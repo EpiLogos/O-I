@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react';
 import './self-other-portal.css';
 
+type ProvenanceEntry = {
+  kind: string;
+  ref: string;
+  source_system: string;
+  revision?: string;
+};
+
 type Participant = {
   schema: 'oi.participant/v1';
   participant_ref: string;
@@ -25,6 +32,7 @@ type SharedField = {
   kind: string;
   visibility: string;
   title?: string;
+  provenance: ProvenanceEntry[];
 };
 
 type SelfOtherDemo = {
