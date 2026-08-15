@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import './self-other-portal.css';
 
 type Participant = {
   schema: 'oi.participant/v1';
