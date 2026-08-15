@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { SelfOtherPortal } from '@/components/self-other-portal';
 import { OICube } from '@/components/ui/oi-cube';
 import { OIGlyph } from '@/components/ui/oi-mark';
 import { ParallaxComponent } from '@/components/ui/parallax-scrolling';
@@ -55,6 +56,7 @@ export default function App() {
         <nav className="site-nav__links">
           <a href="#idea">Idea</a>
           <a href="#field">Field</a>
+          <a href="#shared">Self / Other</a>
           <ExternalLink href="https://github.com/EpiLogos/O-I">GitHub</ExternalLink>
         </nav>
       </header>
@@ -90,8 +92,8 @@ export default function App() {
               <span>I</span>
               <h2>Objective Internality</h2>
               <p>
-                The actor's effective interior can also exist as objective, inspectable structure: projects,
-                capabilities, histories, sources and environments.
+                An actor's operative interior can also exist as objective, inspectable structure: projects,
+                capabilities, histories, sources and environments that can become effective again in later action.
               </p>
             </article>
           </div>
@@ -172,11 +174,35 @@ export default function App() {
                 histories can remain grounded in a local authored world even when computation extends elsewhere.
               </p>
               <p>
-                The emerging shared-field work adds selective projection rather than central ownership: expose what
-                you mean to share, preserve its provenance, keep the source where it belongs.
+                The shared field adds selective projection rather than central ownership: expose what you mean to
+                share, preserve its provenance, keep the source where it belongs.
               </p>
             </div>
           </div>
+        </section>
+
+        <section id="shared" className="section section--black" aria-labelledby="shared-title">
+          <div className="section__eyebrow">SHARED FIELD</div>
+          <div className="section__grid section__grid--heading">
+            <h2 id="shared-title" className="feature-title">
+              Self.
+              <br />
+              Other.
+            </h2>
+            <div className="feature-copy">
+              <p>
+                Shared agency begins with one simple fact: another centre can appear in the world available to this
+                one, without either being reduced to the other.
+              </p>
+              <p>
+                O:I calls the objective, inspectable form of that mutual implication <strong>Objective
+                Co-Internality</strong>. The field relates local worlds through selective projection and provenance;
+                it does not become the owner of either mind or identity.
+              </p>
+            </div>
+          </div>
+
+          <SelfOtherPortal />
         </section>
 
         <section className="section section--black section--closing" aria-labelledby="closing-title">
