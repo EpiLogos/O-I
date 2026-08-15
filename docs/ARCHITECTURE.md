@@ -19,7 +19,7 @@ The product family currently covers six distinct functions.
 |---|---|---|
 | Persistent personal ground | Central | Human-authored Control, Projects, machine intent, and durable personal working structure. |
 | Agent actuation | Agent Runtime | The LLM loop itself, from bare recurrence to a framework or harness. |
-| Capability and context resolution | AIKit | Agent-use resolution of skills, tools, Actions, ContextSources, models, profiles, sessions, and harnesses. |
+| Capability and context resolution | AIKit | Agent-use resolution of skills, tools, Actions, ContextSources, models, profiles, sessions, harnesses, and composition-capable runtime bodies/surfaces. |
 | Developmental agency | Software Factory | Durable Projects, Runs, Agents, Agencies, artifacts, evidence, candidates, and developmental patterns. |
 | Material execution | Workcell | Workspaces, execution providers, runtimes, services, machines, bindings, and material lifecycle. |
 | Recursive formal intelligence | QL-MEF | Executable QL/MEF structure, semantic refraction, and related formal research. |
@@ -42,9 +42,52 @@ The {O:I} repository owns only concerns that make sense at the level of the whol
 
 A product function stays in its product.
 
-For example, project management belongs to the personal-ground surface. Capability learning belongs to the capability/context surface. Run semantics belong to the developmental system. Execution planning belongs to the material-execution system. QL recurrence belongs to the runtime or QL layer that defines it.
+For example, project management belongs to the personal-ground surface. Capability/context and runtime-body composition belong to AIKit. Run semantics belong to the developmental system. Execution planning belongs to the material-execution system. QL recurrence belongs to the runtime or QL layer that defines it.
 
 The `oi` layer can reveal these functions. It does not reimplement them.
+
+## Composable embodiment in the wider field
+
+Some agent harnesses are comparatively fixed runtime shells. Others are themselves composable environments in which model adapters, loop drivers, tools, services, policies, context faculties, subagent facilities, persistence and human/agent UI surfaces can be mounted, replaced, scoped or withdrawn.
+
+This creates a useful architectural distinction:
+
+```text
+Agent
+    enduring identity
+        ↓ situated as
+Agency
+        ↓ embodied through
+Harness
+        ↓ constituted as
+HarnessComposition
+```
+
+The actual body may therefore change without the Agent becoming another Agent.
+
+AIKit is the system surface responsible for making that body intelligible and resolvable: which Components exist, what they require, which providers satisfy them, what they contribute, where those contributions appear, what owns their lifetime, and what would change if the composition were revised.
+
+The deeper composition grammar distinguishes relations such as:
+
+```text
+contain
+federate
+frame
+compose / mount
+require
+provide
+contribute
+target scope
+project
+bind
+map / refract
+```
+
+These are not variants of one generic parent relation. This matches the existing distinction in the knowledge architecture between persistent Spaces, contextual Frames, federation and meta-relation.
+
+DeepSeek Harness/Cordis is a strong current specimen of this class of architecture. Cordis expresses components through service dependencies, provider/consumer relations, reactive coeffects and lifecycle-owned/revertible effects; DeepSeek Harness uses the same composability for its runtime and UI. {O:I} does not depend on Cordis or reproduce it. The significance at this level is that a modern agent environment can make the actor's **body itself an inspectable and composable part of the engineering field around the model**.
+
+This sharpens Objective Internality. The actor's effective interior is not only externalised into persistent projects, sources, histories and tools; parts of its operative body can also be objectively constituted through visible relations of requirement, contribution, scope and lifetime, then disclosed back into the act.
 
 ## Native and composed installation
 
@@ -185,7 +228,7 @@ This preserves an important distinction: the technological architecture must rem
 
 ## Architectural test
 
-A proposed change belongs in {O:I} when it improves the shared entry, disclosure, installation, composition, migration, or compatibility of the field.
+A proposed change belongs in {O:I} when it improves the shared entry, disclosure, installation, composition, migration, compatibility, or conceptual account of the wider field.
 
 A proposed change belongs in a module when it changes what that module can actually do.
 
