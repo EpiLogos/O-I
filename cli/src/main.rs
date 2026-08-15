@@ -230,10 +230,7 @@ fn command_status(catalog: &Catalog, args: &[OsString]) -> Result<i32, String> {
             .as_ref()
             .map(|alias| format!("oi {alias}"))
             .unwrap_or_else(|| "—".to_owned());
-        let native = row
-            .resolved
-            .clone()
-            .unwrap_or_else(|| row.native.clone());
+        let native = row.resolved.clone().unwrap_or_else(|| row.native.clone());
         println!(
             "{:<20} {:<11} {:<16} {}",
             row.name, row.state, alias, native
@@ -309,9 +306,8 @@ fn status_rows(catalog: &Catalog, composition: &Composition) -> Vec<StatusRow> {
                     if let Some(path) = resolve_executable(executable) {
                         row.state = "installed".to_owned();
                         row.resolved = Some(path.display().to_string());
-                        row.detail = Some(
-                            "native command detected but not registered in {O:I}".to_owned(),
-                        );
+                        row.detail =
+                            Some("native command detected but not registered in {O:I}".to_owned());
                     }
                 }
             }
@@ -349,9 +345,7 @@ fn command_init(catalog: &Catalog, args: &[OsString]) -> Result<i32, String> {
         if let Some(path) = resolve_executable(executable) {
             let registration = registration_for(surface, Some(path), None, None)?;
             ensure_alias_available(&composition, &registration)?;
-            composition
-                .modules
-                .insert(surface.id.clone(), registration);
+            composition.modules.insert(surface.id.clone(), registration);
         }
     }
 
@@ -631,18 +625,12 @@ fn command_migrate(catalog: &Catalog, args: &[OsString]) -> Result<i32, String> 
         _ => return Err("usage: oi migrate <path>".to_owned()),
     };
     if !source.exists() {
-        return Err(format!(
-            "source path does not exist: {}",
-            source.display()
-        ));
+        return Err(format!("source path does not exist: {}", source.display()));
     }
     let composition = load_composition()?;
-    let ground = composition
-        .personal_ground
-        .as_deref()
-        .ok_or_else(|| {
-            "personal ground is not set; run 'oi init --personal-ground PATH' first".to_owned()
-        })?;
+    let ground = composition.personal_ground.as_deref().ok_or_else(|| {
+        "personal ground is not set; run 'oi init --personal-ground PATH' first".to_owned()
+    })?;
     let name = source
         .file_name()
         .ok_or_else(|| "source path has no project name".to_owned())?;
@@ -741,9 +729,11 @@ fn ensure_alias_available(
     let Some(alias) = registration.alias.as_deref() else {
         return Ok(());
     };
-    if let Some(conflict) = composition.modules.values().find(|existing| {
-        existing.id != registration.id && existing.alias.as_deref() == Some(alias)
-    }) {
+    if let Some(conflict) = composition
+        .modules
+        .values()
+        .find(|existing| existing.id != registration.id && existing.alias.as_deref() == Some(alias))
+    {
         return Err(format!(
             "alias 'oi {alias}' is already registered to {}",
             conflict.public_name

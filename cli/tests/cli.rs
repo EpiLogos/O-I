@@ -73,10 +73,8 @@ fn register_creates_only_composition_metadata() {
             .arg(&ctrl),
     );
     assert!(result.status.success(), "{}", text(&result.stderr));
-    let state: Value = serde_json::from_slice(
-        &fs::read(home.path().join("composition.json")).unwrap(),
-    )
-    .unwrap();
+    let state: Value =
+        serde_json::from_slice(&fs::read(home.path().join("composition.json")).unwrap()).unwrap();
     let central = &state["modules"]["central"];
     assert_eq!(central["id"], "central");
     assert_eq!(central["alias"], "ctrl");
@@ -207,10 +205,8 @@ fn init_creates_minimal_personal_ground_and_state_without_central() {
     assert!(result.status.success(), "{}", text(&result.stderr));
     assert!(ground.join("Control").is_dir());
     assert!(ground.join("Work").is_dir());
-    let state: Value = serde_json::from_slice(
-        &fs::read(home.path().join("composition.json")).unwrap(),
-    )
-    .unwrap();
+    let state: Value =
+        serde_json::from_slice(&fs::read(home.path().join("composition.json")).unwrap()).unwrap();
     assert_eq!(state["personal_ground"], ground.display().to_string());
 }
 
@@ -228,10 +224,8 @@ fn install_registers_existing_aikit_without_reinstalling() {
     assert!(result.status.success(), "{}", text(&result.stderr));
     let stdout = text(&result.stdout);
     assert!(stdout.contains("registering it instead of reinstalling"));
-    let state: Value = serde_json::from_slice(
-        &fs::read(home.path().join("composition.json")).unwrap(),
-    )
-    .unwrap();
+    let state: Value =
+        serde_json::from_slice(&fs::read(home.path().join("composition.json")).unwrap()).unwrap();
     assert_eq!(state["modules"]["ai-kit"]["version"], "aikit 9.9.9");
 }
 
@@ -288,10 +282,7 @@ fn migrate_discloses_missing_native_handoff_without_mutating_source() {
     let result = output(oi(home.path(), bin.path()).arg("migrate").arg(&source));
     assert_eq!(result.status.code(), Some(4));
     assert!(text(&result.stdout).contains("Handoff unavailable"));
-    assert_eq!(
-        fs::read_to_string(source.join("keep.txt")).unwrap(),
-        "same"
-    );
+    assert_eq!(fs::read_to_string(source.join("keep.txt")).unwrap(), "same");
     assert!(!ground.join("Work/project").exists());
 }
 
