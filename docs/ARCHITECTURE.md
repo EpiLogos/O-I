@@ -7,22 +7,20 @@
 The architecture has two levels:
 
 1. **the Idea** — a coherent account of the technological field through which model capacity becomes situated agency;
-2. **the composition layer** — a small repository and CLI that disclose, install, connect, and hand off to the product surfaces.
+2. **the composition layer** — a small repository and CLI that disclose, install or register, connect, and hand off to the product surfaces.
 
 The second level exists to serve the first.
 
 ## Functional field
 
-The product family currently covers six distinct functions.
-
 | Function | Product surface | Boundary |
 |---|---|---|
-| Persistent personal ground | Central | Human-authored Control, Projects, machine intent, and durable personal working structure. |
+| Persistent personal ground | Central | Human-authored Control, Work, machine intent, and durable personal working structure. |
 | Agent actuation | Agent Runtime | The LLM loop itself, from bare recurrence to a framework or harness. |
 | Capability and context resolution | AIKit | Agent-use resolution of skills, tools, Actions, ContextSources, models, profiles, sessions, and harnesses. |
 | Developmental agency | Software Factory | Durable Projects, Runs, Agents, Agencies, artifacts, evidence, candidates, and developmental patterns. |
-| Material execution | Workcell | Workspaces, execution providers, runtimes, services, machines, bindings, and material lifecycle. |
-| Recursive formal intelligence | QL-MEF | Executable QL/MEF structure, semantic refraction, and related formal research. |
+| Material execution | Workcell | Workspaces, execution providers, runtimes, services, bindings, and material lifecycle. |
+| Recursive formal intelligence | Quaternal Logic | Executable QL/MEF structure, semantic refraction, and related formal research. |
 
 These are centres of responsibility, not mandatory stages in one runtime pipeline.
 
@@ -30,163 +28,79 @@ These are centres of responsibility, not mandatory stages in one runtime pipelin
 
 The {O:I} repository owns only concerns that make sense at the level of the whole:
 
-- the founding vision;
-- public documentation for the field;
-- the map of product responsibilities;
-- installation of selected modules;
-- a common `oi` namespace over installed native CLIs;
-- inspection of which modules and entry points are available;
-- the top-level route into Central/project migration;
-- an agent-facing skill that explains the whole and the handoff rules;
-- compatibility information needed to compose releases safely.
+- the founding vision and public map of responsibilities;
+- installation or registration of selected modules;
+- a common `oi` namespace over native CLIs that actually exist;
+- inspection of which surfaces are installed, registered, missing, or broken;
+- documentation entry and agent-facing disclosure;
+- the top-level route into project migration;
+- compatibility information needed to compose moving product surfaces safely.
 
-A product function stays in its product.
+A product function stays in its product. Project control belongs to Central. Capability resolution belongs to AIKit. Run semantics belong to the Software Factory. Material placement belongs to Workcell. QL/MEF semantics belong to Quaternal Logic. Runtime recurrence belongs to the runtime that defines it.
 
-For example, project management belongs to the personal-ground surface. Capability learning belongs to the capability/context surface. Run semantics belong to the developmental system. Execution planning belongs to the material-execution system. QL recurrence belongs to the runtime or QL layer that defines it.
+## Two small kinds of state
 
-The `oi` layer can reveal these functions. It does not reimplement them.
+Implementation clarified a useful distinction between **live surface description** and **local composition**.
+
+[`surfaces.json`](../surfaces.json) describes the six current product entry points: repository, docs, current native kind, executable and alias where one exists, version-discovery seam, installation posture, and compatibility note. It is not product configuration and does not reproduce product schemas.
+
+The local composition file records only what this machine has actually composed:
+
+```text
+module identity
+native executable or source root
+version when discoverable
+alias
+human docs entry
+optional skill entry
+personal-ground path
+```
+
+By default it lives at `~/.config/oi/composition.json`; `XDG_CONFIG_HOME` and `OI_HOME` can relocate it.
+
+This metadata exists so `oi status`, registration, docs, and dispatch can remain simple. Each product continues to own its own configuration and runtime state.
 
 ## Native and composed installation
 
-Every module keeps its native installation and native CLI.
+Every module keeps its native installation and native surface. When a module is composed through {O:I}, `oi` may expose a clean alias over a real native CLI.
 
-When a module is installed through {O:I}, the installation can also register an alias beneath `oi`.
-
-```text
-native installation                         {O:I} composition
--------------------                         -----------------
-ctrl ...                     <=>             oi ctrl ...
-aikit ...                    <=>             oi kit ...
-<other native CLI>           <=>             oi <alias> ...
-```
-
-The native command remains the authority. The alias preserves its argument and exit semantics unless a documented composition feature requires additional handling.
-
-This gives the user one memorable front door without creating a second implementation of every command surface.
-
-## Discovery before dispatch
-
-The composition layer needs a small local description of the installation.
-
-It must be able to answer:
-
-- Which modules are installed?
-- Where is each native executable?
-- Which alias exposes it?
-- Which version is installed?
-- Where is the personal ground?
-- Which documentation and agent skill describe the surface?
-
-A future manifest can hold this information. The manifest is composition metadata. It must not become a duplicate configuration store for the modules themselves.
-
-Conceptually:
+The live verification currently justifies two aliases:
 
 ```text
-{O:I} installation
-
-alias       native surface       state
------       --------------       -----
-ctrl        ctrl                 installed
-kit         aikit                installed
-...         ...                  optional
+ctrl ...    <=>    oi ctrl ...
+aikit ...   <=>    oi kit ...
 ```
 
-## Installation
+The Agent Runtime, Software Factory, Workcell, and Quaternal Logic do not currently publish user CLIs, so they receive no invented command names.
 
-Installation should support three ordinary cases.
+On Unix, alias dispatch replaces the `oi` process with the native executable. Arguments, standard input, standard output, standard error, signals, and exit status therefore remain native command semantics rather than wrapper semantics.
 
-### Start from {O:I}
+## Setup and installation
 
-The user or agent clones the repository and asks for one or more surfaces. The installer establishes the personal directory shape when requested, installs the selected modules, and registers their aliases.
+`oi init` establishes local composition state and discovers existing `ctrl` and `aikit` commands. When a personal-ground path is supplied and Central is available, setup delegates the actual initialisation to `ctrl`. Without Central, {O:I} can create only the minimal `Control/` + `Work/` seed that already exists in this repository.
 
-### Add {O:I} around existing modules
+`oi register` composes an existing native command or source checkout without reinstalling it.
 
-A user already has one or more native products installed. The installer detects or accepts those installations and registers them without forcing a reinstall.
+`oi install` first detects an existing native installation. The only product with a currently verified generic install recipe is AIKit, whose live README documents its source `cargo install` path. Other surfaces remain explicit register-after-native-install paths until their own repositories publish stable installers.
 
-### Use a module alone
+## Project migration
 
-A user installs one product directly. Nothing in that product should depend on the {O:I} wrapper.
+`oi migrate <path>` is the shared entry, but migration itself belongs to Central.
 
-This keeps the family genuinely composable.
+The current live `ctrl` command surface has no project-adoption Action or command. The first implementation therefore prints the intended source/target/identity-preservation handoff and returns without mutation. This is deliberate: a missing native contract is not permission for {O:I} to become a second project manager.
 
-## Personal ground and project migration
-
-The initial {O:I} repository contains a minimal default tree for the personal ground:
-
-```text
-Central/
-├── Control/
-└── Work/
-```
-
-The actual management semantics belong to the Central product and its `ctrl` CLI.
-
-At the {O:I} level, migration only needs one clear entry point. A user can ask to adopt an existing project into the personal work tree. `oi` then hands the operation to the appropriate native surface.
-
-Project identity must remain distinct from path identity. A repository that moves from `~/code/foo` to `~/Central/Work/foo` is still the same project unless the user explicitly creates a new one.
+When Central publishes the adoption operation, `oi migrate` can become a thin dispatcher to it without changing the ownership model.
 
 ## Agent-facing disclosure
 
-The repository is also an installation medium for agents.
-
-An agent should be able to read `skills/oi/SKILL.md` and learn:
-
-- what {O:I} means;
-- which functional surface owns a request;
-- how to inspect the current installation;
-- when to use `oi` and when to call a native CLI;
-- how to add a module without duplicating its behaviour;
-- how to route project adoption into the personal-ground surface;
-- where deeper product documentation lives.
-
-This is part of the architecture rather than an optional help file. Many users will ask an agent to perform installation and setup for them.
-
-## Human-facing disclosure
-
-The human-facing documentation should explain the system from the outside in.
-
-The first layer should answer what the field is and why it matters. The second layer should show which need each product covers. The third layer can expose the deeper primitives and implementation contracts.
-
-This order matters because the whole should be understandable before the reader has to learn its internal vocabulary.
+An agent should be able to read `skills/oi/SKILL.md`, run `oi status`, and learn which surface owns the next operation. The same state is available as `oi status --json` so agents do not need to scrape prose output.
 
 ## Compatibility
 
-The composition layer eventually needs a small compatibility contract.
+The live descriptor for each surface records only composition-level compatibility information. It can point at a draft integration branch while a product is still under development, but {O:I} does not reinterpret that product's internal contracts.
 
-At minimum, each module should be able to declare:
+The governing test remains simple:
 
-- module identity;
-- supported installation method;
-- native executable or entry point;
-- preferred `oi` alias;
-- version;
-- compatibility range with the {O:I} composition schema;
-- documentation entry point;
-- optional agent skill entry point.
+> A change belongs in {O:I} when it improves shared disclosure, installation, registration, status, documentation, migration handoff, or compatibility. A change belongs in a product when it changes what that product can actually do.
 
-This metadata allows `oi status` and `oi install` to remain simple while the products evolve independently.
-
-## Sixfold relation
-
-The current family also has a deeper formal reading:
-
-```text
-0  persistent ground
-1  actuation
-2  capability field
-3  developmental form
-4  material context
-5  recursive intelligence
-```
-
-The public architecture can use these functional terms without requiring QL terminology. QL-MEF can disclose the deeper relation where that reading is useful.
-
-This preserves an important distinction: the technological architecture must remain intelligible in plain engineering terms, while the formal layer can reveal why the relation has the shape it does.
-
-## Architectural test
-
-A proposed change belongs in {O:I} when it improves the shared entry, disclosure, installation, composition, migration, or compatibility of the field.
-
-A proposed change belongs in a module when it changes what that module can actually do.
-
-That test should keep this repository small as the surrounding system becomes more capable.
+That keeps the repository sparse as the surrounding system becomes more capable.
