@@ -1,1 +1,8 @@
 farp
+
+# O:I public site
+site/node_modules/
+site/dist/
+site/.vite/
+*.log
+.DS_Store

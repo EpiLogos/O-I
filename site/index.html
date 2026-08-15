@@ -1,173 +1,18 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="{O:I} — an architecture for the engineering around the model.">
-  <title>{O:I}</title>
-  <style>
-    :root {
-      color-scheme: light;
-      font-family: Arial, Helvetica, sans-serif;
-      background: #fff;
-      color: #000;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    html,
-    body {
-      min-height: 100%;
-      margin: 0;
-    }
-
-    body {
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      background: #fff;
-      color: #000;
-    }
-
-    main {
-      width: min(92vw, 48rem);
-      min-height: 60vh;
-      display: grid;
-      grid-template-rows: 1fr auto 1fr;
-      align-items: center;
-      justify-items: center;
-      text-align: center;
-    }
-
-    h1 {
-      grid-row: 2;
-      margin: 0;
-      font-size: clamp(3rem, 11vw, 8rem);
-      font-weight: 500;
-      letter-spacing: -0.06em;
-      line-height: 0.9;
-    }
-
-    a {
-      color: inherit;
-      text-underline-offset: 0.2em;
-    }
-
-    main > a {
-      grid-row: 3;
-      align-self: end;
-      margin-bottom: 2rem;
-      font-size: 0.875rem;
-    }
-
-    a:focus-visible {
-      outline: 2px solid currentColor;
-      outline-offset: 4px;
-    }
-
-    main[data-oi-state="projection"] {
-      display: block;
-      min-height: auto;
-      padding: clamp(2rem, 7vw, 5rem) 0;
-      text-align: left;
-    }
-
-    .projection {
-      display: grid;
-      gap: 2rem;
-    }
-
-    .projection__header,
-    .projection__provenance {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 1rem;
-      font-size: 0.75rem;
-    }
-
-    .projection__mark {
-      font-size: 1.25rem;
-      letter-spacing: -0.06em;
-    }
-
-    .projection__kind,
-    .projection__provenance {
-      opacity: 0.58;
-    }
-
-    .projection__title {
-      margin: 8vh 0 0;
-      font-size: clamp(2.75rem, 9vw, 6.5rem);
-      font-weight: 500;
-      letter-spacing: -0.055em;
-      line-height: 0.92;
-    }
-
-    .projection__description {
-      max-width: 38rem;
-      margin: 0;
-      font-size: clamp(1.05rem, 2.4vw, 1.5rem);
-      line-height: 1.45;
-    }
-
-    .projection__group {
-      padding-top: 1.25rem;
-      border-top: 1px solid #000;
-    }
-
-    .projection__group-title {
-      margin: 0 0 0.8rem;
-      font-size: 0.75rem;
-      font-weight: 400;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .projection__list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display: grid;
-      gap: 0.85rem;
-      font-size: 1rem;
-    }
-
-    .projection__item-description {
-      margin: 0.25rem 0 0;
-      max-width: 38rem;
-      opacity: 0.65;
-      line-height: 1.4;
-    }
-
-    .projection__provenance {
-      margin-top: 4vh;
-      padding-top: 1rem;
-      border-top: 1px solid #000;
-    }
-  </style>
-</head>
-<body>
-  <main data-oi-surface="projection-root" data-oi-state="front-door">
-    <h1>{O:I}</h1>
-    <a href="https://github.com/EpiLogos/O-I">GitHub</a>
-  </main>
-  <script type="module">
-    const source = new URLSearchParams(window.location.search).get("projection");
-    if (source) {
-      const root = document.querySelector('[data-oi-surface="projection-root"]');
-      import("./projection-renderer.mjs")
-        .then(({ loadProjectionInto }) => loadProjectionInto(root, source))
-        .catch((error) => {
-          root.dataset.oiState = "projection-error";
-          root.replaceChildren();
-          const message = document.createElement("p");
-          message.textContent = `Projection unavailable: ${error.message}`;
-          root.append(message);
-        });
-    }
-  </script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta
+      name="description"
+      content="{O:I} — an open architecture for the engineering around the model."
+    />
+    <link rel="icon" type="image/svg+xml" href="./media/brand/oi-cube.svg" />
+    <title>{O:I} — Operating Infrastructure · Objective Internality</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
