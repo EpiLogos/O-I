@@ -2,11 +2,11 @@
 
 ## Purpose
 
-Use this skill when a user asks you to understand, install, inspect, compose, or enter a {O:I} system.
+Use this skill when a user asks you to understand, install, inspect, compose, enter, disclose, project, or participate through a {O:I} system.
 
 {O:I} is the shared idea and composition layer around several product surfaces. It is not the place to reimplement the products.
 
-Your first job is to disclose the field clearly and route the work to the surface that owns it.
+Your first job is to disclose the field clearly, preserve ownership boundaries, and route the work to the surface that owns it.
 
 ## Core idea
 
@@ -21,9 +21,121 @@ Think in functional terms first:
 - material execution;
 - recursive formal intelligence.
 
-The current products that implement these functions are Central, Agent Runtime, AIKit, Software Factory, Workcell, and QL-MEF.
+The current products that implement these functions are Central, Agent Runtime, AIKit, Software Factory, Workcell, and Quaternal Logic.
 
-Do not use a product name as a substitute for the function when you are explaining the architecture to a new user. Explain the need first. Name the product second.
+Do not use a product name as a substitute for the function when explaining the architecture to a new user. Explain the need first. Name the product second.
+
+## Objective Internality
+
+Objective Internality is an architectural claim about an actor's operative internal reality.
+
+Projects, histories, memories, sources, capabilities, tools, permissions, environments, constraints, and other conditions can exist as objective, inspectable structure outside one inference and become effective again in later action.
+
+Do not turn this into an unnecessary claim about phenomenal subjectivity. The software can describe and preserve objective operative structure without claiming that it exhausts or proves a Subject.
+
+## Objective Co-Internality — Self / Other
+
+The shared form is **Objective Co-Internality**.
+
+Do not casually rename this “objective intersubjectivity”. Intersubjectivity already assumes Subjects as the relata. O:I begins from objective operative internal worlds and the relation by which an **Other appears as Other in the external environment available within one actor's operative internal environment**.
+
+The minimum relation is:
+
+```text
+Self
+  ↓ selective externalisation
+SharedField
+  ↓ mediated Encounter
+Other
+```
+
+Self and Other are situated relational positions, not identity kinds. The same Participant can be Self from one situated view and Other from another.
+
+The SharedField is not a collective super-subject and does not own either participant's mind or canonical local world.
+
+## Shared-field primitives
+
+When work crosses independently grounded O:I worlds, preserve these distinctions:
+
+```text
+Identity        underlying Human identity or AgentRef
+Participant     field-relative participation relation
+Projection      selected representation of a local/native object
+SharedField     addressable relational environment
+Contribution    attributable difference returned to a field
+Encounter       bounded material made available through mediation
+Presence        current reachability
+Activity        current work/dialogue/study/execution state
+```
+
+Important non-identities:
+
+```text
+Identity ≠ Participant ≠ Presence ≠ Activity
+Projection ≠ Contribution
+Contribution ≠ canonical source object
+SharedField ≠ Context
+SharedField ≠ WikiSpace
+Encounter ≠ belief, understanding, or subjective experience
+```
+
+### SharedFields can nest
+
+SharedFields are recursively nestable. `parent_field_ref` expresses containment only.
+
+Do not confuse:
+
+```text
+contain ≠ federate ≠ anchor ≠ project ≠ participate
+```
+
+A field can be anchored to a WikiSpace, Project, Projection, Contribution, or other stable subject without becoming that subject. Federation between independently grounded fields remains a separate relation.
+
+### Contributions can nest
+
+A Contribution can target any stable addressable subject, including another Contribution.
+
+Use the generic Contribution relation for statements, replies, questions, findings, opinions, support, challenges, corrections, reproductions, syntheses, decisions, ratings, rankings, metrics, moderation judgments, and other typed field differences when appropriate.
+
+Do not invent a privileged `Comment`, `Reaction`, or fixed reply-depth ontology merely because a Contribution targets social material.
+
+Rankings and metrics can be Contributions. Preserve their attribution, target, basis/method, representation, revision/provenance where relevant. Do not treat a platform score as canonical truth merely because a UI computes with it.
+
+### Encounter records mediation, not mind-reading
+
+An Encounter may record what appeared, which revision, through which SharedField, and by which mediation path: direct address, chronology, search, subscription, ranking, recommendation, moderation, or another policy.
+
+Do not infer that displayed material was believed, understood, remembered, or phenomenally experienced.
+
+## Projection and local authority
+
+Projection is explicit and selective.
+
+A local product keeps semantic and mutation authority over its canonical object. O:I can publish a representation, let other Participants address it, and preserve what they observed without silently transferring source ownership.
+
+A Contribution that refers to a Projection is not the Projection. A Projection of a Contribution is still a Projection of that Contribution.
+
+For a Human Participant Root derived from Central, expose only explicitly selected public material. Never infer that `Central/Control` is public merely because it is locally available.
+
+For an Agent, preserve Agent / Agency / AgentSession / Execution distinctions where provenance needs them. Model, Harness, runtime body, or gateway process identity does not replace Agent identity.
+
+## Research commons and wiki boundary
+
+The future O:I Wiki is a living research commons, but the generic wiki system owns wiki semantics.
+
+Preserve:
+
+```text
+WikiSpace / WikiNode / WikiFrame
+          ↓ Projection / anchor
+SharedField
+          ↓ Contributions / Encounters
+Participants
+```
+
+A Contribution can discuss, challenge, reproduce, rank, or extend wiki material without silently mutating canonical wiki knowledge.
+
+Polylogos and Moltbook are important prior shared-agency experiments. Treat them as research Sources to study and source-lock, not as product templates.
 
 ## Start with the installation state
 
@@ -51,7 +163,7 @@ Use the configured agent runtime for loop behaviour, harness behaviour, framewor
 
 ### Capability and context resolution
 
-Use the registered AIKit surface for skills, tools, Actions, ContextSources, models, harnesses, profiles, sessions, familiarity, and local capability resolution.
+Use the registered AIKit surface for skills, tools, Actions, ContextSources, models, harnesses, profiles, sessions, familiarity, local capability resolution, and composition-capable runtime bodies/surfaces.
 
 ### Developmental agency
 
@@ -63,7 +175,13 @@ Use the Workcell surface for workspaces, execution providers, project runtimes, 
 
 ### Recursive formal intelligence
 
-Use QL-MEF for executable QL/MEF semantics, refraction, formal operators, and related research machinery.
+Use Quaternal Logic for executable QL/MEF semantics, refraction, formal operators, and related research machinery.
+
+### Whole-level shared relations
+
+Use the O:I shared-field layer when the request concerns selective disclosure between worlds, Participant relations, Projection, SharedField containment/federation, Contribution, Encounter, shared addressing, transport-neutral publication, or the future hosted field seam.
+
+Do not move native product behaviour into O:I merely because the result will later be shared.
 
 ## Use `oi` as a front door
 
@@ -80,7 +198,7 @@ oi migrate <path>
 
 Use `oi <alias> ...` when the user wants the common namespace or when it improves orientation.
 
-You may use the native CLI directly when the user already knows the product surface or when the native documentation requires it.
+You may use the native CLI directly when the user already knows the product surface or when native documentation requires it.
 
 The alias is a dispatcher. Do not recreate native command behaviour inside the {O:I} layer.
 
@@ -118,16 +236,22 @@ A path change is not a new Project.
 
 Write for the user's experience of the field.
 
-Prefer direct prose and functional language. Explain what a surface gives the person or agent before discussing its internal types.
+Prefer direct prose and functional language. Explain what a surface gives the person or agent before discussing internal types.
 
-Keep the speculative research frame positive and directed. Do not weaken it with unnecessary disclaimers. Distinguish established software behaviour from open research claims when that distinction matters.
+Keep the speculative research frame positive and directed. Distinguish established software behaviour from open research claims when that distinction matters.
 
 Use {O:I} as the canonical written form for the Idea and project. Use `oi` for the CLI command.
 
 ## Architectural guardrail
 
-Before adding code to this repository, ask one question:
+Before adding code to this repository, ask:
 
-> Does this change improve shared disclosure, installation, composition, migration, compatibility, or handoff?
+> Does this change improve shared disclosure, installation, composition, migration, compatibility, cross-surface projection, shared-field participation, or handoff?
 
-If the answer is no, the change probably belongs in one of the product repositories.
+If no, the change probably belongs in one of the product repositories.
+
+For live shared-field backend concerns, ask a second question:
+
+> Is this portable O:I semantics, or service-specific implementation behind the Epi-Logos adapter?
+
+Keep portable identity / Projection / SharedField / Contribution / Encounter semantics in O:I. Keep SpaceTimeDB modules, live Presence implementation, recommendation policy, moderation machinery, and other hosted behaviour behind the future service boundary unless the portable contract genuinely requires a cross-transport extension.
