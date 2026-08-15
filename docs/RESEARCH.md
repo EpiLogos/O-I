@@ -29,6 +29,7 @@ Examples include:
 - a capability set;
 - access to Actions;
 - searchable knowledge sources;
+- a composed runtime body: tools, services, policies, context faculties, observers and surfaces;
 - an execution environment;
 - a workspace;
 - service reachability;
@@ -43,7 +44,7 @@ Potentiation asks a different question:
 
 > **What becomes possible because the surrounding structure has this form?**
 
-Two systems can provision the same nominal tool and still potentiate different agency. The difference may come from how the tool is described, when it becomes available, what context surrounds it, how results return into the loop, how prior work is retained, or how the environment supports verification and recovery.
+Two systems can provision the same nominal tool and still potentiate different agency. The difference may come from how the tool is described, when it becomes available, what context surrounds it, how it is mounted into the actor's runtime body, which human or agent Surfaces expose it, how results return into the loop, how prior work is retained, or how the environment supports verification and recovery.
 
 Potentiation is therefore not a synonym for adding more tools.
 
@@ -56,11 +57,13 @@ The practical engineering field becomes clearer when model development is held a
 A developer may not change the base model or its training process. The developer can still work on:
 
 - agent-loop and harness design;
+- runtime Component/plugin composition;
+- service/provider/consumer seams and lifecycle;
 - context assembly;
 - retrieval and knowledge navigation;
 - memory and persistence;
 - skills and tools;
-- Action design;
+- Action design and multi-surface projection;
 - project representation;
 - human-agent interfaces;
 - multi-agent composition;
@@ -96,7 +99,9 @@ Useful independent variables can include:
 
 - runtime recurrence;
 - harness or framework;
+- HarnessComposition / runtime Component field;
 - capability field;
+- Action/Surface projection;
 - context selection;
 - knowledge horizon;
 - project maturity;
@@ -113,10 +118,12 @@ Useful observations can include:
 - recovery from error;
 - unnecessary action;
 - tool selection;
+- component/faculty use;
 - evidence quality;
 - stopping behaviour;
 - human intervention;
 - context use;
+- body/composition changes during work;
 - latency;
 - token and monetary cost;
 - transfer across tasks or projects.
@@ -127,14 +134,19 @@ No single metric defines agency. The evidence should remain appropriate to the t
 
 The QL agent-runtime programme provides an immediate experimental surface.
 
-It distinguishes the agent host from the recurrence runtime. This allows the same host and model surface to run different loop semantics. The programme also compares multiple host forms, including a harness, a framework agent, and a comparatively native host.
+It distinguishes the agent host from the recurrence runtime. This allows the same host and model surface to run different loop semantics. The existing Pi, Pydantic and Native hosts establish that the loop-runtime seam is portable across materially different host forms.
 
-This is useful to {O:I} because it separates two variables that are often bundled together:
+DeepSeek Harness now supplies a particularly useful **maximal / ideal reference host** for the same experiment architecture. Its runtime is compositionally constituted, its loop is replaceable, and its session/tool activity is designed to remain inspectable. This does not create a new experiment or change the existing `classic | ql-direct | ql-deep` independent variable. It gives the already-defined runtime switch a richer embodied host in which the runtime state and experimental trajectory can also be exposed through composable inspection surfaces.
+
+This is useful to {O:I} because it separates variables that are often bundled together:
 
 1. the surrounding host or harness;
-2. the recurrence semantics through which the model acts.
+2. the composition of that harness/body;
+3. the recurrence semantics through which the model acts.
 
-The live benchmark work then asks whether those structural differences change ordinary model-backed behaviour. Structural conformance alone is not treated as evidence of capability improvement.
+The live benchmark work asks whether those structural differences change ordinary model-backed behaviour. Structural conformance alone is not treated as evidence of capability improvement.
+
+The thin and maximal cases both matter. A thin/native host tests the portability floor; a richly composable harness tests the higher end of the technological agency field that {O:I} is intended to describe.
 
 That is the experimental posture {O:I} should preserve across the wider research field.
 
@@ -166,9 +178,45 @@ A third direction concerns the relation between available capability and effecti
 
 The richest capability field is not always the best local context. Too few powers can block action. Too many badly disclosed powers can increase search cost and confusion.
 
-This creates a useful research problem around selection, description, familiarity, and contextual projection.
+This creates a useful research problem around selection, description, familiarity, contextual projection, and the relation between semantic power and its actual embodiment in a runtime.
 
 AIKit is the current product surface where this question becomes operational. {O:I} provides the wider frame through which results can be compared with changes in runtime, project structure, and material execution.
+
+## Composable embodiment as a variable
+
+A composition-capable harness makes the actor's effective technological body a first-class experimental object.
+
+The same Agent/Agency and model can operate through different constituted bodies:
+
+```text
+Body A
+    minimal loop + tools
+
+Body B
+    same loop/model + richer retrieval/context faculties
+
+Body C
+    same model + composable tools/services/policies/subagents/UI
+
+Body D
+    same rich harness + different loop runtime
+```
+
+The interesting unit is not merely "which plugins are installed?" A component participates relationally in an environment:
+
+```text
+what it requires from its surrounding runtime
+what provider satisfies those requirements
+what powers or services it supplies
+what effects/contributions become active because it is present
+which Surfaces disclose those contributions
+what owns their lifetime
+what changes when the component is withdrawn
+```
+
+Cordis provides an unusually explicit contemporary model of this through reactive coeffects and revertible effects. {O:I} treats that as valuable engineering evidence for a broader question: **how does agency change when an actor's operative body can itself be contextually composed, inspected and revised?**
+
+This includes a stronger form of self-relation. Where policy permits, an artificial actor can inspect its present body, discover a latent Component/faculty, understand what it requires and would change, and invoke an Action or Procedure that moves from `Body₀` to `Body₁`. The Agent remains the same Agent while its effective embodiment changes.
 
 ## Material-world research
 
@@ -184,15 +232,19 @@ The research question is not which provider is universally best. It is how mater
 
 Objective Internality provides the philosophical research concept behind these experiments.
 
-Agentic systems make it possible to externalise parts of an actor's effective interior world into objective technical structures. Projects, histories, tool surfaces, semantic maps, machine state, and memories can exist independently of one inference event and still become part of the actor's working standpoint.
+Agentic systems make it possible to externalise parts of an actor's effective interior world into objective technical structures. Projects, histories, tool and Action surfaces, semantic maps, machine state, memories, runtime Components and active service relations can exist independently of one inference event and still become part of the actor's working standpoint.
 
-This creates a concrete setting for research into interiority, externalisation, world, memory, representation, and agency.
+The composability question adds a dynamic dimension. Objective internality is not only durable externalised structure which can be disclosed back into an act; some of the actor's operative interior can be **contextually constituted through relations of requirement and contribution**. The surrounding world supplies conditions under which a faculty can exist, and the active faculty in turn changes the world available to the actor. These relations can remain inspectable even when the actual act is generated by an opaque model.
+
+This creates a concrete setting for research into interiority, externalisation, world, embodiment, memory, representation, and agency.
 
 The software does not prove a philosophical theory by existing. It provides an experimental and conceptual object through which such a theory can become more precise.
 
 ## QL-MEF and Epi-Logos
 
 QL-MEF supplies the deeper formal research surface. It can make relations in the wider system explicitly refractable and executable without requiring those semantics for ordinary operation.
+
+The effect/coeffect and component/environment reciprocity of composable systems is especially useful empirical material for QL/MEF investigation: conditions received from context and differences contributed back to context form a real operational relation that can be studied without prematurely mapping software nouns onto QL positions.
 
 Epi-Logos is the wider research configuration in which QL-MEF, its semantic resources, and the surrounding software architecture can be studied together.
 
