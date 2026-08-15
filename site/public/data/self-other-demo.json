@@ -5,7 +5,15 @@
     "field_ref": "oi:field:public",
     "kind": "public-commons",
     "visibility": "public",
-    "title": "O:I public field"
+    "title": "O:I public field",
+    "provenance": [
+      {
+        "kind": "field-definition",
+        "ref": "oi:field:public",
+        "source_system": "oi",
+        "revision": "self-other-demo@1"
+      }
+    ]
   },
   "self": {
     "schema": "oi.participant/v1",
