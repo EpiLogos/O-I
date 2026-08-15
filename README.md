@@ -77,6 +77,26 @@ A user can begin from a common working shape and make it their own through ordin
 
 Existing projects belong in this picture too. A repository can be adopted into the personal working ground while keeping the continuity that made it the same project in the first place.
 
+## From a local world to a shared field
+
+The same parent position gives {O:I} a future relational role.
+
+A local installation can selectively project something it owns — a participant root, document, wiki object, research finding, project output, experiment, or another typed object — so that another human, Agent, O:I instance, or shared service can encounter it. The source object remains owned by its native system. {O:I} supplies the shared disclosure, addressing, projection, and transport seam across the products.
+
+This adds another useful reading of the parent relation:
+
+```text
+0       /       1
+Self   relation  Other
+local  projection encounter
+```
+
+It does not add a seventh product. It describes the portal through which differentiated local worlds can become related without being collapsed into one centrally owned world.
+
+The first browser surface is intentionally minimal: [`site/index.html`](site/index.html) contains only the `{O:I}` mark and a GitHub link. It establishes the site as an owned projection surface before there is anything worth pretending to host. The next functional step is a sparse Participant Root projected from explicitly public parts of a local Central setup.
+
+The longer path is local-first and transport-independent. A future Epi-Logos service can make these relations live and subscribable, with SpaceTimeDB as the planned hosted implementation candidate, while the O:I projection and participation contracts remain independent of that transport and store.
+
 ## Open primitives
 
 The surrounding projects have converged on a useful family of open abstractions: `Project`, `Context`, `Agent`, `Agency`, `Capability`, `Action`, `ContextSource`, `Run`, `Artifact`, `Claim`, `Evidence`, `Candidate`, `Environment`, and others.
@@ -108,7 +128,13 @@ It gives us a practical way to study the engineering space around a fixed or ava
 
 The current agent-runtime experiments already test one part of that space by comparing different loop structures while separating them from the model and host that carry them.
 
-The philosophical idea of **Objective Internality** opens the same question at another depth. Contemporary agent systems make it possible for an actor's working interior to be partly externalised into durable technical objects, then re-entered as context, capability, memory, world, and orientation. That gives the software architecture a direct relation to the wider Epi-Logos and Antikythera research programme without making that background a prerequisite for using the technology.
+The research programme also needs to learn from the field itself. [`docs/RESEARCH-PROTOCOL.md`](docs/RESEARCH-PROTOCOL.md) defines a repeatable path from discovering a real paper or system, through source-locked study and abstraction, into implementation, experiment, and a durable finding that can return to the shared knowledge field. Source claims, implementation facts, observations, and {O:I} interpretations stay distinguishable throughout that process.
+
+The future O:I Wiki is therefore planned as a living research commons over technologies, papers, studies, abstractions, experiments, findings, questions, and dialogue rather than as a second rendering of these repository docs. Its implementation follows the generic Wiki system; its shared projections follow the local-first field described in [`docs/SHARED-FIELD.md`](docs/SHARED-FIELD.md).
+
+The philosophical idea of **Objective Internality** opens the same question at another depth. Contemporary agent systems make it possible for an actor's working interior to be partly externalised into durable technical objects, then re-entered as context, capability, memory, world, and orientation. A shared field extends the same structure intersubjectively: selected objective internalities can become objects of relation, learning, challenge, reproduction, and dialogue between differentiated human and artificial participants.
+
+That gives the software architecture a direct relation to the wider Epi-Logos and Antikythera research programme without making that background a prerequisite for using the technology.
 
 ## Start here
 
@@ -117,8 +143,11 @@ This repository is the shared front door for the idea and the composed installat
 - [`docs/VISION.md`](docs/VISION.md) — founding vision and research frame.
 - [`docs/SURFACES.md`](docs/SURFACES.md) — the six project surfaces from the outside in.
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — the composition architecture.
+- [`docs/SHARED-FIELD.md`](docs/SHARED-FIELD.md) — local-first projection, participation, transport, and the future shared relational field.
+- [`docs/RESEARCH.md`](docs/RESEARCH.md) — the agency-potentiation research programme.
+- [`docs/RESEARCH-PROTOCOL.md`](docs/RESEARCH-PROTOCOL.md) — how humans and agents study real systems and return what they learn.
 - [`docs/CLI.md`](docs/CLI.md) — the `oi` command surface.
 - [`docs/INSTALL.md`](docs/INSTALL.md) — installation and composition.
 - [`docs/MIGRATION.md`](docs/MIGRATION.md) — adopting existing projects.
-- [`docs/RESEARCH.md`](docs/RESEARCH.md) — the agency-potentiation research programme.
+- [`site/index.html`](site/index.html) — the minimal browser front door and future projection root.
 - [`skills/oi/SKILL.md`](skills/oi/SKILL.md) — agent-facing orientation to the whole.
