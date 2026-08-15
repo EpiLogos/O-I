@@ -13,6 +13,7 @@ test('unified shared-field API exposes projection and shared-agency floors', () 
     'createContribution',
     'createEncounter',
     'selfOtherReadModel',
+    'createSharedFieldState',
   ]) {
     assert.equal(typeof api[name], 'function', `${name} should be exported`);
   }
