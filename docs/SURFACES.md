@@ -2,92 +2,64 @@
 
 {O:I} is easiest to enter by need rather than by repository name.
 
-This guide describes what each surface gives to a person or agent from the outside. Each product keeps its own detailed documentation and implementation language.
+The six surfaces are centres of responsibility, not mandatory stages in one runtime pipeline. A person can use only the surfaces they need, and each product remains independently useful outside {O:I}.
 
-## Persistent personal ground
+## Persistent personal ground — Central
 
-A useful agentic system needs somewhere durable to stand.
+A useful agentic system needs somewhere durable to stand. Central gives the user a personal working ground for human-authored Control, ordinary Work, machine intent, and other durable material that should survive individual model sessions.
 
-This surface gives the user a personal working ground that survives individual model sessions. It holds human-authored Control, Projects, machine intent, and other durable material that should remain ordinary, inspectable, and portable.
+The current native command is `ctrl`. In a composed installation, `{O:I}` exposes the same surface as `oi ctrl ...`.
 
-The current product is **Central**.
+The active Rust implementation remains under development in Central's current integration line, so {O:I} registers an existing `ctrl` rather than pretending to own Central installation or behaviour.
 
-Its importance is simple. A model invocation can be temporary while the person's working world remains stable. Existing projects can be adopted into that world. Machines can be described as part of that world. Human-authored context stays distinct from model-generated inference.
+## Agent actuation — Agent Runtime
 
-This is the natural `0` of the system: standing ground before actuation.
+A model needs to be placed into an active loop before it can operate as an agent. The current QL agent-runtime programme in `agent-system-design` deliberately separates the host from recurrence semantics so the same model and capability field can be compared through Classic, Direct QL, and Deep QL loops.
 
-## Agent actuation
+The live surface is presently a repository workbench and Series 1 workflow, not a released native command. There is therefore no `oi` runtime alias yet.
 
-A model needs to be placed into an active loop before it can operate as an agent.
+## Capability and context resolution — AIKit
 
-This surface is intentionally plural. It can be a bare loop, a small custom runner, a framework agent, a coding harness, or another runtime form.
+Once an actor exists, it needs a usable field of powers and information. AIKit resolves skills, tools, Actions, profiles, sessions, harnesses, models, and context at the agentic use level.
 
-The current QL agent-runtime programme explores this boundary directly. It separates the host from the recurrence semantics so the same model and capability surface can be tested through different loop structures.
+The native command is `aikit`, with a documented source installation path. A composed installation exposes it as `oi kit ...` without changing the underlying command semantics.
 
-From the {O:I} perspective, the important fact is that **some intelligence is now in act**.
+## Developmental agency — Software Factory
 
-This is the natural `1` of the system.
+Some work needs continuity across intention, design, implementation, evidence, alternatives, decisions, and return. The Software Factory gives that work a durable developmental body through Projects, Runs, Run Maps, Agents, Agencies, Artifacts, Claims, Evidence, Decisions, and Candidates.
 
-## Capability and context resolution
+The current executable implementation is a Rust crate in the Factory integration branch. It does not yet publish a native user CLI, so {O:I} records a source checkout when useful and assigns no alias.
 
-Once an actor exists, it needs a usable field of powers and information.
+## Material execution — Workcell
 
-This surface answers questions such as:
+Agency eventually meets a material environment. Workcell resolves semantic execution demands into workspaces, runtimes, services, provider bindings, and material lifecycle without forcing higher-level software to encode Docker, VM, host, or placement details.
 
-- Which skills are available here?
-- Which tools or Actions can this actor use?
-- Which ContextSources can it search?
-- Which model or harness is active?
-- Which profile applies to this project or session?
-- Which previously used routes should be easy to reach again?
+The current implementation is a Rust workspace and provider/control-plane library surface. It has no released native CLI, so {O:I} assigns no alias.
 
-The current product is **AIKit**.
+## Recursive formal intelligence — Quaternal Logic
 
-AIKit operates at the agentic use level. It is where capabilities become available in context rather than remaining a loose collection of installed software.
+The structures through which an agent works can themselves become objects of computation and reflection. **Quaternal Logic** is the public name for the recursive formal-intelligence surface implemented in the `EpiLogos/QL-MEF` repository.
 
-The same distinction applies to knowledge. A large information horizon can remain available without being loaded into every prompt. The agent can navigate the field and retrieve what the current act requires.
+Its current Rust implementation supplies the QL/MEF kernel, lens registry, provider/service boundary, and optional client adapters. It is currently a library/service surface rather than a released CLI, so {O:I} does not invent a command alias for it.
 
-## Developmental agency
+## Verified native entry points
 
-Some work needs more than a capable session. It needs continuity across intention, design, implementation, evidence, alternatives, decisions, and return.
+The live repositories were rechecked on 15 August 2026. The composition descriptors in [`surfaces.json`](../surfaces.json) retain only the discovery and handoff facts needed by `oi`.
 
-This surface gives agentic work a durable developmental body.
+| Surface | Current native entry | Preferred `oi` alias |
+|---|---|---|
+| Central | `ctrl` | `oi ctrl` |
+| Agent Runtime | repository workbench / Series 1 workflow | none |
+| AIKit | `aikit` | `oi kit` |
+| Software Factory | Rust crate / integration surface | none |
+| Workcell | Rust workspace / control-plane crates | none |
+| Quaternal Logic | QL/MEF Rust kernel/service/adapters | none |
 
-The current product is the **Software Factory**.
-
-Its Project, Run, Run Map, Agent, Agency, Artifact, Claim, Evidence, Decision, and Candidate structures allow a transformation to remain intelligible after one conversation ends. They also allow successful ways of working to become reusable developmental patterns rather than disappearing as session history.
-
-This is where agentic work can become cumulative software development rather than a sequence of isolated requests.
-
-## Material execution
-
-Agency eventually meets a material environment.
-
-A task may need a writable workspace, a project runtime, a database, a browser surface, isolation, a container, a VM, a remote host, persistent storage, or another service.
-
-This surface turns semantic execution needs into a concrete world without forcing higher-level software to encode provider details.
-
-The current product is **Workcell**.
-
-The key distinction is between meaning and placement. A Project can ask for a writable workspace or isolated execution. Workcell can decide whether the current deployment satisfies that need through Docker, a MicroVM, a host process, a remote machine, or another provider.
-
-This gives agency material reach while preserving portability.
-
-## Recursive formal intelligence
-
-The structures through which an agent works can themselves become objects of computation and reflection.
-
-This surface provides executable formal relations, semantic refraction, and deeper recurrence machinery.
-
-The current product is **QL-MEF**.
-
-QL-MEF can read existing objects through additional relations without replacing their ordinary identities. Projects remain Projects. Claims remain Claims. Agents remain Agents. The formal machinery can disclose another dimension of the same system.
-
-This surface also carries the deeper research programme in which QL relations can be implemented, tested, compared, and revised through software evidence.
+An alias appears only when a product actually exposes a native CLI. The absence of an alias is not a missing {O:I} feature; it is a truthful description of the current product surface.
 
 ## The whole field
 
-The six surfaces can be read together as:
+The six functions can still be read together as:
 
 ```text
 0  standing ground
@@ -98,8 +70,4 @@ The six surfaces can be read together as:
 5  recursive disclosure
 ```
 
-This relation is useful because it covers a wide range of practical need without requiring one giant product.
-
-A minimal user may need only the first two surfaces. Another user may add the capability field. A software team may need durable developmental agency and material execution. A research configuration may use the whole set.
-
-{O:I} gives them one map and one entry point while allowing every surface to remain fully itself.
+This relation is useful because it covers a wide range of practical need without requiring one giant product. {O:I} provides one map and one entry point while allowing every surface to remain fully itself.
