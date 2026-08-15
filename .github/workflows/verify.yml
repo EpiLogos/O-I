@@ -6,7 +6,7 @@ on:
   pull_request:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   rust:
@@ -16,17 +16,6 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
-      - name: Apply rustfmt on development branch
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/agent/')
-        run: |
-          cargo fmt --manifest-path cli/Cargo.toml
-          if ! git diff --quiet -- cli; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add cli
-            git commit -m "style: rustfmt oi CLI"
-            git push
-          fi
       - name: Format
         run: cargo fmt --manifest-path cli/Cargo.toml -- --check
       - name: Check
