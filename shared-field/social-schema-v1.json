@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EpiLogos/O-I/shared-field/social-schema-v1.json",
+  "title": "O:I shared agency contracts v1",
+  "$defs": {
+    "ref": {
+      "type": "object",
+      "required": ["ref", "kind"],
+      "properties": {
+        "ref": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string", "minLength": 1 },
+        "revision": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": true
+    },
+    "provenance": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["kind", "ref", "source_system"],
+        "properties": {
+          "kind": { "type": "string", "minLength": 1 },
+          "ref": { "type": "string", "minLength": 1 },
+          "source_system": { "type": "string", "minLength": 1 },
+          "revision": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": true
+      }
+    },
+    "representation": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": { "type": "string", "minLength": 1 },
+        "ref": { "type": "string", "minLength": 1 },
+        "payload": true
+      },
+      "anyOf": [
+        { "required": ["ref"] },
+        { "required": ["payload"] }
+      ],
+      "additionalProperties": true
+    }
+  },
+  "oneOf": [
+    {
+      "title": "SharedField",
+      "type": "object",
+      "required": ["schema", "field_ref", "kind", "visibility", "provenance"],
+      "properties": {
+        "schema": { "const": "oi.shared-field/v1" },
+        "field_ref": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string", "minLength": 1 },
+        "visibility": { "enum": ["public", "unlisted", "restricted", "private"] },
+        "title": { "type": "string", "minLength": 1 },
+        "parent_field_ref": { "type": "string", "minLength": 1 },
+        "anchor": { "$ref": "#/$defs/ref" },
+        "presentation": { "type": "object" },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      },
+      "additionalProperties": true
+    },
+    {
+      "title": "Contribution",
+      "type": "object",
+      "required": ["schema", "contribution_ref", "field_ref", "contributor_participant_ref", "created_at", "mode", "target", "relation", "representation", "provenance"],
+      "properties": {
+        "schema": { "const": "oi.contribution/v1" },
+        "contribution_ref": { "type": "string", "minLength": 1 },
+        "field_ref": { "type": "string", "minLength": 1 },
+        "contributor_participant_ref": { "type": "string", "minLength": 1 },
+        "created_at": { "type": "string", "format": "date-time" },
+        "mode": { "type": "string", "minLength": 1 },
+        "target": { "$ref": "#/$defs/ref" },
+        "relation": {
+          "type": "object",
+          "required": ["kind"],
+          "properties": { "kind": { "type": "string", "minLength": 1 } },
+          "additionalProperties": true
+        },
+        "representation": { "$ref": "#/$defs/representation" },
+        "provenance": { "$ref": "#/$defs/provenance" },
+        "source": { "type": "object" },
+        "agency": { "type": "object" }
+      },
+      "additionalProperties": true
+    },
+    {
+      "title": "Encounter",
+      "type": "object",
+      "required": ["schema", "encounter_ref", "field_ref", "participant_ref", "occurred_at", "mediation", "items", "provenance"],
+      "properties": {
+        "schema": { "const": "oi.encounter/v1" },
+        "encounter_ref": { "type": "string", "minLength": 1 },
+        "field_ref": { "type": "string", "minLength": 1 },
+        "participant_ref": { "type": "string", "minLength": 1 },
+        "occurred_at": { "type": "string", "format": "date-time" },
+        "mediation": {
+          "type": "object",
+          "required": ["kind"],
+          "properties": { "kind": { "type": "string", "minLength": 1 } },
+          "additionalProperties": true
+        },
+        "items": { "type": "array", "items": { "$ref": "#/$defs/ref" } },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      },
+      "additionalProperties": true
+    }
+  ]
+}
