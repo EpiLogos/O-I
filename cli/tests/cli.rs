@@ -162,7 +162,7 @@ fn alias_exec_preserves_arguments_stdio_and_exit_status() {
     let ctrl = fake_executable(
         bin.path(),
         "ctrl",
-        "printf 'args:%s|%s\\n' \"$1\" \"$2\"; cat; printf 'native-stderr\\n' >&2; exit 23",
+        "printf 'args:%s|%s\\n' \"$1\" \"$2\"; /bin/cat; printf 'native-stderr\\n' >&2; exit 23",
     );
     let registered = output(
         oi(home.path(), bin.path())
