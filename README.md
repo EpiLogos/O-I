@@ -18,107 +18,71 @@ That is the field {O:I} is concerned with.
 
 > **Given available model capacity, what technological structures provision and potentiate useful forms of agency?**
 
-This gives a common frame to the systems that surround an acting model and shape what it can become in practice.
-
 The smallest case is simple: **a durable personal working ground plus an LLM running in a loop**. The same architecture can open outward into richer capability, knowledge, development, execution, and recursive intelligence without changing that basic relation.
 
 ## Operating Infrastructure · Objective Internality
-
-The name has two readings.
 
 **Operating Infrastructure** is the technical reading: the structures through which an artificial actor can operate.
 
 **Objective Internality** names the same field from the side of the actor. Much of an agent's effective interior world can exist outside the model as objective, inspectable structure — files, projects, capabilities, histories, sources, environments — and still be disclosed back into the act as its working horizon.
 
-There is also a small joke in the name: **“Oh. I.”** Orientation matters. A useful agentic environment helps both human and artificial actors understand where they are, what is available, and what can happen from here.
-
-At a deeper level, `{O:I}` also carries `0/1`: persistent ground and actuation, the minimal pair from which the wider architecture develops.
-
-```mermaid
-mindmap
-  root(("{O:I}"))
-    "persistent personal ground"
-      "Central"
-    "agent actuation"
-      "runtime experiments"
-      "frameworks"
-      "harnesses"
-      "bare loops"
-    "capability and context resolution"
-      "AIKit"
-    "developmental agency"
-      "Software Factory"
-    "material execution"
-      "Workcell"
-    "recursive formal intelligence"
-      "Quaternal Logic"
-```
+There is also a small joke in the name: **“Oh. I.”** Orientation matters. At a deeper level, `{O:I}` also carries `0/1`: persistent ground and actuation, the minimal pair from which the wider architecture develops.
 
 ## The field
 
-The present {O:I} family has six centres. Each can stand on its own. Together they describe a broad working field for technological agency.
+The present {O:I} family has six centres. Each can stand on its own.
 
 | Function in the whole | Project | What it opens |
 |---|---|---|
-| Persistent personal ground | [**Central**](https://github.com/EpiLogos/Central) | Human-authored control, projects, machine intent, and a durable place from which agents can work. |
+| Persistent personal ground | [**Central**](https://github.com/EpiLogos/Central) | Human-authored Control, ordinary Work, machine intent, recovery, and durable Actions/Connectors. |
 | Agent actuation | [**Agent Runtime experiments**](https://github.com/EpiLogos/agent-system-design/issues/94) | The LLM in act, from bare loops through frameworks and harnesses. |
 | Capability and context resolution | [**AIKit**](https://github.com/EpiLogos/ai-kit) | The agent-use layer for tools, skills, Actions, sources, models, sessions, and context. |
 | Developmental agency | [**Software Factory**](https://github.com/EpiLogos/agent-system-design) | Durable project development through Runs, Agents, evidence, candidates, and reusable patterns of work. |
 | Material execution | [**Workcell**](https://github.com/EpiLogos/Workcell) | The computational worlds in which agency becomes materially situated and executable. |
 | Recursive formal intelligence | [**Quaternal Logic**](https://github.com/EpiLogos/QL-MEF) | The formal and semantic research layer for recursive reasoning, refraction, and deeper structural experiment. |
 
-Together they form a possibility space rather than a fixed workflow. A useful {O:I} can be very small, and it can grow as new needs appear.
-
-## A personal architecture
-
-{O:I} is aimed toward personal technological agency.
-
-A user can begin from a common working shape and make it their own through ordinary authored files, projects, preferences, machine declarations, tools, sources, and histories. The centre can remain personal even when computation extends to another machine, a home server, an isolated environment, or remote compute.
-
-Existing projects belong in this picture too. A repository can be adopted into the personal working ground while keeping the continuity that made it the same project in the first place.
-
-## Open primitives
-
-The surrounding projects have converged on a useful family of open abstractions: `Project`, `Context`, `Agent`, `Agency`, `Capability`, `Action`, `ContextSource`, `Run`, `Artifact`, `Claim`, `Evidence`, `Candidate`, `Environment`, and others.
-
-Their value is practical. They give humans and agents stable handles on recurring parts of the agency problem while leaving room for different models, harnesses, providers, and deployments.
-
-{O:I} provides the larger view in which these abstractions can be seen together.
+Together they form a possibility space rather than a fixed workflow.
 
 ## `oi`
 
-`oi` is the simple entry command for the composed system.
+`oi` is the simple entry command for the composed system. It helps a human or agent see what is available, install/register the native surfaces with published contracts, and reach them through one memorable namespace.
 
-It helps a human or agent set up {O:I}, see what is available, enter the documentation, adopt existing projects, and reach the command surfaces of the installed projects through one memorable namespace.
+The base personal encounter is now executable:
 
-For example:
-
-```text
-oi ctrl ...
-oi kit ...
+```sh
+bash cli/install.sh
+oi install central
+oi init --personal-ground "$HOME/Central"
+oi status --json
+oi ctrl doctor --json
+oi ctrl action list --json
 ```
 
-The same projects can still be used directly. `oi` gives the composed system one shared doorway.
+Central itself creates the valid personal ground. O:I does not populate authored Control material or copy Central configuration into composition state.
 
-## Research
+Existing ordinary work can be placed under that ground with:
 
-{O:I} is also a research proposal.
+```sh
+oi migrate /path/to/existing-work-tree
+```
 
-It gives us a practical way to study the engineering space around a fixed or available model: change the runtime, context, capability field, knowledge horizon, project structure, developmental process, or material environment, and observe what changes in effective agency.
+This preserves the work tree as it is and does not create a new Factory/Project identity.
 
-The current agent-runtime experiments already test one part of that space by comparing different loop structures while separating them from the model and host that carry them.
+The native projects remain independently usable. `oi ctrl ...` and `oi kit ...` are transparent aliases over the native commands that actually exist today.
 
-The philosophical idea of **Objective Internality** opens the same question at another depth. Contemporary agent systems make it possible for an actor's working interior to be partly externalised into durable technical objects, then re-entered as context, capability, memory, world, and orientation. That gives the software architecture a direct relation to the wider Epi-Logos and Antikythera research programme without making that background a prerequisite for using the technology.
+## Research and shared field
+
+{O:I} is also a research proposal about the engineering space around a fixed or available model and about Objective Internality: the ways an actor's effective interior can be objectively externalised and re-entered as context, capability, memory, world, and orientation.
+
+The later local-first shared-field/research-commons programme is developed separately under its own issues and PR. It is not a prerequisite for this original bootstrap front door.
 
 ## Start here
 
-This repository is the shared front door for the idea and the composed installation.
-
 - [`docs/VISION.md`](docs/VISION.md) — founding vision and research frame.
-- [`docs/SURFACES.md`](docs/SURFACES.md) — the six project surfaces from the outside in.
+- [`docs/SURFACES.md`](docs/SURFACES.md) — the six product surfaces from the outside in.
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — the composition architecture.
 - [`docs/CLI.md`](docs/CLI.md) — the `oi` command surface.
 - [`docs/INSTALL.md`](docs/INSTALL.md) — installation and composition.
-- [`docs/MIGRATION.md`](docs/MIGRATION.md) — adopting existing projects.
+- [`docs/MIGRATION.md`](docs/MIGRATION.md) — safe placement of existing ordinary work.
 - [`docs/RESEARCH.md`](docs/RESEARCH.md) — the agency-potentiation research programme.
 - [`skills/oi/SKILL.md`](skills/oi/SKILL.md) — agent-facing orientation to the whole.
