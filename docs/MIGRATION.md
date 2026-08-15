@@ -1,61 +1,47 @@
-# Project Adoption and Migration
+# Placing existing work under Central
 
-Many users will arrive with existing projects. A repository does not become a new Project because its local path changes.
+Central's normative Work model is ordinary filesystem material. A directory under `Work/` does not require a Central-specific Project format, identity record, or adoption Action.
 
-The intended operation remains:
+For that reason, `oi migrate <path>` has one deliberately narrow meaning:
 
-```text
-existing Project
-    ↓
-adopt into personal ground
-    ↓
-move or link source
-    ↓
-refresh product-owned derived state
-    ↓
-continue as the same Project
-```
+> Place this existing local work tree under the configured Central `Work` field while preserving what it already is.
 
-## Ownership
-
-The {O:I} layer provides one system-level entry:
+## Operation
 
 ```text
 oi migrate ~/code/foo
 ```
 
-The actual project-control operation belongs to Central. The native control surface must validate source and target, preserve repository/project identity, perform any move/link/adoption, and expose enough evidence for other products to refresh their own derived bindings.
+O:I resolves the configured personal ground, verifies it through native `ctrl doctor --json`, and previews:
 
-`oi` should never implement that workflow in parallel.
+- the existing source directory;
+- the intended `<Central>/Work/<name>` target;
+- identity/history preservation;
+- the compatible native Central surface that validates the ground.
 
-## Current live boundary
+It then performs one same-filesystem directory rename. Moving the directory as a whole preserves `.git`, uncommitted files, nested data, and the work tree's existing identity. O:I does not create or rename a Factory `Project`, Run, AIKit registration, Workcell binding, or any other derived object.
 
-The Central Rust integration currently exposes `ctrl` commands for root/init/doctor, Work discovery/opening, Control access, machine management, Actions, and recovery. It does **not** yet expose a project-adoption Action or CLI command.
+## Safety boundary
 
-That makes the present `oi migrate` implementation intentionally non-mutating. It resolves the configured personal ground and Central executable and prints:
+The first implementation is intentionally conservative.
 
-- the existing project source;
-- the intended `Central/Work/<project>` target;
-- the requirement to preserve Project identity;
-- the requirement to preserve repository history;
-- the native Central surface that must ultimately own the operation;
-- the fact that the native adoption handoff is not yet available.
+It:
 
-It then exits without changing the source or target.
+- requires a real compatible Central surface and a doctor-valid personal ground;
+- requires the source to be a directory and refuses a symlink source;
+- returns success without mutation when the source is already at its intended Work target;
+- refuses an existing target collision before mutation;
+- on Unix, compares source and target-parent filesystem devices and refuses cross-filesystem placement;
+- uses filesystem rename only; it does not implement copy-and-delete fallback;
+- reports failure without deliberately deleting the original source;
+- leaves all derived systems untouched.
 
-This is the correct implementation state for O-I issue #5: the entry exists, but completion remains blocked on a real Central contract rather than being filled by wrapper behaviour.
+A dirty Git work tree does not need special treatment because the operation does not edit Git or project files; the entire directory is moved intact.
 
-## When Central exposes adoption
+On platforms where safe same-filesystem placement has not been proven, migration refuses rather than pretending to provide a migration framework.
 
-Once Central publishes the native operation, `oi migrate` should become a thin delegation:
+## After placement
 
-1. resolve the registered Central executable;
-2. show the source and intended target;
-3. invoke the native adoption command with the original project path;
-4. preserve native output and exit semantics;
-5. report the resulting registered location;
-6. leave capability indexes, sessions, Workcell bindings, and other derived state to their owning products.
+O:I reports that path-derived systems may need an explicit refresh. This can include AIKit registrations or indexes, Factory paths, Workcell materialisations, editor state, or other integrations that remember the old path. O:I does not perform those refreshes implicitly.
 
-## Safety
-
-Until the native handoff exists, {O:I} performs no path mutation. After it exists, collision checks, dirty-repository policy, identity preservation, move/link semantics, and rollback belong to Central's own adoption contract.
+This is a one-shot composition handoff, not a project manager.

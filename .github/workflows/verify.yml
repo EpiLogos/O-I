@@ -26,3 +26,84 @@ jobs:
         run: cargo test --manifest-path cli/Cargo.toml --all-targets
       - name: Descriptor JSON
         run: python -m json.tool surfaces.json >/dev/null
+
+  central-bootstrap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Clean O:I to native Central encounter
+        shell: bash
+        run: |
+          set -euo pipefail
+          ORIGINAL_HOME="$HOME"
+          TEST_HOME="$RUNNER_TEMP/oi-home"
+          mkdir -p "$TEST_HOME/bin"
+          export HOME="$TEST_HOME"
+          export OI_HOME="$TEST_HOME/.config/oi"
+          export OI_BIN_DIR="$TEST_HOME/bin"
+          export OI_CARGO_ROOT="$TEST_HOME/oi-cargo"
+          export RUSTUP_HOME="$ORIGINAL_HOME/.rustup"
+          export CARGO_HOME="$ORIGINAL_HOME/.cargo"
+          export PATH="$OI_BIN_DIR:$ORIGINAL_HOME/.cargo/bin:/usr/local/bin:/usr/bin:/bin"
+
+          bash cli/install.sh
+          if command -v ctrl >/dev/null 2>&1; then
+            echo "clean bootstrap unexpectedly began with ctrl on PATH"
+            exit 1
+          fi
+
+          oi install central
+          oi init --personal-ground "$HOME/Central"
+          oi status --json > "$RUNNER_TEMP/status.json"
+          oi ctrl doctor --json > "$RUNNER_TEMP/doctor.json"
+          oi ctrl action list --json > "$RUNNER_TEMP/actions.json"
+          oi init --personal-ground "$HOME/Central"
+
+          mkdir -p "$HOME/existing/demo/.git"
+          printf '%s\n' 'ref: refs/heads/main' > "$HOME/existing/demo/.git/HEAD"
+          printf '%s\n' 'ordinary work' > "$HOME/existing/demo/work.txt"
+          oi migrate "$HOME/existing/demo"
+
+          mkdir -p "$HOME/another/demo"
+          printf '%s\n' 'collision source' > "$HOME/another/demo/work.txt"
+          if oi migrate "$HOME/another/demo"; then
+            echo "collision migration unexpectedly succeeded"
+            exit 1
+          fi
+          test -f "$HOME/another/demo/work.txt"
+
+          python3 - "$HOME/Central" "$OI_HOME/composition.json" "$RUNNER_TEMP/status.json" "$RUNNER_TEMP/doctor.json" "$RUNNER_TEMP/actions.json" <<'PY'
+          import json
+          import pathlib
+          import sys
+
+          root = pathlib.Path(sys.argv[1])
+          state = json.load(open(sys.argv[2]))
+          status = json.load(open(sys.argv[3]))
+          doctor = json.load(open(sys.argv[4]))
+          actions = json.load(open(sys.argv[5]))
+
+          required = ["Control/user", "Control/agents", "Control/machines", ".central", "Work"]
+          for relative in required:
+              assert (root / relative).is_dir(), relative
+          for relative in ["Control/user", "Control/agents", "Control/machines"]:
+              assert list((root / relative).iterdir()) == [], relative
+
+          assert set(state) == {"schema", "personal_ground", "modules"}
+          assert state["personal_ground"] == str(root)
+          central = state["modules"]["central"]
+          assert set(central) <= {"id", "public_name", "native_executable", "alias", "version", "docs", "skill", "root"}
+          assert central["alias"] == "ctrl"
+          assert central["version"].startswith("ctrl ")
+
+          central_status = next(item for item in status["surfaces"] if item["id"] == "central")
+          assert central_status["state"] == "registered"
+          assert doctor["status"] == "success" and doctor["data"]["valid"] is True
+          ids = {item["id"] for item in actions["data"]["actions"]}
+          assert {"action.list", "central.init", "central.doctor"} <= ids
+
+          migrated = root / "Work/demo"
+          assert (migrated / ".git/HEAD").read_text().strip() == "ref: refs/heads/main"
+          assert (migrated / "work.txt").read_text().strip() == "ordinary work"
+          PY

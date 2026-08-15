@@ -7,7 +7,7 @@
       "public_name": "Central",
       "function": "persistent personal ground",
       "repository": "https://github.com/EpiLogos/Central",
-      "docs_ref": "build/central-wayfinder-rust",
+      "docs_ref": "19bd58016508883ec7ca2acc5139e3f50a6b0fdb",
       "docs_path": "README.md",
       "skill_paths": [
         "skills/control-maintenance/SKILL.md",
@@ -20,14 +20,17 @@
         "entry": "ctrl",
         "executable": "ctrl",
         "alias": "ctrl",
-        "version_command": null,
+        "version_command": ["--version"],
         "version_manifest": "ctrl/Cargo.toml"
       },
       "install": {
-        "kind": "register-only",
-        "note": "The current Rust integration exposes ctrl, but the live repository does not yet publish a generic standalone install recipe. Register an existing ctrl installation or source checkout."
+        "kind": "central-source",
+        "ref": "agent/ctrl-source-install",
+        "revision": "19bd58016508883ec7ca2acc5139e3f50a6b0fdb",
+        "path": "ctrl",
+        "note": "Central publishes the native source contract cargo install --path ctrl. O:I verifies the pinned pre-release revision before following that contract."
       },
-      "compatibility": "Current executable integration is carried by draft PR #24. The O:I layer depends only on the public ctrl command surface."
+      "compatibility": "O:I requires ctrl --version plus structured action.list containing central.init, central.doctor, and action.list. The pre-release source install is pinned to Central 19bd580 until the contract lands on the integration/publication line."
     },
     {
       "id": "agent-runtime",
