@@ -98,7 +98,10 @@ The deeper work remains in the products themselves.
 See:
 
 - [`docs/VISION.md`](docs/VISION.md) — the full founding vision and research frame.
+- [`docs/SURFACES.md`](docs/SURFACES.md) — the six product surfaces explained from the outside in.
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — product boundaries and the sparse {O:I} layer.
-- [`docs/CLI.md`](docs/CLI.md) — the `oi` namespace, installation, disclosure, and handoff model.
+- [`docs/CLI.md`](docs/CLI.md) — the `oi` namespace, disclosure, and handoff model.
+- [`docs/INSTALL.md`](docs/INSTALL.md) — composed and agent-led installation.
+- [`docs/MIGRATION.md`](docs/MIGRATION.md) — adoption of existing projects into the personal work tree.
 - [`docs/RESEARCH.md`](docs/RESEARCH.md) — the agency-potentiation research programme.
 - [`skills/oi/SKILL.md`](skills/oi/SKILL.md) — agent-facing orientation to the whole.
