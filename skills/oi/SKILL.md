@@ -4,7 +4,7 @@
 
 Use this skill when a user asks you to understand, install, inspect, compose, or enter a {O:I} system.
 
-{O:I} is the shared idea and composition layer around several product surfaces. It is not the place to reimplement the products.
+{O:I} is the sparse shared Idea and composition layer around six product surfaces. It is not the place to reimplement the products.
 
 Your first job is to disclose the field clearly and route the work to the surface that owns it.
 
@@ -14,120 +14,113 @@ Your first job is to disclose the field clearly and route the work to the surfac
 
 Think in functional terms first:
 
-- persistent personal ground;
-- agent actuation;
-- capability and context resolution;
-- developmental agency;
-- material execution;
-- recursive formal intelligence.
+- persistent personal ground — Central;
+- agent actuation — Agent Runtime;
+- capability and context resolution — AIKit;
+- developmental agency — Software Factory;
+- material execution — Workcell;
+- recursive formal intelligence — **Quaternal Logic**, implemented in the `EpiLogos/QL-MEF` repository.
 
-The current products that implement these functions are Central, Agent Runtime, AIKit, Software Factory, Workcell, and QL-MEF.
+Explain the need first and the current product second. The six functions are centres of responsibility, not mandatory stages in one runtime pipeline.
 
-Do not use a product name as a substitute for the function when you are explaining the architecture to a new user. Explain the need first. Name the product second.
+## Start with disclosure
 
-## Start with the installation state
-
-When the `oi` CLI is available, begin with:
+When installation state is not already known, begin with:
 
 ```text
-oi status
+oi status --json
 ```
 
-Use the result to determine which product surfaces are installed and which aliases are available.
+The status distinguishes:
+
+- `installed` — a native CLI is detected but not registered into {O:I};
+- `registered` — composition metadata resolves to a usable executable or source root;
+- `missing` — no current installation is known;
+- `broken` — registration exists but its executable or root no longer resolves.
 
 If `oi` is not installed but this repository is present, read the local documentation before taking installation action.
 
 ## Route by ownership
 
-Route requests according to the function they concern.
+Use the surface that owns the operation.
 
 ### Persistent personal ground and project control
 
-Use the registered control surface for human-authored Control, the personal directory structure, project placement, machine intent, and project adoption or migration.
+Use Central for human-authored Control, the personal directory structure, Work, machine intent, and project-control operations.
 
 ### Agent actuation
 
-Use the configured agent runtime for loop behaviour, harness behaviour, framework behaviour, and runtime-specific sessions or recurrence.
+Use the configured Agent Runtime for loop behaviour, harness/framework behaviour, runtime sessions, and recurrence.
 
 ### Capability and context resolution
 
-Use the registered AIKit surface for skills, tools, Actions, ContextSources, models, harnesses, profiles, sessions, familiarity, and local capability resolution.
+Use AIKit for skills, tools, Actions, ContextSources, models, harnesses, profiles, sessions, and local capability/context resolution.
 
 ### Developmental agency
 
-Use the Software Factory surface for durable Runs, Run Maps, Agents, Agencies, Artifacts, Claims, Evidence, Decisions, Candidates, and related developmental work.
+Use the Software Factory for durable Runs, Run Maps, Agents, Agencies, Artifacts, Claims, Evidence, Decisions, Candidates, and related developmental work.
 
 ### Material execution
 
-Use the Workcell surface for workspaces, execution providers, project runtimes, services, bindings, containers, VMs, machines, capacity, and material lifecycle.
+Use Workcell for workspaces, execution providers, project runtimes, services, bindings, containers, VMs, capacity, placement, and material lifecycle.
 
 ### Recursive formal intelligence
 
-Use QL-MEF for executable QL/MEF semantics, refraction, formal operators, and related research machinery.
+Use Quaternal Logic for QL/MEF kernel semantics, lens/refraction operations, provider/service formal operations, and related research machinery.
 
-## Use `oi` as a front door
+## Current `oi` surface
 
-Use `oi` for operations that concern the composition as a whole:
+Use `oi` for concerns shared by the composition:
 
 ```text
 oi help
-oi status
-oi init
+oi status [--json]
+oi init [--personal-ground PATH]
+oi register <module> ...
 oi install <module>
-oi docs [topic]
+oi docs [topic|module]
 oi migrate <path>
 ```
 
-Use `oi <alias> ...` when the user wants the common namespace or when it improves orientation.
+Only use aliases that correspond to a verified native CLI. The live surfaces currently justify:
 
-You may use the native CLI directly when the user already knows the product surface or when the native documentation requires it.
+```text
+oi ctrl ...  ->  ctrl ...
+oi kit ...   ->  aikit ...
+```
 
-The alias is a dispatcher. Do not recreate native command behaviour inside the {O:I} layer.
+The Agent Runtime, Software Factory, Workcell, and Quaternal Logic do not currently publish native user commands. Do not invent aliases for them.
 
-## Installation
+Alias dispatch is transparent. Treat the native product's arguments, input/output, signal behaviour, and exit semantics as authoritative.
 
-A user can install the whole family or only selected surfaces.
+## Installation and registration
 
-Support three cases:
+Prefer discovery and registration over reinstalling an existing product.
 
-1. start from {O:I} and install selected modules;
-2. register an existing native installation into the {O:I} composition;
-3. leave a module independent of {O:I} and use its native CLI normally.
+For a native CLI, register the executable. For a current development/library surface, register its source root only when composition disclosure is useful.
 
-Do not force reinstall when an existing compatible module can be registered.
+`oi install` follows only installation mechanisms verified in the live product descriptor. AIKit currently has such a generic source-install contract. If another product has no generic installer, use its native documentation and then `oi register`; do not synthesize a plausible install command.
 
-After installation, report:
-
-- what was installed or registered;
-- the native command;
-- the `oi` alias;
-- the documentation entry point;
-- any action the user must still take.
+After setup, report what was installed or registered, the native entry point, any `oi` alias, the docs entry, and any remaining user action.
 
 ## Project migration
 
-Treat migration as adoption of an existing project into the personal working ground.
+Treat migration as adoption of an existing project into the personal working ground, preserving project and repository identity unless the user explicitly asks to create something new.
 
-Preserve project and repository identity unless the user explicitly asks to create something new.
+The current live Central `ctrl` surface does **not** yet expose a project-adoption Action or command. Until it does, `oi migrate <path>` deliberately returns a non-mutating handoff-unavailable result after disclosing the intended source and target.
 
-At the {O:I} layer, gather the source path and target personal ground, then delegate the actual project-control operation to the registered control surface.
-
-A path change is not a new Project.
+Do not work around that boundary by moving repositories yourself and calling the migration complete. The missing operation belongs in Central, after which `oi migrate` can become a thin native delegation.
 
 ## Communication
 
-Write for the user's experience of the field.
+Write for the user's experience of the field. Prefer direct prose and functional language. Explain what a surface gives the person or agent before discussing its internal types.
 
-Prefer direct prose and functional language. Explain what a surface gives the person or agent before discussing its internal types.
-
-Keep the speculative research frame positive and directed. Do not weaken it with unnecessary disclaimers. Distinguish established software behaviour from open research claims when that distinction matters.
-
-Use {O:I} as the canonical written form for the Idea and project. Use `oi` for the CLI command.
+Use {O:I} as the canonical written form for the Idea and project. Use `oi` for the CLI command. Use **Quaternal Logic** as the public product name; use `QL-MEF` when referring specifically to its repository or implementation vocabulary.
 
 ## Architectural guardrail
 
-Before adding code to this repository, ask one question:
+Before adding code to this repository, ask:
 
-> Does this change improve shared disclosure, installation, composition, migration, compatibility, or handoff?
+> Does this change improve shared disclosure, setup, installation/registration, status, documentation, migration handoff, compatibility, or aliasing?
 
-If the answer is no, the change probably belongs in one of the product repositories.
+If the change alters what a product can actually do, implement it in that product instead.
