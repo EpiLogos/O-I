@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://o-i.dev/schema/shared-field-v1.json",
+  "title": "O:I Shared Field v1",
+  "$defs": {
+    "participant": {
+      "type": "object",
+      "required": ["schema", "participant_ref", "field_ref", "identity", "presentation", "provenance"],
+      "properties": {
+        "schema": { "const": "oi.participant/v1" },
+        "participant_ref": { "type": "string", "minLength": 1 },
+        "field_ref": { "type": "string", "minLength": 1 },
+        "identity": {
+          "type": "object",
+          "required": ["kind", "ref"],
+          "properties": {
+            "kind": { "enum": ["human", "agent"] },
+            "ref": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        "agency": {
+          "type": "object",
+          "required": ["ref", "source_system"],
+          "properties": {
+            "ref": { "type": "string", "minLength": 1 },
+            "source_system": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": true
+        },
+        "presentation": { "type": "object" },
+        "provenance": {
+          "type": "object",
+          "required": ["source_system", "source_revision"],
+          "properties": {
+            "source_system": { "type": "string", "minLength": 1 },
+            "source_revision": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "projection": {
+      "type": "object",
+      "required": ["schema", "projection_ref", "projection_revision", "state", "subject", "source", "publisher_participant_ref", "published_at", "audience", "representation", "provenance"],
+      "properties": {
+        "schema": { "const": "oi.projection/v1" },
+        "projection_ref": { "type": "string", "minLength": 1 },
+        "projection_revision": { "type": "integer", "minimum": 1 },
+        "state": { "enum": ["published", "withdrawn"] },
+        "subject": {
+          "type": "object",
+          "required": ["ref", "kind"],
+          "properties": {
+            "ref": { "type": "string", "minLength": 1 },
+            "kind": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": true
+        },
+        "source": {
+          "type": "object",
+          "required": ["system", "revision"],
+          "properties": {
+            "system": { "type": "string", "minLength": 1 },
+            "revision": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": true
+        },
+        "publisher_participant_ref": { "type": "string", "minLength": 1 },
+        "published_at": { "type": "string", "format": "date-time" },
+        "audience": {
+          "type": "object",
+          "required": ["visibility"],
+          "properties": {
+            "visibility": { "enum": ["public", "unlisted", "restricted", "private"] },
+            "refs": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+          },
+          "additionalProperties": false
+        },
+        "representation": {
+          "type": "object",
+          "required": ["kind"],
+          "properties": {
+            "kind": { "type": "string", "minLength": 1 },
+            "ref": { "type": "string", "minLength": 1 },
+            "payload": true
+          },
+          "additionalProperties": true
+        },
+        "provenance": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["kind", "ref", "source_system"],
+            "properties": {
+              "kind": { "type": "string", "minLength": 1 },
+              "ref": { "type": "string", "minLength": 1 },
+              "source_system": { "type": "string", "minLength": 1 },
+              "revision": { "type": "string", "minLength": 1 }
+            },
+            "additionalProperties": true
+          }
+        },
+        "transport": {
+          "type": "object",
+          "description": "Optional non-canonical transport/host metadata, excluded from semantic Projection identity."
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}
