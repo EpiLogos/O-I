@@ -18,7 +18,7 @@ That is the field {O:I} is concerned with.
 
 > **Given available model capacity, what technological structures provision and potentiate useful forms of agency?**
 
-This is an approach to the technological structure of AI agency rather than to model development itself. It gives a common frame to the systems that surround an acting model and shape what it can become in practice.
+This gives a common frame to the systems that surround an acting model and shape what it can become in practice.
 
 The smallest case is simple: **a durable personal working ground plus an LLM running in a loop**. The same architecture can open outward into richer capability, knowledge, development, execution, and recursive intelligence without changing that basic relation.
 
@@ -67,7 +67,7 @@ The present {O:I} family has six centres. Each can stand on its own. Together th
 | Material execution | [**Workcell**](https://github.com/EpiLogos/Workcell) | The computational worlds in which agency becomes materially situated and executable. |
 | Recursive formal intelligence | [**Quaternal Logic**](https://github.com/EpiLogos/QL-MEF) | The formal and semantic research layer for recursive reasoning, refraction, and deeper structural experiment. |
 
-These are not six stages that every task must traverse. They are six parts of a larger possibility space.
+Together they form a possibility space rather than a fixed workflow. A useful {O:I} can be very small, and it can grow as new needs appear.
 
 ## A personal architecture
 
@@ -75,13 +75,13 @@ These are not six stages that every task must traverse. They are six parts of a 
 
 A user can begin from a common working shape and make it their own through ordinary authored files, projects, preferences, machine declarations, tools, sources, and histories. The centre can remain personal even when computation extends to another machine, a home server, an isolated environment, or remote compute.
 
-Existing projects belong in this picture too. A repository can be adopted into the personal working ground without losing the continuity that made it the same project in the first place.
+Existing projects belong in this picture too. A repository can be adopted into the personal working ground while keeping the continuity that made it the same project in the first place.
 
 ## Open primitives
 
 The surrounding projects have converged on a useful family of open abstractions: `Project`, `Context`, `Agent`, `Agency`, `Capability`, `Action`, `ContextSource`, `Run`, `Artifact`, `Claim`, `Evidence`, `Candidate`, `Environment`, and others.
 
-Their value is practical. They give humans and agents stable handles on recurring parts of the agency problem without fixing one model, harness, provider, or deployment as the answer.
+Their value is practical. They give humans and agents stable handles on recurring parts of the agency problem while leaving room for different models, harnesses, providers, and deployments.
 
 {O:I} provides the larger view in which these abstractions can be seen together.
 
@@ -89,7 +89,7 @@ Their value is practical. They give humans and agents stable handles on recurrin
 
 `oi` is the simple entry command for the composed system.
 
-It can help a human or agent set up {O:I}, see what is installed, enter the documentation, adopt existing projects, and reach the command surfaces of the installed projects through one memorable namespace.
+It helps a human or agent set up {O:I}, see what is available, enter the documentation, adopt existing projects, and reach the command surfaces of the installed projects through one memorable namespace.
 
 For example:
 
@@ -98,7 +98,7 @@ oi ctrl ...
 oi kit ...
 ```
 
-The individual projects still have their own native commands when used on their own. `oi` is the common doorway when they are used together.
+The same projects can still be used directly. `oi` gives the composed system one shared doorway.
 
 ## Research
 
