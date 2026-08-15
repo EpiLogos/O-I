@@ -88,6 +88,36 @@ templates/Central/
 
 The Central product owns the full semantics and lifecycle of this tree. The template exists only to give a new composed installation a clear initial shape.
 
+## Foundational suite convergence and local acceptance
+
+Installing selected modules and proving the first complete O:I suite are related but distinct operations.
+
+Once the six native products have each reached an intentionally accepted foundational line, O:I should be able to record one exact **Suite Snapshot / Composition Receipt** containing their accepted native versions/commits, install/registration methods, entry points, aliases, documentation/Skills, verification declarations and relevant compatibility facts.
+
+The acceptance path is:
+
+```text
+native foundational states on main
+        ↓
+exact O:I Suite Snapshot
+        ↓
+clean-environment install/register preflight
+        ↓
+physical install/register on the user's workstation
+        ↓
+native + declared cross-product verification
+        ↓
+known-good O:I suite state
+        ↓ later
+reference server / richer physical topology acceptance
+```
+
+O:I owns the receipt and whole-level composition evidence. Product failures return to the product that owns the behaviour.
+
+A future `oi verify` may aggregate native self-checks and composition/alias integrity, but it must remain thin: it does not reinterpret native product health or manufacture physical evidence that the current environment did not observe.
+
+See [`CONVERGENCE-AND-ACCEPTANCE.md`](CONVERGENCE-AND-ACCEPTANCE.md) and issue #17.
+
 ## Current state
 
-The documentation and template are present now. The `oi` installer and alias registry are tracked as implementation work in GitHub Issues.
+The documentation and template are present now. The `oi` installer and alias registry are tracked as implementation work in GitHub Issues. The suite-convergence/local-acceptance protocol is tracked by #17 and becomes executable as the native install/verification surfaces mature.
