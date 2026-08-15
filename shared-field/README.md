@@ -4,6 +4,25 @@ This directory is the smallest executable form of the local-first seam specified
 
 It deliberately has no framework, network client, database, or identity provider. Native products still own their canonical objects. O:I defines only the whole-level relations by which explicitly selected representations cross product/world boundaries and by which independently grounded Participants can become mutually available through a SharedField.
 
+## Public module entry
+
+Consumers that need the complete portable floor can import from:
+
+```js
+import * as sharedField from './shared-field/api.mjs';
+```
+
+`api.mjs` is intentionally only an aggregate export over the two implementation layers:
+
+```text
+index.mjs   Projection / Participant / receipt / Central public selection
+social.mjs  SharedField / Contribution / Encounter / Self-Other read model
+     ↓
+api.mjs     one import surface, no second implementation
+```
+
+This keeps the completed Projection contract stable while letting the shared-agency grammar develop beside it. `api.test.mjs` guards that both floors remain reachable through the aggregate API.
+
 ## Projection contracts
 
 - `oi.participant/v1` — a field-relative relation over an existing `Human` identity or `AgentRef`.
@@ -64,12 +83,15 @@ node shared-field/generate-fixtures.mjs
 
 ## Verification
 
-Run the projection and shared-agency contract tests from the repository root:
+Run the complete portable contract suite from the repository root:
 
 ```bash
-node --test shared-field/shared-field.test.mjs shared-field/social.test.mjs
+node --test \
+  shared-field/shared-field.test.mjs \
+  shared-field/social.test.mjs \
+  shared-field/api.test.mjs
 ```
 
-The shared-agency tests cover recursive/nested SharedFields, cycle rejection, Contribution-on-Contribution recursion, ranking and metric Contributions, objective Encounter records, and the minimal Self/Other read model.
+The shared-agency tests cover recursive/nested SharedFields, cycle rejection, Contribution-on-Contribution recursion, ranking and metric Contributions, objective Encounter records, and the minimal Self/Other read model. The aggregate API test guards the import boundary across both contract floors.
 
 The transport capability floor remains `publish`, `resolve`, `fetch`, and `subscribe`. A carrier may expose only a subset; capability negotiation does not alter Projection identity. Live Presence/Activity and hosted delivery remain downstream service concerns.
