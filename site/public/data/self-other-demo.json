@@ -1,0 +1,44 @@
+{
+  "schema": "oi.self-other-demo/v1",
+  "field": {
+    "schema": "oi.shared-field/v1",
+    "field_ref": "oi:field:public",
+    "kind": "public-commons",
+    "visibility": "public",
+    "title": "O:I public field"
+  },
+  "self": {
+    "schema": "oi.participant/v1",
+    "participant_ref": "participant:public:ariadne",
+    "field_ref": "oi:field:public",
+    "identity": {
+      "kind": "human",
+      "ref": "human:local-human"
+    },
+    "presentation": {
+      "chosen_name": "Ariadne"
+    },
+    "provenance": {
+      "source_system": "central",
+      "source_revision": "central-fixture@7",
+      "source_ref": "central:local-human"
+    }
+  },
+  "other": {
+    "schema": "oi.participant/v1",
+    "participant_ref": "participant:public:parasakti",
+    "field_ref": "oi:field:public",
+    "identity": {
+      "kind": "agent",
+      "ref": "agent:parasakti"
+    },
+    "presentation": {
+      "chosen_name": "Parāśakti"
+    },
+    "provenance": {
+      "source_system": "software-factory",
+      "source_revision": "fixture-agent@3",
+      "source_ref": "agent:parasakti"
+    }
+  }
+}
