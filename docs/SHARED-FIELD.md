@@ -6,7 +6,7 @@ This document specifies a future-facing seam at the level of the {O:I} whole.
 
 It does not turn {O:I} into a social network, wiki engine, hosted database, identity provider, or communication platform. It defines the relations that let independently grounded human and artificial participants selectively appear to one another through shared knowledge, activity, and dialogue.
 
-The first implementation is intentionally small: a browser front door in this repository. Rich participation, live communication, and hosted relational state remain later work.
+The first implementation is now deliberately small but executable: `shared-field/` provides the transport-neutral Projection/Participant floor and golden fixtures, while the browser front door can render the first sparse typed Projection. Rich participation, live communication, and hosted relational state remain later work.
 
 ## Why this belongs to {O:I}
 
@@ -132,7 +132,7 @@ transport_metadata?      # non-canonical
 hosted_locator?          # non-canonical
 ```
 
-The exact schema is deferred until implementation work can exercise it against real objects. The semantic requirements above are not deferred.
+The exercised v1 schema and runtime contract now live under `shared-field/`. The implementation keeps transport/host metadata explicitly non-canonical, keeps Projection revision distinct from native source revision, and preserves the semantic requirements above as the compatibility floor for later versions.
 
 ## Participant is a role, not a replacement identity
 
@@ -291,19 +291,16 @@ The first useful system may use an ordinary hosted API. Other projections may mo
 
 The semantic field should not depend on one transport being permanent.
 
-A future transport contract should support at least:
+The v1 projection floor negotiates these transport capabilities:
 
 ```text
 publish(projection)
 resolve(ref)
 fetch(ref, revision?)
 subscribe(ref | query)
-withdraw(projection_ref)
-announce_presence(...)?
-open_dialogue(subject_ref)?
 ```
 
-Only the first four belong to the obvious projection floor. Presence and dialogue require a live field and should remain optional capabilities.
+Withdrawal is already represented as a new Projection revision without deleting source history; it does not require transport identity to become semantic identity. Presence and dialogue require a live field and remain optional future capabilities rather than part of this transport floor.
 
 ## Planned Epi-Logos hosted field
 
@@ -331,7 +328,7 @@ This is where the Epi-Logos idea of universal relationality can become enactive 
 
 O:I requires a public browser front door because the architecture must be experienceable, not merely sufficient in abstraction.
 
-The first site is intentionally almost empty:
+The default front door remains intentionally almost empty:
 
 ```text
 {O:I}
@@ -341,16 +338,15 @@ GitHub
 
 Black on white. One centred mark. One link.
 
-The implementation is valuable because it establishes an owned browser Surface in the parent repository. The main element is also the future projection root. The next vertical slice can render one Participant Root projected from a Central installation without redesigning the site around a special-case profile model.
+The same owned browser Surface can now switch from that front-door state to a typed sparse Projection. The first golden case is a Human Participant Root derived from explicitly selected Central material; the renderer consumes the generic sparse representation contract rather than a profile-specific subject model, so Agent, documentation, and Factory projections can use the same boundary.
 
 Future versions may add, in order of increasing capability:
 
-1. one static Participant Root fixture;
-2. a generated local projection exported from Central/O:I;
-3. a hosted read-only projection;
-4. addressable wiki/document/system-output projections;
-5. dialogue around projected objects;
-6. presence and live shared state through the Epi-Logos service.
+1. a generated local projection exported from Central/O:I;
+2. a hosted read-only projection;
+3. addressable wiki/document/system-output projections;
+4. dialogue around projected objects;
+5. presence and live shared state through the Epi-Logos service.
 
 The UI can remain visually sparse as those capabilities deepen.
 
