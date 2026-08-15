@@ -4,12 +4,14 @@ on:
   pull_request:
     paths:
       - 'site/**'
+      - 'shared-field/**'
       - '.github/workflows/site.yml'
   push:
     branches:
       - main
     paths:
       - 'site/**'
+      - 'shared-field/**'
       - '.github/workflows/site.yml'
   workflow_dispatch:
 
@@ -33,6 +35,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Verify projection contracts and browser adapter
+        run: node --test ../shared-field/shared-field.test.mjs projection-renderer.test.mjs
       - run: npm install --no-audit --no-fund
       - run: npm run build
       - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
