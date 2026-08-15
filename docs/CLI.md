@@ -1,186 +1,111 @@
 # `oi` CLI — Disclosure and Composition Surface
 
-## Intent
+`oi` is the command-line front door for a composed {O:I} installation. It is deliberately smaller than the products behind it.
 
-`oi` is the command-line front door for a composed {O:I} installation.
-
-It should be easy to remember and easy for an agent to discover. Its purpose is to make the system visible, install selected modules, and hand work to the native surfaces that own it.
-
-The command should stay small.
-
-## Two command layers
-
-A module keeps its native command when it is installed alone.
-
-When the same module is part of a {O:I} installation, `oi` can expose an alias for that command.
-
-The user can therefore choose either form:
-
-```text
-ctrl projects list
-
-oi ctrl projects list
-```
-
-or:
-
-```text
-aikit open my-project
-
-oi kit open my-project
-```
-
-The alias must preserve the native surface. The {O:I} wrapper should not copy command semantics into a second implementation.
-
-## Why the alias matters
-
-A single namespace gives the whole system one easy point of recall.
-
-For a human, `oi` answers: *what do I have, and where do I go next?*
-
-For an agent, `oi` answers: *which installed surface owns this operation, and how do I invoke it?*
-
-This makes the architecture easier to disclose without making the wrapper larger than it needs to be.
-
-## Initial command families
-
-The first implementation should stay close to the following surface:
+Its current surface is:
 
 ```text
 oi help
-oi status
-oi init
+oi status [--json]
+oi init [--personal-ground PATH]
+oi register <module> [--executable PATH] [--root PATH] [--version TEXT]
 oi install <module>
-oi docs [topic]
+oi docs [topic|module]
 oi migrate <path>
 
 oi <module-alias> [native arguments...]
 ```
 
-The exact spelling can change during implementation. The responsibilities should remain narrow.
+## Current native aliases
 
-### `oi help`
-
-Explain the field, the installed aliases, and the next useful command.
-
-### `oi status`
-
-Show the local {O:I} composition in a compact form. At minimum, report installed modules, native executables, aliases, versions where available, and the current personal-ground path.
-
-### `oi init`
-
-Create or adopt a local {O:I} composition. If the user requests the personal-ground surface, initialise the default directory shape and install or link the native CLI that owns it.
-
-### `oi install <module>`
-
-Install or register one module. The implementation should prefer the module's supported installation mechanism instead of copying its internal installer.
-
-### `oi docs [topic]`
-
-Open or print the relevant human-facing documentation. Topics should include the whole architecture and each installed module.
-
-### `oi migrate <path>`
-
-Enter the project-adoption path. The actual project operation should be delegated to the personal-ground / project-control surface.
-
-### `oi <alias> ...`
-
-Resolve an installed alias and dispatch to the native executable with the remaining arguments.
-
-## Alias registry
-
-Aliases should be explicit installation metadata.
-
-Two aliases are already natural from the current surfaces:
+The six live repositories were inspected before the alias table was fixed. Only two currently publish user CLIs:
 
 ```text
-ctrl  -> ctrl
-kit   -> aikit
+ctrl  -> ctrl   # Central
+kit   -> aikit  # AIKit
 ```
 
-The remaining aliases should be fixed only after the native CLIs for those products are inspected. {O:I} should not invent parallel terminology where a product already has a good command name.
+Software Factory, Workcell, Quaternal Logic, and the current Agent Runtime experiment are real surfaces but do not yet publish native user commands. `oi` therefore gives them no aliases.
 
-A conceptual module record is enough for the first design:
+## `oi status`
 
-```toml
-id = "ai-kit"
-alias = "kit"
-executable = "aikit"
-version = "..."
-docs = "..."
-skill = "..."
-```
+Status compares the live surface descriptors with the local composition and the machine's executable search path. Each surface is one of:
 
-The record describes composition. It does not replace the module's own configuration.
+- **installed** — a native CLI is detected but has not been registered into {O:I};
+- **registered** — the local composition points to a resolvable native executable or source root;
+- **missing** — nothing is registered or detectable;
+- **broken** — composition metadata exists, but its executable or source root no longer resolves.
 
-## Dispatch contract
+`oi status --json` exposes the same information for agents and scripts, including the functional role, docs target, compatibility note, alias, version when known, and version-discovery source.
 
-Alias dispatch should be transparent.
+## Composition state
 
-A first implementation should:
+The local file contains only discovery and handoff metadata. It is not a second configuration system for the products.
 
-1. resolve the alias;
-2. locate the registered executable;
-3. pass through arguments and standard input;
-4. connect standard output and standard error directly;
-5. return the native exit status;
-6. fail clearly when the module is missing or the executable cannot be found.
-
-This is intentionally ordinary command-line behaviour.
-
-## Installation disclosure
-
-Many users will ask an agent to perform setup.
-
-The CLI should therefore produce output that is useful to both a person and an agent. It should state what changed, which native surface was installed or linked, and which command is now available.
-
-For example:
+The default path is:
 
 ```text
-Installed: AIKit
-Native command: aikit
-{O:I} alias: oi kit
-Docs: ...
+~/.config/oi/composition.json
 ```
 
-The output should avoid hidden state and avoid presenting the wrapper as the owner of the installed module.
+`XDG_CONFIG_HOME` follows the usual XDG location, and `OI_HOME` can give tests or installations an explicit state directory.
 
-## Migration disclosure
+A registration records module identity, native executable or source root, optional version, alias, docs entry, and optional skill entry. Product configuration remains where the product owns it.
 
-A migration command should explain the semantic operation before the physical move.
+## `oi init`
 
-For example:
+`oi init` creates the local composition and registers `ctrl` or `aikit` when those native commands are already available.
+
+With `--personal-ground PATH`, setup prefers the native Central surface: if `ctrl` is available, `oi` delegates to `ctrl --root PATH init`. If Central is not yet installed, `oi` creates only the minimal `Control/` + `Work/` seed already carried by this repository and records the path for later composition.
+
+## `oi register`
+
+Registration wraps an existing installation rather than replacing it.
+
+CLI surfaces can be registered by executable:
 
 ```text
-Adopt existing project: ~/code/foo
-Target work tree: ~/Central/Work/foo
-Project identity: preserve
-Repository history: preserve
-
-Delegating project adoption to: ctrl ...
+oi register central --executable /path/to/ctrl
+oi register ai-kit --executable /path/to/aikit
 ```
 
-The native project-control surface can then perform its normal validation and mutation.
+Non-CLI development surfaces can be disclosed from a source checkout:
 
-## Agent use
+```text
+oi register workcell --root /path/to/Workcell
+oi register quaternal-logic --root /path/to/QL-MEF
+```
 
-The `oi` skill should teach agents to begin with `oi status` when they do not know the installation state.
+The registration keeps the product's own repository and docs visible and does not create a parallel runtime configuration.
 
-An agent should then route requests by functional ownership:
+## `oi install`
 
-- personal ground and project control -> the registered control surface;
-- tools, skills, Actions, and ContextSources -> the registered capability/context surface;
-- developmental Runs and related work -> the developmental surface;
-- material execution -> the Workcell surface;
-- QL-MEF operations -> the formal/semantic surface;
-- runtime-specific behaviour -> the configured agent runtime.
+Installation always checks for an existing native command first and registers it rather than reinstalling it.
 
-The `oi` command is the map and dispatcher. The native CLI remains the place where domain behaviour lives.
+AIKit currently has a verified generic install recipe in its live README, so `oi install ai-kit` can clone the current source and run its documented locked Cargo installation before registration.
 
-## Implementation principle
+Other surfaces currently return an explicit register-after-native-install result rather than guessing an installer that the product has not published.
 
-The first CLI should prefer a few reliable operations over a broad command taxonomy.
+## `oi docs`
 
-Its success criterion is simple:
+`oi docs` prints the {O:I} documentation entry points. A topic such as `architecture`, `surfaces`, `install`, or `migration` resolves to the corresponding {O:I} document. A module name resolves to its current native documentation, preferring a registered local checkout when the expected docs file exists.
 
-> A new human or agent can inspect the system, install what is needed, and reach the correct native surface without first learning six unrelated command families.
+## Transparent dispatch
+
+For a real alias, `oi` resolves the native executable and passes all remaining arguments through unchanged.
+
+On Unix, the implementation uses process replacement. The native command therefore receives the original stdin/stdout/stderr and signal relationship and becomes the process whose exit status the caller observes. The wrapper does not parse or reproduce product commands.
+
+Missing or broken native surfaces fail before dispatch with a direct `oi status` / `oi register` recovery path. Alias collisions in composition state are rejected explicitly.
+
+## `oi migrate`
+
+Migration is an entry and handoff, not a project implementation.
+
+The current live Central CLI has no project-adoption Action/command. `oi migrate` therefore discloses the intended source, target work tree, identity/history preservation, and native control surface, then exits without changing files.
+
+This command becomes an actual delegation only when Central exposes the missing native contract.
+
+## Success criterion
+
+A new human or agent should be able to inspect the field, establish or register what exists, reach documentation, and invoke the native surface that owns an operation without first learning six unrelated entry conventions—and without {O:I} becoming a seventh product that reimplements them.
