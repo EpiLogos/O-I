@@ -1,12 +1,35 @@
 # Installing {O:I}
 
-{O:I} is composable. A user can begin with the minimum useful system and add other surfaces when they become useful.
+{O:I} is composable. The `oi` binary installs the shared disclosure/composition layer; each product remains independently installable and continues to own its own configuration.
 
-The installation experience should support both humans and agents.
+## Install the `oi` command
 
-## Minimum
+The current CLI is a small Rust binary under `cli/`.
 
-The minimal personal installation is:
+From a checkout:
+
+```sh
+cargo install --path cli
+```
+
+or use the repository helper:
+
+```sh
+bash cli/install.sh
+```
+
+The helper installs the built binary under a user-owned prefix and links `oi` into `~/.local/bin` by default. `OI_BIN_DIR` and `OI_CARGO_ROOT` can override those locations.
+
+Then begin with:
+
+```text
+oi init
+oi status
+```
+
+## Minimal personal composition
+
+The minimal conceptual pair remains:
 
 ```text
 persistent personal ground
@@ -14,80 +37,47 @@ persistent personal ground
 agent runtime
 ```
 
-In the current product family, this means a Central working tree plus any supported LLM agent runtime.
+`oi init --personal-ground ~/Central` records the chosen personal ground. If a real Central `ctrl` command is already available, `oi` delegates the initialisation to it. Otherwise {O:I} creates only the minimal `Control/` + `Work/` seed; Central still owns the full semantics when it is added.
 
-The runtime can be installed independently. {O:I} does not require one canonical harness.
+The Agent Runtime is currently a development workbench rather than a released CLI and can be registered by source checkout when useful.
 
-## Full composition
+## Add existing installations
 
-A fuller installation can add:
-
-```text
-capability and context resolution
-+ developmental agency
-+ material execution
-+ recursive formal intelligence
-```
-
-Each module keeps its native installer and native CLI. The `oi` installer composes those surfaces and registers a common alias where appropriate.
-
-## Intended entry
-
-A future first-run experience should be close to:
+Registration is first-class because many users will already have one or more native products.
 
 ```text
-oi init
+oi register central --executable /path/to/ctrl
+oi register ai-kit --executable /path/to/aikit
+oi register workcell --root /path/to/Workcell
+oi register quaternal-logic --root /path/to/QL-MEF
 ```
 
-The command should discover existing compatible installations before offering to install anything again.
+A registration stores only the facts required to find and describe the native surface. It does not import or rewrite product configuration.
 
-A user or agent can then add a module explicitly:
+## Install through `oi`
+
+`oi install <module>` checks for an existing native command first. If it finds one, it registers it instead of reinstalling it.
+
+At the current live state, **AIKit is the only product with a verified generic install recipe** suitable for automation here. Its README documents a locked Cargo install from source, and `oi install ai-kit` follows that recipe.
+
+Central's current Rust command is still carried by an integration branch rather than a generic published installer. The Agent Runtime, Software Factory, Workcell, and Quaternal Logic are development/library surfaces rather than released CLIs. For those surfaces, `oi install` explains the native-install/register path instead of inventing one.
+
+As each product publishes a stable install contract, the corresponding descriptor can add it without changing product ownership.
+
+## Composition state
+
+`oi` keeps one small JSON file for local composition metadata. By default:
 
 ```text
-oi install <module>
+~/.config/oi/composition.json
 ```
 
-After installation, `oi status` should show the available surfaces and their aliases.
+Use `OI_HOME` to place the state elsewhere or `XDG_CONFIG_HOME` for the standard XDG location.
 
-## Existing installations
-
-A user who already has AIKit, Central, Workcell, or another module should be able to register that installation into {O:I} without replacing it.
-
-The composition layer needs only the information required to find and describe the native surface:
-
-```text
-module identity
-native executable
-version
-{O:I} alias
-documentation entry
-optional agent skill
-```
-
-The module continues to own its own configuration and runtime state.
+Run `oi status --json` to inspect exactly what is registered and how each surface resolves.
 
 ## Agent-led setup
 
-Agent-led setup is a primary use case.
+Agent-led setup remains a primary use case. An agent can read `skills/oi/SKILL.md`, run `oi status`, register or install only the requested surfaces, and report the native commands now available.
 
-A user should be able to clone this repository and ask an agent to install the desired system. The agent reads `skills/oi/SKILL.md`, inspects the machine, identifies existing modules, and performs the supported native installation steps.
-
-The agent should ask the user only for decisions that materially affect the installation, such as which optional surfaces to add or where the personal ground should live.
-
-At the end, it should report the commands that are now available.
-
-## Default personal tree
-
-The repository includes the minimal seed tree at:
-
-```text
-templates/Central/
-├── Control/
-└── Work/
-```
-
-The Central product owns the full semantics and lifecycle of this tree. The template exists only to give a new composed installation a clear initial shape.
-
-## Current state
-
-The documentation and template are present now. The `oi` installer and alias registry are tracked as implementation work in GitHub Issues.
+The setup rule is conservative: discover before installing, register before duplicating, and never turn the composition layer into the product that owns the operation.
