@@ -25,12 +25,12 @@
       },
       "install": {
         "kind": "central-source",
-        "ref": "build/central-wayfinder-rust",
+        "ref": "b134142532602a9570f2deb1060a1badb8432c6d",
         "revision": "b134142532602a9570f2deb1060a1badb8432c6d",
         "path": "ctrl",
-        "note": "Central publishes the native source contract cargo install --path ctrl. O:I verifies the exact integrated revision before following that contract."
+        "note": "Central publishes the native source contract cargo install --path ctrl. Pre-release O:I fetches and verifies this immutable tested integration commit directly."
       },
-      "compatibility": "O:I requires ctrl --version plus structured action.list containing central.init, central.doctor, and action.list. The tested source contract is pinned to the current Central integration commit until the Rust Wayfinder is promoted to main/release."
+      "compatibility": "O:I requires ctrl --version plus structured action.list containing central.init, central.doctor, and action.list. The source contract is pinned to the tested Central integration commit until the Rust Wayfinder is promoted to main/release."
     },
     {
       "id": "agent-runtime",
@@ -138,7 +138,7 @@
       },
       "install": {
         "kind": "register-only",
-        "note": "The current Quaternal Logic implementation is a Rust workspace/service surface in the QL-MEF repository, not a released CLI. Register a source checkout only."
+        "note": "The current Quaternal Logic implementation is a Rust workspace/service surface in the QL-MEF repository, not a released native CLI. Register a source checkout only."
       },
       "compatibility": "Current Q4 integration is carried by draft PR #6. Quaternal Logic is the public product name; QL-MEF remains the repository and implementation vocabulary."
     }
