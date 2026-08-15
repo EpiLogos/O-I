@@ -12,16 +12,17 @@ Consumers that need the complete portable floor can import from:
 import * as sharedField from './shared-field/api.mjs';
 ```
 
-`api.mjs` is intentionally only an aggregate export over the two implementation layers:
+`api.mjs` is intentionally only an aggregate export over the implementation layers:
 
 ```text
 index.mjs   Projection / Participant / receipt / Central public selection
 social.mjs  SharedField / Contribution / Encounter / Self-Other read model
+state.mjs   transport-free local membership / traversal / thread / history logic
      ↓
 api.mjs     one import surface, no second implementation
 ```
 
-This keeps the completed Projection contract stable while letting the shared-agency grammar develop beside it. `api.test.mjs` guards that both floors remain reachable through the aggregate API.
+This keeps the completed Projection contract stable while letting the shared-agency grammar develop beside it. `api.test.mjs` guards that all three layers remain reachable through the aggregate API.
 
 ## Projection contracts
 
@@ -49,6 +50,26 @@ SharedFields may nest recursively. Containment is checked for cycles and must no
 `selfOtherReadModel()` supplies the smallest browser/agent projection of the shared relation: one field-relative Participant as `Self`, one or more field-relative Participants as `Other`, and the SharedField which relates them. Self/Other are situated positions, not new identity kinds.
 
 The JSON compatibility surface for these relations is `social-schema-v1.json`.
+
+## Local SharedField state
+
+`state.mjs` turns the contracts into a small transport-free business-logic layer. It is deliberately an index/state view rather than canonical persistence.
+
+`createSharedFieldState()` supports:
+
+- adding and looking up SharedFields, Participants, Contributions and Encounters;
+- validating Participant membership against a field;
+- traversing child/descendant fields and full parent paths;
+- querying Participants and Contributions in one field or recursively through its nested fields;
+- querying Contributions by arbitrary target;
+- reconstructing recursive Contribution threads without a fixed reply depth;
+- rejecting Contribution target cycles, including cycles completed after an earlier unresolved reference;
+- retaining/querying Encounter history by Participant and optional field;
+- producing a transport-neutral snapshot for an adapter or fixture.
+
+The state layer allows unresolved/external Contribution targets so that a local field can still address a remote/federated object. It enforces local referential integrity where the corresponding Participant or field is owned by the local state.
+
+This is the seam a browser adapter, static/file carrier, test harness, or future SpaceTimeDB implementation can consume without any of them becoming the semantic owner.
 
 ## Central public selection
 
@@ -89,9 +110,12 @@ Run the complete portable contract suite from the repository root:
 node --test \
   shared-field/shared-field.test.mjs \
   shared-field/social.test.mjs \
+  shared-field/state.test.mjs \
   shared-field/api.test.mjs
 ```
 
-The shared-agency tests cover recursive/nested SharedFields, cycle rejection, Contribution-on-Contribution recursion, ranking and metric Contributions, objective Encounter records, and the minimal Self/Other read model. The aggregate API test guards the import boundary across both contract floors.
+The shared-agency contract tests cover recursive/nested SharedFields, containment-cycle rejection, Contribution-on-Contribution recursion, ranking and metric Contributions, objective Encounter records, and the minimal Self/Other read model.
+
+The state tests cover nested-field traversal, field-relative membership, arbitrary Contribution-thread depth, ranking/metric querying, deferred-reference cycle rejection, and Encounter history. The state logic test harness is 6/6 green locally; the existing social contract suite is separately 6/6 green. The aggregate API test guards the import boundary across all contract layers.
 
 The transport capability floor remains `publish`, `resolve`, `fetch`, and `subscribe`. A carrier may expose only a subset; capability negotiation does not alter Projection identity. Live Presence/Activity and hosted delivery remain downstream service concerns.
