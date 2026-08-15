@@ -113,7 +113,8 @@ fn register_creates_only_composition_metadata() {
             .arg(&ctrl),
     );
     assert!(result.status.success(), "{}", text(&result.stderr));
-    let state: Value = serde_json::from_slice(&fs::read(home.path().join("composition.json")).unwrap()).unwrap();
+    let state: Value =
+        serde_json::from_slice(&fs::read(home.path().join("composition.json")).unwrap()).unwrap();
     let central = &state["modules"]["central"];
     assert_eq!(central["id"], "central");
     assert_eq!(central["alias"], "ctrl");
@@ -151,7 +152,11 @@ fn full_registered_composition_is_reported_without_invented_aliases() {
     let home = TempDir::new().unwrap();
     let bin = TempDir::new().unwrap();
     let ctrl = fake_central(bin.path(), 0);
-    let aikit = fake_executable(bin.path(), "aikit", "if [ \"$1\" = '--version' ]; then echo 'aikit 1.0.0'; fi");
+    let aikit = fake_executable(
+        bin.path(),
+        "aikit",
+        "if [ \"$1\" = '--version' ]; then echo 'aikit 1.0.0'; fi",
+    );
     for (module, executable) in [("central", ctrl), ("ai-kit", aikit)] {
         let result = output(
             oi(home.path(), bin.path())
@@ -160,7 +165,12 @@ fn full_registered_composition_is_reported_without_invented_aliases() {
         );
         assert!(result.status.success(), "{}", text(&result.stderr));
     }
-    for module in ["agent-runtime", "software-factory", "workcell", "quaternal-logic"] {
+    for module in [
+        "agent-runtime",
+        "software-factory",
+        "workcell",
+        "quaternal-logic",
+    ] {
         let root = home.path().join(module);
         fs::create_dir_all(&root).unwrap();
         let result = output(
@@ -175,7 +185,10 @@ fn full_registered_composition_is_reported_without_invented_aliases() {
     let rows = value["surfaces"].as_array().unwrap();
     assert_eq!(rows.len(), 6);
     assert!(rows.iter().all(|row| row["state"] == "registered"));
-    let aliases: Vec<&str> = rows.iter().filter_map(|row| row["alias"].as_str()).collect();
+    let aliases: Vec<&str> = rows
+        .iter()
+        .filter_map(|row| row["alias"].as_str())
+        .collect();
     assert_eq!(aliases, vec!["ctrl", "kit"]);
 }
 
@@ -203,7 +216,12 @@ fn alias_exec_preserves_arguments_stdio_and_exit_status() {
         .stderr(Stdio::piped())
         .spawn()
         .unwrap();
-    child.stdin.as_mut().unwrap().write_all(b"native-stdin\n").unwrap();
+    child
+        .stdin
+        .as_mut()
+        .unwrap()
+        .write_all(b"native-stdin\n")
+        .unwrap();
     drop(child.stdin.take());
     let result = child.wait_with_output().unwrap();
     assert_eq!(result.status.code(), Some(23));
@@ -243,13 +261,20 @@ fn init_delegates_to_real_central_shape_and_is_idempotent() {
         );
         assert!(result.status.success(), "{}", text(&result.stderr));
     }
-    for relative in ["Control/user", "Control/agents", "Control/machines", ".central", "Work"] {
+    for relative in [
+        "Control/user",
+        "Control/agents",
+        "Control/machines",
+        ".central",
+        "Work",
+    ] {
         assert!(ground.join(relative).is_dir(), "missing {relative}");
     }
     for relative in ["Control/user", "Control/agents", "Control/machines"] {
         assert_eq!(fs::read_dir(ground.join(relative)).unwrap().count(), 0);
     }
-    let state: Value = serde_json::from_slice(&fs::read(home.path().join("composition.json")).unwrap()).unwrap();
+    let state: Value =
+        serde_json::from_slice(&fs::read(home.path().join("composition.json")).unwrap()).unwrap();
     assert_eq!(state["personal_ground"], ground.display().to_string());
     assert!(state["modules"]["central"].is_object());
     assert!(state.get("central_config").is_none());
@@ -275,7 +300,10 @@ fn central_init_failure_does_not_record_false_personal_ground() {
             .arg(&ground),
     );
     assert_eq!(result.status.code(), Some(2));
-    assert_eq!(fs::read(home.path().join("composition.json")).unwrap(), before);
+    assert_eq!(
+        fs::read(home.path().join("composition.json")).unwrap(),
+        before
+    );
 }
 
 #[cfg(unix)]
@@ -287,7 +315,8 @@ fn install_central_registers_an_existing_compatible_ctrl() {
     let result = output(oi(home.path(), bin.path()).args(["install", "central"]));
     assert!(result.status.success(), "{}", text(&result.stderr));
     assert!(text(&result.stdout).contains("existing compatible Central"));
-    let state: Value = serde_json::from_slice(&fs::read(home.path().join("composition.json")).unwrap()).unwrap();
+    let state: Value =
+        serde_json::from_slice(&fs::read(home.path().join("composition.json")).unwrap()).unwrap();
     assert_eq!(state["modules"]["central"]["version"], "ctrl 0.1.0");
 }
 
@@ -308,7 +337,10 @@ fn central_install_failure_leaves_prior_composition_recoverable() {
     fake_executable(bin.path(), "cargo", "exit 9");
     let result = output(oi(home.path(), bin.path()).args(["install", "central"]));
     assert_eq!(result.status.code(), Some(2));
-    assert_eq!(fs::read(home.path().join("composition.json")).unwrap(), before);
+    assert_eq!(
+        fs::read(home.path().join("composition.json")).unwrap(),
+        before
+    );
 }
 
 #[cfg(unix)]
@@ -333,9 +365,17 @@ fn migration_places_existing_work_tree_without_changing_its_contents() {
     assert!(result.status.success(), "{}", text(&result.stderr));
     let target = ground.join("Work/project");
     assert!(!source.exists());
-    assert_eq!(fs::read_to_string(target.join(".git/HEAD")).unwrap(), "ref: refs/heads/main\n");
-    assert_eq!(fs::read_to_string(target.join("dirty.txt")).unwrap(), "uncommitted work stays");
-    assert!(text(&result.stdout).contains("No Project, Factory, AIKit, or Workcell object was created"));
+    assert_eq!(
+        fs::read_to_string(target.join(".git/HEAD")).unwrap(),
+        "ref: refs/heads/main\n"
+    );
+    assert_eq!(
+        fs::read_to_string(target.join("dirty.txt")).unwrap(),
+        "uncommitted work stays"
+    );
+    assert!(
+        text(&result.stdout).contains("No Project, Factory, AIKit, or Workcell object was created")
+    );
 }
 
 #[cfg(unix)]
