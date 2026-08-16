@@ -6,7 +6,7 @@
     "acceptance": "tsx live-acceptance.ts"
   },
   "dependencies": {
-    "spacetimedb": "2.7.1"
+    "spacetimedb": "2.8.1"
   },
   "devDependencies": {
     "tsx": "4.20.5",
