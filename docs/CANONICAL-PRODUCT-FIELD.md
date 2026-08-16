@@ -1,29 +1,32 @@
 # {O:I} Canonical Product Field
 
 **Status:** canonical architectural framing  
-**Scope:** the six-product field, its human/agent conjugate faces, and the relations used to compose the whole  
-**Date:** 2026-08-16
+**Scope:** the six-product field, its conjugate human/agent faces, harmonic relations, Context Frames, and the living 12×12 development map  
+**Tracking:** O:I #29  
+**Data:** [`../data/ql-relational-field.csv`](../data/ql-relational-field.csv)
 
 ## 1. Purpose
 
 {O:I} is a field of six product centres which together provision and potentiate technological agency around available model capacity.
 
-This document defines the relational structure of that field.
-
 The six centres are:
 
 | Position | Product | Function in the field |
 |---|---|---|
-| **0** | **Central** | persistent personal and operative ground |
-| **1** | **Actuation** | situated agency, actuation, metagency, and agentic composition |
-| **2** | **AIKit** | capability, context, resource, body, and Surface resolution |
-| **3** | **Software Factory** | developmental form across Projects, Runs, evidence, candidates, and recognition |
-| **4** | **Workcell** | material execution, placement, services, bindings, and lifecycle |
-| **5** | **Quaternal Logic** | formal relation, refraction, synthesis, and recursive intelligence |
+| **0** | **Central** | open persistent personal and operative ground: human-authored Control, ordinary Work, machine intent, and durable local orientation |
+| **1** | **Actuation** | situated Agency, actuation, metagency, determination, AgenticComposition, and Return |
+| **2** | **AIKit** | capability, Context, resource, body, HarnessComposition, session, and Surface resolution |
+| **3** | **Software Factory** | developmental form across Projects, Runs, evidence, candidates, decisions, and recognition |
+| **4** | **Workcell** | materialisation, execution, placement, services, bindings, connectivity, and lifecycle |
+| **5** | **Quaternal Logic** | formal relation, refraction, synthesis, recursion, and executable QL/MEF |
 
 These assignments form the **O:I product QL Form**. They apply the QL positional and harmonic structure to this technological field. They do not redefine the underlying QL positions.
 
-The value of the form is practical. It gives the six products a shared relational grammar. The grammar shows how the products complement one another, how a human and an agent meet each product differently, and how integration can be developed as a whole rather than as a set of pairwise compatibility constraints.
+The form is primarily a **development map**. It lets any change in one product be read through the relations by which that product becomes more fully defined qua the others. QL therefore exposes possible co-necessities across the field: useful seams, missing returns, latent interoperability, and relations which are already clean precisely because they remain indirect.
+
+This is relational co-conditioning, not dependency inflation. A canonical relation does not imply a required API, runtime hop, package dependency, or verification gate.
+
+> **QL generates questions across the O:I field; it does not generate obligations merely because a relation exists.**
 
 ---
 
@@ -36,154 +39,109 @@ H_i = P_i
 A_i = P_i′
 ```
 
-`H` is the **human-facing** position. It describes the product as a field presented to human intention, recognition, choice, authorship, inspection, and action.
+`H` is the **human-facing** position: the product presented to human intention, recognition, authorship, inspection, choice, and action.
 
-`A` is the **agent-facing** conjugate position. It describes the same product as a field available to agent intention, cognition, discovery, judgement, invocation, action, and return.
+`A` is the **agent-facing conjugate** position: the same product available to agent cognition, discovery, judgement, invocation, action, and Return.
 
-The two faces belong to one product centre.
-
-They are different perspectives on the software. They are not identity classes for the subjects that can appear inside the software. A human-facing Actuation surface can display Agents. An agent-facing Central surface can disclose human-authored Control. The face describes the orientation of the product relation, not the type of entity being represented.
-
-The complete product field is therefore:
+The prime mark does not create another product or another entity type. It names the conjugate orientation of the same product position.
 
 ```text
-H0  Central            A0  Central′
-H1  Actuation          A1  Actuation′
-H2  AIKit              A2  AIKit′
-H3  Software Factory   A3  Software Factory′
-H4  Workcell           A4  Workcell′
-H5  Quaternal Logic    A5  Quaternal Logic′
+H0  Central             A0  Central′
+H1  Actuation           A1  Actuation′
+H2  AIKit               A2  AIKit′
+H3  Software Factory    A3  Software Factory′
+H4  Workcell            A4  Workcell′
+H5  Quaternal Logic     A5  Quaternal Logic′
 ```
 
-The prime mark names the conjugate product face. It does not create a second product.
+A human-facing Actuation surface can display Agents. An agent-facing Central surface can disclose human-authored Control. `H/A` describes **perspective in and on the software**, not the ontological class of the thing represented.
 
-### 2.1 The twelve positions in use
+### 2.1 Product-face readings
 
-| Index | Human-facing `P` | Agent-facing `P′` |
+| Position | Human-facing `P` | Agent-facing `P′` |
 |---|---|---|
-| **0 — Central** | The human authors, inspects, edits, and recognises durable Control, ordinary Work, machine intent, and personal operating structure. | The agent discovers the world it inhabits, reads permitted durable ground, finds Actions and Work, inspects machine state, and returns provenance-bearing proposals or results. |
-| **1 — Actuation** | The human can commission, inspect, bound, relate, and understand situated agency and agentic compositions. | The agent inhabits Agency, exercises bounded autonomy and metagency, relates other loci, and returns attributable difference into its world. |
-| **2 — AIKit** | The human can search, navigate, compose, explain, and inspect the effective agentic environment. | The agent gains context cognition: it discovers where it is, what it can do, what it can ask about, what it presently knows, what body it operates through, and what remains latent. |
-| **3 — Software Factory** | The human can see developmental intent, Runs, Run Maps, decisions, candidates, claims, evidence, recognition, and project evolution. | The agent inhabits a developmental topology, resolves the current frontier, acts through available powers, produces artifacts and evidence, compares candidates, and returns developmental difference. |
-| **4 — Workcell** | The human can inspect and operate material plans, providers, worlds, services, endpoints, lifecycle, recovery, and physical execution state. | The agent can discover, plan, prepare, observe, expose, collect, release, and reconcile material execution through structured operations and results. |
-| **5 — Quaternal Logic** | The human can inspect formal relations, compare refractions, explore structure, and interpret recursive or epistemic views of a subject. | The agent can locate, relate, refract, synthesise, and use executable QL/MEF operations as formal faculties where the active profile permits them. |
-
-### 2.2 Same-position conjugation
-
-Each product has a direct conjugate relation:
-
-```text
-J_i : H_i ↔ A_i
-```
-
-These six relations are the first integration test for every product.
-
-A product is whole when its human and agent faces meet through the same semantic objects, identities, actions, evidence, and consequences while giving each actor the form of access appropriate to its intentional mode.
-
-Examples:
-
-- one Central Action can have human CLI guidance and agent-readable discovery and structured invocation;
-- one AIKit Resource can appear in human Search/Explain and agent ContextResolution;
-- one Factory Run can have a human Run Map and an agent-operable developmental view;
-- one Workcell plan can have concise operator output and exact machine-readable state;
-- one QL subject can have a human refraction view and an agent service operation.
-
-This is the suite-wide meaning of **agent-native**: one semantic field can be inhabited from both conjugate directions.
+| **0 — Central** | Author, inspect, edit, and recognise durable Control and ordinary Work. | Discover permitted durable ground, Work, Actions, machine state, and places where returned difference may be proposed. |
+| **1 — Actuation** | Commission, inspect, bound, and understand Agency and AgenticComposition. | Inhabit Agency, exercise bounded autonomy/metagency, relate loci, and return attributable difference. |
+| **2 — AIKit** | Search, navigate, compose, and explain the effective agentic environment. | Resolve Context, capabilities, information horizon, body, session, models, and Surfaces. |
+| **3 — Software Factory** | See developmental intent, Runs, candidates, claims/evidence, decisions, and recognition. | Inhabit developmental topology, act on the frontier, produce evidence/artifacts, and return developmental difference. |
+| **4 — Workcell** | Inspect and operate material plans, worlds, providers, services, endpoints, lifecycle, and recovery. | Discover, plan, prepare, observe, expose, collect, release, and reconcile material execution. |
+| **5 — Quaternal Logic** | Inspect relations, refractions, formal structure, and recursive readings. | Locate, relate, refract, synthesise, and use executable QL/MEF operations when enabled. |
 
 ---
 
-## 3. The complete relation field
+## 3. The complete 12×12 relation field
 
-The twelve product faces define a `12 × 12` ordered relation field.
-
-```text
-human → human    6 × 6 = 36
-agent → agent    6 × 6 = 36
-human → agent    6 × 6 = 36
-agent → human    6 × 6 = 36
-
-complete field            = 144 ordered relations
-```
-
-This is an accounting of the O:I product field. It gives a place to ask any directed relational question between any two product faces.
-
-Examples include:
+The twelve situated product faces define a `12 × 12` ordered field:
 
 ```text
-Central_H  → AIKit_A
-What durable human-authored ground should become addressable to an agent here?
+H → H    6 × 6 = 36
+A → A    6 × 6 = 36
+H → A    6 × 6 = 36
+A → H    6 × 6 = 36
 
-Factory_A → Workcell_A
-What material execution does this developmental act require?
-
-Workcell_H → Factory_A
-What observed material result changes the agent's developmental judgement?
-
-QL_A → Central_H
-What formal finding is worth returning for human recognition as future durable ground?
+complete field = 144 directed relations
 ```
 
-The full relation field remains open. QL harmonic structure identifies smaller sets of relations with a canonical structural role. Those relations provide the main product-composition grammar below.
+The canonical manipulable representation is [`data/ql-relational-field.csv`](../data/ql-relational-field.csv).
+
+The matrix does **not** assert 144 integrations. It makes 144 directed questions addressable. Each row records:
+
+- source and destination product faces;
+- canonical QL family tags where they apply;
+- a lightweight development-coverage reading;
+- a concise product-seam interpretation;
+- a Context-Frame view where a clean one is useful;
+- the canonical document and live issue/PR pointers currently expressing the seam.
+
+The coverage codes are deliberately non-constitutional:
+
+```text
+H  canonical harmonic relation
+S  strong supporting relation in the present architecture
+L  latent relation worth keeping visible
+W  weak / intentionally indirect present expression
+I  reflexive accounting cell
+```
+
+Current accounting is:
+
+```text
+68 H
+40 S
+16 L
+ 8 W
+12 I
+---
+144
+```
+
+The `S/L/W` judgements are editable development readings. They are not QL canon and should change when the software changes.
+
+Central is intentionally sparse in this map. As P0 it is chiefly open authored ground and ordinary Work. Its strongest explicit harmonic relations are `01` and the `05/50` whole/return relation. A weak or mediated Central seam is often correct architecture rather than unfinished integration.
 
 ---
 
-## 4. The three dyadic harmonic systems
+## 4. Canonical QL pairing grammar
 
-The six product centres have three simultaneous pair systems.
+The product form uses the raw QL relation families rather than software-local shorthand.
 
-### 4.1 Primary harmonic family
-
-```text
-D1  (0,1)  Central ↔ Actuation
-D2  (2,3)  AIKit ↔ Software Factory
-D3  (4,5)  Workcell ↔ Quaternal Logic
-```
-
-| Pair | Human-facing relation | Agent-facing relation |
-|---|---|---|
-| **D1 — Central ↔ Actuation** | Durable human ground and visible agency condition one another. The person can author the world in which agency is situated and inspect how agency is constituted in that world. | A world-bound agent receives an operative ground and returns difference through situated Agency or Actuation. |
-| **D2 — AIKit ↔ Factory** | The human composes and understands the available environment while also seeing the developmental transformation that environment serves. | The agent resolves powers, information, body, and Surfaces and uses that field to progress a Run or Project transformation. |
-| **D3 — Workcell ↔ QL** | Material actuality can be inspected together with the formal or refractive account through which its relations become intelligible. | Material results, observations, and constraints can become subjects for formal relation, refraction, comparison, and synthesis. |
-
-`D2` is also the middle complement pair. This gives AIKit and Factory a special hinge role in the product field: operative possibility and developmental determination meet at the same pair.
-
-### 4.2 Offset harmonic family
+### 4.1 A — natural dyads
 
 ```text
-O1  (1,2)  Actuation ↔ AIKit
-O2  (3,4)  Software Factory ↔ Workcell
-O3  (5,0)  Quaternal Logic ↔ Central
+A1  (0,1)  Central ↔ Actuation
+A2  (2,3)  AIKit ↔ Software Factory
+A3  (4,5)  Workcell ↔ Quaternal Logic
 ```
 
-| Pair | Human-facing relation | Agent-facing relation |
-|---|---|---|
-| **O1 — Actuation ↔ AIKit** | The human can relate an actor's identity, role, authority, and composition to the body, capabilities, context, and Surfaces through which that actor operates. | A situated Agency acquires a concrete operative world: Context, capabilities, model, HarnessComposition, session, and Surfaces. |
-| **O2 — Factory ↔ Workcell** | A developmental need can be related directly to the concrete material world used to build, run, compare, expose, and verify it. | A developmental act produces material demand; material execution returns observations, artifacts, endpoints, and evidence to the developmental field. |
-| **O3 — QL ↔ Central** | Formal insight, refraction, or synthesis can return into durable human ground, while authored ground can become a subject of further formal inquiry. | Formal operations can reorient the agent's available ground; persisted ground and retained difference become the starting conditions of later operation. |
-
-The primary and offset families together cover the six adjacent bonds of the product circulation:
+### 4.2 B — offset transitions
 
 ```text
-Central
-  ↔ Actuation
-  ↔ AIKit
-  ↔ Software Factory
-  ↔ Workcell
-  ↔ Quaternal Logic
-  ↔ Central
+B1  (1,2)  Actuation ↔ AIKit
+B2  (3,4)  Software Factory ↔ Workcell
+B3  (5,0)  Quaternal Logic ↔ Central
 ```
 
-This circulation describes the constitutive relations of the whole. An actual operation can enter, leave, return, or recurse through any relation required by the work.
-
-### 4.3 Complement family
-
-The complement relation is:
-
-```text
-μ(i) = 5 - i
-```
-
-It gives:
+### 4.3 C — converse mirrors / complements
 
 ```text
 C1  (0,5)  Central ↔ Quaternal Logic
@@ -191,484 +149,324 @@ C2  (1,4)  Actuation ↔ Workcell
 C3  (2,3)  AIKit ↔ Software Factory
 ```
 
-| Pair | Whole-field meaning |
-|---|---|
-| **C1 — Central ↔ QL** | Durable ground and recursive/formal intelligence qualify one another. Ground gives formal work a situated subject. Formal work can disclose difference that becomes meaningful when returned to ground. |
-| **C2 — Actuation ↔ Workcell** | Semantic agency and material embodiment meet. Agency supplies situated identity, authority, purpose, and return. Workcell supplies the actual computational conditions in which that agency can operate. |
-| **C3 — AIKit ↔ Factory** | Operative possibility and developmental determination meet. AIKit resolves what is available. Factory gives that availability a developmental reason, frontier, evidence structure, and return. |
+`23` is intentionally present in both A and C. It is simultaneously natural harmonic adjacency and the central whole-relative mirror.
 
-The three complement pairs are whole-relative relations. They are useful when a product decision must be tested against the product at the other side of the whole rather than only against its nearest integration neighbour.
+`50` and `05` use the same product vertices but must not be flattened. B3 reads their transition/return relation; C1 reads their whole-relative complement/anchor relation.
+
+### 4.4 Cross-face grammar
+
+The conjugate relations are:
+
+```text
+D1
+(n, n′)
+
+D2-transform
+(n, (n+1)′)
+
+D2-require
+(n, (n-1)′)
+
+D2-complete
+(n, (5-n)′)
+
+D3
+A / B / C applied on the conjugate P′ face
+```
+
+For example:
+
+```text
+H1 → A2   D2-transform
+H3 → A2   D2-require + D2-complete
+H1 → A4   D2-complete
+A3 → A4   D3:B2
+H4 → A4   D1
+```
+
+The CSV uses `.inverse` for the opposite directed traversal of a canonical cross-face relation. This is an O:I directional data label, not a seventh QL family.
 
 ---
 
-## 5. The two three-position harmonics
+## 5. Dyad → conjugate fourfold
 
-The field also has a `3 : 3` reading.
-
-### 5.1 Source-to-expression triad
-
-```text
-1 → 2 → 3
-
-Actuation → AIKit → Software Factory
-```
-
-On the human face:
-
-```text
-Actuation_H
-    the actor and its intended agency
-        ↓
-AIKit_H
-    the environment becomes intelligible and composable
-        ↓
-Factory_H
-    the intended transformation becomes developmentally explicit
-```
-
-On the agent face:
-
-```text
-Actuation_A
-    situated Agency
-        ↓
-AIKit_A
-    context cognition and operative powers
-        ↓
-Factory_A
-    developmental judgement and action
-```
-
-This triad describes agency becoming expressible as determinate work.
-
-### 5.2 Return-to-recognition triad
-
-```text
-4 → 5 → 0
-
-Workcell → Quaternal Logic → Central
-```
-
-On the human face:
-
-```text
-Workcell_H
-    encounter with material actuality
-        ↓
-QL_H
-    relation, interpretation, refraction, synthesis
-        ↓
-Central_H
-    recognition and durable ground
-```
-
-On the agent face:
-
-```text
-Workcell_A
-    observed material difference
-        ↓
-QL_A
-    formal relation, refraction, or synthesis
-        ↓
-Central_A
-    renewed operative ground and addressable retained difference
-```
-
-This triad describes actuality returning as changed conditions for later agency.
-
-The two triads are complementary parts of one field. They are not mandatory workflow halves. They identify the two large tendencies that the products make available: **agency into expression** and **difference back into ground**.
-
----
-
-## 6. The conjugate fourfolds
-
-Every canonical product dyad lifts across the human and agent faces:
+Every important product dyad lifts to:
 
 ```text
 (X,Y) → (H_X, H_Y, A_X, A_Y)
 ```
 
-A fourfold contains six direct relations:
+Its six pairwise relation types are:
 
 ```text
-H_X ↔ H_Y     human product relation
-A_X ↔ A_Y     agent product relation
-H_X ↔ A_X     product-X conjugation
-H_Y ↔ A_Y     product-Y conjugation
-H_X ↔ A_Y     first cross-face diagonal
-H_Y ↔ A_X     second cross-face diagonal
+H_X ↔ H_Y     direct-face product relation
+A_X ↔ A_Y     D3 conjugate-face invariance
+H_X ↔ A_X     D1
+H_Y ↔ A_Y     D1
+H_X ↔ A_Y     D2 cross-face diagonal
+H_Y ↔ A_X     D2 cross-face diagonal
 ```
 
-The fourfold is therefore the smallest complete integration cell for two products. It accounts for both products, both intentional orientations, and the cross-orientation relations between them.
+The cross-face diagonals are therefore native QL relations. They are not software glue invented after the fact.
 
-### 6.1 The 3 × 3 square field
+### 5.1 The 3×3 harmonic square
 
-The three dyadic systems produce this square matrix:
-
-| Family | Square 1 | Square 2 | Square 3 |
+| Family | 1 | 2 | 3 |
 |---|---|---|---|
-| **Primary D** | `Central · Actuation · Central′ · Actuation′` | `AIKit · Factory · AIKit′ · Factory′` | `Workcell · QL · Workcell′ · QL′` |
-| **Offset O** | `Actuation · AIKit · Actuation′ · AIKit′` | `Factory · Workcell · Factory′ · Workcell′` | `QL · Central · QL′ · Central′` |
-| **Complement C** | `Central · QL · Central′ · QL′` | `Actuation · Workcell · Actuation′ · Workcell′` | `AIKit · Factory · AIKit′ · Factory′` |
+| **A** | `01` Central / Actuation | `23` AIKit / Factory | `45` Workcell / QL |
+| **B** | `12` Actuation / AIKit | `34` Factory / Workcell | `50` QL / Central |
+| **C** | `05` Central / QL | `14` Actuation / Workcell | `23` AIKit / Factory |
 
-There are nine harmonic entries and eight unique product fourfolds. `AIKit ↔ Factory` appears both as the central primary pair and as the central complement pair.
-
-### 6.2 Meaning of the eight unique fourfolds
-
-#### D1 — Central / Actuation: grounded agency
+Keep three different counts clear:
 
 ```text
-Central_H ↔ Actuation_A
-human-authored ground ↔ the agency actually situated in that ground
-
-Actuation_H ↔ Central_A
-human inspection and commissioning of agency ↔ the ground and bounds discoverable by the agent
+9 family entries
+8 distinct oriented fourfold structures
+7 unordered product tetrads
 ```
 
-This cell asks how a human-authored world becomes inhabitable as agency and how acting agency returns intelligibly to that world.
-
-#### D2 / C3 — AIKit / Factory: operative possibility and developmental determination
-
-```text
-AIKit_H ↔ Factory_A
-human composition and disclosure of the effective environment ↔ agent developmental action
-
-Factory_H ↔ AIKit_A
-human developmental focus and recognition ↔ what the agent resolves, retrieves, composes, and invokes
-```
-
-This cell is the central hinge between what can be done and what the current development requires.
-
-#### D3 — Workcell / QL: actuality and formal intelligence
-
-```text
-Workcell_H ↔ QL_A
-human-visible material results ↔ agent formal relation and refraction
-
-QL_H ↔ Workcell_A
-human formal questions and readings ↔ agent-operable material tests and observations
-```
-
-This cell turns material encounter and formal inquiry into one experimental relation.
-
-#### O1 — Actuation / AIKit: agency and operative body
-
-```text
-Actuation_H ↔ AIKit_A
-human-visible Agency, authority, and composition ↔ agent context/body/session resolution
-
-AIKit_H ↔ Actuation_A
-human composition of the environment ↔ how the agent can exercise situated agency
-```
-
-This cell joins semantic agency to the concrete body and world through which it becomes operative.
-
-#### O2 — Factory / Workcell: development and materialisation
-
-```text
-Factory_H ↔ Workcell_A
-human developmental intent, candidate, or evaluation need ↔ agent-operable material demand
-
-Workcell_H ↔ Factory_A
-human-observed material state and results ↔ agent developmental evidence and frontier change
-```
-
-This cell gives development direct contact with the world in which its candidates must become actual.
-
-#### O3 — QL / Central: return and renewed ground
-
-```text
-QL_H ↔ Central_A
-human formal framing and insight ↔ agent-discoverable orientation and retained ground
-
-Central_H ↔ QL_A
-human-authored ground ↔ agent formal relation, location, and refraction
-```
-
-This cell carries synthesis and retained difference back into the conditions of later action.
-
-#### C1 — Central / QL: ground and recursive whole
-
-The same four endpoints as the O3 return relation are read here as a complement across the complete field.
-
-Central gives formal intelligence a situated ground and a durable human horizon. QL gives that ground an explicit capacity for structural relation, refraction, and recursive re-reading. The relation supports inquiry in both directions: ground can be formally disclosed, and formal disclosure can return for recognition.
-
-#### C2 — Actuation / Workcell: agency and embodiment
-
-```text
-Actuation_H ↔ Workcell_A
-human-visible commission, authority, and agency bounds ↔ material placement, resources, and execution bounds
-
-Workcell_H ↔ Actuation_A
-material condition and observation ↔ the agent's situated affordances, return, and further actuation
-```
-
-This cell joins the semantic identity of agency to changing material embodiment.
+`A23` and `C23` coincide as an oriented fourfold. `B50` and `C05` use the same unordered tetrad but retain different family/orientation meaning.
 
 ---
 
-## 7. The 4 + 2 whole and its 8 + 4 double cover
+## 6. Main harmonic seam readings
 
-Each face has four inner product positions and two outer anchors:
+### A1 — 01 · Central / Actuation · grounded agency
+
+Central is the authored/open world in which Agency can be situated. Actuation gives that world a first-class account of Agency, determination, bounds, composition, and Return.
+
+Useful questions:
+
+- what authored ground should an Agency be able to discover without Central becoming an orchestration store?
+- what returned difference should become visible or proposable without silently becoming authored Control?
+
+### A2 / C3 — 23 · AIKit / Factory · possibility and developmental determination
+
+This is the central dual-family hinge.
+
+AIKit resolves the operative field: Context, powers, information, models, bodies, sessions, and Surfaces. Factory gives that possibility a developmental reason, frontier, evidence structure, and recognition relation.
+
+Useful questions:
+
+- does the Factory need expose enough intent for AIKit to resolve the right operative body?
+- can Factory inspect what AIKit actually made available without duplicating Context?
+
+### A3 — 45 · Workcell / QL · actuality and formal intelligence
+
+Workcell provides material actuality. QL can make that actuality a subject of formal relation, refraction, comparison, or synthesis.
+
+This relation can remain experimental. QL is not required in order for Workcell to execute.
+
+### B1 — 12 · Actuation / AIKit · agency and operative body
+
+Actuation owns semantic Agency and plurality. AIKit resolves the concrete operative body/world through which a locus acts.
+
+The central law is:
 
 ```text
-human face
-
-anchors:       Central_H · QuaternalLogic_H
-active body:   Actuation_H · AIKit_H · Factory_H · Workcell_H
-
-agent face
-
-anchors:       Central_A · QuaternalLogic_A
-active body:   Actuation_A · AIKit_A · Factory_A · Workcell_A
+AgenticComposition ≠ HarnessComposition
 ```
 
-Across both faces this gives:
+A change of model, harness, session, or Surface should not silently change Agent/Agency identity.
 
-```text
-8 articulating positions
+### B2 — 34 · Factory / Workcell · development and materialisation
 
-Actuation_H / Actuation_A
-AIKit_H / AIKit_A
-Factory_H / Factory_A
-Workcell_H / Workcell_A
+Factory expresses developmental need. Workcell materialises it as an executable world and returns observations, artifacts, services, and material constraints.
 
-4 anchoring positions
+Workcell does not become the owner of Project, Run, Candidate, Claim, or Evidence meaning.
 
-Central_H / Central_A
-QuaternalLogic_H / QuaternalLogic_A
-```
+### B3 — 50 · QL / Central · return and renewed ground
 
-The distinction is functional.
+This is the return-oriented reading: synthesis or retained difference can re-enter the open conditions of later operation.
 
-The middle four products are the explicit operative body of technological agency:
+A formal result does not automatically mutate Central. Human recognition, native Action/proposal discipline, or another owning mechanism still governs durable authored change.
 
-- Actuation constitutes situated agency;
-- AIKit resolves its available world and operative body;
-- Factory gives it developmental form;
-- Workcell gives it material conditions and execution.
+### C1 — 05 · Central / QL · ground and whole-form anchor
 
-Central and Quaternal Logic provide the two outer conditions through which that body remains grounded and recursively intelligible:
+This uses the same vertices as B3 but reads them as a complement across the whole: open ground gives formal inquiry a situated subject; formal intelligence gives ground an available whole-relative/reflexive reading.
 
-- Central provides persistent authored and operative ground;
-- Quaternal Logic provides formal relation, refraction, synthesis, and recursive re-entry.
+### C2 — 14 · Actuation / Workcell · agency and embodiment
 
-All six remain independently active products. The `4 + 2` relation describes their place in the whole.
+Agency can persist while its material Workcell changes. Workcell conditions can also force Agency to revise, refuse, fail, or reconstitute its act.
+
+This seam is one of the clearest places to preserve Agent/Agency identity across rematerialisation.
 
 ---
 
-## 8. O:I as the whole-level conjugate field
+## 7. The 3:3 triads
 
-O:I gives the six centres one public and relational whole.
-
-The whole also has two practical faces.
-
-### Human-facing O:I
-
-The human needs a clear way to:
-
-- understand the six centres;
-- install and inspect the local suite;
-- enter each native human surface;
-- see which world and actors are active;
-- understand what is projected or shared;
-- navigate relations across products;
-- recognise consequential returns.
-
-The `oi` namespace, public site, documentation, status surfaces, and later relation views serve this face.
-
-### Agent-facing O:I
-
-The agent needs a clear way to:
-
-- discover which centres are present;
-- locate their native Actions, Skills, APIs, services, or structured commands;
-- understand the current local world and available whole-level relations;
-- enter the correct product for an operation;
-- preserve source identity and provenance across product boundaries;
-- project or encounter authorised shared material;
-- return difference to the appropriate world.
-
-The O:I Skill, machine-readable suite state, native product Skills, structured outputs, and Projection/SharedField contracts serve this face.
-
-The two faces expose the same installed product field from conjugate intentional directions.
-
----
-
-## 9. Product-field principles
-
-### 9.1 One centre, two first-class faces
-
-Every product should make its core semantic field available through a human-facing and an agent-facing orientation when the function is relevant to both.
-
-The two faces can use different affordances. Human use can favour navigation, visual context, progressive disclosure, explanation, preview, and recognition. Agent use can favour structured discovery, exact references, schemas, bounded retrieval, invocation, traces, and return.
-
-### 9.2 Perspective is distinct from participant identity
-
-`H` and `A` describe how the software is encountered.
-
-They do not classify every entity inside the product as human or agent. Products can represent Humans, Agents, machines, projects, documents, services, and shared fields on either face.
-
-### 9.3 Relations are product design surfaces
-
-A cross-product relation is a place to design positive complementarity.
-
-For each meaningful relation, ask:
-
-- What does the first product make possible for the second?
-- What does the second product return to the first?
-- What should a human be able to see or do across the relation?
-- What should an agent be able to discover or do across the relation?
-- What shared identity, evidence, or provenance must remain legible across the relation?
-
-This turns integration into a search for useful composition rather than only a boundary exercise.
-
-### 9.4 Canonical topology and actual traversal are different
-
-The harmonic field describes the constitutive relations available to the whole.
-
-An actual user action, Agent run, research experiment, or material execution can traverse the field in the order required by the situation. It can revisit a product, cross a conjugate face, jump through a non-adjacent relation, enter a nested whole, or return directly to ground.
-
-The structure supplies orientation without imposing one global workflow.
-
-### 9.5 Difference returns with provenance
-
-The field becomes developmental when encounter can change later action.
-
-Human-authored ground can condition agent action. Agent work can return evidence and proposals. Material execution can return resistance and observation. Formal refraction can return a new account of a subject. Human recognition can make selected difference durable.
-
-The relation is therefore recurrent:
+The positional field admits the two canonical tendencies:
 
 ```text
-ground
-  → agency
-  → available world
-  → development
-  → material encounter
-  → relation / synthesis
-  → recognised or retained difference
-  → developed ground
+1 → 2 → 3
+Actuation → AIKit → Software Factory
+
+4 → 5 → 0
+Workcell → Quaternal Logic → Central
 ```
 
-### 9.6 QL can remain structural and quiet
+The first reads situated agency becoming operationally equipped and developmentally determinate.
 
-The products do not need QL vocabulary in every human or agent interaction.
+The second should be read concretely in this product form as **material contextualisation returning to ground**:
 
-QL is useful here because its relations give the suite a stable grammar for position, conjugacy, complement, adjacency, triadic movement, fourfold composition, recursion, and return.
+1. Workcell materialises/instantiates the project, repository, service, or world in which the work becomes actual;
+2. QL supplies its native formal/reflexive orientation where that reading is useful;
+3. the changed project/world appears again as ordinary durable ground in Central/Work.
 
-A person can use Central, AIKit, Factory, or Workcell in plain product language while the product field still benefits from this structure. An agent can use the same relational form to orient action, inspect missing relations, select complementary capabilities, and reason about return without requiring QL labels in every prompt or tool call.
+This is not a mandatory runtime pipeline. Workcell can materialise a project with no QL service call, and ordinary development can return to Central through its owning product paths. The harmonic tells us what the whole relation means when read together.
 
 ---
 
-## 10. Use during suite localisation and physical acceptance
+## 8. The seven Context Frames
 
-The full local O:I installation should be tested as a product field, not only as six successful installations.
-
-The product-field framing gives four useful acceptance layers.
-
-### 10.1 Product conjugacy
-
-For each centre, prove the real relation between its human and agent faces.
-
-Examples include:
-
-- Central human Control/Work/Action use and agent discovery/invocation over the same ground;
-- AIKit human Search/Context/Compose/Explain and agent ContextResolution over the same Resource field;
-- Workcell human inspection and agent operation over the same plan/lifecycle state.
-
-### 10.2 Harmonic pair integration
-
-Exercise the high-value pair relations:
+The seven Context Frames are the contextual-configuration grammar of the field:
 
 ```text
-Central ↔ Actuation
-Actuation ↔ AIKit
-AIKit ↔ Factory
-Factory ↔ Workcell
-Workcell ↔ QL
-QL ↔ Central
-
-Central ↔ QL
-Actuation ↔ Workcell
-AIKit ↔ Factory
+CF1  (00/00)          Fourfold-Zero / undifferentiated ground
+CF2  (0/1)            Non-Dual Anchor
+CF3  (0/1/2)          Dual-Non-Dual / triadic circulation
+CF4  (0/1/2/3)        Trinitarian / tetradic prehensive closure
+CF5  (4.0/1–4.4/5)    Fractal-Doubling Executive / nested contextual whole
+CF6  (4.5/0)          .5 Bridge
+CF7  (5/0)            Total Synthesis / cyclic closure and reopening
 ```
 
-The purpose is to prove useful exchange, return, and visibility across the relation.
+QL-MEF Q6 PR #19 is the current executable formalisation line for the seven-frame registry, progression, canonical cut, and MEF rotation relation.
 
-### 10.3 Triadic continuity
+### 8.1 What CF adds to the matrix
 
-Prove at least one real source-to-expression path and one real return-to-recognition path:
+The 12×12 field answers:
+
+> what is the directed relation between these two situated product faces?
+
+The Context Frame answers:
+
+> in what relational configuration is this material presently being held together?
+
+CF therefore **modulates the relation field; it does not multiply it into another matrix**.
+
+CF1–CF4 progressively gather an outer field. In the CSV, `cf_view=CF1..CF4` records the smallest linear frame which cleanly contains the outer product positions involved.
+
+CF5–CF7 need more care:
+
+- **CF5** opens recursive contextualisation at #4. In O:I this is especially suggestive of Workcell materialising a local project/world which itself contains a sixfold of relations. CSV labels such as `CF5-field` are O:I development hints, not a claim that CF5 is identical with P4.
+- **CF6** is the bridge by which the nested contextual whole relates outward. `CF5/CF6-field` marks seams where the Workcell/material whole and its return boundary are particularly relevant.
+- **CF7** is the `5/0` synthesis/reopening relation and therefore directly illuminates the QL/Central return seam.
+
+The source grammar also keeps conjugate forms available inside the contextual configuration. We therefore do not create separate human-CF and agent-CF ontologies. A CF is one contextual whole; H/A orientation tells us how positions inside it are being encountered.
+
+### 8.2 CF is not MEF lens
+
+Keep distinct:
 
 ```text
-Actuation → AIKit → Factory
-Workcell → QL → Central
+MEF lens          epistemic refraction: which knowing-mode reads the subject?
+Context Frame     contextual configuration: how is the relational whole held together?
+product face      conjugate orientation: from which situated face is it encountered?
 ```
 
-The physical proof can enter these relations from either human or agent faces and can cross between them where the use case requires it.
+QL-MEF composes Context Frames with MEF rotation. O:I uses that formal capacity to read development without redefining product identities.
 
-### 10.4 Whole-field return
+---
 
-Run one complete local case in which:
+## 9. The 4+2 and 8+4 whole
+
+The product field has the same `4 + 2` structural cut:
 
 ```text
-Central supplies durable ground
-Actuation supplies situated agency
-AIKit resolves the operative world
-Factory carries a real developmental transformation
-Workcell materialises real execution
-QL supplies an optional formal/refraction relation where useful
-difference returns for human recognition and future ground
+P1  Actuation
+P2  AIKit
+P3  Software Factory
+P4  Workcell
+    = active / explicate engineering body
+
+P0  Central
+P5  Quaternal Logic
+    = anchoring / implicate positions
 ```
 
-This is a whole-suite acceptance journey. It is not a required path for every ordinary operation.
+Across both conjugate faces:
+
+```text
+8 active positions + 4 anchors
+```
+
+The anchors are structurally important without being mandatory runtime dependencies. Central can remain open/passive ground. QL can remain latent or optional in an ordinary operation.
+
+The parent relation is **not another product position**. The deeper derivation remains:
+
+```text
+0/1 → 4+2
+```
 
 ---
 
-## 11. Product development through harmonic complementarity
+## 10. Using the relational field for development
 
-The field should be used continuously after installation acceptance.
+The matrix is most useful when read in both directions.
 
-When a product gains a major capability, inspect its harmonic relations before treating the capability as complete.
+### Start from QL
 
-Examples:
+Ask what a canonical relation reveals:
 
-- a new Actuation composition feature should be inspected through its Central, AIKit, and Workcell relations;
-- a new AIKit ContextSource or runtime-composition feature should be inspected through Actuation and Factory, and through its human/agent conjugate;
-- a new Factory developmental primitive should be inspected through AIKit and Workcell, and through the AIKit/Factory central complement square;
-- a new Workcell provider or material relation should be inspected through Factory, Actuation, and QL where material evidence can inform formal research;
-- a new QL operator or refraction should be inspected through Workcell as an experimental subject and Central as a possible route of retained human ground;
-- a new Central Action or durable source form should be inspected through Actuation and QL, and through its agent-facing disclosure.
+```text
+34
+What has to pass cleanly between developmental form and materialisation?
 
-This gives product planning a repeatable question:
+14
+What remains invariant when Agency is materially remade somewhere else?
 
-> **Which harmonic relations does this new capability strengthen, and what becomes possible in the whole because the relation is now explicit?**
+H3 → A4
+What human-recognised developmental intent must become agent-operable material demand?
+
+50 / 05
+What is return, and what is whole-relative anchoring, across the same products?
+```
+
+### Start from a development
+
+When a ticket changes one product:
+
+1. locate the affected product position and directed face;
+2. inspect its harmonic neighbours and relevant fourfold diagonals;
+3. ask whether the change reveals a useful seam in an adjacent/complementary product;
+4. inspect the relevant Context Frame if the change is really about how a wider whole is being held together;
+5. make only the concrete interoperability change that improves the products;
+6. update the matrix row and ticket pointers if the architecture materially changed.
+
+Possible outcomes include a small Action, Capability, ContextSource, Ref, Return relation, read model, provider boundary, projection, or simply a clarified ownership seam.
+
+“No change required” is also a valid result.
 
 ---
 
-## 12. Current convergence point
+## 11. Data contract
 
-The live product field now uses **Actuation** at position `1`.
+`data/ql-relational-field.csv` is intentionally simple and diffable.
 
-Actuation is the canonical developmental/reference home for first-class Agent, Agency, Actuation, agentic composition, model/harness research, and epistemic cultivation. An actual agent can still inhabit the Central world to which it is bound. AIKit resolves the operative body for that agent. Workcell provides material conditions. Factory uses Actuation where developmental work requires first-class agentic composition.
+| Column | Meaning |
+|---|---|
+| `id` | directed relation ID such as `H3->A4` |
+| `src`, `dst` | situated product-face coordinates |
+| `src_product`, `dst_product` | readable product names |
+| `ql` | canonical family tags; `|` separates multiple simultaneous relations |
+| `coverage` | `H/S/L/W/I` development reading |
+| `cf_view` | minimum/especially relevant CF view where useful; field-level CF5/6 labels are explicitly O:I interpretive hints |
+| `seam` | short current product reading |
+| `defined_in` | canonical definition/formalisation pointers |
+| `tracked_by` | current O:I/native issue/PR pointers |
 
-Some earlier O:I composition descriptors still refer to the prior Agent Runtime experiment surface in `agent-system-design`. That runtime work is source and migration history for Actuation. Suite convergence should update the executable composition descriptor only when the current Actuation integration surface is ready to replace the prior registration contract.
+Rows are stable enough to query from scripts, SQLite import, DuckDB, spreadsheets, agents, or a future O:I/Explore relation view. CSV remains the source object because it is readable without tooling.
 
-This document fixes the **product-field relation** now. Installation metadata can follow the tested native product state during the O:I Suite Snapshot and local-acceptance convergence.
+If a query database becomes useful later it should be generated from the CSV rather than becoming a second hand-maintained truth.
 
 ---
 
-## 13. Source basis
+## 12. Ownership and sources
 
-This framing is derived from the current product and formal sources:
+- O:I owns this product-field application, the 12×12 development map, and its whole-level tracking.
+- QL-MEF owns executable QL/MEF formalisation. Its current Q6 PR #19 carries A/B/C, canonical D1/D2/D3, 9/8/7 square accounting, MEF rotation, and the seven Context Frames.
+- each native product remains the source of truth for its own objects, Actions, runtime behaviour, and implementation tickets.
+- O:I #29 is the lightweight continuing tracker for this map.
 
-- O:I architecture and Objective Internality / Objective Co-Internality work on the `research/cordis-composable-agency` line;
-- Central's human-owned operating root, Action, Surface, Skill, and Connector contracts;
-- Actuation's Agent / Agency / Actuation constitution and current system-placement research;
-- AIKit V2's Resource, ContextResolution, context-cognition, HarnessComposition, Surface, and human/agent product model;
-- Software Factory's canonical Project / Run / Run Map / Claim / Evidence / Candidate / Recognition and Agent-Native architecture;
-- Workcell's provider-neutral materialisation contract and native human/agent Surface programme;
-- Quaternal Logic's executable position, relation, refraction, service, and MEF provider contracts;
-- the current QL/MEF formal corpus for `P/P′` conjugacy, the `4 + 2` and `3 : 3` readings, the primary/offset/complement dyadic systems, and the conjugate fourfold square structure.
-
-The native repositories remain the source of truth for each product's implementation contracts. This document is the canonical whole-field account of how those products stand in relation.
+The relational map does not replace native architecture. Its purpose is to keep the six products **mutually legible as one open field of relational co-necessities** while allowing every centre to remain itself.
