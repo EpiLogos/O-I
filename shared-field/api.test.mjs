@@ -43,4 +43,5 @@ test('unified shared-field API exposes projection, shared-agency, Explore, Watch
   assert.equal(api.EXPLORE_RELATION_VIEW_SCHEMA, 'oi.explore-relation-view/v1');
   assert.equal(api.EXPLORE_RESULT_SCHEMA, 'oi.explore-result/v1');
   assert.equal(api.WATCH_SCHEMA, 'oi.watch/v1');
+  assert.equal(api.CONTACT_SCHEMA, 'oi.contact/v1');
 });
