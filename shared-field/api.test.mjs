@@ -6,6 +6,7 @@ test('unified shared-field API exposes projection, shared-agency, Explore, Watch
   for (const name of [
     'createParticipant',
     'createProjection',
+    'refineProjection',
     'receiveProjection',
     'selectCentralParticipantRoot',
     'createSharedField',
