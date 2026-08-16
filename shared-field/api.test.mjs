@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as api from './api.mjs';
 
-test('unified shared-field API exposes projection, shared-agency and Explore floors', () => {
+test('unified shared-field API exposes projection, shared-agency, Explore and hosted-state floors', () => {
   for (const name of [
     'createParticipant',
     'createProjection',
@@ -16,6 +16,9 @@ test('unified shared-field API exposes projection, shared-agency and Explore flo
     'createSharedFieldState',
     'createExploreEntry',
     'createExploreApplication',
+    'hostedSnapshotFromRows',
+    'createSpacetimeExploreSource',
+    'createLiveExploreApplication',
   ]) {
     assert.equal(typeof api[name], 'function', `${name} should be exported`);
   }

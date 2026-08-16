@@ -1,0 +1,14 @@
+{
+  "name": "oi-shared-field-spacetimedb",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "acceptance": "tsx live-acceptance.ts"
+  },
+  "dependencies": {
+    "spacetimedb": "2.7.1"
+  },
+  "devDependencies": {
+    "tsx": "4.20.5"
+  }
+}
