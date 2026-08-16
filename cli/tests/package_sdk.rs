@@ -47,8 +47,14 @@ fn missing_or_old_native_contract_is_reported_without_oi_inventing_health() {
 
     let report = compatibility_report(&manifest, &catalog).unwrap();
     assert!(!report.compatible);
-    assert_eq!(report.contributions[0].status, CompatibilityStatus::Compatible);
-    assert_eq!(report.contributions[1].status, CompatibilityStatus::Incompatible);
+    assert_eq!(
+        report.contributions[0].status,
+        CompatibilityStatus::Compatible
+    );
+    assert_eq!(
+        report.contributions[1].status,
+        CompatibilityStatus::Incompatible
+    );
 
     let unavailable = NativeContractCatalog {
         schema: "oi.native-contract-catalog/v1".into(),
@@ -59,7 +65,10 @@ fn missing_or_old_native_contract_is_reported_without_oi_inventing_health() {
         )],
     };
     let report = compatibility_report(&manifest, &unavailable).unwrap();
-    assert_eq!(report.contributions[1].status, CompatibilityStatus::Unavailable);
+    assert_eq!(
+        report.contributions[1].status,
+        CompatibilityStatus::Unavailable
+    );
 }
 
 #[test]
@@ -92,12 +101,9 @@ fn lifecycle_receipt_requires_one_native_outcome_per_contribution() {
             detail: None,
         })
         .collect();
-    let receipt = record_lifecycle_receipt(
-        &manifest,
-        PackageLifecycleAction::InstallRegister,
-        outcomes,
-    )
-    .unwrap();
+    let receipt =
+        record_lifecycle_receipt(&manifest, PackageLifecycleAction::InstallRegister, outcomes)
+            .unwrap();
     assert_eq!(receipt.native_outcomes.len(), manifest.contributions.len());
 
     let incomplete = vec![NativeRegistrationOutcome {
@@ -107,14 +113,18 @@ fn lifecycle_receipt_requires_one_native_outcome_per_contribution() {
         verification_ref: None,
         detail: None,
     }];
-    assert!(record_lifecycle_receipt(&manifest, PackageLifecycleAction::Remove, incomplete).is_err());
+    assert!(
+        record_lifecycle_receipt(&manifest, PackageLifecycleAction::Remove, incomplete).is_err()
+    );
 }
 
 #[test]
 fn package_disclosures_are_whole_envelope_facts_not_native_policy_replacements() {
     let manifest = parse_manifest(MODEL).unwrap();
     assert!(manifest.permissions.contains(&"network_egress".into()));
-    assert!(manifest.effects.contains(&"binary_process_installation".into()));
+    assert!(manifest
+        .effects
+        .contains(&"binary_process_installation".into()));
     assert!(manifest
         .contributions
         .iter()
