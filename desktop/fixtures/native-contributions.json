@@ -8,20 +8,9 @@
       "native_owner": "oi-explore",
       "target_contract": "oi.explore.surface/v1",
       "availability": "ready",
-      "provenance": {
-        "source": "EpiLogos/O-I#19",
-        "revision": "3de1cc548252017877bdd7d80447b7dcac375551"
-      },
+      "provenance": {"source": "EpiLogos/O-I#19", "revision": "3de1cc548252017877bdd7d80447b7dcac375551"},
       "regions": ["canvas", "navigator", "inspector"],
-      "read_model_ref": {
-        "ref": "oi.explore:surface:root",
-        "kind": "surface",
-        "native_owner": "oi-explore",
-        "provenance": {
-          "source": "shared-field/explore.mjs",
-          "revision": "3de1cc548252017877bdd7d80447b7dcac375551"
-        }
-      },
+      "read_model_ref": {"ref": "oi.explore:surface:root", "kind": "surface", "native_owner": "oi-explore", "provenance": {"source": "shared-field/explore.mjs", "revision": "3de1cc548252017877bdd7d80447b7dcac375551"}},
       "accepted_selection_kinds": ["projection", "wiki_node", "project", "participant", "shared_field"],
       "actions": [],
       "detail": "Consumes the canonical Explore read-model seam from PR #19. Encounter-security PR #32 @ 08b39ec90bb1162de45858eac1851da88c4a7093 and A2A PR #37 @ f1b2075618696fdaeba4da6111904205f295af76 remain the authority/admission owners for hosted mutation, private Contact/Watch state and A2A exchange; this desktop reading exposes none of those mutation powers or private relations. SpaceTimeDB transport identifiers remain non-canonical."
@@ -32,20 +21,9 @@
       "native_owner": "actuation",
       "target_contract": "actuation.agency/v1",
       "availability": "ready",
-      "provenance": {
-        "source": "EpiLogos/Actuation#6",
-        "revision": "b977939ec25c32b3dc8f5ed251b70e4c26933086"
-      },
+      "provenance": {"source": "EpiLogos/Actuation#6", "revision": "b977939ec25c32b3dc8f5ed251b70e4c26933086"},
       "regions": ["inspector", "root_agent"],
-      "read_model_ref": {
-        "ref": "actuation.agency:root-world",
-        "kind": "agency_reading",
-        "native_owner": "actuation",
-        "provenance": {
-          "source": "actuation.agency/v1",
-          "revision": "b977939ec25c32b3dc8f5ed251b70e4c26933086"
-        }
-      },
+      "read_model_ref": {"ref": "actuation.agency:root-world", "kind": "agency_reading", "native_owner": "actuation", "provenance": {"source": "actuation.agency/v1", "revision": "b977939ec25c32b3dc8f5ed251b70e4c26933086"}},
       "accepted_selection_kinds": ["agency", "world_binding", "root_scope", "metagency_grant", "determination", "return"],
       "actions": [],
       "detail": "Consumes verified Actuation PR #6 head b977939ec25c32b3dc8f5ed251b70e4c26933086, including explicit portable RootScope and MetagencyGrant envelopes. Root Agency remains a positional relation between WorldBinding and RootScope; O:I does not introduce a RootAgent subtype or infer metagency from presentation."
@@ -56,20 +34,9 @@
       "native_owner": "central",
       "target_contract": "personal.show",
       "availability": "ready",
-      "provenance": {
-        "source": "EpiLogos/Central#53",
-        "revision": "3f0551090ae39bcef260a27b1a9db0da4729d8a3"
-      },
+      "provenance": {"source": "EpiLogos/Central#53", "revision": "3f0551090ae39bcef260a27b1a9db0da4729d8a3"},
       "regions": ["canvas", "navigator", "inspector"],
-      "read_model_ref": {
-        "ref": "personal.show",
-        "kind": "action",
-        "native_owner": "central",
-        "provenance": {
-          "source": "ctrl/src/personal.rs",
-          "revision": "3f0551090ae39bcef260a27b1a9db0da4729d8a3"
-        }
-      },
+      "read_model_ref": {"ref": "personal.show", "kind": "action", "native_owner": "central", "provenance": {"source": "ctrl/src/personal.rs", "revision": "3f0551090ae39bcef260a27b1a9db0da4729d8a3"}},
       "accepted_selection_kinds": ["personal_root", "control_root", "work_root", "proposal"],
       "actions": [
         {"action_ref": "personal.show", "native_owner": "central", "availability": "available", "required_capability_ref": null},
@@ -86,15 +53,12 @@
       "native_owner": "software-factory",
       "target_contract": "@epilogos/factory-build-surface@0.1.0:FactoryBuildView",
       "availability": "degraded",
-      "provenance": {
-        "source": "EpiLogos/agent-system-design#146",
-        "revision": "2a1775e4ce251dcf01b4b1c621e0d56efe7195be"
-      },
+      "provenance": {"source": "EpiLogos/agent-system-design#146", "revision": "95bd5425de6f6d4a355ad6260ca2e1d74e28bf04"},
       "regions": ["canvas", "navigator", "inspector", "deep_drawer", "command"],
       "read_model_ref": null,
-      "accepted_selection_kinds": ["project", "run", "frontier", "candidate", "claim", "evidence", "agency", "return", "execution", "harness_composition", "agent_session", "surface", "material_binding"],
+      "accepted_selection_kinds": ["project", "run", "frontier", "candidate", "claim", "evidence", "human_request", "agency", "return", "execution", "trajectory", "harness_composition", "agent_session", "surface", "material_binding"],
       "actions": [],
-      "detail": "Consumes Factory PR #146's source-owned @epilogos/factory-build-surface contract: BuildSurface, FactoryBuildView and buildViewFromInterfaces, with source-fidelity SSSF trajectory optics and separate semantic/live/trajectory depths. Factory supplies Project/Run/frontier/Candidate/Claim/Evidence, Agency/Return and Execution owner refs and emits mutation intent dynamically as {actionRef, subjectRef}; O:I does not copy exemplar fixture state or mint Factory Action names. The source package is still private and O:I #21 has no native install/register lifecycle bridge, so no live FactoryBuildView instance is claimed in the desktop yet. Contract hosting is therefore degraded rather than pending or falsely full."
+      "detail": "Consumes Factory PR #146's current source-owned @epilogos/factory-build-surface contract at 95bd5425de6f6d4a355ad6260ca2e1d74e28bf04: BuildSurface accepts the product-native FactoryBuildView directly and preserves separate semantic/live/trajectory depths. Factory owns Project/Run/RunMap-frontier/Candidate/Claim/Evidence/HumanRequest, Agency/Return and Execution/trajectory refs. Its FactoryActionView supplies product-native ActionRefs and BuildSurface emits only {actionRef, subjectRef}; O:I does not copy exemplar state or mint Action names. SessionSpaceRef remains optional producer data and is not treated as an O:I-owned semantic. Because the source package is still private and O:I #21 has no native install/register lifecycle bridge, no live FactoryBuildView instance is claimed in the desktop yet; contract hosting is degraded rather than pending or falsely full."
     },
     {
       "schema": "oi.desktop-host-reading/v1",
@@ -102,20 +66,9 @@
       "native_owner": "ai-kit",
       "target_contract": "aikit.harness-composition-topology/v1",
       "availability": "degraded",
-      "provenance": {
-        "source": "EpiLogos/ai-kit#68",
-        "revision": "beae44c9b9f40565dcae24b4dceac91a3258bf44"
-      },
+      "provenance": {"source": "EpiLogos/ai-kit#68", "revision": "beae44c9b9f40565dcae24b4dceac91a3258bf44"},
       "regions": ["canvas", "inspector", "command"],
-      "read_model_ref": {
-        "ref": "aikit:harness-composition-topology:deepseek-maximal",
-        "kind": "harness_composition_topology",
-        "native_owner": "ai-kit",
-        "provenance": {
-          "source": "crates/aikit-adapters/src/composition_topology.rs",
-          "revision": "beae44c9b9f40565dcae24b4dceac91a3258bf44"
-        }
-      },
+      "read_model_ref": {"ref": "aikit:harness-composition-topology:deepseek-maximal", "kind": "harness_composition_topology", "native_owner": "ai-kit", "provenance": {"source": "crates/aikit-adapters/src/composition_topology.rs", "revision": "beae44c9b9f40565dcae24b4dceac91a3258bf44"}},
       "accepted_selection_kinds": ["component", "surface", "harness_composition", "action"],
       "actions": [],
       "detail": "Consumes AIKit PR #68's target-neutral nested Component topology as a read-model contract at current producer head beae44c9b9f40565dcae24b4dceac91a3258bf44. The same PR owns staged HarnessComposition mutation, ACP connection and terminal working-field projection while #61-#63 SessionSpace remains explicitly unimplemented. Rich UI, HumanCommand, Policy and LoopRuntime contributions remain target-native/NextSession; O:I does not mount Cordis, reinterpret protocol commands as Actions, or create a desktop plugin ontology."
