@@ -1,3 +1,4 @@
+import { ScheduleAt } from 'spacetimedb';
 import { schema, table, t, SenderError } from 'spacetimedb/server';
 
 const CONTACT_WINDOW_MICROS = 60_000_000n;
@@ -32,9 +33,20 @@ const fieldAuthority = table(
     participantRef: t.string().index('btree'),
     actorIdentity: t.identity().index('btree'),
     role: t.string(),
+    contactable: t.bool(),
     revoked: t.bool(),
     expiresAtMicros: t.u64(),
     grantedAtMicros: t.u64(),
+  }
+);
+
+const authorityExpiry = table(
+  { public: false, scheduled: (): any => expire_participant_authority },
+  {
+    scheduledId: t.u64().primaryKey().autoInc(),
+    scheduledAt: t.scheduleAt(),
+    authorityKey: t.string().index('btree'),
+    expiresAtMicros: t.u64(),
   }
 );
 
@@ -155,6 +167,7 @@ const spacetimedb = schema({
   sharedField,
   fieldOwner,
   fieldAuthority,
+  authorityExpiry,
   participant,
   projection,
   exploreEntry,
@@ -167,10 +180,14 @@ const spacetimedb = schema({
 
 export default spacetimedb;
 
+function activeCallerGrants(ctx: any): any[] {
+  return Array.from(ctx.db.fieldAuthority.actorIdentity.filter(ctx.sender)).filter((grant: any) => !grant.revoked);
+}
+
 export const my_field_authority = spacetimedb.view(
   { name: 'my_field_authority', public: true },
   t.array(fieldAuthority.rowType),
-  (ctx) => Array.from(ctx.db.fieldAuthority.actorIdentity.filter(ctx.sender))
+  (ctx) => activeCallerGrants(ctx)
 );
 
 export const my_watch = spacetimedb.view(
@@ -178,7 +195,7 @@ export const my_watch = spacetimedb.view(
   t.array(watch.rowType),
   (ctx) => {
     const rows = new Map<string, any>();
-    for (const grant of ctx.db.fieldAuthority.actorIdentity.filter(ctx.sender)) {
+    for (const grant of activeCallerGrants(ctx)) {
       for (const row of ctx.db.watch.watcherParticipantRef.filter(grant.participantRef)) {
         if (row.fieldRef === grant.fieldRef) rows.set(String(row.rowId), row);
       }
@@ -192,7 +209,7 @@ export const my_contact = spacetimedb.view(
   t.array(contact.rowType),
   (ctx) => {
     const rows = new Map<string, any>();
-    for (const grant of ctx.db.fieldAuthority.actorIdentity.filter(ctx.sender)) {
+    for (const grant of activeCallerGrants(ctx)) {
       for (const row of ctx.db.contact.initiatorParticipantRef.filter(grant.participantRef)) {
         if (row.fieldRef === grant.fieldRef) rows.set(String(row.rowId), row);
       }
@@ -213,7 +230,7 @@ function requireString(value: string, name: string, max = 512): void {
   if (value.length > max) fail(`${name} must be at most ${max} characters`);
 }
 
-function requireJsonObject(value: string, name: string, max = 65_536): unknown {
+function requireJsonObject(value: string, name: string, max = 65_536): Record<string, any> {
   if (value.trim() === '') fail(`${name} must be non-empty JSON`);
   if (value.length > max) fail(`${name} exceeds ${max} character limit`);
   let parsed: unknown;
@@ -225,7 +242,11 @@ function requireJsonObject(value: string, name: string, max = 65_536): unknown {
   if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
     fail(`${name} must contain a JSON object`);
   }
-  return parsed;
+  return parsed as Record<string, any>;
+}
+
+function requireEqual(actual: unknown, expected: unknown, name: string): void {
+  if (actual !== expected) fail(`${name} does not match semantic contract`);
 }
 
 function nowMicros(ctx: any): bigint {
@@ -277,13 +298,19 @@ function requireContactDecision(decision: string): void {
   }
 }
 
+function clearAuthorityExpirySchedules(ctx: any, key: string): void {
+  for (const scheduled of ctx.db.authorityExpiry.authorityKey.filter(key)) {
+    ctx.db.authorityExpiry.scheduledId.delete(scheduled.scheduledId);
+  }
+}
+
 function requireParticipantAuthority(ctx: any, fieldRef: string, participantRef: string, roles: string[]): any {
   const key = authorityKey(fieldRef, participantRef);
   const grant = ctx.db.fieldAuthority.authorityKey.find(key);
   if (!grant) fail(`No authority grant for Participant ${participantRef}`);
 
   let callerOwnsGrant = false;
-  for (const row of ctx.db.fieldAuthority.actorIdentity.filter(ctx.sender)) {
+  for (const row of activeCallerGrants(ctx)) {
     if (row.authorityKey === key) {
       callerOwnsGrant = true;
       break;
@@ -298,9 +325,9 @@ function requireParticipantAuthority(ctx: any, fieldRef: string, participantRef:
   return grant;
 }
 
-function authorityForParticipant(ctx: any, fieldRef: string, participantRef: string): any {
+function authorityForContactRecipient(ctx: any, fieldRef: string, participantRef: string): any {
   const grant = ctx.db.fieldAuthority.authorityKey.find(authorityKey(fieldRef, participantRef));
-  if (!grant || grant.revoked) fail(`Recipient Participant ${participantRef} is not contactable`);
+  if (!grant || grant.revoked || !grant.contactable) fail(`Recipient Participant ${participantRef} is not contactable`);
   if (grant.expiresAtMicros !== 0n && nowMicros(ctx) >= grant.expiresAtMicros) {
     fail(`Recipient Participant ${participantRef} is not contactable`);
   }
@@ -351,11 +378,31 @@ function enforceContactRate(ctx: any, fieldRef: string, initiatorParticipantRef:
   ctx.db.contactRate.rateKey.update({ ...current, count: current.count + 1 });
 }
 
+export const expire_participant_authority = spacetimedb.reducer(
+  { arg: authorityExpiry.rowType },
+  (ctx, { arg }) => {
+    if (!ctx.senderAuth.isInternal) fail('Authority expiry may only be invoked by the SpaceTimeDB scheduler');
+    const current = ctx.db.fieldAuthority.authorityKey.find(arg.authorityKey);
+    if (current
+      && current.expiresAtMicros === arg.expiresAtMicros
+      && current.expiresAtMicros !== 0n
+      && nowMicros(ctx) >= current.expiresAtMicros) {
+      ctx.db.fieldAuthority.authorityKey.delete(arg.authorityKey);
+    }
+    const scheduled = ctx.db.authorityExpiry.scheduledId.find(arg.scheduledId);
+    if (scheduled) ctx.db.authorityExpiry.scheduledId.delete(arg.scheduledId);
+  }
+);
+
 export const put_shared_field = spacetimedb.reducer(
   { fieldRef: t.string(), kind: t.string(), visibility: t.string(), contractJson: t.string() },
   (ctx, args) => {
     requireString(args.fieldRef, 'SharedField fieldRef');
-    requireJsonObject(args.contractJson, 'SharedField contract');
+    if (args.visibility !== 'public') fail('This hosted SharedField table is the public-field floor; private visibility requires caller-scoped content Views');
+    const contract = requireJsonObject(args.contractJson, 'SharedField contract');
+    requireEqual(contract.field_ref, args.fieldRef, 'SharedField fieldRef');
+    requireEqual(contract.kind, args.kind, 'SharedField kind');
+    requireEqual(contract.visibility, args.visibility, 'SharedField visibility');
     const existing = ctx.db.sharedField.fieldRef.find(args.fieldRef);
     if (existing) {
       requireFieldOwner(ctx, args.fieldRef);
@@ -382,7 +429,13 @@ export const put_participant = spacetimedb.reducer(
     contractJson: t.string(),
   },
   (ctx, args) => {
-    requireJsonObject(args.contractJson, 'Participant contract');
+    const contract = requireJsonObject(args.contractJson, 'Participant contract');
+    requireEqual(contract.participant_ref, args.participantRef, 'Participant participantRef');
+    requireEqual(contract.field_ref, args.fieldRef, 'Participant fieldRef');
+    requireEqual(contract.identity?.kind, args.identityKind, 'Participant identityKind');
+    requireEqual(contract.identity?.ref, args.identityRef, 'Participant identityRef');
+    requireEqual(contract.provenance?.source_system, args.sourceSystem, 'Participant sourceSystem');
+    requireEqual(contract.provenance?.source_revision, args.sourceRevision, 'Participant sourceRevision');
     if (!ctx.db.sharedField.fieldRef.find(args.fieldRef)) fail(`Unknown SharedField semantic ref: ${args.fieldRef}`);
     requireFieldOwner(ctx, args.fieldRef);
     const existing = ctx.db.participant.participantRef.find(args.participantRef);
@@ -401,6 +454,7 @@ export const grant_participant_authority = spacetimedb.reducer(
     participantRef: t.string(),
     targetIdentity: t.identity(),
     role: t.string(),
+    contactable: t.bool(),
     ttlSeconds: t.u32(),
   },
   (ctx, args) => {
@@ -414,13 +468,23 @@ export const grant_participant_authority = spacetimedb.reducer(
       participantRef: args.participantRef,
       actorIdentity: args.targetIdentity,
       role: args.role,
+      contactable: args.contactable,
       revoked: false,
       expiresAtMicros: args.ttlSeconds === 0 ? 0n : now + BigInt(args.ttlSeconds) * 1_000_000n,
       grantedAtMicros: now,
     };
+    clearAuthorityExpirySchedules(ctx, row.authorityKey);
     const existing = ctx.db.fieldAuthority.authorityKey.find(row.authorityKey);
     if (existing) ctx.db.fieldAuthority.authorityKey.update(row);
     else ctx.db.fieldAuthority.insert(row);
+    if (row.expiresAtMicros !== 0n) {
+      ctx.db.authorityExpiry.insert({
+        scheduledId: 0n,
+        scheduledAt: ScheduleAt.time(row.expiresAtMicros),
+        authorityKey: row.authorityKey,
+        expiresAtMicros: row.expiresAtMicros,
+      });
+    }
   }
 );
 
@@ -431,7 +495,8 @@ export const revoke_participant_authority = spacetimedb.reducer(
     const key = authorityKey(args.fieldRef, args.participantRef);
     const existing = ctx.db.fieldAuthority.authorityKey.find(key);
     if (!existing) fail(`No authority grant for Participant ${args.participantRef}`);
-    ctx.db.fieldAuthority.authorityKey.update({ ...existing, revoked: true });
+    clearAuthorityExpirySchedules(ctx, key);
+    ctx.db.fieldAuthority.authorityKey.delete(key);
   }
 );
 
@@ -447,7 +512,15 @@ export const put_projection = spacetimedb.reducer(
     contractJson: t.string(),
   },
   (ctx, args) => {
-    requireJsonObject(args.contractJson, 'Projection contract');
+    const contract = requireJsonObject(args.contractJson, 'Projection contract');
+    requireEqual(contract.projection_ref, args.projectionRef, 'Projection projectionRef');
+    requireEqual(contract.projection_revision, args.projectionRevision, 'Projection projectionRevision');
+    requireEqual(contract.source?.revision, args.sourceRevision, 'Projection sourceRevision');
+    requireEqual(contract.publisher_participant_ref, args.publisherParticipantRef, 'Projection publisherParticipantRef');
+    requireEqual(contract.state, args.state, 'Projection state');
+    if (contract.audience?.visibility !== 'public') {
+      fail('This hosted Projection table is the public-field floor; private audience requires caller-scoped content Views');
+    }
     requireParticipantInField(ctx, args.publisherParticipantRef, args.fieldRef);
     requireParticipantAuthority(ctx, args.fieldRef, args.publisherParticipantRef, ['contributor']);
     const expectedKey = `${args.projectionRef}@${args.projectionRevision}`;
@@ -493,7 +566,12 @@ export const put_explore_entry = spacetimedb.reducer(
     entryJson: t.string(),
   },
   (ctx, args) => {
-    requireJsonObject(args.entryJson, 'Explore entry');
+    const entry = requireJsonObject(args.entryJson, 'Explore entry');
+    requireEqual(entry.ref, args.semanticRef, 'Explore semanticRef');
+    requireEqual(entry.world_ref, args.worldRef, 'Explore worldRef');
+    requireEqual(entry.kind, args.kind, 'Explore kind');
+    requireEqual(entry.label, args.label, 'Explore label');
+    requireEqual(entry.revision ?? '', args.revision, 'Explore revision');
     requireFieldOwner(ctx, args.fieldRef);
     const existing = ctx.db.exploreEntry.semanticRef.find(args.semanticRef);
     if (existing) {
@@ -516,7 +594,11 @@ export const put_explore_relation = spacetimedb.reducer(
     relationJson: t.string(),
   },
   (ctx, args) => {
-    requireJsonObject(args.relationJson, 'Explore relation', 16_384);
+    const relation = requireJsonObject(args.relationJson, 'Explore relation', 16_384);
+    requireEqual(relation.from, args.fromRef, 'Explore relation fromRef');
+    requireEqual(relation.to, args.toRef, 'Explore relation toRef');
+    requireEqual(relation.relation, args.relation, 'Explore relation type');
+    requireEqual(relation.origin, args.origin, 'Explore relation origin');
     requireFieldOwner(ctx, args.fieldRef);
     const from = ctx.db.exploreEntry.semanticRef.find(args.fromRef);
     const to = ctx.db.exploreEntry.semanticRef.find(args.toRef);
@@ -546,7 +628,13 @@ export const put_watch = spacetimedb.reducer(
     contractJson: t.string(),
   },
   (ctx, args) => {
-    requireJsonObject(args.contractJson, 'Watch contract', 16_384);
+    const contract = requireJsonObject(args.contractJson, 'Watch contract', 16_384);
+    requireEqual(contract.watch_ref, args.watchRef, 'Watch watchRef');
+    requireEqual(contract.field_ref, args.fieldRef, 'Watch fieldRef');
+    requireEqual(contract.watcher_participant_ref, args.watcherParticipantRef, 'Watch watcherParticipantRef');
+    requireEqual(contract.target?.kind, args.targetKind, 'Watch targetKind');
+    requireEqual(contract.target?.ref, args.targetRef, 'Watch targetRef');
+    requireEqual(contract.state, args.state, 'Watch state');
     requireWatchState(args.state);
     requireParticipantInField(ctx, args.watcherParticipantRef, args.fieldRef);
     requireParticipantAuthority(ctx, args.fieldRef, args.watcherParticipantRef, ['observer', 'contact', 'contributor']);
@@ -590,7 +678,7 @@ export const request_contact = spacetimedb.reducer(
     requireParticipantInField(ctx, args.initiatorParticipantRef, args.fieldRef);
     requireParticipantInField(ctx, args.recipientParticipantRef, args.fieldRef);
     requireParticipantAuthority(ctx, args.fieldRef, args.initiatorParticipantRef, ['contact', 'contributor']);
-    authorityForParticipant(ctx, args.fieldRef, args.recipientParticipantRef);
+    authorityForContactRecipient(ctx, args.fieldRef, args.recipientParticipantRef);
 
     const policy = ctx.db.contactPolicy.policyKey.find(
       contactPolicyKey(args.fieldRef, args.recipientParticipantRef, args.initiatorParticipantRef)
