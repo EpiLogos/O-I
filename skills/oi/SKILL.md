@@ -2,11 +2,19 @@
 
 ## Purpose
 
-Use this skill when a user asks you to understand, install, inspect, compose, enter, disclose, project, or participate through a {O:I} system.
+Use this skill when a user asks you to understand, install, inspect, compose, enter, disclose, project, participate through, or develop a {O:I} system.
 
 {O:I} is the shared idea and composition layer around several product surfaces. It is not the place to reimplement the products.
 
 Your first job is to disclose the field clearly, preserve ownership boundaries, and route the work to the surface that owns it.
+
+When the task is to improve O:I or a native product **as part of the whole field**, use the sibling skill:
+
+```text
+skills/oi-relational-development/SKILL.md
+```
+
+That skill uses the canonical product field and the 12×12 relation data as O:I's developmental map of itself.
 
 ## Core idea
 
@@ -15,13 +23,13 @@ Your first job is to disclose the field clearly, preserve ownership boundaries, 
 Think in functional terms first:
 
 - persistent personal ground;
-- agent actuation;
+- situated agency and actuation;
 - capability and context resolution;
 - developmental agency;
 - material execution;
 - recursive formal intelligence.
 
-The current products that implement these functions are Central, Agent Runtime, AIKit, Software Factory, Workcell, and Quaternal Logic.
+The current products that implement these functions are **Central, Actuation, AIKit, Software Factory, Workcell, and Quaternal Logic**.
 
 Do not use a product name as a substitute for the function when explaining the architecture to a new user. Explain the need first. Name the product second.
 
@@ -155,33 +163,58 @@ Route requests according to the function they concern.
 
 ### Persistent personal ground and project control
 
-Use the registered control surface for human-authored Control, the personal directory structure, project placement, machine intent, and project adoption or migration.
+Use **Central** for human-authored Control, ordinary Work, the personal directory structure, machine intent, Actions, and native project/work placement concerns.
 
-### Agent actuation
+### Situated agency and actuation
 
-Use the configured agent runtime for loop behaviour, harness behaviour, framework behaviour, and runtime-specific sessions or recurrence.
+Use **Actuation** for Agent/Agency semantics, WorldBinding, AgenticComposition, determination/lineage, metagency, Return, and the canonical actuation/runtime research programme.
+
+An Agent can inhabit a Central world without residing in an Actuation-specific daemon. Actuation defines the agency relation; AIKit resolves operative body/session/surfaces; Workcell provides material actuality.
 
 ### Capability and context resolution
 
-Use the registered AIKit surface for skills, tools, Actions, ContextSources, models, harnesses, profiles, sessions, familiarity, local capability resolution, and composition-capable runtime bodies/surfaces.
+Use **AIKit** for skills, tools, Actions as available powers, ContextSources, models, HarnessComposition, profiles, AgentSessions, familiarity, capability resolution, knowledge navigation, and composition-capable runtime bodies/Surfaces.
 
 ### Developmental agency
 
-Use the Software Factory surface for durable Runs, Run Maps, Agents, Agencies, Artifacts, Claims, Evidence, Decisions, Candidates, and related developmental work.
+Use the **Software Factory** for durable Projects, Runs, Run Maps, Artifacts, Claims, Evidence, Decisions, Candidates, Recognition, and related developmental work. Factory can reference Agents/Agencies without becoming the generic owner of Agent/Agency semantics.
 
 ### Material execution
 
-Use the Workcell surface for workspaces, execution providers, project runtimes, services, bindings, containers, VMs, machines, capacity, and material lifecycle.
+Use **Workcell** for workspaces, execution providers, project runtimes, services, bindings, containers, VMs, machines, capacity, connectivity, placement, and material lifecycle.
 
 ### Recursive formal intelligence
 
-Use Quaternal Logic for executable QL/MEF semantics, refraction, formal operators, and related research machinery.
+Use **Quaternal Logic / QL-MEF** for executable QL/MEF semantics, pairing/conjugate grammar, Context Frames, refraction, formal operators, synthesis, and related research machinery.
 
 ### Whole-level shared relations
 
-Use the O:I shared-field layer when the request concerns selective disclosure between worlds, Participant relations, Projection, SharedField containment/federation, Contribution, Encounter, shared addressing, transport-neutral publication, or the future hosted field seam.
+Use the O:I shared-field layer when the request concerns selective disclosure between worlds, Participant relations, Projection, SharedField containment/federation, Contribution, Encounter, shared addressing, transport-neutral publication, or the hosted field seam.
 
 Do not move native product behaviour into O:I merely because the result will later be shared.
+
+## Holistic relational development
+
+When the request asks how O:I should evolve, what a product change implies elsewhere, or how the system can improve itself as a whole, do not improvise an architecture from memory.
+
+Use:
+
+```text
+docs/CANONICAL-PRODUCT-FIELD.md
+data/ql-relational-field.csv
+skills/oi-relational-development/SKILL.md
+```
+
+The relational-development skill tells you how to:
+
+- locate the development in `P0–P5` and `H/A` orientation;
+- inspect the relevant A/B/C, D1/D2/D3, fourfold, triadic, and Context-Frame relations;
+- distinguish a useful co-necessity from an unnecessary dependency;
+- inspect current native evidence before proposing work;
+- choose between no change, map update, ticket update, or native implementation;
+- return real architectural change to the living relation map.
+
+The map is a faculty for holistic developmental judgement. It is not a 144-cell backlog and not a second source of product truth.
 
 ## Use `oi` as a front door
 
@@ -228,7 +261,7 @@ Treat migration as adoption of an existing project into the personal working gro
 
 Preserve project and repository identity unless the user explicitly asks to create something new.
 
-At the {O:I} layer, gather the source path and target personal ground, then delegate the actual project-control operation to the registered control surface.
+At the {O:I} layer, gather the source path and target personal ground, then delegate the actual project-control operation to Central.
 
 A path change is not a new Project.
 
@@ -246,12 +279,18 @@ Use {O:I} as the canonical written form for the Idea and project. Use `oi` for t
 
 Before adding code to this repository, ask:
 
-> Does this change improve shared disclosure, installation, composition, migration, compatibility, cross-surface projection, shared-field participation, or handoff?
+> Does this change improve shared disclosure, installation, composition, migration, compatibility, whole-field relational legibility, cross-surface projection, shared-field participation, or handoff?
 
 If no, the change probably belongs in one of the product repositories.
+
+For a relational-development finding, ask:
+
+> Does the map reveal a real co-necessity, or only a formal relation which is already healthy as architectural distance?
+
+Do not create integration work merely to fill the map.
 
 For live shared-field backend concerns, ask a second question:
 
 > Is this portable O:I semantics, or service-specific implementation behind the Epi-Logos adapter?
 
-Keep portable identity / Projection / SharedField / Contribution / Encounter semantics in O:I. Keep SpaceTimeDB modules, live Presence implementation, recommendation policy, moderation machinery, and other hosted behaviour behind the future service boundary unless the portable contract genuinely requires a cross-transport extension.
+Keep portable identity / Projection / SharedField / Contribution / Encounter semantics in O:I. Keep SpaceTimeDB modules, live Presence implementation, recommendation policy, moderation machinery, and other hosted behaviour behind the service boundary unless the portable contract genuinely requires a cross-transport extension.
