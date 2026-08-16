@@ -39,12 +39,13 @@ jobs:
       - name: Install SpaceTimeDB CLI 2.7.1
         shell: bash
         run: |
-          curl -sSf https://install.spacetimedb.com | sh -s -- -y
+          curl -sSf https://install.spacetimedb.com | \
+            SPACETIME_DOWNLOAD_ROOT="https://github.com/clockworklabs/SpacetimeDB/releases/download/v2.7.1" \
+            sh -s -- -y
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           export PATH="$HOME/.local/bin:$PATH"
-          spacetime install 2.7.1
-          spacetime version use 2.7.1
-          spacetime --version
+          spacetime --version | tee /tmp/spacetimedb-version.txt
+          grep -q '2.7.1' /tmp/spacetimedb-version.txt
       - name: Build SpaceTimeDB shared-field module
         run: spacetime build --module-path shared-field/spacetimedb
       - name: Start local SpaceTimeDB
