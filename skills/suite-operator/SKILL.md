@@ -6,9 +6,9 @@ Use this O:I-owned Skill when operating the installed suite as a whole. It compo
 
 ## Profiles
 
-`oi.skillset/base` is the ordinary operating profile. `oi.skillset/root` is a distinct Root/world-bound profile and must only be projected for an Agency whose scope actually warrants it.
+`oi.skillset/base` is the ordinary operating profile. `oi.skillset/root` is the expanded world-bound/metagentic operating profile.
 
-Root profile membership does not itself grant a Capability or authorize an Action.
+`root` is a projection eligibility relation, **not an Agent kind**. It may be selected only after the calling context supplies an Actuation-owned positional root determination: an ordinary Agency is root for a scope because its `WorldBinding` binds it to that scope's enclosing Objective Internality. The SkillSet profile neither establishes Root Agency nor grants metagency.
 
 ```text
 Skill available
@@ -17,7 +17,29 @@ Skill available
   != authority to mutate authored Central source
 ```
 
-AIKit is the normal resolver/projector when installed. If AIKit is absent, O:I may derive only the minimal O:I/Central Skill projection from already-resolved authoritative local source. Derived files must retain source owner/revision and remain replaceable; they are never a second authoritative Skill body.
+An ordinary worker receives the smallest task-fit/native Skill or the base profile. Do not project the root profile merely because it exists in the suite catalog.
+
+## Native Skill ownership and gaps
+
+Every canonical procedural Skill remains owned by the product whose operation it teaches. The suite manifest points to authoritative native sources; it does not embed their bodies.
+
+If an installed product has not yet published the expected canonical Skill, keep that absence explicit as `awaiting_native_publication`. Do not invent an O:I source path, infer competence from an Action catalog, or copy product documentation into an O:I-owned replacement Skill.
+
+AIKit is the normal dynamic resolver/projector when installed. Its runtime/resource contracts remain AIKit-owned. O:I supplies suite composition, not a parallel capability resolver.
+
+## Minimal no-AIKit projection
+
+If AIKit is absent, O:I may derive only the minimum O:I/Central projection from authoritative native content already resolved by the caller.
+
+A derived projection records native owner, repository/path, exact source revision and a sidecar projection receipt. Update law is strict:
+
+1. a destination with no O:I receipt is local/user-owned and is never overwritten;
+2. an untouched O:I-derived copy may be replaced when its authoritative source revision/body changes;
+3. a locally edited derived copy is preserved and reported as conflict rather than overwritten;
+4. unchanged source/content is a no-op;
+5. removal deletes only an unmodified O:I-owned file/receipt pair.
+
+The local drift fingerprint is not a trust or security primitive. Encounter/admission/security authority remains separate.
 
 ## Extension workflow
 
@@ -37,7 +59,7 @@ A package permission declaration is disclosure/consent input. It is not a Capabi
 
 The desktop may render authoritative read models, canonical Action bindings and stable refs from native contributions. Selection propagation should carry the minimum stable subject ref required by the receiver rather than wholesale prompt/Context state.
 
-Read-only hosting is preferred before mutation. If a native adapter is not landed, surface `pending_native_adapter` explicitly and continue with other contributions.
+Read-only hosting is preferred before mutation. If a native adapter or native Skill is not landed, surface that gap explicitly and continue with other contributions.
 
 ## Cross-product ownership
 
