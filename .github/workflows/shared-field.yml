@@ -24,6 +24,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: ''
       - name: Run shared-field contract and Explore tests
         run: node --test shared-field/*.test.mjs
