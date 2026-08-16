@@ -1,55 +1,31 @@
 import { useEffect, useState } from 'react';
+// @ts-ignore -- this is the tested JS boundary over canonical shared-field contracts.
+import { selfOtherViewModel } from '../../self-other-read-model.mjs';
 import './self-other-portal.css';
 
-type ProvenanceEntry = {
-  kind: string;
-  ref: string;
-  source_system: string;
-  revision?: string;
-};
-
-type Participant = {
-  schema: 'oi.participant/v1';
+type PositionView = {
+  name: string;
+  kind: 'human' | 'agent';
+  identity_ref: string;
   participant_ref: string;
-  field_ref: string;
-  identity: {
-    kind: 'human' | 'agent';
+  source_system: string;
+  source_revision: string;
+};
+
+type SelfOtherView = {
+  field: {
     ref: string;
+    title: string;
+    kind: string;
   };
-  presentation?: {
-    chosen_name?: string;
-  };
-  provenance: {
-    source_system: string;
-    source_revision: string;
-    source_ref?: string;
-  };
-};
-
-type SharedField = {
-  schema: 'oi.shared-field/v1';
-  field_ref: string;
-  kind: string;
-  visibility: string;
-  title?: string;
-  provenance: ProvenanceEntry[];
-};
-
-type SelfOtherDemo = {
-  schema: 'oi.self-other-demo/v1';
-  field: SharedField;
-  self: Participant;
-  other: Participant;
+  self: PositionView;
+  other: PositionView;
 };
 
 type Position = 'self' | 'other';
 
-function participantName(participant: Participant) {
-  return participant.presentation?.chosen_name ?? participant.identity.ref;
-}
-
 export function SelfOtherPortal() {
-  const [data, setData] = useState<SelfOtherDemo | null>(null);
+  const [data, setData] = useState<SelfOtherView | null>(null);
   const [position, setPosition] = useState<Position>('self');
   const [failed, setFailed] = useState(false);
 
@@ -59,10 +35,11 @@ export function SelfOtherPortal() {
     fetch(`${import.meta.env.BASE_URL}data/self-other-demo.json`)
       .then((response) => {
         if (!response.ok) throw new Error(`Self/Other fixture returned ${response.status}`);
-        return response.json() as Promise<SelfOtherDemo>;
+        return response.json() as Promise<unknown>;
       })
       .then((value) => {
-        if (active) setData(value);
+        const view = selfOtherViewModel(value) as SelfOtherView;
+        if (active) setData(view);
       })
       .catch(() => {
         if (active) setFailed(true);
@@ -75,15 +52,15 @@ export function SelfOtherPortal() {
 
   if (failed) {
     return (
-      <div className="border-t border-current/20 py-8 text-sm uppercase tracking-[0.16em]" role="status">
-        Shared-field projection unavailable.
+      <div className="self-other-portal__status" role="status">
+        Shared-field proof unavailable.
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="border-t border-current/20 py-8 text-sm uppercase tracking-[0.16em]" role="status">
+      <div className="self-other-portal__status" role="status">
         Resolving shared field…
       </div>
     );
@@ -96,7 +73,7 @@ export function SelfOtherPortal() {
       className="self-other-portal"
       data-oi-surface="self-other"
       data-oi-state={position}
-      data-oi-field-ref={data.field.field_ref}
+      data-oi-field-ref={data.field.ref}
     >
       <div className="self-other-portal__positions" role="group" aria-label="Choose a field-relative position">
         <button
@@ -123,14 +100,14 @@ export function SelfOtherPortal() {
       <div className="self-other-portal__reading" aria-live="polite">
         <div>
           <div className="self-other-portal__label">{position}</div>
-          <div className="self-other-portal__name">{participantName(selected)}</div>
-          <div className="self-other-portal__kind">{selected.identity.kind}</div>
+          <div className="self-other-portal__name">{selected.name}</div>
+          <div className="self-other-portal__kind">{selected.kind}</div>
         </div>
 
         <dl className="self-other-portal__meta">
           <div>
             <dt>Identity</dt>
-            <dd>{selected.identity.ref}</dd>
+            <dd>{selected.identity_ref}</dd>
           </div>
           <div>
             <dt>Participant</dt>
@@ -138,19 +115,20 @@ export function SelfOtherPortal() {
           </div>
           <div>
             <dt>Field</dt>
-            <dd>{data.field.title ?? data.field.field_ref}</dd>
+            <dd>{data.field.title}</dd>
           </div>
           <div>
             <dt>Source</dt>
             <dd>
-              {selected.provenance.source_system} · {selected.provenance.source_revision}
+              {selected.source_system} · {selected.source_revision}
             </dd>
           </div>
         </dl>
       </div>
 
       <p className="self-other-portal__note">
-        The field relates these positions without owning either identity. Switch sides; the relation stays the same.
+        Self and Other are positions in one shared relation. Identity, field and source provenance remain inspectable as
+        the selected side changes.
       </p>
     </div>
   );

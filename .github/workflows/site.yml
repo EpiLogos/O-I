@@ -35,8 +35,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Verify projection contracts and browser adapter
-        run: node --test ../shared-field/shared-field.test.mjs projection-renderer.test.mjs
+      - name: Verify shared-field contracts and browser adapters
+        run: node --test ../shared-field/shared-field.test.mjs ../shared-field/social.test.mjs projection-renderer.test.mjs self-other-read-model.test.mjs
       - run: npm install --no-audit --no-fund
       - run: npm run build
       - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
