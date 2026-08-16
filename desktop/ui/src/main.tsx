@@ -203,7 +203,7 @@ function copyFor(destination: Destination) {
   return {
     home: 'A sparse local surface over the installed six-product field.',
     personal: 'Central-owned authored ground and Actuation-owned world-binding readings enter here without moving their semantics into O:I.',
-    build: 'Factory Build remains pending its source-faithful #144/#145 implementation; O:I shows that boundary rather than inventing it.',
+    build: 'Factory now publishes the source-faithful BuildSurface / FactoryBuildView contract. O:I can host its stable Project, Run, frontier, Candidate, Agency and Execution refs read-only while native package registration and live instance binding remain explicit lifecycle work.',
     explore: 'The current shared-field Explore read model is hostable now, with canonical refs independent of SpaceTimeDB transport IDs.',
     system: 'Registration, reachability and native contribution status are shown without inventing product-native health.',
   }[destination];
