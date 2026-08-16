@@ -34,7 +34,7 @@
       "availability": "ready",
       "provenance": {
         "source": "EpiLogos/Actuation#6",
-        "revision": "e4d78c831abce0eb7808aca517d1a1d633e4d4e8"
+        "revision": "b977939ec25c32b3dc8f5ed251b70e4c26933086"
       },
       "regions": ["inspector", "root_agent"],
       "read_model_ref": {
@@ -43,12 +43,12 @@
         "native_owner": "actuation",
         "provenance": {
           "source": "actuation.agency/v1",
-          "revision": "e4d78c831abce0eb7808aca517d1a1d633e4d4e8"
+          "revision": "b977939ec25c32b3dc8f5ed251b70e4c26933086"
         }
       },
       "accepted_selection_kinds": ["agency", "world_binding", "determination", "return"],
       "actions": [],
-      "detail": "Root Agency is positional; O:I does not introduce a RootAgent subtype."
+      "detail": "Consumes verified Actuation PR #6 head b977939ec25c32b3dc8f5ed251b70e4c26933086. Root Agency remains positional; O:I does not introduce a RootAgent subtype."
     },
     {
       "schema": "oi.desktop-host-reading/v1",
