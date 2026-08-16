@@ -14,7 +14,9 @@ pub use shell::{
     DesktopHost, RefProvenance, SemanticRef, ShellDestination, ShellSnapshot, SuiteCondition,
 };
 pub use skillset::{
-    resolve_skillset, write_direct_projection, AgentScope, AuthoritativeSkillRef,
-    DirectProjectionReceipt, EffectiveSkill, EffectiveSkillSet, SkillProfile, SkillProjectionMode,
-    SkillSource, SuiteSkillSetManifest,
+    remove_direct_projection, resolve_skillset, write_direct_projection,
+    write_direct_projection_with_state, AgentScope, AuthoritativeSkillRef, DirectProjectionReceipt,
+    DirectProjectionUpdate, EffectiveSkill, EffectiveSkillSet, ExpectedNativeSkill,
+    NativeSkillPublicationState, SkillProfile, SkillProjectionMode, SkillSource,
+    SuiteSkillSetManifest,
 };
