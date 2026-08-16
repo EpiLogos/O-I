@@ -71,14 +71,36 @@ The browser layer remains thin:
 ```text
 shared-field canonical contracts
         ↓
-site/self-other-read-model.mjs
+site read-model adapters
         ↓
-React presentation-only view model
+React presentation-only view models
 ```
 
-`self-other-read-model.mjs` validates the fixture through the canonical contracts and returns only the fields the visual component needs. `self-other-read-model.test.mjs` proves this boundary in CI alongside the shared-field and projection-renderer tests.
+`self-other-read-model.mjs` validates the field and canonical Human/Agent Participant fixtures through `validateParticipant()`, `validateSharedField()` and `selfOtherReadModel()`. Its tests also prove that the browser Self/Other fixtures are the same canonical Participant fixtures used by the shared-field acceptance suite.
+
+`field-proof-read-model.mjs` uses the existing `projectionViewModel()` plus canonical Contribution and Encounter validators. It proves the smallest object-centred chain requested by #12:
+
+```text
+Encountered Projection
+        ↓
+Contribution
+        ↓
+Contribution targeting that Contribution
+```
+
+The React components receive only presentation fields from those adapters. They do not own the underlying schemas or relation rules.
 
 `projection-renderer.mjs` remains the generic sparse Projection adapter and support proof. It is not a second application entry point.
+
+The exact site CI exercises:
+
+```text
+shared-field/shared-field.test.mjs
+shared-field/social.test.mjs
+site/projection-renderer.test.mjs
+site/self-other-read-model.test.mjs
+site/field-proof-read-model.test.mjs
+```
 
 The root stays general:
 
@@ -86,4 +108,4 @@ The root stays general:
 <main data-oi-surface="projection-root" data-oi-state="front-door">
 ```
 
-The Self / Other proof is subordinate to the front-door narrative and is explicitly fixture-backed. Live addressable worlds, search, hosting and wiki projection belong to the equal parallel Explore programme tracked by issue #18.
+The Self / Other and object-relation proofs are subordinate to the front-door narrative and explicitly fixture-backed. Live addressable worlds, search, hosting, wiki projection and richer world presentation belong to the equal parallel Explore programme tracked by issue #18.
