@@ -154,7 +154,10 @@ pub fn validate_manifest(manifest: &PackageManifest) -> Result<(), String> {
     let mut suite_products = BTreeSet::new();
     for requirement in &manifest.compatibility {
         nonempty("compatibility.product", &requirement.product)?;
-        validate_numeric_version("compatibility.minimum_version", &requirement.minimum_version)?;
+        validate_numeric_version(
+            "compatibility.minimum_version",
+            &requirement.minimum_version,
+        )?;
         if !suite_products.insert(requirement.product.as_str()) {
             return Err(format!(
                 "duplicate suite compatibility requirement for `{}`",
@@ -243,9 +246,10 @@ pub fn compatibility_report(
             ));
             let (observed_version, status) = match observed {
                 None => (None, CompatibilityStatus::Unavailable),
-                Some(contract) if !contract.available => {
-                    (Some(contract.version.clone()), CompatibilityStatus::Unavailable)
-                }
+                Some(contract) if !contract.available => (
+                    Some(contract.version.clone()),
+                    CompatibilityStatus::Unavailable,
+                ),
                 Some(contract)
                     if version_at_least(
                         &contract.version,
@@ -253,7 +257,10 @@ pub fn compatibility_report(
                     )
                     .unwrap_or(false) =>
                 {
-                    (Some(contract.version.clone()), CompatibilityStatus::Compatible)
+                    (
+                        Some(contract.version.clone()),
+                        CompatibilityStatus::Compatible,
+                    )
                 }
                 Some(contract) => (
                     Some(contract.version.clone()),
@@ -304,7 +311,10 @@ pub fn record_lifecycle_receipt(
         return Err("native lifecycle outcomes contain duplicate contribution refs".into());
     }
     if expected != observed {
-        return Err("native lifecycle outcomes must account for every package contribution exactly once".into());
+        return Err(
+            "native lifecycle outcomes must account for every package contribution exactly once"
+                .into(),
+        );
     }
 
     for outcome in &native_outcomes {
@@ -371,7 +381,8 @@ fn parse_numeric_version(value: &str) -> Result<Vec<u64>, &'static str> {
             if part.is_empty() || !part.bytes().all(|byte| byte.is_ascii_digit()) {
                 return Err("only dot-separated numeric versions are supported by package v1");
             }
-            part.parse::<u64>().map_err(|_| "version component overflow")
+            part.parse::<u64>()
+                .map_err(|_| "version component overflow")
         })
         .collect()
 }
