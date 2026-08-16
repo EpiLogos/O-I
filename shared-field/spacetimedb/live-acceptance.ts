@@ -7,6 +7,8 @@ import {
   projectionStorageKey,
   relationStorageRef,
 } from '../spacetimedb.mjs';
+import { createWatch } from '../watch.mjs';
+import { createSpacetimeWatchSource } from '../spacetimedb-watch.mjs';
 
 const URI = process.env.SPACETIMEDB_URI ?? 'ws://127.0.0.1:3000';
 const DATABASE = process.env.SPACETIMEDB_DATABASE ?? 'oi-shared-field-ci';
@@ -48,6 +50,7 @@ async function subscribe(conn: DbConnection): Promise<void> {
         tables.projection,
         tables.exploreEntry,
         tables.exploreRelation,
+        tables.watch,
       ]);
   });
 }
@@ -114,9 +117,14 @@ try {
   await subscribe(conn);
   const source = createSpacetimeExploreSource(conn.db);
   const live = createLiveExploreApplication(source);
+  const watchSource = createSpacetimeWatchSource(conn.db);
   let rebuilds = 0;
+  let watchEvents = 0;
   const stopListening = live.subscribe(event => {
     if (event.type === 'rebuild') rebuilds += 1;
+  });
+  const stopWatchListening = watchSource.subscribe(() => {
+    watchEvents += 1;
   });
 
   conn.reducers.putSharedField({
@@ -221,6 +229,56 @@ try {
   assert.ok(rebuilds > 0, 'at least one SpaceTimeDB cache event should rebuild Explore');
   assert.equal(live.status().healthy, true);
 
+  const watch = createWatch({
+    watch_ref: 'watch:participant:public:ariadne:agent:parasakti',
+    watcher_participant_ref: worldEntry.meta.participant_ref,
+    field_ref: field.field_ref,
+    target: { kind: 'agent', ref: agentEntry.ref },
+    created_at: '2026-08-16T19:00:00.000Z',
+    provenance: { source_system: 'o-i', source_revision: 'live-watch@1' },
+  });
+
+  conn.reducers.putWatch({
+    watchRef: watch.watch_ref,
+    fieldRef: watch.field_ref,
+    watcherParticipantRef: watch.watcher_participant_ref,
+    targetKind: watch.target.kind,
+    targetRef: watch.target.ref,
+    state: watch.state,
+    contractJson: JSON.stringify(watch),
+  });
+  const insertedWatch = await waitUntil(
+    () => conn.db.watch.watchRef.find(watch.watch_ref),
+    'Watch insertion'
+  );
+  const watchRowId = String(insertedWatch.rowId);
+  const hostedWatch = watchSource.snapshot()[0];
+  assert.equal(hostedWatch.watch.watch_ref, watch.watch_ref);
+  assert.equal(hostedWatch.watch.target.ref, agentEntry.ref);
+  assert.equal(hostedWatch.implementation.row_id, watchRowId);
+  assert.equal('trust' in hostedWatch.watch, false);
+  assert.equal('preference' in hostedWatch.watch, false);
+
+  const pausedWatch = { ...watch, state: 'paused' };
+  conn.reducers.putWatch({
+    watchRef: pausedWatch.watch_ref,
+    fieldRef: pausedWatch.field_ref,
+    watcherParticipantRef: pausedWatch.watcher_participant_ref,
+    targetKind: pausedWatch.target.kind,
+    targetRef: pausedWatch.target.ref,
+    state: pausedWatch.state,
+    contractJson: JSON.stringify(pausedWatch),
+  });
+  await waitUntil(
+    () => watchSource.snapshot()[0]?.watch.state === 'paused',
+    'Watch update subscription'
+  );
+  const updatedWatch = conn.db.watch.watchRef.find(watch.watch_ref);
+  assert.ok(updatedWatch, 'updated Watch row should exist');
+  assert.equal(String(updatedWatch.rowId), watchRowId, 'Watch implementation row must remain stable across semantic state update');
+  assert.equal(watchSource.snapshot()[0].watch.watch_ref, watch.watch_ref, 'Watch semantic ref must remain stable');
+  assert.ok(watchEvents >= 2, 'Watch insert and update should both arrive through the subscription cache');
+
   console.log(JSON.stringify({
     proof: 'oi-spacetimedb-live-explore/v1',
     database: DATABASE,
@@ -228,13 +286,19 @@ try {
     projection_count: String(conn.db.projection.count()),
     explore_entry_count: String(conn.db.exploreEntry.count()),
     relation_count: String(conn.db.exploreRelation.count()),
+    watch_count: String(conn.db.watch.count()),
     semantic_ref: semanticRef,
     implementation_row_id: beforeRowId,
     source_revision: live.snapshot().projections[0].source.revision,
     explore_revision: live.read(semanticRef)?.revision,
     rebuilds,
+    watch_ref: watch.watch_ref,
+    watch_implementation_row_id: watchRowId,
+    watch_state: watchSource.snapshot()[0].watch.state,
+    watch_events: watchEvents,
   }, null, 2));
 
+  stopWatchListening();
   stopListening();
   live.dispose();
 } finally {
