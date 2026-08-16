@@ -66,12 +66,12 @@
       "native_owner": "ai-kit",
       "target_contract": "aikit.session-space/v1",
       "availability": "degraded",
-      "provenance": {"source": "EpiLogos/ai-kit#68", "revision": "beae44c9b9f40565dcae24b4dceac91a3258bf44"},
+      "provenance": {"source": "EpiLogos/ai-kit#68", "revision": "b98f608fa4c49355f4c4d621e7df391f404d2e0f"},
       "regions": ["canvas", "navigator", "inspector", "command", "status"],
       "read_model_ref": null,
       "accepted_selection_kinds": ["session_space", "project", "agent_session", "component", "surface", "connection", "provider", "harness", "capability", "action"],
       "actions": [],
-      "detail": "Consumes the actual AIKit SessionSpace implementation at PR #68 head beae44c9b9f40565dcae24b4dceac91a3258bf44: durable session-space/... identity, aikit.session-space/v1, SessionSpaceReadModel, AgentSession/component/Surface/connection projections and explicit lifecycle/activation/connection states. SessionSpaceAuthorityState keeps capability availability, capability grant and Action authorisation separate; presence in a SessionSpace does not grant authority. O:I has no live SessionSpace instance binding yet and AIKit's exact head is not fully green, so this remains a degraded read-only contract rather than a fabricated Active workspace."
+      "detail": "Consumes the actual AIKit SessionSpace implementation at PR #68 head b98f608fa4c49355f4c4d621e7df391f404d2e0f: durable session-space/... identity, aikit.session-space/v1, SessionSpaceReadModel, AgentSession/component/Surface/connection projections and explicit lifecycle/activation/connection states. SessionSpaceAuthorityState keeps capability availability, capability grant and Action authorisation separate; presence in a SessionSpace does not grant authority. O:I has no live SessionSpace instance binding yet, so this remains a degraded read-only contract rather than a fabricated Active workspace."
     },
     {
       "schema": "oi.desktop-host-reading/v1",
@@ -79,12 +79,12 @@
       "native_owner": "ai-kit",
       "target_contract": "aikit.harness-composition-topology/v1",
       "availability": "degraded",
-      "provenance": {"source": "EpiLogos/ai-kit#68", "revision": "beae44c9b9f40565dcae24b4dceac91a3258bf44"},
+      "provenance": {"source": "EpiLogos/ai-kit#68", "revision": "b98f608fa4c49355f4c4d621e7df391f404d2e0f"},
       "regions": ["canvas", "inspector", "command"],
-      "read_model_ref": {"ref": "aikit:harness-composition-topology:deepseek-maximal", "kind": "harness_composition_topology", "native_owner": "ai-kit", "provenance": {"source": "crates/aikit-adapters/src/composition_topology.rs", "revision": "beae44c9b9f40565dcae24b4dceac91a3258bf44"}},
+      "read_model_ref": {"ref": "aikit:harness-composition-topology:deepseek-maximal", "kind": "harness_composition_topology", "native_owner": "ai-kit", "provenance": {"source": "crates/aikit-adapters/src/composition_topology.rs", "revision": "b98f608fa4c49355f4c4d621e7df391f404d2e0f"}},
       "accepted_selection_kinds": ["component", "surface", "harness_composition", "action"],
       "actions": [],
-      "detail": "Consumes AIKit PR #68's target-neutral nested Component topology as a read-model contract at current producer head beae44c9b9f40565dcae24b4dceac91a3258bf44. The same PR owns staged HarnessComposition mutation, ACP connection and terminal working-field projection. Rich UI, HumanCommand, Policy and LoopRuntime contributions remain target-native; O:I does not mount Cordis, reinterpret protocol commands as Actions, or create a desktop plugin ontology."
+      "detail": "Consumes AIKit PR #68's target-neutral nested Component topology as a read-model contract at producer head b98f608fa4c49355f4c4d621e7df391f404d2e0f. The same PR owns staged HarnessComposition mutation, ACP connection and terminal working-field projection. Rich UI, HumanCommand, Policy and LoopRuntime contributions remain target-native; O:I does not mount Cordis, reinterpret protocol commands as Actions, or create a desktop plugin ontology."
     }
   ]
 }
