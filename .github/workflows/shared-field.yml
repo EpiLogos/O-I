@@ -64,7 +64,7 @@ jobs:
           cat /tmp/spacetimedb.log
           exit 1
       - name: Publish live shared-field module
-        run: spacetime publish --server local --module-path shared-field/spacetimedb --delete-data always --yes oi-shared-field-ci
+        run: spacetime publish oi-shared-field-ci --server local --module-path shared-field/spacetimedb --yes=all
       - name: Generate current TypeScript client bindings
         run: spacetime generate --lang typescript --out-dir shared-field/spacetimedb/module_bindings --module-path shared-field/spacetimedb
       - name: Prove live subscription to rebuildable Explore index
