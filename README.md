@@ -71,6 +71,8 @@ The present {O:I} family has six centres. Each can stand on its own. Together th
 
 Together they form a possibility space rather than a fixed workflow. A useful {O:I} can be very small, and it can grow as new needs appear.
 
+[`docs/CANONICAL-PRODUCT-FIELD.md`](docs/CANONICAL-PRODUCT-FIELD.md) defines the six centres as one relational whole. It gives every centre a human-facing `P` position and an agent-facing conjugate `P′` position, then applies the canonical dyadic, triadic, fourfold, `3:3`, and `4+2` relations to product composition, research, and physical acceptance.
+
 ## A personal architecture
 
 {O:I} is aimed toward personal technological agency.
@@ -180,6 +182,7 @@ This gives the software architecture a direct relation to the wider Epi-Logos an
 This repository is the shared front door for the idea and the composed installation.
 
 - [`docs/VISION.md`](docs/VISION.md) — founding vision and research frame.
+- [`docs/CANONICAL-PRODUCT-FIELD.md`](docs/CANONICAL-PRODUCT-FIELD.md) — the six centres as a `6+6` human/agent conjugate field, with the harmonic relations used for composition, research, and acceptance.
 - [`docs/SURFACES.md`](docs/SURFACES.md) — the six project surfaces from the outside in.
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — the composition architecture.
 - [`docs/SHARED-FIELD.md`](docs/SHARED-FIELD.md) — local-first projection, participation, transport, and the shared relational field.
