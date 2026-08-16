@@ -61,6 +61,19 @@ const spacetimedb = schema({
       relationJson: t.string(),
     }
   ),
+  watch: table(
+    { public: true },
+    {
+      rowId: t.u64().primaryKey().autoInc(),
+      watchRef: t.string().unique(),
+      fieldRef: t.string().index('btree'),
+      watcherParticipantRef: t.string().index('btree'),
+      targetKind: t.string().index('btree'),
+      targetRef: t.string().index('btree'),
+      state: t.string(),
+      contractJson: t.string(),
+    }
+  ),
 });
 
 export default spacetimedb;
@@ -185,6 +198,37 @@ export const put_explore_relation = spacetimedb.reducer(
       ctx.db.exploreRelation.rowId.update({ ...existing, ...args });
     } else {
       ctx.db.exploreRelation.insert({ rowId: 0n, ...args });
+    }
+  }
+);
+
+export const put_watch = spacetimedb.reducer(
+  {
+    watchRef: t.string(),
+    fieldRef: t.string(),
+    watcherParticipantRef: t.string(),
+    targetKind: t.string(),
+    targetRef: t.string(),
+    state: t.string(),
+    contractJson: t.string(),
+  },
+  (ctx, args) => {
+    requireJsonObject(args.contractJson, 'Watch contract');
+    const participant = ctx.db.participant.participantRef.find(args.watcherParticipantRef);
+    if (!participant) {
+      throw new Error(`Unknown Watcher Participant semantic ref: ${args.watcherParticipantRef}`);
+    }
+    if (participant.fieldRef !== args.fieldRef) {
+      throw new Error(`Watch field must match watcher Participant field: ${participant.fieldRef}`);
+    }
+    if (!ctx.db.exploreEntry.semanticRef.find(args.targetRef)) {
+      throw new Error(`Unknown Watch target semantic ref: ${args.targetRef}`);
+    }
+    const existing = ctx.db.watch.watchRef.find(args.watchRef);
+    if (existing) {
+      ctx.db.watch.rowId.update({ ...existing, ...args });
+    } else {
+      ctx.db.watch.insert({ rowId: 0n, ...args });
     }
   }
 );
