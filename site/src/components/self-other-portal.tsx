@@ -13,6 +13,17 @@ type PositionView = {
   source_revision: string;
 };
 
+type PublicRootView = {
+  projection_ref: string;
+  title: string;
+  description: string;
+  source: string;
+  groups: Array<{
+    label: string;
+    items: Array<{ label: string; ref: string }>;
+  }>;
+};
+
 type SelfOtherView = {
   field: {
     ref: string;
@@ -20,6 +31,7 @@ type SelfOtherView = {
     kind: string;
   };
   self: PositionView;
+  self_public_root: PublicRootView;
   other: PositionView;
 };
 
@@ -127,6 +139,28 @@ export function SelfOtherPortal() {
             </div>
           </dl>
         </div>
+
+        {position === 'self' ? (
+          <section className="self-other-portal__public-root" aria-label="Selected public Participant Root">
+            <header>
+              <div>
+                <div className="self-other-portal__label">Selected public root</div>
+                <p>{data.self_public_root.description}</p>
+              </div>
+              <div className="self-other-portal__root-source">{data.self_public_root.source}</div>
+            </header>
+            <div className="self-other-portal__root-groups">
+              {data.self_public_root.groups.map((group) => (
+                <div key={group.label}>
+                  <span>{group.label}</span>
+                  {group.items.map((item) => (
+                    <strong key={item.ref}>{item.label}</strong>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <p className="self-other-portal__note">
           Self and Other are positions in one shared relation. Identity, field and source provenance remain inspectable as

@@ -17,14 +17,17 @@ test('Self / Other browser adapter is derived from canonical shared-field contra
   assert.equal(view.other.kind, 'agent');
   assert.equal(view.self.source_system, 'central');
   assert.equal(view.other.source_system, 'software-factory');
+  assert.deepEqual(view.self_public_root.groups.map((group) => group.label), ['Projects', 'Interests', 'Outputs']);
 });
 
-test('front-door Self and Other use the canonical golden Participant fixtures', async () => {
+test('front-door Self, public root and Other reuse the canonical golden fixtures', async () => {
   const fixture = JSON.parse(await readFile(fixtureUrl, 'utf8'));
   const golden = JSON.parse(await readFile(goldenUrl, 'utf8'));
 
   assert.deepEqual(fixture.self, golden.human_participant);
+  assert.deepEqual(fixture.self_root_projection, golden.human_participant_root_projection);
   assert.deepEqual(fixture.other, golden.agent_participant);
+  assert.equal(JSON.stringify(fixture.self_root_projection).includes('PRIVATE_'), false);
 });
 
 test('Self / Other adapter rejects a participant outside the selected field', async () => {
@@ -32,4 +35,11 @@ test('Self / Other adapter rejects a participant outside the selected field', as
   fixture.other.field_ref = 'oi:field:elsewhere';
 
   assert.throws(() => selfOtherViewModel(fixture), /selected SharedField/);
+});
+
+test('Self / Other adapter rejects a public root published by another participant', async () => {
+  const fixture = JSON.parse(await readFile(fixtureUrl, 'utf8'));
+  fixture.self_root_projection.publisher_participant_ref = 'participant:someone-else';
+
+  assert.throws(() => selfOtherViewModel(fixture), /selected Self Participant/);
 });

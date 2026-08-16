@@ -11,7 +11,7 @@
         "kind": "field-definition",
         "ref": "oi:field:public",
         "source_system": "oi",
-        "revision": "self-other-demo@2"
+        "revision": "self-other-demo@3"
       }
     ]
   },
@@ -30,6 +30,94 @@
       "source_system": "central",
       "source_revision": "central-fixture@7",
       "source_ref": "central:local-human"
+    }
+  },
+  "self_root_projection": {
+    "schema": "oi.projection/v1",
+    "projection_ref": "projection:ariadne:root",
+    "projection_revision": 1,
+    "state": "published",
+    "subject": {
+      "ref": "central:local-human#participant-root",
+      "kind": "central.participant-root"
+    },
+    "source": {
+      "system": "central",
+      "ref": "central:local-human",
+      "revision": "central-fixture@7"
+    },
+    "publisher_participant_ref": "participant:public:ariadne",
+    "published_at": "2026-08-15T12:00:00Z",
+    "audience": {
+      "visibility": "public"
+    },
+    "representation": {
+      "kind": "oi.sparse-representation/v1",
+      "payload": {
+        "schema": "oi.sparse-representation/v1",
+        "title": "Ariadne",
+        "description": "Building humane infrastructure for humans and agents to work together.",
+        "groups": [
+          {
+            "label": "Projects",
+            "items": [
+              {
+                "label": "{O:I}",
+                "description": "Operating infrastructure around situated agency.",
+                "href": "https://github.com/EpiLogos/O-I",
+                "ref": "project:o-i"
+              }
+            ]
+          },
+          {
+            "label": "Interests",
+            "items": [
+              {
+                "label": "Agentic engineering",
+                "ref": "interest:agentic-engineering"
+              }
+            ]
+          },
+          {
+            "label": "Outputs",
+            "items": [
+              {
+                "label": "O:I shared-field architecture",
+                "description": "A local-first projection and participation seam.",
+                "ref": "output:oi-shared-field"
+              }
+            ]
+          }
+        ],
+        "meta": [
+          {
+            "label": "Source",
+            "value": "central"
+          },
+          {
+            "label": "Revision",
+            "value": "central-fixture@7"
+          }
+        ]
+      }
+    },
+    "provenance": [
+      {
+        "kind": "human-identity",
+        "ref": "human:local-human",
+        "source_system": "central",
+        "revision": "central-fixture@7"
+      },
+      {
+        "kind": "central-participant-root",
+        "ref": "central:local-human#participant-root",
+        "source_system": "central",
+        "revision": "central-fixture@7"
+      }
+    ],
+    "transport": {
+      "kind": "static-file",
+      "locator": "shared-field/fixtures/golden.json#human_participant_root_projection"
     }
   },
   "other": {

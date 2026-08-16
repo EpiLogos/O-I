@@ -66,7 +66,9 @@
 .self-other-portal__label,
 .self-other-portal__kind,
 .self-other-portal__meta dt,
-.self-other-portal__note {
+.self-other-portal__note,
+.self-other-portal__root-source,
+.self-other-portal__root-groups span {
   font-size: var(--oi-type-xs);
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -76,7 +78,9 @@
 .self-other-portal__label,
 .self-other-portal__kind,
 .self-other-portal__meta dt,
-.self-other-portal__note {
+.self-other-portal__note,
+.self-other-portal__root-source,
+.self-other-portal__root-groups span {
   color: var(--oi-muted);
 }
 
@@ -108,6 +112,56 @@
   line-height: 1.5;
 }
 
+.self-other-portal__public-root {
+  padding: 1.6rem 0 2rem;
+  border-top: 1px solid var(--oi-rule);
+}
+
+.self-other-portal__public-root > header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2rem;
+  align-items: start;
+}
+
+.self-other-portal__public-root header p {
+  max-width: 42rem;
+  margin: 0.75rem 0 0;
+  color: var(--oi-muted);
+  font-size: 0.94rem;
+  line-height: 1.55;
+}
+
+.self-other-portal__root-source {
+  text-align: right;
+}
+
+.self-other-portal__root-groups {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 2rem;
+  border-top: 1px solid var(--oi-rule);
+}
+
+.self-other-portal__root-groups > div {
+  min-width: 0;
+  padding: 1.1rem 1.25rem 0 0;
+}
+
+.self-other-portal__root-groups > div + div {
+  padding-left: 1.25rem;
+  border-left: 1px solid var(--oi-rule);
+}
+
+.self-other-portal__root-groups strong {
+  display: block;
+  margin-top: 0.7rem;
+  overflow-wrap: anywhere;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
 .self-other-portal__note {
   max-width: 62rem;
   margin: 0;
@@ -125,11 +179,28 @@
   }
 
   .self-other-portal__reading,
-  .self-other-portal__meta {
+  .self-other-portal__meta,
+  .self-other-portal__public-root > header,
+  .self-other-portal__root-groups {
     grid-template-columns: 1fr;
   }
 
   .self-other-portal__reading {
     gap: 2rem;
+  }
+
+  .self-other-portal__root-source {
+    text-align: left;
+  }
+
+  .self-other-portal__root-groups > div,
+  .self-other-portal__root-groups > div + div {
+    padding: 1rem 0;
+    border-left: 0;
+    border-bottom: 1px solid var(--oi-rule);
+  }
+
+  .self-other-portal__root-groups > div:last-child {
+    border-bottom: 0;
   }
 }
