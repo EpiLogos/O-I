@@ -1,6 +1,6 @@
 {
   "schema": "oi.desktop-host-reading-fixtures/v1",
-  "verified_at": "2026-08-16",
+  "verified_at": "2026-08-17",
   "contributions": [
     {
       "schema": "oi.desktop-host-reading/v1",
@@ -84,14 +84,17 @@
       "schema": "oi.desktop-host-reading/v1",
       "contribution_ref": "factory.surface/build",
       "native_owner": "software-factory",
-      "target_contract": null,
-      "availability": "pending_native_adapter",
-      "provenance": {"source": "EpiLogos/agent-system-design#143", "revision": "issues/144-145-pending"},
-      "regions": ["canvas", "navigator", "inspector", "deep_drawer"],
+      "target_contract": "@epilogos/factory-build-surface@0.1.0:FactoryBuildView",
+      "availability": "degraded",
+      "provenance": {
+        "source": "EpiLogos/agent-system-design#146",
+        "revision": "2a1775e4ce251dcf01b4b1c621e0d56efe7195be"
+      },
+      "regions": ["canvas", "navigator", "inspector", "deep_drawer", "command"],
       "read_model_ref": null,
-      "accepted_selection_kinds": [],
+      "accepted_selection_kinds": ["project", "run", "frontier", "candidate", "claim", "evidence", "agency", "return", "execution", "harness_composition", "agent_session", "surface", "material_binding"],
       "actions": [],
-      "detail": "Factory #144/#145 source-parity and semantic-envelope implementations are not yet present; O:I does not recreate them."
+      "detail": "Consumes Factory PR #146's source-owned @epilogos/factory-build-surface contract: BuildSurface, FactoryBuildView and buildViewFromInterfaces, with source-fidelity SSSF trajectory optics and separate semantic/live/trajectory depths. Factory supplies Project/Run/frontier/Candidate/Claim/Evidence, Agency/Return and Execution owner refs and emits mutation intent dynamically as {actionRef, subjectRef}; O:I does not copy exemplar fixture state or mint Factory Action names. The source package is still private and O:I #21 has no native install/register lifecycle bridge, so no live FactoryBuildView instance is claimed in the desktop yet. Contract hosting is therefore degraded rather than pending or falsely full."
     },
     {
       "schema": "oi.desktop-host-reading/v1",
@@ -99,17 +102,23 @@
       "native_owner": "ai-kit",
       "target_contract": "aikit.harness-composition-topology/v1",
       "availability": "degraded",
-      "provenance": {"source": "EpiLogos/ai-kit#68", "revision": "8f821deabe2e8132d9817443f56046477fd68079"},
+      "provenance": {
+        "source": "EpiLogos/ai-kit#68",
+        "revision": "beae44c9b9f40565dcae24b4dceac91a3258bf44"
+      },
       "regions": ["canvas", "inspector", "command"],
       "read_model_ref": {
         "ref": "aikit:harness-composition-topology:deepseek-maximal",
         "kind": "harness_composition_topology",
         "native_owner": "ai-kit",
-        "provenance": {"source": "crates/aikit-adapters/src/composition_topology.rs", "revision": "8f821deabe2e8132d9817443f56046477fd68079"}
+        "provenance": {
+          "source": "crates/aikit-adapters/src/composition_topology.rs",
+          "revision": "beae44c9b9f40565dcae24b4dceac91a3258bf44"
+        }
       },
       "accepted_selection_kinds": ["component", "surface", "harness_composition", "action"],
       "actions": [],
-      "detail": "Consumes AIKit PR #68's target-neutral nested Component topology as a read-model contract at producer head 8f821deabe2e8132d9817443f56046477fd68079; the topology source blob remains 15755966443d50b2ba67089dc2f194190efa23e8. The same PR now stages desired HarnessComposition changes through AIKit's existing composition path while target activation remains NextSession without a live Cordis control channel; it also owns ACP connection and terminal working-field projection and explicitly leaves #61-#63 SessionSpace unimplemented. Rich UI, HumanCommand, Policy and LoopRuntime contributions remain target-native; O:I does not mount Cordis, reinterpret native commands as Actions, or create a desktop plugin ontology. Live adapter binding therefore remains degraded rather than ready."
+      "detail": "Consumes AIKit PR #68's target-neutral nested Component topology as a read-model contract at current producer head beae44c9b9f40565dcae24b4dceac91a3258bf44. The same PR owns staged HarnessComposition mutation, ACP connection and terminal working-field projection while #61-#63 SessionSpace remains explicitly unimplemented. Rich UI, HumanCommand, Policy and LoopRuntime contributions remain target-native/NextSession; O:I does not mount Cordis, reinterpret protocol commands as Actions, or create a desktop plugin ontology."
     }
   ]
 }
