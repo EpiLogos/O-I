@@ -292,8 +292,10 @@ fn local_skill_projection_edits_are_preserved_on_update_and_removal() {
 
 #[test]
 fn actual_suite_manifest_discloses_unpublished_native_skills_without_invented_paths() {
-    let manifest: SuiteSkillSetManifest =
-        serde_json::from_str(include_str!("../../skills/suite-operator/manifest.json")).unwrap();
+    let manifest: SuiteSkillSetManifest = serde_json::from_str(include_str!(
+        "../../../skills/suite-operator/manifest.json"
+    ))
+    .unwrap();
     let owners = manifest
         .skills
         .iter()
@@ -324,6 +326,12 @@ fn effective_skillset_is_one_serializable_read_model_for_desktop_and_tui() {
         serde_json::from_slice(&serde_json::to_vec(&effective).unwrap()).unwrap();
     assert_eq!(desktop, tui);
     assert_eq!(desktop["profile_ref"], "oi.skillset/root");
-    assert_eq!(desktop["skills"][0]["capability_grant_refs"], serde_json::json!([]));
-    assert_eq!(desktop["skills"][0]["action_authority_refs"], serde_json::json!([]));
+    assert_eq!(
+        desktop["skills"][0]["capability_grant_refs"],
+        serde_json::json!([])
+    );
+    assert_eq!(
+        desktop["skills"][0]["action_authority_refs"],
+        serde_json::json!([])
+    );
 }
