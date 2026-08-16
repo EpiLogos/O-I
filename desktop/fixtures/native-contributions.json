@@ -129,7 +129,7 @@
       "availability": "degraded",
       "provenance": {
         "source": "EpiLogos/ai-kit#68",
-        "revision": "4179160e4f32ecdbd93c1d7525a8f24067c55a3b"
+        "revision": "1e4a8be1bb703d2c3b462c5534564466a664c8a0"
       },
       "regions": ["canvas", "inspector", "command"],
       "read_model_ref": {
@@ -138,7 +138,7 @@
         "native_owner": "ai-kit",
         "provenance": {
           "source": "crates/aikit-adapters/src/composition_topology.rs",
-          "revision": "4179160e4f32ecdbd93c1d7525a8f24067c55a3b"
+          "revision": "1e4a8be1bb703d2c3b462c5534564466a664c8a0"
         }
       },
       "accepted_selection_kinds": ["component", "surface", "harness_composition", "action"],
