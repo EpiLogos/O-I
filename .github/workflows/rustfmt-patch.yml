@@ -1,4 +1,4 @@
-name: Rustfmt Patch
+name: Pre-local Test Diagnostics
 
 on:
   push:
@@ -8,18 +8,21 @@ permissions:
   contents: read
 
 jobs:
-  patch:
+  diagnostics:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt
-      - name: Format working tree
-        run: cargo fmt --manifest-path cli/Cargo.toml
-      - name: Capture patch
-        run: git diff --binary > "$RUNNER_TEMP/rustfmt.patch"
+      - name: Capture tests
+        shell: bash
+        run: |
+          set +e
+          cargo test --manifest-path cli/Cargo.toml --all-targets -- --nocapture > "$RUNNER_TEMP/test.log" 2>&1
+          printf '%s\n' "$?" > "$RUNNER_TEMP/test.status"
+          exit 0
       - uses: actions/upload-artifact@v4
         with:
-          name: rustfmt-patch
-          path: ${{ runner.temp }}/rustfmt.patch
+          name: prelocal-test-diagnostics
+          path: |
+            ${{ runner.temp }}/test.log
+            ${{ runner.temp }}/test.status
