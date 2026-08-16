@@ -44,6 +44,8 @@ jobs:
             sh -s -- -y
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           export PATH="$HOME/.local/bin:$PATH"
+          spacetime version install 2.7.1
+          spacetime version use 2.7.1
           spacetime --version | tee /tmp/spacetimedb-version.txt
           grep -q '2.7.1' /tmp/spacetimedb-version.txt
       - name: Build SpaceTimeDB shared-field module
