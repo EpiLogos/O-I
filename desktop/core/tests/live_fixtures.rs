@@ -73,16 +73,53 @@ fn live_host_reading_fixture_is_parseable_and_truthful_about_cross_product_seams
                 .iter()
                 .any(|action| action.action_ref == "personal.notify")
     }));
+
+    let factory = hosted
+        .iter()
+        .find(|entry| entry.contribution.native_owner == "software-factory")
+        .expect("Factory Build host reading must be present");
+    assert_eq!(
+        factory.contribution.availability,
+        ContributionAvailability::Degraded
+    );
+    assert_eq!(
+        factory.contribution.target_contract.as_deref(),
+        Some("@epilogos/factory-build-surface@0.1.0:FactoryBuildView")
+    );
+    assert_eq!(
+        factory.contribution.provenance.revision.as_deref(),
+        Some("2a1775e4ce251dcf01b4b1c621e0d56efe7195be")
+    );
+    for kind in [
+        "project",
+        "run",
+        "candidate",
+        "execution",
+        "agency",
+        "harness_composition",
+        "agent_session",
+        "material_binding",
+    ] {
+        assert!(factory
+            .contribution
+            .accepted_selection_kinds
+            .iter()
+            .any(|candidate| candidate == kind));
+    }
+    assert!(!factory
+        .contribution
+        .accepted_selection_kinds
+        .iter()
+        .any(|kind| kind == "session_space"));
+    assert!(factory.contribution.actions.is_empty());
+    assert!(factory.contribution.read_model_ref.is_none());
+
     assert!(hosted.iter().any(|entry| {
         entry.contribution.native_owner == "ai-kit"
             && entry.contribution.target_contract.as_deref()
                 == Some("aikit.harness-composition-topology/v1")
             && entry.contribution.provenance.revision.as_deref()
-                == Some("8f821deabe2e8132d9817443f56046477fd68079")
+                == Some("beae44c9b9f40565dcae24b4dceac91a3258bf44")
             && entry.contribution.availability == ContributionAvailability::Degraded
-    }));
-    assert!(hosted.iter().any(|entry| {
-        entry.contribution.native_owner == "software-factory"
-            && entry.contribution.availability == ContributionAvailability::PendingNativeAdapter
     }));
 }
