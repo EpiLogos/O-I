@@ -8,6 +8,7 @@ export * from './contact.mjs';
 export * from './a2a.mjs';
 export * from './a2a-lifecycle.mjs';
 export * from './a2a-explore.mjs';
+export * from './availability-notification.mjs';
 export * from './spacetimedb.mjs';
 export * from './spacetimedb-watch.mjs';
 export * from './spacetimedb-contact.mjs';
