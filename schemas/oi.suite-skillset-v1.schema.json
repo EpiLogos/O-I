@@ -27,10 +27,11 @@
     "profile": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["profile_ref", "purpose", "members"],
+      "required": ["profile_ref", "purpose", "scope", "members"],
       "properties": {
         "profile_ref": { "$ref": "#/$defs/ref" },
         "purpose": { "$ref": "#/$defs/ref" },
+        "scope": { "enum": ["ordinary", "root_world"] },
         "inherits": { "type": "array", "items": { "$ref": "#/$defs/ref" } },
         "members": {
           "type": "array",
