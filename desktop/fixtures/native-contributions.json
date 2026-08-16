@@ -72,36 +72,11 @@
       },
       "accepted_selection_kinds": ["personal_root", "control_root", "work_root", "proposal"],
       "actions": [
-        {
-          "action_ref": "personal.show",
-          "native_owner": "central",
-          "availability": "available",
-          "required_capability_ref": null
-        },
-        {
-          "action_ref": "control.propose-change",
-          "native_owner": "central",
-          "availability": "available",
-          "required_capability_ref": null
-        },
-        {
-          "action_ref": "control.review-proposal",
-          "native_owner": "central",
-          "availability": "available",
-          "required_capability_ref": null
-        },
-        {
-          "action_ref": "control.apply-proposal",
-          "native_owner": "central",
-          "availability": "available",
-          "required_capability_ref": null
-        },
-        {
-          "action_ref": "personal.notify",
-          "native_owner": "central",
-          "availability": "available",
-          "required_capability_ref": null
-        }
+        {"action_ref": "personal.show", "native_owner": "central", "availability": "available", "required_capability_ref": null},
+        {"action_ref": "control.propose-change", "native_owner": "central", "availability": "available", "required_capability_ref": null},
+        {"action_ref": "control.review-proposal", "native_owner": "central", "availability": "available", "required_capability_ref": null},
+        {"action_ref": "control.apply-proposal", "native_owner": "central", "availability": "available", "required_capability_ref": null},
+        {"action_ref": "personal.notify", "native_owner": "central", "availability": "available", "required_capability_ref": null}
       ],
       "detail": "Consumes Central PR #53's native Personal/root-world Action surface. Authored Control/Work remain filesystem-owned by Central; proposal is derived until explicit acceptance, and notification delivery is not human acknowledgement. O:I only hosts the reading and Action refs."
     },
@@ -111,10 +86,7 @@
       "native_owner": "software-factory",
       "target_contract": null,
       "availability": "pending_native_adapter",
-      "provenance": {
-        "source": "EpiLogos/agent-system-design#143",
-        "revision": "issues/144-145-pending"
-      },
+      "provenance": {"source": "EpiLogos/agent-system-design#143", "revision": "issues/144-145-pending"},
       "regions": ["canvas", "navigator", "inspector", "deep_drawer"],
       "read_model_ref": null,
       "accepted_selection_kinds": [],
@@ -127,23 +99,17 @@
       "native_owner": "ai-kit",
       "target_contract": "aikit.harness-composition-topology/v1",
       "availability": "degraded",
-      "provenance": {
-        "source": "EpiLogos/ai-kit#68",
-        "revision": "e8b16126715d9eb5b9f6352803d65767b147b4b7"
-      },
+      "provenance": {"source": "EpiLogos/ai-kit#68", "revision": "6d748e5149e879e7c6d13d7d701eb02c9eb824bd"},
       "regions": ["canvas", "inspector", "command"],
       "read_model_ref": {
         "ref": "aikit:harness-composition-topology:deepseek-maximal",
         "kind": "harness_composition_topology",
         "native_owner": "ai-kit",
-        "provenance": {
-          "source": "crates/aikit-adapters/src/composition_topology.rs",
-          "revision": "e8b16126715d9eb5b9f6352803d65767b147b4b7"
-        }
+        "provenance": {"source": "crates/aikit-adapters/src/composition_topology.rs", "revision": "6d748e5149e879e7c6d13d7d701eb02c9eb824bd"}
       },
       "accepted_selection_kinds": ["component", "surface", "harness_composition", "action"],
       "actions": [],
-      "detail": "Consumes AIKit PR #68's current target-neutral nested Component topology as a read-model contract; the topology implementation blob is unchanged across the live head advance. The same PR now also owns ACP connection and terminal working-field projection, still without #61-#63 SessionSpace. Rich UI, HumanCommand, Policy and LoopRuntime contributions remain target-native and NextSession; O:I does not mount Cordis, reinterpret native commands as Actions, or create a desktop plugin ontology. Live adapter binding therefore remains degraded rather than ready."
+      "detail": "Consumes AIKit PR #68's current target-neutral nested Component topology as a read-model contract; the contract remains aikit.harness-composition-topology/v1 at the current head. The same PR owns ACP connection and terminal working-field projection while explicitly leaving #61-#63 SessionSpace unimplemented. Rich UI, HumanCommand, Policy and LoopRuntime contributions remain target-native and NextSession; O:I does not mount Cordis, reinterpret native commands as Actions, or create a desktop plugin ontology. Live adapter binding therefore remains degraded rather than ready."
     }
   ]
 }
