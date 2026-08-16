@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { DbConnection, tables } from './module_bindings/index';
+import { refineProjection } from '../projection-refinement.mjs';
 import {
   createLiveExploreApplication,
   createSpacetimeExploreSource,
@@ -165,6 +166,45 @@ try {
     'Projection insertion'
   );
 
+  const refinedProjection = refineProjection(projection, {
+    publisher_participant_ref: worldEntry.meta.participant_ref,
+    published_at: '2026-08-16T19:05:00.000Z',
+    representation: {
+      kind: 'explore-entry',
+      ref: projectionEntry.ref,
+      payload: { summary: 'Human-refined public wording.' },
+    },
+    provenance: [
+      {
+        kind: 'human-refinement',
+        ref: worldEntry.meta.participant_ref,
+        source_system: 'o-i',
+        revision: 'refinement@1',
+      },
+    ],
+  });
+  conn.reducers.putProjection({
+    projectionKey: projectionStorageKey(refinedProjection.projection_ref, refinedProjection.projection_revision),
+    projectionRef: refinedProjection.projection_ref,
+    projectionRevision: refinedProjection.projection_revision,
+    sourceRevision: refinedProjection.source.revision,
+    publisherParticipantRef: refinedProjection.publisher_participant_ref,
+    state: refinedProjection.state,
+    contractJson: JSON.stringify(refinedProjection),
+  });
+  await waitUntil(
+    () => conn.db.projection.projectionKey.find(projectionStorageKey(refinedProjection.projection_ref, refinedProjection.projection_revision)),
+    'refined Projection insertion'
+  );
+  const hostedR1 = conn.db.projection.projectionKey.find(projectionStorageKey(projection.projection_ref, 1));
+  const hostedR2 = conn.db.projection.projectionKey.find(projectionStorageKey(projection.projection_ref, 2));
+  assert.ok(hostedR1 && hostedR2, 'both Projection revisions must remain addressable');
+  assert.notEqual(String(hostedR1.rowId), String(hostedR2.rowId), 'Projection revisions are distinct hosted rows');
+  assert.equal(hostedR1.sourceRevision, 'run:explore@1');
+  assert.equal(hostedR2.sourceRevision, 'run:explore@1', 'human refinement must not rewrite canonical source revision');
+  assert.equal(refinedProjection.supersedes.projection_revision, 1);
+  assert.equal(refinedProjection.publisher_participant_ref, worldEntry.meta.participant_ref);
+
   for (const entry of fixture.entries) {
     conn.reducers.putExploreEntry({
       semanticRef: entry.ref,
@@ -225,7 +265,11 @@ try {
   assert.equal(live.search('navigation live')[0]?.ref, semanticRef, 'updated label should enter rebuilt deterministic search');
   assert.equal(live.open(semanticRef, { depth: 1, budget: 8 })?.relations.focus, semanticRef);
   assert.equal(live.read('projection:parasakti:explore-note')?.meta.source_revision, 'run:explore@1');
-  assert.equal(live.snapshot().projections[0].source.revision, 'run:explore@1');
+  const projectedR2 = live.snapshot().projections.find(item => item.projection_revision === 2);
+  assert.ok(projectedR2, 'refined Projection should remain in hosted snapshot');
+  assert.equal(projectedR2.source.revision, 'run:explore@1');
+  assert.equal(projectedR2.publisher_participant_ref, worldEntry.meta.participant_ref);
+  assert.ok(projectedR2.provenance.some(item => item.kind === 'human-refinement'));
   assert.ok(rebuilds > 0, 'at least one SpaceTimeDB cache event should rebuild Explore');
   assert.equal(live.status().healthy, true);
 
@@ -289,9 +333,11 @@ try {
     watch_count: String(conn.db.watch.count()),
     semantic_ref: semanticRef,
     implementation_row_id: beforeRowId,
-    source_revision: live.snapshot().projections[0].source.revision,
+    source_revision: projectedR2.source.revision,
     explore_revision: live.read(semanticRef)?.revision,
     rebuilds,
+    refined_projection_revision: projectedR2.projection_revision,
+    refined_projection_publisher_participant_ref: projectedR2.publisher_participant_ref,
     watch_ref: watch.watch_ref,
     watch_implementation_row_id: watchRowId,
     watch_state: watchSource.snapshot()[0].watch.state,
