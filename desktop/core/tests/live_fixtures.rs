@@ -88,7 +88,7 @@ fn live_host_reading_fixture_is_parseable_and_truthful_about_cross_product_seams
     );
     assert_eq!(
         factory.contribution.provenance.revision.as_deref(),
-        Some("95bd5425de6f6d4a355ad6260ca2e1d74e28bf04")
+        Some("a57e2011149728891e5cc1a0264ba4b3ebe021c5")
     );
     for kind in [
         "project",
