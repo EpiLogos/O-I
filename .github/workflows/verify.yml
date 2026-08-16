@@ -60,6 +60,19 @@ jobs:
           oi ctrl action list --json > "$RUNNER_TEMP/actions.json"
           oi init --personal-ground "$HOME/Central"
 
+          oi snapshot --output "$RUNNER_TEMP/suite.json"
+          set +e
+          oi verify \
+            --snapshot "$RUNNER_TEMP/suite.json" \
+            --receipt "$RUNNER_TEMP/receipt.json" \
+            --json > "$RUNNER_TEMP/verify.json"
+          VERIFY_EXIT=$?
+          set -e
+          if [ "$VERIFY_EXIT" -ne 3 ]; then
+            echo "partial Central pre-local verification returned $VERIFY_EXIT, expected 3"
+            exit 1
+          fi
+
           mkdir -p "$HOME/existing/demo/.git"
           printf '%s\n' 'ref: refs/heads/main' > "$HOME/existing/demo/.git/HEAD"
           printf '%s\n' 'ordinary work' > "$HOME/existing/demo/work.txt"
@@ -73,7 +86,15 @@ jobs:
           fi
           test -f "$HOME/another/demo/work.txt"
 
-          python3 - "$HOME/Central" "$OI_HOME/composition.json" "$RUNNER_TEMP/status.json" "$RUNNER_TEMP/doctor.json" "$RUNNER_TEMP/actions.json" <<'PY'
+          python3 - \
+            "$HOME/Central" \
+            "$OI_HOME/composition.json" \
+            "$RUNNER_TEMP/status.json" \
+            "$RUNNER_TEMP/doctor.json" \
+            "$RUNNER_TEMP/actions.json" \
+            "$RUNNER_TEMP/suite.json" \
+            "$RUNNER_TEMP/verify.json" \
+            "$RUNNER_TEMP/receipt.json" <<'PY'
           import json
           import pathlib
           import sys
@@ -83,6 +104,9 @@ jobs:
           status = json.load(open(sys.argv[3]))
           doctor = json.load(open(sys.argv[4]))
           actions = json.load(open(sys.argv[5]))
+          suite = json.load(open(sys.argv[6]))
+          verify = json.load(open(sys.argv[7]))
+          receipt = json.load(open(sys.argv[8]))
 
           required = ["Control/user", "Control/agents", "Control/machines", ".central", "Work"]
           for relative in required:
@@ -102,6 +126,22 @@ jobs:
           assert doctor["status"] == "success" and doctor["data"]["valid"] is True
           ids = {item["id"] for item in actions["data"]["actions"]}
           assert {"action.list", "central.init", "central.doctor"} <= ids
+
+          assert suite["kind"] == "oi.suite-snapshot/v1"
+          assert suite["completeness"] == "partial-or-unaccepted"
+          assert [item["id"] for item in suite["surfaces"]] == ["central"]
+          assert suite["surfaces"][0]["selection"]["value"] == central["version"]
+          assert suite["surfaces"][0]["mainline_accepted"] is False
+
+          assert verify["kind"] == "oi.composition-receipt/v1"
+          assert verify["environment"] == "pre-local"
+          assert verify["result"] == "incomplete"
+          central_verify = next(item for item in verify["surfaces"] if item["id"] == "central")
+          assert central_verify["status"] == "passed"
+          assert central_verify["verification_operation"] == "central.doctor"
+          assert central_verify["evidence"]["exit_code"] == 0
+          assert json.loads(central_verify["evidence"]["stdout"])["data"]["valid"] is True
+          assert receipt == verify
 
           migrated = root / "Work/demo"
           assert (migrated / ".git/HEAD").read_text().strip() == "ref: refs/heads/main"
