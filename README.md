@@ -35,19 +35,19 @@ The present {O:I} family has six centres. Each can stand on its own.
 | Function in the whole | Project | What it opens |
 |---|---|---|
 | Persistent personal ground | [**Central**](https://github.com/EpiLogos/Central) | Human-authored Control, ordinary Work, machine intent, recovery, and durable Actions/Connectors. |
-| Agent actuation | [**Agent Runtime experiments**](https://github.com/EpiLogos/agent-system-design/issues/94) | The LLM in act, from bare loops through frameworks and harnesses. |
-| Capability and context resolution | [**AIKit**](https://github.com/EpiLogos/ai-kit) | The agent-use layer for tools, skills, Actions, sources, models, sessions, and context. |
-| Developmental agency | [**Software Factory**](https://github.com/EpiLogos/agent-system-design) | Durable project development through Runs, Agents, evidence, candidates, and reusable patterns of work. |
-| Material execution | [**Workcell**](https://github.com/EpiLogos/Workcell) | The computational worlds in which agency becomes materially situated and executable. |
-| Recursive formal intelligence | [**Quaternal Logic**](https://github.com/EpiLogos/QL-MEF) | The formal and semantic research layer for recursive reasoning, refraction, and deeper structural experiment. |
+| Agent actuation | [**Actuation**](https://github.com/EpiLogos/Actuation) | Agent actuation plus model, harness, agent-instance and agency research, including the migrated QL runtime experiment line. |
+| Capability and context resolution | [**AIKit**](https://github.com/EpiLogos/ai-kit) | Capabilities, context, models, profiles, Skills/tools, HarnessComposition, sessions, and Surface resolution. |
+| Developmental agency | [**Software Factory**](https://github.com/EpiLogos/agent-system-design) | Durable Project, Run, evidence, candidate, repair, and ExecutionDisposition semantics. |
+| Material execution | [**Workcell**](https://github.com/EpiLogos/Workcell) | Processes, services, storage, network/fabric, lifecycle, and the material worlds in which agency becomes executable. |
+| Recursive formal intelligence | [**Quaternal Logic**](https://github.com/EpiLogos/QL-MEF) | The formal QL/MEF system, operators, refraction, and structural research surfaces. |
 
 Together they form a possibility space rather than a fixed workflow.
 
 ## `oi`
 
-`oi` is the simple entry command for the composed system. It helps a human or agent see what is available, install/register the native surfaces with published contracts, and reach them through one memorable namespace.
+`oi` is the simple entry command for the composed system. It helps a human or agent see what is available, install/register the native surfaces with published contracts, reach them through one memorable namespace, and verify an exact composed candidate without absorbing native product behaviour.
 
-The base personal encounter is now executable:
+The base personal encounter is executable:
 
 ```sh
 bash cli/install.sh
@@ -68,20 +68,29 @@ oi migrate /path/to/existing-work-tree
 
 This preserves the work tree as it is and does not create a new Factory/Project identity.
 
+For suite convergence and pre-local acceptance, O:I can represent and verify a frozen composition candidate:
+
+```sh
+oi snapshot --output suite.json
+noi verify --snapshot suite.json --receipt receipt.json --json
+```
+
+A Suite Snapshot records exact selected product revisions and accepted composition facts. A Composition Receipt records what O:I observed and which declared native verification operations actually ran. Partial suites remain legal and explicit. O:I never turns command reachability into product acceptance, never silently promotes a branch to accepted mainline, and never claims physical/provider evidence that has not occurred.
+
 The native projects remain independently usable. `oi ctrl ...` and `oi kit ...` are transparent aliases over the native commands that actually exist today.
 
 ## Research and shared field
 
 {O:I} is also a research proposal about the engineering space around a fixed or available model and about Objective Internality: the ways an actor's effective interior can be objectively externalised and re-entered as context, capability, memory, world, and orientation.
 
-The later local-first shared-field/research-commons programme is developed separately under its own issues and PR. It is not a prerequisite for this original bootstrap front door.
+The local-first shared-field/research-commons programme is developed separately under its own issues and PRs. It is not a prerequisite for the original composition, verification, or local-acceptance programme.
 
 ## Start here
 
 - [`docs/VISION.md`](docs/VISION.md) — founding vision and research frame.
 - [`docs/SURFACES.md`](docs/SURFACES.md) — the six product surfaces from the outside in.
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — the composition architecture.
-- [`docs/CLI.md`](docs/CLI.md) — the `oi` command surface.
+- [`docs/CLI.md`](docs/CLI.md) — the `oi` command and pre-local verification surface.
 - [`docs/INSTALL.md`](docs/INSTALL.md) — installation and composition.
 - [`docs/MIGRATION.md`](docs/MIGRATION.md) — safe placement of existing ordinary work.
 - [`docs/RESEARCH.md`](docs/RESEARCH.md) — the agency-potentiation research programme.
