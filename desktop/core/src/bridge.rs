@@ -12,13 +12,15 @@ pub enum BridgeCaller {
 #[serde(rename_all = "snake_case")]
 pub enum BridgeCallClass {
     DiscloseComposition,
+    DiscloseContributions,
     SelectSemanticRef,
     OpenDestination,
 }
 
 impl BridgeCallClass {
-    pub const ALL: [Self; 3] = [
+    pub const ALL: [Self; 4] = [
         Self::DiscloseComposition,
+        Self::DiscloseContributions,
         Self::SelectSemanticRef,
         Self::OpenDestination,
     ];
@@ -38,9 +40,10 @@ impl fmt::Display for BridgeDenied {
 
 impl std::error::Error for BridgeDenied {}
 
-/// D0 bridge policy. The only privileged caller is the root shell UI. Rich or
-/// third-party contribution code receives no native bridge authority merely by
-/// being rendered; D1 may add narrowly scoped native Action bindings later.
+/// Root-shell bridge policy. Third-party/rich contributions are currently hosted
+/// only as declarative read models. They are never loaded as code into this
+/// privileged caller boundary and therefore receive no bridge authority merely
+/// by being present in a Surface catalog.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct BridgePolicy;
 
