@@ -100,10 +100,12 @@ impl SuiteCompositionDisclosure {
 pub fn live_disclosure() -> Result<SuiteCompositionDisclosure, String> {
     let path = state_path()?;
     let composition_json = if path.exists() {
-        Some(
-            fs::read_to_string(&path)
-                .map_err(|error| format!("cannot read composition state {}: {error}", path.display()))?,
-        )
+        Some(fs::read_to_string(&path).map_err(|error| {
+            format!(
+                "cannot read composition state {}: {error}",
+                path.display()
+            )
+        })?)
     } else {
         None
     };
@@ -129,7 +131,10 @@ where
     let catalog: Catalog = serde_json::from_str(catalog_json)
         .map_err(|error| format!("surface catalog is invalid: {error}"))?;
     if catalog.schema != 1 {
-        return Err(format!("unsupported surface catalog schema {}", catalog.schema));
+        return Err(format!(
+            "unsupported surface catalog schema {}",
+            catalog.schema
+        ));
     }
 
     let composition = match composition_json {
@@ -137,7 +142,10 @@ where
             let value: Composition = serde_json::from_str(input)
                 .map_err(|error| format!("composition state is invalid: {error}"))?;
             if value.schema != STATE_SCHEMA {
-                return Err(format!("unsupported composition schema {}", value.schema));
+                return Err(format!(
+                    "unsupported composition schema {}",
+                    value.schema
+                ));
             }
             value
         }
