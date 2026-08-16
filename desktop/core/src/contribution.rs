@@ -2,7 +2,10 @@ use crate::{RefProvenance, SemanticRef};
 use oi_cli::package::{validate_manifest, PackageManifest};
 use serde::{Deserialize, Serialize};
 
-const CONTRIBUTION_SCHEMA: &str = "oi.desktop-native-contribution/v1";
+/// O:I-owned presentation adapter envelope. This is a read model over a
+/// product-native contribution/Surface contract, not a plugin or Component
+/// ontology and not an activation mechanism.
+const HOST_READING_SCHEMA: &str = "oi.desktop-host-reading/v1";
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -191,21 +194,21 @@ pub fn authorize_action(
 }
 
 fn validate_reading(contribution: &NativeContributionReading) -> Result<(), String> {
-    if contribution.schema != CONTRIBUTION_SCHEMA {
+    if contribution.schema != HOST_READING_SCHEMA {
         return Err(format!(
-            "unsupported desktop contribution schema `{}`",
+            "unsupported desktop host-reading schema `{}`",
             contribution.schema
         ));
     }
     if contribution.contribution_ref.trim().is_empty() || contribution.native_owner.trim().is_empty() {
-        return Err("native contribution requires stable contribution_ref and native_owner".into());
+        return Err("host reading requires stable native contribution_ref and native_owner".into());
     }
     if contribution.availability == ContributionAvailability::Ready {
         if contribution.target_contract.as_deref().is_none_or(str::is_empty) {
-            return Err("ready contribution requires an observed native target contract".into());
+            return Err("ready host reading requires an observed native target contract".into());
         }
         if contribution.read_model_ref.is_none() && contribution.actions.is_empty() {
-            return Err("ready contribution must expose a Reading and/or canonical Action binding".into());
+            return Err("ready host reading must expose a Reading and/or canonical Action binding".into());
         }
     }
     for action in &contribution.actions {
