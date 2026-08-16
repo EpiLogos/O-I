@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@epilogos/oi-design-system": "file:../packages/oi-design-system",
     "@studio-freight/lenis": "^1.0.42",
     "clsx": "^2.1.1",
     "gsap": "^3.12.5",

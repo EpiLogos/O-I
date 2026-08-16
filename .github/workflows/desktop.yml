@@ -1,0 +1,72 @@
+name: O:I desktop
+
+on:
+  pull_request:
+    paths:
+      - 'desktop/**'
+      - 'packages/oi-design-system/**'
+      - 'site/**'
+      - 'cli/src/status.rs'
+      - 'cli/src/lib.rs'
+      - 'cli/tests/desktop_status.rs'
+      - '.github/workflows/desktop.yml'
+  push:
+    branches:
+      - agent/oi-desktop-surface-host
+    paths:
+      - 'desktop/**'
+      - 'packages/oi-design-system/**'
+      - 'site/**'
+      - 'cli/src/status.rs'
+      - 'cli/src/lib.rs'
+      - 'cli/tests/desktop_status.rs'
+      - '.github/workflows/desktop.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Verify O:I CLI library and desktop core
+        run: |
+          cargo fmt --manifest-path cli/Cargo.toml -- --check
+          cargo test --manifest-path cli/Cargo.toml --all-targets
+          cargo clippy --manifest-path cli/Cargo.toml --all-targets -- -D warnings
+          cargo fmt --manifest-path desktop/core/Cargo.toml -- --check
+          cargo test --manifest-path desktop/core/Cargo.toml --all-targets
+          cargo clippy --manifest-path desktop/core/Cargo.toml --all-targets -- -D warnings
+
+  presentation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build public front door against shared tokens
+        run: |
+          npm install --prefix site --no-audit --no-fund
+          npm --prefix site run build
+      - name: Build desktop rendered layer
+        run: |
+          npm install --prefix desktop/ui --no-audit --no-fund
+          npm --prefix desktop/ui run build
+      - name: Preserve Explore contract regression
+        run: node --test shared-field/*.test.mjs
+
+  native-shell:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install rendered-layer dependencies
+        run: npm install --prefix desktop/ui --no-audit --no-fund
+      - name: Check Rust-owned native shell
+        run: cargo check --manifest-path desktop/src-tauri/Cargo.toml
