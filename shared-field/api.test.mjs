@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as api from './api.mjs';
 
-test('unified shared-field API exposes projection, shared-agency, Explore, Watch, Contact and hosted-state floors', () => {
+test('unified shared-field API exposes projection, shared-agency, Explore, Watch, Contact, availability notification and hosted-state floors', () => {
   for (const name of [
     'createParticipant',
     'createProjection',
@@ -21,6 +21,12 @@ test('unified shared-field API exposes projection, shared-agency, Explore, Watch
     'validateWatch',
     'createContact',
     'validateContact',
+    'deriveWatchAvailabilityEvents',
+    'availabilityEncounter',
+    'createNotificationDecision',
+    'createCentralPersonalNotifyInvocation',
+    'validateCentralPersonalNotifyDelivery',
+    'createWatchAvailabilityRuntime',
     'hostedSnapshotFromRows',
     'createSpacetimeExploreSource',
     'createLiveExploreApplication',
@@ -44,4 +50,8 @@ test('unified shared-field API exposes projection, shared-agency, Explore, Watch
   assert.equal(api.EXPLORE_RESULT_SCHEMA, 'oi.explore-result/v1');
   assert.equal(api.WATCH_SCHEMA, 'oi.watch/v1');
   assert.equal(api.CONTACT_SCHEMA, 'oi.contact/v1');
+  assert.equal(api.AVAILABILITY_EVENT_SCHEMA, 'oi.availability-event/v1');
+  assert.equal(api.NOTIFICATION_DECISION_SCHEMA, 'oi.notification-decision/v1');
+  assert.equal(api.NOTIFICATION_DELIVERY_SCHEMA, 'oi.notification-delivery/v1');
+  assert.equal(api.CENTRAL_PERSONAL_NOTIFY_ACTION, 'personal.notify');
 });
