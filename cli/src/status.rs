@@ -101,10 +101,7 @@ pub fn live_disclosure() -> Result<SuiteCompositionDisclosure, String> {
     let path = state_path()?;
     let composition_json = if path.exists() {
         Some(fs::read_to_string(&path).map_err(|error| {
-            format!(
-                "cannot read composition state {}: {error}",
-                path.display()
-            )
+            format!("cannot read composition state {}: {error}", path.display())
         })?)
     } else {
         None
@@ -142,10 +139,7 @@ where
             let value: Composition = serde_json::from_str(input)
                 .map_err(|error| format!("composition state is invalid: {error}"))?;
             if value.schema != STATE_SCHEMA {
-                return Err(format!(
-                    "unsupported composition schema {}",
-                    value.schema
-                ));
+                return Err(format!("unsupported composition schema {}", value.schema));
             }
             value
         }
@@ -185,9 +179,8 @@ where
                         }
                         None => {
                             disclosure.state = NativeSurfaceState::Broken;
-                            disclosure.detail = Some(
-                                "registered native executable cannot be resolved".into(),
-                            );
+                            disclosure.detail =
+                                Some("registered native executable cannot be resolved".into());
                         }
                     }
                 } else {
@@ -210,9 +203,8 @@ where
                     if let Some(resolved) = executable_probe(executable) {
                         disclosure.state = NativeSurfaceState::Installed;
                         disclosure.resolved = Some(resolved);
-                        disclosure.detail = Some(
-                            "native command detected but not registered in {O:I}".into(),
-                        );
+                        disclosure.detail =
+                            Some("native command detected but not registered in {O:I}".into());
                     }
                 }
             }
