@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { createExploreApplication } from './explore.mjs';
 
 const fixture = JSON.parse(fs.readFileSync(fileURLToPath(new URL('./fixtures/explore-world-v1.json', import.meta.url)), 'utf8'));
+const schema = JSON.parse(fs.readFileSync(fileURLToPath(new URL('./explore-schema-v1.json', import.meta.url)), 'utf8'));
 const app = createExploreApplication(fixture);
 
 test('stable semantic refs resolve independently of transport locators', () => {
@@ -13,6 +14,7 @@ test('stable semantic refs resolve independently of transport locators', () => {
   assert.equal(agent.kind, 'agent');
   assert.equal(agent.world_ref, 'world:human:ariadne');
   assert.equal(agent.locators[0].locator, '/@ariadne/agents/parasakti');
+  assert.equal(app.resolveLocator('/@ariadne/agents/parasakti', { surface: 'web' }).ref, agent.ref);
 });
 
 test('public fixture retains source revision and provenance without private Central material', () => {
@@ -47,9 +49,29 @@ test('local whole does not require neighbour payload expansion', () => {
   assert.ok(relationView.nodes.every((node) => node.schema === 'oi.explore-entry/v1'));
 });
 
-test('human and agent surfaces consume the same application read model', () => {
+test('structured agent operations preserve the same resource identity and provenance', () => {
+  const ref = 'projection:parasakti:explore-note';
+  assert.equal(app.read(ref).ref, ref);
+  assert.equal(app.relations(ref, { depth: 1, budget: 5 }).focus, ref);
+  assert.equal(app.sources(ref).revision, 'projection@1');
+  assert.equal(app.explain(ref).semantic_identity.ref, ref);
+  assert.equal(app.explain(ref).transport_locators[0].locator, '/p/parasakti-explore-note');
+});
+
+test('human and agent surfaces consume the same application read model and serialize cleanly', () => {
   const human = app.surface('browser', 'agent:parasakti', { depth: 1, budget: 5 });
   const agent = app.surface('agent-api', 'agent:parasakti', { depth: 1, budget: 5 });
   assert.deepEqual(human.read_model, agent.read_model);
   assert.notEqual(human.surface, agent.surface);
+  assert.deepEqual(JSON.parse(JSON.stringify(human)).read_model, human.read_model);
+});
+
+test('language-neutral Explore schema names the versioned cross-client contracts', () => {
+  assert.equal(schema.$schema, 'https://json-schema.org/draft/2020-12/schema');
+  assert.equal(schema.$defs.entry.properties.schema.const, 'oi.explore-entry/v1');
+  assert.equal(schema.$defs.searchResult.properties.schema.const, 'oi.explore-result/v1');
+  assert.equal(schema.$defs.relationView.properties.schema.const, 'oi.explore-relation-view/v1');
+  assert.ok(schema.$defs.sourceView);
+  assert.ok(schema.$defs.explainView);
+  assert.ok(schema.$defs.surfaceView);
 });
