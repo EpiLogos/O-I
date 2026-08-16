@@ -91,5 +91,42 @@
         "central.skill/connector-hardening"
       ]
     }
+  ],
+  "expected_native_skills": [
+    {
+      "native_owner": "actuation",
+      "purpose": "Operate WorldBinding, positional Root Agency, bounded determination and Return through Actuation-owned contracts.",
+      "profile_refs": ["oi.skillset/root"],
+      "required_when_installed": true,
+      "state": "awaiting_native_publication"
+    },
+    {
+      "native_owner": "aikit",
+      "purpose": "Explain and compose capabilities, SkillSets, HarnessComposition and Surfaces through AIKit-owned public contracts.",
+      "profile_refs": ["oi.skillset/base", "oi.skillset/root"],
+      "required_when_installed": true,
+      "state": "awaiting_native_publication"
+    },
+    {
+      "native_owner": "software-factory",
+      "purpose": "Operate Project, Run, Candidate, Claim, Evidence and developmental Actions through Software Factory-owned contracts.",
+      "profile_refs": ["oi.skillset/base", "oi.skillset/root"],
+      "required_when_installed": true,
+      "state": "awaiting_native_publication"
+    },
+    {
+      "native_owner": "workcell",
+      "purpose": "Operate material execution through Workcell public client/provider contracts rather than provider-private mutation.",
+      "profile_refs": ["oi.skillset/base", "oi.skillset/root"],
+      "required_when_installed": true,
+      "state": "awaiting_native_publication"
+    },
+    {
+      "native_owner": "quaternal-logic",
+      "purpose": "Inspect and use QL/MEF through the product-owned formal runtime/service surface where relevant.",
+      "profile_refs": ["oi.skillset/root"],
+      "required_when_installed": false,
+      "state": "awaiting_native_publication"
+    }
   ]
 }
