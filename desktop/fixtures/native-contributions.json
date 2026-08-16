@@ -1,0 +1,102 @@
+{
+  "schema": "oi.desktop-contribution-fixtures/v1",
+  "verified_at": "2026-08-16",
+  "contributions": [
+    {
+      "schema": "oi.desktop-native-contribution/v1",
+      "contribution_ref": "oi.explore.surface/root",
+      "native_owner": "oi-explore",
+      "target_contract": "oi.explore.surface/v1",
+      "availability": "ready",
+      "provenance": {
+        "source": "EpiLogos/O-I#19",
+        "revision": "3de1cc548252017877bdd7d80447b7dcac375551"
+      },
+      "regions": ["canvas", "navigator", "inspector"],
+      "read_model_ref": {
+        "ref": "oi.explore:surface:root",
+        "kind": "surface",
+        "native_owner": "oi-explore",
+        "provenance": {
+          "source": "shared-field/explore.mjs",
+          "revision": "3de1cc548252017877bdd7d80447b7dcac375551"
+        }
+      },
+      "accepted_selection_kinds": ["projection", "wiki_node", "project", "participant", "shared_field"],
+      "actions": [],
+      "detail": "Consumes the current Explore read-model seam; SpaceTimeDB transport identifiers remain non-canonical."
+    },
+    {
+      "schema": "oi.desktop-native-contribution/v1",
+      "contribution_ref": "actuation.agency.reading/root-world",
+      "native_owner": "actuation",
+      "target_contract": "actuation.agency/v1",
+      "availability": "ready",
+      "provenance": {
+        "source": "EpiLogos/Actuation#6",
+        "revision": "e4d78c831abce0eb7808aca517d1a1d633e4d4e8"
+      },
+      "regions": ["inspector", "root_agent"],
+      "read_model_ref": {
+        "ref": "actuation.agency:root-world",
+        "kind": "agency_reading",
+        "native_owner": "actuation",
+        "provenance": {
+          "source": "actuation.agency/v1",
+          "revision": "e4d78c831abce0eb7808aca517d1a1d633e4d4e8"
+        }
+      },
+      "accepted_selection_kinds": ["agency", "world_binding", "determination", "return"],
+      "actions": [],
+      "detail": "Root Agency is positional; O:I does not introduce a RootAgent subtype."
+    },
+    {
+      "schema": "oi.desktop-native-contribution/v1",
+      "contribution_ref": "central.surface/personal",
+      "native_owner": "central",
+      "target_contract": null,
+      "availability": "pending_native_adapter",
+      "provenance": {
+        "source": "EpiLogos/Central#51",
+        "revision": "b134142532602a9570f2deb1060a1badb8432c6d"
+      },
+      "regions": ["canvas", "navigator", "inspector"],
+      "read_model_ref": null,
+      "accepted_selection_kinds": [],
+      "actions": [],
+      "detail": "Central has stable Actions/Ports, but #51 has not yet published the personal desktop read-model contract."
+    },
+    {
+      "schema": "oi.desktop-native-contribution/v1",
+      "contribution_ref": "factory.surface/build",
+      "native_owner": "software-factory",
+      "target_contract": null,
+      "availability": "pending_native_adapter",
+      "provenance": {
+        "source": "EpiLogos/agent-system-design#143",
+        "revision": "issues/144-145-pending"
+      },
+      "regions": ["canvas", "navigator", "inspector", "deep_drawer"],
+      "read_model_ref": null,
+      "accepted_selection_kinds": [],
+      "actions": [],
+      "detail": "Factory #144/#145 source-parity and semantic-envelope implementations are not yet present; O:I does not recreate them."
+    },
+    {
+      "schema": "oi.desktop-native-contribution/v1",
+      "contribution_ref": "aikit.rich-surface/maximal-conformance",
+      "native_owner": "ai-kit",
+      "target_contract": null,
+      "availability": "pending_native_adapter",
+      "provenance": {
+        "source": "EpiLogos/ai-kit#65",
+        "revision": "pending"
+      },
+      "regions": ["canvas", "inspector", "command"],
+      "read_model_ref": null,
+      "accepted_selection_kinds": [],
+      "actions": [],
+      "detail": "AIKit #53 grammar exists; maximal DSH/Cordis UI conformance #65 remains unimplemented, so no desktop plugin ontology is invented here."
+    }
+  ]
+}

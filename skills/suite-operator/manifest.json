@@ -1,0 +1,82 @@
+{
+  "schema": "oi.suite-skillset/v1",
+  "skills": [
+    {
+      "skill_ref": "oi.skill/operator",
+      "native_owner": "oi",
+      "source": {
+        "repository": "https://github.com/EpiLogos/O-I",
+        "revision": "31bce75863966c698b617b6ae5a28437f5b57068",
+        "path": "skills/oi/SKILL.md"
+      },
+      "required_capability_refs": [],
+      "related_action_refs": []
+    },
+    {
+      "skill_ref": "central.skill/control-maintenance",
+      "native_owner": "central",
+      "source": {
+        "repository": "https://github.com/EpiLogos/Central",
+        "revision": "b134142532602a9570f2deb1060a1badb8432c6d",
+        "path": "skills/control-maintenance/SKILL.md"
+      },
+      "required_capability_refs": [],
+      "related_action_refs": []
+    },
+    {
+      "skill_ref": "central.skill/machine-declaration",
+      "native_owner": "central",
+      "source": {
+        "repository": "https://github.com/EpiLogos/Central",
+        "revision": "b134142532602a9570f2deb1060a1badb8432c6d",
+        "path": "skills/machine-declaration/SKILL.md"
+      },
+      "required_capability_refs": [],
+      "related_action_refs": []
+    },
+    {
+      "skill_ref": "central.skill/connector-authoring",
+      "native_owner": "central",
+      "source": {
+        "repository": "https://github.com/EpiLogos/Central",
+        "revision": "b134142532602a9570f2deb1060a1badb8432c6d",
+        "path": "skills/connector-authoring/SKILL.md"
+      },
+      "required_capability_refs": [],
+      "related_action_refs": []
+    },
+    {
+      "skill_ref": "central.skill/connector-hardening",
+      "native_owner": "central",
+      "source": {
+        "repository": "https://github.com/EpiLogos/Central",
+        "revision": "b134142532602a9570f2deb1060a1badb8432c6d",
+        "path": "skills/connector-hardening/SKILL.md"
+      },
+      "required_capability_refs": [],
+      "related_action_refs": []
+    }
+  ],
+  "profiles": [
+    {
+      "profile_ref": "oi.skillset/base",
+      "scope": "ordinary",
+      "skill_refs": [
+        "oi.skill/operator",
+        "central.skill/control-maintenance",
+        "central.skill/machine-declaration"
+      ]
+    },
+    {
+      "profile_ref": "oi.skillset/root",
+      "scope": "root_world",
+      "skill_refs": [
+        "oi.skill/operator",
+        "central.skill/control-maintenance",
+        "central.skill/machine-declaration",
+        "central.skill/connector-authoring",
+        "central.skill/connector-hardening"
+      ]
+    }
+  ]
+}
