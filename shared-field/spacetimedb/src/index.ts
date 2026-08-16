@@ -389,8 +389,6 @@ export const expire_participant_authority = spacetimedb.reducer(
       && nowMicros(ctx) >= current.expiresAtMicros) {
       ctx.db.fieldAuthority.authorityKey.delete(arg.authorityKey);
     }
-    const scheduled = ctx.db.authorityExpiry.scheduledId.find(arg.scheduledId);
-    if (scheduled) ctx.db.authorityExpiry.scheduledId.delete(arg.scheduledId);
   }
 );
 
