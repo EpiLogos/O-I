@@ -7,6 +7,7 @@ on:
       - research/cordis-composable-agency
       - agent/oi-017-encounter-security
       - agent/oi-015-a2a-sharedfield
+      - agent/watch-availability-notifications
     paths:
       - 'shared-field/**'
       - '.github/workflows/shared-field.yml'
@@ -81,6 +82,13 @@ jobs:
           SPACETIMEDB_URI: ws://127.0.0.1:3000
           SPACETIMEDB_A2A_DATABASE: oi-shared-field-a2a-ci
         run: npm --prefix shared-field/spacetimedb run acceptance:a2a
+      - name: Publish isolated Watch availability notification database
+        run: spacetime publish oi-shared-field-watch-notify-ci --server local --module-path shared-field/spacetimedb --yes=all
+      - name: Prove Watch to availability Encounter to explicit Central notification decision
+        env:
+          SPACETIMEDB_URI: ws://127.0.0.1:3000
+          SPACETIMEDB_WATCH_NOTIFY_DATABASE: oi-shared-field-watch-notify-ci
+        run: npm --prefix shared-field/spacetimedb run acceptance:watch-notify
       - name: Show SpaceTimeDB log on failure
         if: failure()
         run: cat /tmp/spacetimedb.log || true
