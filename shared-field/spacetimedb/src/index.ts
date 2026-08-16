@@ -1,4 +1,3 @@
-import { ScheduleAt } from 'spacetimedb';
 import { schema, table, t, SenderError } from 'spacetimedb/server';
 
 const CONTACT_WINDOW_MICROS = 60_000_000n;
@@ -37,16 +36,6 @@ const fieldAuthority = table(
     revoked: t.bool(),
     expiresAtMicros: t.u64(),
     grantedAtMicros: t.u64(),
-  }
-);
-
-const authorityExpiry = table(
-  { public: false, scheduled: (): any => expire_participant_authority },
-  {
-    scheduledId: t.u64().primaryKey().autoInc(),
-    scheduledAt: t.scheduleAt(),
-    authorityKey: t.string().index('btree'),
-    expiresAtMicros: t.u64(),
   }
 );
 
@@ -167,7 +156,6 @@ const spacetimedb = schema({
   sharedField,
   fieldOwner,
   fieldAuthority,
-  authorityExpiry,
   participant,
   projection,
   exploreEntry,
@@ -180,14 +168,26 @@ const spacetimedb = schema({
 
 export default spacetimedb;
 
-function activeCallerGrants(ctx: any): any[] {
-  return Array.from(ctx.db.fieldAuthority.actorIdentity.filter(ctx.sender)).filter((grant: any) => !grant.revoked);
+/**
+ * Private relationship Views deliberately admit only non-expiring grants.
+ *
+ * SpaceTimeDB 2.8.1 reducer-time expiry is proven below, but its documented one-shot
+ * scheduler did not execute reproducibly under the pinned standalone CI runtime. A
+ * finite grant therefore never becomes a private-read entitlement: it can exercise
+ * reducers until server-time expiry, but Watch/Contact disclosure requires a persistent
+ * grant which can be explicitly revoked. This is fail-closed until timed View revocation
+ * is proven on the deployed provider.
+ */
+function privateReadCallerGrants(ctx: any): any[] {
+  return Array.from(ctx.db.fieldAuthority.actorIdentity.filter(ctx.sender)).filter(
+    (grant: any) => !grant.revoked && grant.expiresAtMicros === 0n
+  );
 }
 
 export const my_field_authority = spacetimedb.view(
   { name: 'my_field_authority', public: true },
   t.array(fieldAuthority.rowType),
-  (ctx) => activeCallerGrants(ctx)
+  (ctx) => privateReadCallerGrants(ctx)
 );
 
 export const my_watch = spacetimedb.view(
@@ -195,7 +195,7 @@ export const my_watch = spacetimedb.view(
   t.array(watch.rowType),
   (ctx) => {
     const rows = new Map<string, any>();
-    for (const grant of activeCallerGrants(ctx)) {
+    for (const grant of privateReadCallerGrants(ctx)) {
       for (const row of ctx.db.watch.watcherParticipantRef.filter(grant.participantRef)) {
         if (row.fieldRef === grant.fieldRef) rows.set(String(row.rowId), row);
       }
@@ -209,7 +209,7 @@ export const my_contact = spacetimedb.view(
   t.array(contact.rowType),
   (ctx) => {
     const rows = new Map<string, any>();
-    for (const grant of activeCallerGrants(ctx)) {
+    for (const grant of privateReadCallerGrants(ctx)) {
       for (const row of ctx.db.contact.initiatorParticipantRef.filter(grant.participantRef)) {
         if (row.fieldRef === grant.fieldRef) rows.set(String(row.rowId), row);
       }
@@ -298,19 +298,13 @@ function requireContactDecision(decision: string): void {
   }
 }
 
-function clearAuthorityExpirySchedules(ctx: any, key: string): void {
-  for (const scheduled of ctx.db.authorityExpiry.authorityKey.filter(key)) {
-    ctx.db.authorityExpiry.scheduledId.delete(scheduled.scheduledId);
-  }
-}
-
 function requireParticipantAuthority(ctx: any, fieldRef: string, participantRef: string, roles: string[]): any {
   const key = authorityKey(fieldRef, participantRef);
   const grant = ctx.db.fieldAuthority.authorityKey.find(key);
   if (!grant) fail(`No authority grant for Participant ${participantRef}`);
 
   let callerOwnsGrant = false;
-  for (const row of activeCallerGrants(ctx)) {
+  for (const row of ctx.db.fieldAuthority.actorIdentity.filter(ctx.sender)) {
     if (row.authorityKey === key) {
       callerOwnsGrant = true;
       break;
@@ -377,20 +371,6 @@ function enforceContactRate(ctx: any, fieldRef: string, initiatorParticipantRef:
   }
   ctx.db.contactRate.rateKey.update({ ...current, count: current.count + 1 });
 }
-
-export const expire_participant_authority = spacetimedb.reducer(
-  { arg: authorityExpiry.rowType },
-  (ctx, { arg }) => {
-    if (!ctx.senderAuth.isInternal) fail('Authority expiry may only be invoked by the SpaceTimeDB scheduler');
-    const current = ctx.db.fieldAuthority.authorityKey.find(arg.authorityKey);
-    if (current
-      && current.expiresAtMicros === arg.expiresAtMicros
-      && current.expiresAtMicros !== 0n
-      && nowMicros(ctx) >= current.expiresAtMicros) {
-      ctx.db.fieldAuthority.authorityKey.delete(arg.authorityKey);
-    }
-  }
-);
 
 export const put_shared_field = spacetimedb.reducer(
   { fieldRef: t.string(), kind: t.string(), visibility: t.string(), contractJson: t.string() },
@@ -471,18 +451,9 @@ export const grant_participant_authority = spacetimedb.reducer(
       expiresAtMicros: args.ttlSeconds === 0 ? 0n : now + BigInt(args.ttlSeconds) * 1_000_000n,
       grantedAtMicros: now,
     };
-    clearAuthorityExpirySchedules(ctx, row.authorityKey);
     const existing = ctx.db.fieldAuthority.authorityKey.find(row.authorityKey);
     if (existing) ctx.db.fieldAuthority.authorityKey.update(row);
     else ctx.db.fieldAuthority.insert(row);
-    if (row.expiresAtMicros !== 0n) {
-      ctx.db.authorityExpiry.insert({
-        scheduledId: 0n,
-        scheduledAt: ScheduleAt.time(row.expiresAtMicros),
-        authorityKey: row.authorityKey,
-        expiresAtMicros: row.expiresAtMicros,
-      });
-    }
   }
 );
 
@@ -493,7 +464,6 @@ export const revoke_participant_authority = spacetimedb.reducer(
     const key = authorityKey(args.fieldRef, args.participantRef);
     const existing = ctx.db.fieldAuthority.authorityKey.find(key);
     if (!existing) fail(`No authority grant for Participant ${args.participantRef}`);
-    clearAuthorityExpirySchedules(ctx, key);
     ctx.db.fieldAuthority.authorityKey.delete(key);
   }
 );
