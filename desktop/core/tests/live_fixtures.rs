@@ -123,7 +123,7 @@ fn live_host_reading_fixture_is_parseable_and_truthful_about_cross_product_seams
     );
     assert_eq!(
         session_space.contribution.provenance.revision.as_deref(),
-        Some("beae44c9b9f40565dcae24b4dceac91a3258bf44")
+        Some("b98f608fa4c49355f4c4d621e7df391f404d2e0f")
     );
     assert_eq!(
         session_space.contribution.availability,
@@ -142,7 +142,7 @@ fn live_host_reading_fixture_is_parseable_and_truthful_about_cross_product_seams
             && entry.contribution.target_contract.as_deref()
                 == Some("aikit.harness-composition-topology/v1")
             && entry.contribution.provenance.revision.as_deref()
-                == Some("beae44c9b9f40565dcae24b4dceac91a3258bf44")
+                == Some("b98f608fa4c49355f4c4d621e7df391f404d2e0f")
             && entry.contribution.availability == ContributionAvailability::Degraded
     }));
 }
