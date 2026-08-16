@@ -59,7 +59,7 @@ fn live_host_reading_fixture_is_parseable_and_truthful_about_cross_product_seams
             && entry.contribution.target_contract.as_deref()
                 == Some("aikit.harness-composition-topology/v1")
             && entry.contribution.provenance.revision.as_deref()
-                == Some("1e4a8be1bb703d2c3b462c5534564466a664c8a0")
+                == Some("e8b16126715d9eb5b9f6352803d65767b147b4b7")
             && entry.contribution.availability == ContributionAvailability::Degraded
     }));
     assert!(hosted.iter().any(|entry| {
