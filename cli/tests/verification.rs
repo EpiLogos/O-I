@@ -166,7 +166,11 @@ fn snapshot_and_receipt_preserve_native_result_and_physical_gate() {
             "fake=native-contract-v1",
         ],
     );
-    assert!(snapshot_output.status.success(), "{}", String::from_utf8_lossy(&snapshot_output.stderr));
+    assert!(
+        snapshot_output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&snapshot_output.stderr)
+    );
 
     let receipt = temp.path().join("receipt.json");
     let verify = run(
@@ -195,7 +199,10 @@ fn snapshot_and_receipt_preserve_native_result_and_physical_gate() {
     assert_eq!(fake_result["status"], "passed");
     assert_eq!(fake_result["verification_operation"], "fake.self-check");
     assert_eq!(fake_result["evidence"]["exit_code"], 0);
-    assert_eq!(fake_result["accepted_compatibility"][0], "native-contract-v1");
+    assert_eq!(
+        fake_result["accepted_compatibility"][0],
+        "native-contract-v1"
+    );
 
     let physical_result = report["surfaces"]
         .as_array()
@@ -206,8 +213,7 @@ fn snapshot_and_receipt_preserve_native_result_and_physical_gate() {
     assert_eq!(physical_result["status"], "skipped_physical_gated");
     assert_eq!(report["outstanding_requirements"][0]["kind"], "physical");
 
-    let stored: serde_json::Value =
-        serde_json::from_slice(&fs::read(receipt).unwrap()).unwrap();
+    let stored: serde_json::Value = serde_json::from_slice(&fs::read(receipt).unwrap()).unwrap();
     assert_eq!(stored["result"], report["result"]);
 }
 
@@ -255,7 +261,12 @@ fn snapshot_revision_mismatch_is_incompatible_not_failed_native_health() {
     let verify = run(
         &temp,
         &catalog,
-        &["verify", "--snapshot", snapshot.to_str().unwrap(), "--json"],
+        &[
+            "verify",
+            "--snapshot",
+            snapshot.to_str().unwrap(),
+            "--json",
+        ],
     );
     assert_eq!(verify.status.code(), Some(1));
     let report: serde_json::Value = serde_json::from_slice(&verify.stdout).unwrap();
