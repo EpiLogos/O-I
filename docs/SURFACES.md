@@ -4,29 +4,31 @@
 
 This guide describes what each surface gives to a person or agent from the outside. Each product keeps its own detailed documentation and implementation language.
 
+For the full QL relation grammar across these surfaces, see [`CANONICAL-PRODUCT-FIELD.md`](CANONICAL-PRODUCT-FIELD.md) and the manipulable [`../data/ql-relational-field.csv`](../data/ql-relational-field.csv).
+
 ## Persistent personal ground
 
 A useful agentic system needs somewhere durable to stand.
 
-This surface gives the user a personal working ground that survives individual model sessions. It holds human-authored Control, Projects, machine intent, and other durable material that should remain ordinary, inspectable, and portable.
+This surface gives the user a personal working ground that survives individual model sessions. It holds human-authored Control, ordinary Work, machine intent, and other durable material that should remain inspectable and portable.
 
 The current product is **Central**.
 
-Its importance is simple. A model invocation can be temporary while the person's working world remains stable. Existing projects can be adopted into that world. Machines can be described as part of that world. Human-authored context stays distinct from model-generated inference.
+Its importance is simple. A model invocation can be temporary while the person's working world remains stable. Existing projects can live in `Central/Work`. Machines can be described as part of that world. Human-authored context stays distinct from model-generated inference.
 
-This is the natural `0` of the system: standing ground before actuation.
+This is the natural `0` of the system: open standing ground before actuation. Because of that role, many of Central's relations to the rest of the suite are correctly implicit or mediated rather than direct product integrations.
 
-## Agent actuation
+## Situated agency and actuation
 
-A model needs to be placed into an active loop before it can operate as an agent.
+A model becomes an agentic actor only as intelligence is situated in an operative world with identity, Agency, bounds, powers, relations, and a Return.
 
-This surface is intentionally plural. It can be a bare loop, a small custom runner, a framework agent, a coding harness, or another runtime form.
+The current product is **Actuation**.
 
-The current QL agent-runtime programme explores this boundary directly. It separates the host from the recurrence semantics so the same model and capability surface can be tested through different loop structures.
+Actuation is the canonical developmental/reference home for first-class Agent/Agency semantics, world binding, AgenticComposition, determination and lineage, metagency, Return, and the runtime/recurrent experiments through which forms of actuation are tested.
 
-From the {O:I} perspective, the important fact is that **some intelligence is now in act**.
+An actual Agent does not need to reside inside an Actuation-specific daemon. In the personal suite it may inhabit a Central world while AIKit supplies its operative body and Workcell supplies material actuality.
 
-This is the natural `1` of the system.
+This is the natural `1` of the system: intelligence in act.
 
 ## Capability and context resolution
 
@@ -43,7 +45,7 @@ This surface answers questions such as:
 
 The current product is **AIKit**.
 
-AIKit operates at the agentic use level. It is where capabilities become available in context rather than remaining a loose collection of installed software.
+AIKit operates at the agentic-use level. It is where capabilities become available in Context rather than remaining a loose collection of installed software, and where model, HarnessComposition, AgentSession and Surface choices become discoverable and explainable.
 
 The same distinction applies to knowledge. A large information horizon can remain available without being loaded into every prompt. The agent can navigate the field and retrieve what the current act requires.
 
@@ -55,7 +57,7 @@ This surface gives agentic work a durable developmental body.
 
 The current product is the **Software Factory**.
 
-Its Project, Run, Run Map, Agent, Agency, Artifact, Claim, Evidence, Decision, and Candidate structures allow a transformation to remain intelligible after one conversation ends. They also allow successful ways of working to become reusable developmental patterns rather than disappearing as session history.
+Its Project, Run, Run Map, Agent/Agency references, Artifact, Claim, Evidence, Decision, Candidate and Recognition structures allow a transformation to remain intelligible after one conversation ends. They also allow successful ways of working to become reusable developmental patterns rather than disappearing as session history.
 
 This is where agentic work can become cumulative software development rather than a sequence of isolated requests.
 
@@ -69,37 +71,53 @@ This surface turns semantic execution needs into a concrete world without forcin
 
 The current product is **Workcell**.
 
-The key distinction is between meaning and placement. A Project can ask for a writable workspace or isolated execution. Workcell can decide whether the current deployment satisfies that need through Docker, a MicroVM, a host process, a remote machine, or another provider.
+The key distinction is between meaning and materialisation. A Project can ask for a writable workspace or isolated execution. Workcell can satisfy that need through Docker, a MicroVM, a host process, a remote machine, or another provider while the Project/Run/Agent meanings remain externally owned.
 
-This gives agency material reach while preserving portability.
+A particularly important whole-field reading is `4 → 5 → 0`: Workcell materialises or instantiates the project/world in which work becomes actual; QL can disclose its formal/reflexive relation where useful; the changed project/world remains ordinary durable material in Central/Work. This is a harmonic reading, not a mandatory runtime pipeline.
 
 ## Recursive formal intelligence
 
 The structures through which an agent works can themselves become objects of computation and reflection.
 
-This surface provides executable formal relations, semantic refraction, and deeper recurrence machinery.
+This surface provides executable formal relations, semantic refraction, MEF, Context Frames, and deeper recursive machinery.
 
-The current product is **QL-MEF**.
+The current product is **QL-MEF / Quaternal Logic**.
 
 QL-MEF can read existing objects through additional relations without replacing their ordinary identities. Projects remain Projects. Claims remain Claims. Agents remain Agents. The formal machinery can disclose another dimension of the same system.
 
-This surface also carries the deeper research programme in which QL relations can be implemented, tested, compared, and revised through software evidence.
+Its current Q6 line also formalises the A/B/C pairing families, canonical D1/D2/D3 conjugate relations, the 9/8/7 square accounting, MEF rotation, and the seven Context Frames used by the O:I relational map.
 
 ## The whole field
 
 The six surfaces can be read together as:
 
 ```text
-0  standing ground
-1  intelligence in act
+0  open persistent ground
+1  situated agency / actuation
 2  available powers and horizons
 3  developmental form
-4  material encounter
-5  recursive disclosure
+4  material encounter / instantiation
+5  recursive formal intelligence
 ```
 
-This relation is useful because it covers a wide range of practical need without requiring one giant product.
+The active `4+2` body is:
 
-A minimal user may need only the first two surfaces. Another user may add the capability field. A software team may need durable developmental agency and material execution. A research configuration may use the whole set.
+```text
+1  Actuation
+2  AIKit
+3  Software Factory
+4  Workcell
 
-{O:I} gives them one map and one entry point while allowing every surface to remain fully itself.
+anchored by
+
+0  Central
+5  Quaternal Logic
+```
+
+Across the human and agent conjugate faces this is an `8+4` field.
+
+The relation is useful because it covers a wide range of practical need without requiring one giant product or one mandatory six-stage pipeline. A minimal installation can remain partial. A concrete act can enter the field where its work requires.
+
+The parent relation is the wider `0/1 → 4+2` derivation; it is not another numbered product.
+
+{O:I} gives the six centres one map and one entry point while allowing every surface to remain fully itself. The 12×12 relation field makes their co-necessities inspectable without turning every relation into an integration obligation.
