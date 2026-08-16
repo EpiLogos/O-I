@@ -2,7 +2,7 @@
 
 **Status:** executable research/implementation companion to `ENCOUNTER-SECURITY.md`  
 **Issue:** #31 / OI-017  
-**Initial implementation line:** `agent/oi-017-encounter-security`, based on PR #19 head `3de1cc548252017877bdd7d80447b7dcac375551`  
+**Implementation line:** `agent/oi-017-encounter-security`, based on PR #19 head `3de1cc548252017877bdd7d80447b7dcac375551`  
 **Research date:** 2026-08-16
 
 This file does not replace the six security primitives in `ENCOUNTER-SECURITY.md`. It records the first threat-model pass, current primary-source verification, responsibility cuts and executable security slices.
@@ -48,9 +48,10 @@ trusted / executable / canonical authority
 | Cross-field mutation | Client in Field B updates Field A | server-side `ctx.sender` → field ownership | live attack fixture |
 | Participant impersonation | Client supplies another `participant_ref` | private Identity→Participant authority binding | live attack fixture |
 | Projection overwrite/spoof | Contributor rewrites another revision or source attribution | immutable revision row + publisher authority | live attack fixture |
-| Implementation-ID confusion | client treats SpaceTimeDB row ID as semantic identity | semantic refs remain independently checked | existing + extended live fixture |
+| Implementation-ID confusion | client treats SpaceTimeDB row/index ID as semantic identity | semantic refs independently checked against contract payload | live attack fixture |
 | Relationship-graph extraction | public client subscribes to Watch/Contact rows | private tables + caller-filtered Views | live privacy fixture |
-| Revoked/expired authority | stale session/grant continues mutating | server-time grant check in every protected reducer | live attack fixture |
+| Revoked authority | stale grant continues reading/writing | grant deletion must invalidate reducer authority and caller Views | live attack fixture |
+| Expired authority | finite grant continues mutating or becomes stale private-read entitlement | server-time reducer expiry + finite grants excluded from private Views | live attack fixture |
 | Contact spam / high fan-out | one Participant emits unbounded unsolicited requests | per-origin/per-field server rate window + one-active-request rule | live anti-spam fixture |
 | Block/mute bypass | blocked initiator creates a new request with another ref | recipient-local private policy checked server-side | live attack fixture |
 | Oversized Contact payload | attacker uses social relation as storage/processing sink | server-side field limits | live rejection fixture |
@@ -112,9 +113,13 @@ Verified properties used here:
 3. private tables can be exposed through public per-caller Views using `ViewContext` + indexed `ctx.sender` filtering;
 4. connection tokens can preserve the same SpaceTimeDB Identity across connections, while the connection ID remains session-specific;
 5. reducer invocation time is supplied by `ctx.timestamp`, including `microsSinceUnixEpoch`, so expiry/rate windows do not trust client clocks;
-6. current TypeScript client reducer invocations return a Promise which rejects on `SenderError`, enabling executable negative conformance tests.
+6. current TypeScript client reducer invocations return a Promise which rejects on `SenderError`, enabling executable negative conformance tests;
+7. private tables are omitted from generated ordinary client bindings, while public Views are generated;
+8. schedule tables are documented for one-shot future reducer execution, but the exact pinned 2.8.1 standalone did not reproduce a one-second scheduled authority-expiry execution in repeated live CI fixtures.
 
-**Consequence:** the first hosted security layer is implemented inside the module with private Identity→Participant grants and caller-filtered Views. O:I does not invent a second authentication protocol.
+The scheduling result is treated as provider-conformance evidence, not hand-waved away. See `ENCOUNTER-SECURITY-SPACETIMEDB-CONFORMANCE.md`.
+
+**Consequence:** the first hosted security layer uses private Identity→Participant grants and caller-filtered Views, but finite grants are fail-closed out of private Views. O:I does not invent a second authentication protocol and does not rely on an unproven timer for relationship privacy.
 
 ### Matrix — Contact-state lesson only, no dependency adopted
 
@@ -155,9 +160,9 @@ Implemented contract:
 ```text
 SpaceTimeDB Identity
         ↓ private field owner / Participant grant
-ParticipantRef + field scope + role + expiry/revocation
-        ↓ checked in reducer
-allowed mutation
+ParticipantRef + field scope + role + contactable + expiry/revocation
+        ↓ checked in reducer / caller View
+allowed mutation or relationship disclosure
 ```
 
 The grant is deliberately implementation-local:
@@ -172,24 +177,31 @@ Roles in this first floor are intentionally small:
 - `contact` — observer powers + initiate Contact;
 - `contributor` — contact powers + publish Projection.
 
+`contactable` is separate from role and discoverability. A Participant can remain publicly addressable while direct Contact is refused.
+
 Field owners create/update hosted membership, grant/revoke Participant bindings, and own the derived Explore index write path. This does **not** make field owners global O:I administrators or Root Agents.
 
 Security changes:
 
 - first creation of a hosted SharedField binds its server-side owner to `ctx.sender`; subsequent mutation requires that owner;
 - Participant creation/update is field-owner-only;
-- Participant authority binds a semantic Participant to a concrete SpaceTimeDB Identity privately, with role, server-time expiry and revocation;
+- indexed semantic fields are cross-checked against the canonical JSON contract at the reducer boundary;
+- Participant authority binds a semantic Participant to a concrete SpaceTimeDB Identity privately, with role, `contactable`, server-time expiry and revocation;
+- persistent grants (`ttlSeconds = 0`) may expose caller-filtered private relationship Views and can be explicitly revoked;
+- finite grants (`ttlSeconds > 0`) are mutation-only and never receive private Watch/Contact Views; reducer authority expires using `ctx.timestamp`;
 - Projection writes require the caller to be bound to the declared publisher Participant;
 - an existing Projection revision is immutable; revision progression is monotonic; handing a revision line to a different publisher requires field-owner mediation;
+- non-public SharedFields and non-public Projection audiences are rejected by the current explicitly public hosted floor;
 - Explore entry/relation mutation is field-owner-only in this first slice, closing the easiest index-pollution path;
 - Explore entries and relations carry hosted `fieldRef` scope metadata without changing their semantic refs;
-- Watch storage becomes private and is exposed only through `my_watch`, a caller-filtered public View which omits SpaceTimeDB Identity columns;
+- Watch storage becomes private and is exposed only through `my_watch`, a caller-filtered public View;
+- explicit authority revocation deletes the grant and therefore removes private relationship visibility as well as write authority;
 - Watch mutation requires a live Participant grant;
-- contract/representation JSON gets explicit size/object validation at the reducer boundary.
+- contract/representation JSON gets explicit size/object and semantic-column validation at the reducer boundary.
 
 ### Deliberate current limitation
 
-The existing PR #19 public Explore floor is still a public-field proof. Public SharedField/Participant/Projection/Explore tables are not yet converted into audience-filtered multi-visibility views. Private **relationship** state is now protected, while private content/audience subscription policy remains a later ES1 slice before claiming private hosted worlds.
+The existing PR #19 Explore floor remains explicitly **public** for SharedField/Participant/Projection/Explore content. OI-017 now rejects private material at those reducers rather than allowing a false privacy claim. Private **relationship** state is protected; private/audience-scoped content Views remain a later ES1 slice before private hosted worlds are claimed.
 
 ## ES2 — explicit Contact / anti-spam vertical slice
 
@@ -198,7 +210,7 @@ The existing PR #19 public Explore floor is still a public-field proof. Public S
 Server-side Contact enforces:
 
 - caller must be a live `contact` or `contributor` grant for the initiator Participant;
-- recipient must resolve to a live Participant authority binding;
+- recipient must resolve to a live Participant grant with `contactable = true`;
 - purpose is required and bounded to 500 characters;
 - requested scope and provenance payloads are bounded JSON objects;
 - expiry is computed from server time and capped at seven days;
@@ -207,27 +219,59 @@ Server-side Contact enforces:
 - recipient-local `muted` / `blocked` policy rejects new requests before creation;
 - only the recipient Participant may accept, decline, redirect or narrow the request;
 - Contact and policy tables are private;
-- `my_contact` exposes only rows where the caller's Identity is initiator or recipient and omits runtime Identity columns;
+- `my_contact` exposes only rows for persistent caller grants where the caller is initiator or recipient;
+- finite mutation grants get no Contact graph disclosure;
 - Contact creation has no reducer path to A2A, Contribution, Projection, capability grant, trust, canon or execution.
 
 The intentionally strict rate is a conformance floor, not a final product default. Future world-local Central policy can parameterise it without moving enforcement out of the server-side boundary.
 
 ## Attack/conformance fixture ledger
 
-The live SpaceTimeDB CI lane is extended to prove, against the pinned current release:
+The live SpaceTimeDB CI lane proves, against the pinned current release:
 
 - distinct connections receive distinct SpaceTimeDB Identities while semantic Participants remain explicit;
+- raw private Watch/Contact/authority subscriptions fail;
 - a non-owner cannot mutate another SharedField;
+- private SharedField/Projection material cannot enter the current public hosted floor;
+- a non-owner cannot create Participants in another field;
+- indexed implementation columns cannot spoof semantic contract refs;
 - a caller cannot act as another Participant by supplying its semantic ref;
 - another Participant cannot overwrite an existing Projection revision;
-- field-owner-mediated human refinement can still create the next Projection revision without rewriting the canonical source revision;
+- field-owner-mediated human refinement can create the next Projection revision without rewriting canonical source revision;
 - Explore index writes reject non-owner pollution;
-- private Watch/Contact tables cannot be subscribed as public state;
 - `my_watch` and `my_contact` reveal only caller-visible relationship rows;
-- revoked and expired Participant grants fail in protected reducers;
-- Contact duplicate, mute/block, oversize and rate-limit attacks fail server-side;
-- recipient response transitions remain explicit;
-- the Explore rebuild still preserves semantic identity and provenance after the security changes.
+- a discoverable Participant with `contactable = false` rejects Contact;
+- only the recipient can perform Contact response transitions;
+- Contact block, oversize and rate-limit attacks fail server-side;
+- explicit revocation removes private relationship visibility and protected reducer authority;
+- finite grants expose no private relationship Views, can mutate before expiry, and fail protected mutation after server-time expiry;
+- the Explore rebuild still preserves semantic identity and Projection provenance after the security changes.
+
+### Exact successful provider receipt
+
+Code head `d8877be1a58b2bbf9d71ede0c2ad20d30d50dd58` passed GitHub Actions **Shared field** run `31975770243` (run #94):
+
+```text
+test              SUCCESS
+spacetimedb-live  SUCCESS
+
+SpaceTimeDB 2.8.1 install/build/publish/codegen       SUCCESS
+v3 live authority/privacy/Contact/Explore fixture    SUCCESS
+```
+
+The live proof reported:
+
+```text
+public Participants                         4
+Projection revisions                        2
+owner private Watch rows                    1
+revoked/finite caller private Watch rows    0
+unrelated/finite caller Contact rows        0
+```
+
+and denied cross-field mutation, private-content leakage into the public floor, unauthorised Participant creation, semantic-ref spoofing, Projection impersonation, Explore pollution, raw private-table subscriptions, Contact to a non-contactable Participant, recipient impersonation, block bypass, oversize Contact, high-rate Contact, revoked authority and expired authority.
+
+The branch later gained documentation-only provider-conformance records; those do not alter the verified runtime code.
 
 ## Next unclosed security fronts
 
