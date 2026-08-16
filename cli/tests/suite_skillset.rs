@@ -45,7 +45,10 @@ fn oi_central_observations() -> Vec<SkillObservation> {
 }
 
 fn installed(products: &[&str]) -> BTreeSet<String> {
-    products.iter().map(|product| (*product).to_owned()).collect()
+    products
+        .iter()
+        .map(|product| (*product).to_owned())
+        .collect()
 }
 
 fn skill<'a>(manifest: &'a SuiteSkillSetManifest, skill_ref: &str) -> &'a NativeSkillReference {
@@ -105,7 +108,10 @@ fn oi_and_central_without_aikit_have_legal_direct_projection_path() {
     )
     .unwrap();
     assert!(!effective.degraded);
-    assert_eq!(effective.resolution_mode, SkillResolutionMode::OiDirectProjection);
+    assert_eq!(
+        effective.resolution_mode,
+        SkillResolutionMode::OiDirectProjection
+    );
 
     let dir = tempdir().unwrap();
     let destination = dir.path().join("oi/SKILL.md");
@@ -119,9 +125,8 @@ fn oi_and_central_without_aikit_have_legal_direct_projection_path() {
     assert_eq!(outcome.state, DirectProjectionState::Created);
     let projected = fs::read_to_string(&destination).unwrap();
     assert!(projected.contains("O:I DERIVED SKILL PROJECTION"));
-    assert!(projected.contains(
-        "canonical source = EpiLogos/O-I/skills/suite-operator/SKILL.md @ oi-rev-1"
-    ));
+    assert!(projected
+        .contains("canonical source = EpiLogos/O-I/skills/suite-operator/SKILL.md @ oi-rev-1"));
 }
 
 #[test]
@@ -157,10 +162,9 @@ fn aikit_dynamic_resolution_uses_native_references_not_copied_skill_bodies() {
     )
     .unwrap();
     assert_eq!(effective.resolution_mode, SkillResolutionMode::AikitDynamic);
-    assert!(effective
-        .skills
-        .iter()
-        .all(|skill| !skill.source_repository.is_empty() && skill.source_path.ends_with("SKILL.md")));
+    assert!(effective.skills.iter().all(
+        |skill| !skill.source_repository.is_empty() && skill.source_path.ends_with("SKILL.md")
+    ));
     let manifest_text = include_str!("../../skills/suite-operator/skillset.json");
     assert!(!manifest_text.contains("## Native Skill ownership and gaps"));
 }
@@ -265,11 +269,9 @@ fn authoritative_revision_update_replaces_only_untouched_derived_projection() {
     let destination = dir.path().join("SKILL.md");
     let native = skill(&manifest, "oi:skill:suite-operator");
 
-    let created =
-        materialise_direct_projection(native, "rev-1", "# v1\n", &destination).unwrap();
+    let created = materialise_direct_projection(native, "rev-1", "# v1\n", &destination).unwrap();
     assert_eq!(created.state, DirectProjectionState::Created);
-    let updated =
-        materialise_direct_projection(native, "rev-2", "# v2\n", &destination).unwrap();
+    let updated = materialise_direct_projection(native, "rev-2", "# v2\n", &destination).unwrap();
     assert_eq!(updated.state, DirectProjectionState::Updated);
     assert_eq!(updated.receipt.as_ref().unwrap().source_revision, "rev-2");
     assert!(fs::read_to_string(&destination).unwrap().contains("# v2"));
