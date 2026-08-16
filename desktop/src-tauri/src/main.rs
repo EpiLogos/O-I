@@ -62,9 +62,12 @@ fn open_destination(
 
 fn load_contribution_fixtures() -> Result<Vec<HostedContribution>, String> {
     let fixtures: ContributionFixtures = serde_json::from_str(CONTRIBUTION_FIXTURES)
-        .map_err(|error| format!("invalid desktop contribution fixtures: {error}"))?;
-    if fixtures.schema != "oi.desktop-contribution-fixtures/v1" {
-        return Err(format!("unsupported contribution fixture schema `{}`", fixtures.schema));
+        .map_err(|error| format!("invalid desktop host-reading fixtures: {error}"))?;
+    if fixtures.schema != "oi.desktop-host-reading-fixtures/v1" {
+        return Err(format!(
+            "unsupported desktop host-reading fixture schema `{}`",
+            fixtures.schema
+        ));
     }
     fixtures
         .contributions
@@ -78,7 +81,7 @@ fn main() {
         oi_cli::status::SuiteCompositionDisclosure::unavailable(error)
     });
     let contributions = load_contribution_fixtures().unwrap_or_else(|error| {
-        eprintln!("O:I desktop contribution fixtures unavailable: {error}");
+        eprintln!("O:I desktop host-reading fixtures unavailable: {error}");
         Vec::new()
     });
 
