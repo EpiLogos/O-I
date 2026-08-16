@@ -1,0 +1,43 @@
+{
+  "schema": "oi.package/v1",
+  "package_ref": "package:example/editor-environment",
+  "version": "0.1.0",
+  "source": {
+    "kind": "git",
+    "locator": "example/editor-environment",
+    "revision": "example-revision"
+  },
+  "compatibility": [
+    { "product": "aikit", "minimum_version": "2.0.0" }
+  ],
+  "permissions": ["filesystem_access", "process_activation"],
+  "effects": ["user_configuration_mutation"],
+  "contributions": [
+    {
+      "contribution_ref": "contribution:editor/session-space",
+      "target_product": "aikit",
+      "target_contract": "aikit.sessionspace-provider/v1",
+      "minimum_contract_version": "1.0.0",
+      "artifact": "dist/session-space-provider",
+      "permissions": ["filesystem_access"],
+      "effects": [],
+      "native_verification": {
+        "operation": "aikit verify-session-space-provider",
+        "evidence_format": "aikit.conformance/v1"
+      }
+    },
+    {
+      "contribution_ref": "contribution:editor/acp-connection",
+      "target_product": "aikit",
+      "target_contract": "aikit.connection-adapter/acp/v1",
+      "minimum_contract_version": "1.0.0",
+      "artifact": "dist/acp-adapter",
+      "permissions": ["process_activation"],
+      "effects": [],
+      "native_verification": {
+        "operation": "aikit verify-connection-adapter",
+        "evidence_format": "aikit.conformance/v1"
+      }
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "schema": "oi.package/v1",
+  "package_ref": "package:example/model-environment",
+  "version": "0.1.0",
+  "source": {
+    "kind": "git",
+    "locator": "example/model-environment",
+    "revision": "example-revision"
+  },
+  "compatibility": [
+    { "product": "aikit", "minimum_version": "2.0.0" },
+    { "product": "workcell", "minimum_version": "0.1.0" }
+  ],
+  "permissions": ["filesystem_access", "network_egress", "process_activation"],
+  "effects": ["binary_process_installation", "native_provider_activation"],
+  "contributions": [
+    {
+      "contribution_ref": "contribution:model/aikit-contract-provider",
+      "target_product": "aikit",
+      "target_contract": "aikit.model-contract-provider/v1",
+      "minimum_contract_version": "1.0.0",
+      "artifact": "dist/aikit-model-provider",
+      "permissions": ["network_egress"],
+      "effects": [],
+      "native_verification": {
+        "operation": "aikit verify-model-provider",
+        "evidence_format": "aikit.conformance/v1"
+      }
+    },
+    {
+      "contribution_ref": "contribution:model/workcell-provider",
+      "target_product": "workcell",
+      "target_contract": "workcell.provider-sdk/v1",
+      "minimum_contract_version": "1.0.0",
+      "artifact": "dist/workcell-provider",
+      "permissions": ["filesystem_access", "process_activation"],
+      "effects": ["native_provider_activation"],
+      "native_verification": {
+        "operation": "workcell verify-provider",
+        "evidence_format": "workcell.conformance/v1"
+      }
+    }
+  ]
+}
