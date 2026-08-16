@@ -4,156 +4,178 @@ const CONTACT_WINDOW_MICROS = 60_000_000n;
 const CONTACT_LIMIT_PER_WINDOW = 3;
 const CONTACT_MAX_TTL_SECONDS = 7 * 24 * 60 * 60;
 
+const sharedField = table(
+  { public: true },
+  {
+    rowId: t.u64().primaryKey().autoInc(),
+    fieldRef: t.string().unique(),
+    kind: t.string(),
+    visibility: t.string(),
+    contractJson: t.string(),
+  }
+);
+
+const fieldOwner = table(
+  { public: false },
+  {
+    fieldRef: t.string().primaryKey(),
+    ownerIdentity: t.identity().index('btree'),
+    createdAtMicros: t.u64(),
+  }
+);
+
+const fieldAuthority = table(
+  { public: false },
+  {
+    authorityKey: t.string().primaryKey(),
+    fieldRef: t.string().index('btree'),
+    participantRef: t.string().index('btree'),
+    actorIdentity: t.identity().index('btree'),
+    role: t.string(),
+    revoked: t.bool(),
+    expiresAtMicros: t.u64(),
+    grantedAtMicros: t.u64(),
+  }
+);
+
+const participant = table(
+  { public: true },
+  {
+    rowId: t.u64().primaryKey().autoInc(),
+    participantRef: t.string().unique(),
+    fieldRef: t.string().index('btree'),
+    identityKind: t.string(),
+    identityRef: t.string().index('btree'),
+    sourceSystem: t.string(),
+    sourceRevision: t.string(),
+    contractJson: t.string(),
+  }
+);
+
+const projection = table(
+  { public: true },
+  {
+    rowId: t.u64().primaryKey().autoInc(),
+    projectionKey: t.string().unique(),
+    fieldRef: t.string().index('btree'),
+    projectionRef: t.string().index('btree'),
+    projectionRevision: t.u32(),
+    sourceRevision: t.string(),
+    publisherParticipantRef: t.string().index('btree'),
+    state: t.string(),
+    contractJson: t.string(),
+  }
+);
+
+const exploreEntry = table(
+  { public: true },
+  {
+    rowId: t.u64().primaryKey().autoInc(),
+    semanticRef: t.string().unique(),
+    fieldRef: t.string().index('btree'),
+    worldRef: t.string().index('btree'),
+    kind: t.string().index('btree'),
+    label: t.string(),
+    revision: t.string(),
+    entryJson: t.string(),
+  }
+);
+
+const exploreRelation = table(
+  { public: true },
+  {
+    rowId: t.u64().primaryKey().autoInc(),
+    relationRef: t.string().unique(),
+    fieldRef: t.string().index('btree'),
+    fromRef: t.string().index('btree'),
+    toRef: t.string().index('btree'),
+    relation: t.string().index('btree'),
+    origin: t.string(),
+    relationJson: t.string(),
+  }
+);
+
+const watch = table(
+  { public: false },
+  {
+    rowId: t.u64().primaryKey().autoInc(),
+    watchRef: t.string().unique(),
+    fieldRef: t.string().index('btree'),
+    watcherParticipantRef: t.string().index('btree'),
+    targetKind: t.string().index('btree'),
+    targetRef: t.string().index('btree'),
+    state: t.string(),
+    contractJson: t.string(),
+  }
+);
+
+const contact = table(
+  { public: false },
+  {
+    rowId: t.u64().primaryKey().autoInc(),
+    contactRef: t.string().unique(),
+    fieldRef: t.string().index('btree'),
+    initiatorParticipantRef: t.string().index('btree'),
+    recipientParticipantRef: t.string().index('btree'),
+    state: t.string(),
+    purpose: t.string(),
+    requestedScopeJson: t.string(),
+    createdAtMicros: t.u64(),
+    expiresAtMicros: t.u64(),
+    responseJson: t.string(),
+    provenanceJson: t.string(),
+    contractJson: t.string(),
+  }
+);
+
+const contactPolicy = table(
+  { public: false },
+  {
+    policyKey: t.string().primaryKey(),
+    fieldRef: t.string().index('btree'),
+    blockerParticipantRef: t.string().index('btree'),
+    blockedParticipantRef: t.string().index('btree'),
+    mode: t.string(),
+    updatedAtMicros: t.u64(),
+  }
+);
+
+const contactRate = table(
+  { public: false },
+  {
+    rateKey: t.string().primaryKey(),
+    fieldRef: t.string().index('btree'),
+    initiatorParticipantRef: t.string().index('btree'),
+    windowStartedMicros: t.u64(),
+    count: t.u32(),
+  }
+);
+
 const spacetimedb = schema({
-  sharedField: table(
-    { public: true },
-    {
-      rowId: t.u64().primaryKey().autoInc(),
-      fieldRef: t.string().unique(),
-      kind: t.string(),
-      visibility: t.string(),
-      contractJson: t.string(),
-    }
-  ),
-  fieldOwner: table(
-    { public: false },
-    {
-      fieldRef: t.string().primaryKey(),
-      ownerIdentity: t.identity().index('btree'),
-      createdAtMicros: t.u64(),
-    }
-  ),
-  fieldAuthority: table(
-    { public: false },
-    {
-      authorityKey: t.string().primaryKey(),
-      fieldRef: t.string().index('btree'),
-      participantRef: t.string().index('btree'),
-      actorIdentity: t.identity().index('btree'),
-      role: t.string(),
-      revoked: t.bool(),
-      expiresAtMicros: t.u64(),
-      grantedAtMicros: t.u64(),
-    }
-  ),
-  participant: table(
-    { public: true },
-    {
-      rowId: t.u64().primaryKey().autoInc(),
-      participantRef: t.string().unique(),
-      fieldRef: t.string().index('btree'),
-      identityKind: t.string(),
-      identityRef: t.string().index('btree'),
-      sourceSystem: t.string(),
-      sourceRevision: t.string(),
-      contractJson: t.string(),
-    }
-  ),
-  projection: table(
-    { public: true },
-    {
-      rowId: t.u64().primaryKey().autoInc(),
-      projectionKey: t.string().unique(),
-      fieldRef: t.string().index('btree'),
-      projectionRef: t.string().index('btree'),
-      projectionRevision: t.u32(),
-      sourceRevision: t.string(),
-      publisherParticipantRef: t.string().index('btree'),
-      state: t.string(),
-      contractJson: t.string(),
-    }
-  ),
-  exploreEntry: table(
-    { public: true },
-    {
-      rowId: t.u64().primaryKey().autoInc(),
-      semanticRef: t.string().unique(),
-      fieldRef: t.string().index('btree'),
-      worldRef: t.string().index('btree'),
-      kind: t.string().index('btree'),
-      label: t.string(),
-      revision: t.string(),
-      entryJson: t.string(),
-    }
-  ),
-  exploreRelation: table(
-    { public: true },
-    {
-      rowId: t.u64().primaryKey().autoInc(),
-      relationRef: t.string().unique(),
-      fieldRef: t.string().index('btree'),
-      fromRef: t.string().index('btree'),
-      toRef: t.string().index('btree'),
-      relation: t.string().index('btree'),
-      origin: t.string(),
-      relationJson: t.string(),
-    }
-  ),
-  watch: table(
-    { public: false },
-    {
-      rowId: t.u64().primaryKey().autoInc(),
-      watchRef: t.string().unique(),
-      fieldRef: t.string().index('btree'),
-      watcherParticipantRef: t.string().index('btree'),
-      targetKind: t.string().index('btree'),
-      targetRef: t.string().index('btree'),
-      state: t.string(),
-      contractJson: t.string(),
-    }
-  ),
-  contact: table(
-    { public: false },
-    {
-      rowId: t.u64().primaryKey().autoInc(),
-      contactRef: t.string().unique(),
-      fieldRef: t.string().index('btree'),
-      initiatorParticipantRef: t.string().index('btree'),
-      recipientParticipantRef: t.string().index('btree'),
-      state: t.string(),
-      purpose: t.string(),
-      requestedScopeJson: t.string(),
-      createdAtMicros: t.u64(),
-      expiresAtMicros: t.u64(),
-      responseJson: t.string(),
-      provenanceJson: t.string(),
-      contractJson: t.string(),
-    }
-  ),
-  contactPolicy: table(
-    { public: false },
-    {
-      policyKey: t.string().primaryKey(),
-      fieldRef: t.string().index('btree'),
-      blockerParticipantRef: t.string().index('btree'),
-      blockedParticipantRef: t.string().index('btree'),
-      mode: t.string(),
-      updatedAtMicros: t.u64(),
-    }
-  ),
-  contactRate: table(
-    { public: false },
-    {
-      rateKey: t.string().primaryKey(),
-      fieldRef: t.string().index('btree'),
-      initiatorParticipantRef: t.string().index('btree'),
-      windowStartedMicros: t.u64(),
-      count: t.u32(),
-    }
-  ),
+  sharedField,
+  fieldOwner,
+  fieldAuthority,
+  participant,
+  projection,
+  exploreEntry,
+  exploreRelation,
+  watch,
+  contact,
+  contactPolicy,
+  contactRate,
 });
 
 export default spacetimedb;
 
 export const my_field_authority = spacetimedb.view(
   { name: 'my_field_authority', public: true },
-  t.array(spacetimedb.tables.fieldAuthority.rowType),
+  t.array(fieldAuthority.rowType),
   (ctx) => Array.from(ctx.db.fieldAuthority.actorIdentity.filter(ctx.sender))
 );
 
 export const my_watch = spacetimedb.view(
   { name: 'my_watch', public: true },
-  t.array(spacetimedb.tables.watch.rowType),
+  t.array(watch.rowType),
   (ctx) => {
     const rows = new Map<string, any>();
     for (const grant of ctx.db.fieldAuthority.actorIdentity.filter(ctx.sender)) {
@@ -167,7 +189,7 @@ export const my_watch = spacetimedb.view(
 
 export const my_contact = spacetimedb.view(
   { name: 'my_contact', public: true },
-  t.array(spacetimedb.tables.contact.rowType),
+  t.array(contact.rowType),
   (ctx) => {
     const rows = new Map<string, any>();
     for (const grant of ctx.db.fieldAuthority.actorIdentity.filter(ctx.sender)) {
@@ -234,11 +256,11 @@ function requireFieldOwner(ctx: any, fieldRef: string): void {
 }
 
 function requireParticipantInField(ctx: any, participantRef: string, fieldRef: string): any {
-  const participant = ctx.db.participant.participantRef.find(participantRef);
-  if (!participant || participant.fieldRef !== fieldRef) {
+  const participantRow = ctx.db.participant.participantRef.find(participantRef);
+  if (!participantRow || participantRow.fieldRef !== fieldRef) {
     fail(`Participant ${participantRef} does not belong to SharedField ${fieldRef}`);
   }
-  return participant;
+  return participantRow;
 }
 
 function requireRole(role: string): void {
