@@ -20,7 +20,7 @@ That is the field {O:I} is concerned with.
 
 This gives a common frame to the systems that surround an acting model and shape what it can become in practice.
 
-The smallest case is simple: **a durable personal working ground plus an LLM running in a loop**. The same architecture can open outward into richer capability, knowledge, development, execution, and recursive intelligence without changing that basic relation.
+The smallest case is simple: **a durable personal working ground plus an LLM running in a loop**. The same architecture can open outward into richer capability, knowledge, development, execution, recursive intelligence and shared research without changing that basic relation.
 
 ## Operating Infrastructure · Objective Internality
 
@@ -41,11 +41,11 @@ mindmap
   root(("{O:I}"))
     "persistent personal ground"
       "Central"
-    "agent actuation"
+    "agent actuation + model research"
+      "Actuation"
       "runtime experiments"
-      "frameworks"
-      "harnesses"
-      "bare loops"
+      "epistemic cultivation"
+      "model interiority"
     "capability and context resolution"
       "AIKit"
     "developmental agency"
@@ -63,11 +63,11 @@ The present {O:I} family has six centres. Each can stand on its own. Together th
 | Function in the whole | Project | What it opens |
 |---|---|---|
 | Persistent personal ground | [**Central**](https://github.com/EpiLogos/Central) | Human-authored control, projects, machine intent, and a durable place from which agents can work. |
-| Agent actuation | [**Agent Runtime experiments**](https://github.com/EpiLogos/agent-system-design/issues/94) | The LLM in act, from bare loops through frameworks and harnesses. |
-| Capability and context resolution | [**AIKit**](https://github.com/EpiLogos/ai-kit) | The agent-use layer for tools, skills, Actions, sources, models, sessions, and context. |
+| Agent actuation + model research | [**Actuation**](https://github.com/EpiLogos/Actuation) | The model/harness/agent-instance field: agency semantics, loops and harnesses, QL runtime experiments, model-interior research, and epistemic cultivation. |
+| Capability and context resolution | [**AIKit**](https://github.com/EpiLogos/ai-kit) | The agent-use layer for tools, skills, Actions, sources, models, sessions, research profiles, and context. |
 | Developmental agency | [**Software Factory**](https://github.com/EpiLogos/agent-system-design) | Durable project development through Runs, Agents, evidence, candidates, and reusable patterns of work. |
 | Material execution | [**Workcell**](https://github.com/EpiLogos/Workcell) | The computational worlds in which agency becomes materially situated and executable. |
-| Recursive formal intelligence | [**Quaternal Logic**](https://github.com/EpiLogos/QL-MEF) | The formal and semantic research layer for recursive reasoning, refraction, and deeper structural experiment. |
+| Recursive formal intelligence | [**Quaternal Logic**](https://github.com/EpiLogos/QL-MEF) | The formal and semantic research layer for QL/MEF, recursive reasoning, refraction, topology, and deeper structural experiment. |
 
 Together they form a possibility space rather than a fixed workflow. A useful {O:I} can be very small, and it can grow as new needs appear.
 
@@ -83,7 +83,7 @@ Existing projects belong in this picture too. A repository can be adopted into t
 
 The same parent position gives {O:I} a relational role between independently grounded worlds.
 
-A local installation can selectively project something it owns — a participant root, document, wiki object, research finding, project output, experiment, or another typed object — so that another human, Agent, O:I instance, or shared service can encounter it. The source object remains owned by its native system. {O:I} supplies the shared disclosure, addressing, projection, field and participation grammar across the products.
+A local installation can selectively project something it owns — a participant root, document, wiki object, research finding, project output, experiment, corpus, epistemic protocol, or another typed object — so that another human, Agent, O:I instance, or shared service can encounter it. The source object remains owned by its native system. {O:I} supplies the shared disclosure, addressing, projection, field and participation grammar across the products.
 
 The smallest relation is:
 
@@ -126,7 +126,7 @@ The canonical browser work lives in the React site on PR #14. Its first shared-f
 
 The longer path remains transport-independent. A future Epi-Logos service can make these relations live and subscribable, with SpaceTimeDB as the planned hosted implementation candidate, while O:I's semantic contracts remain independent of that transport and store.
 
-See [`docs/SHARED-FIELD.md`](docs/SHARED-FIELD.md) and [`docs/OBJECTIVE-CO-INTERNALITY.md`](docs/OBJECTIVE-CO-INTERNALITY.md).
+See [`docs/SHARED-FIELD.md`](docs/SHARED-FIELD.md), [`docs/OBJECTIVE-CO-INTERNALITY.md`](docs/OBJECTIVE-CO-INTERNALITY.md), and [`docs/EPISTEMIC-CULTIVATION.md`](docs/EPISTEMIC-CULTIVATION.md).
 
 ## Open primitives
 
@@ -157,13 +157,21 @@ The same projects can still be used directly. `oi` gives the composed system one
 
 It gives us a practical way to study the engineering space around a fixed or available model: change the runtime, context, capability field, knowledge horizon, project structure, developmental process, material environment, or shared field and observe what changes in effective agency.
 
-The current agent-runtime experiments test one part of that space by comparing different loop structures while separating them from the model and host that carry them.
+The model/harness/agent-instance research itself now lives canonically in **Actuation**. That includes the migrated QL runtime programme and the broader epistemic-cultivation/model-interior programme: discovery of structures models have implicitly compressed from the human corpus, deliberate human/agent crafting of epistemic datasets and dialogues, model adaptation/intervention, and study of resulting internal and external organisation.
+
+This adds a cultural research claim to the O:I frame:
+
+> **crafting epistemologies can become a first-class role in AI work.**
+
+The epistemic field is not only whatever a model self-organises from inherited training data. Humans and agents can deliberately author source selections, structural annotations, QL/MEF-aligned dialogues, counterexamples, model adaptations, evaluations and revisions. O:I does not own that laboratory; it provides the objective/shared field through which those epistemic artifacts can be projected, encountered, reproduced, criticised, corrected and returned.
+
+See [`docs/EPISTEMIC-CULTIVATION.md`](docs/EPISTEMIC-CULTIVATION.md) for the O:I relation and the Actuation research specification for the canonical experimental programme.
 
 The research programme also learns from existing systems. [`docs/RESEARCH-PROTOCOL.md`](docs/RESEARCH-PROTOCOL.md) defines a repeatable path from discovering a real paper or system, through source-locked study and abstraction, into implementation, experiment, and a durable finding that can return to the shared knowledge field. Source claims, implementation facts, observations, and {O:I} interpretations stay distinguishable throughout that process.
 
 The Antikythera Polylogos and Moltbook cases are important early evidence for the shared-agency problem. Polylogos shows a dialogically mediated human-agent field capable of returning a durable collaboratively produced artifact. Moltbook provides an attention-mediated contrast in which genuine peer learning can coexist with broadcasting, low reciprocity, concentration and ranking/signalling effects. O:I treats these as prior experiments to learn from, not UI templates to copy.
 
-The future O:I Wiki is planned as a living research commons over technologies, papers, studies, abstractions, experiments, findings, questions, and Contribution histories rather than as a second rendering of these repository docs. Its implementation follows the generic Wiki system; its shared projections and participation follow the local-first field described here.
+The future O:I Wiki is planned as a living research commons over technologies, papers, studies, abstractions, experiments, **epistemic corpora and protocols**, findings, questions, and Contribution histories rather than as a second rendering of these repository docs. Its implementation follows the generic Wiki system; its shared projections and participation follow the local-first field described here.
 
 This gives the software architecture a direct relation to the wider Epi-Logos and Antikythera research programme without making that background a prerequisite for using the technology.
 
@@ -176,6 +184,7 @@ This repository is the shared front door for the idea and the composed installat
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — the composition architecture.
 - [`docs/SHARED-FIELD.md`](docs/SHARED-FIELD.md) — local-first projection, participation, transport, and the shared relational field.
 - [`docs/OBJECTIVE-CO-INTERNALITY.md`](docs/OBJECTIVE-CO-INTERNALITY.md) — Self/Other, recursive SharedFields, Contributions, Encounters, and the plural form of Objective Internality.
+- [`docs/EPISTEMIC-CULTIVATION.md`](docs/EPISTEMIC-CULTIVATION.md) — how Actuation's epistemic/model research enters Objective Internality and the shared research field.
 - [`docs/RESEARCH.md`](docs/RESEARCH.md) — the agency-potentiation research programme.
 - [`docs/RESEARCH-PROTOCOL.md`](docs/RESEARCH-PROTOCOL.md) — how humans and agents study real systems and return what they learn.
 - [`docs/CLI.md`](docs/CLI.md) — the `oi` command surface.
