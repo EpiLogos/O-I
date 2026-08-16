@@ -99,17 +99,17 @@
       "native_owner": "ai-kit",
       "target_contract": "aikit.harness-composition-topology/v1",
       "availability": "degraded",
-      "provenance": {"source": "EpiLogos/ai-kit#68", "revision": "6d748e5149e879e7c6d13d7d701eb02c9eb824bd"},
+      "provenance": {"source": "EpiLogos/ai-kit#68", "revision": "8f821deabe2e8132d9817443f56046477fd68079"},
       "regions": ["canvas", "inspector", "command"],
       "read_model_ref": {
         "ref": "aikit:harness-composition-topology:deepseek-maximal",
         "kind": "harness_composition_topology",
         "native_owner": "ai-kit",
-        "provenance": {"source": "crates/aikit-adapters/src/composition_topology.rs", "revision": "6d748e5149e879e7c6d13d7d701eb02c9eb824bd"}
+        "provenance": {"source": "crates/aikit-adapters/src/composition_topology.rs", "revision": "8f821deabe2e8132d9817443f56046477fd68079"}
       },
       "accepted_selection_kinds": ["component", "surface", "harness_composition", "action"],
       "actions": [],
-      "detail": "Consumes AIKit PR #68's current target-neutral nested Component topology as a read-model contract; the contract remains aikit.harness-composition-topology/v1 at the current head. The same PR owns ACP connection and terminal working-field projection while explicitly leaving #61-#63 SessionSpace unimplemented. Rich UI, HumanCommand, Policy and LoopRuntime contributions remain target-native and NextSession; O:I does not mount Cordis, reinterpret native commands as Actions, or create a desktop plugin ontology. Live adapter binding therefore remains degraded rather than ready."
+      "detail": "Consumes AIKit PR #68's target-neutral nested Component topology as a read-model contract at producer head 8f821deabe2e8132d9817443f56046477fd68079; the topology source blob remains 15755966443d50b2ba67089dc2f194190efa23e8. The same PR now stages desired HarnessComposition changes through AIKit's existing composition path while target activation remains NextSession without a live Cordis control channel; it also owns ACP connection and terminal working-field projection and explicitly leaves #61-#63 SessionSpace unimplemented. Rich UI, HumanCommand, Policy and LoopRuntime contributions remain target-native; O:I does not mount Cordis, reinterpret native commands as Actions, or create a desktop plugin ontology. Live adapter binding therefore remains degraded rather than ready."
     }
   ]
 }
