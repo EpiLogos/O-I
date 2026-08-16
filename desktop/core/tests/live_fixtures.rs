@@ -40,10 +40,29 @@ fn live_host_reading_fixture_is_parseable_and_truthful_about_cross_product_seams
         .iter()
         .any(|kind| matches!(kind.as_str(), "contact" | "watch" | "authority" | "a2a_difference")));
 
-    assert!(hosted.iter().any(|entry| {
-        entry.contribution.native_owner == "actuation"
-            && entry.contribution.availability == ContributionAvailability::Ready
-    }));
+    let actuation = hosted
+        .iter()
+        .find(|entry| entry.contribution.native_owner == "actuation")
+        .expect("Actuation host reading must be present");
+    assert_eq!(
+        actuation.contribution.availability,
+        ContributionAvailability::Ready
+    );
+    assert_eq!(
+        actuation.contribution.provenance.revision.as_deref(),
+        Some("b977939ec25c32b3dc8f5ed251b70e4c26933086")
+    );
+    assert!(actuation
+        .contribution
+        .accepted_selection_kinds
+        .iter()
+        .any(|kind| kind == "root_scope"));
+    assert!(actuation
+        .contribution
+        .accepted_selection_kinds
+        .iter()
+        .any(|kind| kind == "metagency_grant"));
+
     assert!(hosted.iter().any(|entry| {
         entry.contribution.native_owner == "central"
             && entry.contribution.target_contract.as_deref() == Some("personal.show")
