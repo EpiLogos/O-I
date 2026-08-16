@@ -1,0 +1,18 @@
+/*
+ * SpacetimeDB TypeScript module compiler settings.
+ * Required compiler options match the upstream v2.7.1 basic-ts template.
+ */
+{
+  "compilerOptions": {
+    "strict": true,
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "target": "ESNext",
+    "lib": ["ES2021", "dom"],
+    "module": "ESNext",
+    "isolatedModules": true,
+    "noEmit": true
+  },
+  "include": ["./**/*"]
+}
