@@ -24,7 +24,7 @@
       },
       "accepted_selection_kinds": ["projection", "wiki_node", "project", "participant", "shared_field"],
       "actions": [],
-      "detail": "Consumes the current Explore read-model seam; SpaceTimeDB transport identifiers remain non-canonical."
+      "detail": "Consumes the canonical Explore read-model seam from PR #19. Encounter-security PR #32 @ 08b39ec90bb1162de45858eac1851da88c4a7093 and A2A PR #37 @ f1b2075618696fdaeba4da6111904205f295af76 remain the authority/admission owners for hosted mutation, private Contact/Watch state and A2A exchange; this desktop reading exposes none of those mutation powers or private relations. SpaceTimeDB transport identifiers remain non-canonical."
     },
     {
       "schema": "oi.desktop-host-reading/v1",
@@ -129,7 +129,7 @@
       "availability": "degraded",
       "provenance": {
         "source": "EpiLogos/ai-kit#68",
-        "revision": "d089b938bd4b40481a98639157f545843918f8a8"
+        "revision": "4179160e4f32ecdbd93c1d7525a8f24067c55a3b"
       },
       "regions": ["canvas", "inspector", "command"],
       "read_model_ref": {
@@ -138,12 +138,12 @@
         "native_owner": "ai-kit",
         "provenance": {
           "source": "crates/aikit-adapters/src/composition_topology.rs",
-          "revision": "d089b938bd4b40481a98639157f545843918f8a8"
+          "revision": "4179160e4f32ecdbd93c1d7525a8f24067c55a3b"
         }
       },
       "accepted_selection_kinds": ["component", "surface", "harness_composition", "action"],
       "actions": [],
-      "detail": "Consumes AIKit PR #68's target-neutral nested Component topology as a read-model contract. The DeepSeek maximal specimen keeps rich UI, HumanCommand, Policy and LoopRuntime contributions target-native and NextSession; O:I does not mount Cordis, reinterpret native commands as Actions, or create a desktop plugin ontology. Live adapter binding therefore remains degraded rather than ready."
+      "detail": "Consumes AIKit PR #68's current target-neutral nested Component topology as a read-model contract; the topology implementation blob is unchanged across the live head advance. The same PR now also owns ACP connection and terminal working-field projection, still without #61-#63 SessionSpace. Rich UI, HumanCommand, Policy and LoopRuntime contributions remain target-native and NextSession; O:I does not mount Cordis, reinterpret native commands as Actions, or create a desktop plugin ontology. Live adapter binding therefore remains degraded rather than ready."
     }
   ]
 }
