@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "acceptance": "tsx security-live-acceptance-v3.ts"
+    "acceptance": "tsx security-live-acceptance-v3.ts",
+    "acceptance:a2a": "tsx a2a-live-acceptance.ts"
   },
   "dependencies": {
     "spacetimedb": "2.8.1"
