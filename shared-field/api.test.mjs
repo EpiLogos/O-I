@@ -21,6 +21,9 @@ test('unified shared-field API exposes projection, shared-agency, Explore, Watch
     'hostedSnapshotFromRows',
     'createSpacetimeExploreSource',
     'createLiveExploreApplication',
+    'hostedWatchFromRow',
+    'hostedWatchesFromSpacetimeDb',
+    'createSpacetimeWatchSource',
   ]) {
     assert.equal(typeof api[name], 'function', `${name} should be exported`);
   }
