@@ -119,61 +119,66 @@ try {
     if (event.type === 'rebuild') rebuilds += 1;
   });
 
-  conn.reducers.putSharedField(field.field_ref, field.kind, field.visibility, JSON.stringify(field));
+  conn.reducers.putSharedField({
+    fieldRef: field.field_ref,
+    kind: field.kind,
+    visibility: field.visibility,
+    contractJson: JSON.stringify(field),
+  });
   await waitUntil(() => conn.db.sharedField.fieldRef.find(field.field_ref), 'SharedField insertion');
 
   for (const participant of participants) {
-    conn.reducers.putParticipant(
-      participant.participant_ref,
-      participant.field_ref,
-      participant.identity.kind,
-      participant.identity.ref,
-      participant.provenance.source_system,
-      participant.provenance.source_revision,
-      JSON.stringify(participant)
-    );
+    conn.reducers.putParticipant({
+      participantRef: participant.participant_ref,
+      fieldRef: participant.field_ref,
+      identityKind: participant.identity.kind,
+      identityRef: participant.identity.ref,
+      sourceSystem: participant.provenance.source_system,
+      sourceRevision: participant.provenance.source_revision,
+      contractJson: JSON.stringify(participant),
+    });
     await waitUntil(
       () => conn.db.participant.participantRef.find(participant.participant_ref),
       `Participant ${participant.participant_ref}`
     );
   }
 
-  conn.reducers.putProjection(
-    projectionStorageKey(projection.projection_ref, projection.projection_revision),
-    projection.projection_ref,
-    projection.projection_revision,
-    projection.source.revision,
-    projection.publisher_participant_ref,
-    projection.state,
-    JSON.stringify(projection)
-  );
+  conn.reducers.putProjection({
+    projectionKey: projectionStorageKey(projection.projection_ref, projection.projection_revision),
+    projectionRef: projection.projection_ref,
+    projectionRevision: projection.projection_revision,
+    sourceRevision: projection.source.revision,
+    publisherParticipantRef: projection.publisher_participant_ref,
+    state: projection.state,
+    contractJson: JSON.stringify(projection),
+  });
   await waitUntil(
     () => conn.db.projection.projectionKey.find(projectionStorageKey(projection.projection_ref, projection.projection_revision)),
     'Projection insertion'
   );
 
   for (const entry of fixture.entries) {
-    conn.reducers.putExploreEntry(
-      entry.ref,
-      entry.world_ref,
-      entry.kind,
-      entry.label,
-      entry.revision ?? '',
-      JSON.stringify(entry)
-    );
+    conn.reducers.putExploreEntry({
+      semanticRef: entry.ref,
+      worldRef: entry.world_ref,
+      kind: entry.kind,
+      label: entry.label,
+      revision: entry.revision ?? '',
+      entryJson: JSON.stringify(entry),
+    });
     await waitUntil(() => conn.db.exploreEntry.semanticRef.find(entry.ref), `Explore entry ${entry.ref}`);
   }
 
   for (const relation of fixture.relations) {
     const relationRef = relationStorageRef(relation);
-    conn.reducers.putExploreRelation(
+    conn.reducers.putExploreRelation({
       relationRef,
-      relation.from,
-      relation.to,
-      relation.relation,
-      relation.origin,
-      JSON.stringify(relation)
-    );
+      fromRef: relation.from,
+      toRef: relation.to,
+      relation: relation.relation,
+      origin: relation.origin,
+      relationJson: JSON.stringify(relation),
+    });
     await waitUntil(() => conn.db.exploreRelation.relationRef.find(relationRef), `Explore relation ${relationRef}`);
   }
 
@@ -195,14 +200,14 @@ try {
     provenance: currentEntry.provenance.map((item: any) => ({ ...item, revision: 'okf-node@3-live' })),
   };
 
-  conn.reducers.putExploreEntry(
+  conn.reducers.putExploreEntry({
     semanticRef,
-    revisedEntry.world_ref,
-    revisedEntry.kind,
-    revisedEntry.label,
-    revisedEntry.revision,
-    JSON.stringify(revisedEntry)
-  );
+    worldRef: revisedEntry.world_ref,
+    kind: revisedEntry.kind,
+    label: revisedEntry.label,
+    revision: revisedEntry.revision,
+    entryJson: JSON.stringify(revisedEntry),
+  });
 
   await waitUntil(() => live.read(semanticRef)?.revision === 'okf-node@3-live', 'subscription-driven Explore rebuild');
   const after = conn.db.exploreEntry.semanticRef.find(semanticRef);
