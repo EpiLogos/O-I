@@ -209,7 +209,10 @@ pub fn parse_manifest(input: &str) -> Result<SuiteSkillSetManifest, String> {
 
 pub fn validate_manifest(manifest: &SuiteSkillSetManifest) -> Result<(), String> {
     if manifest.schema != SUITE_SKILLSET_SCHEMA {
-        return Err(format!("unsupported suite SkillSet schema `{}`", manifest.schema));
+        return Err(format!(
+            "unsupported suite SkillSet schema `{}`",
+            manifest.schema
+        ));
     }
     if manifest.profiles.is_empty() {
         return Err("suite SkillSet manifest requires at least one profile".into());
@@ -235,11 +238,16 @@ pub fn validate_manifest(manifest: &SuiteSkillSetManifest) -> Result<(), String>
                 nonempty(
                     "source.pinned_revision",
                     skill.source.pinned_revision.as_deref().ok_or_else(|| {
-                        format!("pinned skill `{}` requires pinned_revision", skill.skill_ref)
+                        format!(
+                            "pinned skill `{}` requires pinned_revision",
+                            skill.skill_ref
+                        )
                     })?,
                 )?;
             }
-            RevisionPolicy::ResolveAuthoritativeInstalledRevision if skill.source.pinned_revision.is_some() => {
+            RevisionPolicy::ResolveAuthoritativeInstalledRevision
+                if skill.source.pinned_revision.is_some() =>
+            {
                 return Err(format!(
                     "skill `{}` cannot both resolve installed revision and pin one",
                     skill.skill_ref
@@ -268,14 +276,20 @@ pub fn validate_manifest(manifest: &SuiteSkillSetManifest) -> Result<(), String>
                 ));
             }
             if !members.insert(member.skill_ref.as_str()) {
-                return Err(format!("profile `{}` repeats `{}`", profile.profile_ref, member.skill_ref));
+                return Err(format!(
+                    "profile `{}` repeats `{}`",
+                    profile.profile_ref, member.skill_ref
+                ));
             }
         }
     }
     for profile in &manifest.profiles {
         for parent in &profile.inherits {
             if !profiles.contains(parent.as_str()) {
-                return Err(format!("profile `{}` inherits unknown `{parent}`", profile.profile_ref));
+                return Err(format!(
+                    "profile `{}` inherits unknown `{parent}`",
+                    profile.profile_ref
+                ));
             }
         }
     }
@@ -284,11 +298,17 @@ pub fn validate_manifest(manifest: &SuiteSkillSetManifest) -> Result<(), String>
         nonempty("expected owner_product", &expectation.owner_product)?;
         nonempty("expected purpose", &expectation.purpose)?;
         if expectation.profiles.is_empty() {
-            return Err(format!("{} native Skill expectation has no profile", expectation.owner_product));
+            return Err(format!(
+                "{} native Skill expectation has no profile",
+                expectation.owner_product
+            ));
         }
         for profile in &expectation.profiles {
             if !profiles.contains(profile.as_str()) {
-                return Err(format!("{} expectation names unknown profile `{profile}`", expectation.owner_product));
+                return Err(format!(
+                    "{} expectation names unknown profile `{profile}`",
+                    expectation.owner_product
+                ));
             }
         }
     }
@@ -296,7 +316,11 @@ pub fn validate_manifest(manifest: &SuiteSkillSetManifest) -> Result<(), String>
 }
 
 fn detect_profile_cycles(manifest: &SuiteSkillSetManifest) -> Result<(), String> {
-    let index = manifest.profiles.iter().map(|p| (p.profile_ref.as_str(), p)).collect::<BTreeMap<_, _>>();
+    let index = manifest
+        .profiles
+        .iter()
+        .map(|p| (p.profile_ref.as_str(), p))
+        .collect::<BTreeMap<_, _>>();
     for profile in &manifest.profiles {
         visit_profile(profile.profile_ref.as_str(), &index, &mut BTreeSet::new())?;
     }
@@ -309,9 +333,15 @@ fn visit_profile<'a>(
     visiting: &mut BTreeSet<&'a str>,
 ) -> Result<(), String> {
     if !visiting.insert(profile_ref) {
-        return Err(format!("suite SkillSet profile inheritance cycle at `{profile_ref}`"));
+        return Err(format!(
+            "suite SkillSet profile inheritance cycle at `{profile_ref}`"
+        ));
     }
-    for parent in &index.get(profile_ref).ok_or_else(|| format!("unknown profile `{profile_ref}`"))?.inherits {
+    for parent in &index
+        .get(profile_ref)
+        .ok_or_else(|| format!("unknown profile `{profile_ref}`"))?
+        .inherits
+    {
         visit_profile(parent, index, visiting)?;
     }
     visiting.remove(profile_ref);
@@ -326,18 +356,33 @@ pub fn resolve_profile(
     mode: SkillResolutionMode,
 ) -> Result<EffectiveSkillSet, String> {
     validate_manifest(manifest)?;
-    let profiles = manifest.profiles.iter().map(|p| (p.profile_ref.as_str(), p)).collect::<BTreeMap<_, _>>();
-    let skill_index = manifest.skills.iter().map(|s| (s.skill_ref.as_str(), s)).collect::<BTreeMap<_, _>>();
-    let observation_index = observations.iter().map(|o| (o.skill_ref.as_str(), o)).collect::<BTreeMap<_, _>>();
+    let profiles = manifest
+        .profiles
+        .iter()
+        .map(|p| (p.profile_ref.as_str(), p))
+        .collect::<BTreeMap<_, _>>();
+    let skill_index = manifest
+        .skills
+        .iter()
+        .map(|s| (s.skill_ref.as_str(), s))
+        .collect::<BTreeMap<_, _>>();
+    let observation_index = observations
+        .iter()
+        .map(|o| (o.skill_ref.as_str(), o))
+        .collect::<BTreeMap<_, _>>();
     let mut members = BTreeMap::<String, Requiredness>::new();
     collect_members(profile_ref, &profiles, &mut members)?;
 
     let mut degraded = false;
     let mut skills = Vec::new();
     for (skill_ref, requiredness) in members {
-        let skill = skill_index.get(skill_ref.as_str()).ok_or_else(|| format!("unknown Skill `{skill_ref}`"))?;
+        let skill = skill_index
+            .get(skill_ref.as_str())
+            .ok_or_else(|| format!("unknown Skill `{skill_ref}`"))?;
         let observed = observation_index.get(skill_ref.as_str()).copied();
-        let availability = observed.map(|o| o.availability).unwrap_or(SkillAvailability::Missing);
+        let availability = observed
+            .map(|o| o.availability)
+            .unwrap_or(SkillAvailability::Missing);
         if availability != SkillAvailability::Available && requiredness != Requiredness::Optional {
             degraded = true;
         }
@@ -345,7 +390,9 @@ pub fn resolve_profile(
             skill.source.pinned_revision.as_deref(),
             observed.and_then(|o| o.source_revision.as_deref()),
         ) {
-            if expected != actual { degraded = true; }
+            if expected != actual {
+                degraded = true;
+            }
         }
         skills.push(EffectiveSkillRelation {
             skill_ref: skill.skill_ref.clone(),
@@ -358,21 +405,54 @@ pub fn resolve_profile(
             observed_revision: observed.and_then(|o| o.source_revision.clone()),
             availability,
             resolution_mode: mode,
-            capability_states: skill.required_capabilities.iter().map(|capability| {
-                (capability.clone(), authority.capability_grants.get(capability).copied().unwrap_or(CapabilityGrantState::NotEvaluated))
-            }).collect(),
-            action_states: skill.required_actions.iter().map(|action| {
-                (action.clone(), authority.action_authorizations.get(action).copied().unwrap_or(ActionAuthorizationState::NotEvaluated))
-            }).collect(),
+            capability_states: skill
+                .required_capabilities
+                .iter()
+                .map(|capability| {
+                    (
+                        capability.clone(),
+                        authority
+                            .capability_grants
+                            .get(capability)
+                            .copied()
+                            .unwrap_or(CapabilityGrantState::NotEvaluated),
+                    )
+                })
+                .collect(),
+            action_states: skill
+                .required_actions
+                .iter()
+                .map(|action| {
+                    (
+                        action.clone(),
+                        authority
+                            .action_authorizations
+                            .get(action)
+                            .copied()
+                            .unwrap_or(ActionAuthorizationState::NotEvaluated),
+                    )
+                })
+                .collect(),
             risk_class: skill.risk_class.clone(),
             permission_requirements: skill.permission_requirements.clone(),
         });
     }
 
-    let expected_native_skills = manifest.expected_native_skills.iter()
-        .filter(|expectation| expectation.profiles.iter().any(|profile| profile == profile_ref))
-        .cloned().collect::<Vec<_>>();
-    if expected_native_skills.iter().any(|expectation| expectation.requiredness == Requiredness::Required) {
+    let expected_native_skills = manifest
+        .expected_native_skills
+        .iter()
+        .filter(|expectation| {
+            expectation
+                .profiles
+                .iter()
+                .any(|profile| profile == profile_ref)
+        })
+        .cloned()
+        .collect::<Vec<_>>();
+    if expected_native_skills
+        .iter()
+        .any(|expectation| expectation.requiredness == Requiredness::Required)
+    {
         degraded = true;
     }
     Ok(EffectiveSkillSet {
@@ -390,9 +470,15 @@ fn collect_members(
     profiles: &BTreeMap<&str, &SuiteSkillProfile>,
     output: &mut BTreeMap<String, Requiredness>,
 ) -> Result<(), String> {
-    let profile = profiles.get(profile_ref).ok_or_else(|| format!("unknown suite SkillSet profile `{profile_ref}`"))?;
-    for parent in &profile.inherits { collect_members(parent, profiles, output)?; }
-    for member in &profile.members { output.insert(member.skill_ref.clone(), member.requiredness); }
+    let profile = profiles
+        .get(profile_ref)
+        .ok_or_else(|| format!("unknown suite SkillSet profile `{profile_ref}`"))?;
+    for parent in &profile.inherits {
+        collect_members(parent, profiles, output)?;
+    }
+    for member in &profile.members {
+        output.insert(member.skill_ref.clone(), member.requiredness);
+    }
     Ok(())
 }
 
@@ -403,10 +489,14 @@ pub fn materialise_direct_projection(
     destination: &Path,
 ) -> Result<DirectProjectionOutcome, String> {
     nonempty("source_revision", source_revision)?;
-    if authoritative_content.is_empty() { return Err("authoritative Skill content must not be empty".into()); }
+    if authoritative_content.is_empty() {
+        return Err("authoritative Skill content must not be empty".into());
+    }
     if let Some(pinned) = skill.source.pinned_revision.as_deref() {
         if pinned != source_revision {
-            return Err(format!("revision `{source_revision}` does not satisfy pinned `{pinned}`"));
+            return Err(format!(
+                "revision `{source_revision}` does not satisfy pinned `{pinned}`"
+            ));
         }
     }
 
@@ -417,26 +507,46 @@ pub fn materialise_direct_projection(
 
     if existed_before {
         if !receipt_path.exists() {
-            return Ok(conflict(None, format!("{} is user/local-owned; no O:I receipt", destination.display())));
+            return Ok(conflict(
+                None,
+                format!(
+                    "{} is user/local-owned; no O:I receipt",
+                    destination.display()
+                ),
+            ));
         }
         let receipt = read_receipt(&receipt_path)?;
-        if receipt.skill_ref != skill.skill_ref || receipt.destination != destination.to_string_lossy() {
-            return Ok(conflict(Some(receipt), "receipt belongs to another projection"));
+        if receipt.skill_ref != skill.skill_ref
+            || receipt.destination != destination.to_string_lossy()
+        {
+            return Ok(conflict(
+                Some(receipt),
+                "receipt belongs to another projection",
+            ));
         }
         let current = fs::read(destination).map_err(|error| format!("read projection: {error}"))?;
         let current_digest = stable_digest(&current);
         if current_digest != receipt.generated_digest {
-            return Ok(conflict(Some(receipt), "derived copy has local edits; preserving it"));
+            return Ok(conflict(
+                Some(receipt),
+                "derived copy has local edits; preserving it",
+            ));
         }
         if current_digest == generated_digest && receipt.source_revision == source_revision {
-            return Ok(DirectProjectionOutcome { state: DirectProjectionState::Unchanged, receipt: Some(receipt), detail: None });
+            return Ok(DirectProjectionOutcome {
+                state: DirectProjectionState::Unchanged,
+                receipt: Some(receipt),
+                detail: None,
+            });
         }
     }
 
     if let Some(parent) = destination.parent() {
-        fs::create_dir_all(parent).map_err(|error| format!("create projection directory: {error}"))?;
+        fs::create_dir_all(parent)
+            .map_err(|error| format!("create projection directory: {error}"))?;
     }
-    fs::write(destination, generated.as_bytes()).map_err(|error| format!("write projection: {error}"))?;
+    fs::write(destination, generated.as_bytes())
+        .map_err(|error| format!("write projection: {error}"))?;
     let receipt = DirectProjectionReceipt {
         schema: DIRECT_PROJECTION_SCHEMA.to_owned(),
         skill_ref: skill.skill_ref.clone(),
@@ -448,28 +558,50 @@ pub fn materialise_direct_projection(
     };
     write_receipt(&receipt_path, &receipt)?;
     Ok(DirectProjectionOutcome {
-        state: if existed_before { DirectProjectionState::Updated } else { DirectProjectionState::Created },
+        state: if existed_before {
+            DirectProjectionState::Updated
+        } else {
+            DirectProjectionState::Created
+        },
         receipt: Some(receipt),
         detail: None,
     })
 }
 
-pub fn remove_direct_projection(skill_ref: &str, destination: &Path) -> Result<DirectProjectionOutcome, String> {
+pub fn remove_direct_projection(
+    skill_ref: &str,
+    destination: &Path,
+) -> Result<DirectProjectionOutcome, String> {
     let receipt_path = projection_receipt_path(destination);
     if !destination.exists() && !receipt_path.exists() {
-        return Ok(DirectProjectionOutcome { state: DirectProjectionState::Unchanged, receipt: None, detail: Some("already absent".into()) });
+        return Ok(DirectProjectionOutcome {
+            state: DirectProjectionState::Unchanged,
+            receipt: None,
+            detail: Some("already absent".into()),
+        });
     }
     if !destination.exists() || !receipt_path.exists() {
-        return Ok(conflict(None, "projection file/receipt pair incomplete; preserving remaining state"));
+        return Ok(conflict(
+            None,
+            "projection file/receipt pair incomplete; preserving remaining state",
+        ));
     }
     let receipt = read_receipt(&receipt_path)?;
-    let current = fs::read(destination).map_err(|error| format!("read projection before removal: {error}"))?;
+    let current = fs::read(destination)
+        .map_err(|error| format!("read projection before removal: {error}"))?;
     if receipt.skill_ref != skill_ref || stable_digest(&current) != receipt.generated_digest {
-        return Ok(conflict(Some(receipt), "not an unmodified O:I-owned derived copy; preserving it"));
+        return Ok(conflict(
+            Some(receipt),
+            "not an unmodified O:I-owned derived copy; preserving it",
+        ));
     }
     fs::remove_file(destination).map_err(|error| format!("remove projection: {error}"))?;
     fs::remove_file(&receipt_path).map_err(|error| format!("remove receipt: {error}"))?;
-    Ok(DirectProjectionOutcome { state: DirectProjectionState::Removed, receipt: Some(receipt), detail: None })
+    Ok(DirectProjectionOutcome {
+        state: DirectProjectionState::Removed,
+        receipt: Some(receipt),
+        detail: None,
+    })
 }
 
 fn generated_projection(skill: &NativeSkillReference, revision: &str, body: &str) -> String {
@@ -480,42 +612,68 @@ fn generated_projection(skill: &NativeSkillReference, revision: &str, body: &str
 }
 
 fn projection_receipt_path(destination: &Path) -> PathBuf {
-    let file_name = destination.file_name().and_then(|value| value.to_str()).unwrap_or("SKILL.md");
+    let file_name = destination
+        .file_name()
+        .and_then(|value| value.to_str())
+        .unwrap_or("SKILL.md");
     destination.with_file_name(format!("{file_name}.oi-projection.json"))
 }
 
 fn write_receipt(path: &Path, receipt: &DirectProjectionReceipt) -> Result<(), String> {
-    let bytes = serde_json::to_vec_pretty(receipt).map_err(|error| format!("encode receipt: {error}"))?;
+    let bytes =
+        serde_json::to_vec_pretty(receipt).map_err(|error| format!("encode receipt: {error}"))?;
     fs::write(path, bytes).map_err(|error| format!("write receipt: {error}"))
 }
 
 fn read_receipt(path: &Path) -> Result<DirectProjectionReceipt, String> {
-    let receipt: DirectProjectionReceipt = serde_json::from_slice(&fs::read(path).map_err(|error| format!("read receipt: {error}"))?)
-        .map_err(|error| format!("invalid projection receipt: {error}"))?;
-    if receipt.schema != DIRECT_PROJECTION_SCHEMA { return Err(format!("unsupported projection receipt schema `{}`", receipt.schema)); }
+    let receipt: DirectProjectionReceipt =
+        serde_json::from_slice(&fs::read(path).map_err(|error| format!("read receipt: {error}"))?)
+            .map_err(|error| format!("invalid projection receipt: {error}"))?;
+    if receipt.schema != DIRECT_PROJECTION_SCHEMA {
+        return Err(format!(
+            "unsupported projection receipt schema `{}`",
+            receipt.schema
+        ));
+    }
     Ok(receipt)
 }
 
-fn conflict(receipt: Option<DirectProjectionReceipt>, detail: impl Into<String>) -> DirectProjectionOutcome {
-    DirectProjectionOutcome { state: DirectProjectionState::ConflictPreserved, receipt, detail: Some(detail.into()) }
+fn conflict(
+    receipt: Option<DirectProjectionReceipt>,
+    detail: impl Into<String>,
+) -> DirectProjectionOutcome {
+    DirectProjectionOutcome {
+        state: DirectProjectionState::ConflictPreserved,
+        receipt,
+        detail: Some(detail.into()),
+    }
 }
 
 fn stable_digest(bytes: &[u8]) -> String {
     // Deterministic drift fingerprint only; this is not a security primitive.
     let mut hash = 0xcbf29ce484222325u64;
-    for byte in bytes { hash ^= *byte as u64; hash = hash.wrapping_mul(0x100000001b3); }
+    for byte in bytes {
+        hash ^= *byte as u64;
+        hash = hash.wrapping_mul(0x100000001b3);
+    }
     format!("fnv1a64:{hash:016x}")
 }
 
 fn nonempty(label: &str, value: &str) -> Result<(), String> {
-    if value.trim().is_empty() { Err(format!("{label} must be non-empty")) } else { Ok(()) }
+    if value.trim().is_empty() {
+        Err(format!("{label} must be non-empty"))
+    } else {
+        Ok(())
+    }
 }
 
 fn unique_nonempty(label: &str, values: &[String]) -> Result<(), String> {
     let mut seen = BTreeSet::new();
     for value in values {
         nonempty(label, value)?;
-        if !seen.insert(value.as_str()) { return Err(format!("{label} contains duplicate `{value}`")); }
+        if !seen.insert(value.as_str()) {
+            return Err(format!("{label} contains duplicate `{value}`"));
+        }
     }
     Ok(())
 }
