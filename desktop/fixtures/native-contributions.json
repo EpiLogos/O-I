@@ -46,9 +46,9 @@
           "revision": "b977939ec25c32b3dc8f5ed251b70e4c26933086"
         }
       },
-      "accepted_selection_kinds": ["agency", "world_binding", "determination", "return"],
+      "accepted_selection_kinds": ["agency", "world_binding", "root_scope", "metagency_grant", "determination", "return"],
       "actions": [],
-      "detail": "Consumes verified Actuation PR #6 head b977939ec25c32b3dc8f5ed251b70e4c26933086. Root Agency remains positional; O:I does not introduce a RootAgent subtype."
+      "detail": "Consumes verified Actuation PR #6 head b977939ec25c32b3dc8f5ed251b70e4c26933086, including explicit portable RootScope and MetagencyGrant envelopes. Root Agency remains a positional relation between WorldBinding and RootScope; O:I does not introduce a RootAgent subtype or infer metagency from presentation."
     },
     {
       "schema": "oi.desktop-host-reading/v1",
