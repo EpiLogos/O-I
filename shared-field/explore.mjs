@@ -120,7 +120,7 @@ function scoreCandidate(query, entry) {
 
 export function createExploreApplication(seed = {}) {
   const entries = new Map();
-  const relations = (seed.relations ?? []).map(validateRelation);
+  const relationEdges = (seed.relations ?? []).map(validateRelation);
 
   for (const rawEntry of seed.entries ?? []) {
     const entry = createExploreEntry(rawEntry);
@@ -128,7 +128,7 @@ export function createExploreApplication(seed = {}) {
     entries.set(entry.ref, entry);
   }
 
-  for (const relation of relations) {
+  for (const relation of relationEdges) {
     if (!entries.has(relation.from)) throw new TypeError(`Unknown relation source: ${relation.from}`);
     if (!entries.has(relation.to)) throw new TypeError(`Unknown relation target: ${relation.to}`);
   }
@@ -136,6 +136,17 @@ export function createExploreApplication(seed = {}) {
   function resolve(ref) {
     requireString(ref, 'ref');
     return clone(entries.get(ref));
+  }
+
+  function resolveLocator(locator, options = {}) {
+    requireString(locator, 'locator');
+    if (options.surface !== undefined) requireString(options.surface, 'locator surface');
+    for (const entry of entries.values()) {
+      const matched = entry.locators.find((candidate) =>
+        candidate.locator === locator && (!options.surface || candidate.surface === options.surface));
+      if (matched) return clone(entry);
+    }
+    return undefined;
   }
 
   function search(query = '', options = {}) {
@@ -165,7 +176,7 @@ export function createExploreApplication(seed = {}) {
 
   function relationsFor(ref) {
     requireString(ref, 'ref');
-    return relations.filter((edge) => edge.from === ref || edge.to === ref).map(clone);
+    return relationEdges.filter((edge) => edge.from === ref || edge.to === ref).map(clone);
   }
 
   function localWhole(focusRef, options = {}) {
@@ -177,19 +188,24 @@ export function createExploreApplication(seed = {}) {
     const selected = new Set([focusRef]);
     const selectedEdges = [];
     let frontier = [focusRef];
+    let truncated = false;
 
-    for (let currentDepth = 0; currentDepth < depth && frontier.length && selected.size < budget; currentDepth += 1) {
+    for (let currentDepth = 0; currentDepth < depth && frontier.length; currentDepth += 1) {
       const next = [];
       for (const ref of frontier) {
-        for (const edge of relations) {
+        for (const edge of relationEdges) {
           if (edge.from !== ref && edge.to !== ref) continue;
           const neighbour = edge.from === ref ? edge.to : edge.from;
           if (!selectedEdges.some((existing) => existing.from === edge.from && existing.to === edge.to && existing.relation === edge.relation)) {
             selectedEdges.push(clone(edge));
           }
-          if (!selected.has(neighbour) && selected.size < budget) {
-            selected.add(neighbour);
-            next.push(neighbour);
+          if (!selected.has(neighbour)) {
+            if (selected.size < budget) {
+              selected.add(neighbour);
+              next.push(neighbour);
+            } else {
+              truncated = true;
+            }
           }
         }
       }
@@ -203,7 +219,36 @@ export function createExploreApplication(seed = {}) {
       budget,
       nodes: [...selected].map((ref) => clone(entries.get(ref))),
       edges: selectedEdges.filter((edge) => selected.has(edge.from) && selected.has(edge.to)),
-      truncated: selected.size >= budget,
+      truncated,
+    };
+  }
+
+  function sources(ref) {
+    const resource = resolve(ref);
+    if (!resource) return undefined;
+    return {
+      ref: resource.ref,
+      ...(resource.revision ? { revision: resource.revision } : {}),
+      provenance: clone(resource.provenance),
+    };
+  }
+
+  function explain(ref) {
+    const resource = resolve(ref);
+    if (!resource) return undefined;
+    return {
+      ref: resource.ref,
+      kind: resource.kind,
+      world_ref: resource.world_ref,
+      ...(resource.revision ? { revision: resource.revision } : {}),
+      semantic_identity: {
+        ref: resource.ref,
+        kind: resource.kind,
+        world_ref: resource.world_ref,
+      },
+      provenance: clone(resource.provenance),
+      transport_locators: clone(resource.locators),
+      ...(resource.projection_ref ? { projection_ref: resource.projection_ref } : {}),
     };
   }
 
@@ -224,5 +269,17 @@ export function createExploreApplication(seed = {}) {
     return { surface: surfaceName, read_model: readModel };
   }
 
-  return Object.freeze({ resolve, search, relationsFor, localWhole, open, surface });
+  return Object.freeze({
+    resolve,
+    resolveLocator,
+    search,
+    read: resolve,
+    relations: localWhole,
+    relationsFor,
+    localWhole,
+    sources,
+    explain,
+    open,
+    surface,
+  });
 }
