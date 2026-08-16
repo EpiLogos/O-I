@@ -1,0 +1,122 @@
+{
+  "schema": "oi.explore-fixture/v1",
+  "entries": [
+    {
+      "ref": "world:human:ariadne",
+      "kind": "human-world",
+      "world_ref": "world:human:ariadne",
+      "label": "Ariadne",
+      "summary": "Public stewardship root for an O:I world.",
+      "aliases": ["@ariadne", "ariadne world"],
+      "revision": "central-public@8",
+      "provenance": [{"kind":"human-participant-root","ref":"human:ariadne","source_system":"central","revision":"central-public@8"}],
+      "locators": [{"surface":"web","locator":"/@ariadne"}],
+      "meta": {"participant_ref":"participant:public:ariadne"}
+    },
+    {
+      "ref": "agent:parasakti",
+      "kind": "agent",
+      "world_ref": "world:human:ariadne",
+      "label": "Parāśakti",
+      "summary": "Design-oriented Agent address within Ariadne's projected world.",
+      "aliases": ["parasakti", "design agent"],
+      "revision": "factory-agent-canon@21",
+      "provenance": [{"kind":"agent","ref":"agent:parasakti","source_system":"software-factory","revision":"factory-agent-canon@21"}],
+      "locators": [{"surface":"web","locator":"/@ariadne/agents/parasakti"}],
+      "meta": {"participant_ref":"participant:public:parasakti","agency_ref":"agency:parasakti:design"}
+    },
+    {
+      "ref": "project:o-i",
+      "kind": "project",
+      "world_ref": "world:human:ariadne",
+      "label": "O:I",
+      "summary": "Operating Infrastructure shared-field project.",
+      "aliases": ["operating infrastructure"],
+      "revision": "git:9ae0345",
+      "provenance": [{"kind":"git-project","ref":"repo:EpiLogos/O-I","source_system":"git","revision":"9ae0345e594c2cbe0502cbfeb4c73283eef8aefc"}],
+      "locators": [{"surface":"web","locator":"/@ariadne/projects/o-i"}]
+    },
+    {
+      "ref": "wiki:o-i:explore",
+      "kind": "wiki-space",
+      "world_ref": "world:human:ariadne",
+      "label": "Explore Platform",
+      "summary": "Projected SemanticWiki space organising the public Explore platform.",
+      "aliases": ["explore wiki", "shared-field explore"],
+      "revision": "okf-wiki@1",
+      "provenance": [{"kind":"wiki-space","ref":"wiki:o-i:explore","source_system":"okf-wiki","revision":"okf-wiki@1"}],
+      "locators": [{"surface":"web","locator":"/@ariadne/wiki/explore"}]
+    },
+    {
+      "ref": "wiki:o-i:explore:shared-field",
+      "kind": "wiki-node",
+      "world_ref": "world:human:ariadne",
+      "label": "Shared Field",
+      "summary": "Projection, participation and durable shared relations.",
+      "aliases": ["shared field", "co-internality"],
+      "revision": "okf-node@3",
+      "provenance": [{"kind":"wiki-node","ref":"wiki:o-i:explore:shared-field","source_system":"okf-wiki","revision":"okf-node@3"}],
+      "locators": [{"surface":"web","locator":"/@ariadne/wiki/explore/shared-field"}]
+    },
+    {
+      "ref": "wiki:o-i:explore:knowledge-navigation",
+      "kind": "wiki-node",
+      "world_ref": "world:human:ariadne",
+      "label": "Knowledge Navigation",
+      "summary": "Search leaf to bounded local whole navigation law.",
+      "aliases": ["knowledge navigation", "local whole"],
+      "revision": "okf-node@2",
+      "provenance": [{"kind":"wiki-node","ref":"wiki:o-i:explore:knowledge-navigation","source_system":"okf-wiki","revision":"okf-node@2"}],
+      "locators": [{"surface":"web","locator":"/@ariadne/wiki/explore/knowledge-navigation"}]
+    },
+    {
+      "ref": "wiki:o-i:explore:projection-authority",
+      "kind": "wiki-node",
+      "world_ref": "world:human:ariadne",
+      "label": "Projection and Source Authority",
+      "summary": "Projected representations preserve native source authority and provenance.",
+      "aliases": ["source authority", "projection authority"],
+      "revision": "okf-node@1",
+      "provenance": [{"kind":"wiki-node","ref":"wiki:o-i:explore:projection-authority","source_system":"okf-wiki","revision":"okf-node@1"}],
+      "locators": [{"surface":"web","locator":"/@ariadne/wiki/explore/projection-authority"}]
+    },
+    {
+      "ref": "projection:parasakti:explore-note",
+      "kind": "projection",
+      "world_ref": "world:human:ariadne",
+      "label": "Parāśakti Explore note",
+      "summary": "Public projection of an Agent-authored design note; source revision remains independently authoritative.",
+      "aliases": ["explore note"],
+      "revision": "projection@1",
+      "projection_ref": "projection:parasakti:explore-note",
+      "provenance": [
+        {"kind":"agent","ref":"agent:parasakti","source_system":"software-factory","revision":"factory-agent-canon@21"},
+        {"kind":"source-artifact","ref":"artifact:explore-design-note","source_system":"software-factory","revision":"run:explore@1"}
+      ],
+      "locators": [{"surface":"web","locator":"/p/parasakti-explore-note"}],
+      "meta": {"source_revision":"run:explore@1","publisher_participant_ref":"participant:public:parasakti"}
+    },
+    {
+      "ref": "oi:field:public",
+      "kind": "shared-field",
+      "world_ref": "world:human:ariadne",
+      "label": "O:I Public Field",
+      "summary": "Open relational field for projected O:I worlds and objects.",
+      "aliases": ["public field"],
+      "revision": "shared-field@1",
+      "provenance": [{"kind":"shared-field","ref":"oi:field:public","source_system":"o-i","revision":"shared-field@1"}],
+      "locators": [{"surface":"web","locator":"/f/public"}]
+    }
+  ],
+  "relations": [
+    {"from":"world:human:ariadne","to":"agent:parasakti","relation":"oi.world/agent","origin":"projection","provenance":[{"kind":"projection-relation","ref":"world:human:ariadne#agent:parasakti","source_system":"o-i","revision":"world-projection@1"}]},
+    {"from":"world:human:ariadne","to":"project:o-i","relation":"oi.world/project","origin":"projection","provenance":[{"kind":"projection-relation","ref":"world:human:ariadne#project:o-i","source_system":"o-i","revision":"world-projection@1"}]},
+    {"from":"world:human:ariadne","to":"wiki:o-i:explore","relation":"oi.world/wiki-space","origin":"projection","provenance":[{"kind":"projection-relation","ref":"world:human:ariadne#wiki:o-i:explore","source_system":"o-i","revision":"world-projection@1"}]},
+    {"from":"world:human:ariadne","to":"oi:field:public","relation":"oi.world/shared-field","origin":"projection","provenance":[{"kind":"projection-relation","ref":"world:human:ariadne#oi:field:public","source_system":"o-i","revision":"world-projection@1"}]},
+    {"from":"wiki:o-i:explore","to":"wiki:o-i:explore:shared-field","relation":"wiki.contains","origin":"authored","provenance":[{"kind":"wiki-edge","ref":"edge:explore:shared-field","source_system":"okf-wiki","revision":"okf-wiki@1"}]},
+    {"from":"wiki:o-i:explore","to":"wiki:o-i:explore:knowledge-navigation","relation":"wiki.contains","origin":"authored","provenance":[{"kind":"wiki-edge","ref":"edge:explore:knowledge-navigation","source_system":"okf-wiki","revision":"okf-wiki@1"}]},
+    {"from":"wiki:o-i:explore","to":"wiki:o-i:explore:projection-authority","relation":"wiki.contains","origin":"authored","provenance":[{"kind":"wiki-edge","ref":"edge:explore:projection-authority","source_system":"okf-wiki","revision":"okf-wiki@1"}]},
+    {"from":"wiki:o-i:explore:shared-field","to":"projection:parasakti:explore-note","relation":"oi.projects","origin":"projection","provenance":[{"kind":"projection-relation","ref":"projection:parasakti:explore-note#shared-field","source_system":"o-i","revision":"projection@1"}]},
+    {"from":"agent:parasakti","to":"projection:parasakti:explore-note","relation":"oi.projected-by","origin":"projection","provenance":[{"kind":"projection-relation","ref":"projection:parasakti:explore-note#agent","source_system":"o-i","revision":"projection@1"}]}
+  ]
+}

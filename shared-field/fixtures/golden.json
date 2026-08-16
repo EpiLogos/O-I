@@ -1,0 +1,520 @@
+{
+  "central_local": {
+    "schema": "fixture.central/v1",
+    "central_ref": "central:local-human",
+    "revision": "central-fixture@7",
+    "human_identity": {
+      "ref": "human:local-human",
+      "display_name": "Ariadne",
+      "description": "Building humane infrastructure for humans and agents to work together."
+    },
+    "control": {
+      "Control/user/private-notes.md": "PRIVATE_SENTINEL_NEVER_PROJECT",
+      "Control/agents/collaboration.md": "PRIVATE_AGENT_CONTEXT_NEVER_PROJECT",
+      "Control/machines/workstation.md": "PRIVATE_MACHINE_CONTEXT_NEVER_PROJECT"
+    },
+    "projects": [
+      {
+        "ref": "project:o-i",
+        "label": "{O:I}",
+        "description": "Operating infrastructure around situated agency.",
+        "href": "https://github.com/EpiLogos/O-I"
+      },
+      {
+        "ref": "project:private-lab",
+        "label": "Private Lab",
+        "description": "Not selected for publication."
+      }
+    ],
+    "interests": [
+      {
+        "ref": "interest:agentic-engineering",
+        "label": "Agentic engineering"
+      },
+      {
+        "ref": "interest:private-research",
+        "label": "Private research topic"
+      }
+    ],
+    "outputs": [
+      {
+        "ref": "output:oi-shared-field",
+        "label": "O:I shared-field architecture",
+        "description": "A local-first projection and participation seam."
+      },
+      {
+        "ref": "output:private-journal",
+        "label": "Private journal"
+      }
+    ]
+  },
+  "central_public_selection": {
+    "schema": "oi.central-public-selection/v1",
+    "identity": {
+      "display_name": true,
+      "description": true
+    },
+    "project_refs": [
+      "project:o-i"
+    ],
+    "interest_refs": [
+      "interest:agentic-engineering"
+    ],
+    "output_refs": [
+      "output:oi-shared-field"
+    ]
+  },
+  "central_participant_root": {
+    "schema": "oi.central-participant-root/v1",
+    "subject_ref": "central:local-human#participant-root",
+    "subject_kind": "central.participant-root",
+    "identity_ref": "human:local-human",
+    "source": {
+      "system": "central",
+      "ref": "central:local-human",
+      "revision": "central-fixture@7"
+    },
+    "public": {
+      "identity": {
+        "display_name": "Ariadne",
+        "description": "Building humane infrastructure for humans and agents to work together."
+      },
+      "projects": [
+        {
+          "ref": "project:o-i",
+          "label": "{O:I}",
+          "description": "Operating infrastructure around situated agency.",
+          "href": "https://github.com/EpiLogos/O-I"
+        }
+      ],
+      "interests": [
+        {
+          "ref": "interest:agentic-engineering",
+          "label": "Agentic engineering"
+        }
+      ],
+      "outputs": [
+        {
+          "ref": "output:oi-shared-field",
+          "label": "O:I shared-field architecture",
+          "description": "A local-first projection and participation seam."
+        }
+      ]
+    }
+  },
+  "human_participant": {
+    "schema": "oi.participant/v1",
+    "participant_ref": "participant:public:ariadne",
+    "field_ref": "oi:field:public",
+    "identity": {
+      "kind": "human",
+      "ref": "human:local-human"
+    },
+    "presentation": {
+      "chosen_name": "Ariadne"
+    },
+    "provenance": {
+      "source_system": "central",
+      "source_revision": "central-fixture@7",
+      "source_ref": "central:local-human"
+    }
+  },
+  "human_participant_root_projection": {
+    "schema": "oi.projection/v1",
+    "projection_ref": "projection:ariadne:root",
+    "projection_revision": 1,
+    "state": "published",
+    "subject": {
+      "ref": "central:local-human#participant-root",
+      "kind": "central.participant-root"
+    },
+    "source": {
+      "system": "central",
+      "ref": "central:local-human",
+      "revision": "central-fixture@7"
+    },
+    "publisher_participant_ref": "participant:public:ariadne",
+    "published_at": "2026-08-15T12:00:00Z",
+    "audience": {
+      "visibility": "public"
+    },
+    "representation": {
+      "kind": "oi.sparse-representation/v1",
+      "payload": {
+        "schema": "oi.sparse-representation/v1",
+        "title": "Ariadne",
+        "description": "Building humane infrastructure for humans and agents to work together.",
+        "groups": [
+          {
+            "label": "Projects",
+            "items": [
+              {
+                "label": "{O:I}",
+                "description": "Operating infrastructure around situated agency.",
+                "href": "https://github.com/EpiLogos/O-I",
+                "ref": "project:o-i"
+              }
+            ]
+          },
+          {
+            "label": "Interests",
+            "items": [
+              {
+                "label": "Agentic engineering",
+                "ref": "interest:agentic-engineering"
+              }
+            ]
+          },
+          {
+            "label": "Outputs",
+            "items": [
+              {
+                "label": "O:I shared-field architecture",
+                "description": "A local-first projection and participation seam.",
+                "ref": "output:oi-shared-field"
+              }
+            ]
+          }
+        ],
+        "meta": [
+          {
+            "label": "Source",
+            "value": "central"
+          },
+          {
+            "label": "Revision",
+            "value": "central-fixture@7"
+          }
+        ]
+      }
+    },
+    "provenance": [
+      {
+        "kind": "human-identity",
+        "ref": "human:local-human",
+        "source_system": "central",
+        "revision": "central-fixture@7"
+      },
+      {
+        "kind": "central-participant-root",
+        "ref": "central:local-human#participant-root",
+        "source_system": "central",
+        "revision": "central-fixture@7"
+      }
+    ],
+    "transport": {
+      "kind": "static-file",
+      "locator": "shared-field/fixtures/golden.json#human_participant_root_projection"
+    }
+  },
+  "agent_participant": {
+    "schema": "oi.participant/v1",
+    "participant_ref": "participant:public:parasakti",
+    "field_ref": "oi:field:public",
+    "identity": {
+      "kind": "agent",
+      "ref": "agent:parasakti"
+    },
+    "presentation": {
+      "chosen_name": "Parāśakti"
+    },
+    "provenance": {
+      "source_system": "software-factory",
+      "source_revision": "factory-agent-canon@21"
+    },
+    "agency": {
+      "ref": "agency:parasakti:design",
+      "source_system": "software-factory"
+    }
+  },
+  "agent_participant_projection": {
+    "schema": "oi.projection/v1",
+    "projection_ref": "projection:parasakti:participant-root",
+    "projection_revision": 1,
+    "state": "published",
+    "subject": {
+      "ref": "agent:parasakti",
+      "kind": "software-factory.agent"
+    },
+    "source": {
+      "system": "software-factory",
+      "revision": "factory-agent-canon@21"
+    },
+    "publisher_participant_ref": "participant:public:parasakti",
+    "published_at": "2026-08-15T12:05:00Z",
+    "audience": {
+      "visibility": "public"
+    },
+    "representation": {
+      "kind": "oi.sparse-representation/v1",
+      "payload": {
+        "schema": "oi.sparse-representation/v1",
+        "title": "Parāśakti",
+        "description": "Design-oriented Agent participant.",
+        "groups": [],
+        "meta": [
+          {
+            "label": "Agent",
+            "value": "agent:parasakti"
+          },
+          {
+            "label": "Agency",
+            "value": "agency:parasakti:design"
+          }
+        ]
+      }
+    },
+    "provenance": [
+      {
+        "kind": "agent",
+        "ref": "agent:parasakti",
+        "source_system": "software-factory",
+        "revision": "factory-agent-canon@21"
+      },
+      {
+        "kind": "agency",
+        "ref": "agency:parasakti:design",
+        "source_system": "software-factory",
+        "revision": "factory-agent-canon@21"
+      }
+    ],
+    "transport": {
+      "kind": "https",
+      "host": "field.example.invalid"
+    }
+  },
+  "documentation_projection": {
+    "schema": "oi.projection/v1",
+    "projection_ref": "projection:oi:shared-field-doc",
+    "projection_revision": 1,
+    "state": "published",
+    "subject": {
+      "ref": "repo:EpiLogos/O-I:docs/SHARED-FIELD.md",
+      "kind": "documentation.markdown"
+    },
+    "source": {
+      "system": "git",
+      "revision": "af0dbb000cc162ca624c4cc2cbe669767aeb29d2"
+    },
+    "publisher_participant_ref": "participant:public:ariadne",
+    "published_at": "2026-08-15T12:10:00Z",
+    "audience": {
+      "visibility": "public"
+    },
+    "representation": {
+      "kind": "oi.sparse-representation/v1",
+      "payload": {
+        "schema": "oi.sparse-representation/v1",
+        "title": "Shared Field",
+        "description": "Local worlds, Projection, participation and transport.",
+        "groups": [],
+        "meta": [
+          {
+            "label": "Native type",
+            "value": "documentation.markdown"
+          }
+        ]
+      }
+    },
+    "provenance": [
+      {
+        "kind": "git-object",
+        "ref": "repo:EpiLogos/O-I:docs/SHARED-FIELD.md",
+        "source_system": "git",
+        "revision": "af0dbb000cc162ca624c4cc2cbe669767aeb29d2"
+      }
+    ]
+  },
+  "factory_finding_projection": {
+    "schema": "oi.projection/v1",
+    "projection_ref": "projection:factory:finding:projection-floor",
+    "projection_revision": 1,
+    "state": "published",
+    "subject": {
+      "ref": "factory:finding:projection-floor",
+      "kind": "software-factory.finding"
+    },
+    "source": {
+      "system": "software-factory",
+      "revision": "run:184@3"
+    },
+    "publisher_participant_ref": "participant:public:parasakti",
+    "published_at": "2026-08-15T12:15:00Z",
+    "audience": {
+      "visibility": "public"
+    },
+    "representation": {
+      "kind": "oi.sparse-representation/v1",
+      "payload": {
+        "schema": "oi.sparse-representation/v1",
+        "title": "Projection floor finding",
+        "description": "Transport metadata is not semantic identity.",
+        "groups": [],
+        "meta": [
+          {
+            "label": "Run",
+            "value": "run:184"
+          }
+        ]
+      }
+    },
+    "provenance": [
+      {
+        "kind": "factory-run",
+        "ref": "run:184",
+        "source_system": "software-factory",
+        "revision": "run:184@3"
+      },
+      {
+        "kind": "artifact",
+        "ref": "artifact:184:projection-floor",
+        "source_system": "software-factory",
+        "revision": "artifact:184@1"
+      }
+    ]
+  },
+  "factory_finding_revision_projection": {
+    "schema": "oi.projection/v1",
+    "projection_ref": "projection:factory:finding:projection-floor",
+    "projection_revision": 2,
+    "state": "published",
+    "subject": {
+      "ref": "factory:finding:projection-floor",
+      "kind": "software-factory.finding"
+    },
+    "source": {
+      "system": "software-factory",
+      "revision": "run:184@4"
+    },
+    "publisher_participant_ref": "participant:public:parasakti",
+    "published_at": "2026-08-15T12:20:00Z",
+    "audience": {
+      "visibility": "public"
+    },
+    "representation": {
+      "kind": "oi.sparse-representation/v1",
+      "payload": {
+        "schema": "oi.sparse-representation/v1",
+        "title": "Projection floor finding",
+        "description": "Transport and host metadata can vary while Projection semantic identity remains transport-neutral.",
+        "groups": [],
+        "meta": [
+          {
+            "label": "Run",
+            "value": "run:184"
+          }
+        ]
+      }
+    },
+    "provenance": [
+      {
+        "kind": "factory-run",
+        "ref": "run:184",
+        "source_system": "software-factory",
+        "revision": "run:184@3"
+      },
+      {
+        "kind": "artifact",
+        "ref": "artifact:184:projection-floor",
+        "source_system": "software-factory",
+        "revision": "artifact:184@1"
+      }
+    ],
+    "supersedes": {
+      "projection_ref": "projection:factory:finding:projection-floor",
+      "projection_revision": 1,
+      "source_revision": "run:184@3"
+    }
+  },
+  "factory_finding_withdrawn_projection": {
+    "schema": "oi.projection/v1",
+    "projection_ref": "projection:factory:finding:projection-floor",
+    "projection_revision": 3,
+    "state": "withdrawn",
+    "subject": {
+      "ref": "factory:finding:projection-floor",
+      "kind": "software-factory.finding"
+    },
+    "source": {
+      "system": "software-factory",
+      "revision": "run:184@4"
+    },
+    "publisher_participant_ref": "participant:public:parasakti",
+    "published_at": "2026-08-15T12:25:00Z",
+    "audience": {
+      "visibility": "public"
+    },
+    "representation": {
+      "kind": "oi.withdrawal/v1",
+      "payload": {
+        "reason": "Superseded by a later experiment"
+      }
+    },
+    "provenance": [
+      {
+        "kind": "factory-run",
+        "ref": "run:184",
+        "source_system": "software-factory",
+        "revision": "run:184@3"
+      },
+      {
+        "kind": "artifact",
+        "ref": "artifact:184:projection-floor",
+        "source_system": "software-factory",
+        "revision": "artifact:184@1"
+      }
+    ],
+    "supersedes": {
+      "projection_ref": "projection:factory:finding:projection-floor",
+      "projection_revision": 2,
+      "source_revision": "run:184@4"
+    },
+    "withdrawal": {
+      "reason": "Superseded by a later experiment",
+      "source_history_deleted": false
+    }
+  },
+  "received_human_participant_root_receipt": {
+    "schema": "oi.projection-receipt/v1",
+    "projection_ref": "projection:ariadne:root",
+    "projection_revision": 1,
+    "subject": {
+      "ref": "central:local-human#participant-root",
+      "kind": "central.participant-root"
+    },
+    "source": {
+      "system": "central",
+      "ref": "central:local-human",
+      "revision": "central-fixture@7"
+    },
+    "publisher_participant_ref": "participant:public:ariadne",
+    "provenance": [
+      {
+        "kind": "human-identity",
+        "ref": "human:local-human",
+        "source_system": "central",
+        "revision": "central-fixture@7"
+      },
+      {
+        "kind": "central-participant-root",
+        "ref": "central:local-human#participant-root",
+        "source_system": "central",
+        "revision": "central-fixture@7"
+      }
+    ],
+    "receiver": {
+      "instance_ref": "oi:instance:receiver-b",
+      "received_at": "2026-08-15T12:30:00Z"
+    },
+    "transport": {
+      "kind": "https",
+      "host": "receiver.example.invalid",
+      "cache_key": "root-v1"
+    },
+    "authority": {
+      "source_authorship_claimed": false,
+      "canonical_source_mutation": false,
+      "mode": "observed-read-only"
+    }
+  }
+}

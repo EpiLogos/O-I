@@ -1,0 +1,142 @@
+{
+  "schema": "oi.front-door-field-proof/v1",
+  "projection": {
+    "schema": "oi.projection/v1",
+    "projection_ref": "projection:factory:finding:projection-floor",
+    "projection_revision": 1,
+    "state": "published",
+    "subject": {
+      "ref": "factory:finding:projection-floor",
+      "kind": "software-factory.finding"
+    },
+    "source": {
+      "system": "software-factory",
+      "revision": "run:184@3"
+    },
+    "publisher_participant_ref": "participant:public:parasakti",
+    "published_at": "2026-08-15T12:15:00Z",
+    "audience": {
+      "visibility": "public"
+    },
+    "representation": {
+      "kind": "oi.sparse-representation/v1",
+      "payload": {
+        "schema": "oi.sparse-representation/v1",
+        "title": "Projection floor finding",
+        "description": "Transport metadata is not semantic identity.",
+        "groups": [],
+        "meta": [
+          {
+            "label": "Run",
+            "value": "run:184"
+          }
+        ]
+      }
+    },
+    "provenance": [
+      {
+        "kind": "factory-run",
+        "ref": "run:184",
+        "source_system": "software-factory",
+        "revision": "run:184@3"
+      },
+      {
+        "kind": "artifact",
+        "ref": "artifact:184:projection-floor",
+        "source_system": "software-factory",
+        "revision": "artifact:184@1"
+      }
+    ]
+  },
+  "contributions": [
+    {
+      "schema": "oi.contribution/v1",
+      "contribution_ref": "contribution:front-door:finding-1",
+      "field_ref": "oi:field:public",
+      "contributor_participant_ref": "participant:public:parasakti",
+      "created_at": "2026-08-15T13:00:00Z",
+      "mode": "finding",
+      "target": {
+        "kind": "oi.projection",
+        "ref": "projection:factory:finding:projection-floor",
+        "revision": "1"
+      },
+      "relation": {
+        "kind": "extends"
+      },
+      "representation": {
+        "kind": "text/plain",
+        "payload": "The projected finding remains attributable to its Factory run and artifact."
+      },
+      "provenance": [
+        {
+          "kind": "factory-run",
+          "ref": "run:184",
+          "source_system": "software-factory",
+          "revision": "run:184@3"
+        }
+      ],
+      "agency": {
+        "ref": "agency:parasakti:design",
+        "execution_ref": "execution:42"
+      }
+    },
+    {
+      "schema": "oi.contribution/v1",
+      "contribution_ref": "contribution:front-door:response-1",
+      "field_ref": "oi:field:public",
+      "contributor_participant_ref": "participant:public:ariadne",
+      "created_at": "2026-08-15T13:01:00Z",
+      "mode": "opinion",
+      "target": {
+        "kind": "oi.contribution",
+        "ref": "contribution:front-door:finding-1"
+      },
+      "relation": {
+        "kind": "responds_to"
+      },
+      "representation": {
+        "kind": "text/plain",
+        "payload": "Keep the source revision visible when this difference is encountered."
+      },
+      "provenance": [
+        {
+          "kind": "human-identity",
+          "ref": "human:local-human",
+          "source_system": "central",
+          "revision": "central-fixture@7"
+        }
+      ]
+    }
+  ],
+  "encounter": {
+    "schema": "oi.encounter/v1",
+    "encounter_ref": "encounter:front-door:ariadne:1",
+    "field_ref": "oi:field:public",
+    "participant_ref": "participant:public:ariadne",
+    "occurred_at": "2026-08-15T13:05:00Z",
+    "mediation": {
+      "kind": "direct-address",
+      "policy_ref": "policy:front-door-fixture-v1"
+    },
+    "items": [
+      {
+        "kind": "oi.projection",
+        "ref": "projection:factory:finding:projection-floor",
+        "revision": "1"
+      },
+      {
+        "kind": "oi.contribution",
+        "ref": "contribution:front-door:finding-1"
+      }
+    ],
+    "provenance": [
+      {
+        "kind": "fixture",
+        "ref": "site:front-door-field-proof",
+        "source_system": "oi",
+        "revision": "front-door-proof@1"
+      }
+    ]
+  }
+}
