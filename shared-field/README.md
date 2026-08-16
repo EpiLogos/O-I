@@ -1,10 +1,30 @@
 # O:I shared-field implementation floor
 
-This directory is the smallest executable form of the local-first seam specified in `docs/SHARED-FIELD.md`.
+This directory is the smallest executable form of the local-first seam specified in `docs/SHARED-FIELD.md` and `docs/OBJECTIVE-CO-INTERNALITY.md`.
 
-It deliberately has no framework, network client, database, or identity provider. Native products still own their canonical objects. O:I defines only the whole-level relation by which an explicitly selected representation can cross a product/world boundary.
+It deliberately has no framework, network client, database, or identity provider. Native products still own their canonical objects. O:I defines only the whole-level relations by which explicitly selected representations cross product/world boundaries and by which independently grounded Participants can become mutually available through a SharedField.
 
-## Contracts
+## Public module entry
+
+Consumers that need the complete portable floor can import from:
+
+```js
+import * as sharedField from './shared-field/api.mjs';
+```
+
+`api.mjs` is intentionally only an aggregate export over the implementation layers:
+
+```text
+index.mjs   Projection / Participant / receipt / Central public selection
+social.mjs  SharedField / Contribution / Encounter / Self-Other read model
+state.mjs   transport-free local membership / traversal / thread / history logic
+     ↓
+api.mjs     one import surface, no second implementation
+```
+
+This keeps the completed Projection contract stable while letting the shared-agency grammar develop beside it. `api.test.mjs` guards that all three layers remain reachable through the aggregate API.
+
+## Projection contracts
 
 - `oi.participant/v1` — a field-relative relation over an existing `Human` identity or `AgentRef`.
 - `oi.projection/v1` — a versioned, transport-neutral envelope preserving native subject kind, source system/revision, publisher, audience, representation and provenance.
@@ -14,6 +34,42 @@ It deliberately has no framework, network client, database, or identity provider
 `transport` is optional non-canonical metadata. `canonicalProjection()` and `projectionSemanticIdentity()` intentionally exclude it.
 
 Projection revisions are distinct from source revisions. A revision exposes source drift through `source.revision`; withdrawal creates a new Projection revision without deleting source history.
+
+## Shared-agency contracts
+
+`social.mjs` adds the first executable Objective Co-Internality floor without altering the Projection identity contract:
+
+- `oi.shared-field/v1` — an addressable relational environment. `parent_field_ref` expresses recursive containment only; federation remains a different relation.
+- `oi.contribution/v1` — an attributable difference returned by a Participant to a SharedField. Its target is generic and may itself be another Contribution.
+- `oi.encounter/v1` — an objective record of what a Participant was presented with through a mediation path. It does not assert belief, understanding, phenomenality, or subjective state.
+
+`Contribution` deliberately subsumes platform-shaped notions such as comment, reply, opinion, rating, ranking, metric and moderation judgment. Those are modes/relations of Contribution rather than privileged metadata layers. A ranking or metric therefore retains attribution, target, representation and provenance and does not become truth merely because a UI computes with it.
+
+SharedFields may nest recursively. Containment is checked for cycles and must not be used as a synonym for federation, anchoring, Projection, or participation. This mirrors the recursive whole/member structural law in the generic Glade wiki work while keeping `SharedField` distinct from `WikiSpace` and canonical `Context`.
+
+`selfOtherReadModel()` supplies the smallest browser/agent projection of the shared relation: one field-relative Participant as `Self`, one or more field-relative Participants as `Other`, and the SharedField which relates them. Self/Other are situated positions, not new identity kinds.
+
+The JSON compatibility surface for these relations is `social-schema-v1.json`.
+
+## Local SharedField state
+
+`state.mjs` turns the contracts into a small transport-free business-logic layer. It is deliberately an index/state view rather than canonical persistence.
+
+`createSharedFieldState()` supports:
+
+- adding and looking up SharedFields, Participants, Contributions and Encounters;
+- validating Participant membership against a field;
+- traversing child/descendant fields and full parent paths;
+- querying Participants and Contributions in one field or recursively through its nested fields;
+- querying Contributions by arbitrary target;
+- reconstructing recursive Contribution threads without a fixed reply depth;
+- rejecting Contribution target cycles, including cycles completed after an earlier unresolved reference;
+- retaining/querying Encounter history by Participant and optional field;
+- producing a transport-neutral snapshot for an adapter or fixture.
+
+The state layer allows unresolved/external Contribution targets so that a local field can still address a remote/federated object. It enforces local referential integrity where the corresponding Participant or field is owned by the local state.
+
+This is the seam a browser adapter, static/file carrier, test harness, or future SpaceTimeDB implementation can consume without any of them becoming the semantic owner.
 
 ## Central public selection
 
@@ -29,7 +85,7 @@ output_refs[]
 
 There is no selector for `Central/Control`. The fixture includes private sentinel material under `Control/` and the golden public root proves it never enters the Projection unless a future explicit contract adds a narrower source operation. This matches Central's own invariant that availability does not imply disclosure.
 
-## Fixtures
+## Existing projection fixtures
 
 `fixtures/golden.json` contains named golden examples for:
 
@@ -40,16 +96,26 @@ There is no selector for `Central/Control`. The fixture includes private sentine
 - source revision and withdrawal;
 - receipt by another O:I instance without source-authorship drift.
 
-Regenerate the derived goldens after intentionally changing the contract:
+Regenerate the derived projection goldens after intentionally changing that contract:
 
 ```bash
 node shared-field/generate-fixtures.mjs
 ```
 
-Run the contract tests from the repository root:
+## Verification
+
+Run the complete portable contract suite from the repository root:
 
 ```bash
-node --test shared-field/shared-field.test.mjs
+node --test \
+  shared-field/shared-field.test.mjs \
+  shared-field/social.test.mjs \
+  shared-field/state.test.mjs \
+  shared-field/api.test.mjs
 ```
 
-The transport capability floor is `publish`, `resolve`, `fetch`, and `subscribe`. A carrier may expose only a subset; capability negotiation does not alter Projection identity. Presence and dialogue remain outside this implementation floor.
+The shared-agency contract tests cover recursive/nested SharedFields, containment-cycle rejection, Contribution-on-Contribution recursion, ranking and metric Contributions, objective Encounter records, and the minimal Self/Other read model.
+
+The state tests cover nested-field traversal, field-relative membership, arbitrary Contribution-thread depth, ranking/metric querying, deferred-reference cycle rejection, and Encounter history. The state logic test harness is 6/6 green locally; the existing social contract suite is separately 6/6 green. The aggregate API test guards the import boundary across all contract layers.
+
+The transport capability floor remains `publish`, `resolve`, `fetch`, and `subscribe`. A carrier may expose only a subset; capability negotiation does not alter Projection identity. Live Presence/Activity and hosted delivery remain downstream service concerns.
