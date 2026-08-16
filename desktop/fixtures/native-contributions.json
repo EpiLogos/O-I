@@ -56,9 +56,22 @@
       "provenance": {"source": "EpiLogos/agent-system-design#146", "revision": "95bd5425de6f6d4a355ad6260ca2e1d74e28bf04"},
       "regions": ["canvas", "navigator", "inspector", "deep_drawer", "command"],
       "read_model_ref": null,
-      "accepted_selection_kinds": ["project", "run", "frontier", "candidate", "claim", "evidence", "human_request", "agency", "return", "execution", "trajectory", "harness_composition", "agent_session", "surface", "material_binding"],
+      "accepted_selection_kinds": ["project", "run", "frontier", "candidate", "claim", "evidence", "human_request", "agency", "return", "execution", "trajectory", "harness_composition", "agent_session", "session_space", "surface", "material_binding"],
       "actions": [],
-      "detail": "Consumes Factory PR #146's current source-owned @epilogos/factory-build-surface contract at 95bd5425de6f6d4a355ad6260ca2e1d74e28bf04: BuildSurface accepts the product-native FactoryBuildView directly and preserves separate semantic/live/trajectory depths. Factory owns Project/Run/RunMap-frontier/Candidate/Claim/Evidence/HumanRequest, Agency/Return and Execution/trajectory refs. Its FactoryActionView supplies product-native ActionRefs and BuildSurface emits only {actionRef, subjectRef}; O:I does not copy exemplar state or mint Action names. SessionSpaceRef remains optional producer data and is not treated as an O:I-owned semantic. Because the source package is still private and O:I #21 has no native install/register lifecycle bridge, no live FactoryBuildView instance is claimed in the desktop yet; contract hosting is degraded rather than pending or falsely full."
+      "detail": "Consumes Factory PR #146's current source-owned @epilogos/factory-build-surface contract at 95bd5425de6f6d4a355ad6260ca2e1d74e28bf04: BuildSurface accepts FactoryBuildView directly and preserves separate semantic/live/trajectory depths. Factory owns Project/Run/RunMap-frontier/Candidate/Claim/Evidence/HumanRequest, Agency/Return and Execution/trajectory refs. Its FactoryActionView supplies product-native ActionRefs and BuildSurface emits only {actionRef, subjectRef}; O:I does not copy exemplar state or mint Action names. SessionSpaceRef is accepted only as an opaque AIKit-owned ref now that aikit.session-space/v1 is real; Factory and O:I do not own its lifecycle or authority. Because the source package is still private and O:I #21 has no native install/register lifecycle bridge, no live FactoryBuildView instance is claimed in the desktop yet; contract hosting is degraded rather than pending or falsely full."
+    },
+    {
+      "schema": "oi.desktop-host-reading/v1",
+      "contribution_ref": "aikit.session-space/read-model",
+      "native_owner": "ai-kit",
+      "target_contract": "aikit.session-space/v1",
+      "availability": "degraded",
+      "provenance": {"source": "EpiLogos/ai-kit#68", "revision": "beae44c9b9f40565dcae24b4dceac91a3258bf44"},
+      "regions": ["canvas", "navigator", "inspector", "command", "status"],
+      "read_model_ref": null,
+      "accepted_selection_kinds": ["session_space", "project", "agent_session", "component", "surface", "connection", "provider", "harness", "capability", "action"],
+      "actions": [],
+      "detail": "Consumes the actual AIKit SessionSpace implementation at PR #68 head beae44c9b9f40565dcae24b4dceac91a3258bf44: durable session-space/... identity, aikit.session-space/v1, SessionSpaceReadModel, AgentSession/component/Surface/connection projections and explicit lifecycle/activation/connection states. SessionSpaceAuthorityState keeps capability availability, capability grant and Action authorisation separate; presence in a SessionSpace does not grant authority. O:I has no live SessionSpace instance binding yet and AIKit's exact head is not fully green, so this remains a degraded read-only contract rather than a fabricated Active workspace."
     },
     {
       "schema": "oi.desktop-host-reading/v1",
@@ -71,7 +84,7 @@
       "read_model_ref": {"ref": "aikit:harness-composition-topology:deepseek-maximal", "kind": "harness_composition_topology", "native_owner": "ai-kit", "provenance": {"source": "crates/aikit-adapters/src/composition_topology.rs", "revision": "beae44c9b9f40565dcae24b4dceac91a3258bf44"}},
       "accepted_selection_kinds": ["component", "surface", "harness_composition", "action"],
       "actions": [],
-      "detail": "Consumes AIKit PR #68's target-neutral nested Component topology as a read-model contract at current producer head beae44c9b9f40565dcae24b4dceac91a3258bf44. The same PR owns staged HarnessComposition mutation, ACP connection and terminal working-field projection while #61-#63 SessionSpace remains explicitly unimplemented. Rich UI, HumanCommand, Policy and LoopRuntime contributions remain target-native/NextSession; O:I does not mount Cordis, reinterpret protocol commands as Actions, or create a desktop plugin ontology."
+      "detail": "Consumes AIKit PR #68's target-neutral nested Component topology as a read-model contract at current producer head beae44c9b9f40565dcae24b4dceac91a3258bf44. The same PR owns staged HarnessComposition mutation, ACP connection and terminal working-field projection. Rich UI, HumanCommand, Policy and LoopRuntime contributions remain target-native; O:I does not mount Cordis, reinterpret protocol commands as Actions, or create a desktop plugin ontology."
     }
   ]
 }
