@@ -251,7 +251,10 @@ pub fn validate_manifest(manifest: &SuiteSkillSetManifest) -> Result<(), String>
             RevisionPolicy::Pinned => nonempty(
                 "source.pinned_revision",
                 skill.source.pinned_revision.as_deref().ok_or_else(|| {
-                    format!("pinned Skill `{}` requires pinned_revision", skill.skill_ref)
+                    format!(
+                        "pinned Skill `{}` requires pinned_revision",
+                        skill.skill_ref
+                    )
                 })?,
             )?,
             RevisionPolicy::ResolveAuthoritativeInstalledRevision
@@ -269,7 +272,10 @@ pub fn validate_manifest(manifest: &SuiteSkillSetManifest) -> Result<(), String>
         unique_nonempty("permission_requirements", &skill.permission_requirements)?;
         for requirement in &skill.compatibility {
             nonempty("compatibility.product", &requirement.product)?;
-            nonempty("compatibility.minimum_version", &requirement.minimum_version)?;
+            nonempty(
+                "compatibility.minimum_version",
+                &requirement.minimum_version,
+            )?;
         }
     }
 
@@ -460,7 +466,8 @@ pub fn resolve_profile(
             source_repository: skill.source.repository.clone(),
             source_path: skill.source.path.clone(),
             expected_revision: skill.source.pinned_revision.clone(),
-            observed_revision: observation.and_then(|observation| observation.source_revision.clone()),
+            observed_revision: observation
+                .and_then(|observation| observation.source_revision.clone()),
             availability,
             resolution_mode: mode,
             capability_states,
@@ -680,10 +687,7 @@ fn projection_receipt_path(destination: &Path) -> PathBuf {
     destination.with_file_name(format!("{file_name}.oi-projection.json"))
 }
 
-fn write_projection_receipt(
-    path: &Path,
-    receipt: &DirectProjectionReceipt,
-) -> Result<(), String> {
+fn write_projection_receipt(path: &Path, receipt: &DirectProjectionReceipt) -> Result<(), String> {
     let bytes = serde_json::to_vec_pretty(receipt)
         .map_err(|error| format!("could not encode projection receipt: {error}"))?;
     fs::write(path, bytes).map_err(|error| format!("could not write projection receipt: {error}"))
