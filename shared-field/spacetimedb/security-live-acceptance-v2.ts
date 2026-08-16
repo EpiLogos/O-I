@@ -141,6 +141,7 @@ const agentParticipant = createParticipant({
   agency: { ref: agentEntry.meta.agency_ref, source_system: agentEntry.provenance[0].source_system },
 });
 const strangerParticipant = makeParticipant(field.field_ref, 'stranger');
+const silentParticipant = makeParticipant(field.field_ref, 'silent');
 
 const projection = {
   schema: 'oi.projection/v1',
@@ -196,6 +197,12 @@ try {
   });
   await waitUntil(() => owner.conn.db.sharedField.fieldRef.find(field.field_ref), 'owned field');
 
+  await expectRejected(() => owner.conn.reducers.putSharedField({
+    fieldRef: 'oi:field:private-leak-attempt',
+    kind: 'private',
+    visibility: 'private',
+    contractJson: JSON.stringify({ ...field, field_ref: 'oi:field:private-leak-attempt', kind: 'private', visibility: 'private' }),
+  }), 'private SharedField entering public hosted table');
   await expectRejected(() => stranger.conn.reducers.putSharedField({
     fieldRef: field.field_ref,
     kind: field.kind,
@@ -209,19 +216,24 @@ try {
     contractJson: JSON.stringify({ ...hostileField, title: 'owner steals hostile field' }),
   }), 'reciprocal cross-field mutation');
 
-  for (const value of [humanParticipant, agentParticipant, strangerParticipant]) {
+  for (const value of [humanParticipant, agentParticipant, strangerParticipant, silentParticipant]) {
     await owner.conn.reducers.putParticipant(participantArgs(value));
   }
   await expectRejected(() => stranger.conn.reducers.putParticipant(participantArgs({
     ...strangerParticipant,
     participant_ref: 'participant:security:pollution',
   })), 'participant creation without field ownership');
+  await expectRejected(() => owner.conn.reducers.putParticipant({
+    ...participantArgs(strangerParticipant),
+    participantRef: 'participant:security:semantic-mismatch',
+  }), 'indexed Participant ref mismatching semantic contract');
 
   await owner.conn.reducers.grantParticipantAuthority({
     fieldRef: field.field_ref,
     participantRef: humanParticipant.participant_ref,
     targetIdentity: owner.identity,
     role: 'contributor',
+    contactable: true,
     ttlSeconds: 0,
   });
   await owner.conn.reducers.grantParticipantAuthority({
@@ -229,6 +241,7 @@ try {
     participantRef: agentParticipant.participant_ref,
     targetIdentity: agent.identity,
     role: 'contributor',
+    contactable: true,
     ttlSeconds: 0,
   });
   await owner.conn.reducers.grantParticipantAuthority({
@@ -236,6 +249,15 @@ try {
     participantRef: strangerParticipant.participant_ref,
     targetIdentity: stranger.identity,
     role: 'contact',
+    contactable: true,
+    ttlSeconds: 0,
+  });
+  await owner.conn.reducers.grantParticipantAuthority({
+    fieldRef: field.field_ref,
+    participantRef: silentParticipant.participant_ref,
+    targetIdentity: probe.identity,
+    role: 'observer',
+    contactable: false,
     ttlSeconds: 0,
   });
 
@@ -259,6 +281,21 @@ try {
     state: projection.state,
     contractJson: JSON.stringify(projection),
   }), 'publisher impersonation / revision overwrite');
+  await expectRejected(() => agent.conn.reducers.putProjection({
+    projectionKey: 'projection:security:private@1',
+    fieldRef: field.field_ref,
+    projectionRef: 'projection:security:private',
+    projectionRevision: 1,
+    sourceRevision: 'private-source@1',
+    publisherParticipantRef: agentParticipant.participant_ref,
+    state: 'published',
+    contractJson: JSON.stringify({
+      ...projection,
+      projection_ref: 'projection:security:private',
+      source: { ...projection.source, revision: 'private-source@1' },
+      audience: { visibility: 'private' },
+    }),
+  }), 'private Projection entering public hosted table');
 
   const refined = refineProjection(projection, {
     publisher_participant_ref: humanParticipant.participant_ref,
@@ -309,6 +346,16 @@ try {
     revision: 'hostile@1',
     entryJson: JSON.stringify({ schema: 'oi.explore-entry/v1', ref: 'wiki:o-i:index-poison', kind: 'wiki-node', world_ref: worldEntry.ref, label: 'Index poison', provenance: [] }),
   }), 'non-owner Explore index pollution');
+  const sampleEntry = fixture.entries[0];
+  await expectRejected(() => owner.conn.reducers.putExploreEntry({
+    semanticRef: 'wiki:o-i:semantic-id-spoof',
+    fieldRef: field.field_ref,
+    worldRef: sampleEntry.world_ref,
+    kind: sampleEntry.kind,
+    label: sampleEntry.label,
+    revision: sampleEntry.revision ?? '',
+    entryJson: JSON.stringify(sampleEntry),
+  }), 'SpaceTimeDB indexed ID spoof against semantic ref');
 
   const live = createLiveExploreApplication(createSpacetimeExploreSource(owner.conn.db));
   await waitUntil(() => live.search('knowledge navigation')[0]?.ref === 'wiki:o-i:explore:knowledge-navigation', 'Explore rebuild');
@@ -317,7 +364,7 @@ try {
   assert.equal('watch' in live.snapshot(), false);
   assert.equal('contact' in live.snapshot(), false);
 
-  const watch = createWatch({
+  const ownerWatchContract = createWatch({
     watch_ref: 'watch:security:ariadne:parasakti',
     watcher_participant_ref: humanParticipant.participant_ref,
     field_ref: field.field_ref,
@@ -326,13 +373,13 @@ try {
     provenance: { source_system: 'o-i', source_revision: 'security-watch@1' },
   });
   await owner.conn.reducers.putWatch({
-    watchRef: watch.watch_ref,
-    fieldRef: watch.field_ref,
-    watcherParticipantRef: watch.watcher_participant_ref,
-    targetKind: watch.target.kind,
-    targetRef: watch.target.ref,
-    state: watch.state,
-    contractJson: JSON.stringify(watch),
+    watchRef: ownerWatchContract.watch_ref,
+    fieldRef: ownerWatchContract.field_ref,
+    watcherParticipantRef: ownerWatchContract.watcher_participant_ref,
+    targetKind: ownerWatchContract.target.kind,
+    targetRef: ownerWatchContract.target.ref,
+    state: ownerWatchContract.state,
+    contractJson: JSON.stringify(ownerWatchContract),
   });
   const ownerWatch = createSpacetimeWatchSource(owner.conn.db as any);
   const agentWatch = createSpacetimeWatchSource(agent.conn.db as any);
@@ -340,6 +387,25 @@ try {
   await waitUntil(() => ownerWatch.snapshot().length === 1, 'owner private Watch view');
   assert.equal(agentWatch.snapshot().length, 0);
   assert.equal(strangerWatch.snapshot().length, 0);
+
+  const strangerWatchContract = createWatch({
+    watch_ref: 'watch:security:stranger:parasakti',
+    watcher_participant_ref: strangerParticipant.participant_ref,
+    field_ref: field.field_ref,
+    target: { kind: 'agent', ref: agentEntry.ref },
+    created_at: '2026-08-16T19:01:00.000Z',
+    provenance: { source_system: 'o-i', source_revision: 'security-watch-stranger@1' },
+  });
+  await stranger.conn.reducers.putWatch({
+    watchRef: strangerWatchContract.watch_ref,
+    fieldRef: strangerWatchContract.field_ref,
+    watcherParticipantRef: strangerWatchContract.watcher_participant_ref,
+    targetKind: strangerWatchContract.target.kind,
+    targetRef: strangerWatchContract.target.ref,
+    state: strangerWatchContract.state,
+    contractJson: JSON.stringify(strangerWatchContract),
+  });
+  await waitUntil(() => strangerWatch.snapshot().length === 1, 'stranger private Watch before revocation');
 
   const ownerContact = createSpacetimeContactSource(owner.conn.db as any);
   const agentContact = createSpacetimeContactSource(agent.conn.db as any);
@@ -354,6 +420,17 @@ try {
     ttlSeconds: 600,
     provenanceJson: JSON.stringify({ source_system: 'o-i', source_revision: `security-contact:${ref}@1` }),
   });
+
+  await expectRejected(() => agent.conn.reducers.requestContact({
+    contactRef: 'contact:security:not-contactable',
+    fieldRef: field.field_ref,
+    initiatorParticipantRef: agentParticipant.participant_ref,
+    recipientParticipantRef: silentParticipant.participant_ref,
+    purpose: 'Discoverable must not imply contactable.',
+    requestedScopeJson: '{}',
+    ttlSeconds: 60,
+    provenanceJson: '{}',
+  }), 'discoverable but explicitly non-contactable Participant');
 
   await request('contact:security:1');
   await waitUntil(() => ownerContact.snapshot().some(row => row.contact.contact_ref === 'contact:security:1'), 'recipient Contact view');
@@ -405,6 +482,8 @@ try {
     fieldRef: field.field_ref,
     participantRef: strangerParticipant.participant_ref,
   });
+  await waitUntil(() => strangerWatch.snapshot().length === 0, 'revocation removes private Watch visibility');
+  assert.equal(strangerContact.snapshot().length, 0, 'revoked caller has no private Contact visibility');
   await expectRejected(() => stranger.conn.reducers.requestContact({
     contactRef: 'contact:security:revoked',
     fieldRef: field.field_ref,
@@ -421,9 +500,11 @@ try {
     participantRef: strangerParticipant.participant_ref,
     targetIdentity: stranger.identity,
     role: 'contact',
+    contactable: true,
     ttlSeconds: 1,
   });
-  await sleep(1_150);
+  await waitUntil(() => strangerWatch.snapshot().length === 1, 'finite grant restores scoped private Watch visibility');
+  await waitUntil(() => strangerWatch.snapshot().length === 0, 'scheduled expiry removes private Watch visibility');
   await expectRejected(() => stranger.conn.reducers.requestContact({
     contactRef: 'contact:security:expired',
     fieldRef: field.field_ref,
@@ -436,28 +517,31 @@ try {
   }), 'expired authority');
 
   console.log(JSON.stringify({
-    proof: 'oi-encounter-security-spacetimedb-v1',
+    proof: 'oi-encounter-security-spacetimedb-v2',
     spacetimedb: '2.8.1',
     identities: clients.map(client => ({ name: client.name, identity: client.identity.toHexString() })),
     public_participants: String(owner.conn.db.participant.count()),
     projection_revisions: String(owner.conn.db.projection.count()),
     explore_entries: String(owner.conn.db.exploreEntry.count()),
     private_watch_owner_visible: ownerWatch.snapshot().length,
-    private_watch_unrelated_visible: strangerWatch.snapshot().length,
+    private_watch_unrelated_visible_after_expiry: strangerWatch.snapshot().length,
     contact_rows_owner_visible: ownerContact.snapshot().length,
     contact_rows_unrelated_visible: strangerContact.snapshot().length,
     attacks: {
+      private_content_in_public_floor: 'denied',
       cross_field_mutation: 'denied',
       participant_creation_without_owner: 'denied',
+      semantic_ref_spoof: 'denied',
       projection_impersonation: 'denied',
       explore_pollution: 'denied',
       private_table_subscription: 'denied',
+      discoverable_not_contactable: 'denied',
       recipient_impersonation: 'denied',
       blocked_contact: 'denied',
       oversized_contact: 'denied',
       high_rate_contact: 'denied',
-      revoked_authority: 'denied',
-      expired_authority: 'denied',
+      revoked_authority: 'denied_and_private_views_removed',
+      expired_authority: 'denied_and_private_views_removed',
     },
   }, null, 2));
 
