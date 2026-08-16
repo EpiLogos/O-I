@@ -1,0 +1,168 @@
+{
+  "schema": "oi.suite-skillset/v1",
+  "profiles": [
+    {
+      "profile_ref": "oi:skillset:base-suite-operation",
+      "purpose": "Smallest useful operational Skill composition for safely inspecting and operating installed O:I surfaces without root/metagentic administration.",
+      "inherits": [],
+      "members": [
+        {
+          "skill_ref": "oi:skill:operate-suite",
+          "requiredness": "required"
+        },
+        {
+          "skill_ref": "central:skill:control-maintenance",
+          "requiredness": "if_product_installed"
+        },
+        {
+          "skill_ref": "central:skill:machine-declaration",
+          "requiredness": "if_product_installed"
+        }
+      ]
+    },
+    {
+      "profile_ref": "oi:skillset:root-metagentic-operation",
+      "purpose": "Expanded procedural composition for an explicitly authorised world-bound/root Agency; this profile does not itself grant metagency, capabilities or Action authority.",
+      "inherits": [
+        "oi:skillset:base-suite-operation"
+      ],
+      "members": [
+        {
+          "skill_ref": "central:skill:connector-authoring",
+          "requiredness": "if_product_installed"
+        },
+        {
+          "skill_ref": "central:skill:connector-hardening",
+          "requiredness": "if_product_installed"
+        }
+      ]
+    }
+  ],
+  "skills": [
+    {
+      "skill_ref": "oi:skill:operate-suite",
+      "owner_product": "O:I",
+      "purpose": "Inspect, compose, snapshot, verify and route work across the installed O:I suite through product-owned public contracts.",
+      "source": {
+        "repository": "EpiLogos/O-I",
+        "path": "skills/oi/SKILL.md",
+        "revision_policy": "resolve_authoritative_installed_revision"
+      },
+      "compatibility": [],
+      "required_actions": [],
+      "required_capabilities": [],
+      "risk_class": "suite-operation",
+      "permission_requirements": []
+    },
+    {
+      "skill_ref": "central:skill:control-maintenance",
+      "owner_product": "Central",
+      "purpose": "Operate durable authored Control through Central's inspect/propose/adopt discipline rather than learned or generated personal state.",
+      "source": {
+        "repository": "EpiLogos/Central",
+        "path": "skills/control-maintenance/SKILL.md",
+        "revision_policy": "resolve_authoritative_installed_revision"
+      },
+      "compatibility": [],
+      "required_actions": [],
+      "required_capabilities": [],
+      "risk_class": "authored-ground",
+      "permission_requirements": []
+    },
+    {
+      "skill_ref": "central:skill:machine-declaration",
+      "owner_product": "Central",
+      "purpose": "Inspect and reconcile authored machine intent through Central's native machine declaration contract.",
+      "source": {
+        "repository": "EpiLogos/Central",
+        "path": "skills/machine-declaration/SKILL.md",
+        "revision_policy": "resolve_authoritative_installed_revision"
+      },
+      "compatibility": [],
+      "required_actions": [],
+      "required_capabilities": [],
+      "risk_class": "machine-operation",
+      "permission_requirements": []
+    },
+    {
+      "skill_ref": "central:skill:connector-authoring",
+      "owner_product": "Central",
+      "purpose": "Author provider implementations through Central's public Port/Connector boundary.",
+      "source": {
+        "repository": "EpiLogos/Central",
+        "path": "skills/connector-authoring/SKILL.md",
+        "revision_policy": "resolve_authoritative_installed_revision"
+      },
+      "compatibility": [],
+      "required_actions": [],
+      "required_capabilities": [],
+      "risk_class": "extension-authoring",
+      "permission_requirements": []
+    },
+    {
+      "skill_ref": "central:skill:connector-hardening",
+      "owner_product": "Central",
+      "purpose": "Harden and verify Central provider implementations through the native Connector conformance boundary.",
+      "source": {
+        "repository": "EpiLogos/Central",
+        "path": "skills/connector-hardening/SKILL.md",
+        "revision_policy": "resolve_authoritative_installed_revision"
+      },
+      "compatibility": [],
+      "required_actions": [],
+      "required_capabilities": [],
+      "risk_class": "extension-hardening",
+      "permission_requirements": []
+    }
+  ],
+  "expected_native_skills": [
+    {
+      "owner_product": "Actuation",
+      "purpose": "Operate WorldBinding, positional Root Agency, bounded determination and Return through Actuation-owned contracts.",
+      "requiredness": "if_product_installed",
+      "profiles": [
+        "oi:skillset:root-metagentic-operation"
+      ],
+      "state": "awaiting_native_publication"
+    },
+    {
+      "owner_product": "AIKit",
+      "purpose": "Explain and compose capabilities, SkillSets, Context, HarnessComposition and Surfaces through AIKit-owned public contracts when installed.",
+      "requiredness": "if_product_installed",
+      "profiles": [
+        "oi:skillset:base-suite-operation",
+        "oi:skillset:root-metagentic-operation"
+      ],
+      "state": "awaiting_native_publication"
+    },
+    {
+      "owner_product": "Software Factory",
+      "purpose": "Operate Project, Run, Candidate, evidence and Return-facing developmental workflows through Factory-owned Actions.",
+      "requiredness": "if_product_installed",
+      "profiles": [
+        "oi:skillset:base-suite-operation",
+        "oi:skillset:root-metagentic-operation"
+      ],
+      "state": "awaiting_native_publication"
+    },
+    {
+      "owner_product": "Workcell",
+      "purpose": "Operate material execution through the Workcell public client/provider contract rather than provider-private mutation.",
+      "requiredness": "if_product_installed",
+      "profiles": [
+        "oi:skillset:base-suite-operation",
+        "oi:skillset:root-metagentic-operation"
+      ],
+      "state": "awaiting_native_publication"
+    },
+    {
+      "owner_product": "Quaternal Logic",
+      "purpose": "Inspect and use QL/MEF through the product-owned formal runtime/service surface where relevant.",
+      "requiredness": "optional",
+      "profiles": [
+        "oi:skillset:root-metagentic-operation"
+      ],
+      "state": "awaiting_native_publication"
+    }
+  ]
+}
