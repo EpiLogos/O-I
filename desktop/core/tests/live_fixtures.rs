@@ -101,6 +101,7 @@ fn live_host_reading_fixture_is_parseable_and_truthful_about_cross_product_seams
         "agency",
         "harness_composition",
         "agent_session",
+        "session_space",
         "material_binding",
     ] {
         assert!(factory
@@ -109,16 +110,35 @@ fn live_host_reading_fixture_is_parseable_and_truthful_about_cross_product_seams
             .iter()
             .any(|candidate| candidate == kind));
     }
-    assert!(!factory
+    assert!(factory.contribution.actions.is_empty());
+    assert!(factory.contribution.read_model_ref.is_none());
+
+    let session_space = hosted
+        .iter()
+        .find(|entry| entry.contribution.contribution_ref == "aikit.session-space/read-model")
+        .expect("AIKit SessionSpace host reading must be present");
+    assert_eq!(
+        session_space.contribution.target_contract.as_deref(),
+        Some("aikit.session-space/v1")
+    );
+    assert_eq!(
+        session_space.contribution.provenance.revision.as_deref(),
+        Some("beae44c9b9f40565dcae24b4dceac91a3258bf44")
+    );
+    assert_eq!(
+        session_space.contribution.availability,
+        ContributionAvailability::Degraded
+    );
+    assert!(session_space
         .contribution
         .accepted_selection_kinds
         .iter()
         .any(|kind| kind == "session_space"));
-    assert!(factory.contribution.actions.is_empty());
-    assert!(factory.contribution.read_model_ref.is_none());
+    assert!(session_space.contribution.actions.is_empty());
+    assert!(session_space.contribution.read_model_ref.is_none());
 
     assert!(hosted.iter().any(|entry| {
-        entry.contribution.native_owner == "ai-kit"
+        entry.contribution.contribution_ref == "aikit.harness-composition/deepseek-maximal"
             && entry.contribution.target_contract.as_deref()
                 == Some("aikit.harness-composition-topology/v1")
             && entry.contribution.provenance.revision.as_deref()
