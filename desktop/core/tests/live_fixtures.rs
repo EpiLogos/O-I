@@ -34,17 +34,23 @@ fn live_host_reading_fixture_is_parseable_and_truthful_about_cross_product_seams
             && entry.contribution.availability == ContributionAvailability::Ready
     }));
     assert!(hosted.iter().any(|entry| {
+        entry.contribution.native_owner == "central"
+            && entry.contribution.target_contract.as_deref() == Some("personal.show")
+            && entry.contribution.availability == ContributionAvailability::Ready
+            && entry
+                .contribution
+                .actions
+                .iter()
+                .any(|action| action.action_ref == "personal.notify")
+    }));
+    assert!(hosted.iter().any(|entry| {
         entry.contribution.native_owner == "ai-kit"
             && entry.contribution.target_contract.as_deref()
                 == Some("aikit.harness-composition-topology/v1")
             && entry.contribution.availability == ContributionAvailability::Degraded
     }));
-
-    for owner in ["central", "software-factory"] {
-        assert!(hosted.iter().any(|entry| {
-            entry.contribution.native_owner == owner
-                && entry.contribution.availability
-                    == ContributionAvailability::PendingNativeAdapter
-        }));
-    }
+    assert!(hosted.iter().any(|entry| {
+        entry.contribution.native_owner == "software-factory"
+            && entry.contribution.availability == ContributionAvailability::PendingNativeAdapter
+    }));
 }
