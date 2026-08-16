@@ -18,14 +18,16 @@ The product family currently covers six distinct functions.
 
 | Function | Product surface | Boundary |
 |---|---|---|
-| Persistent personal ground | Central | Human-authored Control, Projects, machine intent, and durable personal working structure. |
-| Agent actuation | Agent Runtime | The LLM loop itself, from bare recurrence to a framework or harness. |
-| Capability and context resolution | AIKit | Agent-use resolution of skills, tools, Actions, ContextSources, models, profiles, sessions, harnesses, and composition-capable runtime bodies/surfaces. |
-| Developmental agency | Software Factory | Durable Projects, Runs, Agents, Agencies, artifacts, evidence, candidates, and developmental patterns. |
+| Persistent personal ground | Central | Human-authored Control, ordinary Work, machine intent, and durable personal working structure. |
+| Situated agency and actuation | Actuation | Agent/Agency, WorldBinding, AgenticComposition, determination/lineage, metagency, Return, and actuation/runtime research; not the mandatory residence of every Agent. |
+| Capability and context resolution | AIKit | Agent-use resolution of skills, tools, Actions, ContextSources, models, profiles, sessions, HarnessComposition, and composition-capable runtime bodies/Surfaces. |
+| Developmental agency | Software Factory | Durable Projects, Runs, artifacts, evidence, candidates, decisions, recognition, and developmental patterns. |
 | Material execution | Workcell | Workspaces, execution providers, runtimes, services, machines, bindings, and material lifecycle. |
-| Recursive formal intelligence | Quaternal Logic | Executable QL/MEF structure, semantic refraction, and related formal research. |
+| Recursive formal intelligence | Quaternal Logic | Executable QL/MEF structure, pairing/conjugate grammar, Context Frames, semantic refraction, and related formal research. |
 
 These are centres of responsibility, not mandatory stages in one runtime pipeline.
+
+The deeper QL application across the six surfaces is defined in [`CANONICAL-PRODUCT-FIELD.md`](CANONICAL-PRODUCT-FIELD.md). Its living 12×12 development object is [`../data/ql-relational-field.csv`](../data/ql-relational-field.csv), tracked by O:I #29.
 
 ## The sparse {O:I} layer
 
@@ -33,7 +35,7 @@ The {O:I} repository owns only concerns that make sense at the level of the whol
 
 - the founding vision;
 - public documentation for the field;
-- the map of product responsibilities;
+- the map of product responsibilities and their QL relations;
 - installation of selected modules;
 - a common `oi` namespace over installed native CLIs;
 - inspection of which modules and entry points are available;
@@ -46,15 +48,17 @@ The {O:I} repository owns only concerns that make sense at the level of the whol
 
 A product function stays in its product.
 
-Project management belongs to the personal-ground surface. Capability/context and runtime-body composition belong to AIKit. Run semantics belong to the developmental system. Execution planning belongs to the material-execution system. QL recurrence belongs to the runtime or Quaternal Logic layer that defines it.
+Persistent authored ground belongs to Central. Situated Agency, AgenticComposition, determination and Return belong to Actuation. Capability/Context and runtime-body composition belong to AIKit. Run/developmental semantics belong to the Factory. Execution planning and materialisation belong to Workcell. Executable formal QL/MEF structure belongs to QL-MEF.
 
-The `oi` layer can reveal these functions. The shared-field layer can project selected outputs from them and relate independently grounded Participants. Neither reimplements product behaviour.
+The `oi` layer can reveal these functions and their relations. The shared-field layer can project selected outputs from them and relate independently grounded Participants. Neither reimplements product behaviour.
+
+The 12×12 relation map follows the same sparse law. It is a developmental sensor for cross-product co-necessities, not a demand that every relation become an API or acceptance gate. Central in particular is allowed to remain open and relatively implicit with most products; its strongest explicit harmonics are `01` and `05/50`.
 
 ## Why a relational layer belongs at the parent
 
 A shared field does not belong naturally inside any one of the six products.
 
-A Central Participant Root, an AIKit capability account, a Factory finding, a Workcell observation, a runtime trace, a Quaternal Logic account, a wiki page, ordinary documentation, a Human, and an Agent can all become objects or participants in common attention. What they share is not native type. It is that they become **selected appearances of independently grounded worlds to one another**.
+A Central Participant Root, an Actuation/Return, an AIKit capability account, a Factory finding, a Workcell observation, a Quaternal Logic account, a wiki page, ordinary documentation, a Human, and an Agent can all become objects or participants in common attention. What they share is not native type. It is that they become **selected appearances of independently grounded worlds to one another**.
 
 That relation is therefore cross-surface and whole-level:
 
@@ -74,7 +78,7 @@ native product / local world
 
 O:I owns the portal and portable relation grammar. The source product keeps semantic and mutation authority over the source object.
 
-This gives the parent package a positive role beyond installation while preserving its sparseness. The parent does not need to know how to manage a Run, materialise a workspace, resolve a capability, author a wiki, or execute a Workcell lifecycle. It needs enough structure to preserve identity, provenance, revision, field participation, addressable Contributions, and the mediation through which one participant encounters another's externalised material.
+This gives the parent package a positive role beyond installation while preserving its sparseness. The parent does not need to know how to manage a Run, materialise a workspace, resolve a capability, author a wiki, determine an Agency, or execute a Workcell lifecycle. It needs enough structure to preserve identity, provenance, revision, field participation, addressable Contributions, and the mediation through which one participant encounters another's externalised material.
 
 The consolidated contract is [`SHARED-FIELD.md`](SHARED-FIELD.md). The deeper Self/Other account is [`OBJECTIVE-CO-INTERNALITY.md`](OBJECTIVE-CO-INTERNALITY.md).
 
@@ -123,6 +127,8 @@ local  projection encounter
 
 This does not assign the products new positions or create a seventh surface.
 
+The parent relation belongs to the deeper `0/1 → 4+2` derivation. It should not be reified as another numbered product position.
+
 `0` names the locally grounded side of the relation. Central is the first concrete personal root of that ground, but a whole O:I installation may project objects owned by any product.
 
 `/` names the selective movement between differentiated centres: disclosure, projection, address, publication, transport, contribution, invitation, response, and mediation.
@@ -131,7 +137,7 @@ This does not assign the products new positions or create a seventh surface.
 
 The relation matters precisely because Self and Other do not collapse into one state store. Local-first authority preserves differentiated centres; Projection, Contribution and Encounter make their relations operative.
 
-This is the architectural point at which O:I can later meet Epi-Logos as a distributed human-agent field. A live hosted service can serve relations between worlds without becoming the metaphysical or technical owner of every world it connects.
+This is the architectural point at which O:I can meet Epi-Logos as a distributed human-agent field. A live hosted service can serve relations between worlds without becoming the metaphysical or technical owner of every world it connects.
 
 ## SharedField, Contribution, and Encounter
 
@@ -191,7 +197,7 @@ Encounter does not assert belief, understanding, memory, endorsement, phenomenal
 
 ## Projection and Participant remain distinct
 
-A `Projection` is an addressable representation of a native object for a defined audience and purpose. It preserves source type, provenance and revision. It can represent documentation, a wiki object, Participant Root, research study, Factory artifact, Workcell result, Contribution, SharedField account, or another source-system output without turning all of them into generic posts.
+A `Projection` is an addressable representation of a native object for a defined audience and purpose. It preserves source type, provenance and revision. It can represent documentation, a wiki object, Participant Root, research study, Factory artifact, Workcell result, Actuation/Return account, Contribution, SharedField account, or another source-system output without turning all of them into generic posts.
 
 `Participant` is a field-relative relation over an existing Human identity or AgentRef. It may carry field-specific presentation, permission, subscription or moderation state but does not replace the underlying identity.
 
@@ -274,7 +280,7 @@ HarnessComposition
 
 The actual body may therefore change without the Agent becoming another Agent.
 
-AIKit is the system surface responsible for making that body intelligible and resolvable: which Components exist, what they require, which providers satisfy them, what they contribute, where those contributions appear, what owns their lifetime, and what would change if the composition were revised.
+Actuation owns the semantic Agency/AgenticComposition relation. AIKit is the system surface responsible for making the operative body intelligible and resolvable: which Components exist, what they require, which providers satisfy them, what they contribute, where those contributions appear, what owns their lifetime, and what would change if the composition were revised.
 
 The deeper composition grammar distinguishes relations such as:
 
@@ -430,10 +436,10 @@ The shared-field contract adds a different compatibility concern: a source syste
 
 ## Sixfold relation
 
-The current family also has a deeper formal reading:
+The current family has a deeper formal reading:
 
 ```text
-0  persistent ground
+0  persistent/open ground
 1  actuation
 2  capability field
 3  developmental form
@@ -441,19 +447,31 @@ The current family also has a deeper formal reading:
 5  recursive intelligence
 ```
 
-The public architecture can use these functional terms without requiring QL terminology. Quaternal Logic can disclose the deeper relation where that reading is useful.
+The active/explicate engineering body is `1–4`; `0` and `5` are anchoring/implicate positions. Across the conjugate faces this gives the `8+4` field.
 
-This preserves an important distinction: the technological architecture remains intelligible in plain engineering terms, while the formal layer can reveal why the relation has the shape it does.
+The canonical product-field document makes the deeper harmonic structure explicit:
+
+- A/B/C dyadic families;
+- D1/D2/D3 conjugate relations;
+- the two `1–2–3 / 4–5–0` triadic tendencies;
+- the 9/8/7 conjugate-square accounting;
+- the seven Context Frames as contextual configurations over the relation field.
+
+The public architecture can use plain engineering language without requiring QL terminology. Quaternal Logic can disclose the deeper relation where that reading is useful.
+
+This preserves an important distinction: the technological architecture remains intelligible in plain engineering terms, while the formal layer can reveal why the relation has the shape it does and can force productive attention across product seams.
 
 The parent Self/relation/Other reading is similarly optional as formal language. Its technical content stands plainly as **local authority + selective externalisation + shared relational field + bounded encounter by another independently grounded participant**.
 
 ## Architectural test
 
-A proposed change belongs in {O:I} when it improves shared entry, disclosure, installation, composition, migration, compatibility, cross-surface Projection, SharedField/Contribution/Encounter semantics, participation boundary, transport seam, or the conceptual account of the wider field.
+A proposed change belongs in {O:I} when it improves shared entry, disclosure, installation, composition, migration, compatibility, whole-field relation mapping, cross-surface Projection, SharedField/Contribution/Encounter semantics, participation boundary, transport seam, or the conceptual account of the wider field.
 
 A proposed change belongs in a module when it changes what that module can actually do.
 
-A proposed live shared-field implementation belongs in the future Epi-Logos service when it implements hosted relations, subscriptions, nested field state, Presence/Activity, moderation, recommendation, or service policy behind O:I's portable contracts.
+A proposed relation-map update belongs in O:I #29 when it changes how an existing product seam is understood, classified, or tracked. The map itself does not create a product requirement.
+
+A proposed live shared-field implementation belongs in the Epi-Logos service when it implements hosted relations, subscriptions, nested field state, Presence/Activity, moderation, recommendation, or service policy behind O:I's portable contracts.
 
 A proposed wiki change belongs in the generic wiki system when it changes WikiSpace/WikiNode/WikiFrame/Route semantics rather than participation around those objects.
 
