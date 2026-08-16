@@ -1,4 +1,4 @@
-use oi_cli::skillset::{parse_manifest, SUITE_SKILLSET_SCHEMA};
+use oi_cli::skillset::{parse_manifest, AgentScope, SUITE_SKILLSET_SCHEMA};
 
 #[test]
 fn desktop_consumes_the_canonical_suite_skillset_contract() {
@@ -8,12 +8,22 @@ fn desktop_consumes_the_canonical_suite_skillset_contract() {
     .expect("canonical suite SkillSet fixture must parse through oi-cli");
 
     assert_eq!(manifest.schema, SUITE_SKILLSET_SCHEMA);
-    assert!(manifest
+    let base = manifest
         .profiles
         .iter()
-        .any(|profile| profile.profile_ref == "oi:skillset:base-suite-operation"));
-    assert!(manifest
+        .find(|profile| profile.profile_ref == "oi:skillset:base-suite-operation")
+        .expect("base suite-operation profile");
+    assert_eq!(base.scope, AgentScope::Ordinary);
+
+    let root = manifest
         .profiles
         .iter()
-        .any(|profile| profile.profile_ref == "oi:skillset:root-metagentic-operation"));
+        .find(|profile| profile.profile_ref == "oi:skillset:root-metagentic-operation")
+        .expect("root/metagentic suite-operation profile");
+    assert_eq!(root.scope, AgentScope::RootWorld);
+
+    assert!(manifest
+        .expected_native_skills
+        .iter()
+        .any(|expectation| expectation.owner_product == "Actuation"));
 }
