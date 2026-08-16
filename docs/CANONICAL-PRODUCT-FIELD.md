@@ -86,7 +86,7 @@ The canonical manipulable representation is [`data/ql-relational-field.csv`](../
 
 The matrix does **not** assert 144 integrations. It makes 144 directed questions addressable. Each row records:
 
-- source and destination product faces;
+- source and destination product faces in the relation `id`;
 - canonical QL family tags where they apply;
 - a lightweight development-coverage reading;
 - a concise product-seam interpretation;
@@ -353,7 +353,7 @@ CF5–CF7 need more care:
 - **CF6** is the bridge by which the nested contextual whole relates outward. `CF5/CF6-field` marks seams where the Workcell/material whole and its return boundary are particularly relevant.
 - **CF7** is the `5/0` synthesis/reopening relation and therefore directly illuminates the QL/Central return seam.
 
-The source grammar also keeps conjugate forms available inside the contextual configuration. We therefore do not create separate human-CF and agent-CF ontologies. A CF is one contextual whole; H/A orientation tells us how positions inside it are being encountered.
+The source grammar retains conjugate-form structure inside the contextual configuration. O:I therefore does not create separate human-CF and agent-CF ontologies, nor does it invent alternate CF face-selection rules beyond the canonical QL-MEF cut. A CF is one contextual whole; H/A orientation tells us how the product positions are being encountered within the O:I application.
 
 ### 8.2 CF is not MEF lens
 
@@ -446,13 +446,12 @@ Possible outcomes include a small Action, Capability, ContextSource, Ref, Return
 
 | Column | Meaning |
 |---|---|
-| `id` | directed relation ID such as `H3->A4` |
-| `src`, `dst` | situated product-face coordinates |
+| `id` | directed situated relation ID such as `H3->A4`; this encodes both source and destination product faces |
 | `src_product`, `dst_product` | readable product names |
 | `ql` | canonical family tags; `|` separates multiple simultaneous relations |
 | `coverage` | `H/S/L/W/I` development reading |
 | `cf_view` | minimum/especially relevant CF view where useful; field-level CF5/6 labels are explicitly O:I interpretive hints |
-| `seam` | short current product reading |
+| `seam` | compact seam key such as `34:development-materialisation` |
 | `defined_in` | canonical definition/formalisation pointers |
 | `tracked_by` | current O:I/native issue/PR pointers |
 
