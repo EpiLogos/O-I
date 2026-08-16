@@ -54,17 +54,56 @@
       "schema": "oi.desktop-host-reading/v1",
       "contribution_ref": "central.surface/personal",
       "native_owner": "central",
-      "target_contract": null,
-      "availability": "pending_native_adapter",
+      "target_contract": "personal.show",
+      "availability": "ready",
       "provenance": {
-        "source": "EpiLogos/Central#51",
-        "revision": "b134142532602a9570f2deb1060a1badb8432c6d"
+        "source": "EpiLogos/Central#53",
+        "revision": "3f0551090ae39bcef260a27b1a9db0da4729d8a3"
       },
       "regions": ["canvas", "navigator", "inspector"],
-      "read_model_ref": null,
-      "accepted_selection_kinds": [],
-      "actions": [],
-      "detail": "Central has stable Actions/Ports, but #51 has not yet published the personal desktop read-model contract."
+      "read_model_ref": {
+        "ref": "personal.show",
+        "kind": "action",
+        "native_owner": "central",
+        "provenance": {
+          "source": "ctrl/src/personal.rs",
+          "revision": "3f0551090ae39bcef260a27b1a9db0da4729d8a3"
+        }
+      },
+      "accepted_selection_kinds": ["personal_root", "control_root", "work_root", "proposal"],
+      "actions": [
+        {
+          "action_ref": "personal.show",
+          "native_owner": "central",
+          "availability": "available",
+          "required_capability_ref": null
+        },
+        {
+          "action_ref": "control.propose-change",
+          "native_owner": "central",
+          "availability": "available",
+          "required_capability_ref": null
+        },
+        {
+          "action_ref": "control.review-proposal",
+          "native_owner": "central",
+          "availability": "available",
+          "required_capability_ref": null
+        },
+        {
+          "action_ref": "control.apply-proposal",
+          "native_owner": "central",
+          "availability": "available",
+          "required_capability_ref": null
+        },
+        {
+          "action_ref": "personal.notify",
+          "native_owner": "central",
+          "availability": "available",
+          "required_capability_ref": null
+        }
+      ],
+      "detail": "Consumes Central PR #53's native Personal/root-world Action surface. Authored Control/Work remain filesystem-owned by Central; proposal is derived until explicit acceptance, and notification delivery is not human acknowledgement. O:I only hosts the reading and Action refs."
     },
     {
       "schema": "oi.desktop-host-reading/v1",
