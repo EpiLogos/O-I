@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 // @ts-ignore -- this is the tested JS boundary over canonical shared-field contracts.
 import { selfOtherViewModel } from '../../self-other-read-model.mjs';
+import { FieldProof } from './field-proof';
 import './self-other-portal.css';
 
 type PositionView = {
@@ -69,67 +70,71 @@ export function SelfOtherPortal() {
   const selected = data[position];
 
   return (
-    <div
-      className="self-other-portal"
-      data-oi-surface="self-other"
-      data-oi-state={position}
-      data-oi-field-ref={data.field.ref}
-    >
-      <div className="self-other-portal__positions" role="group" aria-label="Choose a field-relative position">
-        <button
-          type="button"
-          aria-pressed={position === 'self'}
-          className="self-other-portal__position"
-          onClick={() => setPosition('self')}
-        >
-          Self
-        </button>
-        <span className="self-other-portal__slash" aria-hidden="true">
-          /
-        </span>
-        <button
-          type="button"
-          aria-pressed={position === 'other'}
-          className="self-other-portal__position"
-          onClick={() => setPosition('other')}
-        >
-          Other
-        </button>
-      </div>
-
-      <div className="self-other-portal__reading" aria-live="polite">
-        <div>
-          <div className="self-other-portal__label">{position}</div>
-          <div className="self-other-portal__name">{selected.name}</div>
-          <div className="self-other-portal__kind">{selected.kind}</div>
+    <>
+      <div
+        className="self-other-portal"
+        data-oi-surface="self-other"
+        data-oi-state={position}
+        data-oi-field-ref={data.field.ref}
+      >
+        <div className="self-other-portal__positions" role="group" aria-label="Choose a field-relative position">
+          <button
+            type="button"
+            aria-pressed={position === 'self'}
+            className="self-other-portal__position"
+            onClick={() => setPosition('self')}
+          >
+            Self
+          </button>
+          <span className="self-other-portal__slash" aria-hidden="true">
+            /
+          </span>
+          <button
+            type="button"
+            aria-pressed={position === 'other'}
+            className="self-other-portal__position"
+            onClick={() => setPosition('other')}
+          >
+            Other
+          </button>
         </div>
 
-        <dl className="self-other-portal__meta">
+        <div className="self-other-portal__reading" aria-live="polite">
           <div>
-            <dt>Identity</dt>
-            <dd>{selected.identity_ref}</dd>
+            <div className="self-other-portal__label">{position}</div>
+            <div className="self-other-portal__name">{selected.name}</div>
+            <div className="self-other-portal__kind">{selected.kind}</div>
           </div>
-          <div>
-            <dt>Participant</dt>
-            <dd>{selected.participant_ref}</dd>
-          </div>
-          <div>
-            <dt>Field</dt>
-            <dd>{data.field.title}</dd>
-          </div>
-          <div>
-            <dt>Source</dt>
-            <dd>
-              {selected.source_system} · {selected.source_revision}
-            </dd>
-          </div>
-        </dl>
+
+          <dl className="self-other-portal__meta">
+            <div>
+              <dt>Identity</dt>
+              <dd>{selected.identity_ref}</dd>
+            </div>
+            <div>
+              <dt>Participant</dt>
+              <dd>{selected.participant_ref}</dd>
+            </div>
+            <div>
+              <dt>Field</dt>
+              <dd>{data.field.title}</dd>
+            </div>
+            <div>
+              <dt>Source</dt>
+              <dd>
+                {selected.source_system} · {selected.source_revision}
+              </dd>
+            </div>
+          </dl>
+        </div>
+
+        <p className="self-other-portal__note">
+          Self and Other are positions in one shared relation. Identity, field and source provenance remain inspectable as
+          the selected side changes.
+        </p>
       </div>
 
-      <p className="self-other-portal__note">
-        Self and Other are positions in one shared relation. Identity, field and source provenance remain inspectable as
-        the selected side changes.
-      </p>
-    </div>
+      <FieldProof />
+    </>
   );
 }

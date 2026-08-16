@@ -11,7 +11,7 @@
         "kind": "field-definition",
         "ref": "oi:field:public",
         "source_system": "oi",
-        "revision": "self-other-demo@1"
+        "revision": "self-other-demo@2"
       }
     ]
   },
@@ -45,8 +45,11 @@
     },
     "provenance": {
       "source_system": "software-factory",
-      "source_revision": "fixture-agent@3",
-      "source_ref": "agent:parasakti"
+      "source_revision": "factory-agent-canon@21"
+    },
+    "agency": {
+      "ref": "agency:parasakti:design",
+      "source_system": "software-factory"
     }
   }
 }
