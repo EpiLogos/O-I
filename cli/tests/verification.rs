@@ -261,12 +261,7 @@ fn snapshot_revision_mismatch_is_incompatible_not_failed_native_health() {
     let verify = run(
         &temp,
         &catalog,
-        &[
-            "verify",
-            "--snapshot",
-            snapshot.to_str().unwrap(),
-            "--json",
-        ],
+        &["verify", "--snapshot", snapshot.to_str().unwrap(), "--json"],
     );
     assert_eq!(verify.status.code(), Some(1));
     let report: serde_json::Value = serde_json::from_slice(&verify.stdout).unwrap();
