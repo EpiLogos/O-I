@@ -115,6 +115,27 @@ Current accounting is:
 144
 ```
 
+### 3.1 Human-readable coverage matrix
+
+Rows are source positions and columns are destination positions. The CSV carries the detailed QL family, seam, Context Frame, definition, and tracking pointers for each cell.
+
+```text
+      H0 H1 H2 H3 H4 H5 | A0 A1 A2 A3 A4 A5
+H0     I  H  L  L  W  H |  H  H  L  L  W  H
+H1     H  I  H  S  H  S |  H  H  H  S  H  S
+H2     L  H  I  H  S  S |  L  H  H  H  S  S
+H3     L  S  H  I  H  S |  L  S  H  H  H  S
+H4     W  H  S  H  I  H |  W  H  S  H  H  H
+H5     H  S  S  S  H  I |  H  S  S  S  H  H
+------------------------------------------------
+A0     H  H  L  L  W  H |  I  H  L  L  W  H
+A1     H  H  H  S  H  S |  H  I  H  S  H  S
+A2     L  H  H  H  S  S |  L  H  I  H  S  S
+A3     L  S  H  H  H  S |  L  S  H  I  H  S
+A4     W  H  S  H  H  H |  W  H  S  H  I  H
+A5     H  S  S  S  H  H |  H  S  S  S  H  I
+```
+
 The `S/L/W` judgements are editable development readings. They are not QL canon and should change when the software changes.
 
 Central is intentionally sparse in this map. As P0 it is chiefly open authored ground and ordinary Work. Its strongest explicit harmonic relations are `01` and the `05/50` whole/return relation. A weak or mediated Central seam is often correct architecture rather than unfinished integration.
