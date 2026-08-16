@@ -25,10 +25,21 @@ fn live_host_reading_fixture_is_parseable_and_truthful_about_cross_product_seams
         })
         .collect::<Vec<_>>();
 
-    assert!(hosted.iter().any(|entry| {
-        entry.contribution.native_owner == "oi-explore"
-            && entry.contribution.availability == ContributionAvailability::Ready
-    }));
+    let explore = hosted
+        .iter()
+        .find(|entry| entry.contribution.native_owner == "oi-explore")
+        .expect("Explore host reading must be present");
+    assert_eq!(
+        explore.contribution.availability,
+        ContributionAvailability::Ready
+    );
+    assert!(explore.contribution.actions.is_empty());
+    assert!(!explore
+        .contribution
+        .accepted_selection_kinds
+        .iter()
+        .any(|kind| matches!(kind.as_str(), "contact" | "watch" | "authority" | "a2a_difference")));
+
     assert!(hosted.iter().any(|entry| {
         entry.contribution.native_owner == "actuation"
             && entry.contribution.availability == ContributionAvailability::Ready
@@ -47,6 +58,8 @@ fn live_host_reading_fixture_is_parseable_and_truthful_about_cross_product_seams
         entry.contribution.native_owner == "ai-kit"
             && entry.contribution.target_contract.as_deref()
                 == Some("aikit.harness-composition-topology/v1")
+            && entry.contribution.provenance.revision.as_deref()
+                == Some("4179160e4f32ecdbd93c1d7525a8f24067c55a3b")
             && entry.contribution.availability == ContributionAvailability::Degraded
     }));
     assert!(hosted.iter().any(|entry| {
