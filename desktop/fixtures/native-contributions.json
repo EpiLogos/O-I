@@ -53,12 +53,12 @@
       "native_owner": "software-factory",
       "target_contract": "@epilogos/factory-build-surface@0.1.0:FactoryBuildView",
       "availability": "degraded",
-      "provenance": {"source": "EpiLogos/agent-system-design#146", "revision": "95bd5425de6f6d4a355ad6260ca2e1d74e28bf04"},
+      "provenance": {"source": "EpiLogos/agent-system-design#146", "revision": "a57e2011149728891e5cc1a0264ba4b3ebe021c5"},
       "regions": ["canvas", "navigator", "inspector", "deep_drawer", "command"],
       "read_model_ref": null,
       "accepted_selection_kinds": ["project", "run", "frontier", "candidate", "claim", "evidence", "human_request", "agency", "return", "execution", "trajectory", "harness_composition", "agent_session", "session_space", "surface", "material_binding"],
       "actions": [],
-      "detail": "Consumes Factory PR #146's current source-owned @epilogos/factory-build-surface contract at 95bd5425de6f6d4a355ad6260ca2e1d74e28bf04: BuildSurface accepts FactoryBuildView directly and preserves separate semantic/live/trajectory depths. Factory owns Project/Run/RunMap-frontier/Candidate/Claim/Evidence/HumanRequest, Agency/Return and Execution/trajectory refs. Its FactoryActionView supplies product-native ActionRefs and BuildSurface emits only {actionRef, subjectRef}; O:I does not copy exemplar state or mint Action names. SessionSpaceRef is accepted only as an opaque AIKit-owned ref now that aikit.session-space/v1 is real; Factory and O:I do not own its lifecycle or authority. Because the source package is still private and O:I #21 has no native install/register lifecycle bridge, no live FactoryBuildView instance is claimed in the desktop yet; contract hosting is degraded rather than pending or falsely full."
+      "detail": "Consumes verified-green Factory PR #146 head a57e2011149728891e5cc1a0264ba4b3ebe021c5. The source-owned @epilogos/factory-build-surface contract exports BuildSurface over FactoryBuildView and preserves separate semantic/live/trajectory depths. Factory owns Project/Run/RunMap-frontier/Candidate/Claim/Evidence/HumanRequest, Agency/Return and Execution/trajectory refs. FactoryActionView supplies product-native ActionRefs and BuildSurface emits only {actionRef, subjectRef}; O:I does not copy exemplar state or mint Action names. SessionSpaceRef is accepted only as an opaque AIKit-owned ref now that aikit.session-space/v1 is real; Factory and O:I do not own its lifecycle or authority. The source package is still private and O:I #21 has no native install/register lifecycle bridge, so no live FactoryBuildView instance is claimed in the desktop yet; contract hosting is degraded rather than pending or falsely full."
     },
     {
       "schema": "oi.desktop-host-reading/v1",
