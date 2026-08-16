@@ -2,6 +2,17 @@
   "schema": "oi.suite-skillset/v1",
   "skills": [
     {
+      "skill_ref": "oi.skill/suite-operator",
+      "native_owner": "oi",
+      "source": {
+        "repository": "https://github.com/EpiLogos/O-I",
+        "revision": "e3811f0c7b74beb402a7e35df8dac7566a37a1fb",
+        "path": "skills/suite-operator/SKILL.md"
+      },
+      "required_capability_refs": [],
+      "related_action_refs": []
+    },
+    {
       "skill_ref": "oi.skill/operator",
       "native_owner": "oi",
       "source": {
@@ -62,6 +73,7 @@
       "profile_ref": "oi.skillset/base",
       "scope": "ordinary",
       "skill_refs": [
+        "oi.skill/suite-operator",
         "oi.skill/operator",
         "central.skill/control-maintenance",
         "central.skill/machine-declaration"
@@ -71,6 +83,7 @@
       "profile_ref": "oi.skillset/root",
       "scope": "root_world",
       "skill_refs": [
+        "oi.skill/suite-operator",
         "oi.skill/operator",
         "central.skill/control-maintenance",
         "central.skill/machine-declaration",
