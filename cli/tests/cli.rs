@@ -166,7 +166,7 @@ fn full_registered_composition_is_reported_without_invented_aliases() {
         assert!(result.status.success(), "{}", text(&result.stderr));
     }
     for module in [
-        "agent-runtime",
+        "actuation",
         "software-factory",
         "workcell",
         "quaternal-logic",
