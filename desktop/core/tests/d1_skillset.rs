@@ -10,7 +10,7 @@ use std::collections::BTreeSet;
 
 fn ready_contribution() -> NativeContributionReading {
     NativeContributionReading {
-        schema: "oi.desktop-native-contribution/v1".into(),
+        schema: "oi.desktop-host-reading/v1".into(),
         contribution_ref: "factory.surface/build".into(),
         native_owner: "software-factory".into(),
         target_contract: Some("factory.surface/v1".into()),
