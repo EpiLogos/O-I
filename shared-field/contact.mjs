@@ -1,3 +1,5 @@
+export const CONTACT_SCHEMA = 'oi.contact/v1';
+
 const CONTACT_STATES = new Set(['pending', 'accepted', 'declined', 'redirected', 'narrowed', 'expired']);
 
 function clone(value) {
@@ -26,7 +28,7 @@ function requireMicros(value, name) {
 
 export function validateContact(value) {
   const contact = clone(requireObject(value, 'Contact'));
-  if (contact.schema !== 'oi.contact/v1') throw new TypeError(`Unsupported Contact schema: ${contact.schema}`);
+  if (contact.schema !== CONTACT_SCHEMA) throw new TypeError(`Unsupported Contact schema: ${contact.schema}`);
   requireString(contact.contact_ref, 'Contact contact_ref', 512);
   requireString(contact.field_ref, 'Contact field_ref', 512);
   requireString(contact.initiator_participant_ref, 'Contact initiator_participant_ref', 512);
@@ -47,7 +49,7 @@ export function validateContact(value) {
 
 export function createContact(input = {}) {
   return validateContact({
-    schema: 'oi.contact/v1',
+    schema: CONTACT_SCHEMA,
     contact_ref: input.contact_ref,
     field_ref: input.field_ref,
     initiator_participant_ref: input.initiator_participant_ref,
