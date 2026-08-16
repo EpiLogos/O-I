@@ -4,8 +4,13 @@
     {
       "profile_ref": "oi:skillset:base-suite-operation",
       "purpose": "Smallest useful operational Skill composition for safely inspecting and operating installed O:I surfaces without root/metagentic administration.",
+      "scope": "ordinary",
       "inherits": [],
       "members": [
+        {
+          "skill_ref": "oi:skill:suite-operator",
+          "requiredness": "required"
+        },
         {
           "skill_ref": "oi:skill:operate-suite",
           "requiredness": "required"
@@ -23,6 +28,7 @@
     {
       "profile_ref": "oi:skillset:root-metagentic-operation",
       "purpose": "Expanded procedural composition for an explicitly authorised world-bound/root Agency; this profile does not itself grant metagency, capabilities or Action authority.",
+      "scope": "root_world",
       "inherits": [
         "oi:skillset:base-suite-operation"
       ],
@@ -39,6 +45,21 @@
     }
   ],
   "skills": [
+    {
+      "skill_ref": "oi:skill:suite-operator",
+      "owner_product": "O:I",
+      "purpose": "Operate the installed suite as a composed whole while preserving native product ownership, authority and provenance boundaries.",
+      "source": {
+        "repository": "EpiLogos/O-I",
+        "path": "skills/suite-operator/SKILL.md",
+        "revision_policy": "resolve_authoritative_installed_revision"
+      },
+      "compatibility": [],
+      "required_actions": [],
+      "required_capabilities": [],
+      "risk_class": "suite-operation",
+      "permission_requirements": []
+    },
     {
       "skill_ref": "oi:skill:operate-suite",
       "owner_product": "O:I",
@@ -61,7 +82,8 @@
       "source": {
         "repository": "EpiLogos/Central",
         "path": "skills/control-maintenance/SKILL.md",
-        "revision_policy": "resolve_authoritative_installed_revision"
+        "revision_policy": "pinned",
+        "pinned_revision": "b134142532602a9570f2deb1060a1badb8432c6d"
       },
       "compatibility": [],
       "required_actions": [],
@@ -76,7 +98,8 @@
       "source": {
         "repository": "EpiLogos/Central",
         "path": "skills/machine-declaration/SKILL.md",
-        "revision_policy": "resolve_authoritative_installed_revision"
+        "revision_policy": "pinned",
+        "pinned_revision": "b134142532602a9570f2deb1060a1badb8432c6d"
       },
       "compatibility": [],
       "required_actions": [],
@@ -91,7 +114,8 @@
       "source": {
         "repository": "EpiLogos/Central",
         "path": "skills/connector-authoring/SKILL.md",
-        "revision_policy": "resolve_authoritative_installed_revision"
+        "revision_policy": "pinned",
+        "pinned_revision": "b134142532602a9570f2deb1060a1badb8432c6d"
       },
       "compatibility": [],
       "required_actions": [],
@@ -106,7 +130,8 @@
       "source": {
         "repository": "EpiLogos/Central",
         "path": "skills/connector-hardening/SKILL.md",
-        "revision_policy": "resolve_authoritative_installed_revision"
+        "revision_policy": "pinned",
+        "pinned_revision": "b134142532602a9570f2deb1060a1badb8432c6d"
       },
       "compatibility": [],
       "required_actions": [],
@@ -127,7 +152,7 @@
     },
     {
       "owner_product": "AIKit",
-      "purpose": "Explain and compose capabilities, SkillSets, Context, HarnessComposition and Surfaces through AIKit-owned public contracts when installed.",
+      "purpose": "Explain and compose capabilities, SkillSets, HarnessComposition and Surfaces through AIKit-owned public contracts when installed.",
       "requiredness": "if_product_installed",
       "profiles": [
         "oi:skillset:base-suite-operation",
