@@ -5,7 +5,7 @@ pub fn cli_main() -> ExitCode {
         .map(|value| matches!(value.as_str(), "help" | "--help" | "-h"))
         .unwrap_or(false);
 
-    let code = suite_main();
+    let code = suite_main_exact();
     if is_help {
         println!();
         println!("First-suite composition:");
