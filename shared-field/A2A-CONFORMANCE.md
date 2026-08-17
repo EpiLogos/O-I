@@ -1,9 +1,9 @@
 # O:I SharedField ↔ A2A conformance floor
 
-**Issue:** #24 / OI-015  
+**Issue:** #24 / OI-015 and #31 / #43 / OI-017  
 **A2A target:** protocol `1.0`, HTTP+JSON binding  
 **Hosted state:** SpaceTimeDB `2.8.1`  
-**Security dependency:** #31 / OI-017 encounter-security floor
+**Security phase:** #43 Phase 3 — explicit Exchange authority
 
 This file records the implemented provider/protocol boundary. It is intentionally narrower than “generic A2A support”.
 
@@ -17,12 +17,16 @@ O:I Participant
 A2A binding Projection
     ↓ live reachability observation
 A2A presence Explore fact
+    ↓ explicit Exchange request + field-side grant
+bounded A2A Exchange use
     ↓ protocol exchange
-A2A Task | Message
-    ↓ encountered returned difference
-explicit admission decision
-    ↓ optional
-Contribution and/or Projection
+A2A Task | Message | Artifact
+    ↓ untrusted returned difference
+Phase-2 generic Contribution ingress / quarantine
+    ↓ separate receiving-side Admission decision
+admitted Contribution
+    ↓ separate receiving-side index-eligibility decision
+optional Explore visibility, intersected with caller audience
 ```
 
 The following non-identities are executable invariants:
@@ -30,14 +34,19 @@ The following non-identities are executable invariants:
 ```text
 A2A Agent Card / endpoint ≠ Agent identity
 A2A endpoint ≠ Participant
+published / reachable endpoint ≠ Contact
+accepted Contact ≠ Exchange
+Exchange ≠ trust
+Exchange ≠ execution authority
 A2A Task ≠ Actuation Determination / Return
 A2A Task ≠ Factory Run
 A2A Message ≠ Contribution automatically
 A2A Artifact ≠ Projection automatically
+returned material ≠ Admission / index eligibility / canon / execution
 SpaceTimeDB row ID ≠ O:I semantic Ref
 ```
 
-A2A exchange is communication between eligible situated loci. It carries no determining/delegation authority. If an A2A exchange later participates in an Actuation `Return`, that requires an independently existing Actuation Determination lineage and the Actuation recognition/world-mutation law.
+A2A exchange is communication between eligible situated loci. It carries no determining, delegation, tool-call, package, Workcell, Actuation or Factory execution authority. If an A2A exchange later participates in an Actuation `Return`, that requires independently existing execution authority and recognition/world-mutation law; that is outside #43 Phase 3.
 
 ## A2A primary-source lock
 
@@ -49,50 +58,72 @@ The implementation targets the released A2A v1 semantic/wire family rather than 
 - `AgentInterface` supplies transport URL, protocol binding and protocol version;
 - `SendMessageResponse` contains either an A2A `Task` or an A2A `Message`;
 - Agent Cards are discovered independently of O:I identity and advertise supported interfaces;
-- current v1 patch guidance prefers media type `application/a2a+json` for HTTP+JSON.
+- current v1 guidance uses media type `application/a2a+json` for HTTP+JSON.
 
-O:I records protocol version `1.0` in the semantic binding and uses `application/a2a+json` plus `A2A-Version: 1.0` on message exchange. The Agent Card is checked for an interface matching the *already explicitly published* O:I binding. It is not used to mint or replace the O:I Agent or Participant ref.
+O:I records protocol version `1.0` in the semantic binding and uses `application/a2a+json` plus `A2A-Version: 1.0` on message exchange. The Agent Card is checked for an interface matching the *already explicitly published* O:I binding. Agent Card metadata cannot mint or widen O:I identity, Participant status, Exchange authority or execution authority.
 
-## Explicit publication
+## Explicit publication is not Exchange authority
 
-`oi.a2a-binding/v1` is a revocable semantic transport relation. Publication requires:
+`oi.a2a-binding/v1` is a revocable semantic transport relation. Publication requires distinct Agent, Participant and binding refs, attributable publisher and decision refs, source revision/provenance, and explicit endpoint locators while state is `published`.
 
-- distinct `agent_ref`, `participant_ref` and `binding_ref`;
-- an attributable `publisher_participant_ref`;
-- a fresh `publication_decision_ref`;
-- source revision and provenance;
-- an explicit public Agent Card URL and endpoint URL only while state is `published`.
+Endpoint replacement increments the binding revision and requires another publication decision. Withdrawal is also a new revision and carries no endpoint locators. Agent identity, Participant identity and Watch relations survive replacement/withdrawal.
 
-Outside loopback development, locators must be HTTPS. Embedded URL credentials, query material and fragments are rejected. Runtime authorization headers are request-local and are never copied into SharedField contracts or returned differences.
+Publication and observed availability establish **reachability only**. `performA2aExchange` now requires an explicit Exchange-authority resolver before performing *any* network request, including Agent Card discovery. Missing or denied authority therefore produces zero outbound A2A requests.
 
-Endpoint replacement increments the binding revision and requires another publication decision. Withdrawal is also a new revision and carries no endpoint locators. Agent identity, Participant identity and Watch relations survive both replacement and withdrawal.
+## Phase-3 Exchange grant binding
 
-## Security convergence with OI-017
+A server-side Exchange grant is separate from Contact and Admission. It binds at least:
 
-A2A does not define another authority registry.
+- SharedField;
+- initiating Participant and server-observed runtime actor identity;
+- counterparty Participant;
+- protocol/provider mode;
+- exact A2A binding ref and binding revision;
+- purpose and scope;
+- permitted exchange mode;
+- finite server-time lifetime;
+- finite use count;
+- field-side grant decision/provenance;
+- revocation/completion/exhaustion state.
 
-The binding is materialised as a normal public `oi.projection/v1` with representation kind `a2a-binding`. Therefore hosted mutation uses the existing OI-017 SpaceTimeDB Projection reducer and contributor authority checks.
+The SpaceTimeDB `exchange_request`, `exchange_grant` and `exchange_use` ledgers are private. Grant consumption is reducer-mediated and transactional. Exact operation replay is idempotent; conflicting replay, wrong actor/field/counterparty/protocol/binding/revision/purpose/mode, expiry, revocation and exhaustion fail closed.
 
-Live availability is materialised as an `oi.explore-entry/v1` of kind `a2a-presence`; owner/index authority remains the OI-017 Explore authority boundary. The presence semantic ref is not the SpaceTimeDB row id and is not the binding ref.
+A replacement endpoint/binding revision cannot silently inherit an earlier grant.
 
-This deliberately inherits the current public hosted-content floor. It does not claim private/audience-scoped endpoint publication before #31 provides that hosted content policy. Private runtime endpoints are therefore not silently projected merely because they are locally discoverable.
+## Bounded transport
 
-Contact remains a separate consent/anti-spam primitive. `discoverable ≠ contactable ≠ contacted ≠ reciprocal ≠ trusted`; an A2A binding is additionally `published-and-currently-reachable`, not an ambient permission to contact or delegate.
+The privileged A2A controller applies bounds before remote material can become returned data:
 
-## Returned difference and admission
+- outbound message text: 32 KiB;
+- Agent Card response: 64 KiB;
+- A2A exchange response: 1 MiB;
+- bounded JSON depth/cardinality;
+- 15 second fetch timeout;
+- redirects rejected at the privileged fetch boundary.
 
-`performA2aExchange` returns `oi.a2a-difference/v1` with `admission: pending`. The wire Task/Message payload and any A2A Artifact remain transport provenance at this point.
+Runtime authorization headers remain request-local and are never copied into SharedField contracts or returned differences.
 
-`encounterA2aDifference` may record objective presentation/availability through `oi.encounter/v1`; it does not impute belief, understanding, agreement or other subjective state.
+## Returned difference → generic quarantine
 
-`admitA2aDifference` is the only current bridge from transport result to SharedField semantic material. Its explicit decision can:
+`performA2aExchange` returns `oi.a2a-difference/v1` carrying the exact Exchange grant and operation lineage. Task/Message/Artifact payloads remain transport provenance and untrusted material.
 
-- reject;
-- create a Contribution;
-- create a Projection;
-- create both.
+The former A2A-specific semantic Admission shortcut is not the Phase-3 ingress path. An authorised return can only be submitted through `ingest_authorized_exchange_contribution`, which verifies the consumed Exchange grant/operation and counterparty/source lineage before delegating to the generic Phase-2 Contribution ingress boundary.
 
-No branch creates an Actuation Determination/Return or Factory Run implicitly.
+That boundary produces private quarantine and a caller receipt. It does **not** produce:
+
+- Admission;
+- index eligibility;
+- Projection;
+- Explore visibility;
+- trust or canon;
+- Action/tool/package authority;
+- Workcell/Actuation/Factory execution authority.
+
+Any later Admission and indexing remain separate receiving-side decisions under the Phase-2 laws.
+
+## MCP non-escalation witness
+
+The Phase-3 provider corpus also proves the protocol-neutral distinction using an MCP-shaped grant: a grant scoped to `protocol=mcp` and `mode=data` does not permit `mode=tool:call`. Tool invocation belongs to Phase-4 execution containment, not Exchange.
 
 ## Executable evidence
 
@@ -101,26 +132,15 @@ Portable/adversarial tests:
 ```text
 shared-field/a2a.test.mjs
 shared-field/a2a-explore.test.mjs
+shared-field/exchange-authority.test.mjs
 ```
 
-Live provider/protocol acceptance:
+Live provider acceptance:
 
 ```text
-shared-field/spacetimedb/a2a-live-acceptance.ts
+shared-field/spacetimedb/security-live-acceptance-v4-bootstrap.ts
+shared-field/spacetimedb/security-live-acceptance-v6.ts
+shared-field/spacetimedb/a2a-phase2-ingress-live-acceptance.ts
 ```
 
-The live fixture uses generated SpaceTimeDB bindings and a real loopback HTTP A2A server to prove:
-
-1. Explore search finds the canonical Agent semantic ref;
-2. Agent resolves to a distinct Participant and explicit binding;
-3. binding and presence arrive from live SpaceTimeDB subscriptions;
-4. SpaceTimeDB row ids remain implementation metadata;
-5. the HTTP+JSON v1 exchange returns a Task with an Artifact but creates no SharedField Contribution/Projection automatically;
-6. Encounter retains A2A transport provenance without subjective claims;
-7. explicit admission writes a returned Projection through the secured SpaceTimeDB Projection reducer;
-8. Watch remains independent;
-9. endpoint replacement uses a fresh decision and new transport while preserving Agent/Participant identity;
-10. withdrawal removes locators/reachability while Agent discovery and Watch survive;
-11. post-withdrawal exchange fails before any network request.
-
-CI runs the encounter-security v3 provider proof first and the A2A acceptance against a separate published SpaceTimeDB database second, so protocol evidence cannot pass by bypassing the current security floor.
+The provider chain preserves the earlier Phase-1 private-content and Phase-2 Contribution-Admission corpora, then executes the Phase-3 multi-identity Exchange corpus. A separate isolated live A2A database proves that a grant is consumed before network I/O and that returned remote material lands only in the generic Contribution quarantine.
