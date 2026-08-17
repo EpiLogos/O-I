@@ -11,6 +11,7 @@ pub use contribution::{
     HostedContribution, NativeActionInvocation, NativeContributionReading, PackageEnvelopeRef,
     SelectionProjection,
 };
+pub use epilogos_factory::build::FactoryBuildSnapshot;
 pub use live_product::{
     correlate_session_spaces, dispatch_factory_action, observe_factory_build, FactoryActionRoundTrip,
     FactoryHostObservation, SessionSpaceCorrelation, SessionSpaceCorrelationState,
