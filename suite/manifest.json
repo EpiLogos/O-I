@@ -1,0 +1,195 @@
+{
+  "schema": "oi.suite-manifest/v1",
+  "suite_version": "0.1.0-prelocal.2",
+  "accepted_at": "2026-08-17",
+  "products": [
+    {
+      "id": "central",
+      "public_name": "Central",
+      "repository": "https://github.com/EpiLogos/Central",
+      "canonical_repository": "https://github.com/EpiLogos/Central",
+      "checkout": "Central",
+      "revision": "78a545214ad70e055fae38ccae2d78443112f283",
+      "release_tag": "central-v0.1.0-prelocal.2",
+      "artifact": {
+        "kind": "cli",
+        "entry": "ctrl",
+        "assets": [
+          {
+            "target": "aarch64-apple-darwin",
+            "name": "central-0.1.0-aarch64-apple-darwin.tar.gz",
+            "sha256": "a15468f1d121cb2158552f510ce4f03720e9f4dd9e2127339b2e395ae3acac24",
+            "attestation": "https://github.com/EpiLogos/Central/attestations/41163489"
+          },
+          {
+            "target": "x86_64-unknown-linux-gnu",
+            "name": "central-0.1.0-x86_64-unknown-linux-gnu.tar.gz",
+            "sha256": "011f85f3af24775d0fa3740a88ebf256f1a146f067c1fa1520b267202e25054d",
+            "attestation": "https://github.com/EpiLogos/Central/attestations/41163516"
+          }
+        ],
+        "installed_verify": []
+      },
+      "dev": {
+        "build": ["cargo", "build", "--workspace", "--locked", "--release"],
+        "test": ["cargo", "test", "--workspace", "--locked"]
+      }
+    },
+    {
+      "id": "actuation",
+      "public_name": "Actuation",
+      "repository": "https://github.com/EpiLogos/Actuation",
+      "canonical_repository": "https://github.com/EpiLogos/Actuation",
+      "checkout": "Actuation",
+      "revision": "03e03acb1ae47d60f26903209112258e60f83627",
+      "release_tag": "actuation-v0.1.0-prelocal.2",
+      "artifact": {
+        "kind": "component",
+        "entry": null,
+        "assets": [
+          {
+            "target": "any",
+            "name": "actuation-0.1.0-component.tar.gz",
+            "sha256": "7245550045269562811da8a73ca13a01feb4431a314c30784657e7be35f425ca",
+            "attestation": "https://github.com/EpiLogos/Actuation/attestations/41163540"
+          }
+        ],
+        "installed_verify": []
+      },
+      "dev": {
+        "build": [],
+        "test": ["node", "--test", "contracts/agency.test.mjs", "contracts/model-bearing.test.mjs"]
+      }
+    },
+    {
+      "id": "ai-kit",
+      "public_name": "AIKit",
+      "repository": "https://github.com/EpiLogos/ai-kit",
+      "canonical_repository": "https://github.com/EpiLogos/ai-kit",
+      "checkout": "ai-kit",
+      "revision": "9ff28ca31c723b314ddf62b7f85b6e2611d53d66",
+      "release_tag": "aikit-v0.1.0-prelocal.2",
+      "artifact": {
+        "kind": "cli",
+        "entry": "aikit",
+        "assets": [
+          {
+            "target": "aarch64-apple-darwin",
+            "name": "ai-kit-0.1.0-aarch64-apple-darwin.tar.gz",
+            "sha256": "369afd41fb8c0fea201b46aad4f08d0b9c43f46a4055a829d9a1477a6c7408b0",
+            "attestation": "https://github.com/EpiLogos/ai-kit/attestations/41163810"
+          },
+          {
+            "target": "x86_64-unknown-linux-gnu",
+            "name": "ai-kit-0.1.0-x86_64-unknown-linux-gnu.tar.gz",
+            "sha256": "5b2d11c94726740e3f25e5408dd7abc8f5a8837c36fad90f11a82bf5273984fb",
+            "attestation": "https://github.com/EpiLogos/ai-kit/attestations/41163813"
+          }
+        ],
+        "installed_verify": ["--version"]
+      },
+      "dev": {
+        "build": ["cargo", "build", "--workspace", "--locked", "--release"],
+        "test": ["cargo", "test", "--workspace", "--all-targets", "--locked"]
+      }
+    },
+    {
+      "id": "software-factory",
+      "public_name": "Software Factory",
+      "repository": "https://github.com/EpiLogos/agent-system-design",
+      "canonical_repository": "https://github.com/EpiLogos/Software-Factory",
+      "checkout": "Software-Factory",
+      "revision": "621624c7c8a9919604ad36db451f1a30806fc0ce",
+      "release_tag": "software-factory-v0.1.0-prelocal.2",
+      "artifact": {
+        "kind": "component",
+        "entry": null,
+        "assets": [
+          {
+            "target": "any",
+            "name": "software-factory-0.1.0-component.tar.gz",
+            "sha256": "c2c4af6cd96e200a113d2904fa60aadf705ee29a9a458e66cc7d2d3f4635fb1a",
+            "attestation": "https://github.com/EpiLogos/agent-system-design/attestations/41163579"
+          }
+        ],
+        "installed_verify": []
+      },
+      "dev": {
+        "build": ["cargo", "build", "--workspace", "--locked", "--release"],
+        "test": ["cargo", "test", "--workspace", "--locked"]
+      }
+    },
+    {
+      "id": "workcell",
+      "public_name": "Workcell",
+      "repository": "https://github.com/EpiLogos/Workcell",
+      "canonical_repository": "https://github.com/EpiLogos/Workcell",
+      "checkout": "Workcell",
+      "revision": "9277fdc852a468f1c53f62b766a38e06705fe482",
+      "release_tag": "workcell-v0.1.0-prelocal.2",
+      "artifact": {
+        "kind": "cli",
+        "entry": "workcell",
+        "assets": [
+          {
+            "target": "aarch64-apple-darwin",
+            "name": "workcell-0.1.0-aarch64-apple-darwin.tar.gz",
+            "sha256": "55dc14252ff2d610c5b8b4c270d8113e15bd0cc258046c917a0fffec5dcaf677",
+            "attestation": "https://github.com/EpiLogos/Workcell/attestations/41163600"
+          },
+          {
+            "target": "x86_64-unknown-linux-gnu",
+            "name": "workcell-0.1.0-x86_64-unknown-linux-gnu.tar.gz",
+            "sha256": "1509f020a026e572a2080c3e41d8a04a33ac242f43de5a21a55d093df588ca6a",
+            "attestation": "https://github.com/EpiLogos/Workcell/attestations/41163517"
+          }
+        ],
+        "installed_verify": ["--json", "doctor"]
+      },
+      "dev": {
+        "build": ["cargo", "build", "--workspace", "--locked", "--release"],
+        "test": ["cargo", "test", "--workspace", "--all-targets", "--locked"]
+      }
+    },
+    {
+      "id": "quaternal-logic",
+      "public_name": "Quaternal Logic",
+      "repository": "https://github.com/EpiLogos/QL-MEF",
+      "canonical_repository": "https://github.com/EpiLogos/Quaternal-Logic",
+      "checkout": "Quaternal-Logic",
+      "revision": "cab0baf52f7d7726708d7fb13c6ac98f9b09b643",
+      "release_tag": "quaternal-logic-v0.1.0-prelocal.2",
+      "artifact": {
+        "kind": "component",
+        "entry": null,
+        "assets": [
+          {
+            "target": "any",
+            "name": "quaternal-logic-0.1.0-component.tar.gz",
+            "sha256": "54f87c9c0f44704bee3a077a9348b471c7a2101c0284c068b9579132f0f6fa9e",
+            "attestation": "https://github.com/EpiLogos/QL-MEF/attestations/41163591"
+          }
+        ],
+        "installed_verify": []
+      },
+      "dev": {
+        "build": ["cargo", "build", "--workspace", "--locked", "--release"],
+        "test": ["cargo", "test", "--workspace", "--all-targets", "--locked"]
+      }
+    }
+  ],
+  "physical_gates": [
+    {
+      "id": "macos-reference-workstation",
+      "description": "Physical acceptance on the personal macOS reference workstation is deferred to the fresh physical-acceptance session."
+    },
+    {
+      "id": "workcell-reference-machine",
+      "description": "Physical acceptance on the Ubuntu Workcell reference machine is deferred to the fresh physical-acceptance session."
+    },
+    {
+      "id": "private-provider-materialisation",
+      "description": "Private credential, Tailscale, Docker/GPU and live model-provider materialisation are deferred and are not inferred from cloud CI."
+    }
+  ]
+}
