@@ -24,6 +24,9 @@ const OWNER_PARTICIPANT_REF = 'participant:a2a:p2-owner';
 const AGENT_PARTICIPANT_REF = 'participant:a2a:p2-remote';
 const AGENT_REF = 'agent:a2a:p2-remote';
 const BINDING_REF = 'a2a-binding:p2-remote';
+const EXCHANGE_REQUEST_REF = 'exchange-request:a2a:p3-live';
+const EXCHANGE_GRANT_REF = 'exchange-grant:a2a:p3-live';
+const EXCHANGE_OPERATION_ID = 'exchange-operation:a2a:p3-live';
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 async function waitUntil<T>(read: () => T | undefined | false, description: string): Promise<T> {
@@ -146,6 +149,8 @@ try {
       'SELECT * FROM projection',
       'SELECT * FROM explore_entry',
       'SELECT * FROM my_field_authority',
+      'SELECT * FROM my_contribution_receipt',
+      'SELECT * FROM contribution',
     ]);
   }
 
@@ -218,11 +223,41 @@ try {
   const snapshot = source.snapshot();
   const projectionsBefore = [...owner.conn.db.projection.iter()].length;
 
+  await owner.conn.reducers.requestExchange({
+    requestRef: EXCHANGE_REQUEST_REF,
+    fieldRef: FIELD_REF,
+    initiatorParticipantRef: OWNER_PARTICIPANT_REF,
+    counterpartyParticipantRef: AGENT_PARTICIPANT_REF,
+    purpose: 'a2a-message-exchange',
+    scopeJson: JSON.stringify({ kind: 'message' }),
+    protocol: 'a2a',
+    bindingRef: BINDING_REF,
+    bindingRevision: 1,
+    modesJson: JSON.stringify(['message:send']),
+    maxUses: 1,
+    ttlSeconds: 300,
+  });
+  await owner.conn.reducers.grantExchange({
+    requestRef: EXCHANGE_REQUEST_REF,
+    grantRef: EXCHANGE_GRANT_REF,
+    reason: 'Phase 3 live A2A exchange grant',
+    evidenceJson: JSON.stringify({ fixture: 'a2a-phase3-live' }),
+  });
+
   const difference = await performA2aExchange({
     binding: snapshot.bindings[0],
     presence: snapshot.presence[0],
     initiator_participant_ref: OWNER_PARTICIPANT_REF,
-    message: { exchange_ref: 'a2a-exchange:p2', message_id: 'a2a-message:p2', text: 'Return untrusted material.' },
+    authorize_exchange: async (demand: any) => {
+      await owner.conn.reducers.consumeExchange({
+        grantRef: EXCHANGE_GRANT_REF, operationId: demand.operation_id, fieldRef: demand.field_ref,
+        initiatorParticipantRef: demand.initiator_participant_ref, counterpartyParticipantRef: demand.counterparty_participant_ref,
+        protocol: demand.protocol, bindingRef: demand.binding_ref, bindingRevision: demand.binding_revision,
+        mode: demand.mode, purpose: demand.purpose, scopeJson: demand.scope_json,
+      });
+      return { allowed: true, grant_ref: EXCHANGE_GRANT_REF };
+    },
+    message: { exchange_ref: 'a2a-exchange:p2', exchange_operation_id: EXCHANGE_OPERATION_ID, message_id: 'a2a-message:p2', text: 'Return untrusted material.' },
   });
   assert.equal(difference.transport_result.kind, 'task');
   assert.equal(difference.transport_result.ref, 'a2a-task:p2-return');
@@ -248,15 +283,32 @@ try {
   assert.equal('index_eligible' in ingress, false);
   assert.equal([...owner.conn.db.projection.iter()].length, projectionsBefore, 'transport/ingress preparation must not mint Projection');
   assert.equal(fixture.requests.length, 1);
+  assert.equal(difference.exchange_authority.grant_ref, EXCHANGE_GRANT_REF);
+  assert.equal(ingress.transport_provenance.exchange_operation_id, EXCHANGE_OPERATION_ID);
+
+  await owner.conn.reducers.ingestAuthorizedExchangeContribution({
+    grantRef: EXCHANGE_GRANT_REF,
+    operationId: EXCHANGE_OPERATION_ID,
+    fieldRef: FIELD_REF,
+    contributorParticipantRef: AGENT_PARTICIPANT_REF,
+    sourceKind: ingress.source_kind,
+    transportProvider: ingress.transport_provider,
+    transportMessageId: ingress.transport_message_id,
+    contractJson: JSON.stringify(ingress.contribution),
+  });
+  await waitUntil(() => [...owner.conn.db.myContributionReceipt.iter()].some((row: any) => row.contributionRef === ingress.contribution.contribution_ref && row.state === 'quarantined'), 'A2A returned material quarantine');
+  assert.equal([...owner.conn.db.contribution.iter()].some((row: any) => row.contributionRef === ingress.contribution.contribution_ref), false, 'authorised A2A return must still require Admission');
 
   console.log(JSON.stringify({
-    proof: 'oi-a2a-phase2-ingress-adapter/v1',
+    proof: 'oi-a2a-phase3-exchange-authority/v1',
     spacetimedb: '2.8.1',
     database: DATABASE,
     binding_ref: BINDING_REF,
     task_ref: difference.transport_result.ref,
     generic_ingress_schema: ingress.schema,
     contributor_participant_ref: ingress.contributor_participant_ref,
+    exchange_grant_ref: EXCHANGE_GRANT_REF,
+    exchange_operation_id: EXCHANGE_OPERATION_ID,
     legacy_a2a_admission_bridge: 'disabled',
     auto_contribution: false,
     auto_projection: false,

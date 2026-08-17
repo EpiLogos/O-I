@@ -79,7 +79,7 @@ test('authority demand is bound before discovery to field, actor, counterparty, 
     counterparty_participant_ref: REMOTE,
     protocol: 'a2a', protocol_version: '1.0', protocol_binding: 'HTTP+JSON', mode: 'message:send',
     binding_ref: current.binding_ref, binding_revision: 7,
-    operation_id: 'operation:phase3:portable', purpose: 'portable-phase3-proof',
+    operation_id: 'operation:phase3:portable', purpose: 'portable-phase3-proof', scope_json: JSON.stringify({ kind: 'message' }),
   });
   assert.equal(calls, 2);
   assert.equal(difference.exchange_authority.grant_ref, 'exchange-grant:phase3:portable');

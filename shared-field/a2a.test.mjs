@@ -19,6 +19,7 @@ const FIELD = 'field:o-i:shared';
 const AGENT = 'agent:remote:canonical';
 const PARTICIPANT = 'participant:remote:canonical';
 const LOCAL_PARTICIPANT = 'participant:local:canonical';
+const ALLOW_EXCHANGE = async (demand) => ({ allowed: true, grant_ref: `exchange-grant:test:${demand.operation_id}` });
 
 function agentParticipant() {
   return createParticipant({
@@ -215,6 +216,7 @@ test('source-faithful HTTP+JSON v1 exchange keeps Agent Card claims transport-on
       binding: current,
       presence: online(current),
       initiator_participant_ref: LOCAL_PARTICIPANT,
+      authorize_exchange: ALLOW_EXCHANGE,
       message: { message_id: 'a2a-message:request-1', text: 'hello' },
     });
 
@@ -242,6 +244,7 @@ test('A2A Task and Artifact remain transport data and can only become a generic 
       binding: current,
       presence: online(current),
       initiator_participant_ref: LOCAL_PARTICIPANT,
+      authorize_exchange: ALLOW_EXCHANGE,
       message: { message_id: 'a2a-message:request-task', text: 'return task', exchange_ref: 'a2a-exchange:task-proof' },
     });
 
@@ -335,6 +338,7 @@ test('endpoint disappearance blocks exchange without deleting Participant or Age
     binding: current,
     presence: offline,
     initiator_participant_ref: LOCAL_PARTICIPANT,
+    authorize_exchange: ALLOW_EXCHANGE,
     message: { message_id: 'a2a-message:offline', text: 'hello' },
     fetch_impl: async () => { called = true; throw new Error('must not call'); },
   }), /not currently reachable/);
@@ -356,6 +360,7 @@ test('A2A Encounter records mediation/provenance without imputing subjective sta
     binding_ref: 'a2a-binding:remote',
     binding_revision: 4,
     request_message_id: 'a2a-message:encounter-1',
+    exchange_authority: { grant_ref: 'exchange-grant:encounter', operation_id: 'operation:encounter' },
     transport_result: { kind: 'message', ref: 'a2a-message:return-encounter', payload: { message: { messageId: 'a2a-message:return-encounter' } } },
     admission: 'pending',
     transport_provenance: { protocol: 'A2A', protocol_version: '1.0', protocol_binding: 'HTTP+JSON' },

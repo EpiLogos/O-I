@@ -3,6 +3,12 @@ import { schema, table, t, SenderError } from 'spacetimedb/server';
 const CONTACT_WINDOW_MICROS = 60_000_000n;
 const CONTACT_LIMIT_PER_WINDOW = 3;
 const CONTACT_MAX_TTL_SECONDS = 7 * 24 * 60 * 60;
+const EXCHANGE_MAX_TTL_SECONDS = 24 * 60 * 60;
+const EXCHANGE_MAX_USES = 64;
+const EXCHANGE_MAX_SCOPE_BYTES = 8 * 1024;
+const EXCHANGE_MAX_OUTSTANDING_REQUESTS = 8;
+const EXCHANGE_PROTOCOLS = new Set(['a2a', 'mcp', 'http']);
+const EXCHANGE_MODES = new Set(['message:send', 'task', 'data']);
 const CONTRIBUTION_WINDOW_MICROS = 60_000_000n;
 const CONTRIBUTION_LIMIT_PER_WINDOW = 8;
 const CONTRIBUTION_BYTES_PER_WINDOW = 96 * 1024;
@@ -312,6 +318,77 @@ const contactRate = table(
   }
 );
 
+
+const exchangeRequest = table(
+  { name: 'exchange_request', public: false },
+  {
+    requestRef: t.string().primaryKey(),
+    fieldRef: t.string().index('btree'),
+    initiatorParticipantRef: t.string().index('btree'),
+    initiatorActorIdentity: t.identity().index('btree'),
+    counterpartyParticipantRef: t.string().index('btree'),
+    purpose: t.string(),
+    scopeJson: t.string(),
+    protocol: t.string().index('btree'),
+    bindingRef: t.string(),
+    bindingRevision: t.u32(),
+    modesJson: t.string(),
+    requestedMaxUses: t.u32(),
+    requestedTtlSeconds: t.u32(),
+    state: t.string().index('btree'),
+    createdAtMicros: t.u64(),
+    requestExpiresAtMicros: t.u64(),
+    decisionRef: t.string(),
+  }
+);
+
+const exchangeGrant = table(
+  { name: 'exchange_grant', public: false },
+  {
+    grantRef: t.string().primaryKey(),
+    requestRef: t.string().unique(),
+    fieldRef: t.string().index('btree'),
+    initiatorParticipantRef: t.string().index('btree'),
+    initiatorActorIdentity: t.identity().index('btree'),
+    counterpartyParticipantRef: t.string().index('btree'),
+    purpose: t.string(),
+    scopeJson: t.string(),
+    protocol: t.string().index('btree'),
+    bindingRef: t.string(),
+    bindingRevision: t.u32(),
+    modesJson: t.string(),
+    maxUses: t.u32(),
+    usedUses: t.u32(),
+    state: t.string().index('btree'),
+    grantedAtMicros: t.u64(),
+    expiresAtMicros: t.u64(),
+    endedAtMicros: t.u64(),
+    grantorIdentity: t.identity().index('btree'),
+    decisionRef: t.string(),
+    provenanceJson: t.string(),
+  }
+);
+
+const exchangeUse = table(
+  { name: 'exchange_use', public: false },
+  {
+    useKey: t.string().primaryKey(),
+    grantRef: t.string().index('btree'),
+    operationId: t.string(),
+    fieldRef: t.string().index('btree'),
+    actorIdentity: t.identity().index('btree'),
+    counterpartyParticipantRef: t.string(),
+    protocol: t.string(),
+    bindingRef: t.string(),
+    bindingRevision: t.u32(),
+    mode: t.string(),
+    purpose: t.string(),
+    scopeJson: t.string(),
+    usedAtMicros: t.u64(),
+    demandFingerprint: t.string(),
+  }
+);
+
 const spacetimedb = schema({
   sharedFieldBacking,
   fieldOwner,
@@ -332,6 +409,9 @@ const spacetimedb = schema({
   contact,
   contactPolicy,
   contactRate,
+  exchangeRequest,
+  exchangeGrant,
+  exchangeUse,
 });
 
 export default spacetimedb;
@@ -472,6 +552,10 @@ function contactRateKey(fieldRef: string, initiatorParticipantRef: string): stri
 
 function contributionRateKey(fieldRef: string, originRef: string): string {
   return fingerprintString(`${fieldRef}\u001f${originRef}`);
+}
+
+function exchangeUseKey(grantRef: string, operationId: string): string {
+  return `exchange-use:${fingerprintString(`${grantRef}\u001f${operationId}`)}`;
 }
 
 function isFieldOwner(ctx: any, fieldRef: string): boolean {
@@ -877,6 +961,83 @@ function authorityForContactRecipient(ctx: any, fieldRef: string, participantRef
   return grant;
 }
 
+
+function requireLiveParticipantAuthority(ctx: any, fieldRef: string, participantRef: string, roles?: string[]): any {
+  const grant = ctx.db.fieldAuthority.authorityKey.find(authorityKey(fieldRef, participantRef));
+  if (!grant || grant.revoked) fail(`Participant ${participantRef} has no live field authority`);
+  if (grant.expiresAtMicros !== 0n && nowMicros(ctx) >= grant.expiresAtMicros) {
+    fail(`Authority for Participant ${participantRef} is expired`);
+  }
+  if (roles && !roles.includes(grant.role)) fail(`Participant ${participantRef} lacks required role`);
+  return grant;
+}
+
+function identityStillOwnsParticipant(ctx: any, fieldRef: string, participantRef: string, identity: any): boolean {
+  const key = authorityKey(fieldRef, participantRef);
+  for (const row of ctx.db.fieldAuthority.actorIdentity.filter(identity)) {
+    if (row.authorityKey === key && !row.revoked && (row.expiresAtMicros === 0n || nowMicros(ctx) < row.expiresAtMicros)) return true;
+  }
+  return false;
+}
+
+function callerIsLiveParticipant(ctx: any, fieldRef: string, participantRef: string): boolean {
+  const key = authorityKey(fieldRef, participantRef);
+  for (const row of ctx.db.fieldAuthority.actorIdentity.filter(ctx.sender)) {
+    if (row.authorityKey === key && !row.revoked && (row.expiresAtMicros === 0n || nowMicros(ctx) < row.expiresAtMicros)) return true;
+  }
+  return false;
+}
+
+function validateExchangeScope(scopeJson: string): void {
+  if (utf8Bytes(scopeJson) > EXCHANGE_MAX_SCOPE_BYTES) fail(`Exchange scope exceeds ${EXCHANGE_MAX_SCOPE_BYTES} byte limit`);
+  const scope = requireJsonObject(scopeJson, 'Exchange scope', EXCHANGE_MAX_SCOPE_BYTES);
+  enforceJsonBounds(scope, 'Exchange scope');
+}
+
+function validateExchangeModes(modesJson: string): string[] {
+  const modes = requireJsonStringArray(modesJson, 'Exchange modes', 8);
+  if (modes.length === 0) fail('Exchange modes must contain at least one mode');
+  for (const mode of modes) if (!EXCHANGE_MODES.has(mode)) fail(`Unsupported Exchange mode: ${mode}`);
+  return modes;
+}
+
+function requireExchangeProtocol(protocol: string): void {
+  if (!EXCHANGE_PROTOCOLS.has(protocol)) fail(`Unsupported Exchange protocol: ${protocol}`);
+}
+
+function requireExchangePolicyClear(ctx: any, fieldRef: string, initiatorRef: string, counterpartyRef: string): void {
+  for (const [blocker, blocked] of [[initiatorRef, counterpartyRef], [counterpartyRef, initiatorRef]]) {
+    const row = ctx.db.contactPolicy.policyKey.find(contactPolicyKey(fieldRef, blocker, blocked));
+    if (row && (row.mode === 'blocked' || row.mode === 'muted')) {
+      fail(`Exchange relation is ${row.mode} by ${blocker}`);
+    }
+  }
+}
+
+function endExchangeGrant(ctx: any, grant: any, state: string): void {
+  if (grant.state !== 'active') return;
+  ctx.db.exchangeGrant.grantRef.update({ ...grant, state, endedAtMicros: nowMicros(ctx) });
+}
+
+function terminateExchangeForParticipant(ctx: any, fieldRef: string, participantRef: string, state = 'revoked'): void {
+  const seen = new Set<string>();
+  for (const row of ctx.db.exchangeGrant.initiatorParticipantRef.filter(participantRef)) {
+    if (row.fieldRef === fieldRef && !seen.has(row.grantRef)) { endExchangeGrant(ctx, row, state); seen.add(row.grantRef); }
+  }
+  for (const row of ctx.db.exchangeGrant.counterpartyParticipantRef.filter(participantRef)) {
+    if (row.fieldRef === fieldRef && !seen.has(row.grantRef)) { endExchangeGrant(ctx, row, state); seen.add(row.grantRef); }
+  }
+}
+
+function terminateExchangeBetween(ctx: any, fieldRef: string, a: string, b: string): void {
+  for (const row of ctx.db.exchangeGrant.initiatorParticipantRef.filter(a)) {
+    if (row.fieldRef === fieldRef && row.counterpartyParticipantRef === b) endExchangeGrant(ctx, row, 'revoked');
+  }
+  for (const row of ctx.db.exchangeGrant.initiatorParticipantRef.filter(b)) {
+    if (row.fieldRef === fieldRef && row.counterpartyParticipantRef === a) endExchangeGrant(ctx, row, 'revoked');
+  }
+}
+
 function validateHostedFieldVisibility(visibility: string): void {
   if (visibility === 'unlisted') {
     fail('Hosted unlisted is rejected: current broad subscription Views do not provide direct-only resolvability without enumeration');
@@ -1040,6 +1201,8 @@ function ingressContribution(ctx: any, input: {
   transportProvider: string;
   transportMessageId: string;
   contractJson: string;
+  exchangeGrantRef?: string;
+  exchangeOperationId?: string;
 }): void {
   requireString(input.transportMessageId, 'Contribution transportMessageId', 256);
   requireString(input.transportProvider, 'Contribution transportProvider', 128);
@@ -1068,6 +1231,8 @@ function ingressContribution(ctx: any, input: {
       transport_message_id: input.transportMessageId,
       target_field_ref: input.fieldRef,
       contributor_participant_ref: input.contributorParticipantRef,
+      ...(input.exchangeGrantRef ? { exchange_grant_ref: input.exchangeGrantRef } : {}),
+      ...(input.exchangeOperationId ? { exchange_operation_id: input.exchangeOperationId } : {}),
       received_at_micros: String(now),
     },
     claims: {
@@ -1279,6 +1444,7 @@ export const revoke_participant_authority = spacetimedb.reducer(
     const key = authorityKey(args.fieldRef, args.participantRef);
     const existing = ctx.db.fieldAuthority.authorityKey.find(key);
     if (!existing) fail(`No authority grant for Participant ${args.participantRef}`);
+    terminateExchangeForParticipant(ctx, args.fieldRef, args.participantRef, 'revoked');
     ctx.db.fieldAuthority.authorityKey.delete(key);
     const readKey = audienceKey(args.fieldRef, args.participantRef);
     if (ctx.db.fieldReadGrant.audienceKey.find(readKey)) ctx.db.fieldReadGrant.audienceKey.delete(readKey);
@@ -1352,6 +1518,258 @@ export const ingest_transported_contribution = spacetimedb.reducer(
       transportProvider: args.transportProvider,
       transportMessageId: args.transportMessageId,
       contractJson: args.contractJson,
+    });
+  }
+);
+
+
+export const request_exchange = spacetimedb.reducer(
+  {
+    requestRef: t.string(),
+    fieldRef: t.string(),
+    initiatorParticipantRef: t.string(),
+    counterpartyParticipantRef: t.string(),
+    purpose: t.string(),
+    scopeJson: t.string(),
+    protocol: t.string(),
+    bindingRef: t.string(),
+    bindingRevision: t.u32(),
+    modesJson: t.string(),
+    maxUses: t.u32(),
+    ttlSeconds: t.u32(),
+  },
+  (ctx, args) => {
+    requireString(args.requestRef, 'Exchange requestRef', 512);
+    requireString(args.purpose, 'Exchange purpose', 500);
+    requireString(args.bindingRef, 'Exchange bindingRef', 512);
+    if (args.bindingRevision < 1) fail('Exchange bindingRevision must be positive');
+    if (args.maxUses < 1 || args.maxUses > EXCHANGE_MAX_USES) fail(`Exchange maxUses must be between 1 and ${EXCHANGE_MAX_USES}`);
+    if (args.ttlSeconds < 1 || args.ttlSeconds > EXCHANGE_MAX_TTL_SECONDS) fail(`Exchange ttlSeconds must be between 1 and ${EXCHANGE_MAX_TTL_SECONDS}`);
+    requireExchangeProtocol(args.protocol);
+    validateExchangeScope(args.scopeJson);
+    validateExchangeModes(args.modesJson);
+    if (args.initiatorParticipantRef === args.counterpartyParticipantRef) fail('Exchange requires distinct Participants');
+    requireParticipantInField(ctx, args.initiatorParticipantRef, args.fieldRef);
+    requireParticipantInField(ctx, args.counterpartyParticipantRef, args.fieldRef);
+    requireParticipantAuthority(ctx, args.fieldRef, args.initiatorParticipantRef, ['contact', 'contributor']);
+    requireExchangePolicyClear(ctx, args.fieldRef, args.initiatorParticipantRef, args.counterpartyParticipantRef);
+
+    const existing = ctx.db.exchangeRequest.requestRef.find(args.requestRef);
+    if (existing) {
+      const exact = existing.fieldRef === args.fieldRef
+        && existing.initiatorParticipantRef === args.initiatorParticipantRef
+        && existing.counterpartyParticipantRef === args.counterpartyParticipantRef
+        && existing.purpose === args.purpose
+        && existing.scopeJson === args.scopeJson
+        && existing.protocol === args.protocol
+        && existing.bindingRef === args.bindingRef
+        && existing.bindingRevision === args.bindingRevision
+        && existing.modesJson === args.modesJson
+        && existing.requestedMaxUses === args.maxUses
+        && existing.requestedTtlSeconds === args.ttlSeconds;
+      if (exact) return;
+      fail('Exchange request ref conflicts with a different request');
+    }
+
+    let outstanding = 0;
+    for (const row of ctx.db.exchangeRequest.initiatorParticipantRef.filter(args.initiatorParticipantRef)) {
+      if (row.fieldRef === args.fieldRef && row.state === 'pending' && nowMicros(ctx) < row.requestExpiresAtMicros) outstanding += 1;
+    }
+    if (outstanding >= EXCHANGE_MAX_OUTSTANDING_REQUESTS) fail('Exchange outstanding request limit exceeded');
+
+    const now = nowMicros(ctx);
+    ctx.db.exchangeRequest.insert({
+      requestRef: args.requestRef,
+      fieldRef: args.fieldRef,
+      initiatorParticipantRef: args.initiatorParticipantRef,
+      initiatorActorIdentity: ctx.sender,
+      counterpartyParticipantRef: args.counterpartyParticipantRef,
+      purpose: args.purpose,
+      scopeJson: args.scopeJson,
+      protocol: args.protocol,
+      bindingRef: args.bindingRef,
+      bindingRevision: args.bindingRevision,
+      modesJson: args.modesJson,
+      requestedMaxUses: args.maxUses,
+      requestedTtlSeconds: args.ttlSeconds,
+      state: 'pending',
+      createdAtMicros: now,
+      requestExpiresAtMicros: now + BigInt(args.ttlSeconds) * 1_000_000n,
+      decisionRef: '',
+    });
+  }
+);
+
+export const grant_exchange = spacetimedb.reducer(
+  { requestRef: t.string(), grantRef: t.string(), reason: t.string(), evidenceJson: t.string() },
+  (ctx, args) => {
+    requireString(args.grantRef, 'Exchange grantRef', 512);
+    requireString(args.reason, 'Exchange grant reason', 1_000);
+    requireJsonObject(args.evidenceJson, 'Exchange grant evidence', 8_192);
+    const request = ctx.db.exchangeRequest.requestRef.find(args.requestRef);
+    if (!request) fail(`Unknown Exchange request: ${args.requestRef}`);
+    requireFieldOwner(ctx, request.fieldRef);
+    if (request.state !== 'pending') fail(`Exchange request is already ${request.state}`);
+    if (nowMicros(ctx) >= request.requestExpiresAtMicros) fail('Exchange request has expired');
+    requireExchangePolicyClear(ctx, request.fieldRef, request.initiatorParticipantRef, request.counterpartyParticipantRef);
+    requireParticipantInField(ctx, request.counterpartyParticipantRef, request.fieldRef);
+    const initiatorAuthority = requireLiveParticipantAuthority(ctx, request.fieldRef, request.initiatorParticipantRef, ['contact', 'contributor']);
+    if (!identityStillOwnsParticipant(ctx, request.fieldRef, request.initiatorParticipantRef, request.initiatorActorIdentity)) {
+      fail('Exchange request actor no longer owns the initiating Participant');
+    }
+    if (ctx.db.exchangeGrant.grantRef.find(args.grantRef)) fail(`Exchange grant ref already exists: ${args.grantRef}`);
+    if (ctx.db.exchangeGrant.requestRef.find(args.requestRef)) fail('Exchange request already has a grant');
+    const now = nowMicros(ctx);
+    const decisionRef = `exchange-decision:${fingerprintString(`${request.requestRef}\u001f${args.grantRef}\u001f${String(now)}`)}`;
+    ctx.db.exchangeGrant.insert({
+      grantRef: args.grantRef,
+      requestRef: request.requestRef,
+      fieldRef: request.fieldRef,
+      initiatorParticipantRef: request.initiatorParticipantRef,
+      initiatorActorIdentity: initiatorAuthority.actorIdentity,
+      counterpartyParticipantRef: request.counterpartyParticipantRef,
+      purpose: request.purpose,
+      scopeJson: request.scopeJson,
+      protocol: request.protocol,
+      bindingRef: request.bindingRef,
+      bindingRevision: request.bindingRevision,
+      modesJson: request.modesJson,
+      maxUses: request.requestedMaxUses,
+      usedUses: 0,
+      state: 'active',
+      grantedAtMicros: now,
+      expiresAtMicros: now + BigInt(request.requestedTtlSeconds) * 1_000_000n,
+      endedAtMicros: 0n,
+      grantorIdentity: ctx.sender,
+      decisionRef,
+      provenanceJson: JSON.stringify({ schema: 'oi.exchange-decision/v1', decision_ref: decisionRef, request_ref: request.requestRef, grant_ref: args.grantRef, decided_at_micros: String(now), reason: args.reason, evidence: JSON.parse(args.evidenceJson) }),
+    });
+    ctx.db.exchangeRequest.requestRef.update({ ...request, state: 'granted', decisionRef });
+  }
+);
+
+export const consume_exchange = spacetimedb.reducer(
+  {
+    grantRef: t.string(), operationId: t.string(), fieldRef: t.string(),
+    initiatorParticipantRef: t.string(), counterpartyParticipantRef: t.string(),
+    protocol: t.string(), bindingRef: t.string(), bindingRevision: t.u32(),
+    mode: t.string(), purpose: t.string(), scopeJson: t.string(),
+  },
+  (ctx, args) => {
+    requireString(args.operationId, 'Exchange operationId', 256);
+    requireString(args.bindingRef, 'Exchange bindingRef', 512);
+    requireString(args.purpose, 'Exchange purpose', 500);
+    requireExchangeProtocol(args.protocol);
+    validateExchangeScope(args.scopeJson);
+    if (!EXCHANGE_MODES.has(args.mode)) fail(`Unsupported Exchange mode: ${args.mode}`);
+    const grant = ctx.db.exchangeGrant.grantRef.find(args.grantRef);
+    if (!grant) fail(`Unknown Exchange grant: ${args.grantRef}`);
+    if (grant.fieldRef !== args.fieldRef) fail('Exchange grant crosses SharedField boundary');
+    if (grant.initiatorParticipantRef !== args.initiatorParticipantRef) fail('Exchange initiating Participant does not match grant');
+    if (grant.counterpartyParticipantRef !== args.counterpartyParticipantRef) fail('Exchange counterparty does not match grant');
+    if (grant.protocol !== args.protocol) fail('Exchange protocol does not match grant');
+    if (grant.bindingRef !== args.bindingRef || grant.bindingRevision !== args.bindingRevision) fail('Exchange endpoint/binding lineage does not match grant');
+    if (grant.purpose !== args.purpose) fail('Exchange purpose does not match grant');
+    if (grant.scopeJson !== args.scopeJson) fail('Exchange scope does not match grant');
+    if (!validateExchangeModes(grant.modesJson).includes(args.mode)) fail('Exchange mode is outside grant scope');
+    if (grant.state === 'revoked' || grant.state === 'completed') fail(`Exchange grant is ${grant.state}`);
+    if (nowMicros(ctx) >= grant.expiresAtMicros) fail('Exchange grant has expired');
+    requireExchangePolicyClear(ctx, grant.fieldRef, grant.initiatorParticipantRef, grant.counterpartyParticipantRef);
+    requireParticipantAuthority(ctx, grant.fieldRef, grant.initiatorParticipantRef, ['contact', 'contributor']);
+    let boundToCaller = false;
+    for (const row of ctx.db.exchangeGrant.initiatorActorIdentity.filter(ctx.sender)) {
+      if (row.grantRef === grant.grantRef) { boundToCaller = true; break; }
+    }
+    if (!boundToCaller) fail('Runtime caller is not the actor bound by the Exchange grant');
+
+    const useKey = exchangeUseKey(grant.grantRef, args.operationId);
+    const demandFingerprint = fingerprintString(JSON.stringify({
+      fieldRef: args.fieldRef, initiator: args.initiatorParticipantRef, counterparty: args.counterpartyParticipantRef,
+      protocol: args.protocol, bindingRef: args.bindingRef, bindingRevision: args.bindingRevision,
+      mode: args.mode, purpose: args.purpose, scopeJson: args.scopeJson,
+    }));
+    const existingUse = ctx.db.exchangeUse.useKey.find(useKey);
+    if (existingUse) {
+      if (existingUse.demandFingerprint !== demandFingerprint) fail('Exchange operation replay key conflicts with a different demand');
+      return;
+    }
+    if (grant.state !== 'active') fail(`Exchange grant is ${grant.state}`);
+    if (grant.usedUses >= grant.maxUses) fail('Exchange grant use budget is exhausted');
+    const now = nowMicros(ctx);
+    ctx.db.exchangeUse.insert({
+      useKey, grantRef: grant.grantRef, operationId: args.operationId, fieldRef: grant.fieldRef,
+      actorIdentity: ctx.sender, counterpartyParticipantRef: grant.counterpartyParticipantRef,
+      protocol: args.protocol, bindingRef: args.bindingRef, bindingRevision: args.bindingRevision,
+      mode: args.mode, purpose: args.purpose, scopeJson: args.scopeJson,
+      usedAtMicros: now, demandFingerprint,
+    });
+    const usedUses = grant.usedUses + 1;
+    ctx.db.exchangeGrant.grantRef.update({
+      ...grant,
+      usedUses,
+      state: usedUses >= grant.maxUses ? 'exhausted' : 'active',
+      endedAtMicros: usedUses >= grant.maxUses ? now : grant.endedAtMicros,
+    });
+  }
+);
+
+export const revoke_exchange = spacetimedb.reducer(
+  { grantRef: t.string(), reason: t.string() },
+  (ctx, args) => {
+    requireString(args.reason, 'Exchange revocation reason', 1_000);
+    const grant = ctx.db.exchangeGrant.grantRef.find(args.grantRef);
+    if (!grant) fail(`Unknown Exchange grant: ${args.grantRef}`);
+    if (!isFieldOwner(ctx, grant.fieldRef)
+        && !callerIsLiveParticipant(ctx, grant.fieldRef, grant.initiatorParticipantRef)
+        && !callerIsLiveParticipant(ctx, grant.fieldRef, grant.counterpartyParticipantRef)) {
+      fail('Caller cannot revoke this Exchange grant');
+    }
+    if (grant.state === 'revoked') return;
+    if (grant.state === 'completed') fail('Completed Exchange grant cannot be revoked');
+    ctx.db.exchangeGrant.grantRef.update({ ...grant, state: 'revoked', endedAtMicros: nowMicros(ctx) });
+  }
+);
+
+export const complete_exchange = spacetimedb.reducer(
+  { grantRef: t.string() },
+  (ctx, args) => {
+    const grant = ctx.db.exchangeGrant.grantRef.find(args.grantRef);
+    if (!grant) fail(`Unknown Exchange grant: ${args.grantRef}`);
+    if (!isFieldOwner(ctx, grant.fieldRef)
+        && !callerIsLiveParticipant(ctx, grant.fieldRef, grant.initiatorParticipantRef)
+        && !callerIsLiveParticipant(ctx, grant.fieldRef, grant.counterpartyParticipantRef)) {
+      fail('Caller cannot complete this Exchange grant');
+    }
+    if (grant.state === 'completed') return;
+    if (grant.state === 'revoked') fail('Revoked Exchange grant cannot be completed');
+    ctx.db.exchangeGrant.grantRef.update({ ...grant, state: 'completed', endedAtMicros: nowMicros(ctx) });
+  }
+);
+
+export const ingest_authorized_exchange_contribution = spacetimedb.reducer(
+  {
+    grantRef: t.string(), operationId: t.string(), fieldRef: t.string(),
+    contributorParticipantRef: t.string(), sourceKind: t.string(), transportProvider: t.string(),
+    transportMessageId: t.string(), contractJson: t.string(),
+  },
+  (ctx, args) => {
+    requireFieldOwner(ctx, args.fieldRef);
+    const grant = ctx.db.exchangeGrant.grantRef.find(args.grantRef);
+    if (!grant || grant.fieldRef !== args.fieldRef) fail('Returned material does not reference a valid Exchange grant in this SharedField');
+    if (grant.counterpartyParticipantRef !== args.contributorParticipantRef) fail('Returned material contributor does not match Exchange counterparty');
+    if (grant.protocol !== args.sourceKind) fail('Returned material source kind does not match Exchange protocol');
+    const use = ctx.db.exchangeUse.useKey.find(exchangeUseKey(args.grantRef, args.operationId));
+    if (!use || use.grantRef !== args.grantRef || use.operationId !== args.operationId) fail('Returned material has no matching consumed Exchange operation');
+    if (!CONTRIBUTION_TRANSPORTS.has(args.sourceKind)) fail(`Unsupported mediated Contribution source kind: ${args.sourceKind}`);
+    ingressContribution(ctx, {
+      fieldRef: args.fieldRef,
+      contributorParticipantRef: args.contributorParticipantRef,
+      sourceKind: args.sourceKind,
+      transportProvider: args.transportProvider,
+      transportMessageId: args.transportMessageId,
+      contractJson: args.contractJson,
+      exchangeGrantRef: args.grantRef,
+      exchangeOperationId: args.operationId,
     });
   }
 );
@@ -1819,5 +2237,6 @@ export const set_contact_policy = spacetimedb.reducer(
     };
     if (existing) ctx.db.contactPolicy.policyKey.update(row);
     else ctx.db.contactPolicy.insert(row);
+    terminateExchangeBetween(ctx, args.fieldRef, args.blockerParticipantRef, args.blockedParticipantRef);
   }
 );
