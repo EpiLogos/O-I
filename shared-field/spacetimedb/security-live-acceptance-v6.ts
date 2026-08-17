@@ -96,6 +96,7 @@ function requestArgs(input: {
 function useArgs(input: {
   grantRef: string; operationId: string; fieldRef: string; initiator: string; counterparty: string;
   protocol?: string; bindingRef?: string; bindingRevision?: number; mode?: string; purpose?: string;
+  scope?: Record<string, unknown>;
 }) {
   return {
     grantRef: input.grantRef,
@@ -108,6 +109,7 @@ function useArgs(input: {
     bindingRevision: input.bindingRevision ?? 1,
     mode: input.mode ?? 'message:send',
     purpose: input.purpose ?? 'phase3-authorised-exchange',
+    scopeJson: JSON.stringify(input.scope ?? { kind: 'message', topic: 'phase3-fixture' }),
   };
 }
 
