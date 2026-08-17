@@ -1,13 +1,13 @@
 {
   "schema": 1,
-  "verified_at": "2026-08-16",
+  "verified_at": "2026-08-17",
   "surfaces": [
     {
       "id": "central",
       "public_name": "Central",
       "function": "persistent personal ground",
       "repository": "https://github.com/EpiLogos/Central",
-      "docs_ref": "b134142532602a9570f2deb1060a1badb8432c6d",
+      "docs_ref": "a9e07115fc91174fd32abffa0b3ca338b6786507",
       "docs_path": "README.md",
       "skill_paths": [
         "skills/control-maintenance/SKILL.md",
@@ -25,10 +25,10 @@
       },
       "install": {
         "kind": "central-source",
-        "ref": "b134142532602a9570f2deb1060a1badb8432c6d",
-        "revision": "b134142532602a9570f2deb1060a1badb8432c6d",
+        "ref": "a9e07115fc91174fd32abffa0b3ca338b6786507",
+        "revision": "a9e07115fc91174fd32abffa0b3ca338b6786507",
         "path": "ctrl",
-        "note": "Central publishes the native source contract cargo install --path ctrl. Pre-release O:I fetches and verifies this immutable tested integration commit directly."
+        "note": "Install the exact accepted Central main source with cargo install --path ctrl; Central remains owner of Control, Work and .central semantics."
       },
       "verification": {
         "status": "supported",
@@ -39,21 +39,21 @@
           "evidence": "native-json-stdout"
         },
         "outstanding_requirements": [],
-        "note": "O:I invokes Central's own doctor operation and preserves its exit status/output without reinterpreting Central health."
+        "note": "Portable Central acceptance invokes Central's own doctor against the disposable personal ground. Personal macOS/Raycast/home-server providers remain separate physical acceptance."
       },
-      "compatibility": "O:I requires ctrl --version plus structured action.list containing central.init, central.doctor, and action.list. The source contract remains pinned to the tested Central integration commit until the Rust Wayfinder is promoted to main/release."
+      "compatibility": "Central main carries the accepted portable Rust Wayfinder/ctrl foundation. O:I composes it without taking ownership of Control, Work or personal provider policy."
     },
     {
       "id": "actuation",
       "public_name": "Actuation",
-      "function": "agent actuation; model, harness, agent-instance and agency research",
+      "function": "Agency, WorldBinding, RootScope, Metagency, Determination and Return authority",
       "repository": "https://github.com/EpiLogos/Actuation",
-      "docs_ref": "main",
-      "docs_path": "README.md",
+      "docs_ref": "b59c17cceff7dbe773f2415ae9dd969e730f7cb3",
+      "docs_path": "docs/WORLD-BOUND-ROOT-AGENCY.md",
       "skill_paths": [],
       "native": {
         "kind": "workbench",
-        "entry": "Actuation agent/harness contracts, references and experiments",
+        "entry": "portable Actuation contracts and runtime foundation",
         "executable": null,
         "alias": null,
         "version_command": null,
@@ -61,22 +61,31 @@
       },
       "install": {
         "kind": "register-only",
-        "note": "Actuation currently exposes a repository/reference surface rather than a released native CLI. Register the selected source checkout when composing a suite candidate."
+        "ref": "b59c17cceff7dbe773f2415ae9dd969e730f7cb3",
+        "revision": "b59c17cceff7dbe773f2415ae9dd969e730f7cb3",
+        "note": "Materialise and register the exact accepted Actuation main checkout; do not import later Series-1 or epistemic-cultivation research into bootstrap."
       },
       "verification": {
-        "status": "unsupported",
-        "operation": null,
+        "status": "supported",
+        "operation": {
+          "id": "actuation.agency-contract",
+          "runner": "root-command",
+          "program": "node",
+          "args": ["--test", "contracts/agency.test.mjs"],
+          "working_directory": "{root}",
+          "evidence": "process-exit-and-output"
+        },
         "outstanding_requirements": [],
-        "note": "Actuation main does not yet publish a stable native self-check operation for O:I to invoke. O:I records this as unsupported rather than importing Actuation research or experiment logic."
+        "note": "The first-suite self-check is the portable Agency/WorldBinding/Determination/Return authority contract, not the later model-bearing research programme."
       },
-      "compatibility": "Actuation is the canonical developmental/research home for first-class agentic actuation, including migrated QL runtime experiment material. O:I does not treat those experiments as canonically owned by Software Factory."
+      "compatibility": "Actuation main is the accepted portable authority foundation; later epistemic-cultivation and Series-1 research are non-blocking continuations."
     },
     {
       "id": "ai-kit",
       "public_name": "AIKit",
-      "function": "capability, context, model, profile, Skill/tool, HarnessComposition, session and Surface resolution",
+      "function": "context, capability, model, credential, SessionSpace and provider-process resolution",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "docs_ref": "main",
+      "docs_ref": "b7843b437a8d4edd364b22aec9d7625bc8124915",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -89,110 +98,147 @@
       },
       "install": {
         "kind": "aikit-source",
-        "note": "The live README documents source installation with cargo install --locked --path crates/aikit-cli."
+        "ref": "b7843b437a8d4edd364b22aec9d7625bc8124915",
+        "revision": "b7843b437a8d4edd364b22aec9d7625bc8124915",
+        "path": "crates/aikit-cli",
+        "note": "Install the exact accepted AIKit main CLI with cargo install --locked --path crates/aikit-cli and retain the exact source checkout for native verification."
       },
       "verification": {
-        "status": "unsupported",
-        "operation": null,
+        "status": "supported",
+        "operation": {
+          "id": "aikit.workspace-tests",
+          "runner": "root-command",
+          "program": "cargo",
+          "args": ["test", "--workspace", "--all-targets"],
+          "working_directory": "{root}",
+          "evidence": "process-exit-and-output"
+        },
         "outstanding_requirements": [],
-        "note": "The selected AIKit main has no O:I-declared native self-check contract yet. AIKit V2 completion proceeds in its owning repository; O:I does not substitute branch-only acceptance."
+        "note": "Pre-local verification exercises the accepted V2/SessionSpace/model-roster/credential/provider-authority workspace. Richer #61-#67 host/session continuations remain later."
       },
-      "compatibility": "AIKit owns its native resolution semantics and machine-readable product contracts. O:I only registers/exposes the selected native surface and later invokes the verification operation AIKit itself publishes."
+      "compatibility": "AIKit main contains the accepted V2 integration, SessionSpace composition, contextual model roster, credential resolution and real provider-process authority boundary."
     },
     {
       "id": "software-factory",
       "public_name": "Software Factory",
-      "function": "developmental Project, Run, evidence, candidate, repair and ExecutionDisposition semantics",
+      "function": "developmental Project, Run, Candidate, evidence and authorised Factory Action semantics",
       "repository": "https://github.com/EpiLogos/agent-system-design",
-      "docs_ref": "main",
-      "docs_path": "docs/canon/QL-SOFTWARE-FACTORY-CONSTITUTIONAL-INDEX.md",
+      "docs_ref": "164302df7b98442217c991c8067a4447884e289a",
+      "docs_path": "factory/README.md",
       "skill_paths": [],
       "native": {
         "kind": "workbench",
-        "entry": "Software Factory constitutional/program and implementation surface",
+        "entry": "factory/ Rust implementation root",
         "executable": null,
         "alias": null,
         "version_command": null,
-        "version_manifest": null
+        "version_manifest": "factory/Cargo.toml"
       },
       "install": {
         "kind": "register-only",
-        "note": "Register the selected Factory source checkout. The current mainline remains the canonical corpus/experimental base until the later deliberate harmonisation pass promotes the accepted implementation line."
+        "ref": "164302df7b98442217c991c8067a4447884e289a",
+        "revision": "164302df7b98442217c991c8067a4447884e289a",
+        "note": "Materialise and register the exact accepted Factory main checkout. Live Series-1/deep-runtime research is not a first-suite bootstrap requirement."
       },
       "verification": {
-        "status": "unsupported",
-        "operation": null,
+        "status": "supported",
+        "operation": {
+          "id": "factory.rust-tests",
+          "runner": "root-command",
+          "program": "cargo",
+          "args": ["test", "--manifest-path", "factory/Cargo.toml"],
+          "working_directory": "{root}",
+          "evidence": "process-exit-and-output"
+        },
         "outstanding_requirements": [],
-        "note": "Factory main does not yet publish the final native self-check contract for the harmonised candidate. O:I does not run or reinterpret Factory Run/evidence semantics itself."
+        "note": "The portable Factory self-check covers the Rust product foundation now containing Build provider/Action and AIKit model-roster round-trip semantics."
       },
-      "compatibility": "Software Factory owns developmental Project/Run/evidence/candidate/repair/ExecutionDisposition semantics. QL agent-runtime experiments are not canonically assigned to Factory; their developmental/research home is Actuation."
+      "compatibility": "Factory main is the accepted portable product line through the Build/Action and AIKit model-roster round trip; research runtimes remain separate."
     },
     {
       "id": "workcell",
       "public_name": "Workcell",
-      "function": "material execution, processes, services, storage, network/fabric and lifecycle",
+      "function": "material execution, model-serving base, process containment and secret materialisation",
       "repository": "https://github.com/EpiLogos/Workcell",
-      "docs_ref": "main",
+      "docs_ref": "4e3884076baf05ee7e3cfcfc2b806dfea46cf9ee",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
         "kind": "workbench",
-        "entry": "Workcell material-execution and provider implementation surface",
+        "entry": "portable Rust Workcell workspace and provider SDK",
         "executable": null,
         "alias": null,
         "version_command": null,
-        "version_manifest": null
+        "version_manifest": "Cargo.toml"
       },
       "install": {
         "kind": "register-only",
-        "note": "Register the selected Workcell source checkout. Provider/runtime materialisation remains Workcell-owned."
+        "ref": "4e3884076baf05ee7e3cfcfc2b806dfea46cf9ee",
+        "revision": "4e3884076baf05ee7e3cfcfc2b806dfea46cf9ee",
+        "note": "Materialise and register the exact accepted Workcell main checkout. Provider-specific physical resources are not materialised by O:I preflight."
       },
       "verification": {
-        "status": "unsupported",
-        "operation": null,
+        "status": "supported",
+        "operation": {
+          "id": "workcell.workspace-tests",
+          "runner": "root-command",
+          "program": "cargo",
+          "args": ["test", "--workspace", "--all-targets"],
+          "working_directory": "{root}",
+          "evidence": "process-exit-and-output"
+        },
         "outstanding_requirements": [
           {
             "kind": "physical",
             "id": "workcell-reference-machine",
-            "description": "Reference Ubuntu Workcell material/runtime acceptance must be supplied by Workcell on the real reference machine."
+            "description": "Reference Ubuntu Workcell material/runtime acceptance remains for the physical acceptance session."
           },
           {
             "kind": "provider",
-            "id": "workcell-fabric",
-            "description": "Reference fabric/connectivity acceptance remains provider-gated and Workcell-owned; O:I records its receipt without choosing the provider."
+            "id": "workcell-private-providers",
+            "description": "Private 1Password, Docker/Arrakis/Tailscale, GPU/model-serving and other local/provider-specific acceptance remains outside this pre-local session."
           }
         ],
-        "note": "The harmonised Workcell main must publish its native deterministic self-check before O:I can invoke it. Physical/reference-machine and fabric proofs remain explicitly outstanding."
+        "note": "Cloud preflight verifies the portable workspace including model-serving base, process-containment and secret-materialisation contracts while retaining physical/provider gates explicitly."
       },
-      "compatibility": "Workcell owns material execution and provider/fabric lifecycle. O:I may attach Workcell-native acceptance evidence but does not expose provider operations or treat a particular fabric such as Tailscale as semantic identity."
+      "compatibility": "Workcell main contains the portable materialisation foundation, SDK, model-serving base, Phase-4 process authority and #56 secret-materialisation sibling."
     },
     {
       "id": "quaternal-logic",
       "public_name": "Quaternal Logic",
-      "function": "formal QL/MEF system, operators, refraction and structural research surfaces",
+      "function": "deterministic QL kernel, complete MEF registry, service boundary and optional clients",
       "repository": "https://github.com/EpiLogos/QL-MEF",
-      "docs_ref": "main",
+      "docs_ref": "112c3030036e33c265f97d5a9c0314130ec299bc",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
         "kind": "workbench",
-        "entry": "QL/MEF formal kernel, operator, refraction and research surface",
+        "entry": "QL/MEF Rust kernel, service and adapter workspace",
         "executable": null,
         "alias": null,
         "version_command": null,
-        "version_manifest": null
+        "version_manifest": "Cargo.toml"
       },
       "install": {
         "kind": "register-only",
-        "note": "Register the selected QL-MEF source checkout. O:I exposes Quaternal Logic as the product name while QL-MEF remains repository/implementation vocabulary."
+        "ref": "112c3030036e33c265f97d5a9c0314130ec299bc",
+        "revision": "112c3030036e33c265f97d5a9c0314130ec299bc",
+        "note": "Materialise and register the exact accepted Q1-Q4 QL-MEF main checkout; wiki/Q5/Q6 research remains a separate continuation."
       },
       "verification": {
-        "status": "unsupported",
-        "operation": null,
+        "status": "supported",
+        "operation": {
+          "id": "ql-mef.workspace-tests",
+          "runner": "root-command",
+          "program": "cargo",
+          "args": ["test", "--workspace", "--all-targets"],
+          "working_directory": "{root}",
+          "evidence": "process-exit-and-output"
+        },
         "outstanding_requirements": [],
-        "note": "The selected QL-MEF main has not yet published the harmonised native self-check operation for O:I to invoke. O:I does not reproduce QL/MEF formal verification."
+        "note": "Pre-local verification exercises the accepted Q1 deterministic kernel through Q4 optional client adapters; QW/Q5/Q6 remain non-blocking research."
       },
-      "compatibility": "Quaternal Logic owns the formal QL/MEF system, operators, refraction and structural research surfaces. O:I retains only composition-level identity, revision, documentation and verification declarations."
+      "compatibility": "QL-MEF main is the accepted first-suite Quaternal Logic substrate through Q4; later wiki/refraction and experimental grammar work remains separate."
     }
   ]
 }
