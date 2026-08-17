@@ -1,12 +1,15 @@
 use oi_desktop_core::{
-    host_native_contribution, ActionAuthorityGrant, BridgeCallClass, BridgeCaller, BridgePolicy,
-    DesktopHost, FactoryActionRoundTrip, FactoryBuildSnapshot, HostedContribution,
-    LocalFactoryHost, NativeContributionReading, SemanticRef, ShellDestination, ShellSnapshot,
-    SurfaceActionEmission, FACTORY_BUILD_CONTRIBUTION_REF,
+    host_native_contribution, ActionAuthorityStore, ActionExecutionRequest, BoundedActionGrant,
+    BridgeCallClass, BridgeCaller, BridgePolicy, DesktopHost, FactoryActionRoundTrip,
+    FactoryBuildSnapshot, HostedContribution, LocalFactoryHost, NativeContributionReading,
+    SemanticRef, ShellDestination, ShellSnapshot, SurfaceActionEmission,
+    FACTORY_BUILD_CONTRIBUTION_REF,
 };
 use serde::Deserialize;
 use std::env;
+use std::fs;
 use std::sync::Mutex;
+use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::State;
 
 const CONTRIBUTION_FIXTURES: &str = include_str!("../../fixtures/native-contributions.json");
@@ -21,6 +24,7 @@ struct AppState {
     host: Mutex<DesktopHost>,
     contributions: Mutex<Vec<HostedContribution>>,
     factory: Mutex<Option<LocalFactoryHost>>,
+    action_authority: Mutex<ActionAuthorityStore>,
 }
 
 #[tauri::command]
@@ -64,15 +68,23 @@ fn factory_build_snapshot(
     Ok(observation.snapshot)
 }
 
+/// Privileged native Action boundary.
+///
+/// The frontend may name only an opaque authority handle + operation id. It may
+/// not submit Action/Capability authority facts. Those are registered in the
+/// process-local store from a trusted native handoff and consumed here before the
+/// Factory-owned Action executor can be reached.
 #[tauri::command]
 fn dispatch_factory_action(
     state: State<'_, AppState>,
     emission: SurfaceActionEmission,
-    grant: ActionAuthorityGrant,
+    authority_ref: String,
+    operation_id: String,
 ) -> Result<FactoryActionRoundTrip, String> {
     BridgePolicy
         .authorize(BridgeCaller::ShellUi, BridgeCallClass::DispatchFactoryAction)
         .map_err(|error| error.to_string())?;
+
     let mut factory = state
         .factory
         .lock()
@@ -80,7 +92,42 @@ fn dispatch_factory_action(
     let factory = factory
         .as_mut()
         .ok_or_else(|| "no Factory-owned local provider is configured".to_owned())?;
-    let round_trip = factory.dispatch(&emission, &grant)?;
+
+    let observation = factory.observe()?;
+    let snapshot = observation
+        .snapshot
+        .as_ref()
+        .ok_or_else(|| "Factory provider did not expose a current Build snapshot".to_owned())?;
+    let action = observation
+        .contribution
+        .contribution
+        .actions
+        .iter()
+        .find(|action| action.action_ref == emission.action_ref)
+        .ok_or_else(|| format!("Factory did not advertise Action `{}`", emission.action_ref))?;
+    let binding_revision = observation
+        .contribution
+        .contribution
+        .provenance
+        .revision
+        .clone()
+        .unwrap_or_else(|| snapshot.revision.to_string());
+
+    let request = ActionExecutionRequest {
+        operation_id,
+        emission: emission.clone(),
+        native_owner: action.native_owner.clone(),
+        required_capability_ref: action.required_capability_ref.clone(),
+        binding_revision,
+        now_unix_ms: now_unix_ms()?,
+    };
+    let authorised = state
+        .action_authority
+        .lock()
+        .map_err(|_| "Action authority store lock poisoned".to_owned())?
+        .authorize_and_consume(&authority_ref, &request)?;
+
+    let round_trip = factory.dispatch(&emission, authorised.action_grant())?;
     let observation = factory.observe()?;
     replace_factory_contribution(&state, observation.contribution)?;
     Ok(round_trip)
@@ -144,6 +191,35 @@ fn load_local_factory() -> Result<Option<LocalFactoryHost>, String> {
     }
 }
 
+/// Optional one-shot native handoff from an authority-owning integration.
+///
+/// The file is consumed and deleted before the webview is started. Restarting the
+/// desktop therefore cannot resurrect already materialised grants from this
+/// handoff. Failure to parse after consumption fails closed and loses the grants.
+fn load_action_authority() -> Result<ActionAuthorityStore, String> {
+    let Some(path) = env::var_os("OI_ACTION_AUTHORITY_FILE") else {
+        return Ok(ActionAuthorityStore::default());
+    };
+    let content = fs::read_to_string(&path)
+        .map_err(|error| format!("read OI_ACTION_AUTHORITY_FILE: {error}"))?;
+    fs::remove_file(&path)
+        .map_err(|error| format!("consume OI_ACTION_AUTHORITY_FILE: {error}"))?;
+    let grants: Vec<BoundedActionGrant> = serde_json::from_str(&content)
+        .map_err(|error| format!("invalid bounded Action authority handoff: {error}"))?;
+    let mut store = ActionAuthorityStore::default();
+    for grant in grants {
+        store.register_trusted(grant)?;
+    }
+    Ok(store)
+}
+
+fn now_unix_ms() -> Result<u64, String> {
+    let duration = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|error| format!("system clock is before UNIX epoch: {error}"))?;
+    u64::try_from(duration.as_millis()).map_err(|_| "system time exceeds u64 milliseconds".into())
+}
+
 fn replace_factory_contribution(
     state: &State<'_, AppState>,
     contribution: HostedContribution,
@@ -178,6 +254,10 @@ fn main() {
         .map_err(|error| eprintln!("O:I local Factory provider unavailable: {error}"))
         .ok()
         .flatten();
+    let action_authority = load_action_authority().unwrap_or_else(|error| {
+        eprintln!("O:I Action authority handoff unavailable: {error}");
+        ActionAuthorityStore::default()
+    });
     if let Some(factory) = factory.as_ref() {
         match factory.observe() {
             Ok(observation) => {
@@ -192,6 +272,7 @@ fn main() {
             host: Mutex::new(DesktopHost::new(disclosure)),
             contributions: Mutex::new(contributions),
             factory: Mutex::new(factory),
+            action_authority: Mutex::new(action_authority),
         })
         .invoke_handler(tauri::generate_handler![
             shell_snapshot,
