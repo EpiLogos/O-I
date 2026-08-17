@@ -13,14 +13,18 @@ pub enum BridgeCaller {
 pub enum BridgeCallClass {
     DiscloseComposition,
     DiscloseContributions,
+    ObserveFactoryBuild,
+    DispatchFactoryAction,
     SelectSemanticRef,
     OpenDestination,
 }
 
 impl BridgeCallClass {
-    pub const ALL: [Self; 4] = [
+    pub const ALL: [Self; 6] = [
         Self::DiscloseComposition,
         Self::DiscloseContributions,
+        Self::ObserveFactoryBuild,
+        Self::DispatchFactoryAction,
         Self::SelectSemanticRef,
         Self::OpenDestination,
     ];
@@ -33,7 +37,7 @@ pub struct BridgeDenied {
 }
 
 impl fmt::Display for BridgeDenied {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> std::fmt::Result {
         write!(formatter, "bridge caller {:?} is not authorised for {:?}", self.caller, self.call)
     }
 }
