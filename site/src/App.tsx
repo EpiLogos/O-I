@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { AIStackAperture } from '@/components/ai-stack-aperture';
 import { SelfOtherPortal } from '@/components/self-other-portal';
 import { OICube } from '@/components/ui/oi-cube';
 import { OIGlyph } from '@/components/ui/oi-mark';
@@ -112,6 +113,8 @@ function ProductField() {
           </a>
         ))}
       </div>
+
+      <AIStackAperture />
     </section>
   );
 }
