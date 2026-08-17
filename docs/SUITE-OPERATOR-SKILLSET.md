@@ -12,7 +12,7 @@ native repository authoritative Skill source + revision
   -> native Capability / Action / authority gate
 ```
 
-The manifest now contains **no `awaiting_native_publication` entries** on this integration line. It pins the live native publication review heads for AIKit, Actuation, Software Factory, Workcell and QL-MEF and the current Central main revision. These are exact integration revisions, not claims that the corresponding native PRs have already been merged/promoted. After native-owner merges, this manifest must be repinned to the accepted revisions before O:I #27 is closed.
+The manifest contains **no `awaiting_native_publication` entries**. It pins accepted native-owner `main` revisions for Central, AIKit, Actuation, Software Factory, Workcell and QL-MEF. Those source revisions are explicit provenance and are independently compared with observed installed revisions; later owner changes therefore become reviewable drift rather than silent projected-source replacement.
 
 ## Base versus Root
 
