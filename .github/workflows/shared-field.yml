@@ -8,10 +8,14 @@ on:
       - agent/oi-017-encounter-security
     paths:
       - 'shared-field/**'
+      - 'site/referent-read-model.mjs'
+      - 'site/referent-read-model.test.mjs'
       - '.github/workflows/shared-field.yml'
   pull_request:
     paths:
       - 'shared-field/**'
+      - 'site/referent-read-model.mjs'
+      - 'site/referent-read-model.test.mjs'
       - '.github/workflows/shared-field.yml'
 
 permissions:
@@ -25,8 +29,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Run shared-field contract, Explore and security tests
-        run: node --test shared-field/*.test.mjs
+      - name: Run shared-field, Explore, referent, browser-read-model and security tests
+        run: node --test shared-field/*.test.mjs site/*.test.mjs
 
   spacetimedb-live:
     runs-on: ubuntu-latest
@@ -68,7 +72,7 @@ jobs:
         run: spacetime publish oi-shared-field-ci --server local --module-path shared-field/spacetimedb --yes=all
       - name: Generate current TypeScript client bindings
         run: spacetime generate --lang typescript --out-dir shared-field/spacetimedb/module_bindings --module-path shared-field/spacetimedb
-      - name: Prove Phase 1 privacy and Phase 2 Contribution Admission conformance
+      - name: Prove Phase 1 privacy, Phase 2 Contribution Admission and common-referent privacy-oracle conformance
         env:
           SPACETIMEDB_URI: ws://127.0.0.1:3000
           SPACETIMEDB_DATABASE: oi-shared-field-ci
