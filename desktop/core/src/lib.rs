@@ -1,6 +1,7 @@
 mod bridge;
 mod contribution;
 mod live_product;
+mod local_factory;
 mod shell;
 
 pub use bridge::{BridgeCallClass, BridgeCaller, BridgeDenied, BridgePolicy};
@@ -15,6 +16,7 @@ pub use live_product::{
     FactoryHostObservation, SessionSpaceCorrelation, SessionSpaceCorrelationState,
     SurfaceActionEmission, FACTORY_BUILD_CONTRIBUTION_REF,
 };
+pub use local_factory::{host_factory_snapshot, LocalFactoryHost};
 pub use shell::{
     DesktopHost, RefProvenance, SemanticRef, ShellDestination, ShellSnapshot, SuiteCondition,
 };
