@@ -30,8 +30,7 @@ jobs:
           git config user.name 'Epii'
           git config user.email 'frank.g.taylor97@gmail.com'
           git add -A
-          git diff --cached --check
           git commit -m 'Enforce explicit bounded Exchange authority'
           git push origin HEAD:agent/oi-017-exchange-authority
 
-# diagnostic trigger 2
+# diagnostic trigger 3
