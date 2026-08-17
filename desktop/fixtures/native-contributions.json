@@ -66,12 +66,12 @@
       "native_owner": "ai-kit",
       "target_contract": "aikit.session-space/v1",
       "availability": "degraded",
-      "provenance": {"source": "EpiLogos/ai-kit#68", "revision": "8ec1f923b8cc59b7e18e7b6c1afa0974ca6f1208"},
+      "provenance": {"source": "EpiLogos/ai-kit#68", "revision": "15d7c9f1122336b50189bb1d70961084cbb9685b"},
       "regions": ["canvas", "navigator", "inspector", "command", "status"],
       "read_model_ref": null,
       "accepted_selection_kinds": ["session_space", "project", "agent_session", "component", "surface", "connection", "provider", "harness", "capability", "action"],
       "actions": [],
-      "detail": "AIKit PR #68 now contains the executable aikit.session-space/v1 runtime/read model and target-owned aikit.session-space-contribution/v1 register/readback/remove lifecycle. This desktop fallback remains degraded only when it has no independently observed SessionSpaceReadModel instance; it never fabricates Active, provider health, Capability grant or Action authority."
+      "detail": "AIKit PR #68 contains the executable aikit.session-space/v1 runtime/read model, provider-observed desired-vs-live harmonisation, and target-owned aikit.session-space-contribution/v1 register/readback/remove lifecycle. This desktop fallback remains degraded only when it has no independently observed SessionSpaceReadModel instance; it never fabricates Active, provider health, Capability grant or Action authority."
     },
     {
       "schema": "oi.desktop-host-reading/v1",
@@ -79,9 +79,9 @@
       "native_owner": "ai-kit",
       "target_contract": "aikit.harness-composition-topology/v1",
       "availability": "degraded",
-      "provenance": {"source": "EpiLogos/ai-kit#68", "revision": "8ec1f923b8cc59b7e18e7b6c1afa0974ca6f1208"},
+      "provenance": {"source": "EpiLogos/ai-kit#68", "revision": "15d7c9f1122336b50189bb1d70961084cbb9685b"},
       "regions": ["canvas", "inspector", "command"],
-      "read_model_ref": {"ref": "aikit:harness-composition-topology:deepseek-maximal", "kind": "harness_composition_topology", "native_owner": "ai-kit", "provenance": {"source": "crates/aikit-adapters/src/composition_topology.rs", "revision": "8ec1f923b8cc59b7e18e7b6c1afa0974ca6f1208"}},
+      "read_model_ref": {"ref": "aikit:harness-composition-topology:deepseek-maximal", "kind": "harness_composition_topology", "native_owner": "ai-kit", "provenance": {"source": "crates/aikit-adapters/src/composition_topology.rs", "revision": "15d7c9f1122336b50189bb1d70961084cbb9685b"}},
       "accepted_selection_kinds": ["component", "surface", "harness_composition", "action"],
       "actions": [],
       "detail": "Consumes AIKit PR #68's target-neutral nested Component topology and live SessionSpace programme without reproducing Component/Surface semantics inside O:I. Rich UI, HumanCommand, Policy and LoopRuntime contributions remain target-native."
