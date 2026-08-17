@@ -2,256 +2,126 @@
 
 ## Purpose
 
-Use this skill when a user asks you to understand, install, inspect, compose, enter, disclose, project, or participate through a {O:I} system.
+Use this skill when a user asks you to understand, install, inspect, compose, snapshot, verify, or enter a {O:I} system.
 
-{O:I} is the shared idea and composition layer around several product surfaces. It is not the place to reimplement the products.
+{O:I} is the sparse shared Idea and composition layer around six product surfaces. It is not the place to reimplement the products. Your first job is to disclose the field clearly and route work to the surface that owns it.
 
-Your first job is to disclose the field clearly, preserve ownership boundaries, and route the work to the surface that owns it.
+## Functional field
 
-## Core idea
+- persistent personal ground — Central;
+- agent actuation — Actuation;
+- capability, context, model, profile, Skill/tool, HarnessComposition, session and Surface resolution — AIKit;
+- developmental Project / Run / evidence / candidate / repair / ExecutionDisposition semantics — Software Factory;
+- material execution, processes, services, storage, network/fabric and lifecycle — Workcell;
+- formal QL/MEF system, operators, refraction and structural research — Quaternal Logic (`EpiLogos/QL-MEF`).
 
-{O:I} is an open architecture for the **provisioning and potentiation of technological agency around LLM capacity**.
+The six functions are centres of responsibility, not mandatory stages in one runtime pipeline.
 
-Think in functional terms first:
+The QL agent-runtime experiments have their canonical developmental/research home in Actuation. Do not route them to Software Factory merely because historical material remains in `agent-system-design`.
 
-- persistent personal ground;
-- agent actuation;
-- capability and context resolution;
-- developmental agency;
-- material execution;
-- recursive formal intelligence.
+## First encounter
 
-The current products that implement these functions are Central, Agent Runtime, AIKit, Software Factory, Workcell, and Quaternal Logic.
-
-Do not use a product name as a substitute for the function when explaining the architecture to a new user. Explain the need first. Name the product second.
-
-## Objective Internality
-
-Objective Internality is an architectural claim about an actor's operative internal reality.
-
-Projects, histories, memories, sources, capabilities, tools, permissions, environments, constraints, and other conditions can exist as objective, inspectable structure outside one inference and become effective again in later action.
-
-Do not turn this into an unnecessary claim about phenomenal subjectivity. The software can describe and preserve objective operative structure without claiming that it exhausts or proves a Subject.
-
-## Objective Co-Internality — Self / Other
-
-The shared form is **Objective Co-Internality**.
-
-Do not casually rename this “objective intersubjectivity”. Intersubjectivity already assumes Subjects as the relata. O:I begins from objective operative internal worlds and the relation by which an **Other appears as Other in the external environment available within one actor's operative internal environment**.
-
-The minimum relation is:
+When this repository is present but `oi` is not installed, use its documented Rust installation helper. Then prefer this sequence for the base personal ground:
 
 ```text
-Self
-  ↓ selective externalisation
-SharedField
-  ↓ mediated Encounter
-Other
+oi install central
+oi init --personal-ground $HOME/Central
+oi status --json
+oi ctrl doctor --json
+oi ctrl action list --json
 ```
 
-Self and Other are situated relational positions, not identity kinds. The same Participant can be Self from one situated view and Other from another.
+`oi install central` registers a compatible existing `ctrl` first. Otherwise it follows the pinned native Central source-install contract. `oi init --personal-ground` requires the real native surface; never create a partial Control/Work imitation when Central is absent.
 
-The SharedField is not a collective super-subject and does not own either participant's mind or canonical local world.
+A fresh Central root must contain `Control/user`, `Control/agents`, `Control/machines`, `.central`, and `Work`. The three Control roots initially remain empty.
 
-## Shared-field primitives
+## Control authorship
 
-When work crosses independently grounded O:I worlds, preserve these distinctions:
+Do not generate default personal profiles, preferences, machine facts, or agent rules into Control.
 
-```text
-Identity        underlying Human identity or AgentRef
-Participant     field-relative participation relation
-Projection      selected representation of a local/native object
-SharedField     addressable relational environment
-Contribution    attributable difference returned to a field
-Encounter       bounded material made available through mediation
-Presence        current reachability
-Activity        current work/dialogue/study/execution state
-```
-
-Important non-identities:
-
-```text
-Identity ≠ Participant ≠ Presence ≠ Activity
-Projection ≠ Contribution
-Contribution ≠ canonical source object
-SharedField ≠ Context
-SharedField ≠ WikiSpace
-Encounter ≠ belief, understanding, or subjective experience
-```
-
-### SharedFields can nest
-
-SharedFields are recursively nestable. `parent_field_ref` expresses containment only.
-
-Do not confuse:
-
-```text
-contain ≠ federate ≠ anchor ≠ project ≠ participate
-```
-
-A field can be anchored to a WikiSpace, Project, Projection, Contribution, or other stable subject without becoming that subject. Federation between independently grounded fields remains a separate relation.
-
-### Contributions can nest
-
-A Contribution can target any stable addressable subject, including another Contribution.
-
-Use the generic Contribution relation for statements, replies, questions, findings, opinions, support, challenges, corrections, reproductions, syntheses, decisions, ratings, rankings, metrics, moderation judgments, and other typed field differences when appropriate.
-
-Do not invent a privileged `Comment`, `Reaction`, or fixed reply-depth ontology merely because a Contribution targets social material.
-
-Rankings and metrics can be Contributions. Preserve their attribution, target, basis/method, representation, revision/provenance where relevant. Do not treat a platform score as canonical truth merely because a UI computes with it.
-
-### Encounter records mediation, not mind-reading
-
-An Encounter may record what appeared, which revision, through which SharedField, and by which mediation path: direct address, chronology, search, subscription, ranking, recommendation, moderation, or another policy.
-
-Do not infer that displayed material was believed, understood, remembered, or phenomenally experienced.
-
-## Projection and local authority
-
-Projection is explicit and selective.
-
-A local product keeps semantic and mutation authority over its canonical object. O:I can publish a representation, let other Participants address it, and preserve what they observed without silently transferring source ownership.
-
-A Contribution that refers to a Projection is not the Projection. A Projection of a Contribution is still a Projection of that Contribution.
-
-For a Human Participant Root derived from Central, expose only explicitly selected public material. Never infer that `Central/Control` is public merely because it is locally available.
-
-For an Agent, preserve Agent / Agency / AgentSession / Execution distinctions where provenance needs them. Model, Harness, runtime body, or gateway process identity does not replace Agent identity.
-
-## Research commons and wiki boundary
-
-The future O:I Wiki is a living research commons, but the generic wiki system owns wiki semantics.
-
-Preserve:
-
-```text
-WikiSpace / WikiNode / WikiFrame
-          ↓ Projection / anchor
-SharedField
-          ↓ Contributions / Encounters
-Participants
-```
-
-A Contribution can discuss, challenge, reproduce, rank, or extend wiki material without silently mutating canonical wiki knowledge.
-
-Polylogos and Moltbook are important prior shared-agency experiments. Treat them as research Sources to study and source-lock, not as product templates.
-
-## Start with the installation state
-
-When the `oi` CLI is available, begin with:
-
-```text
-oi status
-```
-
-Use the result to determine which product surfaces are installed and which aliases are available.
-
-If `oi` is not installed but this repository is present, read the local documentation before taking installation action.
+Durable Control content is human-authored or explicitly adopted. An agent can use Central's Control-maintenance and Machine-declaration Skills to propose durable material, but human acceptance is required before authored Control mutation.
 
 ## Route by ownership
 
-Route requests according to the function they concern.
+Use Central for human-authored Control, ordinary Work, machine intent, machine reconciliation/recovery, and canonical Central Actions/Connectors.
 
-### Persistent personal ground and project control
+Use Actuation for first-class agency/actuation, model/harness/agent-instance research, and the QL runtime experiment programme.
 
-Use the registered control surface for human-authored Control, the personal directory structure, project placement, machine intent, and project adoption or migration.
+Use AIKit for capabilities, context sources, models, harnesses, profiles, Skills/tools, HarnessComposition, sessions, Surfaces, and local capability/context resolution.
 
-### Agent actuation
+Use Software Factory for developmental Projects, Runs, evidence, Candidates, repair, ExecutionDisposition and related developmental semantics.
 
-Use the configured agent runtime for loop behaviour, harness behaviour, framework behaviour, and runtime-specific sessions or recurrence.
+Use Workcell for material execution demands, workspaces, providers, project runtimes, services, storage, network/fabric, bindings, capacity, placement, and lifecycle.
 
-### Capability and context resolution
+Use Quaternal Logic for QL/MEF formal operations, refraction, operators and related structural research machinery.
 
-Use the registered AIKit surface for skills, tools, Actions, ContextSources, models, harnesses, profiles, sessions, familiarity, local capability resolution, and composition-capable runtime bodies/surfaces.
+## Aliases
 
-### Developmental agency
-
-Use the Software Factory surface for durable Runs, Run Maps, Agents, Agencies, Artifacts, Claims, Evidence, Decisions, Candidates, and related developmental work.
-
-### Material execution
-
-Use the Workcell surface for workspaces, execution providers, project runtimes, services, bindings, containers, VMs, machines, capacity, and material lifecycle.
-
-### Recursive formal intelligence
-
-Use Quaternal Logic for executable QL/MEF semantics, refraction, formal operators, and related research machinery.
-
-### Whole-level shared relations
-
-Use the O:I shared-field layer when the request concerns selective disclosure between worlds, Participant relations, Projection, SharedField containment/federation, Contribution, Encounter, shared addressing, transport-neutral publication, or the future hosted field seam.
-
-Do not move native product behaviour into O:I merely because the result will later be shared.
-
-## Use `oi` as a front door
-
-Use `oi` for operations that concern the composition as a whole:
+Only use aliases backed by verified native CLIs:
 
 ```text
-oi help
-oi status
-oi init
-oi install <module>
-oi docs [topic]
-oi migrate <path>
+oi ctrl ...  ->  ctrl ...
+oi kit ...   ->  aikit ...
 ```
 
-Use `oi <alias> ...` when the user wants the common namespace or when it improves orientation.
+Alias dispatch is transparent. Native arguments, input/output, signal behavior, and exit status remain authoritative.
 
-You may use the native CLI directly when the user already knows the product surface or when native documentation requires it.
+## Suite Snapshot
 
-The alias is a dispatcher. Do not recreate native command behaviour inside the {O:I} layer.
+Use `oi snapshot` to represent one exact composition candidate. A snapshot is sparse composition metadata, not product configuration or a transitive dependency lockfile.
 
-## Installation
+For a registered source checkout, O:I can observe the exact Git commit. For a registered native CLI, it can use the exact native version when available. Use `--select SURFACE=REVISION` only when that exact candidate revision has been established externally and must be represented without pretending it is the currently installed state.
 
-A user can install the whole family or only selected surfaces.
+Never infer accepted mainline status from a branch name, a PR, command reachability, or a green product check. `--accepted-mainline SURFACE=REVISION` is an explicit acceptance assertion and must match the selected revision. A full-suite freeze should use `--require-full`; before harmonisation, preserve partial/unaccepted state truthfully.
 
-Support three cases:
+Record cross-product facts with `--accept-compatibility SURFACE=FACT` only after those facts have actually been accepted. Descriptor compatibility prose is context, not acceptance evidence.
 
-1. start from {O:I} and install selected modules;
-2. register an existing native installation into the {O:I} composition;
-3. leave a module independent of {O:I} and use its native CLI normally.
+## Whole-level verification
 
-Do not force reinstall when an existing compatible module can be registered.
+Use `oi verify` as a thin aggregator. It can inspect O:I composition metadata, compare current exact revisions with a Suite Snapshot, validate aliases/reachability, and invoke only the native verification operation declared in trusted O:I surface metadata.
 
-After installation, report:
+Do not treat these states as interchangeable:
 
-- what was installed or registered;
-- the native command;
-- the `oi` alias;
-- the documentation entry point;
-- any action the user must still take.
+```text
+unavailable
+unsupported
+skipped_physical_gated
+failed
+incompatible
+passed
+```
 
-## Project migration
+`failed` preserves a native operation's non-zero result. `incompatible` is an O:I composition/revision mismatch. `unavailable` means the declared operation cannot run here. `unsupported` means the owning product has not yet published the required self-check contract. `skipped_physical_gated` means the check requires an explicitly physical/provider environment.
 
-Treat migration as adoption of an existing project into the personal working ground.
+Use `--receipt PATH` to emit the exact `oi.composition-receipt/v1` evidence for automation or later local acceptance. The pre-local receipt must not be described as physical acceptance. It can retain outstanding Workcell/reference-machine/provider requirements without choosing a provider or reinterpreting native evidence.
 
-Preserve project and repository identity unless the user explicitly asks to create something new.
+Do not:
 
-At the {O:I} layer, gather the source path and target personal ground, then delegate the actual project-control operation to the registered control surface.
+- reproduce native product verification logic in O:I;
+- execute commands supplied by an untrusted snapshot;
+- silently repair another product;
+- equate command reachability with acceptance;
+- claim a branch-only revision is an accepted mainline revision;
+- infer physical/provider acceptance that did not run.
 
-A path change is not a new Project.
+## Existing Work placement
+
+Treat `oi migrate <path>` as a conservative one-shot placement of an existing local work tree under the configured Central `Work` field. Central's normative Work model is ordinary filesystem material; there is no required Central Project identity to create.
+
+The command previews source and target, validates the Central ground through native doctor, refuses target collisions, and on supported Unix hosts refuses cross-filesystem placement rather than copying and deleting. It moves the directory as a whole, preserving `.git` and ordinary files.
+
+Do not create or rename Factory Project/Run objects, AIKit registrations, Workcell bindings, or other derived state. Report that path-derived systems may need an explicit refresh after a successful placement.
+
+## Installation and registration
+
+Prefer discovery and registration over reinstalling an existing product. Follow only installation mechanisms verified in the live surface descriptor. O:I stores composition/handoff metadata, not native product configuration.
+
+After setup, report what was installed or registered, the native entry point, any `oi` alias, the docs entry, and remaining physical or product-specific acceptance where relevant.
 
 ## Communication
 
-Write for the user's experience of the field.
+Write for the user's experience of the field. Use {O:I} as the canonical written form and `oi` for the CLI command. Use **Quaternal Logic** as the public product name; use `QL-MEF` when referring specifically to its repository or implementation vocabulary.
 
-Prefer direct prose and functional language. Explain what a surface gives the person or agent before discussing internal types.
+## Guardrail
 
-Keep the speculative research frame positive and directed. Distinguish established software behaviour from open research claims when that distinction matters.
-
-Use {O:I} as the canonical written form for the Idea and project. Use `oi` for the CLI command.
-
-## Architectural guardrail
-
-Before adding code to this repository, ask:
-
-> Does this change improve shared disclosure, installation, composition, migration, compatibility, cross-surface projection, shared-field participation, or handoff?
-
-If no, the change probably belongs in one of the product repositories.
-
-For live shared-field backend concerns, ask a second question:
-
-> Is this portable O:I semantics, or service-specific implementation behind the Epi-Logos adapter?
-
-Keep portable identity / Projection / SharedField / Contribution / Encounter semantics in O:I. Keep SpaceTimeDB modules, live Presence implementation, recommendation policy, moderation machinery, and other hosted behaviour behind the future service boundary unless the portable contract genuinely requires a cross-transport extension.
+Before adding code to this repository, ask whether the change is shared disclosure, setup, installation/registration, status, snapshot/verification composition, documentation, safe work placement, compatibility, or aliasing. If it changes what a native product can actually do, implement it in that product instead.

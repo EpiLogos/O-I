@@ -1,0 +1,90 @@
+{
+  "schema": "oi.desktop-host-reading-fixtures/v1",
+  "verified_at": "2026-08-17",
+  "contributions": [
+    {
+      "schema": "oi.desktop-host-reading/v1",
+      "contribution_ref": "oi.explore.surface/root",
+      "native_owner": "oi-explore",
+      "target_contract": "oi.explore.surface/v1",
+      "availability": "ready",
+      "provenance": {"source": "EpiLogos/O-I#19", "revision": "3de1cc548252017877bdd7d80447b7dcac375551"},
+      "regions": ["canvas", "navigator", "inspector"],
+      "read_model_ref": {"ref": "oi.explore:surface:root", "kind": "surface", "native_owner": "oi-explore", "provenance": {"source": "shared-field/explore.mjs", "revision": "3de1cc548252017877bdd7d80447b7dcac375551"}},
+      "accepted_selection_kinds": ["projection", "wiki_node", "project", "participant", "shared_field"],
+      "actions": [],
+      "detail": "Consumes the canonical Explore read-model seam from PR #19. Encounter-security and A2A remain the authority/admission owners for hosted mutation, private Contact/Watch state and exchange; this desktop reading exposes none of those mutation powers or private relations. SpaceTimeDB transport identifiers remain non-canonical."
+    },
+    {
+      "schema": "oi.desktop-host-reading/v1",
+      "contribution_ref": "actuation.agency.reading/root-world",
+      "native_owner": "actuation",
+      "target_contract": "actuation.agency/v1",
+      "availability": "ready",
+      "provenance": {"source": "EpiLogos/Actuation#6", "revision": "b977939ec25c32b3dc8f5ed251b70e4c26933086"},
+      "regions": ["inspector", "root_agency"],
+      "read_model_ref": {"ref": "actuation.agency:root-world", "kind": "agency_reading", "native_owner": "actuation", "provenance": {"source": "actuation.agency/v1", "revision": "b977939ec25c32b3dc8f5ed251b70e4c26933086"}},
+      "accepted_selection_kinds": ["agency", "world_binding", "root_scope", "metagency_grant", "determination", "return"],
+      "actions": [],
+      "detail": "Consumes verified Actuation PR #6. Root Agency remains a positional relation between WorldBinding and RootScope; O:I does not introduce a RootAgent subtype or infer metagency from presentation."
+    },
+    {
+      "schema": "oi.desktop-host-reading/v1",
+      "contribution_ref": "central.surface/personal",
+      "native_owner": "central",
+      "target_contract": "personal.show",
+      "availability": "ready",
+      "provenance": {"source": "EpiLogos/Central#53", "revision": "3f0551090ae39bcef260a27b1a9db0da4729d8a3"},
+      "regions": ["canvas", "navigator", "inspector"],
+      "read_model_ref": {"ref": "personal.show", "kind": "action", "native_owner": "central", "provenance": {"source": "ctrl/src/personal.rs", "revision": "3f0551090ae39bcef260a27b1a9db0da4729d8a3"}},
+      "accepted_selection_kinds": ["personal_root", "control_root", "work_root", "proposal"],
+      "actions": [
+        {"action_ref": "personal.show", "native_owner": "central", "availability": "available", "required_capability_ref": null},
+        {"action_ref": "control.propose-change", "native_owner": "central", "availability": "available", "required_capability_ref": null},
+        {"action_ref": "control.review-proposal", "native_owner": "central", "availability": "available", "required_capability_ref": null},
+        {"action_ref": "control.apply-proposal", "native_owner": "central", "availability": "available", "required_capability_ref": null},
+        {"action_ref": "personal.notify", "native_owner": "central", "availability": "available", "required_capability_ref": null}
+      ],
+      "detail": "Consumes Central PR #53's native Personal/root-world Action surface. Authored Control/Work remain filesystem-owned by Central; proposal is derived until explicit acceptance, and notification delivery is not human acknowledgement. O:I only hosts the reading and Action refs."
+    },
+    {
+      "schema": "oi.desktop-host-reading/v1",
+      "contribution_ref": "factory.surface/build",
+      "native_owner": "factory",
+      "target_contract": "factory.build-view-provider/v1",
+      "availability": "degraded",
+      "provenance": {"source": "EpiLogos/agent-system-design#146", "revision": "c39bd63580cb7196f38c9a26b49e3977aac95e6a"},
+      "regions": ["canvas", "navigator", "inspector", "deep_drawer", "command", "status"],
+      "read_model_ref": null,
+      "accepted_selection_kinds": ["project", "run", "frontier", "candidate", "claim", "evidence", "human_request", "agency", "return", "execution", "trajectory", "harness_composition", "agent_session", "session_space", "surface", "material_binding"],
+      "actions": [],
+      "detail": "Fallback only: Factory PR #146 now exposes the product-owned factory.build-view-provider/v1 plus a persistent local first-party provider and Factory-owned Action executor over canonical Factory state. The desktop keeps this reading degraded until OI_FACTORY_BUILD_STATE + Project/Run refs resolve an actual provider instance; it never renders the deterministic GUI fixture as live. When observed, the live reading replaces this same factory.surface/build contribution identity with the same Factory native owner."
+    },
+    {
+      "schema": "oi.desktop-host-reading/v1",
+      "contribution_ref": "aikit.session-space/read-model",
+      "native_owner": "ai-kit",
+      "target_contract": "aikit.session-space/v1",
+      "availability": "degraded",
+      "provenance": {"source": "EpiLogos/ai-kit#68", "revision": "15d7c9f1122336b50189bb1d70961084cbb9685b"},
+      "regions": ["canvas", "navigator", "inspector", "command", "status"],
+      "read_model_ref": null,
+      "accepted_selection_kinds": ["session_space", "project", "agent_session", "component", "surface", "connection", "provider", "harness", "capability", "action"],
+      "actions": [],
+      "detail": "AIKit PR #68 contains the executable aikit.session-space/v1 runtime/read model, provider-observed desired-vs-live harmonisation, and target-owned aikit.session-space-contribution/v1 register/readback/remove lifecycle. This desktop fallback remains degraded only when it has no independently observed SessionSpaceReadModel instance; it never fabricates Active, provider health, Capability grant or Action authority."
+    },
+    {
+      "schema": "oi.desktop-host-reading/v1",
+      "contribution_ref": "aikit.harness-composition/deepseek-maximal",
+      "native_owner": "ai-kit",
+      "target_contract": "aikit.harness-composition-topology/v1",
+      "availability": "degraded",
+      "provenance": {"source": "EpiLogos/ai-kit#68", "revision": "15d7c9f1122336b50189bb1d70961084cbb9685b"},
+      "regions": ["canvas", "inspector", "command"],
+      "read_model_ref": {"ref": "aikit:harness-composition-topology:deepseek-maximal", "kind": "harness_composition_topology", "native_owner": "ai-kit", "provenance": {"source": "crates/aikit-adapters/src/composition_topology.rs", "revision": "15d7c9f1122336b50189bb1d70961084cbb9685b"}},
+      "accepted_selection_kinds": ["component", "surface", "harness_composition", "action"],
+      "actions": [],
+      "detail": "Consumes AIKit PR #68's target-neutral nested Component topology and live SessionSpace programme without reproducing Component/Surface semantics inside O:I. Rich UI, HumanCommand, Policy and LoopRuntime contributions remain target-native."
+    }
+  ]
+}

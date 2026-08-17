@@ -1,0 +1,71 @@
+:root {
+  color-scheme: light dark;
+
+  /* O:I foundation — extracted verbatim from the current public front door. */
+  --oi-black: #050505;
+  --oi-white: #f7f7f4;
+  --oi-paper: #ffffff;
+  --oi-ink: #0a0a0a;
+  --oi-gold: #a8873f;
+
+  /* semantic colour */
+  --oi-surface: var(--oi-paper);
+  --oi-foreground: var(--oi-ink);
+  --oi-muted: rgba(10, 10, 10, 0.58);
+  --oi-rule: rgba(10, 10, 10, 0.2);
+  --oi-relation: rgba(10, 10, 10, 0.55);
+  --oi-focus: var(--oi-ink);
+  --oi-projection: rgba(10, 10, 10, 0.7);
+  --oi-meta-relation: var(--oi-gold);
+
+  /* rhythm */
+  --oi-space-1: 0.5rem;
+  --oi-space-2: 0.75rem;
+  --oi-space-3: 1rem;
+  --oi-space-4: 1.5rem;
+  --oi-space-5: 2rem;
+  --oi-space-6: 3rem;
+  --oi-space-7: 4rem;
+  --oi-section-x: clamp(1.25rem, 5vw, 5rem);
+  --oi-section-y: clamp(5rem, 10vw, 10rem);
+
+  /* typography */
+  --oi-type-xs: 0.68rem;
+  --oi-type-sm: 0.82rem;
+  --oi-type-body: clamp(1.02rem, 1.35vw, 1.28rem);
+  --oi-type-title: clamp(3rem, 6.5vw, 7rem);
+  --oi-type-display: clamp(3.5rem, 8vw, 8.5rem);
+  --oi-tracking-label: 0.14em;
+
+  /* motion */
+  --oi-motion-fast: 160ms;
+  --oi-motion-normal: 240ms;
+  --oi-motion-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.oi-surface-light {
+  --oi-surface: var(--oi-paper);
+  --oi-foreground: var(--oi-ink);
+  --oi-muted: rgba(10, 10, 10, 0.58);
+  --oi-rule: rgba(10, 10, 10, 0.2);
+  --oi-relation: rgba(10, 10, 10, 0.55);
+  --oi-focus: var(--oi-ink);
+  --oi-projection: rgba(10, 10, 10, 0.7);
+}
+
+.oi-surface-dark {
+  --oi-surface: var(--oi-black);
+  --oi-foreground: var(--oi-white);
+  --oi-muted: rgba(247, 247, 244, 0.62);
+  --oi-rule: rgba(247, 247, 244, 0.22);
+  --oi-relation: rgba(247, 247, 244, 0.58);
+  --oi-focus: var(--oi-white);
+  --oi-projection: rgba(247, 247, 244, 0.72);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --oi-motion-fast: 0.01ms;
+    --oi-motion-normal: 0.01ms;
+  }
+}

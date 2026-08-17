@@ -9,6 +9,7 @@ name = "oi"
 path = "src/main.rs"
 
 [dependencies]
+aikit-core = { git = "https://github.com/EpiLogos/ai-kit", rev = "9ff28ca31c723b314ddf62b7f85b6e2611d53d66" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 

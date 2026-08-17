@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EpiLogos/O-I/shared-field/admission-schema-v1.json",
+  "title": "O:I Contribution ingress and Admission contracts v1",
+  "$defs": {
+    "ingressRef": {
+      "type": "object",
+      "required": ["ref", "kind"],
+      "properties": {
+        "ref": { "type": "string", "minLength": 1 },
+        "kind": { "const": "oi.contribution-ingress" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "oneOf": [
+    {
+      "title": "Admission",
+      "type": "object",
+      "required": ["schema", "decision_ref", "field_ref", "subject", "disposition", "admission_actor_ref", "decided_at", "reason", "evidence", "provenance"],
+      "properties": {
+        "schema": { "const": "oi.admission/v1" },
+        "decision_ref": { "type": "string", "minLength": 1 },
+        "field_ref": { "type": "string", "minLength": 1 },
+        "subject": { "$ref": "#/$defs/ingressRef" },
+        "disposition": { "enum": ["admitted", "rejected", "withdrawn"] },
+        "admission_actor_ref": { "type": "string", "minLength": 1 },
+        "decided_at": { "type": "string", "format": "date-time" },
+        "reason": { "type": "string", "minLength": 1 },
+        "evidence": { "type": "object" },
+        "provenance": { "type": "object" },
+        "visibility": { "enum": ["public", "restricted", "private"] },
+        "audience_refs": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      },
+      "additionalProperties": false
+    },
+    {
+      "title": "ContributionIngressReceipt",
+      "type": "object",
+      "required": ["schema", "ingress_ref", "field_ref", "contribution_ref", "state", "received_at", "payload_fingerprint"],
+      "properties": {
+        "schema": { "const": "oi.contribution-ingress-receipt/v1" },
+        "ingress_ref": { "type": "string", "minLength": 1 },
+        "field_ref": { "type": "string", "minLength": 1 },
+        "contribution_ref": { "type": "string", "minLength": 1 },
+        "state": { "enum": ["quarantined", "admitted", "rejected", "withdrawn"] },
+        "received_at": { "type": "string", "format": "date-time" },
+        "payload_fingerprint": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    {
+      "title": "ContributionIndexDecision",
+      "type": "object",
+      "required": ["schema", "decision_ref", "field_ref", "subject", "eligible", "decision_actor_ref", "decided_at", "reason", "evidence"],
+      "properties": {
+        "schema": { "const": "oi.contribution-index-decision/v1" },
+        "decision_ref": { "type": "string", "minLength": 1 },
+        "field_ref": { "type": "string", "minLength": 1 },
+        "subject": { "$ref": "#/$defs/ingressRef" },
+        "eligible": { "type": "boolean" },
+        "decision_actor_ref": { "type": "string", "minLength": 1 },
+        "decided_at": { "type": "string", "format": "date-time" },
+        "reason": { "type": "string", "minLength": 1 },
+        "evidence": { "type": "object" }
+      },
+      "additionalProperties": false
+    }
+  ]
+}

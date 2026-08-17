@@ -57,9 +57,9 @@ test('hosted Watch adapter keeps implementation row IDs outside semantic contrac
   );
 });
 
-test('SpaceTimeDB Watch source emits neutral Watch updates with stable semantic identity', () => {
+test('SpaceTimeDB Watch source consumes only caller-filtered myWatch and emits stable updates', () => {
   const handle = fakeWatchHandle([rowFor(baseWatch)]);
-  const source = createSpacetimeWatchSource({ watch: handle });
+  const source = createSpacetimeWatchSource({ myWatch: handle });
   const events = [];
   const unsubscribe = source.subscribe(event => events.push(event));
 
@@ -72,6 +72,7 @@ test('SpaceTimeDB Watch source emits neutral Watch updates with stable semantic 
   assert.equal(events[0].watch.watch_ref, baseWatch.watch_ref);
   assert.equal(events[0].watch.state, 'paused');
   assert.equal(source.snapshot()[0].implementation.row_id, '17');
+  assert.throws(() => createSpacetimeWatchSource({ watch: handle }), /myWatch caller View/);
 
   unsubscribe();
 });

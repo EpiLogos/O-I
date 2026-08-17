@@ -1,13 +1,13 @@
 {
   "schema": 1,
-  "verified_at": "2026-08-15",
+  "verified_at": "2026-08-17",
   "surfaces": [
     {
       "id": "central",
       "public_name": "Central",
       "function": "persistent personal ground",
       "repository": "https://github.com/EpiLogos/Central",
-      "docs_ref": "b134142532602a9570f2deb1060a1badb8432c6d",
+      "docs_ref": "78a545214ad70e055fae38ccae2d78443112f283",
       "docs_path": "README.md",
       "skill_paths": [
         "skills/control-maintenance/SKILL.md",
@@ -20,46 +20,76 @@
         "entry": "ctrl",
         "executable": "ctrl",
         "alias": "ctrl",
-        "version_command": ["--version"],
+        "version_command": [
+          "--version"
+        ],
         "version_manifest": "ctrl/Cargo.toml"
       },
       "install": {
-        "kind": "central-source",
-        "ref": "b134142532602a9570f2deb1060a1badb8432c6d",
-        "revision": "b134142532602a9570f2deb1060a1badb8432c6d",
-        "path": "ctrl",
-        "note": "Central publishes the native source contract cargo install --path ctrl. Pre-release O:I fetches and verifies this immutable tested integration commit directly."
+        "kind": "oi-managed-binary",
+        "ref": "78a545214ad70e055fae38ccae2d78443112f283",
+        "revision": "78a545214ad70e055fae38ccae2d78443112f283",
+        "note": "Install the exact accepted Central release artifact from the Suite Manifest; Central remains owner of Control, Work and .central semantics."
       },
-      "compatibility": "O:I requires ctrl --version plus structured action.list containing central.init, central.doctor, and action.list. The source contract is pinned to the tested Central integration commit until the Rust Wayfinder is promoted to main/release."
+      "verification": {
+        "status": "supported",
+        "operation": {
+          "id": "central.doctor",
+          "runner": "native-executable",
+          "args": [
+            "--root",
+            "{personal_ground}",
+            "doctor",
+            "--json"
+          ],
+          "evidence": "native-json-stdout"
+        },
+        "outstanding_requirements": [],
+        "note": "Portable Central acceptance invokes Central's own doctor against the configured personal ground. Personal macOS/Raycast/home-server providers remain separate physical acceptance."
+      },
+      "compatibility": "Central main carries the accepted portable Rust Wayfinder/ctrl foundation. O:I composes it without taking ownership of Control, Work or personal provider policy."
     },
     {
-      "id": "agent-runtime",
-      "public_name": "Agent Runtime",
-      "function": "agent actuation",
-      "repository": "https://github.com/EpiLogos/agent-system-design",
-      "docs_ref": "ql/deep-runtime",
-      "docs_path": "ql-agent-experiments/deep-ql/README.md",
+      "id": "actuation",
+      "public_name": "Actuation",
+      "function": "Agency, WorldBinding, RootScope, Metagency, Determination and Return authority",
+      "repository": "https://github.com/EpiLogos/Actuation",
+      "docs_ref": "03e03acb1ae47d60f26903209112258e60f83627",
+      "docs_path": "docs/WORLD-BOUND-ROOT-AGENCY.md",
       "skill_paths": [],
       "native": {
         "kind": "workbench",
-        "entry": "ql-agent-experiments/deep-ql package scripts and Series 1 workflow",
+        "entry": "portable Actuation contracts and runtime foundation",
         "executable": null,
         "alias": null,
         "version_command": null,
-        "version_manifest": "ql-agent-experiments/deep-ql/package.json"
+        "version_manifest": null
       },
       "install": {
-        "kind": "register-only",
-        "note": "The current runtime experiment is a repository workbench rather than a released native CLI. Register a source checkout when composition metadata is useful."
+        "kind": "oi-managed-component",
+        "ref": "03e03acb1ae47d60f26903209112258e60f83627",
+        "revision": "03e03acb1ae47d60f26903209112258e60f83627",
+        "note": "Install the exact accepted Actuation component artifact from the Suite Manifest. No fake Actuation CLI is introduced."
       },
-      "compatibility": "The live experiment frontier is draft PR #130. O:I does not assign a command alias until the runtime publishes a stable native command."
+      "verification": {
+        "status": "supported",
+        "operation": {
+          "id": "actuation.managed-artifact",
+          "runner": "managed-artifact",
+          "args": [],
+          "evidence": "oi.managed-artifact-evidence/v1"
+        },
+        "outstanding_requirements": [],
+        "note": "Installed-component acceptance consumes the exact O:I-managed release receipt, digest and provenance reference. Native Actuation contract tests remain a developer/source verification command."
+      },
+      "compatibility": "Actuation main is the accepted portable authority foundation plus the selected provider-neutral model-bearing contract and native operational Skills."
     },
     {
       "id": "ai-kit",
       "public_name": "AIKit",
-      "function": "capability and context resolution",
+      "function": "context, capability, model, credential, SessionSpace and provider-process resolution",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "docs_ref": "main",
+      "docs_ref": "9ff28ca31c723b314ddf62b7f85b6e2611d53d66",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -67,25 +97,42 @@
         "entry": "aikit",
         "executable": "aikit",
         "alias": "kit",
-        "version_command": ["--version"],
+        "version_command": [
+          "--version"
+        ],
         "version_manifest": "crates/aikit-cli/Cargo.toml"
       },
       "install": {
-        "kind": "aikit-source",
-        "note": "The live README documents source installation with cargo install --locked --path crates/aikit-cli."
+        "kind": "oi-managed-binary",
+        "ref": "9ff28ca31c723b314ddf62b7f85b6e2611d53d66",
+        "revision": "9ff28ca31c723b314ddf62b7f85b6e2611d53d66",
+        "note": "Install the exact accepted AIKit release artifact from the Suite Manifest; source/Cargo installation is a developer path only."
       },
-      "compatibility": "AIKit is daemonless and exposes a stable aikit CLI with machine-readable JSON on substantive commands."
+      "verification": {
+        "status": "supported",
+        "operation": {
+          "id": "aikit.native-version",
+          "runner": "native-executable",
+          "args": [
+            "--version"
+          ],
+          "evidence": "process-exit-and-output"
+        },
+        "outstanding_requirements": [],
+        "note": "The accepted release contains the V2/SessionSpace/model-roster/credential/provider-authority line and native operational Skills/SkillSets."
+      },
+      "compatibility": "AIKit main contains the accepted V2 integration, SessionSpace composition, contextual model roster, credential resolution, provider-process authority boundary and operator/developer Skills."
     },
     {
       "id": "software-factory",
       "public_name": "Software Factory",
-      "function": "developmental agency",
+      "function": "developmental Project, Run, Candidate, evidence and authorised Factory Action semantics",
       "repository": "https://github.com/EpiLogos/agent-system-design",
-      "docs_ref": "agent/factory-rust-foundation",
+      "docs_ref": "621624c7c8a9919604ad36db451f1a30806fc0ce",
       "docs_path": "factory/README.md",
       "skill_paths": [],
       "native": {
-        "kind": "library",
+        "kind": "workbench",
         "entry": "factory/ Rust implementation root",
         "executable": null,
         "alias": null,
@@ -93,54 +140,109 @@
         "version_manifest": "factory/Cargo.toml"
       },
       "install": {
-        "kind": "register-only",
-        "note": "The current Factory implementation is a Rust crate on its integration branch, not a released CLI. Register a source checkout only."
+        "kind": "oi-managed-component",
+        "ref": "621624c7c8a9919604ad36db451f1a30806fc0ce",
+        "revision": "621624c7c8a9919604ad36db451f1a30806fc0ce",
+        "note": "Install the exact accepted Software Factory component artifact from the Suite Manifest. The live repository still has its historical agent-system-design name pending the canonical GitHub settings rename."
       },
-      "compatibility": "Current executable integration is draft PR #131. O:I does not invent a Factory CLI or absorb Run behaviour."
+      "verification": {
+        "status": "supported",
+        "operation": {
+          "id": "software-factory.managed-artifact",
+          "runner": "managed-artifact",
+          "args": [],
+          "evidence": "oi.managed-artifact-evidence/v1"
+        },
+        "outstanding_requirements": [],
+        "note": "Installed-component acceptance consumes the exact O:I-managed release receipt, digest and provenance reference. Factory workspace tests remain a developer/source verification command."
+      },
+      "compatibility": "Factory main is the accepted portable Software Factory product line; QL runtime ownership is migrated to Actuation and research runtimes remain separate."
     },
     {
       "id": "workcell",
       "public_name": "Workcell",
-      "function": "material execution",
+      "function": "material execution, model-serving base, process containment and secret materialisation",
       "repository": "https://github.com/EpiLogos/Workcell",
-      "docs_ref": "build/rust-workcell-foundation",
+      "docs_ref": "9277fdc852a468f1c53f62b766a38e06705fe482",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
-        "kind": "library",
-        "entry": "Rust control-plane crates",
-        "executable": null,
-        "alias": null,
-        "version_command": null,
-        "version_manifest": "Cargo.toml"
+        "kind": "cli",
+        "entry": "workcell",
+        "executable": "workcell",
+        "alias": "workcell",
+        "version_command": [
+          "--version"
+        ],
+        "version_manifest": "crates/workcell-cli/Cargo.toml"
       },
       "install": {
-        "kind": "register-only",
-        "note": "The live Workcell implementation is a Rust workspace and provider library surface, not a released CLI. Register a source checkout only."
+        "kind": "oi-managed-binary",
+        "ref": "9277fdc852a468f1c53f62b766a38e06705fe482",
+        "revision": "9277fdc852a468f1c53f62b766a38e06705fe482",
+        "note": "Install the exact accepted Workcell release artifact from the Suite Manifest. Provider-specific physical resources are not materialised by O:I preflight."
       },
-      "compatibility": "Current implementation is carried by draft PR #18. O:I delegates material execution; it does not expose provider operations itself."
+      "verification": {
+        "status": "supported",
+        "operation": {
+          "id": "workcell.doctor",
+          "runner": "native-executable",
+          "args": [
+            "--json",
+            "doctor"
+          ],
+          "evidence": "native-json-stdout"
+        },
+        "outstanding_requirements": [
+          {
+            "kind": "physical",
+            "id": "workcell-reference-machine",
+            "description": "Reference Ubuntu Workcell material/runtime acceptance remains for the physical acceptance session."
+          },
+          {
+            "kind": "provider",
+            "id": "workcell-private-providers",
+            "description": "Private 1Password, Docker/Arrakis/Tailscale, GPU/model-serving and other local/provider-specific acceptance remains outside this pre-local session."
+          }
+        ],
+        "note": "Cloud preflight verifies the released portable CLI and workspace lineage while retaining physical/provider gates explicitly."
+      },
+      "compatibility": "Workcell main contains the portable materialisation foundation, SDK, model-serving base, process authority, secret-materialisation sibling and native operation/provider Skills."
     },
     {
       "id": "quaternal-logic",
       "public_name": "Quaternal Logic",
-      "function": "recursive formal intelligence",
+      "function": "deterministic QL kernel, complete MEF registry, service boundary and optional clients",
       "repository": "https://github.com/EpiLogos/QL-MEF",
-      "docs_ref": "agent/rust-q4-client-adapters",
+      "docs_ref": "cab0baf52f7d7726708d7fb13c6ac98f9b09b643",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
-        "kind": "library",
-        "entry": "QL/MEF Rust kernel, service, and adapter crates",
+        "kind": "workbench",
+        "entry": "Quaternal Logic Rust kernel, service and adapter workspace",
         "executable": null,
         "alias": null,
         "version_command": null,
         "version_manifest": "Cargo.toml"
       },
       "install": {
-        "kind": "register-only",
-        "note": "The current Quaternal Logic implementation is a Rust workspace/service surface in the QL-MEF repository, not a released native CLI. Register a source checkout only."
+        "kind": "oi-managed-component",
+        "ref": "cab0baf52f7d7726708d7fb13c6ac98f9b09b643",
+        "revision": "cab0baf52f7d7726708d7fb13c6ac98f9b09b643",
+        "note": "Install the exact accepted Quaternal Logic component artifact from the Suite Manifest. The live repository still has its historical QL-MEF name pending the canonical GitHub settings rename."
       },
-      "compatibility": "Current Q4 integration is carried by draft PR #6. Quaternal Logic is the public product name; QL-MEF remains the repository and implementation vocabulary."
+      "verification": {
+        "status": "supported",
+        "operation": {
+          "id": "quaternal-logic.managed-artifact",
+          "runner": "managed-artifact",
+          "args": [],
+          "evidence": "oi.managed-artifact-evidence/v1"
+        },
+        "outstanding_requirements": [],
+        "note": "Installed-component acceptance consumes the exact O:I-managed release receipt, digest and provenance reference. Quaternal Logic workspace tests remain a developer/source verification command."
+      },
+      "compatibility": "QL-MEF main is the accepted Quaternal Logic substrate; the canonical product and checkout name is Quaternal Logic / Quaternal-Logic pending repository settings rename."
     }
   ]
 }

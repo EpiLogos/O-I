@@ -1,7 +1,7 @@
 /*
  * SpacetimeDB TypeScript module compiler settings.
- * Required compiler options match the upstream v2.7.1 basic-ts template.
- * Only server source is compiled here; live-acceptance.ts is a post-codegen client.
+ * Required compiler options match the upstream v2.8.1 TypeScript module floor.
+ * Only server source is compiled here; security-live-acceptance.ts is a post-codegen client.
  */
 {
   "compilerOptions": {

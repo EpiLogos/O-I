@@ -1,0 +1,223 @@
+name: Full suite preflight
+
+on:
+  pull_request:
+    paths:
+      - "cli/**"
+      - "suite/**"
+      - "surfaces.json"
+      - "site/**"
+      - "desktop/**"
+      - "packages/**"
+      - "schemas/**"
+      - "skills/**"
+      - ".github/workflows/full-suite-preflight.yml"
+  push:
+    branches:
+      - main
+      - converge/oi-017-first-suite
+    paths:
+      - "cli/**"
+      - "suite/**"
+      - "surfaces.json"
+      - "site/**"
+      - "desktop/**"
+      - "packages/**"
+      - "schemas/**"
+      - "skills/**"
+      - ".github/workflows/full-suite-preflight.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  clean-environment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build locked O:I CLI
+        run: cargo build --manifest-path cli/Cargo.toml --bin oi --locked
+
+      - name: Install exact six-product release suite twice
+        shell: bash
+        run: |
+          set -euo pipefail
+          export OI_HOME="$RUNNER_TEMP/oi-config"
+          export OI_DATA_HOME="$RUNNER_TEMP/oi-data"
+          ROOT="$RUNNER_TEMP/oi-personal-ground"
+          OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
+
+          mkdir -p "$ROOT/Control" "$ROOT/Work"
+          printf '%s\n' 'human-control-sentinel' > "$ROOT/Control/HUMAN-SENTINEL.txt"
+          printf '%s\n' 'ordinary-work-sentinel' > "$ROOT/Work/WORK-SENTINEL.txt"
+
+          "$OI" install --personal-ground "$ROOT"
+          cp "$OI_HOME/composition.json" "$RUNNER_TEMP/composition-first.json"
+          cp "$OI_DATA_HOME/receipts/installed-suite.json" "$RUNNER_TEMP/installed-first.json"
+
+          "$OI" install
+          cp "$OI_HOME/composition.json" "$RUNNER_TEMP/composition-second.json"
+          cmp "$RUNNER_TEMP/composition-first.json" "$RUNNER_TEMP/composition-second.json"
+
+          test -d "$OI_DATA_HOME/bin"
+          test -d "$OI_DATA_HOME/products"
+          test -d "$OI_DATA_HOME/receipts"
+          test -d "$OI_DATA_HOME/cache"
+          test ! -e "$ROOT/.central/oi/managed"
+          test "$(cat "$ROOT/Control/HUMAN-SENTINEL.txt")" = "human-control-sentinel"
+          test "$(cat "$ROOT/Work/WORK-SENTINEL.txt")" = "ordinary-work-sentinel"
+          jq -e '.products | to_entries | all(.value.attestation_locally_verified == true)' "$RUNNER_TEMP/installed-first.json"
+
+      - name: Status and portable doctor match the accepted manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          export OI_HOME="$RUNNER_TEMP/oi-config"
+          export OI_DATA_HOME="$RUNNER_TEMP/oi-data"
+          OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
+          "$OI" manifest --json > "$RUNNER_TEMP/manifest.json"
+          "$OI" status --json > "$RUNNER_TEMP/status.json"
+          "$OI" doctor --json > "$RUNNER_TEMP/doctor.json"
+          "$OI" verify --json > "$RUNNER_TEMP/verify.json"
+
+          jq -e '.schema == "oi.suite-manifest/v1" and .suite_version == "0.1.0-prelocal.2" and (.products | length == 6)' "$RUNNER_TEMP/manifest.json"
+          jq -e '.schema == "oi.suite-status/v1" and .suite_version == "0.1.0-prelocal.2" and (.installed.products | length == 6) and .physical_acceptance == false' "$RUNNER_TEMP/status.json"
+          jq -e '.schema == "oi.suite-doctor/v1" and .ok == true and (.checks | length == 6) and .physical_acceptance == false' "$RUNNER_TEMP/doctor.json"
+          cmp "$RUNNER_TEMP/doctor.json" "$RUNNER_TEMP/verify.json"
+
+          for id in central actuation ai-kit software-factory workcell quaternal-logic; do
+            expected="$(jq -r --arg id "$id" '.products[] | select(.id == $id) | .revision' "$RUNNER_TEMP/manifest.json")"
+            actual="$(jq -r --arg id "$id" '.installed.products[$id].revision' "$RUNNER_TEMP/status.json")"
+            test "$actual" = "$expected"
+          done
+
+      - name: Development launch affordances resolve
+        shell: bash
+        run: |
+          set -euo pipefail
+          export OI_HOME="$RUNNER_TEMP/oi-config"
+          export OI_DATA_HOME="$RUNNER_TEMP/oi-data"
+          OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
+          "$OI" web --check
+          "$OI" app --check
+
+      - name: Developer federation includes O:I and fails closed on unsafe adoption
+        shell: bash
+        run: |
+          set -euo pipefail
+          export OI_HOME="$RUNNER_TEMP/oi-config"
+          export OI_DATA_HOME="$RUNNER_TEMP/oi-data"
+          ROOT="$RUNNER_TEMP/oi-personal-ground"
+          OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
+
+          ln -s "$GITHUB_WORKSPACE" "$ROOT/Work/O-I"
+          "$OI" dev status --json > "$RUNNER_TEMP/dev-status.json"
+          jq -e '.schema == "oi.dev-status/v1" and (.repos | length == 7) and any(.repos[]; .id == "oi") and any(.repos[]; .id == "central")' "$RUNNER_TEMP/dev-status.json"
+
+          "$OI" dev build oi
+          "$OI" dev test oi
+          "$OI" dev install oi
+          test -x "$OI_DATA_HOME/bin/oi"
+
+          if "$OI" dev adopt central "$ROOT"; then
+            echo 'Central self-nesting adoption unexpectedly succeeded' >&2
+            exit 1
+          fi
+
+          BAD="$RUNNER_TEMP/adopt-no-origin"
+          git init -q "$BAD"
+          git -C "$BAD" config user.name preflight
+          git -C "$BAD" config user.email preflight@example.invalid
+          printf 'sentinel\n' > "$BAD/README.md"
+          git -C "$BAD" add README.md
+          git -C "$BAD" commit -qm init
+          if "$OI" dev adopt ai-kit "$BAD"; then
+            echo 'origin-less adoption unexpectedly succeeded' >&2
+            exit 1
+          fi
+          test -d "$BAD/.git"
+          test ! -e "$ROOT/Work/ai-kit"
+
+          LINKED="$RUNNER_TEMP/adopt-linked"
+          git init -q "$LINKED"
+          git -C "$LINKED" config user.name preflight
+          git -C "$LINKED" config user.email preflight@example.invalid
+          printf 'sentinel\n' > "$LINKED/README.md"
+          git -C "$LINKED" add README.md
+          git -C "$LINKED" commit -qm init
+          git -C "$LINKED" worktree add -q "$RUNNER_TEMP/adopt-linked-secondary" -b secondary
+          if "$OI" dev adopt workcell "$LINKED"; then
+            echo 'linked-worktree adoption unexpectedly succeeded' >&2
+            exit 1
+          fi
+          test -d "$LINKED/.git"
+          test ! -e "$ROOT/Work/Workcell"
+
+      - name: Snapshot and receipt are views over the Suite Manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          export OI_HOME="$RUNNER_TEMP/oi-config"
+          export OI_DATA_HOME="$RUNNER_TEMP/oi-data"
+          OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
+          SNAPSHOT_ARGS=(--output "$RUNNER_TEMP/full-suite-snapshot.json" --require-full)
+          while IFS=$'\t' read -r id revision; do
+            SNAPSHOT_ARGS+=(--select "$id=$revision" --accepted-mainline "$id=$revision")
+          done < <(jq -r '.products[] | [.id, .revision] | @tsv' suite/manifest.json)
+
+          "$OI" snapshot "${SNAPSHOT_ARGS[@]}"
+          "$OI" verify \
+            --snapshot "$RUNNER_TEMP/full-suite-snapshot.json" \
+            --receipt "$RUNNER_TEMP/full-suite-composition-receipt.json" \
+            --require-full
+
+          jq -e '.kind == "oi.suite-snapshot/v1" and .completeness == "full-mainline" and (.surfaces | length == 6)' "$RUNNER_TEMP/full-suite-snapshot.json"
+          jq -e '.kind == "oi.composition-receipt/v1" and .result == "prelocal-passed" and (.surfaces | length == 6)' "$RUNNER_TEMP/full-suite-composition-receipt.json"
+
+      - name: Bounded cleanup preserves human ground
+        shell: bash
+        run: |
+          set -euo pipefail
+          export OI_HOME="$RUNNER_TEMP/oi-config"
+          export OI_DATA_HOME="$RUNNER_TEMP/oi-data"
+          ROOT="$RUNNER_TEMP/oi-personal-ground"
+          OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
+          "$OI" cleanup --managed
+          test "$(cat "$ROOT/Control/HUMAN-SENTINEL.txt")" = "human-control-sentinel"
+          test "$(cat "$ROOT/Work/WORK-SENTINEL.txt")" = "ordinary-work-sentinel"
+          test -e "$OI_HOME/composition.json"
+          test ! -e "$OI_DATA_HOME/bin"
+          test ! -e "$OI_DATA_HOME/products"
+          test ! -e "$OI_DATA_HOME/receipts"
+          test ! -e "$OI_DATA_HOME/cache"
+          test ! -e "$ROOT/.central/oi/managed"
+
+      - name: Upload pre-local evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: oi-first-suite-preflight-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/manifest.json
+            ${{ runner.temp }}/status.json
+            ${{ runner.temp }}/doctor.json
+            ${{ runner.temp }}/verify.json
+            ${{ runner.temp }}/installed-first.json
+            ${{ runner.temp }}/dev-status.json
+            ${{ runner.temp }}/full-suite-snapshot.json
+            ${{ runner.temp }}/full-suite-composition-receipt.json
+            ${{ runner.temp }}/composition-first.json
+            ${{ runner.temp }}/composition-second.json
+          if-no-files-found: error

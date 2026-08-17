@@ -2,7 +2,7 @@
 
 This directory is the smallest executable form of the local-first seam specified in `docs/SHARED-FIELD.md` and `docs/OBJECTIVE-CO-INTERNALITY.md`.
 
-It deliberately has no framework, network client, database, or identity provider. Native products still own their canonical objects. O:I defines only the whole-level relations by which explicitly selected representations cross product/world boundaries and by which independently grounded Participants can become mutually available through a SharedField.
+The **portable semantic core** deliberately has no framework, network client, database, or identity-provider dependency. Native products still own their canonical objects. O:I defines only the whole-level relations by which explicitly selected representations cross product/world boundaries and by which independently grounded Participants can become mutually available through a SharedField. The adjacent `spacetimedb/` module is a hosted materialisation of that contract, not a replacement identity/ontology layer.
 
 ## Public module entry
 
@@ -15,15 +15,18 @@ import * as sharedField from './shared-field/api.mjs';
 `api.mjs` is intentionally only an aggregate export over the implementation layers:
 
 ```text
-index.mjs    Projection / Participant / receipt / Central public selection
-social.mjs   SharedField / Contribution / Encounter / Self-Other read model
-state.mjs    transport-free local membership / traversal / thread / history logic
-explore.mjs  projected-object search / ref resolution / bounded relation read models
+index.mjs       Projection / Participant / receipt / Central public selection
+social.mjs      SharedField / Contribution / Encounter / Self-Other read model
+state.mjs       transport-free local membership / traversal / thread / history logic
+explore.mjs     projected-object search / ref resolution / bounded relation read models
+watch.mjs       explicit private-interest relation
+contact.mjs     explicit Contact attempt / recipient-decision contract
+spacetimedb*.mjs hosted adapter seams over the same semantic contracts
       ↓
-api.mjs      one import surface, no second implementation
+api.mjs         one import surface, no second implementation
 ```
 
-This keeps the completed Projection contract stable while letting the shared-agency and Explore application grammar develop beside it. `api.test.mjs` guards that all layers remain reachable through the aggregate API.
+This keeps the completed Projection contract stable while letting the shared-agency, Explore and encounter-security grammar develop beside it. `api.test.mjs` guards that all layers remain reachable through the aggregate API.
 
 ## Projection contracts
 
@@ -52,6 +55,58 @@ SharedFields may nest recursively. Containment is checked for cycles and must no
 
 The JSON compatibility surface for these relations is `social-schema-v1.json`.
 
+## Contact and relationship privacy
+
+Encounter security preserves the law:
+
+```text
+discoverable ≠ contactable ≠ contacted ≠ reciprocal ≠ trusted
+```
+
+`contact.mjs` and `contact-schema-v1.json` define `oi.contact/v1` as a transport-neutral communication attempt carrying an initiator, recipient, purpose, requested scope, expiry, provenance and explicit recipient state transition. A Contact does not itself create a Contribution, Projection, A2A session, capability grant, trust relation or executable authority.
+
+`contactable` is explicit in the hosted Participant-authority binding. A Participant may therefore remain discoverable while server-side Contact initiation is refused.
+
+`watch.mjs` remains a separate private-interest relation. In the hosted SpaceTimeDB module, Watch and Contact storage are private and clients consume only caller-filtered `my_watch` and `my_contact` Views. The portable adapters deliberately reject raw private-table handles.
+
+## Hosted SpaceTimeDB authority floor
+
+`spacetimedb/src/index.ts` materialises the public SharedField/Explore proof while enforcing server-side mutation authority independently of semantic identity.
+
+The current hosted law is:
+
+```text
+SpaceTimeDB Identity
+        ↓ explicit private binding
+ParticipantRef + SharedField + role + contactable + expiry/revocation
+        ↓ reducer / caller-View check
+bounded hosted mutation or relationship disclosure
+```
+
+A SpaceTimeDB runtime `Identity` is therefore **not** an O:I Participant, Human, Agent, Agency or canonical subject ref.
+
+The first executable security floor provides:
+
+- first-creator hosted ownership for each SharedField and owner-only Participant/index mutation;
+- explicit private Participant authority grants with `observer`, `contact` or `contributor` role plus separate `contactable` state;
+- server-time expiry checks on protected reducers;
+- persistent private-read grants (`ttlSeconds = 0`) whose explicit revocation removes both authority and caller-filtered relationship visibility;
+- finite grants (`ttlSeconds > 0`) which are mutation-only and never private Watch/Contact read entitlements, preventing stale private disclosure if provider timers fail;
+- publisher-bound Projection mutation with immutable/sequential revisions;
+- semantic contract/index-column consistency checks against ref/revision substitution;
+- same-field checks for Explore relations and Watch targets;
+- private Watch/Contact/authority tables with caller-filtered public Views;
+- server-side Contact duplicate suppression, recipient mute/block, bounded payloads and a first anti-fanout rate window;
+- stable O:I semantic refs retained independently of SpaceTimeDB row/module identifiers.
+
+This remains deliberately narrower than a universal policy engine. Central remains the natural durable source of human-authored world-local policy; native product/host boundaries continue to own the authority they actually enforce.
+
+The current PR #19 content surface is still a **public-field proof**. SharedField, Participant, Projection and Explore content are not yet presented as audience-filtered private-world Views. OI-017 now rejects non-public SharedField/Projection content at that public reducer boundary rather than allowing a false privacy claim. Relationship metadata is protected now; audience/private-content subscription policy is a later security slice.
+
+SpaceTimeDB documents one-shot schedule tables for timed execution, but the exact pinned 2.8.1 standalone used by O:I CI did not reproduce a one-second scheduled authority-expiry event in repeated live fixtures. O:I therefore does not rely on that timer for private-read revocation. See `docs/ENCOUNTER-SECURITY-SPACETIMEDB-CONFORMANCE.md` for the provider finding and fail-closed consequence.
+
+See `docs/ENCOUNTER-SECURITY.md` for the six primitives and `docs/ENCOUNTER-SECURITY-IMPLEMENTATION.md` for the ES0 threat/responsibility matrix, primary-source lock and residual-risk ledger.
+
 ## Local SharedField state
 
 `state.mjs` turns the contracts into a small transport-free business-logic layer. It is deliberately an index/state view rather than canonical persistence.
@@ -70,7 +125,7 @@ The JSON compatibility surface for these relations is `social-schema-v1.json`.
 
 The state layer allows unresolved/external Contribution targets so that a local field can still address a remote/federated object. It enforces local referential integrity where the corresponding Participant or field is owned by the local state.
 
-This is the seam a browser adapter, static/file carrier, test harness, or future SpaceTimeDB implementation can consume without any of them becoming the semantic owner.
+This is the seam a browser adapter, static/file carrier, test harness, or hosted provider can consume without any of them becoming the semantic owner.
 
 ## Explore application/read-model seam
 
@@ -133,7 +188,7 @@ node shared-field/generate-fixtures.mjs
 
 ## Verification
 
-Run the complete portable contract and Explore suite from the repository root:
+Run the complete portable contract, Explore and encounter-security suite from the repository root:
 
 ```bash
 node --test shared-field/*.test.mjs
@@ -141,8 +196,8 @@ node --test shared-field/*.test.mjs
 
 The shared-agency contract tests cover recursive/nested SharedFields, containment-cycle rejection, Contribution-on-Contribution recursion, ranking and metric Contributions, objective Encounter records, and the minimal Self/Other read model.
 
-The state tests cover nested-field traversal, field-relative membership, arbitrary Contribution-thread depth, ranking/metric querying, deferred-reference cycle rejection, and Encounter history. The Explore tests prove stable refs, provenance/source-revision retention, absence of private Central material, exact/fuzzy search, search → open → bounded local whole, no implicit neighbour payload expansion, and browser/agent parity over the same application read model.
+The state tests cover nested-field traversal, field-relative membership, arbitrary Contribution-thread depth, ranking/metric querying, deferred-reference cycle rejection, and Encounter history. The Explore tests prove stable refs, provenance/source-revision retention, absence of private Central material, exact/fuzzy search, search → open → bounded local whole, no implicit neighbour payload expansion, and browser/agent parity over the same application read model. Contact/adapter tests prove the portable schema boundary and caller-filtered relationship adapters.
 
-`.github/workflows/shared-field.yml` runs this complete Node test lane for shared-field changes.
+`.github/workflows/shared-field.yml` pins SpaceTimeDB 2.8.1, builds/publishes the live module, regenerates current TypeScript bindings and runs `spacetimedb/security-live-acceptance-v3.ts`, a multi-identity adversarial fixture covering cross-field mutation, Participant/publisher impersonation, semantic-ref substitution, index pollution, direct private-table reads, discoverable-but-not-contactable Participants, relationship-graph privacy, explicit revocation, fail-closed finite grants, server-time expiry and Contact abuse controls.
 
-The transport capability floor remains `publish`, `resolve`, `fetch`, and `subscribe`. A carrier may expose only a subset; capability negotiation does not alter Projection identity. Live Presence/Activity and hosted delivery remain downstream service concerns.
+The transport capability floor remains `publish`, `resolve`, `fetch`, and `subscribe`. A carrier may expose only a subset; capability negotiation does not alter Projection identity.

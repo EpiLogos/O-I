@@ -1,0 +1,17 @@
+{
+  "schema": "oi.referent-adversarial-fixture/v1",
+  "cases": [
+    { "id": "exact-independent-pdf", "expect": "one referent; two Projection/source/publisher lines" },
+    { "id": "same-resource-html-pdf", "expect": "no auto-merge; accepted attributable same-resource decision may unify" },
+    { "id": "revised-edition", "expect": "version relation remains explicit; stable referent allowed only through accepted reconciliation" },
+    { "id": "translated-variant", "expect": "translation/variant relation remains explicit; no similarity authority" },
+    { "id": "highly-similar-distinct", "expect": "different exact referents; weak candidate only" },
+    { "id": "malicious-false-assertion", "expect": "claim alone does not bind; dispute suppresses accepted binding" },
+    { "id": "public-private-exact-duplicate", "expect": "public-only caller sees one visible holding and no hidden metadata" },
+    { "id": "disjoint-private-exact-duplicates", "expect": "each audience sees one visible holding; stranger resolves nothing" },
+    { "id": "withdraw-one-form", "expect": "withdrawn form disappears; remaining lawful form keeps referent alive" },
+    { "id": "exact-duplicate-spam", "expect": "one search result; visible holdings retained; no duplicate or holder authority boost" },
+    { "id": "rebuild", "expect": "same ReferentRef and binding identities from the same authoritative visible evidence" },
+    { "id": "personal-exact-form-preference", "expect": "presentation/source selection changes; common identity and trust do not" }
+  ]
+}

@@ -1,177 +1,335 @@
 use oi_cli::skillset::{
-    materialise_direct_projection, parse_manifest, resolve_profile, AgentScope,
-    AuthorityObservation, SkillAvailability, SkillObservation, SkillResolutionMode,
+    materialise_direct_projection, parse_manifest, remove_direct_projection, resolve_profile,
+    ActionAuthorizationState, AgentScope, AuthorityObservation, CapabilityGrantState,
+    DirectProjectionState, NativeSkillReference, Requiredness, SkillAvailability, SkillObservation,
+    SkillResolutionMode, SuiteSkillSetManifest,
 };
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
+use tempfile::tempdir;
 
-const MANIFEST: &str = include_str!("../../skills/suite-operator/skillset.json");
-
-fn installed_products() -> BTreeSet<String> {
-    [
-        "O:I",
-        "Central",
-        "AIKit",
-        "Actuation",
-        "Software Factory",
-        "Workcell",
-        "Quaternal Logic",
-    ]
-    .into_iter()
-    .map(str::to_owned)
-    .collect()
+fn canonical_manifest() -> SuiteSkillSetManifest {
+    parse_manifest(include_str!("../../skills/suite-operator/skillset.json")).unwrap()
 }
 
-fn all_available() -> Vec<SkillObservation> {
-    let manifest = parse_manifest(MANIFEST).expect("manifest");
-    manifest
-        .skills
-        .into_iter()
-        .map(|skill| SkillObservation {
-            skill_ref: skill.skill_ref,
-            availability: SkillAvailability::Available,
-            source_revision: Some(
-                skill
-                    .source
-                    .pinned_revision
-                    .unwrap_or_else(|| "oi-current-head".into()),
-            ),
-            native_version: skill.source.native_version,
-        })
+fn observation(skill_ref: &str, revision: &str) -> SkillObservation {
+    SkillObservation {
+        skill_ref: skill_ref.to_owned(),
+        availability: SkillAvailability::Available,
+        source_revision: Some(revision.to_owned()),
+        native_version: None,
+    }
+}
+
+fn oi_central_observations() -> Vec<SkillObservation> {
+    vec![
+        observation("oi:skill:suite-operator", "oi-rev-1"),
+        observation("oi:skill:operate-suite", "oi-rev-1"),
+        observation(
+            "central:skill:control-maintenance",
+            "7d6ebbd056e9eb30d2a2d1d477e7d6fb32e37010",
+        ),
+        observation(
+            "central:skill:machine-declaration",
+            "7d6ebbd056e9eb30d2a2d1d477e7d6fb32e37010",
+        ),
+        observation(
+            "central:skill:connector-authoring",
+            "7d6ebbd056e9eb30d2a2d1d477e7d6fb32e37010",
+        ),
+        observation(
+            "central:skill:connector-hardening",
+            "7d6ebbd056e9eb30d2a2d1d477e7d6fb32e37010",
+        ),
+    ]
+}
+
+fn installed(products: &[&str]) -> BTreeSet<String> {
+    products
+        .iter()
+        .map(|product| (*product).to_owned())
         .collect()
 }
 
-#[test]
-fn full_suite_root_read_model_contains_every_native_owner_without_authority_collapse() {
-    let manifest = parse_manifest(MANIFEST).expect("manifest");
-    assert!(manifest.expected_native_skills.is_empty());
+fn skill<'a>(manifest: &'a SuiteSkillSetManifest, skill_ref: &str) -> &'a NativeSkillReference {
+    manifest
+        .skills
+        .iter()
+        .find(|skill| skill.skill_ref == skill_ref)
+        .unwrap()
+}
 
+#[test]
+fn ordinary_agency_cannot_receive_root_metagentic_profile() {
+    let manifest = canonical_manifest();
+    let result = resolve_profile(
+        &manifest,
+        "oi:skillset:root-metagentic-operation",
+        AgentScope::Ordinary,
+        &oi_central_observations(),
+        &installed(&["O:I", "Central"]),
+        &AuthorityObservation::default(),
+        SkillResolutionMode::AikitDynamic,
+    );
+    assert!(result.is_err());
+}
+
+#[test]
+fn root_profile_is_only_projected_after_positional_scope_is_supplied() {
+    let manifest = canonical_manifest();
     let effective = resolve_profile(
         &manifest,
         "oi:skillset:root-metagentic-operation",
         AgentScope::RootWorld,
-        &all_available(),
-        &installed_products(),
+        &oi_central_observations(),
+        &installed(&["O:I", "Central"]),
         &AuthorityObservation::default(),
         SkillResolutionMode::AikitDynamic,
     )
-    .expect("root read model");
-
-    assert!(!effective.degraded);
-    assert!(effective.expected_native_skills.is_empty());
-    let owners = effective
+    .unwrap();
+    assert_eq!(effective.scope, AgentScope::RootWorld);
+    assert!(effective
         .skills
         .iter()
-        .map(|skill| skill.owner_product.as_str())
-        .collect::<BTreeSet<_>>();
-    for owner in [
-        "O:I",
-        "Central",
-        "AIKit",
-        "Actuation",
-        "Software Factory",
-        "Workcell",
-        "Quaternal Logic",
-    ] {
-        assert!(owners.contains(owner), "missing owner {owner}");
-    }
-    for skill in &effective.skills {
-        assert!(!skill.source_repository.is_empty());
-        assert!(!skill.source_path.is_empty());
-        if let Some(expected) = &skill.expected_revision {
-            assert_eq!(Some(expected), skill.observed_revision.as_ref());
-        }
-        assert!(skill.capability_states.is_empty());
-        assert!(skill.action_states.is_empty());
-    }
+        .any(|skill| skill.skill_ref == "central:skill:connector-authoring"));
 }
 
 #[test]
-fn ordinary_worker_cannot_select_root_profile_even_when_the_skills_exist() {
-    let manifest = parse_manifest(MANIFEST).expect("manifest");
-    let error = resolve_profile(
-        &manifest,
-        "oi:skillset:root-metagentic-operation",
-        AgentScope::Ordinary,
-        &all_available(),
-        &installed_products(),
-        &AuthorityObservation::default(),
-        SkillResolutionMode::AikitDynamic,
-    )
-    .expect_err("ordinary Agency must not receive Root profile");
-    assert!(error.contains("ordinary Agency"));
-}
-
-#[test]
-fn pinned_native_skill_revision_drift_degrades_instead_of_silent_replacement() {
-    let manifest = parse_manifest(MANIFEST).expect("manifest");
-    let mut observations = all_available();
-    let workcell = observations
-        .iter_mut()
-        .find(|item| item.skill_ref == "workcell:operator")
-        .expect("workcell observation");
-    workcell.source_revision = Some("different-revision".into());
-
+fn oi_and_central_without_aikit_have_legal_direct_projection_path() {
+    let manifest = canonical_manifest();
     let effective = resolve_profile(
         &manifest,
         "oi:skillset:base-suite-operation",
         AgentScope::Ordinary,
-        &observations,
-        &installed_products(),
+        &oi_central_observations(),
+        &installed(&["O:I", "Central"]),
+        &AuthorityObservation::default(),
+        SkillResolutionMode::OiDirectProjection,
+    )
+    .unwrap();
+    assert!(!effective.degraded);
+    assert_eq!(
+        effective.resolution_mode,
+        SkillResolutionMode::OiDirectProjection
+    );
+
+    let dir = tempdir().unwrap();
+    let destination = dir.path().join("oi/SKILL.md");
+    let outcome = materialise_direct_projection(
+        skill(&manifest, "oi:skill:suite-operator"),
+        "oi-rev-1",
+        "# authoritative O:I Skill\n",
+        &destination,
+    )
+    .unwrap();
+    assert_eq!(outcome.state, DirectProjectionState::Created);
+    let projected = fs::read_to_string(&destination).unwrap();
+    assert!(projected.contains("O:I DERIVED SKILL PROJECTION"));
+    assert!(projected
+        .contains("canonical source = EpiLogos/O-I/skills/suite-operator/SKILL.md @ oi-rev-1"));
+}
+
+#[test]
+fn non_oi_central_skill_cannot_use_direct_projection_fallback() {
+    let mut manifest = canonical_manifest();
+    let native = manifest
+        .skills
+        .iter_mut()
+        .find(|skill| skill.skill_ref == "oi:skill:suite-operator")
+        .unwrap();
+    native.owner_product = "Workcell".into();
+    let dir = tempdir().unwrap();
+    assert!(materialise_direct_projection(
+        native,
+        "revision",
+        "# body\n",
+        &dir.path().join("SKILL.md")
+    )
+    .is_err());
+}
+
+#[test]
+fn aikit_dynamic_resolution_uses_native_references_not_copied_skill_bodies() {
+    let manifest = canonical_manifest();
+    let effective = resolve_profile(
+        &manifest,
+        "oi:skillset:base-suite-operation",
+        AgentScope::Ordinary,
+        &oi_central_observations(),
+        &installed(&["O:I", "Central", "AIKit"]),
         &AuthorityObservation::default(),
         SkillResolutionMode::AikitDynamic,
     )
-    .expect("base read model");
-    assert!(effective.degraded);
-    let relation = effective
-        .skills
-        .iter()
-        .find(|item| item.skill_ref == "workcell:operator")
-        .expect("workcell relation");
-    assert_ne!(relation.expected_revision, relation.observed_revision);
+    .unwrap();
+    assert_eq!(effective.resolution_mode, SkillResolutionMode::AikitDynamic);
+    assert!(effective.skills.iter().all(
+        |skill| !skill.source_repository.is_empty() && skill.source_path.ends_with("SKILL.md")
+    ));
+    let manifest_text = include_str!("../../skills/suite-operator/skillset.json");
+    assert!(!manifest_text.contains("## Native Skill ownership and gaps"));
 }
 
 #[test]
-fn direct_projection_fallback_rejects_foreign_native_skill_bodies() {
-    let manifest = parse_manifest(MANIFEST).expect("manifest");
-    let foreign = manifest
+fn installed_product_without_native_skill_is_disclosed_as_gap_not_fake_competence() {
+    let manifest = canonical_manifest();
+    let effective = resolve_profile(
+        &manifest,
+        "oi:skillset:root-metagentic-operation",
+        AgentScope::RootWorld,
+        &oi_central_observations(),
+        &installed(&["O:I", "Central", "Actuation"]),
+        &AuthorityObservation::default(),
+        SkillResolutionMode::AikitDynamic,
+    )
+    .unwrap();
+    assert!(effective.degraded);
+    assert!(effective.expected_native_skills.is_empty());
+    let actuation = effective
         .skills
         .iter()
         .find(|skill| skill.skill_ref == "actuation:operator")
-        .expect("actuation Skill");
-    let temp = tempfile::tempdir().expect("tempdir");
-    let destination = temp.path().join("SKILL.md");
-    let error = materialise_direct_projection(
-        foreign,
-        foreign.source.pinned_revision.as_deref().unwrap(),
-        "authoritative foreign body",
-        &destination,
-    )
-    .expect_err("O:I must not directly project foreign native Skills");
-    assert!(error.contains("O:I/Central-only"));
-    assert!(!destination.exists());
+        .expect("published Actuation native Skill remains visible even when unresolved");
+    assert_eq!(actuation.requiredness, Requiredness::IfProductInstalled);
+    assert_eq!(actuation.availability, SkillAvailability::Missing);
+    assert!(effective
+        .skills
+        .iter()
+        .filter(|skill| skill.owner_product == "Actuation")
+        .all(|skill| skill.availability == SkillAvailability::Missing));
 }
 
 #[test]
-fn direct_projection_preserves_local_edits_to_an_oi_derived_copy() {
-    let manifest = parse_manifest(MANIFEST).expect("manifest");
-    let oi = manifest
+fn ordinary_base_profile_does_not_receive_root_extension_authoring_skills() {
+    let manifest = canonical_manifest();
+    let base = resolve_profile(
+        &manifest,
+        "oi:skillset:base-suite-operation",
+        AgentScope::Ordinary,
+        &oi_central_observations(),
+        &installed(&["O:I", "Central"]),
+        &AuthorityObservation::default(),
+        SkillResolutionMode::AikitDynamic,
+    )
+    .unwrap();
+    let refs = base
+        .skills
+        .iter()
+        .map(|skill| skill.skill_ref.as_str())
+        .collect::<Vec<_>>();
+    assert!(!refs.contains(&"central:skill:connector-authoring"));
+    assert!(!refs.contains(&"central:skill:connector-hardening"));
+}
+
+#[test]
+fn skill_availability_capability_grant_and_action_authority_are_independent() {
+    let mut manifest = canonical_manifest();
+    let native = manifest
+        .skills
+        .iter_mut()
+        .find(|skill| skill.skill_ref == "oi:skill:suite-operator")
+        .unwrap();
+    native.required_capabilities = vec!["oi.package.manage".into()];
+    native.required_actions = vec!["oi.package.install".into()];
+
+    let mut authority = AuthorityObservation::default();
+    authority
+        .capability_grants
+        .insert("oi.package.manage".into(), CapabilityGrantState::Granted);
+    authority.action_authorizations.insert(
+        "oi.package.install".into(),
+        ActionAuthorizationState::Denied,
+    );
+    let effective = resolve_profile(
+        &manifest,
+        "oi:skillset:base-suite-operation",
+        AgentScope::Ordinary,
+        &oi_central_observations(),
+        &installed(&["O:I", "Central"]),
+        &authority,
+        SkillResolutionMode::AikitDynamic,
+    )
+    .unwrap();
+    let relation = effective
         .skills
         .iter()
         .find(|skill| skill.skill_ref == "oi:skill:suite-operator")
-        .expect("O:I Skill");
-    let temp = tempfile::tempdir().expect("tempdir");
-    let destination = temp.path().join("SKILL.md");
-    let first = materialise_direct_projection(oi, "oi-current-head", "source-v1", &destination)
-        .expect("first projection");
-    assert!(first.receipt.is_some());
-    fs::write(&destination, "local edit").expect("edit projection");
-    let second = materialise_direct_projection(oi, "oi-current-head-2", "source-v2", &destination)
-        .expect("conflict outcome");
-    assert!(second
-        .detail
-        .as_deref()
-        .unwrap_or_default()
-        .contains("local edits"));
-    assert_eq!(fs::read_to_string(&destination).unwrap(), "local edit");
+        .unwrap();
+    assert_eq!(relation.availability, SkillAvailability::Available);
+    assert_eq!(
+        relation.capability_states["oi.package.manage"],
+        CapabilityGrantState::Granted
+    );
+    assert_eq!(
+        relation.action_states["oi.package.install"],
+        ActionAuthorizationState::Denied
+    );
+}
+
+#[test]
+fn authoritative_revision_update_replaces_only_untouched_derived_projection() {
+    let manifest = canonical_manifest();
+    let dir = tempdir().unwrap();
+    let destination = dir.path().join("SKILL.md");
+    let native = skill(&manifest, "oi:skill:suite-operator");
+
+    let created = materialise_direct_projection(native, "rev-1", "# v1\n", &destination).unwrap();
+    assert_eq!(created.state, DirectProjectionState::Created);
+    let updated = materialise_direct_projection(native, "rev-2", "# v2\n", &destination).unwrap();
+    assert_eq!(updated.state, DirectProjectionState::Updated);
+    assert_eq!(updated.receipt.as_ref().unwrap().source_revision, "rev-2");
+    assert!(fs::read_to_string(&destination).unwrap().contains("# v2"));
+}
+
+#[test]
+fn user_owned_and_locally_edited_projection_conflicts_are_preserved() {
+    let manifest = canonical_manifest();
+    let dir = tempdir().unwrap();
+    let native = skill(&manifest, "oi:skill:suite-operator");
+    let destination = dir.path().join("SKILL.md");
+
+    fs::write(&destination, "# user-owned\n").unwrap();
+    let conflict =
+        materialise_direct_projection(native, "rev-1", "# native\n", &destination).unwrap();
+    assert_eq!(conflict.state, DirectProjectionState::ConflictPreserved);
+    assert_eq!(fs::read_to_string(&destination).unwrap(), "# user-owned\n");
+
+    fs::remove_file(&destination).unwrap();
+    materialise_direct_projection(native, "rev-1", "# native\n", &destination).unwrap();
+    fs::write(&destination, "# locally edited derived copy\n").unwrap();
+    let edited =
+        materialise_direct_projection(native, "rev-2", "# native v2\n", &destination).unwrap();
+    assert_eq!(edited.state, DirectProjectionState::ConflictPreserved);
+    assert_eq!(
+        fs::read_to_string(&destination).unwrap(),
+        "# locally edited derived copy\n"
+    );
+    let removal = remove_direct_projection("oi:skill:suite-operator", &destination).unwrap();
+    assert_eq!(removal.state, DirectProjectionState::ConflictPreserved);
+    assert!(destination.exists());
+}
+
+#[test]
+fn desktop_and_tui_can_share_the_same_serializable_effective_skillset_read_model() {
+    let manifest = canonical_manifest();
+    let effective = resolve_profile(
+        &manifest,
+        "oi:skillset:root-metagentic-operation",
+        AgentScope::RootWorld,
+        &oi_central_observations(),
+        &installed(&["O:I", "Central"]),
+        &AuthorityObservation {
+            capability_grants: BTreeMap::new(),
+            action_authorizations: BTreeMap::new(),
+        },
+        SkillResolutionMode::AikitDynamic,
+    )
+    .unwrap();
+    let desktop = serde_json::to_value(&effective).unwrap();
+    let tui: serde_json::Value =
+        serde_json::from_slice(&serde_json::to_vec(&effective).unwrap()).unwrap();
+    assert_eq!(desktop, tui);
+    assert_eq!(
+        desktop["profile_ref"],
+        "oi:skillset:root-metagentic-operation"
+    );
 }

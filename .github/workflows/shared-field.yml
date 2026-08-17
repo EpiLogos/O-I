@@ -5,6 +5,8 @@ on:
     branches:
       - platform/shared-field-explore
       - research/cordis-composable-agency
+      - agent/oi-017-encounter-security
+      - agent/oi-017-exchange-authority
     paths:
       - 'shared-field/**'
       - '.github/workflows/shared-field.yml'
@@ -24,7 +26,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Run shared-field contract and Explore tests
+      - name: Run shared-field contract, Explore, A2A and security tests
         run: node --test shared-field/*.test.mjs
 
   spacetimedb-live:
@@ -36,18 +38,18 @@ jobs:
           node-version: '22'
       - name: Install pinned SpaceTimeDB SDK client dependencies
         run: npm install --prefix shared-field/spacetimedb
-      - name: Install SpaceTimeDB CLI 2.7.1
+      - name: Install SpaceTimeDB CLI 2.8.1
         shell: bash
         run: |
           curl -sSf https://install.spacetimedb.com | \
-            SPACETIME_DOWNLOAD_ROOT="https://github.com/clockworklabs/SpacetimeDB/releases/download/v2.7.1" \
+            SPACETIME_DOWNLOAD_ROOT="https://github.com/clockworklabs/SpacetimeDB/releases/download/v2.8.1" \
             sh -s -- -y
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           export PATH="$HOME/.local/bin:$PATH"
-          spacetime version install 2.7.1
-          spacetime version use 2.7.1
+          spacetime version install 2.8.1
+          spacetime version use 2.8.1
           spacetime --version | tee /tmp/spacetimedb-version.txt
-          grep -q '2.7.1' /tmp/spacetimedb-version.txt
+          grep -q '2.8.1' /tmp/spacetimedb-version.txt
       - name: Build SpaceTimeDB shared-field module
         run: spacetime build --module-path shared-field/spacetimedb
       - name: Start local SpaceTimeDB
@@ -63,15 +65,22 @@ jobs:
           done
           cat /tmp/spacetimedb.log
           exit 1
-      - name: Publish live shared-field module
+      - name: Publish live shared-field security database
         run: spacetime publish oi-shared-field-ci --server local --module-path shared-field/spacetimedb --yes=all
       - name: Generate current TypeScript client bindings
         run: spacetime generate --lang typescript --out-dir shared-field/spacetimedb/module_bindings --module-path shared-field/spacetimedb
-      - name: Prove live subscription to rebuildable Explore index
+      - name: Prove Phase 1 privacy, Phase 2 Admission and Phase 3 Exchange conformance
         env:
           SPACETIMEDB_URI: ws://127.0.0.1:3000
           SPACETIMEDB_DATABASE: oi-shared-field-ci
         run: npm --prefix shared-field/spacetimedb run acceptance
+      - name: Publish isolated live A2A SharedField database
+        run: spacetime publish oi-shared-field-a2a-ci --server local --module-path shared-field/spacetimedb --yes=all
+      - name: Prove grant-gated A2A exchange returns only to generic quarantine
+        env:
+          SPACETIMEDB_URI: ws://127.0.0.1:3000
+          SPACETIMEDB_A2A_DATABASE: oi-shared-field-a2a-ci
+        run: npm --prefix shared-field/spacetimedb run acceptance:a2a
       - name: Show SpaceTimeDB log on failure
         if: failure()
         run: cat /tmp/spacetimedb.log || true

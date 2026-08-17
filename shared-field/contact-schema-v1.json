@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://o-i.dev/schema/contact-v1.json",
+  "title": "O:I Contact v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "contact_ref",
+    "field_ref",
+    "initiator_participant_ref",
+    "recipient_participant_ref",
+    "state",
+    "purpose",
+    "requested_scope",
+    "timing",
+    "provenance"
+  ],
+  "properties": {
+    "schema": { "const": "oi.contact/v1" },
+    "contact_ref": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "field_ref": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "initiator_participant_ref": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "recipient_participant_ref": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "state": { "enum": ["pending", "accepted", "declined", "redirected", "narrowed", "expired"] },
+    "purpose": { "type": "string", "minLength": 1, "maxLength": 500 },
+    "requested_scope": { "type": "object" },
+    "timing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["created_micros", "expires_micros"],
+      "properties": {
+        "created_micros": { "type": "string", "pattern": "^[0-9]+$" },
+        "expires_micros": { "type": "string", "pattern": "^[0-9]+$" }
+      }
+    },
+    "response": { "type": "object" },
+    "provenance": { "type": "object" }
+  }
+}
