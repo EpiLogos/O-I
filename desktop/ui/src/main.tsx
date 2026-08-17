@@ -49,6 +49,51 @@ type Contribution = {
   package?: { package_ref: string; source_revision: string };
 };
 
+type FactoryBuildSnapshot = {
+  contract: 'factory.build-view/v1';
+  providerContract: 'factory.build-view-provider/v1';
+  revision: number;
+  provenance: {
+    owner: string;
+    factoryStateRevision: number;
+    runRevision: number;
+    runMapRevision: number;
+    source: string;
+  };
+  view: {
+    project: { projectRef: string; label: string };
+    run: { runRef: string; runMapRef: string; label: string; status: string };
+    frontier: { subjectRef: string; title: string; mode: string; summary: string };
+    candidates: Array<{
+      candidateRef: string;
+      label: string;
+      status: string;
+      claimRefs: string[];
+      evidenceRefs: string[];
+      producingExecutionRefs: string[];
+    }>;
+    humanRequests: Array<{
+      humanRequestRef: string;
+      question: string;
+      whyHuman: string;
+      evidenceRefs?: string[];
+    }>;
+    executions: Array<{
+      executionRef: string;
+      status: string;
+      sessionSpaceRef?: string;
+      harnessRef?: string;
+      nativeTrajectoryRef?: string;
+    }>;
+    actions: Array<{
+      actionRef: string;
+      label: string;
+      subjectKinds: string[];
+      requiredCapabilityRef: string;
+    }>;
+  };
+};
+
 const preview: Snapshot = {
   schema: 'oi.desktop-shell/v1',
   destination: 'home',
@@ -61,16 +106,29 @@ const preview: Snapshot = {
 function App() {
   const [snapshot, setSnapshot] = useState<Snapshot>(preview);
   const [contributions, setContributions] = useState<Contribution[]>([]);
+  const [factoryBuild, setFactoryBuild] = useState<FactoryBuildSnapshot | null>(null);
 
   useEffect(() => {
     invoke<Snapshot>('shell_snapshot').then(setSnapshot).catch(() => setSnapshot(preview));
     invoke<Contribution[]>('contribution_catalog').then(setContributions).catch(() => setContributions([]));
+    refreshFactoryBuild();
   }, []);
+
+  async function refreshFactoryBuild() {
+    try {
+      const next = await invoke<FactoryBuildSnapshot | null>('factory_build_snapshot');
+      setFactoryBuild(next);
+      setContributions(await invoke<Contribution[]>('contribution_catalog'));
+    } catch {
+      setFactoryBuild(null);
+    }
+  }
 
   async function openDestination(destination: Destination) {
     try {
       await invoke('open_destination', { destination });
       setSnapshot(await invoke<Snapshot>('shell_snapshot'));
+      if (destination === 'build') await refreshFactoryBuild();
     } catch {
       setSnapshot((current) => ({ ...current, destination }));
     }
@@ -104,11 +162,14 @@ function App() {
         <p className="oi-eyebrow">{snapshot.destination}</p>
         <h1>{titleFor(snapshot.destination)}</h1>
         <p className="oi-lead">{copyFor(snapshot.destination)}</p>
+        {snapshot.destination === 'build' && factoryBuild && (
+          <FactoryBuildSurface snapshot={factoryBuild} onRefresh={refreshFactoryBuild} />
+        )}
         {snapshot.destination === 'system' && <SystemSurface surfaces={snapshot.surfaces} />}
         <ContributionSurface contributions={visibleContributions} />
       </section>
 
-      <aside className="oi-shell__inspector" aria-label="Context and root agent region">
+      <aside className="oi-shell__inspector" aria-label="Context and root agency region">
         <p className="oi-eyebrow">Encounter</p>
         <h2>Shared reference</h2>
         {snapshot.selection ? (
@@ -119,7 +180,7 @@ function App() {
             <dt>Source</dt><dd>{snapshot.selection.provenance.source}</dd>
           </dl>
         ) : (
-          <p className="oi-muted">No object selected. Canvas and root-agent regions share one stable Ref; O:I does not copy wholesale Context into contributions.</p>
+          <p className="oi-muted">No object selected. Canvas and root-agency regions share one stable Ref; O:I does not copy wholesale Context into contributions.</p>
         )}
         <div className="oi-root-agency">
           <p className="oi-eyebrow">Root Agency</p>
@@ -138,6 +199,87 @@ function App() {
         <span>reserved native Surface slot</span>
       </footer>
     </main>
+  );
+}
+
+function FactoryBuildSurface({
+  snapshot,
+  onRefresh,
+}: {
+  snapshot: FactoryBuildSnapshot;
+  onRefresh: () => Promise<void>;
+}) {
+  return (
+    <section className="oi-contributions" aria-label="Live Factory Build Surface">
+      <p className="oi-eyebrow">Factory-owned live reading · revision {snapshot.revision}</p>
+      <article>
+        <div>
+          <span className="oi-contribution-state" data-state="ready">ready</span>
+          <h3>{snapshot.view.run.label}</h3>
+        </div>
+        <p>{snapshot.view.frontier.title}</p>
+        <dl>
+          <dt>Project</dt><dd>{snapshot.view.project.projectRef}</dd>
+          <dt>Run</dt><dd>{snapshot.view.run.runRef}</dd>
+          <dt>RunMap</dt><dd>{snapshot.view.run.runMapRef}</dd>
+          <dt>Frontier</dt><dd>{snapshot.view.frontier.mode} · {snapshot.view.frontier.summary}</dd>
+          <dt>Factory revision</dt><dd>{snapshot.provenance.factoryStateRevision}</dd>
+          <dt>RunMap revision</dt><dd>{snapshot.provenance.runMapRevision}</dd>
+        </dl>
+        <button type="button" onClick={() => onRefresh()}>Refresh product reading</button>
+      </article>
+
+      {snapshot.view.candidates.map((candidate) => (
+        <article key={candidate.candidateRef}>
+          <div>
+            <span className="oi-contribution-state" data-state="ready">{candidate.status}</span>
+            <h3>{candidate.label}</h3>
+          </div>
+          <p>{candidate.candidateRef}</p>
+          <dl>
+            <dt>Executions</dt><dd>{candidate.producingExecutionRefs.join(', ') || 'none'}</dd>
+            <dt>Claims</dt><dd>{candidate.claimRefs.join(', ') || 'none'}</dd>
+            <dt>Evidence</dt><dd>{candidate.evidenceRefs.join(', ') || 'none'}</dd>
+          </dl>
+        </article>
+      ))}
+
+      {snapshot.view.humanRequests.map((request) => (
+        <article key={request.humanRequestRef}>
+          <div>
+            <span className="oi-contribution-state" data-state="degraded">human request</span>
+            <h3>{request.question}</h3>
+          </div>
+          <p>{request.whyHuman}</p>
+          <small>{request.humanRequestRef}</small>
+        </article>
+      ))}
+
+      {snapshot.view.executions.map((execution) => (
+        <article key={execution.executionRef}>
+          <div>
+            <span className="oi-contribution-state" data-state="ready">{execution.status}</span>
+            <h3>{execution.executionRef}</h3>
+          </div>
+          <dl>
+            <dt>Harness</dt><dd>{execution.harnessRef ?? 'not observed'}</dd>
+            <dt>SessionSpace</dt><dd>{execution.sessionSpaceRef ?? 'not observed'}</dd>
+            <dt>Native trajectory</dt><dd>{execution.nativeTrajectoryRef ?? 'not observed'}</dd>
+          </dl>
+        </article>
+      ))}
+
+      {snapshot.view.actions.map((action) => (
+        <article key={action.actionRef}>
+          <div>
+            <span className="oi-contribution-state" data-state="ready">available Action</span>
+            <h3>{action.label}</h3>
+          </div>
+          <p>{action.actionRef}</p>
+          <small>Requires explicit Capability grant: {action.requiredCapabilityRef}</small>
+        </article>
+      ))}
+    </section>
   );
 }
 
@@ -184,7 +326,7 @@ function SystemSurface({ surfaces }: { surfaces: Surface[] }) {
 function ownerVisibleAt(owner: string, destination: Destination) {
   if (destination === 'home' || destination === 'system') return true;
   if (destination === 'personal') return owner === 'central' || owner === 'actuation';
-  if (destination === 'build') return owner === 'software-factory' || owner === 'ai-kit';
+  if (destination === 'build') return owner === 'software-factory' || owner === 'factory' || owner === 'ai-kit';
   if (destination === 'explore') return owner === 'oi-explore';
   return false;
 }
@@ -203,7 +345,7 @@ function copyFor(destination: Destination) {
   return {
     home: 'A sparse local surface over the installed six-product field.',
     personal: 'Central-owned authored ground and Actuation-owned world-binding readings enter here without moving their semantics into O:I.',
-    build: 'Factory now publishes the source-faithful BuildSurface / FactoryBuildView contract. O:I can host its stable Project, Run, frontier, Candidate, Agency and Execution refs read-only while native package registration and live instance binding remain explicit lifecycle work.',
+    build: 'Factory now exposes a product-owned live FactoryBuildView provider over canonical state. When the local provider binding is configured, this canvas renders that observed revision directly; otherwise the Factory contribution remains explicitly degraded.',
     explore: 'The current shared-field Explore read model is hostable now, with canonical refs independent of SpaceTimeDB transport IDs.',
     system: 'Registration, reachability and native contribution status are shown without inventing product-native health.',
   }[destination];
