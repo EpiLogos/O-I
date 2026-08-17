@@ -19,8 +19,7 @@ use crate::package::{
 };
 
 pub const AIKIT_TARGET_PRODUCT: &str = "aikit";
-pub const AIKIT_SESSION_SPACE_CONTRIBUTION_CONTRACT: &str =
-    "aikit.session-space-contribution/v1";
+pub const AIKIT_SESSION_SPACE_CONTRIBUTION_CONTRACT: &str = "aikit.session-space-contribution/v1";
 pub const AIKIT_SESSION_SPACE_CONTRIBUTION_VERSION: &str = "1.0.0";
 
 /// Narrow lifecycle operation required by `oi.package/v1`. This does not define
