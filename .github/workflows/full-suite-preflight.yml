@@ -30,15 +30,12 @@ on:
 
 permissions:
   contents: read
-  attestations: read
 
 jobs:
   clean-environment:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      OI_HOME: ${{ runner.temp }}/oi-config
-      OI_DATA_HOME: ${{ runner.temp }}/oi-data
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
@@ -58,6 +55,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          export OI_HOME="$RUNNER_TEMP/oi-config"
+          export OI_DATA_HOME="$RUNNER_TEMP/oi-data"
           ROOT="$RUNNER_TEMP/oi-personal-ground"
           OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
 
@@ -85,6 +84,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          export OI_HOME="$RUNNER_TEMP/oi-config"
+          export OI_DATA_HOME="$RUNNER_TEMP/oi-data"
           OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
           "$OI" manifest --json > "$RUNNER_TEMP/manifest.json"
           "$OI" status --json > "$RUNNER_TEMP/status.json"
@@ -106,6 +107,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          export OI_HOME="$RUNNER_TEMP/oi-config"
+          export OI_DATA_HOME="$RUNNER_TEMP/oi-data"
           OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
           "$OI" web --check
           "$OI" app --check
@@ -114,6 +117,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          export OI_HOME="$RUNNER_TEMP/oi-config"
+          export OI_DATA_HOME="$RUNNER_TEMP/oi-data"
           OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
           SNAPSHOT_ARGS=(--output "$RUNNER_TEMP/full-suite-snapshot.json" --require-full)
           while IFS=$'\t' read -r id revision; do
@@ -133,6 +138,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          export OI_HOME="$RUNNER_TEMP/oi-config"
+          export OI_DATA_HOME="$RUNNER_TEMP/oi-data"
           ROOT="$RUNNER_TEMP/oi-personal-ground"
           OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
           "$OI" cleanup --managed
