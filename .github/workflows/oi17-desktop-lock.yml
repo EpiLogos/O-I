@@ -12,17 +12,19 @@ permissions:
 
 jobs:
   lock:
-    runs-on: ubuntu-latest
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
         with:
           ref: converge/oi-017-first-suite
           fetch-depth: 0
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
       - name: Generate native-shell lock from accepted suite revisions
         run: cargo generate-lockfile --manifest-path desktop/src-tauri/Cargo.toml
-      - name: Prove locked native shell graph resolves
-        run: cargo check --manifest-path desktop/src-tauri/Cargo.toml --locked
+      - name: Prove locked native shell graph resolves on accepted target
+        run: cargo check --manifest-path desktop/src-tauri/Cargo.toml --locked --target aarch64-apple-darwin
       - name: Commit lock
         run: |
           git config user.name oi17-convergence-bot
