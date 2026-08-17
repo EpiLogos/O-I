@@ -1,87 +1,47 @@
-# Project Adoption and Migration
+# Placing existing work under Central
 
-Many users will arrive with existing projects. {O:I} should meet that reality directly.
+Central's normative Work model is ordinary filesystem material. A directory under `Work/` does not require a Central-specific Project format, identity record, or adoption Action.
 
-A repository does not become a new Project because its local path changes.
+For that reason, `oi migrate <path>` has one deliberately narrow meaning:
 
-The migration path should therefore preserve project identity and repository history while changing the project's personal placement and refreshing derived local state.
+> Place this existing local work tree under the configured Central `Work` field while preserving what it already is.
 
-## Example
-
-A project currently lives at:
-
-```text
-~/code/foo
-```
-
-The user wants it under:
-
-```text
-~/Central/Work/foo
-```
-
-The intended operation is:
-
-```text
-existing Project
-    ↓
-adopt into personal ground
-    ↓
-move or link source
-    ↓
-refresh local bindings and indexes
-    ↓
-continue as the same Project
-```
-
-## Ownership
-
-The {O:I} layer provides the system-level entry:
+## Operation
 
 ```text
 oi migrate ~/code/foo
 ```
 
-The actual project-control operation belongs to the registered personal-ground surface and its native CLI.
+O:I resolves the configured personal ground, verifies it through native `ctrl doctor --json`, and previews:
 
-This keeps one clear responsibility split:
+- the existing source directory;
+- the intended `<Central>/Work/<name>` target;
+- identity/history preservation;
+- the compatible native Central surface that validates the ground.
 
-- `oi` identifies the installed surface and begins the handoff;
-- the project-control surface validates the source, target, repository state, and Project metadata;
-- capability indexes and other derived state refresh through their owning systems as needed.
+It then performs one same-filesystem directory rename. Moving the directory as a whole preserves `.git`, uncommitted files, nested data, and the work tree's existing identity. O:I does not create or rename a Factory `Project`, Run, AIKit registration, Workcell binding, or any other derived object.
 
-## Preserve and refresh
+## Safety boundary
 
-Migration should preserve durable identity and history such as:
+The first implementation is intentionally conservative.
 
-- Git history;
-- Project identity;
-- recognised project canon;
-- durable Run history where present;
-- source and external references.
+It:
 
-Migration may need to refresh material or derived state such as:
+- requires a real compatible Central surface and a doctor-valid personal ground;
+- requires the source to be a directory and refuses a symlink source;
+- returns success without mutation when the source is already at its intended Work target;
+- refuses an existing target collision before mutation;
+- on Unix, compares source and target-parent filesystem devices and refuses cross-filesystem placement;
+- uses filesystem rename only; it does not implement copy-and-delete fallback;
+- reports failure without deliberately deleting the original source;
+- leaves all derived systems untouched.
 
-- local path bindings;
-- checkout paths;
-- capability or source indexes;
-- session references;
-- runtime materialisations.
+A dirty Git work tree does not need special treatment because the operation does not edit Git or project files; the entire directory is moved intact.
 
-The exact refresh operations belong to the products that own those states.
+On platforms where safe same-filesystem placement has not been proven, migration refuses rather than pretending to provide a migration framework.
 
-## Safety
+## After placement
 
-A migration command should show the source and target before mutation. It should detect path collisions and dirty repositories. It should not destroy an existing source tree until the native project-control surface has completed its own checks.
+O:I reports that path-derived systems may need an explicit refresh. This can include AIKit registrations or indexes, Factory paths, Workcell materialisations, editor state, or other integrations that remember the old path. O:I does not perform those refreshes implicitly.
 
-The first implementation should favour a small, inspectable adoption path over a large import framework.
-
-## Fresh projects and remote repositories
-
-The same personal work tree should support:
-
-- new Projects;
-- clones from remote repositories;
-- adoption of existing local Projects.
-
-These are different ways to enter the same Project world. The personal-ground surface should own their detailed workflows.
+This is a one-shot composition handoff, not a project manager.
