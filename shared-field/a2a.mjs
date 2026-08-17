@@ -10,6 +10,12 @@ export const A2A_PROTOCOL_BINDING = 'HTTP+JSON';
 
 const BINDING_STATES = new Set(['published', 'withdrawn']);
 const AVAILABILITY_STATES = new Set(['online', 'degraded', 'offline', 'withdrawn']);
+const A2A_AGENT_CARD_MAX_BYTES = 64 * 1024;
+const A2A_RESPONSE_MAX_BYTES = 1024 * 1024;
+const A2A_MESSAGE_MAX_BYTES = 32 * 1024;
+const A2A_FETCH_TIMEOUT_MS = 15_000;
+const A2A_MAX_JSON_DEPTH = 12;
+const A2A_MAX_JSON_COLLECTION = 256;
 
 function clone(value) {
   return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
@@ -34,6 +40,55 @@ function timestamp(value, name) {
   string(value, name);
   if (Number.isNaN(Date.parse(value))) throw new TypeError(`${name} must be an ISO timestamp`);
   return value;
+}
+
+
+function utf8Bytes(value) {
+  return new TextEncoder().encode(value).byteLength;
+}
+
+function boundedJsonShape(value, name, depth = 0) {
+  if (depth > A2A_MAX_JSON_DEPTH) throw new TypeError(`${name} exceeds maximum JSON depth ${A2A_MAX_JSON_DEPTH}`);
+  if (value === null || typeof value === 'boolean' || typeof value === 'number') return;
+  if (typeof value === 'string') {
+    if (utf8Bytes(value) > A2A_RESPONSE_MAX_BYTES) throw new TypeError(`${name} contains an oversized string`);
+    return;
+  }
+  if (Array.isArray(value)) {
+    if (value.length > A2A_MAX_JSON_COLLECTION) throw new TypeError(`${name} exceeds ${A2A_MAX_JSON_COLLECTION} array entries`);
+    value.forEach((entry, index) => boundedJsonShape(entry, `${name}[${index}]`, depth + 1));
+    return;
+  }
+  if (typeof value !== 'object') throw new TypeError(`${name} contains an unsupported JSON value`);
+  const entries = Object.entries(value);
+  if (entries.length > A2A_MAX_JSON_COLLECTION) throw new TypeError(`${name} exceeds ${A2A_MAX_JSON_COLLECTION} object properties`);
+  entries.forEach(([key, entry]) => boundedJsonShape(entry, `${name}.${key}`, depth + 1));
+}
+
+async function boundedJsonResponse(response, name, maxBytes) {
+  if (!response?.ok) throw new Error(`${name} failed: ${response?.status ?? 'unknown'}`);
+  const declared = Number(response.headers?.get?.('content-length') ?? 0);
+  if (Number.isFinite(declared) && declared > maxBytes) throw new Error(`${name} exceeds ${maxBytes} byte limit`);
+  let text;
+  if (typeof response.text === 'function') text = await response.text();
+  else if (typeof response.json === 'function') text = JSON.stringify(await response.json());
+  else throw new Error(`${name} did not expose a readable body`);
+  if (utf8Bytes(text) > maxBytes) throw new Error(`${name} exceeds ${maxBytes} byte limit`);
+  let parsed;
+  try { parsed = JSON.parse(text); } catch { throw new Error(`${name} returned invalid JSON`); }
+  boundedJsonShape(parsed, name);
+  return parsed;
+}
+
+async function boundedFetch(fetchImpl, url, options, name, maxBytes) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), A2A_FETCH_TIMEOUT_MS);
+  try {
+    const response = await fetchImpl(url, { ...options, redirect: 'error', signal: controller.signal });
+    return await boundedJsonResponse(response, name, maxBytes);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function publicUrl(value, name) {
@@ -207,45 +262,63 @@ function transportRef(response) {
  * Source-faithful A2A HTTP+JSON v1 exchange. Runtime auth is passed only as request headers;
  * credentials never enter the hosted binding contract or returned SharedField difference.
  */
-export async function performA2aExchange({ binding, presence, initiator_participant_ref, message, fetch_impl = globalThis.fetch, authorization_headers = {} }) {
+export async function performA2aExchange({
+  binding,
+  presence,
+  initiator_participant_ref,
+  message,
+  authorize_exchange,
+  fetch_impl = globalThis.fetch,
+  authorization_headers = {},
+}) {
   const currentBinding = validateA2aBinding(binding);
   const currentPresence = validateA2aPresence(presence);
   string(initiator_participant_ref, 'initiator_participant_ref');
   record(message, 'A2A message');
   string(message.message_id, 'A2A message.message_id');
   string(message.text, 'A2A message.text');
+  if (utf8Bytes(message.text) > A2A_MESSAGE_MAX_BYTES) throw new TypeError(`A2A message.text exceeds ${A2A_MESSAGE_MAX_BYTES} byte limit`);
   if (typeof fetch_impl !== 'function') throw new TypeError('fetch_impl must be a function');
+  if (typeof authorize_exchange !== 'function') throw new TypeError('explicit authorize_exchange resolver is required before A2A network I/O');
   if (currentBinding.state !== 'published') throw new TypeError('A2A exchange requires an explicitly published binding');
   if (currentPresence.binding_ref !== currentBinding.binding_ref || currentPresence.participant_ref !== currentBinding.participant_ref) {
     throw new TypeError('A2A presence must belong to the selected binding/Participant');
   }
   if (!['online', 'degraded'].includes(currentPresence.availability)) throw new TypeError(`A2A endpoint is not currently reachable: ${currentPresence.availability}`);
 
-  const cardResponse = await fetch_impl(currentBinding.agent_card_url, { headers: { Accept: 'application/json', ...authorization_headers } });
-  if (!cardResponse?.ok) throw new Error(`A2A Agent Card fetch failed: ${cardResponse?.status ?? 'unknown'}`);
-  const card = await cardResponse.json();
-  const selectedInterface = assertA2aCard(card, currentBinding);
+  const operationId = string(message.exchange_operation_id ?? message.message_id, 'A2A exchange operation id');
+  const scopeJson = JSON.stringify(message.scope ?? { kind: 'message' });
+  const authority = await authorize_exchange({
+    field_ref: currentBinding.field_ref,
+    initiator_participant_ref,
+    counterparty_participant_ref: currentBinding.participant_ref,
+    protocol: 'a2a',
+    protocol_version: currentBinding.protocol_version,
+    protocol_binding: currentBinding.protocol_binding,
+    mode: 'message:send',
+    binding_ref: currentBinding.binding_ref,
+    binding_revision: currentBinding.binding_revision,
+    operation_id: operationId,
+    purpose: message.purpose ?? 'a2a-message-exchange',
+    scope_json: scopeJson,
+  });
+  record(authority, 'A2A exchange authority result');
+  if (authority.allowed !== true) throw new Error('A2A exchange denied by explicit Exchange authority');
+  const grantRef = string(authority.grant_ref, 'A2A exchange authority grant_ref');
 
+  const card = await boundedFetch(fetch_impl, currentBinding.agent_card_url,
+    { headers: { Accept: 'application/json', ...authorization_headers } },
+    'A2A Agent Card fetch', A2A_AGENT_CARD_MAX_BYTES);
+  const selectedInterface = assertA2aCard(card, currentBinding);
   const request = {
     ...(selectedInterface.tenant ? { tenant: selectedInterface.tenant } : {}),
-    message: {
-      messageId: message.message_id,
-      role: 'ROLE_USER',
-      parts: [{ text: message.text }],
-    },
+    message: { messageId: message.message_id, role: 'ROLE_USER', parts: [{ text: message.text }] },
   };
-  const response = await fetch_impl(a2aSendUrl(selectedInterface.url, selectedInterface.tenant), {
+  const payload = await boundedFetch(fetch_impl, a2aSendUrl(selectedInterface.url, selectedInterface.tenant), {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/a2a+json',
-      Accept: 'application/a2a+json',
-      'A2A-Version': currentBinding.protocol_version,
-      ...authorization_headers,
-    },
+    headers: { 'Content-Type': 'application/a2a+json', Accept: 'application/a2a+json', 'A2A-Version': currentBinding.protocol_version, ...authorization_headers },
     body: JSON.stringify(request),
-  });
-  if (!response?.ok) throw new Error(`A2A message exchange failed: ${response?.status ?? 'unknown'}`);
-  const payload = await response.json();
+  }, 'A2A message exchange', A2A_RESPONSE_MAX_BYTES);
   const result = transportRef(payload);
 
   return {
@@ -258,12 +331,11 @@ export async function performA2aExchange({ binding, presence, initiator_particip
     binding_ref: currentBinding.binding_ref,
     binding_revision: currentBinding.binding_revision,
     request_message_id: message.message_id,
+    exchange_authority: { grant_ref: grantRef, operation_id: operationId },
     transport_result: { ...result, payload: clone(payload) },
     admission: 'pending',
     transport_provenance: {
-      protocol: 'A2A',
-      protocol_version: currentBinding.protocol_version,
-      protocol_binding: currentBinding.protocol_binding,
+      protocol: 'A2A', protocol_version: currentBinding.protocol_version, protocol_binding: currentBinding.protocol_binding,
       agent_card: { name: card.name, version: card.version, url: currentBinding.agent_card_url },
     },
   };
@@ -280,6 +352,9 @@ export function validateA2aDifference(value) {
   string(value.binding_ref, 'A2A difference.binding_ref');
   integer(value.binding_revision, 'A2A difference.binding_revision');
   string(value.request_message_id, 'A2A difference.request_message_id');
+  record(value.exchange_authority, 'A2A difference.exchange_authority');
+  string(value.exchange_authority.grant_ref, 'A2A difference.exchange_authority.grant_ref');
+  string(value.exchange_authority.operation_id, 'A2A difference.exchange_authority.operation_id');
   record(value.transport_result, 'A2A difference.transport_result');
   if (!['task', 'message'].includes(value.transport_result.kind)) throw new TypeError('A2A transport result must be task or message');
   string(value.transport_result.ref, 'A2A difference.transport_result.ref');
@@ -300,6 +375,8 @@ export function encounterA2aDifference(difference, input) {
       kind: 'direct-address',
       protocol: 'A2A',
       binding_ref: value.binding_ref,
+      exchange_grant_ref: value.exchange_authority.grant_ref,
+      exchange_operation_id: value.exchange_authority.operation_id,
       transport_kind: value.transport_result.kind,
       transport_ref: value.transport_result.ref,
     },
@@ -368,6 +445,8 @@ export function prepareA2aContributionIngress(difference, input) {
     contribution,
     transport_provenance: {
       exchange_ref: value.exchange_ref,
+      exchange_grant_ref: value.exchange_authority.grant_ref,
+      exchange_operation_id: value.exchange_authority.operation_id,
       binding_ref: value.binding_ref,
       binding_revision: value.binding_revision,
       request_message_id: value.request_message_id,

@@ -34,6 +34,12 @@ const BINDING_REF = 'a2a-binding:remote';
 const BINDING_PROJECTION_REF = 'projection:a2a-binding:remote';
 const PRESENCE_REF = 'a2a-presence:remote';
 const RETURNED_CONTRIBUTION_REF = 'contribution:a2a:return:1';
+const FIRST_EXCHANGE_REQUEST_REF = 'exchange-request:a2a:full-stack:1';
+const FIRST_EXCHANGE_GRANT_REF = 'exchange-grant:a2a:full-stack:1';
+const FIRST_EXCHANGE_OPERATION_ID = 'exchange-operation:a2a:full-stack:1';
+const REPLACEMENT_EXCHANGE_REQUEST_REF = 'exchange-request:a2a:full-stack:2';
+const REPLACEMENT_EXCHANGE_GRANT_REF = 'exchange-grant:a2a:full-stack:2';
+const REPLACEMENT_EXCHANGE_OPERATION_ID = 'exchange-operation:a2a:full-stack:2';
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -300,12 +306,43 @@ try {
   assert.equal(found[0].participation.participant.participant_ref, AGENT_PARTICIPANT_REF);
   assert.notEqual(firstSnapshot.implementation.bindings[0].row_id, BINDING_REF);
 
+  await owner.conn.reducers.requestExchange({
+    requestRef: FIRST_EXCHANGE_REQUEST_REF,
+    fieldRef: FIELD_REF,
+    initiatorParticipantRef: OWNER_PARTICIPANT_REF,
+    counterpartyParticipantRef: AGENT_PARTICIPANT_REF,
+    purpose: 'a2a-message-exchange',
+    scopeJson: JSON.stringify({ kind: 'message' }),
+    protocol: 'a2a',
+    bindingRef: BINDING_REF,
+    bindingRevision: 1,
+    modesJson: JSON.stringify(['message:send']),
+    maxUses: 1,
+    ttlSeconds: 300,
+  });
+  await owner.conn.reducers.grantExchange({
+    requestRef: FIRST_EXCHANGE_REQUEST_REF,
+    grantRef: FIRST_EXCHANGE_GRANT_REF,
+    reason: 'Full-stack A2A exchange authority for binding revision 1',
+    evidenceJson: JSON.stringify({ fixture: 'a2a-full-stack', binding_revision: 1 }),
+  });
+
   const difference = await performA2aExchange({
     binding: found[0].participation.binding,
     presence: found[0].participation.presence,
     initiator_participant_ref: OWNER_PARTICIPANT_REF,
+    authorize_exchange: async (demand: any) => {
+      await owner.conn.reducers.consumeExchange({
+        grantRef: FIRST_EXCHANGE_GRANT_REF, operationId: demand.operation_id, fieldRef: demand.field_ref,
+        initiatorParticipantRef: demand.initiator_participant_ref, counterpartyParticipantRef: demand.counterparty_participant_ref,
+        protocol: demand.protocol, bindingRef: demand.binding_ref, bindingRevision: demand.binding_revision,
+        mode: demand.mode, purpose: demand.purpose, scopeJson: demand.scope_json,
+      });
+      return { allowed: true, grant_ref: FIRST_EXCHANGE_GRANT_REF };
+    },
     message: {
       exchange_ref: 'a2a-exchange:live:1',
+      exchange_operation_id: FIRST_EXCHANGE_OPERATION_ID,
       message_id: 'a2a-message:live:1',
       text: 'Return a bounded difference for generic Contribution ingress.',
     },
@@ -338,7 +375,9 @@ try {
     target: { ref: AGENT_REF, kind: 'agent' },
   });
   const projectionCountBeforeIngress = rows(owner.conn.db.projection).length;
-  await owner.conn.reducers.ingestTransportedContribution({
+  await owner.conn.reducers.ingestAuthorizedExchangeContribution({
+    grantRef: FIRST_EXCHANGE_GRANT_REF,
+    operationId: FIRST_EXCHANGE_OPERATION_ID,
     fieldRef: ingress.field_ref,
     contributorParticipantRef: ingress.contributor_participant_ref,
     sourceKind: ingress.source_kind,
@@ -417,11 +456,41 @@ try {
   })));
   await waitUntil(() => a2aSource.snapshot().bindings[0]?.binding_revision === 2, 'A2A endpoint replacement');
   const replacementSnapshot = a2aSource.snapshot();
+  await owner.conn.reducers.requestExchange({
+    requestRef: REPLACEMENT_EXCHANGE_REQUEST_REF,
+    fieldRef: FIELD_REF,
+    initiatorParticipantRef: OWNER_PARTICIPANT_REF,
+    counterpartyParticipantRef: AGENT_PARTICIPANT_REF,
+    purpose: 'a2a-message-exchange',
+    scopeJson: JSON.stringify({ kind: 'message' }),
+    protocol: 'a2a',
+    bindingRef: BINDING_REF,
+    bindingRevision: 2,
+    modesJson: JSON.stringify(['message:send']),
+    maxUses: 1,
+    ttlSeconds: 300,
+  });
+  await owner.conn.reducers.grantExchange({
+    requestRef: REPLACEMENT_EXCHANGE_REQUEST_REF,
+    grantRef: REPLACEMENT_EXCHANGE_GRANT_REF,
+    reason: 'Fresh Exchange authority for replacement binding revision 2',
+    evidenceJson: JSON.stringify({ fixture: 'a2a-full-stack', binding_revision: 2 }),
+  });
+
   const replacementDifference = await performA2aExchange({
     binding: replacementSnapshot.bindings[0],
     presence: replacementSnapshot.presence[0],
     initiator_participant_ref: OWNER_PARTICIPANT_REF,
-    message: { message_id: 'a2a-message:live:replacement', text: 'Use replacement endpoint.' },
+    authorize_exchange: async (demand: any) => {
+      await owner.conn.reducers.consumeExchange({
+        grantRef: REPLACEMENT_EXCHANGE_GRANT_REF, operationId: demand.operation_id, fieldRef: demand.field_ref,
+        initiatorParticipantRef: demand.initiator_participant_ref, counterpartyParticipantRef: demand.counterparty_participant_ref,
+        protocol: demand.protocol, bindingRef: demand.binding_ref, bindingRevision: demand.binding_revision,
+        mode: demand.mode, purpose: demand.purpose, scopeJson: demand.scope_json,
+      });
+      return { allowed: true, grant_ref: REPLACEMENT_EXCHANGE_GRANT_REF };
+    },
+    message: { exchange_operation_id: REPLACEMENT_EXCHANGE_OPERATION_ID, message_id: 'a2a-message:live:replacement', text: 'Use replacement endpoint.' },
   });
   assert.equal(replacementDifference.transport_result.ref, 'a2a-task:replacement');
 
@@ -470,6 +539,7 @@ try {
     binding: withdrawn,
     presence: withdrawnPresence,
     initiator_participant_ref: OWNER_PARTICIPANT_REF,
+    authorize_exchange: async () => { throw new Error('withdrawn binding must fail before authority consumption'); },
     message: { message_id: 'a2a-message:after-withdrawal', text: 'must not send' },
     fetch_impl: async () => { attemptedFetch = true; throw new Error('must not fetch'); },
   }), /explicitly published binding|currently reachable/);
@@ -481,7 +551,7 @@ try {
   assert.ok(a2aEvents >= 3);
 
   console.log(JSON.stringify({
-    proof: 'oi-a2a-sharedfield-live/v2-generic-contribution-ingress',
+    proof: 'oi-a2a-sharedfield-live/v3-exchange-authority',
     spacetimedb: '2.8.1',
     database: DATABASE,
     agent_ref: AGENT_REF,
