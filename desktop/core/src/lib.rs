@@ -1,5 +1,6 @@
 mod bridge;
 mod contribution;
+mod live_product;
 mod shell;
 
 pub use bridge::{BridgeCallClass, BridgeCaller, BridgeDenied, BridgePolicy};
@@ -8,6 +9,11 @@ pub use contribution::{
     ActionAvailability, CanonicalActionBinding, ContributionAvailability, HostRegion,
     HostedContribution, NativeActionInvocation, NativeContributionReading, PackageEnvelopeRef,
     SelectionProjection,
+};
+pub use live_product::{
+    correlate_session_spaces, dispatch_factory_action, observe_factory_build, FactoryActionRoundTrip,
+    FactoryHostObservation, SessionSpaceCorrelation, SessionSpaceCorrelationState,
+    SurfaceActionEmission, FACTORY_BUILD_CONTRIBUTION_REF,
 };
 pub use shell::{
     DesktopHost, RefProvenance, SemanticRef, ShellDestination, ShellSnapshot, SuiteCondition,
