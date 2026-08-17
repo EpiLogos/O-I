@@ -13,7 +13,7 @@
       "read_model_ref": {"ref": "oi.explore:surface:root", "kind": "surface", "native_owner": "oi-explore", "provenance": {"source": "shared-field/explore.mjs", "revision": "3de1cc548252017877bdd7d80447b7dcac375551"}},
       "accepted_selection_kinds": ["projection", "wiki_node", "project", "participant", "shared_field"],
       "actions": [],
-      "detail": "Consumes the canonical Explore read-model seam from PR #19. Encounter-security PR #32 @ 08b39ec90bb1162de45858eac1851da88c4a7093 and A2A PR #37 @ f1b2075618696fdaeba4da6111904205f295af76 remain the authority/admission owners for hosted mutation, private Contact/Watch state and A2A exchange; this desktop reading exposes none of those mutation powers or private relations. SpaceTimeDB transport identifiers remain non-canonical."
+      "detail": "Consumes the canonical Explore read-model seam from PR #19. Encounter-security and A2A remain the authority/admission owners for hosted mutation, private Contact/Watch state and exchange; this desktop reading exposes none of those mutation powers or private relations. SpaceTimeDB transport identifiers remain non-canonical."
     },
     {
       "schema": "oi.desktop-host-reading/v1",
@@ -22,11 +22,11 @@
       "target_contract": "actuation.agency/v1",
       "availability": "ready",
       "provenance": {"source": "EpiLogos/Actuation#6", "revision": "b977939ec25c32b3dc8f5ed251b70e4c26933086"},
-      "regions": ["inspector", "root_agent"],
+      "regions": ["inspector", "root_agency"],
       "read_model_ref": {"ref": "actuation.agency:root-world", "kind": "agency_reading", "native_owner": "actuation", "provenance": {"source": "actuation.agency/v1", "revision": "b977939ec25c32b3dc8f5ed251b70e4c26933086"}},
       "accepted_selection_kinds": ["agency", "world_binding", "root_scope", "metagency_grant", "determination", "return"],
       "actions": [],
-      "detail": "Consumes verified Actuation PR #6 head b977939ec25c32b3dc8f5ed251b70e4c26933086, including explicit portable RootScope and MetagencyGrant envelopes. Root Agency remains a positional relation between WorldBinding and RootScope; O:I does not introduce a RootAgent subtype or infer metagency from presentation."
+      "detail": "Consumes verified Actuation PR #6. Root Agency remains a positional relation between WorldBinding and RootScope; O:I does not introduce a RootAgent subtype or infer metagency from presentation."
     },
     {
       "schema": "oi.desktop-host-reading/v1",
@@ -51,14 +51,14 @@
       "schema": "oi.desktop-host-reading/v1",
       "contribution_ref": "factory.surface/build",
       "native_owner": "software-factory",
-      "target_contract": "@epilogos/factory-build-surface@0.1.0:FactoryBuildView",
+      "target_contract": "factory.build-view-provider/v1",
       "availability": "degraded",
-      "provenance": {"source": "EpiLogos/agent-system-design#146", "revision": "a57e2011149728891e5cc1a0264ba4b3ebe021c5"},
-      "regions": ["canvas", "navigator", "inspector", "deep_drawer", "command"],
+      "provenance": {"source": "EpiLogos/agent-system-design#146", "revision": "57f8ed043fc0bed40cc8949a81e7fbb14fd7b2aa"},
+      "regions": ["canvas", "navigator", "inspector", "deep_drawer", "command", "status"],
       "read_model_ref": null,
       "accepted_selection_kinds": ["project", "run", "frontier", "candidate", "claim", "evidence", "human_request", "agency", "return", "execution", "trajectory", "harness_composition", "agent_session", "session_space", "surface", "material_binding"],
       "actions": [],
-      "detail": "Consumes verified-green Factory PR #146 head a57e2011149728891e5cc1a0264ba4b3ebe021c5. The source-owned @epilogos/factory-build-surface contract exports BuildSurface over FactoryBuildView and preserves separate semantic/live/trajectory depths. Factory owns Project/Run/RunMap-frontier/Candidate/Claim/Evidence/HumanRequest, Agency/Return and Execution/trajectory refs. FactoryActionView supplies product-native ActionRefs and BuildSurface emits only {actionRef, subjectRef}; O:I does not copy exemplar state or mint Action names. SessionSpaceRef is accepted only as an opaque AIKit-owned ref now that aikit.session-space/v1 is real; Factory and O:I do not own its lifecycle or authority. The source package is still private and O:I #21 has no native install/register lifecycle bridge, so no live FactoryBuildView instance is claimed in the desktop yet; contract hosting is degraded rather than pending or falsely full."
+      "detail": "Fallback only: Factory PR #146 now exposes the product-owned factory.build-view-provider/v1 plus a persistent local first-party provider and Factory-owned Action executor over canonical Factory state. The desktop keeps this reading degraded until OI_FACTORY_BUILD_STATE + Project/Run refs resolve an actual provider instance; it never renders the deterministic GUI fixture as live. When observed, the live reading replaces this same factory.surface/build contribution identity."
     },
     {
       "schema": "oi.desktop-host-reading/v1",
@@ -66,12 +66,12 @@
       "native_owner": "ai-kit",
       "target_contract": "aikit.session-space/v1",
       "availability": "degraded",
-      "provenance": {"source": "EpiLogos/ai-kit#68", "revision": "b98f608fa4c49355f4c4d621e7df391f404d2e0f"},
+      "provenance": {"source": "EpiLogos/ai-kit#68", "revision": "8ec1f923b8cc59b7e18e7b6c1afa0974ca6f1208"},
       "regions": ["canvas", "navigator", "inspector", "command", "status"],
       "read_model_ref": null,
       "accepted_selection_kinds": ["session_space", "project", "agent_session", "component", "surface", "connection", "provider", "harness", "capability", "action"],
       "actions": [],
-      "detail": "Consumes the actual AIKit SessionSpace implementation at PR #68 head b98f608fa4c49355f4c4d621e7df391f404d2e0f: durable session-space/... identity, aikit.session-space/v1, SessionSpaceReadModel, AgentSession/component/Surface/connection projections and explicit lifecycle/activation/connection states. SessionSpaceAuthorityState keeps capability availability, capability grant and Action authorisation separate; presence in a SessionSpace does not grant authority. O:I has no live SessionSpace instance binding yet, so this remains a degraded read-only contract rather than a fabricated Active workspace."
+      "detail": "AIKit PR #68 now contains the executable aikit.session-space/v1 runtime/read model and target-owned aikit.session-space-contribution/v1 register/readback/remove lifecycle. This desktop fallback remains degraded only when it has no independently observed SessionSpaceReadModel instance; it never fabricates Active, provider health, Capability grant or Action authority."
     },
     {
       "schema": "oi.desktop-host-reading/v1",
@@ -79,12 +79,12 @@
       "native_owner": "ai-kit",
       "target_contract": "aikit.harness-composition-topology/v1",
       "availability": "degraded",
-      "provenance": {"source": "EpiLogos/ai-kit#68", "revision": "b98f608fa4c49355f4c4d621e7df391f404d2e0f"},
+      "provenance": {"source": "EpiLogos/ai-kit#68", "revision": "8ec1f923b8cc59b7e18e7b6c1afa0974ca6f1208"},
       "regions": ["canvas", "inspector", "command"],
-      "read_model_ref": {"ref": "aikit:harness-composition-topology:deepseek-maximal", "kind": "harness_composition_topology", "native_owner": "ai-kit", "provenance": {"source": "crates/aikit-adapters/src/composition_topology.rs", "revision": "b98f608fa4c49355f4c4d621e7df391f404d2e0f"}},
+      "read_model_ref": {"ref": "aikit:harness-composition-topology:deepseek-maximal", "kind": "harness_composition_topology", "native_owner": "ai-kit", "provenance": {"source": "crates/aikit-adapters/src/composition_topology.rs", "revision": "8ec1f923b8cc59b7e18e7b6c1afa0974ca6f1208"}},
       "accepted_selection_kinds": ["component", "surface", "harness_composition", "action"],
       "actions": [],
-      "detail": "Consumes AIKit PR #68's target-neutral nested Component topology as a read-model contract at producer head b98f608fa4c49355f4c4d621e7df391f404d2e0f. The same PR owns staged HarnessComposition mutation, ACP connection and terminal working-field projection. Rich UI, HumanCommand, Policy and LoopRuntime contributions remain target-native; O:I does not mount Cordis, reinterpret protocol commands as Actions, or create a desktop plugin ontology."
+      "detail": "Consumes AIKit PR #68's target-neutral nested Component topology and live SessionSpace programme without reproducing Component/Surface semantics inside O:I. Rich UI, HumanCommand, Policy and LoopRuntime contributions remain target-native."
     }
   ]
 }
