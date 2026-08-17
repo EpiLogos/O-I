@@ -3,8 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "acceptance": "tsx security-live-acceptance-v3.ts",
-    "acceptance:a2a": "tsx a2a-live-acceptance.ts",
+    "acceptance": "tsx security-live-acceptance-v4-bootstrap.ts",
+    "acceptance:a2a": "tsx a2a-live-acceptance-view-bootstrap.ts",
     "acceptance:watch-notify": "tsx watch-notification-live-acceptance.ts"
   },
   "dependencies": {
