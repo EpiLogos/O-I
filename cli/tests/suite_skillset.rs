@@ -168,6 +168,10 @@ fn direct_projection_preserves_local_edits_to_an_oi_derived_copy() {
     fs::write(&destination, "local edit").expect("edit projection");
     let second = materialise_direct_projection(oi, "oi-current-head-2", "source-v2", &destination)
         .expect("conflict outcome");
-    assert!(second.detail.as_deref().unwrap_or_default().contains("local edits"));
+    assert!(second
+        .detail
+        .as_deref()
+        .unwrap_or_default()
+        .contains("local edits"));
     assert_eq!(fs::read_to_string(&destination).unwrap(), "local edit");
 }
