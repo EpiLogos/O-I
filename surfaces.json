@@ -20,7 +20,9 @@
         "entry": "ctrl",
         "executable": "ctrl",
         "alias": "ctrl",
-        "version_command": ["--version"],
+        "version_command": [
+          "--version"
+        ],
         "version_manifest": "ctrl/Cargo.toml"
       },
       "install": {
@@ -34,7 +36,12 @@
         "operation": {
           "id": "central.doctor",
           "runner": "native-executable",
-          "args": ["--root", "{personal_ground}", "doctor", "--json"],
+          "args": [
+            "--root",
+            "{personal_ground}",
+            "doctor",
+            "--json"
+          ],
           "evidence": "native-json-stdout"
         },
         "outstanding_requirements": [],
@@ -67,15 +74,13 @@
       "verification": {
         "status": "supported",
         "operation": {
-          "id": "actuation.agency-contract",
-          "runner": "root-command",
-          "program": "node",
-          "args": ["--test", "contracts/agency.test.mjs", "contracts/model-bearing.test.mjs"],
-          "working_directory": "{root}",
-          "evidence": "process-exit-and-output"
+          "id": "actuation.managed-artifact",
+          "runner": "managed-artifact",
+          "args": [],
+          "evidence": "oi.managed-artifact-evidence/v1"
         },
         "outstanding_requirements": [],
-        "note": "The accepted component carries portable Agency/WorldBinding/Determination/Return and model-bearing contracts; provider materialisation remains outside this pre-local gate."
+        "note": "Installed-component acceptance consumes the exact O:I-managed release receipt, digest and provenance reference. Native Actuation contract tests remain a developer/source verification command."
       },
       "compatibility": "Actuation main is the accepted portable authority foundation plus the selected provider-neutral model-bearing contract and native operational Skills."
     },
@@ -92,7 +97,9 @@
         "entry": "aikit",
         "executable": "aikit",
         "alias": "kit",
-        "version_command": ["--version"],
+        "version_command": [
+          "--version"
+        ],
         "version_manifest": "crates/aikit-cli/Cargo.toml"
       },
       "install": {
@@ -106,7 +113,9 @@
         "operation": {
           "id": "aikit.native-version",
           "runner": "native-executable",
-          "args": ["--version"],
+          "args": [
+            "--version"
+          ],
           "evidence": "process-exit-and-output"
         },
         "outstanding_requirements": [],
@@ -139,15 +148,13 @@
       "verification": {
         "status": "supported",
         "operation": {
-          "id": "factory.rust-tests",
-          "runner": "root-command",
-          "program": "cargo",
-          "args": ["test", "--workspace", "--locked"],
-          "working_directory": "{root}",
-          "evidence": "process-exit-and-output"
+          "id": "software-factory.managed-artifact",
+          "runner": "managed-artifact",
+          "args": [],
+          "evidence": "oi.managed-artifact-evidence/v1"
         },
         "outstanding_requirements": [],
-        "note": "The portable Factory self-check covers the Rust product foundation containing Build provider/Action, SSSF UI and AIKit model-roster round-trip semantics."
+        "note": "Installed-component acceptance consumes the exact O:I-managed release receipt, digest and provenance reference. Factory workspace tests remain a developer/source verification command."
       },
       "compatibility": "Factory main is the accepted portable Software Factory product line; QL runtime ownership is migrated to Actuation and research runtimes remain separate."
     },
@@ -164,7 +171,9 @@
         "entry": "workcell",
         "executable": "workcell",
         "alias": "workcell",
-        "version_command": ["--version"],
+        "version_command": [
+          "--version"
+        ],
         "version_manifest": "crates/workcell-cli/Cargo.toml"
       },
       "install": {
@@ -178,7 +187,10 @@
         "operation": {
           "id": "workcell.doctor",
           "runner": "native-executable",
-          "args": ["--json", "doctor"],
+          "args": [
+            "--json",
+            "doctor"
+          ],
           "evidence": "native-json-stdout"
         },
         "outstanding_requirements": [
@@ -222,15 +234,13 @@
       "verification": {
         "status": "supported",
         "operation": {
-          "id": "quaternal-logic.workspace-tests",
-          "runner": "root-command",
-          "program": "cargo",
-          "args": ["test", "--workspace", "--all-targets", "--locked"],
-          "working_directory": "{root}",
-          "evidence": "process-exit-and-output"
+          "id": "quaternal-logic.managed-artifact",
+          "runner": "managed-artifact",
+          "args": [],
+          "evidence": "oi.managed-artifact-evidence/v1"
         },
         "outstanding_requirements": [],
-        "note": "Pre-local verification covers the accepted first-suite Q-series substrate; later wiki/refraction and experimental grammar work remains separate."
+        "note": "Installed-component acceptance consumes the exact O:I-managed release receipt, digest and provenance reference. Quaternal Logic workspace tests remain a developer/source verification command."
       },
       "compatibility": "QL-MEF main is the accepted Quaternal Logic substrate; the canonical product and checkout name is Quaternal Logic / Quaternal-Logic pending repository settings rename."
     }
