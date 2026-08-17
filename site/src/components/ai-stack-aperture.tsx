@@ -39,10 +39,16 @@ const relations: StackRelation[] = [
     distinction: 'Human-authored ground stays distinct from agent memory, session history and the model context window.',
   },
   {
-    concern: 'MCP · A2A · formal relation',
-    primary: 'AIKit · O:I · Quaternal Logic',
+    concern: 'MCP · A2A · interoperability',
+    primary: 'AIKit · O:I',
     support: 'Actuation',
     distinction: 'Protocols move capabilities and relations; they do not define Agent identity, authority or Agency.',
+  },
+  {
+    concern: 'Formal · reflexive reasoning',
+    primary: 'Quaternal Logic',
+    support: 'All six products',
+    distinction: 'Formal refraction can deepen the field without renaming native objects or becoming a runtime prerequisite.',
   },
 ];
 
