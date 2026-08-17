@@ -150,18 +150,10 @@ fn target_catalog<T: NativeContributionLifecycleTarget>(target: &T) -> NativeCon
 /// Target-specific adapter over AIKit's public native lifecycle. The registry and
 /// SessionSpace read model remain AIKit-owned objects; O:I does not reproduce
 /// their state or infer activation/authority from package presence.
+#[derive(Default)]
 pub struct AikitSessionSpaceLifecycleAdapter {
     registry: SessionSpaceContributionRegistry,
     observed_read_models: BTreeMap<String, SessionSpaceReadModel>,
-}
-
-impl Default for AikitSessionSpaceLifecycleAdapter {
-    fn default() -> Self {
-        Self {
-            registry: SessionSpaceContributionRegistry::default(),
-            observed_read_models: BTreeMap::new(),
-        }
-    }
 }
 
 impl AikitSessionSpaceLifecycleAdapter {
