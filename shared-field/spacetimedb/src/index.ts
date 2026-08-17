@@ -409,17 +409,15 @@ function visibleProjectionRows(ctx: any): any[] {
   return rows;
 }
 
-function projectionRowsReferencingExploreEntry(ctx: any, row: any): any[] {
-  const matches: any[] = [];
-  for (const projectionRow of latestProjectionRowsForField(ctx, row.fieldRef)) {
+function projectionLineagesReferencingExploreEntry(ctx: any, row: any): Set<string> {
+  const refs = new Set<string>();
+  for (const projectionRow of ctx.db.projectionBacking.fieldRef.filter(row.fieldRef)) {
     const contract = parseStoredJson(projectionRow.contractJson, 'Projection contractJson');
-    const explicitProjectionRef = contract.projection_ref;
-    const representationRef = contract.representation?.ref;
-    if (explicitProjectionRef === row.semanticRef || representationRef === row.semanticRef) {
-      matches.push(projectionRow);
+    if (contract.projection_ref === row.semanticRef || contract.representation?.ref === row.semanticRef) {
+      refs.add(projectionRow.projectionRef);
     }
   }
-  return matches;
+  return refs;
 }
 
 function callerCanSeeExploreEntry(ctx: any, row: any): boolean {
@@ -428,23 +426,25 @@ function callerCanSeeExploreEntry(ctx: any, row: any): boolean {
 
   const entry = parseStoredJson(row.entryJson, 'Explore entryJson');
   const directProjectionRef = typeof entry.projection_ref === 'string' ? entry.projection_ref : undefined;
-  const matched = projectionRowsReferencingExploreEntry(ctx, row);
+  const lineages = projectionLineagesReferencingExploreEntry(ctx, row);
+  if (directProjectionRef) lineages.add(directProjectionRef);
 
-  if (directProjectionRef) {
-    const current = latestProjectionRowsForField(ctx, row.fieldRef).find(
-      projectionRow => projectionRow.projectionRef === directProjectionRef
-    );
-    if (!current || current.state !== 'published' || !callerCanSeeProjection(ctx, current)) return false;
-  }
+  if (row.kind === 'projection' && lineages.size === 0) lineages.add(row.semanticRef);
 
-  if (row.kind === 'projection' || matched.length > 0) {
-    return matched.some(projectionRow => projectionRow.state === 'published' && callerCanSeeProjection(ctx, projectionRow));
+  if (lineages.size > 0) {
+    const latest = latestProjectionRowsForField(ctx, row.fieldRef);
+    return Array.from(lineages).some(projectionRef => {
+      const current = latest.find(projectionRow => projectionRow.projectionRef === projectionRef);
+      if (!current || current.state !== 'published' || !callerCanSeeProjection(ctx, current)) return false;
+      const contract = parseStoredJson(current.contractJson, 'Projection contractJson');
+      return contract.projection_ref === row.semanticRef || contract.representation?.ref === row.semanticRef;
+    });
   }
 
   const participantRef = entry.meta?.participant_ref;
   if (typeof participantRef === 'string') {
-    const participantRow = ctx.db.participantBacking.participantRef.find(participantRef);
-    if (!participantRow || participantRow.fieldRef !== row.fieldRef) return false;
+    const participant = ctx.db.participantBacking.participantRef.find(participantRef);
+    if (!participant || participant.fieldRef !== row.fieldRef) return false;
   }
 
   return true;
@@ -471,6 +471,7 @@ function visibleExploreRelationRows(ctx: any): any[] {
   return rows;
 }
 
+/* Caller-filtered public content Views. */
 export const shared_field = spacetimedb.view(
   { name: 'shared_field', public: true },
   t.array(sharedFieldBacking.rowType),
@@ -507,6 +508,10 @@ export const explore_relation = spacetimedb.view(
   (ctx) => visibleExploreRelationRows(ctx)
 );
 
+/**
+ * Protected relationship Views deliberately admit only non-expiring grants.
+ * Finite grants remain reducer-only until provider-timed read expiry is proven.
+ */
 export const my_field_authority = spacetimedb.view(
   { name: 'my_field_authority', public: true },
   t.array(fieldAuthority.rowType),
