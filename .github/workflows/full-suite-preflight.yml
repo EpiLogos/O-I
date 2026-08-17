@@ -1,0 +1,152 @@
+name: Full suite preflight
+
+on:
+  pull_request:
+    paths:
+      - "cli/**"
+      - "surfaces.json"
+      - "site/**"
+      - "desktop/**"
+      - "packages/**"
+      - "schemas/**"
+      - "skills/**"
+      - ".github/workflows/full-suite-preflight.yml"
+  push:
+    branches:
+      - main
+      - converge/oi-017-first-suite
+    paths:
+      - "cli/**"
+      - "surfaces.json"
+      - "site/**"
+      - "desktop/**"
+      - "packages/**"
+      - "schemas/**"
+      - "skills/**"
+      - ".github/workflows/full-suite-preflight.yml"
+  workflow_dispatch:
+
+jobs:
+  clean-environment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build O:I CLI
+        run: cargo build --manifest-path cli/Cargo.toml --bin oi
+
+      - name: Install exact six-product suite twice
+        shell: bash
+        env:
+          OI_SOURCE_ROOT: ${{ github.workspace }}
+        run: |
+          set -euo pipefail
+          ROOT="$RUNNER_TEMP/oi-personal-ground"
+          OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
+          export OI_HOME="$ROOT/.central/oi/state"
+
+          mkdir -p "$ROOT/Control" "$ROOT/Work"
+          printf '%s\n' 'human-control-sentinel' > "$ROOT/Control/HUMAN-SENTINEL.txt"
+          printf '%s\n' 'ordinary-work-sentinel' > "$ROOT/Work/WORK-SENTINEL.txt"
+
+          "$OI" install --personal-ground "$ROOT"
+          cp "$OI_HOME/composition.json" "$RUNNER_TEMP/composition-first.json"
+
+          "$OI" install
+          cp "$OI_HOME/composition.json" "$RUNNER_TEMP/composition-second.json"
+          cmp "$RUNNER_TEMP/composition-first.json" "$RUNNER_TEMP/composition-second.json"
+
+          test "$(cat "$ROOT/Control/HUMAN-SENTINEL.txt")" = "human-control-sentinel"
+          test "$(cat "$ROOT/Work/WORK-SENTINEL.txt")" = "ordinary-work-sentinel"
+
+      - name: Status is exact and fully registered
+        shell: bash
+        env:
+          OI_SOURCE_ROOT: ${{ github.workspace }}
+        run: |
+          set -euo pipefail
+          ROOT="$RUNNER_TEMP/oi-personal-ground"
+          OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
+          export OI_HOME="$ROOT/.central/oi/state"
+          "$OI" status --json > "$RUNNER_TEMP/status.json"
+          jq -e '.surfaces | length == 6' "$RUNNER_TEMP/status.json"
+          jq -e '[.surfaces[].state] | all(. == "registered")' "$RUNNER_TEMP/status.json"
+          jq -e '[.surfaces[].id] | sort == ["actuation","ai-kit","central","quaternal-logic","software-factory","workcell"]' "$RUNNER_TEMP/status.json"
+
+      - name: Development launch affordances resolve
+        shell: bash
+        env:
+          OI_SOURCE_ROOT: ${{ github.workspace }}
+        run: |
+          set -euo pipefail
+          OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
+          "$OI" web --check
+          "$OI" app --check
+
+      - name: Freeze and verify exact full-mainline candidate in disposable environment
+        shell: bash
+        env:
+          OI_SOURCE_ROOT: ${{ github.workspace }}
+        run: |
+          set -euo pipefail
+          ROOT="$RUNNER_TEMP/oi-personal-ground"
+          OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
+          export OI_HOME="$ROOT/.central/oi/state"
+
+          ACCEPT=(
+            "central=a9e07115fc91174fd32abffa0b3ca338b6786507"
+            "actuation=b59c17cceff7dbe773f2415ae9dd969e730f7cb3"
+            "ai-kit=b7843b437a8d4edd364b22aec9d7625bc8124915"
+            "software-factory=164302df7b98442217c991c8067a4447884e289a"
+            "workcell=4e3884076baf05ee7e3cfcfc2b806dfea46cf9ee"
+            "quaternal-logic=112c3030036e33c265f97d5a9c0314130ec299bc"
+          )
+
+          SNAPSHOT_ARGS=(--output "$RUNNER_TEMP/full-suite-snapshot.json" --require-full)
+          for item in "${ACCEPT[@]}"; do
+            SNAPSHOT_ARGS+=(--select "$item" --accepted-mainline "$item")
+          done
+          "$OI" snapshot "${SNAPSHOT_ARGS[@]}"
+          "$OI" verify \
+            --snapshot "$RUNNER_TEMP/full-suite-snapshot.json" \
+            --receipt "$RUNNER_TEMP/full-suite-composition-receipt.json" \
+            --require-full
+
+          jq -e '.kind == "oi.suite-snapshot/v1" and .completeness == "full-mainline" and (.surfaces | length == 6)' "$RUNNER_TEMP/full-suite-snapshot.json"
+          jq -e '.kind == "oi.composition-receipt/v1" and .result == "prelocal-passed" and (.surfaces | length == 6)' "$RUNNER_TEMP/full-suite-composition-receipt.json"
+
+      - name: Bounded cleanup preserves human/native roots
+        shell: bash
+        env:
+          OI_SOURCE_ROOT: ${{ github.workspace }}
+        run: |
+          set -euo pipefail
+          ROOT="$RUNNER_TEMP/oi-personal-ground"
+          OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
+          export OI_HOME="$ROOT/.central/oi/state"
+          "$OI" cleanup --managed
+          test ! -e "$ROOT/.central/oi/managed"
+          test "$(cat "$ROOT/Control/HUMAN-SENTINEL.txt")" = "human-control-sentinel"
+          test "$(cat "$ROOT/Work/WORK-SENTINEL.txt")" = "ordinary-work-sentinel"
+          test -e "$OI_HOME/composition.json"
+
+      - name: Upload pre-local evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: oi-first-suite-preflight-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/status.json
+            ${{ runner.temp }}/full-suite-snapshot.json
+            ${{ runner.temp }}/full-suite-composition-receipt.json
+            ${{ runner.temp }}/composition-first.json
+            ${{ runner.temp }}/composition-second.json
+          if-no-files-found: error
