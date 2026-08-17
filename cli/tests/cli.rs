@@ -157,7 +157,16 @@ fn full_registered_composition_is_reported_without_invented_aliases() {
         "aikit",
         "if [ \"$1\" = '--version' ]; then echo 'aikit 1.0.0'; fi",
     );
-    for (module, executable) in [("central", ctrl), ("ai-kit", aikit)] {
+    let workcell = fake_executable(
+        bin.path(),
+        "workcell",
+        "if [ \"$1\" = '--version' ]; then echo 'workcell 0.1.0'; fi",
+    );
+    for (module, executable) in [
+        ("central", ctrl),
+        ("ai-kit", aikit),
+        ("workcell", workcell),
+    ] {
         let result = output(
             oi(home.path(), bin.path())
                 .args(["register", module, "--executable"])
@@ -165,12 +174,7 @@ fn full_registered_composition_is_reported_without_invented_aliases() {
         );
         assert!(result.status.success(), "{}", text(&result.stderr));
     }
-    for module in [
-        "actuation",
-        "software-factory",
-        "workcell",
-        "quaternal-logic",
-    ] {
+    for module in ["actuation", "software-factory", "quaternal-logic"] {
         let root = home.path().join(module);
         fs::create_dir_all(&root).unwrap();
         let result = output(
@@ -189,7 +193,7 @@ fn full_registered_composition_is_reported_without_invented_aliases() {
         .iter()
         .filter_map(|row| row["alias"].as_str())
         .collect();
-    assert_eq!(aliases, vec!["ctrl", "kit"]);
+    assert_eq!(aliases, vec!["ctrl", "kit", "workcell"]);
 }
 
 #[cfg(unix)]
@@ -308,13 +312,13 @@ fn central_init_failure_does_not_record_false_personal_ground() {
 
 #[cfg(unix)]
 #[test]
-fn install_central_registers_an_existing_compatible_ctrl() {
+fn register_central_discovers_an_existing_compatible_ctrl() {
     let home = TempDir::new().unwrap();
     let bin = TempDir::new().unwrap();
     fake_central(bin.path(), 0);
-    let result = output(oi(home.path(), bin.path()).args(["install", "central"]));
+    let result = output(oi(home.path(), bin.path()).args(["register", "central"]));
     assert!(result.status.success(), "{}", text(&result.stderr));
-    assert!(text(&result.stdout).contains("existing compatible Central"));
+    assert!(text(&result.stdout).contains("Registered: Central"));
     let state: Value =
         serde_json::from_slice(&fs::read(home.path().join("composition.json")).unwrap()).unwrap();
     assert_eq!(state["modules"]["central"]["version"], "ctrl 0.1.0");
