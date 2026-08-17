@@ -26,11 +26,11 @@ jobs:
       - name: Commit transformed product and test tree
         shell: bash
         run: |
-          git checkout HEAD -- .github/workflows/phase3-implementation-patch.yml .github/workflows/phase3-run-patch.yml
+          git checkout HEAD -- .github/workflows/phase3-implementation-patch.yml .github/workflows/phase3-run-patch.yml .github/workflows/shared-field.yml
           git config user.name 'Epii'
           git config user.email 'frank.g.taylor97@gmail.com'
-          git add shared-field .github/workflows/shared-field.yml
+          git add shared-field
           git commit -m 'Enforce explicit bounded Exchange authority'
           git push origin HEAD:agent/oi-017-exchange-authority
 
-# product-only trigger 4
+# shared-field-only trigger 5
