@@ -16,7 +16,7 @@ fn manifest(minimum_version: &str) -> PackageManifest {
         source: PackageSource {
             kind: "git".into(),
             locator: "EpiLogos/ai-kit".into(),
-            revision: "8ec1f923b8cc59b7e18e7b6c1afa0974ca6f1208".into(),
+            revision: "15d7c9f1122336b50189bb1d70961084cbb9685b".into(),
         },
         compatibility: Vec::new(),
         permissions: Vec::new(),
