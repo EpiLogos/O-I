@@ -6,7 +6,7 @@ publish = false
 
 [dependencies]
 aikit-core = { git = "https://github.com/EpiLogos/ai-kit", rev = "8ec1f923b8cc59b7e18e7b6c1afa0974ca6f1208" }
-epilogos-factory = { git = "https://github.com/EpiLogos/agent-system-design", rev = "ee2012f7216b644ee673583eea6041de926cadea" }
+epilogos-factory = { git = "https://github.com/EpiLogos/agent-system-design", rev = "531fe5489e71846cde02cfc2412e3aa090d3cc25" }
 oi-cli = { path = "../../cli" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
