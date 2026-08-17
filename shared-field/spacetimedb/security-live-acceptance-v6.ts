@@ -37,14 +37,24 @@ async function waitUntil<T>(read: () => T | undefined | false, description: stri
 }
 
 function rows(handle: any): any[] { return [...handle.iter()]; }
-function visibleProjectionRefs(client: Client): string[] { return rows(client.conn.db.projection).map(row => row.projectionRef).sort(); }
-function visibleExploreRefs(client: Client): string[] { return rows(client.conn.db.exploreEntry).map(row => row.semanticRef).sort(); }
-function snapshot(client: Client) {
+function visibleProjectionRefs(client: Client, fieldRef: string): string[] {
+  return rows(client.conn.db.projection)
+    .filter(row => row.fieldRef === fieldRef)
+    .map(row => row.projectionRef)
+    .sort();
+}
+function visibleExploreRefs(client: Client, fieldRef: string): string[] {
+  return rows(client.conn.db.exploreEntry)
+    .filter(row => row.fieldRef === fieldRef)
+    .map(row => row.semanticRef)
+    .sort();
+}
+function snapshot(client: Client, fieldRef: string) {
   return {
-    entries: rows(client.conn.db.exploreEntry).map(row => JSON.parse(row.entryJson)),
-    relations: rows(client.conn.db.exploreRelation).map(row => JSON.parse(row.relationJson)),
-    projections: rows(client.conn.db.projection).map(row => JSON.parse(row.contractJson)),
-    contributions: rows(client.conn.db.contribution).map(row => JSON.parse(row.contractJson)),
+    entries: rows(client.conn.db.exploreEntry).filter(row => row.fieldRef === fieldRef).map(row => JSON.parse(row.entryJson)),
+    relations: rows(client.conn.db.exploreRelation).filter(row => row.fieldRef === fieldRef).map(row => JSON.parse(row.relationJson)),
+    projections: rows(client.conn.db.projection).filter(row => row.fieldRef === fieldRef).map(row => JSON.parse(row.contractJson)),
+    contributions: rows(client.conn.db.contribution).filter(row => row.fieldRef === fieldRef).map(row => JSON.parse(row.contractJson)),
   };
 }
 
@@ -153,19 +163,19 @@ try {
   await c.conn.reducers.putProjection(projectionArgs(disjointC));
   for (const item of [publicA, privateB, privateC, disjointB, disjointC]) await owner.conn.reducers.putExploreEntry(exploreArgs(item));
 
-  await waitUntil(() => visibleExploreRefs(stranger).includes(publicA.value.projection_ref), 'public projection Explore row');
-  await waitUntil(() => visibleExploreRefs(b).includes(disjointB.value.projection_ref), 'B private projection Explore row');
-  await waitUntil(() => visibleExploreRefs(c).includes(disjointC.value.projection_ref), 'C private projection Explore row');
+  await waitUntil(() => visibleExploreRefs(stranger, fieldRef).includes(publicA.value.projection_ref), 'public projection Explore row');
+  await waitUntil(() => visibleExploreRefs(b, fieldRef).includes(disjointB.value.projection_ref), 'B private projection Explore row');
+  await waitUntil(() => visibleExploreRefs(c, fieldRef).includes(disjointC.value.projection_ref), 'C private projection Explore row');
 
-  assert.deepEqual(visibleProjectionRefs(stranger), [publicA.value.projection_ref]);
-  assert.equal(visibleProjectionRefs(b).includes(privateB.value.projection_ref), true);
-  assert.equal(visibleProjectionRefs(b).includes(privateC.value.projection_ref), false);
-  assert.equal(visibleProjectionRefs(c).includes(privateC.value.projection_ref), true);
-  assert.equal(visibleProjectionRefs(c).includes(privateB.value.projection_ref), false);
+  assert.deepEqual(visibleProjectionRefs(stranger, fieldRef), [publicA.value.projection_ref]);
+  assert.equal(visibleProjectionRefs(b, fieldRef).includes(privateB.value.projection_ref), true);
+  assert.equal(visibleProjectionRefs(b, fieldRef).includes(privateC.value.projection_ref), false);
+  assert.equal(visibleProjectionRefs(c, fieldRef).includes(privateC.value.projection_ref), true);
+  assert.equal(visibleProjectionRefs(c, fieldRef).includes(privateB.value.projection_ref), false);
 
-  const strangerApp = createReferentExploreApplication(snapshot(stranger));
-  const bApp = createReferentExploreApplication(snapshot(b));
-  const cApp = createReferentExploreApplication(snapshot(c));
+  const strangerApp = createReferentExploreApplication(snapshot(stranger, fieldRef));
+  const bApp = createReferentExploreApplication(snapshot(b, fieldRef));
+  const cApp = createReferentExploreApplication(snapshot(c, fieldRef));
   const publicRef = strangerApp.referentFor(publicA.value.projection_ref);
   assert.equal(publicRef, bApp.referentFor(publicA.value.projection_ref));
   assert.equal(publicRef, cApp.referentFor(publicA.value.projection_ref));
@@ -184,7 +194,7 @@ try {
   assert.equal(strangerApp.open(bHiddenRef), undefined);
   assert.equal(JSON.stringify(strangerApp.search('disjoint')).includes('referent'), false);
 
-  const rebuiltB = createReferentExploreApplication(snapshot(b));
+  const rebuiltB = createReferentExploreApplication(snapshot(b, fieldRef));
   assert.equal(rebuiltB.referentFor(disjointB.value.projection_ref), bHiddenRef);
   assert.deepEqual(rebuiltB.bindings(), bApp.bindings());
 
