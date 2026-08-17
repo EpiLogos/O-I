@@ -1,0 +1,32 @@
+name: OI17 SkillSet fixture fix
+
+on:
+  push:
+    branches:
+      - converge/oi-017-first-suite
+    paths:
+      - scripts/oi17_skillset_test_fix.py
+      - .github/workflows/oi17-skillset-test-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: converge/oi-017-first-suite
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - run: python scripts/oi17_skillset_test_fix.py
+      - run: cargo test --manifest-path cli/Cargo.toml --locked --test suite_skillset
+      - name: Commit
+        run: |
+          git config user.name oi17-convergence-bot
+          git config user.email actions@users.noreply.github.com
+          git add cli/tests/suite_skillset.rs
+          git diff --cached --check
+          git commit -m 'test(skillset): align broad fixtures with canonical native publications'
+          git push origin HEAD:converge/oi-017-first-suite
