@@ -76,20 +76,22 @@ fn live_host_reading_fixture_is_parseable_and_truthful_about_cross_product_seams
 
     let factory = hosted
         .iter()
-        .find(|entry| entry.contribution.native_owner == "software-factory")
-        .expect("Factory Build host reading must be present");
+        .find(|entry| entry.contribution.contribution_ref == "factory.surface/build")
+        .expect("Factory Build fallback reading must be present");
     assert_eq!(
         factory.contribution.availability,
         ContributionAvailability::Degraded
     );
     assert_eq!(
         factory.contribution.target_contract.as_deref(),
-        Some("@epilogos/factory-build-surface@0.1.0:FactoryBuildView")
+        Some("factory.build-view-provider/v1")
     );
-    assert_eq!(
-        factory.contribution.provenance.revision.as_deref(),
-        Some("a57e2011149728891e5cc1a0264ba4b3ebe021c5")
-    );
+    assert!(factory
+        .contribution
+        .detail
+        .as_deref()
+        .unwrap_or_default()
+        .contains("OI_FACTORY_BUILD_STATE"));
     for kind in [
         "project",
         "run",
@@ -123,7 +125,7 @@ fn live_host_reading_fixture_is_parseable_and_truthful_about_cross_product_seams
     );
     assert_eq!(
         session_space.contribution.provenance.revision.as_deref(),
-        Some("b98f608fa4c49355f4c4d621e7df391f404d2e0f")
+        Some("8ec1f923b8cc59b7e18e7b6c1afa0974ca6f1208")
     );
     assert_eq!(
         session_space.contribution.availability,
@@ -142,7 +144,7 @@ fn live_host_reading_fixture_is_parseable_and_truthful_about_cross_product_seams
             && entry.contribution.target_contract.as_deref()
                 == Some("aikit.harness-composition-topology/v1")
             && entry.contribution.provenance.revision.as_deref()
-                == Some("b98f608fa4c49355f4c4d621e7df391f404d2e0f")
+                == Some("8ec1f923b8cc59b7e18e7b6c1afa0974ca6f1208")
             && entry.contribution.availability == ContributionAvailability::Degraded
     }));
 }
