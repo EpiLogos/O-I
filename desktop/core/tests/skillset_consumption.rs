@@ -22,8 +22,9 @@ fn desktop_consumes_the_canonical_suite_skillset_contract() {
         .expect("root/metagentic suite-operation profile");
     assert_eq!(root.scope, AgentScope::RootWorld);
 
+    assert!(manifest.expected_native_skills.is_empty());
     assert!(manifest
-        .expected_native_skills
+        .skills
         .iter()
-        .any(|expectation| expectation.owner_product == "Actuation"));
+        .any(|skill| skill.skill_ref == "actuation:operator" && skill.owner_product == "Actuation"));
 }
