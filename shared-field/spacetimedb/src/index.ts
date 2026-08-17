@@ -3,6 +3,16 @@ import { schema, table, t, SenderError } from 'spacetimedb/server';
 const CONTACT_WINDOW_MICROS = 60_000_000n;
 const CONTACT_LIMIT_PER_WINDOW = 3;
 const CONTACT_MAX_TTL_SECONDS = 7 * 24 * 60 * 60;
+const CONTRIBUTION_WINDOW_MICROS = 60_000_000n;
+const CONTRIBUTION_LIMIT_PER_WINDOW = 8;
+const CONTRIBUTION_BYTES_PER_WINDOW = 96 * 1024;
+const CONTRIBUTION_MAX_OUTSTANDING = 8;
+const CONTRIBUTION_MAX_BYTES = 32 * 1024;
+const CONTRIBUTION_MAX_PROVENANCE = 16;
+const CONTRIBUTION_MAX_COLLECTION = 64;
+const CONTRIBUTION_MAX_DEPTH = 8;
+const CONTRIBUTION_VISIBILITIES = new Set(['public', 'restricted', 'private']);
+const CONTRIBUTION_TRANSPORTS = new Set(['a2a', 'mcp', 'http', 'local-import']);
 const HOSTED_VISIBILITIES = new Set(['public', 'restricted', 'private']);
 const PROJECTION_VISIBILITIES = new Set(['public', 'restricted', 'private']);
 
@@ -99,6 +109,125 @@ const projectionBacking = table(
   }
 );
 
+/*
+ * Phase 2 Contribution shape:
+ *
+ * untrusted ingress
+ *      ↓
+ * PRIVATE immutable-ish ingress evidence / quarantine
+ *      ↓ explicit receiving-side Admission
+ * PRIVATE current admitted Contribution
+ *      ↓ separate receiving-side index eligibility
+ * caller-filtered Contribution / Explore Views
+ *
+ * Transport/source identifiers remain claims. ingressRef, timestamps, caller identity,
+ * lifecycle, Admission and index decisions are produced/enforced by this module.
+ */
+const contributionIngressBacking = table(
+  { name: 'contribution_ingress_backing', public: false },
+  {
+    rowId: t.u64().primaryKey().autoInc(),
+    ingressRef: t.string().unique(),
+    ingressKey: t.string().unique(),
+    fieldRef: t.string().index('btree'),
+    claimedContributionRef: t.string().index('btree'),
+    contributorParticipantRef: t.string().index('btree'),
+    submitterIdentity: t.identity().index('btree'),
+    sourceKind: t.string().index('btree'),
+    transportProvider: t.string(),
+    transportMessageId: t.string(),
+    payloadFingerprint: t.string(),
+    payloadBytes: t.u64(),
+    receivedAtMicros: t.u64(),
+    state: t.string().index('btree'),
+    contractJson: t.string(),
+    serverProvenanceJson: t.string(),
+  }
+);
+
+const contributionReceipt = table(
+  { name: 'contribution_receipt', public: false },
+  {
+    ingressRef: t.string().primaryKey(),
+    submitterIdentity: t.identity().index('btree'),
+    fieldRef: t.string().index('btree'),
+    contributionRef: t.string(),
+    state: t.string(),
+    receivedAtMicros: t.u64(),
+    payloadFingerprint: t.string(),
+  }
+);
+
+const admittedContributionBacking = table(
+  { name: 'admitted_contribution_backing', public: false },
+  {
+    rowId: t.u64().primaryKey().autoInc(),
+    ingressRef: t.string().unique(),
+    contributionRef: t.string().unique(),
+    fieldRef: t.string().index('btree'),
+    contributorParticipantRef: t.string().index('btree'),
+    visibility: t.string().index('btree'),
+    audienceRefsJson: t.string(),
+    admissionDecisionRef: t.string(),
+    admittedAtMicros: t.u64(),
+    contractJson: t.string(),
+  }
+);
+
+const admissionDecision = table(
+  { name: 'admission_decision', public: false },
+  {
+    decisionRef: t.string().primaryKey(),
+    ingressRef: t.string().index('btree'),
+    fieldRef: t.string().index('btree'),
+    disposition: t.string().index('btree'),
+    admissionActorIdentity: t.identity().index('btree'),
+    admissionParticipantRef: t.string(),
+    decidedAtMicros: t.u64(),
+    reason: t.string(),
+    evidenceJson: t.string(),
+    serverProvenanceJson: t.string(),
+  }
+);
+
+const contributionIndexPolicy = table(
+  { name: 'contribution_index_policy', public: false },
+  {
+    ingressRef: t.string().primaryKey(),
+    fieldRef: t.string().index('btree'),
+    eligible: t.bool(),
+    decisionRef: t.string(),
+    decidedAtMicros: t.u64(),
+  }
+);
+
+const contributionIndexDecision = table(
+  { name: 'contribution_index_decision', public: false },
+  {
+    decisionRef: t.string().primaryKey(),
+    ingressRef: t.string().index('btree'),
+    fieldRef: t.string().index('btree'),
+    eligible: t.bool(),
+    decisionActorIdentity: t.identity().index('btree'),
+    decisionParticipantRef: t.string(),
+    decidedAtMicros: t.u64(),
+    reason: t.string(),
+    evidenceJson: t.string(),
+  }
+);
+
+const contributionIngressRate = table(
+  { name: 'contribution_ingress_rate', public: false },
+  {
+    rateKey: t.string().primaryKey(),
+    fieldRef: t.string().index('btree'),
+    originRef: t.string().index('btree'),
+    windowStartedMicros: t.u64(),
+    count: t.u32(),
+    bytes: t.u64(),
+  }
+);
+
 const exploreEntryBacking = table(
   { name: 'explore_entry_backing', public: false },
   {
@@ -190,6 +319,13 @@ const spacetimedb = schema({
   fieldReadGrant,
   participantBacking,
   projectionBacking,
+  contributionIngressBacking,
+  contributionReceipt,
+  admittedContributionBacking,
+  admissionDecision,
+  contributionIndexPolicy,
+  contributionIndexDecision,
+  contributionIngressRate,
   exploreEntryBacking,
   exploreRelationBacking,
   watch,
@@ -244,6 +380,80 @@ function nowMicros(ctx: any): bigint {
   return ctx.timestamp.microsSinceUnixEpoch;
 }
 
+function utf8Bytes(value: string): number {
+  let bytes = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index);
+    if (code < 0x80) bytes += 1;
+    else if (code < 0x800) bytes += 2;
+    else if (code >= 0xd800 && code <= 0xdbff && index + 1 < value.length) {
+      const next = value.charCodeAt(index + 1);
+      if (next >= 0xdc00 && next <= 0xdfff) {
+        bytes += 4;
+        index += 1;
+      } else bytes += 3;
+    } else bytes += 3;
+  }
+  return bytes;
+}
+
+/* Deterministic server-side replay/content fingerprint; not represented as a trust or crypto proof. */
+function fingerprintString(value: string): string {
+  let a = 0x811c9dc5;
+  let b = 0x9e3779b9;
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index);
+    a = Math.imul(a ^ code, 0x01000193) >>> 0;
+    b = Math.imul((b + code) >>> 0, 0x85ebca6b) >>> 0;
+  }
+  return `${a.toString(16).padStart(8, '0')}${b.toString(16).padStart(8, '0')}`;
+}
+
+function enforceJsonBounds(value: unknown, name: string, depth = 0): void {
+  if (depth > CONTRIBUTION_MAX_DEPTH) fail(`${name} exceeds maximum nesting depth ${CONTRIBUTION_MAX_DEPTH}`);
+  if (typeof value === 'string') {
+    if (utf8Bytes(value) > 8_192) fail(`${name} contains a string exceeding 8192 bytes`);
+    return;
+  }
+  if (value === null || typeof value === 'number' || typeof value === 'boolean') return;
+  if (Array.isArray(value)) {
+    if (value.length > CONTRIBUTION_MAX_COLLECTION) {
+      fail(`${name} array exceeds ${CONTRIBUTION_MAX_COLLECTION} entries`);
+    }
+    value.forEach((entry, index) => enforceJsonBounds(entry, `${name}[${index}]`, depth + 1));
+    return;
+  }
+  if (typeof value !== 'object') fail(`${name} contains an unsupported JSON value`);
+  const entries = Object.entries(value as Record<string, unknown>);
+  if (entries.length > CONTRIBUTION_MAX_COLLECTION) {
+    fail(`${name} object exceeds ${CONTRIBUTION_MAX_COLLECTION} properties`);
+  }
+  for (const [key, entry] of entries) {
+    if (utf8Bytes(key) > 128) fail(`${name} contains a property name exceeding 128 bytes`);
+    enforceJsonBounds(entry, `${name}.${key}`, depth + 1);
+  }
+}
+
+function requireJsonStringArray(value: string, name: string, maxItems = 32): string[] {
+  if (utf8Bytes(value) > 4_096) fail(`${name} exceeds 4096 byte limit`);
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value);
+  } catch {
+    fail(`${name} must contain valid JSON`);
+  }
+  if (!Array.isArray(parsed)) fail(`${name} must contain a JSON array`);
+  if (parsed.length > maxItems) fail(`${name} exceeds ${maxItems} entries`);
+  const seen = new Set<string>();
+  return parsed.map((entry, index) => {
+    if (typeof entry !== 'string') fail(`${name}[${index}] must be a string`);
+    requireString(entry, `${name}[${index}]`, 512);
+    if (seen.has(entry)) fail(`${name} contains duplicate ref: ${entry}`);
+    seen.add(entry);
+    return entry;
+  });
+}
+
 function authorityKey(fieldRef: string, participantRef: string): string {
   return `${fieldRef}|${participantRef}`;
 }
@@ -258,6 +468,10 @@ function contactPolicyKey(fieldRef: string, blockerParticipantRef: string, block
 
 function contactRateKey(fieldRef: string, initiatorParticipantRef: string): string {
   return `${fieldRef}|${initiatorParticipantRef}`;
+}
+
+function contributionRateKey(fieldRef: string, originRef: string): string {
+  return fingerprintString(`${fieldRef}\u001f${originRef}`);
 }
 
 function isFieldOwner(ctx: any, fieldRef: string): boolean {
@@ -280,7 +494,7 @@ function requireParticipantInField(ctx: any, participantRef: string, fieldRef: s
 }
 
 function requireRole(role: string): void {
-  if (!['observer', 'contact', 'contributor'].includes(role)) fail(`Unsupported authority role: ${role}`);
+  if (!['observer', 'contact', 'contributor', 'admitter'].includes(role)) fail(`Unsupported authority role: ${role}`);
 }
 
 function requireWatchState(state: string): void {
@@ -409,6 +623,52 @@ function visibleProjectionRows(ctx: any): any[] {
   return rows;
 }
 
+function contributionAudience(row: any): { visibility: string; refs: string[] } {
+  const refs = requireJsonStringArray(row.audienceRefsJson, 'stored Contribution audience', 32);
+  return { visibility: row.visibility, refs };
+}
+
+function callerCanSeeAdmittedContribution(ctx: any, row: any): boolean {
+  const field = ctx.db.sharedFieldBacking.fieldRef.find(row.fieldRef);
+  if (!field || !callerCanSeeField(ctx, field)) return false;
+  if (isFieldOwner(ctx, row.fieldRef)) return true;
+  const audience = contributionAudience(row);
+  const callerRefs = callerPersistentParticipantRefs(ctx, row.fieldRef);
+  if (audience.visibility === 'public') {
+    if (audience.refs.length === 0) return true;
+    return audience.refs.some(ref => callerRefs.has(ref));
+  }
+  if (audience.visibility === 'restricted') {
+    if (callerRefs.size === 0) return false;
+    if (audience.refs.length === 0) return true;
+    return audience.refs.some(ref => callerRefs.has(ref));
+  }
+  if (audience.visibility === 'private') {
+    if (callerRefs.size === 0 || audience.refs.length === 0) return false;
+    return audience.refs.some(ref => callerRefs.has(ref));
+  }
+  return false;
+}
+
+function visibleContributionRows(ctx: any): any[] {
+  const rows: any[] = [];
+  for (const field of visibleFieldRows(ctx)) {
+    for (const row of ctx.db.admittedContributionBacking.fieldRef.filter(field.fieldRef)) {
+      if (callerCanSeeAdmittedContribution(ctx, row)) rows.push(row);
+    }
+  }
+  return rows;
+}
+
+function contributionIsIndexEligible(ctx: any, row: any): boolean {
+  const policy = ctx.db.contributionIndexPolicy.ingressRef.find(row.ingressRef);
+  return Boolean(policy?.eligible);
+}
+
+function contributionClaimsForRef(ctx: any, semanticRef: string): any[] {
+  return Array.from(ctx.db.contributionIngressBacking.claimedContributionRef.filter(semanticRef));
+}
+
 function projectionLineagesReferencingExploreEntry(ctx: any, row: any): Set<string> {
   const refs = new Set<string>();
   for (const projectionRow of ctx.db.projectionBacking.fieldRef.filter(row.fieldRef)) {
@@ -423,6 +683,15 @@ function projectionLineagesReferencingExploreEntry(ctx: any, row: any): Set<stri
 function callerCanSeeExploreEntry(ctx: any, row: any): boolean {
   const field = ctx.db.sharedFieldBacking.fieldRef.find(row.fieldRef);
   if (!field || !callerCanSeeField(ctx, field)) return false;
+
+  const admittedContribution = ctx.db.admittedContributionBacking.contributionRef.find(row.semanticRef);
+  if (admittedContribution) {
+    if (admittedContribution.fieldRef !== row.fieldRef) return false;
+    if (!contributionIsIndexEligible(ctx, admittedContribution)) return false;
+    if (!callerCanSeeAdmittedContribution(ctx, admittedContribution)) return false;
+  } else if (contributionClaimsForRef(ctx, row.semanticRef).some(claim => claim.fieldRef === row.fieldRef)) {
+    return false;
+  }
 
   const entry = parseStoredJson(row.entryJson, 'Explore entryJson');
   const directProjectionRef = typeof entry.projection_ref === 'string' ? entry.projection_ref : undefined;
@@ -496,6 +765,12 @@ export const projection = spacetimedb.view(
   (ctx) => visibleProjectionRows(ctx)
 );
 
+export const contribution = spacetimedb.view(
+  { name: 'contribution', public: true },
+  t.array(admittedContributionBacking.rowType),
+  (ctx) => visibleContributionRows(ctx)
+);
+
 export const explore_entry = spacetimedb.view(
   { name: 'explore_entry', public: true },
   t.array(exploreEntryBacking.rowType),
@@ -549,6 +824,12 @@ export const my_contact = spacetimedb.view(
   }
 );
 
+export const my_contribution_receipt = spacetimedb.view(
+  { name: 'my_contribution_receipt', public: true },
+  t.array(contributionReceipt.rowType),
+  (ctx) => Array.from(ctx.db.contributionReceipt.submitterIdentity.filter(ctx.sender))
+);
+
 function requireParticipantAuthority(ctx: any, fieldRef: string, participantRef: string, roles: string[]): any {
   const key = authorityKey(fieldRef, participantRef);
   const grant = ctx.db.fieldAuthority.authorityKey.find(key);
@@ -568,6 +849,15 @@ function requireParticipantAuthority(ctx: any, fieldRef: string, participantRef:
   }
   if (!roles.includes(grant.role)) fail(`Participant ${participantRef} lacks required role`);
   return grant;
+}
+
+function requireAdmissionAuthority(ctx: any, fieldRef: string, admissionParticipantRef: string): void {
+  if (admissionParticipantRef === '') {
+    requireFieldOwner(ctx, fieldRef);
+    return;
+  }
+  requireParticipantInField(ctx, admissionParticipantRef, fieldRef);
+  requireParticipantAuthority(ctx, fieldRef, admissionParticipantRef, ['admitter']);
 }
 
 function requirePersistentParticipantAuthority(ctx: any, fieldRef: string, participantRef: string): any {
@@ -613,6 +903,245 @@ function validateProjectionAudience(ctx: any, fieldRef: string, contract: Record
     seen.add(rawRef);
     requireParticipantInField(ctx, rawRef, fieldRef);
   }
+}
+
+function validateContributionVisibility(ctx: any, fieldRef: string, visibility: string, audienceRefsJson: string): string[] {
+  if (visibility === 'unlisted') fail('Hosted unlisted Contribution is rejected until direct-only resolution is proven provider-side');
+  if (!CONTRIBUTION_VISIBILITIES.has(visibility)) fail(`Unsupported Contribution visibility: ${visibility}`);
+  const field = ctx.db.sharedFieldBacking.fieldRef.find(fieldRef);
+  if (!field) fail(`Unknown SharedField semantic ref: ${fieldRef}`);
+  if (field.visibility === 'restricted' && visibility === 'public') {
+    fail('Contribution visibility cannot widen a restricted SharedField to public');
+  }
+  if (field.visibility === 'private' && visibility !== 'private') {
+    fail('Contribution visibility cannot widen a private SharedField');
+  }
+  const refs = requireJsonStringArray(audienceRefsJson, 'Contribution audience refs', 32);
+  for (const ref of refs) requireParticipantInField(ctx, ref, fieldRef);
+  if (visibility === 'private' && refs.length === 0) fail('Private Contribution requires an explicit audience');
+  return refs;
+}
+
+function validateKnownTargetField(ctx: any, fieldRef: string, target: Record<string, any>): void {
+  const kind = String(target.kind ?? '');
+  const ref = String(target.ref ?? '');
+  if (kind === 'oi.participant' || kind === 'participant') {
+    requireParticipantInField(ctx, ref, fieldRef);
+    return;
+  }
+  if (kind === 'oi.shared-field' || kind === 'shared-field') {
+    if (ref !== fieldRef) fail('Contribution target SharedField must equal receiving field');
+    return;
+  }
+  if (kind === 'oi.projection' || kind === 'projection') {
+    for (const row of ctx.db.projectionBacking.projectionRef.filter(ref)) {
+      if (row.fieldRef !== fieldRef) fail('Contribution target Projection crosses a SharedField boundary');
+      return;
+    }
+  }
+  if (kind === 'oi.contribution' || kind === 'contribution') {
+    for (const row of ctx.db.contributionIngressBacking.claimedContributionRef.filter(ref)) {
+      if (row.fieldRef !== fieldRef) fail('Contribution target Contribution crosses a SharedField boundary');
+      return;
+    }
+  }
+}
+
+function validateContributionContract(ctx: any, fieldRef: string, contributorParticipantRef: string, contractJson: string): { contract: Record<string, any>; payloadBytes: number; fingerprint: string } {
+  const payloadBytes = utf8Bytes(contractJson);
+  if (payloadBytes > CONTRIBUTION_MAX_BYTES) fail(`Contribution payload exceeds ${CONTRIBUTION_MAX_BYTES} byte limit`);
+  const contract = requireJsonObject(contractJson, 'Contribution contract', CONTRIBUTION_MAX_BYTES);
+  enforceJsonBounds(contract, 'Contribution contract');
+  requireEqual(contract.schema, 'oi.contribution/v1', 'Contribution schema');
+  requireEqual(contract.field_ref, fieldRef, 'Contribution fieldRef');
+  requireEqual(contract.contributor_participant_ref, contributorParticipantRef, 'Contribution contributorParticipantRef');
+  requireString(String(contract.contribution_ref ?? ''), 'Contribution contributionRef', 512);
+  requireString(String(contract.created_at ?? ''), 'Contribution createdAt', 64);
+  requireString(String(contract.mode ?? ''), 'Contribution mode', 64);
+  const target = contract.target;
+  if (target === null || typeof target !== 'object' || Array.isArray(target)) fail('Contribution target must be an object');
+  requireString(String(target.ref ?? ''), 'Contribution target.ref', 512);
+  requireString(String(target.kind ?? ''), 'Contribution target.kind', 128);
+  validateKnownTargetField(ctx, fieldRef, target as Record<string, any>);
+  const relation = contract.relation;
+  if (relation === null || typeof relation !== 'object' || Array.isArray(relation)) fail('Contribution relation must be an object');
+  requireString(String(relation.kind ?? ''), 'Contribution relation.kind', 128);
+  const representation = contract.representation;
+  if (representation === null || typeof representation !== 'object' || Array.isArray(representation)) fail('Contribution representation must be an object');
+  requireString(String(representation.kind ?? ''), 'Contribution representation.kind', 128);
+  if (!(typeof representation.ref === 'string' && representation.ref.trim() !== '')
+      && !Object.prototype.hasOwnProperty.call(representation, 'payload')) {
+    fail('Contribution representation requires ref or payload');
+  }
+  if (representation.ref !== undefined) requireString(String(representation.ref), 'Contribution representation.ref', 512);
+  if (!Array.isArray(contract.provenance) || contract.provenance.length === 0) {
+    fail('Contribution provenance must be a non-empty array');
+  }
+  if (contract.provenance.length > CONTRIBUTION_MAX_PROVENANCE) {
+    fail(`Contribution provenance exceeds ${CONTRIBUTION_MAX_PROVENANCE} entries`);
+  }
+  contract.provenance.forEach((entry: any, index: number) => {
+    if (entry === null || typeof entry !== 'object' || Array.isArray(entry)) fail(`Contribution provenance[${index}] must be an object`);
+    requireString(String(entry.kind ?? ''), `Contribution provenance[${index}].kind`, 128);
+    requireString(String(entry.ref ?? ''), `Contribution provenance[${index}].ref`, 512);
+    requireString(String(entry.source_system ?? ''), `Contribution provenance[${index}].source_system`, 256);
+    if (entry.revision !== undefined) requireString(String(entry.revision), `Contribution provenance[${index}].revision`, 256);
+  });
+  for (const forbidden of ['admitted', 'admission', 'index_eligible', 'indexEligible', 'visibility', 'audience', 'state']) {
+    if (Object.prototype.hasOwnProperty.call(contract, forbidden)) {
+      fail(`Contribution sender cannot supply receiving policy field: ${forbidden}`);
+    }
+  }
+  return { contract, payloadBytes, fingerprint: fingerprintString(contractJson) };
+}
+
+function enforceContributionRate(ctx: any, fieldRef: string, originRef: string, payloadBytes: number): void {
+  const now = nowMicros(ctx);
+  const key = contributionRateKey(fieldRef, originRef);
+  const current = ctx.db.contributionIngressRate.rateKey.find(key);
+  if (!current || now - current.windowStartedMicros >= CONTRIBUTION_WINDOW_MICROS) {
+    const next = {
+      rateKey: key,
+      fieldRef,
+      originRef,
+      windowStartedMicros: now,
+      count: 1,
+      bytes: BigInt(payloadBytes),
+    };
+    if (current) ctx.db.contributionIngressRate.rateKey.update(next);
+    else ctx.db.contributionIngressRate.insert(next);
+    return;
+  }
+  if (current.count >= CONTRIBUTION_LIMIT_PER_WINDOW) fail(`Contribution rate limit exceeded for ${originRef} in ${fieldRef}`);
+  if (current.bytes + BigInt(payloadBytes) > BigInt(CONTRIBUTION_BYTES_PER_WINDOW)) {
+    fail(`Contribution byte budget exceeded for ${originRef} in ${fieldRef}`);
+  }
+  ctx.db.contributionIngressRate.rateKey.update({
+    ...current,
+    count: current.count + 1,
+    bytes: current.bytes + BigInt(payloadBytes),
+  });
+}
+
+function enforceContributionOutstanding(ctx: any, fieldRef: string, contributorParticipantRef: string): void {
+  let count = 0;
+  for (const row of ctx.db.contributionIngressBacking.contributorParticipantRef.filter(contributorParticipantRef)) {
+    if (row.fieldRef === fieldRef && row.state === 'quarantined') count += 1;
+  }
+  if (count >= CONTRIBUTION_MAX_OUTSTANDING) {
+    fail(`Contribution quarantine limit exceeded for ${contributorParticipantRef} in ${fieldRef}`);
+  }
+}
+
+function ingressContribution(ctx: any, input: {
+  fieldRef: string;
+  contributorParticipantRef: string;
+  sourceKind: string;
+  transportProvider: string;
+  transportMessageId: string;
+  contractJson: string;
+}): void {
+  requireString(input.transportMessageId, 'Contribution transportMessageId', 256);
+  requireString(input.transportProvider, 'Contribution transportProvider', 128);
+  requireParticipantInField(ctx, input.contributorParticipantRef, input.fieldRef);
+  const validated = validateContributionContract(ctx, input.fieldRef, input.contributorParticipantRef, input.contractJson);
+  const contributionRef = String(validated.contract.contribution_ref);
+  for (const row of ctx.db.contributionIngressBacking.claimedContributionRef.filter(contributionRef)) {
+    if (row.fieldRef !== input.fieldRef) fail('Contribution claimed semantic ref is already associated with another SharedField');
+  }
+  const ingressKey = fingerprintString(`${input.fieldRef}\u001f${input.contributorParticipantRef}\u001f${input.sourceKind}\u001f${input.transportProvider}\u001f${input.transportMessageId}`);
+  const existing = ctx.db.contributionIngressBacking.ingressKey.find(ingressKey);
+  if (existing) {
+    if (existing.payloadFingerprint === validated.fingerprint && existing.contractJson === input.contractJson) return;
+    fail('Contribution transport replay key conflicts with a different payload');
+  }
+  enforceContributionOutstanding(ctx, input.fieldRef, input.contributorParticipantRef);
+  enforceContributionRate(ctx, input.fieldRef, input.contributorParticipantRef, validated.payloadBytes);
+  const now = nowMicros(ctx);
+  const ingressRef = `ingress:${fingerprintString(`${ingressKey}\u001f${validated.fingerprint}`)}`;
+  if (ctx.db.contributionIngressBacking.ingressRef.find(ingressRef)) fail('Contribution server ingress fingerprint collision; retry with a new transport operation');
+  const serverProvenanceJson = JSON.stringify({
+    schema: 'oi.ingress-provenance/v1',
+    observed: {
+      source_kind: input.sourceKind,
+      transport_provider: input.transportProvider,
+      transport_message_id: input.transportMessageId,
+      target_field_ref: input.fieldRef,
+      contributor_participant_ref: input.contributorParticipantRef,
+      received_at_micros: String(now),
+    },
+    claims: {
+      contribution_ref: contributionRef,
+      payload_fingerprint: validated.fingerprint,
+    },
+  });
+  ctx.db.contributionIngressBacking.insert({
+    rowId: 0n,
+    ingressRef,
+    ingressKey,
+    fieldRef: input.fieldRef,
+    claimedContributionRef: contributionRef,
+    contributorParticipantRef: input.contributorParticipantRef,
+    submitterIdentity: ctx.sender,
+    sourceKind: input.sourceKind,
+    transportProvider: input.transportProvider,
+    transportMessageId: input.transportMessageId,
+    payloadFingerprint: validated.fingerprint,
+    payloadBytes: BigInt(validated.payloadBytes),
+    receivedAtMicros: now,
+    state: 'quarantined',
+    contractJson: input.contractJson,
+    serverProvenanceJson,
+  });
+  ctx.db.contributionReceipt.insert({
+    ingressRef,
+    submitterIdentity: ctx.sender,
+    fieldRef: input.fieldRef,
+    contributionRef,
+    state: 'quarantined',
+    receivedAtMicros: now,
+    payloadFingerprint: validated.fingerprint,
+  });
+}
+
+function updateContributionReceiptState(ctx: any, ingress: any, state: string): void {
+  const receipt = ctx.db.contributionReceipt.ingressRef.find(ingress.ingressRef);
+  if (!receipt) throw new Error(`Missing Contribution receipt for ${ingress.ingressRef}`);
+  ctx.db.contributionReceipt.ingressRef.update({ ...receipt, state });
+}
+
+function admissionDecisionRef(ingressRef: string, disposition: string, at: bigint, participantRef: string): string {
+  return `admission:${fingerprintString(`${ingressRef}\u001f${disposition}\u001f${String(at)}\u001f${participantRef}`)}`;
+}
+
+function indexDecisionRef(ingressRef: string, eligible: boolean, at: bigint, participantRef: string): string {
+  return `index:${fingerprintString(`${ingressRef}\u001f${eligible ? 'eligible' : 'ineligible'}\u001f${String(at)}\u001f${participantRef}`)}`;
+}
+
+function cleanupExploreForSemanticRef(ctx: any, fieldRef: string, semanticRef: string): void {
+  const relationRefs = new Set<string>();
+  for (const row of ctx.db.exploreRelationBacking.fromRef.filter(semanticRef)) {
+    if (row.fieldRef === fieldRef) relationRefs.add(row.relationRef);
+  }
+  for (const row of ctx.db.exploreRelationBacking.toRef.filter(semanticRef)) {
+    if (row.fieldRef === fieldRef) relationRefs.add(row.relationRef);
+  }
+  for (const relationRef of relationRefs) {
+    if (ctx.db.exploreRelationBacking.relationRef.find(relationRef)) {
+      ctx.db.exploreRelationBacking.relationRef.delete(relationRef);
+    }
+  }
+  const entry = ctx.db.exploreEntryBacking.semanticRef.find(semanticRef);
+  if (entry?.fieldRef === fieldRef) ctx.db.exploreEntryBacking.semanticRef.delete(semanticRef);
+}
+
+function requireContributionExploreEligible(ctx: any, fieldRef: string, semanticRef: string): void {
+  const claims = contributionClaimsForRef(ctx, semanticRef);
+  if (claims.length === 0) return;
+  if (claims.some(row => row.fieldRef !== fieldRef)) fail('Explore semantic ref collides with a Contribution from another SharedField');
+  const admitted = ctx.db.admittedContributionBacking.contributionRef.find(semanticRef);
+  if (!admitted || admitted.fieldRef !== fieldRef) fail('Contribution must be explicitly admitted before Explore indexing');
+  if (!contributionIsIndexEligible(ctx, admitted)) fail('Contribution is not index-eligible');
 }
 
 function contactContract(row: any): string {
@@ -785,6 +1314,240 @@ export const revoke_field_read = spacetimedb.reducer(
   }
 );
 
+export const submit_contribution = spacetimedb.reducer(
+  {
+    fieldRef: t.string(),
+    contributorParticipantRef: t.string(),
+    transportMessageId: t.string(),
+    contractJson: t.string(),
+  },
+  (ctx, args) => {
+    requireParticipantAuthority(ctx, args.fieldRef, args.contributorParticipantRef, ['contributor']);
+    ingressContribution(ctx, {
+      fieldRef: args.fieldRef,
+      contributorParticipantRef: args.contributorParticipantRef,
+      sourceKind: 'direct',
+      transportProvider: 'spacetimedb',
+      transportMessageId: args.transportMessageId,
+      contractJson: args.contractJson,
+    });
+  }
+);
+
+export const ingest_transported_contribution = spacetimedb.reducer(
+  {
+    fieldRef: t.string(),
+    contributorParticipantRef: t.string(),
+    sourceKind: t.string(),
+    transportProvider: t.string(),
+    transportMessageId: t.string(),
+    contractJson: t.string(),
+  },
+  (ctx, args) => {
+    requireFieldOwner(ctx, args.fieldRef);
+    if (!CONTRIBUTION_TRANSPORTS.has(args.sourceKind)) fail(`Unsupported mediated Contribution source kind: ${args.sourceKind}`);
+    ingressContribution(ctx, {
+      fieldRef: args.fieldRef,
+      contributorParticipantRef: args.contributorParticipantRef,
+      sourceKind: args.sourceKind,
+      transportProvider: args.transportProvider,
+      transportMessageId: args.transportMessageId,
+      contractJson: args.contractJson,
+    });
+  }
+);
+
+export const admit_contribution = spacetimedb.reducer(
+  {
+    ingressRef: t.string(),
+    admissionParticipantRef: t.string(),
+    visibility: t.string(),
+    audienceRefsJson: t.string(),
+    reason: t.string(),
+    evidenceJson: t.string(),
+  },
+  (ctx, args) => {
+    requireString(args.reason, 'Admission reason', 1_000);
+    requireJsonObject(args.evidenceJson, 'Admission evidence', 8_192);
+    const ingress = ctx.db.contributionIngressBacking.ingressRef.find(args.ingressRef);
+    if (!ingress) fail(`Unknown Contribution ingress: ${args.ingressRef}`);
+    requireAdmissionAuthority(ctx, ingress.fieldRef, args.admissionParticipantRef);
+    if (ingress.state !== 'quarantined') fail(`Contribution ingress is ${ingress.state}, not quarantined`);
+    validateContributionVisibility(ctx, ingress.fieldRef, args.visibility, args.audienceRefsJson);
+    const existingSemantic = ctx.db.admittedContributionBacking.contributionRef.find(ingress.claimedContributionRef);
+    if (existingSemantic && existingSemantic.ingressRef !== ingress.ingressRef) {
+      fail('Another ingress event is already admitted under this Contribution semantic ref');
+    }
+    const now = nowMicros(ctx);
+    const decisionRef = admissionDecisionRef(ingress.ingressRef, 'admitted', now, args.admissionParticipantRef);
+    const serverProvenanceJson = JSON.stringify({
+      schema: 'oi.admission-provenance/v1',
+      ingress_ref: ingress.ingressRef,
+      target_field_ref: ingress.fieldRef,
+      decided_at_micros: String(now),
+      source_kind: ingress.sourceKind,
+      payload_fingerprint: ingress.payloadFingerprint,
+    });
+    ctx.db.admissionDecision.insert({
+      decisionRef,
+      ingressRef: ingress.ingressRef,
+      fieldRef: ingress.fieldRef,
+      disposition: 'admitted',
+      admissionActorIdentity: ctx.sender,
+      admissionParticipantRef: args.admissionParticipantRef,
+      decidedAtMicros: now,
+      reason: args.reason,
+      evidenceJson: args.evidenceJson,
+      serverProvenanceJson,
+    });
+    ctx.db.admittedContributionBacking.insert({
+      rowId: 0n,
+      ingressRef: ingress.ingressRef,
+      contributionRef: ingress.claimedContributionRef,
+      fieldRef: ingress.fieldRef,
+      contributorParticipantRef: ingress.contributorParticipantRef,
+      visibility: args.visibility,
+      audienceRefsJson: args.audienceRefsJson,
+      admissionDecisionRef: decisionRef,
+      admittedAtMicros: now,
+      contractJson: ingress.contractJson,
+    });
+    ctx.db.contributionIngressBacking.ingressRef.update({ ...ingress, state: 'admitted' });
+    updateContributionReceiptState(ctx, ingress, 'admitted');
+    /* Admission deliberately creates no index policy, Explore row, Projection or Action. */
+  }
+);
+
+export const reject_contribution = spacetimedb.reducer(
+  {
+    ingressRef: t.string(),
+    admissionParticipantRef: t.string(),
+    reason: t.string(),
+    evidenceJson: t.string(),
+  },
+  (ctx, args) => {
+    requireString(args.reason, 'Rejection reason', 1_000);
+    requireJsonObject(args.evidenceJson, 'Rejection evidence', 8_192);
+    const ingress = ctx.db.contributionIngressBacking.ingressRef.find(args.ingressRef);
+    if (!ingress) fail(`Unknown Contribution ingress: ${args.ingressRef}`);
+    requireAdmissionAuthority(ctx, ingress.fieldRef, args.admissionParticipantRef);
+    if (ingress.state !== 'quarantined') fail(`Contribution ingress is ${ingress.state}, not quarantined`);
+    const now = nowMicros(ctx);
+    const decisionRef = admissionDecisionRef(ingress.ingressRef, 'rejected', now, args.admissionParticipantRef);
+    ctx.db.admissionDecision.insert({
+      decisionRef,
+      ingressRef: ingress.ingressRef,
+      fieldRef: ingress.fieldRef,
+      disposition: 'rejected',
+      admissionActorIdentity: ctx.sender,
+      admissionParticipantRef: args.admissionParticipantRef,
+      decidedAtMicros: now,
+      reason: args.reason,
+      evidenceJson: args.evidenceJson,
+      serverProvenanceJson: JSON.stringify({
+        schema: 'oi.admission-provenance/v1',
+        ingress_ref: ingress.ingressRef,
+        target_field_ref: ingress.fieldRef,
+        decided_at_micros: String(now),
+        payload_fingerprint: ingress.payloadFingerprint,
+      }),
+    });
+    ctx.db.contributionIngressBacking.ingressRef.update({ ...ingress, state: 'rejected' });
+    updateContributionReceiptState(ctx, ingress, 'rejected');
+    cleanupExploreForSemanticRef(ctx, ingress.fieldRef, ingress.claimedContributionRef);
+  }
+);
+
+export const withdraw_contribution = spacetimedb.reducer(
+  {
+    ingressRef: t.string(),
+    admissionParticipantRef: t.string(),
+    reason: t.string(),
+    evidenceJson: t.string(),
+  },
+  (ctx, args) => {
+    requireString(args.reason, 'Withdrawal reason', 1_000);
+    requireJsonObject(args.evidenceJson, 'Withdrawal evidence', 8_192);
+    const ingress = ctx.db.contributionIngressBacking.ingressRef.find(args.ingressRef);
+    if (!ingress) fail(`Unknown Contribution ingress: ${args.ingressRef}`);
+    requireAdmissionAuthority(ctx, ingress.fieldRef, args.admissionParticipantRef);
+    if (ingress.state !== 'admitted') fail(`Contribution ingress is ${ingress.state}, not admitted`);
+    const admitted = ctx.db.admittedContributionBacking.ingressRef.find(ingress.ingressRef);
+    if (!admitted) throw new Error(`Missing admitted Contribution for ${ingress.ingressRef}`);
+    const now = nowMicros(ctx);
+    const decisionRef = admissionDecisionRef(ingress.ingressRef, 'withdrawn', now, args.admissionParticipantRef);
+    ctx.db.admissionDecision.insert({
+      decisionRef,
+      ingressRef: ingress.ingressRef,
+      fieldRef: ingress.fieldRef,
+      disposition: 'withdrawn',
+      admissionActorIdentity: ctx.sender,
+      admissionParticipantRef: args.admissionParticipantRef,
+      decidedAtMicros: now,
+      reason: args.reason,
+      evidenceJson: args.evidenceJson,
+      serverProvenanceJson: JSON.stringify({
+        schema: 'oi.admission-provenance/v1',
+        ingress_ref: ingress.ingressRef,
+        target_field_ref: ingress.fieldRef,
+        decided_at_micros: String(now),
+        payload_fingerprint: ingress.payloadFingerprint,
+      }),
+    });
+    cleanupExploreForSemanticRef(ctx, ingress.fieldRef, admitted.contributionRef);
+    if (ctx.db.contributionIndexPolicy.ingressRef.find(ingress.ingressRef)) {
+      ctx.db.contributionIndexPolicy.ingressRef.delete(ingress.ingressRef);
+    }
+    ctx.db.admittedContributionBacking.ingressRef.delete(ingress.ingressRef);
+    ctx.db.contributionIngressBacking.ingressRef.update({ ...ingress, state: 'withdrawn' });
+    updateContributionReceiptState(ctx, ingress, 'withdrawn');
+  }
+);
+
+export const set_contribution_index_eligibility = spacetimedb.reducer(
+  {
+    ingressRef: t.string(),
+    admissionParticipantRef: t.string(),
+    eligible: t.bool(),
+    reason: t.string(),
+    evidenceJson: t.string(),
+  },
+  (ctx, args) => {
+    requireString(args.reason, 'Index decision reason', 1_000);
+    requireJsonObject(args.evidenceJson, 'Index decision evidence', 8_192);
+    const ingress = ctx.db.contributionIngressBacking.ingressRef.find(args.ingressRef);
+    if (!ingress) fail(`Unknown Contribution ingress: ${args.ingressRef}`);
+    requireAdmissionAuthority(ctx, ingress.fieldRef, args.admissionParticipantRef);
+    if (ingress.state !== 'admitted') fail('Only an admitted Contribution can receive index eligibility');
+    const admitted = ctx.db.admittedContributionBacking.ingressRef.find(ingress.ingressRef);
+    if (!admitted) throw new Error(`Missing admitted Contribution for ${ingress.ingressRef}`);
+    const now = nowMicros(ctx);
+    const decisionRef = indexDecisionRef(ingress.ingressRef, args.eligible, now, args.admissionParticipantRef);
+    ctx.db.contributionIndexDecision.insert({
+      decisionRef,
+      ingressRef: ingress.ingressRef,
+      fieldRef: ingress.fieldRef,
+      eligible: args.eligible,
+      decisionActorIdentity: ctx.sender,
+      decisionParticipantRef: args.admissionParticipantRef,
+      decidedAtMicros: now,
+      reason: args.reason,
+      evidenceJson: args.evidenceJson,
+    });
+    const current = ctx.db.contributionIndexPolicy.ingressRef.find(ingress.ingressRef);
+    const policy = {
+      ingressRef: ingress.ingressRef,
+      fieldRef: ingress.fieldRef,
+      eligible: args.eligible,
+      decisionRef,
+      decidedAtMicros: now,
+    };
+    if (current) ctx.db.contributionIndexPolicy.ingressRef.update(policy);
+    else ctx.db.contributionIndexPolicy.insert(policy);
+    if (!args.eligible) cleanupExploreForSemanticRef(ctx, ingress.fieldRef, admitted.contributionRef);
+  }
+);
+
 export const put_projection = spacetimedb.reducer(
   {
     projectionKey: t.string(),
@@ -857,6 +1620,7 @@ export const put_explore_entry = spacetimedb.reducer(
     requireEqual(entry.label, args.label, 'Explore label');
     requireEqual(entry.revision ?? '', args.revision, 'Explore revision');
     requireFieldOwner(ctx, args.fieldRef);
+    requireContributionExploreEligible(ctx, args.fieldRef, args.semanticRef);
     const existing = ctx.db.exploreEntryBacking.semanticRef.find(args.semanticRef);
     if (existing) {
       if (existing.fieldRef !== args.fieldRef) fail('Explore entry cannot move between SharedFields');
