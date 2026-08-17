@@ -53,7 +53,7 @@
       "native_owner": "software-factory",
       "target_contract": "factory.build-view-provider/v1",
       "availability": "degraded",
-      "provenance": {"source": "EpiLogos/agent-system-design#146", "revision": "57f8ed043fc0bed40cc8949a81e7fbb14fd7b2aa"},
+      "provenance": {"source": "EpiLogos/agent-system-design#146", "revision": "c39bd63580cb7196f38c9a26b49e3977aac95e6a"},
       "regions": ["canvas", "navigator", "inspector", "deep_drawer", "command", "status"],
       "read_model_ref": null,
       "accepted_selection_kinds": ["project", "run", "frontier", "candidate", "claim", "evidence", "human_request", "agency", "return", "execution", "trajectory", "harness_composition", "agent_session", "session_space", "surface", "material_binding"],
