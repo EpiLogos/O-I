@@ -119,7 +119,7 @@ jobs:
           central = state["modules"]["central"]
           assert set(central) <= {"id", "public_name", "native_executable", "alias", "version", "docs", "skill", "root"}
           assert central["alias"] == "ctrl"
-          assert central["version"].startswith("ctrl ")
+          assert central["version"] == "78a545214ad70e055fae38ccae2d78443112f283"
 
           central_status = next(item for item in status["surfaces"] if item["id"] == "central")
           assert central_status["state"] == "registered"
