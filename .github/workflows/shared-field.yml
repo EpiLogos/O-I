@@ -6,6 +6,7 @@ on:
       - platform/shared-field-explore
       - research/cordis-composable-agency
       - agent/oi-017-encounter-security
+      - agent/oi-017-exchange-authority
     paths:
       - 'shared-field/**'
       - '.github/workflows/shared-field.yml'
@@ -25,7 +26,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Run shared-field contract, Explore and security tests
+      - name: Run shared-field contract, Explore, A2A and security tests
         run: node --test shared-field/*.test.mjs
 
   spacetimedb-live:
@@ -64,15 +65,22 @@ jobs:
           done
           cat /tmp/spacetimedb.log
           exit 1
-      - name: Publish live shared-field module
+      - name: Publish live shared-field security database
         run: spacetime publish oi-shared-field-ci --server local --module-path shared-field/spacetimedb --yes=all
       - name: Generate current TypeScript client bindings
         run: spacetime generate --lang typescript --out-dir shared-field/spacetimedb/module_bindings --module-path shared-field/spacetimedb
-      - name: Prove Phase 1 privacy and Phase 2 Contribution Admission conformance
+      - name: Prove Phase 1 privacy, Phase 2 Admission and Phase 3 Exchange conformance
         env:
           SPACETIMEDB_URI: ws://127.0.0.1:3000
           SPACETIMEDB_DATABASE: oi-shared-field-ci
         run: npm --prefix shared-field/spacetimedb run acceptance
+      - name: Publish isolated live A2A SharedField database
+        run: spacetime publish oi-shared-field-a2a-ci --server local --module-path shared-field/spacetimedb --yes=all
+      - name: Prove grant-gated A2A exchange returns only to generic quarantine
+        env:
+          SPACETIMEDB_URI: ws://127.0.0.1:3000
+          SPACETIMEDB_A2A_DATABASE: oi-shared-field-a2a-ci
+        run: npm --prefix shared-field/spacetimedb run acceptance:a2a
       - name: Show SpaceTimeDB log on failure
         if: failure()
         run: cat /tmp/spacetimedb.log || true
