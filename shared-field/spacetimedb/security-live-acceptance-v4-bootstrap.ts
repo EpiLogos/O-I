@@ -3,3 +3,4 @@
 };
 
 await import('./security-live-acceptance-v4.ts');
+await import('./security-live-acceptance-v5.ts');
