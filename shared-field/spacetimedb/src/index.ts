@@ -1127,12 +1127,11 @@ function cleanupExploreForSemanticRef(ctx: any, fieldRef: string, semanticRef: s
     if (row.fieldRef === fieldRef) relationRefs.add(row.relationRef);
   }
   for (const relationRef of relationRefs) {
-    if (ctx.db.exploreRelationBacking.relationRef.find(relationRef)) {
-      ctx.db.exploreRelationBacking.relationRef.delete(relationRef);
-    }
+    const existing = ctx.db.exploreRelationBacking.relationRef.find(relationRef);
+    if (existing) ctx.db.exploreRelationBacking.rowId.delete(existing.rowId);
   }
   const entry = ctx.db.exploreEntryBacking.semanticRef.find(semanticRef);
-  if (entry?.fieldRef === fieldRef) ctx.db.exploreEntryBacking.semanticRef.delete(semanticRef);
+  if (entry?.fieldRef === fieldRef) ctx.db.exploreEntryBacking.rowId.delete(entry.rowId);
 }
 
 function requireContributionExploreEligible(ctx: any, fieldRef: string, semanticRef: string): void {
@@ -1412,7 +1411,7 @@ export const admit_contribution = spacetimedb.reducer(
       admittedAtMicros: now,
       contractJson: ingress.contractJson,
     });
-    ctx.db.contributionIngressBacking.ingressRef.update({ ...ingress, state: 'admitted' });
+    ctx.db.contributionIngressBacking.rowId.update({ ...ingress, state: 'admitted' });
     updateContributionReceiptState(ctx, ingress, 'admitted');
     /* Admission deliberately creates no index policy, Explore row, Projection or Action. */
   }
@@ -1452,7 +1451,7 @@ export const reject_contribution = spacetimedb.reducer(
         payload_fingerprint: ingress.payloadFingerprint,
       }),
     });
-    ctx.db.contributionIngressBacking.ingressRef.update({ ...ingress, state: 'rejected' });
+    ctx.db.contributionIngressBacking.rowId.update({ ...ingress, state: 'rejected' });
     updateContributionReceiptState(ctx, ingress, 'rejected');
     cleanupExploreForSemanticRef(ctx, ingress.fieldRef, ingress.claimedContributionRef);
   }
@@ -1498,8 +1497,8 @@ export const withdraw_contribution = spacetimedb.reducer(
     if (ctx.db.contributionIndexPolicy.ingressRef.find(ingress.ingressRef)) {
       ctx.db.contributionIndexPolicy.ingressRef.delete(ingress.ingressRef);
     }
-    ctx.db.admittedContributionBacking.ingressRef.delete(ingress.ingressRef);
-    ctx.db.contributionIngressBacking.ingressRef.update({ ...ingress, state: 'withdrawn' });
+    ctx.db.admittedContributionBacking.rowId.delete(admitted.rowId);
+    ctx.db.contributionIngressBacking.rowId.update({ ...ingress, state: 'withdrawn' });
     updateContributionReceiptState(ctx, ingress, 'withdrawn');
   }
 );
