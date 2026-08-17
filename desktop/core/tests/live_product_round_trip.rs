@@ -1,4 +1,8 @@
-use aikit_core::{SessionSpaceDefinition, SessionSpaceRef, SessionSpaceRuntime};
+use aikit_core::resource::ResourceRef;
+use aikit_core::{
+    SessionSpaceAgentSession, SessionSpaceAuthorityState, SessionSpaceConnection,
+    SessionSpaceConnectionState, SessionSpaceDefinition, SessionSpaceRef, SessionSpaceRuntime,
+};
 use epilogos_factory::build::{
     CandidateRecord, ExecutionRecord, FactoryBuildSelection, FactoryBuildState,
     REQUEST_MORE_EVIDENCE_ACTION_REF, REQUEST_MORE_EVIDENCE_CAPABILITY_REF,
@@ -79,7 +83,10 @@ fn factory_is_ready_only_after_a_real_factory_snapshot_is_observed() {
     let snapshot = ready.snapshot.unwrap();
     assert_eq!(snapshot.view.project.project_ref, PROJECT);
     assert_eq!(snapshot.view.run.run_ref, RUN);
-    assert_eq!(snapshot.view.executions[0].session_space_ref.as_deref(), Some(SPACE));
+    assert_eq!(
+        snapshot.view.executions[0].session_space_ref.as_deref(),
+        Some(SPACE)
+    );
 
     let wrong = FactoryBuildSelection {
         project_ref: ProjectRef::from_str("project:01ARZ3NDEKTSV4RRFFQ69G5FBE").unwrap(),
@@ -112,12 +119,48 @@ fn factory_session_space_ref_correlates_only_with_actual_aikit_read_model() {
     assert!(!matched[0].capability_granted);
     assert!(!matched[0].action_authorised);
 
-    runtime.close().unwrap();
+    // Use AIKit's actual provider-health observation path rather than editing a
+    // read model or treating Factory execution state as SessionSpace health.
+    let provider = ResourceRef::parse("provider/deepseek-live").unwrap();
+    let agent_session = ResourceRef::parse("agent-session/live").unwrap();
+    let lease = runtime
+        .bind_agent_session(SessionSpaceAgentSession {
+            agent_session: agent_session.clone(),
+            harness: ResourceRef::parse("harness/deepseek").unwrap(),
+            native_session_id: Some("native-deepseek-session".into()),
+            provider: Some(provider.clone()),
+            provenance: vec!["O:I SessionSpace correlation conformance".into()],
+        })
+        .unwrap();
+    runtime
+        .observe_connection(
+            &lease,
+            SessionSpaceConnection {
+                connection: ResourceRef::parse("connection/deepseek-live").unwrap(),
+                provider: provider.clone(),
+                protocol: "acp".into(),
+                agent_session,
+                component: None,
+                surface: None,
+                state: SessionSpaceConnectionState::Connected,
+                native_session_id: Some("native-deepseek-session".into()),
+                authority: SessionSpaceAuthorityState::default(),
+                reason: None,
+                provenance: vec!["provider-observed connection".into()],
+            },
+        )
+        .unwrap();
+    runtime
+        .observe_provider_unavailable(&provider, "provider disappeared")
+        .unwrap();
     let degraded = correlate_session_spaces(&snapshot, &[runtime.read_model()]);
     assert_eq!(
         degraded[0].state,
         SessionSpaceCorrelationState::ProviderDegraded
     );
+    assert!(!degraded[0].capability_available);
+    assert!(!degraded[0].capability_granted);
+    assert!(!degraded[0].action_authorised);
 }
 
 #[test]
