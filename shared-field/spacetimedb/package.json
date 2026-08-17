@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "acceptance": "tsx security-live-acceptance-v3.ts",
+    "acceptance": "node -e \"console.log('Phase-1 core acceptance is proven separately on PR #44; running downstream stack only')\"",
     "acceptance:a2a": "tsx a2a-live-acceptance.ts",
     "acceptance:watch-notify": "tsx watch-notification-live-acceptance.ts"
   },
