@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epilogos.dev/schemas/oi.suite-skillset-v1.schema.json",
+  "title": "O:I suite operator SkillSet composition",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "profiles", "skills"],
+  "properties": {
+    "schema": { "const": "oi.suite-skillset/v1" },
+    "profiles": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/profile" }
+    },
+    "skills": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/skill" }
+    },
+    "expected_native_skills": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/expectation" }
+    }
+  },
+  "$defs": {
+    "ref": { "type": "string", "minLength": 1 },
+    "requiredness": { "enum": ["required", "if_product_installed", "optional"] },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile_ref", "purpose", "scope", "members"],
+      "properties": {
+        "profile_ref": { "$ref": "#/$defs/ref" },
+        "purpose": { "$ref": "#/$defs/ref" },
+        "scope": { "enum": ["ordinary", "root_world"] },
+        "inherits": { "type": "array", "items": { "$ref": "#/$defs/ref" } },
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["skill_ref", "requiredness"],
+            "properties": {
+              "skill_ref": { "$ref": "#/$defs/ref" },
+              "requiredness": { "$ref": "#/$defs/requiredness" }
+            }
+          }
+        }
+      }
+    },
+    "skill": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["skill_ref", "owner_product", "purpose", "source", "risk_class"],
+      "properties": {
+        "skill_ref": { "$ref": "#/$defs/ref" },
+        "owner_product": { "$ref": "#/$defs/ref" },
+        "purpose": { "$ref": "#/$defs/ref" },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["repository", "path", "revision_policy"],
+          "properties": {
+            "repository": { "$ref": "#/$defs/ref" },
+            "path": { "$ref": "#/$defs/ref" },
+            "revision_policy": { "enum": ["resolve_authoritative_installed_revision", "pinned"] },
+            "pinned_revision": { "$ref": "#/$defs/ref" },
+            "native_version": { "$ref": "#/$defs/ref" }
+          }
+        },
+        "compatibility": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["product", "minimum_version"],
+            "properties": {
+              "product": { "$ref": "#/$defs/ref" },
+              "minimum_version": { "$ref": "#/$defs/ref" }
+            }
+          }
+        },
+        "required_actions": { "type": "array", "items": { "$ref": "#/$defs/ref" } },
+        "required_capabilities": { "type": "array", "items": { "$ref": "#/$defs/ref" } },
+        "risk_class": { "$ref": "#/$defs/ref" },
+        "permission_requirements": { "type": "array", "items": { "$ref": "#/$defs/ref" } }
+      }
+    },
+    "expectation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["owner_product", "purpose", "requiredness", "profiles", "state"],
+      "properties": {
+        "owner_product": { "$ref": "#/$defs/ref" },
+        "purpose": { "$ref": "#/$defs/ref" },
+        "requiredness": { "$ref": "#/$defs/requiredness" },
+        "profiles": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/ref" } },
+        "state": { "const": "awaiting_native_publication" }
+      }
+    }
+  }
+}
