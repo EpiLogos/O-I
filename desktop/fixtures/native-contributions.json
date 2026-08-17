@@ -50,7 +50,7 @@
     {
       "schema": "oi.desktop-host-reading/v1",
       "contribution_ref": "factory.surface/build",
-      "native_owner": "software-factory",
+      "native_owner": "factory",
       "target_contract": "factory.build-view-provider/v1",
       "availability": "degraded",
       "provenance": {"source": "EpiLogos/agent-system-design#146", "revision": "c39bd63580cb7196f38c9a26b49e3977aac95e6a"},
@@ -58,7 +58,7 @@
       "read_model_ref": null,
       "accepted_selection_kinds": ["project", "run", "frontier", "candidate", "claim", "evidence", "human_request", "agency", "return", "execution", "trajectory", "harness_composition", "agent_session", "session_space", "surface", "material_binding"],
       "actions": [],
-      "detail": "Fallback only: Factory PR #146 now exposes the product-owned factory.build-view-provider/v1 plus a persistent local first-party provider and Factory-owned Action executor over canonical Factory state. The desktop keeps this reading degraded until OI_FACTORY_BUILD_STATE + Project/Run refs resolve an actual provider instance; it never renders the deterministic GUI fixture as live. When observed, the live reading replaces this same factory.surface/build contribution identity."
+      "detail": "Fallback only: Factory PR #146 now exposes the product-owned factory.build-view-provider/v1 plus a persistent local first-party provider and Factory-owned Action executor over canonical Factory state. The desktop keeps this reading degraded until OI_FACTORY_BUILD_STATE + Project/Run refs resolve an actual provider instance; it never renders the deterministic GUI fixture as live. When observed, the live reading replaces this same factory.surface/build contribution identity with the same Factory native owner."
     },
     {
       "schema": "oi.desktop-host-reading/v1",
