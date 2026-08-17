@@ -2,6 +2,7 @@ mod composition {
     include!("composition.rs");
     include!("bootstrap.rs");
     include!("verification.rs");
+    include!("first_suite.rs");
     include!("frontdoor.rs");
 }
 
