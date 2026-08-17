@@ -62,12 +62,12 @@ The present {O:I} family has six centres. Each can stand on its own. Together th
 
 | Function in the whole | Project | What it opens |
 |---|---|---|
-| Persistent personal ground | [**Central**](https://github.com/EpiLogos/Central) | Human-authored control, projects, machine intent, and a durable place from which agents can work. |
-| Agent actuation + model research | [**Actuation**](https://github.com/EpiLogos/Actuation) | The model/harness/agent-instance field: agency semantics, loops and harnesses, QL runtime experiments, model-interior research, and epistemic cultivation. |
-| Capability and context resolution | [**AIKit**](https://github.com/EpiLogos/ai-kit) | The agent-use layer for tools, skills, Actions, sources, models, sessions, research profiles, and context. |
-| Developmental agency | [**Software Factory**](https://github.com/EpiLogos/agent-system-design) | Durable project development through Runs, Agents, evidence, candidates, and reusable patterns of work. |
-| Material execution | [**Workcell**](https://github.com/EpiLogos/Workcell) | The computational worlds in which agency becomes materially situated and executable. |
-| Recursive formal intelligence | [**Quaternal Logic**](https://github.com/EpiLogos/QL-MEF) | The formal and semantic research layer for QL/MEF, recursive reasoning, refraction, topology, and deeper structural experiment. |
+| Persistent personal ground | [**Central**](https://github.com/EpiLogos/Central) | Human-authored `Control`, ordinary `Work`, machine intent, durable local orientation, and persistent personal source. |
+| Situated agency and actuation | [**Actuation**](https://github.com/EpiLogos/Actuation) | `Agent` / `Agency`, `WorldBinding`, `AgenticComposition`, determination and bounds, metagency, `Return`, and model-bearing agency research. |
+| Capability and context resolution | [**AIKit**](https://github.com/EpiLogos/ai-kit) | `Context`, capabilities and skills, Actions, models, harnesses, Profiles/SkillSets, sessions, Components/Surfaces, and knowledge/resource navigation and explanation. |
+| Developmental intelligence | [**Software Factory**](https://github.com/EpiLogos/agent-system-design) | Projects, Runs/Run Maps, intent/design/development, candidates, Claims/Evidence, evaluation, decisions, recognition/recursion, and Execution Intelligence demand. |
+| Material actuality | [**Workcell**](https://github.com/EpiLogos/Workcell) | Compute, isolated execution, sandboxes, containers/VMs/microVMs, model/service materialisation, accelerator/resource placement, storage/network/service bindings, deployment and lifecycle. |
+| Formal/reflexive intelligence | [**Quaternal Logic**](https://github.com/EpiLogos/QL-MEF) | QL/MEF, relation/refraction, logical/process/causal perspectives, formal synthesis, recursion, and executable formal experimentation. |
 
 Together they form a possibility space rather than a fixed workflow. A useful {O:I} can be very small, and it can grow as new needs appear.
 
