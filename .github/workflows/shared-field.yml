@@ -6,6 +6,7 @@ on:
       - platform/shared-field-explore
       - research/cordis-composable-agency
       - agent/oi-017-encounter-security
+      - agent/oi-017-auth-binding
     paths:
       - 'shared-field/**'
       - '.github/workflows/shared-field.yml'
@@ -22,9 +23,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Check patch whitespace
+        run: git diff --check "${{ github.event.pull_request.base.sha || github.event.before }}"..HEAD
       - name: Run shared-field contract, Explore and security tests
         run: node --test shared-field/*.test.mjs
 
