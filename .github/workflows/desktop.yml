@@ -35,8 +35,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - name: Test and lint O:I CLI library
         run: |
-          cargo test --manifest-path cli/Cargo.toml --all-targets
-          cargo clippy --manifest-path cli/Cargo.toml --all-targets -- -D warnings
+          cargo test --manifest-path cli/Cargo.toml --all-targets --locked
+          cargo clippy --manifest-path cli/Cargo.toml --all-targets --locked -- -D warnings
       - name: Test and lint desktop core
         run: |
           cargo test --manifest-path desktop/core/Cargo.toml --all-targets
@@ -53,22 +53,24 @@ jobs:
         run: |
           npm install --prefix site --no-audit --no-fund
           npm --prefix site run build
-      - name: Build desktop rendered layer
+      - name: Build desktop rendered layer from lock
         run: |
-          npm install --prefix desktop/ui --no-audit --no-fund
+          npm ci --prefix desktop/ui --no-audit --no-fund
           npm --prefix desktop/ui run build
       - name: Preserve Explore contract regression
         run: node --test shared-field/*.test.mjs
 
   native-shell:
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Install rendered-layer dependencies
-        run: npm install --prefix desktop/ui --no-audit --no-fund
-      - name: Check Rust-owned native shell
-        run: cargo check --manifest-path desktop/src-tauri/Cargo.toml
+      - name: Install rendered-layer dependencies from lock
+        run: npm ci --prefix desktop/ui --no-audit --no-fund
+      - name: Check Rust-owned native shell from lock
+        run: cargo check --manifest-path desktop/src-tauri/Cargo.toml --locked --target aarch64-apple-darwin
