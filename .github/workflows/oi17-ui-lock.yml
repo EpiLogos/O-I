@@ -1,0 +1,37 @@
+name: OI17 desktop UI lock
+
+on:
+  push:
+    branches:
+      - converge/oi-017-first-suite
+    paths:
+      - .github/workflows/oi17-ui-lock.yml
+
+permissions:
+  contents: write
+
+jobs:
+  lock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: converge/oi-017-first-suite
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Generate npm lock from pinned desktop manifest
+        run: npm install --prefix desktop/ui --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Prove reproducible UI install and build
+        run: |
+          npm ci --prefix desktop/ui --no-audit --no-fund
+          npm --prefix desktop/ui run build
+      - name: Commit lock
+        run: |
+          git config user.name oi17-convergence-bot
+          git config user.email actions@users.noreply.github.com
+          git add desktop/ui/package-lock.json
+          git diff --cached --check
+          git commit -m 'build(desktop): lock UI and Tauri CLI dependency graph'
+          git push origin HEAD:converge/oi-017-first-suite
