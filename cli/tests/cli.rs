@@ -162,11 +162,7 @@ fn full_registered_composition_is_reported_without_invented_aliases() {
         "workcell",
         "if [ \"$1\" = '--version' ]; then echo 'workcell 0.1.0'; fi",
     );
-    for (module, executable) in [
-        ("central", ctrl),
-        ("ai-kit", aikit),
-        ("workcell", workcell),
-    ] {
+    for (module, executable) in [("central", ctrl), ("ai-kit", aikit), ("workcell", workcell)] {
         let result = output(
             oi(home.path(), bin.path())
                 .args(["register", module, "--executable"])
