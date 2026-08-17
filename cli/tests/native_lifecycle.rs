@@ -100,5 +100,9 @@ fn incompatible_native_contract_fails_before_registration() {
     let mut target = AikitSessionSpaceLifecycleAdapter::default();
     let error = install_register_with_target(&manifest("2.0.0"), &mut target).unwrap_err();
     assert!(error.contains("not compatible"));
-    assert!(target.native_registry().read_model().registrations.is_empty());
+    assert!(target
+        .native_registry()
+        .read_model()
+        .registrations
+        .is_empty());
 }
