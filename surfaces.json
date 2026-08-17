@@ -3,41 +3,143 @@
   "verified_at": "2026-08-15",
   "surfaces": [
     {
-      "id": "central", "public_name": "Central", "function": "persistent personal ground",
-      "repository": "https://github.com/EpiLogos/Central", "docs_ref": "b134142532602a9570f2deb1060a1badb8432c6d", "docs_path": "README.md",
-      "skill_paths": ["skills/control-maintenance/SKILL.md", "skills/machine-declaration/SKILL.md", "skills/connector-authoring/SKILL.md", "skills/connector-hardening/SKILL.md"],
-      "native": { "kind": "cli", "entry": "ctrl", "executable": "ctrl", "alias": "ctrl", "version_command": ["--version"], "version_manifest": "ctrl/Cargo.toml" },
-      "install": { "kind": "central-source", "ref": "b134142532602a9570f2deb1060a1badb8432c6d", "revision": "b134142532602a9570f2deb1060a1badb8432c6d", "path": "ctrl", "note": "Central publishes the native source contract cargo install --path ctrl. Pre-release O:I fetches and verifies this immutable tested integration commit directly." },
+      "id": "central",
+      "public_name": "Central",
+      "function": "persistent personal ground",
+      "repository": "https://github.com/EpiLogos/Central",
+      "docs_ref": "b134142532602a9570f2deb1060a1badb8432c6d",
+      "docs_path": "README.md",
+      "skill_paths": [
+        "skills/control-maintenance/SKILL.md",
+        "skills/machine-declaration/SKILL.md",
+        "skills/connector-authoring/SKILL.md",
+        "skills/connector-hardening/SKILL.md"
+      ],
+      "native": {
+        "kind": "cli",
+        "entry": "ctrl",
+        "executable": "ctrl",
+        "alias": "ctrl",
+        "version_command": ["--version"],
+        "version_manifest": "ctrl/Cargo.toml"
+      },
+      "install": {
+        "kind": "central-source",
+        "ref": "b134142532602a9570f2deb1060a1badb8432c6d",
+        "revision": "b134142532602a9570f2deb1060a1badb8432c6d",
+        "path": "ctrl",
+        "note": "Central publishes the native source contract cargo install --path ctrl. Pre-release O:I fetches and verifies this immutable tested integration commit directly."
+      },
       "compatibility": "O:I requires ctrl --version plus structured action.list containing central.init, central.doctor, and action.list. The source contract is pinned to the tested Central integration commit until the Rust Wayfinder is promoted to main/release."
     },
     {
-      "id": "agent-runtime", "public_name": "Agent Runtime", "function": "agent actuation", "repository": "https://github.com/EpiLogos/agent-system-design", "docs_ref": "ql/deep-runtime", "docs_path": "ql-agent-experiments/deep-ql/README.md", "skill_paths": [],
-      "native": { "kind": "workbench", "entry": "ql-agent-experiments/deep-ql package scripts and Series 1 workflow", "executable": null, "alias": null, "version_command": null, "version_manifest": "ql-agent-experiments/deep-ql/package.json" },
-      "install": { "kind": "register-only", "note": "The current runtime experiment is a repository workbench rather than a released native CLI. Register a source checkout when composition metadata is useful." },
+      "id": "agent-runtime",
+      "public_name": "Agent Runtime",
+      "function": "agent actuation",
+      "repository": "https://github.com/EpiLogos/agent-system-design",
+      "docs_ref": "ql/deep-runtime",
+      "docs_path": "ql-agent-experiments/deep-ql/README.md",
+      "skill_paths": [],
+      "native": {
+        "kind": "workbench",
+        "entry": "ql-agent-experiments/deep-ql package scripts and Series 1 workflow",
+        "executable": null,
+        "alias": null,
+        "version_command": null,
+        "version_manifest": "ql-agent-experiments/deep-ql/package.json"
+      },
+      "install": {
+        "kind": "register-only",
+        "note": "The current runtime experiment is a repository workbench rather than a released native CLI. Register a source checkout when composition metadata is useful."
+      },
       "compatibility": "The live experiment frontier is draft PR #130. O:I does not assign a command alias until the runtime publishes a stable native command."
     },
     {
-      "id": "ai-kit", "public_name": "AIKit", "function": "capability and context resolution", "repository": "https://github.com/EpiLogos/ai-kit", "docs_ref": "main", "docs_path": "README.md", "skill_paths": [],
-      "native": { "kind": "cli", "entry": "aikit", "executable": "aikit", "alias": "kit", "version_command": ["--version"], "version_manifest": "crates/aikit-cli/Cargo.toml" },
-      "install": { "kind": "aikit-source", "note": "The live README documents source installation with cargo install --locked --path crates/aikit-cli." },
+      "id": "ai-kit",
+      "public_name": "AIKit",
+      "function": "capability and context resolution",
+      "repository": "https://github.com/EpiLogos/ai-kit",
+      "docs_ref": "main",
+      "docs_path": "README.md",
+      "skill_paths": [],
+      "native": {
+        "kind": "cli",
+        "entry": "aikit",
+        "executable": "aikit",
+        "alias": "kit",
+        "version_command": ["--version"],
+        "version_manifest": "crates/aikit-cli/Cargo.toml"
+      },
+      "install": {
+        "kind": "aikit-source",
+        "note": "The live README documents source installation with cargo install --locked --path crates/aikit-cli."
+      },
       "compatibility": "AIKit is daemonless and exposes a stable aikit CLI with machine-readable JSON on substantive commands."
     },
     {
-      "id": "software-factory", "public_name": "Software Factory", "function": "developmental agency", "repository": "https://github.com/EpiLogos/agent-system-design", "docs_ref": "agent/factory-rust-foundation", "docs_path": "factory/README.md", "skill_paths": [],
-      "native": { "kind": "library", "entry": "factory/ Rust implementation root", "executable": null, "alias": null, "version_command": null, "version_manifest": "factory/Cargo.toml" },
-      "install": { "kind": "register-only", "note": "The current Factory implementation is a Rust crate on its integration branch, not a released CLI. Register a source checkout only." },
+      "id": "software-factory",
+      "public_name": "Software Factory",
+      "function": "developmental agency",
+      "repository": "https://github.com/EpiLogos/agent-system-design",
+      "docs_ref": "agent/factory-rust-foundation",
+      "docs_path": "factory/README.md",
+      "skill_paths": [],
+      "native": {
+        "kind": "library",
+        "entry": "factory/ Rust implementation root",
+        "executable": null,
+        "alias": null,
+        "version_command": null,
+        "version_manifest": "factory/Cargo.toml"
+      },
+      "install": {
+        "kind": "register-only",
+        "note": "The current Factory implementation is a Rust crate on its integration branch, not a released CLI. Register a source checkout only."
+      },
       "compatibility": "Current executable integration is draft PR #131. O:I does not invent a Factory CLI or absorb Run behaviour."
     },
     {
-      "id": "workcell", "public_name": "Workcell", "function": "material execution", "repository": "https://github.com/EpiLogos/Workcell", "docs_ref": "build/rust-workcell-foundation", "docs_path": "README.md", "skill_paths": [],
-      "native": { "kind": "library", "entry": "Rust control-plane crates", "executable": null, "alias": null, "version_command": null, "version_manifest": "Cargo.toml" },
-      "install": { "kind": "register-only", "note": "The live Workcell implementation is a Rust workspace and provider library surface, not a released CLI. Register a source checkout only." },
+      "id": "workcell",
+      "public_name": "Workcell",
+      "function": "material execution",
+      "repository": "https://github.com/EpiLogos/Workcell",
+      "docs_ref": "build/rust-workcell-foundation",
+      "docs_path": "README.md",
+      "skill_paths": [],
+      "native": {
+        "kind": "library",
+        "entry": "Rust control-plane crates",
+        "executable": null,
+        "alias": null,
+        "version_command": null,
+        "version_manifest": "Cargo.toml"
+      },
+      "install": {
+        "kind": "register-only",
+        "note": "The live Workcell implementation is a Rust workspace and provider library surface, not a released CLI. Register a source checkout only."
+      },
       "compatibility": "Current implementation is carried by draft PR #18. O:I delegates material execution; it does not expose provider operations itself."
     },
     {
-      "id": "quaternal-logic", "public_name": "Quaternal Logic", "function": "recursive formal intelligence", "repository": "https://github.com/EpiLogos/QL-MEF", "docs_ref": "agent/rust-q4-client-adapters", "docs_path": "README.md", "skill_paths": [],
-      "native": { "kind": "library", "entry": "QL/MEF Rust kernel, service, and adapter crates", "executable": null, "alias": null, "version_command": null, "version_manifest": "Cargo.toml" },
-      "install": { "kind": "register-only", "note": "The current Quaternal Logic implementation is a Rust workspace/service surface in the QL-MEF repository, not a released native CLI. Register a source checkout only." },
+      "id": "quaternal-logic",
+      "public_name": "Quaternal Logic",
+      "function": "recursive formal intelligence",
+      "repository": "https://github.com/EpiLogos/QL-MEF",
+      "docs_ref": "agent/rust-q4-client-adapters",
+      "docs_path": "README.md",
+      "skill_paths": [],
+      "native": {
+        "kind": "library",
+        "entry": "QL/MEF Rust kernel, service, and adapter crates",
+        "executable": null,
+        "alias": null,
+        "version_command": null,
+        "version_manifest": "Cargo.toml"
+      },
+      "install": {
+        "kind": "register-only",
+        "note": "The current Quaternal Logic implementation is a Rust workspace/service surface in the QL-MEF repository, not a released native CLI. Register a source checkout only."
+      },
       "compatibility": "Current Q4 integration is carried by draft PR #6. Quaternal Logic is the public product name; QL-MEF remains the repository and implementation vocabulary."
     }
   ]
