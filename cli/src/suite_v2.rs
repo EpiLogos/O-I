@@ -207,7 +207,7 @@ fn platform_target() -> Result<&'static str, String> {
     }
 }
 
-fn selected_asset<'a>(product: &'a SuiteProduct) -> Result<&'a SuiteAsset, String> {
+fn selected_asset(product: &SuiteProduct) -> Result<&SuiteAsset, String> {
     if product.artifact.kind == "component" {
         return product.artifact.assets.iter().find(|asset| asset.target == "any")
             .ok_or_else(|| format!("{} has no platform-neutral component asset", product.id));
