@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "O:I",
+  "productName": "O-I",
   "version": "0.1.0",
   "identifier": "org.epilogos.oi",
   "build": {
