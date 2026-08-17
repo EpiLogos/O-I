@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "cli/**"
+      - "suite/**"
       - "surfaces.json"
       - "site/**"
       - "desktop/**"
@@ -17,6 +18,7 @@ on:
       - converge/oi-017-first-suite
     paths:
       - "cli/**"
+      - "suite/**"
       - "surfaces.json"
       - "site/**"
       - "desktop/**"
@@ -26,10 +28,18 @@ on:
       - ".github/workflows/full-suite-preflight.yml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+  attestations: read
+
 jobs:
   clean-environment:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      OI_HOME: ${{ runner.temp }}/oi-config
+      OI_DATA_HOME: ${{ runner.temp }}/oi-data
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
 
@@ -41,18 +51,15 @@ jobs:
         with:
           node-version: 22
 
-      - name: Build O:I CLI
-        run: cargo build --manifest-path cli/Cargo.toml --bin oi
+      - name: Build locked O:I CLI
+        run: cargo build --manifest-path cli/Cargo.toml --bin oi --locked
 
-      - name: Install exact six-product suite twice
+      - name: Install exact six-product release suite twice
         shell: bash
-        env:
-          OI_SOURCE_ROOT: ${{ github.workspace }}
         run: |
           set -euo pipefail
           ROOT="$RUNNER_TEMP/oi-personal-ground"
           OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
-          export OI_HOME="$ROOT/.central/oi/state"
 
           mkdir -p "$ROOT/Control" "$ROOT/Work"
           printf '%s\n' 'human-control-sentinel' > "$ROOT/Control/HUMAN-SENTINEL.txt"
@@ -60,61 +67,59 @@ jobs:
 
           "$OI" install --personal-ground "$ROOT"
           cp "$OI_HOME/composition.json" "$RUNNER_TEMP/composition-first.json"
+          cp "$OI_DATA_HOME/receipts/installed-suite.json" "$RUNNER_TEMP/installed-first.json"
 
           "$OI" install
           cp "$OI_HOME/composition.json" "$RUNNER_TEMP/composition-second.json"
           cmp "$RUNNER_TEMP/composition-first.json" "$RUNNER_TEMP/composition-second.json"
 
+          test -d "$OI_DATA_HOME/bin"
+          test -d "$OI_DATA_HOME/products"
+          test -d "$OI_DATA_HOME/receipts"
+          test -d "$OI_DATA_HOME/cache"
+          test ! -e "$ROOT/.central/oi/managed"
           test "$(cat "$ROOT/Control/HUMAN-SENTINEL.txt")" = "human-control-sentinel"
           test "$(cat "$ROOT/Work/WORK-SENTINEL.txt")" = "ordinary-work-sentinel"
 
-      - name: Status is exact and fully registered
+      - name: Status and portable doctor match the accepted manifest
         shell: bash
-        env:
-          OI_SOURCE_ROOT: ${{ github.workspace }}
         run: |
           set -euo pipefail
-          ROOT="$RUNNER_TEMP/oi-personal-ground"
           OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
-          export OI_HOME="$ROOT/.central/oi/state"
+          "$OI" manifest --json > "$RUNNER_TEMP/manifest.json"
           "$OI" status --json > "$RUNNER_TEMP/status.json"
-          jq -e '.surfaces | length == 6' "$RUNNER_TEMP/status.json"
-          jq -e '[.surfaces[].state] | all(. == "registered")' "$RUNNER_TEMP/status.json"
-          jq -e '[.surfaces[].id] | sort == ["actuation","ai-kit","central","quaternal-logic","software-factory","workcell"]' "$RUNNER_TEMP/status.json"
+          "$OI" doctor --json > "$RUNNER_TEMP/doctor.json"
+          "$OI" verify --json > "$RUNNER_TEMP/verify.json"
+
+          jq -e '.schema == "oi.suite-manifest/v1" and .suite_version == "0.1.0-prelocal.2" and (.products | length == 6)' "$RUNNER_TEMP/manifest.json"
+          jq -e '.schema == "oi.suite-status/v1" and .suite_version == "0.1.0-prelocal.2" and (.installed.products | length == 6) and .physical_acceptance == false' "$RUNNER_TEMP/status.json"
+          jq -e '.schema == "oi.suite-doctor/v1" and .ok == true and (.checks | length == 6) and .physical_acceptance == false' "$RUNNER_TEMP/doctor.json"
+          cmp "$RUNNER_TEMP/doctor.json" "$RUNNER_TEMP/verify.json"
+
+          for id in central actuation ai-kit software-factory workcell quaternal-logic; do
+            expected="$(jq -r --arg id "$id" '.products[] | select(.id == $id) | .revision' "$RUNNER_TEMP/manifest.json")"
+            actual="$(jq -r --arg id "$id" '.installed.products[$id].revision' "$RUNNER_TEMP/status.json")"
+            test "$actual" = "$expected"
+          done
 
       - name: Development launch affordances resolve
         shell: bash
-        env:
-          OI_SOURCE_ROOT: ${{ github.workspace }}
         run: |
           set -euo pipefail
           OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
           "$OI" web --check
           "$OI" app --check
 
-      - name: Freeze and verify exact full-mainline candidate in disposable environment
+      - name: Snapshot and receipt are views over the Suite Manifest
         shell: bash
-        env:
-          OI_SOURCE_ROOT: ${{ github.workspace }}
         run: |
           set -euo pipefail
-          ROOT="$RUNNER_TEMP/oi-personal-ground"
           OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
-          export OI_HOME="$ROOT/.central/oi/state"
-
-          ACCEPT=(
-            "central=a9e07115fc91174fd32abffa0b3ca338b6786507"
-            "actuation=b59c17cceff7dbe773f2415ae9dd969e730f7cb3"
-            "ai-kit=b7843b437a8d4edd364b22aec9d7625bc8124915"
-            "software-factory=164302df7b98442217c991c8067a4447884e289a"
-            "workcell=4e3884076baf05ee7e3cfcfc2b806dfea46cf9ee"
-            "quaternal-logic=112c3030036e33c265f97d5a9c0314130ec299bc"
-          )
-
           SNAPSHOT_ARGS=(--output "$RUNNER_TEMP/full-suite-snapshot.json" --require-full)
-          for item in "${ACCEPT[@]}"; do
-            SNAPSHOT_ARGS+=(--select "$item" --accepted-mainline "$item")
-          done
+          while IFS=$'\t' read -r id revision; do
+            SNAPSHOT_ARGS+=(--select "$id=$revision" --accepted-mainline "$id=$revision")
+          done < <(jq -r '.products[] | [.id, .revision] | @tsv' suite/manifest.json)
+
           "$OI" snapshot "${SNAPSHOT_ARGS[@]}"
           "$OI" verify \
             --snapshot "$RUNNER_TEMP/full-suite-snapshot.json" \
@@ -124,27 +129,32 @@ jobs:
           jq -e '.kind == "oi.suite-snapshot/v1" and .completeness == "full-mainline" and (.surfaces | length == 6)' "$RUNNER_TEMP/full-suite-snapshot.json"
           jq -e '.kind == "oi.composition-receipt/v1" and .result == "prelocal-passed" and (.surfaces | length == 6)' "$RUNNER_TEMP/full-suite-composition-receipt.json"
 
-      - name: Bounded cleanup preserves human/native roots
+      - name: Bounded cleanup preserves human ground
         shell: bash
-        env:
-          OI_SOURCE_ROOT: ${{ github.workspace }}
         run: |
           set -euo pipefail
           ROOT="$RUNNER_TEMP/oi-personal-ground"
           OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
-          export OI_HOME="$ROOT/.central/oi/state"
           "$OI" cleanup --managed
-          test ! -e "$ROOT/.central/oi/managed"
           test "$(cat "$ROOT/Control/HUMAN-SENTINEL.txt")" = "human-control-sentinel"
           test "$(cat "$ROOT/Work/WORK-SENTINEL.txt")" = "ordinary-work-sentinel"
           test -e "$OI_HOME/composition.json"
+          test ! -e "$OI_DATA_HOME/bin"
+          test ! -e "$OI_DATA_HOME/products"
+          test ! -e "$OI_DATA_HOME/receipts"
+          test ! -e "$OI_DATA_HOME/cache"
+          test ! -e "$ROOT/.central/oi/managed"
 
       - name: Upload pre-local evidence
         uses: actions/upload-artifact@v4
         with:
           name: oi-first-suite-preflight-${{ github.sha }}
           path: |
+            ${{ runner.temp }}/manifest.json
             ${{ runner.temp }}/status.json
+            ${{ runner.temp }}/doctor.json
+            ${{ runner.temp }}/verify.json
+            ${{ runner.temp }}/installed-first.json
             ${{ runner.temp }}/full-suite-snapshot.json
             ${{ runner.temp }}/full-suite-composition-receipt.json
             ${{ runner.temp }}/composition-first.json
