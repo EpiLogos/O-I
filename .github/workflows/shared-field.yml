@@ -8,6 +8,7 @@ on:
       - agent/oi-017-encounter-security
       - agent/oi-015-a2a-sharedfield
       - agent/watch-availability-notifications
+      - agent/oi-017-exchange-authority-conformance
     paths:
       - 'shared-field/**'
       - '.github/workflows/shared-field.yml'
@@ -27,7 +28,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Run shared-field contract, Explore, A2A and security tests
+      - name: Run shared-field contract, Explore, A2A, notification and security tests
         run: node --test shared-field/*.test.mjs
 
   spacetimedb-live:
@@ -70,18 +71,25 @@ jobs:
         run: spacetime publish oi-shared-field-ci --server local --module-path shared-field/spacetimedb --yes=all
       - name: Generate current TypeScript client bindings
         run: spacetime generate --lang typescript --out-dir shared-field/spacetimedb/module_bindings --module-path shared-field/spacetimedb
-      - name: Prove live authority, privacy, Contact anti-spam and Explore conformance
+      - name: Prove Phase 1 privacy, Phase 2 Admission and Phase 3 Exchange conformance
         env:
           SPACETIMEDB_URI: ws://127.0.0.1:3000
           SPACETIMEDB_DATABASE: oi-shared-field-ci
         run: npm --prefix shared-field/spacetimedb run acceptance
-      - name: Publish isolated live A2A SharedField database
+      - name: Publish source-faithful downstream A2A database
         run: spacetime publish oi-shared-field-a2a-ci --server local --module-path shared-field/spacetimedb --yes=all
-      - name: Prove Explore to A2A exchange, admission, replacement and withdrawal
+      - name: Prove grant-gated Explore to A2A exchange, quarantine, admission, replacement and withdrawal
         env:
           SPACETIMEDB_URI: ws://127.0.0.1:3000
           SPACETIMEDB_A2A_DATABASE: oi-shared-field-a2a-ci
         run: npm --prefix shared-field/spacetimedb run acceptance:a2a
+      - name: Publish isolated canonical Phase 3 A2A database
+        run: spacetime publish oi-shared-field-a2a-phase3-ci --server local --module-path shared-field/spacetimedb --yes=all
+      - name: Prove canonical grant consumption before A2A network and generic quarantine after return
+        env:
+          SPACETIMEDB_URI: ws://127.0.0.1:3000
+          SPACETIMEDB_A2A_DATABASE: oi-shared-field-a2a-phase3-ci
+        run: npm --prefix shared-field/spacetimedb run acceptance:a2a-phase3
       - name: Publish isolated Watch availability notification database
         run: spacetime publish oi-shared-field-watch-notify-ci --server local --module-path shared-field/spacetimedb --yes=all
       - name: Prove Watch to availability Encounter to explicit Central notification decision
