@@ -79,6 +79,7 @@ jobs:
           test ! -e "$ROOT/.central/oi/managed"
           test "$(cat "$ROOT/Control/HUMAN-SENTINEL.txt")" = "human-control-sentinel"
           test "$(cat "$ROOT/Work/WORK-SENTINEL.txt")" = "ordinary-work-sentinel"
+          jq -e '.products | to_entries | all(.value.attestation_locally_verified == true)' "$RUNNER_TEMP/installed-first.json"
 
       - name: Status and portable doctor match the accepted manifest
         shell: bash
@@ -112,6 +113,58 @@ jobs:
           OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
           "$OI" web --check
           "$OI" app --check
+
+      - name: Developer federation includes O:I and fails closed on unsafe adoption
+        shell: bash
+        run: |
+          set -euo pipefail
+          export OI_HOME="$RUNNER_TEMP/oi-config"
+          export OI_DATA_HOME="$RUNNER_TEMP/oi-data"
+          ROOT="$RUNNER_TEMP/oi-personal-ground"
+          OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
+
+          ln -s "$GITHUB_WORKSPACE" "$ROOT/Work/O-I"
+          "$OI" dev status --json > "$RUNNER_TEMP/dev-status.json"
+          jq -e '.schema == "oi.dev-status/v1" and (.repos | length == 7) and any(.repos[]; .id == "oi") and any(.repos[]; .id == "central")' "$RUNNER_TEMP/dev-status.json"
+
+          "$OI" dev build oi
+          "$OI" dev test oi
+          "$OI" dev install oi
+          test -x "$OI_DATA_HOME/bin/oi"
+
+          if "$OI" dev adopt central "$ROOT"; then
+            echo 'Central self-nesting adoption unexpectedly succeeded' >&2
+            exit 1
+          fi
+
+          BAD="$RUNNER_TEMP/adopt-no-origin"
+          git init -q "$BAD"
+          git -C "$BAD" config user.name preflight
+          git -C "$BAD" config user.email preflight@example.invalid
+          printf 'sentinel\n' > "$BAD/README.md"
+          git -C "$BAD" add README.md
+          git -C "$BAD" commit -qm init
+          if "$OI" dev adopt ai-kit "$BAD"; then
+            echo 'origin-less adoption unexpectedly succeeded' >&2
+            exit 1
+          fi
+          test -d "$BAD/.git"
+          test ! -e "$ROOT/Work/ai-kit"
+
+          LINKED="$RUNNER_TEMP/adopt-linked"
+          git init -q "$LINKED"
+          git -C "$LINKED" config user.name preflight
+          git -C "$LINKED" config user.email preflight@example.invalid
+          printf 'sentinel\n' > "$LINKED/README.md"
+          git -C "$LINKED" add README.md
+          git -C "$LINKED" commit -qm init
+          git -C "$LINKED" worktree add -q "$RUNNER_TEMP/adopt-linked-secondary" -b secondary
+          if "$OI" dev adopt workcell "$LINKED"; then
+            echo 'linked-worktree adoption unexpectedly succeeded' >&2
+            exit 1
+          fi
+          test -d "$LINKED/.git"
+          test ! -e "$ROOT/Work/Workcell"
 
       - name: Snapshot and receipt are views over the Suite Manifest
         shell: bash
@@ -162,6 +215,7 @@ jobs:
             ${{ runner.temp }}/doctor.json
             ${{ runner.temp }}/verify.json
             ${{ runner.temp }}/installed-first.json
+            ${{ runner.temp }}/dev-status.json
             ${{ runner.temp }}/full-suite-snapshot.json
             ${{ runner.temp }}/full-suite-composition-receipt.json
             ${{ runner.temp }}/composition-first.json
