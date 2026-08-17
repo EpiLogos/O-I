@@ -73,6 +73,8 @@ Together they form a possibility space rather than a fixed workflow. A useful {O
 
 [`docs/CANONICAL-PRODUCT-FIELD.md`](docs/CANONICAL-PRODUCT-FIELD.md) defines the six centres as one relational whole. It gives every centre a human-facing `P` position and an agent-facing conjugate `P′` position, then applies the canonical dyadic, triadic, fourfold, `3:3`, and `4+2` relations to product composition, research, and physical acceptance.
 
+If you already know the modern AI/agent stack and want the shorter translation first, [`docs/AI-ENGINEERING-FIELD-GUIDE.md`](docs/AI-ENGINEERING-FIELD-GUIDE.md) maps current terms such as context engineering, agents, model routing, coding agents, evals, sandboxes, MCP/A2A, model serving and memory into the six-product field without turning those terms into a second ontology.
+
 ## A personal architecture
 
 {O:I} is aimed toward personal technological agency.
@@ -183,6 +185,7 @@ This repository is the shared front door for the idea and the composed installat
 
 - [`docs/VISION.md`](docs/VISION.md) — founding vision and research frame.
 - [`docs/CANONICAL-PRODUCT-FIELD.md`](docs/CANONICAL-PRODUCT-FIELD.md) — the six centres as a `6+6` human/agent conjugate field, with the harmonic relations used for composition, research, and acceptance.
+- [`docs/AI-ENGINEERING-FIELD-GUIDE.md`](docs/AI-ENGINEERING-FIELD-GUIDE.md) — familiar current AI/agent engineering vocabulary mapped onto the six products, with the boundaries O:I keeps distinct.
 - [`docs/SURFACES.md`](docs/SURFACES.md) — the six project surfaces from the outside in.
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — the composition architecture.
 - [`docs/SHARED-FIELD.md`](docs/SHARED-FIELD.md) — local-first projection, participation, transport, and the shared relational field.
