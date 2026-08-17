@@ -1,6 +1,6 @@
 # {O:I} Encounter Security — Security Grammar for Shared and Composable Spaces
 
-**Status:** architectural companion specification  
+**Status:** architectural companion specification; cloud implementation ratified by `OI-017-ENCOUNTER-SECURITY-FINAL-RECEIPT.md`  
 **Applies to:** O:I shared field, Explore, hosted SpaceTimeDB surface, package/component composition, Root Agency, future federation and collaborative Spaces  
 **Companion to:** `ARCHITECTURE.md`, `SHARED-FIELD.md`, `OBJECTIVE-CO-INTERNALITY.md`
 
@@ -292,7 +292,7 @@ Policy mutation and delegation should themselves be attributable Actions/Decisio
 
 ## 5. Hosted SpaceTimeDB security boundary
 
-The planned SpaceTimeDB service should be treated as a **multi-world live shared-state surface**, not as a trusted copy of every participant's interior.
+The live SpaceTimeDB service is treated as a **multi-world live shared-state surface**, not as a trusted copy of every participant's interior.
 
 The semantic boundary remains:
 
@@ -306,7 +306,7 @@ SpaceTimeDB live state
 bounded Encounter
 ```
 
-The hosted service must eventually prove, through current SpaceTimeDB capabilities or explicit surrounding services, at least:
+The ratified implementation proves, through the exact provider/runtime boundaries recorded in `OI-017-ENCOUNTER-SECURITY-FINAL-RECEIPT.md`:
 
 ```text
 authenticated actor/session binding without identity collapse
@@ -322,11 +322,11 @@ separation of hosted relation state from canonical local source state
 recovery/rebuild without semantic identity drift
 ```
 
-Do not assume a specific SpaceTimeDB security feature before verifying the current implementation and documentation. Where the database/runtime does not supply the required semantic control directly, the adapter/service boundary must make the missing enforcement explicit rather than trusting clients.
+Provider capabilities are not assumed from product names. The adopted boundary is pinned and executed in CI, and any provider-specific physical acceptance not present in hosted evidence remains an explicit non-claim in the final receipt.
 
 ### Pollution resistance
 
-The live field must ensure that the ability to write a Contribution does not imply the ability to:
+The live field ensures that the ability to write a Contribution does not imply the ability to:
 
 - mutate another participant's source Projection;
 - promote material into Wiki canon;
@@ -344,7 +344,7 @@ Indexes are rebuildable views over admitted semantic relations. Search presence 
 
 Contact, watch, encounter and mediation data can reveal more about a person than ordinary public content.
 
-O:I should therefore classify **relationship metadata as potentially sensitive source material**, not harmless platform exhaust.
+O:I therefore classifies **relationship metadata as potentially sensitive source material**, not harmless platform exhaust.
 
 Examples include:
 
@@ -370,13 +370,15 @@ Required architectural principles:
 6. preserve provenance without forcing globally linkable identifiers when a narrower pseudonymous/scoped relation suffices;
 7. make retention/deletion/withdrawal policy explicit where law or user expectation requires it.
 
+The final security audit surface follows the same rule: it records scoped principal fingerprints and bounded allow/deny facts, rejects raw private relationship graphs/content/secrets, and requires explicit audit-read scope.
+
 Future training or research use of shared-field traces is a separate consent/projection relation. Participation does not imply permission to use private relationship metadata for model training.
 
 ---
 
 ## 7. Untrusted content and executable material
 
-The field should separate **semantic contribution** from **code execution**.
+The field separates **semantic contribution** from **code execution**.
 
 Potentially hostile inputs include:
 
@@ -394,22 +396,24 @@ MCP/A2A/service endpoints
 serialized data with active payloads
 ```
 
-The receiving Space needs content-type validation, safe rendering, bounded retrieval and explicit execution activation.
+For the current live declarative browser/Tauri host, hostile rich content is proven unable to acquire native bridge/execution authority without an exact execution grant. Executable package/component material may additionally require exact artifact/revision attestation, and a valid attestation is still not activation authority.
 
-For agentic systems, external text and retrieved material must remain **untrusted data with provenance**, not automatically become higher-priority instructions or tool authority.
+No general archive/document parser or malware-scanning pipeline is present in the ratified ancestry; the final receipt therefore does not invent a file-scanner claim for a non-live ingestion surface. Any future native file-ingestion path must add its own parser/content-security acceptance.
 
-A safe architecture should make the transition from representation to executable capability explicit and reversible.
+For agentic systems, external text and retrieved material remains **untrusted data with provenance**, not automatically higher-priority instructions or tool authority.
+
+The transition from representation to executable capability is explicit and reversible.
 
 ---
 
 ## 8. Security evidence and audit
 
-Security decisions should be inspectable without turning every user interaction into permanent surveillance.
+Security decisions are inspectable without turning every user interaction into permanent surveillance.
 
 High-value evidence includes:
 
 ```text
-which identity/Participant acted
+which scoped principal acted
 which Boundary/policy version applied
 which authority grant was used
 which mediation path caused availability
@@ -419,7 +423,9 @@ which Action or mutation actually executed
 what was denied and at which boundary when useful
 ```
 
-Security evidence should follow the same privacy/minimisation principles as other state. Auditability is not justification for retaining all content indefinitely.
+`oi.security-audit/v1` supplies a privacy-minimised representative audit seam with explicit read scope, finite retention, principal fingerprinting, provenance and hash-chain integrity. It deliberately stores no content payload, secret value or private relationship graph.
+
+Security evidence follows the same privacy/minimisation principles as other state. Auditability is not justification for retaining all content indefinitely.
 
 ---
 
@@ -437,26 +443,9 @@ No single global reputation score becomes O:I truth.
 
 ## 10. Research/development requirement
 
-Concrete security systems must be selected through evidence rather than architectural fashion.
+The #31 research programme compared and exercised concrete mechanisms across authentication/credential binding, authority/capability boundaries, provenance/attestation, private relation handling, Contact/rate control, SpaceTimeDB enforcement, hostile rich content, browser/desktop containment, process/material execution, prompt-injection boundaries, A2A identity/return quarantine, package supply-chain provenance, privacy-safe audit and index-pollution resistance.
 
-The corresponding O:I security Wayfinder/ticket must research and prove candidate systems across at least:
-
-- authentication and credential binding;
-- authorisation / capability / relationship policy;
-- provenance, signing and software/content attestation;
-- encrypted/private relation storage and secret handling;
-- explicit contact / anti-spam / abuse controls;
-- SpaceTimeDB mutation/subscription/tenant security;
-- rich-content sanitisation and malware/file handling;
-- browser/desktop component sandboxing;
-- Wasm/native/plugin execution containment;
-- agent prompt-injection / untrusted-context boundaries;
-- federation / A2A endpoint and remote-metadata trust;
-- package/software supply-chain security;
-- audit/trace integrity and privacy-preserving observability;
-- safe search/index ingestion and pollution resistance.
-
-The ticket should compare concrete existing systems and protocols, identify which responsibilities belong to O:I versus Central/AIKit/Actuation/Factory/Workcell/native host infrastructure, and implement the smallest vertical slices needed to falsify weak choices.
+The ratified choices and deliberate rejections/non-claims are recorded in `OI-017-ENCOUNTER-SECURITY-FINAL-RECEIPT.md`. Research products such as Sigstore/in-toto, general policy engines, sandbox runtimes and malware scanners are not constitutional dependencies merely because they were considered. Native products retain their own enforcement semantics and can replace providers beneath the common security distinctions.
 
 ---
 
@@ -476,7 +465,16 @@ The ticket should compare concrete existing systems and protocols, identify whic
 - hosted SpaceTimeDB state is a live projection, not canonical identity or unrestricted truth;
 - Contributions cannot acquire canonical, executable or propagating authority merely by being stored;
 - indexes and rankings remain derived/attributable mediation, not trust or ontology;
-- executable material crosses an explicit admission/capability boundary;
+- executable material crosses explicit provenance/admission/capability boundaries appropriate to the live surface;
+- artifact attestation does not imply trust, Capability grant, Action authority or activation;
+- authentication does not imply Participant/Agent identity, participation, trust or authority;
+- secret materialisation does not imply execution authority;
 - private Context, credentials and connection graphs do not flow into composed components by default;
 - training/research reuse of interaction traces requires an explicit policy/projection basis;
 - implementation security systems remain replaceable beneath the semantic grammar.
+
+## 12. Ratification boundary
+
+The exact implementation heads, CI/provider receipts, twelve attack fixtures, audit/retention statement and all physical/provider non-claims are fixed in `OI-017-ENCOUNTER-SECURITY-FINAL-RECEIPT.md`.
+
+That receipt is the governing implementation-status document for #31. This file remains the semantic security grammar. Future provider or product additions extend their native security acceptance without retroactively collapsing the distinctions ratified here.
