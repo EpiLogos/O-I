@@ -87,14 +87,28 @@ fn action_availability_capability_grant_and_authority_are_separate() {
         authority_ref: "authority:human-confirmed".into(),
         action_ref: binding.action_ref.clone(),
         native_owner: binding.native_owner.clone(),
+        capability_ref: None,
         capability_grant_ref: None,
     };
     assert!(authorize_action(&binding, &missing_capability).is_err());
+
+    let wrong_capability = ActionAuthorityGrant {
+        capability_ref: Some("factory.capability:other".into()),
+        capability_grant_ref: Some("grant:other".into()),
+        ..missing_capability.clone()
+    };
+    assert!(authorize_action(&binding, &wrong_capability).is_err());
+
     let granted = ActionAuthorityGrant {
+        capability_ref: binding.required_capability_ref.clone(),
         capability_grant_ref: Some("grant:recognition".into()),
         ..missing_capability
     };
     let invocation = authorize_action(&binding, &granted).unwrap();
     assert_eq!(invocation.action_ref, binding.action_ref);
     assert_eq!(invocation.authority_ref, "authority:human-confirmed");
+    assert_eq!(
+        invocation.capability_ref,
+        binding.required_capability_ref
+    );
 }
