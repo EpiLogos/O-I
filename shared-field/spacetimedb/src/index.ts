@@ -3,14 +3,29 @@ import { schema, table, t, SenderError } from 'spacetimedb/server';
 const CONTACT_WINDOW_MICROS = 60_000_000n;
 const CONTACT_LIMIT_PER_WINDOW = 3;
 const CONTACT_MAX_TTL_SECONDS = 7 * 24 * 60 * 60;
+const HOSTED_VISIBILITIES = new Set(['public', 'restricted', 'private']);
+const PROJECTION_VISIBILITIES = new Set(['public', 'restricted', 'private']);
 
-const sharedField = table(
-  { public: true },
+/*
+ * Phase 1 privacy shape:
+ *
+ * PRIVATE canonical backing tables
+ *        ↓
+ * caller/field/audience visibility resolver
+ *        ↓
+ * public caller-filtered Views using the historical public table names
+ *
+ * The old public SQL/client names are deliberately retained as Views so downstream
+ * readers keep their legal read-model contract while raw canonical state becomes
+ * unsubscribable.
+ */
+const sharedFieldBacking = table(
+  { name: 'shared_field_backing', public: false },
   {
     rowId: t.u64().primaryKey().autoInc(),
     fieldRef: t.string().unique(),
     kind: t.string(),
-    visibility: t.string(),
+    visibility: t.string().index('btree'),
     contractJson: t.string(),
   }
 );
@@ -39,8 +54,24 @@ const fieldAuthority = table(
   }
 );
 
-const participant = table(
-  { public: true },
+/*
+ * Explicit private-field read admission. This is audience state, not mutation
+ * authority: a participant must also retain a live persistent fieldAuthority grant
+ * bound to the same runtime caller for this row to confer read eligibility.
+ */
+const fieldReadGrant = table(
+  { public: false },
+  {
+    audienceKey: t.string().primaryKey(),
+    fieldRef: t.string().index('btree'),
+    participantRef: t.string().index('btree'),
+    actorIdentity: t.identity().index('btree'),
+    grantedAtMicros: t.u64(),
+  }
+);
+
+const participantBacking = table(
+  { name: 'participant_backing', public: false },
   {
     rowId: t.u64().primaryKey().autoInc(),
     participantRef: t.string().unique(),
@@ -53,8 +84,8 @@ const participant = table(
   }
 );
 
-const projection = table(
-  { public: true },
+const projectionBacking = table(
+  { name: 'projection_backing', public: false },
   {
     rowId: t.u64().primaryKey().autoInc(),
     projectionKey: t.string().unique(),
@@ -68,8 +99,8 @@ const projection = table(
   }
 );
 
-const exploreEntry = table(
-  { public: true },
+const exploreEntryBacking = table(
+  { name: 'explore_entry_backing', public: false },
   {
     rowId: t.u64().primaryKey().autoInc(),
     semanticRef: t.string().unique(),
@@ -82,8 +113,8 @@ const exploreEntry = table(
   }
 );
 
-const exploreRelation = table(
-  { public: true },
+const exploreRelationBacking = table(
+  { name: 'explore_relation_backing', public: false },
   {
     rowId: t.u64().primaryKey().autoInc(),
     relationRef: t.string().unique(),
@@ -153,13 +184,14 @@ const contactRate = table(
 );
 
 const spacetimedb = schema({
-  sharedField,
+  sharedFieldBacking,
   fieldOwner,
   fieldAuthority,
-  participant,
-  projection,
-  exploreEntry,
-  exploreRelation,
+  fieldReadGrant,
+  participantBacking,
+  projectionBacking,
+  exploreEntryBacking,
+  exploreRelationBacking,
   watch,
   contact,
   contactPolicy,
@@ -168,21 +200,312 @@ const spacetimedb = schema({
 
 export default spacetimedb;
 
-/**
- * Private relationship Views deliberately admit only non-expiring grants.
- *
- * SpaceTimeDB 2.8.1 reducer-time expiry is proven below, but its documented one-shot
- * scheduler did not execute reproducibly under the pinned standalone CI runtime. A
- * finite grant therefore never becomes a private-read entitlement: it can exercise
- * reducers until server-time expiry, but Watch/Contact disclosure requires a persistent
- * grant which can be explicitly revoked. This is fail-closed until timed View revocation
- * is proven on the deployed provider.
- */
+function fail(message: string): never {
+  throw new SenderError(message);
+}
+
+function requireString(value: string, name: string, max = 512): void {
+  if (value.trim() === '') fail(`${name} must be non-empty`);
+  if (value.length > max) fail(`${name} must be at most ${max} characters`);
+}
+
+function requireJsonObject(value: string, name: string, max = 65_536): Record<string, any> {
+  if (value.trim() === '') fail(`${name} must be non-empty JSON`);
+  if (value.length > max) fail(`${name} exceeds ${max} character limit`);
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value);
+  } catch {
+    fail(`${name} must contain valid JSON`);
+  }
+  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    fail(`${name} must contain a JSON object`);
+  }
+  return parsed as Record<string, any>;
+}
+
+function parseStoredJson(value: string, name: string): Record<string, any> {
+  try {
+    const parsed = JSON.parse(value);
+    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new Error(`${name} is not an object`);
+    }
+    return parsed as Record<string, any>;
+  } catch (error: any) {
+    throw new Error(`${name} contains invalid canonical JSON: ${error?.message ?? String(error)}`);
+  }
+}
+
+function requireEqual(actual: unknown, expected: unknown, name: string): void {
+  if (actual !== expected) fail(`${name} does not match semantic contract`);
+}
+
+function nowMicros(ctx: any): bigint {
+  return ctx.timestamp.microsSinceUnixEpoch;
+}
+
+function authorityKey(fieldRef: string, participantRef: string): string {
+  return `${fieldRef}|${participantRef}`;
+}
+
+function audienceKey(fieldRef: string, participantRef: string): string {
+  return `${fieldRef}|${participantRef}`;
+}
+
+function contactPolicyKey(fieldRef: string, blockerParticipantRef: string, blockedParticipantRef: string): string {
+  return `${fieldRef}|${blockerParticipantRef}|${blockedParticipantRef}`;
+}
+
+function contactRateKey(fieldRef: string, initiatorParticipantRef: string): string {
+  return `${fieldRef}|${initiatorParticipantRef}`;
+}
+
+function isFieldOwner(ctx: any, fieldRef: string): boolean {
+  for (const owned of ctx.db.fieldOwner.ownerIdentity.filter(ctx.sender)) {
+    if (owned.fieldRef === fieldRef) return true;
+  }
+  return false;
+}
+
+function requireFieldOwner(ctx: any, fieldRef: string): void {
+  if (!isFieldOwner(ctx, fieldRef)) fail(`Caller is not owner of SharedField ${fieldRef}`);
+}
+
+function requireParticipantInField(ctx: any, participantRef: string, fieldRef: string): any {
+  const participantRow = ctx.db.participantBacking.participantRef.find(participantRef);
+  if (!participantRow || participantRow.fieldRef !== fieldRef) {
+    fail(`Participant ${participantRef} does not belong to SharedField ${fieldRef}`);
+  }
+  return participantRow;
+}
+
+function requireRole(role: string): void {
+  if (!['observer', 'contact', 'contributor'].includes(role)) fail(`Unsupported authority role: ${role}`);
+}
+
+function requireWatchState(state: string): void {
+  if (!['active', 'paused'].includes(state)) fail(`Unsupported Watch state: ${state}`);
+}
+
+function requireContactDecision(decision: string): void {
+  if (!['accepted', 'declined', 'redirected', 'narrowed'].includes(decision)) {
+    fail(`Unsupported Contact decision: ${decision}`);
+  }
+}
+
 function privateReadCallerGrants(ctx: any): any[] {
   return Array.from(ctx.db.fieldAuthority.actorIdentity.filter(ctx.sender)).filter(
     (grant: any) => !grant.revoked && grant.expiresAtMicros === 0n
   );
 }
+
+function callerPersistentParticipantRefs(ctx: any, fieldRef: string): Set<string> {
+  const refs = new Set<string>();
+  for (const grant of privateReadCallerGrants(ctx)) {
+    if (grant.fieldRef === fieldRef) refs.add(grant.participantRef);
+  }
+  return refs;
+}
+
+function callerOwnsPersistentParticipantGrant(ctx: any, fieldRef: string, participantRef: string): boolean {
+  for (const grant of privateReadCallerGrants(ctx)) {
+    if (grant.fieldRef === fieldRef && grant.participantRef === participantRef) return true;
+  }
+  return false;
+}
+
+function callerHasExplicitFieldRead(ctx: any, fieldRef: string): boolean {
+  for (const readGrant of ctx.db.fieldReadGrant.actorIdentity.filter(ctx.sender)) {
+    if (readGrant.fieldRef !== fieldRef) continue;
+    if (callerOwnsPersistentParticipantGrant(ctx, fieldRef, readGrant.participantRef)) return true;
+  }
+  return false;
+}
+
+function callerCanSeeField(ctx: any, fieldRow: any): boolean {
+  if (fieldRow.visibility === 'public') return true;
+  if (isFieldOwner(ctx, fieldRow.fieldRef)) return true;
+  if (fieldRow.visibility === 'restricted') {
+    return callerPersistentParticipantRefs(ctx, fieldRow.fieldRef).size > 0;
+  }
+  if (fieldRow.visibility === 'private') {
+    return callerHasExplicitFieldRead(ctx, fieldRow.fieldRef);
+  }
+  return false;
+}
+
+function visibleFieldRows(ctx: any): any[] {
+  const rows = new Map<string, any>();
+  for (const row of ctx.db.sharedFieldBacking.visibility.filter('public')) rows.set(row.fieldRef, row);
+  for (const owned of ctx.db.fieldOwner.ownerIdentity.filter(ctx.sender)) {
+    const row = ctx.db.sharedFieldBacking.fieldRef.find(owned.fieldRef);
+    if (row) rows.set(row.fieldRef, row);
+  }
+  for (const grant of privateReadCallerGrants(ctx)) {
+    const row = ctx.db.sharedFieldBacking.fieldRef.find(grant.fieldRef);
+    if (row?.visibility === 'restricted') rows.set(row.fieldRef, row);
+  }
+  for (const readGrant of ctx.db.fieldReadGrant.actorIdentity.filter(ctx.sender)) {
+    const row = ctx.db.sharedFieldBacking.fieldRef.find(readGrant.fieldRef);
+    if (row?.visibility === 'private' && callerOwnsPersistentParticipantGrant(ctx, readGrant.fieldRef, readGrant.participantRef)) {
+      rows.set(row.fieldRef, row);
+    }
+  }
+  return Array.from(rows.values());
+}
+
+function latestProjectionRowsForField(ctx: any, fieldRef: string): any[] {
+  const latest = new Map<string, any>();
+  for (const row of ctx.db.projectionBacking.fieldRef.filter(fieldRef)) {
+    const prior = latest.get(row.projectionRef);
+    if (!prior || row.projectionRevision > prior.projectionRevision) latest.set(row.projectionRef, row);
+  }
+  return Array.from(latest.values());
+}
+
+function projectionAudience(contract: Record<string, any>): { visibility: string; refs: string[] } {
+  const audience = contract.audience;
+  if (audience === null || typeof audience !== 'object' || Array.isArray(audience)) {
+    throw new Error('Projection audience missing from canonical contract');
+  }
+  const visibility = String(audience.visibility ?? '');
+  const refs = audience.refs === undefined ? [] : audience.refs;
+  if (!Array.isArray(refs)) throw new Error('Projection audience refs are not an array');
+  return { visibility, refs: refs.map((ref: unknown) => String(ref)) };
+}
+
+function callerCanSeeProjection(ctx: any, row: any): boolean {
+  const field = ctx.db.sharedFieldBacking.fieldRef.find(row.fieldRef);
+  if (!field || !callerCanSeeField(ctx, field)) return false;
+  if (isFieldOwner(ctx, row.fieldRef)) return true;
+
+  const contract = parseStoredJson(row.contractJson, 'Projection contractJson');
+  const audience = projectionAudience(contract);
+  const callerRefs = callerPersistentParticipantRefs(ctx, row.fieldRef);
+
+  if (audience.visibility === 'public') {
+    if (audience.refs.length === 0) return true;
+    return audience.refs.some(ref => callerRefs.has(ref));
+  }
+  if (audience.visibility === 'restricted') {
+    if (callerRefs.size === 0) return false;
+    if (audience.refs.length === 0) return true;
+    return audience.refs.some(ref => callerRefs.has(ref));
+  }
+  if (audience.visibility === 'private') {
+    if (callerRefs.size === 0 || audience.refs.length === 0) return false;
+    return audience.refs.some(ref => callerRefs.has(ref));
+  }
+  return false;
+}
+
+function visibleProjectionRows(ctx: any): any[] {
+  const rows: any[] = [];
+  for (const field of visibleFieldRows(ctx)) {
+    for (const row of latestProjectionRowsForField(ctx, field.fieldRef)) {
+      if (callerCanSeeProjection(ctx, row)) rows.push(row);
+    }
+  }
+  return rows;
+}
+
+function projectionRowsReferencingExploreEntry(ctx: any, row: any): any[] {
+  const matches: any[] = [];
+  for (const projectionRow of latestProjectionRowsForField(ctx, row.fieldRef)) {
+    const contract = parseStoredJson(projectionRow.contractJson, 'Projection contractJson');
+    const explicitProjectionRef = contract.projection_ref;
+    const representationRef = contract.representation?.ref;
+    if (explicitProjectionRef === row.semanticRef || representationRef === row.semanticRef) {
+      matches.push(projectionRow);
+    }
+  }
+  return matches;
+}
+
+function callerCanSeeExploreEntry(ctx: any, row: any): boolean {
+  const field = ctx.db.sharedFieldBacking.fieldRef.find(row.fieldRef);
+  if (!field || !callerCanSeeField(ctx, field)) return false;
+
+  const entry = parseStoredJson(row.entryJson, 'Explore entryJson');
+  const directProjectionRef = typeof entry.projection_ref === 'string' ? entry.projection_ref : undefined;
+  const matched = projectionRowsReferencingExploreEntry(ctx, row);
+
+  if (directProjectionRef) {
+    const current = latestProjectionRowsForField(ctx, row.fieldRef).find(
+      projectionRow => projectionRow.projectionRef === directProjectionRef
+    );
+    if (!current || current.state !== 'published' || !callerCanSeeProjection(ctx, current)) return false;
+  }
+
+  if (row.kind === 'projection' || matched.length > 0) {
+    return matched.some(projectionRow => projectionRow.state === 'published' && callerCanSeeProjection(ctx, projectionRow));
+  }
+
+  const participantRef = entry.meta?.participant_ref;
+  if (typeof participantRef === 'string') {
+    const participantRow = ctx.db.participantBacking.participantRef.find(participantRef);
+    if (!participantRow || participantRow.fieldRef !== row.fieldRef) return false;
+  }
+
+  return true;
+}
+
+function visibleExploreEntryRows(ctx: any): any[] {
+  const rows: any[] = [];
+  for (const field of visibleFieldRows(ctx)) {
+    for (const row of ctx.db.exploreEntryBacking.fieldRef.filter(field.fieldRef)) {
+      if (callerCanSeeExploreEntry(ctx, row)) rows.push(row);
+    }
+  }
+  return rows;
+}
+
+function visibleExploreRelationRows(ctx: any): any[] {
+  const visibleRefs = new Set(visibleExploreEntryRows(ctx).map(row => row.semanticRef));
+  const rows: any[] = [];
+  for (const field of visibleFieldRows(ctx)) {
+    for (const row of ctx.db.exploreRelationBacking.fieldRef.filter(field.fieldRef)) {
+      if (visibleRefs.has(row.fromRef) && visibleRefs.has(row.toRef)) rows.push(row);
+    }
+  }
+  return rows;
+}
+
+export const shared_field = spacetimedb.view(
+  { name: 'shared_field', public: true },
+  t.array(sharedFieldBacking.rowType),
+  (ctx) => visibleFieldRows(ctx)
+);
+
+export const participant = spacetimedb.view(
+  { name: 'participant', public: true },
+  t.array(participantBacking.rowType),
+  (ctx) => {
+    const rows: any[] = [];
+    for (const field of visibleFieldRows(ctx)) {
+      for (const row of ctx.db.participantBacking.fieldRef.filter(field.fieldRef)) rows.push(row);
+    }
+    return rows;
+  }
+);
+
+export const projection = spacetimedb.view(
+  { name: 'projection', public: true },
+  t.array(projectionBacking.rowType),
+  (ctx) => visibleProjectionRows(ctx)
+);
+
+export const explore_entry = spacetimedb.view(
+  { name: 'explore_entry', public: true },
+  t.array(exploreEntryBacking.rowType),
+  (ctx) => visibleExploreEntryRows(ctx)
+);
+
+export const explore_relation = spacetimedb.view(
+  { name: 'explore_relation', public: true },
+  t.array(exploreRelationBacking.rowType),
+  (ctx) => visibleExploreRelationRows(ctx)
+);
 
 export const my_field_authority = spacetimedb.view(
   { name: 'my_field_authority', public: true },
@@ -221,83 +544,6 @@ export const my_contact = spacetimedb.view(
   }
 );
 
-function fail(message: string): never {
-  throw new SenderError(message);
-}
-
-function requireString(value: string, name: string, max = 512): void {
-  if (value.trim() === '') fail(`${name} must be non-empty`);
-  if (value.length > max) fail(`${name} must be at most ${max} characters`);
-}
-
-function requireJsonObject(value: string, name: string, max = 65_536): Record<string, any> {
-  if (value.trim() === '') fail(`${name} must be non-empty JSON`);
-  if (value.length > max) fail(`${name} exceeds ${max} character limit`);
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(value);
-  } catch {
-    fail(`${name} must contain valid JSON`);
-  }
-  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    fail(`${name} must contain a JSON object`);
-  }
-  return parsed as Record<string, any>;
-}
-
-function requireEqual(actual: unknown, expected: unknown, name: string): void {
-  if (actual !== expected) fail(`${name} does not match semantic contract`);
-}
-
-function nowMicros(ctx: any): bigint {
-  return ctx.timestamp.microsSinceUnixEpoch;
-}
-
-function authorityKey(fieldRef: string, participantRef: string): string {
-  return `${fieldRef}|${participantRef}`;
-}
-
-function contactPolicyKey(fieldRef: string, blockerParticipantRef: string, blockedParticipantRef: string): string {
-  return `${fieldRef}|${blockerParticipantRef}|${blockedParticipantRef}`;
-}
-
-function contactRateKey(fieldRef: string, initiatorParticipantRef: string): string {
-  return `${fieldRef}|${initiatorParticipantRef}`;
-}
-
-function isFieldOwner(ctx: any, fieldRef: string): boolean {
-  for (const owned of ctx.db.fieldOwner.ownerIdentity.filter(ctx.sender)) {
-    if (owned.fieldRef === fieldRef) return true;
-  }
-  return false;
-}
-
-function requireFieldOwner(ctx: any, fieldRef: string): void {
-  if (!isFieldOwner(ctx, fieldRef)) fail(`Caller is not owner of SharedField ${fieldRef}`);
-}
-
-function requireParticipantInField(ctx: any, participantRef: string, fieldRef: string): any {
-  const participantRow = ctx.db.participant.participantRef.find(participantRef);
-  if (!participantRow || participantRow.fieldRef !== fieldRef) {
-    fail(`Participant ${participantRef} does not belong to SharedField ${fieldRef}`);
-  }
-  return participantRow;
-}
-
-function requireRole(role: string): void {
-  if (!['observer', 'contact', 'contributor'].includes(role)) fail(`Unsupported authority role: ${role}`);
-}
-
-function requireWatchState(state: string): void {
-  if (!['active', 'paused'].includes(state)) fail(`Unsupported Watch state: ${state}`);
-}
-
-function requireContactDecision(decision: string): void {
-  if (!['accepted', 'declined', 'redirected', 'narrowed'].includes(decision)) {
-    fail(`Unsupported Contact decision: ${decision}`);
-  }
-}
-
 function requireParticipantAuthority(ctx: any, fieldRef: string, participantRef: string, roles: string[]): any {
   const key = authorityKey(fieldRef, participantRef);
   const grant = ctx.db.fieldAuthority.authorityKey.find(key);
@@ -319,6 +565,14 @@ function requireParticipantAuthority(ctx: any, fieldRef: string, participantRef:
   return grant;
 }
 
+function requirePersistentParticipantAuthority(ctx: any, fieldRef: string, participantRef: string): any {
+  const grant = ctx.db.fieldAuthority.authorityKey.find(authorityKey(fieldRef, participantRef));
+  if (!grant || grant.revoked || grant.expiresAtMicros !== 0n) {
+    fail(`Participant ${participantRef} requires persistent authority for protected read audience`);
+  }
+  return grant;
+}
+
 function authorityForContactRecipient(ctx: any, fieldRef: string, participantRef: string): any {
   const grant = ctx.db.fieldAuthority.authorityKey.find(authorityKey(fieldRef, participantRef));
   if (!grant || grant.revoked || !grant.contactable) fail(`Recipient Participant ${participantRef} is not contactable`);
@@ -326,6 +580,34 @@ function authorityForContactRecipient(ctx: any, fieldRef: string, participantRef
     fail(`Recipient Participant ${participantRef} is not contactable`);
   }
   return grant;
+}
+
+function validateHostedFieldVisibility(visibility: string): void {
+  if (visibility === 'unlisted') {
+    fail('Hosted unlisted is rejected: current broad subscription Views do not provide direct-only resolvability without enumeration');
+  }
+  if (!HOSTED_VISIBILITIES.has(visibility)) fail(`Unsupported hosted SharedField visibility: ${visibility}`);
+}
+
+function validateProjectionAudience(ctx: any, fieldRef: string, contract: Record<string, any>): void {
+  const audience = contract.audience;
+  if (audience === null || typeof audience !== 'object' || Array.isArray(audience)) {
+    fail('Projection audience must be an object');
+  }
+  const visibility = audience.visibility;
+  if (visibility === 'unlisted') {
+    fail('Hosted unlisted Projection is rejected until direct-only resolution can be enforced provider-side');
+  }
+  if (!PROJECTION_VISIBILITIES.has(visibility)) fail(`Unsupported Projection audience visibility: ${visibility}`);
+  const refs = audience.refs ?? [];
+  if (!Array.isArray(refs)) fail('Projection audience.refs must be an array');
+  const seen = new Set<string>();
+  for (const rawRef of refs) {
+    if (typeof rawRef !== 'string' || rawRef.trim() === '') fail('Projection audience.refs entries must be non-empty Participant refs');
+    if (seen.has(rawRef)) fail(`Duplicate Projection audience ref: ${rawRef}`);
+    seen.add(rawRef);
+    requireParticipantInField(ctx, rawRef, fieldRef);
+  }
 }
 
 function contactContract(row: any): string {
@@ -376,18 +658,18 @@ export const put_shared_field = spacetimedb.reducer(
   { fieldRef: t.string(), kind: t.string(), visibility: t.string(), contractJson: t.string() },
   (ctx, args) => {
     requireString(args.fieldRef, 'SharedField fieldRef');
-    if (args.visibility !== 'public') fail('This hosted SharedField table is the public-field floor; private visibility requires caller-scoped content Views');
+    validateHostedFieldVisibility(args.visibility);
     const contract = requireJsonObject(args.contractJson, 'SharedField contract');
     requireEqual(contract.field_ref, args.fieldRef, 'SharedField fieldRef');
     requireEqual(contract.kind, args.kind, 'SharedField kind');
     requireEqual(contract.visibility, args.visibility, 'SharedField visibility');
-    const existing = ctx.db.sharedField.fieldRef.find(args.fieldRef);
+    const existing = ctx.db.sharedFieldBacking.fieldRef.find(args.fieldRef);
     if (existing) {
       requireFieldOwner(ctx, args.fieldRef);
-      ctx.db.sharedField.rowId.update({ ...existing, ...args });
+      ctx.db.sharedFieldBacking.rowId.update({ ...existing, ...args });
       return;
     }
-    ctx.db.sharedField.insert({ rowId: 0n, ...args });
+    ctx.db.sharedFieldBacking.insert({ rowId: 0n, ...args });
     ctx.db.fieldOwner.insert({
       fieldRef: args.fieldRef,
       ownerIdentity: ctx.sender,
@@ -414,14 +696,14 @@ export const put_participant = spacetimedb.reducer(
     requireEqual(contract.identity?.ref, args.identityRef, 'Participant identityRef');
     requireEqual(contract.provenance?.source_system, args.sourceSystem, 'Participant sourceSystem');
     requireEqual(contract.provenance?.source_revision, args.sourceRevision, 'Participant sourceRevision');
-    if (!ctx.db.sharedField.fieldRef.find(args.fieldRef)) fail(`Unknown SharedField semantic ref: ${args.fieldRef}`);
+    if (!ctx.db.sharedFieldBacking.fieldRef.find(args.fieldRef)) fail(`Unknown SharedField semantic ref: ${args.fieldRef}`);
     requireFieldOwner(ctx, args.fieldRef);
-    const existing = ctx.db.participant.participantRef.find(args.participantRef);
+    const existing = ctx.db.participantBacking.participantRef.find(args.participantRef);
     if (existing) {
       if (existing.fieldRef !== args.fieldRef) fail('Participant cannot move between SharedFields by update');
-      ctx.db.participant.rowId.update({ ...existing, ...args });
+      ctx.db.participantBacking.rowId.update({ ...existing, ...args });
     } else {
-      ctx.db.participant.insert({ rowId: 0n, ...args });
+      ctx.db.participantBacking.insert({ rowId: 0n, ...args });
     }
   }
 );
@@ -465,6 +747,36 @@ export const revoke_participant_authority = spacetimedb.reducer(
     const existing = ctx.db.fieldAuthority.authorityKey.find(key);
     if (!existing) fail(`No authority grant for Participant ${args.participantRef}`);
     ctx.db.fieldAuthority.authorityKey.delete(key);
+    const readKey = audienceKey(args.fieldRef, args.participantRef);
+    if (ctx.db.fieldReadGrant.audienceKey.find(readKey)) ctx.db.fieldReadGrant.audienceKey.delete(readKey);
+  }
+);
+
+export const grant_field_read = spacetimedb.reducer(
+  { fieldRef: t.string(), participantRef: t.string() },
+  (ctx, args) => {
+    requireFieldOwner(ctx, args.fieldRef);
+    requireParticipantInField(ctx, args.participantRef, args.fieldRef);
+    const authority = requirePersistentParticipantAuthority(ctx, args.fieldRef, args.participantRef);
+    const row = {
+      audienceKey: audienceKey(args.fieldRef, args.participantRef),
+      fieldRef: args.fieldRef,
+      participantRef: args.participantRef,
+      actorIdentity: authority.actorIdentity,
+      grantedAtMicros: nowMicros(ctx),
+    };
+    const existing = ctx.db.fieldReadGrant.audienceKey.find(row.audienceKey);
+    if (existing) ctx.db.fieldReadGrant.audienceKey.update(row);
+    else ctx.db.fieldReadGrant.insert(row);
+  }
+);
+
+export const revoke_field_read = spacetimedb.reducer(
+  { fieldRef: t.string(), participantRef: t.string() },
+  (ctx, args) => {
+    requireFieldOwner(ctx, args.fieldRef);
+    const key = audienceKey(args.fieldRef, args.participantRef);
+    if (ctx.db.fieldReadGrant.audienceKey.find(key)) ctx.db.fieldReadGrant.audienceKey.delete(key);
   }
 );
 
@@ -486,15 +798,14 @@ export const put_projection = spacetimedb.reducer(
     requireEqual(contract.source?.revision, args.sourceRevision, 'Projection sourceRevision');
     requireEqual(contract.publisher_participant_ref, args.publisherParticipantRef, 'Projection publisherParticipantRef');
     requireEqual(contract.state, args.state, 'Projection state');
-    if (contract.audience?.visibility !== 'public') {
-      fail('This hosted Projection table is the public-field floor; private audience requires caller-scoped content Views');
-    }
+    if (!['published', 'withdrawn'].includes(args.state)) fail(`Unsupported Projection state: ${args.state}`);
+    validateProjectionAudience(ctx, args.fieldRef, contract);
     requireParticipantInField(ctx, args.publisherParticipantRef, args.fieldRef);
     requireParticipantAuthority(ctx, args.fieldRef, args.publisherParticipantRef, ['contributor']);
     const expectedKey = `${args.projectionRef}@${args.projectionRevision}`;
     if (args.projectionKey !== expectedKey) fail(`Projection key must be ${expectedKey}`);
 
-    const existing = ctx.db.projection.projectionKey.find(args.projectionKey);
+    const existing = ctx.db.projectionBacking.projectionKey.find(args.projectionKey);
     if (existing) {
       const exact = existing.fieldRef === args.fieldRef
         && existing.projectionRef === args.projectionRef
@@ -508,7 +819,7 @@ export const put_projection = spacetimedb.reducer(
     }
 
     let latest: any | undefined;
-    for (const row of ctx.db.projection.projectionRef.filter(args.projectionRef)) {
+    for (const row of ctx.db.projectionBacking.projectionRef.filter(args.projectionRef)) {
       if (!latest || row.projectionRevision > latest.projectionRevision) latest = row;
     }
     if (!latest && args.projectionRevision !== 1) fail('First Projection revision must be 1');
@@ -519,7 +830,7 @@ export const put_projection = spacetimedb.reducer(
         fail('Only the current publisher or field owner may hand a Projection to a new publisher');
       }
     }
-    ctx.db.projection.insert({ rowId: 0n, ...args });
+    ctx.db.projectionBacking.insert({ rowId: 0n, ...args });
   }
 );
 
@@ -541,12 +852,12 @@ export const put_explore_entry = spacetimedb.reducer(
     requireEqual(entry.label, args.label, 'Explore label');
     requireEqual(entry.revision ?? '', args.revision, 'Explore revision');
     requireFieldOwner(ctx, args.fieldRef);
-    const existing = ctx.db.exploreEntry.semanticRef.find(args.semanticRef);
+    const existing = ctx.db.exploreEntryBacking.semanticRef.find(args.semanticRef);
     if (existing) {
       if (existing.fieldRef !== args.fieldRef) fail('Explore entry cannot move between SharedFields');
-      ctx.db.exploreEntry.rowId.update({ ...existing, ...args });
+      ctx.db.exploreEntryBacking.rowId.update({ ...existing, ...args });
     } else {
-      ctx.db.exploreEntry.insert({ rowId: 0n, ...args });
+      ctx.db.exploreEntryBacking.insert({ rowId: 0n, ...args });
     }
   }
 );
@@ -568,19 +879,19 @@ export const put_explore_relation = spacetimedb.reducer(
     requireEqual(relation.relation, args.relation, 'Explore relation type');
     requireEqual(relation.origin, args.origin, 'Explore relation origin');
     requireFieldOwner(ctx, args.fieldRef);
-    const from = ctx.db.exploreEntry.semanticRef.find(args.fromRef);
-    const to = ctx.db.exploreEntry.semanticRef.find(args.toRef);
+    const from = ctx.db.exploreEntryBacking.semanticRef.find(args.fromRef);
+    const to = ctx.db.exploreEntryBacking.semanticRef.find(args.toRef);
     if (!from) fail(`Unknown Explore source semantic ref: ${args.fromRef}`);
     if (!to) fail(`Unknown Explore target semantic ref: ${args.toRef}`);
     if (from.fieldRef !== args.fieldRef || to.fieldRef !== args.fieldRef) {
       fail('Explore relations cannot cross a SharedField authority boundary implicitly');
     }
-    const existing = ctx.db.exploreRelation.relationRef.find(args.relationRef);
+    const existing = ctx.db.exploreRelationBacking.relationRef.find(args.relationRef);
     if (existing) {
       if (existing.fieldRef !== args.fieldRef) fail('Explore relation cannot move between SharedFields');
-      ctx.db.exploreRelation.rowId.update({ ...existing, ...args });
+      ctx.db.exploreRelationBacking.rowId.update({ ...existing, ...args });
     } else {
-      ctx.db.exploreRelation.insert({ rowId: 0n, ...args });
+      ctx.db.exploreRelationBacking.insert({ rowId: 0n, ...args });
     }
   }
 );
@@ -606,8 +917,10 @@ export const put_watch = spacetimedb.reducer(
     requireWatchState(args.state);
     requireParticipantInField(ctx, args.watcherParticipantRef, args.fieldRef);
     requireParticipantAuthority(ctx, args.fieldRef, args.watcherParticipantRef, ['observer', 'contact', 'contributor']);
-    const target = ctx.db.exploreEntry.semanticRef.find(args.targetRef);
-    if (!target || target.fieldRef !== args.fieldRef) fail(`Unknown Watch target in SharedField ${args.fieldRef}: ${args.targetRef}`);
+    const target = ctx.db.exploreEntryBacking.semanticRef.find(args.targetRef);
+    if (!target || target.fieldRef !== args.fieldRef || !callerCanSeeExploreEntry(ctx, target)) {
+      fail(`Unknown or unavailable Watch target in SharedField ${args.fieldRef}: ${args.targetRef}`);
+    }
     const existing = ctx.db.watch.watchRef.find(args.watchRef);
     if (existing) {
       if (existing.fieldRef !== args.fieldRef
