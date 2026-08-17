@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as api from './api.mjs';
 
-test('unified shared-field API exposes projection, shared-agency, Explore, Watch and hosted-state floors', () => {
+test('unified shared-field API exposes projection, shared-agency, Explore, Watch, Contact and hosted-state floors', () => {
   for (const name of [
     'createParticipant',
     'createProjection',
@@ -19,12 +19,17 @@ test('unified shared-field API exposes projection, shared-agency, Explore, Watch
     'createExploreApplication',
     'createWatch',
     'validateWatch',
+    'createContact',
+    'validateContact',
     'hostedSnapshotFromRows',
     'createSpacetimeExploreSource',
     'createLiveExploreApplication',
     'hostedWatchFromRow',
     'hostedWatchesFromSpacetimeDb',
     'createSpacetimeWatchSource',
+    'hostedContactFromRow',
+    'hostedContactsFromSpacetimeDb',
+    'createSpacetimeContactSource',
   ]) {
     assert.equal(typeof api[name], 'function', `${name} should be exported`);
   }
@@ -38,4 +43,5 @@ test('unified shared-field API exposes projection, shared-agency, Explore, Watch
   assert.equal(api.EXPLORE_RELATION_VIEW_SCHEMA, 'oi.explore-relation-view/v1');
   assert.equal(api.EXPLORE_RESULT_SCHEMA, 'oi.explore-result/v1');
   assert.equal(api.WATCH_SCHEMA, 'oi.watch/v1');
+  assert.equal(api.CONTACT_SCHEMA, 'oi.contact/v1');
 });

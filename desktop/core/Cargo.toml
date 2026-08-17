@@ -1,0 +1,13 @@
+[package]
+name = "oi-desktop-core"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+aikit-core = { git = "https://github.com/EpiLogos/ai-kit", rev = "e85755f1aea80e8d669da0e06b1ca76c0e94a656" }
+aikit-adapters = { git = "https://github.com/EpiLogos/ai-kit", rev = "e85755f1aea80e8d669da0e06b1ca76c0e94a656" }
+epilogos-factory = { git = "https://github.com/EpiLogos/agent-system-design", rev = "c39bd63580cb7196f38c9a26b49e3977aac95e6a" }
+oi-cli = { path = "../../cli" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

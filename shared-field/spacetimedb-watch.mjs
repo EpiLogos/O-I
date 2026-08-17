@@ -41,14 +41,14 @@ export function hostedWatchFromRow(row) {
 }
 
 export function hostedWatchesFromSpacetimeDb(db) {
-  const handle = db?.watch;
-  if (!handle || typeof handle.iter !== 'function') throw new TypeError('SpaceTimeDB db.watch table handle is required');
+  const handle = db?.myWatch;
+  if (!handle || typeof handle.iter !== 'function') throw new TypeError('SpaceTimeDB db.myWatch caller View handle is required');
   return [...handle.iter()].map(hostedWatchFromRow);
 }
 
 export function createSpacetimeWatchSource(db) {
-  const handle = db?.watch;
-  if (!handle || typeof handle.iter !== 'function') throw new TypeError('SpaceTimeDB db.watch table handle is required');
+  const handle = db?.myWatch;
+  if (!handle || typeof handle.iter !== 'function') throw new TypeError('SpaceTimeDB db.myWatch caller View handle is required');
 
   function snapshot() {
     return hostedWatchesFromSpacetimeDb(db);

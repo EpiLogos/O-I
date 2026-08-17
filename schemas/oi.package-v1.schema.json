@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epilogos.github.io/o-i/schemas/oi.package-v1.schema.json",
+  "title": "O:I Package Descriptor v1",
+  "description": "Suite-level installation/composition envelope around independently owned native extension contracts.",
+  "type": "object",
+  "required": ["schema", "package_ref", "version", "source", "contributions"],
+  "properties": {
+    "schema": { "const": "oi.package/v1" },
+    "package_ref": { "type": "string", "minLength": 1 },
+    "version": { "$ref": "#/$defs/version" },
+    "source": {
+      "type": "object",
+      "required": ["kind", "locator", "revision"],
+      "properties": {
+        "kind": { "type": "string", "minLength": 1 },
+        "locator": { "type": "string", "minLength": 1 },
+        "revision": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "compatibility": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["product", "minimum_version"],
+        "properties": {
+          "product": { "type": "string", "minLength": 1 },
+          "minimum_version": { "$ref": "#/$defs/version" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "permissions": { "$ref": "#/$defs/disclosures" },
+    "effects": { "$ref": "#/$defs/disclosures" },
+    "contributions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "contribution_ref",
+          "target_product",
+          "target_contract",
+          "minimum_contract_version",
+          "artifact",
+          "native_verification"
+        ],
+        "properties": {
+          "contribution_ref": { "type": "string", "minLength": 1 },
+          "target_product": { "type": "string", "minLength": 1 },
+          "target_contract": { "type": "string", "minLength": 1 },
+          "minimum_contract_version": { "$ref": "#/$defs/version" },
+          "artifact": { "type": "string", "minLength": 1 },
+          "permissions": { "$ref": "#/$defs/disclosures" },
+          "effects": { "$ref": "#/$defs/disclosures" },
+          "native_verification": {
+            "type": "object",
+            "required": ["operation"],
+            "properties": {
+              "operation": { "type": "string", "minLength": 1 },
+              "evidence_format": { "type": "string", "minLength": 1 }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "$defs": {
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+(?:\\.[0-9]+)*$"
+    },
+    "disclosures": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "additionalProperties": false
+}
