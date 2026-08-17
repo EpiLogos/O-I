@@ -1,0 +1,30 @@
+name: Suite SkillSet
+
+on:
+  pull_request:
+    paths:
+      - "skills/suite-operator/**"
+      - "cli/src/skillset.rs"
+      - "cli/src/lib.rs"
+      - "cli/tests/suite_skillset.rs"
+      - "schemas/oi.suite-skillset-v1.schema.json"
+      - "docs/SUITE-OPERATOR-SKILLSET.md"
+      - ".github/workflows/suite-skillset.yml"
+  push:
+    branches: [main]
+    paths:
+      - "skills/suite-operator/**"
+      - "cli/src/skillset.rs"
+      - "cli/src/lib.rs"
+      - "cli/tests/suite_skillset.rs"
+      - "schemas/oi.suite-skillset-v1.schema.json"
+      - "docs/SUITE-OPERATOR-SKILLSET.md"
+      - ".github/workflows/suite-skillset.yml"
+
+jobs:
+  conformance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test --manifest-path cli/Cargo.toml --test suite_skillset
