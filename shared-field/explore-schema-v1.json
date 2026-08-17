@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://o-i.dev/schemas/explore-v1.json",
+  "title": "O:I Explore v1 cross-client read models",
+  "type": "object",
+  "$defs": {
+    "provenance": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["kind", "ref", "source_system"],
+      "properties": {
+        "kind": {"type": "string", "minLength": 1},
+        "ref": {"type": "string", "minLength": 1},
+        "source_system": {"type": "string", "minLength": 1},
+        "revision": {"type": "string", "minLength": 1}
+      }
+    },
+    "locator": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["surface", "locator"],
+      "properties": {
+        "surface": {"type": "string", "minLength": 1},
+        "locator": {"type": "string", "minLength": 1}
+      }
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "ref", "kind", "world_ref", "label", "aliases", "provenance", "locators"],
+      "properties": {
+        "schema": {"const": "oi.explore-entry/v1"},
+        "ref": {"type": "string", "minLength": 1},
+        "kind": {"type": "string", "minLength": 1},
+        "world_ref": {"type": "string", "minLength": 1},
+        "label": {"type": "string", "minLength": 1},
+        "summary": {"type": "string", "minLength": 1},
+        "revision": {"type": "string", "minLength": 1},
+        "aliases": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "provenance": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/provenance"}},
+        "locators": {"type": "array", "items": {"$ref": "#/$defs/locator"}},
+        "projection_ref": {"type": "string", "minLength": 1},
+        "meta": {"type": "object"}
+      }
+    },
+    "relation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to", "relation", "origin", "provenance"],
+      "properties": {
+        "from": {"type": "string", "minLength": 1},
+        "to": {"type": "string", "minLength": 1},
+        "relation": {"type": "string", "minLength": 1},
+        "origin": {"type": "string", "minLength": 1},
+        "direction": {"type": "string", "minLength": 1},
+        "provenance": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/provenance"}}
+      }
+    },
+    "searchResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "ref", "kind", "world_ref", "label", "provenance", "locators", "score"],
+      "properties": {
+        "schema": {"const": "oi.explore-result/v1"},
+        "ref": {"type": "string", "minLength": 1},
+        "kind": {"type": "string", "minLength": 1},
+        "world_ref": {"type": "string", "minLength": 1},
+        "label": {"type": "string", "minLength": 1},
+        "summary": {"type": "string", "minLength": 1},
+        "revision": {"type": "string", "minLength": 1},
+        "provenance": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/provenance"}},
+        "locators": {"type": "array", "items": {"$ref": "#/$defs/locator"}},
+        "score": {"type": "number", "minimum": 0}
+      }
+    },
+    "relationView": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "focus", "depth", "budget", "nodes", "edges", "truncated"],
+      "properties": {
+        "schema": {"const": "oi.explore-relation-view/v1"},
+        "focus": {"type": "string", "minLength": 1},
+        "depth": {"type": "integer", "minimum": 0},
+        "budget": {"type": "integer", "minimum": 1},
+        "nodes": {"type": "array", "items": {"$ref": "#/$defs/entry"}},
+        "edges": {"type": "array", "items": {"$ref": "#/$defs/relation"}},
+        "truncated": {"type": "boolean"}
+      }
+    },
+    "sourceView": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "provenance"],
+      "properties": {
+        "ref": {"type": "string", "minLength": 1},
+        "revision": {"type": "string", "minLength": 1},
+        "provenance": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/provenance"}}
+      }
+    },
+    "explainView": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "kind", "world_ref", "semantic_identity", "provenance", "transport_locators"],
+      "properties": {
+        "ref": {"type": "string", "minLength": 1},
+        "kind": {"type": "string", "minLength": 1},
+        "world_ref": {"type": "string", "minLength": 1},
+        "revision": {"type": "string", "minLength": 1},
+        "semantic_identity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["ref", "kind", "world_ref"],
+          "properties": {
+            "ref": {"type": "string", "minLength": 1},
+            "kind": {"type": "string", "minLength": 1},
+            "world_ref": {"type": "string", "minLength": 1}
+          }
+        },
+        "provenance": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/provenance"}},
+        "transport_locators": {"type": "array", "items": {"$ref": "#/$defs/locator"}},
+        "projection_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "openView": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["resource", "relations", "actions"],
+      "properties": {
+        "resource": {"$ref": "#/$defs/entry"},
+        "relations": {"$ref": "#/$defs/relationView"},
+        "actions": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "surfaceView": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["surface", "read_model"],
+      "properties": {
+        "surface": {"type": "string", "minLength": 1},
+        "read_model": {"$ref": "#/$defs/openView"}
+      }
+    }
+  },
+  "properties": {
+    "entry": {"$ref": "#/$defs/entry"},
+    "search_result": {"$ref": "#/$defs/searchResult"},
+    "relation_view": {"$ref": "#/$defs/relationView"},
+    "source_view": {"$ref": "#/$defs/sourceView"},
+    "explain_view": {"$ref": "#/$defs/explainView"},
+    "open_view": {"$ref": "#/$defs/openView"},
+    "surface_view": {"$ref": "#/$defs/surfaceView"}
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://o-i.dev/schemas/watch-v1.json",
+  "title": "O:I Watch v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "watch_ref",
+    "watcher_participant_ref",
+    "field_ref",
+    "target",
+    "state",
+    "created_at",
+    "provenance"
+  ],
+  "properties": {
+    "schema": {"const": "oi.watch/v1"},
+    "watch_ref": {"type": "string", "minLength": 1},
+    "watcher_participant_ref": {"type": "string", "minLength": 1},
+    "field_ref": {"type": "string", "minLength": 1},
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "ref"],
+      "properties": {
+        "kind": {
+          "enum": ["world", "agent", "project", "wiki-space", "wiki-node", "object"]
+        },
+        "ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "state": {"enum": ["active", "paused"]},
+    "created_at": {"type": "string", "format": "date-time"},
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_system", "source_revision"],
+      "properties": {
+        "source_system": {"type": "string", "minLength": 1},
+        "source_revision": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

@@ -1,0 +1,77 @@
+name: Shared field
+
+on:
+  push:
+    branches:
+      - platform/shared-field-explore
+      - research/cordis-composable-agency
+    paths:
+      - 'shared-field/**'
+      - '.github/workflows/shared-field.yml'
+  pull_request:
+    paths:
+      - 'shared-field/**'
+      - '.github/workflows/shared-field.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run shared-field contract and Explore tests
+        run: node --test shared-field/*.test.mjs
+
+  spacetimedb-live:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned SpaceTimeDB SDK client dependencies
+        run: npm install --prefix shared-field/spacetimedb
+      - name: Install SpaceTimeDB CLI 2.7.1
+        shell: bash
+        run: |
+          curl -sSf https://install.spacetimedb.com | \
+            SPACETIME_DOWNLOAD_ROOT="https://github.com/clockworklabs/SpacetimeDB/releases/download/v2.7.1" \
+            sh -s -- -y
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.local/bin:$PATH"
+          spacetime version install 2.7.1
+          spacetime version use 2.7.1
+          spacetime --version | tee /tmp/spacetimedb-version.txt
+          grep -q '2.7.1' /tmp/spacetimedb-version.txt
+      - name: Build SpaceTimeDB shared-field module
+        run: spacetime build --module-path shared-field/spacetimedb
+      - name: Start local SpaceTimeDB
+        shell: bash
+        run: |
+          spacetime start --listen-addr 127.0.0.1:3000 > /tmp/spacetimedb.log 2>&1 &
+          echo $! > /tmp/spacetimedb.pid
+          for attempt in $(seq 1 60); do
+            if spacetime server ping local; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/spacetimedb.log
+          exit 1
+      - name: Publish live shared-field module
+        run: spacetime publish oi-shared-field-ci --server local --module-path shared-field/spacetimedb --yes=all
+      - name: Generate current TypeScript client bindings
+        run: spacetime generate --lang typescript --out-dir shared-field/spacetimedb/module_bindings --module-path shared-field/spacetimedb
+      - name: Prove live subscription to rebuildable Explore index
+        env:
+          SPACETIMEDB_URI: ws://127.0.0.1:3000
+          SPACETIMEDB_DATABASE: oi-shared-field-ci
+        run: npm --prefix shared-field/spacetimedb run acceptance
+      - name: Show SpaceTimeDB log on failure
+        if: failure()
+        run: cat /tmp/spacetimedb.log || true

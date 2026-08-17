@@ -15,14 +15,15 @@ import * as sharedField from './shared-field/api.mjs';
 `api.mjs` is intentionally only an aggregate export over the implementation layers:
 
 ```text
-index.mjs   Projection / Participant / receipt / Central public selection
-social.mjs  SharedField / Contribution / Encounter / Self-Other read model
-state.mjs   transport-free local membership / traversal / thread / history logic
-     ↓
-api.mjs     one import surface, no second implementation
+index.mjs    Projection / Participant / receipt / Central public selection
+social.mjs   SharedField / Contribution / Encounter / Self-Other read model
+state.mjs    transport-free local membership / traversal / thread / history logic
+explore.mjs  projected-object search / ref resolution / bounded relation read models
+      ↓
+api.mjs      one import surface, no second implementation
 ```
 
-This keeps the completed Projection contract stable while letting the shared-agency grammar develop beside it. `api.test.mjs` guards that all three layers remain reachable through the aggregate API.
+This keeps the completed Projection contract stable while letting the shared-agency and Explore application grammar develop beside it. `api.test.mjs` guards that all layers remain reachable through the aggregate API.
 
 ## Projection contracts
 
@@ -71,6 +72,34 @@ The state layer allows unresolved/external Contribution targets so that a local 
 
 This is the seam a browser adapter, static/file carrier, test harness, or future SpaceTimeDB implementation can consume without any of them becoming the semantic owner.
 
+## Explore application/read-model seam
+
+`explore.mjs` is the first application layer over explicitly projected public objects. It is a rebuildable read/index surface, not a new source ontology or canonical store.
+
+`createExploreApplication()` provides:
+
+- stable semantic-ref resolution independent of transport locator;
+- low-latency exact, prefix, substring and deterministic fuzzy search over heterogeneous projected objects;
+- world/kind filtering without invoking slow semantic providers;
+- typed relation lookup with provenance/origin retained;
+- explicit bounded `localWhole()` expansion using depth and node budget;
+- `open()` as the search-leaf → local-whole application path;
+- `surface()` as a thin browser/agent envelope over the same read model.
+
+The Explore entry is deliberately an indexing/read-model envelope. It retains the native object `ref`, `kind`, containing `world_ref`, revision, provenance and optional transport locators without replacing the underlying Participant, Projection, WikiSpace, WikiNode, Project, SharedField or other source identity.
+
+`fixtures/explore-world-v1.json` is a public-only representative world with one Human stewardship root, one independently addressable Agent, one Project, one projected WikiSpace, three WikiNodes, one Agent-authored Projection and one SharedField. It contains no private `Central/Control` material.
+
+The relation view follows the AIKit/Glade law:
+
+```text
+SEARCH LEAF
+    ↓ open / recenter
+BOUNDED LOCAL WHOLE
+```
+
+Relations retain their provider/semantic origin. A `wiki.contains` edge remains a Wiki relation; an O:I projection relation remains an O:I projection relation. Rendering them together does not transfer relation ownership.
+
 ## Central public selection
 
 `selectCentralParticipantRoot()` uses a closed public-selection shape:
@@ -104,18 +133,16 @@ node shared-field/generate-fixtures.mjs
 
 ## Verification
 
-Run the complete portable contract suite from the repository root:
+Run the complete portable contract and Explore suite from the repository root:
 
 ```bash
-node --test \
-  shared-field/shared-field.test.mjs \
-  shared-field/social.test.mjs \
-  shared-field/state.test.mjs \
-  shared-field/api.test.mjs
+node --test shared-field/*.test.mjs
 ```
 
 The shared-agency contract tests cover recursive/nested SharedFields, containment-cycle rejection, Contribution-on-Contribution recursion, ranking and metric Contributions, objective Encounter records, and the minimal Self/Other read model.
 
-The state tests cover nested-field traversal, field-relative membership, arbitrary Contribution-thread depth, ranking/metric querying, deferred-reference cycle rejection, and Encounter history. The state logic test harness is 6/6 green locally; the existing social contract suite is separately 6/6 green. The aggregate API test guards the import boundary across all contract layers.
+The state tests cover nested-field traversal, field-relative membership, arbitrary Contribution-thread depth, ranking/metric querying, deferred-reference cycle rejection, and Encounter history. The Explore tests prove stable refs, provenance/source-revision retention, absence of private Central material, exact/fuzzy search, search → open → bounded local whole, no implicit neighbour payload expansion, and browser/agent parity over the same application read model.
+
+`.github/workflows/shared-field.yml` runs this complete Node test lane for shared-field changes.
 
 The transport capability floor remains `publish`, `resolve`, `fetch`, and `subscribe`. A carrier may expose only a subset; capability negotiation does not alter Projection identity. Live Presence/Activity and hosted delivery remain downstream service concerns.
