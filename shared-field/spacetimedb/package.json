@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "acceptance": "tsx security-live-acceptance-v3.ts",
-    "acceptance:a2a": "tsx a2a-live-acceptance.ts"
+    "acceptance:a2a": "tsx a2a-phase2-ingress-live-acceptance.ts"
   },
   "dependencies": {
     "spacetimedb": "2.8.1"

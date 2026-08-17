@@ -1,16 +1,15 @@
-import { createProjection, validateParticipant } from './index.mjs';
+import { validateParticipant } from './index.mjs';
 import { createContribution, createEncounter } from './social.mjs';
 
 export const A2A_BINDING_SCHEMA = 'oi.a2a-binding/v1';
 export const A2A_PRESENCE_SCHEMA = 'oi.a2a-presence/v1';
 export const A2A_DIFFERENCE_SCHEMA = 'oi.a2a-difference/v1';
-export const A2A_ADMISSION_SCHEMA = 'oi.a2a-admission/v1';
+export const A2A_CONTRIBUTION_INGRESS_SCHEMA = 'oi.a2a-contribution-ingress/v1';
 export const A2A_PROTOCOL_VERSION = '1.0';
 export const A2A_PROTOCOL_BINDING = 'HTTP+JSON';
 
 const BINDING_STATES = new Set(['published', 'withdrawn']);
 const AVAILABILITY_STATES = new Set(['online', 'degraded', 'offline', 'withdrawn']);
-const ADMISSION_DISPOSITIONS = new Set(['reject', 'contribution', 'projection', 'contribution+projection']);
 
 function clone(value) {
   return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
@@ -310,70 +309,78 @@ export function encounterA2aDifference(difference, input) {
 }
 
 /**
- * Admission is the only bridge from transport result to SharedField semantic material.
- * It intentionally does not create Actuation Determination/Return or Factory Run identities.
+ * Convert a returned A2A difference into an untrusted generic Contribution ingress request.
+ * This function does not admit, index, project, execute, trust or canonicalise anything.
+ * The receiving server owns the actual ingress identity/time/provenance and the later
+ * Admission/index decisions.
  */
-export function admitA2aDifference(difference, input) {
+export function prepareA2aContributionIngress(difference, input) {
   const value = validateA2aDifference(difference);
-  record(input, 'A2A admission');
-  string(input.decision_ref, 'A2A admission.decision_ref');
-  string(input.decided_by_participant_ref, 'A2A admission.decided_by_participant_ref');
-  timestamp(input.decided_at, 'A2A admission.decided_at');
-  if (!ADMISSION_DISPOSITIONS.has(input.disposition)) throw new TypeError(`Unsupported A2A admission disposition: ${input.disposition}`);
+  record(input, 'A2A Contribution ingress');
+  for (const forbidden of ['decision_ref', 'disposition', 'admitted', 'visibility', 'audience', 'index_eligible', 'projection']) {
+    if (Object.prototype.hasOwnProperty.call(input, forbidden)) {
+      throw new TypeError(`A2A Contribution ingress cannot carry receiving policy: ${forbidden}`);
+    }
+  }
+  const contributionRef = string(input.contribution_ref, 'A2A Contribution ingress.contribution_ref');
+  const createdAt = timestamp(input.created_at, 'A2A Contribution ingress.created_at');
+  const target = record(input.target, 'A2A Contribution ingress.target');
+  string(target.ref, 'A2A Contribution ingress.target.ref');
+  string(target.kind, 'A2A Contribution ingress.target.kind');
+  const transportMessageId = string(
+    input.transport_message_id ?? `${value.exchange_ref}:${value.transport_result.kind}:${value.transport_result.ref}`,
+    'A2A Contribution ingress.transport_message_id'
+  );
 
-  const receipt = {
-    schema: A2A_ADMISSION_SCHEMA,
-    decision_ref: input.decision_ref,
-    exchange_ref: value.exchange_ref,
+  const contribution = createContribution({
+    contribution_ref: contributionRef,
     field_ref: value.field_ref,
-    disposition: input.disposition,
-    decided_by_participant_ref: input.decided_by_participant_ref,
-    decided_at: input.decided_at,
+    contributor_participant_ref: value.recipient_participant_ref,
+    created_at: createdAt,
+    mode: input.mode ?? 'finding',
+    target: clone(target),
+    relation: { kind: input.relation_kind ?? 'returned-difference' },
+    representation: { kind: 'a2a-return', payload: clone(value.transport_result.payload) },
+    provenance: [
+      {
+        kind: 'a2a-exchange',
+        ref: value.exchange_ref,
+        source_system: 'A2A',
+        revision: String(value.binding_revision),
+      },
+      {
+        kind: `a2a-${value.transport_result.kind}`,
+        ref: value.transport_result.ref,
+        source_system: 'A2A',
+        revision: value.request_message_id,
+      },
+    ],
+    source: { system: 'A2A', revision: value.transport_result.ref },
+  });
+
+  return {
+    schema: A2A_CONTRIBUTION_INGRESS_SCHEMA,
+    field_ref: value.field_ref,
+    contributor_participant_ref: value.recipient_participant_ref,
+    source_kind: 'a2a',
+    transport_provider: 'A2A HTTP+JSON v1',
+    transport_message_id: transportMessageId,
+    contribution,
     transport_provenance: {
+      exchange_ref: value.exchange_ref,
       binding_ref: value.binding_ref,
       binding_revision: value.binding_revision,
+      request_message_id: value.request_message_id,
       transport_kind: value.transport_result.kind,
       transport_ref: value.transport_result.ref,
     },
   };
+}
 
-  if (input.disposition.includes('contribution')) {
-    record(input.contribution, 'A2A admission.contribution');
-    receipt.contribution = createContribution({
-      contribution_ref: string(input.contribution.contribution_ref, 'A2A admission.contribution.contribution_ref'),
-      field_ref: value.field_ref,
-      contributor_participant_ref: input.decided_by_participant_ref,
-      created_at: input.decided_at,
-      mode: input.contribution.mode ?? 'finding',
-      target: record(input.contribution.target, 'A2A admission.contribution.target'),
-      relation: { kind: input.contribution.relation_kind ?? 'returned-difference' },
-      representation: { kind: 'a2a-return', payload: clone(value.transport_result.payload) },
-      provenance: [
-        { kind: 'a2a-exchange', ref: value.exchange_ref, source_system: 'A2A', revision: String(value.binding_revision) },
-        { kind: 'admission-decision', ref: input.decision_ref, source_system: 'O:I' },
-      ],
-      source: { system: 'A2A', revision: value.transport_result.ref },
-    });
-  }
-
-  if (input.disposition.includes('projection')) {
-    record(input.projection, 'A2A admission.projection');
-    receipt.projection = createProjection({
-      projection_ref: string(input.projection.projection_ref, 'A2A admission.projection.projection_ref'),
-      projection_revision: input.projection.projection_revision ?? 1,
-      state: 'published',
-      subject: input.projection.subject ?? { ref: value.exchange_ref, kind: A2A_DIFFERENCE_SCHEMA },
-      source: { system: 'A2A', revision: value.transport_result.ref },
-      publisher_participant_ref: input.decided_by_participant_ref,
-      published_at: input.decided_at,
-      audience: input.projection.audience ?? { visibility: 'public' },
-      representation: { kind: 'a2a-return', payload: clone(value.transport_result.payload) },
-      provenance: [
-        { kind: 'a2a-exchange', ref: value.exchange_ref, source_system: 'A2A', revision: String(value.binding_revision) },
-        { kind: 'admission-decision', ref: input.decision_ref, source_system: 'O:I' },
-      ],
-    });
-  }
-
-  return receipt;
+/**
+ * Compatibility tombstone: the pre-Phase-2 helper could directly mint semantic
+ * Contribution/Projection material. That path is intentionally fail-closed now.
+ */
+export function admitA2aDifference() {
+  throw new TypeError('A2A-specific Admission is disabled; route the returned difference through prepareA2aContributionIngress and hosted generic Contribution Admission');
 }
