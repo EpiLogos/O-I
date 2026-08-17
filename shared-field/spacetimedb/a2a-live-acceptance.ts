@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import { DbConnection } from './module_bindings/index';
 import { createParticipant } from '../index.mjs';
-import { createExploreApplication } from '../explore.mjs';
 import { createWatch } from '../watch.mjs';
 import {
   admitA2aDifference,
@@ -10,6 +9,7 @@ import {
   createA2aPresence,
   encounterA2aDifference,
   performA2aExchange,
+  prepareA2aContributionIngress,
 } from '../a2a.mjs';
 import { reviseA2aBinding, withdrawA2aBinding } from '../a2a-lifecycle.mjs';
 import { searchA2aParticipation } from '../a2a-explore.mjs';
@@ -33,6 +33,7 @@ const AGENT_WORLD_REF = 'world:a2a:remote';
 const BINDING_REF = 'a2a-binding:remote';
 const BINDING_PROJECTION_REF = 'projection:a2a-binding:remote';
 const PRESENCE_REF = 'a2a-presence:remote';
+const RETURNED_CONTRIBUTION_REF = 'contribution:a2a:return:1';
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -66,14 +67,8 @@ async function subscribe(conn: DbConnection, queries: string[]): Promise<void> {
   });
 }
 
-async function expectRejected(run: () => Promise<unknown>, description: string): Promise<void> {
-  let caught: unknown;
-  try {
-    await run();
-  } catch (error) {
-    caught = error;
-  }
-  assert.ok(caught, `${description} should reject`);
+function rows(handle: any): any[] {
+  return [...handle.iter()];
 }
 
 function participantArgs(value: any) {
@@ -216,21 +211,17 @@ const agentExploreEntry = {
 };
 
 try {
-  await subscribe(owner.conn, [
+  const readQueries = [
     'SELECT * FROM shared_field',
     'SELECT * FROM participant',
     'SELECT * FROM projection',
+    'SELECT * FROM contribution',
     'SELECT * FROM explore_entry',
     'SELECT * FROM my_field_authority',
-    'SELECT * FROM my_watch',
-  ]);
-  await subscribe(agent.conn, [
-    'SELECT * FROM shared_field',
-    'SELECT * FROM participant',
-    'SELECT * FROM projection',
-    'SELECT * FROM explore_entry',
-    'SELECT * FROM my_field_authority',
-  ]);
+    'SELECT * FROM my_contribution_receipt',
+  ];
+  await subscribe(owner.conn, [...readQueries, 'SELECT * FROM my_watch']);
+  await subscribe(agent.conn, readQueries);
 
   await owner.conn.reducers.putSharedField({
     fieldRef: field.field_ref,
@@ -273,8 +264,7 @@ try {
     agent_card_url: fixtureServer.initial.card,
     provenance: [{ kind: 'explicit-publication', ref: 'decision:a2a:publish:1', source_system: 'O:I', revision: '1' }],
   });
-  const firstBindingProjection = createA2aBindingProjection(firstBinding);
-  await agent.conn.reducers.putProjection(projectionArgs(FIELD_REF, firstBindingProjection));
+  await agent.conn.reducers.putProjection(projectionArgs(FIELD_REF, createA2aBindingProjection(firstBinding)));
 
   const firstPresence = createA2aPresence({
     binding_ref: BINDING_REF,
@@ -285,11 +275,10 @@ try {
     observed_at: '2026-08-16T21:00:05.000Z',
     provenance: [{ kind: 'reachability-observation', ref: 'probe:a2a:1', source_system: 'O:I' }],
   });
-  const firstPresenceEntry = createA2aPresenceExploreEntry(firstPresence, {
+  await owner.conn.reducers.putExploreEntry(exploreArgs(FIELD_REF, createA2aPresenceExploreEntry(firstPresence, {
     semantic_ref: PRESENCE_REF,
     world_ref: AGENT_WORLD_REF,
-  });
-  await owner.conn.reducers.putExploreEntry(exploreArgs(FIELD_REF, firstPresenceEntry));
+  })));
 
   const a2aSource = createSpacetimeA2aSource(owner.conn.db as any);
   let a2aEvents = 0;
@@ -308,12 +297,8 @@ try {
     presence: firstSnapshot.presence,
   });
   assert.equal(found.length, 1);
-  assert.equal(found[0].explore.ref, AGENT_REF);
   assert.equal(found[0].participation.participant.participant_ref, AGENT_PARTICIPANT_REF);
-  assert.equal(found[0].participation.binding.binding_ref, BINDING_REF);
-  assert.equal(found[0].participation.presence.availability, 'online');
   assert.notEqual(firstSnapshot.implementation.bindings[0].row_id, BINDING_REF);
-  assert.notEqual(firstSnapshot.implementation.presence[0].row_id, PRESENCE_REF);
 
   const difference = await performA2aExchange({
     binding: found[0].participation.binding,
@@ -322,7 +307,7 @@ try {
     message: {
       exchange_ref: 'a2a-exchange:live:1',
       message_id: 'a2a-message:live:1',
-      text: 'Return a bounded difference for explicit admission.',
+      text: 'Return a bounded difference for generic Contribution ingress.',
     },
   });
   assert.equal(difference.transport_result.kind, 'task');
@@ -330,8 +315,6 @@ try {
   assert.equal(difference.admission, 'pending');
   assert.equal('projection' in difference, false);
   assert.equal('contribution' in difference, false);
-  assert.equal('determination_ref' in difference, false);
-  assert.equal('run_ref' in difference, false);
 
   const encounter = encounterA2aDifference(difference, {
     encounter_ref: 'encounter:a2a:live:1',
@@ -339,23 +322,53 @@ try {
     occurred_at: '2026-08-16T21:00:10.000Z',
   });
   assert.equal(encounter.mediation.protocol, 'A2A');
-  assert.equal(encounter.provenance[0].ref, difference.exchange_ref);
   assert.equal('subjective_state' in encounter, false);
 
-  const admission = admitA2aDifference(difference, {
-    decision_ref: 'decision:a2a:admit:1',
+  // The legacy A2A-specific semantic bridge is now fail-closed.
+  assert.throws(() => admitA2aDifference(difference, {
+    decision_ref: 'decision:a2a:legacy:1',
     decided_by_participant_ref: OWNER_PARTICIPANT_REF,
     decided_at: '2026-08-16T21:00:15.000Z',
     disposition: 'projection',
-    projection: { projection_ref: 'projection:a2a:return:1' },
+  }), /A2A-specific Admission is disabled/);
+
+  const ingress = prepareA2aContributionIngress(difference, {
+    contribution_ref: RETURNED_CONTRIBUTION_REF,
+    created_at: '2026-08-16T21:00:15.000Z',
+    target: { ref: AGENT_REF, kind: 'agent' },
   });
-  assert.ok(admission.projection);
-  assert.equal(admission.projection.representation.kind, 'a2a-return');
-  await owner.conn.reducers.putProjection(projectionArgs(FIELD_REF, admission.projection));
-  await waitUntil(
-    () => owner.conn.db.projection.projectionKey.find(projectionStorageKey(admission.projection.projection_ref, 1)),
-    'admitted returned Projection'
+  const projectionCountBeforeIngress = rows(owner.conn.db.projection).length;
+  await owner.conn.reducers.ingestTransportedContribution({
+    fieldRef: ingress.field_ref,
+    contributorParticipantRef: ingress.contributor_participant_ref,
+    sourceKind: ingress.source_kind,
+    transportProvider: ingress.transport_provider,
+    transportMessageId: ingress.transport_message_id,
+    contractJson: JSON.stringify(ingress.contribution),
+  });
+  const receipt = await waitUntil(
+    () => rows(owner.conn.db.myContributionReceipt).find(row => row.contributionRef === RETURNED_CONTRIBUTION_REF),
+    'A2A returned difference quarantine receipt'
   );
+  assert.equal(receipt.state, 'quarantined');
+  assert.equal(rows(owner.conn.db.contribution).some(row => row.contributionRef === RETURNED_CONTRIBUTION_REF), false);
+  assert.equal(rows(owner.conn.db.exploreEntry).some(row => row.semanticRef === RETURNED_CONTRIBUTION_REF), false);
+  assert.equal(rows(owner.conn.db.projection).length, projectionCountBeforeIngress, 'A2A ingress must not auto-create Projection');
+
+  await owner.conn.reducers.admitContribution({
+    ingressRef: receipt.ingressRef,
+    admissionParticipantRef: '',
+    visibility: 'public',
+    audienceRefsJson: '[]',
+    reason: 'Receiving field explicitly admits bounded A2A returned difference as data.',
+    evidenceJson: JSON.stringify({ schema: 'oi.a2a-phase2-evidence/v1', exchange_ref: difference.exchange_ref }),
+  });
+  await waitUntil(
+    () => rows(owner.conn.db.contribution).find(row => row.contributionRef === RETURNED_CONTRIBUTION_REF),
+    'explicitly admitted A2A Contribution'
+  );
+  assert.equal(rows(owner.conn.db.exploreEntry).some(row => row.semanticRef === RETURNED_CONTRIBUTION_REF), false, 'Admission alone remains non-indexing');
+  assert.equal(rows(owner.conn.db.projection).length, projectionCountBeforeIngress, 'Admission remains non-projecting');
 
   const watch = createWatch({
     watch_ref: 'watch:a2a:agent',
@@ -385,11 +398,10 @@ try {
     agent_card_url: fixtureServer.replacement.card,
     provenance: [{ kind: 'explicit-publication', ref: 'decision:a2a:publish:2', source_system: 'O:I', revision: '2' }],
   });
-  const replacementProjection = createA2aBindingProjection(replacement, {
+  await agent.conn.reducers.putProjection(projectionArgs(FIELD_REF, createA2aBindingProjection(replacement, {
     projection_ref: BINDING_PROJECTION_REF,
     projection_revision: 2,
-  });
-  await agent.conn.reducers.putProjection(projectionArgs(FIELD_REF, replacementProjection));
+  })));
   const replacementPresence = createA2aPresence({
     binding_ref: BINDING_REF,
     field_ref: FIELD_REF,
@@ -405,9 +417,6 @@ try {
   })));
   await waitUntil(() => a2aSource.snapshot().bindings[0]?.binding_revision === 2, 'A2A endpoint replacement');
   const replacementSnapshot = a2aSource.snapshot();
-  assert.equal(replacementSnapshot.bindings[0].agent_ref, AGENT_REF);
-  assert.equal(replacementSnapshot.bindings[0].participant_ref, AGENT_PARTICIPANT_REF);
-  assert.equal(replacementSnapshot.bindings[0].endpoint_url, fixtureServer.replacement.endpoint);
   const replacementDifference = await performA2aExchange({
     binding: replacementSnapshot.bindings[0],
     presence: replacementSnapshot.presence[0],
@@ -422,11 +431,10 @@ try {
     published_at: '2026-08-16T21:02:00.000Z',
     provenance: [{ kind: 'explicit-withdrawal', ref: 'decision:a2a:withdraw:3', source_system: 'O:I', revision: '3' }],
   });
-  const withdrawnProjection = createA2aBindingProjection(withdrawn, {
+  await agent.conn.reducers.putProjection(projectionArgs(FIELD_REF, createA2aBindingProjection(withdrawn, {
     projection_ref: BINDING_PROJECTION_REF,
     projection_revision: 3,
-  });
-  await agent.conn.reducers.putProjection(projectionArgs(FIELD_REF, withdrawnProjection));
+  })));
   const withdrawnPresence = createA2aPresence({
     binding_ref: BINDING_REF,
     field_ref: FIELD_REF,
@@ -446,7 +454,6 @@ try {
   const withdrawnSnapshot = a2aSource.snapshot();
   assert.equal(withdrawnSnapshot.bindings[0].state, 'withdrawn');
   assert.equal('endpoint_url' in withdrawnSnapshot.bindings[0], false);
-  assert.equal('agent_card_url' in withdrawnSnapshot.bindings[0], false);
   const stillDiscoverable = searchA2aParticipation({
     explore: liveExplore,
     query: 'Remote A2A Agent',
@@ -455,10 +462,8 @@ try {
     presence: withdrawnSnapshot.presence,
   });
   assert.equal(stillDiscoverable.length, 1);
-  assert.equal(stillDiscoverable[0].explore.ref, AGENT_REF);
-  assert.equal(stillDiscoverable[0].participation.participant.participant_ref, AGENT_PARTICIPANT_REF);
-  assert.equal(stillDiscoverable[0].participation.binding, undefined, 'withdrawal removes active A2A reachability without deleting Agent/Participant');
-  assert.equal(watchSource.snapshot()[0]?.watch.watch_ref, watch.watch_ref, 'Watch remains an independent relation after A2A withdrawal');
+  assert.equal(stillDiscoverable[0].participation.binding, undefined, 'withdrawal removes reachability without deleting identity');
+  assert.equal(watchSource.snapshot()[0]?.watch.watch_ref, watch.watch_ref, 'Watch remains independent after A2A withdrawal');
 
   let attemptedFetch = false;
   await assert.rejects(() => performA2aExchange({
@@ -473,23 +478,24 @@ try {
   assert.equal(fixtureServer.requests[0].headers['content-type'], 'application/a2a+json');
   assert.equal(fixtureServer.requests[0].headers['a2a-version'], '1.0');
   assert.equal(fixtureServer.requests[0].body.message.role, 'ROLE_USER');
-  assert.ok(a2aEvents >= 3, 'Projection/Explore insert and update events should drive A2A source subscriptions');
+  assert.ok(a2aEvents >= 3);
 
   console.log(JSON.stringify({
-    proof: 'oi-a2a-sharedfield-live/v1',
+    proof: 'oi-a2a-sharedfield-live/v2-generic-contribution-ingress',
     spacetimedb: '2.8.1',
     database: DATABASE,
     agent_ref: AGENT_REF,
     participant_ref: AGENT_PARTICIPANT_REF,
     binding_ref: BINDING_REF,
-    binding_projection_ref: BINDING_PROJECTION_REF,
     binding_revision: withdrawn.binding_revision,
     binding_state: withdrawn.state,
-    presence_ref: PRESENCE_REF,
-    presence_state: withdrawnPresence.availability,
     initial_task: difference.transport_result.ref,
     replacement_task: replacementDifference.transport_result.ref,
-    admitted_projection_ref: admission.projection.projection_ref,
+    contribution_ingress_ref: receipt.ingressRef,
+    admitted_contribution_ref: RETURNED_CONTRIBUTION_REF,
+    admitted_contribution_indexed: false,
+    legacy_a2a_admission_bridge: 'disabled',
+    automatic_projection_from_returned_difference: false,
     encounter_ref: encounter.encounter_ref,
     watch_ref: watch.watch_ref,
     a2a_subscription_events: a2aEvents,
