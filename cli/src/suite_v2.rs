@@ -349,7 +349,13 @@ fn install_manifest_product(
         return Err(format!("cached artifact checksum mismatch for {}", asset.name));
     }
 
-    let attestation_locally_verified = verify_github_attestation_if_available(&archive, product)?;
+    let attestation_locally_verified = match receipt.products.get(&product.id) {
+        Some(previous)
+            if previous.revision == product.revision
+                && previous.sha256 == asset.sha256
+                && previous.attestation_locally_verified => true,
+        _ => verify_github_attestation_if_available(&archive, product)?,
+    };
     let product_root = data_root.join("products").join(&product.id).join(&product.revision);
     let marker_path = product_root.join(".oi-install.json");
     let reusable = marker_path.is_file()
@@ -386,6 +392,19 @@ fn install_manifest_product(
         fs::rename(&temp_root, &product_root).map_err(|error| format!("cannot promote managed product {}: {error}", product.id))?;
     }
 
+    let material_root = {
+        let mut roots = fs::read_dir(&product_root)
+            .map_err(|error| format!("cannot inspect managed product root {}: {error}", product_root.display()))?
+            .filter_map(Result::ok)
+            .map(|entry| entry.path())
+            .filter(|path| path.is_dir());
+        let root = roots.next().ok_or_else(|| format!("{} artifact did not unpack to a material root", product.id))?;
+        if roots.next().is_some() {
+            return Err(format!("{} artifact unpacked to multiple material roots; refusing ambiguous registration", product.id));
+        }
+        root
+    };
+
     let executable = if let Some(entry) = product.artifact.entry.as_deref() {
         let source = find_named_file(&product_root, entry, 3)
             .ok_or_else(|| format!("{} artifact does not contain expected executable {}", product.id, entry))?;
@@ -406,7 +425,7 @@ fn install_manifest_product(
     };
 
     let surface = find_surface(catalog, &product.id)?;
-    let registration = registration_for(surface, executable.clone(), Some(product_root.clone()), Some(product.revision.clone()))?;
+    let registration = registration_for(surface, executable.clone(), Some(material_root.clone()), Some(product.revision.clone()))?;
     ensure_alias_available(composition, &registration)?;
     composition.modules.insert(product.id.clone(), registration);
 
@@ -418,7 +437,7 @@ fn install_manifest_product(
         installed_at_ms: prelocal_now_ms()?,
         attestation: asset.attestation.clone(),
         attestation_locally_verified,
-        root: product_root.display().to_string(),
+        root: material_root.display().to_string(),
         executable: executable.as_ref().map(|p| p.display().to_string()),
     });
     println!("{}: {} @ {}", product.public_name, asset.name, product.revision);
