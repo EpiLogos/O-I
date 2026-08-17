@@ -22,7 +22,7 @@ pub enum HostRegion {
     Canvas,
     Navigator,
     Inspector,
-    RootAgent,
+    RootAgency,
     DeepDrawer,
     Command,
     Status,
@@ -89,6 +89,8 @@ pub struct ActionAuthorityGrant {
     pub action_ref: String,
     pub native_owner: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub capability_ref: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub capability_grant_ref: Option<String>,
 }
 
@@ -97,6 +99,8 @@ pub struct NativeActionInvocation {
     pub action_ref: String,
     pub native_owner: String,
     pub authority_ref: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub capability_ref: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub capability_grant_ref: Option<String>,
 }
@@ -179,8 +183,15 @@ pub fn authorize_action(
     if binding.action_ref != grant.action_ref || binding.native_owner != grant.native_owner {
         return Err("Action authority grant does not match the canonical Action binding".into());
     }
-    if binding.required_capability_ref.is_some() && grant.capability_grant_ref.is_none() {
-        return Err("Action requires an explicit Capability grant".into());
+    if let Some(required_capability_ref) = binding.required_capability_ref.as_deref() {
+        if grant.capability_ref.as_deref() != Some(required_capability_ref) {
+            return Err(format!(
+                "Action requires Capability `{required_capability_ref}`"
+            ));
+        }
+        if grant.capability_grant_ref.is_none() {
+            return Err("Action requires an explicit Capability grant".into());
+        }
     }
     if grant.authority_ref.trim().is_empty() {
         return Err("Action authority grant requires a non-empty authority_ref".into());
@@ -189,6 +200,7 @@ pub fn authorize_action(
         action_ref: binding.action_ref.clone(),
         native_owner: binding.native_owner.clone(),
         authority_ref: grant.authority_ref.clone(),
+        capability_ref: grant.capability_ref.clone(),
         capability_grant_ref: grant.capability_grant_ref.clone(),
     })
 }
