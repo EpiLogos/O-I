@@ -163,7 +163,7 @@ try {
     { fieldRef: FIELD, participantRef: pCounterparty.participant_ref, targetIdentity: counterparty.identity, role: 'contributor', contactable: true, ttlSeconds: 0 },
     { fieldRef: FIELD, participantRef: pMember.participant_ref, targetIdentity: member.identity, role: 'observer', contactable: false, ttlSeconds: 0 },
     { fieldRef: FIELD, participantRef: pRevoked.participant_ref, targetIdentity: revokedActor.identity, role: 'contributor', contactable: true, ttlSeconds: 0 },
-    { fieldRef: FIELD, participantRef: pFinite.participant_ref, targetIdentity: finiteActor.identity, role: 'contributor', contactable: true, ttlSeconds: 1 },
+    { fieldRef: FIELD, participantRef: pFinite.participant_ref, targetIdentity: finiteActor.identity, role: 'contributor', contactable: true, ttlSeconds: 0 },
   ]) await owner.conn.reducers.grantParticipantAuthority(grant);
 
   // 3. Published reachability / field participation without a grant cannot be used as Exchange authority.
@@ -265,6 +265,7 @@ try {
   // 20. Server-time expiry of the underlying actor authority fails closed.
   const finiteRequest = 'exchange-request:phase3:finite';
   const finiteGrant = 'exchange-grant:phase3:finite';
+  await owner.conn.reducers.grantParticipantAuthority({ fieldRef: FIELD, participantRef: pFinite.participant_ref, targetIdentity: finiteActor.identity, role: 'contributor', contactable: true, ttlSeconds: 1 });
   await finiteActor.conn.reducers.requestExchange(requestArgs({ requestRef: finiteRequest, fieldRef: FIELD, initiator: pFinite.participant_ref, counterparty: pCounterparty.participant_ref, ttlSeconds: 300 }));
   await owner.conn.reducers.grantExchange({ requestRef: finiteRequest, grantRef: finiteGrant, reason: 'finite actor proof', evidenceJson: '{}' });
   await sleep(1_150);
