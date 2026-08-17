@@ -23,14 +23,14 @@ jobs:
         run: |
           awk 'BEGIN{f=0} /python - <<.PY./{f=1;next} f && /^          PY$/{exit} f {sub(/^          /, ""); print}' .github/workflows/phase3-implementation-patch.yml > /tmp/phase3_patch.py
           python /tmp/phase3_patch.py
-      - name: Commit transformed Phase 3 tree for diagnostic CI
+      - name: Commit transformed product and test tree
         shell: bash
         run: |
-          rm -f .github/workflows/phase3-run-patch.yml
+          git checkout HEAD -- .github/workflows/phase3-implementation-patch.yml .github/workflows/phase3-run-patch.yml
           git config user.name 'Epii'
           git config user.email 'frank.g.taylor97@gmail.com'
-          git add -A
+          git add shared-field .github/workflows/shared-field.yml
           git commit -m 'Enforce explicit bounded Exchange authority'
           git push origin HEAD:agent/oi-017-exchange-authority
 
-# diagnostic trigger 3
+# product-only trigger 4
