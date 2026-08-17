@@ -6,9 +6,13 @@ Authoritative receipt:
 
 - `docs/OI-017-ENCOUNTER-SECURITY-FINAL-RECEIPT.md`
 
+Aligned semantic grammar:
+
+- `docs/ENCOUNTER-SECURITY.md`
+
 Final residual executable seams:
 
 - `shared-field/security-closure.mjs`
 - `shared-field/security-closure.test.mjs`
 
-The pointer contains no security semantics of its own. It exists to ensure the receipt commit cannot be treated as accepted without an exact descendant head rerunning the complete workflow.
+The pointer contains no security semantics of its own. It exists to ensure the complete receipt/alignment commits cannot be treated as accepted without an exact descendant head rerunning the full workflow.
