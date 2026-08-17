@@ -20,7 +20,7 @@ use crate::{
     NativeContributionReading, RefProvenance, SemanticRef,
 };
 
-pub const FACTORY_BUILD_CONTRIBUTION_REF: &str = "factory-contribution/build";
+pub const FACTORY_BUILD_CONTRIBUTION_REF: &str = "factory.surface/build";
 
 #[derive(Clone, Debug, Serialize, PartialEq)]
 pub struct FactoryHostObservation {
