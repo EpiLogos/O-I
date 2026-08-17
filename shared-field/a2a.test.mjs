@@ -9,6 +9,7 @@ import {
   createA2aPresence,
   encounterA2aDifference,
   performA2aExchange,
+  prepareA2aContributionIngress,
   resolveA2aParticipation,
 } from './a2a.mjs';
 import { reviseA2aBinding, withdrawA2aBinding } from './a2a-lifecycle.mjs';
@@ -234,7 +235,7 @@ test('source-faithful HTTP+JSON v1 exchange keeps Agent Card claims transport-on
   });
 });
 
-test('A2A Task and Artifact remain transport results until an explicit admission decision', async () => {
+test('A2A Task and Artifact remain transport data and can only become a generic quarantinable Contribution request', async () => {
   await withA2aServer(async ({ endpointUrl, cardUrl }) => {
     const current = binding(endpointUrl, cardUrl);
     const difference = await performA2aExchange({
@@ -251,33 +252,37 @@ test('A2A Task and Artifact remain transport results until an explicit admission
     assert.equal('contribution' in difference, false);
     assert.equal('projection' in difference, false);
 
-    const rejected = admitA2aDifference(difference, {
-      decision_ref: 'decision:reject:return-1',
+    assert.throws(() => admitA2aDifference(difference, {
+      decision_ref: 'decision:legacy-a2a-admission',
       decided_by_participant_ref: LOCAL_PARTICIPANT,
       decided_at: '2026-08-16T21:02:00.000Z',
-      disposition: 'reject',
-    });
-    assert.equal('contribution' in rejected, false);
-    assert.equal('projection' in rejected, false);
-
-    const admitted = admitA2aDifference(difference, {
-      decision_ref: 'decision:admit:return-1',
-      decided_by_participant_ref: LOCAL_PARTICIPANT,
-      decided_at: '2026-08-16T21:03:00.000Z',
       disposition: 'contribution+projection',
-      contribution: {
-        contribution_ref: 'contribution:a2a:return-1',
-        target: { ref: 'project:o-i', kind: 'project' },
-      },
-      projection: { projection_ref: 'projection:a2a:return-1' },
+    }), /A2A-specific Admission is disabled/);
+
+    const ingress = prepareA2aContributionIngress(difference, {
+      contribution_ref: 'contribution:a2a:return-1',
+      created_at: '2026-08-16T21:03:00.000Z',
+      target: { ref: 'project:o-i', kind: 'project' },
     });
 
-    assert.equal(admitted.contribution.schema, 'oi.contribution/v1');
-    assert.equal(admitted.projection.schema, 'oi.projection/v1');
-    assert.equal(admitted.contribution.provenance[0].ref, difference.exchange_ref);
-    assert.equal(admitted.projection.provenance[1].ref, 'decision:admit:return-1');
-    assert.equal('determination_ref' in admitted, false);
-    assert.equal('run_ref' in admitted, false);
+    assert.equal(ingress.schema, 'oi.a2a-contribution-ingress/v1');
+    assert.equal(ingress.source_kind, 'a2a');
+    assert.equal(ingress.contributor_participant_ref, PARTICIPANT, 'remote returned difference remains attributed to remote Participant');
+    assert.equal(ingress.contribution.schema, 'oi.contribution/v1');
+    assert.equal(ingress.contribution.provenance[0].ref, difference.exchange_ref);
+    assert.equal(ingress.contribution.provenance[1].ref, difference.transport_result.ref);
+    assert.equal('projection' in ingress, false);
+    assert.equal('admission' in ingress, false);
+    assert.equal('index_eligible' in ingress, false);
+    assert.equal('visibility' in ingress, false);
+    assert.equal('determination_ref' in ingress, false);
+    assert.equal('run_ref' in ingress, false);
+    assert.throws(() => prepareA2aContributionIngress(difference, {
+      contribution_ref: 'contribution:a2a:malicious',
+      created_at: '2026-08-16T21:03:00.000Z',
+      target: { ref: 'project:o-i', kind: 'project' },
+      visibility: 'public',
+    }), /cannot carry receiving policy/);
   });
 });
 
