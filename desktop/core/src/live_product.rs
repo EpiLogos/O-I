@@ -5,7 +5,8 @@
 //! meaning.
 
 use aikit_core::{
-    SessionSpaceActivationState, SessionSpaceLifecycle, SessionSpaceReadModel, SESSION_SPACE_VERSION,
+    SessionSpaceActivationState, SessionSpaceConnectionState, SessionSpaceLifecycle,
+    SessionSpaceReadModel, SESSION_SPACE_VERSION,
 };
 use epilogos_factory::build::{
     FactoryActionAuthority, FactoryActionExecutor, FactoryActionInvocation, FactoryActionReceipt,
@@ -226,6 +227,14 @@ pub fn correlate_session_spaces(
                         surface.state,
                         SessionSpaceActivationState::Degraded
                             | SessionSpaceActivationState::Unavailable
+                    )
+                })
+                || read_model.connections.iter().any(|connection| {
+                    matches!(
+                        connection.state,
+                        SessionSpaceConnectionState::Degraded
+                            | SessionSpaceConnectionState::Unavailable
+                            | SessionSpaceConnectionState::Closed
                     )
                 });
 
