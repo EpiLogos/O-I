@@ -13,3 +13,5 @@ export * from './a2a.mjs';
 export * from './a2a-lifecycle.mjs';
 export * from './a2a-explore.mjs';
 export * from './spacetimedb-a2a.mjs';
+export * from './auth-binding.mjs';
+export * from './referent.mjs';

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://o-i.dev/schemas/auth-binding-v1.json",
+  "title": "O:I AuthBinding v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "binding_ref",
+    "authenticated_principal",
+    "assurance_class",
+    "bound_subject_ref",
+    "bound_subject_kind",
+    "scope",
+    "provider",
+    "proof_provenance",
+    "issued_at",
+    "expires_at",
+    "revoked_at"
+  ],
+  "properties": {
+    "version": { "const": "oi.auth-binding/v1" },
+    "binding_ref": { "type": "string", "minLength": 1 },
+    "authenticated_principal": { "type": "string", "minLength": 1 },
+    "assurance_class": { "type": "string", "minLength": 1 },
+    "bound_subject_ref": { "type": "string", "minLength": 1 },
+    "bound_subject_kind": { "type": "string", "minLength": 1 },
+    "scope": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "provider": { "type": "string", "minLength": 1 },
+    "proof_provenance": { "type": "string", "minLength": 1 },
+    "issued_at": { "type": "string", "format": "date-time" },
+    "expires_at": {
+      "oneOf": [
+        { "type": "string", "format": "date-time" },
+        { "type": "null" }
+      ]
+    },
+    "revoked_at": {
+      "oneOf": [
+        { "type": "string", "format": "date-time" },
+        { "type": "null" }
+      ]
+    }
+  }
+}
