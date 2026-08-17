@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://o-i.epi-logos.org/schemas/a2a-participation-v1.json",
+  "title": "O:I A2A SharedField participation contracts",
+  "$defs": {
+    "provenance": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["kind", "ref", "source_system"],
+        "properties": {
+          "kind": { "type": "string", "minLength": 1 },
+          "ref": { "type": "string", "minLength": 1 },
+          "source_system": { "type": "string", "minLength": 1 },
+          "revision": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": true
+      }
+    },
+    "binding": {
+      "type": "object",
+      "required": [
+        "schema", "binding_ref", "binding_revision", "field_ref", "participant_ref", "agent_ref",
+        "publisher_participant_ref", "publication_decision_ref", "source_revision", "published_at", "state",
+        "protocol_version", "protocol_binding", "provenance"
+      ],
+      "properties": {
+        "schema": { "const": "oi.a2a-binding/v1" },
+        "binding_ref": { "type": "string", "minLength": 1 },
+        "binding_revision": { "type": "integer", "minimum": 1 },
+        "field_ref": { "type": "string", "minLength": 1 },
+        "participant_ref": { "type": "string", "minLength": 1 },
+        "agent_ref": { "type": "string", "minLength": 1 },
+        "publisher_participant_ref": { "type": "string", "minLength": 1 },
+        "publication_decision_ref": { "type": "string", "minLength": 1 },
+        "source_revision": { "type": "string", "minLength": 1 },
+        "projection_ref": { "type": "string", "minLength": 1 },
+        "published_at": { "type": "string", "format": "date-time" },
+        "state": { "enum": ["published", "withdrawn"] },
+        "protocol_version": { "const": "1.0" },
+        "protocol_binding": { "const": "HTTP+JSON" },
+        "endpoint_url": { "type": "string", "format": "uri" },
+        "agent_card_url": { "type": "string", "format": "uri" },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "state": { "const": "published" } } },
+          "then": { "required": ["endpoint_url", "agent_card_url"] },
+          "else": {
+            "not": { "anyOf": [{ "required": ["endpoint_url"] }, { "required": ["agent_card_url"] }] }
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "presence": {
+      "type": "object",
+      "required": ["schema", "binding_ref", "field_ref", "participant_ref", "availability", "sequence", "observed_at", "provenance"],
+      "properties": {
+        "schema": { "const": "oi.a2a-presence/v1" },
+        "binding_ref": { "type": "string", "minLength": 1 },
+        "field_ref": { "type": "string", "minLength": 1 },
+        "participant_ref": { "type": "string", "minLength": 1 },
+        "availability": { "enum": ["online", "degraded", "offline", "withdrawn"] },
+        "sequence": { "type": "integer", "minimum": 1 },
+        "observed_at": { "type": "string", "format": "date-time" },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "oneOf": [{ "$ref": "#/$defs/binding" }, { "$ref": "#/$defs/presence" }]
+}
