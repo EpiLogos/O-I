@@ -36,3 +36,5 @@ jobs:
           git diff --cached --check
           git commit -m 'Enforce explicit bounded Exchange authority'
           git push origin HEAD:agent/oi-017-exchange-authority
+
+# one-shot trigger
