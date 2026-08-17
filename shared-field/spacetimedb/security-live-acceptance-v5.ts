@@ -575,7 +575,14 @@ try {
       contributorRef: remotePublic.participant_ref,
       targetRef: anchor.ref,
       payload: { task: 'task:phase2', message: 'message:phase2', artifact: 'artifact:phase2' },
-      source: { transport: 'a2a', task_ref: 'task:phase2', message_ref: 'message:phase2', artifact_ref: 'artifact:phase2' },
+      source: {
+        system: 'a2a',
+        revision: 'a2a-v1',
+        transport: 'a2a',
+        task_ref: 'task:phase2',
+        message_ref: 'message:phase2',
+        artifact_ref: 'artifact:phase2',
+      },
     })),
   });
   const a2aReceipt = await waitUntil(() => receiptFor(owner, a2aRef), 'A2A quarantine receipt');
