@@ -27,19 +27,19 @@ fn oi_central_observations() -> Vec<SkillObservation> {
         observation("oi:skill:operate-suite", "oi-rev-1"),
         observation(
             "central:skill:control-maintenance",
-            "b134142532602a9570f2deb1060a1badb8432c6d",
+            "7d6ebbd056e9eb30d2a2d1d477e7d6fb32e37010",
         ),
         observation(
             "central:skill:machine-declaration",
-            "b134142532602a9570f2deb1060a1badb8432c6d",
+            "7d6ebbd056e9eb30d2a2d1d477e7d6fb32e37010",
         ),
         observation(
             "central:skill:connector-authoring",
-            "b134142532602a9570f2deb1060a1badb8432c6d",
+            "7d6ebbd056e9eb30d2a2d1d477e7d6fb32e37010",
         ),
         observation(
             "central:skill:connector-hardening",
-            "b134142532602a9570f2deb1060a1badb8432c6d",
+            "7d6ebbd056e9eb30d2a2d1d477e7d6fb32e37010",
         ),
     ]
 }
@@ -183,16 +183,19 @@ fn installed_product_without_native_skill_is_disclosed_as_gap_not_fake_competenc
     )
     .unwrap();
     assert!(effective.degraded);
+    assert!(effective.expected_native_skills.is_empty());
     let actuation = effective
-        .expected_native_skills
-        .iter()
-        .find(|gap| gap.owner_product == "Actuation")
-        .unwrap();
-    assert_eq!(actuation.requiredness, Requiredness::IfProductInstalled);
-    assert!(!effective
         .skills
         .iter()
-        .any(|skill| skill.owner_product == "Actuation"));
+        .find(|skill| skill.skill_ref == "actuation:operator")
+        .expect("published Actuation native Skill remains visible even when unresolved");
+    assert_eq!(actuation.requiredness, Requiredness::IfProductInstalled);
+    assert_eq!(actuation.availability, SkillAvailability::Missing);
+    assert!(effective
+        .skills
+        .iter()
+        .filter(|skill| skill.owner_product == "Actuation")
+        .all(|skill| skill.availability == SkillAvailability::Missing));
 }
 
 #[test]
