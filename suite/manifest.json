@@ -134,7 +134,7 @@
           {
             "target": "aarch64-apple-darwin",
             "name": "workcell-0.1.0-aarch64-apple-darwin.tar.gz",
-            "sha256": "55dc14252ff2d610c5b8b4c270d8113e15bd0cc258046c917a0fffec5dcaf677",
+            "sha256": "55dc3aea4bcb91531b719dbc348a18fa0f44d90a30a0dd2a74983b88520d82d7",
             "attestation": "https://github.com/EpiLogos/Workcell/attestations/41163600"
           },
           {
