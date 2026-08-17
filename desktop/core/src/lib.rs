@@ -1,5 +1,6 @@
 mod bridge;
 mod contribution;
+mod execution_authority;
 mod live_product;
 mod local_aikit;
 mod local_factory;
@@ -11,6 +12,10 @@ pub use contribution::{
     ActionAvailability, CanonicalActionBinding, ContributionAvailability, HostRegion,
     HostedContribution, NativeActionInvocation, NativeContributionReading, PackageEnvelopeRef,
     SelectionProjection,
+};
+pub use execution_authority::{
+    ActionAuthorityStore, ActionExecutionRequest, AuthorisedActionExecution, BoundedActionGrant,
+    BOUNDED_ACTION_GRANT_SCHEMA,
 };
 pub use epilogos_factory::build::FactoryBuildSnapshot;
 pub use live_product::{
