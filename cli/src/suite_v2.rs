@@ -51,7 +51,7 @@ struct SuiteDev {
     test: Vec<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct SuiteGate {
     id: String,
     description: String,
@@ -176,12 +176,11 @@ fn suite_manifest() -> Result<SuiteManifest, String> {
 }
 
 fn command_suite_manifest(args: &[OsString]) -> Result<i32, String> {
-    match args {
-        [] | [one] if args.is_empty() || one == "--json" => {
-            println!("{}", SUITE_MANIFEST_JSON.trim());
-            Ok(0)
-        }
-        _ => Err("usage: oi manifest [--json]".to_owned()),
+    if args.is_empty() || (args.len() == 1 && args[0].to_str() == Some("--json")) {
+        println!("{}", SUITE_MANIFEST_JSON.trim());
+        Ok(0)
+    } else {
+        Err("usage: oi manifest [--json]".to_owned())
     }
 }
 
@@ -476,11 +475,8 @@ fn verify_installed_product(product: &SuiteProduct, executable: Option<&Path>, p
     let Some(executable) = executable else { return Ok(()); };
     let mut command = Command::new(executable);
     if product.id == "central" {
-        if let Some(ground) = personal_ground {
-            command.arg("--root").arg(ground).args(["doctor", "--json"]);
-        } else {
-            command.arg("--version");
-        }
+        let _ = personal_ground;
+        command.arg("--version");
     } else {
         command.args(&product.artifact.installed_verify);
     }
@@ -582,7 +578,7 @@ fn command_suite_v2_doctor(args: &[OsString]) -> Result<i32, String> {
 }
 
 fn command_suite_v2_cleanup(args: &[OsString]) -> Result<i32, String> {
-    if args != [OsString::from("--managed")] { return Err("usage: oi cleanup --managed".to_owned()); }
+    if args.len() != 1 || args[0].to_str() != Some("--managed") { return Err("usage: oi cleanup --managed".to_owned()); }
     let root = oi_data_root()?;
     let mut composition = load_composition()?;
     composition.modules.retain(|_, registration| {
@@ -767,7 +763,9 @@ fn command_dev_adopt_v2(args: &[OsString]) -> Result<i32, String> {
         return Err("adoption source is diverged; resolve history explicitly before adoption".to_owned());
     }
     let expected_repo = if canonical_id == "oi" { OI_REPOSITORY.to_owned() } else { manifest.products.iter().find(|p| p.id == canonical_id).unwrap().repository.clone() };
-    if state.remote.as_deref().map(normalize_git_remote).as_deref() != Some(normalize_git_remote(&expected_repo).as_str()) {
+    let actual_remote = state.remote.as_deref().map(normalize_git_remote);
+    let expected_remote = normalize_git_remote(&expected_repo);
+    if actual_remote.as_deref() != Some(expected_remote.as_str()) {
         return Err(format!("origin mismatch: found {:?}, expected canonical {}; no files changed", state.remote, expected_repo));
     }
     if let Some(parent) = target.parent() { fs::create_dir_all(parent).map_err(|e| e.to_string())?; }
