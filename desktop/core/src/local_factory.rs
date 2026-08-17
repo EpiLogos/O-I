@@ -8,7 +8,9 @@ use epilogos_factory::build::{
     FACTORY_BUILD_PROVIDER_CONTRACT, FACTORY_NATIVE_OWNER,
 };
 use epilogos_factory::build_provider::{FactoryBuildFileProvider, FactoryBuildProviderError};
+use epilogos_factory::core::run::{ProjectRef, RunRef};
 use std::path::PathBuf;
+use std::str::FromStr;
 
 use crate::{
     authorize_action, host_native_contribution, ActionAuthorityGrant, ActionAvailability,
@@ -29,6 +31,18 @@ impl LocalFactoryHost {
         Ok(Self {
             provider: FactoryBuildFileProvider::open(state_path, selection)?,
         })
+    }
+
+    pub fn open_refs(
+        state_path: impl Into<PathBuf>,
+        project_ref: &str,
+        run_ref: &str,
+    ) -> Result<Self, String> {
+        let selection = FactoryBuildSelection {
+            project_ref: ProjectRef::from_str(project_ref).map_err(|error| error.to_string())?,
+            run_ref: RunRef::from_str(run_ref).map_err(|error| error.to_string())?,
+        };
+        Self::open(state_path, selection).map_err(|error| error.to_string())
     }
 
     pub fn observe(&self) -> Result<FactoryHostObservation, String> {
