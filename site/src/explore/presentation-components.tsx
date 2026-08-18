@@ -49,6 +49,12 @@ function stringArray(value: unknown) {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
 }
 
+function recordArray(value: unknown) {
+  return Array.isArray(value)
+    ? value.filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null && !Array.isArray(item))
+    : [];
+}
+
 function safeHref(value: unknown) {
   if (typeof value !== 'string') return undefined;
   try {
@@ -107,6 +113,42 @@ function Text({ binding, authoring, onEditProps }: RendererProps) {
   );
 }
 
+function Lede({ binding, authoring, onEditProps }: RendererProps) {
+  const title = textProp(binding.props.title, textProp(binding.fallback.title));
+  const body = textProp(binding.props.text, textProp(binding.fallback.text));
+  return (
+    <header className="world-component world-component--heading" data-component-ref={binding.component_ref}>
+      <div className="world-component__eyebrow">Account reading</div>
+      {title || authoring ? <h2>{editableText(authoring, title, (value) => onEditProps?.(binding.binding_ref, { title: value }))}</h2> : null}
+      {body || authoring ? <p>{editableText(authoring, body, (value) => onEditProps?.(binding.binding_ref, { text: value }))}</p> : null}
+    </header>
+  );
+}
+
+function Prose({ binding, authoring, onEditProps }: RendererProps) {
+  const title = textProp(binding.props.title, textProp(binding.fallback.title));
+  const body = textProp(binding.props.text, textProp(binding.fallback.text));
+  return (
+    <article className="world-component world-component--text" data-component-ref={binding.component_ref}>
+      {title || authoring ? <h3>{editableText(authoring, title, (value) => onEditProps?.(binding.binding_ref, { title: value }))}</h3> : null}
+      <p>{editableText(authoring, body || 'No portable prose representation is available.', (value) => onEditProps?.(binding.binding_ref, { text: value }))}</p>
+    </article>
+  );
+}
+
+function Distinction({ binding, authoring, onEditProps }: RendererProps) {
+  const title = textProp(binding.props.title, textProp(binding.fallback.title, 'Distinction'));
+  const body = textProp(binding.props.text, textProp(binding.fallback.text));
+  const standing = textProp(binding.props.standing, 'Key distinction');
+  return (
+    <article className="world-component world-component--text" data-component-ref={binding.component_ref}>
+      <div className="world-component__eyebrow">{standing}</div>
+      <h3>{editableText(authoring, title, (value) => onEditProps?.(binding.binding_ref, { title: value }))}</h3>
+      {body || authoring ? <p>{editableText(authoring, body, (value) => onEditProps?.(binding.binding_ref, { text: value }))}</p> : null}
+    </article>
+  );
+}
+
 function Collection({ binding, onOpenRef }: RendererProps) {
   const title = textProp(binding.props.title, textProp(binding.fallback.title, 'Selection'));
   const rawItems = Array.isArray(binding.props.items) ? binding.props.items : [];
@@ -130,6 +172,19 @@ function Collection({ binding, onOpenRef }: RendererProps) {
   );
 }
 
+function ReferenceCard({ binding, onOpenRef, authoring, onEditProps }: RendererProps) {
+  const title = textProp(binding.props.title, textProp(binding.fallback.title, 'Related material'));
+  const body = textProp(binding.props.text, textProp(binding.fallback.text));
+  const refs = stringArray(binding.props.refs);
+  return (
+    <section className="world-component world-component--collection" data-component-ref={binding.component_ref}>
+      <h3>{editableText(authoring, title, (value) => onEditProps?.(binding.binding_ref, { title: value }))}</h3>
+      {body || authoring ? <p>{editableText(authoring, body, (value) => onEditProps?.(binding.binding_ref, { text: value }))}</p> : null}
+      {refs.length ? <div className="world-component__refs">{refs.map((ref) => <button type="button" key={ref} onClick={() => onOpenRef?.(ref)}>{ref}</button>)}</div> : null}
+    </section>
+  );
+}
+
 function WikiReading({ binding, onOpenRef, authoring, onEditProps }: RendererProps) {
   const title = textProp(binding.props.title, textProp(binding.fallback.title, 'Wiki reading'));
   const body = textProp(binding.props.text, textProp(binding.fallback.text));
@@ -140,6 +195,137 @@ function WikiReading({ binding, onOpenRef, authoring, onEditProps }: RendererPro
       <h3>{editableText(authoring, title, (value) => onEditProps?.(binding.binding_ref, { title: value }))}</h3>
       {body || authoring ? <p>{editableText(authoring, body, (value) => onEditProps?.(binding.binding_ref, { text: value }))}</p> : null}
       {refs.length ? <div className="world-component__refs">{refs.map((ref) => <button type="button" key={ref} onClick={() => onOpenRef?.(ref)}>{ref}</button>)}</div> : null}
+    </article>
+  );
+}
+
+function ClaimEvidence({ binding, authoring, onEditProps }: RendererProps) {
+  const title = textProp(binding.props.title, textProp(binding.fallback.title, 'Claim and evidence'));
+  const claim = textProp(binding.props.claim, textProp(binding.fallback.text));
+  const evidence = stringArray(binding.props.evidence);
+  const standing = textProp(binding.props.standing, 'Claim / evidence');
+  return (
+    <article className="world-component world-component--text" data-component-ref={binding.component_ref}>
+      <div className="world-component__eyebrow">{standing}</div>
+      <h3>{editableText(authoring, title, (value) => onEditProps?.(binding.binding_ref, { title: value }))}</h3>
+      {claim || authoring ? <p>{editableText(authoring, claim, (value) => onEditProps?.(binding.binding_ref, { claim: value }))}</p> : null}
+      {evidence.length ? <ul>{evidence.map((item) => <li key={item}>{item}</li>)}</ul> : null}
+    </article>
+  );
+}
+
+function Timeline({ binding, authoring, onEditProps }: RendererProps) {
+  const title = textProp(binding.props.title, textProp(binding.fallback.title, 'History'));
+  const items = recordArray(binding.props.items);
+  return (
+    <section className="world-component world-component--text" data-component-ref={binding.component_ref}>
+      <h3>{editableText(authoring, title, (value) => onEditProps?.(binding.binding_ref, { title: value }))}</h3>
+      {items.length ? (
+        <ol>
+          {items.map((item, index) => {
+            const label = textProp(item.label, textProp(item.time, `Step ${index + 1}`));
+            const copy = textProp(item.text, textProp(item.description));
+            return <li key={`${label}:${index}`}><strong>{label}</strong>{copy ? ` — ${copy}` : ''}</li>;
+          })}
+        </ol>
+      ) : <p>{textProp(binding.fallback.text, 'No timeline items are available.')}</p>}
+    </section>
+  );
+}
+
+function Diagram({ binding, authoring, onEditProps }: RendererProps) {
+  const title = textProp(binding.props.title, textProp(binding.fallback.title, 'Diagram'));
+  const description = textProp(binding.props.description, textProp(binding.fallback.text));
+  const relations = stringArray(binding.props.relations);
+  return (
+    <figure className="world-component world-component--text" data-component-ref={binding.component_ref}>
+      <div className="world-component__eyebrow">Diagram reading</div>
+      <h3>{editableText(authoring, title, (value) => onEditProps?.(binding.binding_ref, { title: value }))}</h3>
+      {relations.length ? <div className="world-component__collection">{relations.map((relation) => <div key={relation}>{relation}</div>)}</div> : null}
+      {description || authoring ? <figcaption>{editableText(authoring, description, (value) => onEditProps?.(binding.binding_ref, { description: value }))}</figcaption> : null}
+    </figure>
+  );
+}
+
+function Comparison({ binding, authoring, onEditProps }: RendererProps) {
+  const title = textProp(binding.props.title, textProp(binding.fallback.title, 'Comparison'));
+  const rows = recordArray(binding.props.rows);
+  return (
+    <section className="world-component world-component--collection" data-component-ref={binding.component_ref}>
+      <h3>{editableText(authoring, title, (value) => onEditProps?.(binding.binding_ref, { title: value }))}</h3>
+      <div className="world-component__collection">
+        {rows.map((row, index) => {
+          const label = textProp(row.label, textProp(row.name, `Item ${index + 1}`));
+          const value = textProp(row.value, textProp(row.text));
+          return <div key={`${label}:${index}`}><strong>{label}</strong>{value ? <span>{value}</span> : null}</div>;
+        })}
+      </div>
+    </section>
+  );
+}
+
+function CodeSchema({ binding, authoring, onEditProps }: RendererProps) {
+  const title = textProp(binding.props.title, textProp(binding.fallback.title, 'Code / schema'));
+  const code = textProp(binding.props.code, textProp(binding.fallback.text));
+  const language = textProp(binding.props.language, 'Code / schema');
+  return (
+    <article className="world-component world-component--text" data-component-ref={binding.component_ref}>
+      <div className="world-component__eyebrow">{language}</div>
+      <h3>{editableText(authoring, title, (value) => onEditProps?.(binding.binding_ref, { title: value }))}</h3>
+      <pre><code>{code}</code></pre>
+    </article>
+  );
+}
+
+function ImageFigure({ binding, authoring, onEditProps }: RendererProps) {
+  const title = textProp(binding.props.title, textProp(binding.fallback.title, 'Image'));
+  const caption = textProp(binding.props.caption, textProp(binding.fallback.text));
+  const alt = textProp(binding.props.alt, title);
+  const src = safeHref(binding.props.src);
+  return (
+    <figure className="world-component world-component--text" data-component-ref={binding.component_ref}>
+      <h3>{editableText(authoring, title, (value) => onEditProps?.(binding.binding_ref, { title: value }))}</h3>
+      {src ? <img src={src} alt={alt} loading="lazy" /> : null}
+      {caption || authoring ? <figcaption>{editableText(authoring, caption, (value) => onEditProps?.(binding.binding_ref, { caption: value }))}</figcaption> : null}
+    </figure>
+  );
+}
+
+function Mockup({ binding, authoring, onEditProps }: RendererProps) {
+  const title = textProp(binding.props.title, textProp(binding.fallback.title, 'Mockup'));
+  const body = textProp(binding.props.text, textProp(binding.props.description, textProp(binding.fallback.text)));
+  return (
+    <section className="world-component world-component--text" data-component-ref={binding.component_ref}>
+      <div className="world-component__eyebrow">Interface / mockup</div>
+      <h3>{editableText(authoring, title, (value) => onEditProps?.(binding.binding_ref, { title: value }))}</h3>
+      <div className="world-component__collection"><div>{editableText(authoring, body, (value) => onEditProps?.(binding.binding_ref, { text: value }))}</div></div>
+    </section>
+  );
+}
+
+function Source({ binding, authoring, onEditProps }: RendererProps) {
+  const title = textProp(binding.props.title, textProp(binding.fallback.title, 'Source'));
+  const copy = textProp(binding.props.text, textProp(binding.fallback.text));
+  const href = safeHref(binding.props.href);
+  return (
+    <article className="world-component world-component--link" data-component-ref={binding.component_ref}>
+      <div>
+        <strong>{editableText(authoring, title, (value) => onEditProps?.(binding.binding_ref, { title: value }))}</strong>
+        {copy || authoring ? <span>{editableText(authoring, copy, (value) => onEditProps?.(binding.binding_ref, { text: value }))}</span> : null}
+      </div>
+      {href ? <a href={href} target="_blank" rel="noreferrer" aria-label={`Open ${title}`}>↗</a> : null}
+    </article>
+  );
+}
+
+function Action({ binding, onOpenRef }: RendererProps) {
+  const label = textProp(binding.props.label, textProp(binding.props.title, textProp(binding.fallback.title, 'Open')));
+  const ref = textProp(binding.props.ref, textProp(binding.subject_ref));
+  const href = safeHref(binding.props.href);
+  return (
+    <article className="world-component world-component--link" data-component-ref={binding.component_ref}>
+      <div><strong>{label}</strong>{textProp(binding.fallback.text) ? <span>{textProp(binding.fallback.text)}</span> : null}</div>
+      {ref && onOpenRef ? <button type="button" onClick={() => onOpenRef(ref)}>Open</button> : href ? <a href={href} target="_blank" rel="noreferrer">↗</a> : null}
     </article>
   );
 }
@@ -162,6 +348,21 @@ export const portablePresentationRenderers: Record<string, Renderer> = {
   'oi.presentation/collection/v1': Collection,
   'oi.presentation/wiki-reading/v1': WikiReading,
   'oi.presentation/link/v1': Link,
+  'oi.presentation/lede/v1': Lede,
+  'oi.presentation/prose/v1': Prose,
+  'oi.presentation/distinction/v1': Distinction,
+  'oi.presentation/diagram/v1': Diagram,
+  'oi.presentation/source/v1': Source,
+  'oi.presentation/claim-evidence/v1': ClaimEvidence,
+  'oi.presentation/timeline/v1': Timeline,
+  'oi.presentation/comparison/v1': Comparison,
+  'oi.presentation/code-schema/v1': CodeSchema,
+  'oi.presentation/image/v1': ImageFigure,
+  'oi.presentation/mockup/v1': Mockup,
+  'oi.presentation/wiki-excerpt/v1': WikiReading,
+  'oi.presentation/reference-card/v1': ReferenceCard,
+  'oi.presentation/run-history/v1': Timeline,
+  'oi.presentation/action/v1': Action,
 };
 
 function Fallback({ binding }: RendererProps) {
