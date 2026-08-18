@@ -158,6 +158,7 @@ export function connectSpacetimeExplore(config: Config, callbacks: Callbacks) {
       .onError((_ctx: unknown, error: Error) => {
         removeLiveListener();
         nextLive.dispose?.();
+        try { conn.disconnect(); } catch { /* already disconnected */ }
         scheduleReconnect(error);
       })
       .subscribe(QUERIES);
@@ -178,7 +179,7 @@ export function connectSpacetimeExplore(config: Config, callbacks: Callbacks) {
         installLiveConnection(conn);
       })
       .onConnectError((_ctx: unknown, error: Error) => scheduleReconnect(error))
-      .onDisconnect((_ctx: unknown, error: Error | null) => {
+      .onDisconnect((_ctx: unknown, error: Error | undefined) => {
         if (!disposed) scheduleReconnect(error ?? new Error('SpaceTimeDB disconnected.'));
       });
 
