@@ -1,0 +1,37 @@
+name: O:I ↔ Epi Pratibimba bridge
+
+on:
+  pull_request:
+    paths:
+      - 'desktop/core/src/local_epi.rs'
+      - 'desktop/core/src/lib.rs'
+      - 'desktop/core/src/bridge.rs'
+      - 'desktop/core/tests/local_epi_provider.rs'
+      - 'desktop/src-tauri/src/main.rs'
+      - '.github/workflows/epi-pratibimba-integration.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  real-epi-provider:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out O:I
+        uses: actions/checkout@v4
+      - name: Check out coordinated Epi bridge
+        uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Epi-Logos-C-Experiments
+          ref: agent/epi-pratibimba-a-kernel-bridge
+          path: epi-source
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build and test Epi-owned bridge against real C kernel
+        run: |
+          cargo test --manifest-path epi-source/Body/S/S0/pratibimba-bridge/Cargo.toml
+          cargo build --manifest-path epi-source/Body/S/S0/pratibimba-bridge/Cargo.toml
+      - name: Exercise O:I host against the real Epi producer
+        env:
+          EPI_BRIDGE_BIN: ${{ github.workspace }}/epi-source/Body/S/S0/pratibimba-bridge/target/debug/epi-pratibimba-bridge
+        run: cargo test --manifest-path desktop/core/Cargo.toml --test local_epi_provider real_epi_bridge_process_hosts_when_acceptance_binary_is_supplied -- --exact --nocapture
