@@ -171,6 +171,7 @@ fn nara_send_selection(
         .actions
         .iter()
         .find(|binding| binding.action_ref == EPI_NARA_SENDOFF_ACTION_REF)
+        .cloned()
         .ok_or_else(|| "Epi Nara provider did not advertise its governed sendoff Action".to_owned())?;
     let binding_revision = observation
         .contribution
@@ -210,7 +211,7 @@ fn nara_send_selection(
         now_unix_ms: now,
     };
     let authorised = authorities.authorize_and_consume(&grant_ref, &request)?;
-    authorize_action(action, authorised.action_grant())?;
+    authorize_action(&action, authorised.action_grant())?;
     drop(authorities);
 
     let subject = SemanticRef {
