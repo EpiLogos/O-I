@@ -49,7 +49,7 @@ const CENTRE_VISUALS: CentreVisual[] = [
   },
   {
     id: 'actuation',
-    tone: 'light',
+    tone: 'dark',
     figureLabel: 'Actuation architecture: Agent identity becomes situated Agency with purpose, world binding, authority and bounds; Actuation may delegate, derive or federate; Return carries encountered reality back.',
     columns: [
       {
@@ -78,7 +78,7 @@ const CENTRE_VISUALS: CentreVisual[] = [
   },
   {
     id: 'aikit',
-    tone: 'dark',
+    tone: 'light',
     figureLabel: 'AIKit architecture: discover a heterogeneous capability and source field, resolve it for the current project and Agency, compose runtime bodies and sessions, then disclose the resulting horizon through Surfaces and explanation.',
     columns: [
       {
@@ -182,7 +182,7 @@ const CENTRE_VISUALS: CentreVisual[] = [
   },
   {
     id: 'ql',
-    tone: 'light',
+    tone: 'dark',
     figureLabel: 'Quaternal Logic architecture: formal source propositions become explicit references and operators, MEF refraction and provider operations, provenance-bearing readings, experiments and returned evidence.',
     columns: [
       {
