@@ -1,7 +1,6 @@
 .stack-aperture {
   margin-top: clamp(6rem, 12vw, 11rem);
   padding-top: 2rem;
-  border-top: 1px solid var(--oi-rule);
 }
 
 .stack-aperture__intro {

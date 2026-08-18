@@ -4,58 +4,74 @@ import { OICube } from '@/components/ui/oi-cube';
 import { OIGlyph } from '@/components/ui/oi-mark';
 import { ParallaxComponent } from '@/components/ui/parallax-scrolling';
 
+const OI = 'O:I';
+
 type ProductSurface = {
-  position: string;
-  need: string;
-  role: string;
-  project: string;
+  name: string;
+  intent: string;
+  what: string;
+  why: string;
   href: string;
 };
 
 const products: ProductSurface[] = [
   {
-    position: '0',
-    need: 'A durable place to author and return to.',
-    role: 'Persistent personal and operative ground',
-    project: 'Central',
+    name: 'Central',
+    intent: 'A durable place to stand.',
+    what:
+      'Human-authored Control, ordinary Work, machine intent, and the stable conventions that let an agent return to the same world.',
+    why: 'Without ground, every session starts from scratch. Central keeps the world authored and recoverable.',
     href: 'https://github.com/EpiLogos/Central',
   },
   {
-    position: '1',
-    need: 'Agency you can commission, inspect and understand.',
-    role: 'Situated agency and agentic composition',
-    project: 'Actuation',
+    name: 'Actuation',
+    intent: 'Agency you can commission, inspect and relate.',
+    what:
+      'Situated Agents, Agencies, actuation loops, harnesses, and the composition of agentic work.',
+    why: 'A model has capacity; Actuation places that capacity into a loop that can act, observe and continue.',
     href: 'https://github.com/EpiLogos/Actuation',
   },
   {
-    position: '2',
-    need: 'Know what the agent can access and do here.',
-    role: 'Capability, context, resources and surfaces',
-    project: 'AIKit',
+    name: 'AIKit',
+    intent: 'The operative world becomes usable.',
+    what:
+      'Capability resolution, skills, tools, Actions, sources, models, sessions, profiles and context.',
+    why: 'An agent needs to know what it can reach and how to reach it without rebuilding the environment each time.',
     href: 'https://github.com/EpiLogos/ai-kit',
   },
   {
-    position: '3',
-    need: 'Turn intention into developed, evidenced software.',
-    role: 'Projects, Runs, candidates and recognition',
-    project: 'Software Factory',
+    name: 'Software Factory',
+    intent: 'Intention becomes evidenced development.',
+    what:
+      'Projects, Runs, Run Maps, candidates, claims, evidence, decisions and recognition.',
+    why: 'Agentic work that matters needs to leave durable developmental objects, not just chat transcripts.',
     href: 'https://github.com/EpiLogos/agent-system-design',
   },
   {
-    position: '4',
-    need: 'Give agency a real computational world.',
-    role: 'Execution, placement, services and lifecycle',
-    project: 'Workcell',
+    name: 'Workcell',
+    intent: 'Give agency a material body.',
+    what:
+      'Execution environments, services, workspaces, containers, machines, endpoints and lifecycle.',
+    why: 'Ideas stay ideas until they can run somewhere; Workcell makes the computational world explicit.',
     href: 'https://github.com/EpiLogos/Workcell',
   },
   {
-    position: '5',
-    need: 'Make formal relations usable and recursive.',
-    role: 'Relation, refraction, synthesis and recursive intelligence',
-    project: 'Quaternal Logic',
+    name: 'Quaternal Logic',
+    intent: 'Make relation recursive.',
+    what:
+      'Formal position, refraction, synthesis, and executable semantic machinery.',
+    why: 'When the structures of agency themselves become inspectable, the field can study and improve itself.',
     href: 'https://github.com/EpiLogos/QL-MEF',
   },
 ];
+
+function GitHubIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" width="18" height="18">
+      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
+    </svg>
+  );
+}
 
 function ExternalLink({ href, children, className = '' }: { href: string; children: ReactNode; className?: string }) {
   return (
@@ -69,46 +85,46 @@ function ExternalLink({ href, children, className = '' }: { href: string; childr
 function ProductField() {
   return (
     <section id="products" className="section section--black oi-surface-dark" aria-labelledby="products-title">
-      <div className="section__eyebrow">O:I PRODUCT FIELD</div>
+      <div className="section__eyebrow">Six centres, one field</div>
       <div className="section__grid section__grid--heading">
-        <h1 id="products-title" className="feature-title feature-title--wide">
-          Six products around one agent environment.
-        </h1>
+        <h2 id="products-title" className="feature-title feature-title--wide">
+          The {OI} family can be small or grow as the work grows.
+        </h2>
         <p className="feature-copy">
-          Each centre answers a concrete human need. Together they make the operative world around an agent explicit,
-          inspectable and composable.
+          Each centre answers a concrete need. Together they describe the technological field through which model capacity
+          becomes situated agency. Install one, or compose the whole.
         </p>
       </div>
 
-      <div className="product-field" role="table" aria-label="O:I product field">
-        <div className="product-field__head" role="row">
-          <span role="columnheader">Human need</span>
-          <span role="columnheader">Role in Objective Internality</span>
-          <span role="columnheader">Software</span>
-          <span aria-hidden="true" />
-        </div>
+      <div className="product-field" role="list" aria-label="O:I product field">
         {products.map((product) => (
           <a
-            key={product.project}
+            key={product.name}
             className="product-row"
             href={product.href}
             target="_blank"
             rel="noreferrer"
-            role="row"
+            role="listitem"
           >
-            <span className="product-row__need" role="cell">
-              <span className="product-row__position">P{product.position}</span>
-              {product.need}
-            </span>
-            <span className="product-row__role" role="cell">
-              {product.role}
-            </span>
-            <span className="product-row__project" role="cell">
-              {product.project}
-            </span>
-            <span className="product-row__arrow" aria-hidden="true">
-              ↗
-            </span>
+            <div className="product-row__visible">
+              <span className="product-row__name" role="presentation">
+                {product.name}
+              </span>
+              <span className="product-row__intent" role="presentation">
+                {product.intent}
+              </span>
+              <span className="product-row__arrow" aria-hidden="true">
+                ↗
+              </span>
+            </div>
+            <div className="product-row__detail">
+              <p className="product-row__what" role="presentation">
+                {product.what}
+              </p>
+              <p className="product-row__why" role="presentation">
+                {product.why}
+              </p>
+            </div>
           </a>
         ))}
       </div>
@@ -137,54 +153,72 @@ export default function App() {
 
       <main id="top" data-oi-surface="projection-root" data-oi-state="front-door">
         <ParallaxComponent />
-        <ProductField />
 
-        <section id="understand" className="section section--white oi-surface-light" aria-labelledby="understand-title">
-          <div className="section__eyebrow">UNDERSTAND</div>
+        <section id="what" className="section section--black oi-surface-dark" aria-labelledby="what-title">
+          <div className="section__eyebrow">What is {OI}</div>
           <div className="section__grid section__grid--intro">
-            <h2 id="understand-title" className="display-copy display-copy--compact">
-              AI has a world around it.
+            <h2 id="what-title" className="display-copy display-copy--compact">
+              {OI} is an architecture for the engineering around the model.
             </h2>
             <div className="body-copy body-copy--lead">
               <p>
-                Agents operate through projects, files, tools, sources, histories, models and other agents. O:I makes
-                that operative world explicit.
+                A model supplies capacity. What that capacity can do depends on the world around it: where it stands, what
+                it can reach, what it can do, what it knows, which projects it inhabits, and how its work persists.
               </p>
               <p>
-                The human can see what an agent has access to, what shaped its work, what it produced or changed, and
-                where authorship and stewardship enter the environment.
+                {OI} names that wider field. It is a personal, open, composable structure for technological agency — the
+                operating infrastructure that lets an agent act, and the objective internal world that makes the act
+                situated.
+              </p>
+              <p>
+                The idea is developed at length in the{' '}
+                <ExternalLink href="https://github.com/EpiLogos/Antykathera-Essay-Work">Antykathera essay work</ExternalLink>,
+                which explores how every actor — human or artificial — carries an operative internal world that includes,
+                but is not reducible to, the worlds of others.
               </p>
             </div>
           </div>
 
-          <div className="definition-grid" aria-label="The two public readings of O:I">
+          <div className="definition-grid" aria-label="The two readings of O:I">
             <article>
-              <span>O</span>
-              <h3>Operating Infrastructure</h3>
-              <p>The structures through which technological agency becomes situated and able to act.</p>
+              <span>0</span>
+              <h3>Persistent ground</h3>
+              <p>
+                A durable place from which agency can stand: human-authored files, projects, preferences, tools, sources and
+                histories that remain available across sessions.
+              </p>
             </article>
             <article>
-              <span>I</span>
-              <h3>Objective Internality</h3>
+              <span>1</span>
+              <h3>Actuated intelligence</h3>
               <p>
-                The inspectable operative interior around an actor: authored ground, capabilities, projects, sources,
-                histories, environments and the relations that can become effective in later action.
+                A model placed into a loop that can receive, act, observe and continue — an agent that can operate from
+                that ground.
               </p>
             </article>
           </div>
 
           <div className="understand-strip">
             <div>
-              <span className="understand-strip__label">Ground</span>
-              <p>Keep durable authored context and project continuity.</p>
+              <span className="understand-strip__label">Agency is not an agent</span>
+              <p>
+                An agent is a situated actor. Agency is the possibility of effective action that arises from the relation
+                between actor, ground and world.
+              </p>
             </div>
             <div>
-              <span className="understand-strip__label">Agency</span>
-              <p>Make the actor, its powers and its current world legible.</p>
+              <span className="understand-strip__label">0/1 spans both sides</span>
+              <p>
+                The same structure applies to human and artificial actors: an operative internal world, selectively
+                disclosed into action. The point of {OI} is the common denominator, not a theory of intelligence.
+              </p>
             </div>
             <div>
-              <span className="understand-strip__label">Stewardship</span>
-              <p>Inspect the path from source and action to result and return.</p>
+              <span className="understand-strip__label">Open and personal</span>
+              <p>
+                {OI} is designed to be installed, authored and owned locally. The shared field extends from personal ground,
+                rather than starting from a central platform.
+              </p>
             </div>
           </div>
         </section>
@@ -217,38 +251,44 @@ export default function App() {
           </div>
         </section>
 
+        <ProductField />
+
         <section className="section section--white section--cube oi-surface-light" aria-labelledby="local-title">
           <div className="cube-wrap" aria-hidden="true">
             <OICube />
           </div>
           <div className="section__grid section__grid--feature">
             <div>
-              <div className="section__eyebrow">OBJECTIVE INTERNALITY</div>
+              <div className="section__eyebrow">One install</div>
               <h2 id="local-title" className="feature-title">
-                Your working world has continuity.
+                The parent {OI} suite composes the whole.
               </h2>
             </div>
             <div className="feature-copy">
               <p>
-                Files, projects, preferences, machines, tools and histories can remain grounded in an authored world
-                while computation moves across models, processes and hosts.
+                The <code>oi</code> command is the front door. It discovers, installs and composes the six products into
+                one managed local environment while leaving each product&apos;s native identity intact.
               </p>
               <p>
-                Projection makes selected parts addressable beyond that local world while keeping source authority and
-                provenance visible.
+                From one installation a human can enter Central, commission agents, resolve capabilities, run
+                developmental work, place execution, and reach the formal layer when needed. An agent can discover the same
+                world through structured skills, schemas and state.
               </p>
+              <ExternalLink href="https://github.com/EpiLogos/O-I/blob/research/cordis-composable-agency/docs/INSTALL.md">
+                Install {OI}
+              </ExternalLink>
             </div>
           </div>
         </section>
 
         <section id="build" className="section section--black section--build oi-surface-dark" aria-labelledby="build-title">
-          <div className="section__eyebrow">BUILD</div>
+          <div className="section__eyebrow">Build</div>
           <div className="section__grid section__grid--heading">
             <h2 id="build-title" className="feature-title">
               Read the system. Enter the code.
             </h2>
             <p className="feature-copy">
-              O:I is developed in public. The repository is the shared entry point into the architecture, current work
+              {OI} is developed in public. The repository is the shared entry point into the architecture, current work
               and the six independently useful products.
             </p>
           </div>
@@ -278,14 +318,14 @@ export default function App() {
             {'{O:I}'}
           </div>
           <div className="closing-copy">
-            <div className="section__eyebrow">OPERATING INFRASTRUCTURE · OBJECTIVE INTERNALITY</div>
-            <h2 id="closing-title">An architecture for the engineering around the model.</h2>
+            <div className="section__eyebrow">Operating Infrastructure · Objective Internality</div>
+            <h2 id="closing-title">An open field for situated agency.</h2>
           </div>
         </section>
       </main>
 
       <footer className="site-footer oi-surface-dark">
-        <span>{'{O:I}'}</span>
+        <span>{OI}</span>
         <span>Understand · Explore · Build</span>
         <span>Open project · 2026</span>
       </footer>
