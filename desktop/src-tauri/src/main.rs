@@ -1,11 +1,12 @@
 use oi_desktop_core::{
     host_native_contribution, ActionAuthorityStore, ActionExecutionRequest, BoundedActionGrant,
     BridgeCallClass, BridgeCaller, BridgePolicy, DesktopHost, FactoryActionRoundTrip,
-    FactoryBuildSnapshot, HostedContribution, LocalFactoryHost, NativeContributionReading,
-    SemanticRef, ShellDestination, ShellSnapshot, SurfaceActionEmission,
-    FACTORY_BUILD_CONTRIBUTION_REF,
+    FactoryBuildSnapshot, HostedContribution, LocalEpiHost, LocalFactoryHost,
+    NativeContributionReading, SemanticRef, ShellDestination, ShellSnapshot, SurfaceActionEmission,
+    EPI_PRIMITIVE_CONTRIBUTION_REF, FACTORY_BUILD_CONTRIBUTION_REF,
 };
 use serde::Deserialize;
+use serde_json::Value;
 use std::env;
 use std::fs;
 use std::sync::Mutex;
@@ -24,6 +25,7 @@ struct AppState {
     host: Mutex<DesktopHost>,
     contributions: Mutex<Vec<HostedContribution>>,
     factory: Mutex<Option<LocalFactoryHost>>,
+    epi: Mutex<Option<LocalEpiHost>>,
     action_authority: Mutex<ActionAuthorityStore>,
 }
 
@@ -66,6 +68,23 @@ fn factory_build_snapshot(
     let observation = factory.refresh()?;
     replace_factory_contribution(&state, observation.contribution)?;
     Ok(observation.snapshot)
+}
+
+#[tauri::command]
+fn epi_primitive_snapshot(state: State<'_, AppState>) -> Result<Option<Value>, String> {
+    BridgePolicy
+        .authorize(BridgeCaller::ShellUi, BridgeCallClass::ObserveEpiPrimitives)
+        .map_err(|error| error.to_string())?;
+    let epi = state
+        .epi
+        .lock()
+        .map_err(|_| "Epi primitive provider lock poisoned".to_owned())?;
+    let Some(epi) = epi.as_ref() else {
+        return Ok(None);
+    };
+    let observation = epi.observe()?;
+    replace_epi_contribution(&state, observation.contribution)?;
+    Ok(Some(observation.snapshot))
 }
 
 /// Privileged native Action boundary.
@@ -191,6 +210,20 @@ fn load_local_factory() -> Result<Option<LocalFactoryHost>, String> {
     }
 }
 
+fn load_local_epi() -> Result<Option<LocalEpiHost>, String> {
+    let Some(executable) = env::var_os("OI_EPI_BRIDGE") else {
+        return Ok(None);
+    };
+    let mut host = LocalEpiHost::open(executable);
+    if let Some(path) = env::var_os("OI_EPI_VAK_FILE") {
+        host = host.with_vak_file(path);
+    }
+    if let Some(path) = env::var_os("OI_EPI_NARA_CONTEXT_FILE") {
+        host = host.with_nara_context_file(path);
+    }
+    Ok(Some(host))
+}
+
 /// Optional one-shot native handoff from an authority-owning integration.
 ///
 /// The file is consumed and deleted before the webview is started. Restarting the
@@ -228,17 +261,36 @@ fn replace_factory_contribution(
         .contributions
         .lock()
         .map_err(|_| "contribution catalog lock poisoned".to_owned())?;
-    replace_factory_contribution_in(&mut contributions, contribution);
+    replace_contribution_in(
+        &mut contributions,
+        contribution,
+        FACTORY_BUILD_CONTRIBUTION_REF,
+    );
     Ok(())
 }
 
-fn replace_factory_contribution_in(
+fn replace_epi_contribution(
+    state: &State<'_, AppState>,
+    contribution: HostedContribution,
+) -> Result<(), String> {
+    let mut contributions = state
+        .contributions
+        .lock()
+        .map_err(|_| "contribution catalog lock poisoned".to_owned())?;
+    replace_contribution_in(
+        &mut contributions,
+        contribution,
+        EPI_PRIMITIVE_CONTRIBUTION_REF,
+    );
+    Ok(())
+}
+
+fn replace_contribution_in(
     contributions: &mut Vec<HostedContribution>,
     contribution: HostedContribution,
+    contribution_ref: &str,
 ) {
-    contributions.retain(|entry| {
-        entry.contribution.contribution_ref != FACTORY_BUILD_CONTRIBUTION_REF
-    });
+    contributions.retain(|entry| entry.contribution.contribution_ref != contribution_ref);
     contributions.push(contribution);
 }
 
@@ -254,16 +306,32 @@ fn main() {
         .map_err(|error| eprintln!("O:I local Factory provider unavailable: {error}"))
         .ok()
         .flatten();
+    let epi = load_local_epi()
+        .map_err(|error| eprintln!("O:I local Epi primitive provider unavailable: {error}"))
+        .ok()
+        .flatten();
     let action_authority = load_action_authority().unwrap_or_else(|error| {
         eprintln!("O:I Action authority handoff unavailable: {error}");
         ActionAuthorityStore::default()
     });
     if let Some(factory) = factory.as_ref() {
         match factory.observe() {
-            Ok(observation) => {
-                replace_factory_contribution_in(&mut contributions, observation.contribution)
-            }
+            Ok(observation) => replace_contribution_in(
+                &mut contributions,
+                observation.contribution,
+                FACTORY_BUILD_CONTRIBUTION_REF,
+            ),
             Err(error) => eprintln!("O:I Factory observation degraded: {error}"),
+        }
+    }
+    if let Some(epi) = epi.as_ref() {
+        match epi.observe() {
+            Ok(observation) => replace_contribution_in(
+                &mut contributions,
+                observation.contribution,
+                EPI_PRIMITIVE_CONTRIBUTION_REF,
+            ),
+            Err(error) => eprintln!("O:I Epi observation degraded: {error}"),
         }
     }
 
@@ -272,12 +340,14 @@ fn main() {
             host: Mutex::new(DesktopHost::new(disclosure)),
             contributions: Mutex::new(contributions),
             factory: Mutex::new(factory),
+            epi: Mutex::new(epi),
             action_authority: Mutex::new(action_authority),
         })
         .invoke_handler(tauri::generate_handler![
             shell_snapshot,
             contribution_catalog,
             factory_build_snapshot,
+            epi_primitive_snapshot,
             dispatch_factory_action,
             select_semantic_ref,
             open_destination
