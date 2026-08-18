@@ -35,7 +35,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Verify shared-field contracts and browser adapters
+      - name: Verify shared-field contracts, public content and browser adapters
         run: |
           node --test \
             ../shared-field/shared-field.test.mjs \
@@ -44,6 +44,7 @@ jobs:
             ../shared-field/presentation-projection.test.mjs \
             ../shared-field/presentation-authoring.test.mjs \
             ../shared-field/account-projection.test.mjs \
+            public-content.test.mjs \
             projection-renderer.test.mjs \
             self-other-read-model.test.mjs \
             field-proof-read-model.test.mjs \
