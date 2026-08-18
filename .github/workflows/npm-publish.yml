@@ -27,6 +27,27 @@ jobs:
         run: |
           npm test
           npm pack --dry-run
+      - name: Require bootstrapped npm package
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! npm view '@epilogos/oi' name --json >/dev/null 2>&1; then
+            cat >&2 <<'EOF'
+          @epilogos/oi does not exist in the npm registry yet.
+
+          npm trusted publishing cannot create the first registry entry. Bootstrap the
+          package once with an authenticated npm account that owns the @epilogos scope,
+          then configure its GitHub Actions trusted publisher as:
+
+            organization/user: EpiLogos
+            repository:        O-I
+            workflow filename: npm-publish.yml
+            allowed action:    npm publish
+
+          After that one-time bootstrap, this workflow is the tokenless publication path.
+          EOF
+            exit 1
+          fi
       - name: Require matching immutable GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
