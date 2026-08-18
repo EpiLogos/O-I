@@ -51,7 +51,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Build public front door against shared tokens
+      - name: Install SpaceTimeDB module dependencies
+        run: npm install --prefix shared-field/spacetimedb --no-audit --no-fund
+      - name: Install pinned SpaceTimeDB CLI 2.8.1
+        shell: bash
+        run: |
+          curl -sSf https://install.spacetimedb.com | \
+            SPACETIME_DOWNLOAD_ROOT="https://github.com/clockworklabs/SpacetimeDB/releases/download/v2.8.1" \
+            sh -s -- -y
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.local/bin:$PATH"
+          spacetime version install 2.8.1
+          spacetime version use 2.8.1
+          spacetime --version | tee /tmp/spacetimedb-version.txt
+          grep -q '2.8.1' /tmp/spacetimedb-version.txt
+      - name: Build public front door against shared tokens and live SharedField bindings
         run: |
           npm install --prefix site --no-audit --no-fund
           npm --prefix site run build
