@@ -141,6 +141,76 @@ function PageOpening({ pageId, sectionId = 'intro' }: { pageId: Exclude<PageId, 
   );
 }
 
+function ProductFieldArchitecture() {
+  const nativeProducts = [
+    ['Central', 'personal + project ground'],
+    ['Actuation', 'Agent + Agency + Return'],
+    ['AIKit', 'capability + context composition'],
+    ['Software Factory', 'Projects + Runs + evidence'],
+    ['Workcell', 'material execution'],
+    ['Quaternal Logic', 'formal experiment'],
+  ];
+  const wholeLevel = [
+    ['suite/', 'release + composition metadata'],
+    ['oi CLI', 'install · register · inspect · route'],
+    ['desktop/', 'whole-field local surface'],
+    ['skills/', 'suite operating guidance'],
+    ['shared-field/', 'Projection · SharedField · Encounter'],
+    ['site/', 'public field + Explore'],
+  ];
+
+  return (
+    <section className="section section--white product-field-architecture" aria-labelledby="product-field-architecture-title">
+      <div className="section__eyebrow"><span>Current architecture</span></div>
+      <div className="section__grid section__grid--heading">
+        <h2 id="product-field-architecture-title" className="feature-title">Native products. One thin O:I layer.</h2>
+        <div className="body-copy">
+          <p>Each product owns its own technology. O:I owns the whole-level seams that install, disclose and relate those native worlds.</p>
+        </div>
+      </div>
+      <div className="field-architecture" role="img" aria-label="Six native product repositories related through O:I suite, CLI, desktop, skills, shared-field and site seams">
+        <div className="field-architecture__layer">
+          <span className="field-architecture__label">Native ownership</span>
+          <div className="field-architecture__nodes">
+            {nativeProducts.map(([name, detail]) => (
+              <div className="field-architecture__node" key={name}>
+                <strong>{name}</strong>
+                <span>{detail}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="field-architecture__relation" aria-hidden="true">↑ native contracts · composition · selected projection ↓</div>
+        <div className="field-architecture__layer field-architecture__layer--oi">
+          <span className="field-architecture__label">O:I whole-level seams</span>
+          <div className="field-architecture__nodes">
+            {wholeLevel.map(([name, detail]) => (
+              <div className="field-architecture__node" key={name}>
+                <strong>{name}</strong>
+                <span>{detail}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ResearchCycle() {
+  const cycle = getChild(getSection('research', 'method'), 'cycle').title.split(' → ');
+  return (
+    <div className="research-cycle" aria-label="O:I research cycle">
+      {cycle.map((stage, index) => (
+        <div className="research-cycle__stage" key={`${stage}-${index}`}>
+          <span className="research-cycle__index">{String(index + 1).padStart(2, '0')}</span>
+          <strong>{stage}</strong>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function HomePage() {
   const heroTitle = getChild(getSection('home', 'hero'), 'title').title;
   const existing = getSection('home', 'existing-world');
@@ -159,7 +229,7 @@ function HomePage() {
             <div className="section__eyebrow"><span>{existing.title}</span></div>
             <h2 id="existing-world-title">{getTitle(existing)}</h2>
             <MarkdownBody source={getBody(existing, 'title')} className="body-copy" />
-            <a className="inline-link statement-block__link" href="./oi.html#existing-world">Read why non-displacement matters →</a>
+            <a className="inline-link statement-block__link" href="./oi.html#existing-world">Read how O:I works with existing worlds →</a>
           </div>
         </section>
 
@@ -167,12 +237,12 @@ function HomePage() {
           <PossibilityField />
         </NarrativeSection>
 
-        <NarrativeSection pageId="home" sectionId="centres" tone="black">
+        <NarrativeSection pageId="home" sectionId="centres" tone="white">
           <CentresIndex />
         </NarrativeSection>
 
-        <NarrativeSection pageId="home" sectionId="shared" tone="white" />
-        <NarrativeSection pageId="home" sectionId="build" tone="black" />
+        <NarrativeSection pageId="home" sectionId="shared" tone="black" />
+        <NarrativeSection pageId="home" sectionId="build" tone="white" />
 
         <section className="section section--black section--closing">
           <div className="closing-mark" aria-hidden="true">{`{O:I}`}</div>
@@ -192,7 +262,7 @@ function OIPage() {
       <main>
         <PageOpening pageId="oi" />
         <NarrativeSection pageId="oi" sectionId="existing-world" tone="white" />
-        <NarrativeSection pageId="oi" sectionId="possibility" tone="black" />
+        <NarrativeSection pageId="oi" sectionId="possibility" tone="white" />
         <section id="name" className="section section--white section--cube" aria-labelledby="oi-name-title">
           <div className="section__eyebrow"><span>{name.title}</span></div>
           <div className="section__grid section__grid--heading">
@@ -212,7 +282,7 @@ function OIPage() {
           </div>
         </section>
         <NarrativeSection pageId="oi" sectionId="human-agency" tone="black" />
-        <NarrativeSection pageId="oi" sectionId="research-field" tone="white" />
+        <NarrativeSection pageId="oi" sectionId="research-field" tone="black" />
       </main>
     </PageShell>
   );
@@ -223,7 +293,8 @@ function ProductsPage() {
     <PageShell active="products">
       <main>
         <PageOpening pageId="products" />
-        <section className="section section--black" aria-label="Six O:I products">
+        <ProductFieldArchitecture />
+        <section className="section section--white products-page" aria-label="Our six O:I products">
           <CentresSection />
         </section>
       </main>
@@ -239,8 +310,8 @@ function SharedFieldPage() {
         <NarrativeSection pageId="shared-field" sectionId="projection" tone="white">
           <SharedFieldFigure />
         </NarrativeSection>
-        <NarrativeSection pageId="shared-field" sectionId="co-internality" tone="black" />
-        <NarrativeSection pageId="shared-field" sectionId="explore" tone="white" />
+        <NarrativeSection pageId="shared-field" sectionId="co-internality" tone="white" />
+        <NarrativeSection pageId="shared-field" sectionId="explore" tone="black" />
       </main>
     </PageShell>
   );
@@ -251,9 +322,13 @@ function ResearchPage() {
     <PageShell active="research">
       <main>
         <PageOpening pageId="research" />
-        <NarrativeSection pageId="research" sectionId="parity" tone="white" />
-        <NarrativeSection pageId="research" sectionId="bimba" tone="black" />
-        <NarrativeSection pageId="research" sectionId="optional" tone="white" />
+        <NarrativeSection pageId="research" sectionId="object" tone="white" />
+        <NarrativeSection pageId="research" sectionId="method" tone="white">
+          <ResearchCycle />
+        </NarrativeSection>
+        <NarrativeSection pageId="research" sectionId="programme" tone="black" />
+        <NarrativeSection pageId="research" sectionId="ql" tone="black" />
+        <NarrativeSection pageId="research" sectionId="open" tone="white" />
       </main>
     </PageShell>
   );
@@ -272,7 +347,7 @@ function BuildPage() {
             <MarkdownBody source={getBody(links, 'title')} className="body-copy public-link-list" />
           </div>
         </section>
-        <NarrativeSection pageId="build" sectionId="health" tone="black" />
+        <NarrativeSection pageId="build" sectionId="health" tone="white" />
       </main>
     </PageShell>
   );
