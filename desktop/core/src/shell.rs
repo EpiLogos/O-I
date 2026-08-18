@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "snake_case")]
 pub enum ShellDestination {
     Home,
+    Epi,
     Personal,
     Build,
     Explore,
@@ -13,8 +14,9 @@ pub enum ShellDestination {
 }
 
 impl ShellDestination {
-    pub const ALL: [Self; 5] = [
+    pub const ALL: [Self; 6] = [
         Self::Home,
+        Self::Epi,
         Self::Personal,
         Self::Build,
         Self::Explore,
@@ -79,8 +81,7 @@ impl DesktopHost {
     }
 
     pub fn snapshot(&self, caller: BridgeCaller) -> Result<ShellSnapshot, BridgeDenied> {
-        self.bridge
-            .authorize(caller, BridgeCallClass::DiscloseComposition)?;
+        self.bridge.authorize(caller, BridgeCallClass::DiscloseComposition)?;
         Ok(ShellSnapshot {
             schema: "oi.desktop-shell/v1",
             destination: self.destination,
@@ -92,22 +93,13 @@ impl DesktopHost {
         })
     }
 
-    pub fn select(
-        &mut self,
-        caller: BridgeCaller,
-        subject: SemanticRef,
-    ) -> Result<(), BridgeDenied> {
-        self.bridge
-            .authorize(caller, BridgeCallClass::SelectSemanticRef)?;
+    pub fn select(&mut self, caller: BridgeCaller, subject: SemanticRef) -> Result<(), BridgeDenied> {
+        self.bridge.authorize(caller, BridgeCallClass::SelectSemanticRef)?;
         self.selection = Some(subject);
         Ok(())
     }
 
-    pub fn open_destination(
-        &mut self,
-        caller: BridgeCaller,
-        destination: ShellDestination,
-    ) -> Result<(), BridgeDenied> {
+    pub fn open_destination(&mut self, caller: BridgeCaller, destination: ShellDestination) -> Result<(), BridgeDenied> {
         self.bridge.authorize(caller, BridgeCallClass::OpenDestination)?;
         self.destination = destination;
         Ok(())
@@ -118,17 +110,10 @@ fn suite_condition(surfaces: &[SurfaceDisclosure]) -> SuiteCondition {
     if surfaces.iter().any(|surface| surface.state == NativeSurfaceState::Broken) {
         return SuiteCondition::Broken;
     }
-    if surfaces.is_empty()
-        || surfaces
-            .iter()
-            .all(|surface| surface.state == NativeSurfaceState::Missing)
-    {
+    if surfaces.is_empty() || surfaces.iter().all(|surface| surface.state == NativeSurfaceState::Missing) {
         return SuiteCondition::Empty;
     }
-    if surfaces
-        .iter()
-        .all(|surface| surface.state == NativeSurfaceState::Registered)
-    {
+    if surfaces.iter().all(|surface| surface.state == NativeSurfaceState::Registered) {
         return SuiteCondition::Full;
     }
     SuiteCondition::Partial
