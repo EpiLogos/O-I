@@ -47,7 +47,8 @@ jobs:
             self-other-read-model.test.mjs \
             field-proof-read-model.test.mjs \
             explore-read-model.test.mjs \
-            explore-provider.test.mjs
+            explore-provider.test.mjs \
+            src/explore/relation-layout.test.mjs
       - run: npm install --no-audit --no-fund
       - run: npm run build
       - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -58,7 +59,7 @@ jobs:
           path: site/dist
 
   deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'main'
     needs: build
     runs-on: ubuntu-latest
     environment:
