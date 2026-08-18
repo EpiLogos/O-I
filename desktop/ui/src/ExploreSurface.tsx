@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { WorldPresentationRenderer, type WorldPresentation } from '../../../site/src/explore/presentation-components';
+import { WorldPresentationRenderer, type WorldPresentation } from './world-presentation';
 // @ts-ignore -- Surface-neutral application model owned outside the desktop renderer.
 import { createExploreSurfaceModel } from '../../../shared-field/explore-surface.mjs';
 import './explore-surface.css';
