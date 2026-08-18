@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { OIGlyph } from '@/components/ui/oi-mark';
 import { AuthoringInspector } from '@/explore/authoring-inspector';
 import { WorldPresentationRenderer, type WorldPresentation } from '@/explore/presentation-components';
+import { RelationField, type RelationView } from '@/explore/relation-field';
 // @ts-ignore -- application boundary over canonical shared-field contracts.
 import { createExploreBrowserModel } from '../explore-read-model.mjs';
 // @ts-ignore -- shared application operations are intentionally language-neutral JS.
@@ -16,6 +17,7 @@ type ExploreEntry = {
   label: string;
   summary?: string;
   revision?: string;
+  meta?: Record<string, unknown>;
   provenance: Array<{ kind: string; ref: string; source_system: string; revision?: string }>;
 };
 
@@ -24,7 +26,7 @@ type ExploreOpen = {
   world?: ExploreEntry;
   world_presentation?: WorldPresentation;
   world_presentation_projection?: Record<string, any>;
-  relations: { nodes: ExploreEntry[]; edges: Array<{ from: string; to: string; relation: string; origin: string }>; truncated: boolean };
+  relations: RelationView;
   sources?: { ref: string; revision?: string; provenance: ExploreEntry['provenance'] };
   actions: string[];
 };
@@ -112,16 +114,6 @@ function contributionsFromPresentation(presentation?: WorldPresentation): Contri
   return result;
 }
 
-function RelationReading({ opened, mode, onOpen }: { opened: ExploreOpen; mode: FieldMode; onOpen: (ref: string) => void }) {
-  if (mode === 'list') return <div className="direct-relations">{opened.relations.nodes.map((node) => <button key={node.ref} onClick={() => onOpen(node.ref)}><span>{kindLabel(node.kind)}</span><strong>{node.label}</strong><small>{node.ref}</small></button>)}</div>;
-  if (mode === 'tree') return <div className="direct-tree"><strong>{opened.resource.label}</strong>{opened.relations.edges.filter((edge) => edge.from === opened.resource.ref || edge.to === opened.resource.ref).map((edge, index) => {
-    const ref = edge.from === opened.resource.ref ? edge.to : edge.from;
-    const node = opened.relations.nodes.find((candidate) => candidate.ref === ref);
-    return node ? <button key={`${edge.relation}:${index}`} onClick={() => onOpen(ref)}><span>{edge.relation}</span><strong>{node.label}</strong></button> : null;
-  })}</div>;
-  return <div className="direct-graph" aria-label="Bounded relation presentation">{opened.relations.nodes.slice(0, 12).map((node) => <button key={node.ref} className={node.ref === opened.resource.ref ? 'is-focus' : ''} onClick={() => onOpen(node.ref)}><span>{kindLabel(node.kind)}</span><strong>{node.label}</strong></button>)}</div>;
-}
-
 function ReadInspector({ opened, presentation }: { opened?: ExploreOpen; presentation?: WorldPresentation }) {
   if (!opened) return <div className="direct-inspector-empty">Select an addressable object to inspect it.</div>;
   return <div className="direct-inspector-body"><div className="direct-eyebrow">Encounter</div><h2>{opened.resource.label}</h2><dl><dt>Ref</dt><dd><code>{opened.resource.ref}</code></dd><dt>World</dt><dd><code>{opened.resource.world_ref}</code></dd>{presentation ? <><dt>Presentation</dt><dd><code>{presentation.presentation_ref}</code></dd><dt>Revision</dt><dd>{presentation.revision}</dd></> : null}<dt>Source</dt><dd><code>{opened.sources?.ref ?? opened.resource.ref}</code></dd><dt>Source revision</dt><dd><code>{opened.sources?.revision ?? opened.resource.revision ?? 'not disclosed'}</code></dd></dl><section><div className="direct-eyebrow">Provenance</div><pre>{JSON.stringify(presentation?.provenance ?? opened.resource.provenance, null, 2)}</pre></section></div>;
@@ -140,8 +132,8 @@ export default function DirectExploreApp() {
   const [query, setQuery] = useState('');
   const [selectedRef, setSelectedRef] = useState<string | null>(null);
   const [fieldMode, setFieldMode] = useState<FieldMode>('graph');
+  const [relationDepth, setRelationDepth] = useState<1 | 2>(1);
   const [pageMode, setPageMode] = useState<PageMode>('read');
-  const [showRelations, setShowRelations] = useState(false);
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(false);
   const [leftWidth, setLeftWidth] = useState(280);
@@ -170,8 +162,11 @@ export default function DirectExploreApp() {
       .catch(() => setFailed(true));
   }, []);
 
-  const results = useMemo(() => model?.search(query, { limit: 64 }) ?? [], [model, query]);
-  const opened = model && selectedRef ? model.open(selectedRef, { depth: 1, budget: 18 }) : undefined;
+  const results = useMemo(() => {
+    if (!model) return [];
+    return query.trim() ? model.search(query, { limit: 48 }) : model.worlds();
+  }, [model, query]);
+  const opened = model && selectedRef ? model.open(selectedRef, { depth: relationDepth, budget: relationDepth === 1 ? 18 : 32 }) : undefined;
   const canonicalPresentation = opened?.resource.ref === opened?.resource.world_ref ? opened?.world_presentation : undefined;
   const hasCurrentWorking = Boolean(canonicalPresentation && working && workingFor === canonicalPresentation.presentation_ref && workingBaseRevision === canonicalPresentation.revision);
   const authoringPresentation = hasCurrentWorking ? working : canonicalPresentation;
@@ -200,7 +195,10 @@ export default function DirectExploreApp() {
   }, [authoringPresentation, seedContributions]);
 
   function openRef(ref: string) {
-    setSelectedRef(ref); setPageMode('read'); setShowRelations(false); setRightOpen(false); setPreparedRevision(null);
+    setSelectedRef(ref);
+    setPageMode('read');
+    setRightOpen(false);
+    setPreparedRevision(null);
   }
 
   function operate(operation: Record<string, unknown>) {
@@ -228,7 +226,7 @@ export default function DirectExploreApp() {
         }
       }
     }
-    setWorking(clone(next)); setWorkingFor(canonicalPresentation.presentation_ref); setWorkingBaseRevision(canonicalPresentation.revision); setDirty(restored || (hasCurrentWorking && dirty)); setPageMode('author'); setRightOpen(true); setShowRelations(false);
+    setWorking(clone(next)); setWorkingFor(canonicalPresentation.presentation_ref); setWorkingBaseRevision(canonicalPresentation.revision); setDirty(restored || (hasCurrentWorking && dirty)); setPageMode('author'); setRightOpen(true);
   }
 
   function saveWorkingState() {
@@ -257,12 +255,16 @@ export default function DirectExploreApp() {
     </header>
 
     <div className={pageDominant ? 'direct-workspace direct-workspace--full' : 'direct-workspace'}>
-      {leftOpen ? <aside className="direct-navigator"><div className="direct-pane-head"><strong>Explore</strong><button onClick={() => setLeftOpen(false)} aria-label="Collapse navigator">×</button></div><label className="direct-search"><span>Search</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="World, agent, project, wiki, ref…" /></label><div className="direct-results">{results.map((result) => <button key={result.ref} className={result.ref === selectedRef ? 'is-selected' : ''} onClick={() => openRef(result.ref)}><span>{kindLabel(result.kind)}</span><strong>{result.label}</strong><small>{result.summary ?? result.ref}</small></button>)}</div><label className="direct-resize"><span>Width</span><input aria-label="Navigator width" type="range" min="220" max="460" value={leftWidth} onChange={(event) => setLeftWidth(Number(event.target.value))} /></label></aside> : null}
+      {leftOpen ? <aside className="direct-navigator"><div className="direct-pane-head"><strong>Explore</strong><button onClick={() => setLeftOpen(false)} aria-label="Collapse navigator">×</button></div><label className="direct-search"><span>Search</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="World, agent, project, wiki, ref…" autoComplete="off" /></label><div className="direct-results-label">{query.trim() ? `${results.length} results` : 'Worlds'}</div><div className="direct-results">{results.map((result) => <button key={result.ref} className={result.ref === selectedRef ? 'is-selected' : ''} onClick={() => openRef(result.ref)}><span>{kindLabel(result.kind)}</span><strong>{result.label}</strong><small>{result.summary ?? result.ref}</small></button>)}</div><label className="direct-resize"><span>Width</span><input aria-label="Navigator width" type="range" min="220" max="460" value={leftWidth} onChange={(event) => setLeftWidth(Number(event.target.value))} /></label></aside> : null}
 
-      <main className="direct-canvas" aria-label="Authored Explore canvas">
+      <main className="direct-canvas" aria-label="Explore encounter and authored presentation">
         {failed ? <div className="direct-empty"><strong>Explore provider unavailable.</strong><p>The application Surface remains intact but no public field can be read.</p></div> : null}
-        {!failed && !opened ? <div className="direct-empty"><strong>No authored Projection is open.</strong><p>Explore does not substitute demo personalities or invented worlds. Open a projected world when one is available.</p></div> : null}
-        {opened ? <>{!presentation ? <section className="direct-object-reading"><div className="direct-eyebrow">{kindLabel(opened.resource.kind)}</div><h1>{opened.resource.label}</h1><p>{opened.resource.summary}</p><code>{opened.resource.ref}</code></section> : null}{presentation ? <WorldPresentationRenderer presentation={presentation} onOpenRef={openRef} authoring={pageMode === 'author'} selectedBindingRef={selectedBindingRef} selectedRegionRef={selectedRegionRef} onSelectBinding={(bindingRef, regionRef) => { setSelectedBindingRef(bindingRef); setSelectedRegionRef(regionRef); setRightOpen(true); }} onSelectRegion={(regionRef) => { setSelectedRegionRef(regionRef); setSelectedBindingRef(null); setRightOpen(true); }} onEditProps={(bindingRef, patch) => operate({ type: 'edit-binding-props', binding_ref: bindingRef, patch })} onInsert={(regionRef, index) => setInsertTarget({ regionRef, index })} onMoveBinding={(bindingRef, regionRef, index) => operate({ type: 'move-binding', binding_ref: bindingRef, to_region_ref: regionRef, index })} onDuplicateBinding={(bindingRef) => operate({ type: 'duplicate-binding', binding_ref: bindingRef })} onRemoveBinding={(bindingRef) => { operate({ type: 'remove-binding', binding_ref: bindingRef }); setSelectedBindingRef(null); }} /> : null}{pageMode !== 'preview' ? <div className="direct-relations-toggle"><button onClick={() => setShowRelations((value) => !value)} aria-expanded={showRelations}>{showRelations ? 'Hide relations' : 'Relations'}</button><div role="group" aria-label="Relation view">{(['list', 'tree', 'graph'] as FieldMode[]).map((mode) => <button key={mode} aria-pressed={fieldMode === mode} onClick={() => { setFieldMode(mode); setShowRelations(true); }}>{mode}</button>)}</div></div> : null}{showRelations && pageMode !== 'preview' ? <RelationReading opened={opened} mode={fieldMode} onOpen={openRef} /> : null}</> : null}
+        {!failed && !opened ? <div className="direct-empty"><strong>The field is ready for authored projections.</strong><p>No public world is currently projected. Explore does not manufacture demo people, fake worlds or decorative knowledge to fill this state.</p></div> : null}
+        {opened ? <>
+          {pageMode === 'read' ? <RelationField view={opened.relations} mode={fieldMode} onModeChange={setFieldMode} onOpen={openRef} onDepthChange={setRelationDepth} /> : null}
+          {!presentation ? <section className="direct-object-reading"><div className="direct-eyebrow">{kindLabel(opened.resource.kind)}</div><h2>{opened.resource.label}</h2><p>{opened.resource.summary}</p><code>{opened.resource.ref}</code></section> : null}
+          {presentation ? <WorldPresentationRenderer presentation={presentation} onOpenRef={openRef} authoring={pageMode === 'author'} selectedBindingRef={selectedBindingRef} selectedRegionRef={selectedRegionRef} onSelectBinding={(bindingRef, regionRef) => { setSelectedBindingRef(bindingRef); setSelectedRegionRef(regionRef); setRightOpen(true); }} onSelectRegion={(regionRef) => { setSelectedRegionRef(regionRef); setSelectedBindingRef(null); setRightOpen(true); }} onEditProps={(bindingRef, patch) => operate({ type: 'edit-binding-props', binding_ref: bindingRef, patch })} onInsert={(regionRef, index) => setInsertTarget({ regionRef, index })} onMoveBinding={(bindingRef, regionRef, index) => operate({ type: 'move-binding', binding_ref: bindingRef, to_region_ref: regionRef, index })} onDuplicateBinding={(bindingRef) => operate({ type: 'duplicate-binding', binding_ref: bindingRef })} onRemoveBinding={(bindingRef) => { operate({ type: 'remove-binding', binding_ref: bindingRef }); setSelectedBindingRef(null); }} /> : null}
+        </> : null}
       </main>
 
       {rightOpen && pageMode !== 'preview' ? <aside className="direct-inspector"><div className="direct-pane-head"><strong>Inspector</strong><button onClick={() => setRightOpen(false)} aria-label="Collapse inspector">×</button></div>{pageMode === 'author' && authoringPresentation && opened ? <AuthoringInspector context={{ resource: opened.resource, projection_ref: opened.world_presentation_projection?.projection_ref ?? null, source_ref: opened.sources?.ref ?? null, source_revision: opened.sources?.revision ?? null }} presentation={authoringPresentation} selectedBindingRef={selectedBindingRef} selectedRegionRef={selectedRegionRef} contributions={contributions} dirty={dirty} sourceReturn={sourceReturn} onOperation={operate} /> : <ReadInspector opened={opened} presentation={canonicalPresentation} />}{pageMode === 'author' && !authoringAuthority ? <section className="direct-authority-note"><div className="direct-eyebrow">Projection authority</div><p>This provider has not disclosed authenticated authoring authority. Working state may be edited and previewed, but no Projection revision is attributed or published from this Surface.</p></section> : null}<label className="direct-resize"><span>Width</span><input aria-label="Inspector width" type="range" min="260" max="520" value={rightWidth} onChange={(event) => setRightWidth(Number(event.target.value))} /></label></aside> : null}
