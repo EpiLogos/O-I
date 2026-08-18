@@ -54,6 +54,25 @@ export function normalizeContributionField(input = []) {
   });
 }
 
+function sourceReturnDisclosure(value) {
+  if (!value) {
+    return {
+      available: false,
+      owner: null,
+      action_refs: [],
+      reason: 'No native source-return operation is disclosed for this authored context.',
+    };
+  }
+  const input = record(value, 'source return disclosure');
+  return {
+    available: input.available === true,
+    owner: typeof input.owner === 'string' ? input.owner : null,
+    action_refs: Array.isArray(input.action_refs) ? input.action_refs.filter((entry) => typeof entry === 'string') : [],
+    ...(typeof input.target_ref === 'string' ? { target_ref: input.target_ref } : {}),
+    ...(typeof input.reason === 'string' ? { reason: input.reason } : {}),
+  };
+}
+
 export function authoringDisclosure(input) {
   record(input, 'presentation authoring disclosure');
   const presentation = validateWorldPresentation(input.presentation);
@@ -64,6 +83,9 @@ export function authoringDisclosure(input) {
 
   if (selectedBindingRef) {
     const found = findBinding(presentation, selectedBindingRef);
+    const contribution = found.binding.contribution_ref
+      ? contributions.find((item) => item.contribution_ref === found.binding.contribution_ref)
+      : undefined;
     selected = {
       kind: 'binding',
       region_ref: found.region.region_ref,
@@ -73,6 +95,10 @@ export function authoringDisclosure(input) {
       surface_ref: found.binding.surface_ref ?? null,
       subject_ref: found.binding.subject_ref ?? null,
       projection_ref: found.binding.projection_ref ?? null,
+      action_refs: contribution ? clone(contribution.action_refs) : [],
+      contribution_available: contribution ? contribution.available : null,
+      contribution_degraded: contribution ? contribution.degraded : false,
+      contribution_reason: contribution?.reason ?? null,
       provenance: clone(found.binding.provenance),
     };
   } else if (selectedRegionRef) {
@@ -93,6 +119,7 @@ export function authoringDisclosure(input) {
     projection_ref: input.projection_ref ?? null,
     source_ref: input.source_ref ?? null,
     source_revision: input.source_revision ?? null,
+    source_return: sourceReturnDisclosure(input.source_return),
     mode: input.mode === 'author' ? 'author' : input.mode === 'preview' ? 'preview' : 'read',
     dirty: input.dirty === true,
     selected,
