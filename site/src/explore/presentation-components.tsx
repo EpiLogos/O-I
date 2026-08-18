@@ -27,10 +27,7 @@ export type WorldPresentation = {
   revision: number;
   title: string;
   summary?: string;
-  theme: {
-    name?: string;
-    tokens: Record<string, string>;
-  };
+  theme: { name?: string; tokens: Record<string, string> };
   regions: PresentationRegion[];
   provenance: Array<Record<string, unknown>>;
 };
@@ -38,6 +35,8 @@ export type WorldPresentation = {
 type RendererProps = {
   binding: PresentationBinding;
   onOpenRef?: (ref: string) => void;
+  authoring?: boolean;
+  onEditProps?: (bindingRef: string, patch: Record<string, unknown>) => void;
 };
 
 type Renderer = (props: RendererProps) => ReactNode;
@@ -60,26 +59,50 @@ function safeHref(value: unknown) {
   }
 }
 
-function Heading({ binding }: RendererProps) {
+function editableText(
+  authoring: boolean | undefined,
+  value: string,
+  onCommit: (value: string) => void,
+  className?: string,
+) {
+  if (!authoring) return value;
+  return (
+    <span
+      className={className ? `${className} world-editable` : 'world-editable'}
+      contentEditable
+      suppressContentEditableWarning
+      role="textbox"
+      tabIndex={0}
+      onBlur={(event) => onCommit(event.currentTarget.textContent ?? '')}
+      onKeyDown={(event) => {
+        if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') event.currentTarget.blur();
+      }}
+    >
+      {value}
+    </span>
+  );
+}
+
+function Heading({ binding, authoring, onEditProps }: RendererProps) {
   const eyebrow = textProp(binding.props.eyebrow);
   const title = textProp(binding.props.title, textProp(binding.fallback.title, binding.component_ref));
   const copy = textProp(binding.props.copy, textProp(binding.fallback.text));
   return (
     <header className="world-component world-component--heading" data-component-ref={binding.component_ref}>
       {eyebrow ? <div className="world-component__eyebrow">{eyebrow}</div> : null}
-      <h2>{title}</h2>
-      {copy ? <p>{copy}</p> : null}
+      <h2>{editableText(authoring, title, (value) => onEditProps?.(binding.binding_ref, { title: value }))}</h2>
+      {copy || authoring ? <p>{editableText(authoring, copy, (value) => onEditProps?.(binding.binding_ref, { copy: value }))}</p> : null}
     </header>
   );
 }
 
-function Text({ binding }: RendererProps) {
+function Text({ binding, authoring, onEditProps }: RendererProps) {
   const title = textProp(binding.props.title, textProp(binding.fallback.title));
   const body = textProp(binding.props.text, textProp(binding.fallback.text));
   return (
     <article className="world-component world-component--text" data-component-ref={binding.component_ref}>
-      {title ? <h3>{title}</h3> : null}
-      <p>{body || 'No portable text representation is available.'}</p>
+      {title || authoring ? <h3>{editableText(authoring, title, (value) => onEditProps?.(binding.binding_ref, { title: value }))}</h3> : null}
+      <p>{editableText(authoring, body || 'No portable text representation is available.', (value) => onEditProps?.(binding.binding_ref, { text: value }))}</p>
     </article>
   );
 }
@@ -97,26 +120,9 @@ function Collection({ binding, onOpenRef }: RendererProps) {
           const ref = textProp(item.ref);
           const href = safeHref(item.href);
           const description = textProp(item.description);
-          const content = (
-            <>
-              <strong>{label}</strong>
-              {description ? <span>{description}</span> : null}
-            </>
-          );
-          if (ref && onOpenRef) {
-            return (
-              <button type="button" key={`${ref}:${index}`} onClick={() => onOpenRef(ref)}>
-                {content}
-              </button>
-            );
-          }
-          if (href) {
-            return (
-              <a key={`${href}:${index}`} href={href} target="_blank" rel="noreferrer">
-                {content}
-              </a>
-            );
-          }
+          const content = <><strong>{label}</strong>{description ? <span>{description}</span> : null}</>;
+          if (ref && onOpenRef) return <button type="button" key={`${ref}:${index}`} onClick={() => onOpenRef(ref)}>{content}</button>;
+          if (href) return <a key={`${href}:${index}`} href={href} target="_blank" rel="noreferrer">{content}</a>;
           return <div key={`${label}:${index}`}>{content}</div>;
         })}
       </div>
@@ -124,24 +130,16 @@ function Collection({ binding, onOpenRef }: RendererProps) {
   );
 }
 
-function WikiReading({ binding, onOpenRef }: RendererProps) {
+function WikiReading({ binding, onOpenRef, authoring, onEditProps }: RendererProps) {
   const title = textProp(binding.props.title, textProp(binding.fallback.title, 'Wiki reading'));
   const body = textProp(binding.props.text, textProp(binding.fallback.text));
   const refs = stringArray(binding.props.refs);
   return (
     <article className="world-component world-component--wiki" data-component-ref={binding.component_ref}>
       <div className="world-component__eyebrow">Wiki reading</div>
-      <h3>{title}</h3>
-      {body ? <p>{body}</p> : null}
-      {refs.length ? (
-        <div className="world-component__refs">
-          {refs.map((ref) => (
-            <button type="button" key={ref} onClick={() => onOpenRef?.(ref)}>
-              {ref}
-            </button>
-          ))}
-        </div>
-      ) : null}
+      <h3>{editableText(authoring, title, (value) => onEditProps?.(binding.binding_ref, { title: value }))}</h3>
+      {body || authoring ? <p>{editableText(authoring, body, (value) => onEditProps?.(binding.binding_ref, { text: value }))}</p> : null}
+      {refs.length ? <div className="world-component__refs">{refs.map((ref) => <button type="button" key={ref} onClick={() => onOpenRef?.(ref)}>{ref}</button>)}</div> : null}
     </article>
   );
 }
@@ -152,15 +150,8 @@ function Link({ binding }: RendererProps) {
   const href = safeHref(binding.props.href);
   return (
     <article className="world-component world-component--link" data-component-ref={binding.component_ref}>
-      <div>
-        <strong>{label}</strong>
-        {copy ? <span>{copy}</span> : null}
-      </div>
-      {href ? (
-        <a href={href} target="_blank" rel="noreferrer" aria-label={`Open ${label}`}>
-          ↗
-        </a>
-      ) : null}
+      <div><strong>{label}</strong>{copy ? <span>{copy}</span> : null}</div>
+      {href ? <a href={href} target="_blank" rel="noreferrer" aria-label={`Open ${label}`}>↗</a> : null}
     </article>
   );
 }
@@ -178,65 +169,92 @@ function Fallback({ binding }: RendererProps) {
   const text = textProp(binding.fallback.text, 'This component is not available on the current Surface.');
   return (
     <article className="world-component world-component--fallback" data-component-ref={binding.component_ref}>
-      <div className="world-component__eyebrow">Portable fallback</div>
-      <h3>{title}</h3>
-      <p>{text}</p>
-      <code>{binding.component_ref}</code>
+      <div className="world-component__eyebrow">Portable fallback</div><h3>{title}</h3><p>{text}</p><code>{binding.component_ref}</code>
     </article>
   );
 }
 
 export function presentationThemeStyle(presentation: WorldPresentation): CSSProperties {
-  const tokens = presentation.theme.tokens;
   const style: Record<string, string> = {};
   const mapping: Record<string, string> = {
-    surface: '--oi-surface',
-    foreground: '--oi-foreground',
-    muted: '--oi-muted',
-    rule: '--oi-rule',
-    relation: '--oi-relation',
-    focus: '--oi-focus',
-    projection: '--oi-projection',
-    human: '--oi-human',
-    agent: '--oi-agent',
+    surface: '--oi-surface', foreground: '--oi-foreground', muted: '--oi-muted', rule: '--oi-rule', relation: '--oi-relation',
+    focus: '--oi-focus', projection: '--oi-projection', human: '--oi-human', agent: '--oi-agent',
   };
-  for (const [token, variable] of Object.entries(mapping)) {
-    if (tokens[token]) style[variable] = tokens[token];
-  }
+  for (const [token, variable] of Object.entries(mapping)) if (presentation.theme.tokens[token]) style[variable] = presentation.theme.tokens[token];
   return style as CSSProperties;
 }
 
 export function WorldPresentationRenderer({
   presentation,
   onOpenRef,
+  authoring = false,
+  selectedBindingRef,
+  selectedRegionRef,
+  onSelectBinding,
+  onSelectRegion,
+  onEditProps,
+  onInsert,
+  onMoveBinding,
+  onDuplicateBinding,
+  onRemoveBinding,
 }: {
   presentation: WorldPresentation;
   onOpenRef?: (ref: string) => void;
+  authoring?: boolean;
+  selectedBindingRef?: string | null;
+  selectedRegionRef?: string | null;
+  onSelectBinding?: (bindingRef: string, regionRef: string) => void;
+  onSelectRegion?: (regionRef: string) => void;
+  onEditProps?: (bindingRef: string, patch: Record<string, unknown>) => void;
+  onInsert?: (regionRef: string, index: number) => void;
+  onMoveBinding?: (bindingRef: string, regionRef: string, index: number) => void;
+  onDuplicateBinding?: (bindingRef: string) => void;
+  onRemoveBinding?: (bindingRef: string) => void;
 }) {
   return (
-    <article
-      className="world-presentation"
-      data-presentation-ref={presentation.presentation_ref}
-      data-world-ref={presentation.world_ref}
-      style={presentationThemeStyle(presentation)}
-    >
+    <article className={authoring ? 'world-presentation world-presentation--authoring' : 'world-presentation'} data-presentation-ref={presentation.presentation_ref} data-world-ref={presentation.world_ref} style={presentationThemeStyle(presentation)}>
       <header className="world-presentation__masthead">
-        <div>
-          <div className="world-component__eyebrow">Projected world</div>
-          <h1>{presentation.title}</h1>
-        </div>
+        <div><div className="world-component__eyebrow">Projected world</div><h1>{presentation.title}</h1></div>
         <div className="world-presentation__revision">presentation {presentation.revision}</div>
         {presentation.summary ? <p>{presentation.summary}</p> : null}
       </header>
-
       {presentation.regions.map((region) => (
-        <section key={region.region_ref} className="world-region" data-region-role={region.role}>
+        <section
+          key={region.region_ref}
+          className={selectedRegionRef === region.region_ref ? 'world-region world-region--selected' : 'world-region'}
+          data-region-ref={region.region_ref}
+          data-region-role={region.role}
+          onClick={(event) => { if (authoring && event.target === event.currentTarget) onSelectRegion?.(region.region_ref); }}
+        >
           {region.label ? <div className="world-region__label">{region.label}</div> : null}
+          {authoring ? <button type="button" className="world-insert" onClick={() => onInsert?.(region.region_ref, 0)} aria-label={`Insert at start of ${region.label ?? region.role}`}>＋</button> : null}
           <div className="world-region__components">
-            {region.bindings.map((binding) => {
+            {region.bindings.map((binding, index) => {
               const rendererKey = binding.portable_renderer ?? binding.component_ref;
               const Renderer = portablePresentationRenderers[rendererKey] ?? Fallback;
-              return <Renderer key={binding.binding_ref} binding={binding} onOpenRef={onOpenRef} />;
+              const selected = selectedBindingRef === binding.binding_ref;
+              return (
+                <div
+                  key={binding.binding_ref}
+                  className={selected ? 'world-binding world-binding--selected' : 'world-binding'}
+                  data-binding-ref={binding.binding_ref}
+                  data-component-ref={binding.component_ref}
+                  data-contribution-ref={binding.contribution_ref}
+                  data-surface-ref={binding.surface_ref}
+                  onClick={(event) => { if (authoring) { event.stopPropagation(); onSelectBinding?.(binding.binding_ref, region.region_ref); } }}
+                >
+                  {authoring && selected ? (
+                    <div className="world-binding__tools" role="toolbar" aria-label="Selected presentation binding">
+                      <button type="button" onClick={(event) => { event.stopPropagation(); onMoveBinding?.(binding.binding_ref, region.region_ref, Math.max(0, index - 1)); }} disabled={index === 0}>↑</button>
+                      <button type="button" onClick={(event) => { event.stopPropagation(); onMoveBinding?.(binding.binding_ref, region.region_ref, index + 1); }} disabled={index === region.bindings.length - 1}>↓</button>
+                      <button type="button" onClick={(event) => { event.stopPropagation(); onDuplicateBinding?.(binding.binding_ref); }}>Duplicate</button>
+                      <button type="button" onClick={(event) => { event.stopPropagation(); onRemoveBinding?.(binding.binding_ref); }}>Remove</button>
+                    </div>
+                  ) : null}
+                  <Renderer binding={binding} onOpenRef={onOpenRef} authoring={authoring} onEditProps={onEditProps} />
+                  {authoring ? <button type="button" className="world-insert world-insert--after" onClick={(event) => { event.stopPropagation(); onInsert?.(region.region_ref, index + 1); }} aria-label={`Insert after ${binding.binding_ref}`}>＋</button> : null}
+                </div>
+              );
             })}
           </div>
         </section>
