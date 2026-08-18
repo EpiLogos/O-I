@@ -1,6 +1,9 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
+
+const siteRoot = fileURLToPath(new URL('.', import.meta.url));
 
 export default defineConfig({
   base: './',
@@ -8,6 +11,14 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
+  },
+  build: {
+    rollupOptions: {
+      input: {
+        main: resolve(siteRoot, 'index.html'),
+        explore: resolve(siteRoot, 'explore.html'),
+      },
     },
   },
 });

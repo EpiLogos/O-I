@@ -57,8 +57,10 @@ jobs:
         run: |
           npm ci --prefix desktop/ui --no-audit --no-fund
           npm --prefix desktop/ui run build
-      - name: Preserve Explore contract regression
-        run: node --test shared-field/*.test.mjs
+      - name: Preserve Explore contract regression and desktop convergence
+        run: |
+          node --test shared-field/*.test.mjs
+          node --test desktop/ui/src/explore-presentation.test.mjs
 
   native-shell:
     runs-on: macos-15

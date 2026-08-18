@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 import { AIStackAperture } from '@/components/ai-stack-aperture';
-import { SelfOtherPortal } from '@/components/self-other-portal';
 import { OICube } from '@/components/ui/oi-cube';
 import { OIGlyph } from '@/components/ui/oi-mark';
 import { ParallaxComponent } from '@/components/ui/parallax-scrolling';
@@ -128,7 +127,7 @@ export default function App() {
         </a>
         <nav className="site-nav__links">
           <a href="#understand">Understand</a>
-          <a href="#explore">Explore</a>
+          <a href="./explore.html">Explore</a>
           <a href="#build">Build</a>
           <ExternalLink href="https://github.com/EpiLogos/O-I" className="site-nav__github">
             GitHub
@@ -193,37 +192,28 @@ export default function App() {
         <section id="explore" className="section section--black oi-surface-dark" aria-labelledby="explore-title">
           <div className="section__eyebrow section__eyebrow--signal">
             <span className="meta-signal" aria-hidden="true" />
-            EXPLORE · ACTIVE PARALLEL PROGRAMME
+            EXPLORE
           </div>
           <div className="section__grid section__grid--feature">
             <div>
               <h2 id="explore-title" className="feature-title">
-                Every O:I can become an addressable world.
+                Enter the shared field.
               </h2>
             </div>
             <div className="feature-copy">
               <p>
-                A local O:I can selectively project an inspectable part of its world—an Agent, Project, Wiki node,
-                output or relation—into a shared field with stable references and provenance.
+                Explore is the open field of explicitly projected O:I worlds, agents, projects, knowledge and work.
+                Search begins at an addressable object and opens outward into its bounded local relations and authored
+                presentation.
               </p>
               <p>
-                Explore is being developed now on its own persistent line alongside this front door. The public site
-                can point into that field as live read models arrive; it does not pretend that hosted capability is
-                already complete.
+                Worlds remain projections of independently owned sources. Their presentation can be composed and
+                revised without turning the browser into source authority.
               </p>
-              <ExternalLink href="https://github.com/EpiLogos/O-I/issues/18">Explore programme #18</ExternalLink>
+              <a href="./explore.html" className="link-arrow">
+                Open Explore <span aria-hidden="true">→</span>
+              </a>
             </div>
-          </div>
-
-          <div className="shared-proof" aria-labelledby="shared-proof-title">
-            <div className="shared-proof__header">
-              <div>
-                <div className="section__eyebrow">CURRENT FRONT-DOOR PROOF</div>
-                <h3 id="shared-proof-title">Self / Other</h3>
-              </div>
-              <p>Fixture-backed · canonical shared-field contracts · provenance preserved</p>
-            </div>
-            <SelfOtherPortal />
           </div>
         </section>
 
