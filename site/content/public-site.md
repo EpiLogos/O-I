@@ -26,7 +26,7 @@ O:I — Operating Infrastructure · Objective Internality — is an open archite
 
 Your editor, shell, repositories, prompts, agents, skills, tools, services, machines and working habits already form a real technological environment. O:I starts there.
 
-You can keep the setup you use and make more of its structure durable, visible and composable over time. Existing worlds are also part of the research: the platform is meant to meet heterogeneous arrangements rather than only arrangements created inside O:I.
+You can keep the setup you use and make more of its structure durable, visible and composable over time. The products define common relations and public extension seams so technologies we did not build can still become part of that world. Existing worlds are also part of the research: the platform is meant to learn from heterogeneous arrangements rather than only arrangements created inside O:I.
 
 ## [field] One possibility space
 
@@ -57,6 +57,8 @@ A real project you keep, plus an AI agent able to work with it, is already a use
 
 Central keeps personal and project ground durable. Actuation makes agency and authority explicit. AIKit composes the capabilities and context available here and now. Software Factory carries software development from intention through evidence and Return. Workcell makes computational environments real. Quaternal Logic is the executable formal research surface.
 
+Their abstractions are meant to remain stable enough for other technologies to meet them through SDKs, providers, connectors and extension contracts. The reference implementations show working paths; the wider field can add more.
+
 [See the products and their architecture](./products.html).
 
 ## [shared] Shared field
@@ -65,13 +67,17 @@ Central keeps personal and project ground durable. Actuation makes agency and au
 
 A person or agent can define a world locally and selectively make parts of it available to another world: a document, project result, wiki space, experiment, Agent or other addressable object. The shared field carries the relation while source identity and provenance remain visible.
 
+That includes the engineering knowledge produced around the platform itself. A reusable connector, provider, fixture, study or reproduction can become an attributable contribution that another world can encounter and extend.
+
 [Read the Shared Field account](./shared-field.html) or [open Explore](./explore.html).
 
 ## [build] Build
 
-### [title] Open source, local-first and developed in public.
+### [title] Extend the world you already use.
 
-The `oi` command is the local doorway into the O:I system. It works with the native products rather than replacing their command surfaces, and the repositories remain the authority for current implementation and installation.
+The `oi` command is the local doorway into the O:I system. The products are being developed around public contracts and SDKs so people can connect the technologies they actually use rather than waiting for one team to implement every stack.
+
+A provider, connector, component or fixture that works in one world can be shared, reproduced and adapted in another. That is both practical reuse and part of how the research field grows.
 
 [Read the build and source guide](./build.html).
 
@@ -93,7 +99,9 @@ The architecture spans the persistent world an agent returns to, the capabilitie
 
 A useful agentic setup may be a repository and a CLI agent, a collection of scripts and services, several machines, a rich harness, or something assembled from technologies O:I did not create. O:I is designed to encounter that world as it is and add explicit structure where it helps.
 
-That keeps continuity with the work and habits you already have. It also keeps the research open to real variation rather than only testing configurations produced by one preferred stack.
+The common abstractions are the durable root. Native SDKs, providers, connectors and extension contracts are the accommodation layer: they let a particular editor, runtime, model host, source system, machine or service participate in the relation while retaining its own identity.
+
+That keeps continuity with the work and habits you already have and keeps the research open to real variation rather than only testing configurations produced by one preferred stack.
 
 ## [possibility] One possibility space
 
@@ -129,11 +137,11 @@ That leaves more room for the work in which human authorship matters most: purpo
 
 ## [research-field] Research field
 
-### [title] Agentic engineering is an open research field.
+### [title] Agentic engineering is an open, collective research field.
 
 We are studying how prompts, recurrence, memory, knowledge horizons, capability fields, authority, embodiment, development process, material environment, mediation and human practice combine around available model capacity.
 
-O:I gives those arrangements a common place to become describable, comparable and testable. The aim is to learn from different worlds, including results that challenge our own preferred architecture.
+No single team inhabits the full possibility space. Different people already have different technological worlds. O:I therefore treats public SDKs, connectors, providers, fixtures and shared reproductions as part of the research method: more real worlds create more opportunities to compare arrangements, discover limits and return evidence that can improve the products themselves.
 
 [Enter the Research programme](./research.html).
 
@@ -146,6 +154,8 @@ O:I gives those arrangements a common place to become describable, comparable an
 ### [title] We are developing six products to make an agent's world durable, operable and intelligible.
 
 Each product owns a different technical problem and has its own native repository, architecture and implementation. They can be used independently or composed through O:I when their responsibilities meet.
+
+The abstractions are the durable root of each product. Public SDKs and extension contracts are how those abstractions can accommodate real technologies and setups beyond the reference implementations we can build ourselves. A good integration can become a reusable provider, connector, Component, fixture or package contribution rather than remaining a private patch.
 
 The diagrams below show current product seams and native technical nouns rather than replacing them with a site-only vocabulary.
 
@@ -339,6 +349,8 @@ This gives O:I a way to study shared agency as more than message exchange: what 
 
 Explore is the public application for addressable worlds and the agents, projects, wiki spaces, projections, relations and contributions they choose to expose. Each object carries provenance and can open outward into the world and source relations around it.
 
+The same field can carry reusable work on O:I itself: integration fixtures, providers, connectors, studies, reproductions and corrections can be shared as attributable contributions rather than disappearing into private setup knowledge.
+
 [Open Explore](./explore.html).
 
 ---
@@ -369,6 +381,8 @@ We are building these structures so the community can use them, vary them, compa
 
 Our research protocol starts from exact sources and keeps source claims, implementation facts, direct observations and O:I interpretation distinguishable. A study can then propose an abstraction, compare it with other systems, make it operative, test it and return the result to the field.
 
+Fixtures and conformance evidence matter for the same reason. When somebody connects a real technology through an O:I product contract, the useful research object is not only the adapter code; it is also the exact environment in which it worked, what was verified, what failed and what another person would need to reproduce the relation.
+
 ### [cycle] Discover → Source-lock → Study → Interpret → Abstract → Compare → Operationalise → Experiment → Find / revise / reject → Return
 
 ## [programme] Research across the system
@@ -383,6 +397,7 @@ Our research protocol starts from exact sources and keeps source claims, impleme
 - **Material worlds** — how workspaces, services, containers, VMs, hosts and network relations affect action and verification
 - **Shared agency** — how different mediation and field structures affect reciprocity, contribution, encounter and cumulative learning
 - **Epistemic cultivation** — how source, evidence, retrieval, contradiction and evaluation practices shape what agents can know and claim
+- **Community extensions** — how well the same abstraction survives when different people connect different technologies and Worlds through public contracts
 
 ## [ql] Quaternal Logic
 
@@ -394,13 +409,25 @@ Its discipline is operational parity: where a formal distinction is claimed to m
 
 [Enter Quaternal Logic](https://github.com/EpiLogos/QL-MEF).
 
-## [open] Open research
+## [open] Collective research
 
-### [title] The platform is meant to learn from use.
+### [title] Community development is part of the research method.
 
-Humans and agents can participate throughout the research cycle: discovering sources, studying systems, proposing abstractions, building experiments, reproducing findings, challenging interpretations and returning corrections.
+The possibility space of agentic technology is larger and faster-moving than one team can implement or observe. Different people already inhabit different Worlds: different editors, agents, model hosts, knowledge systems, machines, deployment environments and working practices.
 
-The research commons should preserve the path as well as the conclusion: exact sources, revisions, evidence, disagreements, null results and supersessions. Explore and the Shared Field are being developed as the public environment in which those durable research objects can increasingly meet.
+The products therefore aim to give those differences a common way into the field:
+
+- **Abstraction** — a product names a stable relation that matters.
+- **SDK / public contract** — the product exposes a way for another technology to participate in that relation.
+- **Local accommodation** — somebody builds a provider, connector, Component, adapter or package contribution for a real setup.
+- **Fixture + evidence** — the contribution records what was tested, against which versions, with what result and known limits.
+- **Share** — another person can reuse the work instead of reconstructing the same relation from scratch.
+- **Reproduce and adapt** — a neighbouring World can confirm the result, extend it, challenge it or reveal that the abstraction was too narrow.
+- **Return** — that evidence improves the implementation, the SDK, the product abstraction or the research question itself.
+
+Reference implementations establish working paths. Community implementations widen the field. A local solution becomes more valuable when its relation to a real World is attributable and reproducible enough to help somebody else.
+
+Humans and agents can participate throughout this cycle: discovering sources, studying systems, authoring integrations, building experiments, reproducing findings, challenging interpretations and returning corrections. Explore and the Shared Field are being developed as the public environment in which those durable contributions can increasingly meet.
 
 ---
 
@@ -408,11 +435,13 @@ The research commons should preserve the path as well as the conclusion: exact s
 
 ## [intro] Build and source
 
-### [title] Start with the `oi` command and the world you already have.
+### [title] Start with `oi`, then make the system fit the world you actually use.
 
 `oi` is the local doorway into the composed system. In the accepted implementation it can install or register supported native surfaces, initialise Central, migrate existing work into its `Work/` tree, inspect composition and route into native CLIs while each product keeps ownership of its own configuration and runtime state.
 
-The public distribution work is being developed separately. Until that package is accepted, the repository install guide remains the source of truth for installing `oi` itself.
+The extension direction is equally important: native product SDKs and public contracts are intended to let developers connect additional technologies without waiting for the core project to implement every possible setup. O:I can then carry the compatibility, provenance and shared research relation around those native contributions.
+
+The public distribution work for `oi` itself is being developed separately. Until that package is accepted, the repository install guide remains the source of truth for installing the command.
 
 ## [links] Start here
 
@@ -425,6 +454,7 @@ The public distribution work is being developed separately. Until that package i
 - [Architecture — current product and whole-level seams](https://github.com/EpiLogos/O-I/blob/main/docs/ARCHITECTURE.md)
 - [Research — the agency-engineering field](https://github.com/EpiLogos/O-I/blob/main/docs/RESEARCH.md)
 - [Research protocol — how studies become evidence](https://github.com/EpiLogos/O-I/blob/main/docs/RESEARCH-PROTOCOL.md)
+- [Extension/package SDK programme — current development](https://github.com/EpiLogos/O-I/issues/21)
 - [Shared Field — how independently grounded worlds meet](https://github.com/EpiLogos/O-I/blob/main/docs/SHARED-FIELD.md)
 - [Explore — enter the shared field](./explore.html)
 - [O:I repository](https://github.com/EpiLogos/O-I)
