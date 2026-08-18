@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as api from './api.mjs';
 
-test('unified shared-field API exposes projection, Explore presentation/authoring, shared-agency, Watch, Contact and hosted-state floors', () => {
+test('unified shared-field API exposes projection, Explore presentation/authoring/reading, shared-agency, Watch, Contact and hosted-state floors', () => {
   for (const name of [
     'createParticipant',
     'createProjection',
@@ -27,6 +27,8 @@ test('unified shared-field API exposes projection, Explore presentation/authorin
     'authoringDisclosure',
     'applyPresentationAuthoringOperation',
     'bindingAvailability',
+    'structuredProjectionReading',
+    'accountModuleKinds',
     'createWatch',
     'validateWatch',
     'createContact',

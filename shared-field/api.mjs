@@ -7,6 +7,7 @@ export * from './explore.mjs';
 export * from './presentation.mjs';
 export * from './presentation-projection.mjs';
 export * from './presentation-authoring.mjs';
+export * from './projection-reading.mjs';
 export * from './watch.mjs';
 export * from './contact.mjs';
 export * from './spacetimedb.mjs';
