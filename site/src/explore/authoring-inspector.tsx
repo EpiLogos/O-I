@@ -117,7 +117,7 @@ export function AuthoringInspector({
       <div className="direct-eyebrow">World theme</div>
       <p className="direct-inspector-note">Semantic roles remain the persisted meaning. The host-owned meta-relation role is intentionally not authorable here.</p>
       <div className="direct-theme-grid">
-        {THEME_TOKENS.map((token) => <label key={token} className="direct-inspector-control"><span>{token}</span><input value={presentation.theme.tokens[token] ?? ''} placeholder="inherit" onChange={(event) => onOperation({ type: 'edit-theme', tokens: { [token]: event.target.value } })} /></label>)}
+        {THEME_TOKENS.map((token) => <label key={`${token}:${presentation.theme.tokens[token] ?? ''}`} className="direct-inspector-control"><span>{token}</span><input defaultValue={presentation.theme.tokens[token] ?? ''} placeholder="inherit" onBlur={(event) => { const value = event.target.value.trim(); if (value && value !== presentation.theme.tokens[token]) onOperation({ type: 'edit-theme', tokens: { [token]: value } }); }} /></label>)}
       </div>
     </section>
 
