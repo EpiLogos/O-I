@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { WorldPresentationRenderer, type WorldPresentation } from '../../../site/src/explore/presentation-components';
 // @ts-ignore -- Surface-neutral application model owned outside the desktop renderer.
 import { createExploreSurfaceModel } from '../../../shared-field/explore-surface.mjs';
@@ -132,6 +132,8 @@ export function ExploreSurface({ seed, onSelect }: Props) {
   const [selectedRef, setSelectedRef] = useState<string | null>(null);
   const [depth, setDepth] = useState<1 | 2>(1);
   const [viewMode, setViewMode] = useState<ViewMode>('graph');
+  const [navigatorOpen, setNavigatorOpen] = useState(true);
+  const [navigatorWidth, setNavigatorWidth] = useState(240);
 
   useEffect(() => {
     if (!model) { setSelectedRef(null); return; }
@@ -157,15 +159,17 @@ export function ExploreSurface({ seed, onSelect }: Props) {
   if (!seed) return <section className="desktop-explore desktop-explore--empty"><p className="oi-eyebrow">Explore</p><h2>No local projected field is bound.</h2><p>Configure a local Explore projection provider to search and traverse real worlds here. The desktop does not substitute fixtures or invented public content.</p></section>;
   if (!model) return <section className="desktop-explore desktop-explore--empty"><p className="oi-eyebrow">Explore</p><h2>The projected field could not be read.</h2><p>The provider payload failed the shared Explore Surface contract. No fallback ontology has been created.</p></section>;
 
-  return <section className="desktop-explore" aria-label="O:I Explore">
+  const style = { '--desktop-explore-nav': `${navigatorWidth}px` } as CSSProperties;
+  return <section className="desktop-explore" aria-label="O:I Explore" style={style}>
     <header className="desktop-explore__searchbar">
       <label><span>Search the field</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="World, agent, project, wiki, ref…" autoComplete="off" /></label>
+      <button type="button" className="desktop-explore__pane-toggle" aria-expanded={navigatorOpen} onClick={() => setNavigatorOpen((value) => !value)}>Navigator</button>
       <div className="desktop-explore__view-controls" role="group" aria-label="Explore relation view">{(['graph', 'tree', 'list'] as ViewMode[]).map((mode) => <button type="button" key={mode} aria-pressed={viewMode === mode} onClick={() => setViewMode(mode)}>{mode}</button>)}</div>
       <div className="desktop-explore__view-controls" role="group" aria-label="Explore relation depth"><button type="button" aria-pressed={depth === 1} onClick={() => setDepth(1)}>Near</button><button type="button" aria-pressed={depth === 2} onClick={() => setDepth(2)}>Wider</button></div>
     </header>
 
-    <div className="desktop-explore__body">
-      <aside className="desktop-explore__results"><span className="oi-eyebrow">{query.trim() ? 'Results' : 'Worlds'}</span>{results.map((entry) => <button key={entry.ref} type="button" className={entry.ref === selectedRef ? 'is-selected' : ''} onClick={() => openRef(entry.ref)}><span>{kindLabel(entry.kind)}</span><strong>{entry.label}</strong><small>{entry.summary ?? entry.ref}</small></button>)}</aside>
+    <div className={navigatorOpen ? 'desktop-explore__body' : 'desktop-explore__body desktop-explore__body--full'}>
+      {navigatorOpen ? <aside className="desktop-explore__results"><span className="oi-eyebrow">{query.trim() ? 'Results' : 'Worlds'}</span>{results.map((entry) => <button key={entry.ref} type="button" className={entry.ref === selectedRef ? 'is-selected' : ''} onClick={() => openRef(entry.ref)}><span>{kindLabel(entry.kind)}</span><strong>{entry.label}</strong><small>{entry.summary ?? entry.ref}</small></button>)}<label className="desktop-explore__resize"><span>Width</span><input type="range" min="210" max="390" value={navigatorWidth} onChange={(event) => setNavigatorWidth(Number(event.target.value))} /></label></aside> : null}
       <div className="desktop-explore__encounter">
         {!opened ? <div className="desktop-explore__no-result"><h2>No projected object is open.</h2></div> : <>
           <header className="desktop-explore__focus"><span className="oi-eyebrow">Local whole</span><h2>{opened.resource.label}</h2><p>{opened.resource.summary}</p><small>{opened.resource.ref}</small></header>
