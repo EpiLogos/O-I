@@ -43,6 +43,7 @@ jobs:
             ../shared-field/presentation.test.mjs \
             ../shared-field/presentation-projection.test.mjs \
             ../shared-field/presentation-authoring.test.mjs \
+            ../shared-field/explore-surface.test.mjs \
             projection-renderer.test.mjs \
             self-other-read-model.test.mjs \
             field-proof-read-model.test.mjs \
