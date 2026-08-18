@@ -13,10 +13,10 @@ The public entries are:
 ```text
 index.html          landing / front door
 oi.html             whole-level O:I account
-products.html       six native product centres
-shared-field.html   projection, encounter and Objective Co-Internality
-research.html       Quaternal Logic / MEF and formal-research framing
-build.html          source, governing documents and development entry
+products.html       six native products + current architecture views
+shared-field.html   World, Projection, SharedField and Objective Co-Internality
+research.html       agentic-engineering research field + protocol + QL entry
+build.html          installation, source, governing documents and development entry
 explore.html        standalone Explore application
 ```
 
@@ -55,7 +55,7 @@ The Markdown is also the readable content specification. Stable IDs in square br
 
 ## [central] Central
 
-### [summary] Files, commands and connectors for ...
+### [summary] Your personal and project world ...
 
 ### [what] What it is
 
@@ -82,31 +82,67 @@ npm run build
 
 Vite emits all seven page entries. Relative asset paths keep the output suitable for GitHub Pages or another static host.
 
+## Public-language rule
+
+The public site begins by naming the thing positively and concretely. Distinction-preserving constitutional language still belongs in the source documents, but first contact should not make the reader decode a chain of negations before they know what the product is.
+
+Use the specific technical noun when it matters: underlying model capacity, Agent, Agency, harness/runtime, World, Project, Action, Workcell, Projection. Avoid using `a model` as a generic stand-in for all of them.
+
+Programme statements should also preserve research status. O:I is building an open platform in which proposed agency structures can be tested; public copy should not present development propositions as already-proven behavioural conclusions.
+
 ## Front door
 
-`index.html` is deliberately a landing page rather than the complete public essay. It keeps the parallax identity, the top-level account of the world around the model, the non-displacement statement, the minimal-to-developed possibility field, concise entrances to the six products, and apertures into Shared Field and Build.
+`index.html` is deliberately a landing page rather than the complete public essay. It keeps the parallax identity, a plain account of an agent acting through a technological world, the existing-world entry, the minimal-to-developed possibility field, concise entrances to our six products, and apertures into Shared Field and Build.
 
-The deeper authored material remains present but now has room on the O:I, Products, Shared Field and Research pages.
+The deeper authored material remains present but has room on the O:I, Products, Shared Field and Research pages.
 
 The visible hero title is **Objective : Internality**. Title/heading uses of the name follow the colon form while prose may still discuss the concept of Objective Internality normally.
 
 ## Products
 
-The six detailed product descriptions are projected from `content/public-site.md`. `src/components/centres.tsx` owns their differentiated figures and layout only.
+The six detailed product descriptions are projected from `content/public-site.md`. `src/components/centres.tsx` owns their architecture figures and page composition.
 
-The product writing order is:
+The dedicated Products page is an inspectable architecture layer rather than six large marketing cards. It begins with the accepted O:I/native ownership seam and then shows each product through current native technical nouns:
 
 ```text
-concrete software responsibility
-        ↓
-why that responsibility exists
-        ↓
-what changes for a human or agent
-        ↓
-current product shape / native source
+Central           Control · Work · ctrl · Actions · connectors
+Actuation         Agent · Agency · WorldBinding · Actuation · Return
+AIKit             models · Skills · Actions · ContextSources · HarnessComposition · Surfaces
+Software Factory  Project · Commission · Run / RunMap · Candidate · Evidence · Recognition · Return
+Workcell          Demand · Plan · provider · BindingGraph · material resources · lifecycle
+Quaternal Logic   QL refs/operators · MEF registry · refraction · readings · experiment · Return
 ```
 
-This keeps the native product meaning available without requiring first-contact readers to decode the internal abstraction before they know what the software does.
+The architecture drawings are React-owned because they are visual composition. Their product meaning should remain traceable to the native architecture/documentation corpus rather than becoming a site-only ontology.
+
+## Research
+
+Research is the O:I agentic-engineering programme, not a synonym for Quaternal Logic.
+
+The public page begins from the research object — the technological world around available model capacity — and the capacity / provisioning / potentiation distinction. It then exposes the canonical research cycle:
+
+```text
+Discover
+  → Source-lock
+  → Study
+  → Interpret
+  → Abstract
+  → Compare
+  → Operationalise
+  → Experiment
+  → Find / revise / reject
+  → Return
+```
+
+The page then opens the research surfaces distributed across personal/project worlds, agency and authority, capability/knowledge fields, harnesses and runtime bodies, developmental systems, material worlds, shared agency and epistemic cultivation.
+
+Quaternal Logic remains a substantial deeper entry into the Epi-Logos formal research programme, with operational parity as its discipline; it does not stand in for the whole O:I research protocol.
+
+## Build / distribution
+
+The Build page must follow accepted implementation truth. Until the public distribution package lands, `docs/INSTALL.md` and `docs/CLI.md` remain the authority for installing and using `oi`. Do not publish a future npm command merely because distribution work is underway.
+
+When that distribution PR is accepted, update `content/public-site.md` first and make the public install line the simplest truthful first encounter.
 
 ## Explore
 
@@ -128,13 +164,13 @@ Explore React Surface
         └─ WorldPresentation renderer / authoring surface
 ```
 
-The default static provider is `public/data/explore-public.json`. It is intentionally honest: if no public worlds are supplied, Explore renders an empty field rather than substituting demo personalities or arbitrary content. A live hosted/federated provider can replace that seed through the same browser read-model seam.
+The default static provider is `public/data/explore-public.json`. If no public worlds are supplied, Explore renders an empty field rather than substituting arbitrary demo content. A live hosted/federated provider can replace that seed through the same browser read-model seam.
 
 `explore-read-model.mjs` is tested against the canonical shared-field Explore fixture, but that fixture is test material rather than the public product experience.
 
 ## World presentation and native composition
 
-Rich world presentation is a Projection representation, not a new profile/site ontology.
+Rich world presentation is a Projection representation rather than a new profile/site ontology.
 
 The portable contract lives in:
 
@@ -191,6 +227,8 @@ The public pages and Explore preserve:
 - scarce gold for shared-system meta-relation rather than ordinary decoration;
 - keyboard and visible-focus behaviour;
 - responsive and reduced-motion behaviour.
+
+Page colour is compositional rather than a forced alternating stripe. Adjacent sections may remain in one field where the reader is still inside the same conceptual or technical movement.
 
 A projected world may remap its permitted semantic presentation tokens without removing the common provenance/navigation grammar.
 
