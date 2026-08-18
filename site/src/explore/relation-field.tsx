@@ -45,7 +45,8 @@ function kindLabel(kind: string) {
 
 function relationLabel(relation: string) {
   const parts = relation.split(/[/.]/g).filter(Boolean);
-  return parts.at(-1)?.replaceAll('-', ' ') ?? relation;
+  const tail = parts.length ? parts[parts.length - 1] : relation;
+  return tail.replace(/-/g, ' ');
 }
 
 function shortLabel(label: string, max = 25) {
