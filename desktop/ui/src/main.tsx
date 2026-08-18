@@ -3,8 +3,9 @@ import ReactDOM from 'react-dom/client';
 import { invoke } from '@tauri-apps/api/core';
 import '@epilogos/oi-design-system/tokens.css';
 import './shell.css';
+import { NaraSurface, type NaraActionReceipt } from './NaraSurface';
 
-type Destination = 'home' | 'personal' | 'build' | 'explore' | 'system';
+type Destination = 'home' | 'epi' | 'personal' | 'build' | 'explore' | 'system';
 type SuiteCondition = 'empty' | 'partial' | 'broken' | 'full';
 type ContributionAvailability = 'ready' | 'degraded' | 'pending_native_adapter' | 'unavailable';
 
@@ -98,7 +99,7 @@ const preview: Snapshot = {
   schema: 'oi.desktop-shell/v1',
   destination: 'home',
   suite_condition: 'empty',
-  destinations: ['home', 'personal', 'build', 'explore', 'system'],
+  destinations: ['home', 'epi', 'personal', 'build', 'explore', 'system'],
   surfaces: [],
   warnings: ['Browser preview: native O:I composition is unavailable outside the Rust shell.'],
 };
@@ -107,11 +108,12 @@ function App() {
   const [snapshot, setSnapshot] = useState<Snapshot>(preview);
   const [contributions, setContributions] = useState<Contribution[]>([]);
   const [factoryBuild, setFactoryBuild] = useState<FactoryBuildSnapshot | null>(null);
+  const [naraReceipt, setNaraReceipt] = useState<NaraActionReceipt | null>(null);
 
   useEffect(() => {
     invoke<Snapshot>('shell_snapshot').then(setSnapshot).catch(() => setSnapshot(preview));
     invoke<Contribution[]>('contribution_catalog').then(setContributions).catch(() => setContributions([]));
-    refreshFactoryBuild();
+    void refreshFactoryBuild();
   }, []);
 
   async function refreshFactoryBuild() {
@@ -134,6 +136,17 @@ function App() {
     }
   }
 
+  async function receiveNaraAction(receipt: NaraActionReceipt) {
+    setNaraReceipt(receipt);
+    try {
+      setSnapshot(await invoke<Snapshot>('shell_snapshot'));
+      setContributions(await invoke<Contribution[]>('contribution_catalog'));
+    } catch {
+      // The receipt still carries the exact governed context packet; failure to
+      // refresh shell chrome must not broaden or reconstruct it.
+    }
+  }
+
   const visibleContributions = useMemo(
     () => contributions.filter((entry) => ownerVisibleAt(entry.contribution.native_owner, snapshot.destination)),
     [contributions, snapshot.destination],
@@ -151,7 +164,7 @@ function App() {
               className={snapshot.destination === destination ? 'is-active' : ''}
               onClick={() => openDestination(destination)}
             >
-              {destination === 'home' ? 'Home' : destination[0].toUpperCase() + destination.slice(1)}
+              {destination === 'home' ? 'Home' : destination === 'epi' ? 'Epi' : destination[0].toUpperCase() + destination.slice(1)}
             </button>
           ))}
         </nav>
@@ -159,20 +172,28 @@ function App() {
       </header>
 
       <section className="oi-shell__canvas" aria-label="Primary content canvas">
-        <p className="oi-eyebrow">{snapshot.destination}</p>
-        <h1>{titleFor(snapshot.destination)}</h1>
-        <p className="oi-lead">{copyFor(snapshot.destination)}</p>
-        {snapshot.destination === 'build' && factoryBuild && (
-          <FactoryBuildSurface snapshot={factoryBuild} onRefresh={refreshFactoryBuild} />
+        {snapshot.destination === 'epi' ? (
+          <NaraSurface onActionReceipt={receiveNaraAction} />
+        ) : (
+          <>
+            <p className="oi-eyebrow">{snapshot.destination}</p>
+            <h1>{titleFor(snapshot.destination)}</h1>
+            <p className="oi-lead">{copyFor(snapshot.destination)}</p>
+            {snapshot.destination === 'build' && factoryBuild && (
+              <FactoryBuildSurface snapshot={factoryBuild} onRefresh={refreshFactoryBuild} />
+            )}
+            {snapshot.destination === 'system' && <SystemSurface surfaces={snapshot.surfaces} />}
+            <ContributionSurface contributions={visibleContributions} />
+          </>
         )}
-        {snapshot.destination === 'system' && <SystemSurface surfaces={snapshot.surfaces} />}
-        <ContributionSurface contributions={visibleContributions} />
       </section>
 
       <aside className="oi-shell__inspector" aria-label="Context and root agency region">
         <p className="oi-eyebrow">Encounter</p>
-        <h2>Shared reference</h2>
-        {snapshot.selection ? (
+        <h2>{snapshot.destination === 'epi' ? 'Situated Epi context' : 'Shared reference'}</h2>
+        {snapshot.destination === 'epi' && naraReceipt ? (
+          <SituatedNaraPacket receipt={naraReceipt} />
+        ) : snapshot.selection ? (
           <dl className="oi-ref">
             <dt>Ref</dt><dd>{snapshot.selection.ref}</dd>
             <dt>Kind</dt><dd>{snapshot.selection.kind}</dd>
@@ -180,7 +201,11 @@ function App() {
             <dt>Source</dt><dd>{snapshot.selection.provenance.source}</dd>
           </dl>
         ) : (
-          <p className="oi-muted">No object selected. Canvas and root-agency regions share one stable Ref; O:I does not copy wholesale Context into contributions.</p>
+          <p className="oi-muted">
+            {snapshot.destination === 'epi'
+              ? 'Select text in Nara and invoke the governed sendoff. The situated region receives only that bounded packet, never ambient access to the journal.'
+              : 'No object selected. Canvas and root-agency regions share one stable Ref; O:I does not copy wholesale Context into contributions.'}
+          </p>
         )}
         <div className="oi-root-agency">
           <p className="oi-eyebrow">Root Agency</p>
@@ -196,27 +221,39 @@ function App() {
 
       <footer className="oi-shell__drawer" aria-label="Deep drawer">
         <span>Trajectory / terminal / events</span>
-        <span>reserved native Surface slot</span>
+        <span>{snapshot.destination === 'epi' ? 'closed unless germane to Nara work' : 'reserved native Surface slot'}</span>
       </footer>
     </main>
   );
 }
 
-function FactoryBuildSurface({
-  snapshot,
-  onRefresh,
-}: {
-  snapshot: FactoryBuildSnapshot;
-  onRefresh: () => Promise<void>;
-}) {
+function SituatedNaraPacket({ receipt }: { receipt: NaraActionReceipt }) {
+  const selection = receipt.selection;
+  return (
+    <div className="oi-situated-packet">
+      <dl className="oi-ref">
+        <dt>Selection</dt><dd>{selection.selectionRef}</dd>
+        <dt>Episode</dt><dd>{selection.episodeRef}</dd>
+        <dt>Range</dt><dd>{selection.startByte}–{selection.endByte} · r{selection.episodeRevision}</dd>
+        <dt>DAY/NOW</dt><dd>{selection.dayId} · {selection.nowPath}</dd>
+        <dt>QL</dt><dd>{selection.qlAddress}</dd>
+        <dt>Coordinate</dt><dd>{selection.coordinateRef}</dd>
+        <dt>Profile</dt><dd>{selection.profileRef}</dd>
+      </dl>
+      <blockquote>{selection.selectedText}</blockquote>
+      <p className="oi-muted">Exact disclosure scope:</p>
+      <ul>{receipt.agentContextScope.map((item) => <li key={item}>{item}</li>)}</ul>
+      <small>Governed Action {receipt.actionRef} · authority parent {receipt.authoritySubjectRef} · operation {receipt.operationId}</small>
+    </div>
+  );
+}
+
+function FactoryBuildSurface({ snapshot, onRefresh }: { snapshot: FactoryBuildSnapshot; onRefresh: () => Promise<void> }) {
   return (
     <section className="oi-contributions" aria-label="Live Factory Build Surface">
       <p className="oi-eyebrow">Factory-owned live reading · revision {snapshot.revision}</p>
       <article>
-        <div>
-          <span className="oi-contribution-state" data-state="ready">ready</span>
-          <h3>{snapshot.view.run.label}</h3>
-        </div>
+        <div><span className="oi-contribution-state" data-state="ready">ready</span><h3>{snapshot.view.run.label}</h3></div>
         <p>{snapshot.view.frontier.title}</p>
         <dl>
           <dt>Project</dt><dd>{snapshot.view.project.projectRef}</dd>
@@ -231,10 +268,7 @@ function FactoryBuildSurface({
 
       {snapshot.view.candidates.map((candidate) => (
         <article key={candidate.candidateRef}>
-          <div>
-            <span className="oi-contribution-state" data-state="ready">{candidate.status}</span>
-            <h3>{candidate.label}</h3>
-          </div>
+          <div><span className="oi-contribution-state" data-state="ready">{candidate.status}</span><h3>{candidate.label}</h3></div>
           <p>{candidate.candidateRef}</p>
           <dl>
             <dt>Executions</dt><dd>{candidate.producingExecutionRefs.join(', ') || 'none'}</dd>
@@ -246,10 +280,7 @@ function FactoryBuildSurface({
 
       {snapshot.view.humanRequests.map((request) => (
         <article key={request.humanRequestRef}>
-          <div>
-            <span className="oi-contribution-state" data-state="degraded">human request</span>
-            <h3>{request.question}</h3>
-          </div>
+          <div><span className="oi-contribution-state" data-state="degraded">human request</span><h3>{request.question}</h3></div>
           <p>{request.whyHuman}</p>
           <small>{request.humanRequestRef}</small>
         </article>
@@ -257,10 +288,7 @@ function FactoryBuildSurface({
 
       {snapshot.view.executions.map((execution) => (
         <article key={execution.executionRef}>
-          <div>
-            <span className="oi-contribution-state" data-state="ready">{execution.status}</span>
-            <h3>{execution.executionRef}</h3>
-          </div>
+          <div><span className="oi-contribution-state" data-state="ready">{execution.status}</span><h3>{execution.executionRef}</h3></div>
           <dl>
             <dt>Harness</dt><dd>{execution.harnessRef ?? 'not observed'}</dd>
             <dt>SessionSpace</dt><dd>{execution.sessionSpaceRef ?? 'not observed'}</dd>
@@ -271,10 +299,7 @@ function FactoryBuildSurface({
 
       {snapshot.view.actions.map((action) => (
         <article key={action.actionRef}>
-          <div>
-            <span className="oi-contribution-state" data-state="ready">available Action</span>
-            <h3>{action.label}</h3>
-          </div>
+          <div><span className="oi-contribution-state" data-state="ready">available Action</span><h3>{action.label}</h3></div>
           <p>{action.actionRef}</p>
           <small>Requires explicit Capability grant: {action.requiredCapabilityRef}</small>
         </article>
@@ -325,6 +350,7 @@ function SystemSurface({ surfaces }: { surfaces: Surface[] }) {
 
 function ownerVisibleAt(owner: string, destination: Destination) {
   if (destination === 'home' || destination === 'system') return true;
+  if (destination === 'epi') return owner === 'epi' || owner === 'actuation' || owner === 'ai-kit';
   if (destination === 'personal') return owner === 'central' || owner === 'actuation';
   if (destination === 'build') return owner === 'software-factory' || owner === 'factory' || owner === 'ai-kit';
   if (destination === 'explore') return owner === 'oi-explore';
@@ -334,6 +360,7 @@ function ownerVisibleAt(owner: string, destination: Destination) {
 function titleFor(destination: Destination) {
   return {
     home: 'The local O:I whole.',
+    epi: 'Nara.',
     personal: 'Personal ground.',
     build: 'Development in view.',
     explore: 'Addressable worlds.',
@@ -344,8 +371,9 @@ function titleFor(destination: Destination) {
 function copyFor(destination: Destination) {
   return {
     home: 'A sparse local surface over the installed six-product field.',
+    epi: 'The lived Epi surface begins in protected writing and present context, with technical depth available when asked for.',
     personal: 'Central-owned authored ground and Actuation-owned world-binding readings enter here without moving their semantics into O:I.',
-    build: 'Factory now exposes a product-owned live FactoryBuildView provider over canonical state. When the local provider binding is configured, this canvas renders that observed revision directly; otherwise the Factory contribution remains explicitly degraded.',
+    build: 'Factory exposes a product-owned live FactoryBuildView provider over canonical state. When its local provider binding is configured, this canvas renders that observed revision directly; otherwise the Factory contribution remains explicitly degraded.',
     explore: 'The current shared-field Explore read model is hostable now, with canonical refs independent of SpaceTimeDB transport IDs.',
     system: 'Registration, reachability and native contribution status are shown without inventing product-native health.',
   }[destination];
