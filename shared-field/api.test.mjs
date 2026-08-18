@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as api from './api.mjs';
 
-test('unified shared-field API exposes projection, Explore presentation, shared-agency, Watch, Contact and hosted-state floors', () => {
+test('unified shared-field API exposes projection, Explore presentation/authoring, shared-agency, Watch, Contact and hosted-state floors', () => {
   for (const name of [
     'createParticipant',
     'createProjection',
@@ -23,6 +23,10 @@ test('unified shared-field API exposes projection, Explore presentation, shared-
     'createWorldPresentationProjection',
     'worldPresentationFromProjection',
     'refineWorldPresentationProjection',
+    'normalizeContributionField',
+    'authoringDisclosure',
+    'applyPresentationAuthoringOperation',
+    'bindingAvailability',
     'createWatch',
     'validateWatch',
     'createContact',
@@ -50,6 +54,7 @@ test('unified shared-field API exposes projection, Explore presentation, shared-
   assert.equal(api.EXPLORE_RESULT_SCHEMA, 'oi.explore-result/v1');
   assert.equal(api.WORLD_PRESENTATION_SCHEMA, 'oi.world-presentation/v1');
   assert.equal(api.PRESENTATION_BINDING_SCHEMA, 'oi.presentation-binding/v1');
+  assert.equal(api.PRESENTATION_AUTHORING_SCHEMA, 'oi.presentation-authoring/v1');
   assert.equal(api.WATCH_SCHEMA, 'oi.watch/v1');
   assert.equal(api.CONTACT_SCHEMA, 'oi.contact/v1');
 });
