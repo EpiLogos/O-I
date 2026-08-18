@@ -3,6 +3,7 @@ mod contribution;
 mod execution_authority;
 mod live_product;
 mod local_aikit;
+mod local_epi;
 mod local_factory;
 mod shell;
 
@@ -26,6 +27,11 @@ pub use live_product::{
 pub use local_aikit::{
     host_session_space_read_model, AikitSessionSpaceHostObservation, LocalAikitSessionSpaceHost,
     AIKIT_SESSION_SPACE_CONTRIBUTION_REF,
+};
+pub use local_epi::{
+    host_epi_snapshot, EpiHostObservation, LocalEpiHost, EPI_NATIVE_OWNER,
+    EPI_PRIMITIVE_CONTRIBUTION_REF, EPI_PRIMITIVE_PROVIDER_CONTRACT,
+    EPI_PRIMITIVE_SNAPSHOT_SCHEMA,
 };
 pub use local_factory::{host_factory_snapshot, LocalFactoryHost};
 pub use shell::{
