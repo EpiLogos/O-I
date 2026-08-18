@@ -182,12 +182,18 @@ jobs:
           set -euo pipefail
           tag='oi-v0.1.0-prelocal.3'
           if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "release $tag already exists; refusing to mutate an accepted release" >&2
-            exit 1
+            echo "release $tag already exists; leaving the accepted immutable release untouched"
+            exit 0
           fi
-          gh release create "$tag" dist/*.tar.gz dist/*.tgz dist/*.sha256 \
+          if ! gh release create "$tag" dist/*.tar.gz dist/*.tgz dist/*.sha256 \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --prerelease \
             --title 'O:I 0.1.0 pre-local.3' \
-            --notes 'Prebuilt O:I bootstrap, npm-formatted @epilogos/oi distribution package, and locked Apple Silicon Tauri app bundle for the accepted six-product suite manifest. Physical workstation/provider acceptance is explicitly not claimed.'
+            --notes 'Prebuilt O:I bootstrap, npm-formatted @epilogos/oi distribution package, and locked Apple Silicon Tauri app bundle for the accepted six-product suite manifest. Physical workstation/provider acceptance is explicitly not claimed.'; then
+            if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+              echo "release $tag was created concurrently; leaving that accepted immutable release untouched"
+              exit 0
+            fi
+            exit 1
+          fi
