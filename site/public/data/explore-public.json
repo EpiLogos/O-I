@@ -1,7 +1,409 @@
 {
   "schema": "oi.explore-browser-seed/v1",
-  "entries": [],
-  "relations": [],
-  "presentations": [],
-  "presentation_projections": []
+  "entries": [
+    {
+      "ref": "world:epi-logos",
+      "kind": "programme-world",
+      "world_ref": "world:epi-logos",
+      "label": "Epi-Logos",
+      "summary": "The public projection of the O:I programme world — its products, documents and relations, with their sources.",
+      "aliases": ["epi-logos", "o:i", "operating infrastructure", "objective internality"],
+      "revision": "oi-v0.1.0-prelocal.2",
+      "provenance": [
+        { "kind": "git-project", "ref": "repo:EpiLogos/O-I", "source_system": "git", "revision": "oi-v0.1.0-prelocal.2" }
+      ],
+      "locators": [{ "surface": "web", "locator": "/@epi-logos" }]
+    },
+    {
+      "ref": "project:o-i",
+      "kind": "project",
+      "world_ref": "world:epi-logos",
+      "label": "O:I",
+      "summary": "The umbrella: shared contracts, shared-field mediations, the oi suite operator, and the public site you are reading.",
+      "aliases": ["umbrella", "oi suite", "suite operator"],
+      "revision": "oi-v0.1.0-prelocal.2",
+      "provenance": [
+        { "kind": "git-project", "ref": "repo:EpiLogos/O-I", "source_system": "git", "revision": "oi-v0.1.0-prelocal.2" }
+      ]
+    },
+    {
+      "ref": "project:central",
+      "kind": "project",
+      "world_ref": "world:epi-logos",
+      "label": "Central",
+      "summary": "The persistent, human-authored ground of a technological world — a world that remains yours while models, interfaces, machines and runtimes change.",
+      "aliases": ["ground", "persistent ground", "control plane"],
+      "revision": "main",
+      "provenance": [
+        { "kind": "git-project", "ref": "repo:EpiLogos/Central", "source_system": "git", "revision": "main" }
+      ]
+    },
+    {
+      "ref": "project:actuation",
+      "kind": "project",
+      "world_ref": "world:epi-logos",
+      "label": "Actuation",
+      "summary": "The constitution of situated agency: who acts, under whose authority, within what bounds — and how reality returns. Downward authority requires upward reality.",
+      "aliases": ["agency", "delegation", "return"],
+      "revision": "main",
+      "provenance": [
+        { "kind": "git-project", "ref": "repo:EpiLogos/Actuation", "source_system": "git", "revision": "main" }
+      ]
+    },
+    {
+      "ref": "project:ai-kit",
+      "kind": "project",
+      "world_ref": "world:epi-logos",
+      "label": "AIKit",
+      "summary": "The disclosure layer: what models, skills, tools, actions and sources are actually available here, made findable and composable without flattening the world they were found in.",
+      "aliases": ["ai-kit", "aikit", "capabilities", "broker", "discovery"],
+      "revision": "main",
+      "provenance": [
+        { "kind": "git-project", "ref": "repo:EpiLogos/ai-kit", "source_system": "git", "revision": "main" }
+      ]
+    },
+    {
+      "ref": "project:software-factory",
+      "kind": "project",
+      "world_ref": "world:epi-logos",
+      "label": "Software Factory",
+      "summary": "Developmental continuity for agentic software work: from authored commission through development and candidate realities to Recognition and Return.",
+      "aliases": ["factory", "commission", "recognition", "development"],
+      "revision": "main",
+      "provenance": [
+        { "kind": "git-project", "ref": "repo:EpiLogos/agent-system-design", "source_system": "git", "revision": "main" }
+      ]
+    },
+    {
+      "ref": "project:workcell",
+      "kind": "project",
+      "world_ref": "world:epi-logos",
+      "label": "Workcell",
+      "summary": "The crossing from declared need to an actual computational environment — workspace, process, service, container or machine, with lifecycle and evidence.",
+      "aliases": ["materialisation", "environment", "demand"],
+      "revision": "main",
+      "provenance": [
+        { "kind": "git-project", "ref": "repo:EpiLogos/Workcell", "source_system": "git", "revision": "main" }
+      ]
+    },
+    {
+      "ref": "project:quaternal-logic",
+      "kind": "project",
+      "world_ref": "world:epi-logos",
+      "label": "Quaternal Logic",
+      "summary": "The formal and experimental field: archetypal and philosophical structures made executable enough to test. Operational parity is the test.",
+      "aliases": ["quaternal", "formal experiment", "parity", "ql", "mef"],
+      "revision": "main",
+      "provenance": [
+        { "kind": "git-project", "ref": "repo:EpiLogos/QL-MEF", "source_system": "git", "revision": "main" }
+      ]
+    },
+    {
+      "ref": "wiki:o-i:docs",
+      "kind": "wiki-space",
+      "world_ref": "world:epi-logos",
+      "label": "O:I Documentation",
+      "summary": "The programme's canonical documents, projected as a browsable knowledge organisation.",
+      "aliases": ["docs", "documentation", "positions", "vision"],
+      "revision": "oi-v0.1.0-prelocal.2",
+      "provenance": [
+        { "kind": "git-tree", "ref": "repo:EpiLogos/O-I:docs", "source_system": "git", "revision": "oi-v0.1.0-prelocal.2" }
+      ]
+    },
+    {
+      "ref": "wiki:o-i:docs:founding-positions",
+      "kind": "wiki-node",
+      "world_ref": "world:epi-logos",
+      "label": "Founding positions",
+      "summary": "The harmonised statement of what O:I is actually saying — the positions the public site compresses.",
+      "aliases": ["founding positions", "what o:i is saying"],
+      "revision": "oi-v0.1.0-prelocal.2",
+      "provenance": [
+        { "kind": "git-blob", "ref": "repo:EpiLogos/O-I:docs/positions/FOUNDING-POSITIONS.md", "source_system": "git", "revision": "oi-v0.1.0-prelocal.2" }
+      ]
+    },
+    {
+      "ref": "wiki:o-i:docs:vision",
+      "kind": "wiki-node",
+      "world_ref": "world:epi-logos",
+      "label": "Vision",
+      "summary": "Agency, world and return — the programme's orienting statement.",
+      "aliases": ["vision"],
+      "revision": "oi-v0.1.0-prelocal.2",
+      "provenance": [
+        { "kind": "git-blob", "ref": "repo:EpiLogos/O-I:docs/VISION.md", "source_system": "git", "revision": "oi-v0.1.0-prelocal.2" }
+      ]
+    },
+    {
+      "ref": "wiki:o-i:docs:architecture",
+      "kind": "wiki-node",
+      "world_ref": "world:epi-logos",
+      "label": "Architecture",
+      "summary": "The canonical product field: how the six centres interlock by contract.",
+      "aliases": ["architecture", "product field"],
+      "revision": "oi-v0.1.0-prelocal.2",
+      "provenance": [
+        { "kind": "git-blob", "ref": "repo:EpiLogos/O-I:docs/ARCHITECTURE.md", "source_system": "git", "revision": "oi-v0.1.0-prelocal.2" }
+      ]
+    },
+    {
+      "ref": "wiki:o-i:docs:shared-field",
+      "kind": "wiki-node",
+      "world_ref": "world:epi-logos",
+      "label": "Shared field",
+      "summary": "How independently grounded worlds selectively project, encounter one another, and return attributable difference.",
+      "aliases": ["shared field", "projection", "worlds"],
+      "revision": "oi-v0.1.0-prelocal.2",
+      "provenance": [
+        { "kind": "git-blob", "ref": "repo:EpiLogos/O-I:docs/SHARED-FIELD.md", "source_system": "git", "revision": "oi-v0.1.0-prelocal.2" }
+      ]
+    },
+    {
+      "ref": "wiki:o-i:docs:objective-co-internality",
+      "kind": "wiki-node",
+      "world_ref": "world:epi-logos",
+      "label": "Objective co-internality",
+      "summary": "The relation between distinct operative interiors that meet without either being absorbed.",
+      "aliases": ["objective internality", "co-internality"],
+      "revision": "oi-v0.1.0-prelocal.2",
+      "provenance": [
+        { "kind": "git-blob", "ref": "repo:EpiLogos/O-I:docs/OBJECTIVE-CO-INTERNALITY.md", "source_system": "git", "revision": "oi-v0.1.0-prelocal.2" }
+      ]
+    },
+    {
+      "ref": "wiki:o-i:docs:visual-product-understanding",
+      "kind": "wiki-node",
+      "world_ref": "world:epi-logos",
+      "label": "Visual product understanding",
+      "summary": "The accepted diagram and visual-understanding work the public figures reinterpret.",
+      "aliases": ["diagrams", "visual understanding"],
+      "revision": "oi-v0.1.0-prelocal.2",
+      "provenance": [
+        { "kind": "git-blob", "ref": "repo:EpiLogos/O-I:docs/VISUAL-PRODUCT-UNDERSTANDING.md", "source_system": "git", "revision": "oi-v0.1.0-prelocal.2" }
+      ]
+    },
+    {
+      "ref": "oi:field:public",
+      "kind": "shared-field",
+      "world_ref": "world:epi-logos",
+      "label": "Public shared field",
+      "summary": "The public field into which the O:I programme world projects — and into which any independently grounded world can project without being absorbed.",
+      "aliases": ["field", "shared field"],
+      "revision": "oi-v0.1.0-prelocal.2",
+      "provenance": [
+        { "kind": "shared-field", "ref": "oi:field:public", "source_system": "o-i", "revision": "oi-v0.1.0-prelocal.2" }
+      ]
+    },
+    {
+      "ref": "projection:epi-logos:world-presentation",
+      "kind": "projection",
+      "world_ref": "world:epi-logos",
+      "label": "Epi-Logos world presentation",
+      "summary": "The authored public presentation of the O:I programme world — a projection, not the source. The canonical repositories remain authoritative.",
+      "aliases": ["presentation", "world presentation"],
+      "revision": "world-presentation@1",
+      "provenance": [
+        { "kind": "world-presentation", "ref": "projection:epi-logos:world-presentation", "source_system": "o-i", "revision": "world-presentation@1" }
+      ]
+    }
+  ],
+  "relations": [
+    { "from": "world:epi-logos", "to": "project:o-i", "relation": "oi.world/project", "origin": "projection", "provenance": [{ "kind": "projection-relation", "ref": "world:epi-logos#project:o-i", "source_system": "o-i", "revision": "world-projection@1" }] },
+    { "from": "world:epi-logos", "to": "project:central", "relation": "oi.world/project", "origin": "projection", "provenance": [{ "kind": "projection-relation", "ref": "world:epi-logos#project:central", "source_system": "o-i", "revision": "world-projection@1" }] },
+    { "from": "world:epi-logos", "to": "project:actuation", "relation": "oi.world/project", "origin": "projection", "provenance": [{ "kind": "projection-relation", "ref": "world:epi-logos#project:actuation", "source_system": "o-i", "revision": "world-projection@1" }] },
+    { "from": "world:epi-logos", "to": "project:ai-kit", "relation": "oi.world/project", "origin": "projection", "provenance": [{ "kind": "projection-relation", "ref": "world:epi-logos#project:ai-kit", "source_system": "o-i", "revision": "world-projection@1" }] },
+    { "from": "world:epi-logos", "to": "project:software-factory", "relation": "oi.world/project", "origin": "projection", "provenance": [{ "kind": "projection-relation", "ref": "world:epi-logos#project:software-factory", "source_system": "o-i", "revision": "world-projection@1" }] },
+    { "from": "world:epi-logos", "to": "project:workcell", "relation": "oi.world/project", "origin": "projection", "provenance": [{ "kind": "projection-relation", "ref": "world:epi-logos#project:workcell", "source_system": "o-i", "revision": "world-projection@1" }] },
+    { "from": "world:epi-logos", "to": "project:quaternal-logic", "relation": "oi.world/project", "origin": "projection", "provenance": [{ "kind": "projection-relation", "ref": "world:epi-logos#project:quaternal-logic", "source_system": "o-i", "revision": "world-projection@1" }] },
+    { "from": "world:epi-logos", "to": "wiki:o-i:docs", "relation": "oi.world/knowledge", "origin": "projection", "provenance": [{ "kind": "projection-relation", "ref": "world:epi-logos#wiki:o-i:docs", "source_system": "o-i", "revision": "world-projection@1" }] },
+    { "from": "wiki:o-i:docs", "to": "wiki:o-i:docs:founding-positions", "relation": "wiki.contains", "origin": "projection", "provenance": [{ "kind": "projection-relation", "ref": "wiki:o-i:docs#founding-positions", "source_system": "o-i", "revision": "world-projection@1" }] },
+    { "from": "wiki:o-i:docs", "to": "wiki:o-i:docs:vision", "relation": "wiki.contains", "origin": "projection", "provenance": [{ "kind": "projection-relation", "ref": "wiki:o-i:docs#vision", "source_system": "o-i", "revision": "world-projection@1" }] },
+    { "from": "wiki:o-i:docs", "to": "wiki:o-i:docs:architecture", "relation": "wiki.contains", "origin": "projection", "provenance": [{ "kind": "projection-relation", "ref": "wiki:o-i:docs#architecture", "source_system": "o-i", "revision": "world-projection@1" }] },
+    { "from": "wiki:o-i:docs", "to": "wiki:o-i:docs:shared-field", "relation": "wiki.contains", "origin": "projection", "provenance": [{ "kind": "projection-relation", "ref": "wiki:o-i:docs#shared-field", "source_system": "o-i", "revision": "world-projection@1" }] },
+    { "from": "wiki:o-i:docs", "to": "wiki:o-i:docs:objective-co-internality", "relation": "wiki.contains", "origin": "projection", "provenance": [{ "kind": "projection-relation", "ref": "wiki:o-i:docs#objective-co-internality", "source_system": "o-i", "revision": "world-projection@1" }] },
+    { "from": "wiki:o-i:docs", "to": "wiki:o-i:docs:visual-product-understanding", "relation": "wiki.contains", "origin": "projection", "provenance": [{ "kind": "projection-relation", "ref": "wiki:o-i:docs#visual-product-understanding", "source_system": "o-i", "revision": "world-projection@1" }] },
+    { "from": "world:epi-logos", "to": "oi:field:public", "relation": "oi.world/shared-field", "origin": "projection", "provenance": [{ "kind": "projection-relation", "ref": "world:epi-logos#oi:field:public", "source_system": "o-i", "revision": "world-projection@1" }] },
+    { "from": "world:epi-logos", "to": "projection:epi-logos:world-presentation", "relation": "oi.projects", "origin": "projection", "provenance": [{ "kind": "projection-relation", "ref": "world:epi-logos#projection:world-presentation", "source_system": "o-i", "revision": "world-projection@1" }] }
+  ],
+  "presentation_projections": [
+    {
+      "schema": "oi.projection/v1",
+      "projection_ref": "projection:epi-logos:world-presentation",
+      "projection_revision": 1,
+      "state": "published",
+      "subject": { "ref": "world:epi-logos", "kind": "programme-world", "label": "Epi-Logos" },
+      "source": { "system": "git", "ref": "repo:EpiLogos/O-I", "revision": "oi-v0.1.0-prelocal.2" },
+      "publisher_participant_ref": "participant:epi-logos",
+      "published_at": "2026-08-18T00:00:00.000Z",
+      "audience": { "visibility": "public" },
+      "representation": {
+        "kind": "oi.world-presentation/v1",
+        "payload": {
+          "schema": "oi.world-presentation/v1",
+          "presentation_ref": "presentation:epi-logos:public-world",
+          "world_ref": "world:epi-logos",
+          "revision": 1,
+          "title": "Epi-Logos",
+          "summary": "The public projection of the O:I programme world. This page is a presentation; the canonical repositories remain authoritative.",
+          "theme": { "name": "oi-house", "tokens": {} },
+          "regions": [
+            {
+              "region_ref": "opening",
+              "role": "opening",
+              "label": "Opening",
+              "bindings": [
+                {
+                  "binding_ref": "b-opening-lede",
+                  "component_ref": "component:epi-logos:opening-lede",
+                  "portable_renderer": "oi.presentation/lede/v1",
+                  "props": {
+                    "title": "Operating Infrastructure · Objective Internality",
+                    "text": "An open architecture and research programme for the technological structures through which model capacity becomes situated agency — beginning from the technological world you already have, which you do not have to replace."
+                  },
+                  "fallback": { "title": "Operating Infrastructure · Objective Internality", "text": "An open architecture and research programme for the world around the model." },
+                  "provenance": [
+                    { "kind": "git-blob", "ref": "repo:EpiLogos/O-I:docs/positions/FOUNDING-POSITIONS.md", "source_system": "git", "revision": "oi-v0.1.0-prelocal.2" }
+                  ]
+                },
+                {
+                  "binding_ref": "b-opening-prose",
+                  "component_ref": "component:epi-logos:opening-prose",
+                  "portable_renderer": "oi.presentation/prose/v1",
+                  "props": {
+                    "title": "The world is the variable",
+                    "text": "Hold the model constant and change the loop, the memory, the capability field, the authority structure or the material environment, and a different agency appears. The smallest O:I is already complete — persistent authored ground plus actuated model capacity — and the whole wider field is optional development, never a prerequisite."
+                  },
+                  "fallback": { "title": "The world is the variable", "text": "The surrounding arrangement changes what the same model capacity can do." },
+                  "provenance": [
+                    { "kind": "git-blob", "ref": "repo:EpiLogos/O-I:docs/VISION.md", "source_system": "git", "revision": "oi-v0.1.0-prelocal.2" }
+                  ]
+                }
+              ]
+            },
+            {
+              "region_ref": "centres",
+              "role": "field",
+              "label": "Six centres",
+              "bindings": [
+                {
+                  "binding_ref": "b-centres-collection",
+                  "component_ref": "component:epi-logos:centres",
+                  "portable_renderer": "oi.presentation/collection/v1",
+                  "props": {
+                    "title": "Six centres — instruments in the field, not prerequisites",
+                    "items": [
+                      { "label": "Central", "description": "A world that remains yours.", "ref": "project:central" },
+                      { "label": "Actuation", "description": "Downward authority requires upward reality.", "ref": "project:actuation" },
+                      { "label": "AIKit", "description": "A horizon that discloses itself.", "ref": "project:ai-kit" },
+                      { "label": "Software Factory", "description": "Vision survives the labour.", "ref": "project:software-factory" },
+                      { "label": "Workcell", "description": "Intention crosses into matter.", "ref": "project:workcell" },
+                      { "label": "Quaternal Logic", "description": "Metaphysics, made answerable.", "ref": "project:quaternal-logic" }
+                    ]
+                  },
+                  "fallback": { "title": "Six centres", "text": "Central · Actuation · AIKit · Software Factory · Workcell · Quaternal Logic." },
+                  "provenance": [
+                    { "kind": "git-blob", "ref": "repo:EpiLogos/O-I:docs/ARCHITECTURE.md", "source_system": "git", "revision": "oi-v0.1.0-prelocal.2" }
+                  ]
+                }
+              ]
+            },
+            {
+              "region_ref": "knowledge",
+              "role": "knowledge",
+              "label": "Documentation",
+              "bindings": [
+                {
+                  "binding_ref": "b-docs-reading",
+                  "component_ref": "component:epi-logos:docs-reading",
+                  "portable_renderer": "oi.presentation/wiki-reading/v1",
+                  "props": {
+                    "title": "O:I Documentation",
+                    "text": "The programme's canonical documents. Each node resolves to the source that remains authoritative for it.",
+                    "refs": [
+                      "wiki:o-i:docs:founding-positions",
+                      "wiki:o-i:docs:vision",
+                      "wiki:o-i:docs:architecture",
+                      "wiki:o-i:docs:shared-field",
+                      "wiki:o-i:docs:objective-co-internality",
+                      "wiki:o-i:docs:visual-product-understanding"
+                    ]
+                  },
+                  "fallback": { "title": "O:I Documentation", "text": "The programme's canonical documents." },
+                  "provenance": [
+                    { "kind": "git-tree", "ref": "repo:EpiLogos/O-I:docs", "source_system": "git", "revision": "oi-v0.1.0-prelocal.2" }
+                  ]
+                }
+              ]
+            },
+            {
+              "region_ref": "relation",
+              "role": "relation",
+              "label": "How worlds meet",
+              "bindings": [
+                {
+                  "binding_ref": "b-relation-diagram",
+                  "component_ref": "component:epi-logos:world-relation",
+                  "portable_renderer": "oi.presentation/diagram/v1",
+                  "props": {
+                    "title": "World → field → world",
+                    "relations": [
+                      "Your world → selective projection → shared field",
+                      "Shared field → mediated encounter → another world",
+                      "Encounter → attributable return → each ground"
+                    ],
+                    "description": "Projection is not upload: source authority and canonical identity stay local, and the field mediates presentations, not ownership."
+                  },
+                  "fallback": { "title": "World → field → world", "text": "Worlds selectively project into a shared field and return attributable difference." },
+                  "provenance": [
+                    { "kind": "git-blob", "ref": "repo:EpiLogos/O-I:docs/SHARED-FIELD.md", "source_system": "git", "revision": "oi-v0.1.0-prelocal.2" }
+                  ]
+                }
+              ]
+            },
+            {
+              "region_ref": "sources",
+              "role": "source",
+              "label": "Canonical sources",
+              "bindings": [
+                {
+                  "binding_ref": "b-source-repo",
+                  "component_ref": "component:epi-logos:source-repo",
+                  "portable_renderer": "oi.presentation/source/v1",
+                  "props": {
+                    "title": "EpiLogos/O-I",
+                    "text": "The umbrella repository — contracts, shared field, suite operator, public site.",
+                    "href": "https://github.com/EpiLogos/O-I"
+                  },
+                  "fallback": { "title": "EpiLogos/O-I", "text": "github.com/EpiLogos/O-I" },
+                  "provenance": [
+                    { "kind": "git-project", "ref": "repo:EpiLogos/O-I", "source_system": "git", "revision": "oi-v0.1.0-prelocal.2" }
+                  ]
+                },
+                {
+                  "binding_ref": "b-source-positions",
+                  "component_ref": "component:epi-logos:source-positions",
+                  "portable_renderer": "oi.presentation/source/v1",
+                  "props": {
+                    "title": "Founding positions",
+                    "text": "The harmonised statement of what O:I is actually saying.",
+                    "href": "https://github.com/EpiLogos/O-I/blob/main/docs/positions/FOUNDING-POSITIONS.md"
+                  },
+                  "fallback": { "title": "Founding positions", "text": "docs/positions/FOUNDING-POSITIONS.md" },
+                  "provenance": [
+                    { "kind": "git-blob", "ref": "repo:EpiLogos/O-I:docs/positions/FOUNDING-POSITIONS.md", "source_system": "git", "revision": "oi-v0.1.0-prelocal.2" }
+                  ]
+                }
+              ]
+            }
+          ],
+          "provenance": [
+            { "kind": "world-presentation", "ref": "repo:EpiLogos/O-I", "source_system": "git", "revision": "oi-v0.1.0-prelocal.2" }
+          ]
+        }
+      },
+      "provenance": [
+        { "kind": "git-project", "ref": "repo:EpiLogos/O-I", "source_system": "git", "revision": "oi-v0.1.0-prelocal.2" }
+      ]
+    }
+  ]
 }

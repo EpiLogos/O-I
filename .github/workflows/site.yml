@@ -48,7 +48,8 @@ jobs:
             self-other-read-model.test.mjs \
             field-proof-read-model.test.mjs \
             explore-read-model.test.mjs \
-            explore-provider.test.mjs
+            explore-provider.test.mjs \
+            explore-public-seed.test.mjs
       - run: npm install --no-audit --no-fund
       - run: npm run build
       - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
