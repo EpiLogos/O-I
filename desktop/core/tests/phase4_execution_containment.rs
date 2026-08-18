@@ -37,6 +37,7 @@ fn request(operation_id: &str) -> ActionExecutionRequest {
             action_ref: ACTION.into(),
             subject_ref: SUBJECT.into(),
         },
+        authority_subject_ref: None,
         native_owner: "factory".into(),
         required_capability_ref: Some(CAPABILITY.into()),
         binding_revision: REVISION.into(),
@@ -85,7 +86,7 @@ fn subject_revision_capability_and_operation_substitution_fail_before_use_is_spe
     assert!(store
         .authorize_and_consume("authority/phase4/demo", &wrong_subject)
         .unwrap_err()
-        .contains("exact Action/owner/subject"));
+        .contains("authority subject"));
 
     let mut wrong_revision = request("operation/stale-revision");
     wrong_revision.binding_revision = "43".into();
@@ -102,6 +103,50 @@ fn subject_revision_capability_and_operation_substitution_fail_before_use_is_spe
         .contains("Capability"));
 
     assert_eq!(store.remaining_uses("authority/phase4/demo"), Some(1));
+}
+
+#[test]
+fn stable_parent_grant_can_authorise_one_exact_provider_created_child_selection() {
+    let mut store = ActionAuthorityStore::default();
+    let mut grant = bounded_grant(1);
+    grant.grant.authority_ref = "authority/nara/episode".into();
+    grant.grant.action_ref = "epi.action.nara.selection.sendoff".into();
+    grant.grant.native_owner = "epi".into();
+    grant.grant.capability_ref = Some("epi.capability.nara.selected-context".into());
+    grant.grant.capability_grant_ref = Some("capability-grant/nara/selected-context".into());
+    grant.subject_ref = "epi:nara:episode:2026-08-19:daily-note".into();
+    grant.binding_revision = "epi-revision".into();
+    store.register_trusted(grant).unwrap();
+
+    assert_eq!(
+        store.available_grant_ref(
+            "epi.action.nara.selection.sendoff",
+            "epi",
+            "epi:nara:episode:2026-08-19:daily-note",
+            2_000,
+        ),
+        Some("authority/nara/episode".into())
+    );
+
+    let authorised = store
+        .authorize_and_consume(
+            "authority/nara/episode",
+            &ActionExecutionRequest {
+                operation_id: "nara-selection/7:12-20".into(),
+                emission: SurfaceActionEmission {
+                    action_ref: "epi.action.nara.selection.sendoff".into(),
+                    subject_ref: "epi:nara:selection:episode:r7:12-20".into(),
+                },
+                authority_subject_ref: Some("epi:nara:episode:2026-08-19:daily-note".into()),
+                native_owner: "epi".into(),
+                required_capability_ref: Some("epi.capability.nara.selected-context".into()),
+                binding_revision: "epi-revision".into(),
+                now_unix_ms: 2_000,
+            },
+        )
+        .unwrap();
+    assert_eq!(authorised.grant_ref, "authority/nara/episode");
+    assert_eq!(store.remaining_uses("authority/nara/episode"), Some(0));
 }
 
 #[test]
