@@ -14,15 +14,15 @@
 
 ## [what] What is O:I
 
-### [title] AI agents act through a world around them.
+### [title] O:I maps what it means for an AI agent to have a world.
 
 An AI agent works through an underlying inference model, but also through the project it can see, the tools it can use, the knowledge it can reach, the authority it has, the environment it can change and the history it can carry forward.
 
-O:I — Operating Infrastructure · Objective Internality — is an open architecture for designing that world. We are developing it as a working platform and an open research programme for understanding how different technological arrangements shape what kinds of agency become possible.
+O:I — Operating Infrastructure · Objective Internality — is an open architecture for making that world explicit: a common substrate through which different agentic setups can expose and develop the projects, knowledge, capabilities, authority, environments, history and relations that become operative for an agent. We are building it both as a working platform and as a research programme into Objective Internality: what constitutes having-a-world for an artificial agent, and what different technical arrangements make possible.
 
 ## [existing-world] Start from the world you already have
 
-### [title] Your existing setup is already a world.
+### [title] Start where you are.
 
 Your editor, shell, repositories, prompts, agents, skills, tools, services, machines and working habits already form a real technological environment. O:I starts there.
 
@@ -30,17 +30,17 @@ You can keep the setup you use and make more of its structure durable, visible a
 
 ## [field] One possibility space
 
-### [title] Begin with a project and an agent.
+### [title] The same substrate can stay minimal or develop as far as you need.
 
-A real project you keep, plus an AI agent able to work with it, is already a useful starting point. From there the world can develop as your needs develop: more durable personal context, richer tools and knowledge, explicit agency and authority, developmental history, material execution environments, formal experiments and relations with other worlds.
+At the minimal end, O:I can simply give your existing project and agent a durable relation: your working ground persists, and the agent can act from it. Nothing else has to be added until it is useful. As your needs develop, the same world can gain richer knowledge, capabilities, authority, developmental history, material execution environments, formal experiments and relations with other worlds.
 
-### [ground] Files and projects you keep
+### [ground] Your working ground persists
 
-### [capacity] An AI agent that can work with them
+### [capacity] Your agent acts from that ground
 
-### [core-note] A small but real continuing world.
+### [core-note] Minimal O:I: durable ground + actuated model capacity.
 
-### [developments] It can develop into
+### [developments] Develop the world where your use demands it
 
 - **Projects and continuity** — work that persists across sessions
 - **Knowledge and sources** — material the agent can find and trace back to source
@@ -53,21 +53,23 @@ A real project you keep, plus an AI agent able to work with it, is already a use
 
 ## [centres] Our products
 
-### [title] We are developing six products for six parts of that world.
+### [title] We are mapping what constitutes having-a-world for an AI agent.
 
-Central keeps personal and project ground durable. Actuation makes agency and authority explicit. AIKit composes the capabilities and context available here and now. Software Factory carries software development from intention through evidence and Return. Workcell makes computational environments real. Quaternal Logic is the executable formal research surface.
+Objective Internality is the technological space through which project ground, knowledge, capability, authority, developmental history, material environment, formal structure and relation can become operative for an agent. We are developing six products as the current engineering map of that space: Central for durable personal and project ground; Actuation for agency and authority; AIKit for capabilities, knowledge and runtime composition; Software Factory for developmental continuity and Return; Workcell for material computational worlds; and Quaternal Logic for executable formal research.
 
-Their abstractions are meant to remain stable enough for other technologies to meet them through SDKs, providers, connectors and extension contracts. The reference implementations show working paths; the wider field can add more.
+These are centres within the same minimal-to-maximal possibility space. A world can begin with only the relations it needs and develop across more of the map as its use becomes richer. Their abstractions are meant to remain stable enough for other technologies to meet them through SDKs, providers, connectors and extension contracts. The reference implementations show working paths; the wider field can add more.
 
 [See the products and their architecture](./products.html).
 
 ## [shared] Shared field
 
-### [title] Worlds can meet in a shared field.
+### [title] From your local agent world to a shared field.
 
-A person or agent can define a world locally and selectively make parts of it available to another world: a document, project result, wiki space, experiment, Agent or other addressable object. The shared field carries the relation while source identity and provenance remain visible.
+We are building O:I as a platform through which a locally grounded agent world can selectively become shareable. A document, project result, wiki space, experiment, Agent or other addressable object can be projected outward while its source identity and provenance remain with the world that owns it.
 
-That includes the engineering knowledge produced around the platform itself. A reusable connector, provider, fixture, study or reproduction can become an attributable contribution that another world can encounter and extend.
+That is the minimal technological movement: **local agent world → selective Projection → Shared Field → encounter by another world**. It gives independently grounded people and agents a place to publish, encounter, respond, extend and learn from one another without requiring their local worlds to collapse into the platform.
+
+The same field can carry the engineering knowledge produced around O:I itself. A reusable connector, provider, fixture, study or reproduction can become an attributable contribution that another world can encounter and extend.
 
 [Read the Shared Field account](./shared-field.html) or [open Explore](./explore.html).
 
