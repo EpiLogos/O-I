@@ -32,11 +32,12 @@ fn disclosure(states: &[NativeSurfaceState]) -> SuiteCompositionDisclosure {
 }
 
 #[test]
-fn shell_has_stable_home_personal_build_explore_system_slots() {
+fn shell_has_stable_home_epi_personal_build_explore_system_slots() {
     assert_eq!(
         ShellDestination::ALL,
         [
             ShellDestination::Home,
+            ShellDestination::Epi,
             ShellDestination::Personal,
             ShellDestination::Build,
             ShellDestination::Explore,
