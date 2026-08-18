@@ -15,8 +15,8 @@ index.html          landing / front door
 oi.html             whole-level O:I account
 products.html       six native products + current architecture views
 shared-field.html   World, Projection, SharedField and Objective Co-Internality
-research.html       agentic-engineering research field + protocol + QL entry
-build.html          installation, source, governing documents and development entry
+research.html       agentic-engineering research field + protocol + collective extension + QL entry
+build.html          installation, source, SDK/extension direction and development entry
 explore.html        standalone Explore application
 ```
 
@@ -90,6 +90,8 @@ Use the specific technical noun when it matters: underlying model capacity, Agen
 
 Programme statements should also preserve research status. O:I is building an open platform in which proposed agency structures can be tested; public copy should not present development propositions as already-proven behavioural conclusions.
 
+`docs/positions/FOUNDING-POSITIONS.md` is the upstream authored source for this public framing. The site tests now check several load-bearing public claims against that file directly.
+
 ## Front door
 
 `index.html` is deliberately a landing page rather than the complete public essay. It keeps the parallax identity, a plain account of an agent acting through a technological world, the existing-world entry, the minimal-to-developed possibility field, concise entrances to our six products, and apertures into Shared Field and Build.
@@ -115,6 +117,8 @@ Quaternal Logic   QL refs/operators · MEF registry · refraction · readings ·
 
 The architecture drawings are React-owned because they are visual composition. Their product meaning should remain traceable to the native architecture/documentation corpus rather than becoming a site-only ontology.
 
+The extension framing is equally important. The product abstraction is the durable root; a native SDK, provider, connector, Component or other public contract is an accommodation surface through which a real technology can participate in that relation. Reference implementations demonstrate known paths. The public site may describe this as programme intent even where a particular native SDK is still in development, but present-tense implementation claims must remain grounded in the owning product repository.
+
 ## Research
 
 Research is the O:I agentic-engineering programme, not a synonym for Quaternal Logic.
@@ -134,15 +138,51 @@ Discover
   → Return
 ```
 
-The page then opens the research surfaces distributed across personal/project worlds, agency and authority, capability/knowledge fields, harnesses and runtime bodies, developmental systems, material worlds, shared agency and epistemic cultivation.
+The page then opens the research surfaces distributed across personal/project worlds, agency and authority, capability/knowledge fields, harnesses and runtime bodies, developmental systems, material worlds, shared agency, epistemic cultivation and community extension.
+
+Community extension is part of the research method, not generic plugin language. The public account should preserve this relation:
+
+```text
+stable abstraction
+      ↓
+native SDK / public contract
+      ↓
+local accommodation to a real technology
+      ↓
+fixture + verification + observed use
+      ↓
+shared contribution
+      ↓
+reproduction / adaptation / comparison
+      ↓
+Return to product and research
+```
+
+The point is that the research object is heterogeneous technological agency itself. Different people inhabit different Worlds. Their providers, connectors, Components, fixtures, reproductions and corrections can therefore widen the empirical field and return pressure on the abstractions, SDKs and implementations.
 
 Quaternal Logic remains a substantial deeper entry into the Epi-Logos formal research programme, with operational parity as its discipline; it does not stand in for the whole O:I research protocol.
 
-## Build / distribution
+## Build / distribution / extension
 
-The Build page must follow accepted implementation truth. Until the public distribution package lands, `docs/INSTALL.md` and `docs/CLI.md` remain the authority for installing and using `oi`. Do not publish a future npm command merely because distribution work is underway.
+Keep two package relations distinct.
+
+The ordinary `oi` command distribution and the O:I extension/package envelope solve different problems:
+
+```text
+@epilogos/oi
+  ordinary distribution of the native oi executable
+
+             !=
+
+oi.package/v1
+  suite extension/contribution composition envelope
+```
+
+The public Build page must follow accepted implementation truth. Until the public distribution package lands, `docs/INSTALL.md` and `docs/CLI.md` remain the authority for installing and using `oi`. Do not publish a future npm command merely because distribution work is underway.
 
 When that distribution PR is accepted, update `content/public-site.md` first and make the public install line the simplest truthful first encounter.
+
+The extension/package SDK programme is a separate product-development line. It can be linked as current development while native product SDKs and contracts retain semantic ownership of the contributions they accept. O:I owns the whole-level composition/provenance relation rather than becoming a universal runtime plugin ontology.
 
 ## Explore
 
