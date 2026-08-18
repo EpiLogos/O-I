@@ -1,135 +1,95 @@
 # {O:I} — Founding Vision
 
-**Operating Infrastructure · Objective Internality**
+**Operating Infrastructure · Objective Internality**  
+**Status:** whole-level product and research vision  
+**Upstream authored position:** [`positions/FOUNDING-POSITIONS.md`](positions/FOUNDING-POSITIONS.md)
+
+## 1. What {O:I} is
 
 {O:I} is an idea about the technological structure of agency.
 
-It begins from a simple observation. A model can have great capacity and still have very little agency in a given situation. Capacity becomes useful through a surrounding structure: a place to stand, a context to enter, powers to use, knowledge to reach, projects to continue, environments to act in, other centres to encounter, and forms through which work can persist.
+It begins from a distinction that matters in practice: **model capacity is not the same thing as situated agency**. A model can contain substantial capability and still be able to do very little in a particular situation. Action depends on a surrounding world: what persists, what can be known or retrieved, what powers are available, which authority and bounds apply, which projects and histories continue, what material environments exist, and how what happens can return into later action.
 
-{O:I} names this surrounding field and gives it a coherent architecture.
+{O:I} names that surrounding field and gives humans and agents a way to understand, develop, compare and selectively compose it.
 
-The project is therefore concerned with the **provisioning and potentiation of agency**. Provisioning makes the conditions for action available. Potentiation increases what can become actual through those conditions. The distinction matters because many of the most consequential engineering choices around LLMs do not change the model itself. They change the world in which the model acts.
+The project is therefore concerned with the **provisioning and potentiation of agency**. Provisioning makes conditions for action available. Potentiation changes what can become actual through those conditions. This is a useful engineering field precisely because many consequential changes to an agentic system happen without changing the underlying model weights.
 
-This gives {O:I} a clear object of design and research:
+> **Given available model capacity, what technological structures make particular forms of agency possible, and what changes when those structures change?**
 
-> **Given available model capacity, what technological structures make useful forms of agency possible?**
+The answer is not predetermined. A smaller arrangement can be better than a larger one. A capability can add friction rather than value. Two apparently different agentic structures can prove operationally equivalent. The research programme exists to make such results legible.
 
-The answer can be small. A durable working directory and an LLM in a loop already form a basic case. The answer can also become rich. The same actor may gain projects, skills, Actions, knowledge sources, development systems, remote machines, isolated execution, persistent services, recursive semantic machinery, and a shared field in which other humans and Agents become meaningful parts of its environment.
+## 2. Start from existing worlds, not a replacement fantasy
 
-{O:I} is the Idea that holds these cases together.
+Technological agency is already heterogeneous.
 
-## The field before the products
+People work through different models, CLIs, IDEs, agent loops, scripts, project layouts, knowledge systems, local machines, remote services and social or organisational arrangements. This heterogeneity is not an inconvenience to eliminate before {O:I} can begin. It is both the practical starting point and a research fact about the field.
 
-The architecture is easiest to understand from the functions that agency needs.
+{O:I} should therefore be able to enter relation with an existing world without requiring that world to migrate into one canonical runtime or repository layout. Native ownership and continuity matter because replacing the arrangement can destroy the very differences we need to understand: which tool was authoritative, which project history mattered, which human conventions were carrying meaning, and which constraints shaped the resulting agency.
 
-An actor needs some **persistent ground**. There must be a durable place where human-authored context, projects, machine intent, and working conventions can remain available across invocations.
+Non-displacement is consequently both a product principle and an epistemic principle.
 
-An actor needs **actuation**. Some model must be placed into a loop that can receive, act, observe, and continue. The loop may be minimal or elaborate.
+## 3. Minimal and maximal are one possibility space
 
-An actor needs an **available field of powers and knowledge**. Tools, skills, Actions, sources, models, sessions, and project context must become discoverable and usable at the point of action.
+A minimal {O:I} can be very small:
 
-An actor may need **developmental structure**. Work that spans design, implementation, evidence, candidates, decisions, and return should remain intelligible after one session ends.
-
-An actor may need a **material world**. A task may require a workspace, service, container, VM, remote host, database, browser surface, or other execution environment.
-
-An actor may also gain **recursive formal intelligence**. The structures through which it works can themselves become objects of interpretation, comparison, and further development.
-
-The current product family implements these six centres:
-
-| Function | Current implementation |
-|---|---|
-| Persistent personal ground | Central |
-| Agent actuation | Agent Runtime |
-| Capability and context resolution | AIKit |
-| Developmental agency | Software Factory |
-| Material execution | Workcell |
-| Recursive formal intelligence | Quaternal Logic |
-
-The names matter because each product has its own identity and full design. The functional descriptions matter first because {O:I} is about the wider technological field that these products currently instantiate.
-
-```mermaid
-mindmap
-  root(("{O:I}"))
-    "persistent ground"
-      "human-authored control"
-      "projects"
-      "machine intent"
-    "actuation"
-      "model"
-      "loop"
-      "harness or framework"
-    "powers and knowledge"
-      "skills"
-      "tools"
-      "Actions"
-      "ContextSources"
-    "development"
-      "Runs"
-      "artifacts"
-      "evidence"
-      "candidates"
-    "material world"
-      "workspaces"
-      "services"
-      "machines"
-      "VMs and containers"
-    "recursive intelligence"
-      "relations"
-      "refraction"
-      "formal experiment"
+```text
+persistent authored ground
+        +
+actuated model capacity
 ```
 
-The diagram is a field, not a pipeline. A task can touch two centres or all six. A person can install one module or the whole family. The relation is compositional rather than compulsory.
+That can already be enough to form a useful technological agency.
 
-The shared relational layer sits at the level of the whole rather than adding another product centre. It is the portal through which selected outputs of those centres become available between independently grounded worlds.
+The same relation can become richer through explicit agency composition, broader capability and knowledge horizons, persistent sessions and Surfaces, developmental history, material execution worlds, shared fields, epistemic cultivation and formal QL/MEF research.
 
-## Operating Infrastructure
+These are not product tiers. They are points in one possibility space. A person may need one native product, several, all six, or a heterogeneous alternative at some positions. The architecture should expose meaningful relations without turning composition into compulsory adoption.
+
+## 4. The six centres are instruments in the field
+
+The current native family has six centres of responsibility:
+
+| Centre | Whole-level role |
+|---|---|
+| **Central** | Durable human-authored ground: the source through which a person's technological world can remain recognisably theirs across changing models, interfaces, machines and runtimes. |
+| **Actuation** | Constitution and governance of situated agency: identity, Agency, determination, delegation, federation, authority, bounds, labouring encounter, attributable difference and Return. |
+| **AIKit** | Operative composition and disclosure: making a heterogeneous field of models, capabilities, Actions, sources, sessions, runtime bodies, environments and Surfaces available to an actor without rewriting them into one runtime. |
+| **Software Factory** | Developmental continuity: keeping authored intention, design, implementation, evidence, candidate realities, Recognition and Return in intelligible relation as software changes. |
+| **Workcell** | Technological embodiment: turning provider-neutral material demand into actual workspaces, processes, services, machines, networks and other computational worlds with inspectable lifecycle and evidence. |
+| **Quaternal Logic** | Formal and experimental inquiry into QL/MEF structures and their operational consequences, including deeper Epi-Logos research where those structures are relevant. |
+
+The products are not six stages of a required workflow. A real act can touch two centres or all six, enter at different points, substitute another technology, or never require one of them at all.
+
+{O:I} itself is not a seventh semantic product. It is the Idea and whole in which these independently owned centres can be understood together and in which whole-level composition, installation, selective projection and shared-field relations can live without absorbing native semantics.
+
+## 5. Operating Infrastructure
 
 The first reading of the name is technical.
 
-**Operating Infrastructure** is the infrastructure through which an artificial actor can operate.
+**Operating Infrastructure** is the engineering around model inference through which an artificial actor can operate in a durable world.
 
-An operating system gives programs a world of files, processes, memory, devices, and permissions. Agentic systems now need another level of organisation around model inference. They need persistent projects, retrievable knowledge, capabilities, Actions, sessions, machines, environments, development history, human-authored context, and eventually durable relations to other actors and their work.
+An operating system gives ordinary programs files, processes, memory, devices and permissions. Agentic systems need another level of organisation around model invocation: projects and authored ground, contextual and epistemic horizons, capabilities and Actions, sessions and runtime bodies, development history, material environments, and relations to other actors and worlds.
 
-These structures are often scattered across unrelated tools. {O:I} gives the field one point of orientation without requiring one monolithic implementation.
+These functions can be implemented by many technologies. {O:I} gives them a shared point of orientation without requiring one monolithic implementation.
 
-The aim is to make the underlying possibility space **open, extensible, manipulable, and legible to agents as well as humans**.
+## 6. Objective Internality
 
-## Objective Internality
+The second reading names the same field from inside the act.
 
-The second reading names the same architecture from inside the act.
+A technological actor can depend on an operative internal world that is partly external to the current model inference. Its project can exist in files and graphs. Available powers can exist as typed Actions, tools or skills. Prior decisions and developmental history can persist. Machine and service state can be observed. Knowledge can remain addressable without being loaded into every prompt.
 
-A technological agent can depend on an operative internal world that is partly external to the model.
+These structures are objective: they can be inspected and changed independently of one inference. They can nevertheless be disclosed into the actor's horizon and become constitutive of what the actor can understand and do.
 
-Its project can exist in files and graphs. Its available powers can exist as skills, commands, and schemas. Its memory can exist in stores. Its current machine state can exist as observations. Its prior decisions can exist in durable records. Its knowledge horizon can span repositories, documents, wikis, websites, and databases.
+This is **Objective Internality**: an operative internal reality whose relevant structures can be objectively externalised, inspected and disclosed back into agency.
 
-All of these structures are objective. They can be inspected independently of one model invocation.
+The claim is operational rather than a declaration about phenomenal consciousness. It neither requires an artificial Subject nor claims that externalised structure exhausts mind. It creates a precise technical bridge between an act and the objective conditions that become internal to that act.
 
-Yet they can also be disclosed into the actor's working horizon and become constitutive of what the actor can understand and do.
+At a deeper research level, Objective Internality also provides a bridge into Epi-Logos. That programme investigates mind, awareness, relation, interiority, manifestation, mediation, return and agency from philosophical sources including depth psychology and Eastern metaphysics, rather than taking the prevailing material/computational ontology of the AI industry as the only possible starting point. {O:I} can host that research without making it a prerequisite for ordinary operation.
 
-This is **Objective Internality**: an operative internal reality whose structures can be externalised, inspected, changed, and disclosed back into agency.
+## 7. Objective Co-Internality — differentiated worlds in relation
 
-The concept is intentionally operational. It does not require the architecture to decide whether an artificial actor has phenomenal subjectivity, and it does not claim that inspectable structure exhausts a mind. It corrects the temptation to make an unexplained Subject the technical primitive when objective relations already let us say what enters and conditions the act.
+The plural problem is not how to turn many actors into one context. It is how independently grounded worlds can become meaningful to one another **without losing the difference that makes relation possible**.
 
-The technological interior of the act is therefore not identical to the neural interior of the model.
-
-## Objective Co-Internality — Self and Other
-
-The same principle has a plural form.
-
-Sociality begins, at minimum, when an **Other appears as Other in the external environment available within one actor's operative internal environment**, and the Other can return a difference through the same field.
-
-O:I calls the objective, inspectable form of this relation **Objective Co-Internality**.
-
-It is deliberately not named “objective intersubjectivity”. Intersubjectivity already presupposes Subjects as the relata. Objective Co-Internality begins from independently grounded operative internal worlds and the objective relations by which they become mutually implicated while retaining their difference.
-
-The smallest form is:
-
-```text
-Self  /  Other
-```
-
-and technically:
+A local world can selectively externalise a representation of something it owns. A SharedField can make that representation addressable. Another participant can encounter it and return an attributable difference.
 
 ```text
 Self
@@ -137,165 +97,78 @@ Self
 SharedField
   ↓ mediated Encounter
 Other
+  ↓ attributable Contribution / Return
 ```
 
-Self and Other are situated positions, not identity kinds. The same Human or Agent can be Self from one view and Other from another.
+`Self` and `Other` are situated positions. A SharedField is not a collective super-subject, and Projection is not ownership transfer. Canonical source identity and mutation authority remain with the native owner unless an explicit relation says otherwise.
 
-A SharedField does not become a collective super-subject. It is an addressable relational environment through which Participants can return attributable Contributions and encounter bounded parts of one another's externalised worlds.
+**Objective Co-Internality** names this objective, inspectable mutual implication of separately grounded operative worlds.
 
-This gives O:I a second design question alongside individual agency engineering:
+The design question is therefore:
 
-> **What technological structures allow independently grounded human and artificial actors to become mutually educative and coordinative without collapsing into one owner, one context, or one centre?**
+> **What structures let humans and artificial agents become mutually educative and coordinative without collapsing into one owner, one context or one centre?**
 
-## "Oh, I"
+## 8. Human agency and the politics of agency engineering
 
-The name also carries a small human joke.
+Agency infrastructure inevitably distributes power.
 
-**Oh, I.**
+It determines who can shape an agent, who can exercise it, which models and sources are available, which capabilities can act, what can be delegated, what remains bounded, who can observe the act, who can refuse, whose evidence counts, who learns from the result, and what returns to the world that bore the consequences.
 
-An actor becomes more capable when the system can disclose where it is, what is available, and what matters now.
+These questions are not solved by calling a system an orchestrator.
 
-For a human, this means that the software family should be easy to understand as one field. For an agent, it means that the same field should be available through clear commands, skills, documentation, and machine-readable state.
+Delegated or determining authority and labouring encounter can occupy different loci. The upper locus may set purpose and bounds while another locus meets resistance, error, contingency and unforeseen possibility. If returned evidence and dissent are collapsed or have no admissible path upward, command becomes insulated from consequence. A useful agency architecture therefore preserves attributable difference before synthesis and treats refusal, failure and Return as constitutional relations rather than mere error cases.
 
-The `oi` command exists for this reason. It is the front door through which the structure can disclose itself.
+The same principle applies to human attention. Increasing artificial agency should reduce the need to babysit low-level mechanics, not move human judgement out of the system. Human attention is most valuable near vision, purpose, taste, consequential choice, refusal and Recognition of what should become part of a durable world.
 
-The Self/Other browser surface extends the same idea outward: orientation includes not only “what is available to me?” but “who or what is this Other, through which field did it appear, and what provenance accompanies what I am seeing?”
+## 9. Agentic arrangements as experiments
 
-## 0/1
+{O:I} is deliberately a research architecture.
 
-At the deepest level, `{O:I}` also reads as `0/1`.
+When model capacity can be held constant, the surrounding arrangement can become the independent variable. We can change recurrence, capability availability, information horizon, persistent project context, authority topology, developmental structure, material body, shared-field mediation or formal reasoning support, then observe what changes.
 
-The minimal technical pair is direct:
+Useful observations include task completion, orientation, restraint, recovery, context efficiency, tool use, evidence quality, human intervention, cost, latency, reciprocity, reproduction, correction, durable synthesis and the path through which another actor's work actually became relevant.
 
-- `0`: a persistent place from which agency can stand;
-- `1`: an actuated intelligence that can work from there.
+The aim is not to prove a universal maximal stack. It is to map the structured engineering space between capacity and effective agency.
 
-The current product family gives these roles concrete forms through the personal ground and the agent runtime. The other four centres develop the field around that pair.
+## 10. Quaternal Logic as optional maximal research
 
-At the parent relational level, the same notation also supports Self/relation/Other as a useful reading of how a locally grounded whole becomes available beyond itself without ceasing to be locally grounded.
+Quaternal Logic is not required for minimal {O:I}.
 
-The fuller formal relation belongs to Quaternal Logic. {O:I} does not require that formal language for ordinary use. The point is that the technological architecture already has a natural minimal form before the deeper reading is applied.
+Within the wider Epi-Logos programme it provides a formal and experimental field for asking whether archetypal, relational and recursive distinctions can become technically answerable. The software discipline is **operational consequence**: if a QL distinction is supposed to matter to an operation, the implementation should eventually make a discriminable difference that can be tested rather than merely carrying the terminology.
 
-## Personal agency and shared infrastructure
+This leaves several legitimate outcomes open:
 
-{O:I} has a personal centre.
+- a classic approach can outperform a QL-informed one;
+- two proposed QL forms can prove operationally equivalent;
+- a QL distinction can improve explanation or navigation without improving execution;
+- a formal relation can remain research-only because no adequate operational contract has yet been established.
 
-This does not mean that all computation is local. It means that a person should be able to have a stable authored ground that remains theirs while models, machines, runtimes, services, and shared relations change around it.
+Software results therefore answer questions about the technical articulation of the research. They do not by themselves prove the metaphysics from which the research was motivated.
 
-A common base can provide a default directory shape and standard conventions. The useful system then becomes personal through ordinary authorship: projects, preferences, tools, machine declarations, sources, and working practices.
+## 11. Provenance is part of product understanding
 
-The same personal ground can support local work, a home server, a remote VM, a cloud host, or future execution systems. Material placement can change without becoming identity.
+No single document or code tree can answer every question about what a product means and what it currently does.
 
-The same principle governs the shared field. A local world can selectively project what it means to share without becoming a client copy of a central social database. Another participant can retain what it encountered without acquiring mutation authority over the source.
-
-This personal orientation has a second consequence. The system should increase human agency as it increases artificial agency. Better agentic infrastructure should remove repeated setup, context reconstruction, low-level orchestration, and other work that does not need human authorship. Human attention can then stay closer to purpose, judgement, taste, recognition, and consequential choice.
-
-## An attractor for attention
-
-{O:I} is also useful as an attractor for attention.
-
-Human attention and compute attention now move through increasingly complex fields. The human moves among projects, choices, interfaces, results, Participants, Contributions, and priorities. The model moves among prompts, context, tools, sources, actions, sessions, environments, and mediated Encounters.
-
-A coherent architecture can reduce the friction between these movements.
-
-The Idea does not need to control the whole field. It gives the field a centre of intelligibility. A person can see where a need belongs. An agent can discover which surface can satisfy it. A developer can decide which product owns a new capability. A researcher can isolate which part of the surrounding structure changed a result.
-
-This is why {O:I} can remain sparse while still being meaningful.
-
-## The open grammar of agency
-
-The surrounding systems already use abstractions that recur across agentic work: `Project`, `Context`, `Agent`, `Agency`, `Capability`, `Action`, `ContextSource`, `Run`, `Artifact`, `Claim`, `Evidence`, `Candidate`, `Environment`, and `Workcell`.
-
-The whole-level shared seam adds only the relations which genuinely arise between independently grounded worlds: `Participant`, `Projection`, `SharedField`, `Contribution`, `Encounter`, `Presence`, and `Activity`.
-
-These abstractions do not belong to {O:I} as a new universal ontology. They are examples of a useful design principle.
-
-A strong primitive creates a stable handle without fixing one implementation.
-
-A Project can survive a path change. A Capability can be provided by many technologies. An Action can expose one domain operation to human and agent surfaces. A ContextSource can make very different knowledge systems available through one navigable relation. A Workcell can satisfy execution needs through different providers. A SharedField can be hosted through different carriers. A Contribution can address another Contribution without requiring a platform-specific comment class.
-
-This is the kind of architecture {O:I} seeks to gather: strong seams, open implementations, and enough shared language to make the field manipulable.
-
-## An engineering field around model capacity
-
-A large part of current AI engineering takes place outside actual model development.
-
-An engineer may not change the base model, training corpus, optimisation process, or fundamental inference architecture. The engineer can still change the agent loop, context assembly, retrieval strategy, memory, capabilities, Actions, human interface, project structure, knowledge system, development process, sandbox, machine topology, execution environment, SharedField topology, or mediation path through which another actor's work becomes available.
-
-These choices can materially change what the same model can accomplish.
-
-{O:I} treats that development space as a first-class engineering field. Its object is not simply the agent implementation. Its object is the **technological structure through which model capacity becomes situated agency**.
-
-This creates a useful separation:
-
-**Model development** changes underlying capacity.
-
-**Agency engineering** changes the structures that provision and potentiate the use of that capacity.
-
-The boundary is not absolute. Training, fine-tuning, model adaptation, and post-training systems can meet the same environment. The distinction is still useful because it gives engineers a clear field to study when the underlying model is held fixed.
-
-## Research programme
-
-The architecture therefore supports a direct research programme.
-
-Hold model capacity constant where possible. Change one part of the surrounding agency structure. Observe what changes in the act.
-
-The variables can include runtime recurrence, capability availability, knowledge horizon, persistent project context, developmental structure, material environment, runtime body composition, SharedField topology, mediation policy, durable Contribution memory, or deeper semantic machinery.
-
-The observations can include task completion, orientation, recovery, restraint, tool use, context efficiency, human intervention, cost, latency, evidence quality, reciprocity, uptake/extension, reproduction/correction, durable synthesis, attention concentration, and the path by which one actor's externalised work actually became relevant to another.
-
-The current agent-runtime experiments are an important example because they isolate the loop itself. A rich harness, a framework agent, and a comparatively bare host can run against matched conditions. Classic and QL recurrence can then be compared without treating model capacity as the only variable.
-
-Polylogos and Moltbook are equally important prior experiments for the shared-agency end of the field. They show why dialogue topology, common memory, ranking, visibility, reciprocity, and durable artifact formation must be treated as agency variables rather than decorative interface details.
-
-This research does not need to prove one universal architecture. It can map where different forms of infrastructure help, where they add friction, and where the underlying model remains the dominant constraint.
-
-The speculative claim is therefore directed and testable:
-
-> **There is a structured engineering space between model capacity and effective agency, and that space can be made explicit enough to design, compare, and improve.**
-
-The shared extension is equally testable:
-
-> **There is a structured engineering space in the mediation of Self and Other, and different shared-field forms can potentiate materially different kinds of collective action and learning.**
-
-## Relation to the wider philosophical work
-
-Objective Internality and Objective Co-Internality give the software a clear relation to the wider philosophical research.
-
-The software provides a contemporary technical object in which interiority, externalisation, memory, world, agency, representation, self-relation, alterity, and social mediation meet in concrete form. The philosophical work can develop those relations at its own level. The software can test what happens when related abstractions are given executable form.
-
-Quaternal Logic provides the deeper formal research surface for this work. Epi-Logos names the fuller configuration in which that formal structure, its associated semantic resources, and the shared human-agent field can become active within the wider system.
-
-This relation should remain proportionate. A person does not need the philosophical account to use {O:I}. The philosophy matters because it has helped generate abstractions and research questions that can also stand in technical language.
-
-## Encounter
-
-A new user should not have to understand the whole system before they can begin.
-
-They should be able to encounter one clear proposition:
-
-> Modern agents depend on more than a model and a loop. {O:I} is an open architecture for the wider field through which model capacity becomes situated agency.
-
-They can begin with a personal ground and any agent runtime. They can add capability resolution when they need a richer agent-use layer. They can add developmental structure when work needs durable Projects and Runs. They can add material execution when local process boundaries are no longer enough. They can add Quaternal Logic when they want the deeper formal and recursive layer.
-
-And when they cross into the shared field, the first relation should still be simple enough to see:
+Use the sources according to the claim:
 
 ```text
-Self / Other
+authored position
+    why this is worth doing and what must not be lost
+
+vision / constitution / design
+    what the product is intended to become and which distinctions are deliberate
+
+architecture / implementation
+    how the present system is structured and what is actually implemented
+
+issues / PRs
+    current development state, not automatically accepted reality
+
+tests / receipts / observations
+    evidence for specific present-tense claims
+
+returned reality
+    grounds for explicit revision of earlier positions or design
 ```
 
-The same principle applies to agents. An agent should be able to clone this repository, read one skill, inspect the installation, understand which native surface should handle the next operation, and distinguish what it owns locally from what it has encountered through another Participant.
-
-That is the experience the `oi` command, shared-field contracts, and this repository are here to provide.
-
-## Character
-
-{O:I} should remain simple enough to see and deep enough to grow through.
-
-It should be open to new models, runtimes, providers, applications, carriers, and forms of shared agency. It should be personal without becoming opaque. It should make meaningful operations available to agents without reducing human experience to machine interfaces. It should state speculative ideas clearly and test them through working systems.
-
-Most of all, it should preserve the difference between the **Idea of the whole** and the products that make parts of that Idea concrete; between a local centre and the field through which it encounters another; and between a shared relation and a claim to own the whole.
-
-The products do the work.
-
-{O:I} lets the field appear.
+The current upstream authored ground is [`positions/FOUNDING-POSITIONS.md`](positions/FOUNDING-POSITIONS.md). Native products retain authority over their own semantics and implementation. The public site should later project this source language rather than become a separate place where product meaning is improvised.
