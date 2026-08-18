@@ -64,9 +64,13 @@ test('founding positions carry the same positive world and collective research c
   assert.match(foundingPositions, /stable abstraction[\s\S]*native SDK \/ public contract[\s\S]*fixture \+ verification[\s\S]*Return to product and research/);
 });
 
-test('first-contact copy names the world and our products directly', () => {
+test('first-contact copy carries the world-making proposition and local-to-shared movement', () => {
+  assert.match(sectionBody('home', 'what'), /^### \[title\] O:I maps what it means for an AI agent to have a world\.$/m);
+  assert.match(sectionBody('home', 'existing-world'), /^### \[title\] Start where you are\.$/m);
+  assert.match(sectionBody('home', 'field'), /Minimal O:I: durable ground \+ actuated model capacity/);
+  assert.match(sectionBody('home', 'centres'), /mapping what constitutes having-a-world for an AI agent/);
+  assert.match(sectionBody('home', 'shared'), /local agent world → selective Projection → Shared Field → encounter by another world/);
   assert.match(sectionBody('shared-field', 'intro'), /^### \[title\] A world, defined for agents\.$/m);
-  assert.match(sectionBody('home', 'centres'), /We are developing six products/);
 });
 
 test('Objective : Internality is the authored title form', () => {
