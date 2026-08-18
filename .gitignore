@@ -8,5 +8,6 @@ site/package-lock.json
 site/tsconfig.*.tsbuildinfo
 site/*.config.js
 site/*.config.d.ts
+site/src/explore/spacetimedb-bindings/
 *.log
 .DS_Store
