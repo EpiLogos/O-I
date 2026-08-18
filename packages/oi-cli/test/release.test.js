@@ -11,7 +11,7 @@ const {
 } = require('../lib/release');
 
 test('package exposes the native oi command', () => {
-  assert.equal(pkg.name, '@epilogos/oi');
+  assert.equal(pkg.name, '@epi-logos/oi');
   assert.equal(pkg.bin.oi, 'bin/oi.js');
 });
 
@@ -30,7 +30,7 @@ test('release asset URL is immutable-tag based and names the native archive', ()
   assert.equal(assetName(target), 'oi-0.1.0-aarch64-apple-darwin.tar.gz');
   assert.equal(
     releaseAssetUrl(DEFAULT_RELEASE_TAG, target),
-    'https://github.com/EpiLogos/O-I/releases/download/oi-v0.1.0-prelocal.3/oi-0.1.0-aarch64-apple-darwin.tar.gz'
+    'https://github.com/EpiLogos/O-I/releases/download/oi-v0.1.0-prelocal.4/oi-0.1.0-aarch64-apple-darwin.tar.gz'
   );
   assert.equal(
     checksumAssetUrl(DEFAULT_RELEASE_TAG, target),

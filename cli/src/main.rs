@@ -1,4 +1,4 @@
-// O:I 0.1.0-prelocal.3 release-candidate front door.
+// O:I 0.1.0-prelocal.4 release-candidate front door.
 mod composition {
     include!("composition.rs");
     include!("bootstrap.rs");

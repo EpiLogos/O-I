@@ -18,7 +18,7 @@ const {
 
 async function main() {
   if (process.env.OI_NPM_SKIP_DOWNLOAD === '1') {
-    console.warn('@epilogos/oi: skipping native download because OI_NPM_SKIP_DOWNLOAD=1');
+    console.warn('@epi-logos/oi: skipping native download because OI_NPM_SKIP_DOWNLOAD=1');
     return;
   }
 
@@ -31,7 +31,7 @@ async function main() {
   const stagedBinary = path.join(vendor, '.oi.installing');
 
   try {
-    console.log(`@epilogos/oi: installing native O:I ${NATIVE_VERSION} for ${target} from ${tag}`);
+    console.log(`@epi-logos/oi: installing native O:I ${NATIVE_VERSION} for ${target} from ${tag}`);
     const [checksumText] = await Promise.all([
       downloadText(checksumAssetUrl(tag, target)),
       downloadToFile(releaseAssetUrl(tag, target), archive),
@@ -53,7 +53,7 @@ async function main() {
     fs.copyFileSync(sourceBinary, stagedBinary);
     fs.chmodSync(stagedBinary, 0o755);
     fs.renameSync(stagedBinary, finalBinary);
-    console.log(`@epilogos/oi: native oi installed (${observed.slice(0, 12)}…)`);
+    console.log(`@epi-logos/oi: native oi installed (${observed.slice(0, 12)}…)`);
   } finally {
     try { fs.rmSync(stagedBinary, { force: true }); } catch {}
     try { fs.rmSync(temp, { recursive: true, force: true }); } catch {}
@@ -61,6 +61,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error(`@epilogos/oi install failed: ${error.message}`);
+  console.error(`@epi-logos/oi install failed: ${error.message}`);
   process.exit(1);
 });

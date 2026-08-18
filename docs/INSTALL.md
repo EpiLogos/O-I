@@ -6,22 +6,22 @@
 
 ### npm-formatted native distribution
 
-The repository now defines `@epilogos/oi` as the public distribution package for the native Rust CLI. It is a thin installer/launcher over O:I's prebuilt release artifacts, not a JavaScript reimplementation of `oi` and not the `oi.package/v1` extension envelope.
+The repository now defines `@epi-logos/oi` as the public distribution package for the native Rust CLI. It is a thin installer/launcher over O:I's prebuilt release artifacts, not a JavaScript reimplementation of `oi` and not the `oi.package/v1` extension envelope.
 
-The `oi-v0.1.0-prelocal.3` release line publishes the npm package tarball beside the native binary archives. Once that release exists, the package can be installed without a repository checkout or Rust toolchain:
+The `oi-v0.1.0-prelocal.4` release line publishes the npm package tarball beside the native binary archives. Once that release exists, the package can be installed without a repository checkout or Rust toolchain:
 
 ```sh
-npm install -g https://github.com/EpiLogos/O-I/releases/download/oi-v0.1.0-prelocal.3/epilogos-oi-0.1.0-prelocal.3.tgz
+npm install -g https://github.com/EpiLogos/O-I/releases/download/oi-v0.1.0-prelocal.4/epi-logos-oi-0.1.0-prelocal.4.tgz
 oi help
 ```
 
 The short registry form is the intended public entry point:
 
 ```sh
-npm install -g @epilogos/oi
+npm install -g @epi-logos/oi
 ```
 
-That short command becomes real only after the package has actually been published to npm. npm trusted publishing cannot create a package's first registry entry: an authenticated npm account that owns the `@epilogos` scope must perform the one-time bootstrap publish first. After that, configure the package's GitHub Actions trusted publisher for:
+That short command becomes real only after the package has actually been published to npm. npm trusted publishing cannot create a package's first registry entry: an authenticated npm account that owns the `@epi-logos` scope must perform the one-time bootstrap publish first. After that, configure the package's GitHub Actions trusted publisher for:
 
 ```text
 organization/user   EpiLogos

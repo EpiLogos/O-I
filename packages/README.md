@@ -2,7 +2,7 @@
 
 This directory now contains **two deliberately different package relations**. They should not be conflated.
 
-## 1. `@epilogos/oi` — distribution package for the `oi` command
+## 1. `@epi-logos/oi` — distribution package for the `oi` command
 
 `packages/oi-cli/` is an ordinary npm distribution surface for the native Rust `oi` executable. It exists so installing the O:I front door does not require cloning the repository or compiling Rust on the user's machine.
 
