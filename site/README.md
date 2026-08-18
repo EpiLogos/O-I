@@ -90,7 +90,57 @@ Use the specific technical noun when it matters: underlying model capacity, Agen
 
 Programme statements should also preserve research status. O:I is building an open platform in which proposed agency structures can be tested; public copy should not present development propositions as already-proven behavioural conclusions.
 
-`docs/positions/FOUNDING-POSITIONS.md` is the upstream authored source for this public framing. The site tests now check several load-bearing public claims against that file directly.
+`docs/positions/FOUNDING-POSITIONS.md` is the upstream authored source for this public framing. The site tests check load-bearing public claims against that file directly.
+
+## Source-to-site provenance
+
+Public writing is a **projection from developed product meaning**, not an independent compression exercise.
+
+When a site change concerns what O:I, a World, Objective Internality, human agency, a native product or the research programme *means*, begin at `docs/positions/FOUNDING-POSITIONS.md` and follow provenance far enough to distinguish:
+
+- **authored position** — why the distinction exists and what the programme is choosing to build;
+- **product/design commitment** — the relation a native product is meant to preserve;
+- **research proposition** — a claim or question being made available for comparison and experiment;
+- **implementation fact** — what current code and accepted contracts actually do;
+- **observed result** — what an experiment, fixture or real use returned;
+- **current development state** — work underway but not yet accepted as implementation truth;
+- **inference** — a synthesis which must be labelled rather than silently attributed to a source.
+
+The public page can use fewer words than its source, but it must preserve the **relation that gives the words meaning**. Do not translate a developed proposition into a generic category label and call that fidelity.
+
+For example, the human-authorship position is not adequately projected as `personalisation`, `memory`, `human in the loop`, or `human agency`. The recoverable relation is:
+
+```text
+human authorship
+      ↓
+purpose · principles · preferences · rules · ways of working
+      ↓
+durable authored source
+      ↓
+selective derivation / retrieval / disclosure
+      ↓
+operative context + authority for a particular act
+      ↓
+actuation and encounter
+      ↓
+evidence / resistance / possibility
+      ↓
+Return
+      ↓
+human Recognition / accepted revision / renewed authorship
+```
+
+The source distinctions are load-bearing:
+
+```text
+human-authored source ≠ observed state ≠ agent-generated material
+retrieval ≠ permission
+returned proposal ≠ accepted revision
+```
+
+A shorter public surface does not need to print this complete diagram every time, but its wording must remain compatible with it. The landing page can name the possibility; the O:I page should explain it; a native-product page should say what that product actually contributes; the Research page should preserve the open experimental question.
+
+The same rule applies to community extension, Objective Co-Internality, Return, operational parity and other constitutional relations. If a phrase starts behaving like a slogan, recover the source relation before rewriting the phrase.
 
 ## Front door
 
@@ -119,11 +169,13 @@ The architecture drawings are React-owned because they are visual composition. T
 
 The extension framing is equally important. The product abstraction is the durable root; a native SDK, provider, connector, Component or other public contract is an accommodation surface through which a real technology can participate in that relation. Reference implementations demonstrate known paths. The public site may describe this as programme intent even where a particular native SDK is still in development, but present-tense implementation claims must remain grounded in the owning product repository.
 
+For human-authored ground, keep native product ownership equally clear. Central owns the source classes and Control treatment; AIKit owns contextual resolution and disclosure; Actuation owns authority and Return relations; Factory owns Commission/Recognition in development. The site may explain their whole relation without implying that one product already implements another product's responsibility.
+
 ## Research
 
 Research is the O:I agentic-engineering programme, not a synonym for Quaternal Logic.
 
-The public page begins from the research object — the technological world around available model capacity — and the capacity / provisioning / potentiation distinction. It then exposes the canonical research cycle:
+The public page begins from the research object — the technological world around available model capacity — and the capacity / provisioning / potentiation distinction. It then exposes the human-authorship programme and the canonical research cycle:
 
 ```text
 Discover
@@ -138,7 +190,11 @@ Discover
   → Return
 ```
 
-The page then opens the research surfaces distributed across personal/project worlds, agency and authority, capability/knowledge fields, harnesses and runtime bodies, developmental systems, material worlds, shared agency, epistemic cultivation and community extension.
+The human-authorship line asks where and how human-written purpose, principles, preferences, rules and ways of working should enter an agentic system. Central's current authored / observed / generated distinctions and bounded retrieval provide concrete mechanisms; the behavioural value of different forms, representations and retrieval treatments remains an open comparative question.
+
+The public page should preserve both sides: **current mechanism** and **research proposition**. Do not turn a current Control protocol into proof that human-authored prose improves agency; equally, do not flatten the programme into a vague future aspiration when concrete source/provenance and retrieval mechanisms already exist.
+
+The page then opens the research surfaces distributed across human authorship, personal/project worlds, agency and authority, capability/knowledge fields, harnesses and runtime bodies, developmental systems, material worlds, shared agency, epistemic cultivation and community extension.
 
 Community extension is part of the research method, not generic plugin language. The public account should preserve this relation:
 
