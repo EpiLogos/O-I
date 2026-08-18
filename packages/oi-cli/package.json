@@ -1,6 +1,6 @@
 {
-  "name": "@epilogos/oi",
-  "version": "0.1.0-prelocal.3",
+  "name": "@epi-logos/oi",
+  "version": "0.1.0-prelocal.4",
   "description": "Native O:I composition CLI distribution",
   "repository": {
     "type": "git",

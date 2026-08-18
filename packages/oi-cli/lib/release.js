@@ -5,7 +5,7 @@ const { createHash } = require('node:crypto');
 const { spawnSync } = require('node:child_process');
 
 const REPOSITORY = 'EpiLogos/O-I';
-const DEFAULT_RELEASE_TAG = 'oi-v0.1.0-prelocal.3';
+const DEFAULT_RELEASE_TAG = 'oi-v0.1.0-prelocal.4';
 const NATIVE_VERSION = '0.1.0';
 const MAX_REDIRECTS = 8;
 
@@ -13,7 +13,7 @@ function resolveTarget(platform = process.platform, arch = process.arch) {
   if (platform === 'darwin' && arch === 'arm64') return 'aarch64-apple-darwin';
   if (platform === 'linux' && arch === 'x64') return 'x86_64-unknown-linux-gnu';
   throw new Error(
-    `@epilogos/oi does not yet publish a prebuilt binary for ${platform}/${arch}. ` +
+    `@epi-logos/oi does not yet publish a prebuilt binary for ${platform}/${arch}. ` +
       'The current pre-local release supports Apple Silicon macOS and x64 Linux; use the source install on another platform.'
   );
 }
@@ -51,7 +51,7 @@ function downloadToFile(url, destination, redirects = 0) {
   return new Promise((resolve, reject) => {
     const request = https.get(
       url,
-      { headers: { 'User-Agent': '@epilogos/oi npm installer' } },
+      { headers: { 'User-Agent': '@epi-logos/oi npm installer' } },
       (response) => {
         const status = response.statusCode || 0;
         if (status >= 300 && status < 400 && response.headers.location) {
@@ -84,7 +84,7 @@ function downloadText(url, redirects = 0) {
   return new Promise((resolve, reject) => {
     const request = https.get(
       url,
-      { headers: { 'User-Agent': '@epilogos/oi npm installer' } },
+      { headers: { 'User-Agent': '@epi-logos/oi npm installer' } },
       (response) => {
         const status = response.statusCode || 0;
         if (status >= 300 && status < 400 && response.headers.location) {

@@ -31,12 +31,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if ! npm view '@epilogos/oi' name --json >/dev/null 2>&1; then
+          if ! npm view '@epi-logos/oi' name --json >/dev/null 2>&1; then
             cat >&2 <<'EOF'
-          @epilogos/oi does not exist in the npm registry yet.
+          @epi-logos/oi does not exist in the npm registry yet.
 
           npm trusted publishing cannot create the first registry entry. Bootstrap the
-          package once with an authenticated npm account that owns the @epilogos scope,
+          package once with an authenticated npm account that owns the @epi-logos scope,
           then configure its GitHub Actions trusted publisher as:
 
             organization/user: EpiLogos

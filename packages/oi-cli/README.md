@@ -1,21 +1,21 @@
-# `@epilogos/oi`
+# `@epi-logos/oi`
 
 This package is the **distribution surface for the native Rust `oi` command**.
 
-It is deliberately distinct from O:I's `oi.package/v1` extension envelope. The extension envelope describes contributions that target independently owned native product SDKs. `@epilogos/oi` does not implement that ontology and does not reimplement the CLI in JavaScript; it only installs and launches the native O:I binary.
+It is deliberately distinct from O:I's `oi.package/v1` extension envelope. The extension envelope describes contributions that target independently owned native product SDKs. `@epi-logos/oi` does not implement that ontology and does not reimplement the CLI in JavaScript; it only installs and launches the native O:I binary.
 
 ## Install
 
 Once the npm registry entry is published:
 
 ```sh
-npm install -g @epilogos/oi
+npm install -g @epi-logos/oi
 ```
 
 Before that registry publication, the same npm package is attached to the immutable O:I pre-local release and can be installed directly from its tarball:
 
 ```sh
-npm install -g https://github.com/EpiLogos/O-I/releases/download/oi-v0.1.0-prelocal.3/epilogos-oi-0.1.0-prelocal.3.tgz
+npm install -g https://github.com/EpiLogos/O-I/releases/download/oi-v0.1.0-prelocal.4/epi-logos-oi-0.1.0-prelocal.4.tgz
 ```
 
 Then:
@@ -26,7 +26,7 @@ oi help
 
 ## Registry bootstrap and trusted publishing
 
-npm requires a package to exist in the registry before a trusted publisher can be attached to it. The first `@epilogos/oi` publication must therefore be performed once by an authenticated npm account that owns the `@epilogos` scope.
+npm requires a package to exist in the registry before a trusted publisher can be attached to it. The first `@epi-logos/oi` publication must therefore be performed once by an authenticated npm account that owns the `@epi-logos` scope.
 
 After that bootstrap publication, configure the package's GitHub Actions trusted publisher as:
 

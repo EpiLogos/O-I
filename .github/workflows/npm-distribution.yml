@@ -52,6 +52,6 @@ jobs:
         run: |
           set -euo pipefail
           prefix="$RUNNER_TEMP/oi-npm-prefix"
-          package="$RUNNER_TEMP/epilogos-oi-0.1.0-prelocal.3.tgz"
+          package="$RUNNER_TEMP/epi-logos-oi-0.1.0-prelocal.4.tgz"
           npm install --global "$package" --prefix "$prefix"
           "$prefix/bin/oi" help >/dev/null
