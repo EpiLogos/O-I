@@ -146,7 +146,7 @@ export function ExploreSurface({ seed, onSelect }: Props) {
     return query.trim() ? model.search(query, { limit: 36 }) : model.worlds();
   }, [model, query]);
   const opened = model && selectedRef ? model.open(selectedRef, { depth, budget: depth === 1 ? 18 : 32 }) : undefined;
-  const presentation = opened?.resource.ref === opened?.resource.world_ref ? opened.world_presentation : undefined;
+  const presentation = opened && opened.resource.ref === opened.resource.world_ref ? opened.world_presentation : undefined;
 
   async function openRef(ref: string) {
     if (!model) return;
