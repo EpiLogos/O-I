@@ -36,7 +36,16 @@ jobs:
         with:
           node-version: 22
       - name: Verify shared-field contracts and browser adapters
-        run: node --test ../shared-field/shared-field.test.mjs ../shared-field/social.test.mjs projection-renderer.test.mjs self-other-read-model.test.mjs field-proof-read-model.test.mjs
+        run: |
+          node --test \
+            ../shared-field/shared-field.test.mjs \
+            ../shared-field/social.test.mjs \
+            ../shared-field/presentation.test.mjs \
+            ../shared-field/presentation-projection.test.mjs \
+            projection-renderer.test.mjs \
+            self-other-read-model.test.mjs \
+            field-proof-read-model.test.mjs \
+            explore-read-model.test.mjs
       - run: npm install --no-audit --no-fund
       - run: npm run build
       - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
