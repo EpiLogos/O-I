@@ -5,6 +5,7 @@ export * from './admission.mjs';
 export * from './state.mjs';
 export * from './explore.mjs';
 export * from './presentation.mjs';
+export * from './presentation-projection.mjs';
 export * from './watch.mjs';
 export * from './contact.mjs';
 export * from './spacetimedb.mjs';
