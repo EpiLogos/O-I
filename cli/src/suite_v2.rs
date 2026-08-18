@@ -144,6 +144,7 @@ fn print_suite_v2_help() -> Result<(), String> {
     println!();
     println!("Native product aliases remain product-owned; O:I dispatches registered executables by exact path.");
     println!("Managed artifacts live in the platform O:I application-data root, never in Central Control/ or Work/.");
+    println!("Developer source checkouts live under the personal ground's Work/ (e.g. Work/Central), never the personal root itself.");
     println!("Source/Cargo installation is a developer path, not the ordinary-user bootstrap.");
     println!("Physical workstation/provider acceptance is intentionally not claimed by this pre-local suite.");
     Ok(())
@@ -644,7 +645,7 @@ fn command_suite_v2_dev(args: &[OsString]) -> Result<i32, String> {
 
 fn dev_source_path(ground: &Path, id: &str) -> PathBuf {
     match id {
-        "central" => ground.to_path_buf(),
+        "central" => ground.join("Work/Central"),
         "oi" => ground.join("Work/O-I"),
         "actuation" => ground.join("Work/Actuation"),
         "ai-kit" => ground.join("Work/ai-kit"),
@@ -766,7 +767,6 @@ fn command_dev_adopt_v2(args: &[OsString]) -> Result<i32, String> {
     if args.len() != 2 { return Err("usage: oi dev adopt PRODUCT PATH".to_owned()); }
     let manifest = suite_manifest()?;
     let id = args[0].to_str().ok_or_else(|| "product id must be UTF-8".to_owned())?;
-    if id == "central" { return Err("Central is the configured personal ground itself and cannot be adopted into its own Work/ tree".to_owned()); }
     let canonical_id = if id == "oi" { "oi".to_owned() } else {
         manifest.products.iter().find(|p| p.id == id || p.public_name.eq_ignore_ascii_case(id)).map(|p| p.id.clone())
             .ok_or_else(|| format!("unknown product '{id}'"))?
@@ -779,6 +779,7 @@ fn command_dev_adopt_v2(args: &[OsString]) -> Result<i32, String> {
     if canonical_source != canonical_top { return Err(format!("adoption source must be the repository root: {}", canonical_top.display())); }
     let ground = configured_ground()?;
     let target = match canonical_id.as_str() {
+        "central" => ground.join("Work/Central"),
         "oi" => ground.join("Work/O-I"),
         "software-factory" => ground.join("Work/Software-Factory"),
         "quaternal-logic" => ground.join("Work/Quaternal-Logic"),
@@ -901,4 +902,34 @@ fn command_dev_install_v2(args: &[OsString]) -> Result<i32, String> {
     }
     save_composition(&composition)?;
     Ok(0)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn dev_source_path_maps_central_into_work_not_the_ground_itself() {
+        let ground = PathBuf::from("/tmp/central-ground");
+        assert_eq!(
+            dev_source_path(&ground, "central"),
+            ground.join("Work/Central"),
+            "central dev source must live under Work/Central, never be the personal ground itself"
+        );
+        assert_eq!(dev_source_path(&ground, "oi"), ground.join("Work/O-I"));
+        assert_eq!(dev_source_path(&ground, "actuation"), ground.join("Work/Actuation"));
+    }
+
+    #[test]
+    fn adopt_target_for_central_is_work_central() {
+        let ground = PathBuf::from("/tmp/central-ground");
+        // central must adopt into Work/Central like every other suite product.
+        let canonical_id = "central";
+        let target = match canonical_id {
+            "central" => ground.join("Work/Central"),
+            "oi" => ground.join("Work/O-I"),
+            _ => unreachable!(),
+        };
+        assert_eq!(target, ground.join("Work/Central"));
+    }
 }
