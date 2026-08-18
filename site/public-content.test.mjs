@@ -36,6 +36,20 @@ test('product sections expose the renderer contract', () => {
   }
 });
 
+test('research page represents the wider programme and keeps QL as one deeper surface', () => {
+  for (const section of ['object', 'method', 'programme', 'ql', 'open']) {
+    sectionBody('research', section);
+  }
+  assert.match(sectionBody('research', 'method'), /^### \[cycle\] Discover → Source-lock → Study →/m);
+  assert.match(sectionBody('research', 'programme'), /Personal and project worlds/);
+  assert.match(sectionBody('research', 'ql'), /A deeper formal research programme/);
+});
+
+test('first-contact copy names the world and our products directly', () => {
+  assert.match(sectionBody('shared-field', 'intro'), /^### \[title\] A world, defined for agents\.$/m);
+  assert.match(sectionBody('home', 'centres'), /We are developing six products/);
+});
+
 test('Objective : Internality is the authored title form', () => {
   assert.match(source, /^### \[title\] Objective : Internality$/m);
   assert.doesNotMatch(source, /^#{1,4} .*Objective Internality[.]*$/m);
