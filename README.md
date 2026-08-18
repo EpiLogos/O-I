@@ -2,98 +2,70 @@
 
 **Operating Infrastructure · Objective Internality**
 
-{O:I} is an open idea and architecture for the **provisioning and potentiation of technological agency around available model capacity**.
+{O:I} is an open research and engineering architecture for the **technological field in which model capacity becomes situated agency**.
 
-A model supplies capacity. An agent loop puts some of that capacity into motion. What that act can become depends on the world around it: where it stands, what it can reach, what it can do, what it can know, which projects it inhabits, which machines it can use, and how its work can persist and develop.
+A capable model is not yet a capable agent in a particular world. What it can actually do depends on where it stands, what can remain available between invocations, which powers and sources it can reach, how its agency is constituted and bounded, which environments can be made real for it, how developmental work survives one session, and how evidence and difference can return to the people and systems that bear the consequences.
 
-{O:I} names that wider field.
+{O:I} makes that surrounding field intelligible enough to develop, compare, selectively compose, and selectively share.
 
-## An architecture for the engineering around the model
+It starts from the world people already have. A useful AI setup may be a directory and a CLI model loop, a collection of existing tools and projects, a rich agent runtime, several machines, or something assembled from technologies {O:I} did not create. **Adoption is not a demand for replacement.** Existing arrangements are both practical realities to preserve and research facts: if every world had to be rewritten into one preferred stack before it could participate, {O:I} would erase much of the variation it exists to understand.
 
-A large part of contemporary AI engineering begins after the model already exists.
+## The possibility space
 
-Engineers can change the loop that invokes it, the context it receives, the knowledge it can retrieve, the tools and Actions it can use, the projects it inhabits, the environments it can enter, the machines it can reach, and the developmental structures through which its work accumulates.
+The smallest useful case and the richest research case are points in one possibility space, not product tiers.
 
-That is the field {O:I} is concerned with.
-
-> **Given available model capacity, what technological structures provision and potentiate useful forms of agency?**
-
-This gives a common frame to the systems that surround an acting model and shape what it can become in practice.
-
-The smallest case is simple: **a durable personal working ground plus an LLM running in a loop**. The same architecture can open outward into richer capability, knowledge, development, execution, recursive intelligence and shared research without changing that basic relation.
-
-## Operating Infrastructure · Objective Internality
-
-The name has two readings.
-
-**Operating Infrastructure** is the technical reading: the structures through which an artificial actor can operate.
-
-**Objective Internality** names the same field from the side of the actor. An actor's operative internal reality can exist partly as objective, inspectable structure outside one model inference — files, projects, capabilities, histories, sources, environments, constraints and other conditions — and become effective again in later action.
-
-This is deliberately an operational claim. It does not require O:I to decide whether an artificial actor has phenomenal subjectivity, nor does it pretend that inspectable structure exhausts a mind.
-
-There is also a small joke in the name: **“Oh. I.”** Orientation matters. A useful agentic environment helps both human and artificial actors understand where they are, what is available, and what can happen from here.
-
-At a deeper level, `{O:I}` also carries `0/1`: persistent ground and actuation, the minimal pair from which the wider architecture develops.
-
-```mermaid
-mindmap
-  root(("{O:I}"))
-    "persistent personal ground"
-      "Central"
-    "agent actuation + model research"
-      "Actuation"
-      "runtime experiments"
-      "epistemic cultivation"
-      "model interiority"
-    "capability and context resolution"
-      "AIKit"
-    "developmental agency"
-      "Software Factory"
-    "material execution"
-      "Workcell"
-    "recursive formal intelligence"
-      "Quaternal Logic"
+```text
+persistent authored ground
+        +
+actuated model capacity
+        ↓
+a situated technological agency
 ```
 
-## The field
+That relation can remain small. It can also open into explicit agency composition, broader capability and knowledge horizons, durable development, material execution worlds, shared fields, and formal or epistemic research. Nothing in the larger architecture makes the smaller case invalid.
 
-The present {O:I} family has six centres. Each can stand on its own. Together they describe a broad working field for technological agency.
+This matters because **model capacity and situated agency are different variables**. Two arrangements can use the same model and produce materially different action because the surrounding world differs. Conversely, a more capable model can remain poorly situated. {O:I} therefore treats agentic arrangements as experimental configurations as well as products: change the loop, context, capability field, knowledge horizon, authority structure, development process, material environment, or mediation path and ask what changed in the resulting agency.
 
-| Function in the whole | Project | What it opens |
+## The six centres
+
+The present {O:I} family has six native product centres. They are **instruments and centres of responsibility in the field, not six mandatory boxes that every installation must contain**. Each is designed to stand on its own and to meet heterogeneous alternatives through explicit seams.
+
+| Centre | What it is as a whole | What it changes |
 |---|---|---|
-| Persistent personal ground | [**Central**](https://github.com/EpiLogos/Central) | Human-authored control, projects, machine intent, and a durable place from which agents can work. |
-| Agent actuation + model research | [**Actuation**](https://github.com/EpiLogos/Actuation) | The model/harness/agent-instance field: agency semantics, loops and harnesses, QL runtime experiments, model-interior research, and epistemic cultivation. |
-| Capability and context resolution | [**AIKit**](https://github.com/EpiLogos/ai-kit) | The agent-use layer for tools, skills, Actions, sources, models, sessions, research profiles, and context. |
-| Developmental agency | [**Software Factory**](https://github.com/EpiLogos/agent-system-design) | Durable project development through Runs, Agents, evidence, candidates, and reusable patterns of work. |
-| Material execution | [**Workcell**](https://github.com/EpiLogos/Workcell) | The computational worlds in which agency becomes materially situated and executable. |
-| Recursive formal intelligence | [**Quaternal Logic**](https://github.com/EpiLogos/QL-MEF) | The formal and semantic research layer for QL/MEF, recursive reasoning, refraction, topology, and deeper structural experiment. |
+| [**Central**](https://github.com/EpiLogos/Central) | A durable human-authored operating ground through which a technological world can remain recognisably a person's own while models, interfaces, machines and runtimes change. | Authored intent and ordinary work do not have to be surrendered to the lifecycle of whichever agent product is current. |
+| [**Actuation**](https://github.com/EpiLogos/Actuation) | The field in which agency itself becomes constitutable and governable: identity, situated Agency, determination, delegation, federation, authority, bounds, labouring encounter and Return. | A plurality of agents can be related without reducing agency to process orchestration or hiding who may determine, refuse, observe and learn from the act. |
+| [**AIKit**](https://github.com/EpiLogos/ai-kit) | The operative composition and disclosure layer through which a heterogeneous technological world becomes available to an actor here and now. | Models, skills, Actions, sources, sessions, runtime bodies and Surfaces can form a usable horizon without requiring all of them to be rewritten into one agent runtime. |
+| [**Software Factory**](https://github.com/EpiLogos/agent-system-design) | A developmental system that preserves the relation from authored intention through design, agentic development, evidence, candidate formation, Recognition and Return. | Fast agentic implementation can remain answerable to human purpose instead of preserving technical nouns while silently losing why the software was worth making. |
+| [**Workcell**](https://github.com/EpiLogos/Workcell) | The materialisation product that turns provider-neutral semantic demand into an actual computational world. | Workspaces, processes, services, containers, VMs, hosts, databases and browser-accessible applications acquire explicit placement, lifecycle, bindings and observed evidence without becoming the higher-level ontology. |
+| [**Quaternal Logic**](https://github.com/EpiLogos/QL-MEF) | The formal and experimental field in which the wider Epi-Logos programme attempts to make archetypal and relational form technically answerable. | Formal distinctions can be implemented, refracted and tested for operational consequence without making QL a prerequisite for ordinary {O:I} use or pretending software proves the metaphysics from which the research arose. |
 
-Together they form a possibility space rather than a fixed workflow. A useful {O:I} can be very small, and it can grow as new needs appear.
+{O:I} is the **Idea and whole relating these centres**. It is not a seventh semantic product beside them. Whole-level concerns such as installation, composition disclosure, selective projection and shared-field relations belong here precisely because they relate independently owned worlds and products rather than replacing their native meanings.
 
-[`docs/CANONICAL-PRODUCT-FIELD.md`](docs/CANONICAL-PRODUCT-FIELD.md) defines the six centres as one relational whole. It gives every centre a human-facing `P` position and an agent-facing conjugate `P′` position, then applies the canonical dyadic, triadic, fourfold, `3:3`, and `4+2` relations to product composition, research, and physical acceptance.
+## Operating Infrastructure
 
-## A personal architecture
+The first reading of the name is technical.
 
-{O:I} is aimed toward personal technological agency.
+**Operating Infrastructure** is the engineering around model inference that makes operation possible: persistent projects and authored ground, actuation, capability and source disclosure, sessions and runtime bodies, developmental continuity, material environments, and relations to other independently grounded worlds.
 
-A user can begin from a common working shape and make it their own through ordinary authored files, projects, preferences, machine declarations, tools, sources, and histories. The centre can remain personal even when computation extends to another machine, a home server, an isolated environment, or remote compute.
+Many of these functions already exist in separate tools. {O:I} does not require those tools to become one monolith. It supplies a common field in which their distinct responsibilities and relations can be made explicit.
 
-Existing projects belong in this picture too. A repository can be adopted into the personal working ground while keeping the continuity that made it the same project in the first place.
+## Objective Internality
+
+The second reading names the same field from the side of an actor.
+
+Part of an actor's operative internal reality can exist objectively outside a single model inference: files, project history, available powers, source indexes, machine observations, constraints, prior decisions, runtime bindings and other durable relations can be inspected independently, then disclosed back into later action.
+
+**Objective Internality** names this relation: objective structure can become internal to the operation of an actor without being identical to the neural interior of the model.
+
+The claim is deliberately operational. {O:I} does not need to decide whether an artificial actor has phenomenal subjectivity, and inspectable structure is not asserted to exhaust mind. The concept gives engineering a way to talk precisely about what conditions an act without making an unexplained Subject the software primitive.
+
+Objective Internality is also one bridge into the wider Epi-Logos research, whose account of mind begins from philosophical sources not identical with the prevailing material/computational ontology of the AI industry. That deeper provenance can inform maximal research without becoming a condition of entry into the technology.
 
 ## From a local world to a shared field
 
-The same parent position gives {O:I} a relational role between independently grounded worlds.
+A shared field should allow differentiated worlds to enter relation **without ceasing to be separately grounded**.
 
-A local installation can selectively project something it owns — a participant root, document, wiki object, research finding, project output, experiment, corpus, epistemic protocol, or another typed object — so that another human, Agent, O:I instance, or shared service can encounter it. The source object remains owned by its native system. {O:I} supplies the shared disclosure, addressing, projection, field and participation grammar across the products.
-
-The smallest relation is:
-
-```text
-Self  /  Other
-```
-
-More explicitly:
+A local system can selectively project something it owns — a document, Wiki object, research finding, Project result, experiment, corpus, protocol or another typed object — so another human, Agent or {O:I} instance can encounter it. Projection makes a representation available; it does not transfer canonical ownership or mutation authority over the source.
 
 ```text
 Self
@@ -101,97 +73,67 @@ Self
 SharedField
   ↓ mediated Encounter
 Other
+  ↓ attributable difference
+Return
 ```
 
-`Self` and `Other` are situated positions, not identity kinds. Another centre can appear in the world available to this one without either centre being reduced to the other or to a common hosted account.
+`Self` and `Other` are situated positions, not identity kinds. The same participant can occupy either position from another view. **Objective Co-Internality** names the objective relation in which independently grounded operative worlds become mutually implicated while retaining their difference.
 
-The plural form of Objective Internality is **Objective Co-Internality**: independently grounded operative internal worlds become mutually implicated through objective, inspectable externalised relations while remaining differentiated centres. The term is intentionally not “objective intersubjectivity”; intersubjectivity already assumes subjects as the relata, while O:I is keeping the base claim at the level of objective operative internal reality.
+The current shared grammar includes `Participant`, `Projection`, `SharedField`, `Contribution`, `Encounter`, `Presence` and `Activity`. These relations stay whole-level because they concern how native worlds meet; they do not turn {O:I} into the owner of the object that was projected.
 
-The shared grammar is deliberately small:
+See [`docs/SHARED-FIELD.md`](docs/SHARED-FIELD.md) and [`docs/OBJECTIVE-CO-INTERNALITY.md`](docs/OBJECTIVE-CO-INTERNALITY.md).
 
-```text
-Identity        underlying identity
-Participant     field-relative participation relation
-Projection      selected representation of a local/native object
-SharedField     addressable relational environment
-Contribution    attributable difference returned to a field
-Encounter       bounded material made available through a mediation path
-Presence        current reachability
-Activity        current work/dialogue/study/execution state
-```
+## Human agency is part of the success condition
 
-SharedFields can nest recursively. Contributions can target other Contributions recursively, so an opinion about a finding, a metric over that opinion, or a challenge to the metric remains addressable and attributable rather than disappearing into platform metadata. Ratings, rankings and metrics are therefore possible modes of Contribution, not a privileged truth layer.
+Increasing artificial agency is useful only if the surrounding arrangement also improves the human's capacity to author, judge and live with the result.
 
-The relation remains local-first. Projection does not transfer canonical ownership. SharedField containment is not federation. `SharedField` is not canonical `Context` and not the generic wiki system's `WikiSpace`.
+The aim is not to keep a human supervising every low-level action. Routine setup, context reconstruction, source discovery, execution mechanics and developmental bookkeeping are exactly the kinds of work that can move away from continuous human attention when they are made inspectable and reversible. Human attention can stay nearer purpose, taste, consequential choice, refusal, Recognition and the question of what should become part of the world.
 
-The canonical browser work lives in the React site on PR #14. Its first shared-field experience is intentionally sparse: expose **Self / Other**, the field that relates them, and provenance. It does not begin from a feed, follower graph or global reputation score.
+This is also why authority and Return matter. Delegated or determining authority can become separated from the locus that actually meets resistance, error, unforeseen possibility and consequence. If evidence and difference have no path back into the governing locus, command becomes insulated from the reality produced under it. The architecture therefore treats provenance-bearing Return, dissent and refusal as part of agency design rather than as exceptional failure paths.
 
-The longer path remains transport-independent. A future Epi-Logos service can make these relations live and subscribable, with SpaceTimeDB as the planned hosted implementation candidate, while O:I's semantic contracts remain independent of that transport and store.
+## Research, not a predetermined winner
 
-See [`docs/SHARED-FIELD.md`](docs/SHARED-FIELD.md), [`docs/OBJECTIVE-CO-INTERNALITY.md`](docs/OBJECTIVE-CO-INTERNALITY.md), and [`docs/EPISTEMIC-CULTIVATION.md`](docs/EPISTEMIC-CULTIVATION.md).
+{O:I} is a research programme as well as a product family.
 
-## Open primitives
+The point is not to prove that the maximal arrangement, any particular agent loop, or Quaternal Logic must outperform simpler alternatives. A legitimate result can be that a simpler configuration is better, that two formally different arrangements are operationally equivalent, or that a distinction improves explanation without improving execution.
 
-The surrounding projects have converged on a useful family of open abstractions: `Project`, `Context`, `Agent`, `Agency`, `Capability`, `Action`, `ContextSource`, `Run`, `Artifact`, `Claim`, `Evidence`, `Candidate`, `Environment`, and others.
+The research value lies in making enough of the surrounding structure explicit that those outcomes can be compared without collapsing everything back into an undifferentiated claim about "model capability".
 
-Their value is practical. They give humans and agents stable handles on recurring parts of the agency problem while leaving room for different models, harnesses, providers, and deployments.
+The model/harness/agent-instance and epistemic-cultivation research field now lives canonically in **Actuation**. The formal QL/MEF field lives in **Quaternal Logic**. {O:I} supplies the whole-level field in which their findings can be related to personal ground, operative composition, development, materialisation and selective sharing.
 
-{O:I} provides the larger view in which these abstractions can be seen together. Its shared-field layer adds only those relations that genuinely arise between independently grounded worlds.
+See [`docs/RESEARCH.md`](docs/RESEARCH.md), [`docs/RESEARCH-PROTOCOL.md`](docs/RESEARCH-PROTOCOL.md), and [`docs/EPISTEMIC-CULTIVATION.md`](docs/EPISTEMIC-CULTIVATION.md).
 
 ## `oi`
 
-`oi` is the simple entry command for the composed system.
-
-It helps a human or agent set up {O:I}, see what is available, enter the documentation, adopt existing projects, and reach the command surfaces of the installed projects through one memorable namespace.
-
-For example:
+`oi` is the shared doorway into the composed system. It can disclose what is installed and route a human or agent toward the native command and documentation surfaces without making the native products inaccessible on their own.
 
 ```text
 oi ctrl ...
 oi kit ...
 ```
 
-The same projects can still be used directly. `oi` gives the composed system one shared doorway.
+The command namespace is composition convenience, not semantic ownership.
 
-## Research
+## Provenance and current state
 
-{O:I} is also a research proposal.
+Product meaning and implementation truth have different sources.
 
-It gives us a practical way to study the engineering space around a fixed or available model: change the runtime, context, capability field, knowledge horizon, project structure, developmental process, material environment, or shared field and observe what changes in effective agency.
+- [`docs/positions/FOUNDING-POSITIONS.md`](docs/positions/FOUNDING-POSITIONS.md) is the upstream authored position for why this field exists and what must not be lost as implementation develops.
+- [`docs/VISION.md`](docs/VISION.md) develops the whole-level product and research vision.
+- Native product repositories own their own constitutions, design, code and implementation evidence.
+- Current code and accepted evidence determine what is real now; open issues and draft PRs remain development state rather than completed capability.
 
-The model/harness/agent-instance research itself now lives canonically in **Actuation**. That includes the migrated QL runtime programme and the broader epistemic-cultivation/model-interior programme: discovery of structures models have implicitly compressed from the human corpus, deliberate human/agent crafting of epistemic datasets and dialogues, model adaptation/intervention, and study of resulting internal and external organisation.
-
-This adds a cultural research claim to the O:I frame:
-
-> **crafting epistemologies can become a first-class role in AI work.**
-
-The epistemic field is not only whatever a model self-organises from inherited training data. Humans and agents can deliberately author source selections, structural annotations, QL/MEF-aligned dialogues, counterexamples, model adaptations, evaluations and revisions. O:I does not own that laboratory; it provides the objective/shared field through which those epistemic artifacts can be projected, encountered, reproduced, criticised, corrected and returned.
-
-See [`docs/EPISTEMIC-CULTIVATION.md`](docs/EPISTEMIC-CULTIVATION.md) for the O:I relation and the Actuation research specification for the canonical experimental programme.
-
-The research programme also learns from existing systems. [`docs/RESEARCH-PROTOCOL.md`](docs/RESEARCH-PROTOCOL.md) defines a repeatable path from discovering a real paper or system, through source-locked study and abstraction, into implementation, experiment, and a durable finding that can return to the shared knowledge field. Source claims, implementation facts, observations, and {O:I} interpretations stay distinguishable throughout that process.
-
-The Antikythera Polylogos and Moltbook cases are important early evidence for the shared-agency problem. Polylogos shows a dialogically mediated human-agent field capable of returning a durable collaboratively produced artifact. Moltbook provides an attention-mediated contrast in which genuine peer learning can coexist with broadcasting, low reciprocity, concentration and ranking/signalling effects. O:I treats these as prior experiments to learn from, not UI templates to copy.
-
-The future O:I Wiki is planned as a living research commons over technologies, papers, studies, abstractions, experiments, **epistemic corpora and protocols**, findings, questions, and Contribution histories rather than as a second rendering of these repository docs. Its implementation follows the generic Wiki system; its shared projections and participation follow the local-first field described here.
-
-This gives the software architecture a direct relation to the wider Epi-Logos and Antikythera research programme without making that background a prerequisite for using the technology.
+The formal six-centre relation in [`docs/CANONICAL-PRODUCT-FIELD.md`](docs/CANONICAL-PRODUCT-FIELD.md) is a QL-informed **reading of the product field**, useful for relational development and research. It is not the reason the products exist, an installation requirement, or a claim that the six products exhaust all possible technological agency arrangements.
 
 ## Start here
 
-This repository is the shared front door for the idea and the composed installation.
-
-- [`docs/VISION.md`](docs/VISION.md) — founding vision and research frame.
-- [`docs/CANONICAL-PRODUCT-FIELD.md`](docs/CANONICAL-PRODUCT-FIELD.md) — the six centres as a `6+6` human/agent conjugate field, with the harmonic relations used for composition, research, and acceptance.
-- [`docs/SURFACES.md`](docs/SURFACES.md) — the six project surfaces from the outside in.
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — the composition architecture.
-- [`docs/SHARED-FIELD.md`](docs/SHARED-FIELD.md) — local-first projection, participation, transport, and the shared relational field.
-- [`docs/OBJECTIVE-CO-INTERNALITY.md`](docs/OBJECTIVE-CO-INTERNALITY.md) — Self/Other, recursive SharedFields, Contributions, Encounters, and the plural form of Objective Internality.
-- [`docs/EPISTEMIC-CULTIVATION.md`](docs/EPISTEMIC-CULTIVATION.md) — how Actuation's epistemic/model research enters Objective Internality and the shared research field.
-- [`docs/RESEARCH.md`](docs/RESEARCH.md) — the agency-potentiation research programme.
-- [`docs/RESEARCH-PROTOCOL.md`](docs/RESEARCH-PROTOCOL.md) — how humans and agents study real systems and return what they learn.
-- [`docs/CLI.md`](docs/CLI.md) — the `oi` command surface.
-- [`docs/INSTALL.md`](docs/INSTALL.md) — installation and composition.
-- [`docs/MIGRATION.md`](docs/MIGRATION.md) — adopting existing projects.
-- [`site/`](site/) — browser-surface support on this parent line; the canonical public React implementation is developed on PR #14.
+- [`docs/positions/FOUNDING-POSITIONS.md`](docs/positions/FOUNDING-POSITIONS.md) — upstream authored positions and provenance law.
+- [`docs/VISION.md`](docs/VISION.md) — whole-product and research vision.
+- [`docs/SURFACES.md`](docs/SURFACES.md) — the current six native product surfaces.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — composition architecture and ownership boundaries.
+- [`docs/CANONICAL-PRODUCT-FIELD.md`](docs/CANONICAL-PRODUCT-FIELD.md) — optional QL-informed relational reading of the six centres.
+- [`docs/SHARED-FIELD.md`](docs/SHARED-FIELD.md) — local-first projection and participation.
+- [`docs/CLI.md`](docs/CLI.md) and [`docs/INSTALL.md`](docs/INSTALL.md) — composed command and installation surfaces.
 - [`skills/oi/SKILL.md`](skills/oi/SKILL.md) — agent-facing orientation to the whole.
+
+The public site is a later projection of this source language; it is not modified by this documentation pass.

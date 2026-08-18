@@ -42,7 +42,7 @@ export function OIMark({
         </g>
       ) : null}
 
-      {show('bar') ? <rect x="508" y="58" width="30" height="164" fill="currentColor" /> : null}
+      {show('bar') ? <rect x="476" y="58" width="24" height="164" fill="currentColor" /> : null}
     </svg>
   );
 }

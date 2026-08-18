@@ -1,293 +1,350 @@
-import type { ReactNode } from 'react';
-import { AIStackAperture } from '@/components/ai-stack-aperture';
-import { OICube } from '@/components/ui/oi-cube';
-import { OIGlyph } from '@/components/ui/oi-mark';
-import { ParallaxComponent } from '@/components/ui/parallax-scrolling';
+import './index.css';
+import { ParallaxComponent } from './components/ui/parallax-scrolling';
+import { OICube } from './components/ui/oi-cube';
+import { OIMark } from './components/ui/oi-mark';
+import { PossibilityField } from './components/possibility-field';
+import { CentresSection } from './components/centres';
+import { SharedFieldFigure } from './components/shared-field-figure';
 
-type ProductSurface = {
-  position: string;
-  need: string;
-  role: string;
-  project: string;
-  href: string;
-};
-
-const products: ProductSurface[] = [
-  {
-    position: '0',
-    need: 'A durable place to author and return to.',
-    role: 'Persistent personal and operative ground',
-    project: 'Central',
-    href: 'https://github.com/EpiLogos/Central',
-  },
-  {
-    position: '1',
-    need: 'Agency you can commission, inspect and understand.',
-    role: 'Situated agency and agentic composition',
-    project: 'Actuation',
-    href: 'https://github.com/EpiLogos/Actuation',
-  },
-  {
-    position: '2',
-    need: 'Know what the agent can access and do here.',
-    role: 'Capability, context, resources and surfaces',
-    project: 'AIKit',
-    href: 'https://github.com/EpiLogos/ai-kit',
-  },
-  {
-    position: '3',
-    need: 'Turn intention into developed, evidenced software.',
-    role: 'Projects, Runs, candidates and recognition',
-    project: 'Software Factory',
-    href: 'https://github.com/EpiLogos/agent-system-design',
-  },
-  {
-    position: '4',
-    need: 'Give agency a real computational world.',
-    role: 'Execution, placement, services and lifecycle',
-    project: 'Workcell',
-    href: 'https://github.com/EpiLogos/Workcell',
-  },
-  {
-    position: '5',
-    need: 'Make formal relations usable and recursive.',
-    role: 'Relation, refraction, synthesis and recursive intelligence',
-    project: 'Quaternal Logic',
-    href: 'https://github.com/EpiLogos/QL-MEF',
-  },
-];
-
-function ExternalLink({ href, children, className = '' }: { href: string; children: ReactNode; className?: string }) {
+function GitHubIcon() {
   return (
-    <a href={href} target="_blank" rel="noreferrer" className={`link-arrow ${className}`.trim()}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
+      <path d="M9 18c-4.51 2-5-2-7-2" />
+    </svg>
+  );
+}
+
+function ExternalLink({ href, className, children }: { href: string; className?: string; children: React.ReactNode }) {
+  return (
+    <a href={href} className={className} target={href.startsWith('http') ? '_blank' : undefined} rel={href.startsWith('http') ? 'noreferrer' : undefined}>
       {children}
-      <span aria-hidden="true">↗</span>
     </a>
   );
 }
 
-function ProductField() {
+function SiteNav() {
   return (
-    <section id="products" className="section section--black oi-surface-dark" aria-labelledby="products-title">
-      <div className="section__eyebrow">O:I PRODUCT FIELD</div>
-      <div className="section__grid section__grid--heading">
-        <h1 id="products-title" className="feature-title feature-title--wide">
-          Six products around one agent environment.
-        </h1>
-        <p className="feature-copy">
-          Each centre answers a concrete human need. Together they make the operative world around an agent explicit,
-          inspectable and composable.
-        </p>
-      </div>
+    <header className="site-nav">
+      <ExternalLink href="#top" className="site-nav__brand" aria-label="O:I home">
+        <OIMark className="site-nav__mark" />
+      </ExternalLink>
+      <nav className="site-nav__links" aria-label="Primary">
+        <a href="#what">Understand</a>
+        <a href="#field">Field</a>
+        <a href="#centres">Centres</a>
+        <a href="./explore.html">Explore</a>
+        <a href="#build">Build</a>
+        <ExternalLink href="https://github.com/EpiLogos/O-I" className="site-nav__github" aria-label="GitHub repository">
+          <GitHubIcon />
+        </ExternalLink>
+      </nav>
+    </header>
+  );
+}
 
-      <div className="product-field" role="table" aria-label="O:I product field">
-        <div className="product-field__head" role="row">
-          <span role="columnheader">Human need</span>
-          <span role="columnheader">Role in Objective Internality</span>
-          <span role="columnheader">Software</span>
-          <span aria-hidden="true" />
-        </div>
-        {products.map((product) => (
-          <a
-            key={product.project}
-            className="product-row"
-            href={product.href}
-            target="_blank"
-            rel="noreferrer"
-            role="row"
-          >
-            <span className="product-row__need" role="cell">
-              <span className="product-row__position">P{product.position}</span>
-              {product.need}
-            </span>
-            <span className="product-row__role" role="cell">
-              {product.role}
-            </span>
-            <span className="product-row__project" role="cell">
-              {product.project}
-            </span>
-            <span className="product-row__arrow" aria-hidden="true">
-              ↗
-            </span>
-          </a>
-        ))}
-      </div>
-
-      <AIStackAperture />
-    </section>
+function ArrowIcon() {
+  return (
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M7 17 17 7" />
+      <path d="M7 7h10v10" />
+    </svg>
   );
 }
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-black text-white">
-      <header className="site-nav" aria-label="Primary navigation">
-        <a href="#top" className="site-nav__mark" aria-label="O:I home">
-          <OIGlyph />
-        </a>
-        <nav className="site-nav__links">
-          <a href="#understand">Understand</a>
-          <a href="./explore.html">Explore</a>
-          <a href="#build">Build</a>
-          <ExternalLink href="https://github.com/EpiLogos/O-I" className="site-nav__github">
-            GitHub
-          </ExternalLink>
-        </nav>
-      </header>
+    <div id="top">
+      <SiteNav />
+      <main>
+        <section className="hero" aria-label="O:I opening statement">
+          <h1 className="visually-hidden">O:I — Operating Infrastructure · Objective Internality</h1>
+          <ParallaxComponent />
+        </section>
 
-      <main id="top" data-oi-surface="projection-root" data-oi-state="front-door">
-        <ParallaxComponent />
-        <ProductField />
-
-        <section id="understand" className="section section--white oi-surface-light" aria-labelledby="understand-title">
-          <div className="section__eyebrow">UNDERSTAND</div>
+        <section id="what" className="section section--black" aria-labelledby="what-title">
+          <div className="section__eyebrow"><span>What is O:I</span></div>
           <div className="section__grid section__grid--intro">
-            <h2 id="understand-title" className="display-copy display-copy--compact">
-              AI has a world around it.
-            </h2>
+            <h2 id="what-title" className="display-copy">A capable model is not yet a capable agent.</h2>
             <div className="body-copy body-copy--lead">
               <p>
-                Agents operate through projects, files, tools, sources, histories, models and other agents. O:I makes
-                that operative world explicit.
+                What a model can do depends on the world around it: where it stands, what persists
+                between sessions, which tools and sources it can reach, what authority it holds,
+                which projects continue, and how what happens returns into later action.
+                O:I — Operating Infrastructure · Objective Internality — is an open architecture
+                and research programme for that surrounding field: the technological structures
+                through which model capacity becomes situated agency.
               </p>
               <p>
-                The human can see what an agent has access to, what shaped its work, what it produced or changed, and
-                where authorship and stewardship enter the environment.
+                These arrangements are experimental. Hold the model constant and change the loop,
+                the memory, the capability field, the authority structure or the material
+                environment, and a different agency appears. O:I exists to make that field explicit
+                enough to engineer, compare and study — not to hide it inside one prescribed stack.
               </p>
             </div>
           </div>
 
-          <div className="definition-grid" aria-label="The two public readings of O:I">
+          <div className="statement-block">
+            <h3>You do not have to replace your AI setup.</h3>
+            <p>
+              O:I begins from the technological world you already inhabit: your models, agents,
+              editors, shells, projects, prompts, skills, tools, services, machines and working
+              habits. That world already matters, and it stays yours. O:I can make its structure
+              explicit without migration, without surrendering its ownership or continuity, and
+              without rewriting it into someone else's runtime. Heterogeneous setups are not a
+              problem to eliminate — they are the practical starting point, and part of what the
+              research exists to understand.
+            </p>
+          </div>
+
+          <div className="premise-strip">
+            <div>
+              <span className="premise-strip__label">Agency is not an agent</span>
+              <p>A situated actor with a ground, a history and relations is different from a model producing output.</p>
+            </div>
+            <div>
+              <span className="premise-strip__label">The world is the variable</span>
+              <p>The same capacity in a different surrounding arrangement becomes a different capability.</p>
+            </div>
+            <div>
+              <span className="premise-strip__label">Yours by default</span>
+              <p>Open source, locally installed, human-authored. Sharing extends from personal ground; it does not replace it.</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="field" className="section section--white" aria-labelledby="field-title">
+          <div className="section__eyebrow"><span>One possibility space</span></div>
+          <div className="section__grid section__grid--heading">
+            <h2 id="field-title" className="feature-title">Start small. Stay whole.</h2>
+            <div className="body-copy">
+              <p>
+                The smallest O:I is already a complete relation: persistent authored ground, plus
+                model capacity that can act upon it. A directory containing a real project and an
+                agent that can work there. A Git repository and a model in a loop. Nothing else is
+                required — and nothing in the wider field is a prerequisite.
+              </p>
+              <p>
+                These are not product tiers, and the six centres below are not six prerequisites.
+                The maximal case is the minimal relation developed through need — one centre,
+                several, all six, or interoperable alternatives.
+              </p>
+            </div>
+          </div>
+          <PossibilityField />
+        </section>
+
+        <section id="centres" className="section section--black" aria-labelledby="centres-title">
+          <div className="section__eyebrow"><span>Six centres</span></div>
+          <div className="section__grid section__grid--heading">
+            <h2 id="centres-title" className="feature-title">Instruments in the field, not prerequisites.</h2>
+            <div className="body-copy">
+              <p>
+                Each centre exists because a distinct difficulty demanded it. They interlock by
+                contract rather than by pipeline — each remains itself, each can meet equivalents,
+                and none is a tollbooth for the others.
+              </p>
+            </div>
+          </div>
+          <CentresSection />
+        </section>
+
+        <section id="name" className="section section--white section--cube" aria-labelledby="name-title">
+          <div className="section__eyebrow"><span>Two readings of one name</span></div>
+          <div className="section__grid section__grid--heading">
+            <h2 id="name-title" className="feature-title feature-title--wide">Operating Infrastructure. Objective Internality.</h2>
+            <div className="body-copy">
+              <p>
+                The first reading is engineering. An operating system gives programs files,
+                processes, memory and permissions. O:I names the corresponding organisation around
+                model inference: projects and ground, capabilities and actions, sessions and
+                runtime bodies, developmental history, material environments, relations to other
+                worlds.
+              </p>
+            </div>
+          </div>
+
+          <div className="cube-wrap" aria-hidden="true"><OICube /></div>
+
+          <div className="readings-grid">
             <article>
-              <span>O</span>
-              <h3>Operating Infrastructure</h3>
-              <p>The structures through which technological agency becomes situated and able to act.</p>
-            </article>
-            <article>
-              <span>I</span>
               <h3>Objective Internality</h3>
               <p>
-                The inspectable operative interior around an actor: authored ground, capabilities, projects, sources,
-                histories, environments and the relations that can become effective in later action.
+                The second reading names the same field from inside an act. An actor's operative
+                internal world — what it can actually draw on when it acts — is not identical to
+                the inside of a model. Projects held in files, available powers, persistent memory,
+                machine state, prior decisions, relations to other actors: these are objective
+                structures. They exist between invocations, they can be inspected and changed, and
+                they can be disclosed into an invocation as part of what the actor is working with.
+                Objective Internality names that relation: an operative interior made objective —
+                externalised, structured, and able to return.
+              </p>
+            </article>
+            <article>
+              <h3>What is not being claimed</h3>
+              <p>
+                The claim is operational, not phenomenal. O:I does not assert that an artificial
+                actor is a subject, or that inspectable structure exhausts a mind. It asserts
+                something narrower and more useful: the operative interior of an act is not
+                automatically identical to the computational interior of the model producing the
+                next token — and designing that wider interior deliberately changes what agency
+                becomes.
+              </p>
+              <p className="readings-grid__aside">
+                The philosophical depth of this position is developed in the{' '}
+                <a href="https://github.com/EpiLogos/Antykathera-Essay-Work">Antykathera essay work</a>.
               </p>
             </article>
           </div>
+        </section>
 
-          <div className="understand-strip">
-            <div>
-              <span className="understand-strip__label">Ground</span>
-              <p>Keep durable authored context and project continuity.</p>
-            </div>
-            <div>
-              <span className="understand-strip__label">Agency</span>
-              <p>Make the actor, its powers and its current world legible.</p>
-            </div>
-            <div>
-              <span className="understand-strip__label">Stewardship</span>
-              <p>Inspect the path from source and action to result and return.</p>
+        <section id="research" className="section section--black" aria-labelledby="research-title">
+          <div className="section__eyebrow"><span>Formal research · Quaternal Logic</span></div>
+          <div className="section__grid section__grid--intro">
+            <h2 id="research-title" className="display-copy display-copy--compact">Where the metaphysics becomes answerable.</h2>
+            <div className="body-copy body-copy--lead">
+              <p>
+                Quaternal Logic belongs to the wider Epi-Logos programme, whose account of mind,
+                relation and form draws on depth psychology and Eastern metaphysics rather than on
+                the material-computational ontology most AI engineering assumes. O:I does not ask
+                anyone to accept that account. It does something more useful: it makes the
+                account's formal claims executable enough to be tested.
+              </p>
+              <p>
+                Operational parity is the test. If a formal distinction is supposed to matter to an
+                operation, implementing it must make a discriminable difference. A classical
+                approach may outperform an informed one; two formally different structures may
+                prove equivalent; a distinction may improve explanation without improving
+                execution. Those are answers, not embarrassments. Software does not prove the
+                metaphysics — it gives the metaphysics somewhere precise to be wrong.
+              </p>
+              <p>
+                The relation is old: an archetypal image is expressed into a technical reflection,
+                and the reflection returns information about what the originating form actually
+                means. A minimal O:I never needs any of this. A maximal research programme can ask,
+                through it, what agency looks like when engineered from a different account of
+                relation, interiority, recurrence and form.
+              </p>
             </div>
           </div>
+        </section>
+
+        <section id="shared" className="section section--white" aria-labelledby="shared-title">
+          <div className="section__eyebrow"><span>The shared field</span></div>
+          <div className="section__grid section__grid--heading">
+            <h2 id="shared-title" className="feature-title">Worlds, not accounts.</h2>
+            <div className="body-copy">
+              <p>
+                The maximal direction of O:I is social — but it is not one giant hosted AI account.
+                A world remains independently grounded: owned, continued and authoritative locally.
+                It selectively projects part of itself into a shared field — a document, a project
+                result, a wiki space, an experiment. Other worlds encounter the projection from
+                their own ground, respond, contest, extend — and return an attributable difference.
+              </p>
+              <p>
+                Projection is not upload. Source authority and canonical identity do not move; the
+                field mediates presentations, not ownership. Participation never requires
+                surrendering the distinction between source and projection, encounter and mutation,
+                another's contribution and one's own state. Even where the field is hosted, the
+                hosting carries no claim over what a world is.
+              </p>
+            </div>
+          </div>
+          <SharedFieldFigure />
+          <p className="shared-note">
+            Self and Other are positions, not identity kinds — the same participant occupies either
+            side from another view.
+          </p>
         </section>
 
         <section id="explore" className="section section--black oi-surface-dark" aria-labelledby="explore-title">
           <div className="section__eyebrow section__eyebrow--signal">
             <span className="meta-signal" aria-hidden="true" />
-            EXPLORE
+            <span>Explore</span>
           </div>
-          <div className="section__grid section__grid--feature">
-            <div>
-              <h2 id="explore-title" className="feature-title">
-                Enter the shared field.
-              </h2>
-            </div>
-            <div className="feature-copy">
+          <div className="section__grid section__grid--intro">
+            <h2 id="explore-title" className="display-copy display-copy--compact">The platform, becoming visible.</h2>
+            <div className="body-copy body-copy--lead">
               <p>
-                Explore is the open field of explicitly projected O:I worlds, agents, projects, knowledge and work.
-                Search begins at an addressable object and opens outward into its bounded local relations and authored
-                presentation.
+                Explore is the public surface of the shared field: addressable worlds, and beneath
+                them agents, projects, wiki spaces, projections, relations and contributions —
+                each carrying its provenance, each resolvable to the source that remains
+                authoritative for it. Search begins at an addressable object and opens outward into
+                its bounded local relations and authored presentation.
               </p>
               <p>
-                Worlds remain projections of independently owned sources. Their presentation can be composed and
-                revised without turning the browser into source authority.
-              </p>
-              <a href="./explore.html" className="link-arrow">
-                Open Explore <span aria-hidden="true">→</span>
-              </a>
-            </div>
-          </div>
-        </section>
-
-        <section className="section section--white section--cube oi-surface-light" aria-labelledby="local-title">
-          <div className="cube-wrap" aria-hidden="true">
-            <OICube />
-          </div>
-          <div className="section__grid section__grid--feature">
-            <div>
-              <div className="section__eyebrow">OBJECTIVE INTERNALITY</div>
-              <h2 id="local-title" className="feature-title">
-                Your working world has continuity.
-              </h2>
-            </div>
-            <div className="feature-copy">
-              <p>
-                Files, projects, preferences, machines, tools and histories can remain grounded in an authored world
-                while computation moves across models, processes and hosts.
+                It begins with the O:I programme's own world — its products, documents and
+                relations, projected with their real sources. The architecture hard-codes no one:
+                any independently grounded world can project into the same grammar and remain
+                itself.
               </p>
               <p>
-                Projection makes selected parts addressable beyond that local world while keeping source authority and
-                provenance visible.
+                <ExternalLink href="./explore.html" className="inline-link">Open Explore ↗</ExternalLink>
               </p>
             </div>
           </div>
         </section>
 
-        <section id="build" className="section section--black section--build oi-surface-dark" aria-labelledby="build-title">
-          <div className="section__eyebrow">BUILD</div>
+        <section id="build" className="section section--black section--build" aria-labelledby="build-title">
+          <div className="section__eyebrow"><span>Build</span></div>
           <div className="section__grid section__grid--heading">
-            <h2 id="build-title" className="feature-title">
-              Read the system. Enter the code.
-            </h2>
-            <p className="feature-copy">
-              O:I is developed in public. The repository is the shared entry point into the architecture, current work
-              and the six independently useful products.
-            </p>
+            <h2 id="build-title" className="feature-title">Read the positions. Enter the code.</h2>
+            <div className="body-copy">
+              <p>
+                One install: the <strong>oi</strong> command discovers, installs and composes the
+                six centres into a managed local environment, while leaving each product's native
+                identity and CLI intact. The public projection stays projection; the canonical
+                repositories carry their own instructions.
+              </p>
+            </div>
           </div>
-
-          <div className="build-links" role="list">
-            <ExternalLink href="https://github.com/EpiLogos/O-I/blob/research/cordis-composable-agency/docs/CANONICAL-PRODUCT-FIELD.md">
+          <div className="build-links">
+            <ExternalLink href="https://github.com/EpiLogos/O-I/blob/main/docs/positions/FOUNDING-POSITIONS.md" className="link-arrow">
+              <span>Founding positions</span>
+              <strong>What O:I is actually saying</strong>
+              <ArrowIcon />
+            </ExternalLink>
+            <ExternalLink href="https://github.com/EpiLogos/O-I/blob/main/docs/VISION.md" className="link-arrow">
+              <span>Vision</span>
+              <strong>Agency · world · return</strong>
+              <ArrowIcon />
+            </ExternalLink>
+            <ExternalLink href="https://github.com/EpiLogos/O-I/blob/main/docs/ARCHITECTURE.md" className="link-arrow">
               <span>Architecture</span>
               <strong>Canonical product field</strong>
+              <ArrowIcon />
             </ExternalLink>
-            <ExternalLink href="https://github.com/EpiLogos/O-I#start-here">
-              <span>Understand</span>
-              <strong>Documentation</strong>
+            <ExternalLink href="https://github.com/EpiLogos/O-I/blob/main/docs/SHARED-FIELD.md" className="link-arrow">
+              <span>Shared field</span>
+              <strong>How worlds meet</strong>
+              <ArrowIcon />
             </ExternalLink>
-            <ExternalLink href="https://github.com/EpiLogos/O-I">
-              <span>Source</span>
-              <strong>O:I repository</strong>
+            <ExternalLink href="./explore.html" className="link-arrow">
+              <span>Explore</span>
+              <strong>Enter the shared field</strong>
+              <ArrowIcon />
             </ExternalLink>
-            <ExternalLink href="https://github.com/EpiLogos/O-I/issues">
-              <span>Contribute</span>
-              <strong>Current work</strong>
+            <ExternalLink href="https://github.com/EpiLogos/O-I" className="link-arrow">
+              <span>Repository</span>
+              <strong>EpiLogos/O-I</strong>
+              <ArrowIcon />
             </ExternalLink>
           </div>
         </section>
 
-        <section className="section section--black section--closing oi-surface-dark" aria-labelledby="closing-title">
-          <div className="closing-mark" aria-hidden="true">
-            {'{O:I}'}
-          </div>
+        <section className="section section--black section--closing">
+          <div className="closing-mark" aria-hidden="true">{`{O:I}`}</div>
           <div className="closing-copy">
-            <div className="section__eyebrow">OPERATING INFRASTRUCTURE · OBJECTIVE INTERNALITY</div>
-            <h2 id="closing-title">An architecture for the engineering around the model.</h2>
+            <h2>An open field for situated agency.</h2>
           </div>
         </section>
       </main>
-
-      <footer className="site-footer oi-surface-dark">
-        <span>{'{O:I}'}</span>
-        <span>Understand · Explore · Build</span>
-        <span>Open project · 2026</span>
+      <footer className="site-footer">
+        <span>O:I — Objective Internality</span>
+        <span>
+          <a href="#what">Understand</a> · <a href="#centres">Centres</a> · <a href="./explore.html">Explore</a> · <a href="#build">Build</a>
+        </span>
+        <span>Open source · open protocols</span>
       </footer>
     </div>
   );

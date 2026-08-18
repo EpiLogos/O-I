@@ -4,5 +4,9 @@ farp
 site/node_modules/
 site/dist/
 site/.vite/
+site/package-lock.json
+site/tsconfig.*.tsbuildinfo
+site/*.config.js
+site/*.config.d.ts
 *.log
 .DS_Store

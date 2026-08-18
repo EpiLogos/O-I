@@ -4,6 +4,8 @@
 
 {O:I} is the shared frame around six independently useful product surfaces. It does not absorb their behaviour.
 
+For the canonical three-depth visual orientation — experience, product relation, then current software seams — see [`VISUAL-PRODUCT-UNDERSTANDING.md`](VISUAL-PRODUCT-UNDERSTANDING.md).
+
 The architecture has one Idea and two deliberately thin operative faces:
 
 1. **the Idea** — a coherent account of the technological field through which model capacity becomes situated agency;
@@ -19,7 +21,7 @@ The product family currently covers six distinct functions.
 | Function | Product surface | Boundary |
 |---|---|---|
 | Persistent personal ground | Central | Human-authored Control, Projects, machine intent, and durable personal working structure. |
-| Agent actuation | Agent Runtime | The LLM loop itself, from bare recurrence to a framework or harness. |
+| Agent actuation | Actuation | Situated Agency, Actuation, metagency, AgenticComposition, determination/lineage, and Return semantics. |
 | Capability and context resolution | AIKit | Agent-use resolution of skills, tools, Actions, ContextSources, models, profiles, sessions, harnesses, and composition-capable runtime bodies/surfaces. |
 | Developmental agency | Software Factory | Durable Projects, Runs, Agents, Agencies, artifacts, evidence, candidates, and developmental patterns. |
 | Material execution | Workcell | Workspaces, execution providers, runtimes, services, machines, bindings, and material lifecycle. |
@@ -46,7 +48,7 @@ The {O:I} repository owns only concerns that make sense at the level of the whol
 
 A product function stays in its product.
 
-Project management belongs to the personal-ground surface. Capability/context and runtime-body composition belong to AIKit. Run semantics belong to the developmental system. Execution planning belongs to the material-execution system. QL recurrence belongs to the runtime or Quaternal Logic layer that defines it.
+Project management belongs to the personal-ground surface. First-class situated agency and Return belong to Actuation. Capability/context and runtime-body composition belong to AIKit. Run semantics belong to the developmental system. Execution planning belongs to the material-execution system. Executable QL/MEF form and refraction belong to Quaternal Logic.
 
 The `oi` layer can reveal these functions. The shared-field layer can project selected outputs from them and relate independently grounded Participants. Neither reimplements product behaviour.
 

@@ -18,6 +18,7 @@ export function ParallaxComponent() {
     gsap.registerPlugin(ScrollTrigger);
 
     const triggerElement = root.querySelector<HTMLElement>('[data-parallax-layers]');
+    const title = root.querySelector<HTMLElement>('[data-parallax-title]');
     const darkWipe = root.querySelector<HTMLElement>('[data-dark-wipe]');
     const lenis = new Lenis({
       smoothWheel: true,
@@ -38,23 +39,39 @@ export function ParallaxComponent() {
       });
 
       const layers = [
-        { layer: '1', yPercent: 68, scale: 1.08 },
-        { layer: '2', yPercent: 50, scale: 1.035 },
-        { layer: '3', yPercent: 32, scale: 1.01 },
-        { layer: '4', yPercent: 12, scale: 1 },
+        { layer: '1', out: 26, back: 0 },
+        { layer: '2', out: 17, back: 0 },
+        { layer: '3', out: 9, back: 0 },
+        { layer: '4', out: 3, back: 0 },
       ];
 
       layers.forEach((layer, index) => {
         timeline.to(
           triggerElement.querySelectorAll(`[data-parallax-layer="${layer.layer}"]`),
           {
-            yPercent: layer.yPercent,
-            scale: layer.scale,
+            keyframes: [
+              { yPercent: layer.out, ease: 'none' },
+              { yPercent: layer.back, ease: 'none' },
+            ],
             ease: 'none',
           },
           index === 0 ? 0 : '<',
         );
       });
+
+      if (title) {
+        timeline.to(
+          title,
+          {
+            keyframes: [
+              { yPercent: 18, opacity: 0.2, ease: 'none' },
+              { yPercent: 0, opacity: 1, ease: 'none' },
+            ],
+            ease: 'none',
+          },
+          0,
+        );
+      }
 
       if (darkWipe) {
         timeline.fromTo(
@@ -98,14 +115,8 @@ export function ParallaxComponent() {
             </div>
           </div>
 
-          <div className="parallax__wordmark" aria-hidden="true">
-            <span>OPERATING INFRASTRUCTURE</span>
-            <span className="parallax__slash">/</span>
-            <span>OBJECTIVE INTERNALITY</span>
-          </div>
-
-          <div className="parallax__scroll-cue" aria-hidden="true">
-            scroll
+          <div data-parallax-title className="parallax__title" aria-hidden="true">
+            Objective Internality
           </div>
         </div>
       </section>

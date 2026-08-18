@@ -62,3 +62,27 @@ test("fixture corpus members can be selected without making the renderer subject
   );
   assert.equal(fetched, "golden.json");
 });
+
+test("Explore registers the account presentation grammar without executable HTML injection", async () => {
+  const source = await fs.readFile(path.join(here, "src", "explore", "presentation-components.tsx"), "utf8");
+  for (const renderer of [
+    "oi.presentation/lede/v1",
+    "oi.presentation/prose/v1",
+    "oi.presentation/distinction/v1",
+    "oi.presentation/diagram/v1",
+    "oi.presentation/source/v1",
+    "oi.presentation/claim-evidence/v1",
+    "oi.presentation/timeline/v1",
+    "oi.presentation/comparison/v1",
+    "oi.presentation/code-schema/v1",
+    "oi.presentation/image/v1",
+    "oi.presentation/mockup/v1",
+    "oi.presentation/wiki-excerpt/v1",
+    "oi.presentation/reference-card/v1",
+    "oi.presentation/run-history/v1",
+    "oi.presentation/action/v1",
+  ]) {
+    assert.match(source, new RegExp(renderer.replaceAll("/", "\\/")));
+  }
+  assert.equal(source.includes("dangerouslySetInnerHTML"), false);
+});
