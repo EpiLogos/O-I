@@ -38,13 +38,34 @@ test('product sections expose the renderer contract', () => {
 });
 
 test('research page represents the wider programme and keeps QL as one deeper surface', () => {
-  for (const section of ['object', 'method', 'programme', 'ql', 'open']) {
+  for (const section of ['object', 'human-authorship', 'method', 'programme', 'ql', 'open']) {
     sectionBody('research', section);
   }
   assert.match(sectionBody('research', 'method'), /^### \[cycle\] Discover → Source-lock → Study →/m);
+  assert.match(sectionBody('research', 'programme'), /Human authorship and operative orientation/);
   assert.match(sectionBody('research', 'programme'), /Personal and project worlds/);
   assert.match(sectionBody('research', 'programme'), /Community extensions/);
   assert.match(sectionBody('research', 'ql'), /A deeper formal research programme/);
+});
+
+test('human authorship remains a developed provenance relation, not generic personalisation', () => {
+  const human = sectionBody('oi', 'human-agency');
+  assert.match(human, /human authorship → durable source → selective operative use → action and encounter → returned evidence → human Recognition and revision/);
+  assert.match(human, /Generated interpretation is not authored source/);
+  assert.match(human, /Retrieval is not permission/);
+
+  const central = sectionBody('products', 'central');
+  assert.match(central, /authored source/);
+  assert.match(central, /observed state/);
+  assert.match(central, /generated material/);
+  assert.match(central, /Natural prose is first-class/);
+  assert.match(central, /human acceptance/);
+
+  const research = sectionBody('research', 'human-authorship');
+  assert.match(research, /Where should the human enter an agentic system/);
+  assert.match(research, /smallest relevant part of durable ground/);
+  assert.match(research, /repeated prompting and micromanagement/);
+  assert.match(research, /hold the model, task and tools approximately constant/);
 });
 
 test('collective extension is represented as a research method, not generic extensibility', () => {
@@ -57,20 +78,26 @@ test('collective extension is represented as a research method, not generic exte
   assert.match(sectionBody('products', 'intro'), /abstractions are the durable root/);
 });
 
-test('founding positions carry the same positive world and collective research commitments', () => {
+test('founding positions carry the same positive world, authorship and collective research commitments', () => {
   assert.match(foundingPositions, /^## 1 — Agency is constituted through model capacity in relation with a World$/m);
   assert.match(foundingPositions, /^## 2 — Existing technological Worlds are legitimate starting Worlds$/m);
+  assert.match(foundingPositions, /^## 4 — Increasing artificial agency should return more room for human agency$/m);
   assert.match(foundingPositions, /^## 5 — Agentic engineering is an open, collective research field$/m);
+  assert.match(foundingPositions, /human authorship[\s\S]*durable authored source[\s\S]*selective derivation \/ retrieval \/ disclosure[\s\S]*human Recognition \/ accepted revision/);
+  assert.match(foundingPositions, /Generated interpretation is not authored source/);
+  assert.match(foundingPositions, /Human authorship is itself an agency variable/);
   assert.match(foundingPositions, /stable abstraction[\s\S]*native SDK \/ public contract[\s\S]*fixture \+ verification[\s\S]*Return to product and research/);
 });
 
 test('first-contact copy carries the world-making proposition and local-to-shared movement', () => {
   assert.match(sectionBody('home', 'what'), /^### \[title\] O:I maps what it means for an AI agent to have a world\.$/m);
   assert.match(sectionBody('home', 'existing-world'), /^### \[title\] Start where you are\.$/m);
+  assert.match(sectionBody('home', 'existing-world'), /principles, preferences, project purposes, rules and ways of working/);
   assert.match(sectionBody('home', 'field'), /Minimal O:I: durable ground \+ actuated model capacity/);
   assert.match(sectionBody('home', 'centres'), /mapping what constitutes having-a-world for an AI agent/);
   assert.match(sectionBody('home', 'shared'), /local agent world → selective Projection → Shared Field → encounter by another world/);
   assert.match(sectionBody('shared-field', 'intro'), /^### \[title\] A world, defined for agents\.$/m);
+  assert.match(sectionBody('shared-field', 'co-internality'), /legibility without capture/);
 });
 
 test('Objective : Internality is the authored title form', () => {
