@@ -18,13 +18,14 @@ pub enum BridgeCallClass {
     ObserveEpiNara,
     WriteEpiNara,
     DispatchEpiNaraAction,
+    DispatchEpiPersonalAction,
     DispatchFactoryAction,
     SelectSemanticRef,
     OpenDestination,
 }
 
 impl BridgeCallClass {
-    pub const ALL: [Self; 10] = [
+    pub const ALL: [Self; 11] = [
         Self::DiscloseComposition,
         Self::DiscloseContributions,
         Self::ObserveFactoryBuild,
@@ -32,6 +33,7 @@ impl BridgeCallClass {
         Self::ObserveEpiNara,
         Self::WriteEpiNara,
         Self::DispatchEpiNaraAction,
+        Self::DispatchEpiPersonalAction,
         Self::DispatchFactoryAction,
         Self::SelectSemanticRef,
         Self::OpenDestination,
@@ -54,7 +56,8 @@ impl std::error::Error for BridgeDenied {}
 
 /// Root-shell bridge policy. Third-party/rich contributions are hosted only as
 /// declarative read models. Presence in the Surface catalog never grants access
-/// to the protected Nara body or any privileged native dispatcher.
+/// to the protected Nara body, Personal 4/5/0 depth, or any privileged native
+/// dispatcher.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct BridgePolicy;
 
