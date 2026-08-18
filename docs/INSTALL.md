@@ -21,7 +21,16 @@ The short registry form is the intended public entry point:
 npm install -g @epilogos/oi
 ```
 
-The repository contains a manual trusted-publishing workflow for that package, but the short command should be advertised as live only after the `@epilogos/oi` npm registry entry has actually been published. Until then, the immutable GitHub release tarball above is the real npm install surface.
+That short command becomes real only after the package has actually been published to npm. npm trusted publishing cannot create a package's first registry entry: an authenticated npm account that owns the `@epilogos` scope must perform the one-time bootstrap publish first. After that, configure the package's GitHub Actions trusted publisher for:
+
+```text
+organization/user   EpiLogos
+repository          O-I
+workflow filename   npm-publish.yml
+allowed action      npm publish
+```
+
+The repository's manual `npm-publish.yml` workflow is then the tokenless publication path for later versions. Until the first registry publication has happened, the immutable GitHub release tarball above is the real npm install surface.
 
 The pre-local package supports the native release targets that O:I actually builds today:
 
