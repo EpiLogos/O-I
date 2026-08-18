@@ -68,7 +68,11 @@ jobs:
           spacetime --version | tee /tmp/spacetimedb-version.txt
           grep -q '2.8.1' /tmp/spacetimedb-version.txt
       - run: npm install --no-audit --no-fund
-      - run: npm run build
+      - name: Build live Explore client and site
+        env:
+          VITE_OI_SPACETIMEDB_URI: ${{ vars.OI_SPACETIMEDB_URI }}
+          VITE_OI_SPACETIMEDB_DATABASE: ${{ vars.OI_SPACETIMEDB_DATABASE }}
+        run: npm run build
       - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/configure-pages@v5
       - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
