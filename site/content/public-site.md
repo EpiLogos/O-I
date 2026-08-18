@@ -14,66 +14,64 @@
 
 ## [what] What is O:I
 
-### [title] A capable model is not yet a capable agent.
+### [title] AI agents act through a world around them.
 
-What a model can do depends on the world around it: where it stands, what persists between sessions, which tools and sources it can reach, what authority it holds, which projects continue, and how what happens returns into later action. O:I — Operating Infrastructure · Objective Internality — is an open architecture and research programme for that surrounding field: the technological structures through which model capacity becomes situated agency.
+An AI agent works through an underlying inference model, but also through the project it can see, the tools it can use, the knowledge it can reach, the authority it has, the environment it can change and the history it can carry forward.
 
-These arrangements are experimental. Hold the model constant and change the loop, the memory, the available tools and knowledge, the authority structure or the material environment, and a different agency appears. O:I exists to make that surrounding field explicit enough to build, inspect, compare and study — not to hide it inside one prescribed stack.
+O:I — Operating Infrastructure · Objective Internality — is an open architecture for designing that world. We are developing it as a working platform and an open research programme for understanding how different technological arrangements shape what kinds of agency become possible.
 
 ## [existing-world] Start from the world you already have
 
-### [title] You do not have to replace your AI setup.
+### [title] Your existing setup is already a world.
 
-O:I begins from the technological world you already inhabit: your models, agents, editors, shells, projects, prompts, skills, tools, services, machines and working habits. That world already matters, and it stays yours. O:I can make its structure explicit without migration, without surrendering its ownership or continuity, and without rewriting it into somebody else's runtime.
+Your editor, shell, repositories, prompts, agents, skills, tools, services, machines and working habits already form a real technological environment. O:I starts there.
 
-Heterogeneous setups are not a problem to eliminate. They are the practical starting point and part of what the research exists to understand.
+You can keep the setup you use and make more of its structure durable, visible and composable over time. Existing worlds are also part of the research: the platform is meant to meet heterogeneous arrangements rather than only arrangements created inside O:I.
 
 ## [field] One possibility space
 
-### [title] Start small. Stay whole.
+### [title] Begin with a project and an agent.
 
-The smallest useful case is ordinary: files and projects you keep, plus an AI agent that can work with them. A directory containing a real project and an agent with the ability to act there is already enough to expose the central relation. Nothing in the wider O:I field is a prerequisite.
-
-The larger field develops from actual needs: more durable personal context, richer tools and knowledge, explicit agency and authority, persistent development history, material execution environments, formal experiments, or relations with other worlds. These are not product tiers.
+A real project you keep, plus an AI agent able to work with it, is already a useful starting point. From there the world can develop as your needs develop: more durable personal context, richer tools and knowledge, explicit agency and authority, developmental history, material execution environments, formal experiments and relations with other worlds.
 
 ### [ground] Files and projects you keep
 
 ### [capacity] An AI agent that can work with them
 
-### [core-note] Already enough to form a continuing agent world.
+### [core-note] A small but real continuing world.
 
 ### [developments] It can develop into
 
 - **Projects and continuity** — work that persists across sessions
-- **Knowledge and sources** — a world whose sources remain available and attributable
-- **Skills, tools and actions** — powers the actor can find and use when relevant
+- **Knowledge and sources** — material the agent can find and trace back to source
+- **Skills, tools and actions** — powers available when they are relevant
 - **Agents and agencies** — differentiated and delegated forms of agency
 - **Developmental history** — evidence, decisions and returned learning
-- **Material execution worlds** — environments that actually run
+- **Material execution worlds** — environments where work can actually run
 - **Formal experiment** — propositions made technically testable
-- **Shared fields** — encounter with independently grounded worlds
+- **Shared fields** — worlds becoming available to one another
 
-## [centres] Six centres
+## [centres] Our products
 
-### [title] Six different problems. Six independently useful products.
+### [title] We are developing six products for six parts of that world.
 
-The present O:I family has six native product centres. Each exists because a distinct difficulty demanded it. They interlock by contract rather than by pipeline; none is a mandatory tollbooth for the others.
+Central keeps personal and project ground durable. Actuation makes agency and authority explicit. AIKit composes the capabilities and context available here and now. Software Factory carries software development from intention through evidence and Return. Workcell makes computational environments real. Quaternal Logic is the executable formal research surface.
 
-The home page gives the shortest useful account. The Products page carries the direct description, reason and human or agent consequence of each centre.
+[See the products and their architecture](./products.html).
 
 ## [shared] Shared field
 
-### [title] Worlds can meet without becoming one world.
+### [title] Worlds can meet in a shared field.
 
-A locally grounded world can selectively project a document, project result, wiki space, experiment or other bounded part of itself into a shared field. Other worlds can encounter that projection from their own ground, respond, contest or extend it, while source ownership and provenance remain visible.
+A person or agent can define a world locally and selectively make parts of it available to another world: a document, project result, wiki space, experiment, Agent or other addressable object. The shared field carries the relation while source identity and provenance remain visible.
 
 [Read the Shared Field account](./shared-field.html) or [open Explore](./explore.html).
 
 ## [build] Build
 
-### [title] Open source, locally inhabitable, developed in public.
+### [title] Open source, local-first and developed in public.
 
-O:I can compose the six centres into a managed local environment while leaving each product's native identity and command surface intact. The repositories remain the authority for their own implementation and instructions.
+The `oi` command is the local doorway into the O:I system. It works with the native products rather than replacing their command surfaces, and the repositories remain the authority for current implementation and installation.
 
 [Read the build and source guide](./build.html).
 
@@ -83,99 +81,95 @@ O:I can compose the six centres into a managed local environment while leaving e
 
 ## [intro] The surrounding field
 
-### [title] The engineering around the model is part of the agent.
+### [title] O:I gives AI agents a world to act in.
 
-A model can possess considerable capability while having very little effective agency in a particular situation. It may not know where it is, what project continues here, what it can act upon, which tools exist, what authority it has, what happened before this session, or what should remain afterwards.
+Give the same underlying inference model different projects, tools, knowledge, permissions, histories, runtime bodies and execution environments and you have changed the conditions under which an agent acts. O:I makes those surrounding conditions explicit enough to build, inspect, compose and study.
 
-O:I treats agency as relational. Effective technological agency arises through the relation between model capacity and a surrounding world that can situate, provision, constrain, inform, remember, materialise and return action.
+The architecture spans the persistent world an agent returns to, the capabilities it can reach, the Agency under which it acts, the environments it can materialise, the developmental history it can inherit and the other worlds it can encounter.
 
-This is why changing the loop, context construction, memory, capability disclosure, project representation, authority, execution environment, multi-agent relation or human relation can materially change an act even when the model weights remain fixed.
+## [existing-world] Existing worlds
 
-## [existing-world] Existing worlds are the starting fact
+### [title] Your current setup is a legitimate starting world.
 
-### [title] Adoption is not a demand for replacement.
+A useful agentic setup may be a repository and a CLI agent, a collection of scripts and services, several machines, a rich harness, or something assembled from technologies O:I did not create. O:I is designed to encounter that world as it is and add explicit structure where it helps.
 
-Whatever combination of models, shells, editors, agents, scripts, projects, documents, tools, local services, remote machines, prompts, skills, databases and improvised conventions somebody already uses is already a real arrangement of technological agency.
+That keeps continuity with the work and habits you already have. It also keeps the research open to real variation rather than only testing configurations produced by one preferred stack.
 
-People accumulate continuity in those arrangements. Requiring migration as the price of intelligibility would destroy some of the continuity O:I is meant to preserve. It would also weaken the research: if the programme only recognises O:I-native setups, it can only rediscover the consequences of its own design choices.
+## [possibility] One possibility space
 
-The first-party products are therefore strong instruments for developing an agent world, not a definition of which worlds count.
+### [title] Start small. Develop only what you need.
 
-## [possibility] Minimal and maximal
+The minimal case can stay very small: persistent files and projects, plus an AI agent able to act there. The same world can later gain durable Agents and Agencies, Skills and Actions, richer source navigation, developmental Runs and evidence, material Workcells, research instrumentation and SharedFields.
 
-### [title] One possibility space, developed through need.
-
-The minimal case keeps the architecture honest. Files and projects that persist, together with model capacity in an acting loop, already expose the core problem: how does an actor enter a real world and continue acting there intelligibly?
-
-The maximal case can include multiple Projects, models and harnesses; durable Agents and Agencies; skills, tools, Actions and knowledge sources; developmental Runs, evidence and history; mutable execution bodies and Workcells; epistemic cultivation and evaluation; Quaternal Logic / MEF experiments; and SharedFields through which independently grounded worlds meet.
-
-These are not two architectures. The maximal case is the minimal relation developed through additional needs. A person may need one centre, several, all six, or interoperable alternatives.
+Our six products are centres within that possibility space. You can use one, several, all six, or interoperable alternatives where another technology already owns the job well.
 
 ## [name] Two readings of one name
 
 ### [title] Operating Infrastructure. Objective : Internality.
 
-The first reading is engineering. An operating system gives programs files, processes, memory and permissions. O:I names the corresponding organisation around model inference: projects and durable ground, capabilities and actions, sessions and runtime bodies, developmental history, material environments, and relations to other actors and worlds.
+**Operating Infrastructure** names the engineering around an AI agent: projects and durable ground, capabilities and Actions, sessions and runtime bodies, developmental history, material environments and relations to other actors and worlds.
 
 ### [objective-internality] Objective : Internality
 
-The second reading names the same field from inside an act. An actor's operative internal world — what it can actually draw on when it acts — is not identical to the inside of a model. Projects held in files, available powers, persistent memory, machine state, prior decisions and relations to other actors are objective structures. They exist between invocations, can be inspected and changed, and can become part of what the actor is presently working with.
+**Objective : Internality** names the same field from the side of the actor. Part of what an agent can actually draw on while acting can exist objectively outside one inference: files, project history, available powers, source indexes, machine observations, constraints, prior decisions and runtime bindings can persist, be inspected and become available again in later action.
 
-Objective Internality names that relation: an operative interior that is objectively structured, inspectable and able to persist and return.
+The research question is what becomes possible when that operative interior is designed as a real, durable and inspectable technological world.
 
-### [non-claim] What is not being claimed
+### [non-claim] The operational claim
 
-The claim is operational, not phenomenal. O:I does not assert that an artificial actor is a subject, or that inspectable structure exhausts a mind. It asserts something narrower: the operative interior of an act is not automatically identical to the computational interior of the model producing the next token, and deliberately designing that wider interior changes what agency can become.
+Objective : Internality gives us a precise engineering object without requiring a prior conclusion about artificial subjectivity. We can build and compare systems in which different forms of memory, world, capability, identity, relation and history become operative for an agent, then let implementation and use return evidence about where the concept helps and where it needs revision.
 
 ## [human-agency] Human agency
 
-### [title] More artificial agency should return more human agency.
+### [title] More artificial agency should create more room for human agency.
 
-The human role is not well described as merely being kept “in the loop.” A human can remain continuously involved while spending their attention on repetitive setup, context repair, permission babysitting, state reconstruction, prompt transport, mechanical orchestration and verification the system could have made unnecessary.
+We want routine setup, context repair, source discovery, execution mechanics and developmental bookkeeping to move away from continuous human attention when the system can carry them safely and visibly.
 
-The stronger aim is to keep human attention near the activities in which human authorship is consequential: purpose, vision, judgement, taste, meaningful alternatives, interpretation, refusal, recognition and redirection.
+That leaves more room for the work in which human authorship matters most: purpose, vision, judgement, taste, meaningful alternatives, interpretation, refusal, Recognition and redirection. This is a design commitment we test against the actual experience of using the system.
 
-The system should therefore be judged partly by a simple consequence: does greater technological agency return meaningful time and expressive power to the person using it, or merely create a larger apparatus that requires more supervision?
+## [research-field] Research field
 
-## [research-field] Agentic technology is still a research field
+### [title] Agentic engineering is an open research field.
 
-### [title] The surrounding arrangement is an experimental variable.
+We are studying how prompts, recurrence, memory, knowledge horizons, capability fields, authority, embodiment, development process, material environment, mediation and human practice combine around available model capacity.
 
-We do not yet possess a settled engineering science of how models, prompts, recurrence, memory, tools, knowledge horizons, social topology, authority, embodiment, development process and human practice combine to produce different forms of effective agency.
+O:I gives those arrangements a common place to become describable, comparable and testable. The aim is to learn from different worlds, including results that challenge our own preferred architecture.
 
-O:I treats those arrangements as experimental configurations. A useful experiment can hold model capacity and task conditions approximately constant while changing one surrounding variable; another can compare naturally occurring worlds. The aim is to make the configuration describable enough that a result can answer more than “this agent was better.”
+[Enter the Research programme](./research.html).
 
 ---
 
 # [products] Products
 
-## [intro] Six centres
+## [intro] Our six products
 
-### [title] Each centre owns a different part of the technological world.
+### [title] We are developing six products to make an agent's world durable, operable and intelligible.
 
-These products are not six stages and they are not six prerequisites. Each owns a distinct problem, can be used independently, and can meet equivalent technologies through explicit contracts. The descriptions below begin with the actual software responsibility before moving into the deeper reason the distinction exists.
+Each product owns a different technical problem and has its own native repository, architecture and implementation. They can be used independently or composed through O:I when their responsibilities meet.
+
+The diagrams below show current product seams and native technical nouns rather than replacing them with a site-only vocabulary.
 
 ## [central] Central
 
-### [summary] Files, commands and connectors for keeping your durable personal ground and ordinary work under your own ownership.
+### [summary] Your personal and project world, held in ordinary files and operated through stable Actions.
 
-### [lede] A world that remains yours.
+### [lede] Your working world, under your control.
 
 ### [what] What it is
 
-Central is a human-owned directory and toolset for durable personal context and ordinary work. `Control/` holds material a person deliberately wants carried forward about themselves, their agents and their machines; `Work/` remains ordinary projects and files; `ctrl` exposes stable Actions; connectors bind those Actions to the technologies available on a particular machine.
+Central is the human-owned root for personal context and ordinary work. `Control/` holds material deliberately authored about the person, their agents and their machines. `Work/` holds normal projects and files. `ctrl` exposes stable Actions, and connectors bind those Actions to the technologies available on a particular machine.
 
 ### [why] Why it exists
 
-Models, interfaces, machines and agent runtimes change faster than the work they serve. Without an owned source, personal continuity belongs to whichever application happens to be current — and leaves when it does. Observation and inference can be useful without silently becoming things the person has authored about themselves.
+Models, editors, machines and agent runtimes change faster than the life and work they serve. Central gives that longer-lived world an owned source so a person can change tools without reconstructing the same context from scattered application settings.
 
 ### [change] What changes
 
-The continuity moves to the person. A human can change models, editors or machines without reconstructing the same technological life from scattered settings, while an agent can return to a stable, permission-bounded authored world rather than treating every session as a blank prompt.
+A person can carry the same authored ground and ordinary work across changing tools, while an agent can return to a stable, permission-bounded world instead of beginning every session from scratch.
 
 ### [capabilities] Current shape
 
-Authored `Control/` source · ordinary `Work/` trees · `ctrl` Actions and SDK · replaceable connectors · subordinate derived state
+`Control/user` · `Control/agents` · `Control/machines` · ordinary `Work/` · `ctrl` Actions / SDK · replaceable connectors · derived `.central/` state
 
 ### [repo] Native centre
 
@@ -183,25 +177,25 @@ https://github.com/EpiLogos/Central
 
 ## [actuation] Actuation
 
-### [summary] Contracts and runtime forms for making who is acting, under whose authority, within what bounds, and with what return path explicit.
+### [summary] The product for defining who is acting, under whose authority, within what bounds and with what path for Return.
 
-### [lede] Agency itself becomes inspectable.
+### [lede] Who acts, who decides, and how reality returns.
 
 ### [what] What it is
 
-Actuation is the product for constituting and managing technological agency: which Agent or Agency is acting, who or what determined it, what purpose and bounds apply, what authority it holds, whether another locus is delegated, derived or federated, what may be refused, and how returned evidence or disagreement re-enters the governing world.
+Actuation defines technological agency as a first-class object. It distinguishes Agent, situated Agency, determination, authority, bounds, delegation, derivation, federation, Actuation and Return so a composed system can say who is acting and on whose behalf.
 
 ### [why] Why it exists
 
-Orchestration can make processes move without making the resulting authority intelligible. Delegation separates a determining locus, which supplies purpose and permission, from a labouring locus, which meets resistance, error and consequence. If reality has no path back upward, command becomes insulated from what it causes.
+As agents delegate work and participate in larger compositions, process flow alone stops being enough. The governing purpose and permissions need a clear relation to the locus doing the work, and the evidence, resistance or disagreement encountered there needs a route back into later determination.
 
 ### [change] What changes
 
-Agency becomes attributable rather than ambient. Delegation, federation, refusal, dissent, failure and Return have explicit identities and bounds, so a composition can remain intelligible even when several agents or worlds participate.
+Authority, delegation, refusal, dissent and Return become inspectable parts of the agency relation rather than assumptions hidden inside orchestration code.
 
 ### [capabilities] Current shape
 
-Agent / Agency constitution · determination and bounds · delegation / derivation / federation · agentic composition · Return
+Agent · Agency · determination / WorldBinding · authority and bounds · delegation / derivation / federation · Actuation · Return
 
 ### [repo] Native centre
 
@@ -209,25 +203,25 @@ https://github.com/EpiLogos/Actuation
 
 ## [aikit] AIKit
 
-### [summary] A control and interface layer that discovers the models, tools, skills, sources, sessions and runtimes already around you and composes the relevant subset for the current act.
+### [summary] The layer that discovers and composes the models, skills, tools, sources, sessions and runtime components available in a real setup.
 
-### [lede] A large world, disclosed as a usable horizon.
+### [lede] What an agent can use, here and now.
 
 ### [what] What it is
 
-AIKit indexes and composes a heterogeneous agentic setup: models, CLI agents, skills, tools, Actions, source systems, projects, sessions, multiplexers, runtime Components and Surfaces. For a particular project, actor and task it resolves what exists, what is relevant, what is permitted and what should actually be disclosed or activated.
+AIKit discovers a heterogeneous agentic environment and resolves the useful subset for a particular project, actor and task. It works across model providers, CLI agents, Skills, tools, Actions, ContextSources, projects, sessions, multiplexers, runtime Components and Surfaces.
 
 ### [why] Why it exists
 
-Real agent environments are accumulations, not clean installs. Useful capability is scattered across clients and hosts; knowledge can be available without belonging in every prompt; a resource can exist without being selected, loaded or invoked. Rewriting all of that into one runtime destroys the world AIKit is supposed to make usable.
+Real setups accumulate across clients, hosts and projects. Useful capability may exist without belonging in every prompt or every runtime. AIKit gives that larger world a discoverable and composable horizon.
 
 ### [change] What changes
 
-A human or agent can ask what is available here, why it is available, what is absent or degraded, what can be retrieved, what can be invoked and how the current environment was composed. The wider world stays heterogeneous while the current act gets a small, explainable horizon.
+A human or agent can inspect what is available, what is relevant, what is permitted, what is degraded and how the current working environment was composed.
 
 ### [capabilities] Current shape
 
-Context-scoped capability resolution · models and harnesses · Skills / tools / Actions · Knowledge Navigation · sessions and muxes · runtime Components / Surfaces · Explain / History
+Context-scoped capability resolution · models and harnesses · Skills / tools / Actions · ContextSources / Knowledge Navigation · sessions / muxes · runtime Components / Surfaces · Explain / History
 
 ### [repo] Native centre
 
@@ -235,25 +229,25 @@ https://github.com/EpiLogos/ai-kit
 
 ## [factory] Software Factory
 
-### [summary] A development system that keeps authored intention connected to design, agent-led implementation, evidence, candidate realities and human Recognition.
+### [summary] A development system that keeps authored intention connected to design, agent-led implementation, evidence, Candidates, Recognition and Return.
 
-### [lede] Vision survives the labour.
+### [lede] Software development that remembers why.
 
 ### [what] What it is
 
-Software Factory is the developmental system for agentic software work. It keeps one durable relation from authored product intention through design and program determination into implementation, tests and other evidence, executable Candidates, human or authorised Recognition, and Return into the Project's future ground.
+Software Factory is the developmental system for agentic software work. It carries a Project from authored intention and product meaning through design, Runs, implementation and tests into evidenced Candidates that can be encountered, recognised, redirected and returned into future development.
 
 ### [why] Why it exists
 
-Agentic development can produce technically competent change at a speed that deletes the reason the work mattered. A system can preserve every noun in a request and still lose the intended experience, judgement or human possibility that gave those nouns meaning.
+Agentic implementation can move faster than the human meaning that commissioned it. Factory keeps the originating intention, the developmental path and the evidence available together so speed does not erase why the software was worth making.
 
 ### [change] What changes
 
-The commission remains visible through the labour. Agents and deterministic systems can carry much more routine development while work returns as evidenced realities a human can encounter, recognise, reject or be changed by. The durable output includes Runs, decisions and evidence rather than only chat transcripts and commits.
+Agents and deterministic systems can carry more of the labour while the human remains close to commissioning, judgement, Recognition and redirection. Runs, decisions, evidence and Candidates become durable project material rather than disappearing into chat history.
 
 ### [capabilities] Current shape
 
-Project understanding · Run / RunMap · design and development · Candidates · evidence · Commission / Recognition · developmental Return
+Project understanding · Commission · Run / RunMap · design / development · Evidence · Candidate · Recognition · Return
 
 ### [repo] Native centre
 
@@ -261,25 +255,25 @@ https://github.com/EpiLogos/agent-system-design
 
 ## [workcell] Workcell
 
-### [summary] A provider-neutral runtime product that turns “I need a world where this can run” into an actual workspace, process, service, container, VM or host with inspectable bindings and lifecycle.
+### [summary] The product that turns a requirement for computation into an actual workspace, process, service, container, VM or host.
 
-### [lede] Semantic demand becomes a material world.
+### [lede] A real place for work to run.
 
 ### [what] What it is
 
-Workcell takes material requirements from higher-level software and makes them real: writable workspaces, processes, services, containers, MicroVMs or VMs, remote hosts, storage, databases, network relationships, credentials, browser-accessible Candidates and other runtime resources. It records which providers and bindings actually satisfied the demand.
+Workcell takes provider-neutral material requirements and resolves them into real computational resources: writable workspaces, processes, services, containers, MicroVMs or VMs, remote hosts, storage, databases, network relationships, credentials and browser-accessible applications. It records the providers and bindings that made the requested world real.
 
 ### [why] Why it exists
 
-Provider-neutral software still has to run somewhere. If higher-level Projects and Agents hard-code host paths, Docker networks, IP addresses or VM brands, material implementation leaks upward and becomes mistaken for semantic identity.
+Projects and Agents need concrete environments, but their higher-level identity should not be defined by host paths, Docker network names, IP addresses or one infrastructure provider. Workcell keeps the material implementation explicit at the layer that owns it.
 
 ### [change] What changes
 
-A human or agent can ask for the material conditions an act needs without manually reconstructing provider topology each time. The resulting world remains inspectable — what source was mounted, which services were reachable, what persisted, what was healthy, and what was eventually released.
+A human or agent can request the material conditions an act needs and still inspect what was created, where it lives, which services connect, what persists, what is healthy and what is eventually released.
 
 ### [capabilities] Current shape
 
-Demand planning · provider matching · workspace / process / service materialisation · BindingGraph · observation · exposure · collection · lifecycle and release
+Demand · plan / provider matching · BindingGraph · workspace / process / service · container / MicroVM / VM / host · observation · exposure · collection · retention / release
 
 ### [repo] Native centre
 
@@ -287,25 +281,25 @@ https://github.com/EpiLogos/Workcell
 
 ## [ql] Quaternal Logic
 
-### [summary] The executable QL / MEF product: formal references and operators, the twelve-lens manifold, provenance-bearing readings and experiments that require formal distinctions to make operationally detectable differences.
+### [summary] The executable formal research product for QL / MEF structures, refraction, provenance-bearing readings and operational experiments.
 
-### [lede] Metaphysical and archetypal propositions, made technically answerable.
+### [lede] Formal research made executable.
 
 ### [what] What it is
 
-Quaternal Logic / MEF is the standalone executable home for the programme's formal research: sufficiently specified QL structures and operators, the twelve-lens MEF manifold, provider and service contracts, provenance-bearing refractions, and the promotion path by which deeper formal propositions can become testable software operations.
+Quaternal Logic / MEF is the standalone implementation home for the programme's formal research: specified QL references and operators, the twelve-lens MEF manifold, provider and service contracts, provenance-bearing refractions and the experimental path from a formal proposition to an executable operation.
 
 ### [why] Why it exists
 
-The wider Epi-Logos programme asks whether mainstream material-computational assumptions exhaust the useful ways to engineer mind, relation, recurrence and form. Alternative metaphysical language is cheap unless it can be made answerable to implementation and evidence.
+The wider Epi-Logos programme contains formal and philosophical propositions about relation, recurrence, mind and archetypal form. Quaternal Logic gives those propositions a technical surface where correspondences can be specified precisely enough to test.
 
 ### [change] What changes
 
-A formal proposition can become an experiment. If a claimed distinction matters to an operation, changing it should produce a discriminable consequence. Classical approaches can win; QL forms can prove equivalent; a distinction can improve explanation without improving execution. Those are legitimate results.
+A formal distinction can enter an experiment. Where it is claimed to matter operationally, the implementation can test for a detectable consequence and return positive, negative, mixed or null evidence to the wider research programme.
 
 ### [capabilities] Current shape
 
-Executable QL references / operators · MEF registry and refraction · provider/service contracts · provenance-bearing readings · operational-parity experiments
+Executable QL references / operators · MEF registry / twelve-lens refraction · provider / service contracts · provenance-bearing readings · operational-parity experiments
 
 ### [repo] Native centre
 
@@ -315,35 +309,35 @@ https://github.com/EpiLogos/QL-MEF
 
 # [shared-field] Shared Field
 
-## [intro] Independently grounded worlds
+## [intro] World
 
-### [title] Worlds, not accounts.
+### [title] A world, defined for agents.
 
-The maximal social direction of O:I is not one giant hosted AI account. A world remains independently grounded: owned, continued and authoritative locally. It selectively projects a bounded part of itself into a shared field — a document, project result, wiki space, experiment, Agent or other addressable object.
+A World is the durable place from which an agent can act: its projects, sources, capabilities, history, authority, environment and relations. O:I lets people and agents define these worlds locally and make selected parts of them available beyond themselves.
 
-Another world encounters that projection from its own ground. It can respond, contest, extend or learn from it and return an attributable difference without becoming a subordinate record inside the first world.
+A Shared Field is where those independently grounded worlds meet. A document, project result, wiki space, experiment, Agent or other addressable object can become available to another world while retaining its source identity and provenance.
 
-## [projection] Projection is not upload
+## [projection] Projection
 
-### [title] Sharing does not move the source of truth.
+### [title] Source stays with the world.
 
-Source authority and canonical identity do not move merely because a representation becomes public or shared. The field mediates presentations and relations; it does not silently acquire ownership of the world that produced them.
+Projection creates an addressable representation of something a world owns for a particular audience or purpose. The source keeps its canonical identity and revision; the projection carries enough provenance for another participant to understand where it came from.
 
-Participation therefore preserves distinctions between source and projection, encounter and mutation, another participant's contribution and one's own canonical state. A SharedField can be hosted without the host becoming the ontological centre of every participant.
+That gives sharing a clear return path. Another person, Agent or world can respond, extend, contest or contribute without the shared field becoming the author of the source material.
 
 ## [co-internality] Objective Co-Internality
 
-### [title] Relation without collapse.
+### [title] Independent worlds in relation.
 
-Once an operative world can be locally grounded, a plural problem appears: how can it meet another grounded world without one becoming a mere extension of the other?
+Objective Co-Internality names the plural relation created when one operative world becomes meaningfully available within another while both retain their own ground, history and authority.
 
-Objective Co-Internality names that relation. A person, Agent or Agency can externalise a bounded part of its world; another can encounter it from its own ground, retain provenance, respond and return difference. The relation matters precisely because the participants are not required to share one owner, one context, one memory, one authority structure or one canonical database.
+This gives O:I a way to study shared agency as more than message exchange: what was projected, how it was encountered, what difference was returned, and how that difference later changed either world.
 
 ## [explore] Explore
 
-### [title] The shared field has a public surface.
+### [title] Explore is where those worlds become visible.
 
-Explore is the public application for addressable worlds and the agents, projects, wiki spaces, projections, relations and contributions they choose to expose. Each object carries provenance and remains resolvable toward the source that stays authoritative for it.
+Explore is the public application for addressable worlds and the agents, projects, wiki spaces, projections, relations and contributions they choose to expose. Each object carries provenance and can open outward into the world and source relations around it.
 
 [Open Explore](./explore.html).
 
@@ -351,39 +345,62 @@ Explore is the public application for addressable worlds and the agents, project
 
 # [research] Research
 
-## [intro] Formal research · Quaternal Logic
+## [intro] Agentic engineering
 
-### [title] Where the metaphysics becomes answerable.
+### [title] We are building O:I as an open research platform for agentic engineering.
 
-Quaternal Logic belongs to the wider Epi-Logos programme, whose account of mind, relation and form draws on depth psychology, Eastern metaphysics, phenomenology, process thought and related traditions rather than simply adopting the material-computational ontology most AI engineering assumes.
+The research object is the technological world through which available model capacity becomes situated agency: project ground, prompts and recurrence, knowledge, memory, capabilities, authority, runtime body, development process, material environment, shared-field mediation and human practice.
 
-O:I does not ask anyone to accept that account. It does something more useful: it gives formal claims somewhere technical to meet consequence and evidence.
+We are building these structures so the community can use them, vary them, compare them and return evidence about what they actually change. The programme begins with questions and testable propositions rather than finished conclusions about the best form of agency.
 
-## [parity] Operational parity
+## [object] What we study
 
-### [title] A formal name has to change an operation, not decorate it.
+### [title] Capacity. Provisioning. Potentiation.
 
-If a formal distinction is supposed to matter technically, implementing it should eventually produce an operationally discriminable consequence. Attaching a QL position or lens name to a record is not enough by itself.
+**Capacity** is what the underlying model and available compute can potentially provide.
 
-A classical approach may outperform an informed one; two formally different structures may prove equivalent; a distinction may improve explanation without improving execution; an implementation may falsify a proposed software correspondence without settling the wider metaphysical question. Those are answers, not embarrassments.
+**Provisioning** asks what an act has available: a project, sources, Skills, Actions, memory, permissions, a runtime body, an execution environment, other participants and a path for Return.
 
-Software does not prove the metaphysics. It gives the metaphysics somewhere precise to be wrong.
+**Potentiation** asks what becomes possible because those surrounding structures have a particular form. O:I gives us a common field in which those relations can be made explicit and compared.
 
-## [bimba] Form and technical reflection
+## [method] Research method
 
-### [title] Returned reality can revise the technical correspondence.
+### [title] Research should remain reopenable.
 
-A recurring Epi-Logos relation is that an originating or archetypal form becomes articulated into a technical reflection, and the reflection returns information about what the originating proposition actually means in operation.
+Our research protocol starts from exact sources and keeps source claims, implementation facts, direct observations and O:I interpretation distinguishable. A study can then propose an abstraction, compare it with other systems, make it operative, test it and return the result to the field.
 
-The point is not that software determines the metaphysics. It can disclose that a proposed computational correspondence is stronger, weaker or simply different from what was expected. That returned reality should revise the implementation account explicitly rather than being hidden by terminology.
+### [cycle] Discover → Source-lock → Study → Interpret → Abstract → Compare → Operationalise → Experiment → Find / revise / reject → Return
 
-## [optional] Optional depth
+## [programme] Research across the system
 
-### [title] Minimal O:I does not require Quaternal Logic.
+### [title] Each part of O:I opens a different research surface.
 
-A minimal O:I can remain entirely ordinary: durable files and projects plus model capacity able to act in that world. AIKit, Factory, Workcell and the other products must remain coherent with no QL provider present.
+- **Personal and project worlds** — how durable authored ground changes orientation, continuity and human effort
+- **Agency and authority** — how Agent, Agency, delegation, federation, refusal and Return shape coordinated action
+- **Capability and knowledge fields** — how selection, disclosure and composition affect what an agent can use effectively
+- **Harnesses and runtime bodies** — how recurrence, Components, tools, services and Surfaces change the conditions of action
+- **Developmental systems** — how agent-led software work preserves intention, evidence, recovery and Recognition
+- **Material worlds** — how workspaces, services, containers, VMs, hosts and network relations affect action and verification
+- **Shared agency** — how different mediation and field structures affect reciprocity, contribution, encounter and cumulative learning
+- **Epistemic cultivation** — how source, evidence, retrieval, contradiction and evaluation practices shape what agents can know and claim
 
-The maximal research programme can use QL deeply where there is a reason to do so: formal location and relation, MEF refraction, synthesis, recurrence experiments, structural wiki fields, and later operators whose operational meaning becomes sufficiently exact.
+## [ql] Quaternal Logic
+
+### [title] A deeper formal research programme.
+
+Quaternal Logic belongs to the wider Epi-Logos research programme. It carries formal work on relation, recurrence, refraction and archetypal structure into executable QL / MEF operations so proposed correspondences can meet implementation and evidence.
+
+Its discipline is operational parity: where a formal distinction is claimed to matter to an operation, implementation should eventually make a discriminable difference. Classical approaches may perform better, two formal structures may prove equivalent, or a distinction may improve explanation without improving execution. All of those results can return to the research.
+
+[Enter Quaternal Logic](https://github.com/EpiLogos/QL-MEF).
+
+## [open] Open research
+
+### [title] The platform is meant to learn from use.
+
+Humans and agents can participate throughout the research cycle: discovering sources, studying systems, proposing abstractions, building experiments, reproducing findings, challenging interpretations and returning corrections.
+
+The research commons should preserve the path as well as the conclusion: exact sources, revisions, evidence, disagreements, null results and supersessions. Explore and the Shared Field are being developed as the public environment in which those durable research objects can increasingly meet.
 
 ---
 
@@ -391,28 +408,31 @@ The maximal research programme can use QL deeply where there is a reason to do s
 
 ## [intro] Build and source
 
-### [title] Read the positions. Enter the code.
+### [title] Start with the `oi` command and the world you already have.
 
-The `oi` command is the whole-level installer and composition entry point. It can discover, install and compose the six centres into a managed local environment while leaving each product's native identity and CLI intact.
+`oi` is the local doorway into the composed system. In the accepted implementation it can install or register supported native surfaces, initialise Central, migrate existing work into its `Work/` tree, inspect composition and route into native CLIs while each product keeps ownership of its own configuration and runtime state.
 
-The public site is a projection. The canonical repositories and their accepted `main` branches determine current implementation truth; open PRs and research branches remain development state until they are accepted.
+The public distribution work is being developed separately. Until that package is accepted, the repository install guide remains the source of truth for installing `oi` itself.
 
 ## [links] Start here
 
-### [title] Source and governing documents
+### [title] Source, installation and governing documents
 
-- [Founding positions — what O:I is actually saying](https://github.com/EpiLogos/O-I/blob/main/docs/positions/FOUNDING-POSITIONS.md)
-- [Vision — agency, world and return](https://github.com/EpiLogos/O-I/blob/main/docs/VISION.md)
-- [Architecture — canonical product field](https://github.com/EpiLogos/O-I/blob/main/docs/ARCHITECTURE.md)
+- [Install O:I — current supported install path](https://github.com/EpiLogos/O-I/blob/main/docs/INSTALL.md)
+- [CLI — current `oi` command surface](https://github.com/EpiLogos/O-I/blob/main/docs/CLI.md)
+- [Founding positions — why the field exists](https://github.com/EpiLogos/O-I/blob/main/docs/positions/FOUNDING-POSITIONS.md)
+- [Vision — agency, world and Return](https://github.com/EpiLogos/O-I/blob/main/docs/VISION.md)
+- [Architecture — current product and whole-level seams](https://github.com/EpiLogos/O-I/blob/main/docs/ARCHITECTURE.md)
+- [Research — the agency-engineering field](https://github.com/EpiLogos/O-I/blob/main/docs/RESEARCH.md)
+- [Research protocol — how studies become evidence](https://github.com/EpiLogos/O-I/blob/main/docs/RESEARCH-PROTOCOL.md)
 - [Shared Field — how independently grounded worlds meet](https://github.com/EpiLogos/O-I/blob/main/docs/SHARED-FIELD.md)
 - [Explore — enter the shared field](./explore.html)
 - [O:I repository](https://github.com/EpiLogos/O-I)
-- [Current issues and development](https://github.com/EpiLogos/O-I/issues)
 
 ## [health] Site content and health
 
-### [title] The site has one human-editable content source.
+### [title] Edit the site as Markdown.
 
-This public site is rendered from `site/content/public-site.md`. Layout components and figures stay in React; public prose and page structure stay here in Markdown. The build validates that required pages, sections and product fields remain present before the site can compile.
+This public site is rendered from `site/content/public-site.md`. Layout components and figures stay in React; public prose and page structure stay here in Markdown. The build validates the required pages, sections and product fields before the site can compile.
 
-When changing public language, edit the Markdown first. When changing visual composition or interactive behaviour, edit the React/CSS implementation while keeping this document as the readable content/spec companion.
+Change the Markdown when you want to change what the site says. Change the React and CSS when you want to change how that material is composed or behaves.
