@@ -1,6 +1,16 @@
-# O:I package / extension envelope
+# O:I packages
 
-This directory documents and fixtures the small suite-level package boundary from O:I #21.
+This directory now contains **two deliberately different package relations**. They should not be conflated.
+
+## 1. `@epilogos/oi` — distribution package for the `oi` command
+
+`packages/oi-cli/` is an ordinary npm distribution surface for the native Rust `oi` executable. It exists so installing the O:I front door does not require cloning the repository or compiling Rust on the user's machine.
+
+It does not define any O:I extension semantics. Its install script selects a supported native release artifact, verifies the published SHA-256, installs the binary inside the npm package, and exposes it through npm's `bin` mechanism.
+
+## 2. `oi.package/v1` — suite extension / contribution envelope
+
+The rest of this directory documents and fixtures the small suite-level package boundary from O:I #21.
 
 The package descriptor owns only:
 
@@ -16,7 +26,9 @@ It does **not** define the semantics of `SessionSpaceProvider`, ACP, model Contr
 
 The example manifests are conformance-shape fixtures, not claims that the named target contracts are already live:
 
-- `examples/ide-environment.json` demonstrates an AIKit SessionSpaceProvider plus connection-adapter package shape. AIKit #61–#63 remain gated on AIKit #60, so O:I does not activate or emulate these contracts here.
-- `examples/model-environment.json` demonstrates an AIKit model-contract contribution plus a Workcell provider-SDK contribution. Workcell #23 owns the provider SDK; AIKit #64 owns model resolution.
+- `examples/ide-environment.json` demonstrates an AIKit SessionSpaceProvider plus connection-adapter package shape. AIKit #61–#63 remain gated on their native implementation line, so O:I does not activate or emulate these contracts here.
+- `examples/model-environment.json` demonstrates an AIKit model-contract contribution plus a Workcell provider-SDK contribution. Workcell owns the provider SDK; AIKit owns model resolution.
+
+The envelope is therefore **real validation/composition code with fixture examples**, but its full install/register/remove path becomes a live extension system only when the target products expose and exercise the corresponding native lifecycle contracts.
 
 No marketplace, daemon, plugin VM, dynamic ABI or universal provider ontology is introduced.

@@ -2,15 +2,55 @@
 
 {O:I} is composable. The `oi` binary installs the shared disclosure/composition layer; each product remains independently installable and continues to own its own configuration and runtime state.
 
-## First encounter
+## Install the `oi` command
 
-From an O-I checkout:
+### npm-formatted native distribution
+
+The repository now defines `@epilogos/oi` as the public distribution package for the native Rust CLI. It is a thin installer/launcher over O:I's prebuilt release artifacts, not a JavaScript reimplementation of `oi` and not the `oi.package/v1` extension envelope.
+
+The `oi-v0.1.0-prelocal.3` release line publishes the npm package tarball beside the native binary archives. Once that release exists, the package can be installed without a repository checkout or Rust toolchain:
+
+```sh
+npm install -g https://github.com/EpiLogos/O-I/releases/download/oi-v0.1.0-prelocal.3/epilogos-oi-0.1.0-prelocal.3.tgz
+oi help
+```
+
+The short registry form is the intended public entry point:
+
+```sh
+npm install -g @epilogos/oi
+```
+
+The repository contains a manual trusted-publishing workflow for that package, but the short command should be advertised as live only after the `@epilogos/oi` npm registry entry has actually been published. Until then, the immutable GitHub release tarball above is the real npm install surface.
+
+The pre-local package supports the native release targets that O:I actually builds today:
+
+```text
+Apple Silicon macOS    aarch64-apple-darwin
+x64 Linux              x86_64-unknown-linux-gnu
+```
+
+Unsupported platforms fail explicitly instead of silently compiling or substituting another binary. The package verifies the native archive against its release SHA-256 sidecar; the native release workflow also emits GitHub artifact attestations.
+
+### Developer/source install
+
+From an O-I checkout, the Rust source path remains available:
+
+```sh
+cargo install --path cli
+```
+
+or:
 
 ```sh
 bash cli/install.sh
 ```
 
-Ensure the reported bin directory is on `PATH`, then establish the native personal ground:
+The helper installs the built binary under a user-owned prefix and links `oi` into `~/.local/bin` by default. `OI_BIN_DIR` and `OI_CARGO_ROOT` can override those locations.
+
+## First encounter
+
+After `oi` itself is installed, establish or discover the native personal ground:
 
 ```sh
 oi install central
@@ -35,22 +75,6 @@ Work/
 The Control roots start empty. O:I does not generate personal profiles, preferences, machine facts, or agent rules. An agent can later help author durable Control through Central's Control-maintenance or Machine-declaration Skills, with explicit human acceptance before durable mutation.
 
 Because `oi ctrl ...` is a transparent alias, a non-default personal-ground path should be passed to native `ctrl` with `--root` (or configured through Central's own root mechanism). The simple sequence above uses the native default `$HOME/Central`.
-
-## Install the `oi` command
-
-The current CLI is a small Rust binary under `cli/`.
-
-```sh
-cargo install --path cli
-```
-
-or:
-
-```sh
-bash cli/install.sh
-```
-
-The helper installs the built binary under a user-owned prefix and links `oi` into `~/.local/bin` by default. `OI_BIN_DIR` and `OI_CARGO_ROOT` can override those locations.
 
 ## Add existing installations
 

@@ -1,0 +1,33 @@
+{
+  "name": "@epilogos/oi",
+  "version": "0.1.0-prelocal.3",
+  "description": "Native O:I composition CLI distribution",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EpiLogos/O-I.git",
+    "directory": "packages/oi-cli"
+  },
+  "homepage": "https://github.com/EpiLogos/O-I",
+  "bugs": {
+    "url": "https://github.com/EpiLogos/O-I/issues"
+  },
+  "bin": {
+    "oi": "bin/oi.js"
+  },
+  "scripts": {
+    "postinstall": "node scripts/install.js",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "scripts",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
