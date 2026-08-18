@@ -3,6 +3,11 @@ import { OIGlyph } from '@/components/ui/oi-mark';
 import { AuthoringInspector } from '@/explore/authoring-inspector';
 import { WorldPresentationRenderer, type WorldPresentation } from '@/explore/presentation-components';
 import { RelationField, type RelationView } from '@/explore/relation-field';
+import {
+  connectSpacetimeExplore,
+  readSpacetimeExploreConfig,
+  type SpacetimeExploreProvider,
+} from '@/explore/spacetimedb-provider';
 // @ts-ignore -- application boundary over canonical shared-field contracts.
 import { createExploreBrowserModel } from '../explore-read-model.mjs';
 // @ts-ignore -- shared application operations are intentionally language-neutral JS.
@@ -60,6 +65,7 @@ type AuthoringAuthority = {
 
 type FieldMode = 'list' | 'tree' | 'graph';
 type PageMode = 'read' | 'author' | 'preview';
+type PublicationState = 'idle' | 'publishing' | 'published' | 'error';
 
 function kindLabel(kind: string) {
   return kind.split(/[-_.]/g).filter(Boolean).map((part) => part[0].toUpperCase() + part.slice(1)).join(' ');
@@ -126,7 +132,9 @@ function workingKey(presentation: WorldPresentation) {
 export default function DirectExploreApp() {
   const [model, setModel] = useState<ExploreModel | null>(null);
   const [seedContributions, setSeedContributions] = useState<Contribution[]>([]);
-  const [authoringAuthority, setAuthoringAuthority] = useState<AuthoringAuthority | null>(null);
+  const [staticAuthoringAuthority, setStaticAuthoringAuthority] = useState<AuthoringAuthority | null>(null);
+  const [liveProvider, setLiveProvider] = useState<SpacetimeExploreProvider | null>(null);
+  const [authorityRevision, setAuthorityRevision] = useState(0);
   const [sourceReturn, setSourceReturn] = useState<Record<string, unknown> | null>(null);
   const [failed, setFailed] = useState(false);
   const [query, setQuery] = useState('');
@@ -146,20 +154,49 @@ export default function DirectExploreApp() {
   const [selectedRegionRef, setSelectedRegionRef] = useState<string | null>(null);
   const [insertTarget, setInsertTarget] = useState<{ regionRef: string; index: number } | null>(null);
   const [preparedRevision, setPreparedRevision] = useState<Record<string, unknown> | null>(null);
+  const [publicationState, setPublicationState] = useState<PublicationState>('idle');
+  const [publicationError, setPublicationError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${import.meta.env.BASE_URL}data/explore-public.json`)
-      .then((response) => { if (!response.ok) throw new Error(String(response.status)); return response.json(); })
-      .then((seed) => {
-        const next = createExploreBrowserModel(seed) as ExploreModel;
-        setModel(next);
-        setSeedContributions(normalizeContributionField(seed.composition_contributions ?? []) as Contribution[]);
-        setAuthoringAuthority(readAuthoringAuthority(seed));
-        setSourceReturn(seed.source_return && typeof seed.source_return === 'object' ? clone(seed.source_return) : null);
-        const first = next.worlds()[0] ?? next.search('', { limit: 1 })[0];
-        if (first) setSelectedRef(first.ref);
-      })
-      .catch(() => setFailed(true));
+    let cancelled = false;
+    let provider: SpacetimeExploreProvider | null = null;
+
+    function applySeed(seed: any) {
+      if (cancelled) return;
+      const next = createExploreBrowserModel(seed) as ExploreModel;
+      setModel(next);
+      setFailed(false);
+      setSeedContributions(normalizeContributionField(seed.composition_contributions ?? []) as Contribution[]);
+      setStaticAuthoringAuthority(readAuthoringAuthority(seed));
+      setSourceReturn(seed.source_return && typeof seed.source_return === 'object' ? clone(seed.source_return) : null);
+      setSelectedRef((current) => {
+        if (current && next.open(current, { depth: 1, budget: 1 })) return current;
+        return (next.worlds()[0] ?? next.search('', { limit: 1 })[0])?.ref ?? null;
+      });
+    }
+
+    const config = readSpacetimeExploreConfig();
+    if (config) {
+      provider = connectSpacetimeExplore(config, {
+        onSeed: applySeed,
+        onAuthorityChange: () => setAuthorityRevision((revision) => revision + 1),
+        onStatus: (status) => {
+          if (status.state === 'live') setFailed(false);
+        },
+        onError: () => setFailed(true),
+      });
+      setLiveProvider(provider);
+    } else {
+      fetch(`${import.meta.env.BASE_URL}data/explore-public.json`)
+        .then((response) => { if (!response.ok) throw new Error(String(response.status)); return response.json(); })
+        .then(applySeed)
+        .catch(() => { if (!cancelled) setFailed(true); });
+    }
+
+    return () => {
+      cancelled = true;
+      provider?.dispose();
+    };
   }, []);
 
   const results = useMemo(() => {
@@ -171,6 +208,10 @@ export default function DirectExploreApp() {
   const hasCurrentWorking = Boolean(canonicalPresentation && working && workingFor === canonicalPresentation.presentation_ref && workingBaseRevision === canonicalPresentation.revision);
   const authoringPresentation = hasCurrentWorking ? working : canonicalPresentation;
   const presentation = pageMode === 'read' ? canonicalPresentation : authoringPresentation;
+  const authoringAuthority = useMemo(
+    () => (opened && liveProvider ? liveProvider.authoringAuthorityFor(opened.resource.ref) : staticAuthoringAuthority),
+    [opened?.resource.ref, liveProvider, staticAuthoringAuthority, authorityRevision],
+  );
 
   useEffect(() => {
     if (!canonicalPresentation) return;
@@ -180,6 +221,8 @@ export default function DirectExploreApp() {
     setWorkingBaseRevision(null);
     setDirty(false);
     setPreparedRevision(null);
+    setPublicationState('idle');
+    setPublicationError(null);
     setSelectedBindingRef(null);
     setSelectedRegionRef(null);
   }, [canonicalPresentation, workingFor, workingBaseRevision]);
@@ -199,12 +242,14 @@ export default function DirectExploreApp() {
     setPageMode('read');
     setRightOpen(false);
     setPreparedRevision(null);
+    setPublicationState('idle');
+    setPublicationError(null);
   }
 
   function operate(operation: Record<string, unknown>) {
     if (!authoringPresentation || pageMode !== 'author') return;
     const next = applyPresentationAuthoringOperation(authoringPresentation, operation, contributions) as WorldPresentation;
-    setWorking(next); setWorkingFor(next.presentation_ref); setWorkingBaseRevision(canonicalPresentation?.revision ?? next.revision); setDirty(true); setPreparedRevision(null);
+    setWorking(next); setWorkingFor(next.presentation_ref); setWorkingBaseRevision(canonicalPresentation?.revision ?? next.revision); setDirty(true); setPreparedRevision(null); setPublicationState('idle'); setPublicationError(null);
   }
 
   function enterAuthor() {
@@ -233,8 +278,8 @@ export default function DirectExploreApp() {
     if (authoringPresentation && canonicalPresentation) localStorage.setItem(workingKey(canonicalPresentation), JSON.stringify(authoringPresentation));
   }
 
-  function prepareProjectionRevision() {
-    if (!authoringPresentation || !opened?.world_presentation_projection || !authoringAuthority) return;
+  async function refineOrPublishProjection() {
+    if (!authoringPresentation || !opened?.world_presentation_projection || !authoringAuthority || publicationState === 'publishing') return;
     const next = refineWorldPresentationProjection(opened.world_presentation_projection, authoringPresentation, {
       publisher_participant_ref: authoringAuthority.publisher_participant_ref,
       published_at: new Date().toISOString(),
@@ -242,6 +287,23 @@ export default function DirectExploreApp() {
       ...(authoringAuthority.transport ? { transport: clone(authoringAuthority.transport) } : {}),
     });
     setPreparedRevision(next);
+    setPublicationError(null);
+
+    if (!liveProvider) {
+      setPublicationState('published');
+      return;
+    }
+
+    setPublicationState('publishing');
+    try {
+      await liveProvider.publishProjection(next, opened.resource.ref);
+      if (canonicalPresentation) localStorage.removeItem(workingKey(canonicalPresentation));
+      setDirty(false);
+      setPublicationState('published');
+    } catch (error) {
+      setPublicationState('error');
+      setPublicationError(error instanceof Error ? error.message : String(error));
+    }
   }
 
   const pageDominant = !leftOpen && !rightOpen;
@@ -251,14 +313,14 @@ export default function DirectExploreApp() {
     <header className="direct-topbar">
       <a href="./index.html" className="direct-mark" aria-label="O:I home"><OIGlyph /></a>
       <div className="direct-mode-switch" role="group" aria-label="Explore page mode"><button aria-pressed={pageMode === 'read'} onClick={() => setPageMode('read')}>Read</button><button aria-pressed={pageMode === 'author'} disabled={!canonicalPresentation} onClick={enterAuthor}>Author</button><button aria-pressed={pageMode === 'preview'} disabled={!canonicalPresentation} onClick={() => setPageMode('preview')}>Preview</button></div>
-      <div className="direct-top-actions"><button onClick={() => setLeftOpen((value) => !value)} aria-expanded={leftOpen}>Navigator</button><button onClick={() => setRightOpen((value) => !value)} aria-expanded={rightOpen}>Inspect</button>{pageMode === 'author' && <button onClick={saveWorkingState} disabled={!dirty}>Save working state</button>}{pageMode === 'author' && <button title={authoringAuthority ? 'Prepare the next canonical Projection revision' : 'No authenticated Projection-authoring authority is disclosed by this provider'} onClick={prepareProjectionRevision} disabled={!dirty || !opened?.world_presentation_projection || !authoringAuthority}>Refine Projection</button>}</div>
+      <div className="direct-top-actions"><button onClick={() => setLeftOpen((value) => !value)} aria-expanded={leftOpen}>Navigator</button><button onClick={() => setRightOpen((value) => !value)} aria-expanded={rightOpen}>Inspect</button>{pageMode === 'author' && <button onClick={saveWorkingState} disabled={!dirty}>Save working state</button>}{pageMode === 'author' && <button title={authoringAuthority ? (liveProvider ? 'Publish the next canonical Projection revision through the live SharedField' : 'Prepare the next canonical Projection revision') : 'No authenticated Projection-authoring authority is disclosed by this provider'} onClick={refineOrPublishProjection} disabled={!dirty || !opened?.world_presentation_projection || !authoringAuthority || publicationState === 'publishing'}>{liveProvider ? (publicationState === 'publishing' ? 'Publishing…' : 'Publish Projection') : 'Refine Projection'}</button>}</div>
     </header>
 
     <div className={pageDominant ? 'direct-workspace direct-workspace--full' : 'direct-workspace'}>
       {leftOpen ? <aside className="direct-navigator"><div className="direct-pane-head"><strong>Explore</strong><button onClick={() => setLeftOpen(false)} aria-label="Collapse navigator">×</button></div><label className="direct-search"><span>Search</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="World, agent, project, wiki, ref…" autoComplete="off" /></label><div className="direct-results-label">{query.trim() ? `${results.length} results` : 'Worlds'}</div><div className="direct-results">{results.map((result) => <button key={result.ref} className={result.ref === selectedRef ? 'is-selected' : ''} onClick={() => openRef(result.ref)}><span>{kindLabel(result.kind)}</span><strong>{result.label}</strong><small>{result.summary ?? result.ref}</small></button>)}</div><label className="direct-resize"><span>Width</span><input aria-label="Navigator width" type="range" min="220" max="460" value={leftWidth} onChange={(event) => setLeftWidth(Number(event.target.value))} /></label></aside> : null}
 
       <main className="direct-canvas" aria-label="Explore encounter and authored presentation">
-        {failed ? <div className="direct-empty"><strong>Explore provider unavailable.</strong><p>The application Surface remains intact but no public field can be read.</p></div> : null}
+        {failed && !model ? <div className="direct-empty"><strong>Live Explore provider unavailable.</strong><p>No static substitute is inserted when a live SharedField is configured.</p></div> : null}
         {!failed && !opened ? <div className="direct-empty"><strong>The field is ready for authored projections.</strong><p>No public world is currently projected. Explore does not manufacture demo people, fake worlds or decorative knowledge to fill this state.</p></div> : null}
         {opened ? <>
           {pageMode === 'read' ? <RelationField view={opened.relations} mode={fieldMode} onModeChange={setFieldMode} onOpen={openRef} onDepthChange={setRelationDepth} /> : null}
@@ -267,11 +329,11 @@ export default function DirectExploreApp() {
         </> : null}
       </main>
 
-      {rightOpen && pageMode !== 'preview' ? <aside className="direct-inspector"><div className="direct-pane-head"><strong>Inspector</strong><button onClick={() => setRightOpen(false)} aria-label="Collapse inspector">×</button></div>{pageMode === 'author' && authoringPresentation && opened ? <AuthoringInspector context={{ resource: opened.resource, projection_ref: opened.world_presentation_projection?.projection_ref ?? null, source_ref: opened.sources?.ref ?? null, source_revision: opened.sources?.revision ?? null }} presentation={authoringPresentation} selectedBindingRef={selectedBindingRef} selectedRegionRef={selectedRegionRef} contributions={contributions} dirty={dirty} sourceReturn={sourceReturn} onOperation={operate} /> : <ReadInspector opened={opened} presentation={canonicalPresentation} />}{pageMode === 'author' && !authoringAuthority ? <section className="direct-authority-note"><div className="direct-eyebrow">Projection authority</div><p>This provider has not disclosed authenticated authoring authority. Working state may be edited and previewed, but no Projection revision is attributed or published from this Surface.</p></section> : null}<label className="direct-resize"><span>Width</span><input aria-label="Inspector width" type="range" min="260" max="520" value={rightWidth} onChange={(event) => setRightWidth(Number(event.target.value))} /></label></aside> : null}
+      {rightOpen && pageMode !== 'preview' ? <aside className="direct-inspector"><div className="direct-pane-head"><strong>Inspector</strong><button onClick={() => setRightOpen(false)} aria-label="Collapse inspector">×</button></div>{pageMode === 'author' && authoringPresentation && opened ? <AuthoringInspector context={{ resource: opened.resource, projection_ref: opened.world_presentation_projection?.projection_ref ?? null, source_ref: opened.sources?.ref ?? null, source_revision: opened.sources?.revision ?? null }} presentation={authoringPresentation} selectedBindingRef={selectedBindingRef} selectedRegionRef={selectedRegionRef} contributions={contributions} dirty={dirty} sourceReturn={sourceReturn} onOperation={operate} /> : <ReadInspector opened={opened} presentation={canonicalPresentation} />}{pageMode === 'author' && !authoringAuthority ? <section className="direct-authority-note"><div className="direct-eyebrow">Projection authority</div><p>This provider has not disclosed authenticated human authoring authority. Working state may be edited and previewed, but no Projection revision can be published from this Surface.</p></section> : null}<label className="direct-resize"><span>Width</span><input aria-label="Inspector width" type="range" min="260" max="520" value={rightWidth} onChange={(event) => setRightWidth(Number(event.target.value))} /></label></aside> : null}
     </div>
 
     {insertTarget && pageMode === 'author' ? <div className="direct-popover-backdrop" onClick={() => setInsertTarget(null)}><section className="direct-insert-popover" onClick={(event) => event.stopPropagation()} aria-label="Insert native contribution"><div className="direct-pane-head"><strong>Insert contribution</strong><button onClick={() => setInsertTarget(null)} aria-label="Close insertion palette">×</button></div>{contributions.length ? contributions.map((contribution) => <button key={contribution.contribution_ref} disabled={!contribution.available} onClick={() => { operate({ type: 'insert-contribution', region_ref: insertTarget.regionRef, index: insertTarget.index, contribution_ref: contribution.contribution_ref }); setInsertTarget(null); }}><span>{contribution.label}</span><code>{contribution.contribution_ref}</code><small>{contribution.available ? contribution.surface_ref ?? contribution.component_ref : contribution.reason ?? 'Unavailable'}</small></button>) : <p>No compatible contributions are disclosed by the operative field.</p>}</section></div> : null}
 
-    {preparedRevision ? <div className="direct-revision-receipt" role="status"><strong>Projection revision prepared through canonical refinement.</strong><span>Source authority and source revision are preserved. Provider publication is still a separate transport operation.</span><code>{String((preparedRevision as any).projection_ref)}@{String((preparedRevision as any).projection_revision)}</code></div> : null}
+    {preparedRevision ? <div className="direct-revision-receipt" role="status"><strong>{liveProvider ? (publicationState === 'published' ? 'Projection revision published through the live SharedField.' : publicationState === 'error' ? 'Projection publication failed.' : 'Projection revision prepared for the live SharedField.') : 'Projection revision prepared through canonical refinement.'}</strong><span>{liveProvider ? (publicationState === 'published' ? 'The subscribed Projection view is the canonical return path; source authority and source revision remain unchanged.' : publicationError ?? 'Publication is passing through the SpaceTimeDB reducer authority boundary.') : 'Source authority and source revision are preserved. This static/offline provider has no publication transport.'}</span><code>{String((preparedRevision as any).projection_ref)}@{String((preparedRevision as any).projection_revision)}</code></div> : null}
   </div>;
 }
