@@ -24,6 +24,15 @@ pub const EPI_NARA_DAILY_PROVIDER_CONTRACT: &str = "epi.nara-daily-provider/v1";
 pub const EPI_NARA_SELECTION_SCHEMA: &str = "epi.nara-selection/v1";
 pub const EPI_NARA_SENDOFF_ACTION_REF: &str = "epi.action.nara.selection.sendoff";
 pub const EPI_NARA_SENDOFF_CAPABILITY_REF: &str = "epi.capability.nara.selected-context";
+pub const EPI_EPII_REVIEW_SCHEMA: &str = "epi.personal-epii-review/v1";
+pub const EPI_EPII_REVIEW_ACTION_REF: &str = "epi.action.epii.review";
+pub const EPI_EPII_REVIEW_CAPABILITY_REF: &str = "epi.capability.epii.personal-review";
+pub const EPI_ANUTTARA_GROUND_SCHEMA: &str = "epi.personal-ground-orientation/v1";
+pub const EPI_ANUTTARA_GROUND_ACTION_REF: &str = "epi.action.anuttara.ground";
+pub const EPI_ANUTTARA_GROUND_CAPABILITY_REF: &str = "epi.capability.bimba.ground-read";
+pub const EPI_PERSONAL_PROPOSAL_SCHEMA: &str = "epi.personal-proposal/v1";
+pub const EPI_PERSONAL_PROPOSAL_ACTION_REF: &str = "epi.action.personal.proposal";
+pub const EPI_PERSONAL_PROPOSAL_CAPABILITY_REF: &str = "epi.capability.personal.proposal";
 pub const EPI_NATIVE_OWNER: &str = "epi";
 
 #[derive(Clone, Debug, PartialEq)]
@@ -72,12 +81,19 @@ impl LocalEpiHost {
         let snapshot = self.invoke("snapshot", None)?;
         let mut observation = host_epi_snapshot(snapshot)?;
         if self.nara_available() {
-            observation.contribution.contribution.actions.push(CanonicalActionBinding {
-                action_ref: EPI_NARA_SENDOFF_ACTION_REF.into(),
-                native_owner: EPI_NATIVE_OWNER.into(),
-                availability: ActionAvailability::Available,
-                required_capability_ref: Some(EPI_NARA_SENDOFF_CAPABILITY_REF.into()),
-            });
+            for (action_ref, capability_ref) in [
+                (EPI_NARA_SENDOFF_ACTION_REF, EPI_NARA_SENDOFF_CAPABILITY_REF),
+                (EPI_EPII_REVIEW_ACTION_REF, EPI_EPII_REVIEW_CAPABILITY_REF),
+                (EPI_ANUTTARA_GROUND_ACTION_REF, EPI_ANUTTARA_GROUND_CAPABILITY_REF),
+                (EPI_PERSONAL_PROPOSAL_ACTION_REF, EPI_PERSONAL_PROPOSAL_CAPABILITY_REF),
+            ] {
+                observation.contribution.contribution.actions.push(CanonicalActionBinding {
+                    action_ref: action_ref.into(),
+                    native_owner: EPI_NATIVE_OWNER.into(),
+                    availability: ActionAvailability::Available,
+                    required_capability_ref: Some(capability_ref.into()),
+                });
+            }
             observation
                 .contribution
                 .contribution
@@ -88,7 +104,7 @@ impl LocalEpiHost {
                 .contribution
                 .detail
                 .take()
-                .map(|detail| format!("{detail} · protected Nara daily provider ready"));
+                .map(|detail| format!("{detail} · protected Nara + Personal 4/5/0 provider ready"));
         }
         Ok(observation)
     }
@@ -114,16 +130,59 @@ impl LocalEpiHost {
         expect_string(&value, "/actionRef", EPI_NARA_SENDOFF_ACTION_REF)?;
         expect_string(&value, "/capabilityRef", EPI_NARA_SENDOFF_CAPABILITY_REF)?;
         expect_string(&value, "/privacyClass", "protected-local-selected-disclosure")?;
-        required_string(&value, "/episodeRef")?;
-        required_string(&value, "/selectionRef")?;
-        required_string(&value, "/profileRef")?;
+        validate_personal_subject(&value)?;
+        Ok(value)
+    }
+
+    pub fn epii_review(&self, request: Value) -> Result<Value, String> {
+        self.require_nara()?;
+        let value = self.invoke("epii-review", Some(request))?;
+        expect_string(&value, "/schema", EPI_EPII_REVIEW_SCHEMA)?;
+        expect_string(&value, "/actionRef", EPI_EPII_REVIEW_ACTION_REF)?;
+        expect_string(&value, "/capabilityRef", EPI_EPII_REVIEW_CAPABILITY_REF)?;
+        expect_string(&value, "/agent/canonicalAgentRef", "epi:agent:epii")?;
+        expect_u64(&value, "/agent/position", 5)?;
+        validate_personal_subject_at(&value, "/subject")?;
+        Ok(value)
+    }
+
+    pub fn personal_ground(&self, request: Value) -> Result<Value, String> {
+        self.require_nara()?;
+        let value = self.invoke("personal-ground", Some(request))?;
+        expect_string(&value, "/schema", EPI_ANUTTARA_GROUND_SCHEMA)?;
+        expect_string(&value, "/actionRef", EPI_ANUTTARA_GROUND_ACTION_REF)?;
+        expect_string(&value, "/capabilityRef", EPI_ANUTTARA_GROUND_CAPABILITY_REF)?;
+        expect_string(&value, "/agent/canonicalAgentRef", "epi:agent:anuttara")?;
+        expect_u64(&value, "/agent/position", 0)?;
+        expect_bool(&value, "/bimba/providerIdentityIsSemanticIdentity", false)?;
+        expect_string(&value, "/bimba/promotion", "none")?;
+        validate_personal_subject_at(&value, "/subject")?;
+        Ok(value)
+    }
+
+    pub fn personal_proposal(&self, request: Value) -> Result<Value, String> {
+        self.require_nara()?;
+        let value = self.invoke("personal-proposal", Some(request))?;
+        expect_string(&value, "/schema", EPI_PERSONAL_PROPOSAL_SCHEMA)?;
+        expect_string(&value, "/actionRef", EPI_PERSONAL_PROPOSAL_ACTION_REF)?;
+        expect_string(&value, "/capabilityRef", EPI_PERSONAL_PROPOSAL_CAPABILITY_REF)?;
+        expect_string(&value, "/sourceClass", "proposal")?;
+        expect_string(&value, "/adoptionState", "unreviewed")?;
+        expect_bool(&value, "/sourceMutationPerformed", false)?;
+        expect_string(&value, "/centralReturn/actionRef", "projectcentral.now.return")?;
+        expect_bool(
+            &value,
+            "/centralReturn/requiresHumanAcceptanceForDurableGround",
+            true,
+        )?;
+        validate_personal_subject_at(&value, "/subject")?;
         Ok(value)
     }
 
     fn require_nara(&self) -> Result<(), String> {
         if !self.nara_available() {
             return Err(
-                "Nara daily provider requires OI_EPI_NARA_CONTEXT_FILE and OI_EPI_NARA_VAULT_ROOT"
+                "Nara/Personal provider requires OI_EPI_NARA_CONTEXT_FILE and OI_EPI_NARA_VAULT_ROOT"
                     .into(),
             );
         }
@@ -143,7 +202,7 @@ impl LocalEpiHost {
             let vault = self
                 .nara_vault_root
                 .as_ref()
-                .ok_or_else(|| "Nara operation has no configured protected vault root".to_owned())?;
+                .ok_or_else(|| "Nara/Personal operation has no configured protected vault root".to_owned())?;
             command.arg("--vault-root").arg(vault);
         }
         if request.is_some() {
@@ -274,8 +333,46 @@ fn validate_nara_daily(value: &Value) -> Result<(), String> {
     Ok(())
 }
 
+fn validate_personal_subject(value: &Value) -> Result<(), String> {
+    required_string(value, "/episodeRef")?;
+    required_string(value, "/selectionRef")?;
+    required_string(value, "/qlAddress")?;
+    required_string(value, "/coordinateRef")?;
+    required_string(value, "/profileRef")?;
+    Ok(())
+}
+
+fn validate_personal_subject_at(value: &Value, prefix: &str) -> Result<(), String> {
+    for suffix in ["episodeRef", "selectionRef", "qlAddress", "coordinateRef", "profileRef"] {
+        required_string(value, &format!("{prefix}/{suffix}"))?;
+    }
+    Ok(())
+}
+
 fn expect_string(snapshot: &Value, pointer: &str, expected: &str) -> Result<(), String> {
     let observed = required_string(snapshot, pointer)?;
+    if observed != expected {
+        return Err(format!("Epi provider `{pointer}` was `{observed}`, expected `{expected}`"));
+    }
+    Ok(())
+}
+
+fn expect_u64(snapshot: &Value, pointer: &str, expected: u64) -> Result<(), String> {
+    let observed = snapshot
+        .pointer(pointer)
+        .and_then(Value::as_u64)
+        .ok_or_else(|| format!("Epi provider requires u64 `{pointer}`"))?;
+    if observed != expected {
+        return Err(format!("Epi provider `{pointer}` was `{observed}`, expected `{expected}`"));
+    }
+    Ok(())
+}
+
+fn expect_bool(snapshot: &Value, pointer: &str, expected: bool) -> Result<(), String> {
+    let observed = snapshot
+        .pointer(pointer)
+        .and_then(Value::as_bool)
+        .ok_or_else(|| format!("Epi provider requires bool `{pointer}`"))?;
     if observed != expected {
         return Err(format!("Epi provider `{pointer}` was `{observed}`, expected `{expected}`"));
     }
