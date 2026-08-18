@@ -1,14 +1,11 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { OIGlyph } from '@/components/ui/oi-mark';
-import {
-  WorldPresentationRenderer,
-  portablePresentationRenderers,
-  type WorldPresentation,
-} from '@/explore/presentation-components';
+import { AuthoringInspector } from '@/explore/authoring-inspector';
+import { WorldPresentationRenderer, type WorldPresentation } from '@/explore/presentation-components';
 // @ts-ignore -- application boundary over canonical shared-field contracts.
 import { createExploreBrowserModel } from '../explore-read-model.mjs';
 // @ts-ignore -- shared application operations are intentionally language-neutral JS.
-import { applyPresentationAuthoringOperation, authoringDisclosure, bindingAvailability, normalizeContributionField } from '../../shared-field/presentation-authoring.mjs';
+import { applyPresentationAuthoringOperation, authoringDisclosure, normalizeContributionField } from '../../shared-field/presentation-authoring.mjs';
 // @ts-ignore -- canonical Projection refinement operation.
 import { refineWorldPresentationProjection } from '../../shared-field/presentation-projection.mjs';
 
@@ -76,8 +73,7 @@ function readAuthoringAuthority(seed: any): AuthoringAuthority | null {
   if (typeof authority.publisher_participant_ref !== 'string' || !authority.publisher_participant_ref.trim()) return null;
   if (!Array.isArray(authority.provenance) || !authority.provenance.length) return null;
   const provenance = authority.provenance.filter((entry: any) =>
-    entry?.kind === 'human-refinement' &&
-    typeof entry.ref === 'string' && entry.ref.trim() &&
+    entry?.kind === 'human-refinement' && typeof entry.ref === 'string' && entry.ref.trim() &&
     typeof entry.source_system === 'string' && entry.source_system.trim() &&
     typeof entry.revision === 'string' && entry.revision.trim(),
   );
@@ -116,61 +112,30 @@ function contributionsFromPresentation(presentation?: WorldPresentation): Contri
   return result;
 }
 
-function provenanceText(value: Array<Record<string, unknown>> | undefined) {
-  if (!value?.length) return 'No provenance disclosed';
-  return value.map((item) => [item.source_system, item.ref, item.revision].filter(Boolean).join(' · ')).join('\n');
-}
-
 function RelationReading({ opened, mode, onOpen }: { opened: ExploreOpen; mode: FieldMode; onOpen: (ref: string) => void }) {
-  if (mode === 'list') {
-    return <div className="direct-relations">{opened.relations.nodes.map((node) => <button key={node.ref} onClick={() => onOpen(node.ref)}><span>{kindLabel(node.kind)}</span><strong>{node.label}</strong><small>{node.ref}</small></button>)}</div>;
-  }
-  if (mode === 'tree') {
-    return <div className="direct-tree"><strong>{opened.resource.label}</strong>{opened.relations.edges.filter((edge) => edge.from === opened.resource.ref || edge.to === opened.resource.ref).map((edge, index) => {
-      const ref = edge.from === opened.resource.ref ? edge.to : edge.from;
-      const node = opened.relations.nodes.find((candidate) => candidate.ref === ref);
-      return node ? <button key={`${edge.relation}:${index}`} onClick={() => onOpen(ref)}><span>{edge.relation}</span><strong>{node.label}</strong></button> : null;
-    })}</div>;
-  }
+  if (mode === 'list') return <div className="direct-relations">{opened.relations.nodes.map((node) => <button key={node.ref} onClick={() => onOpen(node.ref)}><span>{kindLabel(node.kind)}</span><strong>{node.label}</strong><small>{node.ref}</small></button>)}</div>;
+  if (mode === 'tree') return <div className="direct-tree"><strong>{opened.resource.label}</strong>{opened.relations.edges.filter((edge) => edge.from === opened.resource.ref || edge.to === opened.resource.ref).map((edge, index) => {
+    const ref = edge.from === opened.resource.ref ? edge.to : edge.from;
+    const node = opened.relations.nodes.find((candidate) => candidate.ref === ref);
+    return node ? <button key={`${edge.relation}:${index}`} onClick={() => onOpen(ref)}><span>{edge.relation}</span><strong>{node.label}</strong></button> : null;
+  })}</div>;
   return <div className="direct-graph" aria-label="Bounded relation presentation">{opened.relations.nodes.slice(0, 12).map((node) => <button key={node.ref} className={node.ref === opened.resource.ref ? 'is-focus' : ''} onClick={() => onOpen(node.ref)}><span>{kindLabel(node.kind)}</span><strong>{node.label}</strong></button>)}</div>;
 }
 
-function Inspector({ opened, presentation, selectedBindingRef, selectedRegionRef, contributions, dirty }: {
-  opened?: ExploreOpen;
-  presentation?: WorldPresentation;
-  selectedBindingRef: string | null;
-  selectedRegionRef: string | null;
-  contributions: Contribution[];
-  dirty: boolean;
-}) {
+function ReadInspector({ opened, presentation }: { opened?: ExploreOpen; presentation?: WorldPresentation }) {
   if (!opened) return <div className="direct-inspector-empty">Select an addressable object to inspect it.</div>;
-  const disclosure = presentation ? authoringDisclosure({
-    presentation,
-    projection_ref: opened.world_presentation_projection?.projection_ref ?? null,
-    source_ref: opened.sources?.ref ?? opened.resource.ref,
-    source_revision: opened.sources?.revision ?? opened.resource.revision ?? null,
-    selected_binding_ref: selectedBindingRef,
-    selected_region_ref: selectedBindingRef ? null : selectedRegionRef,
-    contributions,
-    mode: 'author',
-    dirty,
-  }) : null;
-  const availability = presentation ? bindingAvailability(presentation, contributions, portablePresentationRenderers) : [];
-  const selectedAvailability = selectedBindingRef ? availability.find((item: any) => item.binding_ref === selectedBindingRef) : null;
-  return <div className="direct-inspector-body">
-    <div className="direct-eyebrow">Context</div><h2>{opened.resource.label}</h2>
-    <dl><dt>Ref</dt><dd><code>{opened.resource.ref}</code></dd><dt>World</dt><dd><code>{opened.resource.world_ref}</code></dd>{presentation ? <><dt>Presentation</dt><dd><code>{presentation.presentation_ref}</code></dd><dt>Revision</dt><dd>{presentation.revision}</dd></> : null}</dl>
-    {disclosure?.selected ? <section><div className="direct-eyebrow">Selection</div><pre>{JSON.stringify(disclosure.selected, null, 2)}</pre></section> : null}
-    {selectedAvailability ? <section><div className="direct-eyebrow">Availability</div><p>{selectedAvailability.renderer_available ? 'Renderer available' : 'Renderer fallback'}</p>{selectedAvailability.reason ? <small>{selectedAvailability.reason}</small> : null}</section> : null}
-    <section><div className="direct-eyebrow">Provenance</div><pre>{presentation ? provenanceText(presentation.provenance) : provenanceText(opened.resource.provenance as any)}</pre></section>
-    {disclosure ? <section><div className="direct-eyebrow">Agent-visible operations</div><div className="direct-chips">{disclosure.operations.map((operation: string) => <span key={operation}>{operation}</span>)}</div></section> : null}
-  </div>;
+  return <div className="direct-inspector-body"><div className="direct-eyebrow">Encounter</div><h2>{opened.resource.label}</h2><dl><dt>Ref</dt><dd><code>{opened.resource.ref}</code></dd><dt>World</dt><dd><code>{opened.resource.world_ref}</code></dd>{presentation ? <><dt>Presentation</dt><dd><code>{presentation.presentation_ref}</code></dd><dt>Revision</dt><dd>{presentation.revision}</dd></> : null}<dt>Source</dt><dd><code>{opened.sources?.ref ?? opened.resource.ref}</code></dd><dt>Source revision</dt><dd><code>{opened.sources?.revision ?? opened.resource.revision ?? 'not disclosed'}</code></dd></dl><section><div className="direct-eyebrow">Provenance</div><pre>{JSON.stringify(presentation?.provenance ?? opened.resource.provenance, null, 2)}</pre></section></div>;
+}
+
+function workingKey(presentation: WorldPresentation) {
+  return `oi.explore.working-presentation:${presentation.presentation_ref}@${presentation.revision}`;
 }
 
 export default function DirectExploreApp() {
   const [model, setModel] = useState<ExploreModel | null>(null);
   const [seedContributions, setSeedContributions] = useState<Contribution[]>([]);
   const [authoringAuthority, setAuthoringAuthority] = useState<AuthoringAuthority | null>(null);
+  const [sourceReturn, setSourceReturn] = useState<Record<string, unknown> | null>(null);
   const [failed, setFailed] = useState(false);
   const [query, setQuery] = useState('');
   const [selectedRef, setSelectedRef] = useState<string | null>(null);
@@ -183,6 +148,7 @@ export default function DirectExploreApp() {
   const [rightWidth, setRightWidth] = useState(320);
   const [working, setWorking] = useState<WorldPresentation | undefined>();
   const [workingFor, setWorkingFor] = useState<string | null>(null);
+  const [workingBaseRevision, setWorkingBaseRevision] = useState<number | null>(null);
   const [dirty, setDirty] = useState(false);
   const [selectedBindingRef, setSelectedBindingRef] = useState<string | null>(null);
   const [selectedRegionRef, setSelectedRegionRef] = useState<string | null>(null);
@@ -197,6 +163,7 @@ export default function DirectExploreApp() {
         setModel(next);
         setSeedContributions(normalizeContributionField(seed.composition_contributions ?? []) as Contribution[]);
         setAuthoringAuthority(readAuthoringAuthority(seed));
+        setSourceReturn(seed.source_return && typeof seed.source_return === 'object' ? clone(seed.source_return) : null);
         const first = next.worlds()[0] ?? next.search('', { limit: 1 })[0];
         if (first) setSelectedRef(first.ref);
       })
@@ -206,51 +173,71 @@ export default function DirectExploreApp() {
   const results = useMemo(() => model?.search(query, { limit: 64 }) ?? [], [model, query]);
   const opened = model && selectedRef ? model.open(selectedRef, { depth: 1, budget: 18 }) : undefined;
   const canonicalPresentation = opened?.resource.ref === opened?.resource.world_ref ? opened?.world_presentation : undefined;
+  const hasCurrentWorking = Boolean(canonicalPresentation && working && workingFor === canonicalPresentation.presentation_ref && workingBaseRevision === canonicalPresentation.revision);
+  const authoringPresentation = hasCurrentWorking ? working : canonicalPresentation;
+  const presentation = pageMode === 'read' ? canonicalPresentation : authoringPresentation;
 
   useEffect(() => {
-    const presentationRef = canonicalPresentation?.presentation_ref ?? null;
-    if (!canonicalPresentation || workingFor === presentationRef) return;
-    setWorking(clone(canonicalPresentation));
-    setWorkingFor(presentationRef);
+    if (!canonicalPresentation) return;
+    if (workingFor === canonicalPresentation.presentation_ref && workingBaseRevision === canonicalPresentation.revision) return;
+    setWorking(undefined);
+    setWorkingFor(null);
+    setWorkingBaseRevision(null);
     setDirty(false);
     setPreparedRevision(null);
     setSelectedBindingRef(null);
     setSelectedRegionRef(null);
-  }, [canonicalPresentation, workingFor]);
+  }, [canonicalPresentation, workingFor, workingBaseRevision]);
 
-  const presentation = workingFor === canonicalPresentation?.presentation_ref ? working : canonicalPresentation;
   const contributions = useMemo(() => {
-    const combined = [...seedContributions, ...contributionsFromPresentation(presentation)];
+    const combined = [...seedContributions, ...contributionsFromPresentation(authoringPresentation)];
     const seen = new Set<string>();
     return combined.filter((item) => {
       if (seen.has(item.contribution_ref)) return false;
       seen.add(item.contribution_ref);
       return true;
     });
-  }, [presentation, seedContributions]);
+  }, [authoringPresentation, seedContributions]);
 
   function openRef(ref: string) {
     setSelectedRef(ref); setPageMode('read'); setShowRelations(false); setRightOpen(false); setPreparedRevision(null);
   }
 
   function operate(operation: Record<string, unknown>) {
-    if (!presentation) return;
-    const next = applyPresentationAuthoringOperation(presentation, operation, contributions) as WorldPresentation;
-    setWorking(next); setWorkingFor(next.presentation_ref); setDirty(true); setPreparedRevision(null);
+    if (!authoringPresentation || pageMode !== 'author') return;
+    const next = applyPresentationAuthoringOperation(authoringPresentation, operation, contributions) as WorldPresentation;
+    setWorking(next); setWorkingFor(next.presentation_ref); setWorkingBaseRevision(canonicalPresentation?.revision ?? next.revision); setDirty(true); setPreparedRevision(null);
   }
 
   function enterAuthor() {
     if (!canonicalPresentation) return;
-    setWorking(clone(canonicalPresentation)); setWorkingFor(canonicalPresentation.presentation_ref); setPageMode('author'); setRightOpen(true); setShowRelations(false);
+    let next = hasCurrentWorking && working ? working : clone(canonicalPresentation);
+    let restored = false;
+    if (!hasCurrentWorking) {
+      const saved = localStorage.getItem(workingKey(canonicalPresentation));
+      if (saved) {
+        try {
+          const candidate = JSON.parse(saved) as WorldPresentation;
+          authoringDisclosure({ presentation: candidate, contributions: [] });
+          if (candidate.presentation_ref === canonicalPresentation.presentation_ref && candidate.world_ref === canonicalPresentation.world_ref) {
+            next = candidate;
+            restored = true;
+          }
+        } catch {
+          localStorage.removeItem(workingKey(canonicalPresentation));
+        }
+      }
+    }
+    setWorking(clone(next)); setWorkingFor(canonicalPresentation.presentation_ref); setWorkingBaseRevision(canonicalPresentation.revision); setDirty(restored || (hasCurrentWorking && dirty)); setPageMode('author'); setRightOpen(true); setShowRelations(false);
   }
 
   function saveWorkingState() {
-    if (presentation) localStorage.setItem(`oi.explore.working-presentation:${presentation.presentation_ref}`, JSON.stringify(presentation));
+    if (authoringPresentation && canonicalPresentation) localStorage.setItem(workingKey(canonicalPresentation), JSON.stringify(authoringPresentation));
   }
 
   function prepareProjectionRevision() {
-    if (!presentation || !opened?.world_presentation_projection || !authoringAuthority) return;
-    const next = refineWorldPresentationProjection(opened.world_presentation_projection, presentation, {
+    if (!authoringPresentation || !opened?.world_presentation_projection || !authoringAuthority) return;
+    const next = refineWorldPresentationProjection(opened.world_presentation_projection, authoringPresentation, {
       publisher_participant_ref: authoringAuthority.publisher_participant_ref,
       published_at: new Date().toISOString(),
       provenance: clone(authoringAuthority.provenance),
@@ -265,12 +252,12 @@ export default function DirectExploreApp() {
   return <div className="direct-explore oi-surface-light" style={style}>
     <header className="direct-topbar">
       <a href="./index.html" className="direct-mark" aria-label="O:I home"><OIGlyph /></a>
-      <div className="direct-mode-switch" role="group" aria-label="Explore page mode"><button aria-pressed={pageMode === 'read'} onClick={() => setPageMode('read')}>Read</button><button aria-pressed={pageMode === 'author'} disabled={!canonicalPresentation} onClick={enterAuthor}>Author</button><button aria-pressed={pageMode === 'preview'} disabled={!presentation} onClick={() => setPageMode('preview')}>Preview</button></div>
+      <div className="direct-mode-switch" role="group" aria-label="Explore page mode"><button aria-pressed={pageMode === 'read'} onClick={() => setPageMode('read')}>Read</button><button aria-pressed={pageMode === 'author'} disabled={!canonicalPresentation} onClick={enterAuthor}>Author</button><button aria-pressed={pageMode === 'preview'} disabled={!canonicalPresentation} onClick={() => setPageMode('preview')}>Preview</button></div>
       <div className="direct-top-actions"><button onClick={() => setLeftOpen((value) => !value)} aria-expanded={leftOpen}>Navigator</button><button onClick={() => setRightOpen((value) => !value)} aria-expanded={rightOpen}>Inspect</button>{pageMode === 'author' && <button onClick={saveWorkingState} disabled={!dirty}>Save working state</button>}{pageMode === 'author' && <button title={authoringAuthority ? 'Prepare the next canonical Projection revision' : 'No authenticated Projection-authoring authority is disclosed by this provider'} onClick={prepareProjectionRevision} disabled={!dirty || !opened?.world_presentation_projection || !authoringAuthority}>Refine Projection</button>}</div>
     </header>
 
     <div className={pageDominant ? 'direct-workspace direct-workspace--full' : 'direct-workspace'}>
-      {leftOpen ? <aside className="direct-navigator"><div className="direct-pane-head"><strong>Explore</strong><button onClick={() => setLeftOpen(false)}>×</button></div><label className="direct-search"><span>Search</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="World, agent, project, wiki, ref…" /></label><div className="direct-results">{results.map((result) => <button key={result.ref} className={result.ref === selectedRef ? 'is-selected' : ''} onClick={() => openRef(result.ref)}><span>{kindLabel(result.kind)}</span><strong>{result.label}</strong><small>{result.summary ?? result.ref}</small></button>)}</div><label className="direct-resize"><span>Width</span><input type="range" min="220" max="460" value={leftWidth} onChange={(event) => setLeftWidth(Number(event.target.value))} /></label></aside> : null}
+      {leftOpen ? <aside className="direct-navigator"><div className="direct-pane-head"><strong>Explore</strong><button onClick={() => setLeftOpen(false)} aria-label="Collapse navigator">×</button></div><label className="direct-search"><span>Search</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="World, agent, project, wiki, ref…" /></label><div className="direct-results">{results.map((result) => <button key={result.ref} className={result.ref === selectedRef ? 'is-selected' : ''} onClick={() => openRef(result.ref)}><span>{kindLabel(result.kind)}</span><strong>{result.label}</strong><small>{result.summary ?? result.ref}</small></button>)}</div><label className="direct-resize"><span>Width</span><input aria-label="Navigator width" type="range" min="220" max="460" value={leftWidth} onChange={(event) => setLeftWidth(Number(event.target.value))} /></label></aside> : null}
 
       <main className="direct-canvas" aria-label="Authored Explore canvas">
         {failed ? <div className="direct-empty"><strong>Explore provider unavailable.</strong><p>The application Surface remains intact but no public field can be read.</p></div> : null}
@@ -278,10 +265,10 @@ export default function DirectExploreApp() {
         {opened ? <>{!presentation ? <section className="direct-object-reading"><div className="direct-eyebrow">{kindLabel(opened.resource.kind)}</div><h1>{opened.resource.label}</h1><p>{opened.resource.summary}</p><code>{opened.resource.ref}</code></section> : null}{presentation ? <WorldPresentationRenderer presentation={presentation} onOpenRef={openRef} authoring={pageMode === 'author'} selectedBindingRef={selectedBindingRef} selectedRegionRef={selectedRegionRef} onSelectBinding={(bindingRef, regionRef) => { setSelectedBindingRef(bindingRef); setSelectedRegionRef(regionRef); setRightOpen(true); }} onSelectRegion={(regionRef) => { setSelectedRegionRef(regionRef); setSelectedBindingRef(null); setRightOpen(true); }} onEditProps={(bindingRef, patch) => operate({ type: 'edit-binding-props', binding_ref: bindingRef, patch })} onInsert={(regionRef, index) => setInsertTarget({ regionRef, index })} onMoveBinding={(bindingRef, regionRef, index) => operate({ type: 'move-binding', binding_ref: bindingRef, to_region_ref: regionRef, index })} onDuplicateBinding={(bindingRef) => operate({ type: 'duplicate-binding', binding_ref: bindingRef })} onRemoveBinding={(bindingRef) => { operate({ type: 'remove-binding', binding_ref: bindingRef }); setSelectedBindingRef(null); }} /> : null}{pageMode !== 'preview' ? <div className="direct-relations-toggle"><button onClick={() => setShowRelations((value) => !value)} aria-expanded={showRelations}>{showRelations ? 'Hide relations' : 'Relations'}</button><div role="group" aria-label="Relation view">{(['list', 'tree', 'graph'] as FieldMode[]).map((mode) => <button key={mode} aria-pressed={fieldMode === mode} onClick={() => { setFieldMode(mode); setShowRelations(true); }}>{mode}</button>)}</div></div> : null}{showRelations && pageMode !== 'preview' ? <RelationReading opened={opened} mode={fieldMode} onOpen={openRef} /> : null}</> : null}
       </main>
 
-      {rightOpen && pageMode !== 'preview' ? <aside className="direct-inspector"><div className="direct-pane-head"><strong>Inspector</strong><button onClick={() => setRightOpen(false)}>×</button></div><Inspector opened={opened} presentation={presentation} selectedBindingRef={selectedBindingRef} selectedRegionRef={selectedRegionRef} contributions={contributions} dirty={dirty} />{pageMode === 'author' && !authoringAuthority ? <section className="direct-authority-note"><div className="direct-eyebrow">Projection authority</div><p>This provider has not disclosed authenticated authoring authority. Working state may be edited and previewed, but no Projection revision is attributed or published from this Surface.</p></section> : null}<label className="direct-resize"><span>Width</span><input type="range" min="260" max="520" value={rightWidth} onChange={(event) => setRightWidth(Number(event.target.value))} /></label></aside> : null}
+      {rightOpen && pageMode !== 'preview' ? <aside className="direct-inspector"><div className="direct-pane-head"><strong>Inspector</strong><button onClick={() => setRightOpen(false)} aria-label="Collapse inspector">×</button></div>{pageMode === 'author' && authoringPresentation && opened ? <AuthoringInspector context={{ resource: opened.resource, projection_ref: opened.world_presentation_projection?.projection_ref ?? null, source_ref: opened.sources?.ref ?? null, source_revision: opened.sources?.revision ?? null }} presentation={authoringPresentation} selectedBindingRef={selectedBindingRef} selectedRegionRef={selectedRegionRef} contributions={contributions} dirty={dirty} sourceReturn={sourceReturn} onOperation={operate} /> : <ReadInspector opened={opened} presentation={canonicalPresentation} />}{pageMode === 'author' && !authoringAuthority ? <section className="direct-authority-note"><div className="direct-eyebrow">Projection authority</div><p>This provider has not disclosed authenticated authoring authority. Working state may be edited and previewed, but no Projection revision is attributed or published from this Surface.</p></section> : null}<label className="direct-resize"><span>Width</span><input aria-label="Inspector width" type="range" min="260" max="520" value={rightWidth} onChange={(event) => setRightWidth(Number(event.target.value))} /></label></aside> : null}
     </div>
 
-    {insertTarget && pageMode === 'author' ? <div className="direct-popover-backdrop" onClick={() => setInsertTarget(null)}><section className="direct-insert-popover" onClick={(event) => event.stopPropagation()} aria-label="Insert native contribution"><div className="direct-pane-head"><strong>Insert contribution</strong><button onClick={() => setInsertTarget(null)}>×</button></div>{contributions.length ? contributions.map((contribution) => <button key={contribution.contribution_ref} disabled={!contribution.available} onClick={() => { operate({ type: 'insert-contribution', region_ref: insertTarget.regionRef, index: insertTarget.index, contribution_ref: contribution.contribution_ref }); setInsertTarget(null); }}><span>{contribution.label}</span><code>{contribution.contribution_ref}</code><small>{contribution.available ? contribution.surface_ref ?? contribution.component_ref : contribution.reason ?? 'Unavailable'}</small></button>) : <p>No compatible contributions are disclosed by the operative field.</p>}</section></div> : null}
+    {insertTarget && pageMode === 'author' ? <div className="direct-popover-backdrop" onClick={() => setInsertTarget(null)}><section className="direct-insert-popover" onClick={(event) => event.stopPropagation()} aria-label="Insert native contribution"><div className="direct-pane-head"><strong>Insert contribution</strong><button onClick={() => setInsertTarget(null)} aria-label="Close insertion palette">×</button></div>{contributions.length ? contributions.map((contribution) => <button key={contribution.contribution_ref} disabled={!contribution.available} onClick={() => { operate({ type: 'insert-contribution', region_ref: insertTarget.regionRef, index: insertTarget.index, contribution_ref: contribution.contribution_ref }); setInsertTarget(null); }}><span>{contribution.label}</span><code>{contribution.contribution_ref}</code><small>{contribution.available ? contribution.surface_ref ?? contribution.component_ref : contribution.reason ?? 'Unavailable'}</small></button>) : <p>No compatible contributions are disclosed by the operative field.</p>}</section></div> : null}
 
     {preparedRevision ? <div className="direct-revision-receipt" role="status"><strong>Projection revision prepared through canonical refinement.</strong><span>Source authority and source revision are preserved. Provider publication is still a separate transport operation.</span><code>{String((preparedRevision as any).projection_ref)}@{String((preparedRevision as any).projection_revision)}</code></div> : null}
   </div>;
