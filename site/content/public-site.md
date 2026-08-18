@@ -16,9 +16,9 @@
 
 ### [title] O:I maps what it means for an AI agent to have a world.
 
-An AI agent works through an underlying inference model, but also through the project it can see, the tools it can use, the knowledge it can reach, the authority it has, the environment it can change and the history it can carry forward.
+An AI agent works through an underlying inference model, but also through the project it can see, the tools it can use, the knowledge it can reach, the authority it has, the environment it can change, the history it can carry forward and the human-authored purposes or principles that can orient its work.
 
-O:I — Operating Infrastructure · Objective Internality — is an open architecture for making that world explicit: a common substrate through which different agentic setups can expose and develop the projects, knowledge, capabilities, authority, environments, history and relations that become operative for an agent. We are building it both as a working platform and as a research programme into Objective Internality: what constitutes having-a-world for an artificial agent, and what different technical arrangements make possible.
+O:I — Operating Infrastructure · Objective Internality — is an open architecture for making that world explicit: a common substrate through which different agentic setups can expose and develop the projects, knowledge, capabilities, authority, environments, history, authored ground and relations that become operative for an agent. We are building it both as a working platform and as a research programme into Objective Internality: what constitutes having-a-world for an artificial agent, and what different technical arrangements make possible.
 
 ## [existing-world] Start from the world you already have
 
@@ -28,11 +28,13 @@ Your editor, shell, repositories, prompts, agents, skills, tools, services, mach
 
 You can keep the setup you use and make more of its structure durable, visible and composable over time. The products define common relations and public extension seams so technologies we did not build can still become part of that world. Existing worlds are also part of the research: the platform is meant to learn from heterogeneous arrangements rather than only arrangements created inside O:I.
 
+The same applies to the human side of the world. Principles, preferences, project purposes, rules and ways of working can remain as durable source in a person's own words instead of being reconstructed from scattered application settings or retyped into every session. Relevant parts can become available to an agent when they are useful; the whole person does not have to become one giant prompt.
+
 ## [field] One possibility space
 
 ### [title] The same substrate can stay minimal or develop as far as you need.
 
-At the minimal end, O:I can simply give your existing project and agent a durable relation: your working ground persists, and the agent can act from it. Nothing else has to be added until it is useful. As your needs develop, the same world can gain richer knowledge, capabilities, authority, developmental history, material execution environments, formal experiments and relations with other worlds.
+At the minimal end, O:I can simply give your existing project and agent a durable relation: your working ground persists, and the agent can act from it. Nothing else has to be added until it is useful. As your needs develop, the same world can gain richer authored orientation, knowledge, capabilities, authority, developmental history, material execution environments, formal experiments and relations with other worlds.
 
 ### [ground] Your working ground persists
 
@@ -42,6 +44,7 @@ At the minimal end, O:I can simply give your existing project and agent a durabl
 
 ### [developments] Develop the world where your use demands it
 
+- **Authored orientation** — purpose, principles, preferences and ways of working that remain yours
 - **Projects and continuity** — work that persists across sessions
 - **Knowledge and sources** — material the agent can find and trace back to source
 - **Skills, tools and actions** — powers available when they are relevant
@@ -55,7 +58,7 @@ At the minimal end, O:I can simply give your existing project and agent a durabl
 
 ### [title] We are mapping what constitutes having-a-world for an AI agent.
 
-Objective Internality is the technological space through which project ground, knowledge, capability, authority, developmental history, material environment, formal structure and relation can become operative for an agent. We are developing six products as the current engineering map of that space: Central for durable personal and project ground; Actuation for agency and authority; AIKit for capabilities, knowledge and runtime composition; Software Factory for developmental continuity and Return; Workcell for material computational worlds; and Quaternal Logic for executable formal research.
+Objective Internality is the technological space through which authored ground, project continuity, knowledge, capability, authority, developmental history, material environment, formal structure and relation can become operative for an agent. We are developing six products as the current engineering map of that space: Central for durable personal and project ground; Actuation for agency and authority; AIKit for capabilities, knowledge and runtime composition; Software Factory for developmental continuity and Return; Workcell for material computational worlds; and Quaternal Logic for executable formal research.
 
 These are centres within the same minimal-to-maximal possibility space. A world can begin with only the relations it needs and develop across more of the map as its use becomes richer. Their abstractions are meant to remain stable enough for other technologies to meet them through SDKs, providers, connectors and extension contracts. The reference implementations show working paths; the wider field can add more.
 
@@ -91,9 +94,9 @@ A provider, connector, component or fixture that works in one world can be share
 
 ### [title] O:I gives AI agents a world to act in.
 
-Give the same underlying inference model different projects, tools, knowledge, permissions, histories, runtime bodies and execution environments and you have changed the conditions under which an agent acts. O:I makes those surrounding conditions explicit enough to build, inspect, compose and study.
+Give the same underlying inference model different projects, tools, knowledge, permissions, histories, human-authored principles, runtime bodies and execution environments and you have changed the conditions under which an agent acts. O:I makes those surrounding conditions explicit enough to build, inspect, compose and study.
 
-The architecture spans the persistent world an agent returns to, the capabilities it can reach, the Agency under which it acts, the environments it can materialise, the developmental history it can inherit and the other worlds it can encounter.
+The architecture spans the persistent world an agent returns to, the authored ground that can orient it, the capabilities it can reach, the Agency under which it acts, the environments it can materialise, the developmental history it can inherit and the other worlds it can encounter.
 
 ## [existing-world] Existing worlds
 
@@ -109,7 +112,7 @@ That keeps continuity with the work and habits you already have and keeps the re
 
 ### [title] Start small. Develop only what you need.
 
-The minimal case can stay very small: persistent files and projects, plus an AI agent able to act there. The same world can later gain durable Agents and Agencies, Skills and Actions, richer source navigation, developmental Runs and evidence, material Workcells, research instrumentation and SharedFields.
+The minimal case can stay very small: persistent files and projects, plus an AI agent able to act there. The same world can later gain durable human-authored orientation, Agents and Agencies, Skills and Actions, richer source navigation, developmental Runs and evidence, material Workcells, research instrumentation and SharedFields.
 
 Our six products are centres within that possibility space. You can use one, several, all six, or interoperable alternatives where another technology already owns the job well.
 
@@ -121,27 +124,39 @@ Our six products are centres within that possibility space. You can use one, sev
 
 ### [objective-internality] Objective : Internality
 
-**Objective : Internality** names the same field from the side of the actor. Part of what an agent can actually draw on while acting can exist objectively outside one inference: files, project history, available powers, source indexes, machine observations, constraints, prior decisions and runtime bindings can persist, be inspected and become available again in later action.
+**Objective : Internality** names the same field from the side of the actor. Part of what an agent can actually draw on while acting can exist objectively outside one inference: files, project history, available powers, source indexes, machine observations, constraints, prior decisions, human-authored principles and runtime bindings can persist, be inspected and become available again in later action.
 
-The research question is what becomes possible when that operative interior is designed as a real, durable and inspectable technological world.
+That gives the operative world several related dimensions. It has **continuity** in what can survive an inference; **potency** in the knowledge, capabilities, authority and material reach that can become active; and **orientation** in the purposes, principles, judgements, source authorities and limits that can make one action more fitting than another.
+
+Those structures do not all have the same provenance. Something the human wrote, something a machine observed and something an agent inferred may all be useful, but they should not silently become the same kind of truth. The research question is what becomes possible when that operative interior is designed as a durable, inspectable and provenance-bearing technological world.
 
 ### [non-claim] The operational claim
 
-Objective : Internality gives us a precise engineering object without requiring a prior conclusion about artificial subjectivity. We can build and compare systems in which different forms of memory, world, capability, identity, relation and history become operative for an agent, then let implementation and use return evidence about where the concept helps and where it needs revision.
+Objective : Internality gives us a precise engineering object without requiring a prior conclusion about artificial subjectivity. We can build and compare systems in which different forms of memory, world, capability, identity, authored orientation, relation and history become operative for an agent, then let implementation and use return evidence about where the concept helps and where it needs revision.
+
+The originating Antykathera research is deliberately stronger than a generic claim about context and deliberately more disciplined than a claim about machine consciousness: it treats structured, inspectable, causally consequential context-worlds as a research object while keeping phenomenal subjectivity open. O:I develops the technological side of that proposition and makes it available for comparison.
 
 ## [human-agency] Human agency
 
-### [title] More artificial agency should create more room for human agency.
+### [title] More artificial agency should create more room for human authorship.
 
-We want routine setup, context repair, source discovery, execution mechanics and developmental bookkeeping to move away from continuous human attention when the system can carry them safely and visibly.
+The aim is not simply to automate mechanics until a person has fewer buttons to press. We want the human to remain causally present at the points where their authorship most changes the world from which later agency proceeds.
 
-That leaves more room for the work in which human authorship matters most: purpose, vision, judgement, taste, meaningful alternatives, interpretation, refusal, Recognition and redirection. This is a design commitment we test against the actual experience of using the system.
+A person can write purpose, principles, preferences, rules, tastes, refusals, project positions and ways of working in their own words. When that material remains durable and relevant parts can be retrieved selectively, the person does not have to reconstruct themselves at the start of every inference or supervise every act for their judgement to remain part of the system.
+
+The relation we are building toward is **human authorship → durable source → selective operative use → action and encounter → returned evidence → human Recognition and revision**.
+
+Each transition has a boundary. Generated interpretation is not authored source. An observed pattern is not automatically a preference. Retrieval is not permission. An agent can propose a revision without silently becoming the author of the person's durable ground.
+
+That changes where the human needs to touch the system. Human attention can stay close to purpose, Commission, principles, authority, meaningful alternatives, judgement, taste, refusal, Recognition, redirection and accepted revision, while routine setup, context repair, source discovery, execution mechanics and developmental bookkeeping move away from continuous attention when the system can carry them safely and visibly.
+
+This is a design commitment and a research question. We test it against the actual experience of using the system: whether greater technological agency increases a person's expressive and interpretive power, reduces repeated prompting and mechanical supervision, and returns reality clearly enough for the person to change what should happen next.
 
 ## [research-field] Research field
 
 ### [title] Agentic engineering is an open, collective research field.
 
-We are studying how prompts, recurrence, memory, knowledge horizons, capability fields, authority, embodiment, development process, material environment, mediation and human practice combine around available model capacity.
+We are studying how prompts, recurrence, memory, knowledge horizons, capability fields, authority, embodiment, development process, material environment, mediation, human-authored ground and human practice combine around available model capacity.
 
 No single team inhabits the full possibility space. Different people already have different technological worlds. O:I therefore treats public SDKs, connectors, providers, fixtures and shared reproductions as part of the research method: more real worlds create more opportunities to compare arrangements, discover limits and return evidence that can improve the products themselves.
 
@@ -163,25 +178,31 @@ The diagrams below show current product seams and native technical nouns rather 
 
 ## [central] Central
 
-### [summary] Your personal and project world, held in ordinary files and operated through stable Actions.
+### [summary] Human-authored personal ground and ordinary project work, kept in ordinary files and exposed through bounded Actions.
 
-### [lede] Your working world, under your control.
+### [lede] Write the ground your agents can return to.
 
 ### [what] What it is
 
-Central is the human-owned root for personal context and ordinary work. `Control/` holds material deliberately authored about the person, their agents and their machines. `Work/` holds normal projects and files. `ctrl` exposes stable Actions, and connectors bind those Actions to the technologies available on a particular machine.
+Central is the human-owned root for personal context and ordinary work. `Control/` holds material about the person, their agents and their machines; `Work/` holds normal projects and files. `ctrl` exposes stable Actions, and connectors bind those Actions to technologies available on a particular machine.
+
+Control deliberately distinguishes **authored source**, **observed state** and **generated material**. Natural prose is first-class: a person does not have to translate themselves into one universal profile schema before their writing can become useful to an agent.
 
 ### [why] Why it exists
 
-Models, editors, machines and agent runtimes change faster than the life and work they serve. Central gives that longer-lived world an owned source so a person can change tools without reconstructing the same context from scattered application settings.
+Models, editors, machines and agent runtimes change faster than the life and work they serve. Central gives that longer-lived world an owned source so a person can change tools without reconstructing the same principles, preferences, machine meanings and project context from scattered application settings.
+
+The distinction between source and derivation matters because an agent can infer, summarise and observe useful things without thereby becoming the author of the person. Durable human-authored source changes through human acceptance rather than silent machine reinterpretation.
 
 ### [change] What changes
 
-A person can carry the same authored ground and ordinary work across changing tools, while an agent can return to a stable, permission-bounded world instead of beginning every session from scratch.
+A person can write principles, preferences, purposes and ways of working once in their own words, keep them as ordinary owned material, and let relevant portions become available where later agency needs them. The entire Control tree does not have to enter every prompt: retrieval and permission are separate concerns, and Central's stock retrieval path can exclude authored subtrees from agent reading entirely.
+
+An agent can therefore return to a stable, permission-bounded world instead of beginning every session from scratch, while the person retains authorship of the source from which that world is selectively disclosed.
 
 ### [capabilities] Current shape
 
-`Control/user` · `Control/agents` · `Control/machines` · ordinary `Work/` · `ctrl` Actions / SDK · replaceable connectors · derived `.central/` state
+`Control/user` · `Control/agents` · `Control/machines` · authored / observed / generated source classes · bounded retrieval · ordinary `Work/` · `ctrl` Actions / SDK · replaceable connectors · derived `.central/` state
 
 ### [repo] Native centre
 
@@ -199,11 +220,11 @@ Actuation defines technological agency as a first-class object. It distinguishes
 
 ### [why] Why it exists
 
-As agents delegate work and participate in larger compositions, process flow alone stops being enough. The governing purpose and permissions need a clear relation to the locus doing the work, and the evidence, resistance or disagreement encountered there needs a route back into later determination.
+As agents delegate work and participate in larger compositions, process flow alone stops being enough. Human-authored purpose becomes operationally meaningful only in relation to authority and bounds: who may carry it into action, how far that authority travels, and what happens when the acting locus encounters a world the determining locus could not fully predict.
 
 ### [change] What changes
 
-Authority, delegation, refusal, dissent and Return become inspectable parts of the agency relation rather than assumptions hidden inside orchestration code.
+Authority, delegation, refusal, dissent and Return become inspectable parts of the agency relation rather than assumptions hidden inside orchestration code. The person or Agency that determines a course of action can delegate real judgement without losing the path by which resistance, evidence or a better possibility returns to later determination.
 
 ### [capabilities] Current shape
 
@@ -225,11 +246,11 @@ AIKit discovers a heterogeneous agentic environment and resolves the useful subs
 
 ### [why] Why it exists
 
-Real setups accumulate across clients, hosts and projects. Useful capability may exist without belonging in every prompt or every runtime. AIKit gives that larger world a discoverable and composable horizon.
+Real setups accumulate across clients, hosts and projects. Useful capability or authored context may exist without belonging in every prompt or every runtime. AIKit gives that larger world a discoverable and composable horizon.
 
 ### [change] What changes
 
-A human or agent can inspect what is available, what is relevant, what is permitted, what is degraded and how the current working environment was composed.
+A human or agent can inspect what is available, what is relevant, what is permitted, what is degraded and how the current working environment was composed. Durable ground can stay larger than the immediate act while the smallest useful subset becomes operative where it is needed.
 
 ### [capabilities] Current shape
 
@@ -255,7 +276,7 @@ Agentic implementation can move faster than the human meaning that commissioned 
 
 ### [change] What changes
 
-Agents and deterministic systems can carry more of the labour while the human remains close to commissioning, judgement, Recognition and redirection. Runs, decisions, evidence and Candidates become durable project material rather than disappearing into chat history.
+Agents and deterministic systems can carry more of the labour and substantial situated judgement while the human remains close to the consequential points of authorship: Commission, product meaning, judgement, Recognition and redirection. Runs, decisions, evidence and Candidates become durable project material rather than disappearing into chat history.
 
 ### [capabilities] Current shape
 
@@ -281,7 +302,7 @@ Projects and Agents need concrete environments, but their higher-level identity 
 
 ### [change] What changes
 
-A human or agent can request the material conditions an act needs and still inspect what was created, where it lives, which services connect, what persists, what is healthy and what is eventually released.
+A human or agent can request the material conditions an act needs and still inspect what was created, where it lives, which services connect, what persists, what is healthy and what is eventually released. Purpose and authority gain a real path into the material world without the higher-level World being reduced to one provider's implementation details.
 
 ### [capabilities] Current shape
 
@@ -325,7 +346,7 @@ https://github.com/EpiLogos/QL-MEF
 
 ### [title] A world, defined for agents.
 
-A World is the durable place from which an agent can act: its projects, sources, capabilities, history, authority, environment and relations. O:I lets people and agents define these worlds locally and make selected parts of them available beyond themselves.
+A World is the durable place from which an agent can act: its authored orientation, projects, sources, capabilities, history, authority, environment and relations. O:I lets people and agents define these worlds locally and make selected parts of them available beyond themselves.
 
 A Shared Field is where those independently grounded worlds meet. A document, project result, wiki space, experiment, Agent or other addressable object can become available to another world while retaining its source identity and provenance.
 
@@ -337,6 +358,8 @@ Projection creates an addressable representation of something a world owns for a
 
 That gives sharing a clear return path. Another person, Agent or world can respond, extend, contest or contribute without the shared field becoming the author of the source material.
 
+The same distinction matters when the source is personal or human-authored. Making a bounded part of a person's ground agent-readable or publicly shareable is not the same as transferring ownership of the source, and a response or generated interpretation does not silently become a revision of what the person authored.
+
 ## [co-internality] Objective Co-Internality
 
 ### [title] Independent worlds in relation.
@@ -344,6 +367,8 @@ That gives sharing a clear return path. Another person, Agent or world can respo
 Objective Co-Internality names the plural relation created when one operative world becomes meaningfully available within another while both retain their own ground, history and authority.
 
 This gives O:I a way to study shared agency as more than message exchange: what was projected, how it was encountered, what difference was returned, and how that difference later changed either world.
+
+The design problem is **legibility without capture**: enough source, permission and provenance can become visible for a relation to be accountable without requiring either participant's whole local world to be absorbed by the shared service.
 
 ## [explore] Explore
 
@@ -363,9 +388,11 @@ The same field can carry reusable work on O:I itself: integration fixtures, prov
 
 ### [title] We are building O:I as an open research platform for agentic engineering.
 
-The research object is the technological world through which available model capacity becomes situated agency: project ground, prompts and recurrence, knowledge, memory, capabilities, authority, runtime body, development process, material environment, shared-field mediation and human practice.
+The research object is the technological world through which available model capacity becomes situated agency: project ground, prompts and recurrence, knowledge, memory, capabilities, authority, runtime body, development process, material environment, shared-field mediation, human-authored orientation and human practice.
 
 We are building these structures so the community can use them, vary them, compare them and return evidence about what they actually change. The programme begins with questions and testable propositions rather than finished conclusions about the best form of agency.
+
+The philosophical lineage matters, but it is not being presented as implementation evidence. *The Return of Zero* develops Objective Internality as a way of studying structured, inspectable and causally consequential agent context-worlds while refusing to infer phenomenal subjectivity from functional organisation alone. O:I takes that opening into engineering: what parts of an operative world can be externalised, made inspectable, selectively disclosed, acted from and changed through Return?
 
 ## [object] What we study
 
@@ -373,15 +400,43 @@ We are building these structures so the community can use them, vary them, compa
 
 **Capacity** is what the underlying model and available compute can potentially provide.
 
-**Provisioning** asks what an act has available: a project, sources, Skills, Actions, memory, permissions, a runtime body, an execution environment, other participants and a path for Return.
+**Provisioning** asks what an act has available: a project, sources, human-authored orientation, Skills, Actions, memory, permissions, a runtime body, an execution environment, other participants and a path for Return.
 
 **Potentiation** asks what becomes possible because those surrounding structures have a particular form. O:I gives us a common field in which those relations can be made explicit and compared.
+
+The same nominal model or tool can participate in very different agency depending on what the actor can find, what it is allowed to do, which source it trusts, what history persists, what the human has authored, how much of that ground becomes operative now, and how encountered reality is returned.
+
+## [human-authorship] Human authorship
+
+### [title] Where should the human enter an agentic system?
+
+One research line concerns the high-level points of contact between a person and artificial agency. The ordinary answer is often supervision: keep the human in the loop, ask for approval, or make the person repeatedly prompt the system. We are testing a different and complementary possibility: **the human can author durable parts of the operative world from which later agency proceeds**.
+
+Central already gives this question a concrete technical shape. Its Control protocol distinguishes human-authored source from observed state and generated material; natural prose is first-class; authored material is not required to become a universal profile schema; and durable mutation of human-authored source requires human acceptance. Its retrieval treatment also demonstrates that source existence and permission to retrieve it are separate concerns.
+
+That lets us ask more precise questions than whether “personalisation” helps:
+
+- What changes when the same model and task have no standing human-authored ground, a generated profile, or principles and preferences written directly by the person?
+- Which forms of human writing materially improve orientation, continuity, constraint preservation or collaboration, and which merely increase context length?
+- When does prose in the person's own voice preserve distinctions that a schema loses? When does a schema make a relation more dependable?
+- Can selecting the smallest relevant part of durable ground outperform injecting an entire profile into every act?
+- What happens when an agent inference or observation is presented as though the human authored it?
+- How should an agent propose a change to a person's durable ground without silently rewriting the person it is modelling?
+- How do principles and preferences interact with explicit authority, tool permission and material reach?
+- Can durable high-level authorship reduce repeated prompting and micromanagement while increasing the person's expressive and interpretive agency?
+- Which results survive changes of model, harness, Project and time?
+
+A useful experimental shape is to hold the model, task and tools approximately constant while changing the authored ground and its retrieval treatment, then observe orientation, repeated prompting, human intervention, constraint preservation, provenance errors, correction, context cost, recovery, transfer and the quality of Return.
+
+The larger human relation is equally important. O:I places human authorship at several consequential surfaces: **authorship** of durable ground; **authority** over what an Agency may do; **Commission** of work worth undertaking; **Recognition** of what development and reality returned; and **accepted revision, refusal or redirection** after encounter. The question is whether increasingly capable artificial agency can move more mechanical labour between those moments without moving the human out of authorship itself.
 
 ## [method] Research method
 
 ### [title] Research should remain reopenable.
 
 Our research protocol starts from exact sources and keeps source claims, implementation facts, direct observations and O:I interpretation distinguishable. A study can then propose an abstraction, compare it with other systems, make it operative, test it and return the result to the field.
+
+The same status discipline applies inside an agentic World. Human-authored source, machine-observed state and agent-generated interpretation can all be useful research objects, but collapsing them destroys evidence about where a claim came from and who had authority to make it.
 
 Fixtures and conformance evidence matter for the same reason. When somebody connects a real technology through an O:I product contract, the useful research object is not only the adapter code; it is also the exact environment in which it worked, what was verified, what failed and what another person would need to reproduce the relation.
 
@@ -391,14 +446,15 @@ Fixtures and conformance evidence matter for the same reason. When somebody conn
 
 ### [title] Each part of O:I opens a different research surface.
 
-- **Personal and project worlds** — how durable authored ground changes orientation, continuity and human effort
+- **Human authorship and operative orientation** — how principles, preferences, purposes, rules, prose form, provenance and selective retrieval change later agency and human effort
+- **Personal and project worlds** — how durable ground changes orientation, continuity, transfer and recovery
 - **Agency and authority** — how Agent, Agency, delegation, federation, refusal and Return shape coordinated action
 - **Capability and knowledge fields** — how selection, disclosure and composition affect what an agent can use effectively
 - **Harnesses and runtime bodies** — how recurrence, Components, tools, services and Surfaces change the conditions of action
 - **Developmental systems** — how agent-led software work preserves intention, evidence, recovery and Recognition
 - **Material worlds** — how workspaces, services, containers, VMs, hosts and network relations affect action and verification
 - **Shared agency** — how different mediation and field structures affect reciprocity, contribution, encounter and cumulative learning
-- **Epistemic cultivation** — how source, evidence, retrieval, contradiction and evaluation practices shape what agents can know and claim
+- **Epistemic cultivation** — how source, evidence, retrieval, contradiction, evaluation and provenance practices shape what agents can know and claim
 - **Community extensions** — how well the same abstraction survives when different people connect different technologies and Worlds through public contracts
 
 ## [ql] Quaternal Logic
