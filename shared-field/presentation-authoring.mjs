@@ -142,6 +142,20 @@ export function authoringDisclosure(input) {
   };
 }
 
+/**
+ * Working state deliberately retains the currently published presentation
+ * revision. Ratification is the moment it becomes the next WorldPresentation.
+ */
+export function ratifyWorldPresentationRevision(value, provenance = []) {
+  const presentation = validateWorldPresentation(value);
+  if (!Array.isArray(provenance)) throw new TypeError('presentation ratification provenance must be an array');
+  return validateWorldPresentation({
+    ...clone(presentation),
+    revision: presentation.revision + 1,
+    provenance: [...clone(presentation.provenance), ...clone(provenance)],
+  });
+}
+
 function uniqueRef(presentation, preferred) {
   const used = new Set(presentation.regions.flatMap((region) => region.bindings.map((binding) => binding.binding_ref)));
   if (!used.has(preferred)) return preferred;
