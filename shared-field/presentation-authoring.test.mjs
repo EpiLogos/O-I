@@ -107,7 +107,7 @@ test('direct authoring mutates existing WorldPresentation regions and bindings w
   assert.equal(next.regions[0].bindings.some((binding) => binding.binding_ref === 'binding:opening-copy'), false);
 });
 
-test('agent disclosure exposes the same selected refs, provenance, source revision, contribution field and authoring operations', () => {
+test('agent disclosure exposes the same selected refs, provenance, source revision, source-return boundary and authoring operations', () => {
   const disclosure = authoringDisclosure({
     presentation: presentation(),
     projection_ref: 'projection:o-i:explore@3',
@@ -115,6 +115,13 @@ test('agent disclosure exposes the same selected refs, provenance, source revisi
     source_revision: '78e81de',
     selected_binding_ref: 'binding:opening-copy',
     contributions,
+    source_return: {
+      available: true,
+      owner: 'central',
+      target_ref: 'control:user/product-vision',
+      action_refs: ['control.propose-change', 'control.review-proposal', 'control.apply-proposal'],
+      reason: 'Durable source return is a Central-owned proposal/apply path, not a Projection edit.',
+    },
     mode: 'author',
     dirty: true,
   });
@@ -122,11 +129,35 @@ test('agent disclosure exposes the same selected refs, provenance, source revisi
   assert.equal(disclosure.selected.binding_ref, 'binding:opening-copy');
   assert.equal(disclosure.selected.component_ref, 'oi.presentation.component:text');
   assert.equal(disclosure.selected.projection_ref, 'projection:o-i:explore@3');
+  assert.deepEqual(disclosure.selected.action_refs, []);
   assert.equal(disclosure.source_revision, '78e81de');
+  assert.equal(disclosure.source_return.owner, 'central');
+  assert.equal(disclosure.source_return.action_refs[0], 'control.propose-change');
   assert.equal(disclosure.dirty, true);
   assert.ok(disclosure.operations.includes('insert-contribution'));
   assert.equal(disclosure.contributions[1].degraded, true);
   assert.equal(disclosure.contributions[1].action_refs[0], 'aikit.project-map.open');
+});
+
+test('selected native contribution keeps its canonical ActionRef and degraded reason without gaining a UI-owned handler', () => {
+  const value = presentation();
+  value.regions[0].bindings[0] = {
+    ...value.regions[0].bindings[0],
+    component_ref: 'component:aikit:project-map',
+    contribution_ref: 'contribution:aikit:project-map',
+    surface_ref: 'surface:aikit:project-map:web',
+    portable_renderer: 'aikit.presentation/project-map/v1',
+  };
+  const disclosure = authoringDisclosure({
+    presentation: value,
+    selected_binding_ref: 'binding:opening-copy',
+    contributions,
+    mode: 'author',
+  });
+  assert.deepEqual(disclosure.selected.action_refs, ['aikit.project-map.open']);
+  assert.equal(disclosure.selected.contribution_available, false);
+  assert.equal(disclosure.selected.contribution_degraded, true);
+  assert.match(disclosure.selected.contribution_reason, /provider requirement/);
 });
 
 test('unavailable native contribution is visible but cannot be inserted and renderer fallback does not drift identity', () => {
