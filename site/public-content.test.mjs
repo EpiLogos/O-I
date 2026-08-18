@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 const source = readFileSync(new URL('./content/public-site.md', import.meta.url), 'utf8');
+const foundingPositions = readFileSync(new URL('../docs/positions/FOUNDING-POSITIONS.md', import.meta.url), 'utf8');
 const viteConfig = readFileSync(new URL('./vite.config.ts', import.meta.url), 'utf8');
 
 function hasHeading(level, id) {
@@ -42,7 +43,25 @@ test('research page represents the wider programme and keeps QL as one deeper su
   }
   assert.match(sectionBody('research', 'method'), /^### \[cycle\] Discover → Source-lock → Study →/m);
   assert.match(sectionBody('research', 'programme'), /Personal and project worlds/);
+  assert.match(sectionBody('research', 'programme'), /Community extensions/);
   assert.match(sectionBody('research', 'ql'), /A deeper formal research programme/);
+});
+
+test('collective extension is represented as a research method, not generic extensibility', () => {
+  const collective = sectionBody('research', 'open');
+  assert.match(collective, /Community development is part of the research method/);
+  assert.match(collective, /SDK \/ public contract/);
+  assert.match(collective, /Fixture \+ evidence/);
+  assert.match(collective, /Reproduce and adapt/);
+  assert.match(collective, /Return/);
+  assert.match(sectionBody('products', 'intro'), /abstractions are the durable root/);
+});
+
+test('founding positions carry the same positive world and collective research commitments', () => {
+  assert.match(foundingPositions, /^## 1 — Agency is constituted through model capacity in relation with a World$/m);
+  assert.match(foundingPositions, /^## 2 — Existing technological Worlds are legitimate starting Worlds$/m);
+  assert.match(foundingPositions, /^## 5 — Agentic engineering is an open, collective research field$/m);
+  assert.match(foundingPositions, /stable abstraction[\s\S]*native SDK \/ public contract[\s\S]*fixture \+ verification[\s\S]*Return to product and research/);
 });
 
 test('first-contact copy names the world and our products directly', () => {
