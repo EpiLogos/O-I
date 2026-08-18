@@ -24,6 +24,21 @@ Then:
 oi help
 ```
 
+## Registry bootstrap and trusted publishing
+
+npm requires a package to exist in the registry before a trusted publisher can be attached to it. The first `@epilogos/oi` publication must therefore be performed once by an authenticated npm account that owns the `@epilogos` scope.
+
+After that bootstrap publication, configure the package's GitHub Actions trusted publisher as:
+
+```text
+organization/user   EpiLogos
+repository          O-I
+workflow filename   npm-publish.yml
+allowed action      npm publish
+```
+
+`.github/workflows/npm-publish.yml` is the tokenless OIDC publication path after that point and deliberately refuses to pretend it can create the initial npm registry entry.
+
 ## What install does
 
 The package resolves the current platform, downloads the corresponding immutable O:I release archive and SHA-256 sidecar, verifies the archive bytes, extracts the native `oi` executable into the package, and exposes it through npm's normal `bin` mechanism.
