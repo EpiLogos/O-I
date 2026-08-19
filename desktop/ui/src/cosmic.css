@@ -1,0 +1,172 @@
+.cosmic-surface {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: 2.4rem clamp(1.2rem, 3vw, 3rem) 3rem;
+  display: grid;
+  gap: 1.4rem;
+}
+
+.cosmic-header,
+.cosmic-now,
+.cosmic-footer,
+.cosmic-aspect__heading,
+.cosmic-depth {
+  display: flex;
+  align-items: center;
+}
+
+.cosmic-header,
+.cosmic-footer {
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.cosmic-title {
+  margin: .2rem 0 0;
+  font-size: clamp(2.7rem, 8vw, 6.2rem);
+  font-weight: 430;
+  letter-spacing: -.07em;
+}
+
+.cosmic-refresh,
+.cosmic-depth button,
+.cosmic-workspace > button {
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  background: transparent;
+  color: inherit;
+  border-radius: 999px;
+  padding: .62rem .9rem;
+  cursor: pointer;
+}
+
+.cosmic-refresh:disabled { opacity: .45; cursor: default; }
+
+.cosmic-now {
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: .65rem 1.25rem;
+  min-height: 2.6rem;
+  border-block: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  font-size: .78rem;
+  letter-spacing: .045em;
+}
+
+.cosmic-now strong { font-size: 1rem; }
+
+.cosmic-instrument {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, .72fr) minmax(0, 1fr);
+  grid-template-areas:
+    "movement core resonance"
+    "symbol symbol symbol";
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.cosmic-aspect,
+.cosmic-core,
+.cosmic-workspace {
+  border: 1px solid color-mix(in srgb, currentColor 13%, transparent);
+  border-radius: 1.15rem;
+  background: color-mix(in srgb, currentColor 2.5%, transparent);
+}
+
+.cosmic-aspect {
+  padding: 1.2rem 1.25rem;
+  min-height: 13rem;
+}
+
+.cosmic-aspect:first-child { grid-area: movement; }
+.cosmic-core { grid-area: core; }
+.cosmic-aspect:nth-child(3) { grid-area: resonance; }
+.cosmic-aspect--wide { grid-area: symbol; min-height: auto; }
+
+.cosmic-aspect__heading { justify-content: space-between; gap: 1rem; }
+.cosmic-aspect__heading span { font-size: .82rem; font-weight: 700; }
+.cosmic-aspect__heading small,
+.cosmic-aspect > small { opacity: .58; }
+.cosmic-aspect h2 { margin: .8rem 0 1.25rem; font-size: clamp(1.45rem, 3vw, 2.15rem); }
+.cosmic-aspect p { margin: .38rem 0; line-height: 1.45; }
+
+.cosmic-aspect[data-status="research"],
+.cosmic-aspect[data-status="provider-unavailable"] { border-style: dashed; }
+
+.cosmic-core {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: .35rem;
+  padding: 1rem;
+  overflow-wrap: anywhere;
+}
+
+.cosmic-core__pulse {
+  width: 4.8rem;
+  height: 4.8rem;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  box-shadow: inset 0 0 0 1rem color-mix(in srgb, currentColor 4%, transparent);
+  margin-bottom: .65rem;
+}
+
+.cosmic-core strong { font-size: 1.05rem; }
+.cosmic-core span,
+.cosmic-core small { font-size: .7rem; opacity: .66; }
+
+.cosmic-depth {
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: .55rem;
+}
+
+.cosmic-depth button {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+.cosmic-depth button span { opacity: .6; font-size: .72rem; }
+.cosmic-depth button strong { font-size: .78rem; }
+
+.cosmic-footer {
+  font-size: .7rem;
+  opacity: .62;
+  overflow-wrap: anywhere;
+}
+
+.cosmic-explain {
+  border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  padding-top: 1rem;
+}
+
+.cosmic-explain summary { cursor: pointer; font-size: .8rem; }
+.cosmic-explain__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.cosmic-explain__grid > div,
+.cosmic-workspace {
+  padding: 1rem;
+  overflow-wrap: anywhere;
+}
+
+.cosmic-explain__grid p,
+.cosmic-workspace p { font-size: .76rem; line-height: 1.45; }
+
+.cosmic-workspace h2 { font-size: clamp(2rem, 6vw, 4.5rem); margin: 1rem 0 .4rem; }
+.cosmic-state { opacity: .7; }
+
+@media (max-width: 860px) {
+  .cosmic-instrument {
+    grid-template-columns: 1fr;
+    grid-template-areas: "core" "movement" "resonance" "symbol";
+  }
+  .cosmic-aspect { min-height: auto; }
+  .cosmic-explain__grid { grid-template-columns: 1fr; }
+  .cosmic-footer { align-items: flex-start; flex-direction: column; }
+}
