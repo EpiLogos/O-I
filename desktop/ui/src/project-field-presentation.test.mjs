@@ -4,6 +4,7 @@ import test from 'node:test';
 
 const projectField = readFileSync(new URL('./project-field.tsx', import.meta.url), 'utf8');
 const workbench = readFileSync(new URL('./workbench.tsx', import.meta.url), 'utf8');
+const main = readFileSync(new URL('./main.tsx', import.meta.url), 'utf8');
 const core = readFileSync(new URL('../../core/src/project_field.rs', import.meta.url), 'utf8');
 const knowledge = readFileSync(new URL('../../core/src/project_knowledge.rs', import.meta.url), 'utf8');
 
@@ -24,6 +25,15 @@ test('selection, retrieval and Agent Context disclosure remain distinct', () => 
   assert.match(core, /selected != retrieved/);
   assert.match(core, /retrieved != disclosed-into-agent-context/);
   assert.match(knowledge, /Selection itself never calls/);
+});
+
+test('P2 projects the one P1 canonical selection instead of owning a second selection state', () => {
+  assert.match(main, /selection=\{snapshot\.selection\}/);
+  assert.match(main, /<WorkbenchSurface selection=\{selection\} onSelect=\{onSelect\} \/>/);
+  assert.match(workbench, /selection\?: WorkbenchSemanticRef/);
+  assert.doesNotMatch(workbench, /useState<WorkbenchSemanticRef/);
+  assert.match(workbench, /<ProjectNavigator selection=\{selection\}/);
+  assert.match(workbench, /<ProjectFieldCanvas selection=\{selection\}/);
 });
 
 test('Ground mutation is not proxied through the desktop host', () => {
