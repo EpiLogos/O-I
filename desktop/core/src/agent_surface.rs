@@ -21,12 +21,19 @@ const MAX_MESSAGES_PER_TURN: usize = 512;
 
 #[derive(Clone, Deserialize, Serialize, PartialEq, Eq)]
 pub struct AgentSurfaceOpenRequest {
+    /// Native host-owned connection identity, not Agent identity.
     pub connection_ref: String,
+    /// Canonical AIKit AgentSession identity supplied by the caller/workbench.
     pub agent_session_ref: String,
+    /// Native host-owned provider process command. Tauri must not accept this
+    /// field directly from an untrusted contribution/webview request.
     pub argv: Vec<String>,
+    /// Native host-owned working directory.
     pub cwd: String,
+    /// `create`, `load`, or `resume`. Strings keep the public O:I boundary from
+    /// exporting AIKit adapter implementation enums as desktop ontology.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub mode: Option<SessionOpenMode>,
+    pub mode: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub native_session_id: Option<String>,
     #[serde(default)]
@@ -59,7 +66,7 @@ impl AikitAgentSurface {
         }
         let connection_ref = ResourceRef::parse(&request.connection_ref)
             .map_err(|error| error.to_string())?;
-        let mode = request.mode.unwrap_or(SessionOpenMode::Create);
+        let mode = parse_open_mode(request.mode.as_deref())?;
         let mut provenance = request.provenance;
         provenance.push("O:I generic conversation Surface via AIKit ACP adapter".into());
         let mut adapter = AcpV1ConnectionAdapter::new(connection_ref, provenance);
@@ -192,5 +199,16 @@ impl AikitAgentSurface {
 impl Drop for AikitAgentSurface {
     fn drop(&mut self) {
         let _ = self.process.terminate();
+    }
+}
+
+fn parse_open_mode(raw: Option<&str>) -> Result<SessionOpenMode, String> {
+    match raw.unwrap_or("create") {
+        "create" => Ok(SessionOpenMode::Create),
+        "load" => Ok(SessionOpenMode::Load),
+        "resume" => Ok(SessionOpenMode::Resume),
+        other => Err(format!(
+            "unsupported AgentSession open mode `{other}`; expected create, load, or resume"
+        )),
     }
 }
