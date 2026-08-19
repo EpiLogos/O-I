@@ -1,6 +1,6 @@
 {
   "schema": "oi.desktop-host-reading-fixtures/v1",
-  "verified_at": "2026-08-17",
+  "verified_at": "2026-08-19",
   "contributions": [
     {
       "schema": "oi.desktop-host-reading/v1",
@@ -26,7 +26,7 @@
       "read_model_ref": {"ref": "actuation.agency:root-world", "kind": "agency_reading", "native_owner": "actuation", "provenance": {"source": "actuation.agency/v1", "revision": "b977939ec25c32b3dc8f5ed251b70e4c26933086"}},
       "accepted_selection_kinds": ["agency", "world_binding", "root_scope", "metagency_grant", "determination", "return"],
       "actions": [],
-      "detail": "Consumes verified Actuation PR #6. Root Agency remains a positional relation between WorldBinding and RootScope; O:I does not introduce a RootAgent subtype or infer metagency from presentation."
+      "detail": "Consumes verified Actuation PR #6. Root Agency remains a positional relation between WorldBinding and RootScope; O:I does not introduce a RootAgent subtype or infer metagency from presentation. Realised Actuation remains a separate owner observation and is not fabricated by System."
     },
     {
       "schema": "oi.desktop-host-reading/v1",
@@ -58,7 +58,7 @@
       "read_model_ref": null,
       "accepted_selection_kinds": ["project", "run", "frontier", "candidate", "claim", "evidence", "human_request", "agency", "return", "execution", "trajectory", "harness_composition", "agent_session", "session_space", "surface", "material_binding"],
       "actions": [],
-      "detail": "Fallback only: Factory PR #146 now exposes the product-owned factory.build-view-provider/v1 plus a persistent local first-party provider and Factory-owned Action executor over canonical Factory state. The desktop keeps this reading degraded until OI_FACTORY_BUILD_STATE + Project/Run refs resolve an actual provider instance; it never renders the deterministic GUI fixture as live. When observed, the live reading replaces this same factory.surface/build contribution identity with the same Factory native owner."
+      "detail": "Fallback only: Factory exposes the product-owned factory.build-view-provider/v1 plus a persistent local first-party provider and Factory-owned Action executor over canonical Factory state. The desktop keeps this reading degraded until OI_FACTORY_BUILD_STATE + Project/Run refs resolve an actual provider instance; it never renders the deterministic GUI fixture as live."
     },
     {
       "schema": "oi.desktop-host-reading/v1",
@@ -71,7 +71,7 @@
       "read_model_ref": null,
       "accepted_selection_kinds": ["session_space", "project", "agent_session", "component", "surface", "connection", "provider", "harness", "capability", "action"],
       "actions": [],
-      "detail": "AIKit PR #68 contains the executable aikit.session-space/v1 runtime/read model, provider-observed desired-vs-live harmonisation, and target-owned aikit.session-space-contribution/v1 register/readback/remove lifecycle. This desktop fallback remains degraded only when it has no independently observed SessionSpaceReadModel instance; it never fabricates Active, provider health, Capability grant or Action authority."
+      "detail": "AIKit PR #68 contains the executable aikit.session-space/v1 runtime/read model, provider-observed desired-vs-live harmonisation, and target-owned contribution lifecycle. This fallback remains degraded when no independently observed SessionSpaceReadModel instance exists; it never fabricates Active, provider health, Capability grant or Action authority."
     },
     {
       "schema": "oi.desktop-host-reading/v1",
@@ -84,7 +84,32 @@
       "read_model_ref": {"ref": "aikit:harness-composition-topology:deepseek-maximal", "kind": "harness_composition_topology", "native_owner": "ai-kit", "provenance": {"source": "crates/aikit-adapters/src/composition_topology.rs", "revision": "15d7c9f1122336b50189bb1d70961084cbb9685b"}},
       "accepted_selection_kinds": ["component", "surface", "harness_composition", "action"],
       "actions": [],
-      "detail": "Consumes AIKit PR #68's target-neutral nested Component topology and live SessionSpace programme without reproducing Component/Surface semantics inside O:I. Rich UI, HumanCommand, Policy and LoopRuntime contributions remain target-native."
+      "detail": "Consumes AIKit's target-neutral nested Component topology. Effective resolution, staged composition preview and target-owned activation remain different state classes; System does not collapse them."
+    },
+    {
+      "schema": "oi.desktop-host-reading/v1",
+      "contribution_ref": "workcell.control/read-model",
+      "native_owner": "workcell",
+      "target_contract": "workcell.control/v1",
+      "availability": "pending_native_adapter",
+      "provenance": {"source": "EpiLogos/Workcell#41 current-development", "revision": "5274a5be892ed9e3f326323b78e12e47a98d48d8"},
+      "regions": ["inspector", "deep_drawer"],
+      "read_model_ref": null,
+      "accepted_selection_kinds": ["provider", "offer", "binding", "binding_graph", "material_world", "process", "service", "storage", "artifact", "network_relationship", "reachability"],
+      "actions": [],
+      "detail": "Current development, not accepted-main runtime evidence: Workcell PR #41 exposes workcell.control/v1, persistent material hosting, public SDK/provider conformance and deterministic Fabric relations. O:I has no bound Workcell provider/read adapter in this tranche, and no physical Docker/Arrakis/Ubuntu/Tailscale/exe.dev/model-hardware acceptance is inferred."
+    },
+    {
+      "schema": "oi.desktop-host-reading/v1",
+      "contribution_ref": "ql-mef.provider/read-model",
+      "native_owner": "ql-mef",
+      "availability": "pending_native_adapter",
+      "provenance": {"source": "EpiLogos/QL-MEF main ql-service", "revision": "3e9fb929f0c34e8b4474eef59ce512b53082fba1"},
+      "regions": ["inspector"],
+      "read_model_ref": null,
+      "accepted_selection_kinds": ["ql_provider", "ql_capability", "ql_reading", "ql_relation", "ql_synthesis"],
+      "actions": [],
+      "detail": "Optional formal provider seam. Current QL-MEF main exposes QlService operations Capabilities, Locate, Refract, Relate and Synthesise. No O:I-native provider instance is bound here, so System shows readiness as provider-pending and ordinary operation remains available without QL."
     }
   ]
 }
