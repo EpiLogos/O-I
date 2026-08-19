@@ -5,6 +5,7 @@ mod live_product;
 mod local_aikit;
 mod local_central;
 mod local_epi;
+mod local_epi_cosmic;
 mod local_factory;
 mod shell;
 
@@ -46,6 +47,7 @@ pub use local_epi::{
     EPI_PERSONAL_PROPOSAL_SCHEMA, EPI_PRIMITIVE_CONTRIBUTION_REF,
     EPI_PRIMITIVE_PROVIDER_CONTRACT, EPI_PRIMITIVE_SNAPSHOT_SCHEMA,
 };
+pub use local_epi_cosmic::{host_epi_cosmic, EpiCosmicHostObservation};
 pub use local_factory::{host_factory_snapshot, LocalFactoryHost};
 pub use shell::{
     DesktopHost, RefProvenance, SemanticRef, ShellDestination, ShellSnapshot, SuiteCondition,
