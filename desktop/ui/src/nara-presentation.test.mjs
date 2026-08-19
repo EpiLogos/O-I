@@ -20,9 +20,11 @@ test('Personal 4\/5\/0 depth is summoned around the governed Nara selection', ()
   assert.match(surface, /epi_personal_depth/);
   assert.match(surface, /M5′ Epii/);
   assert.match(surface, /M0′ Anuttara \/ Bimba/);
-  for (const summon of ['Explain', 'Review', 'Source', 'Bimba', 'Provenance', 'Proposal']) {
+  for (const summon of ['Explain', 'Review', 'Source', 'Bimba', 'Provenance', 'Proposal', 'History']) {
     assert.match(surface, new RegExp(`>${summon}<`));
   }
+  assert.match(surface, /central_now_snapshot/);
+  assert.match(surface, /Central NOW is a temporal working field, not canon/);
   assert.match(surface, /subjectRef !== selected\.selectionRef/);
   assert.match(surface, /authoritySubjectRef !== selected\.episodeRef/);
   assert.match(surface, /same selection/);
