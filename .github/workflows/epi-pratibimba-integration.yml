@@ -18,6 +18,7 @@ on:
       - 'desktop/ui/src/main.tsx'
       - 'desktop/ui/src/nara.css'
       - 'desktop/ui/src/nara-presentation.test.mjs'
+      - 'docs/OI-DESKTOP-SURFACE-LEDGER-COSMIC-123-DELTA.md'
       - '.github/workflows/epi-pratibimba-integration.yml'
   workflow_dispatch:
 
