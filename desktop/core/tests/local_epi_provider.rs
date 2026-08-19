@@ -102,7 +102,7 @@ fn real_nara_daily_round_trip_uses_the_same_provider_and_bounded_selection_packe
     let host = LocalEpiHost::open(binary)
         .with_nara_context_file(context)
         .with_nara_vault_root(vault);
-    let observation = host.observe().expect("host Prompt-B Epi provider");
+    let observation = host.observe().expect("host coordinate-rooted Epi provider");
     assert!(observation
         .contribution
         .contribution
@@ -114,9 +114,16 @@ fn real_nara_daily_round_trip_uses_the_same_provider_and_bounded_selection_packe
         .expect("write real protected Nara episode");
     assert_eq!(written["privacyClass"], "protected-local-body");
     assert_eq!(written["livedContext"]["coordinateRef"], "epi:bimba:#-4/M4'");
+    assert_eq!(written["coordinateBinding"]["bimbaSourceRef"], "#4.4");
+    assert_eq!(written["coordinateBinding"]["pratibimbaCoordinateRef"], "epi:m-coordinate:M4-4'");
+    assert_eq!(written["coordinateBinding"]["carrierSourceRef"], "#4.4.4.4");
+    assert_eq!(written["coordinateBinding"]["carrierPratibimbaCoordinateRef"], "epi:m-coordinate:M4-4-4-4'");
+    assert_eq!(written["coordinateBinding"]["reviewSourceRef"], "#4.5");
+    assert_eq!(written["coordinateBinding"]["reviewPratibimbaCoordinateRef"], "epi:m-coordinate:M4-5'");
     assert!(written["livedContext"]["profileRef"].as_str().unwrap().starts_with("epi:matheme-harmonic-profile:"));
     let reread = host.nara_daily().expect("restart-style re-read");
     assert_eq!(reread["episodeRef"], written["episodeRef"]);
+    assert_eq!(reread["coordinateBinding"], written["coordinateBinding"]);
     assert_eq!(reread["body"], written["body"]);
 
     let body = written["body"].as_str().unwrap();
@@ -132,6 +139,7 @@ fn real_nara_daily_round_trip_uses_the_same_provider_and_bounded_selection_packe
         .expect("resolve real selected-context packet");
     assert_eq!(selection["selectedText"], "α");
     assert_eq!(selection["privacyClass"], "protected-local-selected-disclosure");
+    assert_eq!(selection["coordinateBinding"], written["coordinateBinding"]);
     let encoded = serde_json::to_string(&selection).unwrap();
     assert!(!encoded.contains("The lived Nara surface sees this exact"));
     assert!(!encoded.contains("identityRef"));
