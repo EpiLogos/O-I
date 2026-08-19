@@ -6,6 +6,8 @@ use oi_desktop_core::{
 use serde_json::json;
 use std::env;
 
+const BIMBA_MAP_SOURCE_REVISION: &str = "daa660cbc1b8c5da83828698665a753852cb0287";
+
 #[test]
 fn sandboxed_contributions_cannot_enter_personal_dispatch() {
     let denied = BridgePolicy.authorize(
@@ -28,6 +30,8 @@ fn personal_action_catalog_remains_epi_owned_and_is_not_a_generic_runtime() {
     for forbidden in ["EpiiRuntime", "EpiSession", "EpiHarness", "BimbaNeo4jRef"] {
         assert!(!source.contains(forbidden));
     }
+    assert!(!source.contains("struct MCoordinate"));
+    assert!(!source.contains("struct MRelation"));
 }
 
 #[cfg(unix)]
@@ -124,7 +128,9 @@ fn real_epi_personal_provider_round_trip_when_cross_repo_fixture_is_supplied() {
         env::var_os("EPI_NARA_CONTEXT"),
         env::var_os("EPI_NARA_VAULT"),
     ) else {
-        eprintln!("real Personal provider env not supplied; dedicated cross-repository workflow owns this proof");
+        eprintln!(
+            "real Personal provider env not supplied; dedicated cross-repository workflow owns this proof"
+        );
         return;
     };
 
@@ -137,11 +143,83 @@ fn real_epi_personal_provider_round_trip_when_cross_repo_fixture_is_supplied() {
         EPI_ANUTTARA_GROUND_ACTION_REF,
         EPI_PERSONAL_PROPOSAL_ACTION_REF,
     ] {
-        assert!(observation
-            .contribution
-            .contribution
-            .actions
-            .iter()
-            .any(|binding| binding.action_ref == action));
+        assert!(
+            observation
+                .contribution
+                .contribution
+                .actions
+                .iter()
+                .any(|binding| binding.action_ref == action)
+        );
     }
+
+    let body = "A protected Personal passage with one exact returned difference.";
+    let written = host.nara_write(body).expect("write protected Nara source");
+    let needle = "returned difference";
+    let start = body.find(needle).unwrap();
+    let end = start + needle.len();
+    let selection_request = json!({
+        "episodeRef": written["episodeRef"],
+        "revision": written["episodeRevision"],
+        "startByte": start,
+        "endByte": end
+    });
+
+    let selection = host
+        .nara_selection(selection_request.clone())
+        .expect("resolve exact Nara selection");
+    assert_eq!(selection["coordinateBinding"]["bimbaSourceRef"], "#4.4");
+    assert_eq!(
+        selection["coordinateBinding"]["carrierSourceRef"],
+        "#4.4.4.4"
+    );
+
+    let review = host
+        .epii_review(json!({
+            "selection": selection_request.clone(),
+            "mode": "review"
+        }))
+        .expect("host Epii review with Map lineage");
+    assert_eq!(review["subject"]["coordinateBinding"], selection["coordinateBinding"]);
+    assert_eq!(review["mapGround"]["sourceRef"], "#5");
+    assert_eq!(
+        review["mapGround"]["sourceRevision"],
+        BIMBA_MAP_SOURCE_REVISION
+    );
+    assert_eq!(review["mapGround"]["sourceRelationAsserted"], false);
+
+    let ground = host
+        .personal_ground(json!({
+            "selection": selection_request.clone(),
+            "reviewRef": review["reviewRef"]
+        }))
+        .expect("host Anuttara ground with Map lineage");
+    assert_eq!(ground["subject"]["coordinateBinding"], selection["coordinateBinding"]);
+    assert_eq!(ground["mapGround"]["sourceRef"], "#0");
+    assert_eq!(
+        ground["mapGround"]["sourceRevision"],
+        BIMBA_MAP_SOURCE_REVISION
+    );
+    assert_eq!(ground["relation"]["relationClass"], "implementation-flow");
+    assert_eq!(ground["relation"]["bimbaSourceRelationAsserted"], false);
+
+    let proposal = host
+        .personal_proposal(json!({
+            "selection": selection_request,
+            "reviewRef": review["reviewRef"],
+            "groundRef": ground["groundRef"],
+            "proposedContent": "candidate return"
+        }))
+        .expect("host Epii proposal with Map lineage");
+    assert_eq!(proposal["subject"]["coordinateBinding"], selection["coordinateBinding"]);
+    assert_eq!(proposal["mapGround"]["sourceRef"], "#5");
+    assert_eq!(
+        proposal["mapGround"]["sourceRevision"],
+        BIMBA_MAP_SOURCE_REVISION
+    );
+    assert_eq!(proposal["sourceMutationPerformed"], false);
+    assert_eq!(
+        proposal["centralReturn"]["requiresHumanAcceptanceForDurableGround"],
+        true
+    );
 }
