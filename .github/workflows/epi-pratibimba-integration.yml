@@ -25,14 +25,14 @@ jobs:
     steps:
       - name: Check out O:I
         uses: actions/checkout@v4
-      - name: Check out coordinated Epi Prompt-B producer
+      - name: Check out coordinated Epi coordinate-rooted Nara producer
         uses: actions/checkout@v4
         with:
           repository: EpiLogos/Epi-Logos-C-Experiments
-          ref: 65ca543d6b1d1601b7d6da30218fb968b9d87366
+          ref: c5c36e0fcd05d23636209f1adb9636b033d74f05
           path: epi-source
       - uses: dtolnay/rust-toolchain@stable
-      - name: Build and test Epi-owned bridge against real C kernel and protected Nara store
+      - name: Build and test Epi-owned bridge, coordinate manifests and protected Nara store
         run: |
           cargo test --manifest-path epi-source/Body/S/S0/pratibimba-bridge/Cargo.toml
           cargo build --manifest-path epi-source/Body/S/S0/pratibimba-bridge/Cargo.toml
@@ -49,7 +49,7 @@ jobs:
             "sourceClass": "human-authored"
           }
           JSON
-      - name: Exercise O:I host against the real Epi producer
+      - name: Exercise O:I host against the real coordinate-rooted Epi producer
         env:
           EPI_BRIDGE_BIN: ${{ github.workspace }}/epi-source/Body/S/S0/pratibimba-bridge/target/debug/epi-pratibimba-bridge
           EPI_NARA_CONTEXT: ${{ runner.temp }}/nara-context.json
