@@ -7,9 +7,8 @@ pub const BOUNDED_ACTION_GRANT_SCHEMA: &str = "oi.bounded-action-grant/v1";
 /// A finite grant imported from the authority-owning native product boundary.
 ///
 /// O:I does not mint semantic Action/Capability authority here. The desktop host
-/// consumes an already-issued grant and binds it to the exact Action, authority
-/// subject and observed native binding revision before a privileged dispatcher is
-/// reached.
+/// consumes an already-issued grant and binds it to the exact Action, subject and
+/// observed native binding revision before a privileged dispatcher is reached.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct BoundedActionGrant {
     pub schema: String,
@@ -28,10 +27,6 @@ pub struct BoundedActionGrant {
 pub struct ActionExecutionRequest {
     pub operation_id: String,
     pub emission: SurfaceActionEmission,
-    /// Stable parent subject against which native authority was issued when the
-    /// exact child identity is produced only by a protected provider operation.
-    /// Existing Actions leave this `None` and retain exact emitted-subject matching.
-    pub authority_subject_ref: Option<String>,
     pub native_owner: String,
     pub required_capability_ref: Option<String>,
     pub binding_revision: String,
@@ -98,8 +93,8 @@ impl ActionAuthorityStore {
         Ok(())
     }
 
-    /// Resolve a currently usable grant by native Action + parent/exact subject.
-    /// The grant contents never enter the webview and this does not mint authority.
+    /// Find a currently usable native grant without disclosing its contents to
+    /// the webview or minting new authority inside O:I.
     pub fn available_grant_ref(
         &self,
         action_ref: &str,
@@ -125,6 +120,32 @@ impl ActionAuthorityStore {
         grant_ref: &str,
         request: &ActionExecutionRequest,
     ) -> Result<AuthorisedActionExecution, String> {
+        self.authorize_for_subject_and_consume(grant_ref, request, &request.emission.subject_ref)
+    }
+
+    /// Protected providers can produce an exact child subject (for example a
+    /// Nara range selection) only after reading private state. Authority can be
+    /// pre-issued against the stable protected episode parent while the emitted
+    /// Action still names the exact child selection. This helper preserves both
+    /// identities without changing the generic Action request shape.
+    pub fn authorize_parent_and_consume(
+        &mut self,
+        grant_ref: &str,
+        request: &ActionExecutionRequest,
+        authority_subject_ref: &str,
+    ) -> Result<AuthorisedActionExecution, String> {
+        if authority_subject_ref.trim().is_empty() {
+            return Err("parent-bounded Action authority requires a stable authority subject".into());
+        }
+        self.authorize_for_subject_and_consume(grant_ref, request, authority_subject_ref)
+    }
+
+    fn authorize_for_subject_and_consume(
+        &mut self,
+        grant_ref: &str,
+        request: &ActionExecutionRequest,
+        authority_subject_ref: &str,
+    ) -> Result<AuthorisedActionExecution, String> {
         let stored = self
             .grants
             .get_mut(grant_ref)
@@ -139,7 +160,7 @@ impl ActionAuthorityStore {
             return Err(format!("Action authority `{grant_ref}` is expired"));
         }
 
-        let fingerprint = operation_fingerprint(request);
+        let fingerprint = operation_fingerprint(request, authority_subject_ref);
         if let Some(previous) = stored.operation_fingerprints.get(&request.operation_id) {
             if previous == &fingerprint {
                 return Err(format!(
@@ -153,14 +174,10 @@ impl ActionAuthorityStore {
             ));
         }
 
-        let authority_subject = request
-            .authority_subject_ref
-            .as_deref()
-            .unwrap_or(&request.emission.subject_ref);
         let grant = &stored.grant;
         if grant.grant.action_ref != request.emission.action_ref
             || grant.grant.native_owner != request.native_owner
-            || grant.subject_ref != authority_subject
+            || grant.subject_ref != authority_subject_ref
         {
             return Err("Action authority does not match the exact Action/owner/authority subject target".into());
         }
@@ -218,15 +235,12 @@ fn validate_grant(grant: &BoundedActionGrant) -> Result<(), String> {
     Ok(())
 }
 
-fn operation_fingerprint(request: &ActionExecutionRequest) -> String {
+fn operation_fingerprint(request: &ActionExecutionRequest, authority_subject_ref: &str) -> String {
     format!(
         "{}|{}|{}|{}|{}|{}",
         request.emission.action_ref,
         request.emission.subject_ref,
-        request
-            .authority_subject_ref
-            .as_deref()
-            .unwrap_or(&request.emission.subject_ref),
+        authority_subject_ref,
         request.native_owner,
         request.required_capability_ref.as_deref().unwrap_or("-"),
         request.binding_revision
