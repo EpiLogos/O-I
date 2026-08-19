@@ -34,11 +34,21 @@ jobs:
           repository: EpiLogos/Epi-Logos-C-Experiments
           ref: 80f13d9e2e534ee87dd224bb5712446d50f7b963
           path: epi-source
+      - name: Check out coordinated Central NOW/DAY owner
+        uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Central
+          ref: ab354c1278396b0d50620bf8a43c40eedc26b907
+          path: central-source
       - uses: dtolnay/rust-toolchain@stable
       - name: Build and test Epi-owned bridge against real C kernel and protected Personal provider
         run: |
           cargo test --manifest-path epi-source/Body/S/S0/pratibimba-bridge/Cargo.toml
           cargo build --manifest-path epi-source/Body/S/S0/pratibimba-bridge/Cargo.toml
+      - name: Prove the real Central NOW/DAY return and human-recognition owner contract
+        run: |
+          cargo test --manifest-path central-source/Cargo.toml -p ctrl --test projectcentral_now -- --nocapture
+          cargo build --manifest-path central-source/Cargo.toml -p ctrl
       - name: Prepare protected Nara acceptance context
         run: |
           mkdir -p "$RUNNER_TEMP/nara-vault"
