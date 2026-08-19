@@ -409,3 +409,74 @@ Epi/Pratibimba is the preferred rich-domain stress specimen only when its curren
 8. **Run #111 only against an explicit accepted/current revision cut**, re-run this ledger, then hand the resulting candidate to #65 physical alpha.
 
 QL/Epi active work remains a named convergence exception throughout. It can enter #111 as a rich native Surface specimen when ready, but it does not sit on the critical path for the ordinary professional desktop.
+
+## 11. Epi D Current Situated Matheme / `epi.cosmic.123` amendment
+
+**Status:** ACTIVE/DRAFT returned implementation state for Prompt D. This section is the current Epi-D amendment to the earlier P0 snapshot above; it does not retroactively turn open PR state into accepted-main fact.
+
+### 11.1 Exact D cut
+
+| Relation | Exact inspected state | Standing |
+|---|---|---|
+| QL-MEF PRE-D whole-Map provider | accepted `main` `d418abfff6f9e001c8c5ff083206329b298eddcf`; locked Epi Map source `daa660cbc1b8c5da83828698665a753852cb0287`; dataset tree `cd4f4f77c13f27e2563c5a6753d2f8bf2b605f15` | **REAL accepted source/parity floor** |
+| Epi Current Situated producer | Epi PR #22 head `29fcb77be55c216b2d5e5855d1999f1fd3ba01fd`; `epi.current-situated-matheme/v1` + `epi.cosmic.123/v1` | **ACTIVE; Epi bridge CI green at this head** |
+| O:I opaque host | O:I PR #117 head `699e4f0ffde2b1e5f90668bb46c148819e9551f1`; `desktop/core/src/local_epi_cosmic.rs` | **ACTIVE; cross-repo acceptance running at amendment time** |
+| Corrected C return | Epi #18 + O:I #112 | **OWNER TICKETS OPEN; final corrected-C implementation return not yet present at this inspected cut** |
+
+D is therefore a stable implementation floor over the accepted PRE-D source identity, but **not yet a final C↔D acceptance claim**. When #18/#112 return, D must reconcile onto those exact heads without minting a second Personal event or substituting profile equality for same-event identity.
+
+### 11.2 Native Surface / Action descriptor ledger
+
+| ID | Product / Surface | Canonical identity carried by Epi | O:I disposition | Action / deep-open relation | Current standing |
+|---|---|---|---|---|---|
+| E-D0 | Current Situated Matheme | one Epi `eventRef`; same `subjectRef` + existing `episodeRef`; `DAY/NOW`; world observation; M1/M2/M3 same event; `#4.4.4.4`; `qIdentity · qTransit · qActivity → Qcomposed`; exact Map/source/provider revisions | host returned JSON opaquely; validate identity/provenance invariants only; never compute M/astrology/QL semantics | `epi.action.current-situated.read` | **ACTIVE producer**; Epi CI green; live-world standing still provider-dependent |
+| E-D1 | `epi.cosmic.123` parent | Epi `surfaceRef` over the same event; parent M1/M2/M3 contributions; same Personal subject; `.0/.5` boundary expressions | Canvas / Inspector / RootAgency / Status native contribution; heterogeneous Epi body allowed; no fake React depth | `epi.action.cosmic.current.read`; `epi.action.cosmic.open-depth` | **ACTIVE host floor**; parent product does not imply deep completion |
+| E-D2 | `epi.deep.m1` descriptor | same `eventRef` + `ql:m-coordinate:pratibimba:M1` + `.0/.5` boundary refs | selectable/openable deep Surface ref; O:I does not implement K²/Ananda instrument | `epi.action.cosmic.open-depth` | **PARTIAL descriptor only; `completionClaimed=false`** |
+| E-D3 | `epi.deep.m2` descriptor | same `eventRef` + `ql:m-coordinate:pratibimba:M2` + `.0/.5` boundary refs | selectable/openable deep Surface ref; provider state remains Epi-owned and truth-classed | `epi.action.cosmic.open-depth` | **PARTIAL descriptor only; `completionClaimed=false`; dense cymatic/frequency lab deferred** |
+| E-D4 | `epi.deep.m3` descriptor | same `eventRef` + `ql:m-coordinate:pratibimba:M3` + `.0/.5` boundary refs | selectable/openable deep Surface ref; same M2 world observation must survive into M3 | `epi.action.cosmic.open-depth` | **PARTIAL descriptor only; `completionClaimed=false`; transcription/clock workbench deferred** |
+
+This D amendment intentionally lists only the Cosmic deep descriptors M1/M2/M3. It **does not claim that `epi.deep.m0`, `epi.deep.m4`, or `epi.deep.m5` are completed**, and it does not reinterpret the parent Personal 4/5/0 product as those deep instruments. Prompt E remains the owner of the six deep-product completion tranche.
+
+### 11.3 Same-event Personal law at the host boundary
+
+The O:I D adapter fails closed unless the Epi reading preserves a relation stronger than `profileRef` equality:
+
+```text
+eventRef
++ subjectRef
++ existing episodeRef
++ epi.personal.450
++ #4.4.4.4 / M4-4-4-4'
++ qIdentity
++ qTransit
++ qActivity
++ Qcomposed
++ one worldObservationRef shared by M2 and M3
++ exact M1/M2/M3 MCoordinateRefs
+```
+
+O:I validates presence/co-reference and leaves computation in Epi. Raw situated quaternion material remains protected Epi semantic state; an O:I workbench selection/context is not that semantic state, and a renderer presentation is neither of them.
+
+### 11.4 Provider and degraded-state law
+
+The current Epi repository has deterministic harmonic/correspondential projection, but this reconciliation did **not** find an accepted real astronomical/transit provider capable of proving a live current solar/planetary/decan observation. The D producer therefore distinguishes `live-provider`, `fixture`, and `derived-only` observations.
+
+The coordinated O:I acceptance uses a fixture observation on purpose. It must arrive as:
+
+```text
+M2 status = degraded
+current-world = no-live-now-claim
+```
+
+and O:I refuses to upgrade fixture/derived state. A later real provider may satisfy the same Epi contract without changing `eventRef + MCoordinateRef + SurfaceRef` semantics; only then may the specific observation claim live-now.
+
+### 11.5 First-D disposition
+
+The superseded first-D work is classified rather than silently reused:
+
+- **KEEP / EVIDENCE:** shared kernel/profile operators; no-local-table discipline; useful source/operator provenance; material-provider non-overclaim.
+- **REFACTOR:** coarse M1′/M2′/M3′ and “deep workspace” handles become exact Map-rooted MCoordinateRefs plus deep Surface descriptors.
+- **REPLACE:** profile/tick-derived Cosmic ref as semantic event identity; profile-derived M2 as live-world fact; Cosmic↔Personal proof by profileRef equality.
+- **RETIRE:** any implication that D completes the full six deep instruments/products.
+
+This preserves the distinction the whole ledger is built to protect: authored product meaning, implementation fact, observed CI evidence, provider truth and current development state are related, but they are not interchangeable.
