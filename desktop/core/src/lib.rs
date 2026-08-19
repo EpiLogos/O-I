@@ -1,3 +1,4 @@
+mod agent_surface;
 mod aikit_workbench;
 mod bridge;
 mod contribution;
@@ -7,6 +8,9 @@ mod local_aikit;
 mod local_factory;
 mod shell;
 
+pub use agent_surface::{
+    AgentSurfaceOpenRequest, AgentSurfaceReading, AikitAgentSurface,
+};
 pub use aikit_workbench::{
     LocalAikitWorkbench, SessionSpaceApplicationReading, SessionSpaceFocusRequest,
 };
