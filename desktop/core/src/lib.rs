@@ -5,6 +5,7 @@ mod live_product;
 mod local_aikit;
 mod local_central;
 mod local_epi;
+mod local_epi_cosmic;
 mod local_factory;
 mod shell;
 
@@ -42,6 +43,14 @@ pub use local_epi::{
     EPI_PERSONAL_PROPOSAL_ACTION_REF, EPI_PERSONAL_PROPOSAL_CAPABILITY_REF,
     EPI_PERSONAL_PROPOSAL_SCHEMA, EPI_PRIMITIVE_CONTRIBUTION_REF,
     EPI_PRIMITIVE_PROVIDER_CONTRACT, EPI_PRIMITIVE_SNAPSHOT_SCHEMA,
+};
+pub use local_epi_cosmic::{
+    host_epi_current_situated, EpiCurrentSituatedHostObservation, LocalEpiCosmicHost,
+    EPI_COSMIC_CONTRIBUTION_REF, EPI_COSMIC_CURRENT_ACTION_REF,
+    EPI_COSMIC_OPEN_DEPTH_ACTION_REF, EPI_COSMIC_PARENT_SCHEMA, EPI_COSMIC_PRODUCT_ID,
+    EPI_CURRENT_SITUATED_ACTION_REF, EPI_CURRENT_SITUATED_SCHEMA,
+    EPI_PERSONAL_LIVING_M_COORDINATE_REF, EPI_PERSONAL_LIVING_SOURCE_COORDINATE,
+    EPI_PERSONAL_PRODUCT_ID,
 };
 pub use local_factory::{host_factory_snapshot, LocalFactoryHost};
 pub use shell::{
