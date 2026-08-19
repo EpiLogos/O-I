@@ -14,6 +14,11 @@ type Availability =
   | 'pending-native-adapter'
   | 'unknown';
 
+type ContextAvailability =
+  | 'available'
+  | { unresolved: { reasons: string[] } }
+  | { unavailable: { reasons: string[] } };
+
 type ContextResource = {
   resource: {
     descriptor: {
@@ -26,7 +31,7 @@ type ContextResource = {
     eligibility?: unknown;
     providers?: unknown[];
   };
-  availability?: unknown;
+  availability: ContextAvailability;
 };
 
 type ContextResolution = {
@@ -463,10 +468,10 @@ function fuzzyIncludes(candidate: string, query: string) {
   return query.length === 0;
 }
 
-function availabilityFrom(value: unknown): Availability {
-  if (!value || typeof value !== 'object') return 'unknown';
-  const state = (value as { state?: string }).state;
-  if (state === 'available' || state === 'unresolved' || state === 'unavailable') return state;
+function availabilityFrom(value: ContextAvailability): Availability {
+  if (value === 'available') return 'available';
+  if ('unresolved' in value) return 'unresolved';
+  if ('unavailable' in value) return 'unavailable';
   return 'unknown';
 }
 
