@@ -67,17 +67,22 @@ fn desktop_reads_and_focuses_the_same_canonical_session_space() {
     assert!(reconciled.explanation.reconstruction.is_some());
     assert_eq!(reconciled.state.id(), &space);
 
+    // A provider observation for another canonical SessionSpace is unrelated
+    // evidence. It is ignored rather than substituted or allowed to block access
+    // to the requested canonical application state.
     let wrong_runtime = SessionSpaceReadModel {
         id: SessionSpaceRef::parse("session-space/not-the-same-space").unwrap(),
         ..runtime.clone()
     };
-    let error = desktop
+    let unrelated = desktop
         .read_session_space_with_runtime(
             "session-space/personal-workbench",
             Some(&wrong_runtime),
         )
-        .unwrap_err();
-    assert_eq!(error.code(), "oi.session_space.runtime_identity_mismatch");
+        .unwrap();
+    assert_eq!(unrelated.state.id(), &space);
+    assert!(unrelated.runtime.is_none());
+    assert!(unrelated.explanation.reconstruction.is_none());
 
     let receipt = desktop
         .focus_session_space(&SessionSpaceFocusRequest {
