@@ -123,7 +123,7 @@ impl LocalEpiHost {
             actions: vec![
                 action(EPI_NARA_SENDOFF_ACTION_REF, EPI_NARA_SENDOFF_CAPABILITY_REF),
                 action(EPI_EPII_REVIEW_ACTION_REF, EPI_EPII_REVIEW_CAPABILITY_REF),
-                action(ANUTTARA_GROUND_ACTION_REF, EPI_ANUTTARA_GROUND_CAPABILITY_REF),
+                action(EPI_ANUTTARA_GROUND_ACTION_REF, EPI_ANUTTARA_GROUND_CAPABILITY_REF),
                 action(EPI_PERSONAL_PROPOSAL_ACTION_REF, EPI_PERSONAL_PROPOSAL_CAPABILITY_REF),
             ],
             detail: Some(format!(
