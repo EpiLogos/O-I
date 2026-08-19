@@ -1,12 +1,23 @@
+use std::fs;
+use std::time::{SystemTime, UNIX_EPOCH};
+
 use aikit_core::{SessionSpaceMutation, SessionSpaceRef};
 use aikit_store::{AikitHome, SessionSpaceApplicationStore};
 use oi_desktop_core::{LocalAikitWorkbench, SessionSpaceFocusRequest};
-use tempfile::TempDir;
 
 #[test]
 fn desktop_reads_and_focuses_the_same_canonical_session_space() {
-    let temp = TempDir::new().unwrap();
-    let home = AikitHome::at(temp.path());
+    let root = std::env::temp_dir().join(format!(
+        "oi-aikit-workbench-{}-{}",
+        std::process::id(),
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    fs::create_dir_all(&root).unwrap();
+
+    let home = AikitHome::at(&root);
     let store = SessionSpaceApplicationStore::new(home.clone());
     let space = SessionSpaceRef::parse("session-space/personal-workbench").unwrap();
 
@@ -22,7 +33,7 @@ fn desktop_reads_and_focuses_the_same_canonical_session_space() {
     let created = store.apply(&create).unwrap();
     assert_eq!(created.sequence, 0);
 
-    let desktop = LocalAikitWorkbench::at(temp.path());
+    let desktop = LocalAikitWorkbench::at(&root);
     let listed = desktop.list_session_spaces().unwrap();
     assert_eq!(listed.len(), 1);
     assert_eq!(listed[0].id(), &space);
@@ -45,7 +56,7 @@ fn desktop_reads_and_focuses_the_same_canonical_session_space() {
 
     // Re-open through a fresh desktop binding: no O:I-local SessionSpace state is
     // needed to preserve identity, focus or History.
-    let reopened = LocalAikitWorkbench::at(temp.path())
+    let reopened = LocalAikitWorkbench::at(&root)
         .read_session_space("session-space/personal-workbench")
         .unwrap();
     assert_eq!(reopened.state.id(), &space);
@@ -55,4 +66,6 @@ fn desktop_reads_and_focuses_the_same_canonical_session_space() {
         reopened.state.focus.as_ref().unwrap().target.to_string(),
         "wiki:node:lived-concern"
     );
+
+    fs::remove_dir_all(root).unwrap();
 }
