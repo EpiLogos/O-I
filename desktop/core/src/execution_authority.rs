@@ -93,6 +93,32 @@ impl ActionAuthorityStore {
         Ok(())
     }
 
+    /// Resolve an already-issued grant for the exact Action/owner/subject/native
+    /// binding represented by this request, then consume it through the same
+    /// validation path as an explicitly named authority handle.
+    ///
+    /// This exists for host projections such as Search/Command: the renderer may
+    /// discover an Action but is never allowed to mint or nominate authority. A
+    /// request is invocable only when exactly one trusted native grant already
+    /// matches it. Multiple matches fail closed rather than choosing policy in O:I.
+    pub fn authorize_matching_and_consume(
+        &mut self,
+        request: &ActionExecutionRequest,
+    ) -> Result<AuthorisedActionExecution, String> {
+        let matches = self
+            .grants
+            .iter()
+            .filter_map(|(grant_ref, stored)| {
+                semantic_binding_matches(stored, request).then(|| grant_ref.clone())
+            })
+            .collect::<Vec<_>>();
+        match matches.as_slice() {
+            [] => Err("no already-issued native Action authority matches this request".into()),
+            [grant_ref] => self.authorize_and_consume(grant_ref, request),
+            _ => Err("multiple native Action authorities match this request; explicit native disambiguation is required".into()),
+        }
+    }
+
     pub fn authorize_and_consume(
         &mut self,
         grant_ref: &str,
@@ -165,6 +191,16 @@ impl ActionAuthorityStore {
                 .saturating_sub(stored.uses)
         })
     }
+}
+
+fn semantic_binding_matches(stored: &StoredGrant, request: &ActionExecutionRequest) -> bool {
+    let grant = &stored.grant;
+    !stored.revoked
+        && grant.grant.action_ref == request.emission.action_ref
+        && grant.grant.native_owner == request.native_owner
+        && grant.subject_ref == request.emission.subject_ref
+        && grant.binding_revision == request.binding_revision
+        && grant.grant.capability_ref == request.required_capability_ref
 }
 
 fn validate_grant(grant: &BoundedActionGrant) -> Result<(), String> {
