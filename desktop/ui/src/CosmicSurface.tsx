@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import './cosmic.css';
 
@@ -85,7 +85,7 @@ export function CosmicSurface({ onSelection }: Props) {
 
   async function openWorkspace(workspace: DeepWorkspaceEntry) {
     if (!reading) return;
-    const sourceRevision = stringField(objectField(reading.provenance, 'sourceRevision'));
+    const sourceRevision = stringField(reading.provenance, 'sourceRevision');
     await invoke('select_semantic_ref', {
       subject: {
         ref: workspace.workspaceRef,
