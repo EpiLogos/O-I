@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { invoke } from '@tauri-apps/api/core';
 import '@epilogos/oi-design-system/tokens.css';
 import './shell.css';
+import { WorkbenchEvidence, WorkbenchSemanticRef, WorkbenchSurface } from './workbench';
 
 type Destination = 'home' | 'personal' | 'build' | 'explore' | 'system';
 type SuiteCondition = 'empty' | 'partial' | 'broken' | 'full';
@@ -107,6 +108,7 @@ function App() {
   const [snapshot, setSnapshot] = useState<Snapshot>(preview);
   const [contributions, setContributions] = useState<Contribution[]>([]);
   const [factoryBuild, setFactoryBuild] = useState<FactoryBuildSnapshot | null>(null);
+  const [workbenchEvidence, setWorkbenchEvidence] = useState<WorkbenchEvidence | null>(null);
 
   useEffect(() => {
     invoke<Snapshot>('shell_snapshot').then(setSnapshot).catch(() => setSnapshot(preview));
@@ -131,6 +133,18 @@ function App() {
       if (destination === 'build') await refreshFactoryBuild();
     } catch {
       setSnapshot((current) => ({ ...current, destination }));
+    }
+  }
+
+  async function selectWorkbenchRef(subject: WorkbenchSemanticRef, evidence: WorkbenchEvidence) {
+    setWorkbenchEvidence(evidence);
+    try {
+      await invoke('select_semantic_ref', { subject });
+      setSnapshot(await invoke<Snapshot>('shell_snapshot'));
+    } catch {
+      // Browser preview has no native bridge. Keep only an ephemeral visual
+      // selection there; native builds always use the privileged bridge above.
+      setSnapshot((current) => ({ ...current, selection: subject }));
     }
   }
 
@@ -162,6 +176,7 @@ function App() {
         <p className="oi-eyebrow">{snapshot.destination}</p>
         <h1>{titleFor(snapshot.destination)}</h1>
         <p className="oi-lead">{copyFor(snapshot.destination)}</p>
+        {snapshot.destination === 'home' && <WorkbenchSurface onSelect={selectWorkbenchRef} />}
         {snapshot.destination === 'build' && factoryBuild && (
           <FactoryBuildSurface snapshot={factoryBuild} onRefresh={refreshFactoryBuild} />
         )}
@@ -180,7 +195,20 @@ function App() {
             <dt>Source</dt><dd>{snapshot.selection.provenance.source}</dd>
           </dl>
         ) : (
-          <p className="oi-muted">No object selected. Canvas and root-agency regions share one stable Ref; O:I does not copy wholesale Context into contributions.</p>
+          <p className="oi-muted">No object selected. Canvas, Knowledge and root-agency regions share one stable Ref; O:I does not copy wholesale Context into contributions.</p>
+        )}
+        {workbenchEvidence && (
+          <div className="oi-inspector-evidence">
+            <p className="oi-eyebrow">Explain / History</p>
+            <strong>{workbenchEvidence.title}</strong>
+            <p className="oi-muted">{workbenchEvidence.summary}</p>
+            {workbenchEvidence.detail != null && (
+              <details>
+                <summary>Native detail</summary>
+                <pre>{JSON.stringify(workbenchEvidence.detail, null, 2)}</pre>
+              </details>
+            )}
+          </div>
         )}
         <div className="oi-root-agency">
           <p className="oi-eyebrow">Root Agency</p>
@@ -196,7 +224,7 @@ function App() {
 
       <footer className="oi-shell__drawer" aria-label="Deep drawer">
         <span>Trajectory / terminal / events</span>
-        <span>reserved native Surface slot</span>
+        <span>alternate native Surfaces remain attachable without changing SessionSpace identity</span>
       </footer>
     </main>
   );
@@ -333,7 +361,7 @@ function ownerVisibleAt(owner: string, destination: Destination) {
 
 function titleFor(destination: Destination) {
   return {
-    home: 'The local O:I whole.',
+    home: 'The local O:I workbench.',
     personal: 'Personal ground.',
     build: 'Development in view.',
     explore: 'Addressable worlds.',
@@ -343,7 +371,7 @@ function titleFor(destination: Destination) {
 
 function copyFor(destination: Destination) {
   return {
-    home: 'A sparse local surface over the installed six-product field.',
+    home: 'One native workspace over AIKit SessionSpace, AgentSession conversation and project Knowledge. Focus changes around stable refs; O:I does not become their state owner.',
     personal: 'Central-owned authored ground and Actuation-owned world-binding readings enter here without moving their semantics into O:I.',
     build: 'Factory now exposes a product-owned live FactoryBuildView provider over canonical state. When the local provider binding is configured, this canvas renders that observed revision directly; otherwise the Factory contribution remains explicitly degraded.',
     explore: 'The current shared-field Explore read model is hostable now, with canonical refs independent of SpaceTimeDB transport IDs.',
