@@ -118,6 +118,30 @@ type NaraSelection = {
   disclosureScope: string[];
 };
 
+type NaraActionReceipt = {
+  schema: 'oi.epi-nara-action-receipt/v2';
+  actionRef: string;
+  subjectRef: string;
+  authoritySubjectRef: string;
+  grantRef: string;
+  operationId: string;
+  selection: NaraSelection;
+  agentContextDisclosed: false;
+};
+
+type PersonalActionReceipt = {
+  schema: 'oi.epi-personal-action-receipt/v2';
+  kind: string;
+  actionRef: string;
+  subjectRef: string;
+  authoritySubjectRef: string;
+  grantRef: string;
+  operationId: string;
+  reading: Record<string, unknown>;
+  centralReturn?: unknown;
+  durableHumanSourceMutated: false;
+};
+
 type SessionSpaceState = {
   definition: { id: string };
   agent_sessions: Record<string, { agent_session: string; purpose?: string; provenance: string[] }>;
@@ -244,31 +268,32 @@ export function PersonalSurface({ onSelect }: Props) {
     const startByte = utf8ByteOffset(body, startUtf16);
     const endByte = utf8ByteOffset(body, endUtf16);
     try {
-      const selected = await invoke<NaraSelection>('nara_send_selection', {
+      const receipt = await invoke<NaraActionReceipt>('nara_send_selection', {
         episodeRef: current.episodeRef,
         revision: current.episodeRevision,
         startByte,
         endByte,
+        operationId: newOperationId('selection'),
       });
+      const selected = receipt.selection;
       if (
         selected.episodeRef !== current.episodeRef
         || selected.episodeRevision !== current.episodeRevision
         || selected.startByte !== startByte
         || selected.endByte !== endByte
+        || receipt.authoritySubjectRef !== current.episodeRef
+        || receipt.subjectRef !== selected.selectionRef
+        || receipt.agentContextDisclosed !== false
       ) {
-        throw new Error('Governed selection returned identity drift.');
+        throw new Error('Governed selection returned identity/authority drift.');
       }
       setSelection(selected);
       setHasTextSelection(false);
-      setMessage('Exact saved range is now the shared Personal subject child; Agent Context remains undisclosed.');
+      setMessage('Exact saved range is governed; Action authority was consumed; Agent Context remains undisclosed.');
       await onSelect(selectionRef(selected), {
         title: 'Governed Personal selection',
         summary: `r${selected.episodeRevision} · bytes ${selected.startByte}–${selected.endByte} · selection ≠ Agent Context disclosure`,
-        detail: {
-          disclosureScope: selected.disclosureScope,
-          coordinateRef: selected.coordinateRef,
-          profileRef: selected.profileRef,
-        },
+        detail: receipt,
       });
     } catch (error) {
       setMessage(messageFrom(error));
@@ -279,13 +304,17 @@ export function PersonalSurface({ onSelect }: Props) {
     if (!selection) return;
     setBusy(true);
     try {
-      const reading = await invoke<Record<string, unknown>>('epi_personal_review', selectionArgs(selection, { mode }));
+      const receipt = await invoke<PersonalActionReceipt>('epi_personal_review', selectionArgs(selection, {
+        mode,
+        operationId: newOperationId(mode),
+      }));
+      ensureReceiptSubject(receipt, selection);
       await onSelect(selectionRef(selection), {
         title: mode === 'explain' ? 'Epii · Explain' : 'Epii · Review',
         summary: 'Epi-native bounded reading over the exact governed range; dialogue remains the canonical AgentSession.',
-        detail: reading,
+        detail: receipt,
       });
-      setMessage(`${mode === 'explain' ? 'Explain' : 'Review'} returned in Inspector without replacing the Nara canvas.`);
+      setMessage(`${mode === 'explain' ? 'Explain' : 'Review'} returned in Inspector under bounded native Action authority.`);
     } catch (error) {
       setMessage(messageFrom(error));
     } finally {
@@ -297,7 +326,12 @@ export function PersonalSurface({ onSelect }: Props) {
     if (!selection) return;
     setBusy(true);
     try {
-      const ground = await invoke<Record<string, unknown>>('epi_personal_ground', selectionArgs(selection, { reviewRef: null }));
+      const receipt = await invoke<PersonalActionReceipt>('epi_personal_ground', selectionArgs(selection, {
+        reviewRef: null,
+        operationId: newOperationId('bimba'),
+      }));
+      ensureReceiptSubject(receipt, selection);
+      const ground = receipt.reading;
       const bimbaRef = nestedString(ground, ['bimba', 'semanticRef']);
       let sharedKnowledge: unknown = null;
       let sharedKnowledgeAbsence: string | null = null;
@@ -321,10 +355,10 @@ export function PersonalSurface({ onSelect }: Props) {
           summary: sharedKnowledge
             ? 'Native Epi source ref resolved through shared Knowledge.'
             : 'Native Epi source ref retained; shared Knowledge provider is currently unavailable for this ref.',
-          detail: { ground, sharedKnowledge, sharedKnowledgeAbsence },
+          detail: { receipt, sharedKnowledge, sharedKnowledgeAbsence },
         });
       }
-      setMessage('Bimba/source reveal moved to the shared Knowledge/Inspector path; no Epi-local graph was opened.');
+      setMessage('Bimba/source reveal used bounded Epi authority and the shared Knowledge/Inspector path; no Epi-local graph was opened.');
     } catch (error) {
       setMessage(messageFrom(error));
     } finally {
@@ -355,15 +389,18 @@ export function PersonalSurface({ onSelect }: Props) {
     if (!selection) return;
     setBusy(true);
     try {
-      const result = await invoke<Record<string, unknown>>('epi_personal_proposal', selectionArgs(selection, {
+      const receipt = await invoke<PersonalActionReceipt>('epi_personal_proposal', selectionArgs(selection, {
         reviewRef: null,
         groundRef: null,
         proposedContent: selection.selectedText,
+        operationId: newOperationId('proposal'),
       }));
+      ensureReceiptSubject(receipt, selection);
+      if (receipt.durableHumanSourceMutated !== false) throw new Error('Proposal receipt claimed a durable source mutation.');
       await onSelect(selectionRef(selection), {
         title: 'Personal return proposal',
-        summary: 'Proposal created from the exact selected wording. It is not adopted human source; Central receives refs/lineage only when configured.',
-        detail: result,
+        summary: 'Proposal created from the exact selected wording under bounded native Action authority. It is not adopted human source; Central receives refs/lineage only when configured.',
+        detail: receipt,
       });
       setMessage('Proposal returned without mutating Nara or human-owned source.');
     } catch (error) {
@@ -516,6 +553,12 @@ function selectionArgs(selection: NaraSelection, extra: Record<string, unknown>)
   };
 }
 
+function ensureReceiptSubject(receipt: PersonalActionReceipt, selection: NaraSelection) {
+  if (receipt.subjectRef !== selection.selectionRef || receipt.authoritySubjectRef !== selection.episodeRef) {
+    throw new Error('Personal Action receipt drifted from governed selection/episode authority.');
+  }
+}
+
 function bodyFreeApplication(application: PersonalApplication) {
   return {
     productId: application.productId,
@@ -536,6 +579,11 @@ function nestedString(value: Record<string, unknown>, path: string[]) {
     current = (current as Record<string, unknown>)[segment];
   }
   return typeof current === 'string' ? current : undefined;
+}
+
+function newOperationId(kind: string) {
+  const uuid = globalThis.crypto?.randomUUID?.();
+  return uuid ? `epi.personal.${kind}.${uuid}` : `epi.personal.${kind}.${Date.now()}.${Math.random().toString(36).slice(2)}`;
 }
 
 function utf8ByteOffset(value: string, utf16Offset: number) {
