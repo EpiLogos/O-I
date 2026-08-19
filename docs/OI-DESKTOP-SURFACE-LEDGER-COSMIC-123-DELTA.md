@@ -12,14 +12,15 @@ This delta supersedes the parent ledger's earlier point-in-time sentence that co
 
 | Relation | Exact current head | Standing |
 |---|---|---|
-| QL-MEF PRE-D whole-Map provider | `d418abfff6f9e001c8c5ff083206329b298eddcf` | accepted `main`; D consumes, does not fork |
+| QL-MEF current `main` | `3e9fb929f0c34e8b4474eef59ce512b53082fba1` | current repository head; merged PR #70 adds holographic manifest/validator evidence over the PRE-D floor |
+| QL-MEF PRE-D executable whole-Map provider | `d418abfff6f9e001c8c5ff083206329b298eddcf` | direct ancestor of current main; exact `ql-core`/`ql-mef` provider revision pinned by D; the `d418… → 3e9fb…` delta does not change executable QL/Map code |
 | Locked Epi Map source | `daa660cbc1b8c5da83828698665a753852cb0287` / dataset tree `cd4f4f77c13f27e2563c5a6753d2f8bf2b605f15` | source identity retained by QL-MEF returned-reality provider |
 | corrected C producer | Epi PR #23 `aa8e66e57834e1f13ffb227f597ab085a070bbb5` | active Personal parent owner; current D base + merge parent |
 | D producer candidate | Epi PR #22 `310014c5d702568662f92346b706d1e5e87ebdbd` | active Current Situated / Cosmic parent candidate; exact-head CI queued at this ledger cut |
 | corrected C host | O:I PR #116 `daa5adc43b780c359f9091011a5593de3273cb27` | active composed Personal host; current D base + merge parent |
 | D host candidate | O:I PR #117 `ed0f1ce91e22e7513b7f320bc6b538e988cac8e3` | active opaque Cosmic host candidate; exact-head CI queued at this ledger cut |
 
-A later green/failure result is an observed result for these exact revisions; it does not change the architectural status by itself. Any head movement requires this table to be refreshed before final acceptance.
+`d418…` is therefore the exact executable PRE-D provider revision used by D, not a claim that it remains QL-MEF's branch head. A later green/failure result is an observed result for these exact revisions; it does not change the architectural status by itself. Any head movement requires this table to be refreshed before final acceptance.
 
 ## Corrected C → D identity law
 
