@@ -5,6 +5,7 @@ import '@epilogos/oi-design-system/tokens.css';
 import './shell.css';
 import { RuntimeObservationSurface } from './runtime-observation';
 import { NativeSearchCommand } from './native-command';
+import { ExploreWorkbenchSurface } from './explore-workbench';
 import {
   HostSurfaceDescriptor,
   ProfessionalWorkbenchHost,
@@ -146,7 +147,7 @@ const ROOT_SURFACES: Record<Destination, HostSurfaceDescriptor> = {
     title: 'Explore',
     nativeOwner: 'o-i',
     region: 'canvas',
-    provenance: 'O:I host destination; Explore application body remains #110',
+    provenance: 'O:I workbench projection of the renderer-neutral Explore application',
   },
   system: {
     surfaceRef: 'surface/oi/system-host',
@@ -416,6 +417,17 @@ function RootCanvasSurface({
     );
   }
 
+  if (destination === 'explore') {
+    return (
+      <>
+        <SurfaceHeader destination={destination} binding={binding} />
+        <p className="oi-lead">Search, READ and bounded GRAPH/TREE/LIST now use the same renderer-neutral Explore application as hosted/browser and structured Agent access. Local rendering does not change Projection, SharedField or publication standing.</p>
+        <ExploreWorkbenchSurface onSelect={onSelect} />
+        <ContributionSurface contributions={visibleContributions} />
+      </>
+    );
+  }
+
   return (
     <>
       <SurfaceHeader destination={destination} binding={binding} />
@@ -543,7 +555,7 @@ function copyFor(destination: Destination) {
     home: 'One native workspace over AIKit SessionSpace, AgentSession conversation and project Knowledge.',
     personal: 'P1 provides a host Surface only. Central/Actuation bodies and the Project/Ground editor field belong to #106/#107.',
     build: 'Factory Build remains product-owned and source-faithful; P1 only hosts its current read model and canonical Actions.',
-    explore: 'P1 provides the host placement contract. Desktop ↔ Explore local/social parity and application body belong to #110.',
+    explore: 'Explore is the workbench projection of the same renderer-neutral application used by hosted/browser and structured Agent Surfaces.',
     system: 'P1 provides the region and current composition disclosure. The six-product System workbench belongs to #109.',
   }[destination];
 }
