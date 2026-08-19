@@ -1,0 +1,115 @@
+.oi-factory-build-host {
+  min-height: 100%;
+  background: var(--oi-surface, #050505);
+}
+
+.oi-factory-build-provenance {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--oi-rule, rgba(247,247,244,.18));
+  background: var(--oi-surface, #050505);
+  color: var(--oi-muted, rgba(247,247,244,.62));
+  font-size: .7rem;
+}
+
+.oi-factory-build-provenance strong {
+  color: var(--oi-foreground, #f7f7f4);
+}
+
+.oi-factory-build-provenance code {
+  max-width: min(52ch, 100%);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.oi-factory-build-navigator {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--oi-rule);
+}
+
+.oi-factory-build-navigator > p {
+  margin: 0;
+}
+
+.oi-factory-build-navigator__group {
+  display: grid;
+  gap: 4px;
+}
+
+.oi-factory-build-navigator__group > small {
+  color: var(--oi-muted);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.oi-factory-build-navigator__group button {
+  display: grid;
+  gap: 2px;
+  padding: 7px 8px;
+  border: 1px solid var(--oi-rule);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.oi-factory-build-navigator__group button:hover,
+.oi-factory-build-navigator__group button:focus-visible {
+  border-color: var(--oi-foreground);
+  outline: none;
+}
+
+.oi-factory-build-navigator__group button span,
+.oi-factory-build-navigator__group button code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.oi-factory-build-navigator__group button code {
+  color: var(--oi-muted);
+  font-size: .68rem;
+}
+
+.oi-factory-trajectory-region {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.oi-factory-trajectory-region__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.oi-factory-trajectory-region__head p {
+  margin: 0 0 4px;
+}
+
+.oi-factory-trajectory-region__head code {
+  max-width: 42%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--oi-muted);
+}
+
+.oi-factory-trajectory-region .fb-waterfall,
+.oi-factory-trajectory-region .fb-detail {
+  border: 1px solid var(--oi-rule);
+  border-radius: 8px;
+}
+
+.oi-factory-trajectory-region .fb-detail {
+  border-top: 1px solid var(--oi-rule) !important;
+  margin-bottom: 0;
+}
