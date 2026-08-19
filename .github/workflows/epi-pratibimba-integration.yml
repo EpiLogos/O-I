@@ -28,11 +28,11 @@ jobs:
     steps:
       - name: Check out O:I
         uses: actions/checkout@v4
-      - name: Check out coordinated Epi Prompt-C producer
+      - name: Check out coordinated Epi PRE-D Personal Map-lineage producer
         uses: actions/checkout@v4
         with:
           repository: EpiLogos/Epi-Logos-C-Experiments
-          ref: 80f13d9e2e534ee87dd224bb5712446d50f7b963
+          ref: 947b6c5fea1f548301eba99dba5d2743657c9f9d
           path: epi-source
       - name: Check out coordinated Central NOW/DAY owner
         uses: actions/checkout@v4
@@ -41,7 +41,7 @@ jobs:
           ref: ab354c1278396b0d50620bf8a43c40eedc26b907
           path: central-source
       - uses: dtolnay/rust-toolchain@stable
-      - name: Build and test Epi-owned bridge against real C kernel and protected Personal provider
+      - name: Build and test Epi-owned bridge against real C kernel and source-conformant Personal provider
         run: |
           cargo test --manifest-path epi-source/Body/S/S0/pratibimba-bridge/Cargo.toml
           cargo build --manifest-path epi-source/Body/S/S0/pratibimba-bridge/Cargo.toml
@@ -62,7 +62,7 @@ jobs:
             "sourceClass": "human-authored"
           }
           JSON
-      - name: Exercise O:I host against the real Prompt-C Epi producer
+      - name: Exercise O:I host against the real source-conformant Personal producer
         env:
           EPI_BRIDGE_BIN: ${{ github.workspace }}/epi-source/Body/S/S0/pratibimba-bridge/target/debug/epi-pratibimba-bridge
           EPI_NARA_CONTEXT: ${{ runner.temp }}/nara-context.json
