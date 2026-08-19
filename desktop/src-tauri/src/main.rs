@@ -1,11 +1,11 @@
 use oi_desktop_core::{
-    authorize_action, host_native_contribution, ActionAuthorityStore, ActionExecutionRequest,
-    BoundedActionGrant, BridgeCallClass, BridgeCaller, BridgePolicy, DesktopHost,
-    FactoryActionRoundTrip, FactoryBuildSnapshot, HostedContribution, LocalCentralHost,
-    LocalEpiHost, LocalFactoryHost, NativeContributionReading, SemanticRef, ShellDestination,
-    ShellSnapshot, SurfaceActionEmission, EPI_ANUTTARA_GROUND_ACTION_REF,
-    EPI_EPII_REVIEW_ACTION_REF, EPI_NARA_SENDOFF_ACTION_REF, EPI_NATIVE_OWNER,
-    EPI_PERSONAL_PROPOSAL_ACTION_REF, EPI_PRIMITIVE_CONTRIBUTION_REF,
+    authorize_action, host_epi_cosmic, host_native_contribution, ActionAuthorityStore,
+    ActionExecutionRequest, BoundedActionGrant, BridgeCallClass, BridgeCaller, BridgePolicy,
+    DesktopHost, FactoryActionRoundTrip, FactoryBuildSnapshot, HostedContribution,
+    LocalCentralHost, LocalEpiHost, LocalFactoryHost, NativeContributionReading, SemanticRef,
+    ShellDestination, ShellSnapshot, SurfaceActionEmission, EPI_ANUTTARA_GROUND_ACTION_REF,
+    EPI_COSMIC_CONTRIBUTION_REF, EPI_EPII_REVIEW_ACTION_REF, EPI_NARA_SENDOFF_ACTION_REF,
+    EPI_NATIVE_OWNER, EPI_PERSONAL_PROPOSAL_ACTION_REF, EPI_PRIMITIVE_CONTRIBUTION_REF,
     FACTORY_BUILD_CONTRIBUTION_REF,
 };
 use serde::{Deserialize, Serialize};
@@ -99,7 +99,9 @@ fn epi_cosmic_snapshot(state: State<'_, AppState>) -> Result<Option<Value>, Stri
     BridgePolicy.authorize(BridgeCaller::ShellUi, BridgeCallClass::ObserveEpiPrimitives).map_err(|error| error.to_string())?;
     let epi = state.epi.lock().map_err(|_| "Epi Cosmic provider lock poisoned".to_owned())?;
     let Some(epi) = epi.as_ref() else { return Ok(None); };
-    Ok(Some(epi.cosmic_current()?))
+    let observation = host_epi_cosmic(epi.cosmic_current()?)?;
+    replace_epi_cosmic_contribution(&state, observation.contribution)?;
+    Ok(Some(observation.reading))
 }
 
 #[tauri::command]
@@ -346,6 +348,12 @@ fn replace_epi_contribution(state: &State<'_, AppState>, contribution: HostedCon
     Ok(())
 }
 
+fn replace_epi_cosmic_contribution(state: &State<'_, AppState>, contribution: HostedContribution) -> Result<(), String> {
+    let mut contributions = state.contributions.lock().map_err(|_| "contribution catalog lock poisoned".to_owned())?;
+    replace_contribution_in(&mut contributions, contribution, EPI_COSMIC_CONTRIBUTION_REF);
+    Ok(())
+}
+
 fn replace_contribution_in(contributions: &mut Vec<HostedContribution>, contribution: HostedContribution, contribution_ref: &str) {
     contributions.retain(|entry| entry.contribution.contribution_ref != contribution_ref);
     contributions.push(contribution);
@@ -359,7 +367,13 @@ fn main() {
     let central = load_local_central().map_err(|error| eprintln!("O:I local Central NOW provider unavailable: {error}")).ok().flatten();
     let action_authority = load_action_authority().unwrap_or_else(|error| { eprintln!("O:I Action authority handoff unavailable: {error}"); ActionAuthorityStore::default() });
     if let Some(factory) = factory.as_ref() { match factory.observe() { Ok(observation) => replace_contribution_in(&mut contributions, observation.contribution, FACTORY_BUILD_CONTRIBUTION_REF), Err(error) => eprintln!("O:I Factory observation degraded: {error}") } }
-    if let Some(epi) = epi.as_ref() { match epi.observe() { Ok(observation) => replace_contribution_in(&mut contributions, observation.contribution, EPI_PRIMITIVE_CONTRIBUTION_REF), Err(error) => eprintln!("O:I Epi observation degraded: {error}") } }
+    if let Some(epi) = epi.as_ref() {
+        match epi.observe() { Ok(observation) => replace_contribution_in(&mut contributions, observation.contribution, EPI_PRIMITIVE_CONTRIBUTION_REF), Err(error) => eprintln!("O:I Epi observation degraded: {error}") }
+        match epi.cosmic_current().and_then(|reading| host_epi_cosmic(reading)) {
+            Ok(observation) => replace_contribution_in(&mut contributions, observation.contribution, EPI_COSMIC_CONTRIBUTION_REF),
+            Err(error) => eprintln!("O:I Epi Cosmic observation degraded: {error}"),
+        }
+    }
 
     tauri::Builder::default()
         .manage(AppState { host: Mutex::new(DesktopHost::new(disclosure)), contributions: Mutex::new(contributions), factory: Mutex::new(factory), epi: Mutex::new(epi), central: Mutex::new(central), action_authority: Mutex::new(action_authority) })
