@@ -26,6 +26,26 @@ pub struct LocalProjectKnowledge {
 }
 
 impl LocalProjectKnowledge {
+    /// Open using the native AIKit home discovered for this process. Raw actor and
+    /// Agency refs are parsed here so the Tauri shell does not need its own AIKit
+    /// dependency merely to project the application.
+    pub fn discover(
+        project_root: impl AsRef<Path>,
+        central_root: Option<&Path>,
+        actor: Option<&str>,
+        agency: Option<&str>,
+        focus: Option<String>,
+    ) -> AikitResult<Self> {
+        Self::open(
+            project_root,
+            central_root,
+            AikitHome::discover()?,
+            actor.map(ResourceRef::parse).transpose()?,
+            agency.map(ResourceRef::parse).transpose()?,
+            focus,
+        )
+    }
+
     pub fn open(
         project_root: impl AsRef<Path>,
         central_root: Option<&Path>,
