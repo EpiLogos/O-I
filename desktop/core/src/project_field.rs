@@ -345,9 +345,10 @@ mod tests {
     #[test]
     fn project_field_keeps_read_authority_bounded() {
         let source = include_str!("project_field.rs");
+        let forbidden = ["fn invoke_", "central_action"].concat();
         assert!(source.contains("projectcentral.ground.inspect"));
         assert!(source.contains("projectcentral.now.inspect"));
         assert!(source.contains("RetrievalTarget::Human"));
-        assert!(!source.contains("fn invoke_central_action"));
+        assert!(!source.contains(&forbidden));
     }
 }
