@@ -19,6 +19,11 @@ use crate::{
 pub const EPI_PRIMITIVE_CONTRIBUTION_REF: &str = "epi.pratibimba.foundation";
 pub const EPI_PRIMITIVE_SNAPSHOT_SCHEMA: &str = "epi.pratibimba-primitive-snapshot/v1";
 pub const EPI_PRIMITIVE_PROVIDER_CONTRACT: &str = "epi.pratibimba-primitive-provider/v1";
+pub const EPI_COSMIC_CONTRIBUTION_REF: &str = "epi.pratibimba.cosmic";
+pub const EPI_COSMIC_CURRENT_SCHEMA: &str = "epi.cosmic-current/v1";
+pub const EPI_COSMIC_CURRENT_PROVIDER_CONTRACT: &str = "epi.cosmic-current-provider/v1";
+pub const EPI_COSMIC_OPEN_DEPTH_ACTION_REF: &str = "epi.action.cosmic.open-depth";
+pub const EPI_COSMIC_OPEN_DEPTH_CAPABILITY_REF: &str = "epi.capability.cosmic.current-state";
 pub const EPI_NARA_DAILY_SCHEMA: &str = "epi.nara-daily-surface/v1";
 pub const EPI_NARA_DAILY_PROVIDER_CONTRACT: &str = "epi.nara-daily-provider/v1";
 pub const EPI_NARA_SELECTION_SCHEMA: &str = "epi.nara-selection/v1";
@@ -80,6 +85,17 @@ impl LocalEpiHost {
     pub fn observe(&self) -> Result<EpiHostObservation, String> {
         let snapshot = self.invoke("snapshot", None)?;
         let mut observation = host_epi_snapshot(snapshot)?;
+        observation.contribution.contribution.actions.push(CanonicalActionBinding {
+            action_ref: EPI_COSMIC_OPEN_DEPTH_ACTION_REF.into(),
+            native_owner: EPI_NATIVE_OWNER.into(),
+            availability: ActionAvailability::Available,
+            required_capability_ref: Some(EPI_COSMIC_OPEN_DEPTH_CAPABILITY_REF.into()),
+        });
+        observation
+            .contribution
+            .contribution
+            .accepted_selection_kinds
+            .push("epi-deep-workspace".into());
         if self.nara_available() {
             for (action_ref, capability_ref) in [
                 (EPI_NARA_SENDOFF_ACTION_REF, EPI_NARA_SENDOFF_CAPABILITY_REF),
@@ -104,9 +120,15 @@ impl LocalEpiHost {
                 .contribution
                 .detail
                 .take()
-                .map(|detail| format!("{detail} · protected Nara + Personal 4/5/0 provider ready"));
+                .map(|detail| format!("{detail} · protected Nara + Personal 4/5/0 provider ready · integrated Cosmic read ready"));
         }
         Ok(observation)
+    }
+
+    pub fn cosmic_current(&self) -> Result<Value, String> {
+        let value = self.invoke("cosmic-current", None)?;
+        validate_cosmic_current(&value)?;
+        Ok(value)
     }
 
     pub fn nara_daily(&self) -> Result<Value, String> {
@@ -198,7 +220,7 @@ impl LocalEpiHost {
         if let Some(path) = self.nara_context_file.as_ref() {
             command.arg("--nara-context").arg(path);
         }
-        if operation != "snapshot" {
+        if operation != "snapshot" && operation != "cosmic-current" {
             let vault = self
                 .nara_vault_root
                 .as_ref()
@@ -318,6 +340,39 @@ pub fn host_epi_snapshot(snapshot: Value) -> Result<EpiHostObservation, String> 
         contribution: host_native_contribution(None, contribution)?,
         snapshot,
     })
+}
+
+fn validate_cosmic_current(value: &Value) -> Result<(), String> {
+    expect_string(value, "/schema", EPI_COSMIC_CURRENT_SCHEMA)?;
+    expect_string(value, "/providerContract", EPI_COSMIC_CURRENT_PROVIDER_CONTRACT)?;
+    expect_string(value, "/contributionRef", EPI_COSMIC_CONTRIBUTION_REF)?;
+    expect_string(value, "/nativeOwner", EPI_NATIVE_OWNER)?;
+    required_string(value, "/cosmicRef")?;
+    required_string(value, "/profileRef")?;
+    required_string(value, "/coordinateRef")?;
+    required_string(value, "/qlAddress")?;
+    expect_string(value, "/movement/coordinate", "M1'")?;
+    expect_string(value, "/resonance/coordinate", "M2'")?;
+    expect_string(value, "/symbolic/coordinate", "M3'")?;
+    let workspaces = value
+        .pointer("/deepWorkspaces")
+        .and_then(Value::as_array)
+        .ok_or_else(|| "Epi Cosmic reading requires deepWorkspaces".to_owned())?;
+    if workspaces.len() != 6 {
+        return Err("Epi Cosmic reading must expose all six deep workspace entries".to_owned());
+    }
+    for (position, workspace) in workspaces.iter().enumerate() {
+        expect_string(
+            workspace,
+            "/workspaceRef",
+            &format!("epi:bimba:#-{position}/M{position}'"),
+        )?;
+    }
+    let provider_revision = required_string(value, "/provenance/qlUse/providerRevision")?;
+    if provider_revision.len() != 40 || !provider_revision.chars().all(|c| c.is_ascii_hexdigit()) {
+        return Err("Epi Cosmic reading requires an exact pinned QL provider revision".to_owned());
+    }
+    Ok(())
 }
 
 fn validate_nara_daily(value: &Value) -> Result<(), String> {
