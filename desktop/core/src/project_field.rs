@@ -343,10 +343,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn project_field_has_no_owner_mutation_proxy() {
+    fn project_field_keeps_read_authority_bounded() {
         let source = include_str!("project_field.rs");
-        assert!(!source.contains("projectcentral.ground.apply"));
-        assert!(!source.contains("projectcentral.now.update"));
+        assert!(source.contains("projectcentral.ground.inspect"));
+        assert!(source.contains("projectcentral.now.inspect"));
         assert!(source.contains("RetrievalTarget::Human"));
+        assert!(!source.contains("fn invoke_central_action"));
     }
 }
