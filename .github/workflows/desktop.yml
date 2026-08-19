@@ -28,6 +28,40 @@ permissions:
   contents: read
 
 jobs:
+  # Temporary branch-scoped bootstrap for PR #99. The normal locked jobs remain
+  # authoritative. This job asks Cargo itself to update only the lock changes
+  # required by the changed manifest, commits that generated lock to the PR head,
+  # and is removed once the locked gates accept it.
+  refresh-native-lock:
+    if: github.event_name == 'pull_request' && github.head_ref == 'agent/oi-desktop-workbench-94'
+    runs-on: macos-15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+      - name: Let Cargo materialise the changed native dependency graph
+        shell: bash
+        run: |
+          set +e
+          cargo check --manifest-path desktop/src-tauri/Cargo.toml --target aarch64-apple-darwin
+          check_status=$?
+          set -e
+
+          git add desktop/src-tauri/Cargo.lock
+          if ! git diff --cached --quiet; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m 'desktop: refresh native dependency lock'
+            git push origin HEAD:${{ github.head_ref }}
+          fi
+
+          exit "$check_status"
+
   core:
     runs-on: ubuntu-latest
     steps:
