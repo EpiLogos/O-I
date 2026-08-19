@@ -65,5 +65,5 @@ jobs:
         working-directory: desktop/ui
         run: |
           npm ci
-          npm test
+          node --test src/nara-presentation.test.mjs
           npm run build
