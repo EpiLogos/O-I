@@ -111,13 +111,13 @@ The Personal Surface can resolve the proposal handoff without adoption and can r
 
 ## 5. `.0/.5` expression
 
-The Epi producer's application reading carries the parent expression as data; O:I exposes it in summonable detail rather than making `.1-.4` permanent dashboard fields:
+The product-scale Epi authority defines the parent boundary as `M#.0 ↔ M#.5`; the differentiated deep instrument is the whole `M#′` field. The producer carries that parent expression as data and O:I exposes it in summonable detail rather than making `.1-.4` permanent dashboard fields:
 
 | Domain | `.0` ground | `.5` return | C law |
 |---|---|---|---|
-| M4/Nara | `M4-0'` protected identity/quintessence ground, bound at parent scale to current protected episode | `M4-5'` Epii/Sophia review/recognition gate | `.1-.4` summon only when lived activity crosses them; full deep instrument → `epi.deep.m4` |
-| M5/Epii | `M5-0'` Bimba/Gnosis/library ground | `M5-5'` Logos/return | parent uses canonical AgentSession + governed proposal; full M5 IDE → `epi.deep.m5` |
-| M0/Anuttara | `M0-0'` source-provenanced Anuttara/Bimba language ground | `M0-5'` pedagogy route into Epii | shared Knowledge over native refs; full graph → `epi.deep.m0` |
+| M4/Nara | `M4.0` authoritative protected identity / identity-class ground, bound at parent scale to the current protected episode | `M4.5` integration / return seam encountered through Epii/Sophia review and recognition | `.1-.4` summon only when lived activity crosses them; full differentiated `M4′` instrument → `epi.deep.m4` |
+| M5/Epii | `M5.0` canonical Epii identity/source over Bimba/Gnosis/library ground | `M5.5` whole-agent / Logos return seam | parent uses canonical AgentSession + governed proposal; full differentiated `M5′` IDE → `epi.deep.m5` |
+| M0/Anuttara | `M0.0` invariant/source/canon Anuttara-Bimba ground | `M0.5` totalised source / pedagogy return seam into Epii | shared Knowledge over native refs; full differentiated `M0′` graph → `epi.deep.m0` |
 
 ## 6. Prior Prompt-C disposition
 
@@ -139,7 +139,7 @@ Relative to O:I PR #89:
 
 ## 7. Evidence and wider programme relation
 
-`desktop/core/tests/local_epi_personal_provider.rs` exercises `LocalEpiHost` against the real corrected Epi bridge when configured. `.github/workflows/epi-personal-450-integration.yml` pins the current corrected Epi producer (`8a9ed96101b579a7b27774fb96ffba94d410aaae`) and Central NOW/DAY owner (`ab354c1278396b0d50620bf8a43c40eedc26b907`), tests/builds both, runs the O:I real-provider acceptance and builds the Personal presentation.
+`desktop/core/tests/local_epi_personal_provider.rs` exercises `LocalEpiHost` against the real corrected Epi bridge when configured. `.github/workflows/epi-personal-450-integration.yml` pins the current corrected Epi producer (`aa8e66e57834e1f13ffb227f597ab085a070bbb5`) and Central NOW/DAY owner (`ab354c1278396b0d50620bf8a43c40eedc26b907`), tests/builds both, runs the O:I real-provider acceptance and builds the Personal presentation.
 
 This C cut consumes the real #99 workbench floor exactly as #104 instructed. It does not claim #105 professional shell/Search/Command completion or #111 whole-application physical acceptance. Those remain desktop-programme concerns rather than reasons to push generic workbench implementation into Epi.
 
