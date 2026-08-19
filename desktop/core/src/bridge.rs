@@ -14,29 +14,35 @@ pub enum BridgeCallClass {
     DiscloseComposition,
     DiscloseContributions,
     ObserveFactoryBuild,
-    ObserveEpiPrimitives,
-    ObserveEpiNara,
-    ObserveCentralNow,
+    DispatchFactoryAction,
+    ObserveSessionSpace,
+    MutateSessionSpaceFocus,
+    InteractAgentSession,
+    ObserveKnowledge,
+    ObserveEpiPersonal,
     WriteEpiNara,
     DispatchEpiNaraAction,
     DispatchEpiPersonalAction,
-    DispatchFactoryAction,
+    ObserveCentralNow,
     SelectSemanticRef,
     OpenDestination,
 }
 
 impl BridgeCallClass {
-    pub const ALL: [Self; 12] = [
+    pub const ALL: [Self; 15] = [
         Self::DiscloseComposition,
         Self::DiscloseContributions,
         Self::ObserveFactoryBuild,
-        Self::ObserveEpiPrimitives,
-        Self::ObserveEpiNara,
-        Self::ObserveCentralNow,
+        Self::DispatchFactoryAction,
+        Self::ObserveSessionSpace,
+        Self::MutateSessionSpaceFocus,
+        Self::InteractAgentSession,
+        Self::ObserveKnowledge,
+        Self::ObserveEpiPersonal,
         Self::WriteEpiNara,
         Self::DispatchEpiNaraAction,
         Self::DispatchEpiPersonalAction,
-        Self::DispatchFactoryAction,
+        Self::ObserveCentralNow,
         Self::SelectSemanticRef,
         Self::OpenDestination,
     ];
@@ -57,9 +63,10 @@ impl fmt::Display for BridgeDenied {
 impl std::error::Error for BridgeDenied {}
 
 /// Root-shell bridge policy. Third-party/rich contributions are hosted only as
-/// declarative read models. Presence in the Surface catalog never grants access
-/// to the protected Nara body, Personal 4/5/0 depth, Central NOW, or any
-/// privileged native dispatcher.
+/// declarative read models. Presence in a Surface catalog never grants access to
+/// the protected Personal body, Agent Context, Central NOW, or privileged native
+/// dispatchers. The root shell may invoke those native seams explicitly; a
+/// sandboxed contribution may not acquire that authority by being mounted.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct BridgePolicy;
 

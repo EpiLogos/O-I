@@ -1,3 +1,5 @@
+mod agent_surface;
+mod aikit_workbench;
 mod bridge;
 mod contribution;
 mod execution_authority;
@@ -5,10 +7,16 @@ mod live_product;
 mod local_aikit;
 mod local_central;
 mod local_epi;
-mod local_epi_cosmic;
 mod local_factory;
+mod project_knowledge;
 mod shell;
 
+pub use agent_surface::{
+    AgentSurfaceOpenRequest, AgentSurfaceReading, AikitAgentSurface,
+};
+pub use aikit_workbench::{
+    LocalAikitWorkbench, SessionSpaceApplicationReading, SessionSpaceFocusRequest,
+};
 pub use bridge::{BridgeCallClass, BridgeCaller, BridgeDenied, BridgePolicy};
 pub use contribution::{
     authorize_action, host_native_contribution, selection_for, ActionAuthorityGrant,
@@ -35,24 +43,13 @@ pub use local_central::{
     CENTRAL_NOW_RETURN_ACTION_REF, CENTRAL_NOW_UPDATE_ACTION_REF,
 };
 pub use local_epi::{
-    host_epi_snapshot, EpiHostObservation, LocalEpiHost, EPI_ANUTTARA_GROUND_ACTION_REF,
-    EPI_ANUTTARA_GROUND_CAPABILITY_REF, EPI_ANUTTARA_GROUND_SCHEMA,
-    EPI_EPII_REVIEW_ACTION_REF, EPI_EPII_REVIEW_CAPABILITY_REF, EPI_EPII_REVIEW_SCHEMA,
-    EPI_NARA_DAILY_PROVIDER_CONTRACT, EPI_NARA_DAILY_SCHEMA, EPI_NARA_SELECTION_SCHEMA,
-    EPI_NARA_SENDOFF_ACTION_REF, EPI_NARA_SENDOFF_CAPABILITY_REF, EPI_NATIVE_OWNER,
-    EPI_PERSONAL_PROPOSAL_ACTION_REF, EPI_PERSONAL_PROPOSAL_CAPABILITY_REF,
-    EPI_PERSONAL_PROPOSAL_SCHEMA, EPI_PRIMITIVE_CONTRIBUTION_REF,
-    EPI_PRIMITIVE_PROVIDER_CONTRACT, EPI_PRIMITIVE_SNAPSHOT_SCHEMA,
-};
-pub use local_epi_cosmic::{
-    host_epi_current_situated, EpiCurrentSituatedHostObservation, LocalEpiCosmicHost,
-    EPI_COSMIC_CONTRIBUTION_REF, EPI_COSMIC_CURRENT_ACTION_REF,
-    EPI_COSMIC_OPEN_DEPTH_ACTION_REF, EPI_COSMIC_PARENT_SCHEMA, EPI_COSMIC_PRODUCT_ID,
-    EPI_CURRENT_SITUATED_ACTION_REF, EPI_CURRENT_SITUATED_SCHEMA,
-    EPI_PERSONAL_LIVING_M_COORDINATE_REF, EPI_PERSONAL_LIVING_SOURCE_COORDINATE,
-    EPI_PERSONAL_PRODUCT_ID,
+    EpiPersonalHostObservation, LocalEpiHost, EPI_ANUTTARA_GROUND_ACTION_REF,
+    EPI_EPII_REVIEW_ACTION_REF, EPI_NATIVE_OWNER, EPI_NARA_SENDOFF_ACTION_REF,
+    EPI_PERSONAL_450_APPLICATION_SCHEMA, EPI_PERSONAL_450_CONTRIBUTION_REF,
+    EPI_PERSONAL_PROPOSAL_ACTION_REF,
 };
 pub use local_factory::{host_factory_snapshot, LocalFactoryHost};
+pub use project_knowledge::LocalProjectKnowledge;
 pub use shell::{
     DesktopHost, RefProvenance, SemanticRef, ShellDestination, ShellSnapshot, SuiteCondition,
 };

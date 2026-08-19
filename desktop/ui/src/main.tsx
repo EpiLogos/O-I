@@ -3,9 +3,11 @@ import ReactDOM from 'react-dom/client';
 import { invoke } from '@tauri-apps/api/core';
 import '@epilogos/oi-design-system/tokens.css';
 import './shell.css';
-import { NaraSurface, type NaraActionReceipt } from './NaraSurface';
+import { PersonalSurface } from './PersonalSurface';
+import { RuntimeObservationSurface } from './runtime-observation';
+import { WorkbenchEvidence, WorkbenchSemanticRef, WorkbenchSurface } from './workbench';
 
-type Destination = 'home' | 'epi' | 'personal' | 'build' | 'explore' | 'system';
+type Destination = 'home' | 'personal' | 'build' | 'explore' | 'system';
 type SuiteCondition = 'empty' | 'partial' | 'broken' | 'full';
 type ContributionAvailability = 'ready' | 'degraded' | 'pending_native_adapter' | 'unavailable';
 
@@ -99,7 +101,7 @@ const preview: Snapshot = {
   schema: 'oi.desktop-shell/v1',
   destination: 'home',
   suite_condition: 'empty',
-  destinations: ['home', 'epi', 'personal', 'build', 'explore', 'system'],
+  destinations: ['home', 'personal', 'build', 'explore', 'system'],
   surfaces: [],
   warnings: ['Browser preview: native O:I composition is unavailable outside the Rust shell.'],
 };
@@ -108,12 +110,12 @@ function App() {
   const [snapshot, setSnapshot] = useState<Snapshot>(preview);
   const [contributions, setContributions] = useState<Contribution[]>([]);
   const [factoryBuild, setFactoryBuild] = useState<FactoryBuildSnapshot | null>(null);
-  const [naraReceipt, setNaraReceipt] = useState<NaraActionReceipt | null>(null);
+  const [workbenchEvidence, setWorkbenchEvidence] = useState<WorkbenchEvidence | null>(null);
 
   useEffect(() => {
     invoke<Snapshot>('shell_snapshot').then(setSnapshot).catch(() => setSnapshot(preview));
     invoke<Contribution[]>('contribution_catalog').then(setContributions).catch(() => setContributions([]));
-    void refreshFactoryBuild();
+    refreshFactoryBuild();
   }, []);
 
   async function refreshFactoryBuild() {
@@ -131,19 +133,28 @@ function App() {
       await invoke('open_destination', { destination });
       setSnapshot(await invoke<Snapshot>('shell_snapshot'));
       if (destination === 'build') await refreshFactoryBuild();
+      if (destination === 'personal') {
+        // The Personal Surface observes its native Epi product after mount; its
+        // contribution then becomes visible in the catalog without O:I inventing
+        // Epi health before the provider has actually been read.
+        setTimeout(() => {
+          void invoke<Contribution[]>('contribution_catalog').then(setContributions).catch(() => undefined);
+        }, 0);
+      }
     } catch {
       setSnapshot((current) => ({ ...current, destination }));
     }
   }
 
-  async function receiveNaraAction(receipt: NaraActionReceipt) {
-    setNaraReceipt(receipt);
+  async function selectWorkbenchRef(subject: WorkbenchSemanticRef, evidence: WorkbenchEvidence) {
+    setWorkbenchEvidence(evidence);
     try {
+      await invoke('select_semantic_ref', { subject });
       setSnapshot(await invoke<Snapshot>('shell_snapshot'));
-      setContributions(await invoke<Contribution[]>('contribution_catalog'));
     } catch {
-      // The receipt still carries the exact governed context packet; failure to
-      // refresh shell chrome must not broaden or reconstruct it.
+      // Browser preview has no native bridge. Keep only an ephemeral visual
+      // selection there; native builds always use the privileged bridge above.
+      setSnapshot((current) => ({ ...current, selection: subject }));
     }
   }
 
@@ -164,7 +175,7 @@ function App() {
               className={snapshot.destination === destination ? 'is-active' : ''}
               onClick={() => openDestination(destination)}
             >
-              {destination === 'home' ? 'Home' : destination === 'epi' ? 'Epi' : destination[0].toUpperCase() + destination.slice(1)}
+              {destination === 'home' ? 'Home' : destination[0].toUpperCase() + destination.slice(1)}
             </button>
           ))}
         </nav>
@@ -172,28 +183,27 @@ function App() {
       </header>
 
       <section className="oi-shell__canvas" aria-label="Primary content canvas">
-        {snapshot.destination === 'epi' ? (
-          <NaraSurface onActionReceipt={receiveNaraAction} />
-        ) : (
+        {snapshot.destination !== 'personal' && <p className="oi-eyebrow">{snapshot.destination}</p>}
+        {snapshot.destination !== 'personal' && <h1>{titleFor(snapshot.destination)}</h1>}
+        {snapshot.destination !== 'personal' && <p className="oi-lead">{copyFor(snapshot.destination)}</p>}
+        {snapshot.destination === 'home' && (
           <>
-            <p className="oi-eyebrow">{snapshot.destination}</p>
-            <h1>{titleFor(snapshot.destination)}</h1>
-            <p className="oi-lead">{copyFor(snapshot.destination)}</p>
-            {snapshot.destination === 'build' && factoryBuild && (
-              <FactoryBuildSurface snapshot={factoryBuild} onRefresh={refreshFactoryBuild} />
-            )}
-            {snapshot.destination === 'system' && <SystemSurface surfaces={snapshot.surfaces} />}
-            <ContributionSurface contributions={visibleContributions} />
+            <WorkbenchSurface onSelect={selectWorkbenchRef} />
+            <RuntimeObservationSurface />
           </>
         )}
+        {snapshot.destination === 'personal' && <PersonalSurface onSelect={selectWorkbenchRef} />}
+        {snapshot.destination === 'build' && factoryBuild && (
+          <FactoryBuildSurface snapshot={factoryBuild} onRefresh={refreshFactoryBuild} />
+        )}
+        {snapshot.destination === 'system' && <SystemSurface surfaces={snapshot.surfaces} />}
+        <ContributionSurface contributions={visibleContributions} />
       </section>
 
       <aside className="oi-shell__inspector" aria-label="Context and root agency region">
         <p className="oi-eyebrow">Encounter</p>
-        <h2>{snapshot.destination === 'epi' ? 'Situated Epi context' : 'Shared reference'}</h2>
-        {snapshot.destination === 'epi' && naraReceipt ? (
-          <SituatedNaraPacket receipt={naraReceipt} />
-        ) : snapshot.selection ? (
+        <h2>Shared reference</h2>
+        {snapshot.selection ? (
           <dl className="oi-ref">
             <dt>Ref</dt><dd>{snapshot.selection.ref}</dd>
             <dt>Kind</dt><dd>{snapshot.selection.kind}</dd>
@@ -201,11 +211,20 @@ function App() {
             <dt>Source</dt><dd>{snapshot.selection.provenance.source}</dd>
           </dl>
         ) : (
-          <p className="oi-muted">
-            {snapshot.destination === 'epi'
-              ? 'Select text in Nara and invoke the governed sendoff. The situated region receives only that bounded packet, never ambient access to the journal.'
-              : 'No object selected. Canvas and root-agency regions share one stable Ref; O:I does not copy wholesale Context into contributions.'}
-          </p>
+          <p className="oi-muted">No object selected. Canvas, Knowledge and root-agency regions share one stable Ref; O:I does not copy wholesale Context into contributions.</p>
+        )}
+        {workbenchEvidence && (
+          <div className="oi-inspector-evidence">
+            <p className="oi-eyebrow">Explain / History</p>
+            <strong>{workbenchEvidence.title}</strong>
+            <p className="oi-muted">{workbenchEvidence.summary}</p>
+            {workbenchEvidence.detail != null && (
+              <details>
+                <summary>Native detail</summary>
+                <pre>{JSON.stringify(workbenchEvidence.detail, null, 2)}</pre>
+              </details>
+            )}
+          </div>
         )}
         <div className="oi-root-agency">
           <p className="oi-eyebrow">Root Agency</p>
@@ -221,30 +240,9 @@ function App() {
 
       <footer className="oi-shell__drawer" aria-label="Deep drawer">
         <span>Trajectory / terminal / events</span>
-        <span>{snapshot.destination === 'epi' ? 'closed unless germane to Nara work' : 'reserved native Surface slot'}</span>
+        <span>alternate native Surfaces remain attachable without changing SessionSpace identity</span>
       </footer>
     </main>
-  );
-}
-
-function SituatedNaraPacket({ receipt }: { receipt: NaraActionReceipt }) {
-  const selection = receipt.selection;
-  return (
-    <div className="oi-situated-packet">
-      <dl className="oi-ref">
-        <dt>Selection</dt><dd>{selection.selectionRef}</dd>
-        <dt>Episode</dt><dd>{selection.episodeRef}</dd>
-        <dt>Range</dt><dd>{selection.startByte}–{selection.endByte} · r{selection.episodeRevision}</dd>
-        <dt>DAY/NOW</dt><dd>{selection.dayId} · {selection.nowPath}</dd>
-        <dt>QL</dt><dd>{selection.qlAddress}</dd>
-        <dt>Coordinate</dt><dd>{selection.coordinateRef}</dd>
-        <dt>Profile</dt><dd>{selection.profileRef}</dd>
-      </dl>
-      <blockquote>{selection.selectedText}</blockquote>
-      <p className="oi-muted">Exact disclosure scope:</p>
-      <ul>{receipt.agentContextScope.map((item) => <li key={item}>{item}</li>)}</ul>
-      <small>Governed Action {receipt.actionRef} · authority parent {receipt.authoritySubjectRef} · operation {receipt.operationId}</small>
-    </div>
   );
 }
 
@@ -265,7 +263,6 @@ function FactoryBuildSurface({ snapshot, onRefresh }: { snapshot: FactoryBuildSn
         </dl>
         <button type="button" onClick={() => onRefresh()}>Refresh product reading</button>
       </article>
-
       {snapshot.view.candidates.map((candidate) => (
         <article key={candidate.candidateRef}>
           <div><span className="oi-contribution-state" data-state="ready">{candidate.status}</span><h3>{candidate.label}</h3></div>
@@ -277,15 +274,12 @@ function FactoryBuildSurface({ snapshot, onRefresh }: { snapshot: FactoryBuildSn
           </dl>
         </article>
       ))}
-
       {snapshot.view.humanRequests.map((request) => (
         <article key={request.humanRequestRef}>
           <div><span className="oi-contribution-state" data-state="degraded">human request</span><h3>{request.question}</h3></div>
-          <p>{request.whyHuman}</p>
-          <small>{request.humanRequestRef}</small>
+          <p>{request.whyHuman}</p><small>{request.humanRequestRef}</small>
         </article>
       ))}
-
       {snapshot.view.executions.map((execution) => (
         <article key={execution.executionRef}>
           <div><span className="oi-contribution-state" data-state="ready">{execution.status}</span><h3>{execution.executionRef}</h3></div>
@@ -296,12 +290,10 @@ function FactoryBuildSurface({ snapshot, onRefresh }: { snapshot: FactoryBuildSn
           </dl>
         </article>
       ))}
-
       {snapshot.view.actions.map((action) => (
         <article key={action.actionRef}>
           <div><span className="oi-contribution-state" data-state="ready">available Action</span><h3>{action.label}</h3></div>
-          <p>{action.actionRef}</p>
-          <small>Requires explicit Capability grant: {action.requiredCapabilityRef}</small>
+          <p>{action.actionRef}</p><small>Requires explicit Capability grant: {action.requiredCapabilityRef}</small>
         </article>
       ))}
     </section>
@@ -350,8 +342,7 @@ function SystemSurface({ surfaces }: { surfaces: Surface[] }) {
 
 function ownerVisibleAt(owner: string, destination: Destination) {
   if (destination === 'home' || destination === 'system') return true;
-  if (destination === 'epi') return owner === 'epi' || owner === 'actuation' || owner === 'ai-kit';
-  if (destination === 'personal') return owner === 'central' || owner === 'actuation';
+  if (destination === 'personal') return owner === 'epi' || owner === 'central' || owner === 'actuation' || owner === 'ai-kit';
   if (destination === 'build') return owner === 'software-factory' || owner === 'factory' || owner === 'ai-kit';
   if (destination === 'explore') return owner === 'oi-explore';
   return false;
@@ -359,9 +350,8 @@ function ownerVisibleAt(owner: string, destination: Destination) {
 
 function titleFor(destination: Destination) {
   return {
-    home: 'The local O:I whole.',
-    epi: 'Nara.',
-    personal: 'Personal ground.',
+    home: 'The local O:I workbench.',
+    personal: 'Personal.',
     build: 'Development in view.',
     explore: 'Addressable worlds.',
     system: 'Composition, disclosed.',
@@ -370,10 +360,9 @@ function titleFor(destination: Destination) {
 
 function copyFor(destination: Destination) {
   return {
-    home: 'A sparse local surface over the installed six-product field.',
-    epi: 'The lived Epi surface begins in protected writing and present context, with technical depth available when asked for.',
-    personal: 'Central-owned authored ground and Actuation-owned world-binding readings enter here without moving their semantics into O:I.',
-    build: 'Factory exposes a product-owned live FactoryBuildView provider over canonical state. When its local provider binding is configured, this canvas renders that observed revision directly; otherwise the Factory contribution remains explicitly degraded.',
+    home: 'One native workspace over AIKit SessionSpace, AgentSession conversation and project Knowledge. Focus changes around stable refs; O:I does not become their state owner.',
+    personal: 'Epi-owned lived activity over one protected Personal subject, composed with canonical AgentSession, shared Knowledge and Central NOW/DAY authority.',
+    build: 'Factory exposes a product-owned live FactoryBuildView provider over canonical state. When the local provider binding is configured, this canvas renders that observed revision directly; otherwise the Factory contribution remains explicitly degraded.',
     explore: 'The current shared-field Explore read model is hostable now, with canonical refs independent of SpaceTimeDB transport IDs.',
     system: 'Registration, reachability and native contribution status are shown without inventing product-native health.',
   }[destination];

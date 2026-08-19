@@ -1,9 +1,9 @@
-//! Narrow O:I presentation binding to the Epi-owned Pratibimba providers.
+//! Narrow O:I binding to Epi-owned Pratibimba application providers.
 //!
-//! O:I deliberately does not import or reproduce Epi's semantic structs. It
-//! invokes the native producer, validates stable provider/read-model seams, and
-//! hosts returned JSON plus stable refs. Epi remains computation, persistence and
-//! world-semantics owner.
+//! Epi owns Personal semantics and protected persistence. O:I invokes the native
+//! producer, validates stable contracts and hosts returned refs/readings. It does
+//! not reproduce M semantics, implement a chat runtime, or expose protected body
+//! content through the generic contribution catalog.
 
 use serde_json::Value;
 use std::io::Write;
@@ -16,16 +16,13 @@ use crate::{
     RefProvenance, SemanticRef,
 };
 
-pub const EPI_PRIMITIVE_CONTRIBUTION_REF: &str = "epi.pratibimba.foundation";
-pub const EPI_PRIMITIVE_SNAPSHOT_SCHEMA: &str = "epi.pratibimba-primitive-snapshot/v1";
-pub const EPI_PRIMITIVE_PROVIDER_CONTRACT: &str = "epi.pratibimba-primitive-provider/v1";
+pub const EPI_PERSONAL_450_CONTRIBUTION_REF: &str = "epi.personal.450";
+pub const EPI_PERSONAL_450_APPLICATION_SCHEMA: &str = "epi.personal-450-application/v1";
 pub const EPI_NARA_DAILY_SCHEMA: &str = "epi.nara-daily-surface/v1";
 pub const EPI_NARA_DAILY_PROVIDER_CONTRACT: &str = "epi.nara-daily-provider/v1";
 pub const EPI_NARA_SELECTION_SCHEMA: &str = "epi.nara-selection/v1";
 pub const EPI_NARA_SENDOFF_ACTION_REF: &str = "epi.action.nara.selection.sendoff";
 pub const EPI_NARA_SENDOFF_CAPABILITY_REF: &str = "epi.capability.nara.selected-context";
-pub const EPI_NARA_M_COORDINATE_MANIFEST_REF: &str = "epi:m-coordinate-manifest:nara-m4:v1";
-pub const EPI_BIMBA_MAP_SOURCE_REVISION: &str = "daa660cbc1b8c5da83828698665a753852cb0287";
 pub const EPI_EPII_REVIEW_SCHEMA: &str = "epi.personal-epii-review/v1";
 pub const EPI_EPII_REVIEW_ACTION_REF: &str = "epi.action.epii.review";
 pub const EPI_EPII_REVIEW_CAPABILITY_REF: &str = "epi.capability.epii.personal-review";
@@ -38,9 +35,9 @@ pub const EPI_PERSONAL_PROPOSAL_CAPABILITY_REF: &str = "epi.capability.personal.
 pub const EPI_NATIVE_OWNER: &str = "epi";
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct EpiHostObservation {
+pub struct EpiPersonalHostObservation {
     pub contribution: HostedContribution,
-    pub snapshot: Value,
+    pub application: Value,
 }
 
 pub struct LocalEpiHost {
@@ -75,177 +72,137 @@ impl LocalEpiHost {
         self
     }
 
-    pub fn nara_available(&self) -> bool {
+    pub fn available(&self) -> bool {
         self.nara_context_file.is_some() && self.nara_vault_root.is_some()
     }
 
-    pub fn observe(&self) -> Result<EpiHostObservation, String> {
-        let snapshot = self.invoke("snapshot", None)?;
-        let mut observation = host_epi_snapshot(snapshot)?;
-        if self.nara_available() {
-            for (action_ref, capability_ref) in [
-                (EPI_NARA_SENDOFF_ACTION_REF, EPI_NARA_SENDOFF_CAPABILITY_REF),
-                (EPI_EPII_REVIEW_ACTION_REF, EPI_EPII_REVIEW_CAPABILITY_REF),
-                (EPI_ANUTTARA_GROUND_ACTION_REF, EPI_ANUTTARA_GROUND_CAPABILITY_REF),
-                (
-                    EPI_PERSONAL_PROPOSAL_ACTION_REF,
-                    EPI_PERSONAL_PROPOSAL_CAPABILITY_REF,
-                ),
-            ] {
-                observation
-                    .contribution
-                    .contribution
-                    .actions
-                    .push(CanonicalActionBinding {
-                        action_ref: action_ref.into(),
-                        native_owner: EPI_NATIVE_OWNER.into(),
-                        availability: ActionAvailability::Available,
-                        required_capability_ref: Some(capability_ref.into()),
-                    });
-            }
-            observation
-                .contribution
-                .contribution
-                .accepted_selection_kinds
-                .push("nara-selection".into());
-            observation.contribution.contribution.detail = observation
-                .contribution
-                .contribution
-                .detail
-                .take()
-                .map(|detail| {
-                    format!("{detail} · protected Nara + Personal 4/5/0 provider ready")
-                });
-        }
-        Ok(observation)
+    pub fn observe_personal(&self) -> Result<EpiPersonalHostObservation, String> {
+        self.require_personal()?;
+        let application = self.invoke("personal-application", None)?;
+        validate_personal_application(&application)?;
+        let source_revision = required_string(&application, "/provenance/epiSourceRevision")?;
+        let subject_ref = required_string(&application, "/subject/subjectRef")?;
+        let revision = application
+            .pointer("/subject/episodeRevision")
+            .and_then(Value::as_u64)
+            .ok_or_else(|| "Personal application requires subject.episodeRevision".to_owned())?;
+
+        let contribution = NativeContributionReading {
+            schema: "oi.desktop-host-reading/v1".into(),
+            contribution_ref: EPI_PERSONAL_450_CONTRIBUTION_REF.into(),
+            native_owner: EPI_NATIVE_OWNER.into(),
+            target_contract: Some(EPI_PERSONAL_450_APPLICATION_SCHEMA.into()),
+            availability: ContributionAvailability::Ready,
+            provenance: RefProvenance {
+                source: "EpiLogos/Epi-Logos-C-Experiments::epi-pratibimba-bridge".into(),
+                revision: Some(source_revision.clone()),
+            },
+            regions: vec![
+                HostRegion::Canvas,
+                HostRegion::Navigator,
+                HostRegion::Inspector,
+                HostRegion::RootAgency,
+                HostRegion::Command,
+                HostRegion::Status,
+            ],
+            read_model_ref: Some(SemanticRef {
+                ref_id: subject_ref.clone(),
+                kind: "nara-episode".into(),
+                native_owner: EPI_NATIVE_OWNER.into(),
+                provenance: RefProvenance {
+                    source: "epi.personal.450 current governed subject".into(),
+                    revision: Some(format!("{source_revision}:episode-r{revision}")),
+                },
+            }),
+            accepted_selection_kinds: vec![
+                "nara-episode".into(),
+                "nara-selection".into(),
+                "bimba-ref".into(),
+                "epi-address".into(),
+            ],
+            actions: vec![
+                action(EPI_NARA_SENDOFF_ACTION_REF, EPI_NARA_SENDOFF_CAPABILITY_REF),
+                action(EPI_EPII_REVIEW_ACTION_REF, EPI_EPII_REVIEW_CAPABILITY_REF),
+                action(EPI_ANUTTARA_GROUND_ACTION_REF, EPI_ANUTTARA_GROUND_CAPABILITY_REF),
+                action(EPI_PERSONAL_PROPOSAL_ACTION_REF, EPI_PERSONAL_PROPOSAL_CAPABILITY_REF),
+            ],
+            detail: Some(format!(
+                "native epi.personal.450 · one protected subject {subject_ref} · journal/DAY-NOW + Epii AgentSession requirement + Bimba Knowledge refs + governed proposal return · deep M0/M4/M5 descriptors exposed without deep renderers"
+            )),
+        };
+        Ok(EpiPersonalHostObservation {
+            contribution: host_native_contribution(None, contribution)?,
+            application,
+        })
     }
 
     pub fn nara_daily(&self) -> Result<Value, String> {
-        self.require_nara()?;
+        self.require_personal()?;
         let value = self.invoke("nara-read", None)?;
         validate_nara_daily(&value)?;
         Ok(value)
     }
 
     pub fn nara_write(&self, body: &str) -> Result<Value, String> {
-        self.require_nara()?;
+        self.require_personal()?;
         let value = self.invoke("nara-write", Some(serde_json::json!({"body": body})))?;
         validate_nara_daily(&value)?;
         Ok(value)
     }
 
     pub fn nara_selection(&self, request: Value) -> Result<Value, String> {
-        self.require_nara()?;
+        self.require_personal()?;
         let value = self.invoke("nara-select", Some(request))?;
         expect_string(&value, "/schema", EPI_NARA_SELECTION_SCHEMA)?;
         expect_string(&value, "/actionRef", EPI_NARA_SENDOFF_ACTION_REF)?;
-        expect_string(
-            &value,
-            "/capabilityRef",
-            EPI_NARA_SENDOFF_CAPABILITY_REF,
-        )?;
-        expect_string(
-            &value,
-            "/privacyClass",
-            "protected-local-selected-disclosure",
-        )?;
-        validate_personal_subject(&value)?;
+        expect_string(&value, "/capabilityRef", EPI_NARA_SENDOFF_CAPABILITY_REF)?;
+        expect_string(&value, "/privacyClass", "protected-local-selected-disclosure")?;
+        validate_selection(&value)?;
         Ok(value)
     }
 
     pub fn epii_review(&self, request: Value) -> Result<Value, String> {
-        self.require_nara()?;
+        self.require_personal()?;
         let value = self.invoke("epii-review", Some(request))?;
         expect_string(&value, "/schema", EPI_EPII_REVIEW_SCHEMA)?;
         expect_string(&value, "/actionRef", EPI_EPII_REVIEW_ACTION_REF)?;
-        expect_string(
-            &value,
-            "/capabilityRef",
-            EPI_EPII_REVIEW_CAPABILITY_REF,
-        )?;
         expect_string(&value, "/agent/canonicalAgentRef", "epi:agent:epii")?;
-        expect_u64(&value, "/agent/position", 5)?;
-        validate_personal_subject_at(&value, "/subject")?;
-        validate_map_ground(&value, "/mapGround", 5)?;
-        expect_string(
-            &value,
-            "/provenance/bimbaMapSourceRevision",
-            EPI_BIMBA_MAP_SOURCE_REVISION,
-        )?;
+        validate_subject_at(&value, "/subject")?;
         Ok(value)
     }
 
     pub fn personal_ground(&self, request: Value) -> Result<Value, String> {
-        self.require_nara()?;
+        self.require_personal()?;
         let value = self.invoke("personal-ground", Some(request))?;
         expect_string(&value, "/schema", EPI_ANUTTARA_GROUND_SCHEMA)?;
         expect_string(&value, "/actionRef", EPI_ANUTTARA_GROUND_ACTION_REF)?;
-        expect_string(
-            &value,
-            "/capabilityRef",
-            EPI_ANUTTARA_GROUND_CAPABILITY_REF,
-        )?;
         expect_string(&value, "/agent/canonicalAgentRef", "epi:agent:anuttara")?;
-        expect_u64(&value, "/agent/position", 0)?;
-        expect_bool(
-            &value,
-            "/bimba/providerIdentityIsSemanticIdentity",
-            false,
-        )?;
-        expect_string(&value, "/bimba/promotion", "none")?;
-        validate_personal_subject_at(&value, "/subject")?;
-        validate_map_ground(&value, "/mapGround", 0)?;
-        expect_string(&value, "/relation/relationClass", "implementation-flow")?;
-        expect_bool(
-            &value,
-            "/relation/bimbaSourceRelationAsserted",
-            false,
-        )?;
-        expect_string(
-            &value,
-            "/provenance/bimbaMapSourceRevision",
-            EPI_BIMBA_MAP_SOURCE_REVISION,
-        )?;
+        expect_bool(&value, "/bimba/providerIdentityIsSemanticIdentity", false)?;
+        validate_subject_at(&value, "/subject")?;
         Ok(value)
     }
 
     pub fn personal_proposal(&self, request: Value) -> Result<Value, String> {
-        self.require_nara()?;
+        self.require_personal()?;
         let value = self.invoke("personal-proposal", Some(request))?;
         expect_string(&value, "/schema", EPI_PERSONAL_PROPOSAL_SCHEMA)?;
         expect_string(&value, "/actionRef", EPI_PERSONAL_PROPOSAL_ACTION_REF)?;
-        expect_string(
-            &value,
-            "/capabilityRef",
-            EPI_PERSONAL_PROPOSAL_CAPABILITY_REF,
-        )?;
         expect_string(&value, "/sourceClass", "proposal")?;
         expect_string(&value, "/adoptionState", "unreviewed")?;
         expect_bool(&value, "/sourceMutationPerformed", false)?;
-        expect_string(
-            &value,
-            "/centralReturn/actionRef",
-            "projectcentral.now.return",
-        )?;
         expect_bool(
             &value,
             "/centralReturn/requiresHumanAcceptanceForDurableGround",
             true,
         )?;
-        validate_personal_subject_at(&value, "/subject")?;
-        validate_map_ground(&value, "/mapGround", 5)?;
-        expect_string(
-            &value,
-            "/provenance/bimbaMapSourceRevision",
-            EPI_BIMBA_MAP_SOURCE_REVISION,
-        )?;
+        validate_subject_at(&value, "/subject")?;
         Ok(value)
     }
 
-    fn require_nara(&self) -> Result<(), String> {
-        if !self.nara_available() {
+    fn require_personal(&self) -> Result<(), String> {
+        if !self.available() {
             return Err(
-                "Nara/Personal provider requires OI_EPI_NARA_CONTEXT_FILE and OI_EPI_NARA_VAULT_ROOT"
+                "Epi Personal provider requires OI_EPI_NARA_CONTEXT_FILE and OI_EPI_NARA_VAULT_ROOT"
                     .into(),
             );
         }
@@ -262,9 +219,10 @@ impl LocalEpiHost {
             command.arg("--nara-context").arg(path);
         }
         if operation != "snapshot" {
-            let vault = self.nara_vault_root.as_ref().ok_or_else(|| {
-                "Nara/Personal operation has no configured protected vault root".to_owned()
-            })?;
+            let vault = self
+                .nara_vault_root
+                .as_ref()
+                .ok_or_else(|| "Epi Personal operation has no protected vault root".to_owned())?;
             command.arg("--vault-root").arg(vault);
         }
         if request.is_some() {
@@ -272,20 +230,17 @@ impl LocalEpiHost {
         }
         command.stdout(Stdio::piped()).stderr(Stdio::piped());
         let mut child = command.spawn().map_err(|error| {
-            format!(
-                "start Epi provider `{}`: {error}",
-                self.executable.display()
-            )
+            format!("start Epi provider `{}`: {error}", self.executable.display())
         })?;
         if let Some(request) = request {
             let bytes = serde_json::to_vec(&request)
-                .map_err(|error| format!("serialize private Epi operation request: {error}"))?;
+                .map_err(|error| format!("serialize private Epi request: {error}"))?;
             child
                 .stdin
                 .take()
-                .ok_or_else(|| "Epi provider stdin was unavailable".to_owned())?
+                .ok_or_else(|| "Epi provider stdin unavailable".to_owned())?
                 .write_all(&bytes)
-                .map_err(|error| format!("write private Epi operation request: {error}"))?;
+                .map_err(|error| format!("write private Epi request: {error}"))?;
         }
         let output = child
             .wait_with_output()
@@ -295,11 +250,7 @@ impl LocalEpiHost {
             return Err(format!(
                 "Epi provider `{operation}` exited with {}{}",
                 output.status,
-                if stderr.is_empty() {
-                    String::new()
-                } else {
-                    format!(": {stderr}")
-                }
+                if stderr.is_empty() { String::new() } else { format!(": {stderr}") }
             ));
         }
         serde_json::from_slice(&output.stdout)
@@ -307,142 +258,79 @@ impl LocalEpiHost {
     }
 }
 
-pub fn host_epi_snapshot(snapshot: Value) -> Result<EpiHostObservation, String> {
-    expect_string(&snapshot, "/schema", EPI_PRIMITIVE_SNAPSHOT_SCHEMA)?;
-    expect_string(
-        &snapshot,
-        "/providerContract",
-        EPI_PRIMITIVE_PROVIDER_CONTRACT,
-    )?;
-    expect_string(&snapshot, "/nativeOwner", EPI_NATIVE_OWNER)?;
-
-    let source_revision = required_string(&snapshot, "/sourceRevision")?;
-    let status = required_string(&snapshot, "/status")?;
-    let parity = snapshot
-        .pointer("/kernel/parity")
-        .and_then(Value::as_bool)
-        .ok_or_else(|| "Epi primitive snapshot requires boolean kernel.parity".to_owned())?;
-    if !parity {
-        return Err("Epi primitive snapshot failed epi-lib/portal-core parity".into());
-    }
-
-    let canonical_ref = required_string(&snapshot, "/currentAddress/canonicalRef")?;
-    let bimba_ref = required_string(&snapshot, "/currentAddress/bimbaRef")?;
-    let domain_ref = required_string(&snapshot, "/currentAddress/domainRef")?;
-    let ql_address = required_string(&snapshot, "/ql/qlAddress")?;
-    let lens_ref = required_string(&snapshot, "/ql/lensRef")?;
-    let sublens_ref = required_string(&snapshot, "/ql/sublensRef")?;
-    let tick12 = snapshot
-        .pointer("/kernel/harmonicProfile/tick12")
-        .and_then(Value::as_u64)
-        .ok_or_else(|| "Epi primitive snapshot requires kernel.harmonicProfile.tick12".to_owned())?;
-    let vak_status = required_string(&snapshot, "/vak/currentState/status")?;
-    let day_now_status = required_string(&snapshot, "/time/dayNow/status")?;
-    let ql_provider_revision = required_string(&snapshot, "/ql/providerRevision")?;
-
-    if !canonical_ref.starts_with("epi:bimba:") || bimba_ref.trim().is_empty() {
-        return Err("Epi primitive snapshot requires a stable Bimba-addressable current ref".into());
-    }
-    if !ql_address.starts_with("qladdr:")
-        || !lens_ref.starts_with("mef:lens:")
-        || !sublens_ref.starts_with("mef:sublens:")
-    {
-        return Err("Epi primitive snapshot did not preserve canonical QL/MEF ref identity".into());
-    }
-    if ql_provider_revision.len() != 40
-        || !ql_provider_revision
-            .chars()
-            .all(|c| c.is_ascii_hexdigit())
-    {
-        return Err("Epi primitive snapshot requires an exact QL provider revision".into());
-    }
-
-    let availability = match status.as_str() {
-        "implemented" => ContributionAvailability::Ready,
-        "partial" | "degraded" => ContributionAvailability::Degraded,
-        "provider-unavailable" | "stub" | "research" => ContributionAvailability::Unavailable,
-        other => return Err(format!("unsupported Epi primitive status `{other}`")),
-    };
-
-    let contribution = NativeContributionReading {
-        schema: "oi.desktop-host-reading/v1".into(),
-        contribution_ref: EPI_PRIMITIVE_CONTRIBUTION_REF.into(),
+fn action(action_ref: &str, capability_ref: &str) -> CanonicalActionBinding {
+    CanonicalActionBinding {
+        action_ref: action_ref.into(),
         native_owner: EPI_NATIVE_OWNER.into(),
-        target_contract: Some(EPI_PRIMITIVE_PROVIDER_CONTRACT.into()),
-        availability,
-        provenance: RefProvenance {
-            source: "EpiLogos/Epi-Logos-C-Experiments::epi-pratibimba-bridge".into(),
-            revision: Some(source_revision.clone()),
-        },
-        regions: vec![
-            HostRegion::Canvas,
-            HostRegion::Inspector,
-            HostRegion::RootAgency,
-            HostRegion::Status,
-        ],
-        read_model_ref: Some(SemanticRef {
-            ref_id: canonical_ref.clone(),
-            kind: "epi-address".into(),
-            native_owner: EPI_NATIVE_OWNER.into(),
-            provenance: RefProvenance {
-                source: "EpiLogos/Epi-Logos-C-Experiments::epi-pratibimba-bridge".into(),
-                revision: Some(source_revision.clone()),
-            },
-        }),
-        accepted_selection_kinds: vec![
-            "epi-address".into(),
-            "bimba-ref".into(),
-            "ql-address".into(),
-            "mef-lens".into(),
-            "nara-day".into(),
-            "nara-episode".into(),
-        ],
-        actions: Vec::new(),
-        detail: Some(format!(
-            "real Epi foundation · {canonical_ref} ({domain_ref}) · tick12 {tick12} · {ql_address} · {lens_ref} / {sublens_ref} · VĀK {vak_status} · DAY/NOW {day_now_status} · epi-lib parity true · Epi {source_revision} · QL {ql_provider_revision}"
-        )),
-    };
+        availability: ActionAvailability::Available,
+        required_capability_ref: Some(capability_ref.into()),
+    }
+}
 
-    Ok(EpiHostObservation {
-        contribution: host_native_contribution(None, contribution)?,
-        snapshot,
-    })
+fn validate_personal_application(value: &Value) -> Result<(), String> {
+    expect_string(value, "/schema", EPI_PERSONAL_450_APPLICATION_SCHEMA)?;
+    expect_string(value, "/productId", EPI_PERSONAL_450_CONTRIBUTION_REF)?;
+    expect_string(value, "/nativeOwner", EPI_NATIVE_OWNER)?;
+    required_string(value, "/subject/subjectRef")?;
+    required_string(value, "/subject/episodeRef")?;
+    expect_bool(value, "/subject/protectedBodyDisclosed", false)?;
+    expect_bool(value, "/authority/selectionIsAgentContextDisclosure", false)?;
+    expect_bool(value, "/authority/proposalIsAdoptedHumanSource", false)?;
+    expect_string(value, "/authority/canonicalEpiiAgentRef", "epi:agent:epii")?;
+    expect_bool(value, "/eventBinding/bindableToEventRef", true)?;
+    expect_bool(value, "/eventBinding/parallelPersonalEventState", false)?;
+    if value.pointer("/eventBinding/eventRef").is_some() {
+        return Err("Prompt C Personal application must not mint an eventRef before D binds it".into());
+    }
+    let subject = required_string(value, "/subject/subjectRef")?;
+    let event_subject = required_string(value, "/eventBinding/subjectRef")?;
+    if subject != event_subject {
+        return Err("Personal application event binding drifted from its governed subject".into());
+    }
+    let deep = value
+        .pointer("/deepOpen")
+        .and_then(Value::as_array)
+        .ok_or_else(|| "Personal application requires deepOpen descriptors".to_owned())?;
+    for product in ["epi.deep.m0", "epi.deep.m4", "epi.deep.m5"] {
+        let descriptor = deep
+            .iter()
+            .find(|entry| entry.pointer("/productId").and_then(Value::as_str) == Some(product))
+            .ok_or_else(|| format!("Personal application is missing deep-open descriptor `{product}`"))?;
+        expect_bool(descriptor, "/preservesSubjectIdentity", true)?;
+        let deep_subject = required_string(descriptor, "/subjectRef")?;
+        if deep_subject != subject {
+            return Err(format!("deep-open `{product}` drifted from Personal subject"));
+        }
+    }
+    Ok(())
 }
 
 fn validate_nara_daily(value: &Value) -> Result<(), String> {
     expect_string(value, "/schema", EPI_NARA_DAILY_SCHEMA)?;
-    expect_string(
-        value,
-        "/providerContract",
-        EPI_NARA_DAILY_PROVIDER_CONTRACT,
-    )?;
+    expect_string(value, "/providerContract", EPI_NARA_DAILY_PROVIDER_CONTRACT)?;
     expect_string(value, "/nativeOwner", EPI_NATIVE_OWNER)?;
     expect_string(value, "/privacyClass", "protected-local-body")?;
     required_string(value, "/episodeRef")?;
-    required_string(value, "/dayRef")?;
     required_string(value, "/livedContext/qlAddress")?;
     required_string(value, "/livedContext/coordinateRef")?;
     required_string(value, "/livedContext/profileRef")?;
-    validate_nara_coordinate_binding_at(value, "")?;
-    expect_string(
-        value,
-        "/explain/coordinateManifestRef",
-        EPI_NARA_M_COORDINATE_MANIFEST_REF,
-    )?;
     Ok(())
 }
 
-fn validate_personal_subject(value: &Value) -> Result<(), String> {
-    required_string(value, "/episodeRef")?;
-    required_string(value, "/selectionRef")?;
-    required_string(value, "/qlAddress")?;
-    required_string(value, "/coordinateRef")?;
-    required_string(value, "/profileRef")?;
-    validate_nara_coordinate_binding_at(value, "")?;
+fn validate_selection(value: &Value) -> Result<(), String> {
+    for pointer in [
+        "/episodeRef",
+        "/selectionRef",
+        "/qlAddress",
+        "/coordinateRef",
+        "/profileRef",
+    ] {
+        required_string(value, pointer)?;
+    }
     Ok(())
 }
 
-fn validate_personal_subject_at(value: &Value, prefix: &str) -> Result<(), String> {
+fn validate_subject_at(value: &Value, prefix: &str) -> Result<(), String> {
     for suffix in [
         "episodeRef",
         "selectionRef",
@@ -452,113 +340,30 @@ fn validate_personal_subject_at(value: &Value, prefix: &str) -> Result<(), Strin
     ] {
         required_string(value, &format!("{prefix}/{suffix}"))?;
     }
-    validate_nara_coordinate_binding_at(value, prefix)?;
     Ok(())
 }
 
-fn validate_nara_coordinate_binding_at(value: &Value, prefix: &str) -> Result<(), String> {
-    let at = |suffix: &str| format!("{prefix}/coordinateBinding/{suffix}");
-    expect_string(
-        value,
-        &at("manifestRef"),
-        EPI_NARA_M_COORDINATE_MANIFEST_REF,
-    )?;
-    expect_string(value, &at("bimbaSourceRef"), "#4.4")?;
-    expect_string(value, &at("bimbaCoordinateRef"), "epi:m-coordinate:M4-4")?;
-    expect_string(
-        value,
-        &at("pratibimbaCoordinateRef"),
-        "epi:m-coordinate:M4-4'",
-    )?;
-    expect_string(value, &at("carrierSourceRef"), "#4.4.4.4")?;
-    expect_string(
-        value,
-        &at("carrierBimbaCoordinateRef"),
-        "epi:m-coordinate:M4-4-4-4",
-    )?;
-    expect_string(
-        value,
-        &at("carrierPratibimbaCoordinateRef"),
-        "epi:m-coordinate:M4-4-4-4'",
-    )?;
-    expect_string(value, &at("reviewSourceRef"), "#4.5")?;
-    expect_string(
-        value,
-        &at("reviewPratibimbaCoordinateRef"),
-        "epi:m-coordinate:M4-5'",
-    )?;
-    Ok(())
-}
-
-fn validate_map_ground(value: &Value, prefix: &str, root: u8) -> Result<(), String> {
-    expect_string(
-        value,
-        &format!("{prefix}/sourceRepository"),
-        "EpiLogos/Epi-Logos-C-Experiments",
-    )?;
-    expect_string(
-        value,
-        &format!("{prefix}/sourceRevision"),
-        EPI_BIMBA_MAP_SOURCE_REVISION,
-    )?;
-    expect_string(value, &format!("{prefix}/sourceRef"), &format!("#{root}"))?;
-    expect_string(
-        value,
-        &format!("{prefix}/bimbaCoordinateRef"),
-        &format!("ql:m-coordinate:bimba:M{root}"),
-    )?;
-    expect_string(
-        value,
-        &format!("{prefix}/pratibimbaCoordinateRef"),
-        &format!("ql:m-coordinate:pratibimba:M{root}"),
-    )?;
-    required_string(value, &format!("{prefix}/readinessState"))?;
-    expect_bool(
-        value,
-        &format!("{prefix}/sourceRelationAsserted"),
-        false,
-    )?;
-    Ok(())
-}
-
-fn expect_string(snapshot: &Value, pointer: &str, expected: &str) -> Result<(), String> {
-    let observed = required_string(snapshot, pointer)?;
+fn expect_string(value: &Value, pointer: &str, expected: &str) -> Result<(), String> {
+    let observed = required_string(value, pointer)?;
     if observed != expected {
-        return Err(format!(
-            "Epi provider `{pointer}` was `{observed}`, expected `{expected}`"
-        ));
+        return Err(format!("Epi provider `{pointer}` was `{observed}`, expected `{expected}`"));
     }
     Ok(())
 }
 
-fn expect_u64(snapshot: &Value, pointer: &str, expected: u64) -> Result<(), String> {
-    let observed = snapshot
-        .pointer(pointer)
-        .and_then(Value::as_u64)
-        .ok_or_else(|| format!("Epi provider requires u64 `{pointer}`"))?;
-    if observed != expected {
-        return Err(format!(
-            "Epi provider `{pointer}` was `{observed}`, expected `{expected}`"
-        ));
-    }
-    Ok(())
-}
-
-fn expect_bool(snapshot: &Value, pointer: &str, expected: bool) -> Result<(), String> {
-    let observed = snapshot
+fn expect_bool(value: &Value, pointer: &str, expected: bool) -> Result<(), String> {
+    let observed = value
         .pointer(pointer)
         .and_then(Value::as_bool)
         .ok_or_else(|| format!("Epi provider requires bool `{pointer}`"))?;
     if observed != expected {
-        return Err(format!(
-            "Epi provider `{pointer}` was `{observed}`, expected `{expected}`"
-        ));
+        return Err(format!("Epi provider `{pointer}` was `{observed}`, expected `{expected}`"));
     }
     Ok(())
 }
 
-pub(crate) fn required_string(snapshot: &Value, pointer: &str) -> Result<String, String> {
-    snapshot
+pub(crate) fn required_string(value: &Value, pointer: &str) -> Result<String, String> {
+    value
         .pointer(pointer)
         .and_then(Value::as_str)
         .filter(|value| !value.trim().is_empty())

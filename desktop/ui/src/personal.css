@@ -1,0 +1,179 @@
+.epi-personal {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.epi-personal__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.epi-personal__header h2 {
+  margin: 0.15rem 0 0.35rem;
+  font-size: clamp(2rem, 5vw, 4.5rem);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+
+.epi-personal__now {
+  display: grid;
+  gap: 0.3rem;
+  max-width: 26rem;
+  text-align: right;
+  font-size: 0.8rem;
+}
+
+.epi-personal__now span {
+  overflow-wrap: anywhere;
+  color: var(--oi-text-muted, #666);
+}
+
+.epi-personal__journal {
+  width: 100%;
+  min-height: 46vh;
+  box-sizing: border-box;
+  resize: vertical;
+  border: 0;
+  border-block: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  padding: 1.5rem 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 1.08rem;
+  line-height: 1.75;
+  outline: none;
+}
+
+.epi-personal__status,
+.epi-personal__actions,
+.epi-personal__contract,
+.epi-personal__deep {
+  display: flex;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.epi-personal__status {
+  justify-content: space-between;
+  color: var(--oi-text-muted, #666);
+  font-size: 0.78rem;
+}
+
+.epi-personal__actions button,
+.epi-personal__deep button,
+.epi-personal__recognition button {
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  border-radius: 999px;
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  color: inherit;
+}
+
+.epi-personal__actions button:disabled,
+.epi-personal__recognition button:disabled {
+  opacity: 0.35;
+}
+
+.epi-personal__recognition {
+  border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  border-radius: 0.75rem;
+  padding: 0.85rem 1rem;
+}
+
+.epi-personal__recognition summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.epi-personal__recognition code {
+  overflow-wrap: anywhere;
+}
+
+.epi-personal__recognition-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) auto;
+  gap: 0.65rem;
+  align-items: end;
+  margin-top: 0.85rem;
+}
+
+.epi-personal__recognition-fields label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--oi-text-muted, #666);
+}
+
+.epi-personal__recognition-fields select,
+.epi-personal__recognition-fields input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
+  border-radius: 0.45rem;
+  padding: 0.5rem 0.6rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.epi-personal__contract {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  padding-top: 1rem;
+}
+
+.epi-personal__deep button {
+  display: grid;
+  gap: 0.15rem;
+  text-align: left;
+  border-radius: 0.5rem;
+}
+
+.epi-personal__deep small {
+  color: var(--oi-text-muted, #666);
+  font-size: 0.68rem;
+}
+
+.epi-personal__boundaries {
+  border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  padding-top: 0.75rem;
+}
+
+.epi-personal__boundaries > div {
+  padding: 0.8rem 0;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.epi-personal__boundaries p {
+  margin: 0.3rem 0;
+}
+
+.epi-personal__boundaries pre {
+  overflow: auto;
+  font-size: 0.72rem;
+}
+
+.epi-personal__agent-sidecar {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+}
+
+@media (max-width: 860px) {
+  .epi-personal__header,
+  .epi-personal__contract,
+  .epi-personal__recognition-fields {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .epi-personal__now {
+    text-align: left;
+  }
+}

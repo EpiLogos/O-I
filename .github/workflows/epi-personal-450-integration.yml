@@ -1,0 +1,93 @@
+name: O:I ↔ Epi Personal 4/5/0
+
+on:
+  pull_request:
+    paths:
+      - 'desktop/core/src/local_epi.rs'
+      - 'desktop/core/src/local_central.rs'
+      - 'desktop/core/src/lib.rs'
+      - 'desktop/core/src/bridge.rs'
+      - 'desktop/core/src/execution_authority.rs'
+      - 'desktop/core/tests/local_epi_personal_provider.rs'
+      - 'desktop/core/tests/personal_450_structure.rs'
+      - 'desktop/src-tauri/src/main.rs'
+      - 'desktop/src-tauri/src/personal.rs'
+      - 'desktop/ui/src/PersonalSurface.tsx'
+      - 'desktop/ui/src/main.tsx'
+      - 'desktop/ui/src/personal.css'
+      - 'docs/OI-DESKTOP-SURFACE-LEDGER-PERSONAL-450-DELTA.md'
+      - '.github/workflows/epi-personal-450-integration.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  real-personal-owner-stack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out O:I composition branch
+        uses: actions/checkout@v4
+
+      - name: Check out corrected Epi Personal parent producer
+        uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Epi-Logos-C-Experiments
+          ref: 8a9ed96101b579a7b27774fb96ffba94d410aaae
+          path: epi-source
+
+      - name: Check out current Central NOW/DAY owner
+        uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Central
+          ref: ab354c1278396b0d50620bf8a43c40eedc26b907
+          path: central-source
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/ui/package-lock.json
+
+      - name: Test and build Epi-owned Personal producer
+        run: |
+          cargo test --manifest-path epi-source/Body/S/S0/pratibimba-bridge/Cargo.toml
+          cargo build --manifest-path epi-source/Body/S/S0/pratibimba-bridge/Cargo.toml
+
+      - name: Prove Central NOW/DAY authority contract
+        run: |
+          cargo test --manifest-path central-source/Cargo.toml -p ctrl --test projectcentral_now -- --nocapture
+          cargo build --manifest-path central-source/Cargo.toml -p ctrl
+
+      - name: Prepare protected Nara acceptance context
+        run: |
+          mkdir -p "$RUNNER_TEMP/nara-vault"
+          cat > "$RUNNER_TEMP/nara-context.json" <<'JSON'
+          {
+            "identityRef": "epi:nara:identity:ci-local",
+            "personalFieldRef": "central:project:ci:now",
+            "dayId": "2026-08-19",
+            "nowPath": "ProjectCentral/now/day/2026-08-19",
+            "sessionKey": "oi-personal-450-ci",
+            "privacyClass": "protected-local",
+            "sourceClass": "human-authored",
+            "sourceRef": "central:project:ci:human-ground"
+          }
+          JSON
+
+      - name: Exercise O:I host against real Epi Personal producer
+        env:
+          EPI_BRIDGE_BIN: ${{ github.workspace }}/epi-source/Body/S/S0/pratibimba-bridge/target/debug/epi-pratibimba-bridge
+          EPI_NARA_CONTEXT: ${{ runner.temp }}/nara-context.json
+          EPI_NARA_VAULT: ${{ runner.temp }}/nara-vault
+        run: |
+          cargo test --manifest-path desktop/core/Cargo.toml --test local_epi_personal_provider -- --nocapture
+          cargo test --manifest-path desktop/core/Cargo.toml --test personal_450_structure -- --nocapture
+
+      - name: Build composed Personal desktop presentation
+        working-directory: desktop/ui
+        run: |
+          npm ci
+          npm run build
