@@ -108,9 +108,8 @@ impl ActionAuthorityStore {
         let matches = self
             .grants
             .iter()
-            .filter_map(|(grant_ref, stored)| {
-                semantic_binding_matches(stored, request).then(|| grant_ref.clone())
-            })
+            .filter(|(_, stored)| semantic_binding_matches(stored, request))
+            .map(|(grant_ref, _)| grant_ref.clone())
             .collect::<Vec<_>>();
         match matches.as_slice() {
             [] => Err("no already-issued native Action authority matches this request".into()),
