@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { createDesktopExplorePresentationReading } from './explore-presentation.mjs';
 import { authoringDisclosure } from '../../../shared-field/presentation-authoring.mjs';
 
@@ -68,4 +69,32 @@ test('desktop reports honest degradation rather than inventing a presentation in
   assert.equal(reading.availability, 'degraded');
   assert.equal(reading.presentation_ref, null);
   assert.match(reading.reason, /No live WorldPresentation/);
+});
+
+test('P6 mounts the shared renderer-neutral Explore application in the P1 workbench', async () => {
+  const renderer = await readFile(new URL('./ExploreSurface.tsx', import.meta.url), 'utf8');
+  const adapter = await readFile(new URL('./explore-workbench.tsx', import.meta.url), 'utf8');
+  const host = await readFile(new URL('./main.tsx', import.meta.url), 'utf8');
+
+  assert.match(renderer, /createExploreSurfaceModel/);
+  assert.match(renderer, /shared-field\/explore-surface\.mjs/);
+  assert.doesNotMatch(renderer, /createExploreApplication/);
+  assert.match(adapter, /invoke<unknown \| null>\('explore_surface_seed'\)/);
+  assert.match(adapter, /privacy: 'selection != Agent Context disclosure != Projection selection != SharedField admission != public != remote Agent authority'/);
+  assert.match(host, /destination === 'explore'/);
+  assert.match(host, /<ExploreWorkbenchSurface onSelect=\{onSelect\} \/>/);
+});
+
+test('native Explore bridge is a schema-checked read projection, not publication or admission authority', async () => {
+  const native = await readFile(new URL('../../src-tauri/src/main.rs', import.meta.url), 'utf8');
+  const start = native.indexOf('fn explore_surface_seed()');
+  const end = native.indexOf('#[tauri::command]\nfn factory_build_snapshot', start);
+  assert.ok(start >= 0 && end > start);
+  const bridge = native.slice(start, end);
+
+  assert.match(bridge, /OI_EXPLORE_SURFACE_SEED/);
+  assert.match(bridge, /EXPLORE_SURFACE_SEED_SCHEMA/);
+  assert.match(bridge, /fs::read_to_string/);
+  assert.match(bridge, /BridgeCallClass::DiscloseContributions/);
+  assert.doesNotMatch(bridge, /remove_file|write_to|publish|exchange|admit|quarantine/);
 });
