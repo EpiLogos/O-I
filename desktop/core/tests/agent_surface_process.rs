@@ -2,7 +2,6 @@
 #[test]
 fn generic_surface_preserves_canonical_agent_session_over_real_acp_process() {
     use aikit_adapters::ConnectionSignalKind;
-    use oi_desktop_core::{AgentSurfaceOpenRequest, AikitAgentSurface};
 
     let (mut surface, opened) = open_fixture_surface(
         "connection/oi-test/acp",
