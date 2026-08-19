@@ -233,7 +233,10 @@ pub(crate) fn epi_personal_proposal(
         return Err("Epi proposal violated proposal != adopted source authority".into());
     }
     let central_return = match load_central()? {
-        Some(central) => Some(central.return_personal_proposal(&reading)?),
+        Some(central) => match central.return_personal_proposal(&reading) {
+            Ok(value) => Some(json!({"status": "returned", "data": value})),
+            Err(error) => Some(json!({"status": "degraded", "error": error})),
+        },
         None => None,
     };
     Ok(action_receipt(
