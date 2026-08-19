@@ -5,15 +5,33 @@ import test from 'node:test';
 const surface = readFileSync(new URL('./NaraSurface.tsx', import.meta.url), 'utf8');
 const shell = readFileSync(new URL('./main.tsx', import.meta.url), 'utf8');
 
-// This is intentionally a presentation contract over the actual checked-in
-// component, not a fixture implementation of Nara semantics.
-test('Nara is a write-first daily canvas over native provider operations', () => {
+// These are presentation contracts over the actual checked-in components,
+// not fixture implementations of Nara/Epi semantics.
+test('Nara remains the write-first daily root over native provider operations', () => {
   assert.match(surface, /<textarea/);
   assert.match(surface, /nara_daily_snapshot/);
   assert.match(surface, /nara_save_daily/);
   assert.match(surface, /nara_send_selection/);
   assert.match(surface, /Explain this reading/);
   assert.match(surface, /protected personal context|identityOrientation/);
+});
+
+test('Personal 4\/5\/0 depth is summoned around the governed Nara selection', () => {
+  assert.match(surface, /epi_personal_depth/);
+  assert.match(surface, /M5′ Epii/);
+  assert.match(surface, /M0′ Anuttara \/ Bimba/);
+  for (const summon of ['Explain', 'Review', 'Source', 'Bimba', 'Provenance', 'Proposal']) {
+    assert.match(surface, new RegExp(`>${summon}<`));
+  }
+  assert.match(surface, /subjectRef !== selected\.selectionRef/);
+  assert.match(surface, /authoritySubjectRef !== selected\.episodeRef/);
+  assert.match(surface, /same selection/);
+  assert.match(surface, /Why this ground/);
+  assert.match(surface, /Source mutation/);
+  assert.match(surface, /Reject \/ do not adopt/);
+  assert.match(surface, /human-accepted promotion path/);
+  assert.equal(surface.includes('Epii dashboard'), false);
+  assert.equal(surface.includes('Bimba dashboard'), false);
 });
 
 test('renderer does not grow a second cosmology or private identity model', () => {
@@ -27,6 +45,7 @@ test('renderer does not grow a second cosmology or private identity model', () =
     'dreamText',
     'relationship',
     'health',
+    'EpiiRuntime',
   ]) {
     assert.equal(surface.includes(forbidden), false, `renderer must not own or expose ${forbidden}`);
   }
