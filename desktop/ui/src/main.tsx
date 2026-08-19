@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { invoke } from '@tauri-apps/api/core';
 import '@epilogos/oi-design-system/tokens.css';
 import './shell.css';
+import { RuntimeObservationSurface } from './runtime-observation';
 import { WorkbenchEvidence, WorkbenchSemanticRef, WorkbenchSurface } from './workbench';
 
 type Destination = 'home' | 'personal' | 'build' | 'explore' | 'system';
@@ -176,7 +177,12 @@ function App() {
         <p className="oi-eyebrow">{snapshot.destination}</p>
         <h1>{titleFor(snapshot.destination)}</h1>
         <p className="oi-lead">{copyFor(snapshot.destination)}</p>
-        {snapshot.destination === 'home' && <WorkbenchSurface onSelect={selectWorkbenchRef} />}
+        {snapshot.destination === 'home' && (
+          <>
+            <WorkbenchSurface onSelect={selectWorkbenchRef} />
+            <RuntimeObservationSurface />
+          </>
+        )}
         {snapshot.destination === 'build' && factoryBuild && (
           <FactoryBuildSurface snapshot={factoryBuild} onRefresh={refreshFactoryBuild} />
         )}
