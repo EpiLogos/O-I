@@ -19,12 +19,16 @@ use serde_json::json;
 
 const MAX_MESSAGES_PER_TURN: usize = 512;
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Clone, Deserialize, Serialize, PartialEq, Eq)]
 pub struct AgentSurfaceOpenRequest {
     pub connection_ref: String,
     pub agent_session_ref: String,
     pub argv: Vec<String>,
     pub cwd: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mode: Option<SessionOpenMode>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub native_session_id: Option<String>,
     #[serde(default)]
     pub provenance: Vec<String>,
 }
@@ -37,7 +41,6 @@ pub struct AgentSurfaceReading {
     pub signals: Vec<ConnectionSignal>,
 }
 
-#[derive(Debug)]
 pub struct AikitAgentSurface {
     adapter: AcpV1ConnectionAdapter,
     process: ConnectionProcess,
@@ -56,6 +59,7 @@ impl AikitAgentSurface {
         }
         let connection_ref = ResourceRef::parse(&request.connection_ref)
             .map_err(|error| error.to_string())?;
+        let mode = request.mode.unwrap_or(SessionOpenMode::Create);
         let mut provenance = request.provenance;
         provenance.push("O:I generic conversation Surface via AIKit ACP adapter".into());
         let mut adapter = AcpV1ConnectionAdapter::new(connection_ref, provenance);
@@ -68,20 +72,21 @@ impl AikitAgentSurface {
         let mut signals = adapter
             .ingest(process.read_json().map_err(|error| error.to_string())?)
             .map_err(|error| error.to_string())?;
-        if !adapter
-            .negotiated_capabilities()
-            .supports(SessionOpenMode::Create)
-        {
+        if !adapter.negotiated_capabilities().supports(mode) {
             let _ = process.terminate();
-            return Err("ACP provider does not advertise session creation".into());
+            return Err(format!("ACP provider does not advertise {mode:?}"));
+        }
+        if mode != SessionOpenMode::Create && request.native_session_id.is_none() {
+            let _ = process.terminate();
+            return Err(format!("{mode:?} requires a provider-native session id"));
         }
 
         process
             .send_json(
                 &adapter
                     .open_session(SessionOpenRequest {
-                        mode: SessionOpenMode::Create,
-                        native_session_id: None,
+                        mode,
+                        native_session_id: request.native_session_id,
                         cwd: request.cwd,
                         additional_directories: Vec::new(),
                         mcp_servers: Vec::new(),
