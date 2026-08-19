@@ -340,8 +340,6 @@ fn load_project_map(path: &Path) -> Result<ProjectMap, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     fn project_field_keeps_read_authority_bounded() {
         let source = include_str!("project_field.rs");
