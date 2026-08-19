@@ -95,6 +95,14 @@ fn epi_primitive_snapshot(state: State<'_, AppState>) -> Result<Option<Value>, S
 }
 
 #[tauri::command]
+fn epi_cosmic_snapshot(state: State<'_, AppState>) -> Result<Option<Value>, String> {
+    BridgePolicy.authorize(BridgeCaller::ShellUi, BridgeCallClass::ObserveEpiPrimitives).map_err(|error| error.to_string())?;
+    let epi = state.epi.lock().map_err(|_| "Epi Cosmic provider lock poisoned".to_owned())?;
+    let Some(epi) = epi.as_ref() else { return Ok(None); };
+    Ok(Some(epi.cosmic_current()?))
+}
+
+#[tauri::command]
 fn nara_daily_snapshot(state: State<'_, AppState>) -> Result<Option<Value>, String> {
     BridgePolicy.authorize(BridgeCaller::ShellUi, BridgeCallClass::ObserveEpiNara).map_err(|error| error.to_string())?;
     let epi = state.epi.lock().map_err(|_| "Epi Nara provider lock poisoned".to_owned())?;
@@ -355,7 +363,7 @@ fn main() {
 
     tauri::Builder::default()
         .manage(AppState { host: Mutex::new(DesktopHost::new(disclosure)), contributions: Mutex::new(contributions), factory: Mutex::new(factory), epi: Mutex::new(epi), central: Mutex::new(central), action_authority: Mutex::new(action_authority) })
-        .invoke_handler(tauri::generate_handler![shell_snapshot, contribution_catalog, factory_build_snapshot, epi_primitive_snapshot, nara_daily_snapshot, central_now_snapshot, nara_save_daily, nara_send_selection, epi_personal_depth, reject_personal_proposal, recognize_personal_human_source, dispatch_factory_action, select_semantic_ref, open_destination])
+        .invoke_handler(tauri::generate_handler![shell_snapshot, contribution_catalog, factory_build_snapshot, epi_primitive_snapshot, epi_cosmic_snapshot, nara_daily_snapshot, central_now_snapshot, nara_save_daily, nara_send_selection, epi_personal_depth, reject_personal_proposal, recognize_personal_human_source, dispatch_factory_action, select_semantic_ref, open_destination])
         .run(tauri::generate_context!())
         .expect("failed to run O:I desktop");
 }
