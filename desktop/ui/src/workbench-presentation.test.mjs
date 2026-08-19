@@ -71,6 +71,17 @@ test('P1 host exposes the stable five-region workbench and editor-group presenta
   assert.match(host, /will not recreate the missing native Surface or semantic subject/i);
 });
 
+test('one canonical SurfaceRef may be placed in several host regions without a desktop Surface identity', () => {
+  assert.match(host, /regions\?: WorkbenchHostRegion\[\]/);
+  assert.match(host, /function surfaceRegions/);
+  assert.match(host, /HostRegionSurfaces/);
+  assert.match(host, /data-surface-ref=\{surface\.surfaceRef\}/);
+  for (const region of ['navigator', 'sidecar', 'lower', 'system']) {
+    assert.match(host, new RegExp(`HostRegionSurfaces region=\\"${region}\\"`));
+  }
+  assert.equal(host.includes('DesktopSurfaceRef'), false);
+});
+
 test('presentation identity and semantic subject remain separate across tabs splits and restore', () => {
   assert.match(host, /bindingId: string/);
   assert.match(host, /surfaceRef: string/);
@@ -94,6 +105,15 @@ test('Search and Command aggregate native descriptors and never define a desktop
   assert.equal(command.includes('OiActionCatalog'), false);
   assert.equal(command.includes('DesktopAction'), false);
   assert.equal(command.includes('DesktopContextResolver'), false);
+});
+
+test('Search preserves the actual externally tagged AIKit ContextResolution availability contract', () => {
+  assert.match(command, /type ContextAvailability/);
+  assert.match(command, /\{ unresolved: \{ reasons: string\[\] \} \}/);
+  assert.match(command, /\{ unavailable: \{ reasons: string\[\] \} \}/);
+  assert.match(command, /value === 'available'/);
+  assert.match(command, /'unresolved' in value/);
+  assert.match(command, /'unavailable' in value/);
 });
 
 test('keyboard and mouse command activation converge on the same canonical Action path', () => {
