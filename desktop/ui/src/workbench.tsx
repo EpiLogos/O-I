@@ -1,4 +1,5 @@
 import React, { FormEvent, useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { invoke } from '@tauri-apps/api/core';
 import './workbench.css';
 
@@ -137,7 +138,7 @@ export function WorkbenchSurface({
   onAgentSessionChange,
 }: {
   onSelect: (subject: WorkbenchSemanticRef, evidence: WorkbenchEvidence) => Promise<void>;
-  onAgentSessionChange: (agentSessionRef: string | null) => void;
+  onAgentSessionChange?: (agentSessionRef: string | null) => void;
 }) {
   const [spaces, setSpaces] = useState<SessionSpaceState[]>([]);
   const [spaceRef, setSpaceRef] = useState<string>('');
@@ -149,10 +150,18 @@ export function WorkbenchSurface({
   const [knowledgeDetail, setKnowledgeDetail] = useState<unknown>(null);
   const [knowledgeError, setKnowledgeError] = useState<string>('');
   const [selectedKnowledge, setSelectedKnowledge] = useState<KnowledgeHit | null>(null);
+  const [activeAgentSession, setActiveAgentSession] = useState<string | null>(null);
+  const [encounterHost, setEncounterHost] = useState<Element | null>(null);
 
   useEffect(() => {
+    setEncounterHost(document.querySelector('.oi-shell__inspector'));
     void refreshSpaces();
   }, []);
+
+  function publishAgentSession(agentSessionRef: string | null) {
+    setActiveAgentSession(agentSessionRef);
+    onAgentSessionChange?.(agentSessionRef);
+  }
 
   async function refreshSpaces() {
     try {
@@ -164,7 +173,7 @@ export function WorkbenchSurface({
     } catch (error) {
       setSpaces([]);
       setSpace(null);
-      onAgentSessionChange(null);
+      publishAgentSession(null);
       setSpaceError(messageFrom(error));
     }
   }
@@ -179,7 +188,7 @@ export function WorkbenchSurface({
       setSpace(next);
       setSpaceError('');
       const firstAgent = Object.keys(next.state.agent_sessions)[0] ?? null;
-      onAgentSessionChange(firstAgent);
+      publishAgentSession(firstAgent);
       await onSelect(
         {
           ref: nextRef,
@@ -199,7 +208,7 @@ export function WorkbenchSurface({
   }
 
   async function focusAgent(agentSessionRef: string) {
-    onAgentSessionChange(agentSessionRef);
+    publishAgentSession(agentSessionRef);
     try {
       if (spaceRef) {
         await invoke('aikit_session_space_focus', {
@@ -210,6 +219,7 @@ export function WorkbenchSurface({
           },
         });
         await openSpace(spaceRef);
+        publishAgentSession(agentSessionRef);
       }
       await onSelect(
         {
@@ -302,103 +312,109 @@ export function WorkbenchSurface({
   const nativeRefs = useMemo(() => Object.keys(space?.state.native_references ?? {}), [space]);
 
   return (
-    <section className="oi-workbench" aria-label="Native O:I workbench">
-      <header className="oi-workbench__header">
-        <div>
-          <p className="oi-eyebrow">AIKit application projection</p>
-          <h2>Workbench</h2>
-          <p className="oi-muted">One SessionSpace relation; canvas, Encounter and Knowledge change focus around the same stable refs.</p>
-        </div>
-        <button type="button" onClick={() => void refreshSpaces()}>Re-read native state</button>
-      </header>
-
-      <div className="oi-workbench__spacebar">
-        <label>
-          <span>SessionSpace</span>
-          <select value={spaceRef} onChange={(event) => void openSpace(event.target.value)}>
-            {!spaces.length && <option value="">No native SessionSpace observed</option>}
-            {spaces.map((entry) => (
-              <option key={entry.definition.id} value={entry.definition.id}>
-                {entry.label ?? entry.definition.id}
-              </option>
-            ))}
-          </select>
-        </label>
-        {space && <span className="oi-workbench__revision">rev {space.state.revision}</span>}
-        {space?.state.focus && <span className="oi-workbench__focus">focus · {space.state.focus.target}</span>}
-      </div>
-      {spaceError && <p className="oi-workbench__error">SessionSpace: {spaceError}</p>}
-
-      <div className="oi-workbench__grid">
-        <article className="oi-workbench__pane">
-          <p className="oi-eyebrow">SessionSpace</p>
-          <h3>Resolved relations</h3>
-          {space ? (
-            <>
-              <RelationList label="Projects" refs={projectRefs} empty="No Project membership authored." />
-              <AgentRelationList refs={agentRefs} onFocus={focusAgent} />
-              <RelationList label="Surfaces" refs={surfaceRefs} empty="No Surface attachment authored." />
-              <RelationList label="Native bindings" refs={nativeRefs} empty="No provider/host/material ref authored." />
-              <details>
-                <summary>Explain / History</summary>
-                <pre>{jsonPreview({ explanation: space.explanation, history: space.history })}</pre>
-              </details>
-            </>
-          ) : <p className="oi-muted">Open a native SessionSpace to inspect its authored relations.</p>}
-        </article>
-
-        <article className="oi-workbench__pane oi-workbench__knowledge">
-          <p className="oi-eyebrow">ProjectCentral → SemanticWiki → AIKit</p>
-          <h3>Knowledge</h3>
-          <form onSubmit={searchKnowledge} className="oi-workbench__search">
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search this local project world" />
-            <button type="submit" disabled={!query.trim()}>Search</button>
-          </form>
-          <div className="oi-workbench__modes" aria-label="Knowledge presentation">
-            {(['list', 'tree', 'graph', 'reading', 'history'] as KnowledgeMode[]).map((entry) => (
-              <button
-                key={entry}
-                type="button"
-                className={mode === entry ? 'is-active' : ''}
-                disabled={entry !== 'list' && !selectedKnowledge}
-                onClick={() => {
-                  if (entry === 'list') {
-                    setMode('list');
-                    return;
-                  }
-                  if (selectedKnowledge) void selectKnowledge(selectedKnowledge, entry);
-                }}
-              >{entry}</button>
-            ))}
+    <>
+      <section className="oi-workbench" aria-label="Native O:I workbench">
+        <header className="oi-workbench__header">
+          <div>
+            <p className="oi-eyebrow">AIKit application projection</p>
+            <h2>Workbench</h2>
+            <p className="oi-muted">One SessionSpace relation; canvas, Encounter and Knowledge change focus around the same stable refs.</p>
           </div>
-          {knowledge?.absences.map((absence) => <p className="oi-muted" key={absence}>{absence}</p>)}
-          {mode === 'list' && (
-            <div className="oi-workbench__hits">
-              {knowledge?.hits.map((hit) => (
-                <button
-                  key={hit.resource}
-                  type="button"
-                  className={selectedKnowledge?.resource === hit.resource ? 'is-current' : ''}
-                  onClick={() => void selectKnowledge(hit)}
-                >
-                  <strong>{hit.label}</strong>
-                  <span>{hit.kind} · {hit.authority}</span>
-                  {hit.snippet && <small>{hit.snippet}</small>}
-                </button>
+          <button type="button" onClick={() => void refreshSpaces()}>Re-read native state</button>
+        </header>
+
+        <div className="oi-workbench__spacebar">
+          <label>
+            <span>SessionSpace</span>
+            <select value={spaceRef} onChange={(event) => void openSpace(event.target.value)}>
+              {!spaces.length && <option value="">No native SessionSpace observed</option>}
+              {spaces.map((entry) => (
+                <option key={entry.definition.id} value={entry.definition.id}>
+                  {entry.label ?? entry.definition.id}
+                </option>
               ))}
-              {knowledge && !knowledge.hits.length && <p className="oi-muted">No matching local Knowledge refs.</p>}
+            </select>
+          </label>
+          {space && <span className="oi-workbench__revision">rev {space.state.revision}</span>}
+          {space?.state.focus && <span className="oi-workbench__focus">focus · {space.state.focus.target}</span>}
+        </div>
+        {spaceError && <p className="oi-workbench__error">SessionSpace: {spaceError}</p>}
+
+        <div className="oi-workbench__grid">
+          <article className="oi-workbench__pane">
+            <p className="oi-eyebrow">SessionSpace</p>
+            <h3>Resolved relations</h3>
+            {space ? (
+              <>
+                <RelationList label="Projects" refs={projectRefs} empty="No Project membership authored." />
+                <AgentRelationList refs={agentRefs} onFocus={focusAgent} />
+                <RelationList label="Surfaces" refs={surfaceRefs} empty="No Surface attachment authored." />
+                <RelationList label="Native bindings" refs={nativeRefs} empty="No provider/host/material ref authored." />
+                <details>
+                  <summary>Explain / History</summary>
+                  <pre>{jsonPreview({ explanation: space.explanation, history: space.history })}</pre>
+                </details>
+              </>
+            ) : <p className="oi-muted">Open a native SessionSpace to inspect its authored relations.</p>}
+          </article>
+
+          <article className="oi-workbench__pane oi-workbench__knowledge">
+            <p className="oi-eyebrow">ProjectCentral → SemanticWiki → AIKit</p>
+            <h3>Knowledge</h3>
+            <form onSubmit={searchKnowledge} className="oi-workbench__search">
+              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search this local project world" />
+              <button type="submit" disabled={!query.trim()}>Search</button>
+            </form>
+            <div className="oi-workbench__modes" aria-label="Knowledge presentation">
+              {(['list', 'tree', 'graph', 'reading', 'history'] as KnowledgeMode[]).map((entry) => (
+                <button
+                  key={entry}
+                  type="button"
+                  className={mode === entry ? 'is-active' : ''}
+                  disabled={entry !== 'list' && !selectedKnowledge}
+                  onClick={() => {
+                    if (entry === 'list') {
+                      setMode('list');
+                      return;
+                    }
+                    if (selectedKnowledge) void selectKnowledge(selectedKnowledge, entry);
+                  }}
+                >{entry}</button>
+              ))}
             </div>
-          )}
-          {(mode === 'tree' || mode === 'graph') && knowledgeDetail != null && (
-            <RelationPresentation mode={mode} view={knowledgeDetail as KnowledgeRelationView} />
-          )}
-          {(mode === 'reading' || mode === 'history') && knowledgeDetail != null && (
-            <pre className="oi-workbench__detail">{jsonPreview(knowledgeDetail)}</pre>
-          )}
-          {knowledgeError && <p className="oi-workbench__error">Knowledge: {knowledgeError}</p>}
-        </article>
-      </div>
-    </section>
+            {knowledge?.absences.map((absence) => <p className="oi-muted" key={absence}>{absence}</p>)}
+            {mode === 'list' && (
+              <div className="oi-workbench__hits">
+                {knowledge?.hits.map((hit) => (
+                  <button
+                    key={hit.resource}
+                    type="button"
+                    className={selectedKnowledge?.resource === hit.resource ? 'is-current' : ''}
+                    onClick={() => void selectKnowledge(hit)}
+                  >
+                    <strong>{hit.label}</strong>
+                    <span>{hit.kind} · {hit.authority}</span>
+                    {hit.snippet && <small>{hit.snippet}</small>}
+                  </button>
+                ))}
+                {knowledge && !knowledge.hits.length && <p className="oi-muted">No matching local Knowledge refs.</p>}
+              </div>
+            )}
+            {(mode === 'tree' || mode === 'graph') && knowledgeDetail != null && (
+              <RelationPresentation mode={mode} view={knowledgeDetail as KnowledgeRelationView} />
+            )}
+            {(mode === 'reading' || mode === 'history') && knowledgeDetail != null && (
+              <pre className="oi-workbench__detail">{jsonPreview(knowledgeDetail)}</pre>
+            )}
+            {knowledgeError && <p className="oi-workbench__error">Knowledge: {knowledgeError}</p>}
+          </article>
+        </div>
+      </section>
+      {encounterHost && createPortal(
+        <AgentEncounterSurface agentSessionRef={activeAgentSession} onSelect={onSelect} />,
+        encounterHost,
+      )}
+    </>
   );
 }
 
@@ -489,8 +505,6 @@ export function AgentEncounterSurface({
       setError(messageFrom(nextError));
     } finally {
       setSurface(null);
-      // Provider material is an ephemeral renderer projection, not a transcript
-      // authority. Closing the Surface deliberately drops this local view.
       setSignals([]);
     }
   }
