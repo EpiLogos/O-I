@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { ExploreSurface } from './ExploreSurface';
 import type { WorkbenchEvidence, WorkbenchSemanticRef } from './workbench';
+import './explore-workbench.css';
 
 type ExploreEntry = {
   ref: string;
