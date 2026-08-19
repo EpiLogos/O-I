@@ -20,12 +20,16 @@ pub enum BridgeCallClass {
     MutateSessionSpaceFocus,
     InteractAgentSession,
     ObserveKnowledge,
+    ObserveProjectField,
+    RetrieveProjectSource,
+    ObserveProjectReflection,
+    InvokeProjectOwnerAction,
     SelectSemanticRef,
     OpenDestination,
 }
 
 impl BridgeCallClass {
-    pub const ALL: [Self; 11] = [
+    pub const ALL: [Self; 15] = [
         Self::DiscloseComposition,
         Self::DiscloseContributions,
         Self::ObserveFactoryBuild,
@@ -35,6 +39,10 @@ impl BridgeCallClass {
         Self::MutateSessionSpaceFocus,
         Self::InteractAgentSession,
         Self::ObserveKnowledge,
+        Self::ObserveProjectField,
+        Self::RetrieveProjectSource,
+        Self::ObserveProjectReflection,
+        Self::InvokeProjectOwnerAction,
         Self::SelectSemanticRef,
         Self::OpenDestination,
     ];
