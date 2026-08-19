@@ -62,6 +62,7 @@ jobs:
           node --test shared-field/*.test.mjs
           node --test desktop/ui/src/explore-presentation.test.mjs
           node --test desktop/ui/src/workbench-presentation.test.mjs
+          node --test desktop/ui/src/project-field-presentation.test.mjs
 
   native-shell:
     runs-on: macos-15

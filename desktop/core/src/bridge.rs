@@ -47,7 +47,7 @@ pub struct BridgeDenied {
 }
 
 impl fmt::Display for BridgeDenied {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(formatter, "bridge caller {:?} is not authorised for {:?}", self.caller, self.call)
     }
 }

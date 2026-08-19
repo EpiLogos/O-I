@@ -7,6 +7,7 @@ mod live_product;
 mod local_aikit;
 mod local_factory;
 mod native_application;
+mod project_field;
 mod project_knowledge;
 mod shell;
 
@@ -39,6 +40,10 @@ pub use local_aikit::{
 };
 pub use local_factory::{host_factory_snapshot, LocalFactoryHost};
 pub use native_application::{load_context_resolution, NativeContextResolution};
+pub use project_field::{
+    LocalProjectField, NativeOwnerReading, ProjectFieldSnapshot, ProjectMapStatus,
+    PROJECT_FIELD_VERSION,
+};
 pub use project_knowledge::LocalProjectKnowledge;
 pub use shell::{
     DesktopHost, RefProvenance, SemanticRef, ShellDestination, ShellSnapshot, SuiteCondition,

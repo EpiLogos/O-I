@@ -1,28 +1,62 @@
-//! Local/private Knowledge workbench over ProjectCentral + AIKit Knowledge.
+//! Local/private Project work field over ProjectCentral + AIKit Knowledge.
 //!
-//! ProjectCentral remains the source owner and SemanticWiki remains the relation
-//! authority. O:I rebuilds AIKit's derived index for navigation and records only
-//! AIKit-owned route/history receipts. The Central root Human Wiki is deliberately
-//! not loaded by this default binding: local retrievability is bounded and does
-//! not imply ambient disclosure, Projection, or publication.
+//! ProjectCentral remains source/ground authority and SemanticWiki remains Wiki
+//! relation authority. O:I composes their native AIKit readings; it does not own
+//! source identity, Project identity, Wiki state, ProjectMap graph state, or Agent
+//! Context disclosure. Stable selection remains a separate host concern.
 
 use std::path::Path;
+use std::sync::Mutex;
 
 use aikit_adapters::ProjectCentralFilesystemBinding;
 use aikit_core::{
-    FamiliarityContext, KnowledgeAddress, KnowledgeApplication, KnowledgeExplanation,
+    AikitError, FamiliarityContext, KnowledgeAddress, KnowledgeApplication, KnowledgeExplanation,
     KnowledgeProviderStatus, KnowledgeReading, KnowledgeRelationView, KnowledgeSearchResult,
-    ProjectCentralBinding, ResourceRef, Result as AikitResult, SemanticWikiIndex,
-    SemanticWikiProvider,
+    ProjectCentralBinding, ProjectReflectionReadModel, ResourceRef, Result as AikitResult,
+    SemanticWikiIndex, SemanticWikiProvider,
 };
 use aikit_store::{AikitHome, KnowledgeApplicationReceipt, KnowledgeApplicationStore};
+use serde::Serialize;
+use serde_json::Value;
 
-#[derive(Debug, Clone)]
+use crate::project_field::{LocalProjectField, ProjectFieldSnapshot};
+
+#[derive(Debug, Serialize)]
+pub struct ProjectKnowledgeStatus {
+    pub knowledge: KnowledgeProviderStatus,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub project_field: Option<ProjectFieldSnapshot>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub project_field_error: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(untagged)]
+pub enum ProjectReading {
+    Knowledge(KnowledgeReading),
+    Source(aikit_core::ContextSourceReadOutcome),
+}
+
+#[derive(Debug, Serialize)]
+#[serde(untagged)]
+pub enum ProjectExplanation {
+    Knowledge(Box<KnowledgeExplanation>),
+    Source(Value),
+}
+
+#[derive(Debug, Serialize)]
+#[serde(untagged)]
+pub enum ProjectRelations {
+    Knowledge(KnowledgeRelationView),
+    Reflection(ProjectReflectionReadModel),
+}
+
 pub struct LocalProjectKnowledge {
     binding: ProjectCentralBinding,
     index: SemanticWikiIndex,
     context: FamiliarityContext,
     store: KnowledgeApplicationStore,
+    project_field: Mutex<LocalProjectField>,
 }
 
 impl LocalProjectKnowledge {
@@ -54,7 +88,8 @@ impl LocalProjectKnowledge {
         agency: Option<ResourceRef>,
         focus: Option<String>,
     ) -> AikitResult<Self> {
-        let binding = ProjectCentralFilesystemBinding::inspect(project_root, central_root)?;
+        let project_root = project_root.as_ref().to_path_buf();
+        let binding = ProjectCentralFilesystemBinding::inspect(&project_root, central_root)?;
 
         // Canonical project Wiki plus explicitly adopted Wikis form the default
         // local project horizon. The optional Central root Wiki is not ambiently
@@ -71,11 +106,14 @@ impl LocalProjectKnowledge {
             agency,
             focus,
         };
+        let project_field = LocalProjectField::discover(&project_root, central_root, None)
+            .map_err(|error| AikitError::new("oi.project_field.open", error))?;
         Ok(Self {
             binding: binding.semantic,
             index,
             context,
             store: KnowledgeApplicationStore::new(aikit_home),
+            project_field: Mutex::new(project_field),
         })
     }
 
@@ -87,8 +125,27 @@ impl LocalProjectKnowledge {
         &self.context
     }
 
-    pub fn status(&self) -> KnowledgeProviderStatus {
-        self.application().status()
+    pub fn status(&self) -> ProjectKnowledgeStatus {
+        let knowledge = self.application().status();
+        match self.project_field.lock() {
+            Ok(field) => match field.snapshot() {
+                Ok(project_field) => ProjectKnowledgeStatus {
+                    knowledge,
+                    project_field: Some(project_field),
+                    project_field_error: None,
+                },
+                Err(error) => ProjectKnowledgeStatus {
+                    knowledge,
+                    project_field: None,
+                    project_field_error: Some(error),
+                },
+            },
+            Err(_) => ProjectKnowledgeStatus {
+                knowledge,
+                project_field: None,
+                project_field_error: Some("Project field lock poisoned".into()),
+            },
+        }
     }
 
     pub fn search(&self, query: &str, limit: usize) -> AikitResult<KnowledgeSearchResult> {
@@ -97,13 +154,24 @@ impl LocalProjectKnowledge {
         Ok(result)
     }
 
-    pub fn read(&self, raw_resource: &str) -> AikitResult<KnowledgeReading> {
+    /// Explicit reading preserves the identity of the selected thing. Wiki refs
+    /// use the native Knowledge application; ContextSource refs use AIKit's
+    /// provider-owned retrieval with a Human target. Selection itself never calls
+    /// this method and therefore never becomes retrieval or Agent disclosure.
+    pub fn read(&self, raw_resource: &str) -> AikitResult<ProjectReading> {
+        if self.project_source_exists(raw_resource)? {
+            let mut field = self.project_field()?;
+            return field
+                .read_source(raw_resource)
+                .map(ProjectReading::Source)
+                .map_err(|error| AikitError::new("oi.project_source.read", error));
+        }
         let address = self.resolve_address(raw_resource)?;
         let application = self.application();
         let reading = application.read(&address)?;
         let route = application.route(None, std::slice::from_ref(&address))?;
         self.store.append_route(route)?;
-        Ok(reading)
+        Ok(ProjectReading::Knowledge(reading))
     }
 
     pub fn relations(
@@ -112,15 +180,33 @@ impl LocalProjectKnowledge {
         depth: u8,
         max_nodes: usize,
         max_edges: usize,
-    ) -> AikitResult<KnowledgeRelationView> {
+    ) -> AikitResult<ProjectRelations> {
+        if self.project_source_exists(raw_resource)? {
+            let field = self.project_field()?;
+            return field
+                .reflection(raw_resource)
+                .map(ProjectRelations::Reflection)
+                .map_err(|error| AikitError::new("oi.project_reflection.read", error));
+        }
         let address = self.resolve_address(raw_resource)?;
         self.application()
             .relations(&address, depth, max_nodes, max_edges)
+            .map(ProjectRelations::Knowledge)
     }
 
-    pub fn explain(&self, raw_resource: &str) -> AikitResult<KnowledgeExplanation> {
+    pub fn explain(&self, raw_resource: &str) -> AikitResult<ProjectExplanation> {
+        if self.project_source_exists(raw_resource)? {
+            let field = self.project_field()?;
+            return field
+                .explain_source(raw_resource)
+                .map(ProjectExplanation::Source)
+                .map_err(|error| AikitError::new("oi.project_source.explain", error));
+        }
         let address = self.resolve_address(raw_resource)?;
-        self.application().explain(&address)
+        self.application()
+            .explain(&address)
+            .map(Box::new)
+            .map(ProjectExplanation::Knowledge)
     }
 
     pub fn history(
@@ -136,6 +222,16 @@ impl LocalProjectKnowledge {
             .with_wiki(SemanticWikiProvider::new(&self.index))
     }
 
+    fn project_field(&self) -> AikitResult<std::sync::MutexGuard<'_, LocalProjectField>> {
+        self.project_field
+            .lock()
+            .map_err(|_| AikitError::new("oi.project_field.lock", "Project field lock poisoned"))
+    }
+
+    fn project_source_exists(&self, raw_resource: &str) -> AikitResult<bool> {
+        Ok(self.project_field()?.contains_source(raw_resource))
+    }
+
     fn resolve_address(&self, raw_resource: &str) -> AikitResult<KnowledgeAddress> {
         let resource = ResourceRef::parse(raw_resource)?;
         if let Some(address) = self.store.address(&resource)? {
@@ -147,10 +243,10 @@ impl LocalProjectKnowledge {
         if self.index.contains(&resource) {
             return Ok(KnowledgeAddress::Wiki(resource));
         }
-        Err(aikit_core::AikitError::new(
+        Err(AikitError::new(
             "oi.knowledge.address_unknown",
             format!(
-                "{raw_resource} is not present in the local SemanticWiki index and has not been resolved by Knowledge search"
+                "{raw_resource} is neither a Project ContextSource nor present in the local SemanticWiki index and has not been resolved by Knowledge search"
             ),
         ))
     }

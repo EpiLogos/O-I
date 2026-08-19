@@ -2,7 +2,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-const workbench = readFileSync(new URL('./workbench.tsx', import.meta.url), 'utf8');
+const workbench = [
+  readFileSync(new URL('./workbench.tsx', import.meta.url), 'utf8'),
+  readFileSync(new URL('./workbench-native.tsx', import.meta.url), 'utf8'),
+].join('\n');
 const runtime = readFileSync(new URL('./runtime-observation.tsx', import.meta.url), 'utf8');
 const shell = readFileSync(new URL('./main.tsx', import.meta.url), 'utf8');
 const host = readFileSync(new URL('./workbench-host.tsx', import.meta.url), 'utf8');
