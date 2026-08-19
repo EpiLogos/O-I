@@ -72,7 +72,12 @@ type PersonalApplication = {
     durableReturnOwner: string;
     protectedBodyProjection: string;
   };
-  provenance: { epiSourceRevision: string; qlProviderRevision: string; semanticSources: string[]; productScale: string };
+  provenance: {
+    epiSourceRevision: string;
+    qlProviderRevision: string;
+    semanticSources: string[];
+    productScale: string;
+  };
 };
 
 type NaraDaily = {
@@ -129,6 +134,7 @@ export function PersonalSurface({ onSelect }: Props) {
   const [daily, setDaily] = useState<NaraDaily | null>(null);
   const [body, setBody] = useState('');
   const [selection, setSelection] = useState<NaraSelection | null>(null);
+  const [hasTextSelection, setHasTextSelection] = useState(false);
   const [message, setMessage] = useState('Opening protected Personal subject…');
   const [busy, setBusy] = useState(false);
   const [epiiAgentSession, setEpiiAgentSession] = useState<string | null>(null);
@@ -157,7 +163,10 @@ export function PersonalSurface({ onSelect }: Props) {
         invoke<NaraDaily | null>('nara_daily_snapshot'),
       ]);
       if (!nextApplication || !nextDaily) throw new Error('No native Epi Personal 4/5/0 provider is configured.');
-      if (nextApplication.subject.episodeRef !== nextDaily.episodeRef || nextApplication.subject.episodeRevision !== nextDaily.episodeRevision) {
+      if (
+        nextApplication.subject.episodeRef !== nextDaily.episodeRef
+        || nextApplication.subject.episodeRevision !== nextDaily.episodeRevision
+      ) {
         throw new Error('Personal application subject drifted from the current Nara episode/revision.');
       }
       setApplication(nextApplication);
@@ -209,6 +218,7 @@ export function PersonalSurface({ onSelect }: Props) {
       setBody(next.body);
       saved.current = next.body;
       setSelection(null);
+      setHasTextSelection(false);
       setMessage(`Saved · episode r${next.episodeRevision}`);
       return next;
     } catch (error) {
@@ -219,13 +229,20 @@ export function PersonalSurface({ onSelect }: Props) {
     }
   }
 
+  function observeEditorSelection() {
+    const source = editor.current;
+    setHasTextSelection(Boolean(source && source.selectionStart !== source.selectionEnd));
+  }
+
   async function governSelection() {
     const source = editor.current;
     if (!source || source.selectionStart === source.selectionEnd) return;
+    const startUtf16 = source.selectionStart;
+    const endUtf16 = source.selectionEnd;
     const current = body === saved.current ? daily : await save(body);
     if (!current) return;
-    const startByte = utf8ByteOffset(body, source.selectionStart);
-    const endByte = utf8ByteOffset(body, source.selectionEnd);
+    const startByte = utf8ByteOffset(body, startUtf16);
+    const endByte = utf8ByteOffset(body, endUtf16);
     try {
       const selected = await invoke<NaraSelection>('nara_send_selection', {
         episodeRef: current.episodeRef,
@@ -233,15 +250,25 @@ export function PersonalSurface({ onSelect }: Props) {
         startByte,
         endByte,
       });
-      if (selected.episodeRef !== current.episodeRef || selected.episodeRevision !== current.episodeRevision || selected.startByte !== startByte || selected.endByte !== endByte) {
+      if (
+        selected.episodeRef !== current.episodeRef
+        || selected.episodeRevision !== current.episodeRevision
+        || selected.startByte !== startByte
+        || selected.endByte !== endByte
+      ) {
         throw new Error('Governed selection returned identity drift.');
       }
       setSelection(selected);
+      setHasTextSelection(false);
       setMessage('Exact saved range is now the shared Personal subject child; Agent Context remains undisclosed.');
       await onSelect(selectionRef(selected), {
         title: 'Governed Personal selection',
         summary: `r${selected.episodeRevision} · bytes ${selected.startByte}–${selected.endByte} · selection ≠ Agent Context disclosure`,
-        detail: { disclosureScope: selected.disclosureScope, coordinateRef: selected.coordinateRef, profileRef: selected.profileRef },
+        detail: {
+          disclosureScope: selected.disclosureScope,
+          coordinateRef: selected.coordinateRef,
+          profileRef: selected.profileRef,
+        },
       });
     } catch (error) {
       setMessage(messageFrom(error));
@@ -270,8 +297,8 @@ export function PersonalSurface({ onSelect }: Props) {
     if (!selection) return;
     setBusy(true);
     try {
-      const ground = await invoke<Record<string, any>>('epi_personal_ground', selectionArgs(selection, { reviewRef: null }));
-      const bimbaRef = ground?.bimba?.semanticRef as string | undefined;
+      const ground = await invoke<Record<string, unknown>>('epi_personal_ground', selectionArgs(selection, { reviewRef: null }));
+      const bimbaRef = nestedString(ground, ['bimba', 'semanticRef']);
       let sharedKnowledge: unknown = null;
       let sharedKnowledgeAbsence: string | null = null;
       if (bimbaRef) {
@@ -291,7 +318,9 @@ export function PersonalSurface({ onSelect }: Props) {
           provenance: { source: 'Epi native ground ref; shared Knowledge resolves presentation when available' },
         }, {
           title: 'Anuttara / Bimba',
-          summary: sharedKnowledge ? 'Native Epi source ref resolved through shared Knowledge.' : 'Native Epi source ref retained; shared Knowledge provider is currently unavailable for this ref.',
+          summary: sharedKnowledge
+            ? 'Native Epi source ref resolved through shared Knowledge.'
+            : 'Native Epi source ref retained; shared Knowledge provider is currently unavailable for this ref.',
           detail: { ground, sharedKnowledge, sharedKnowledgeAbsence },
         });
       }
@@ -304,11 +333,12 @@ export function PersonalSurface({ onSelect }: Props) {
   }
 
   async function history() {
+    if (!application) return;
     setBusy(true);
     try {
       const reading = await invoke<Record<string, unknown> | null>('central_now_snapshot');
       if (!reading) throw new Error('Central NOW/DAY is not configured.');
-      await onSelect(application ? subjectRef(application) : selectionRef(selection!), {
+      await onSelect(subjectRef(application), {
         title: 'Central NOW / DAY',
         summary: 'Central-owned temporal return field; read-only from this Personal review path.',
         detail: reading,
@@ -370,7 +400,6 @@ export function PersonalSurface({ onSelect }: Props) {
     );
   }
 
-  const hasTextSelection = Boolean(editor.current && editor.current.selectionStart !== editor.current.selectionEnd);
   return (
     <>
       <section className="epi-personal" aria-label="Epi Personal 4/5/0">
@@ -393,7 +422,11 @@ export function PersonalSurface({ onSelect }: Props) {
           className="epi-personal__journal"
           aria-label="Personal journal"
           value={body}
-          onChange={(event) => setBody(event.target.value)}
+          onChange={(event) => {
+            setBody(event.target.value);
+            setHasTextSelection(false);
+          }}
+          onSelect={observeEditorSelection}
           placeholder="Write here…"
           spellCheck
         />
@@ -415,7 +448,9 @@ export function PersonalSurface({ onSelect }: Props) {
         <div className="epi-personal__contract">
           <div>
             <p className="oi-eyebrow">M5 · Epii</p>
-            {epiiAgentSession ? <p>Canonical AgentSession found: <code>{epiiAgentSession}</code></p> : <p className="oi-muted">No current AgentSession identifies Epii. O:I will not substitute an arbitrary session.</p>}
+            {epiiAgentSession
+              ? <p>Canonical AgentSession found: <code>{epiiAgentSession}</code></p>
+              : <p className="oi-muted">No current AgentSession identifies Epii. O:I will not substitute an arbitrary session.</p>}
           </div>
           <div>
             <p className="oi-eyebrow">Deep-open</p>
@@ -492,6 +527,15 @@ function bodyFreeApplication(application: PersonalApplication) {
     authority: application.authority,
     provenance: application.provenance,
   };
+}
+
+function nestedString(value: Record<string, unknown>, path: string[]) {
+  let current: unknown = value;
+  for (const segment of path) {
+    if (!current || typeof current !== 'object' || Array.isArray(current)) return undefined;
+    current = (current as Record<string, unknown>)[segment];
+  }
+  return typeof current === 'string' ? current : undefined;
 }
 
 function utf8ByteOffset(value: string, utf16Offset: number) {
