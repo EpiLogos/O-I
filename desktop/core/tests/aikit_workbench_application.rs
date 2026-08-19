@@ -1,7 +1,8 @@
 use std::fs;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use aikit_core::{SessionSpaceMutation, SessionSpaceRef};
+use aikit_core::session_space_application::SessionSpaceMutation;
+use aikit_core::SessionSpaceRef;
 use aikit_store::{AikitHome, SessionSpaceApplicationStore};
 use oi_desktop_core::{LocalAikitWorkbench, SessionSpaceFocusRequest};
 
