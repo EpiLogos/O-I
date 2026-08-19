@@ -1,4 +1,7 @@
 pub fn cli_main() -> ExitCode {
+    if let Some(code) = existing_world_main() {
+        return code;
+    }
     if let Some(code) = suite_v2_main() {
         return code;
     }
