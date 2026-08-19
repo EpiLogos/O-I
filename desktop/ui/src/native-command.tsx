@@ -207,7 +207,7 @@ export function NativeSearchCommand({
 
     try {
       const returned = await invoke('dispatch_contextual_factory_action', {
-        emission: { action_ref: result.ref, subject_ref: result.subjectRef },
+        emission: { actionRef: result.ref, subjectRef: result.subjectRef },
         operationId: crypto.randomUUID(),
       });
       onActionResult?.(returned);
