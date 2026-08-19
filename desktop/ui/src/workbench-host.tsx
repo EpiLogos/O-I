@@ -9,11 +9,17 @@ export type SurfaceFocus = {
   subjectRef?: string;
 };
 
+/// Host placement metadata for an already-existing native Surface.
+///
+/// `surfaceRef` remains the canonical Surface identity. `region` is retained for
+/// the first P1 callers; `regions` allows one native Surface to be projected into
+/// several host regions without minting a second Surface identity.
 export type HostSurfaceDescriptor = {
   surfaceRef: string;
   title: string;
   nativeOwner: string;
-  region: WorkbenchHostRegion;
+  region?: WorkbenchHostRegion;
+  regions?: WorkbenchHostRegion[];
   provenance?: string;
   state?: 'ready' | 'degraded' | 'unavailable';
   subjectRef?: string;
@@ -76,6 +82,7 @@ export function ProfessionalWorkbenchHost({
   command,
   onSurfaceFocus,
   renderSurface,
+  renderRegionSurface,
 }: {
   surfaces: HostSurfaceDescriptor[];
   initialSurfaceRef: string;
@@ -87,6 +94,7 @@ export function ProfessionalWorkbenchHost({
   command: ReactNode;
   onSurfaceFocus?: (focus: SurfaceFocus) => void;
   renderSurface: (surface: HostSurfaceDescriptor, binding: SurfacePresentationBinding) => ReactNode;
+  renderRegionSurface?: (surface: HostSurfaceDescriptor, region: Exclude<WorkbenchHostRegion, 'canvas'>) => ReactNode;
 }) {
   const surfaceMap = useMemo(() => new Map(surfaces.map((surface) => [surface.surfaceRef, surface])), [surfaces]);
   const [layout, setLayout] = useState<WorkbenchLayout>(() => initialLayout(initialSurfaceRef));
@@ -178,7 +186,7 @@ export function ProfessionalWorkbenchHost({
 
   function openSurface(surfaceRef: string, pinned = false) {
     const surface = surfaceMap.get(surfaceRef);
-    if (!surface) return;
+    if (!surface || !surfaceRegions(surface).includes('canvas')) return;
     setLayout((current) => {
       for (const group of current.groups) {
         const existing = group.tabs.find((tab) => tab.surfaceRef === surfaceRef && tab.subjectRef === surface.subjectRef);
@@ -231,6 +239,8 @@ export function ProfessionalWorkbenchHost({
     setLayout((current) => {
       const [binding, ...closed] = current.closed;
       if (!binding) return current;
+      const surface = surfaceMap.get(binding.surfaceRef);
+      if (!surface || !surfaceRegions(surface).includes('canvas')) return { ...current, closed };
       const groupId = current.focusedGroupId || current.groups[0]?.groupId || 'group-1';
       const restored = { ...binding, bindingId: presentationId(binding.surfaceRef) };
       return {
@@ -333,6 +343,7 @@ export function ProfessionalWorkbenchHost({
   } as React.CSSProperties;
 
   const visibleGroups = layout.split === 'single' ? layout.groups.slice(0, 1) : layout.groups.slice(0, 2);
+  const regionSurfaceProps = { surfaces, renderRegionSurface, onSurfaceFocus };
 
   return (
     <main ref={rootRef} className="oi-professional-host oi-surface-light" style={style} data-split={layout.split}>
@@ -341,14 +352,19 @@ export function ProfessionalWorkbenchHost({
           <strong>{layout.regions.navigatorCollapsed ? 'O:I' : 'Navigator'}</strong>
           <button type="button" aria-label="Toggle navigator" onClick={() => toggleRegion('navigator')}>⇤</button>
         </div>
-        {!layout.regions.navigatorCollapsed && <div className="oi-host-region__body">{navigator}</div>}
+        {!layout.regions.navigatorCollapsed && (
+          <div className="oi-host-region__body">
+            {navigator}
+            <HostRegionSurfaces region="navigator" {...regionSurfaceProps} />
+          </div>
+        )}
         {!layout.regions.navigatorCollapsed && <div className="oi-resize-handle oi-resize-handle--x" onPointerDown={(event) => beginResize('navigator', event)} />}
       </aside>
 
       <section className="oi-host-canvas" data-host-region="canvas" tabIndex={-1} aria-label="Primary Canvas">
         <div className="oi-host-canvas__toolbar">
           <div className="oi-host-canvas__surface-menu">
-            {surfaces.filter((surface) => surface.region === 'canvas').map((surface) => (
+            {surfaces.filter((surface) => surfaceRegions(surface).includes('canvas')).map((surface) => (
               <button key={surface.surfaceRef} type="button" onClick={() => openSurface(surface.surfaceRef)}>{surface.title}</button>
             ))}
           </div>
@@ -384,7 +400,7 @@ export function ProfessionalWorkbenchHost({
                   })}
                 </div>
                 <div className="oi-editor-surface" role="tabpanel">
-                  {!active && <HostEmptyState surfaces={surfaces.filter((surface) => surface.region === 'canvas')} onOpen={openSurface} />}
+                  {!active && <HostEmptyState surfaces={surfaces.filter((surface) => surfaceRegions(surface).includes('canvas'))} onOpen={openSurface} />}
                   {active && !surfaceMap.has(active.surfaceRef) && (
                     <div className="oi-host-stale">
                       <strong>Surface no longer available</strong>
@@ -406,7 +422,12 @@ export function ProfessionalWorkbenchHost({
           {!layout.regions.sidecarCollapsed && <strong>Agency / Inspector</strong>}
           <button type="button" aria-label="Toggle sidecar" onClick={() => toggleRegion('sidecar')}>⇥</button>
         </div>
-        {!layout.regions.sidecarCollapsed && <div className="oi-host-region__body oi-shell__inspector">{sidecar}</div>}
+        {!layout.regions.sidecarCollapsed && (
+          <div className="oi-host-region__body oi-shell__inspector">
+            {sidecar}
+            <HostRegionSurfaces region="sidecar" {...regionSurfaceProps} />
+          </div>
+        )}
       </aside>
 
       <aside className="oi-host-region oi-host-system" data-host-region="system" tabIndex={-1} aria-label="System region">
@@ -415,7 +436,12 @@ export function ProfessionalWorkbenchHost({
           {!layout.regions.systemCollapsed && <strong>System</strong>}
           <button type="button" aria-label="Toggle system region" onClick={() => toggleRegion('system')}>⚙</button>
         </div>
-        {!layout.regions.systemCollapsed && <div className="oi-host-region__body">{system}</div>}
+        {!layout.regions.systemCollapsed && (
+          <div className="oi-host-region__body">
+            {system}
+            <HostRegionSurfaces region="system" {...regionSurfaceProps} />
+          </div>
+        )}
       </aside>
 
       <section className="oi-host-region oi-host-lower" data-host-region="lower" tabIndex={-1} aria-label="Lower deep region">
@@ -424,11 +450,56 @@ export function ProfessionalWorkbenchHost({
           <strong>Lower / Deep</strong>
           <button type="button" aria-label="Toggle lower region" onClick={() => toggleRegion('lower')}>⌄</button>
         </div>
-        {!layout.regions.lowerCollapsed && <div className="oi-host-region__body">{lower}</div>}
+        {!layout.regions.lowerCollapsed && (
+          <div className="oi-host-region__body">
+            {lower}
+            <HostRegionSurfaces region="lower" {...regionSurfaceProps} />
+          </div>
+        )}
       </section>
 
       <footer className="oi-host-status" aria-label="Status and context bar">{status}</footer>
     </main>
+  );
+}
+
+function HostRegionSurfaces({
+  surfaces,
+  region,
+  renderRegionSurface,
+  onSurfaceFocus,
+}: {
+  surfaces: HostSurfaceDescriptor[];
+  region: Exclude<WorkbenchHostRegion, 'canvas'>;
+  renderRegionSurface?: (surface: HostSurfaceDescriptor, region: Exclude<WorkbenchHostRegion, 'canvas'>) => ReactNode;
+  onSurfaceFocus?: (focus: SurfaceFocus) => void;
+}) {
+  const placed = surfaces.filter((surface) => surfaceRegions(surface).includes(region));
+  if (!placed.length) return null;
+  return (
+    <div className="oi-host-region-surfaces" data-surface-region={region}>
+      {placed.map((surface) => (
+        <section
+          key={`${region}:${surface.surfaceRef}`}
+          className="oi-host-region-surface"
+          data-surface-ref={surface.surfaceRef}
+          data-surface-state={surface.state ?? 'ready'}
+          onPointerDown={() => onSurfaceFocus?.({ surfaceRef: surface.surfaceRef, subjectRef: surface.subjectRef })}
+        >
+          {renderRegionSurface ? renderRegionSurface(surface, region) : <DefaultRegionSurface surface={surface} />}
+        </section>
+      ))}
+    </div>
+  );
+}
+
+function DefaultRegionSurface({ surface }: { surface: HostSurfaceDescriptor }) {
+  return (
+    <div className="oi-host-region-surface__descriptor">
+      <strong>{surface.title}</strong>
+      <code>{surface.surfaceRef}</code>
+      <small>{surface.nativeOwner}{surface.provenance ? ` · ${surface.provenance}` : ''}</small>
+    </div>
   );
 }
 
@@ -471,13 +542,21 @@ function reconcileLayout(layout: WorkbenchLayout, surfaces: Map<string, HostSurf
   const groups = layout.groups.length ? layout.groups : [{ groupId: 'group-1', tabs: [], activeBindingId: undefined }];
   const hasAnyBinding = groups.some((group) => group.tabs.length > 0);
   if (hasAnyBinding) return { ...layout, groups };
-  const surface = surfaces.get(initialSurfaceRef) ?? surfaces.values().next().value as HostSurfaceDescriptor | undefined;
+  const initial = surfaces.get(initialSurfaceRef);
+  const surface = initial && surfaceRegions(initial).includes('canvas')
+    ? initial
+    : [...surfaces.values()].find((candidate) => surfaceRegions(candidate).includes('canvas'));
   if (!surface) return { ...layout, groups };
   const binding = bindingFor(surface, true);
   return {
     ...layout,
     groups: groups.map((group, index) => index === 0 ? { ...group, tabs: [binding], activeBindingId: binding.bindingId } : group),
   };
+}
+
+function surfaceRegions(surface: HostSurfaceDescriptor): WorkbenchHostRegion[] {
+  const regions = surface.regions?.length ? surface.regions : surface.region ? [surface.region] : ['canvas'];
+  return [...new Set(regions)];
 }
 
 function bindingFor(surface: HostSurfaceDescriptor, pinned: boolean): SurfacePresentationBinding {
