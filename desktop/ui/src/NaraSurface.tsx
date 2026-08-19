@@ -93,6 +93,7 @@ export function NaraSurface({ onActionReceipt }: Props) {
   const [selection, setSelection] = useState<[number, number]>([0, 0]);
   const [actionReceipt, setActionReceipt] = useState<NaraActionReceipt | null>(null);
   const [depth, setDepth] = useState<PersonalDepthReceipt | null>(null);
+  const [history, setHistory] = useState<Record<string, unknown> | null>(null);
   const [proposalDraft, setProposalDraft] = useState('');
   const [depthBusy, setDepthBusy] = useState(false);
   const [state, setState] = useState<'loading' | 'saved' | 'saving' | 'degraded'>('loading');
@@ -170,6 +171,7 @@ export function NaraSurface({ onActionReceipt }: Props) {
       });
       setActionReceipt(receipt);
       setDepth(null);
+      setHistory(null);
       setProposalDraft(receipt.selection.selectedText);
       await onActionReceipt(receipt);
       setMessage('Selection shared with the situated Epi context');
@@ -181,6 +183,7 @@ export function NaraSurface({ onActionReceipt }: Props) {
   async function summon(kind: PersonalDepthKind, proposedContent?: string) {
     if (!actionReceipt) return;
     setDepthBusy(true);
+    setHistory(null);
     const selected = actionReceipt.selection;
     const currentReading = depth?.reading;
     const reviewRef = stringField(currentReading, 'reviewRef');
@@ -202,6 +205,22 @@ export function NaraSurface({ onActionReceipt }: Props) {
       }
       setDepth(next);
       setMessage(`${humanDepthName(kind)} opened around the same Nara selection`);
+    } catch (error) {
+      setMessage(String(error));
+    } finally {
+      setDepthBusy(false);
+    }
+  }
+
+  async function openHistory() {
+    if (!actionReceipt) return;
+    setDepthBusy(true);
+    try {
+      const next = await invoke<Record<string, unknown> | null>('central_now_snapshot');
+      if (!next) throw new Error('Central NOW is not configured for this O:I session.');
+      setDepth(null);
+      setHistory(next);
+      setMessage('Central NOW history opened around the same Nara selection');
     } catch (error) {
       setMessage(String(error));
     } finally {
@@ -243,8 +262,8 @@ export function NaraSurface({ onActionReceipt }: Props) {
     <section className="nara-surface" aria-label="M4 prime Nara daily surface">
       <header className="nara-header">
         <div>
-          <p className="oi-eyebrow">Epi / Pratibimba · {depth ? depthCoordinate(depth.kind) : 'M4′ Nara'}</p>
-          <h1 className="nara-title">{depth ? humanDepthName(depth.kind) : 'Today.'}</h1>
+          <p className="oi-eyebrow">Epi / Pratibimba · {history ? 'Central NOW · read-only temporal return' : depth ? depthCoordinate(depth.kind) : 'M4′ Nara'}</p>
+          <h1 className="nara-title">{history ? 'History' : depth ? humanDepthName(depth.kind) : 'Today.'}</h1>
         </div>
         <div className="nara-orientation" aria-label="Current Epi orientation">
           <span>{context.dayId}</span>
@@ -254,7 +273,9 @@ export function NaraSurface({ onActionReceipt }: Props) {
         </div>
       </header>
 
-      {depth && actionReceipt ? (
+      {history && actionReceipt ? (
+        <HistorySurface reading={history} selection={actionReceipt} onBack={() => setHistory(null)} />
+      ) : depth && actionReceipt ? (
         <PersonalDepthSurface
           receipt={depth}
           selection={actionReceipt}
@@ -263,6 +284,7 @@ export function NaraSurface({ onActionReceipt }: Props) {
           busy={depthBusy}
           onBack={() => setDepth(null)}
           onSummon={(kind) => void summon(kind)}
+          onHistory={() => void openHistory()}
           onCreateProposal={() => void summon('proposal', proposalDraft)}
           onReject={() => void rejectProposal()}
         />
@@ -291,6 +313,7 @@ export function NaraSurface({ onActionReceipt }: Props) {
               <button type="button" disabled={depthBusy} onClick={() => void summon('bimba')}>Bimba</button>
               <button type="button" disabled={depthBusy} onClick={() => void summon('provenance')}>Provenance</button>
               <button type="button" disabled={depthBusy} onClick={() => void summon('proposal')}>Proposal</button>
+              <button type="button" disabled={depthBusy} onClick={() => void openHistory()}>History</button>
             </nav>
           )}
 
@@ -347,6 +370,7 @@ function PersonalDepthSurface({
   busy,
   onBack,
   onSummon,
+  onHistory,
   onCreateProposal,
   onReject,
 }: {
@@ -357,6 +381,7 @@ function PersonalDepthSurface({
   busy: boolean;
   onBack: () => void;
   onSummon: (kind: PersonalDepthKind) => void;
+  onHistory: () => void;
   onCreateProposal: () => void;
   onReject: () => void;
 }) {
@@ -441,8 +466,28 @@ function PersonalDepthSurface({
         <button type="button" disabled={busy} onClick={() => onSummon('bimba')}>Bimba</button>
         <button type="button" disabled={busy} onClick={() => onSummon('provenance')}>Provenance</button>
         <button type="button" disabled={busy} onClick={() => onSummon('proposal')}>Proposal</button>
+        <button type="button" disabled={busy} onClick={onHistory}>History</button>
       </nav>
       <small className="nara-depth__receipt">{receipt.actionRef} · {receipt.subjectRef} · authority {receipt.authoritySubjectRef}</small>
+    </article>
+  );
+}
+
+function HistorySurface({ reading, selection, onBack }: { reading: Record<string, unknown>; selection: NaraActionReceipt; onBack: () => void }) {
+  return (
+    <article className="nara-depth" data-depth="history">
+      <div className="nara-depth__subject">
+        <button type="button" onClick={onBack}>← Nara</button>
+        <blockquote>{selection.selection.selectedText}</blockquote>
+        <small>same selection {selection.selection.selectionRef} · Central NOW is a temporal working field, not canon</small>
+      </div>
+      <div className="nara-depth__body">
+        <p>History here is Central-owned NOW/DAY working context. It can show the current return field around this lived concern without rewriting Nara, Epi theory, or durable human source.</p>
+        <details open>
+          <summary>Current NOW reading</summary>
+          <pre>{pretty(reading)}</pre>
+        </details>
+      </div>
     </article>
   );
 }
