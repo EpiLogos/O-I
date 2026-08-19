@@ -45,7 +45,7 @@ P3 deliberately imports and mounts `AgentEncounterSurface`; it does not add `Des
 
 ### AIKit accepted main
 
-Current accepted main consumed by the inherited host remains `42127820d6e5bf4ea5ee248e88e305e14c5c1a7c`.
+Current AIKit `main` revalidated for this P3 cut is `5308405e447b4a48e57fa2cfb2c5e6ef276ae343`. It is the direct merge descendant of the `42127820d6e5bf4ea5ee248e88e305e14c5c1a7c` application ABI already inherited by #99/#118; the ContextResolution, SessionSpace and connection contracts consumed here are unchanged across that move.
 
 P3 reads:
 
