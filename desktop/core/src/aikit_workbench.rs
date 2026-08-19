@@ -1,23 +1,30 @@
 //! Native AIKit application bindings for the O:I desktop workbench.
 //!
-//! O:I is a projection over AIKit-owned application state.  This module never
+//! O:I is a projection over AIKit-owned application state. This module never
 //! writes a desktop SessionSpace document: every mutation is staged and applied
 //! by `SessionSpaceApplicationStore`, so AIKit remains the canonical authority
-//! for identity, basis validation, receipts, reconstruction and History.
+//! for identity, basis validation, receipts, reconstruction and History. Live
+//! provider state remains an observation beside that authority.
 
 use std::path::Path;
 
-use aikit_core::{ResourceRef, Result as AikitResult, SessionSpaceRef};
+use aikit_core::session_space::SessionSpaceReadModel;
 use aikit_core::session_space_application::{
     SessionSpaceAuthoredState, SessionSpaceExplanation, SessionSpaceFocus,
     SessionSpaceMutation,
 };
+use aikit_core::{ResourceRef, Result as AikitResult, SessionSpaceRef};
 use aikit_store::{AikitHome, SessionSpaceApplicationStore, SessionSpaceReceipt};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct SessionSpaceApplicationReading {
     pub state: SessionSpaceAuthoredState,
+    /// Current target-owned runtime observation when the native provider has
+    /// published one for this exact SessionSpace identity. It is never persisted
+    /// by O:I as canonical state.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub runtime: Option<SessionSpaceReadModel>,
     pub explanation: SessionSpaceExplanation,
     #[serde(default)]
     pub history: Vec<SessionSpaceReceipt>,
@@ -57,17 +64,41 @@ impl LocalAikitWorkbench {
         SessionSpaceApplicationStore::new(self.home.clone()).list()
     }
 
-    pub fn read_session_space(
+    pub fn read_session_space(&self, raw: &str) -> AikitResult<SessionSpaceApplicationReading> {
+        self.read_session_space_with_runtime(raw, None)
+    }
+
+    /// Reconcile the canonical AIKit application state with one current runtime
+    /// observation. Runtime identity must match exactly; provider-native ids are
+    /// never accepted as substitutes. AgentSession continuity is deliberately not
+    /// inferred here: AIKit requires explicit evidence from the AgentSession owner.
+    pub fn read_session_space_with_runtime(
         &self,
         raw: &str,
+        runtime: Option<&SessionSpaceReadModel>,
     ) -> AikitResult<SessionSpaceApplicationReading> {
         let session_space = SessionSpaceRef::parse(raw)?;
+        if let Some(runtime) = runtime {
+            if runtime.id != session_space {
+                return Err(aikit_core::AikitError::new(
+                    "oi.session_space.runtime_identity_mismatch",
+                    format!(
+                        "runtime observation {} cannot be projected as canonical SessionSpace {}",
+                        runtime.id, session_space
+                    ),
+                ));
+            }
+        }
         let store = SessionSpaceApplicationStore::new(self.home.clone());
         let state = store.load(&session_space)?;
         let history = store.history(&session_space)?;
-        let explanation = store.explain(&session_space, None)?;
+        let reconstruction = runtime
+            .map(|runtime| store.reconstruct(&session_space, Some(runtime), &[], &[]))
+            .transpose()?;
+        let explanation = store.explain(&session_space, reconstruction)?;
         Ok(SessionSpaceApplicationReading {
             state,
+            runtime: runtime.cloned(),
             explanation,
             history,
         })
@@ -88,7 +119,9 @@ impl LocalAikitWorkbench {
                 focus: Some(SessionSpaceFocus {
                     target,
                     region: request.region.clone(),
-                    provenance: vec!["O:I desktop requested focus through AIKit application authority".into()],
+                    provenance: vec![
+                        "O:I desktop requested focus through AIKit application authority".into(),
+                    ],
                 }),
             },
         )?;
