@@ -2,8 +2,9 @@ use oi_desktop_core::{
     host_native_contribution, ActionAuthorityStore, ActionExecutionRequest, AgentSurfaceOpenRequest,
     AgentSurfaceReading, AikitAgentSurface, BoundedActionGrant, BridgeCallClass, BridgeCaller,
     BridgePolicy, DesktopHost, FactoryActionRoundTrip, FactoryBuildSnapshot, HostedContribution,
-    LocalAikitWorkbench, LocalFactoryHost, LocalProjectKnowledge, NativeContributionReading,
-    SemanticRef, SessionSpaceFocusRequest, ShellDestination, ShellSnapshot, SurfaceActionEmission,
+    LocalAikitSessionSpaceHost, LocalAikitWorkbench, LocalFactoryHost, LocalProjectKnowledge,
+    NativeContributionReading, SemanticRef, SessionSpaceFocusRequest, ShellDestination,
+    ShellSnapshot, SurfaceActionEmission, AIKIT_SESSION_SPACE_CONTRIBUTION_REF,
     FACTORY_BUILD_CONTRIBUTION_REF,
 };
 use serde::{Deserialize, Serialize};
@@ -46,6 +47,7 @@ struct AppState {
     factory: Mutex<Option<LocalFactoryHost>>,
     action_authority: Mutex<ActionAuthorityStore>,
     aikit: Mutex<Option<LocalAikitWorkbench>>,
+    aikit_runtime: Mutex<Option<LocalAikitSessionSpaceHost>>,
     knowledge: Mutex<Option<LocalProjectKnowledge>>,
     agent_provider: Option<AgentProviderConfig>,
     agent_surface: Mutex<Option<AikitAgentSurface>>,
@@ -88,7 +90,11 @@ fn factory_build_snapshot(
         return Ok(None);
     };
     let observation = factory.refresh()?;
-    replace_factory_contribution(&state, observation.contribution)?;
+    replace_contribution(
+        &state,
+        FACTORY_BUILD_CONTRIBUTION_REF,
+        observation.contribution,
+    )?;
     Ok(observation.snapshot)
 }
 
@@ -153,7 +159,11 @@ fn dispatch_factory_action(
 
     let round_trip = factory.dispatch(&emission, authorised.action_grant())?;
     let observation = factory.observe()?;
-    replace_factory_contribution(&state, observation.contribution)?;
+    replace_contribution(
+        &state,
+        FACTORY_BUILD_CONTRIBUTION_REF,
+        observation.contribution,
+    )?;
     Ok(round_trip)
 }
 
@@ -184,6 +194,28 @@ fn aikit_session_space_read(
     BridgePolicy
         .authorize(BridgeCaller::ShellUi, BridgeCallClass::ObserveSessionSpace)
         .map_err(|error| error.to_string())?;
+
+    // Runtime observation is read independently from canonical application state.
+    // If configured, failure is returned rather than silently presenting stale
+    // provider truth as current. Identity is checked again by LocalAikitWorkbench.
+    let runtime_observation = {
+        let runtime = state
+            .aikit_runtime
+            .lock()
+            .map_err(|_| "AIKit runtime observation lock poisoned".to_owned())?;
+        runtime
+            .as_ref()
+            .map(LocalAikitSessionSpaceHost::observe)
+            .transpose()?
+    };
+    if let Some(observation) = runtime_observation.as_ref() {
+        replace_contribution(
+            &state,
+            AIKIT_SESSION_SPACE_CONTRIBUTION_REF,
+            observation.contribution.clone(),
+        )?;
+    }
+
     let aikit = state
         .aikit
         .lock()
@@ -193,7 +225,12 @@ fn aikit_session_space_read(
         .ok_or_else(|| "native AIKit application is not available".to_owned())?;
     to_value(
         aikit
-            .read_session_space(&session_space_ref)
+            .read_session_space_with_runtime(
+                &session_space_ref,
+                runtime_observation
+                    .as_ref()
+                    .map(|observation| &observation.read_model),
+            )
             .map_err(|error| error.to_string())?,
     )
 }
@@ -473,6 +510,13 @@ fn load_local_aikit() -> Result<Option<LocalAikitWorkbench>, String> {
         .map_err(|error| error.to_string())
 }
 
+fn load_local_aikit_runtime() -> Result<Option<LocalAikitSessionSpaceHost>, String> {
+    let Some(path) = env::var_os("OI_AIKIT_SESSION_SPACE_OBSERVATION") else {
+        return Ok(None);
+    };
+    LocalAikitSessionSpaceHost::open(PathBuf::from(path)).map(Some)
+}
+
 fn load_local_knowledge() -> Result<Option<LocalProjectKnowledge>, String> {
     let Some(project_root) = env::var_os("OI_PROJECT_ROOT") else {
         return Ok(None);
@@ -546,25 +590,25 @@ fn now_unix_ms() -> Result<u64, String> {
     u64::try_from(duration.as_millis()).map_err(|_| "system time exceeds u64 milliseconds".into())
 }
 
-fn replace_factory_contribution(
+fn replace_contribution(
     state: &State<'_, AppState>,
+    contribution_ref: &str,
     contribution: HostedContribution,
 ) -> Result<(), String> {
     let mut contributions = state
         .contributions
         .lock()
         .map_err(|_| "contribution catalog lock poisoned".to_owned())?;
-    replace_factory_contribution_in(&mut contributions, contribution);
+    replace_contribution_in(&mut contributions, contribution_ref, contribution);
     Ok(())
 }
 
-fn replace_factory_contribution_in(
+fn replace_contribution_in(
     contributions: &mut Vec<HostedContribution>,
+    contribution_ref: &str,
     contribution: HostedContribution,
 ) {
-    contributions.retain(|entry| {
-        entry.contribution.contribution_ref != FACTORY_BUILD_CONTRIBUTION_REF
-    });
+    contributions.retain(|entry| entry.contribution.contribution_ref != contribution_ref);
     contributions.push(contribution);
 }
 
@@ -588,6 +632,10 @@ fn main() {
         .map_err(|error| eprintln!("O:I native AIKit application unavailable: {error}"))
         .ok()
         .flatten();
+    let aikit_runtime = load_local_aikit_runtime()
+        .map_err(|error| eprintln!("O:I AIKit runtime observation unavailable: {error}"))
+        .ok()
+        .flatten();
     let knowledge = load_local_knowledge()
         .map_err(|error| eprintln!("O:I local Knowledge world unavailable: {error}"))
         .ok()
@@ -598,10 +646,22 @@ fn main() {
         .flatten();
     if let Some(factory) = factory.as_ref() {
         match factory.observe() {
-            Ok(observation) => {
-                replace_factory_contribution_in(&mut contributions, observation.contribution)
-            }
+            Ok(observation) => replace_contribution_in(
+                &mut contributions,
+                FACTORY_BUILD_CONTRIBUTION_REF,
+                observation.contribution,
+            ),
             Err(error) => eprintln!("O:I Factory observation degraded: {error}"),
+        }
+    }
+    if let Some(runtime) = aikit_runtime.as_ref() {
+        match runtime.observe() {
+            Ok(observation) => replace_contribution_in(
+                &mut contributions,
+                AIKIT_SESSION_SPACE_CONTRIBUTION_REF,
+                observation.contribution,
+            ),
+            Err(error) => eprintln!("O:I AIKit SessionSpace observation degraded: {error}"),
         }
     }
 
@@ -612,6 +672,7 @@ fn main() {
             factory: Mutex::new(factory),
             action_authority: Mutex::new(action_authority),
             aikit: Mutex::new(aikit),
+            aikit_runtime: Mutex::new(aikit_runtime),
             knowledge: Mutex::new(knowledge),
             agent_provider,
             agent_surface: Mutex::new(None),
