@@ -2,7 +2,9 @@ use std::fs;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use aikit_core::session_space_application::SessionSpaceMutation;
-use aikit_core::SessionSpaceRef;
+use aikit_core::{
+    SessionSpaceLifecycle, SessionSpaceReadModel, SessionSpaceRef, SESSION_SPACE_VERSION,
+};
 use aikit_store::{AikitHome, SessionSpaceApplicationStore};
 use oi_desktop_core::{LocalAikitWorkbench, SessionSpaceFocusRequest};
 
@@ -44,6 +46,38 @@ fn desktop_reads_and_focuses_the_same_canonical_session_space() {
         .unwrap();
     assert_eq!(before.state.revision, 0);
     assert_eq!(before.history.len(), 1);
+    assert!(before.runtime.is_none());
+
+    let runtime = SessionSpaceReadModel {
+        version: SESSION_SPACE_VERSION.into(),
+        id: space.clone(),
+        lifecycle: SessionSpaceLifecycle::Open,
+        revision: 7,
+        projects: Vec::new(),
+        agent_sessions: Vec::new(),
+        components: Vec::new(),
+        surfaces: Vec::new(),
+        connections: Vec::new(),
+        provenance: vec!["target-owned runtime observation".into()],
+    };
+    let reconciled = desktop
+        .read_session_space_with_runtime("session-space/personal-workbench", Some(&runtime))
+        .unwrap();
+    assert_eq!(reconciled.runtime.as_ref().unwrap().revision, 7);
+    assert!(reconciled.explanation.reconstruction.is_some());
+    assert_eq!(reconciled.state.id(), &space);
+
+    let wrong_runtime = SessionSpaceReadModel {
+        id: SessionSpaceRef::parse("session-space/not-the-same-space").unwrap(),
+        ..runtime.clone()
+    };
+    let error = desktop
+        .read_session_space_with_runtime(
+            "session-space/personal-workbench",
+            Some(&wrong_runtime),
+        )
+        .unwrap_err();
+    assert_eq!(error.code(), "oi.session_space.runtime_identity_mismatch");
 
     let receipt = desktop
         .focus_session_space(&SessionSpaceFocusRequest {
