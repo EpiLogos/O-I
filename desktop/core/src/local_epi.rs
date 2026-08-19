@@ -24,6 +24,7 @@ pub const EPI_NARA_DAILY_PROVIDER_CONTRACT: &str = "epi.nara-daily-provider/v1";
 pub const EPI_NARA_SELECTION_SCHEMA: &str = "epi.nara-selection/v1";
 pub const EPI_NARA_SENDOFF_ACTION_REF: &str = "epi.action.nara.selection.sendoff";
 pub const EPI_NARA_SENDOFF_CAPABILITY_REF: &str = "epi.capability.nara.selected-context";
+pub const EPI_NARA_M_COORDINATE_MANIFEST_REF: &str = "epi:m-coordinate-manifest:nara-m4:v1";
 pub const EPI_NATIVE_OWNER: &str = "epi";
 
 #[derive(Clone, Debug, PartialEq)]
@@ -117,6 +118,7 @@ impl LocalEpiHost {
         required_string(&value, "/episodeRef")?;
         required_string(&value, "/selectionRef")?;
         required_string(&value, "/profileRef")?;
+        validate_nara_coordinate_binding(&value)?;
         Ok(value)
     }
 
@@ -271,6 +273,49 @@ fn validate_nara_daily(value: &Value) -> Result<(), String> {
     required_string(value, "/livedContext/qlAddress")?;
     required_string(value, "/livedContext/coordinateRef")?;
     required_string(value, "/livedContext/profileRef")?;
+    validate_nara_coordinate_binding(value)?;
+    expect_string(
+        value,
+        "/explain/coordinateManifestRef",
+        EPI_NARA_M_COORDINATE_MANIFEST_REF,
+    )?;
+    Ok(())
+}
+
+fn validate_nara_coordinate_binding(value: &Value) -> Result<(), String> {
+    expect_string(
+        value,
+        "/coordinateBinding/manifestRef",
+        EPI_NARA_M_COORDINATE_MANIFEST_REF,
+    )?;
+    expect_string(value, "/coordinateBinding/bimbaSourceRef", "#4.4")?;
+    expect_string(
+        value,
+        "/coordinateBinding/bimbaCoordinateRef",
+        "epi:m-coordinate:M4-4",
+    )?;
+    expect_string(
+        value,
+        "/coordinateBinding/pratibimbaCoordinateRef",
+        "epi:m-coordinate:M4-4'",
+    )?;
+    expect_string(value, "/coordinateBinding/carrierSourceRef", "#4.4.4.4")?;
+    expect_string(
+        value,
+        "/coordinateBinding/carrierBimbaCoordinateRef",
+        "epi:m-coordinate:M4-4-4-4",
+    )?;
+    expect_string(
+        value,
+        "/coordinateBinding/carrierPratibimbaCoordinateRef",
+        "epi:m-coordinate:M4-4-4-4'",
+    )?;
+    expect_string(value, "/coordinateBinding/reviewSourceRef", "#4.5")?;
+    expect_string(
+        value,
+        "/coordinateBinding/reviewPratibimbaCoordinateRef",
+        "epi:m-coordinate:M4-5'",
+    )?;
     Ok(())
 }
 
