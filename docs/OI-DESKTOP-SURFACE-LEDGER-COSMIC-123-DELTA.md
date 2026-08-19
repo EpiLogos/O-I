@@ -14,10 +14,10 @@ This delta supersedes the parent ledger's earlier point-in-time sentence that co
 |---|---|---|
 | QL-MEF PRE-D whole-Map provider | `d418abfff6f9e001c8c5ff083206329b298eddcf` | accepted `main`; D consumes, does not fork |
 | Locked Epi Map source | `daa660cbc1b8c5da83828698665a753852cb0287` / dataset tree `cd4f4f77c13f27e2563c5a6753d2f8bf2b605f15` | source identity retained by QL-MEF returned-reality provider |
-| corrected C producer | Epi PR #23 `458cd76e9ad3eed655419efed7b665ebe04a53d9` | active Personal parent owner; current D base + merge parent |
-| D producer candidate | Epi PR #22 `7a4eaaddf7c8f85b0bf969a2d87931fcac069838` | active Current Situated / Cosmic parent candidate; fresh CI queued at this ledger cut |
-| corrected C host | O:I PR #116 `22e437eefb150ed947b10fea32006d3bbdfba54f` | active composed Personal host; current D base + merge parent |
-| D host candidate | O:I PR #117 `e6aed92c1f458e67dc42f2cca82e6e33b76262f1` | active opaque Cosmic host candidate; fresh CI queued at this ledger cut |
+| corrected C producer | Epi PR #23 `aa8e66e57834e1f13ffb227f597ab085a070bbb5` | active Personal parent owner; current D base + merge parent |
+| D producer candidate | Epi PR #22 `310014c5d702568662f92346b706d1e5e87ebdbd` | active Current Situated / Cosmic parent candidate; exact-head CI queued at this ledger cut |
+| corrected C host | O:I PR #116 `daa5adc43b780c359f9091011a5593de3273cb27` | active composed Personal host; current D base + merge parent |
+| D host candidate | O:I PR #117 `ed0f1ce91e22e7513b7f320bc6b538e988cac8e3` | active opaque Cosmic host candidate; exact-head CI queued at this ledger cut |
 
 A later green/failure result is an observed result for these exact revisions; it does not change the architectural status by itself. Any head movement requires this table to be refreshed before final acceptance.
 
