@@ -28,7 +28,8 @@ test('selection, retrieval and Agent Context disclosure remain distinct', () => 
 
 test('Ground mutation is not proxied through the desktop host', () => {
   assert.match(core, /projectcentral\.ground\.inspect/);
-  assert.doesNotMatch(core, /projectcentral\.ground\.apply/);
+  assert.match(core, /projectcentral\.now\.inspect/);
+  assert.doesNotMatch(core, /fn invoke_central_action/);
   assert.match(projectField, /Ground mutation is never proxied/);
 });
 
