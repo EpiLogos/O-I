@@ -19,12 +19,17 @@ pub enum BridgeCallClass {
     MutateSessionSpaceFocus,
     InteractAgentSession,
     ObserveKnowledge,
+    ObserveEpiPersonal,
+    WriteEpiNara,
+    DispatchEpiNaraAction,
+    DispatchEpiPersonalAction,
+    ObserveCentralNow,
     SelectSemanticRef,
     OpenDestination,
 }
 
 impl BridgeCallClass {
-    pub const ALL: [Self; 10] = [
+    pub const ALL: [Self; 15] = [
         Self::DiscloseComposition,
         Self::DiscloseContributions,
         Self::ObserveFactoryBuild,
@@ -33,6 +38,11 @@ impl BridgeCallClass {
         Self::MutateSessionSpaceFocus,
         Self::InteractAgentSession,
         Self::ObserveKnowledge,
+        Self::ObserveEpiPersonal,
+        Self::WriteEpiNara,
+        Self::DispatchEpiNaraAction,
+        Self::DispatchEpiPersonalAction,
+        Self::ObserveCentralNow,
         Self::SelectSemanticRef,
         Self::OpenDestination,
     ];
@@ -52,10 +62,11 @@ impl fmt::Display for BridgeDenied {
 
 impl std::error::Error for BridgeDenied {}
 
-/// Root-shell bridge policy. Third-party/rich contributions are currently hosted
-/// only as declarative read models. They are never loaded as code into this
-/// privileged caller boundary and therefore receive no bridge authority merely
-/// by being present in a Surface catalog.
+/// Root-shell bridge policy. Third-party/rich contributions are hosted only as
+/// declarative read models. Presence in a Surface catalog never grants access to
+/// the protected Personal body, Agent Context, Central NOW, or privileged native
+/// dispatchers. The root shell may invoke those native seams explicitly; a
+/// sandboxed contribution may not acquire that authority by being mounted.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct BridgePolicy;
 
