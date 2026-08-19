@@ -40,7 +40,10 @@ fn epi_snapshot_hosts_through_existing_native_contribution_contract() {
     assert!(contribution.regions.contains(&HostRegion::Inspector));
     assert!(contribution.regions.contains(&HostRegion::RootAgency));
     assert_eq!(
-        contribution.read_model_ref.as_ref().map(|reference| reference.ref_id.as_str()),
+        contribution
+            .read_model_ref
+            .as_ref()
+            .map(|reference| reference.ref_id.as_str()),
         Some("epi:bimba:#-4/M4'")
     );
 }
@@ -59,33 +62,61 @@ fn host_rejects_loss_of_real_kernel_or_canonical_ref_identity() {
 #[test]
 fn adapter_does_not_create_a_second_epi_runtime_ontology() {
     let source = include_str!("../src/local_epi.rs");
-    for forbidden in ["EpiSession", "EpiPlugin", "EpiDesktopAction", "EpiProcess", "EpiHarness"] {
-        assert!(!source.contains(forbidden), "O:I adapter must not introduce {forbidden}");
+    for forbidden in [
+        "EpiSession",
+        "EpiPlugin",
+        "EpiDesktopAction",
+        "EpiProcess",
+        "EpiHarness",
+    ] {
+        assert!(
+            !source.contains(forbidden),
+            "O:I adapter must not introduce {forbidden}"
+        );
     }
 }
 
 #[test]
 fn real_epi_bridge_process_hosts_when_acceptance_binary_is_supplied() {
     let Some(binary) = env::var_os("EPI_BRIDGE_BIN") else {
-        eprintln!("EPI_BRIDGE_BIN not supplied; cross-repository acceptance is exercised by the dedicated workflow");
+        eprintln!(
+            "EPI_BRIDGE_BIN not supplied; cross-repository acceptance is exercised by the dedicated workflow"
+        );
         return;
     };
     let observation = LocalEpiHost::open(binary)
         .observe()
         .expect("real Epi provider process must host");
     assert_eq!(
-        observation.snapshot.pointer("/kernel/parity").and_then(|value| value.as_bool()),
+        observation
+            .snapshot
+            .pointer("/kernel/parity")
+            .and_then(|value| value.as_bool()),
         Some(true)
     );
     assert_eq!(
-        observation.snapshot.pointer("/kernel/epiLib/operation").and_then(|value| value.as_str()),
+        observation
+            .snapshot
+            .pointer("/kernel/epiLib/operation")
+            .and_then(|value| value.as_str()),
         Some("epi-lib::kernel_tick_from_epogdoon via epi_kernel_tick_wire")
     );
     assert_eq!(
-        observation.contribution.contribution.read_model_ref.as_ref().map(|reference| reference.ref_id.as_str()),
+        observation
+            .contribution
+            .contribution
+            .read_model_ref
+            .as_ref()
+            .map(|reference| reference.ref_id.as_str()),
         Some("epi:bimba:#-4/M4'")
     );
-    assert!(observation.contribution.contribution.regions.contains(&HostRegion::RootAgency));
+    assert!(
+        observation
+            .contribution
+            .contribution
+            .regions
+            .contains(&HostRegion::RootAgency)
+    );
 }
 
 #[test]
@@ -95,28 +126,62 @@ fn real_nara_daily_round_trip_uses_the_same_provider_and_bounded_selection_packe
         env::var_os("EPI_NARA_CONTEXT"),
         env::var_os("EPI_NARA_VAULT"),
     ) else {
-        eprintln!("real Nara provider acceptance env not supplied; dedicated workflow owns this cross-repository check");
+        eprintln!(
+            "real Nara provider acceptance env not supplied; dedicated workflow owns this cross-repository check"
+        );
         return;
     };
 
     let host = LocalEpiHost::open(binary)
         .with_nara_context_file(context)
         .with_nara_vault_root(vault);
-    let observation = host.observe().expect("host Prompt-B Epi provider");
-    assert!(observation
-        .contribution
-        .contribution
-        .actions
-        .iter()
-        .any(|action| action.action_ref == EPI_NARA_SENDOFF_ACTION_REF));
+    let observation = host
+        .observe()
+        .expect("host source-conformant Personal Epi provider");
+    assert!(
+        observation
+            .contribution
+            .contribution
+            .actions
+            .iter()
+            .any(|action| action.action_ref == EPI_NARA_SENDOFF_ACTION_REF)
+    );
 
-    let written = host.nara_write("The lived Nara surface sees this exact α selection.")
+    let written = host
+        .nara_write("The lived Nara surface sees this exact α selection.")
         .expect("write real protected Nara episode");
     assert_eq!(written["privacyClass"], "protected-local-body");
-    assert_eq!(written["livedContext"]["coordinateRef"], "epi:bimba:#-4/M4'");
-    assert!(written["livedContext"]["profileRef"].as_str().unwrap().starts_with("epi:matheme-harmonic-profile:"));
+    assert_eq!(
+        written["livedContext"]["coordinateRef"],
+        "epi:bimba:#-4/M4'"
+    );
+    assert_eq!(written["coordinateBinding"]["bimbaSourceRef"], "#4.4");
+    assert_eq!(
+        written["coordinateBinding"]["pratibimbaCoordinateRef"],
+        "epi:m-coordinate:M4-4'"
+    );
+    assert_eq!(
+        written["coordinateBinding"]["carrierSourceRef"],
+        "#4.4.4.4"
+    );
+    assert_eq!(
+        written["coordinateBinding"]["carrierPratibimbaCoordinateRef"],
+        "epi:m-coordinate:M4-4-4-4'"
+    );
+    assert_eq!(written["coordinateBinding"]["reviewSourceRef"], "#4.5");
+    assert_eq!(
+        written["coordinateBinding"]["reviewPratibimbaCoordinateRef"],
+        "epi:m-coordinate:M4-5'"
+    );
+    assert!(
+        written["livedContext"]["profileRef"]
+            .as_str()
+            .unwrap()
+            .starts_with("epi:matheme-harmonic-profile:")
+    );
     let reread = host.nara_daily().expect("restart-style re-read");
     assert_eq!(reread["episodeRef"], written["episodeRef"]);
+    assert_eq!(reread["coordinateBinding"], written["coordinateBinding"]);
     assert_eq!(reread["body"], written["body"]);
 
     let body = written["body"].as_str().unwrap();
@@ -131,7 +196,11 @@ fn real_nara_daily_round_trip_uses_the_same_provider_and_bounded_selection_packe
         }))
         .expect("resolve real selected-context packet");
     assert_eq!(selection["selectedText"], "α");
-    assert_eq!(selection["privacyClass"], "protected-local-selected-disclosure");
+    assert_eq!(
+        selection["privacyClass"],
+        "protected-local-selected-disclosure"
+    );
+    assert_eq!(selection["coordinateBinding"], written["coordinateBinding"]);
     let encoded = serde_json::to_string(&selection).unwrap();
     assert!(!encoded.contains("The lived Nara surface sees this exact"));
     assert!(!encoded.contains("identityRef"));
