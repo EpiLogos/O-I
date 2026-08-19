@@ -142,6 +142,14 @@ type PersonalActionReceipt = {
   durableHumanSourceMutated: false;
 };
 
+type CentralNow = {
+  exists: boolean;
+  human_scratch: string[];
+  active_items: Array<Record<string, unknown>>;
+  promotions: Array<Record<string, unknown>>;
+  boundaries: string[];
+};
+
 type SessionSpaceState = {
   definition: { id: string };
   agent_sessions: Record<string, { agent_session: string; purpose?: string; provenance: string[] }>;
@@ -163,6 +171,10 @@ export function PersonalSurface({ onSelect }: Props) {
   const [busy, setBusy] = useState(false);
   const [epiiAgentSession, setEpiiAgentSession] = useState<string | null>(null);
   const [encounterHost, setEncounterHost] = useState<Element | null>(null);
+  const [proposalReceipt, setProposalReceipt] = useState<PersonalActionReceipt | null>(null);
+  const [centralNow, setCentralNow] = useState<CentralNow | null>(null);
+  const [recognitionSource, setRecognitionSource] = useState('');
+  const [recognitionDestination, setRecognitionDestination] = useState('');
   const editor = useRef<HTMLTextAreaElement | null>(null);
   const saved = useRef('');
   const loaded = useRef(false);
@@ -242,6 +254,7 @@ export function PersonalSurface({ onSelect }: Props) {
       setBody(next.body);
       saved.current = next.body;
       setSelection(null);
+      setProposalReceipt(null);
       setHasTextSelection(false);
       setMessage(`Saved · episode r${next.episodeRevision}`);
       return next;
@@ -288,6 +301,7 @@ export function PersonalSurface({ onSelect }: Props) {
         throw new Error('Governed selection returned identity/authority drift.');
       }
       setSelection(selected);
+      setProposalReceipt(null);
       setHasTextSelection(false);
       setMessage('Exact saved range is governed; Action authority was consumed; Agent Context remains undisclosed.');
       await onSelect(selectionRef(selected), {
@@ -345,20 +359,15 @@ export function PersonalSurface({ onSelect }: Props) {
         } catch (error) {
           sharedKnowledgeAbsence = messageFrom(error);
         }
-        await onSelect({
-          ref: bimbaRef,
-          kind: 'bimba-ref',
-          native_owner: 'epi',
-          provenance: { source: 'Epi native ground ref; shared Knowledge resolves presentation when available' },
-        }, {
-          title: 'Anuttara / Bimba',
-          summary: sharedKnowledge
-            ? 'Native Epi source ref resolved through shared Knowledge.'
-            : 'Native Epi source ref retained; shared Knowledge provider is currently unavailable for this ref.',
-          detail: { receipt, sharedKnowledge, sharedKnowledgeAbsence },
-        });
       }
-      setMessage('Bimba/source reveal used bounded Epi authority and the shared Knowledge/Inspector path; no Epi-local graph was opened.');
+      await onSelect(selectionRef(selection), {
+        title: 'Anuttara / Bimba',
+        summary: sharedKnowledge
+          ? 'The same governed Personal selection is oriented by an Epi-native Bimba ref resolved through shared Knowledge.'
+          : 'The same governed Personal selection retains its Epi-native Bimba ref; shared Knowledge is currently unavailable for that ref.',
+        detail: { receipt, bimbaRef, sharedKnowledge, sharedKnowledgeAbsence },
+      });
+      setMessage('Bimba/source reveal kept the Personal subject in focus and used the shared Knowledge/Inspector path; no Epi-local graph was opened.');
     } catch (error) {
       setMessage(messageFrom(error));
     } finally {
@@ -370,9 +379,11 @@ export function PersonalSurface({ onSelect }: Props) {
     if (!application) return;
     setBusy(true);
     try {
-      const reading = await invoke<Record<string, unknown> | null>('central_now_snapshot');
+      const reading = await invoke<CentralNow | null>('central_now_snapshot');
       if (!reading) throw new Error('Central NOW/DAY is not configured.');
-      await onSelect(subjectRef(application), {
+      setCentralNow(reading);
+      if (!recognitionSource && reading.human_scratch.length) setRecognitionSource(reading.human_scratch[0]);
+      await onSelect(selection ? selectionRef(selection) : subjectRef(application), {
         title: 'Central NOW / DAY',
         summary: 'Central-owned temporal return field; read-only from this Personal review path.',
         detail: reading,
@@ -397,12 +408,72 @@ export function PersonalSurface({ onSelect }: Props) {
       }));
       ensureReceiptSubject(receipt, selection);
       if (receipt.durableHumanSourceMutated !== false) throw new Error('Proposal receipt claimed a durable source mutation.');
+      setProposalReceipt(receipt);
+      try {
+        const now = await invoke<CentralNow | null>('central_now_snapshot');
+        setCentralNow(now);
+        if (now?.human_scratch.length) {
+          setRecognitionSource((current) => current || now.human_scratch[0]);
+        }
+      } catch {
+        setCentralNow(null);
+      }
       await onSelect(selectionRef(selection), {
         title: 'Personal return proposal',
         summary: 'Proposal created from the exact selected wording under bounded native Action authority. It is not adopted human source; Central receives refs/lineage only when configured.',
         detail: receipt,
       });
-      setMessage('Proposal returned without mutating Nara or human-owned source.');
+      setMessage('Proposal returned without mutating Nara or human-owned source. Recognition remains a separate human-source act.');
+    } catch (error) {
+      setMessage(messageFrom(error));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function rejectProposal() {
+    if (!proposalReceipt || !selection) return;
+    const handoffId = nestedUnknownString(proposalReceipt.centralReturn, ['data', 'handoff', 'id']);
+    const proposalRef = nestedString(proposalReceipt.reading, ['proposalRef']);
+    if (!handoffId || !proposalRef) {
+      setMessage('No returned Central handoff is available to reject.');
+      return;
+    }
+    setBusy(true);
+    try {
+      const reading = await invoke<Record<string, unknown>>('reject_personal_proposal', { handoffId, proposalRef });
+      await onSelect(selectionRef(selection), {
+        title: 'Personal proposal resolved',
+        summary: 'Central marked the bounded Agent return resolved; the proposal ref remains preserved as provenance.',
+        detail: reading,
+      });
+      setMessage('Central return resolved without promoting it into human source.');
+    } catch (error) {
+      setMessage(messageFrom(error));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function recognizeHumanSource() {
+    if (!application || !recognitionSource.trim() || !recognitionDestination.trim()) return;
+    setBusy(true);
+    try {
+      const reading = await invoke<Record<string, unknown>>('recognize_personal_human_source', {
+        source: recognitionSource.trim(),
+        destination: recognitionDestination.trim(),
+      });
+      await onSelect(selection ? selectionRef(selection) : subjectRef(application), {
+        title: 'Recognised human return',
+        summary: 'Central promoted an explicitly human-owned NOW source with human-accepted authority. The Epi proposal itself was not promoted.',
+        detail: {
+          recognition: reading,
+          proposalRef: proposalReceipt ? nestedString(proposalReceipt.reading, ['proposalRef']) : undefined,
+        },
+      });
+      setMessage('Human-owned NOW source recognised into Central project ground; proposal/source distinction preserved.');
+      const now = await invoke<CentralNow | null>('central_now_snapshot').catch(() => null);
+      setCentralNow(now);
     } catch (error) {
       setMessage(messageFrom(error));
     } finally {
@@ -411,19 +482,15 @@ export function PersonalSurface({ onSelect }: Props) {
   }
 
   async function inspectDeep(productId: string) {
-    const descriptor = application?.deepOpen.find((entry) => entry.productId === productId);
+    if (!application) return;
+    const descriptor = application.deepOpen.find((entry) => entry.productId === productId);
     if (!descriptor) return;
-    await onSelect({
-      ref: productId,
-      kind: 'epi-deep-product',
-      native_owner: 'epi',
-      provenance: { source: 'epi.personal.450 deep-open descriptor' },
-    }, {
+    await onSelect(selection ? selectionRef(selection) : subjectRef(application), {
       title: productId,
       summary: `${descriptor.coordinateRoot} · ${descriptor.readiness} · same Personal subject retained`,
       detail: descriptor,
     });
-    setMessage(`${productId} descriptor is stable; C does not fabricate its deep renderer.`);
+    setMessage(`${productId} descriptor is stable; C keeps the current Personal subject and does not fabricate its deep renderer.`);
   }
 
   if (!application || !daily) {
@@ -436,6 +503,9 @@ export function PersonalSurface({ onSelect }: Props) {
       </section>
     );
   }
+
+  const centralReturnStatus = nestedUnknownString(proposalReceipt?.centralReturn, ['status']);
+  const centralHandoffId = nestedUnknownString(proposalReceipt?.centralReturn, ['data', 'handoff', 'id']);
 
   return (
     <>
@@ -481,6 +551,52 @@ export function PersonalSurface({ onSelect }: Props) {
           <button type="button" disabled={busy} onClick={() => void history()}>History</button>
           <button type="button" disabled={busy || !selection} onClick={() => void propose()}>Propose return</button>
         </div>
+
+        {proposalReceipt && (
+          <details className="epi-personal__recognition" open>
+            <summary>Proposal / recognised return</summary>
+            <p>
+              Epi proposal: <code>{nestedString(proposalReceipt.reading, ['proposalRef']) ?? 'unknown'}</code>
+              {' · '}Central return: <strong>{centralReturnStatus ?? 'not configured'}</strong>
+            </p>
+            <p className="oi-muted">
+              The proposal is Agent-derived material. Central will only promote a separate human-owned
+              <code> ProjectCentral/now/user/… </code> source with explicit <code>human-accepted</code> authority.
+            </p>
+            {centralHandoffId && (
+              <button type="button" disabled={busy} onClick={() => void rejectProposal()}>
+                Resolve proposal without adoption
+              </button>
+            )}
+            <div className="epi-personal__recognition-fields">
+              <label>
+                Human NOW source
+                <select value={recognitionSource} onChange={(event) => setRecognitionSource(event.target.value)}>
+                  <option value="">Choose human-owned source…</option>
+                  {(centralNow?.human_scratch ?? []).map((source) => <option key={source} value={source}>{source}</option>)}
+                </select>
+              </label>
+              <label>
+                Project-ground destination
+                <input
+                  value={recognitionDestination}
+                  onChange={(event) => setRecognitionDestination(event.target.value)}
+                  placeholder="personal/recognised-return.md"
+                />
+              </label>
+              <button
+                type="button"
+                disabled={busy || !recognitionSource.trim() || !recognitionDestination.trim()}
+                onClick={() => void recognizeHumanSource()}
+              >
+                Recognise human source
+              </button>
+            </div>
+            {!centralNow?.human_scratch?.length && (
+              <p className="oi-muted">No current Central human scratch source is available; C does not convert the Epi proposal into one.</p>
+            )}
+          </details>
+        )}
 
         <div className="epi-personal__contract">
           <div>
@@ -573,6 +689,10 @@ function bodyFreeApplication(application: PersonalApplication) {
 }
 
 function nestedString(value: Record<string, unknown>, path: string[]) {
+  return nestedUnknownString(value, path);
+}
+
+function nestedUnknownString(value: unknown, path: string[]) {
   let current: unknown = value;
   for (const segment of path) {
     if (!current || typeof current !== 'object' || Array.isArray(current)) return undefined;
