@@ -33,7 +33,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: EpiLogos/Epi-Logos-C-Experiments
-          ref: 8a9ed96101b579a7b27774fb96ffba94d410aaae
+          ref: aa8e66e57834e1f13ffb227f597ab085a070bbb5
           path: epi-source
 
       - name: Check out current Central NOW/DAY owner
