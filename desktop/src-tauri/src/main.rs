@@ -1,13 +1,16 @@
 use oi_desktop_core::{
-    host_native_contribution, ActionAuthorityStore, ActionExecutionRequest, BoundedActionGrant,
-    BridgeCallClass, BridgeCaller, BridgePolicy, DesktopHost, FactoryActionRoundTrip,
-    FactoryBuildSnapshot, HostedContribution, LocalFactoryHost, NativeContributionReading,
-    SemanticRef, ShellDestination, ShellSnapshot, SurfaceActionEmission,
+    host_native_contribution, ActionAuthorityStore, ActionExecutionRequest, AgentSurfaceOpenRequest,
+    AgentSurfaceReading, AikitAgentSurface, BoundedActionGrant, BridgeCallClass, BridgeCaller,
+    BridgePolicy, DesktopHost, FactoryActionRoundTrip, FactoryBuildSnapshot, HostedContribution,
+    LocalAikitWorkbench, LocalFactoryHost, LocalProjectKnowledge, NativeContributionReading,
+    SemanticRef, SessionSpaceFocusRequest, ShellDestination, ShellSnapshot, SurfaceActionEmission,
     FACTORY_BUILD_CONTRIBUTION_REF,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::env;
 use std::fs;
+use std::path::PathBuf;
 use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::State;
@@ -20,11 +23,32 @@ struct ContributionFixtures {
     contributions: Vec<NativeContributionReading>,
 }
 
+#[derive(Debug, Clone)]
+struct AgentProviderConfig {
+    connection_ref: String,
+    argv: Vec<String>,
+    cwd: String,
+    provenance: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct AgentSurfaceOpenInput {
+    agent_session_ref: String,
+    #[serde(default)]
+    mode: Option<String>,
+    #[serde(default)]
+    native_session_id: Option<String>,
+}
+
 struct AppState {
     host: Mutex<DesktopHost>,
     contributions: Mutex<Vec<HostedContribution>>,
     factory: Mutex<Option<LocalFactoryHost>>,
     action_authority: Mutex<ActionAuthorityStore>,
+    aikit: Mutex<Option<LocalAikitWorkbench>>,
+    knowledge: Mutex<Option<LocalProjectKnowledge>>,
+    agent_provider: Option<AgentProviderConfig>,
+    agent_surface: Mutex<Option<AikitAgentSurface>>,
 }
 
 #[tauri::command]
@@ -133,6 +157,236 @@ fn dispatch_factory_action(
     Ok(round_trip)
 }
 
+// ---------------------------------------------------------------------------
+// AIKit SessionSpace application projection
+// ---------------------------------------------------------------------------
+
+#[tauri::command]
+fn aikit_session_spaces(state: State<'_, AppState>) -> Result<Value, String> {
+    BridgePolicy
+        .authorize(BridgeCaller::ShellUi, BridgeCallClass::ObserveSessionSpace)
+        .map_err(|error| error.to_string())?;
+    let aikit = state
+        .aikit
+        .lock()
+        .map_err(|_| "AIKit workbench lock poisoned".to_owned())?;
+    let aikit = aikit
+        .as_ref()
+        .ok_or_else(|| "native AIKit application is not available".to_owned())?;
+    to_value(aikit.list_session_spaces().map_err(|error| error.to_string())?)
+}
+
+#[tauri::command]
+fn aikit_session_space_read(
+    state: State<'_, AppState>,
+    session_space_ref: String,
+) -> Result<Value, String> {
+    BridgePolicy
+        .authorize(BridgeCaller::ShellUi, BridgeCallClass::ObserveSessionSpace)
+        .map_err(|error| error.to_string())?;
+    let aikit = state
+        .aikit
+        .lock()
+        .map_err(|_| "AIKit workbench lock poisoned".to_owned())?;
+    let aikit = aikit
+        .as_ref()
+        .ok_or_else(|| "native AIKit application is not available".to_owned())?;
+    to_value(
+        aikit
+            .read_session_space(&session_space_ref)
+            .map_err(|error| error.to_string())?,
+    )
+}
+
+#[tauri::command]
+fn aikit_session_space_focus(
+    state: State<'_, AppState>,
+    request: SessionSpaceFocusRequest,
+) -> Result<Value, String> {
+    BridgePolicy
+        .authorize(
+            BridgeCaller::ShellUi,
+            BridgeCallClass::MutateSessionSpaceFocus,
+        )
+        .map_err(|error| error.to_string())?;
+    let aikit = state
+        .aikit
+        .lock()
+        .map_err(|_| "AIKit workbench lock poisoned".to_owned())?;
+    let aikit = aikit
+        .as_ref()
+        .ok_or_else(|| "native AIKit application is not available".to_owned())?;
+    to_value(
+        aikit
+            .focus_session_space(&request)
+            .map_err(|error| error.to_string())?,
+    )
+}
+
+// ---------------------------------------------------------------------------
+// Generic AIKit AgentSession conversation Surface
+// ---------------------------------------------------------------------------
+
+#[tauri::command]
+fn agent_surface_open(
+    state: State<'_, AppState>,
+    request: AgentSurfaceOpenInput,
+) -> Result<AgentSurfaceReading, String> {
+    BridgePolicy
+        .authorize(BridgeCaller::ShellUi, BridgeCallClass::InteractAgentSession)
+        .map_err(|error| error.to_string())?;
+    let provider = state
+        .agent_provider
+        .as_ref()
+        .ok_or_else(|| "no native AgentSession provider is configured".to_owned())?;
+    let mut current = state
+        .agent_surface
+        .lock()
+        .map_err(|_| "AgentSession Surface lock poisoned".to_owned())?;
+    if current.is_some() {
+        return Err(
+            "an AgentSession Surface is already open; close it explicitly before replacing it"
+                .into(),
+        );
+    }
+    let (surface, reading) = AikitAgentSurface::open(AgentSurfaceOpenRequest {
+        connection_ref: provider.connection_ref.clone(),
+        agent_session_ref: request.agent_session_ref,
+        argv: provider.argv.clone(),
+        cwd: provider.cwd.clone(),
+        mode: request.mode,
+        native_session_id: request.native_session_id,
+        provenance: provider.provenance.clone(),
+    })?;
+    *current = Some(surface);
+    Ok(reading)
+}
+
+#[tauri::command]
+fn agent_surface_send(state: State<'_, AppState>, text: String) -> Result<Value, String> {
+    BridgePolicy
+        .authorize(BridgeCaller::ShellUi, BridgeCallClass::InteractAgentSession)
+        .map_err(|error| error.to_string())?;
+    let mut current = state
+        .agent_surface
+        .lock()
+        .map_err(|_| "AgentSession Surface lock poisoned".to_owned())?;
+    let surface = current
+        .as_mut()
+        .ok_or_else(|| "no AgentSession Surface is open".to_owned())?;
+    to_value(surface.send(&text)?)
+}
+
+#[tauri::command]
+fn agent_surface_cancel(state: State<'_, AppState>) -> Result<(), String> {
+    BridgePolicy
+        .authorize(BridgeCaller::ShellUi, BridgeCallClass::InteractAgentSession)
+        .map_err(|error| error.to_string())?;
+    let mut current = state
+        .agent_surface
+        .lock()
+        .map_err(|_| "AgentSession Surface lock poisoned".to_owned())?;
+    current
+        .as_mut()
+        .ok_or_else(|| "no AgentSession Surface is open".to_owned())?
+        .cancel()
+}
+
+#[tauri::command]
+fn agent_surface_close(state: State<'_, AppState>) -> Result<(), String> {
+    BridgePolicy
+        .authorize(BridgeCaller::ShellUi, BridgeCallClass::InteractAgentSession)
+        .map_err(|error| error.to_string())?;
+    let mut current = state
+        .agent_surface
+        .lock()
+        .map_err(|_| "AgentSession Surface lock poisoned".to_owned())?;
+    let mut surface = current
+        .take()
+        .ok_or_else(|| "no AgentSession Surface is open".to_owned())?;
+    surface.close()
+}
+
+// ---------------------------------------------------------------------------
+// ProjectCentral -> SemanticWiki -> AIKit Knowledge application projection
+// ---------------------------------------------------------------------------
+
+#[tauri::command]
+fn knowledge_status(state: State<'_, AppState>) -> Result<Value, String> {
+    with_knowledge(&state, |knowledge| to_value(knowledge.status()))
+}
+
+#[tauri::command]
+fn knowledge_search(
+    state: State<'_, AppState>,
+    query: String,
+    limit: usize,
+) -> Result<Value, String> {
+    with_knowledge(&state, |knowledge| {
+        to_value(
+            knowledge
+                .search(&query, limit)
+                .map_err(|error| error.to_string())?,
+        )
+    })
+}
+
+#[tauri::command]
+fn knowledge_read(state: State<'_, AppState>, resource_ref: String) -> Result<Value, String> {
+    with_knowledge(&state, |knowledge| {
+        to_value(
+            knowledge
+                .read(&resource_ref)
+                .map_err(|error| error.to_string())?,
+        )
+    })
+}
+
+#[tauri::command]
+fn knowledge_relations(
+    state: State<'_, AppState>,
+    resource_ref: String,
+    depth: u8,
+    max_nodes: usize,
+    max_edges: usize,
+) -> Result<Value, String> {
+    with_knowledge(&state, |knowledge| {
+        to_value(
+            knowledge
+                .relations(&resource_ref, depth, max_nodes, max_edges)
+                .map_err(|error| error.to_string())?,
+        )
+    })
+}
+
+#[tauri::command]
+fn knowledge_explain(
+    state: State<'_, AppState>,
+    resource_ref: String,
+) -> Result<Value, String> {
+    with_knowledge(&state, |knowledge| {
+        to_value(
+            knowledge
+                .explain(&resource_ref)
+                .map_err(|error| error.to_string())?,
+        )
+    })
+}
+
+#[tauri::command]
+fn knowledge_history(
+    state: State<'_, AppState>,
+    resource_ref: Option<String>,
+) -> Result<Value, String> {
+    with_knowledge(&state, |knowledge| {
+        to_value(
+            knowledge
+                .history(resource_ref.as_deref())
+                .map_err(|error| error.to_string())?,
+        )
+    })
+}
+
 #[tauri::command]
 fn select_semantic_ref(state: State<'_, AppState>, subject: SemanticRef) -> Result<(), String> {
     state
@@ -154,6 +408,28 @@ fn open_destination(
         .map_err(|_| "desktop host lock poisoned".to_owned())?
         .open_destination(BridgeCaller::ShellUi, destination)
         .map_err(|error| error.to_string())
+}
+
+fn with_knowledge<T>(
+    state: &State<'_, AppState>,
+    operation: impl FnOnce(&LocalProjectKnowledge) -> Result<T, String>,
+) -> Result<T, String> {
+    BridgePolicy
+        .authorize(BridgeCaller::ShellUi, BridgeCallClass::ObserveKnowledge)
+        .map_err(|error| error.to_string())?;
+    let knowledge = state
+        .knowledge
+        .lock()
+        .map_err(|_| "Knowledge workbench lock poisoned".to_owned())?;
+    operation(
+        knowledge
+            .as_ref()
+            .ok_or_else(|| "no local ProjectCentral Knowledge world is configured".to_owned())?,
+    )
+}
+
+fn to_value(value: impl Serialize) -> Result<Value, String> {
+    serde_json::to_value(value).map_err(|error| format!("serialize desktop projection: {error}"))
 }
 
 fn load_contribution_fixtures() -> Result<Vec<HostedContribution>, String> {
@@ -189,6 +465,56 @@ fn load_local_factory() -> Result<Option<LocalFactoryHost>, String> {
                 .into(),
         ),
     }
+}
+
+fn load_local_aikit() -> Result<Option<LocalAikitWorkbench>, String> {
+    LocalAikitWorkbench::discover()
+        .map(Some)
+        .map_err(|error| error.to_string())
+}
+
+fn load_local_knowledge() -> Result<Option<LocalProjectKnowledge>, String> {
+    let Some(project_root) = env::var_os("OI_PROJECT_ROOT") else {
+        return Ok(None);
+    };
+    let central_root = env::var_os("OI_CENTRAL_ROOT").map(PathBuf::from);
+    let actor = env::var("OI_KNOWLEDGE_ACTOR_REF").ok();
+    let agency = env::var("OI_KNOWLEDGE_AGENCY_REF").ok();
+    let focus = env::var("OI_KNOWLEDGE_FOCUS").ok();
+    LocalProjectKnowledge::discover(
+        PathBuf::from(project_root),
+        central_root.as_deref(),
+        actor.as_deref(),
+        agency.as_deref(),
+        focus,
+    )
+    .map(Some)
+    .map_err(|error| error.to_string())
+}
+
+fn load_agent_provider() -> Result<Option<AgentProviderConfig>, String> {
+    let Some(raw_argv) = env::var("OI_AGENT_PROVIDER_ARGV").ok() else {
+        return Ok(None);
+    };
+    let argv: Vec<String> = serde_json::from_str(&raw_argv)
+        .map_err(|error| format!("OI_AGENT_PROVIDER_ARGV must be a JSON string array: {error}"))?;
+    if argv.is_empty() {
+        return Err("OI_AGENT_PROVIDER_ARGV cannot be empty".into());
+    }
+    let cwd = env::var("OI_AGENT_PROVIDER_CWD")
+        .unwrap_or_else(|_| env::current_dir().unwrap_or_default().display().to_string());
+    let connection_ref = env::var("OI_AGENT_CONNECTION_REF")
+        .unwrap_or_else(|_| "connection/oi-desktop/acp".into());
+    let provenance = env::var("OI_AGENT_PROVIDER_PROVENANCE")
+        .ok()
+        .map(|value| vec![value])
+        .unwrap_or_else(|| vec!["native O:I desktop provider configuration".into()]);
+    Ok(Some(AgentProviderConfig {
+        connection_ref,
+        argv,
+        cwd,
+        provenance,
+    }))
 }
 
 /// Optional one-shot native handoff from an authority-owning integration.
@@ -258,6 +584,18 @@ fn main() {
         eprintln!("O:I Action authority handoff unavailable: {error}");
         ActionAuthorityStore::default()
     });
+    let aikit = load_local_aikit()
+        .map_err(|error| eprintln!("O:I native AIKit application unavailable: {error}"))
+        .ok()
+        .flatten();
+    let knowledge = load_local_knowledge()
+        .map_err(|error| eprintln!("O:I local Knowledge world unavailable: {error}"))
+        .ok()
+        .flatten();
+    let agent_provider = load_agent_provider()
+        .map_err(|error| eprintln!("O:I AgentSession provider unavailable: {error}"))
+        .ok()
+        .flatten();
     if let Some(factory) = factory.as_ref() {
         match factory.observe() {
             Ok(observation) => {
@@ -273,12 +611,29 @@ fn main() {
             contributions: Mutex::new(contributions),
             factory: Mutex::new(factory),
             action_authority: Mutex::new(action_authority),
+            aikit: Mutex::new(aikit),
+            knowledge: Mutex::new(knowledge),
+            agent_provider,
+            agent_surface: Mutex::new(None),
         })
         .invoke_handler(tauri::generate_handler![
             shell_snapshot,
             contribution_catalog,
             factory_build_snapshot,
             dispatch_factory_action,
+            aikit_session_spaces,
+            aikit_session_space_read,
+            aikit_session_space_focus,
+            agent_surface_open,
+            agent_surface_send,
+            agent_surface_cancel,
+            agent_surface_close,
+            knowledge_status,
+            knowledge_search,
+            knowledge_read,
+            knowledge_relations,
+            knowledge_explain,
+            knowledge_history,
             select_semantic_ref,
             open_destination
         ])
