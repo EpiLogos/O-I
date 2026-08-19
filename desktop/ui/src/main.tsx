@@ -4,8 +4,10 @@ import { invoke } from '@tauri-apps/api/core';
 import '@epilogos/oi-design-system/tokens.css';
 import './shell.css';
 import { NaraSurface, type NaraActionReceipt } from './NaraSurface';
+import { CosmicSurface } from './CosmicSurface';
 
 type Destination = 'home' | 'epi' | 'personal' | 'build' | 'explore' | 'system';
+type EpiSurface = 'nara' | 'cosmic';
 type SuiteCondition = 'empty' | 'partial' | 'broken' | 'full';
 type ContributionAvailability = 'ready' | 'degraded' | 'pending_native_adapter' | 'unavailable';
 
@@ -109,6 +111,7 @@ function App() {
   const [contributions, setContributions] = useState<Contribution[]>([]);
   const [factoryBuild, setFactoryBuild] = useState<FactoryBuildSnapshot | null>(null);
   const [naraReceipt, setNaraReceipt] = useState<NaraActionReceipt | null>(null);
+  const [epiSurface, setEpiSurface] = useState<EpiSurface>('nara');
 
   useEffect(() => {
     invoke<Snapshot>('shell_snapshot').then(setSnapshot).catch(() => setSnapshot(preview));
@@ -147,6 +150,15 @@ function App() {
     }
   }
 
+  async function receiveCosmicSelection() {
+    try {
+      setSnapshot(await invoke<Snapshot>('shell_snapshot'));
+      setContributions(await invoke<Contribution[]>('contribution_catalog'));
+    } catch {
+      // The Epi-owned Cosmic reading remains intact even if shell chrome cannot refresh.
+    }
+  }
+
   const visibleContributions = useMemo(
     () => contributions.filter((entry) => ownerVisibleAt(entry.contribution.native_owner, snapshot.destination)),
     [contributions, snapshot.destination],
@@ -173,7 +185,15 @@ function App() {
 
       <section className="oi-shell__canvas" aria-label="Primary content canvas">
         {snapshot.destination === 'epi' ? (
-          <NaraSurface onActionReceipt={receiveNaraAction} />
+          <div>
+            <nav className="cosmic-depth" aria-label="Epi parent surfaces">
+              <button type="button" aria-pressed={epiSurface === 'nara'} onClick={() => setEpiSurface('nara')}>M4′ Nara · lived</button>
+              <button type="button" aria-pressed={epiSurface === 'cosmic'} onClick={() => setEpiSurface('cosmic')}>Cosmic · M1′ + M2′ + M3′</button>
+            </nav>
+            {epiSurface === 'nara'
+              ? <NaraSurface onActionReceipt={receiveNaraAction} />
+              : <CosmicSurface onSelection={receiveCosmicSelection} />}
+          </div>
         ) : (
           <>
             <p className="oi-eyebrow">{snapshot.destination}</p>
@@ -190,8 +210,8 @@ function App() {
 
       <aside className="oi-shell__inspector" aria-label="Context and root agency region">
         <p className="oi-eyebrow">Encounter</p>
-        <h2>{snapshot.destination === 'epi' ? 'Situated Epi context' : 'Shared reference'}</h2>
-        {snapshot.destination === 'epi' && naraReceipt ? (
+        <h2>{snapshot.destination === 'epi' ? (epiSurface === 'nara' ? 'Situated Epi context' : 'Cosmic coordinate') : 'Shared reference'}</h2>
+        {snapshot.destination === 'epi' && epiSurface === 'nara' && naraReceipt ? (
           <SituatedNaraPacket receipt={naraReceipt} />
         ) : snapshot.selection ? (
           <dl className="oi-ref">
@@ -203,7 +223,9 @@ function App() {
         ) : (
           <p className="oi-muted">
             {snapshot.destination === 'epi'
-              ? 'Select text in Nara and invoke the governed sendoff. The situated region receives only that bounded packet, never ambient access to the journal.'
+              ? epiSurface === 'nara'
+                ? 'Select text in Nara and invoke the governed sendoff. The situated region receives only that bounded packet, never ambient access to the journal.'
+                : 'Select a deep M′ entry in Cosmic. O:I stores only the stable Epi ref while the source-owned current reading remains in the Epi provider.'
               : 'No object selected. Canvas and root-agency regions share one stable Ref; O:I does not copy wholesale Context into contributions.'}
           </p>
         )}
@@ -221,7 +243,7 @@ function App() {
 
       <footer className="oi-shell__drawer" aria-label="Deep drawer">
         <span>Trajectory / terminal / events</span>
-        <span>{snapshot.destination === 'epi' ? 'closed unless germane to Nara work' : 'reserved native Surface slot'}</span>
+        <span>{snapshot.destination === 'epi' ? (epiSurface === 'nara' ? 'closed unless germane to Nara work' : 'Cosmic provenance available in Explain; no renderer-local state') : 'reserved native Surface slot'}</span>
       </footer>
     </main>
   );
@@ -371,7 +393,7 @@ function titleFor(destination: Destination) {
 function copyFor(destination: Destination) {
   return {
     home: 'A sparse local surface over the installed six-product field.',
-    epi: 'The lived Epi surface begins in protected writing and present context, with technical depth available when asked for.',
+    epi: 'The lived Epi surface begins in protected writing and present context, with the integrated Cosmic instrument available as a deeper view of the same source-owned state.',
     personal: 'Central-owned authored ground and Actuation-owned world-binding readings enter here without moving their semantics into O:I.',
     build: 'Factory exposes a product-owned live FactoryBuildView provider over canonical state. When its local provider binding is configured, this canvas renders that observed revision directly; otherwise the Factory contribution remains explicitly degraded.',
     explore: 'The current shared-field Explore read model is hostable now, with canonical refs independent of SpaceTimeDB transport IDs.',
