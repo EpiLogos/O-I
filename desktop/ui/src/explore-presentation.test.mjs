@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createDesktopExplorePresentationReading } from './explore-presentation.mjs';
-import { authoringDisclosure } from '../../../shared-field/presentation-authoring.mjs';
+import { applyPresentationAuthoringOperation, authoringDisclosure } from '../../../shared-field/presentation-authoring.mjs';
 
 const provenance = [{ kind: 'projected-source', ref: 'project:o-i', source_system: 'EpiLogos/O-I', revision: 'main' }];
 const presentation = {
@@ -64,6 +64,21 @@ test('desktop consumes the same structured authoring meaning as the web/agent ap
   assert.equal(desktop.bindings[0].binding_ref, 'binding:project-reading');
 });
 
+test('desktop working authoring changes the same WorldPresentation model without minting a new Projection identity', () => {
+  const edited = applyPresentationAuthoringOperation(presentation, {
+    type: 'edit-binding-props',
+    binding_ref: 'binding:project-reading',
+    patch: { title: 'Edited locally' },
+  }, contributions);
+
+  assert.equal(edited.presentation_ref, presentation.presentation_ref);
+  assert.equal(edited.world_ref, presentation.world_ref);
+  assert.equal(edited.revision, presentation.revision);
+  assert.equal(edited.regions[0].bindings[0].props.title, 'Edited locally');
+  assert.equal(presentation.regions[0].bindings[0].props.title, 'Project reading');
+  assert.equal(Object.hasOwn(edited, 'projection_ref'), false);
+});
+
 test('desktop reports honest degradation rather than inventing a presentation instance', () => {
   const reading = createDesktopExplorePresentationReading({ contributions });
   assert.equal(reading.availability, 'degraded');
@@ -71,14 +86,22 @@ test('desktop reports honest degradation rather than inventing a presentation in
   assert.match(reading.reason, /No live WorldPresentation/);
 });
 
-test('P6 mounts the shared renderer-neutral Explore application in the P1 workbench', async () => {
+test('P6 mounts the shared renderer-neutral Explore application and Read Author Preview semantics in the P1 workbench', async () => {
   const renderer = await readFile(new URL('./ExploreSurface.tsx', import.meta.url), 'utf8');
+  const authoring = await readFile(new URL('./explore-authoring.tsx', import.meta.url), 'utf8');
   const adapter = await readFile(new URL('./explore-workbench.tsx', import.meta.url), 'utf8');
   const host = await readFile(new URL('./main.tsx', import.meta.url), 'utf8');
 
   assert.match(renderer, /createExploreSurfaceModel/);
   assert.match(renderer, /shared-field\/explore-surface\.mjs/);
   assert.doesNotMatch(renderer, /createExploreApplication/);
+  assert.match(renderer, /applyPresentationAuthoringOperation/);
+  assert.match(renderer, />Read<\/button>/);
+  assert.match(renderer, />Author<\/button>/);
+  assert.match(renderer, />Preview<\/button>/);
+  assert.match(renderer, /working-presentation/);
+  assert.match(authoring, /no desktop publication authority/);
+  assert.doesNotMatch(renderer + authoring + adapter, /refineWorldPresentationProjection|publishProjection|performA2aExchange/);
   assert.match(adapter, /invoke<unknown \| null>\('explore_surface_seed'\)/);
   assert.match(adapter, /privacy: 'selection != Agent Context disclosure != Projection selection != SharedField admission != public != remote Agent authority'/);
   assert.match(host, /destination === 'explore'/);
