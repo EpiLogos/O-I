@@ -4,18 +4,23 @@ on:
   pull_request:
     paths:
       - 'desktop/core/src/local_epi.rs'
+      - 'desktop/core/src/local_epi_cosmic.rs'
       - 'desktop/core/src/local_central.rs'
       - 'desktop/core/src/lib.rs'
       - 'desktop/core/src/bridge.rs'
       - 'desktop/core/src/execution_authority.rs'
       - 'desktop/core/tests/local_epi_provider.rs'
       - 'desktop/core/tests/personal_return.rs'
+      - 'desktop/core/tests/cosmic_current.rs'
       - 'desktop/core/tests/phase4_execution_containment.rs'
       - 'desktop/src-tauri/src/main.rs'
       - 'desktop/ui/src/NaraSurface.tsx'
+      - 'desktop/ui/src/CosmicSurface.tsx'
       - 'desktop/ui/src/main.tsx'
       - 'desktop/ui/src/nara.css'
+      - 'desktop/ui/src/cosmic.css'
       - 'desktop/ui/src/nara-presentation.test.mjs'
+      - 'desktop/ui/src/cosmic-presentation.test.mjs'
       - '.github/workflows/epi-pratibimba-integration.yml'
   workflow_dispatch:
 
@@ -28,11 +33,11 @@ jobs:
     steps:
       - name: Check out O:I
         uses: actions/checkout@v4
-      - name: Check out coordinated Epi Prompt-C producer
+      - name: Check out coordinated Epi Prompt-D Cosmic producer
         uses: actions/checkout@v4
         with:
           repository: EpiLogos/Epi-Logos-C-Experiments
-          ref: 80f13d9e2e534ee87dd224bb5712446d50f7b963
+          ref: 0f5b8c328c2e8e4f4ca26236a42027f2f97df154
           path: epi-source
       - name: Check out coordinated Central NOW/DAY owner
         uses: actions/checkout@v4
@@ -41,7 +46,7 @@ jobs:
           ref: ab354c1278396b0d50620bf8a43c40eedc26b907
           path: central-source
       - uses: dtolnay/rust-toolchain@stable
-      - name: Build and test Epi-owned bridge against real C kernel and protected Personal provider
+      - name: Build and test Epi-owned bridge against real C kernel, Cosmic composition and protected Personal provider
         run: |
           cargo test --manifest-path epi-source/Body/S/S0/pratibimba-bridge/Cargo.toml
           cargo build --manifest-path epi-source/Body/S/S0/pratibimba-bridge/Cargo.toml
@@ -62,7 +67,7 @@ jobs:
             "sourceClass": "human-authored"
           }
           JSON
-      - name: Exercise O:I host against the real Prompt-C Epi producer
+      - name: Exercise O:I host against the real Prompt-D Epi producer
         env:
           EPI_BRIDGE_BIN: ${{ github.workspace }}/epi-source/Body/S/S0/pratibimba-bridge/target/debug/epi-pratibimba-bridge
           EPI_NARA_CONTEXT: ${{ runner.temp }}/nara-context.json
@@ -70,10 +75,11 @@ jobs:
         run: |
           cargo test --manifest-path desktop/core/Cargo.toml --test local_epi_provider -- --nocapture
           cargo test --manifest-path desktop/core/Cargo.toml --test personal_return -- --nocapture
+          cargo test --manifest-path desktop/core/Cargo.toml --test cosmic_current -- --nocapture
           cargo test --manifest-path desktop/core/Cargo.toml --test phase4_execution_containment -- --nocapture
-      - name: Prove the Nara-rooted Personal depth presentation contract
+      - name: Prove Nara remains root and Cosmic is one source-composed instrument
         working-directory: desktop/ui
         run: |
           npm ci
-          node --test src/nara-presentation.test.mjs
+          node --test src/nara-presentation.test.mjs src/cosmic-presentation.test.mjs
           npm run build
