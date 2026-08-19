@@ -555,7 +555,11 @@ function reconcileLayout(layout: WorkbenchLayout, surfaces: Map<string, HostSurf
 }
 
 function surfaceRegions(surface: HostSurfaceDescriptor): WorkbenchHostRegion[] {
-  const regions = surface.regions?.length ? surface.regions : surface.region ? [surface.region] : ['canvas'];
+  const regions: WorkbenchHostRegion[] = surface.regions?.length
+    ? surface.regions
+    : surface.region
+      ? [surface.region]
+      : ['canvas'];
   return [...new Set(regions)];
 }
 
