@@ -40,7 +40,7 @@ pub enum ProjectReading {
 #[derive(Debug, Serialize)]
 #[serde(untagged)]
 pub enum ProjectExplanation {
-    Knowledge(KnowledgeExplanation),
+    Knowledge(Box<KnowledgeExplanation>),
     Source(Value),
 }
 
@@ -205,6 +205,7 @@ impl LocalProjectKnowledge {
         let address = self.resolve_address(raw_resource)?;
         self.application()
             .explain(&address)
+            .map(Box::new)
             .map(ProjectExplanation::Knowledge)
     }
 
