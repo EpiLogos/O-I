@@ -69,26 +69,17 @@ impl LocalAikitWorkbench {
     }
 
     /// Reconcile the canonical AIKit application state with one current runtime
-    /// observation. Runtime identity must match exactly; provider-native ids are
-    /// never accepted as substitutes. AgentSession continuity is deliberately not
-    /// inferred here: AIKit requires explicit evidence from the AgentSession owner.
+    /// observation when, and only when, it names the same canonical SessionSpace.
+    /// A configured observation for another space is simply unrelated evidence;
+    /// it is never promoted to this identity. AgentSession continuity is likewise
+    /// not inferred here: AIKit requires explicit evidence from its real owner.
     pub fn read_session_space_with_runtime(
         &self,
         raw: &str,
         runtime: Option<&SessionSpaceReadModel>,
     ) -> AikitResult<SessionSpaceApplicationReading> {
         let session_space = SessionSpaceRef::parse(raw)?;
-        if let Some(runtime) = runtime {
-            if runtime.id != session_space {
-                return Err(aikit_core::AikitError::new(
-                    "oi.session_space.runtime_identity_mismatch",
-                    format!(
-                        "runtime observation {} cannot be projected as canonical SessionSpace {}",
-                        runtime.id, session_space
-                    ),
-                ));
-            }
-        }
+        let runtime = runtime.filter(|runtime| runtime.id == session_space);
         let store = SessionSpaceApplicationStore::new(self.home.clone());
         let state = store.load(&session_space)?;
         let history = store.history(&session_space)?;
