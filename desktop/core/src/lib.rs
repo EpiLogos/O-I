@@ -7,16 +7,13 @@ mod live_product;
 mod local_aikit;
 mod local_central;
 mod local_epi;
+mod local_epi_cosmic;
 mod local_factory;
 mod project_knowledge;
 mod shell;
 
-pub use agent_surface::{
-    AgentSurfaceOpenRequest, AgentSurfaceReading, AikitAgentSurface,
-};
-pub use aikit_workbench::{
-    LocalAikitWorkbench, SessionSpaceApplicationReading, SessionSpaceFocusRequest,
-};
+pub use agent_surface::{AgentSurfaceOpenRequest, AgentSurfaceReading, AikitAgentSurface};
+pub use aikit_workbench::{LocalAikitWorkbench, SessionSpaceApplicationReading, SessionSpaceFocusRequest};
 pub use bridge::{BridgeCallClass, BridgeCaller, BridgeDenied, BridgePolicy};
 pub use contribution::{
     authorize_action, host_native_contribution, selection_for, ActionAuthorityGrant,
@@ -47,6 +44,14 @@ pub use local_epi::{
     EPI_EPII_REVIEW_ACTION_REF, EPI_NATIVE_OWNER, EPI_NARA_SENDOFF_ACTION_REF,
     EPI_PERSONAL_450_APPLICATION_SCHEMA, EPI_PERSONAL_450_CONTRIBUTION_REF,
     EPI_PERSONAL_PROPOSAL_ACTION_REF,
+};
+pub use local_epi_cosmic::{
+    host_epi_current_situated, EpiCurrentSituatedHostObservation, LocalEpiCosmicHost,
+    EPI_COSMIC_CONTRIBUTION_REF, EPI_COSMIC_CURRENT_ACTION_REF,
+    EPI_COSMIC_OPEN_DEPTH_ACTION_REF, EPI_COSMIC_PARENT_SCHEMA, EPI_COSMIC_PRODUCT_ID,
+    EPI_CURRENT_SITUATED_ACTION_REF, EPI_CURRENT_SITUATED_SCHEMA,
+    EPI_PERSONAL_LIVING_M_COORDINATE_REF, EPI_PERSONAL_LIVING_SOURCE_COORDINATE,
+    EPI_PERSONAL_PRODUCT_ID,
 };
 pub use local_factory::{host_factory_snapshot, LocalFactoryHost};
 pub use project_knowledge::LocalProjectKnowledge;

@@ -1,0 +1,84 @@
+name: O:I ↔ Epi Pratibimba bridge
+
+on:
+  pull_request:
+    paths:
+      - 'desktop/core/src/local_epi.rs'
+      - 'desktop/core/src/local_epi_cosmic.rs'
+      - 'desktop/core/src/local_central.rs'
+      - 'desktop/core/src/lib.rs'
+      - 'desktop/core/src/bridge.rs'
+      - 'desktop/core/src/execution_authority.rs'
+      - 'desktop/core/tests/local_epi_provider.rs'
+      - 'desktop/core/tests/personal_return.rs'
+      - 'desktop/core/tests/cosmic_current.rs'
+      - 'desktop/core/tests/phase4_execution_containment.rs'
+      - 'desktop/src-tauri/src/main.rs'
+      - 'desktop/ui/src/NaraSurface.tsx'
+      - 'desktop/ui/src/main.tsx'
+      - 'desktop/ui/src/nara.css'
+      - 'desktop/ui/src/nara-presentation.test.mjs'
+      - 'docs/OI-DESKTOP-SURFACE-LEDGER-COSMIC-123-DELTA.md'
+      - '.github/workflows/epi-pratibimba-integration.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  real-epi-provider:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out O:I
+        uses: actions/checkout@v4
+      - name: Check out corrected-C-bound Epi D producer
+        uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Epi-Logos-C-Experiments
+          ref: 310014c5d702568662f92346b706d1e5e87ebdbd
+          path: epi-source
+      - name: Check out coordinated Central NOW/DAY owner
+        uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Central
+          ref: ab354c1278396b0d50620bf8a43c40eedc26b907
+          path: central-source
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build and test Epi-owned bridge against corrected C + Current Situated producer
+        run: |
+          cargo test --manifest-path epi-source/Body/S/S0/pratibimba-bridge/Cargo.toml
+          cargo build --manifest-path epi-source/Body/S/S0/pratibimba-bridge/Cargo.toml
+      - name: Prove the real Central NOW/DAY return and human-recognition owner contract
+        run: |
+          cargo test --manifest-path central-source/Cargo.toml -p ctrl --test projectcentral_now -- --nocapture
+          cargo build --manifest-path central-source/Cargo.toml -p ctrl
+      - name: Prepare protected Nara acceptance context
+        run: |
+          mkdir -p "$RUNNER_TEMP/nara-vault"
+          cat > "$RUNNER_TEMP/nara-context.json" <<'JSON'
+          {
+            "identityRef": "epi:nara:identity:ci-local",
+            "dayId": "2026-08-19",
+            "nowPath": "DAY/2026-08-19/NOW/acceptance",
+            "sessionKey": "oi-nara-ci",
+            "episodeRef": "epi:episode:oi-ci",
+            "privacyClass": "protected-local",
+            "sourceClass": "human-authored"
+          }
+          JSON
+      - name: Exercise O:I host against corrected Personal and Current Situated producer
+        env:
+          EPI_BRIDGE_BIN: ${{ github.workspace }}/epi-source/Body/S/S0/pratibimba-bridge/target/debug/epi-pratibimba-bridge
+          EPI_NARA_CONTEXT: ${{ runner.temp }}/nara-context.json
+          EPI_NARA_VAULT: ${{ runner.temp }}/nara-vault
+        run: |
+          cargo test --manifest-path desktop/core/Cargo.toml --test local_epi_provider -- --nocapture
+          cargo test --manifest-path desktop/core/Cargo.toml --test personal_return -- --nocapture
+          cargo test --manifest-path desktop/core/Cargo.toml --test cosmic_current -- --nocapture
+          cargo test --manifest-path desktop/core/Cargo.toml --test phase4_execution_containment -- --nocapture
+      - name: Prove the Nara-rooted Personal depth presentation contract
+        working-directory: desktop/ui
+        run: |
+          npm ci
+          node --test src/nara-presentation.test.mjs
+          npm run build
