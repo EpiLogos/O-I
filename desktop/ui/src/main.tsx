@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { invoke } from '@tauri-apps/api/core';
 import '@epilogos/oi-design-system/tokens.css';
 import './shell.css';
+import { PersonalSurface } from './PersonalSurface';
 import { RuntimeObservationSurface } from './runtime-observation';
 import { WorkbenchEvidence, WorkbenchSemanticRef, WorkbenchSurface } from './workbench';
 
@@ -132,6 +133,14 @@ function App() {
       await invoke('open_destination', { destination });
       setSnapshot(await invoke<Snapshot>('shell_snapshot'));
       if (destination === 'build') await refreshFactoryBuild();
+      if (destination === 'personal') {
+        // The Personal Surface observes its native Epi product after mount; its
+        // contribution then becomes visible in the catalog without O:I inventing
+        // Epi health before the provider has actually been read.
+        setTimeout(() => {
+          void invoke<Contribution[]>('contribution_catalog').then(setContributions).catch(() => undefined);
+        }, 0);
+      }
     } catch {
       setSnapshot((current) => ({ ...current, destination }));
     }
@@ -174,15 +183,16 @@ function App() {
       </header>
 
       <section className="oi-shell__canvas" aria-label="Primary content canvas">
-        <p className="oi-eyebrow">{snapshot.destination}</p>
-        <h1>{titleFor(snapshot.destination)}</h1>
-        <p className="oi-lead">{copyFor(snapshot.destination)}</p>
+        {snapshot.destination !== 'personal' && <p className="oi-eyebrow">{snapshot.destination}</p>}
+        {snapshot.destination !== 'personal' && <h1>{titleFor(snapshot.destination)}</h1>}
+        {snapshot.destination !== 'personal' && <p className="oi-lead">{copyFor(snapshot.destination)}</p>}
         {snapshot.destination === 'home' && (
           <>
             <WorkbenchSurface onSelect={selectWorkbenchRef} />
             <RuntimeObservationSurface />
           </>
         )}
+        {snapshot.destination === 'personal' && <PersonalSurface onSelect={selectWorkbenchRef} />}
         {snapshot.destination === 'build' && factoryBuild && (
           <FactoryBuildSurface snapshot={factoryBuild} onRefresh={refreshFactoryBuild} />
         )}
@@ -236,21 +246,12 @@ function App() {
   );
 }
 
-function FactoryBuildSurface({
-  snapshot,
-  onRefresh,
-}: {
-  snapshot: FactoryBuildSnapshot;
-  onRefresh: () => Promise<void>;
-}) {
+function FactoryBuildSurface({ snapshot, onRefresh }: { snapshot: FactoryBuildSnapshot; onRefresh: () => Promise<void> }) {
   return (
     <section className="oi-contributions" aria-label="Live Factory Build Surface">
       <p className="oi-eyebrow">Factory-owned live reading · revision {snapshot.revision}</p>
       <article>
-        <div>
-          <span className="oi-contribution-state" data-state="ready">ready</span>
-          <h3>{snapshot.view.run.label}</h3>
-        </div>
+        <div><span className="oi-contribution-state" data-state="ready">ready</span><h3>{snapshot.view.run.label}</h3></div>
         <p>{snapshot.view.frontier.title}</p>
         <dl>
           <dt>Project</dt><dd>{snapshot.view.project.projectRef}</dd>
@@ -262,13 +263,9 @@ function FactoryBuildSurface({
         </dl>
         <button type="button" onClick={() => onRefresh()}>Refresh product reading</button>
       </article>
-
       {snapshot.view.candidates.map((candidate) => (
         <article key={candidate.candidateRef}>
-          <div>
-            <span className="oi-contribution-state" data-state="ready">{candidate.status}</span>
-            <h3>{candidate.label}</h3>
-          </div>
+          <div><span className="oi-contribution-state" data-state="ready">{candidate.status}</span><h3>{candidate.label}</h3></div>
           <p>{candidate.candidateRef}</p>
           <dl>
             <dt>Executions</dt><dd>{candidate.producingExecutionRefs.join(', ') || 'none'}</dd>
@@ -277,24 +274,15 @@ function FactoryBuildSurface({
           </dl>
         </article>
       ))}
-
       {snapshot.view.humanRequests.map((request) => (
         <article key={request.humanRequestRef}>
-          <div>
-            <span className="oi-contribution-state" data-state="degraded">human request</span>
-            <h3>{request.question}</h3>
-          </div>
-          <p>{request.whyHuman}</p>
-          <small>{request.humanRequestRef}</small>
+          <div><span className="oi-contribution-state" data-state="degraded">human request</span><h3>{request.question}</h3></div>
+          <p>{request.whyHuman}</p><small>{request.humanRequestRef}</small>
         </article>
       ))}
-
       {snapshot.view.executions.map((execution) => (
         <article key={execution.executionRef}>
-          <div>
-            <span className="oi-contribution-state" data-state="ready">{execution.status}</span>
-            <h3>{execution.executionRef}</h3>
-          </div>
+          <div><span className="oi-contribution-state" data-state="ready">{execution.status}</span><h3>{execution.executionRef}</h3></div>
           <dl>
             <dt>Harness</dt><dd>{execution.harnessRef ?? 'not observed'}</dd>
             <dt>SessionSpace</dt><dd>{execution.sessionSpaceRef ?? 'not observed'}</dd>
@@ -302,15 +290,10 @@ function FactoryBuildSurface({
           </dl>
         </article>
       ))}
-
       {snapshot.view.actions.map((action) => (
         <article key={action.actionRef}>
-          <div>
-            <span className="oi-contribution-state" data-state="ready">available Action</span>
-            <h3>{action.label}</h3>
-          </div>
-          <p>{action.actionRef}</p>
-          <small>Requires explicit Capability grant: {action.requiredCapabilityRef}</small>
+          <div><span className="oi-contribution-state" data-state="ready">available Action</span><h3>{action.label}</h3></div>
+          <p>{action.actionRef}</p><small>Requires explicit Capability grant: {action.requiredCapabilityRef}</small>
         </article>
       ))}
     </section>
@@ -359,7 +342,7 @@ function SystemSurface({ surfaces }: { surfaces: Surface[] }) {
 
 function ownerVisibleAt(owner: string, destination: Destination) {
   if (destination === 'home' || destination === 'system') return true;
-  if (destination === 'personal') return owner === 'central' || owner === 'actuation';
+  if (destination === 'personal') return owner === 'epi' || owner === 'central' || owner === 'actuation' || owner === 'ai-kit';
   if (destination === 'build') return owner === 'software-factory' || owner === 'factory' || owner === 'ai-kit';
   if (destination === 'explore') return owner === 'oi-explore';
   return false;
@@ -368,7 +351,7 @@ function ownerVisibleAt(owner: string, destination: Destination) {
 function titleFor(destination: Destination) {
   return {
     home: 'The local O:I workbench.',
-    personal: 'Personal ground.',
+    personal: 'Personal.',
     build: 'Development in view.',
     explore: 'Addressable worlds.',
     system: 'Composition, disclosed.',
@@ -378,8 +361,8 @@ function titleFor(destination: Destination) {
 function copyFor(destination: Destination) {
   return {
     home: 'One native workspace over AIKit SessionSpace, AgentSession conversation and project Knowledge. Focus changes around stable refs; O:I does not become their state owner.',
-    personal: 'Central-owned authored ground and Actuation-owned world-binding readings enter here without moving their semantics into O:I.',
-    build: 'Factory now exposes a product-owned live FactoryBuildView provider over canonical state. When the local provider binding is configured, this canvas renders that observed revision directly; otherwise the Factory contribution remains explicitly degraded.',
+    personal: 'Epi-owned lived activity over one protected Personal subject, composed with canonical AgentSession, shared Knowledge and Central NOW/DAY authority.',
+    build: 'Factory exposes a product-owned live FactoryBuildView provider over canonical state. When the local provider binding is configured, this canvas renders that observed revision directly; otherwise the Factory contribution remains explicitly degraded.',
     explore: 'The current shared-field Explore read model is hostable now, with canonical refs independent of SpaceTimeDB transport IDs.',
     system: 'Registration, reachability and native contribution status are shown without inventing product-native health.',
   }[destination];
