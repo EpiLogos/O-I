@@ -81,12 +81,17 @@ fn protected_child_action_consumes_authority_bound_to_stable_episode_parent() {
 fn personal_host_does_not_reintroduce_local_chat_graph_or_parallel_event_runtime() {
     let epi = include_str!("../src/local_epi.rs");
     let tauri = include_str!("../../src-tauri/src/personal.rs");
+    let ui = include_str!("../../ui/src/PersonalSurface.tsx");
     assert!(!epi.contains("struct EpiiRuntime"));
     assert!(!epi.contains("struct PersonalEvent"));
     assert!(!tauri.contains("struct EpiiRuntime"));
     assert!(!tauri.contains("struct PersonalEvent"));
+    assert!(!ui.contains("EpiiRuntime"));
+    assert!(!ui.contains("PersonalEvent"));
     assert!(epi.contains("personal-application"));
-    assert!(tauri.contains("knowledge_read"));
+    assert!(ui.contains("knowledge_read"));
+    assert!(ui.contains("knowledge_explain"));
+    assert!(ui.contains("AgentEncounterSurface"));
     assert!(tauri.contains("return_personal_proposal"));
     assert!(tauri.contains("available_grant_ref"));
     assert!(tauri.contains("authorize_parent_and_consume"));
