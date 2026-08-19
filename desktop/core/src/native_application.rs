@@ -27,13 +27,13 @@ pub use aikit_core::ContextResolution as NativeContextResolution;
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     fn source_never_becomes_a_second_context_resolver() {
         let source = include_str!("native_application.rs");
-        assert!(!source.contains("compose_context_resolution("));
-        assert!(!source.contains("application_context_resolution("));
+        let compose = ["compose_context_", "resolution("].concat();
+        let application = ["application_context_", "resolution("].concat();
+        assert!(!source.contains(&compose));
+        assert!(!source.contains(&application));
         assert!(source.contains("CONTEXT_RESOLUTION_VERSION"));
     }
 }
