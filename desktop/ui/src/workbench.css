@@ -10,20 +10,23 @@
 .oi-workbench__modes,
 .oi-workbench__prompt,
 .oi-workbench__search,
-.oi-agent-encounter__actions {
+.oi-agent-encounter__actions,
+.oi-runtime-observation > header {
   display: flex;
   align-items: center;
   gap: 0.65rem;
 }
 
-.oi-workbench__header {
+.oi-workbench__header,
+.oi-runtime-observation > header {
   justify-content: space-between;
   align-items: flex-start;
 }
 
 .oi-workbench__header h2,
 .oi-workbench__pane h3,
-.oi-agent-encounter h3 {
+.oi-agent-encounter h3,
+.oi-runtime-observation h2 {
   margin: 0.15rem 0 0.45rem;
 }
 
@@ -32,7 +35,8 @@
 .oi-workbench select,
 .oi-workbench textarea,
 .oi-agent-encounter button,
-.oi-agent-encounter textarea {
+.oi-agent-encounter textarea,
+.oi-runtime-observation button {
   font: inherit;
 }
 
@@ -41,7 +45,8 @@
 .oi-workbench input,
 .oi-workbench textarea,
 .oi-agent-encounter button,
-.oi-agent-encounter textarea {
+.oi-agent-encounter textarea,
+.oi-runtime-observation button {
   border: 1px solid var(--oi-border-subtle);
   background: var(--oi-surface-raised);
   color: var(--oi-text-primary);
@@ -49,7 +54,8 @@
 }
 
 .oi-workbench button,
-.oi-agent-encounter button {
+.oi-agent-encounter button,
+.oi-runtime-observation button {
   padding: 0.5rem 0.7rem;
   cursor: pointer;
 }
@@ -117,12 +123,14 @@
 .oi-workbench__relations code,
 .oi-workbench__hits span,
 .oi-workbench__hits small,
-.oi-agent-encounter code {
+.oi-agent-encounter code,
+.oi-runtime-observation code {
   overflow-wrap: anywhere;
 }
 
 .oi-workbench__relations code,
-.oi-agent-encounter code {
+.oi-agent-encounter code,
+.oi-runtime-observation code {
   font-size: 0.73rem;
   color: var(--oi-text-secondary);
 }
@@ -285,8 +293,53 @@
   flex-wrap: wrap;
 }
 
+.oi-runtime-observation {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--oi-border-subtle);
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--oi-surface-raised) 32%, transparent);
+}
+
+.oi-runtime-observation__summary {
+  display: grid;
+  grid-template-columns: 8rem 1fr;
+  gap: 0.35rem 0.7rem;
+  font-size: 0.78rem;
+}
+
+.oi-runtime-observation__summary dt {
+  color: var(--oi-text-secondary);
+}
+
+.oi-runtime-observation__summary dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.oi-runtime-observation__rows {
+  display: grid;
+  gap: 0.4rem;
+  padding-top: 0.8rem;
+  margin-top: 0.8rem;
+  border-top: 1px solid var(--oi-border-subtle);
+}
+
+.oi-runtime-observation__rows > div {
+  display: grid;
+  grid-template-columns: minmax(12rem, 0.7fr) minmax(0, 1.3fr);
+  gap: 0.7rem;
+  align-items: baseline;
+}
+
+.oi-runtime-observation__rows small {
+  color: var(--oi-text-secondary);
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 980px) {
-  .oi-workbench__grid {
+  .oi-workbench__grid,
+  .oi-runtime-observation__rows > div {
     grid-template-columns: 1fr;
   }
 
