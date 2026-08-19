@@ -32,7 +32,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: EpiLogos/Epi-Logos-C-Experiments
-          ref: d57ea08f6ae7d72dac29a9212ec44902cbf4ff9b
+          ref: 80f13d9e2e534ee87dd224bb5712446d50f7b963
           path: epi-source
       - uses: dtolnay/rust-toolchain@stable
       - name: Build and test Epi-owned bridge against real C kernel and protected Personal provider
