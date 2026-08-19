@@ -4,6 +4,13 @@ import { invoke } from '@tauri-apps/api/core';
 import '@epilogos/oi-design-system/tokens.css';
 import './shell.css';
 import { RuntimeObservationSurface } from './runtime-observation';
+import { NativeSearchCommand } from './native-command';
+import {
+  HostSurfaceDescriptor,
+  ProfessionalWorkbenchHost,
+  SurfaceFocus,
+  SurfacePresentationBinding,
+} from './workbench-host';
 import { WorkbenchEvidence, WorkbenchSemanticRef, WorkbenchSurface } from './workbench';
 
 type Destination = 'home' | 'personal' | 'build' | 'explore' | 'system';
@@ -45,6 +52,13 @@ type Contribution = {
     availability: ContributionAvailability;
     regions: string[];
     read_model_ref?: SemanticRef;
+    accepted_selection_kinds: string[];
+    actions: Array<{
+      action_ref: string;
+      native_owner: string;
+      availability: 'available' | 'unavailable';
+      required_capability_ref?: string;
+    }>;
     detail?: string;
     provenance: { source: string; revision?: string };
   };
@@ -105,16 +119,59 @@ const preview: Snapshot = {
   warnings: ['Browser preview: native O:I composition is unavailable outside the Rust shell.'],
 };
 
+const ROOT_SURFACES: Record<Destination, HostSurfaceDescriptor> = {
+  home: {
+    surfaceRef: 'surface/oi/workbench',
+    title: 'Workbench',
+    nativeOwner: 'o-i',
+    region: 'canvas',
+    provenance: 'O:I professional host',
+  },
+  personal: {
+    surfaceRef: 'surface/oi/personal-host',
+    title: 'Personal',
+    nativeOwner: 'o-i',
+    region: 'canvas',
+    provenance: 'O:I host destination; native content remains product-owned',
+  },
+  build: {
+    surfaceRef: 'surface/oi/build-host',
+    title: 'Build',
+    nativeOwner: 'o-i',
+    region: 'canvas',
+    provenance: 'O:I host destination over Factory native reading',
+  },
+  explore: {
+    surfaceRef: 'surface/oi/explore-host',
+    title: 'Explore',
+    nativeOwner: 'o-i',
+    region: 'canvas',
+    provenance: 'O:I host destination; Explore application body remains #110',
+  },
+  system: {
+    surfaceRef: 'surface/oi/system-host',
+    title: 'System',
+    nativeOwner: 'o-i',
+    region: 'canvas',
+    provenance: 'O:I host destination; six-product System body remains #109',
+  },
+};
+
+const DESTINATION_BY_SURFACE = new Map(
+  Object.entries(ROOT_SURFACES).map(([destination, surface]) => [surface.surfaceRef, destination as Destination]),
+);
+
 function App() {
   const [snapshot, setSnapshot] = useState<Snapshot>(preview);
   const [contributions, setContributions] = useState<Contribution[]>([]);
   const [factoryBuild, setFactoryBuild] = useState<FactoryBuildSnapshot | null>(null);
   const [workbenchEvidence, setWorkbenchEvidence] = useState<WorkbenchEvidence | null>(null);
+  const [actionResult, setActionResult] = useState<unknown>(null);
 
   useEffect(() => {
     invoke<Snapshot>('shell_snapshot').then(setSnapshot).catch(() => setSnapshot(preview));
     invoke<Contribution[]>('contribution_catalog').then(setContributions).catch(() => setContributions([]));
-    refreshFactoryBuild();
+    void refreshFactoryBuild();
   }, []);
 
   async function refreshFactoryBuild() {
@@ -143,96 +200,238 @@ function App() {
       await invoke('select_semantic_ref', { subject });
       setSnapshot(await invoke<Snapshot>('shell_snapshot'));
     } catch {
-      // Browser preview has no native bridge. Keep only an ephemeral visual
-      // selection there; native builds always use the privileged bridge above.
+      // Browser preview has no native bridge. This fallback is presentation only;
+      // native builds always use the privileged stable-ref selection boundary.
       setSnapshot((current) => ({ ...current, selection: subject }));
     }
   }
 
-  const visibleContributions = useMemo(
-    () => contributions.filter((entry) => ownerVisibleAt(entry.contribution.native_owner, snapshot.destination)),
-    [contributions, snapshot.destination],
-  );
+  function onSurfaceFocus(focus: SurfaceFocus) {
+    const destination = DESTINATION_BY_SURFACE.get(focus.surfaceRef);
+    if (destination) void openDestination(destination);
+  }
+
   const rootAgency = contributions.find((entry) => entry.contribution.native_owner === 'actuation');
+  const surfaces = useMemo(() => Object.values(ROOT_SURFACES), []);
 
   return (
-    <main className="oi-shell oi-surface-light" data-suite-state={snapshot.suite_condition}>
-      <header className="oi-shell__topbar">
-        <div className="oi-mark" aria-label="O:I">O:I</div>
-        <nav aria-label="O:I destinations">
-          {snapshot.destinations.map((destination) => (
-            <button
-              key={destination}
-              className={snapshot.destination === destination ? 'is-active' : ''}
-              onClick={() => openDestination(destination)}
-            >
-              {destination === 'home' ? 'Home' : destination[0].toUpperCase() + destination.slice(1)}
-            </button>
-          ))}
-        </nav>
-        <span className="oi-state" data-state={snapshot.suite_condition}>{snapshot.suite_condition}</span>
-      </header>
+    <ProfessionalWorkbenchHost
+      surfaces={surfaces}
+      initialSurfaceRef={ROOT_SURFACES.home.surfaceRef}
+      onSurfaceFocus={onSurfaceFocus}
+      command={(
+        <NativeSearchCommand
+          selection={snapshot.selection}
+          onSelect={selectWorkbenchRef}
+          onActionResult={(result) => {
+            setActionResult(result);
+            void refreshFactoryBuild();
+          }}
+        />
+      )}
+      navigator={(
+        <NavigatorHost surfaces={surfaces} snapshot={snapshot} contributions={contributions} />
+      )}
+      sidecar={(
+        <AgencySidecar selection={snapshot.selection} evidence={workbenchEvidence} rootAgency={rootAgency} />
+      )}
+      lower={<LowerRegion actionResult={actionResult} />}
+      system={<SystemRegion surfaces={snapshot.surfaces} contributions={contributions} warnings={snapshot.warnings} />}
+      status={(
+        <>
+          <span>O:I · {snapshot.suite_condition}</span>
+          <span>{snapshot.selection ? `selected ${snapshot.selection.ref}` : 'no semantic selection'}</span>
+          <span>selection ≠ Agent Context disclosure</span>
+          <span>Surface ≠ Action</span>
+        </>
+      )}
+      renderSurface={(surface, binding) => (
+        <RootCanvasSurface
+          surface={surface}
+          binding={binding}
+          contributions={contributions}
+          factoryBuild={factoryBuild}
+          onSelect={selectWorkbenchRef}
+          onRefreshFactory={refreshFactoryBuild}
+        />
+      )}
+    />
+  );
+}
 
-      <section className="oi-shell__canvas" aria-label="Primary content canvas">
-        <p className="oi-eyebrow">{snapshot.destination}</p>
-        <h1>{titleFor(snapshot.destination)}</h1>
-        <p className="oi-lead">{copyFor(snapshot.destination)}</p>
-        {snapshot.destination === 'home' && (
-          <>
-            <WorkbenchSurface onSelect={selectWorkbenchRef} />
-            <RuntimeObservationSurface />
-          </>
-        )}
-        {snapshot.destination === 'build' && factoryBuild && (
-          <FactoryBuildSurface snapshot={factoryBuild} onRefresh={refreshFactoryBuild} />
-        )}
-        {snapshot.destination === 'system' && <SystemSurface surfaces={snapshot.surfaces} />}
-        <ContributionSurface contributions={visibleContributions} />
-      </section>
+function NavigatorHost({
+  surfaces,
+  snapshot,
+  contributions,
+}: {
+  surfaces: HostSurfaceDescriptor[];
+  snapshot: Snapshot;
+  contributions: Contribution[];
+}) {
+  return (
+    <div className="oi-p1-navigator">
+      <p className="oi-eyebrow">Host contract</p>
+      <p className="oi-muted">P1 exposes placement and shared focus only. Project/files/Ground/Knowledge navigation belongs to #106.</p>
+      <div className="oi-workbench__relations">
+        <strong>Canvas Surfaces</strong>
+        {surfaces.map((surface) => <code key={surface.surfaceRef}>{surface.surfaceRef}</code>)}
+      </div>
+      <div className="oi-workbench__relations">
+        <strong>Current selection</strong>
+        {snapshot.selection ? <code>{snapshot.selection.ref}</code> : <span className="oi-muted">None</span>}
+      </div>
+      <div className="oi-workbench__relations">
+        <strong>Native contributions</strong>
+        {contributions.map((entry) => (
+          <span key={entry.contribution.contribution_ref}>
+            {entry.contribution.native_owner} · {entry.contribution.availability}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
 
-      <aside className="oi-shell__inspector" aria-label="Context and root agency region">
-        <p className="oi-eyebrow">Encounter</p>
-        <h2>Shared reference</h2>
-        {snapshot.selection ? (
-          <dl className="oi-ref">
-            <dt>Ref</dt><dd>{snapshot.selection.ref}</dd>
-            <dt>Kind</dt><dd>{snapshot.selection.kind}</dd>
-            <dt>Owner</dt><dd>{snapshot.selection.native_owner}</dd>
-            <dt>Source</dt><dd>{snapshot.selection.provenance.source}</dd>
-          </dl>
-        ) : (
-          <p className="oi-muted">No object selected. Canvas, Knowledge and root-agency regions share one stable Ref; O:I does not copy wholesale Context into contributions.</p>
-        )}
-        {workbenchEvidence && (
-          <div className="oi-inspector-evidence">
-            <p className="oi-eyebrow">Explain / History</p>
-            <strong>{workbenchEvidence.title}</strong>
-            <p className="oi-muted">{workbenchEvidence.summary}</p>
-            {workbenchEvidence.detail != null && (
-              <details>
-                <summary>Native detail</summary>
-                <pre>{JSON.stringify(workbenchEvidence.detail, null, 2)}</pre>
-              </details>
-            )}
-          </div>
-        )}
-        <div className="oi-root-agency">
-          <p className="oi-eyebrow">Root Agency</p>
-          {rootAgency ? (
-            <>
-              <strong>{rootAgency.contribution.availability}</strong>
-              <p className="oi-muted">{rootAgency.contribution.target_contract ?? 'native adapter pending'}</p>
-              <small>{rootAgency.contribution.provenance.source}</small>
-            </>
-          ) : <p className="oi-muted">No Actuation reading disclosed.</p>}
+function AgencySidecar({
+  selection,
+  evidence,
+  rootAgency,
+}: {
+  selection?: SemanticRef;
+  evidence: WorkbenchEvidence | null;
+  rootAgency?: Contribution;
+}) {
+  return (
+    <>
+      <p className="oi-eyebrow">Shared semantic focus</p>
+      <h2>Agency / Inspector</h2>
+      {selection ? (
+        <dl className="oi-ref">
+          <dt>Ref</dt><dd>{selection.ref}</dd>
+          <dt>Kind</dt><dd>{selection.kind}</dd>
+          <dt>Owner</dt><dd>{selection.native_owner}</dd>
+          <dt>Source</dt><dd>{selection.provenance.source}</dd>
+        </dl>
+      ) : (
+        <p className="oi-muted">No object selected. The host carries only a stable semantic ref; it does not disclose the object into Agent Context.</p>
+      )}
+      {evidence && (
+        <div className="oi-inspector-evidence">
+          <p className="oi-eyebrow">Reading / Explain / History</p>
+          <strong>{evidence.title}</strong>
+          <p className="oi-muted">{evidence.summary}</p>
+          {evidence.detail != null && (
+            <details><summary>Native detail</summary><pre>{JSON.stringify(evidence.detail, null, 2)}</pre></details>
+          )}
         </div>
-      </aside>
+      )}
+      <div className="oi-root-agency">
+        <p className="oi-eyebrow">Root Agency slot</p>
+        {rootAgency ? (
+          <>
+            <strong>{rootAgency.contribution.availability}</strong>
+            <p className="oi-muted">{rootAgency.contribution.target_contract ?? 'native adapter pending'}</p>
+            <small>{rootAgency.contribution.provenance.source}</small>
+          </>
+        ) : <p className="oi-muted">No Actuation reading disclosed. #107 owns the canonical conversation/Cradle body, not P1.</p>}
+      </div>
+      <div className="oi-p1-agent-slot" aria-label="Inherited AgentSession portal slot" />
+    </>
+  );
+}
 
-      <footer className="oi-shell__drawer" aria-label="Deep drawer">
-        <span>Trajectory / terminal / events</span>
-        <span>alternate native Surfaces remain attachable without changing SessionSpace identity</span>
-      </footer>
-    </main>
+function LowerRegion({ actionResult }: { actionResult: unknown }) {
+  return (
+    <div className="oi-p1-lower">
+      <p className="oi-eyebrow">Terminal · trajectory · events · evidence · material</p>
+      <p className="oi-muted">P1 establishes the lower/deep host region. Product-specific bodies remain native-owned and are supplied by #106–#110 or alternate native Surfaces.</p>
+      <RuntimeObservationSurface />
+      {actionResult != null && (
+        <details><summary>Most recent native Action return</summary><pre>{JSON.stringify(actionResult, null, 2)}</pre></details>
+      )}
+    </div>
+  );
+}
+
+function SystemRegion({
+  surfaces,
+  contributions,
+  warnings,
+}: {
+  surfaces: Surface[];
+  contributions: Contribution[];
+  warnings: string[];
+}) {
+  return (
+    <div className="oi-p1-system">
+      <p className="oi-eyebrow">Composition disclosure</p>
+      <p className="oi-muted">P1 exposes the stable System region only. #109 owns the six-product configuration workbench.</p>
+      <SystemSurface surfaces={surfaces} />
+      <ContributionSurface contributions={contributions} />
+      {warnings.map((warning) => <p key={warning} className="oi-muted">{warning}</p>)}
+    </div>
+  );
+}
+
+function RootCanvasSurface({
+  surface,
+  binding,
+  contributions,
+  factoryBuild,
+  onSelect,
+  onRefreshFactory,
+}: {
+  surface: HostSurfaceDescriptor;
+  binding: SurfacePresentationBinding;
+  contributions: Contribution[];
+  factoryBuild: FactoryBuildSnapshot | null;
+  onSelect: (subject: WorkbenchSemanticRef, evidence: WorkbenchEvidence) => Promise<void>;
+  onRefreshFactory: () => Promise<void>;
+}) {
+  const destination = DESTINATION_BY_SURFACE.get(surface.surfaceRef) ?? 'home';
+  const visibleContributions = contributions.filter((entry) => ownerVisibleAt(entry.contribution.native_owner, destination));
+
+  if (destination === 'home') {
+    return (
+      <>
+        <p className="oi-eyebrow">Professional host · inherited application substrate</p>
+        <h1>The local O:I workbench.</h1>
+        <p className="oi-lead">Regions, tabs, splits and presentation focus compose around the same stable refs; SessionSpace, AgentSession and Knowledge remain AIKit/native application state.</p>
+        <WorkbenchSurface onSelect={onSelect} />
+      </>
+    );
+  }
+
+  if (destination === 'build') {
+    return (
+      <>
+        <SurfaceHeader destination={destination} binding={binding} />
+        {factoryBuild ? (
+          <FactoryBuildSurface snapshot={factoryBuild} onRefresh={onRefreshFactory} />
+        ) : (
+          <p className="oi-muted">No live FactoryBuildView provider is bound. #108 consumes the source-faithful Factory Build body; P1 will not fabricate it.</p>
+        )}
+        <ContributionSurface contributions={visibleContributions} />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <SurfaceHeader destination={destination} binding={binding} />
+      <p className="oi-lead">{copyFor(destination)}</p>
+      <ContributionSurface contributions={visibleContributions} />
+    </>
+  );
+}
+
+function SurfaceHeader({ destination, binding }: { destination: Destination; binding: SurfacePresentationBinding }) {
+  return (
+    <>
+      <p className="oi-eyebrow">{destination} · provider-local presentation {binding.bindingId}</p>
+      <h1>{titleFor(destination)}</h1>
+      <small className="oi-muted">Tab/split identity is presentation state and is never substituted for a native Surface or semantic subject ref.</small>
+    </>
   );
 }
 
@@ -247,70 +446,34 @@ function FactoryBuildSurface({
     <section className="oi-contributions" aria-label="Live Factory Build Surface">
       <p className="oi-eyebrow">Factory-owned live reading · revision {snapshot.revision}</p>
       <article>
-        <div>
-          <span className="oi-contribution-state" data-state="ready">ready</span>
-          <h3>{snapshot.view.run.label}</h3>
-        </div>
+        <div><span className="oi-contribution-state" data-state="ready">ready</span><h3>{snapshot.view.run.label}</h3></div>
         <p>{snapshot.view.frontier.title}</p>
         <dl>
           <dt>Project</dt><dd>{snapshot.view.project.projectRef}</dd>
           <dt>Run</dt><dd>{snapshot.view.run.runRef}</dd>
           <dt>RunMap</dt><dd>{snapshot.view.run.runMapRef}</dd>
           <dt>Frontier</dt><dd>{snapshot.view.frontier.mode} · {snapshot.view.frontier.summary}</dd>
-          <dt>Factory revision</dt><dd>{snapshot.provenance.factoryStateRevision}</dd>
-          <dt>RunMap revision</dt><dd>{snapshot.provenance.runMapRevision}</dd>
         </dl>
-        <button type="button" onClick={() => onRefresh()}>Refresh product reading</button>
+        <button type="button" onClick={() => void onRefresh()}>Refresh native reading</button>
       </article>
-
       {snapshot.view.candidates.map((candidate) => (
         <article key={candidate.candidateRef}>
-          <div>
-            <span className="oi-contribution-state" data-state="ready">{candidate.status}</span>
-            <h3>{candidate.label}</h3>
-          </div>
+          <div><span className="oi-contribution-state" data-state="ready">{candidate.status}</span><h3>{candidate.label}</h3></div>
           <p>{candidate.candidateRef}</p>
-          <dl>
-            <dt>Executions</dt><dd>{candidate.producingExecutionRefs.join(', ') || 'none'}</dd>
-            <dt>Claims</dt><dd>{candidate.claimRefs.join(', ') || 'none'}</dd>
-            <dt>Evidence</dt><dd>{candidate.evidenceRefs.join(', ') || 'none'}</dd>
-          </dl>
+          <small>{candidate.claimRefs.length} claims · {candidate.evidenceRefs.length} evidence refs</small>
         </article>
       ))}
-
       {snapshot.view.humanRequests.map((request) => (
         <article key={request.humanRequestRef}>
-          <div>
-            <span className="oi-contribution-state" data-state="degraded">human request</span>
-            <h3>{request.question}</h3>
-          </div>
+          <div><span className="oi-contribution-state" data-state="degraded">human request</span><h3>{request.question}</h3></div>
           <p>{request.whyHuman}</p>
-          <small>{request.humanRequestRef}</small>
         </article>
       ))}
-
-      {snapshot.view.executions.map((execution) => (
-        <article key={execution.executionRef}>
-          <div>
-            <span className="oi-contribution-state" data-state="ready">{execution.status}</span>
-            <h3>{execution.executionRef}</h3>
-          </div>
-          <dl>
-            <dt>Harness</dt><dd>{execution.harnessRef ?? 'not observed'}</dd>
-            <dt>SessionSpace</dt><dd>{execution.sessionSpaceRef ?? 'not observed'}</dd>
-            <dt>Native trajectory</dt><dd>{execution.nativeTrajectoryRef ?? 'not observed'}</dd>
-          </dl>
-        </article>
-      ))}
-
       {snapshot.view.actions.map((action) => (
         <article key={action.actionRef}>
-          <div>
-            <span className="oi-contribution-state" data-state="ready">available Action</span>
-            <h3>{action.label}</h3>
-          </div>
+          <div><span className="oi-contribution-state" data-state="ready">discoverable Action</span><h3>{action.label}</h3></div>
           <p>{action.actionRef}</p>
-          <small>Requires explicit Capability grant: {action.requiredCapabilityRef}</small>
+          <small>Requires native Capability grant: {action.requiredCapabilityRef}</small>
         </article>
       ))}
     </section>
@@ -359,7 +522,7 @@ function SystemSurface({ surfaces }: { surfaces: Surface[] }) {
 
 function ownerVisibleAt(owner: string, destination: Destination) {
   if (destination === 'home' || destination === 'system') return true;
-  if (destination === 'personal') return owner === 'central' || owner === 'actuation';
+  if (destination === 'personal') return owner === 'central' || owner === 'actuation' || owner === 'ai-kit';
   if (destination === 'build') return owner === 'software-factory' || owner === 'factory' || owner === 'ai-kit';
   if (destination === 'explore') return owner === 'oi-explore';
   return false;
@@ -377,11 +540,11 @@ function titleFor(destination: Destination) {
 
 function copyFor(destination: Destination) {
   return {
-    home: 'One native workspace over AIKit SessionSpace, AgentSession conversation and project Knowledge. Focus changes around stable refs; O:I does not become their state owner.',
-    personal: 'Central-owned authored ground and Actuation-owned world-binding readings enter here without moving their semantics into O:I.',
-    build: 'Factory now exposes a product-owned live FactoryBuildView provider over canonical state. When the local provider binding is configured, this canvas renders that observed revision directly; otherwise the Factory contribution remains explicitly degraded.',
-    explore: 'The current shared-field Explore read model is hostable now, with canonical refs independent of SpaceTimeDB transport IDs.',
-    system: 'Registration, reachability and native contribution status are shown without inventing product-native health.',
+    home: 'One native workspace over AIKit SessionSpace, AgentSession conversation and project Knowledge.',
+    personal: 'P1 provides a host Surface only. Central/Actuation bodies and the Project/Ground editor field belong to #106/#107.',
+    build: 'Factory Build remains product-owned and source-faithful; P1 only hosts its current read model and canonical Actions.',
+    explore: 'P1 provides the host placement contract. Desktop ↔ Explore local/social parity and application body belong to #110.',
+    system: 'P1 provides the region and current composition disclosure. The six-product System workbench belongs to #109.',
   }[destination];
 }
 
