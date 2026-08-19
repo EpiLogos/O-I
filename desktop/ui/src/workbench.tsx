@@ -10,13 +10,14 @@ import {
 export * from './workbench-native';
 
 export function WorkbenchSurface({
+  selection,
   onSelect,
   onAgentSessionChange,
 }: {
+  selection?: WorkbenchSemanticRef;
   onSelect: (subject: WorkbenchSemanticRef, evidence: WorkbenchEvidence) => Promise<void>;
   onAgentSessionChange?: (agentSessionRef: string | null) => void;
 }) {
-  const [selection, setSelection] = useState<WorkbenchSemanticRef | undefined>();
   const [navigatorHost, setNavigatorHost] = useState<Element | null>(null);
 
   useEffect(() => {
@@ -24,7 +25,6 @@ export function WorkbenchSurface({
   }, []);
 
   async function select(subject: WorkbenchSemanticRef, evidence: WorkbenchEvidence) {
-    setSelection(subject);
     await onSelect(subject, evidence);
   }
 

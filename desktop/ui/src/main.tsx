@@ -251,6 +251,7 @@ function App() {
           binding={binding}
           contributions={contributions}
           factoryBuild={factoryBuild}
+          selection={snapshot.selection}
           onSelect={selectWorkbenchRef}
           onRefreshFactory={refreshFactoryBuild}
         />
@@ -378,6 +379,7 @@ function RootCanvasSurface({
   binding,
   contributions,
   factoryBuild,
+  selection,
   onSelect,
   onRefreshFactory,
 }: {
@@ -385,6 +387,7 @@ function RootCanvasSurface({
   binding: SurfacePresentationBinding;
   contributions: Contribution[];
   factoryBuild: FactoryBuildSnapshot | null;
+  selection?: WorkbenchSemanticRef;
   onSelect: (subject: WorkbenchSemanticRef, evidence: WorkbenchEvidence) => Promise<void>;
   onRefreshFactory: () => Promise<void>;
 }) {
@@ -397,7 +400,7 @@ function RootCanvasSurface({
         <p className="oi-eyebrow">Professional host · inherited application substrate</p>
         <h1>The local O:I workbench.</h1>
         <p className="oi-lead">Regions, tabs, splits and presentation focus compose around the same stable refs; SessionSpace, AgentSession and Knowledge remain AIKit/native application state.</p>
-        <WorkbenchSurface onSelect={onSelect} />
+        <WorkbenchSurface selection={selection} onSelect={onSelect} />
       </>
     );
   }
