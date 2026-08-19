@@ -102,8 +102,8 @@ test('keyboard and mouse command activation converge on the same canonical Actio
   assert.match(command, /if \(event\.key === 'Enter'\)/);
   assert.match(command, /void activateResult\(result\)/);
   assert.match(command, /dispatch_contextual_factory_action/);
-  assert.match(command, /action_ref: result\.ref/);
-  assert.match(command, /subject_ref: result\.subjectRef/);
+  assert.match(command, /actionRef: result\.ref/);
+  assert.match(command, /subjectRef: result\.subjectRef/);
   assert.equal(command.includes('authorityRef:'), false);
 });
 
