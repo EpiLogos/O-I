@@ -192,7 +192,10 @@ impl AikitAgentSurface {
     }
 
     pub fn close(&mut self) -> Result<(), String> {
-        self.process.terminate().map_err(|error| error.to_string())
+        self.process
+            .terminate()
+            .map(|_| ())
+            .map_err(|error| error.to_string())
     }
 }
 
