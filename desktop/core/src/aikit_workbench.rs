@@ -7,9 +7,10 @@
 
 use std::path::Path;
 
-use aikit_core::{
-    ResourceRef, Result as AikitResult, SessionSpaceAuthoredState, SessionSpaceExplanation,
-    SessionSpaceFocus, SessionSpaceMutation, SessionSpaceRef,
+use aikit_core::{ResourceRef, Result as AikitResult, SessionSpaceRef};
+use aikit_core::session_space_application::{
+    SessionSpaceAuthoredState, SessionSpaceExplanation, SessionSpaceFocus,
+    SessionSpaceMutation,
 };
 use aikit_store::{AikitHome, SessionSpaceApplicationStore, SessionSpaceReceipt};
 use serde::{Deserialize, Serialize};
