@@ -1,11 +1,11 @@
 use oi_desktop_core::{
-    host_native_contribution, ActionAuthorityStore, ActionExecutionRequest, AgentSurfaceOpenRequest,
-    AgentSurfaceReading, AikitAgentSurface, BoundedActionGrant, BridgeCallClass, BridgeCaller,
-    BridgePolicy, DesktopHost, FactoryActionRoundTrip, FactoryBuildSnapshot, HostedContribution,
-    LocalAikitSessionSpaceHost, LocalAikitWorkbench, LocalFactoryHost, LocalProjectKnowledge,
-    NativeContributionReading, SemanticRef, SessionSpaceFocusRequest, ShellDestination,
-    ShellSnapshot, SurfaceActionEmission, AIKIT_SESSION_SPACE_CONTRIBUTION_REF,
-    FACTORY_BUILD_CONTRIBUTION_REF,
+    host_native_contribution, load_context_resolution, ActionAuthorityStore, ActionExecutionRequest,
+    AgentSurfaceOpenRequest, AgentSurfaceReading, AikitAgentSurface, BoundedActionGrant,
+    BridgeCallClass, BridgeCaller, BridgePolicy, DesktopHost, FactoryActionRoundTrip,
+    FactoryBuildSnapshot, HostedContribution, LocalAikitSessionSpaceHost, LocalAikitWorkbench,
+    LocalFactoryHost, LocalProjectKnowledge, NativeContextResolution, NativeContributionReading,
+    SemanticRef, SessionSpaceFocusRequest, ShellDestination, ShellSnapshot, SurfaceActionEmission,
+    AIKIT_SESSION_SPACE_CONTRIBUTION_REF, FACTORY_BUILD_CONTRIBUTION_REF,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -48,6 +48,7 @@ struct AppState {
     action_authority: Mutex<ActionAuthorityStore>,
     aikit: Mutex<Option<LocalAikitWorkbench>>,
     aikit_runtime: Mutex<Option<LocalAikitSessionSpaceHost>>,
+    aikit_context: Mutex<Option<NativeContextResolution>>,
     knowledge: Mutex<Option<LocalProjectKnowledge>>,
     agent_provider: Option<AgentProviderConfig>,
     agent_surface: Mutex<Option<AikitAgentSurface>>,
@@ -98,12 +99,9 @@ fn factory_build_snapshot(
     Ok(observation.snapshot)
 }
 
-/// Privileged native Action boundary.
-///
-/// The frontend may name only an opaque authority handle + operation id. It may
-/// not submit Action/Capability authority facts. Those are registered in the
-/// process-local store from a trusted native handoff and consumed here before the
-/// Factory-owned Action executor can be reached.
+/// Explicit authority-handle projection retained for existing native clients.
+/// The renderer still cannot supply Action/Capability authority facts: the handle
+/// resolves only an already-issued trusted grant registered before webview use.
 #[tauri::command]
 fn dispatch_factory_action(
     state: State<'_, AppState>,
@@ -114,7 +112,33 @@ fn dispatch_factory_action(
     BridgePolicy
         .authorize(BridgeCaller::ShellUi, BridgeCallClass::DispatchFactoryAction)
         .map_err(|error| error.to_string())?;
+    dispatch_factory_action_inner(&state, emission, operation_id, Some(authority_ref))
+}
 
+/// Search/Command projection of the same canonical Factory Action handler.
+///
+/// No authority identifier is accepted from the renderer. The native host must
+/// already hold exactly one bounded grant matching ActionRef + owner + subject +
+/// binding revision + Capability requirement. Discovery therefore cannot confer
+/// authority, and ambiguous grants fail closed rather than creating O:I policy.
+#[tauri::command]
+fn dispatch_contextual_factory_action(
+    state: State<'_, AppState>,
+    emission: SurfaceActionEmission,
+    operation_id: String,
+) -> Result<FactoryActionRoundTrip, String> {
+    BridgePolicy
+        .authorize(BridgeCaller::ShellUi, BridgeCallClass::DispatchFactoryAction)
+        .map_err(|error| error.to_string())?;
+    dispatch_factory_action_inner(&state, emission, operation_id, None)
+}
+
+fn dispatch_factory_action_inner(
+    state: &State<'_, AppState>,
+    emission: SurfaceActionEmission,
+    operation_id: String,
+    explicit_authority_ref: Option<String>,
+) -> Result<FactoryActionRoundTrip, String> {
     let mut factory = state
         .factory
         .lock()
@@ -151,16 +175,21 @@ fn dispatch_factory_action(
         binding_revision,
         now_unix_ms: now_unix_ms()?,
     };
-    let authorised = state
-        .action_authority
-        .lock()
-        .map_err(|_| "Action authority store lock poisoned".to_owned())?
-        .authorize_and_consume(&authority_ref, &request)?;
+    let authorised = {
+        let mut authority = state
+            .action_authority
+            .lock()
+            .map_err(|_| "Action authority store lock poisoned".to_owned())?;
+        match explicit_authority_ref {
+            Some(authority_ref) => authority.authorize_and_consume(&authority_ref, &request)?,
+            None => authority.authorize_matching_and_consume(&request)?,
+        }
+    };
 
     let round_trip = factory.dispatch(&emission, authorised.action_grant())?;
     let observation = factory.observe()?;
     replace_contribution(
-        &state,
+        state,
         FACTORY_BUILD_CONTRIBUTION_REF,
         observation.contribution,
     )?;
@@ -168,8 +197,26 @@ fn dispatch_factory_action(
 }
 
 // ---------------------------------------------------------------------------
-// AIKit SessionSpace application projection
+// AIKit native application projections
 // ---------------------------------------------------------------------------
+
+/// Read the exact ContextResolution supplied by the native AIKit integration.
+/// O:I never runs a second resolver here: absence remains absence and the entire
+/// typed AIKit application result is returned without presentation inference.
+#[tauri::command]
+fn aikit_context_resolution(state: State<'_, AppState>) -> Result<Option<NativeContextResolution>, String> {
+    BridgePolicy
+        .authorize(
+            BridgeCaller::ShellUi,
+            BridgeCallClass::ObserveContextResolution,
+        )
+        .map_err(|error| error.to_string())?;
+    Ok(state
+        .aikit_context
+        .lock()
+        .map_err(|_| "AIKit ContextResolution lock poisoned".to_owned())?
+        .clone())
+}
 
 #[tauri::command]
 fn aikit_session_spaces(state: State<'_, AppState>) -> Result<Value, String> {
@@ -195,9 +242,8 @@ fn aikit_session_space_read(
         .authorize(BridgeCaller::ShellUi, BridgeCallClass::ObserveSessionSpace)
         .map_err(|error| error.to_string())?;
 
-    // Runtime observation is read independently from canonical application state.
-    // If configured, failure is returned rather than silently presenting stale
-    // provider truth as current. Identity is checked again by LocalAikitWorkbench.
+    // Runtime observation remains independent evidence beside canonical authored
+    // SessionSpace state. LocalAikitWorkbench checks the exact identity again.
     let runtime_observation = {
         let runtime = state
             .aikit_runtime
@@ -491,12 +537,9 @@ fn load_local_factory() -> Result<Option<LocalFactoryHost>, String> {
     let run_ref = env::var("OI_FACTORY_RUN_REF").ok();
     match (state_path, project_ref, run_ref) {
         (None, None, None) => Ok(None),
-        (Some(state_path), Some(project_ref), Some(run_ref)) => LocalFactoryHost::open_refs(
-            state_path,
-            &project_ref,
-            &run_ref,
-        )
-        .map(Some),
+        (Some(state_path), Some(project_ref), Some(run_ref)) => {
+            LocalFactoryHost::open_refs(state_path, &project_ref, &run_ref).map(Some)
+        }
         _ => Err(
             "local Factory provider requires OI_FACTORY_BUILD_STATE, OI_FACTORY_PROJECT_REF and OI_FACTORY_RUN_REF together"
                 .into(),
@@ -515,6 +558,13 @@ fn load_local_aikit_runtime() -> Result<Option<LocalAikitSessionSpaceHost>, Stri
         return Ok(None);
     };
     LocalAikitSessionSpaceHost::open(PathBuf::from(path)).map(Some)
+}
+
+fn load_aikit_context() -> Result<Option<NativeContextResolution>, String> {
+    let Some(path) = env::var_os("OI_AIKIT_CONTEXT_RESOLUTION") else {
+        return Ok(None);
+    };
+    load_context_resolution(PathBuf::from(path)).map(Some)
 }
 
 fn load_local_knowledge() -> Result<Option<LocalProjectKnowledge>, String> {
@@ -613,9 +663,8 @@ fn replace_contribution_in(
 }
 
 fn main() {
-    let disclosure = oi_cli::status::live_disclosure().unwrap_or_else(|error| {
-        oi_cli::status::SuiteCompositionDisclosure::unavailable(error)
-    });
+    let disclosure = oi_cli::status::live_disclosure()
+        .unwrap_or_else(|error| oi_cli::status::SuiteCompositionDisclosure::unavailable(error));
     let mut contributions = load_contribution_fixtures().unwrap_or_else(|error| {
         eprintln!("O:I desktop host-reading fixtures unavailable: {error}");
         Vec::new()
@@ -636,6 +685,10 @@ fn main() {
         .map_err(|error| eprintln!("O:I AIKit runtime observation unavailable: {error}"))
         .ok()
         .flatten();
+    let aikit_context = load_aikit_context()
+        .map_err(|error| eprintln!("O:I AIKit ContextResolution unavailable: {error}"))
+        .ok()
+        .flatten();
     let knowledge = load_local_knowledge()
         .map_err(|error| eprintln!("O:I local Knowledge world unavailable: {error}"))
         .ok()
@@ -644,6 +697,7 @@ fn main() {
         .map_err(|error| eprintln!("O:I AgentSession provider unavailable: {error}"))
         .ok()
         .flatten();
+
     if let Some(factory) = factory.as_ref() {
         match factory.observe() {
             Ok(observation) => replace_contribution_in(
@@ -673,6 +727,7 @@ fn main() {
             action_authority: Mutex::new(action_authority),
             aikit: Mutex::new(aikit),
             aikit_runtime: Mutex::new(aikit_runtime),
+            aikit_context: Mutex::new(aikit_context),
             knowledge: Mutex::new(knowledge),
             agent_provider,
             agent_surface: Mutex::new(None),
@@ -682,6 +737,8 @@ fn main() {
             contribution_catalog,
             factory_build_snapshot,
             dispatch_factory_action,
+            dispatch_contextual_factory_action,
+            aikit_context_resolution,
             aikit_session_spaces,
             aikit_session_space_read,
             aikit_session_space_focus,
