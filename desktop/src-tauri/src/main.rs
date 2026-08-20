@@ -13,6 +13,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::State;
 
 const CONTRIBUTION_FIXTURES: &str = include_str!("../../fixtures/native-contributions.json");
+const EXPLORE_SURFACE_SEED_SCHEMA: &str = "oi.explore-browser-seed/v1";
 
 #[derive(Deserialize)]
 struct ContributionFixtures {
@@ -47,6 +48,35 @@ fn contribution_catalog(state: State<'_, AppState>) -> Result<Vec<HostedContribu
         .lock()
         .map_err(|_| "contribution catalog lock poisoned".to_owned())?
         .clone())
+}
+
+/// Optional local projected-field adapter for the installed Explore Surface.
+///
+/// The file is a read-model/projection input only. It is not canonical source
+/// authority and the desktop does not mutate it. A native provider can replace
+/// this adapter without changing Explore semantic refs or Surface behaviour.
+#[tauri::command]
+fn explore_surface_seed() -> Result<Option<serde_json::Value>, String> {
+    BridgePolicy
+        .authorize(BridgeCaller::ShellUi, BridgeCallClass::DiscloseContributions)
+        .map_err(|error| error.to_string())?;
+    let Some(path) = env::var_os("OI_EXPLORE_SURFACE_SEED") else {
+        return Ok(None);
+    };
+    let content = fs::read_to_string(&path)
+        .map_err(|error| format!("read OI_EXPLORE_SURFACE_SEED: {error}"))?;
+    let value: serde_json::Value = serde_json::from_str(&content)
+        .map_err(|error| format!("invalid OI_EXPLORE_SURFACE_SEED JSON: {error}"))?;
+    let schema = value
+        .get("schema")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "OI_EXPLORE_SURFACE_SEED must disclose schema".to_owned())?;
+    if schema != EXPLORE_SURFACE_SEED_SCHEMA {
+        return Err(format!(
+            "unsupported OI_EXPLORE_SURFACE_SEED schema `{schema}`; expected `{EXPLORE_SURFACE_SEED_SCHEMA}`"
+        ));
+    }
+    Ok(Some(value))
 }
 
 #[tauri::command]
@@ -277,6 +307,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             shell_snapshot,
             contribution_catalog,
+            explore_surface_seed,
             factory_build_snapshot,
             dispatch_factory_action,
             select_semantic_ref,

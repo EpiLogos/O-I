@@ -74,6 +74,11 @@ jobs:
           SPACETIMEDB_URI: ws://127.0.0.1:3000
           SPACETIMEDB_DATABASE: oi-shared-field-ci
         run: npm --prefix shared-field/spacetimedb run acceptance
+      - name: Prove live SharedField drives Explore Surface and Projection refinement
+        env:
+          SPACETIMEDB_URI: ws://127.0.0.1:3000
+          SPACETIMEDB_DATABASE: oi-shared-field-ci
+        run: npm --prefix shared-field/spacetimedb run acceptance:explore-surface
       - name: Publish isolated live A2A SharedField database
         run: spacetime publish oi-shared-field-a2a-ci --server local --module-path shared-field/spacetimedb --yes=all
       - name: Prove grant-gated A2A exchange returns only to generic quarantine

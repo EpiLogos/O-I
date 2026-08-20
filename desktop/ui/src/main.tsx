@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { invoke } from '@tauri-apps/api/core';
 import '@epilogos/oi-design-system/tokens.css';
+import { ExploreSurface } from './ExploreSurface';
 import './shell.css';
 
 type Destination = 'home' | 'personal' | 'build' | 'explore' | 'system';
@@ -13,6 +14,15 @@ type SemanticRef = {
   kind: string;
   native_owner: string;
   provenance: { source: string; revision?: string };
+};
+
+type ExploreEntry = {
+  ref: string;
+  kind: string;
+  world_ref: string;
+  label: string;
+  revision?: string;
+  provenance: Array<{ source_system: string; revision?: string }>;
 };
 
 type Surface = {
@@ -107,11 +117,13 @@ function App() {
   const [snapshot, setSnapshot] = useState<Snapshot>(preview);
   const [contributions, setContributions] = useState<Contribution[]>([]);
   const [factoryBuild, setFactoryBuild] = useState<FactoryBuildSnapshot | null>(null);
+  const [exploreSeed, setExploreSeed] = useState<unknown | null>(null);
 
   useEffect(() => {
     invoke<Snapshot>('shell_snapshot').then(setSnapshot).catch(() => setSnapshot(preview));
     invoke<Contribution[]>('contribution_catalog').then(setContributions).catch(() => setContributions([]));
     refreshFactoryBuild();
+    refreshExploreSeed();
   }, []);
 
   async function refreshFactoryBuild() {
@@ -124,11 +136,39 @@ function App() {
     }
   }
 
+  async function refreshExploreSeed() {
+    try {
+      setExploreSeed(await invoke<unknown | null>('explore_surface_seed'));
+    } catch {
+      setExploreSeed(null);
+    }
+  }
+
+  async function selectExploreEntry(entry: ExploreEntry) {
+    const provenance = entry.provenance[0];
+    const subject: SemanticRef = {
+      ref: entry.ref,
+      kind: entry.kind,
+      native_owner: 'oi-explore',
+      provenance: {
+        source: provenance?.source_system ?? 'oi-explore',
+        ...(provenance?.revision ?? entry.revision ? { revision: provenance?.revision ?? entry.revision } : {}),
+      },
+    };
+    try {
+      await invoke('select_semantic_ref', { subject });
+      setSnapshot(await invoke<Snapshot>('shell_snapshot'));
+    } catch {
+      setSnapshot((current) => ({ ...current, selection: subject }));
+    }
+  }
+
   async function openDestination(destination: Destination) {
     try {
       await invoke('open_destination', { destination });
       setSnapshot(await invoke<Snapshot>('shell_snapshot'));
       if (destination === 'build') await refreshFactoryBuild();
+      if (destination === 'explore') await refreshExploreSeed();
     } catch {
       setSnapshot((current) => ({ ...current, destination }));
     }
@@ -165,8 +205,9 @@ function App() {
         {snapshot.destination === 'build' && factoryBuild && (
           <FactoryBuildSurface snapshot={factoryBuild} onRefresh={refreshFactoryBuild} />
         )}
+        {snapshot.destination === 'explore' && <ExploreSurface seed={exploreSeed} onSelect={selectExploreEntry} />}
         {snapshot.destination === 'system' && <SystemSurface surfaces={snapshot.surfaces} />}
-        <ContributionSurface contributions={visibleContributions} />
+        {snapshot.destination !== 'explore' && <ContributionSurface contributions={visibleContributions} />}
       </section>
 
       <aside className="oi-shell__inspector" aria-label="Context and root agency region">
@@ -345,8 +386,8 @@ function copyFor(destination: Destination) {
   return {
     home: 'A sparse local surface over the installed six-product field.',
     personal: 'Central-owned authored ground and Actuation-owned world-binding readings enter here without moving their semantics into O:I.',
-    build: 'Factory now exposes a product-owned live FactoryBuildView provider over canonical state. When the local provider binding is configured, this canvas renders that observed revision directly; otherwise the Factory contribution remains explicitly degraded.',
-    explore: 'The current shared-field Explore read model is hostable now, with canonical refs independent of SpaceTimeDB transport IDs.',
+    build: 'Factory exposes its product-owned live Build reading over canonical state; execution detail remains subordinate to developmental meaning.',
+    explore: 'Search the projected field, enter an addressable object as a bounded typed neighbourhood, and read the world without moving source authority into the desktop.',
     system: 'Registration, reachability and native contribution status are shown without inventing product-native health.',
   }[destination];
 }
