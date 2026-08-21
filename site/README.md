@@ -2,13 +2,69 @@
 
 The public O:I web surface is a React + TypeScript application with a shadcn-compatible component layout and Tailwind CSS.
 
-Its stable public navigation grammar is:
+The front door is no longer a one-page document. The public navigation is:
 
 ```text
-Understand · Explore · Build
+O:I · Products · Shared Field · Research · Build · Explore
 ```
 
-`index.html` is the front door. `explore.html` is the standalone Explore application surface; Explore is no longer represented by a fixture/demo section inside the front door.
+The public entries are:
+
+```text
+index.html          landing / front door
+oi.html             whole-level O:I account
+products.html       six native products + current architecture views
+shared-field.html   World, Projection, SharedField and Objective Co-Internality
+research.html       agentic-engineering research field + protocol + collective extension + QL entry
+build.html          installation, source, SDK/extension direction and development entry
+explore.html        standalone Explore application
+```
+
+Explore remains a distinct application surface and is not authored by the public prose document below.
+
+## Human-editable public content
+
+The public words and page/section order live in one companion source:
+
+```text
+content/public-site.md
+```
+
+This is the first place to edit site copy.
+
+The relation is deliberately small:
+
+```text
+content/public-site.md
+        │
+        │ headings + prose + links
+        ▼
+src/lib/public-content.ts
+        │ validated content outline
+        ▼
+React page / figure components
+        │
+        ▼
+index + O:I + Products + Shared Field + Research + Build
+```
+
+The Markdown is also the readable content specification. Stable IDs in square brackets are renderer handles, not public text:
+
+```md
+# [products] Products
+
+## [central] Central
+
+### [summary] Your personal and project world ...
+
+### [what] What it is
+
+Editable prose here.
+```
+
+Keep the stable `[id]` when editing a heading; the words after it are ordinary public copy and can be changed directly. The supported authoring grammar is intentionally narrow: `#` pages, `##` sections, `###` / `####` structured content, paragraphs, emphasis, inline code, links and bullet lists.
+
+React owns layout, figures, navigation behaviour and interactive surfaces. It should not become a second store of ordinary public prose. `src/lib/public-content.ts` validates the required pages and product fields during the TypeScript/Vite build, and `public-content.test.mjs` keeps the file/page contract explicit in CI.
 
 ## Development
 
@@ -24,13 +80,165 @@ Production build:
 npm run build
 ```
 
-Vite builds both page entries. Relative asset paths keep the output suitable for GitHub Pages or another static host.
+Vite emits all seven page entries. Relative asset paths keep the output suitable for GitHub Pages or another static host.
+
+## Public-language rule
+
+The public site begins by naming the thing positively and concretely. Distinction-preserving constitutional language still belongs in the source documents, but first contact should not make the reader decode a chain of negations before they know what the product is.
+
+Use the specific technical noun when it matters: underlying model capacity, Agent, Agency, harness/runtime, World, Project, Action, Workcell, Projection. Avoid using `a model` as a generic stand-in for all of them.
+
+Programme statements should also preserve research status. O:I is building an open platform in which proposed agency structures can be tested; public copy should not present development propositions as already-proven behavioural conclusions.
+
+`docs/positions/FOUNDING-POSITIONS.md` is the upstream authored source for this public framing. The site tests check load-bearing public claims against that file directly.
+
+## Source-to-site provenance
+
+Public writing is a **projection from developed product meaning**, not an independent compression exercise.
+
+When a site change concerns what O:I, a World, Objective Internality, human agency, a native product or the research programme *means*, begin at `docs/positions/FOUNDING-POSITIONS.md` and follow provenance far enough to distinguish:
+
+- **authored position** — why the distinction exists and what the programme is choosing to build;
+- **product/design commitment** — the relation a native product is meant to preserve;
+- **research proposition** — a claim or question being made available for comparison and experiment;
+- **implementation fact** — what current code and accepted contracts actually do;
+- **observed result** — what an experiment, fixture or real use returned;
+- **current development state** — work underway but not yet accepted as implementation truth;
+- **inference** — a synthesis which must be labelled rather than silently attributed to a source.
+
+The public page can use fewer words than its source, but it must preserve the **relation that gives the words meaning**. Do not translate a developed proposition into a generic category label and call that fidelity.
+
+For example, the human-authorship position is not adequately projected as `personalisation`, `memory`, `human in the loop`, or `human agency`. The recoverable relation is:
+
+```text
+human authorship
+      ↓
+purpose · principles · preferences · rules · ways of working
+      ↓
+durable authored source
+      ↓
+selective derivation / retrieval / disclosure
+      ↓
+operative context + authority for a particular act
+      ↓
+actuation and encounter
+      ↓
+evidence / resistance / possibility
+      ↓
+Return
+      ↓
+human Recognition / accepted revision / renewed authorship
+```
+
+The source distinctions are load-bearing:
+
+```text
+human-authored source ≠ observed state ≠ agent-generated material
+retrieval ≠ permission
+returned proposal ≠ accepted revision
+```
+
+A shorter public surface does not need to print this complete diagram every time, but its wording must remain compatible with it. The landing page can name the possibility; the O:I page should explain it; a native-product page should say what that product actually contributes; the Research page should preserve the open experimental question.
+
+The same rule applies to community extension, Objective Co-Internality, Return, operational parity and other constitutional relations. If a phrase starts behaving like a slogan, recover the source relation before rewriting the phrase.
 
 ## Front door
 
-The first substantive content after the parallax identity is the canonical six-product field: Central, Actuation, AIKit, Software Factory, Workcell, and Quaternal Logic.
+`index.html` is deliberately a landing page rather than the complete public essay. It keeps the parallax identity, a plain account of an agent acting through a technological world, the existing-world entry, the minimal-to-developed possibility field, concise entrances to our six products, and apertures into Shared Field and Build.
 
-The front door explains O:I and provides a quiet aperture into Explore. It does not carry synthetic Explore worlds or fixture content as product meaning.
+The deeper authored material remains present but has room on the O:I, Products, Shared Field and Research pages.
+
+The visible hero title is **Objective : Internality**. Title/heading uses of the name follow the colon form while prose may still discuss the concept of Objective Internality normally.
+
+## Products
+
+The six detailed product descriptions are projected from `content/public-site.md`. `src/components/centres.tsx` owns their architecture figures and page composition.
+
+The dedicated Products page is an inspectable architecture layer rather than six large marketing cards. It begins with the accepted O:I/native ownership seam and then shows each product through current native technical nouns:
+
+```text
+Central           Control · Work · ctrl · Actions · connectors
+Actuation         Agent · Agency · WorldBinding · Actuation · Return
+AIKit             models · Skills · Actions · ContextSources · HarnessComposition · Surfaces
+Software Factory  Project · Commission · Run / RunMap · Candidate · Evidence · Recognition · Return
+Workcell          Demand · Plan · provider · BindingGraph · material resources · lifecycle
+Quaternal Logic   QL refs/operators · MEF registry · refraction · readings · experiment · Return
+```
+
+The architecture drawings are React-owned because they are visual composition. Their product meaning should remain traceable to the native architecture/documentation corpus rather than becoming a site-only ontology.
+
+The extension framing is equally important. The product abstraction is the durable root; a native SDK, provider, connector, Component or other public contract is an accommodation surface through which a real technology can participate in that relation. Reference implementations demonstrate known paths. The public site may describe this as programme intent even where a particular native SDK is still in development, but present-tense implementation claims must remain grounded in the owning product repository.
+
+For human-authored ground, keep native product ownership equally clear. Central owns the source classes and Control treatment; AIKit owns contextual resolution and disclosure; Actuation owns authority and Return relations; Factory owns Commission/Recognition in development. The site may explain their whole relation without implying that one product already implements another product's responsibility.
+
+## Research
+
+Research is the O:I agentic-engineering programme, not a synonym for Quaternal Logic.
+
+The public page begins from the research object — the technological world around available model capacity — and the capacity / provisioning / potentiation distinction. It then exposes the human-authorship programme and the canonical research cycle:
+
+```text
+Discover
+  → Source-lock
+  → Study
+  → Interpret
+  → Abstract
+  → Compare
+  → Operationalise
+  → Experiment
+  → Find / revise / reject
+  → Return
+```
+
+The human-authorship line asks where and how human-written purpose, principles, preferences, rules and ways of working should enter an agentic system. Central's current authored / observed / generated distinctions and bounded retrieval provide concrete mechanisms; the behavioural value of different forms, representations and retrieval treatments remains an open comparative question.
+
+The public page should preserve both sides: **current mechanism** and **research proposition**. Do not turn a current Control protocol into proof that human-authored prose improves agency; equally, do not flatten the programme into a vague future aspiration when concrete source/provenance and retrieval mechanisms already exist.
+
+The page then opens the research surfaces distributed across human authorship, personal/project worlds, agency and authority, capability/knowledge fields, harnesses and runtime bodies, developmental systems, material worlds, shared agency, epistemic cultivation and community extension.
+
+Community extension is part of the research method, not generic plugin language. The public account should preserve this relation:
+
+```text
+stable abstraction
+      ↓
+native SDK / public contract
+      ↓
+local accommodation to a real technology
+      ↓
+fixture + verification + observed use
+      ↓
+shared contribution
+      ↓
+reproduction / adaptation / comparison
+      ↓
+Return to product and research
+```
+
+The point is that the research object is heterogeneous technological agency itself. Different people inhabit different Worlds. Their providers, connectors, Components, fixtures, reproductions and corrections can therefore widen the empirical field and return pressure on the abstractions, SDKs and implementations.
+
+Quaternal Logic remains a substantial deeper entry into the Epi-Logos formal research programme, with operational parity as its discipline; it does not stand in for the whole O:I research protocol.
+
+## Build / distribution / extension
+
+Keep two package relations distinct.
+
+The ordinary `oi` command distribution and the O:I extension/package envelope solve different problems:
+
+```text
+@epilogos/oi
+  ordinary distribution of the native oi executable
+
+             !=
+
+oi.package/v1
+  suite extension/contribution composition envelope
+```
+
+The public Build page must follow accepted implementation truth. Until the public distribution package lands, `docs/INSTALL.md` and `docs/CLI.md` remain the authority for installing and using `oi`. Do not publish a future npm command merely because distribution work is underway.
+
+When that distribution PR is accepted, update `content/public-site.md` first and make the public install line the simplest truthful first encounter.
+
+The extension/package SDK programme is a separate product-development line. It can be linked as current development while native product SDKs and contracts retain semantic ownership of the contributions they accept. O:I owns the whole-level composition/provenance relation rather than becoming a universal runtime plugin ontology.
 
 ## Explore
 
@@ -49,16 +257,16 @@ Explore React Surface
         ├─ bounded local whole
         ├─ LIST / TREE / GRAPH presentations
         ├─ provenance inspector
-        └─ WorldPresentation renderer / composer
+        └─ WorldPresentation renderer / authoring surface
 ```
 
-The default static provider is `public/data/explore-public.json`. It is intentionally honest: if no public worlds are supplied, Explore renders an empty field rather than substituting demo personalities or arbitrary content. A live hosted/federated provider can replace that seed through the same browser read-model seam.
+The default static provider is `public/data/explore-public.json`. If no public worlds are supplied, Explore renders an empty field rather than substituting arbitrary demo content. A live hosted/federated provider can replace that seed through the same browser read-model seam.
 
 `explore-read-model.mjs` is tested against the canonical shared-field Explore fixture, but that fixture is test material rather than the public product experience.
 
 ## World presentation and native composition
 
-Rich world presentation is a Projection representation, not a new profile/site ontology.
+Rich world presentation is a Projection representation rather than a new profile/site ontology.
 
 The portable contract lives in:
 
@@ -84,13 +292,13 @@ A presentation manifest contains layout regions, bindings to native component/co
 
 The shared-system meta-relation/gold grammar is not world-overridable.
 
-The browser's first portable renderer registry lives at `src/explore/presentation-components.tsx`. It is one Surface implementation of the contract, not the semantic owner of the components it renders.
+The browser's portable renderer registry lives at `src/explore/presentation-components.tsx`. It is one Surface implementation of the contract, not the semantic owner of the components it renders.
 
 ## Projection authoring
 
-Explore includes a local WorldPresentation composer so a human can develop an initial presentation before a publication provider is connected. Browser-local drafts are explicitly **not** Explore entries, published Projections or source authority.
+Explore's direct authoring surface operates over the same WorldPresentation representation it renders. Browser-local working state is explicitly **not** a published Projection or source authority.
 
-When a WorldPresentation is published or edited, the shared-field helper `refineWorldPresentationProjection()` uses the existing Projection refinement law:
+When a WorldPresentation is ratified, the shared-field helper `refineWorldPresentationProjection()` uses the existing Projection refinement law:
 
 ```text
 source revision remains R1
@@ -102,19 +310,21 @@ Projection P2 carries WorldPresentation W2
     P2 supersedes P1
 ```
 
-A connected authenticated hosted/self-hosted provider is responsible for actually publishing that revision. The static page does not pretend localStorage is canonical persistence.
+A connected authenticated hosted/self-hosted provider is responsible for actually publishing that revision. Browser persistence does not become canonical state merely because it is convenient.
 
 ## Design system
 
 `src/tokens.css` owns the current site foundation/semantic token layer and remains aligned with the extracted `packages/oi-design-system` package used by the desktop programme.
 
-Explore preserves:
+The public pages and Explore preserve:
 
 - O:I light/dark foundation and typography/rhythm;
 - relation/focus/projection semantic roles;
 - scarce gold for shared-system meta-relation rather than ordinary decoration;
 - keyboard and visible-focus behaviour;
 - responsive and reduced-motion behaviour.
+
+Page colour is compositional rather than a forced alternating stripe. Adjacent sections may remain in one field where the reader is still inside the same conceptual or technical movement.
 
 A projected world may remap its permitted semantic presentation tokens without removing the common provenance/navigation grammar.
 
@@ -128,4 +338,4 @@ field-proof-read-model.mjs
 projection-renderer.mjs
 ```
 
-They are not the Explore application and are no longer mounted as Explore product content.
+They are not the Explore application and are not mounted as public front-door content.

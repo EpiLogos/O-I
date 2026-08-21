@@ -1,10 +1,24 @@
+import type { ReactNode } from 'react';
 import './index.css';
 import { ParallaxComponent } from './components/ui/parallax-scrolling';
 import { OICube } from './components/ui/oi-cube';
 import { OIMark } from './components/ui/oi-mark';
 import { PossibilityField } from './components/possibility-field';
-import { CentresSection } from './components/centres';
+import { CentresIndex, CentresSection } from './components/centres';
 import { SharedFieldFigure } from './components/shared-field-figure';
+import { MarkdownBody } from './components/markdown-body';
+import { getBody, getChild, getPage, getSection, getTitle } from './lib/public-content';
+
+type PageId = 'home' | 'oi' | 'products' | 'shared-field' | 'research' | 'build';
+
+const PAGE_FILES: Record<PageId, string> = {
+  home: 'index.html',
+  oi: 'oi.html',
+  products: 'products.html',
+  'shared-field': 'shared-field.html',
+  research: 'research.html',
+  build: 'build.html',
+};
 
 function GitHubIcon() {
   return (
@@ -15,27 +29,44 @@ function GitHubIcon() {
   );
 }
 
-function ExternalLink({ href, className, children }: { href: string; className?: string; children: React.ReactNode }) {
+function ExternalLink({ href, className, children }: { href: string; className?: string; children: ReactNode }) {
+  const external = href.startsWith('http');
   return (
-    <a href={href} className={className} target={href.startsWith('http') ? '_blank' : undefined} rel={href.startsWith('http') ? 'noreferrer' : undefined}>
+    <a href={href} className={className} target={external ? '_blank' : undefined} rel={external ? 'noreferrer' : undefined}>
       {children}
     </a>
   );
 }
 
-function SiteNav() {
+function currentPage(): PageId {
+  const filename = window.location.pathname.split('/').filter(Boolean).pop() ?? '';
+  if (!filename || filename === 'index.html') return 'home';
+  const entry = (Object.entries(PAGE_FILES) as Array<[PageId, string]>).find(([, file]) => file === filename);
+  return entry?.[0] ?? 'home';
+}
+
+function SiteNav({ active }: { active: PageId }) {
+  const links: Array<{ id: PageId; label: string }> = [
+    { id: 'oi', label: 'O:I' },
+    { id: 'products', label: 'Products' },
+    { id: 'shared-field', label: 'Shared Field' },
+    { id: 'research', label: 'Research' },
+    { id: 'build', label: 'Build' },
+  ];
+
   return (
     <header className="site-nav">
-      <ExternalLink href="#top" className="site-nav__brand" aria-label="O:I home">
+      <a href="./index.html" className="site-nav__brand" aria-label="O:I home">
         <OIMark className="site-nav__mark" />
-      </ExternalLink>
+      </a>
       <nav className="site-nav__links" aria-label="Primary">
-        <a href="#what">Understand</a>
-        <a href="#field">Field</a>
-        <a href="#centres">Centres</a>
+        {links.map((link) => (
+          <a key={link.id} href={`./${PAGE_FILES[link.id]}`} aria-current={active === link.id ? 'page' : undefined}>
+            {link.label}
+          </a>
+        ))}
         <a href="./explore.html">Explore</a>
-        <a href="#build">Build</a>
-        <ExternalLink href="https://github.com/EpiLogos/O-I" className="site-nav__github" aria-label="GitHub repository">
+        <ExternalLink href="https://github.com/EpiLogos/O-I" className="site-nav__github">
           <GitHubIcon />
         </ExternalLink>
       </nav>
@@ -43,294 +74,175 @@ function SiteNav() {
   );
 }
 
-function ArrowIcon() {
+function Footer() {
   return (
-    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M7 17 17 7" />
-      <path d="M7 7h10v10" />
-    </svg>
+    <footer className="site-footer">
+      <span>O:I — Objective : Internality</span>
+      <span>
+        <a href="./oi.html">O:I</a> · <a href="./products.html">Products</a> · <a href="./shared-field.html">Shared Field</a> ·{' '}
+        <a href="./research.html">Research</a> · <a href="./build.html">Build</a> · <a href="./explore.html">Explore</a>
+      </span>
+      <span>Open source · open protocols</span>
+    </footer>
   );
 }
 
-export default function App() {
+function PageShell({ active, children }: { active: PageId; children: ReactNode }) {
   return (
     <div id="top">
-      <SiteNav />
+      <SiteNav active={active} />
+      {children}
+      <Footer />
+    </div>
+  );
+}
+
+function NarrativeSection({
+  pageId,
+  sectionId,
+  tone = 'white',
+  display = false,
+  children,
+}: {
+  pageId: PageId;
+  sectionId: string;
+  tone?: 'white' | 'black';
+  display?: boolean;
+  children?: ReactNode;
+}) {
+  const section = getSection(pageId, sectionId);
+  const title = getTitle(section);
+  const body = getBody(section, 'title');
+  return (
+    <section id={sectionId} className={`section section--${tone}`} aria-labelledby={`${pageId}-${sectionId}-title`}>
+      <div className="section__eyebrow"><span>{section.title}</span></div>
+      <div className={`section__grid ${display ? 'section__grid--intro' : 'section__grid--heading'}`}>
+        <h2 id={`${pageId}-${sectionId}-title`} className={display ? 'display-copy display-copy--compact' : 'feature-title'}>
+          {title}
+        </h2>
+        <MarkdownBody source={body} className={display ? 'body-copy body-copy--lead' : 'body-copy'} />
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function PageOpening({ pageId, sectionId = 'intro' }: { pageId: Exclude<PageId, 'home'>; sectionId?: string }) {
+  const page = getPage(pageId);
+  const section = getSection(pageId, sectionId);
+  return (
+    <section className="section section--black page-opening" aria-labelledby={`${pageId}-page-title`}>
+      <div className="section__eyebrow"><span>{page.title}</span></div>
+      <div className="page-opening__grid">
+        <h1 id={`${pageId}-page-title`} className="page-opening__title">{getTitle(section)}</h1>
+        <MarkdownBody source={getBody(section, 'title')} className="body-copy body-copy--lead" />
+      </div>
+    </section>
+  );
+}
+
+function ProductFieldArchitecture() {
+  const nativeProducts = [
+    ['Central', 'personal + project ground'],
+    ['Actuation', 'Agent + Agency + Return'],
+    ['AIKit', 'capability + context composition'],
+    ['Software Factory', 'Projects + Runs + evidence'],
+    ['Workcell', 'material execution'],
+    ['Quaternal Logic', 'formal experiment'],
+  ];
+  const wholeLevel = [
+    ['suite/', 'release + composition metadata'],
+    ['oi CLI', 'install · register · inspect · route'],
+    ['desktop/', 'whole-field local surface'],
+    ['skills/', 'suite operating guidance'],
+    ['shared-field/', 'Projection · SharedField · Encounter'],
+    ['site/', 'public field + Explore'],
+  ];
+
+  return (
+    <section className="section section--white product-field-architecture" aria-labelledby="product-field-architecture-title">
+      <div className="section__eyebrow"><span>Current architecture</span></div>
+      <div className="section__grid section__grid--heading">
+        <h2 id="product-field-architecture-title" className="feature-title">Native products. One thin O:I layer.</h2>
+        <div className="body-copy">
+          <p>Each product owns its own technology. O:I owns the whole-level seams that install, disclose and relate those native worlds.</p>
+        </div>
+      </div>
+      <div className="field-architecture" role="img" aria-label="Six native product repositories related through O:I suite, CLI, desktop, skills, shared-field and site seams">
+        <div className="field-architecture__layer">
+          <span className="field-architecture__label">Native ownership</span>
+          <div className="field-architecture__nodes">
+            {nativeProducts.map(([name, detail]) => (
+              <div className="field-architecture__node" key={name}>
+                <strong>{name}</strong>
+                <span>{detail}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="field-architecture__relation" aria-hidden="true">↑ native contracts · composition · selected projection ↓</div>
+        <div className="field-architecture__layer field-architecture__layer--oi">
+          <span className="field-architecture__label">O:I whole-level seams</span>
+          <div className="field-architecture__nodes">
+            {wholeLevel.map(([name, detail]) => (
+              <div className="field-architecture__node" key={name}>
+                <strong>{name}</strong>
+                <span>{detail}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ResearchCycle() {
+  const cycle = getChild(getSection('research', 'method'), 'cycle').title.split(' → ');
+  return (
+    <div className="research-cycle" aria-label="O:I research cycle">
+      {cycle.map((stage, index) => (
+        <div className="research-cycle__stage" key={`${stage}-${index}`}>
+          <span className="research-cycle__index">{String(index + 1).padStart(2, '0')}</span>
+          <strong>{stage}</strong>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function HomePage() {
+  const heroTitle = getChild(getSection('home', 'hero'), 'title').title;
+  const existing = getSection('home', 'existing-world');
+  return (
+    <PageShell active="home">
       <main>
         <section className="hero" aria-label="O:I opening statement">
-          <h1 className="visually-hidden">O:I — Operating Infrastructure · Objective Internality</h1>
-          <ParallaxComponent />
+          <h1 className="visually-hidden">{heroTitle} — Operating Infrastructure</h1>
+          <ParallaxComponent title={heroTitle} />
         </section>
 
-        <section id="what" className="section section--black" aria-labelledby="what-title">
-          <div className="section__eyebrow"><span>What is O:I</span></div>
-          <div className="section__grid section__grid--intro">
-            <h2 id="what-title" className="display-copy">A capable model is not yet a capable agent.</h2>
-            <div className="body-copy body-copy--lead">
-              <p>
-                What a model can do depends on the world around it: where it stands, what persists
-                between sessions, which tools and sources it can reach, what authority it holds,
-                which projects continue, and how what happens returns into later action.
-                O:I — Operating Infrastructure · Objective Internality — is an open architecture
-                and research programme for that surrounding field: the technological structures
-                through which model capacity becomes situated agency.
-              </p>
-              <p>
-                These arrangements are experimental. Hold the model constant and change the loop,
-                the memory, the capability field, the authority structure or the material
-                environment, and a different agency appears. O:I exists to make that field explicit
-                enough to engineer, compare and study — not to hide it inside one prescribed stack.
-              </p>
-            </div>
-          </div>
+        <NarrativeSection pageId="home" sectionId="what" tone="black" display />
 
+        <section className="section section--black section--statement" aria-labelledby="existing-world-title">
           <div className="statement-block">
-            <h3>You do not have to replace your AI setup.</h3>
-            <p>
-              O:I begins from the technological world you already inhabit: your models, agents,
-              editors, shells, projects, prompts, skills, tools, services, machines and working
-              habits. That world already matters, and it stays yours. O:I can make its structure
-              explicit without migration, without surrendering its ownership or continuity, and
-              without rewriting it into someone else's runtime. Heterogeneous setups are not a
-              problem to eliminate — they are the practical starting point, and part of what the
-              research exists to understand.
-            </p>
-          </div>
-
-          <div className="premise-strip">
-            <div>
-              <span className="premise-strip__label">Agency is not an agent</span>
-              <p>A situated actor with a ground, a history and relations is different from a model producing output.</p>
-            </div>
-            <div>
-              <span className="premise-strip__label">The world is the variable</span>
-              <p>The same capacity in a different surrounding arrangement becomes a different capability.</p>
-            </div>
-            <div>
-              <span className="premise-strip__label">Yours by default</span>
-              <p>Open source, locally installed, human-authored. Sharing extends from personal ground; it does not replace it.</p>
-            </div>
+            <div className="section__eyebrow"><span>{existing.title}</span></div>
+            <h2 id="existing-world-title">{getTitle(existing)}</h2>
+            <MarkdownBody source={getBody(existing, 'title')} className="body-copy" />
+            <a className="inline-link statement-block__link" href="./oi.html#existing-world">Read how O:I works with existing worlds →</a>
           </div>
         </section>
 
-        <section id="field" className="section section--white" aria-labelledby="field-title">
-          <div className="section__eyebrow"><span>One possibility space</span></div>
-          <div className="section__grid section__grid--heading">
-            <h2 id="field-title" className="feature-title">Start small. Stay whole.</h2>
-            <div className="body-copy">
-              <p>
-                The smallest O:I is already a complete relation: persistent authored ground, plus
-                model capacity that can act upon it. A directory containing a real project and an
-                agent that can work there. A Git repository and a model in a loop. Nothing else is
-                required — and nothing in the wider field is a prerequisite.
-              </p>
-              <p>
-                These are not product tiers, and the six centres below are not six prerequisites.
-                The maximal case is the minimal relation developed through need — one centre,
-                several, all six, or interoperable alternatives.
-              </p>
-            </div>
-          </div>
+        <NarrativeSection pageId="home" sectionId="field" tone="white">
           <PossibilityField />
-        </section>
+        </NarrativeSection>
 
-        <section id="centres" className="section section--black" aria-labelledby="centres-title">
-          <div className="section__eyebrow"><span>Six centres</span></div>
-          <div className="section__grid section__grid--heading">
-            <h2 id="centres-title" className="feature-title">Instruments in the field, not prerequisites.</h2>
-            <div className="body-copy">
-              <p>
-                Each centre exists because a distinct difficulty demanded it. They interlock by
-                contract rather than by pipeline — each remains itself, each can meet equivalents,
-                and none is a tollbooth for the others.
-              </p>
-            </div>
-          </div>
-          <CentresSection />
-        </section>
+        <NarrativeSection pageId="home" sectionId="centres" tone="white">
+          <CentresIndex />
+        </NarrativeSection>
 
-        <section id="name" className="section section--white section--cube" aria-labelledby="name-title">
-          <div className="section__eyebrow"><span>Two readings of one name</span></div>
-          <div className="section__grid section__grid--heading">
-            <h2 id="name-title" className="feature-title feature-title--wide">Operating Infrastructure. Objective Internality.</h2>
-            <div className="body-copy">
-              <p>
-                The first reading is engineering. An operating system gives programs files,
-                processes, memory and permissions. O:I names the corresponding organisation around
-                model inference: projects and ground, capabilities and actions, sessions and
-                runtime bodies, developmental history, material environments, relations to other
-                worlds.
-              </p>
-            </div>
-          </div>
-
-          <div className="cube-wrap" aria-hidden="true"><OICube /></div>
-
-          <div className="readings-grid">
-            <article>
-              <h3>Objective Internality</h3>
-              <p>
-                The second reading names the same field from inside an act. An actor's operative
-                internal world — what it can actually draw on when it acts — is not identical to
-                the inside of a model. Projects held in files, available powers, persistent memory,
-                machine state, prior decisions, relations to other actors: these are objective
-                structures. They exist between invocations, they can be inspected and changed, and
-                they can be disclosed into an invocation as part of what the actor is working with.
-                Objective Internality names that relation: an operative interior made objective —
-                externalised, structured, and able to return.
-              </p>
-            </article>
-            <article>
-              <h3>What is not being claimed</h3>
-              <p>
-                The claim is operational, not phenomenal. O:I does not assert that an artificial
-                actor is a subject, or that inspectable structure exhausts a mind. It asserts
-                something narrower and more useful: the operative interior of an act is not
-                automatically identical to the computational interior of the model producing the
-                next token — and designing that wider interior deliberately changes what agency
-                becomes.
-              </p>
-              <p className="readings-grid__aside">
-                The philosophical depth of this position is developed in the{' '}
-                <a href="https://github.com/EpiLogos/Antykathera-Essay-Work">Antykathera essay work</a>.
-              </p>
-            </article>
-          </div>
-        </section>
-
-        <section id="research" className="section section--black" aria-labelledby="research-title">
-          <div className="section__eyebrow"><span>Formal research · Quaternal Logic</span></div>
-          <div className="section__grid section__grid--intro">
-            <h2 id="research-title" className="display-copy display-copy--compact">Where the metaphysics becomes answerable.</h2>
-            <div className="body-copy body-copy--lead">
-              <p>
-                Quaternal Logic belongs to the wider Epi-Logos programme, whose account of mind,
-                relation and form draws on depth psychology and Eastern metaphysics rather than on
-                the material-computational ontology most AI engineering assumes. O:I does not ask
-                anyone to accept that account. It does something more useful: it makes the
-                account's formal claims executable enough to be tested.
-              </p>
-              <p>
-                Operational parity is the test. If a formal distinction is supposed to matter to an
-                operation, implementing it must make a discriminable difference. A classical
-                approach may outperform an informed one; two formally different structures may
-                prove equivalent; a distinction may improve explanation without improving
-                execution. Those are answers, not embarrassments. Software does not prove the
-                metaphysics — it gives the metaphysics somewhere precise to be wrong.
-              </p>
-              <p>
-                The relation is old: an archetypal image is expressed into a technical reflection,
-                and the reflection returns information about what the originating form actually
-                means. A minimal O:I never needs any of this. A maximal research programme can ask,
-                through it, what agency looks like when engineered from a different account of
-                relation, interiority, recurrence and form.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <section id="shared" className="section section--white" aria-labelledby="shared-title">
-          <div className="section__eyebrow"><span>The shared field</span></div>
-          <div className="section__grid section__grid--heading">
-            <h2 id="shared-title" className="feature-title">Worlds, not accounts.</h2>
-            <div className="body-copy">
-              <p>
-                The maximal direction of O:I is social — but it is not one giant hosted AI account.
-                A world remains independently grounded: owned, continued and authoritative locally.
-                It selectively projects part of itself into a shared field — a document, a project
-                result, a wiki space, an experiment. Other worlds encounter the projection from
-                their own ground, respond, contest, extend — and return an attributable difference.
-              </p>
-              <p>
-                Projection is not upload. Source authority and canonical identity do not move; the
-                field mediates presentations, not ownership. Participation never requires
-                surrendering the distinction between source and projection, encounter and mutation,
-                another's contribution and one's own state. Even where the field is hosted, the
-                hosting carries no claim over what a world is.
-              </p>
-            </div>
-          </div>
-          <SharedFieldFigure />
-          <p className="shared-note">
-            Self and Other are positions, not identity kinds — the same participant occupies either
-            side from another view.
-          </p>
-        </section>
-
-        <section id="explore" className="section section--black oi-surface-dark" aria-labelledby="explore-title">
-          <div className="section__eyebrow section__eyebrow--signal">
-            <span className="meta-signal" aria-hidden="true" />
-            <span>Explore</span>
-          </div>
-          <div className="section__grid section__grid--intro">
-            <h2 id="explore-title" className="display-copy display-copy--compact">The platform, becoming visible.</h2>
-            <div className="body-copy body-copy--lead">
-              <p>
-                Explore is the public surface of the shared field: addressable worlds, and beneath
-                them agents, projects, wiki spaces, projections, relations and contributions —
-                each carrying its provenance, each resolvable to the source that remains
-                authoritative for it. Search begins at an addressable object and opens outward into
-                its bounded local relations and authored presentation.
-              </p>
-              <p>
-                It begins with the O:I programme's own world — its products, documents and
-                relations, projected with their real sources. The architecture hard-codes no one:
-                any independently grounded world can project into the same grammar and remain
-                itself.
-              </p>
-              <p>
-                <ExternalLink href="./explore.html" className="inline-link">Open Explore ↗</ExternalLink>
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <section id="build" className="section section--black section--build" aria-labelledby="build-title">
-          <div className="section__eyebrow"><span>Build</span></div>
-          <div className="section__grid section__grid--heading">
-            <h2 id="build-title" className="feature-title">Read the positions. Enter the code.</h2>
-            <div className="body-copy">
-              <p>
-                One install: the <strong>oi</strong> command discovers, installs and composes the
-                six centres into a managed local environment, while leaving each product's native
-                identity and CLI intact. The public projection stays projection; the canonical
-                repositories carry their own instructions.
-              </p>
-            </div>
-          </div>
-          <div className="build-links">
-            <ExternalLink href="https://github.com/EpiLogos/O-I/blob/main/docs/positions/FOUNDING-POSITIONS.md" className="link-arrow">
-              <span>Founding positions</span>
-              <strong>What O:I is actually saying</strong>
-              <ArrowIcon />
-            </ExternalLink>
-            <ExternalLink href="https://github.com/EpiLogos/O-I/blob/main/docs/VISION.md" className="link-arrow">
-              <span>Vision</span>
-              <strong>Agency · world · return</strong>
-              <ArrowIcon />
-            </ExternalLink>
-            <ExternalLink href="https://github.com/EpiLogos/O-I/blob/main/docs/ARCHITECTURE.md" className="link-arrow">
-              <span>Architecture</span>
-              <strong>Canonical product field</strong>
-              <ArrowIcon />
-            </ExternalLink>
-            <ExternalLink href="https://github.com/EpiLogos/O-I/blob/main/docs/SHARED-FIELD.md" className="link-arrow">
-              <span>Shared field</span>
-              <strong>How worlds meet</strong>
-              <ArrowIcon />
-            </ExternalLink>
-            <ExternalLink href="./explore.html" className="link-arrow">
-              <span>Explore</span>
-              <strong>Enter the shared field</strong>
-              <ArrowIcon />
-            </ExternalLink>
-            <ExternalLink href="https://github.com/EpiLogos/O-I" className="link-arrow">
-              <span>Repository</span>
-              <strong>EpiLogos/O-I</strong>
-              <ArrowIcon />
-            </ExternalLink>
-          </div>
-        </section>
+        <NarrativeSection pageId="home" sectionId="shared" tone="black" />
+        <NarrativeSection pageId="home" sectionId="build" tone="white" />
 
         <section className="section section--black section--closing">
           <div className="closing-mark" aria-hidden="true">{`{O:I}`}</div>
@@ -339,13 +251,121 @@ export default function App() {
           </div>
         </section>
       </main>
-      <footer className="site-footer">
-        <span>O:I — Objective Internality</span>
-        <span>
-          <a href="#what">Understand</a> · <a href="#centres">Centres</a> · <a href="./explore.html">Explore</a> · <a href="#build">Build</a>
-        </span>
-        <span>Open source · open protocols</span>
-      </footer>
-    </div>
+    </PageShell>
   );
+}
+
+function OIPage() {
+  const name = getSection('oi', 'name');
+  return (
+    <PageShell active="oi">
+      <main>
+        <PageOpening pageId="oi" />
+        <NarrativeSection pageId="oi" sectionId="existing-world" tone="white" />
+        <NarrativeSection pageId="oi" sectionId="possibility" tone="white" />
+        <section id="name" className="section section--white section--cube" aria-labelledby="oi-name-title">
+          <div className="section__eyebrow"><span>{name.title}</span></div>
+          <div className="section__grid section__grid--heading">
+            <h2 id="oi-name-title" className="feature-title feature-title--wide">{getTitle(name)}</h2>
+            <MarkdownBody source={getBody(name, 'title')} className="body-copy" />
+          </div>
+          <div className="cube-wrap" aria-hidden="true"><OICube /></div>
+          <div className="readings-grid">
+            <article>
+              <h3>{getChild(name, 'objective-internality').title}</h3>
+              <MarkdownBody source={getBody(name, 'objective-internality')} />
+            </article>
+            <article>
+              <h3>{getChild(name, 'non-claim').title}</h3>
+              <MarkdownBody source={getBody(name, 'non-claim')} />
+            </article>
+          </div>
+        </section>
+        <NarrativeSection pageId="oi" sectionId="human-agency" tone="black" />
+        <NarrativeSection pageId="oi" sectionId="research-field" tone="black" />
+      </main>
+    </PageShell>
+  );
+}
+
+function ProductsPage() {
+  return (
+    <PageShell active="products">
+      <main>
+        <PageOpening pageId="products" />
+        <ProductFieldArchitecture />
+        <section className="section section--white products-page" aria-label="Our six O:I products">
+          <CentresSection />
+        </section>
+      </main>
+    </PageShell>
+  );
+}
+
+function SharedFieldPage() {
+  return (
+    <PageShell active="shared-field">
+      <main>
+        <PageOpening pageId="shared-field" />
+        <NarrativeSection pageId="shared-field" sectionId="projection" tone="white">
+          <SharedFieldFigure />
+        </NarrativeSection>
+        <NarrativeSection pageId="shared-field" sectionId="co-internality" tone="white" />
+        <NarrativeSection pageId="shared-field" sectionId="explore" tone="black" />
+      </main>
+    </PageShell>
+  );
+}
+
+function ResearchPage() {
+  return (
+    <PageShell active="research">
+      <main>
+        <PageOpening pageId="research" />
+        <NarrativeSection pageId="research" sectionId="object" tone="white" />
+        <NarrativeSection pageId="research" sectionId="method" tone="white">
+          <ResearchCycle />
+        </NarrativeSection>
+        <NarrativeSection pageId="research" sectionId="programme" tone="black" />
+        <NarrativeSection pageId="research" sectionId="ql" tone="black" />
+        <NarrativeSection pageId="research" sectionId="open" tone="white" />
+      </main>
+    </PageShell>
+  );
+}
+
+function BuildPage() {
+  const links = getSection('build', 'links');
+  return (
+    <PageShell active="build">
+      <main>
+        <PageOpening pageId="build" />
+        <section id="links" className="section section--white" aria-labelledby="build-links-title">
+          <div className="section__eyebrow"><span>{links.title}</span></div>
+          <div className="section__grid section__grid--heading">
+            <h2 id="build-links-title" className="feature-title">{getTitle(links)}</h2>
+            <MarkdownBody source={getBody(links, 'title')} className="body-copy public-link-list" />
+          </div>
+        </section>
+        <NarrativeSection pageId="build" sectionId="health" tone="white" />
+      </main>
+    </PageShell>
+  );
+}
+
+export default function App() {
+  switch (currentPage()) {
+    case 'oi':
+      return <OIPage />;
+    case 'products':
+      return <ProductsPage />;
+    case 'shared-field':
+      return <SharedFieldPage />;
+    case 'research':
+      return <ResearchPage />;
+    case 'build':
+      return <BuildPage />;
+    default:
+      return <HomePage />;
+  }
 }
