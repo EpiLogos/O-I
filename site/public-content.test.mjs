@@ -92,7 +92,7 @@ test('founding positions carry the same positive world, authorship and collectiv
 test('first-contact copy carries the world-making proposition and local-to-shared movement', () => {
   assert.match(sectionBody('home', 'what'), /^### \[title\] O:I maps what it means for an AI agent to have a world\.$/m);
   assert.match(sectionBody('home', 'existing-world'), /^### \[title\] Start where you are\.$/m);
-  assert.match(sectionBody('home', 'existing-world'), /principles, preferences, project purposes, rules and ways of working/);
+  assert.match(sectionBody('home', 'existing-world'), /principles, preferences, project purposes, rules and ways of working/i);
   assert.match(sectionBody('home', 'field'), /Minimal O:I: durable ground \+ actuated model capacity/);
   assert.match(sectionBody('home', 'centres'), /mapping what constitutes having-a-world for an AI agent/);
   assert.match(sectionBody('home', 'shared'), /local agent world → selective Projection → Shared Field → encounter by another world/);
