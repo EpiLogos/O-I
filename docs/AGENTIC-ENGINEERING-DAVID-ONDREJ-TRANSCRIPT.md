@@ -9,7 +9,6 @@
 Topics: AI-native companies, markdown-over-code (engineering the markdown > executing the code), high-agency vs low-agency in the AI era, the last remaining mode AI won't kill.
 
 ---
-
 0:00 Everything you ever learned about
 0:01 building software is kind of thrown on
 0:03 its head.
