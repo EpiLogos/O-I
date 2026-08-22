@@ -272,7 +272,11 @@ fn init_delegates_to_real_central_shape_and_is_idempotent() {
     ] {
         assert!(ground.join(relative).is_dir(), "missing {relative}");
     }
-    for relative in ["Control/user", "Control/agents/governance", "Control/machines"] {
+    for relative in [
+        "Control/user",
+        "Control/agents/governance",
+        "Control/machines",
+    ] {
         assert_eq!(fs::read_dir(ground.join(relative)).unwrap().count(), 0);
     }
     assert!(ground.join("Control/agents/wiki/wiki.json").is_file());
