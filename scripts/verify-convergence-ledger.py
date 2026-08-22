@@ -7,6 +7,11 @@ live GitHub refs with the checked-in disposition ledger.
 
 Regular mode validates structure only. `--live` queries GitHub and requires exact
 coverage. `--closure` additionally refuses any item still marked closure_blocking.
+
+A small amendments file may carry refs created concurrently while the repair is in
+flight. Amendments are not an escape hatch: they use the same required disposition,
+owner, reason, re-entry and closure-blocking fields and participate in exact set
+equality just like the base ledger.
 """
 
 from __future__ import annotations
@@ -21,6 +26,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 LEDGER_PATH = ROOT / "suite/convergence-ledger.json"
+AMENDMENTS_PATH = ROOT / "suite/convergence-ledger-amendments.json"
 ALLOWED = {
     "KEEP_ACTIVE_EXCEPTION",
     "BLOCKED_PHYSICAL",
@@ -36,9 +42,37 @@ def die(message: str) -> None:
     raise SystemExit(f"convergence ledger verification failed: {message}")
 
 
-def load() -> dict:
-    with LEDGER_PATH.open("r", encoding="utf-8") as handle:
+def read_json(path: Path) -> dict:
+    with path.open("r", encoding="utf-8") as handle:
         return json.load(handle)
+
+
+def load() -> dict:
+    ledger = read_json(LEDGER_PATH)
+    if not AMENDMENTS_PATH.exists():
+        return ledger
+
+    amendments = read_json(AMENDMENTS_PATH)
+    if amendments.get("schema") != "oi.convergence-ledger-amendments/v1":
+        die("unexpected convergence amendments schema")
+
+    by_repo = {
+        entry["repository"]: entry
+        for entry in ledger.get("repositories", [])
+        if isinstance(entry, dict) and isinstance(entry.get("repository"), str)
+    }
+    for amendment in amendments.get("repositories", []):
+        repo = amendment.get("repository")
+        if not isinstance(repo, str) or "/" not in repo:
+            die(f"invalid amendment repository identity: {repo!r}")
+        target = by_repo.get(repo)
+        if target is None:
+            target = {"repository": repo, "branches": [], "open_pull_requests": []}
+            ledger.setdefault("repositories", []).append(target)
+            by_repo[repo] = target
+        target.setdefault("branches", []).extend(amendment.get("branches", []))
+        target.setdefault("open_pull_requests", []).extend(amendment.get("open_pull_requests", []))
+    return ledger
 
 
 def github_json(url: str):
@@ -162,6 +196,8 @@ def main() -> int:
         die("ledger itself still declares closure_ready=false")
 
     print("convergence ledger structure: PASS")
+    if AMENDMENTS_PATH.exists():
+        print("explicit concurrent amendments: INCLUDED")
     if args.live:
         print("live open-PR/non-main-branch set equality: PASS")
     if args.closure:
