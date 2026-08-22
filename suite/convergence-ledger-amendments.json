@@ -1,0 +1,21 @@
+{
+  "schema": "oi.convergence-ledger-amendments/v1",
+  "observed_at": "2026-08-22",
+  "reason": "Live work may advance while the #97 repair is running. New refs must be explicitly classified rather than silently tolerated or forcing the base incident ledger to be rewritten for every concurrent commit.",
+  "repositories": [
+    {
+      "repository": "EpiLogos/O-I",
+      "branches": [
+        {
+          "name": "docs/human-agent-covenant",
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "concurrent O:I Human-Agent Covenant authored-position development",
+          "reason": "Two current documentation commits were created from the post-site main while #97 repair was in progress. They articulate the Human-Agent Covenant and its situation script and are not branch-cleanup debris.",
+          "reentry_condition": "open/attach the native O:I owner PR or explicitly converge/supersede this authored-position line after its current authoring pass",
+          "closure_blocking": false
+        }
+      ],
+      "open_pull_requests": []
+    }
+  ]
+}
