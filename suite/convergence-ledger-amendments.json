@@ -35,6 +35,29 @@
       ]
     },
     {
+      "repository": "EpiLogos/Central",
+      "branches": [
+        {
+          "name": "repair/oi97-projectcentral-doc-truth",
+          "disposition": "REPAIR_ACTIVE",
+          "owner": "Central PR #86 / O:I #97",
+          "reason": "Native Central README still described the pre-ProjectCentral filesystem shape; this one-file repair aligns documentation with current main implementation before physical handoff.",
+          "reentry_condition": "merge PR #86 after native checks, refresh O:I current-main Central pin, then retire repair branch",
+          "closure_blocking": true
+        }
+      ],
+      "open_pull_requests": [
+        {
+          "number": 86,
+          "disposition": "REPAIR_ACTIVE",
+          "owner": "Central documentation truth / O:I #97",
+          "reason": "Correct current implementation account for ProjectCentral and root Wiki before workstation acceptance.",
+          "reentry_condition": "merge after Central checks and refresh O:I current-main snapshot",
+          "closure_blocking": true
+        }
+      ]
+    },
+    {
       "repository": "EpiLogos/ai-kit",
       "branches": [
         {
