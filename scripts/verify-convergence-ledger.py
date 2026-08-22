@@ -9,9 +9,9 @@ Regular mode validates structure only. `--live` queries GitHub and requires exac
 coverage. `--closure` additionally refuses any item still marked closure_blocking.
 
 A small amendments file may carry refs created concurrently while the repair is in
-flight. Amendments are not an escape hatch: they use the same required disposition,
-owner, reason, re-entry and closure-blocking fields and participate in exact set
-equality just like the base ledger.
+flight or replace an earlier disposition after its ambiguity has been resolved.
+Amendments are not an escape hatch: they use the same required disposition, owner,
+reason, re-entry and closure-blocking fields and participate in exact set equality.
 """
 
 from __future__ import annotations
@@ -47,6 +47,15 @@ def read_json(path: Path) -> dict:
         return json.load(handle)
 
 
+def keyed(items: list, key: str, context: str) -> dict:
+    result = {}
+    for item in items:
+        if not isinstance(item, dict) or key not in item:
+            die(f"{context}: amendment/base item missing {key}")
+        result[item[key]] = item
+    return result
+
+
 def load() -> dict:
     ledger = read_json(LEDGER_PATH)
     if not AMENDMENTS_PATH.exists():
@@ -70,8 +79,14 @@ def load() -> dict:
             target = {"repository": repo, "branches": [], "open_pull_requests": []}
             ledger.setdefault("repositories", []).append(target)
             by_repo[repo] = target
-        target.setdefault("branches", []).extend(amendment.get("branches", []))
-        target.setdefault("open_pull_requests", []).extend(amendment.get("open_pull_requests", []))
+
+        branches = keyed(target.get("branches", []), "name", f"{repo} branches")
+        branches.update(keyed(amendment.get("branches", []), "name", f"{repo} branch amendments"))
+        target["branches"] = list(branches.values())
+
+        prs = keyed(target.get("open_pull_requests", []), "number", f"{repo} PRs")
+        prs.update(keyed(amendment.get("open_pull_requests", []), "number", f"{repo} PR amendments"))
+        target["open_pull_requests"] = list(prs.values())
     return ledger
 
 
