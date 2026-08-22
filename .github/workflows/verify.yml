@@ -32,7 +32,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: Clean O:I to native Central encounter
+      - name: Clean O:I to native current Central encounter
         shell: bash
         run: |
           set -euo pipefail
@@ -108,30 +108,45 @@ jobs:
           verify = json.load(open(sys.argv[7]))
           receipt = json.load(open(sys.argv[8]))
 
-          required = ["Control/user", "Control/agents", "Control/machines", ".central", "Work"]
+          required = [
+              "Control/user",
+              "Control/agents/governance",
+              "Control/agents/wiki",
+              "Control/machines",
+              ".central",
+              "Work",
+          ]
           for relative in required:
               assert (root / relative).is_dir(), relative
-          for relative in ["Control/user", "Control/agents", "Control/machines"]:
+          for relative in ["Control/user", "Control/agents/governance", "Control/machines"]:
               assert list((root / relative).iterdir()) == [], relative
+          assert (root / "Control/agents/wiki/wiki.json").is_file()
 
           assert set(state) == {"schema", "personal_ground", "modules"}
           assert state["personal_ground"] == str(root)
           central = state["modules"]["central"]
           assert set(central) <= {"id", "public_name", "native_executable", "alias", "version", "docs", "skill", "root"}
           assert central["alias"] == "ctrl"
-          assert central["version"] == "78a545214ad70e055fae38ccae2d78443112f283"
+          assert central["version"] == "564120f0da1777a70bda3a7ca3e3214efb3e5149"
 
           central_status = next(item for item in status["surfaces"] if item["id"] == "central")
           assert central_status["state"] == "registered"
           assert doctor["status"] == "success" and doctor["data"]["valid"] is True
           ids = {item["id"] for item in actions["data"]["actions"]}
-          assert {"action.list", "central.init", "central.doctor"} <= ids
+          assert {
+              "action.list",
+              "central.init",
+              "central.doctor",
+              "projectcentral.inspect",
+              "projectcentral.doctor",
+              "projectcentral.init",
+          } <= ids
 
           assert suite["kind"] == "oi.suite-snapshot/v1"
           assert suite["completeness"] == "partial-or-unaccepted"
           assert [item["id"] for item in suite["surfaces"]] == ["central"]
           assert suite["surfaces"][0]["selection"]["value"] == central["version"]
-          assert suite["surfaces"][0]["mainline_accepted"] is False
+          assert suite["surfaces"][0]["mainline_accepted"] is True
 
           assert verify["kind"] == "oi.composition-receipt/v1"
           assert verify["environment"] == "pre-local"
