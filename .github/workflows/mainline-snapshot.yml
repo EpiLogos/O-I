@@ -1,0 +1,32 @@
+name: Mainline snapshot truth
+
+on:
+  pull_request:
+    paths:
+      - 'surfaces.json'
+      - 'suite/mainline.json'
+      - 'suite/manifest.json'
+      - 'scripts/verify-mainline-snapshot.py'
+      - '.github/workflows/mainline-snapshot.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'surfaces.json'
+      - 'suite/mainline.json'
+      - 'suite/manifest.json'
+      - 'scripts/verify-mainline-snapshot.py'
+      - '.github/workflows/mainline-snapshot.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify checked-in mainline/source relation
+        run: python3 scripts/verify-mainline-snapshot.py
+      - name: Verify recorded revisions equal live native mains
+        run: python3 scripts/verify-mainline-snapshot.py --live

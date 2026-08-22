@@ -1,0 +1,75 @@
+{
+  "schema": "oi.convergence-ledger-amendments/v1",
+  "observed_at": "2026-08-22",
+  "reason": "Live work may advance while the #97 repair is running. New refs and corrected dispositions must be explicit rather than silently tolerated or inferred from branch counts.",
+  "repositories": [
+    {
+      "repository": "EpiLogos/O-I",
+      "branches": [
+        {
+          "name": "docs/human-agent-covenant",
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "concurrent O:I Human-Agent Covenant authored-position development",
+          "reason": "Two current documentation commits were created from the post-site main while #97 repair was in progress. They articulate the Human-Agent Covenant and its situation script and are not branch-cleanup debris.",
+          "reentry_condition": "open/attach the native O:I owner PR or explicitly converge/supersede this authored-position line after its current authoring pass",
+          "closure_blocking": false
+        },
+        {
+          "name": "research/meta-harness-context-craft",
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "O:I PR #130 / praxis programme #91",
+          "reason": "Unique meta-harness source-study and O:I profile work now has an explicit native draft PR instead of remaining ownerless branch debris.",
+          "reentry_condition": "reconcile its two-file delta onto current main, then merge or explicitly supersede through PR #130",
+          "closure_blocking": false
+        }
+      ],
+      "open_pull_requests": [
+        {
+          "number": 130,
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "O:I praxis programme #91",
+          "reason": "Explicit native review surface for the meta-harness/context-craft source study created during #97 repair.",
+          "reentry_condition": "current-main reconciliation then merge/supersession decision",
+          "closure_blocking": false
+        }
+      ]
+    },
+    {
+      "repository": "EpiLogos/Central",
+      "branches": [
+        {
+          "name": "repair/oi97-projectcentral-doc-truth",
+          "disposition": "RETIRE_MERGED",
+          "owner": "Central PR #86 / O:I #97",
+          "reason": "PR #86 is merged to Central main as 7ed02e66edd12de3318ad7de86f2f4650b8f0e7a. The surviving branch is only a remote ref for the already-merged documentation repair.",
+          "reentry_condition": "delete the remote branch when branch-deletion capability is available; never treat it as current development",
+          "closure_blocking": false
+        }
+      ],
+      "open_pull_requests": []
+    },
+    {
+      "repository": "EpiLogos/ai-kit",
+      "branches": [
+        {
+          "name": "praxis/meta-harness-context-craft",
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "AIKit PR #117",
+          "reason": "Five-commit world-situated Guidance/Skill line is a clean descendant of accepted AIKit main and now has a native draft PR.",
+          "reentry_condition": "AIKit instruction/praxis owners review and merge or explicitly supersede PR #117",
+          "closure_blocking": false
+        }
+      ],
+      "open_pull_requests": [
+        {
+          "number": 117,
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "AIKit praxis / meta-harness craft",
+          "reason": "Native owner PR for the previously ownerless meta-harness Guidance and Skill work.",
+          "reentry_condition": "review against #107/#115/#116 and merge or supersede",
+          "closure_blocking": false
+        }
+      ]
+    }
+  ]
+}

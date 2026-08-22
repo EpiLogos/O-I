@@ -1,0 +1,42 @@
+name: Convergence truth
+
+on:
+  pull_request:
+    paths:
+      - 'suite/convergence-ledger.json'
+      - 'scripts/verify-convergence-ledger.py'
+      - '.github/workflows/convergence-truth.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'suite/convergence-ledger.json'
+      - 'scripts/verify-convergence-ledger.py'
+      - '.github/workflows/convergence-truth.yml'
+  workflow_dispatch:
+    inputs:
+      closure:
+        description: 'Require the ledger to be closure-ready with zero blocking entries'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate durable disposition structure
+        run: python3 scripts/verify-convergence-ledger.py
+      - name: Prove exact live ref coverage
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/verify-convergence-ledger.py --live
+      - name: Prove closure readiness when explicitly requested
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.closure }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/verify-convergence-ledger.py --live --closure

@@ -1,0 +1,53 @@
+{
+  "schema": "oi.mainline-snapshot/v1",
+  "observed_at": "2026-08-22",
+  "purpose": "Durable current-main source snapshot for the six native O:I product owners. This is distinct from immutable released-artifact manifests.",
+  "release_manifest": {
+    "path": "suite/manifest.json",
+    "suite_version": "0.1.0-prelocal.2",
+    "accepted_at": "2026-08-17",
+    "relation": "historical-immutable-release-snapshot"
+  },
+  "source_catalog": "surfaces.json",
+  "coordinator_rule": "O:I itself is the repository containing this snapshot; its exact accepted commit is recorded by the owning PR/issue receipt rather than self-referentially inside this file.",
+  "products": [
+    {
+      "id": "central",
+      "repository": "https://github.com/EpiLogos/Central",
+      "revision": "7ed02e66edd12de3318ad7de86f2f4650b8f0e7a",
+      "state": "accepted-main",
+      "note": "Includes merged ProjectCentral C0/C1 filesystem, Wiki lifecycle, personal-root hygiene and the corrected README account of the current recursive ProjectCentral/root-Wiki implementation. Later authored-ground/NOW/governance drafts remain development state."
+    },
+    {
+      "id": "actuation",
+      "repository": "https://github.com/EpiLogos/Actuation",
+      "revision": "bb36b3c20561359bdfbc5c826a11d15a5e693aed",
+      "state": "accepted-main"
+    },
+    {
+      "id": "ai-kit",
+      "repository": "https://github.com/EpiLogos/ai-kit",
+      "revision": "5308405e447b4a48e57fa2cfb2c5e6ef276ae343",
+      "state": "accepted-main"
+    },
+    {
+      "id": "software-factory",
+      "repository": "https://github.com/EpiLogos/agent-system-design",
+      "revision": "e914e881209da5e96bcc4f0a8ee566028a5acf0b",
+      "state": "accepted-main"
+    },
+    {
+      "id": "workcell",
+      "repository": "https://github.com/EpiLogos/Workcell",
+      "revision": "3949f8c5e8e9f75d1e7b34d10f119da2881e5496",
+      "state": "accepted-main"
+    },
+    {
+      "id": "quaternal-logic",
+      "repository": "https://github.com/EpiLogos/QL-MEF",
+      "revision": "3e9fb929f0c34e8b4474eef59ce512b53082fba1",
+      "state": "accepted-main-with-active-branch-exceptions",
+      "note": "This pins accepted QL-MEF main only. Later Epi/Pratibimba computational branches remain owned by their dedicated convergence programme and are not silently included here."
+    }
+  ]
+}
