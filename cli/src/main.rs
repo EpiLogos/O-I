@@ -6,6 +6,7 @@ mod composition {
     include!("first_suite.rs");
     include!("first_suite_finalize.rs");
     include!("suite_v2.rs");
+    include!("trust_closure.rs");
     include!("frontdoor.rs");
     include!("existing_world.rs");
 }
