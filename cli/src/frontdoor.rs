@@ -11,13 +11,24 @@ pub fn cli_main() -> ExitCode {
                 println!("  oi dev sync [PRODUCT]          fetch/prune and fast-forward clean local source only");
                 println!("  oi dev build [PRODUCT]         build current local source through native product build contract");
                 println!("  oi dev test [PRODUCT]          test current local source through native product test contract");
-                println!("  oi dev install [PRODUCT]       install/register builds from current source, not historical release SHAs");
+                println!("  oi dev install [PRODUCT]       install/register only from clean exact current-main source");
                 println!("  oi dev acceptance [--json]     prove the local software world is the current clean mainline world before physical provider tests");
                 println!();
                 println!("Existing-world adoption:");
                 println!("  oi adopt PATH [--json]   inspect and preserve a heterogeneous existing world; return native-owner handoffs without mutation");
                 ExitCode::SUCCESS
             }
+            Err(message) => {
+                eprintln!("oi: {message}");
+                ExitCode::from(2)
+            }
+        };
+    }
+    if command == Some("dev")
+        && args.get(1).and_then(|value| value.to_str()) == Some("install")
+    {
+        return match command_guarded_current_dev_install(args.get(2..).unwrap_or_default()) {
+            Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
             Err(message) => {
                 eprintln!("oi: {message}");
                 ExitCode::from(2)
