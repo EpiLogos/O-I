@@ -1,13 +1,13 @@
 {
   "schema": 1,
-  "verified_at": "2026-08-21",
+  "verified_at": "2026-08-22",
   "surfaces": [
     {
       "id": "central",
       "public_name": "Central",
       "function": "persistent personal ground",
       "repository": "https://github.com/EpiLogos/Central",
-      "docs_ref": "564120f0da1777a70bda3a7ca3e3214efb3e5149",
+      "docs_ref": "7ed02e66edd12de3318ad7de86f2f4650b8f0e7a",
       "docs_path": "README.md",
       "skill_paths": [
         "skills/control-maintenance/SKILL.md",
@@ -27,8 +27,8 @@
       },
       "install": {
         "kind": "oi-managed-binary",
-        "ref": "564120f0da1777a70bda3a7ca3e3214efb3e5149",
-        "revision": "564120f0da1777a70bda3a7ca3e3214efb3e5149",
+        "ref": "7ed02e66edd12de3318ad7de86f2f4650b8f0e7a",
+        "revision": "7ed02e66edd12de3318ad7de86f2f4650b8f0e7a",
         "path": "ctrl",
         "note": "Current mainline source pin for developer/source installation. The immutable prelocal.2 release artifact remains described separately by suite/manifest.json; Central remains owner of Control, Work, ProjectCentral and .central semantics."
       },
@@ -46,9 +46,9 @@
           "evidence": "native-json-stdout"
         },
         "outstanding_requirements": [],
-        "note": "Portable Central acceptance invokes Central's own doctor against the configured personal ground. ProjectCentral C0/C1 is on this source pin; personal macOS/Raycast/home-server and owner-world migration remain separate physical acceptance."
+        "note": "Portable Central acceptance invokes Central's own doctor against the configured personal ground. ProjectCentral C0/C1 and the corrected root-Wiki implementation account are on this source pin; personal macOS/Raycast/home-server and owner-world migration remain separate physical acceptance."
       },
-      "compatibility": "Central main carries the accepted recursive Control/ProjectCentral filesystem and Agent-Wiki lifecycle floor. O:I composes it without taking ownership of Control, Work, ProjectCentral or personal provider policy."
+      "compatibility": "Central main carries the accepted recursive Control/ProjectCentral filesystem and Agent-Wiki lifecycle floor, with its README now describing that actual implementation. O:I composes it without taking ownership of Control, Work, ProjectCentral or personal provider policy."
     },
     {
       "id": "actuation",
