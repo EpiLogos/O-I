@@ -147,7 +147,7 @@ fn dev_status_reports_current_main_pins_not_release_snapshot() {
         .unwrap();
     assert_eq!(
         central["accepted_current_main"],
-        "564120f0da1777a70bda3a7ca3e3214efb3e5149"
+        "7ed02e66edd12de3318ad7de86f2f4650b8f0e7a"
     );
     assert_ne!(
         central["accepted_current_main"],
