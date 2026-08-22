@@ -1,6 +1,6 @@
 {
   "schema": "oi.mainline-snapshot/v1",
-  "observed_at": "2026-08-21",
+  "observed_at": "2026-08-22",
   "purpose": "Durable current-main source snapshot for the six native O:I product owners. This is distinct from immutable released-artifact manifests.",
   "release_manifest": {
     "path": "suite/manifest.json",
@@ -14,9 +14,9 @@
     {
       "id": "central",
       "repository": "https://github.com/EpiLogos/Central",
-      "revision": "564120f0da1777a70bda3a7ca3e3214efb3e5149",
+      "revision": "7ed02e66edd12de3318ad7de86f2f4650b8f0e7a",
       "state": "accepted-main",
-      "note": "Includes merged ProjectCentral C0/C1 filesystem, Wiki lifecycle and personal-root hygiene; later authored-ground/NOW/governance drafts remain development state."
+      "note": "Includes merged ProjectCentral C0/C1 filesystem, Wiki lifecycle, personal-root hygiene and the corrected README account of the current recursive ProjectCentral/root-Wiki implementation. Later authored-ground/NOW/governance drafts remain development state."
     },
     {
       "id": "actuation",
