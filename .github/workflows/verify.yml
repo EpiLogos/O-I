@@ -127,7 +127,7 @@ jobs:
           central = state["modules"]["central"]
           assert set(central) <= {"id", "public_name", "native_executable", "alias", "version", "docs", "skill", "root"}
           assert central["alias"] == "ctrl"
-          assert central["version"] == "564120f0da1777a70bda3a7ca3e3214efb3e5149"
+          assert central["version"] == "7ed02e66edd12de3318ad7de86f2f4650b8f0e7a"
 
           central_status = next(item for item in status["surfaces"] if item["id"] == "central")
           assert central_status["state"] == "registered"
@@ -146,9 +146,6 @@ jobs:
           assert suite["completeness"] == "partial-or-unaccepted"
           assert [item["id"] for item in suite["surfaces"]] == ["central"]
           assert suite["surfaces"][0]["selection"]["value"] == central["version"]
-          # The legacy snapshot contract only marks mainline_accepted after an
-          # explicit --accepted-mainline assertion. Merely observing the current
-          # revision must not auto-promote that standing.
           assert suite["surfaces"][0]["mainline_accepted"] is False
 
           assert verify["kind"] == "oi.composition-receipt/v1"
