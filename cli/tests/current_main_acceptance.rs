@@ -28,7 +28,8 @@ fn fake_central(dir: &Path, projectcentral: bool) -> PathBuf {
     } else {
         r#"[{"id":"action.list"},{"id":"central.init"},{"id":"central.doctor"}]"#
     };
-    let body = format!(r#"
+    let body = format!(
+        r#"
 if [ "${{1:-}}" = "--version" ]; then
   echo 'ctrl 0.1.0'
   exit 0
@@ -60,7 +61,8 @@ if [ "${{1:-}}" = "doctor" ]; then
   exit 3
 fi
 exit 0
-"#);
+"#
+    );
     fake_executable(dir, "ctrl", &body)
 }
 
