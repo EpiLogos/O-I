@@ -1,6 +1,7 @@
 mod agent_surface;
 mod aikit_workbench;
 mod bridge;
+mod central_change;
 mod contribution;
 mod execution_authority;
 mod live_product;
@@ -17,6 +18,7 @@ pub use aikit_workbench::{
     LocalAikitWorkbench, SessionSpaceApplicationReading, SessionSpaceFocusRequest,
 };
 pub use bridge::{BridgeCallClass, BridgeCaller, BridgeDenied, BridgePolicy};
+pub use central_change::read_central_change_horizon;
 pub use contribution::{
     authorize_action, host_native_contribution, selection_for, ActionAuthorityGrant,
     ActionAvailability, CanonicalActionBinding, ContributionAvailability, HostRegion,
