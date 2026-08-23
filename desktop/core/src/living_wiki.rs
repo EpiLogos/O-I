@@ -1,18 +1,20 @@
 //! Living Wiki desktop projection over native Central + AIKit owner contracts.
 //!
-//! Central remains the source-change authority. AIKit remains the impact/freshness/
-//! integrative-reading and Contemplate authority. This module only adapts the public
-//! Central Action result into AIKit's provider-neutral change horizon and derives
-//! deterministic dependency manifests from the already-loaded canonical Wiki objects.
-//! It owns no watcher, source store, Wiki, Agent runtime, or background invocation.
+//! Central remains source-change authority. AIKit remains impact/freshness,
+//! integrative-reading and Contemplate authority. O:I adapts Central's public Action
+//! result into AIKit's provider-neutral horizon and presents the returned owner
+//! readings. It owns no dependency graph, watcher, Wiki, Agent runtime or background
+//! invocation path.
 
+use aikit_core::model_runtime::ModelRuntimeReadModel;
 use aikit_core::{
-    deterministic_transitive_knowledge_impact, portable_contemplate_preflight,
-    INTEGRATIVE_READING_EXTENSION, KnowledgeChangeHorizon, KnowledgeChangeKind,
-    KnowledgeDependency, KnowledgeObservedSource, KnowledgeResourceDependency,
-    KnowledgeSourceChange, KnowledgeTransitiveImpact, ModelRuntimeReadModel,
-    PortableContemplatePreflight, PortableContemplatePreflightRequest, ProjectRef, QlRefractionRequest,
-    ResourceRef, SemanticRevision, SemanticWikiIndex, SourceRef, SourceRevision, WikiObject,
+    bounded_contemplate_preflight, deterministic_transitive_knowledge_impact,
+    wiki_living_dependencies, BoundedContemplatePreflight, ContemplateRequest,
+    KnowledgeChangeHorizon, KnowledgeChangeKind, KnowledgeObservedSource, KnowledgeSourceChange,
+    KnowledgeTransitiveImpact, ProjectRef, QlRefractionRequest, ResourceRef, SemanticWikiIndex,
+    SourceRef, SourceRevision, WikiObject, DEFAULT_CONTEMPLATE_OBJECT_BUDGET,
+    DEFAULT_CONTEMPLATE_RELATION_DEPTH, DEFAULT_LIVING_IMPACT_DEPTH,
+    DEFAULT_LIVING_IMPACT_RESOURCES,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -128,13 +130,16 @@ pub fn parse_central_horizon(value: Value) -> Result<CentralSourceHorizon, Strin
     Ok(horizon)
 }
 
-pub fn adapt_central_horizon(horizon: &CentralSourceHorizon) -> Result<KnowledgeChangeHorizon, String> {
+pub fn adapt_central_horizon(
+    horizon: &CentralSourceHorizon,
+) -> Result<KnowledgeChangeHorizon, String> {
     let sources = horizon
         .sources
         .iter()
         .map(|observed| {
             Ok(KnowledgeObservedSource {
-                source: SourceRef::parse(&observed.binding.source_ref).map_err(|error| error.to_string())?,
+                source: SourceRef::parse(&observed.binding.source_ref)
+                    .map_err(|error| error.to_string())?,
                 revision: Some(
                     SourceRevision::parse(&observed.revision.revision)
                         .map_err(|error| error.to_string())?,
@@ -183,92 +188,12 @@ pub fn adapt_central_horizon(horizon: &CentralSourceHorizon) -> Result<Knowledge
     })
 }
 
-fn object_provenance(object: &WikiObject) -> &[aikit_core::WikiProvenanceRef] {
-    match object {
-        WikiObject::Space(value) => &value.provenance,
-        WikiObject::Node(value) => &value.provenance,
-        WikiObject::Edge(value) => &value.provenance,
-        WikiObject::Frame(value) => &value.provenance,
-        WikiObject::Reading(value) => &value.provenance,
-    }
-}
-
-/// Build only dependencies already stated by canonical Wiki provenance or an
-/// AIKit integrative-reading basis manifest. Ordinary semantic graph cycles are
-/// deliberately not copied into the reading-basis DAG.
-pub fn wiki_dependency_manifest(
-    index: &SemanticWikiIndex,
-) -> Result<(Vec<KnowledgeDependency>, Vec<KnowledgeResourceDependency>), String> {
-    let mut source_dependencies = Vec::new();
-    let mut resource_dependencies = Vec::new();
-    for resource in index.discover() {
-        let Some(object) = index.resolve(&resource) else {
-            continue;
-        };
-        for provenance in object_provenance(&object) {
-            let basis_revision = match provenance.source_revision.as_ref() {
-                Some(SemanticRevision::Text(value)) => Some(
-                    SourceRevision::parse(value).map_err(|error| error.to_string())?,
-                ),
-                // A numeric semantic revision is not silently translated into a
-                // provider-specific SourceRevision identity.
-                Some(SemanticRevision::Number(_)) | None => None,
-            };
-            if basis_revision.is_none() {
-                continue;
-            }
-            source_dependencies.push(KnowledgeDependency {
-                dependent: resource.clone(),
-                source: provenance.source_ref.clone(),
-                basis_revision,
-                relation: "wiki-provenance".into(),
-                provenance_ref: Some(resource.clone()),
-                integrative: matches!(object, WikiObject::Reading(_)),
-            });
-        }
-        if let WikiObject::Reading(reading) = &object {
-            let Some(basis) = reading
-                .extensions
-                .get(INTEGRATIVE_READING_EXTENSION)
-                .and_then(|value| value.get("basis"))
-                .and_then(Value::as_array)
-            else {
-                continue;
-            };
-            for item in basis {
-                let Some(raw) = item.get("resource").and_then(Value::as_str) else {
-                    continue;
-                };
-                let basis_ref = ResourceRef::parse(raw).map_err(|error| error.to_string())?;
-                resource_dependencies.push(KnowledgeResourceDependency {
-                    basis: basis_ref,
-                    dependent: reading.ref_id.clone(),
-                    relation: "integrative-basis".into(),
-                    provenance_ref: Some(reading.ref_id.clone()),
-                    integrative: true,
-                });
-            }
-        }
-    }
-    source_dependencies.sort_by(|left, right| {
-        left.dependent
-            .cmp(&right.dependent)
-            .then(left.source.cmp(&right.source))
-    });
-    source_dependencies.dedup_by(|left, right| {
-        left.dependent == right.dependent
-            && left.source == right.source
-            && left.basis_revision == right.basis_revision
-    });
-    resource_dependencies.sort_by(|left, right| {
-        left.basis
-            .cmp(&right.basis)
-            .then(left.dependent.cmp(&right.dependent))
-    });
-    resource_dependencies.dedup_by(|left, right| {
-        left.basis == right.basis && left.dependent == right.dependent
-    });
-    Ok((source_dependencies, resource_dependencies))
+pub fn wiki_objects(index: &SemanticWikiIndex) -> Vec<WikiObject> {
+    index
+        .discover()
+        .into_iter()
+        .filter_map(|resource| index.resolve(&resource))
+        .collect()
 }
 
 pub fn living_wiki_reading(
@@ -276,13 +201,15 @@ pub fn living_wiki_reading(
     index: &SemanticWikiIndex,
 ) -> Result<LivingWikiDesktopReading, String> {
     let horizon = adapt_central_horizon(central)?;
-    let (source_dependencies, resource_dependencies) = wiki_dependency_manifest(index)?;
+    let objects = wiki_objects(index);
+    let (source_dependencies, resource_dependencies) =
+        wiki_living_dependencies(&objects).map_err(|error| error.to_string())?;
     let impact = deterministic_transitive_knowledge_impact(
         &horizon,
         &source_dependencies,
         &resource_dependencies,
-        aikit_core::DEFAULT_LIVING_IMPACT_DEPTH,
-        aikit_core::DEFAULT_LIVING_IMPACT_RESOURCES,
+        DEFAULT_LIVING_IMPACT_DEPTH,
+        DEFAULT_LIVING_IMPACT_RESOURCES,
     )
     .map_err(|error| error.to_string())?;
     let changed = central
@@ -325,28 +252,36 @@ pub fn living_wiki_preflight(
     index: &SemanticWikiIndex,
     runtime: &ModelRuntimeReadModel,
     ql: Option<QlRefractionRequest>,
-) -> Result<PortableContemplatePreflight, String> {
+) -> Result<BoundedContemplatePreflight, String> {
     let horizon = adapt_central_horizon(central)?;
-    let (source_dependencies, resource_dependencies) = wiki_dependency_manifest(index)?;
-    portable_contemplate_preflight(&PortableContemplatePreflightRequest {
-        project,
-        focus,
-        horizon,
-        source_dependencies,
-        resource_dependencies,
-        runtime: runtime.clone(),
-        method: None,
-        ql,
-        max_depth: aikit_core::DEFAULT_LIVING_IMPACT_DEPTH,
-        max_affected: aikit_core::DEFAULT_LIVING_IMPACT_RESOURCES,
-    })
+    let objects = wiki_objects(index);
+    let (source_dependencies, resource_dependencies) =
+        wiki_living_dependencies(&objects).map_err(|error| error.to_string())?;
+    bounded_contemplate_preflight(
+        &ContemplateRequest {
+            project,
+            focus,
+            horizon: &horizon,
+            dependencies: &source_dependencies,
+            current_wiki_objects: &objects,
+            runtime,
+            method: None,
+            ql,
+        },
+        &resource_dependencies,
+        DEFAULT_CONTEMPLATE_OBJECT_BUDGET,
+        DEFAULT_CONTEMPLATE_RELATION_DEPTH,
+    )
     .map_err(|error| error.to_string())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use aikit_core::{SemanticWikiReading, WikiProvenanceRef};
+    use aikit_core::{
+        KnowledgeFreshness, SemanticRevision, SemanticWikiReading, WikiNode, WikiProvenanceRef,
+        INTEGRATIVE_READING_EXTENSION,
+    };
     use std::collections::BTreeMap;
 
     fn central_fixture() -> CentralSourceHorizon {
@@ -388,29 +323,71 @@ mod tests {
     }
 
     #[test]
-    fn retained_source_change_flows_from_central_into_aikit_without_payload_or_agent() {
+    fn retained_source_change_uses_owner_dependency_closure_without_payload_or_agent() {
         let source = SourceRef::parse("central:source:project:test:README.md").unwrap();
-        let reading = WikiObject::Reading(SemanticWikiReading {
+        let part_ref = ResourceRef::parse("wiki:node:part").unwrap();
+        let whole_ref = ResourceRef::parse("wiki:reading:whole").unwrap();
+        let part = WikiObject::Node(WikiNode {
             profile: "okf-wiki/v1".into(),
-            ref_id: ResourceRef::parse("wiki:reading:whole").unwrap(),
+            ref_id: part_ref.clone(),
             revision: 1,
             provenance: vec![WikiProvenanceRef {
                 source_ref: source,
                 source_revision: Some(SemanticRevision::Text("r1".into())),
-                producer_ref: Some(ResourceRef::parse("agent:test").unwrap()),
+                producer_ref: None,
                 generation_ref: None,
                 extensions: BTreeMap::new(),
             }],
+            node_type: "concept".into(),
+            title: Some("Part".into()),
+            space_refs: vec![],
+            source_refs: vec![],
+            local_space_ref: None,
+            extensions: BTreeMap::new(),
+        });
+        let mut extensions = BTreeMap::new();
+        extensions.insert(
+            INTEGRATIVE_READING_EXTENSION.into(),
+            serde_json::json!({
+                "basis": [{"resource": part_ref}],
+                "relations": [],
+                "return_paths": [{"from_basis": part_ref, "through": [], "to_whole": whole_ref}],
+                "freshness": KnowledgeFreshness::Fresh,
+                "topology": "recursive-dag"
+            }),
+        );
+        let whole = WikiObject::Reading(SemanticWikiReading {
+            profile: "okf-wiki/v1".into(),
+            ref_id: whole_ref.clone(),
+            revision: 1,
+            provenance: vec![],
             frame_ref: ResourceRef::parse("wiki:frame:test").unwrap(),
             reading_type: "integrative".into(),
             artifact_ref: None,
             derived_by_ref: Some(ResourceRef::parse("agent:test").unwrap()),
-            extensions: BTreeMap::new(),
+            extensions,
         });
-        let index = SemanticWikiIndex::rebuild([reading]).unwrap();
+        let index = SemanticWikiIndex::rebuild([part, whole]).unwrap();
         let result = living_wiki_reading(&central_fixture(), &index).unwrap();
         assert_eq!(result.changed.len(), 1);
-        assert_eq!(result.impact.pending_integration.len(), 1);
+        assert!(result
+            .impact
+            .direct
+            .affected
+            .iter()
+            .any(|affected| affected.resource == part_ref));
+        assert!(!result
+            .impact
+            .direct
+            .affected
+            .iter()
+            .any(|affected| affected.resource == whole_ref));
+        assert!(result.impact.pending_integration.contains(&whole_ref));
+        assert!(result
+            .impact
+            .paths
+            .iter()
+            .any(|path| path.resource == whole_ref && path.steps.len() == 2));
         assert!(!result.source_payloads_exposed);
         assert!(!result.automatic_agent_or_model_invocation);
         assert!(!result.impact.automatic_agent_or_model_invocation);
