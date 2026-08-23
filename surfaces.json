@@ -7,7 +7,7 @@
       "public_name": "Central",
       "function": "persistent personal ground",
       "repository": "https://github.com/EpiLogos/Central",
-      "docs_ref": "f890b0793ac15d2a5853c9c74ad82fba817adc25",
+      "docs_ref": "20c65d712389d6f38a30ee5bc2ff39874dbb38b4",
       "docs_path": "README.md",
       "skill_paths": [
         "skills/control-maintenance/SKILL.md",
@@ -27,8 +27,8 @@
       },
       "install": {
         "kind": "oi-managed-binary",
-        "ref": "f890b0793ac15d2a5853c9c74ad82fba817adc25",
-        "revision": "f890b0793ac15d2a5853c9c74ad82fba817adc25",
+        "ref": "20c65d712389d6f38a30ee5bc2ff39874dbb38b4",
+        "revision": "20c65d712389d6f38a30ee5bc2ff39874dbb38b4",
         "path": "ctrl",
         "note": "Install the exact accepted Central release artifact from the Suite Manifest; Central remains owner of Control, Work and .central semantics."
       },
