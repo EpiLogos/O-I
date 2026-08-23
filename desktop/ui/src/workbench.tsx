@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { CurrentWorldNavigator } from './current-world';
+import { CurrentWorldNavigator, type CurrentWorldReading } from './current-world';
 import { ProjectFieldCanvas, ProjectNavigator } from './project-field';
 import {
   WorkbenchSurface as NativeWorkbenchSurface,
@@ -12,10 +12,12 @@ export * from './workbench-native';
 
 export function WorkbenchSurface({
   selection,
+  currentWorld,
   onSelect,
   onAgentSessionChange,
 }: {
   selection?: WorkbenchSemanticRef;
+  currentWorld?: CurrentWorldReading;
   onSelect: (subject: WorkbenchSemanticRef, evidence: WorkbenchEvidence) => Promise<void>;
   onAgentSessionChange?: (agentSessionRef: string | null) => void;
 }) {
@@ -33,7 +35,7 @@ export function WorkbenchSurface({
     <>
       {navigatorHost && createPortal(
         <>
-          <CurrentWorldNavigator />
+          <CurrentWorldNavigator currentWorld={currentWorld} />
           <ProjectNavigator selection={selection} onSelect={select} />
         </>,
         navigatorHost,
