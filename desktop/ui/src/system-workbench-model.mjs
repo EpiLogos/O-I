@@ -53,6 +53,16 @@ export const SYSTEM_PRODUCTS = [
   },
 ];
 
+const CURRENT_WORLD_PRODUCT_IDS = {
+  central: 'central',
+  actuation: 'actuation',
+  'ai-kit': 'ai-kit',
+  factory: 'software-factory',
+  workcell: 'workcell',
+  'ql-mef': 'quaternal-logic',
+};
+const CF5_POSITIONS = [0, 1, 2, 3, 4, 5];
+
 const STATUS = {
   available: 'available',
   degraded: 'degraded',
@@ -342,32 +352,81 @@ function pendingProviderProduct(input, product, noun, optional = false) {
   return result;
 }
 
+function constitutionFromCurrentWorld(currentWorld) {
+  const available = Boolean(currentWorld && typeof currentWorld === 'object');
+  const presentPositions = Array.isArray(currentWorld?.context_frame?.present_positions)
+    ? [...currentWorld.context_frame.present_positions]
+    : [];
+  const positions = SYSTEM_PRODUCTS.map((product, canonicalPosition) => {
+    const productId = CURRENT_WORLD_PRODUCT_IDS[product.id];
+    const reading = Array.isArray(currentWorld?.positions)
+      ? currentWorld.positions.find((entry) => entry?.product_id === productId)
+      : undefined;
+    return {
+      system_product_id: product.id,
+      product_id: productId,
+      position: reading?.position ?? canonicalPosition,
+      present: reading?.present === true,
+      state: reading?.state ?? 'missing',
+      native_owner: reading?.native_owner ?? product.authority,
+      native_location: reading?.native_location ?? null,
+      version: reading?.version ?? null,
+    };
+  });
+  const exactMaximalPositions = presentPositions.length === CF5_POSITIONS.length
+    && CF5_POSITIONS.every((position, index) => presentPositions[index] === position);
+  const maximal = available
+    && currentWorld?.context_frame?.maximal === true
+    && currentWorld?.context_frame?.reading === 'cf5'
+    && exactMaximalPositions
+    && positions.every((position) => position.present);
+  return {
+    schema: currentWorld?.schema ?? 'oi.current-world/v1',
+    available,
+    reading: maximal ? 'cf5' : null,
+    maximal,
+    present_positions: presentPositions,
+    positions,
+    personal_ground: currentWorld?.personal_ground ?? null,
+    current_machine: currentWorld?.current_machine ?? null,
+  };
+}
+
 export function buildSystemWorkbench(input = {}) {
+  const constitution = constitutionFromCurrentWorld(input.currentWorld);
   const products = SYSTEM_PRODUCTS.map((product) => {
+    let result;
     switch (product.id) {
-      case 'central': return centralProduct(input, product);
-      case 'actuation': return actuationProduct(input, product);
-      case 'ai-kit': return aikitProduct(input, product);
-      case 'factory': return factoryProduct(input, product);
-      case 'workcell': return pendingProviderProduct(input, product, 'Provider/offer/binding/material-lifecycle');
-      case 'ql-mef': return pendingProviderProduct(input, product, 'Formal provider/capability/readiness', true);
+      case 'central': result = centralProduct(input, product); break;
+      case 'actuation': result = actuationProduct(input, product); break;
+      case 'ai-kit': result = aikitProduct(input, product); break;
+      case 'factory': result = factoryProduct(input, product); break;
+      case 'workcell': result = pendingProviderProduct(input, product, 'Provider/offer/binding/material-lifecycle'); break;
+      case 'ql-mef': result = pendingProviderProduct(input, product, 'Formal provider/capability/readiness', true); break;
       default: throw new Error(`unknown System product ${product.id}`);
     }
+    return {
+      ...result,
+      constitution: constitution.positions.find((position) => position.system_product_id === product.id),
+    };
   });
 
   const gaps = products
     .filter((product) => ['not_disclosed', 'degraded', 'unsupported'].includes(product.states.observed.status))
     .map((product) => `${product.label}: ${product.states.observed.summary}`);
+  const warnings = [...new Set([...(input.warnings ?? []), ...(input.currentWorld?.warnings ?? [])])];
 
   return {
     schema: 'oi.system-workbench/v1',
     state_axes: [...SYSTEM_STATE_AXES],
-    condition: gaps.length ? 'partial' : 'full',
+    condition: !constitution.available ? 'unavailable' : constitution.maximal ? 'cf5' : 'partial',
+    constitution,
     ordinary_operation_blocked: false,
     products,
-    warnings: [...(input.warnings ?? [])],
+    warnings,
     gaps,
     invariants: [
+      'CurrentWorld is the top-level six-product constitution reading.',
       'System is presentation/composition, never configuration authority.',
       'authored ≠ effective ≠ active ≠ staged ≠ expected effect ≠ observed.',
       'selected ≠ retrieved ≠ disclosed into Agent Context.',

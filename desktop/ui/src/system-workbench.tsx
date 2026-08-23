@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useCurrentWorld } from './current-world';
 import { buildSystemWorkbench } from './system-workbench-model.mjs';
 import type { SystemProduct, SystemStateAxis } from './system-workbench-model.mjs';
 import './system-workbench.css';
@@ -28,22 +29,27 @@ export function SystemWorkbench({
   warnings: string[];
   mode?: 'canvas' | 'rail';
 }) {
-  const model = useMemo(() => buildSystemWorkbench({ surfaces, contributions, aikitContext, factoryBuild, warnings }), [surfaces, contributions, aikitContext, factoryBuild, warnings]);
+  const { currentWorld } = useCurrentWorld();
+  const model = useMemo(() => buildSystemWorkbench({ surfaces, contributions, aikitContext, factoryBuild, currentWorld, warnings }), [surfaces, contributions, aikitContext, factoryBuild, currentWorld, warnings]);
   const [selectedId, setSelectedId] = useState('ai-kit');
   const selected = model.products.find((product) => product.id === selectedId) ?? model.products[0];
+  const presentCount = model.constitution.present_positions.length;
+  const constitutionLabel = model.condition === 'cf5' ? 'CF5' : model.condition;
+  const machine = model.constitution.current_machine;
 
   if (mode === 'rail') {
     return (
       <section className="oi-system oi-system--rail" aria-label="Six-product System composition">
         <div className="oi-system__heading">
-          <div><p className="oi-eyebrow">System · composition only</p><strong>{model.condition}</strong></div>
-          <span>{model.products.length}/6 owners</span>
+          <div><p className="oi-eyebrow">CurrentWorld · constitution</p><strong>{constitutionLabel}</strong></div>
+          <span>{presentCount}/6 present</span>
         </div>
+        {machine && <p className="oi-system__authority"><code>{machine.role}</code> ↔ <code>{machine.workcell_ref ?? 'Workcell unresolved'}</code>{machine.health ? ` · ${machine.health}` : ''}</p>}
         <div className="oi-system__rail-products">
           {model.products.map((product) => (
             <button type="button" key={product.id} onClick={() => setSelectedId(product.id)} data-selected={product.id === selected.id}>
               <span>{product.label}</span>
-              <small data-state={product.states.observed.status}>{product.states.observed.status.replaceAll('_', ' ')}</small>
+              <small data-state={product.constitution.present ? product.constitution.state : 'unavailable'}>P{product.constitution.position} · {product.constitution.present ? product.constitution.state : 'absent'}</small>
             </button>
           ))}
         </div>
@@ -57,15 +63,18 @@ export function SystemWorkbench({
     <section className="oi-system" aria-label="Six-product System workbench">
       <header className="oi-system__heading">
         <div>
-          <p className="oi-eyebrow">Six-product System · read / inspect / configure through native owners</p>
-          <h2>One composition, seven different kinds of state.</h2>
-          <p className="oi-muted">The workbench does not turn “configured”, “resolved”, “running”, “previewed”, or “observed” into synonyms. Missing native evidence remains visible as missing evidence.</p>
+          <p className="oi-eyebrow">CurrentWorld · six-product constitution</p>
+          <h2>Current constitution; native-owner state beneath it.</h2>
+          <p className="oi-muted">CurrentWorld supplies position, presence and Context Frame. Each product’s authored, effective, active, staged and observed state remains native-owner evidence.</p>
         </div>
         <div className="oi-system__condition">
-          <span>Suite</span><strong>{model.condition}</strong>
+          <span>CurrentWorld</span><strong>{constitutionLabel}</strong>
+          <span>Positions</span><strong>{model.constitution.present_positions.join(' · ') || 'none'}</strong>
           <span>Ordinary operation</span><strong>{model.ordinary_operation_blocked ? 'blocked' : 'not blocked'}</strong>
         </div>
       </header>
+
+      {machine && <p className="oi-system__authority">Machine → <code>{machine.role}</code> · {machine.central_source ?? 'Central source unresolved'} ↔ <code>{machine.workcell_ref ?? 'Workcell unresolved'}</code>{machine.health ? ` · ${machine.health}` : ''}</p>}
 
       <div className="oi-system__tabs" role="tablist" aria-label="System products">
         {model.products.map((product) => (
@@ -77,7 +86,7 @@ export function SystemWorkbench({
             onClick={() => setSelectedId(product.id)}
           >
             <span>{product.label}</span>
-            <small data-state={product.states.observed.status}>{product.states.observed.status.replaceAll('_', ' ')}</small>
+            <small data-state={product.constitution.present ? product.constitution.state : 'unavailable'}>P{product.constitution.position} · {product.constitution.present ? product.constitution.state : 'absent'}</small>
           </button>
         ))}
       </div>
@@ -88,7 +97,7 @@ export function SystemWorkbench({
           <tbody>
             {model.products.map((product) => (
               <tr key={product.id} data-selected={product.id === selected.id} onClick={() => setSelectedId(product.id)}>
-                <th><strong>{product.label}</strong><small>{product.authority}</small></th>
+                <th><strong>{product.label}</strong><small>P{product.constitution.position} · {product.constitution.present ? product.constitution.state : 'absent'} · {product.authority}</small></th>
                 {model.state_axes.map((axis) => {
                   const state = product.states[axis];
                   return <td key={axis}><span className="oi-system__state" data-state={state.status}>{state.status.replaceAll('_', ' ')}</span><p>{state.summary}</p></td>;
@@ -104,6 +113,7 @@ export function SystemWorkbench({
           <p className="oi-eyebrow">Selected native owner</p>
           <h3>{selected.label}</h3>
           <p>{selected.purpose}</p>
+          <p className="oi-system__authority">Constitution → <strong>P{selected.constitution.position} · {selected.constitution.present ? selected.constitution.state : 'absent'}</strong></p>
           <p className="oi-system__authority">Native authority → <strong>{selected.authority}</strong></p>
           <StateDigest product={selected} />
         </div>
@@ -123,7 +133,7 @@ export function SystemWorkbench({
 
       {(model.gaps.length > 0 || model.warnings.length > 0) && (
         <details className="oi-system__gaps">
-          <summary>Deferred / provider gaps ({model.gaps.length})</summary>
+          <summary>Native-owner / provider gaps ({model.gaps.length})</summary>
           {model.gaps.map((gap) => <p key={gap}>{gap}</p>)}
           {model.warnings.map((warning) => <p key={warning}>{warning}</p>)}
         </details>
