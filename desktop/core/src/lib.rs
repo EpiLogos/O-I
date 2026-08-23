@@ -5,6 +5,7 @@ mod central_change;
 mod contribution;
 mod execution_authority;
 mod live_product;
+mod living_contemplate;
 mod living_wiki;
 mod local_aikit;
 mod local_factory;
@@ -34,6 +35,9 @@ pub use live_product::{
     correlate_session_spaces, dispatch_factory_action, observe_factory_build, FactoryActionRoundTrip,
     FactoryHostObservation, SessionSpaceCorrelation, SessionSpaceCorrelationState,
     SurfaceActionEmission, FACTORY_BUILD_CONTRIBUTION_REF,
+};
+pub use living_contemplate::{
+    contemplate_prompt, AcpLivingContemplateExecutor, LIVING_CONTEMPLATE_TRANSPORT_VERSION,
 };
 pub use living_wiki::{
     adapt_central_horizon, living_wiki_preflight, living_wiki_reading, parse_central_horizon,
