@@ -9,21 +9,23 @@ use std::path::Path;
 use std::sync::Mutex;
 
 use aikit_adapters::ProjectCentralFilesystemBinding;
+use aikit_core::model_runtime::ModelRuntimeReadModel;
 use aikit_core::{
-    explicit_contemplate, AikitError, ContemplateExecutor, ContemplateOutcome, ContemplateRequest,
-    FamiliarityContext, KnowledgeAddress, KnowledgeApplication, KnowledgeExplanation,
-    KnowledgeProviderStatus, KnowledgeReading, KnowledgeRelationView, KnowledgeSearchResult,
-    ModelRuntimeReadModel, PortableContemplatePreflight, ProjectCentralBinding,
-    ProjectReflectionReadModel, QlRefractionRequest, ResourceRef, Result as AikitResult,
-    SemanticWikiIndex, SemanticWikiProvider, WikiObject,
+    explicit_bounded_contemplate, wiki_living_dependencies, AikitError,
+    BoundedContemplateExecutor, BoundedContemplateOutcome, BoundedContemplatePreflight,
+    ContemplateRequest, FamiliarityContext, KnowledgeAddress, KnowledgeApplication,
+    KnowledgeExplanation, KnowledgeProviderStatus, KnowledgeReading, KnowledgeRelationView,
+    KnowledgeSearchResult, ProjectCentralBinding, ProjectReflectionReadModel, QlRefractionRequest,
+    ResourceRef, Result as AikitResult, SemanticWikiIndex, SemanticWikiProvider, WikiObject,
+    DEFAULT_CONTEMPLATE_OBJECT_BUDGET, DEFAULT_CONTEMPLATE_RELATION_DEPTH,
 };
 use aikit_store::{AikitHome, KnowledgeApplicationReceipt, KnowledgeApplicationStore};
 use serde::Serialize;
 use serde_json::Value;
 
 use crate::living_wiki::{
-    adapt_central_horizon, living_wiki_preflight, living_wiki_reading, wiki_dependency_manifest,
-    CentralSourceHorizon, LivingWikiDesktopReading,
+    adapt_central_horizon, living_wiki_preflight, living_wiki_reading, CentralSourceHorizon,
+    LivingWikiDesktopReading,
 };
 use crate::project_field::{LocalProjectField, ProjectFieldSnapshot};
 
@@ -163,15 +165,16 @@ impl LocalProjectKnowledge {
         living_wiki_reading(central, &self.index)
     }
 
-    /// AIKit-owned deterministic Contemplate preflight. Runtime identity is
-    /// supplied by the native host, never by renderer selection state.
+    /// AIKit-owned deterministic bounded Contemplate preflight. Runtime identity
+    /// is supplied by the native host, never by renderer selection state. O:I does
+    /// not rebuild or enlarge the owner field.
     pub fn living_preflight(
         &self,
         central: &CentralSourceHorizon,
         focus: Vec<ResourceRef>,
         runtime: &ModelRuntimeReadModel,
         ql: Option<QlRefractionRequest>,
-    ) -> Result<PortableContemplatePreflight, String> {
+    ) -> Result<BoundedContemplatePreflight, String> {
         living_wiki_preflight(
             self.binding.project.clone(),
             focus,
@@ -182,23 +185,22 @@ impl LocalProjectKnowledge {
         )
     }
 
-    /// Cross the Agent/model line only when the caller explicitly supplies an
-    /// AIKit `ContemplateExecutor`. Human source effects remain proposal-only in
-    /// AIKit's returned Agent-Wiki maintenance plan.
+    /// Cross the Agent/model line only when the caller explicitly supplies AIKit's
+    /// bounded executor. Human source effects remain proposal-only in AIKit's
+    /// returned Agent-Wiki maintenance plan.
     pub fn contemplate(
         &self,
         central: &CentralSourceHorizon,
         focus: Vec<ResourceRef>,
         runtime: &ModelRuntimeReadModel,
         ql: Option<QlRefractionRequest>,
-        executor: &mut dyn ContemplateExecutor,
-    ) -> AikitResult<ContemplateOutcome> {
+        executor: &mut dyn BoundedContemplateExecutor,
+    ) -> AikitResult<BoundedContemplateOutcome> {
         let horizon = adapt_central_horizon(central)
             .map_err(|error| AikitError::new("oi.living_wiki.central_horizon", error))?;
-        let (dependencies, _) = wiki_dependency_manifest(&self.index)
-            .map_err(|error| AikitError::new("oi.living_wiki.dependencies", error))?;
         let current_wiki_objects = self.wiki_objects();
-        explicit_contemplate(
+        let (dependencies, resource_dependencies) = wiki_living_dependencies(&current_wiki_objects)?;
+        explicit_bounded_contemplate(
             &ContemplateRequest {
                 project: self.binding.project.clone(),
                 focus,
@@ -209,6 +211,9 @@ impl LocalProjectKnowledge {
                 method: None,
                 ql,
             },
+            &resource_dependencies,
+            DEFAULT_CONTEMPLATE_OBJECT_BUDGET,
+            DEFAULT_CONTEMPLATE_RELATION_DEPTH,
             executor,
         )
     }
