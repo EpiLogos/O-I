@@ -31,17 +31,20 @@ test('selection, retrieval and Agent Context disclosure remain distinct', () => 
 
 test('P2 projects the one P1 canonical selection instead of owning a second selection state', () => {
   assert.match(main, /selection=\{snapshot\.selection\}/);
-  assert.match(main, /<WorkbenchSurface selection=\{selection\} onSelect=\{onSelect\} \/>/);
+  assert.match(main, /<WorkbenchSurface selection=\{selection\} currentWorld=\{currentWorld\} onSelect=\{onSelect\} \/>/);
   assert.match(workbench, /selection\?: WorkbenchSemanticRef/);
   assert.doesNotMatch(workbench, /useState<WorkbenchSemanticRef/);
   assert.match(workbench, /<ProjectNavigator selection=\{selection\}/);
   assert.match(workbench, /<ProjectFieldCanvas selection=\{selection\}/);
 });
 
-test('Navigator consumes the shared ShellSnapshot CurrentWorld without a second machine model', () => {
+test('Navigator consumes the one ShellSnapshot CurrentWorld without refetching or a machine model', () => {
   assert.match(shell, /pub current_world: CurrentWorldReading/);
-  assert.match(currentWorld, /invoke<ShellCurrentWorldSnapshot>\('shell_snapshot'\)/);
-  assert.match(workbench, /<CurrentWorldNavigator \/>/);
+  assert.match(main, /current_world\?: CurrentWorldReading/);
+  assert.match(main, /currentWorld=\{snapshot\.current_world\}/);
+  assert.match(workbench, /<CurrentWorldNavigator currentWorld=\{currentWorld\} \/>/);
+  assert.doesNotMatch(currentWorld, /invoke\(/);
+  assert.doesNotMatch(currentWorld, /useState/);
   assert.match(currentWorld, /currentWorld\?\.current_machine/);
   assert.match(currentWorld, /machine\.role/);
   assert.match(currentWorld, /machine\.central_source/);
