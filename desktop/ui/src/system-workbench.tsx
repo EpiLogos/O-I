@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useCurrentWorld } from './current-world';
+import type { CurrentWorldReading } from './current-world';
 import { buildSystemWorkbench } from './system-workbench-model.mjs';
 import type { SystemProduct, SystemStateAxis } from './system-workbench-model.mjs';
 import './system-workbench.css';
@@ -19,6 +19,7 @@ export function SystemWorkbench({
   contributions,
   aikitContext,
   factoryBuild,
+  currentWorld,
   warnings,
   mode = 'canvas',
 }: {
@@ -26,10 +27,10 @@ export function SystemWorkbench({
   contributions: unknown[];
   aikitContext: unknown;
   factoryBuild: unknown;
+  currentWorld?: CurrentWorldReading;
   warnings: string[];
   mode?: 'canvas' | 'rail';
 }) {
-  const { currentWorld } = useCurrentWorld();
   const model = useMemo(() => buildSystemWorkbench({ surfaces, contributions, aikitContext, factoryBuild, currentWorld, warnings }), [surfaces, contributions, aikitContext, factoryBuild, currentWorld, warnings]);
   const [selectedId, setSelectedId] = useState('ai-kit');
   const selected = model.products.find((product) => product.id === selectedId) ?? model.products[0];
