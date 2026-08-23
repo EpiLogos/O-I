@@ -1,0 +1,89 @@
+name: Living Wiki native finalize
+
+on:
+  push:
+    branches:
+      - feat/living-wiki-desktop-135
+    paths:
+      - '.github/workflows/living-wiki-finalize.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/living-wiki-desktop-135
+          fetch-depth: 0
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+          components: rustfmt, clippy
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Register Living commands in the existing native shell
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('desktop/src-tauri/src/main.rs')
+          text = path.read_text()
+          if not text.startswith('mod living;'):
+              text = 'mod living;\n\n' + text
+          needle = '            knowledge_status,\n'
+          replacement = (
+              '            living::living_knowledge_status,\n'
+              '            living::living_contemplate_preflight,\n'
+              '            living::living_contemplate,\n'
+              '            knowledge_status,\n'
+          )
+          if 'living::living_knowledge_status' not in text:
+              if needle not in text:
+                  raise SystemExit('native handler insertion point moved')
+              text = text.replace(needle, replacement, 1)
+          path.write_text(text)
+
+      - name: Resolve the native shell lock from actual dependency state
+        run: |
+          cargo generate-lockfile --manifest-path desktop/src-tauri/Cargo.toml
+          cargo fmt --manifest-path desktop/src-tauri/Cargo.toml
+          cargo fmt --manifest-path desktop/core/Cargo.toml
+
+      - name: Build and test rendered Living workbench
+        run: |
+          npm ci --prefix desktop/ui --no-audit --no-fund
+          npm --prefix desktop/ui run build
+          node --test desktop/ui/src/living-wiki-model.test.ts
+
+      - name: Test owner-composition core
+        run: |
+          cargo test --manifest-path desktop/core/Cargo.toml --all-targets
+          cargo clippy --manifest-path desktop/core/Cargo.toml --all-targets -- -D warnings
+
+      - name: Prove native shell from generated lock
+        run: cargo check --manifest-path desktop/src-tauri/Cargo.toml --locked --target aarch64-apple-darwin
+
+      - name: Preserve diff hygiene
+        run: git diff --check
+
+      - name: Commit generated native integration and retire one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/living-wiki-finalize.yml
+          git add desktop/src-tauri/src/main.rs desktop/src-tauri/Cargo.lock desktop/core
+          if git diff --cached --quiet; then
+            echo 'No finalization changes were produced' >&2
+            exit 1
+          fi
+          git config user.name 'Epii'
+          git config user.email 'frank.g.taylor97@gmail.com'
+          git commit -m 'feat: register Living Wiki native shell and lock exact owners'
+          git push origin HEAD:feat/living-wiki-desktop-135
