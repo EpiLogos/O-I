@@ -10,15 +10,21 @@ use std::sync::Mutex;
 
 use aikit_adapters::ProjectCentralFilesystemBinding;
 use aikit_core::{
-    AikitError, FamiliarityContext, KnowledgeAddress, KnowledgeApplication, KnowledgeExplanation,
+    explicit_contemplate, AikitError, ContemplateExecutor, ContemplateOutcome, ContemplateRequest,
+    FamiliarityContext, KnowledgeAddress, KnowledgeApplication, KnowledgeExplanation,
     KnowledgeProviderStatus, KnowledgeReading, KnowledgeRelationView, KnowledgeSearchResult,
-    ProjectCentralBinding, ProjectReflectionReadModel, ResourceRef, Result as AikitResult,
-    SemanticWikiIndex, SemanticWikiProvider,
+    ModelRuntimeReadModel, PortableContemplatePreflight, ProjectCentralBinding,
+    ProjectReflectionReadModel, QlRefractionRequest, ResourceRef, Result as AikitResult,
+    SemanticWikiIndex, SemanticWikiProvider, WikiObject,
 };
 use aikit_store::{AikitHome, KnowledgeApplicationReceipt, KnowledgeApplicationStore};
 use serde::Serialize;
 use serde_json::Value;
 
+use crate::living_wiki::{
+    adapt_central_horizon, living_wiki_preflight, living_wiki_reading, wiki_dependency_manifest,
+    CentralSourceHorizon, LivingWikiDesktopReading,
+};
 use crate::project_field::{LocalProjectField, ProjectFieldSnapshot};
 
 #[derive(Debug, Serialize)]
@@ -148,6 +154,65 @@ impl LocalProjectKnowledge {
         }
     }
 
+    /// Compose Central's authoritative source horizon with AIKit's deterministic
+    /// impact/freshness closure. This method cannot invoke an Agent/model.
+    pub fn living_status(
+        &self,
+        central: &CentralSourceHorizon,
+    ) -> Result<LivingWikiDesktopReading, String> {
+        living_wiki_reading(central, &self.index)
+    }
+
+    /// AIKit-owned deterministic Contemplate preflight. Runtime identity is
+    /// supplied by the native host, never by renderer selection state.
+    pub fn living_preflight(
+        &self,
+        central: &CentralSourceHorizon,
+        focus: Vec<ResourceRef>,
+        runtime: &ModelRuntimeReadModel,
+        ql: Option<QlRefractionRequest>,
+    ) -> Result<PortableContemplatePreflight, String> {
+        living_wiki_preflight(
+            self.binding.project.clone(),
+            focus,
+            central,
+            &self.index,
+            runtime,
+            ql,
+        )
+    }
+
+    /// Cross the Agent/model line only when the caller explicitly supplies an
+    /// AIKit `ContemplateExecutor`. Human source effects remain proposal-only in
+    /// AIKit's returned Agent-Wiki maintenance plan.
+    pub fn contemplate(
+        &self,
+        central: &CentralSourceHorizon,
+        focus: Vec<ResourceRef>,
+        runtime: &ModelRuntimeReadModel,
+        ql: Option<QlRefractionRequest>,
+        executor: &mut dyn ContemplateExecutor,
+    ) -> AikitResult<ContemplateOutcome> {
+        let horizon = adapt_central_horizon(central)
+            .map_err(|error| AikitError::new("oi.living_wiki.central_horizon", error))?;
+        let (dependencies, _) = wiki_dependency_manifest(&self.index)
+            .map_err(|error| AikitError::new("oi.living_wiki.dependencies", error))?;
+        let current_wiki_objects = self.wiki_objects();
+        explicit_contemplate(
+            &ContemplateRequest {
+                project: self.binding.project.clone(),
+                focus,
+                horizon: &horizon,
+                dependencies: &dependencies,
+                current_wiki_objects: &current_wiki_objects,
+                runtime,
+                method: None,
+                ql,
+            },
+            executor,
+        )
+    }
+
     pub fn search(&self, query: &str, limit: usize) -> AikitResult<KnowledgeSearchResult> {
         let result = self.application().search(query, limit);
         self.store.remember_search_hits(&result.hits)?;
@@ -215,6 +280,14 @@ impl LocalProjectKnowledge {
     ) -> AikitResult<Vec<KnowledgeApplicationReceipt>> {
         let resource = raw_resource.map(ResourceRef::parse).transpose()?;
         self.store.history(Some(&self.context), resource.as_ref())
+    }
+
+    fn wiki_objects(&self) -> Vec<WikiObject> {
+        self.index
+            .discover()
+            .into_iter()
+            .filter_map(|resource| self.index.resolve(&resource))
+            .collect()
     }
 
     fn application(&self) -> KnowledgeApplication<'_> {
