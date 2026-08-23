@@ -7,6 +7,8 @@ const runtime = readFileSync(new URL('./runtime-observation.tsx', import.meta.ur
 const shell = readFileSync(new URL('./main.tsx', import.meta.url), 'utf8');
 const host = readFileSync(new URL('./workbench-host.tsx', import.meta.url), 'utf8');
 const command = readFileSync(new URL('./native-command.tsx', import.meta.url), 'utf8');
+const systemWorkbench = readFileSync(new URL('./system-workbench.tsx', import.meta.url), 'utf8');
+const currentWorld = readFileSync(new URL('./current-world.tsx', import.meta.url), 'utf8');
 
 // Presentation contract only: native/provider acceptance remains in Rust and the
 // physical alpha. These assertions prevent the renderer from silently becoming a
@@ -127,11 +129,22 @@ test('keyboard and mouse command activation converge on the same canonical Actio
   assert.equal(command.includes('authorityRef:'), false);
 });
 
-test('P1 leaves P2-P6 product bodies explicit rather than implementing them in the host', () => {
+test('System consumes the ShellSnapshot CurrentWorld directly without a renderer-owned refetch', () => {
+  assert.match(shell, /current_world\?: CurrentWorldReading/);
+  assert.match(shell, /currentWorld=\{snapshot\.current_world\}/);
+  assert.match(systemWorkbench, /currentWorld\?: CurrentWorldReading/);
+  assert.match(systemWorkbench, /buildSystemWorkbench\(\{ surfaces, contributions, aikitContext, factoryBuild, currentWorld, warnings \}\)/);
+  assert.doesNotMatch(currentWorld, /invoke\(/);
+  assert.doesNotMatch(currentWorld, /useState/);
+  assert.doesNotMatch(systemWorkbench, /useCurrentWorld/);
+});
+
+test('P5 keeps the inherited host boundary while implementing only the System product body', () => {
   assert.match(shell, /Project\/files\/Ground\/Knowledge navigation belongs to #106/);
   assert.match(shell, /#107 owns the canonical conversation\/Cradle body/);
   assert.match(shell, /#108 consumes the source-faithful Factory Build body/);
-  assert.match(shell, /six-product configuration workbench/);
+  assert.match(shell, /import \{ SystemWorkbench \} from '\.\/system-workbench'/);
+  assert.match(shell, /O:I six-product composition workbench; native state remains owner-owned/);
   assert.match(shell, /application body belong to #110/);
 });
 

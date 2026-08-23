@@ -147,4 +147,52 @@ fn live_host_reading_fixture_is_parseable_and_truthful_about_cross_product_seams
                 == Some("15d7c9f1122336b50189bb1d70961084cbb9685b")
             && entry.contribution.availability == ContributionAvailability::Degraded
     }));
+
+    for owner in ["central", "actuation", "ai-kit", "factory", "workcell", "ql-mef"] {
+        assert!(
+            hosted
+                .iter()
+                .any(|entry| entry.contribution.native_owner == owner),
+            "System fixture must disclose a truthful six-product slot for {owner}"
+        );
+    }
+
+    let workcell = hosted
+        .iter()
+        .find(|entry| entry.contribution.native_owner == "workcell")
+        .expect("Workcell System slot must be present");
+    assert_eq!(
+        workcell.contribution.availability,
+        ContributionAvailability::PendingNativeAdapter
+    );
+    assert_eq!(
+        workcell.contribution.target_contract.as_deref(),
+        Some("workcell.control/v1")
+    );
+    assert!(workcell.contribution.read_model_ref.is_none());
+    assert!(workcell.contribution.actions.is_empty());
+    assert!(workcell
+        .contribution
+        .detail
+        .as_deref()
+        .unwrap_or_default()
+        .contains("Current development, not accepted-main runtime evidence"));
+
+    let ql = hosted
+        .iter()
+        .find(|entry| entry.contribution.native_owner == "ql-mef")
+        .expect("QL-MEF System slot must be present");
+    assert_eq!(
+        ql.contribution.availability,
+        ContributionAvailability::PendingNativeAdapter
+    );
+    assert!(ql.contribution.target_contract.is_none());
+    assert!(ql.contribution.read_model_ref.is_none());
+    assert!(ql.contribution.actions.is_empty());
+    assert!(ql
+        .contribution
+        .detail
+        .as_deref()
+        .unwrap_or_default()
+        .contains("ordinary operation remains available without QL"));
 }

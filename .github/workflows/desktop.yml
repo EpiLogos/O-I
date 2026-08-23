@@ -57,11 +57,12 @@ jobs:
         run: |
           npm ci --prefix desktop/ui --no-audit --no-fund
           npm --prefix desktop/ui run build
-      - name: Preserve Explore and workbench presentation contracts
+      - name: Preserve Explore, workbench and System presentation contracts
         run: |
           node --test shared-field/*.test.mjs
           node --test desktop/ui/src/explore-presentation.test.mjs
           node --test desktop/ui/src/workbench-presentation.test.mjs
+          node --test desktop/ui/src/system-workbench-model.test.mjs
 
   native-shell:
     runs-on: macos-15

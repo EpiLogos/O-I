@@ -1,4 +1,5 @@
 use crate::{BridgeCallClass, BridgeCaller, BridgeDenied, BridgePolicy};
+use oi_cli::current_world::{live_current_world, CurrentWorldReading};
 use oi_cli::status::{NativeSurfaceState, SuiteCompositionDisclosure, SurfaceDisclosure};
 use serde::{Deserialize, Serialize};
 
@@ -52,6 +53,7 @@ pub struct ShellSnapshot {
     pub schema: &'static str,
     pub destination: ShellDestination,
     pub suite_condition: SuiteCondition,
+    pub current_world: CurrentWorldReading,
     pub surfaces: Vec<SurfaceDisclosure>,
     pub destinations: Vec<ShellDestination>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -63,6 +65,7 @@ pub struct ShellSnapshot {
 #[derive(Clone, Debug)]
 pub struct DesktopHost {
     disclosure: SuiteCompositionDisclosure,
+    current_world: CurrentWorldReading,
     destination: ShellDestination,
     selection: Option<SemanticRef>,
     bridge: BridgePolicy,
@@ -70,12 +73,29 @@ pub struct DesktopHost {
 
 impl DesktopHost {
     pub fn new(disclosure: SuiteCompositionDisclosure) -> Self {
+        let current_world = live_current_world().unwrap_or_else(|error| {
+            let mut reading = CurrentWorldReading::from_disclosure(&disclosure);
+            reading.warnings.push(format!(
+                "live CurrentWorld enrichment unavailable; using suite disclosure: {error}"
+            ));
+            reading
+        });
         Self {
             disclosure,
+            current_world,
             destination: ShellDestination::Home,
             selection: None,
             bridge: BridgePolicy,
         }
+    }
+
+    pub fn with_current_world(mut self, current_world: CurrentWorldReading) -> Self {
+        self.current_world = current_world;
+        self
+    }
+
+    pub fn current_world(&self) -> &CurrentWorldReading {
+        &self.current_world
     }
 
     pub fn snapshot(&self, caller: BridgeCaller) -> Result<ShellSnapshot, BridgeDenied> {
@@ -85,6 +105,7 @@ impl DesktopHost {
             schema: "oi.desktop-shell/v1",
             destination: self.destination,
             suite_condition: suite_condition(&self.disclosure.surfaces),
+            current_world: self.current_world.clone(),
             surfaces: self.disclosure.surfaces.clone(),
             destinations: ShellDestination::ALL.to_vec(),
             selection: self.selection.clone(),
@@ -115,7 +136,10 @@ impl DesktopHost {
 }
 
 fn suite_condition(surfaces: &[SurfaceDisclosure]) -> SuiteCondition {
-    if surfaces.iter().any(|surface| surface.state == NativeSurfaceState::Broken) {
+    if surfaces
+        .iter()
+        .any(|surface| surface.state == NativeSurfaceState::Broken)
+    {
         return SuiteCondition::Broken;
     }
     if surfaces.is_empty()
