@@ -1,7 +1,8 @@
 # Epistemic Cultivation in {O:I}
 
 **Status:** parent-level relation note  
-**Canonical model-research home:** [`EpiLogos/Actuation`](https://github.com/EpiLogos/Actuation)
+**Canonical model-research home:** [`EpiLogos/Actuation`](https://github.com/EpiLogos/Actuation)  
+**Covenant relation:** [[COVENANT-SOURCE-MARK-FIGURE]]
 
 ## The cultural shift
 
@@ -21,6 +22,52 @@ The work includes human and agent activity such as:
 - evaluation of both epistemic behaviour and model-interior organisation.
 
 This is not merely data labelling around a fixed model. The epistemic field itself is an authored and revisable object.
+
+## Figures, source-ground and cultivated apprehension
+
+The Covenant adds an important relation to this work: an epistemic environment does not shape judgement only by supplying propositions. It can also make a **Whole / Mark apprehensible** through well-grounded Figures — metaphors, historical precedents, exemplary objects, diagrams, worked cases, practices and other forms which disclose a relation compactly.
+
+The relation is:
+
+```text
+SOURCE-GROUND
+      0
+      /
+MARK
+      1
+```
+
+A Figure is one possible provenance-bearing mark inside Source-ground. Its use remains disciplined through two explicit relations:
+
+```text
+FIGURE
+   ├── ILLUMINATES ──► what relation / aspect becomes more apprehensible
+   └── BOUNDARY ─────► what the Figure does not establish
+```
+
+This matters for epistemic cultivation because examples and analogies can strongly shape what an Agent notices, expects and regards as a possible form of action. They can therefore be deliberately authored and evaluated rather than treated as incidental rhetoric.
+
+A cultivated Figure should preserve at least:
+
+```text
+source / provenance
+what is factually established about the Figure
+what present relation it is intended to illuminate
+what stronger Claim it does not establish
+how its use changed interpretation / judgement / action
+```
+
+The distinction between Figure and proof is part of the epistemic craft. Historical Evidence about an example can establish the example's actual form; it cannot automatically validate an analogous Project proposition.
+
+This creates useful experimental questions for Actuation research:
+
+- does a well-chosen Figure improve an Agent's recovery of a difficult Project Mark?
+- does carrying `ILLUMINATES` and `BOUNDARY` together reduce analogy-driven hallucination or false ontology promotion?
+- can multiple Figures disclose complementary relations without collapsing into one imposed framing?
+- how do Figures interact with Claims, Evidence, retrieval and later retained Context?
+- can human-authored metaphors and examples remain poietic while artificial Agency makes their operative relation inspectable?
+
+Figures can therefore become first-class **epistemic artifacts** without becoming first-class universal runtime primitives.
 
 ## Ownership
 
@@ -61,6 +108,7 @@ corpora
 annotations
 dialogues
 lens structures
+orienting Figures
 model adapters
 experiment histories
 findings
@@ -94,6 +142,7 @@ A local system may selectively project:
 
 - a corpus or corpus revision;
 - an annotation set;
+- an orienting Figure with its source, `ILLUMINATES` and `BOUNDARY` relations;
 - a QL/MEF disclosure protocol;
 - a training/adaptation recipe;
 - a model/checkpoint/adapter reference;
@@ -145,6 +194,7 @@ A useful research commons can make visible:
 
 ```text
 source → epistemic transformation → corpus revision
+       → Figure / disclosure protocol
        → model/intervention → experiment
        → observation → finding
        → critique/reproduction → revised epistemic artifact
