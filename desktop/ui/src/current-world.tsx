@@ -1,6 +1,3 @@
-import { useCallback, useEffect, useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
-
 export type CurrentWorldPosition = {
   position: number;
   product_id: string;
@@ -30,34 +27,7 @@ export type CurrentWorldReading = {
   warnings: string[];
 };
 
-type ShellCurrentWorldSnapshot = {
-  current_world?: CurrentWorldReading;
-};
-
-let sharedReading: Promise<CurrentWorldReading | null> | null = null;
-
-export function readCurrentWorld(force = false): Promise<CurrentWorldReading | null> {
-  if (force || !sharedReading) {
-    sharedReading = invoke<ShellCurrentWorldSnapshot>('shell_snapshot')
-      .then((snapshot) => snapshot.current_world ?? null)
-      .catch(() => null);
-  }
-  return sharedReading;
-}
-
-export function useCurrentWorld() {
-  const [currentWorld, setCurrentWorld] = useState<CurrentWorldReading | null>(null);
-
-  const refresh = useCallback(async (force = false) => {
-    setCurrentWorld(await readCurrentWorld(force));
-  }, []);
-
-  useEffect(() => { void refresh(); }, [refresh]);
-  return { currentWorld, refresh };
-}
-
-export function CurrentWorldNavigator() {
-  const { currentWorld, refresh } = useCurrentWorld();
+export function CurrentWorldNavigator({ currentWorld }: { currentWorld?: CurrentWorldReading }) {
   const machine = currentWorld?.current_machine;
   const frame = currentWorld?.context_frame;
   const frameLabel = frame?.maximal && frame.reading === 'cf5'
@@ -71,7 +41,6 @@ export function CurrentWorldNavigator() {
           <p className="oi-eyebrow">Current world</p>
           <strong>{currentWorld?.personal_ground ?? 'Central ground unavailable'}</strong>
         </div>
-        <button type="button" onClick={() => void refresh(true)}>↻</button>
       </header>
       <div className="oi-workbench__relations">
         <strong>Constitution</strong>
