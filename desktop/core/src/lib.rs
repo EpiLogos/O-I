@@ -37,8 +37,7 @@ pub use live_product::{
 };
 pub use living_wiki::{
     adapt_central_horizon, living_wiki_preflight, living_wiki_reading, parse_central_horizon,
-    wiki_dependency_manifest, CentralSourceHorizon, LivingWikiDesktopReading,
-    LIVING_WIKI_DESKTOP_VERSION,
+    CentralSourceHorizon, LivingWikiDesktopReading, LIVING_WIKI_DESKTOP_VERSION,
 };
 pub use local_aikit::{
     host_session_space_read_model, AikitSessionSpaceHostObservation, LocalAikitSessionSpaceHost,
