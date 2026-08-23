@@ -25,7 +25,7 @@ on:
       - '.github/workflows/desktop.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   core:
@@ -63,6 +63,7 @@ jobs:
           node --test desktop/ui/src/explore-presentation.test.mjs
           node --test desktop/ui/src/workbench-presentation.test.mjs
           node --test desktop/ui/src/project-field-presentation.test.mjs
+          node --test desktop/ui/src/living-wiki-model.test.mjs
 
   native-shell:
     runs-on: macos-15
@@ -78,3 +79,99 @@ jobs:
         run: npm ci --prefix desktop/ui --no-audit --no-fund
       - name: Check Rust-owned native shell from lock
         run: cargo check --manifest-path desktop/src-tauri/Cargo.toml --locked --target aarch64-apple-darwin
+
+  living-native-finalize:
+    if: github.event_name == 'pull_request' && github.head_ref == 'feat/living-wiki-desktop-135'
+    runs-on: macos-15
+    timeout-minutes: 30
+    env:
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/living-wiki-desktop-135
+          fetch-depth: 0
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+          components: rustfmt, clippy
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Patch only the exact native composition seams
+        shell: python
+        run: |
+          from pathlib import Path
+
+          main = Path('desktop/src-tauri/src/main.rs')
+          text = main.read_text()
+          if not text.startswith('mod living;'):
+              text = 'mod living;\n\n' + text
+          needle = '            knowledge_status,\n'
+          replacement = (
+              '            living::living_knowledge_status,\n'
+              '            living::living_contemplate_preflight,\n'
+              '            living::living_contemplate,\n'
+              '            knowledge_status,\n'
+          )
+          if 'living::living_knowledge_status' not in text:
+              if needle not in text:
+                  raise SystemExit('native handler insertion point moved')
+              text = text.replace(needle, replacement, 1)
+          main.write_text(text)
+
+          knowledge = Path('desktop/core/src/project_knowledge.rs')
+          text = knowledge.read_text()
+          old = 'raw.into_iter().map(ResourceRef::parse).collect()'
+          new = 'raw.into_iter()\n        .map(|value| ResourceRef::parse(&value))\n        .collect()'
+          if old in text:
+              text = text.replace(old, new, 1)
+          elif new not in text:
+              raise SystemExit('stable-ref parser insertion point moved')
+          knowledge.write_text(text)
+
+      - name: Resolve native dependency truth from Cargo
+        run: |
+          cargo generate-lockfile --manifest-path desktop/src-tauri/Cargo.toml
+          cargo fmt --manifest-path desktop/src-tauri/Cargo.toml
+          cargo fmt --manifest-path desktop/core/Cargo.toml
+
+      - name: Prove rendered Living workbench
+        run: |
+          npm ci --prefix desktop/ui --no-audit --no-fund
+          npm --prefix desktop/ui run build
+          node --test desktop/ui/src/project-field-presentation.test.mjs
+          node --test desktop/ui/src/living-wiki-model.test.mjs
+
+      - name: Prove owner composition core
+        run: |
+          cargo test --manifest-path desktop/core/Cargo.toml --all-targets
+          cargo clippy --manifest-path desktop/core/Cargo.toml --all-targets -- -D warnings
+
+      - name: Prove Tauri shell from generated lock
+        run: cargo check --manifest-path desktop/src-tauri/Cargo.toml --locked --target aarch64-apple-darwin
+
+      - name: Preserve diff hygiene
+        run: git diff --check
+
+      - name: Commit only if the remote branch is still this exact head
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote_head="$(git ls-remote origin refs/heads/feat/living-wiki-desktop-135 | cut -f1)"
+          if [ "$remote_head" != "$EXPECTED_HEAD" ]; then
+            echo "branch moved during native finalization: expected $EXPECTED_HEAD, found $remote_head" >&2
+            exit 1
+          fi
+          git add desktop/src-tauri/src/main.rs desktop/src-tauri/Cargo.lock desktop/core
+          if git diff --cached --quiet; then
+            echo 'No native finalization changes were produced' >&2
+            exit 1
+          fi
+          git config user.name 'Epii'
+          git config user.email 'frank.g.taylor97@gmail.com'
+          git commit -m 'feat: register Living Wiki native shell and lock exact owners'
+          git push origin HEAD:feat/living-wiki-desktop-135
