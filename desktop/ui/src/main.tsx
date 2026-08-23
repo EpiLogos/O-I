@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { invoke } from '@tauri-apps/api/core';
 import '@epilogos/oi-design-system/tokens.css';
 import './shell.css';
+import type { CurrentWorldReading } from './current-world';
 import { RuntimeObservationSurface } from './runtime-observation';
 import { NativeSearchCommand } from './native-command';
 import { SystemWorkbench } from './system-workbench';
@@ -42,6 +43,7 @@ type Snapshot = {
   destinations: Destination[];
   surfaces: Surface[];
   selection?: SemanticRef;
+  current_world?: CurrentWorldReading;
   warnings: string[];
 };
 
@@ -254,6 +256,7 @@ function App() {
           contributions={contributions}
           aikitContext={aikitContext}
           factoryBuild={factoryBuild}
+          currentWorld={snapshot.current_world}
           warnings={snapshot.warnings}
         />
       )}
@@ -274,6 +277,7 @@ function App() {
           contributions={contributions}
           factoryBuild={factoryBuild}
           aikitContext={aikitContext}
+          currentWorld={snapshot.current_world}
           onSelect={selectWorkbenchRef}
           onRefreshFactory={refreshFactoryBuild}
         />
@@ -381,12 +385,14 @@ function SystemRegion({
   contributions,
   aikitContext,
   factoryBuild,
+  currentWorld,
   warnings,
 }: {
   surfaces: Surface[];
   contributions: Contribution[];
   aikitContext: unknown;
   factoryBuild: FactoryBuildSnapshot | null;
+  currentWorld?: CurrentWorldReading;
   warnings: string[];
 }) {
   return (
@@ -396,6 +402,7 @@ function SystemRegion({
       contributions={contributions}
       aikitContext={aikitContext}
       factoryBuild={factoryBuild}
+      currentWorld={currentWorld}
       warnings={warnings}
     />
   );
@@ -409,6 +416,7 @@ function RootCanvasSurface({
   contributions,
   factoryBuild,
   aikitContext,
+  currentWorld,
   onSelect,
   onRefreshFactory,
 }: {
@@ -419,6 +427,7 @@ function RootCanvasSurface({
   contributions: Contribution[];
   factoryBuild: FactoryBuildSnapshot | null;
   aikitContext: unknown;
+  currentWorld?: CurrentWorldReading;
   onSelect: (subject: WorkbenchSemanticRef, evidence: WorkbenchEvidence) => Promise<void>;
   onRefreshFactory: () => Promise<void>;
 }) {
@@ -459,6 +468,7 @@ function RootCanvasSurface({
           contributions={contributions}
           aikitContext={aikitContext}
           factoryBuild={factoryBuild}
+          currentWorld={currentWorld}
           warnings={warnings}
         />
       </>
