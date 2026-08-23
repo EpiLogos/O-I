@@ -4,6 +4,7 @@ mod bridge;
 mod contribution;
 mod execution_authority;
 mod live_product;
+mod living_wiki;
 mod local_aikit;
 mod local_factory;
 mod native_application;
@@ -11,9 +12,7 @@ mod project_field;
 mod project_knowledge;
 mod shell;
 
-pub use agent_surface::{
-    AgentSurfaceOpenRequest, AgentSurfaceReading, AikitAgentSurface,
-};
+pub use agent_surface::{AgentSurfaceOpenRequest, AgentSurfaceReading, AikitAgentSurface};
 pub use aikit_workbench::{
     LocalAikitWorkbench, SessionSpaceApplicationReading, SessionSpaceFocusRequest,
 };
@@ -33,6 +32,11 @@ pub use live_product::{
     correlate_session_spaces, dispatch_factory_action, observe_factory_build, FactoryActionRoundTrip,
     FactoryHostObservation, SessionSpaceCorrelation, SessionSpaceCorrelationState,
     SurfaceActionEmission, FACTORY_BUILD_CONTRIBUTION_REF,
+};
+pub use living_wiki::{
+    adapt_central_horizon, living_wiki_preflight, living_wiki_reading, parse_central_horizon,
+    wiki_dependency_manifest, CentralSourceHorizon, LivingWikiDesktopReading,
+    LIVING_WIKI_DESKTOP_VERSION,
 };
 pub use local_aikit::{
     host_session_space_read_model, AikitSessionSpaceHostObservation, LocalAikitSessionSpaceHost,
