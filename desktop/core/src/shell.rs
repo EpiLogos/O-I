@@ -1,5 +1,5 @@
 use crate::{BridgeCallClass, BridgeCaller, BridgeDenied, BridgePolicy};
-use oi_cli::current_world::CurrentWorldReading;
+use oi_cli::current_world::{live_current_world, CurrentWorldReading};
 use oi_cli::status::{NativeSurfaceState, SuiteCompositionDisclosure, SurfaceDisclosure};
 use serde::{Deserialize, Serialize};
 
@@ -73,7 +73,13 @@ pub struct DesktopHost {
 
 impl DesktopHost {
     pub fn new(disclosure: SuiteCompositionDisclosure) -> Self {
-        let current_world = CurrentWorldReading::from_disclosure(&disclosure);
+        let current_world = live_current_world().unwrap_or_else(|error| {
+            let mut reading = CurrentWorldReading::from_disclosure(&disclosure);
+            reading.warnings.push(format!(
+                "live CurrentWorld enrichment unavailable; using suite disclosure: {error}"
+            ));
+            reading
+        });
         Self {
             disclosure,
             current_world,
@@ -130,7 +136,10 @@ impl DesktopHost {
 }
 
 fn suite_condition(surfaces: &[SurfaceDisclosure]) -> SuiteCondition {
-    if surfaces.iter().any(|surface| surface.state == NativeSurfaceState::Broken) {
+    if surfaces
+        .iter()
+        .any(|surface| surface.state == NativeSurfaceState::Broken)
+    {
         return SuiteCondition::Broken;
     }
     if surfaces.is_empty()
