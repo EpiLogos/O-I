@@ -1,6 +1,6 @@
 {
   "schema": "oi.mainline-snapshot/v1",
-  "observed_at": "2026-08-22",
+  "observed_at": "2026-08-23",
   "purpose": "Durable current-main source snapshot for the six native O:I product owners. This is distinct from immutable released-artifact manifests.",
   "release_manifest": {
     "path": "suite/manifest.json",
@@ -14,40 +14,44 @@
     {
       "id": "central",
       "repository": "https://github.com/EpiLogos/Central",
-      "revision": "7ed02e66edd12de3318ad7de86f2f4650b8f0e7a",
-      "state": "accepted-main",
-      "note": "Includes merged ProjectCentral C0/C1 filesystem, Wiki lifecycle, personal-root hygiene and the corrected README account of the current recursive ProjectCentral/root-Wiki implementation. Later authored-ground/NOW/governance drafts remain development state."
+      "revision": "48a89d4edba275454be1ec6bdbc61951568ec7fc",
+      "state": "accepted-main-with-active-flow-exception",
+      "note": "Current main includes current-machine↔Workcell, ProjectCentral authored ground, NOW/DAY, Agent governance, Living Wiki Source Change Horizon, and accepted native macOS/Ubuntu/Automation/Package/Configuration/Notification extensions. Central #93 / PR #95 Flow remains active development and is not silently included."
     },
     {
       "id": "actuation",
       "repository": "https://github.com/EpiLogos/Actuation",
       "revision": "bb36b3c20561359bdfbc5c826a11d15a5e693aed",
-      "state": "accepted-main"
+      "state": "accepted-main",
+      "note": "Accepted main includes the realised Actuation loop and provider-neutral model-bearing authority floor; PR #3 remains explicit research development."
     },
     {
       "id": "ai-kit",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "revision": "5308405e447b4a48e57fa2cfb2c5e6ef276ae343",
-      "state": "accepted-main"
+      "revision": "e440153051d3b26481a369a4e53536056b54d3ec",
+      "state": "accepted-main-with-active-branch-exceptions",
+      "note": "Current main includes V2/SessionSpace/Knowledge/ProjectCentral/praxis, evidence-backed harness admission, Living Knowledge impact/freshness and bounded Contemplate preflight/return validation. Credential, Explain/History, TUI parity and instruction-craft PRs remain active exceptions."
     },
     {
       "id": "software-factory",
       "repository": "https://github.com/EpiLogos/agent-system-design",
-      "revision": "e914e881209da5e96bcc4f0a8ee566028a5acf0b",
-      "state": "accepted-main"
+      "revision": "ec08c99a55a6320c6f59d3c73024b5d48063a989",
+      "state": "accepted-main-with-active-research-exceptions",
+      "note": "Current main preserves the Factory↔Actuation ownership correction while active Deep QL, optional QL client and persistent-hosting/DeepSeek-host research remain explicit development lines."
     },
     {
       "id": "workcell",
       "repository": "https://github.com/EpiLogos/Workcell",
       "revision": "3949f8c5e8e9f75d1e7b34d10f119da2881e5496",
-      "state": "accepted-main"
+      "state": "accepted-main-with-current-world-readiness-exception",
+      "note": "Accepted main contains the current portable materialisation/control/fabric/model-serving/process/secret foundation; current-world context-composition readiness remains an explicit development branch."
     },
     {
       "id": "quaternal-logic",
       "repository": "https://github.com/EpiLogos/QL-MEF",
-      "revision": "3e9fb929f0c34e8b4474eef59ce512b53082fba1",
+      "revision": "30171fb9f3646a1ef6e306357503d8a9df4a8a1c",
       "state": "accepted-main-with-active-branch-exceptions",
-      "note": "This pins accepted QL-MEF main only. Later Epi/Pratibimba computational branches remain owned by their dedicated convergence programme and are not silently included here."
+      "note": "Current main includes optional bounded Living Wiki QL depth over the accepted QL/MEF substrate. R4/Q6, musical/harmonic and dedicated Epi/Pratibimba computational programmes remain explicit owner development and are exhaustively represented in the convergence ledger."
     }
   ]
 }
