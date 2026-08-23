@@ -48,7 +48,10 @@ pub use local_aikit::{
     AIKIT_SESSION_SPACE_CONTRIBUTION_REF,
 };
 pub use local_factory::{host_factory_snapshot, LocalFactoryHost};
-pub use native_application::{load_context_resolution, NativeContextResolution};
+pub use native_application::{
+    load_context_resolution, load_model_runtime, NativeContextResolution,
+    NativeModelRuntimeReadModel,
+};
 pub use project_field::{
     LocalProjectField, NativeOwnerReading, ProjectFieldSnapshot, ProjectMapStatus,
     PROJECT_FIELD_VERSION,
