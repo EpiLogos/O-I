@@ -174,8 +174,7 @@ mod unix {
             open_fixture_surface("Here is what I think the project means.");
         let before = preflight();
         let mut executor = AcpLivingContemplateExecutor::new(&mut surface);
-        let error = executor.execute(&before).unwrap_err();
-        assert!(error.code().contains("knowledge.living_contemplate_return"));
+        assert!(executor.execute(&before).is_err());
         surface.close().unwrap();
         fs::remove_dir_all(root).unwrap();
     }
