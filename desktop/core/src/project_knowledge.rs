@@ -185,6 +185,20 @@ impl LocalProjectKnowledge {
         )
     }
 
+    /// Renderer/native-shell facade over the same owner preflight. Strings are
+    /// accepted only as transport values and parsed immediately through AIKit's
+    /// canonical ResourceRef parser. Ordinary desktop correctness has no QL
+    /// requirement; formal profiles remain an explicit owner attachment.
+    pub fn living_preflight_refs(
+        &self,
+        central: &CentralSourceHorizon,
+        focus: Vec<String>,
+        runtime: &ModelRuntimeReadModel,
+    ) -> Result<BoundedContemplatePreflight, String> {
+        let focus = parse_resource_refs(focus).map_err(|error| error.to_string())?;
+        self.living_preflight(central, focus, runtime, None)
+    }
+
     /// Cross the Agent/model line only when the caller explicitly supplies AIKit's
     /// bounded executor. Human source effects remain proposal-only in AIKit's
     /// returned Agent-Wiki maintenance plan.
@@ -214,6 +228,24 @@ impl LocalProjectKnowledge {
             &resource_dependencies,
             DEFAULT_CONTEMPLATE_OBJECT_BUDGET,
             DEFAULT_CONTEMPLATE_RELATION_DEPTH,
+            executor,
+        )
+    }
+
+    /// Stable-ref transport facade for explicit ordinary Contemplate. The same
+    /// ResourceRef parser and owner operation are used as the typed path above.
+    pub fn contemplate_refs(
+        &self,
+        central: &CentralSourceHorizon,
+        focus: Vec<String>,
+        runtime: &ModelRuntimeReadModel,
+        executor: &mut dyn BoundedContemplateExecutor,
+    ) -> AikitResult<BoundedContemplateOutcome> {
+        self.contemplate(
+            central,
+            parse_resource_refs(focus)?,
+            runtime,
+            None,
             executor,
         )
     }
@@ -328,4 +360,8 @@ impl LocalProjectKnowledge {
             ),
         ))
     }
+}
+
+fn parse_resource_refs(raw: Vec<String>) -> AikitResult<Vec<ResourceRef>> {
+    raw.into_iter().map(ResourceRef::parse).collect()
 }
