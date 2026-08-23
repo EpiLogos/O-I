@@ -127,11 +127,12 @@ test('keyboard and mouse command activation converge on the same canonical Actio
   assert.equal(command.includes('authorityRef:'), false);
 });
 
-test('P1 leaves P2-P6 product bodies explicit rather than implementing them in the host', () => {
+test('P5 keeps the inherited host boundary while implementing only the System product body', () => {
   assert.match(shell, /Project\/files\/Ground\/Knowledge navigation belongs to #106/);
   assert.match(shell, /#107 owns the canonical conversation\/Cradle body/);
   assert.match(shell, /#108 consumes the source-faithful Factory Build body/);
-  assert.match(shell, /six-product configuration workbench/);
+  assert.match(shell, /import \{ SystemWorkbench \} from '\.\/system-workbench'/);
+  assert.match(shell, /O:I six-product composition workbench; native state remains owner-owned/);
   assert.match(shell, /application body belong to #110/);
 });
 
