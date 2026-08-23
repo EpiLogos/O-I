@@ -27,6 +27,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 LEDGER_PATH = ROOT / "suite/convergence-ledger.json"
 AMENDMENTS_PATH = ROOT / "suite/convergence-ledger-amendments.json"
+REQUIRED_REPOSITORIES = {
+    "EpiLogos/O-I",
+    "EpiLogos/Central",
+    "EpiLogos/Actuation",
+    "EpiLogos/ai-kit",
+    "EpiLogos/agent-system-design",
+    "EpiLogos/Workcell",
+    "EpiLogos/QL-MEF",
+}
 ALLOWED = {
     "KEEP_ACTIVE_EXCEPTION",
     "BLOCKED_PHYSICAL",
@@ -206,6 +215,11 @@ def main() -> int:
                 missing = sorted(live_prs - ledger_prs)
                 stale = sorted(ledger_prs - live_prs)
                 die(f"{repo}: open PR set mismatch; unledgered_live={missing}, ledgered_but_closed={stale}")
+
+    if seen_repositories != REQUIRED_REPOSITORIES:
+        missing = sorted(REQUIRED_REPOSITORIES - seen_repositories)
+        unexpected = sorted(seen_repositories - REQUIRED_REPOSITORIES)
+        die(f"repository set mismatch; missing={missing}, unexpected={unexpected}")
 
     if args.closure and ledger.get("closure_ready") is not True:
         die("ledger itself still declares closure_ready=false")
