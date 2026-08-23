@@ -1,4 +1,6 @@
-use crate::status::{live_disclosure, NativeSurfaceState, SuiteCompositionDisclosure, SurfaceDisclosure};
+use crate::status::{
+    live_disclosure, NativeSurfaceState, SuiteCompositionDisclosure, SurfaceDisclosure,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fs;
@@ -74,7 +76,10 @@ impl CurrentWorldReading {
                     *position,
                     product_id,
                     public_name,
-                    disclosure.surfaces.iter().find(|surface| surface.id == *product_id),
+                    disclosure
+                        .surfaces
+                        .iter()
+                        .find(|surface| surface.id == *product_id),
                 )
             })
             .collect::<Vec<_>>();
@@ -140,7 +145,10 @@ pub fn live_current_world() -> Result<CurrentWorldReading, String> {
         }
     }
 
-    if machine.central_source.is_some() || machine.workcell_ref.is_some() || machine.health.is_some() {
+    if machine.central_source.is_some()
+        || machine.workcell_ref.is_some()
+        || machine.health.is_some()
+    {
         reading.current_machine = Some(machine);
     }
     Ok(reading)
@@ -220,7 +228,9 @@ fn central_machine_binding(root: &Path, role: &str) -> Result<Option<(String, St
         .get("reference")
         .and_then(Value::as_str)
         .filter(|reference| !reference.trim().is_empty())
-        .ok_or_else(|| format!("Central machine source {relative} has an invalid Workcell binding"))?;
+        .ok_or_else(|| {
+            format!("Central machine source {relative} has an invalid Workcell binding")
+        })?;
     Ok(Some((relative, reference.to_owned())))
 }
 
@@ -282,7 +292,10 @@ mod tests {
         };
         let reading = CurrentWorldReading::from_disclosure(&disclosure);
         assert_eq!(reading.positions.len(), 6);
-        assert_eq!(reading.context_frame.present_positions, vec![0, 1, 2, 3, 4, 5]);
+        assert_eq!(
+            reading.context_frame.present_positions,
+            vec![0, 1, 2, 3, 4, 5]
+        );
         assert_eq!(reading.context_frame.reading.as_deref(), Some("cf5"));
         assert!(reading.context_frame.maximal);
     }
