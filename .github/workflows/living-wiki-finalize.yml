@@ -60,7 +60,7 @@ jobs:
         run: |
           npm ci --prefix desktop/ui --no-audit --no-fund
           npm --prefix desktop/ui run build
-          node --test desktop/ui/src/living-wiki-model.test.ts
+          node --test desktop/ui/src/living-wiki-model.test.mjs
 
       - name: Test owner-composition core
         run: |
