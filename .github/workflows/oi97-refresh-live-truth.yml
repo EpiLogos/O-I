@@ -1,0 +1,93 @@
+name: OI97 refresh live truth
+
+on:
+  push:
+    branches: [repair/oi97-trust-closure]
+    paths:
+      - '.github/workflows/oi97-refresh-live-truth.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  refresh-and-prove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: repair/oi97-trust-closure
+      - name: Compose surfaces.json from current six-owner snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('surfaces.json')
+          data = json.loads(path.read_text())
+          data['verified_at'] = '2026-08-23'
+          pins = {
+              'central': '48a89d4edba275454be1ec6bdbc61951568ec7fc',
+              'actuation': 'bb36b3c20561359bdfbc5c826a11d15a5e693aed',
+              'ai-kit': 'e440153051d3b26481a369a4e53536056b54d3ec',
+              'software-factory': 'ec08c99a55a6320c6f59d3c73024b5d48063a989',
+              'workcell': '3949f8c5e8e9f75d1e7b34d10f119da2881e5496',
+              'quaternal-logic': '30171fb9f3646a1ef6e306357503d8a9df4a8a1c',
+          }
+          notes = {
+              'central': (
+                  'Portable Central verification now targets the accepted current main containing current-machine↔Workcell, '
+                  'ProjectCentral authored ground, NOW/DAY, governance, Source Change Horizon and native host extensions. '
+                  'Central Flow PR #95 remains an explicit active development exception; named physical owner-world exercises remain observation evidence.'
+              ),
+              'ai-kit': (
+                  'Current main includes the accepted V2/SessionSpace/Knowledge/ProjectCentral/praxis field, evidence-backed harness admission, '
+                  'Living Knowledge impact/freshness and bounded Contemplate preflight/return validation. Open credential, Explain/History, '
+                  'TUI parity and instruction-craft lines remain explicit development exceptions.'
+              ),
+              'software-factory': (
+                  'Current main preserves the Factory↔Actuation ownership correction. Deep QL Series 1, optional QL client and persistent-hosting/DeepSeek-host '
+                  'research remain explicit development lines rather than accepted-main claims.'
+              ),
+              'quaternal-logic': (
+                  'Current main includes optional bounded Living Wiki QL depth over the accepted QL/MEF substrate. R4/Q6, musical/harmonic and dedicated '
+                  'Epi/Pratibimba computational programmes remain explicit owner development and are covered in the convergence ledger.'
+              ),
+          }
+          compatibility = {
+              'central': 'Central current main owns the accepted personal/Project source world, current-machine relation, Living Wiki source-change horizon and native host extension seams. O:I composes these without taking ownership of Control, Work, ProjectCentral, Flow or provider policy.',
+              'ai-kit': 'AIKit current main owns context/capability/session/harness/Knowledge composition including harness admission and bounded Living Knowledge deliberation; O:I consumes those owner contracts without creating a second resolver or agent runtime.',
+              'software-factory': 'Factory current main owns developmental Project/Run/Candidate/Evidence semantics with the corrected Actuation authority boundary; active Deep QL/host research remains development state.',
+              'quaternal-logic': 'QL-MEF current main is the accepted Quaternal Logic substrate with optional bounded Living Wiki refraction. Active kernel/music/Epi computational branches remain explicit native-owner development, not silently folded into this source pin.',
+          }
+          by_id = {surface['id']: surface for surface in data['surfaces']}
+          if set(by_id) != set(pins):
+              raise SystemExit(f'surface id set drift: {sorted(by_id)}')
+          for surface_id, revision in pins.items():
+              surface = by_id[surface_id]
+              surface['docs_ref'] = revision
+              surface['install']['ref'] = revision
+              surface['install']['revision'] = revision
+              if surface_id in notes:
+                  surface['verification']['note'] = notes[surface_id]
+              if surface_id in compatibility:
+                  surface['compatibility'] = compatibility[surface_id]
+          path.write_text(json.dumps(data, indent=2) + '\n')
+          PY
+      - name: Prove live six-main equality
+        run: python3 scripts/verify-mainline-snapshot.py --live
+      - name: Prove exact live PR and branch coverage
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/verify-convergence-ledger.py --live
+      - name: Commit source catalog and retire one-shot refresher
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add surfaces.json
+          git rm .github/workflows/oi97-refresh-live-truth.yml
+          git commit -m '[OI97] Align source catalog with live owner mains'
+          git push origin HEAD:repair/oi97-trust-closure
