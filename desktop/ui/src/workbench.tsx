@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { CurrentWorldNavigator } from './current-world';
 import { ProjectFieldCanvas, ProjectNavigator } from './project-field';
 import {
   WorkbenchSurface as NativeWorkbenchSurface,
@@ -31,7 +32,10 @@ export function WorkbenchSurface({
   return (
     <>
       {navigatorHost && createPortal(
-        <ProjectNavigator selection={selection} onSelect={select} />,
+        <>
+          <CurrentWorldNavigator />
+          <ProjectNavigator selection={selection} onSelect={select} />
+        </>,
         navigatorHost,
       )}
       <ProjectFieldCanvas selection={selection} onSelect={select} />
