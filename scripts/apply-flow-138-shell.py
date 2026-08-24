@@ -95,8 +95,7 @@ shell_flow = "desktop/src-tauri/src/flow.rs"
 replace(
     shell_flow,
     "#[serde(default)] authority_refs: Vec<FlowAuthorityInput>,",
-    "authority_refs: Option<Vec<FlowAuthorityInput>>,
-",
+    "authority_refs: Option<Vec<FlowAuthorityInput>>,\n",
     count=2,
 )
 replace(
