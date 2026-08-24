@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Verify that O:I's current-main source snapshot is truthful.
+"""Verify O:I's six-product source snapshot without collapsing owner programmes.
 
-This guard deliberately separates two claims:
+This guard separates three claims:
 
 1. suite/manifest.json is an immutable released-artifact snapshot;
-2. suite/mainline.json + surfaces.json describe the current accepted native mains.
-
-A release may be older than current source. What is forbidden is presenting that older
-release as proof that the current-main development world was converged.
+2. suite/mainline.json + surfaces.json describe one coherent six-product source cut;
+3. O:I #97 live-main convergence applies only to its explicitly authored primary
+   repository set. Quaternal Logic remains the separately owned parallel product
+   and its moving development main is not a #97 closure dependency.
 """
 
 from __future__ import annotations
@@ -29,6 +29,7 @@ EXPECTED_IDS = {
     "workcell",
     "quaternal-logic",
 }
+PARALLEL_LIVE_EXCEPTIONS = {"quaternal-logic"}
 
 
 def load(path: str):
@@ -60,7 +61,10 @@ def main() -> int:
     parser.add_argument(
         "--live",
         action="store_true",
-        help="also compare every recorded native revision with the repository's live main",
+        help=(
+            "compare #97 in-scope product revisions with their live mains; "
+            "parallel Quaternal Logic remains represented but is not live-gated"
+        ),
     )
     args = parser.parse_args()
 
@@ -102,17 +106,27 @@ def main() -> int:
         install = surface.get("install", {})
         if install.get("ref") != revision or install.get("revision") != revision:
             die(f"{product_id} source-install pin does not match mainline revision")
+
+        if product_id in PARALLEL_LIVE_EXCEPTIONS:
+            if product.get("state") != "parallel-native-owner-exception":
+                die(
+                    f"{product_id} must declare parallel-native-owner-exception "
+                    "while outside #97 live-main gating"
+                )
+            continue
+
         if args.live:
             observed = live_main(product["repository"])
             if observed != revision:
                 die(
                     f"{product_id} live main moved: snapshot {revision}, live {observed}; "
-                    "update the snapshot/catalog or explicitly reclassify the line before claiming convergence"
+                    "update the #97 source cut or explicitly reclassify the in-scope line"
                 )
 
     print("mainline snapshot verification: PASS")
     if args.live:
-        print("live native-main equality: PASS")
+        print("live #97 in-scope native-main equality: PASS")
+        print("Quaternal Logic parallel owner: represented, NOT #97 live-gated")
     print(
         f"release snapshot remains distinct: {release['suite_version']} accepted {release['accepted_at']}"
     )
