@@ -46,7 +46,10 @@ impl LocalFactoryHost {
     }
 
     pub fn observe(&self) -> Result<FactoryHostObservation, String> {
-        let snapshot = self.provider.snapshot().map_err(|error| error.to_string())?;
+        let snapshot = self
+            .provider
+            .snapshot()
+            .map_err(|error| error.to_string())?;
         host_factory_snapshot(snapshot)
     }
 
@@ -60,7 +63,10 @@ impl LocalFactoryHost {
         emission: &SurfaceActionEmission,
         grant: &ActionAuthorityGrant,
     ) -> Result<FactoryActionRoundTrip, String> {
-        let before = self.provider.snapshot().map_err(|error| error.to_string())?;
+        let before = self
+            .provider
+            .snapshot()
+            .map_err(|error| error.to_string())?;
         let action = before
             .view
             .actions
@@ -92,9 +98,14 @@ impl LocalFactoryHost {
                 },
             )
             .map_err(|error| error.to_string())?;
-        let after = self.provider.snapshot().map_err(|error| error.to_string())?;
+        let after = self
+            .provider
+            .snapshot()
+            .map_err(|error| error.to_string())?;
         if after.revision <= before.revision {
-            return Err("Factory Action completed without advancing FactoryBuildView revision".into());
+            return Err(
+                "Factory Action completed without advancing FactoryBuildView revision".into(),
+            );
         }
         Ok(FactoryActionRoundTrip {
             before,
@@ -156,9 +167,7 @@ pub fn host_factory_snapshot(
         read_model_ref: Some(SemanticRef {
             ref_id: format!(
                 "factory-build-view/{}/{}/{}",
-                snapshot.view.project.project_ref,
-                snapshot.view.run.run_ref,
-                snapshot.revision
+                snapshot.view.project.project_ref, snapshot.view.run.run_ref, snapshot.revision
             ),
             kind: "factory-build-view".into(),
             native_owner: FACTORY_NATIVE_OWNER.into(),

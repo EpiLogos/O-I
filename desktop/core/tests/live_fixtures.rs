@@ -1,4 +1,6 @@
-use oi_desktop_core::{host_native_contribution, ContributionAvailability, NativeContributionReading};
+use oi_desktop_core::{
+    host_native_contribution, ContributionAvailability, NativeContributionReading,
+};
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -9,10 +11,9 @@ struct ContributionFixtures {
 
 #[test]
 fn live_host_reading_fixture_is_parseable_and_truthful_about_cross_product_seams() {
-    let fixtures: ContributionFixtures = serde_json::from_str(include_str!(
-        "../../fixtures/native-contributions.json"
-    ))
-    .expect("desktop host-reading fixture must parse");
+    let fixtures: ContributionFixtures =
+        serde_json::from_str(include_str!("../../fixtures/native-contributions.json"))
+            .expect("desktop host-reading fixture must parse");
 
     assert_eq!(fixtures.schema, "oi.desktop-host-reading-fixtures/v1");
 
@@ -38,7 +39,10 @@ fn live_host_reading_fixture_is_parseable_and_truthful_about_cross_product_seams
         .contribution
         .accepted_selection_kinds
         .iter()
-        .any(|kind| matches!(kind.as_str(), "contact" | "watch" | "authority" | "a2a_difference")));
+        .any(|kind| matches!(
+            kind.as_str(),
+            "contact" | "watch" | "authority" | "a2a_difference"
+        )));
 
     let actuation = hosted
         .iter()

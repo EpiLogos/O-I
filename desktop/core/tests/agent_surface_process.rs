@@ -41,10 +41,18 @@ fn provider_rebind_changes_native_identity_without_renaming_agent_session() {
         "provider-a: ",
     );
     assert_eq!(
-        first_opened.binding.agent_session.as_ref().unwrap().to_string(),
+        first_opened
+            .binding
+            .agent_session
+            .as_ref()
+            .unwrap()
+            .to_string(),
         canonical
     );
-    assert_eq!(first_opened.binding.native_session_id, "native-provider-a-17");
+    assert_eq!(
+        first_opened.binding.native_session_id,
+        "native-provider-a-17"
+    );
     assert_eq!(
         first_opened.descriptor.connection_ref.to_string(),
         "connection/provider-a/acp"
@@ -58,10 +66,18 @@ fn provider_rebind_changes_native_identity_without_renaming_agent_session() {
         "provider-b: ",
     );
     assert_eq!(
-        second_opened.binding.agent_session.as_ref().unwrap().to_string(),
+        second_opened
+            .binding
+            .agent_session
+            .as_ref()
+            .unwrap()
+            .to_string(),
         canonical
     );
-    assert_eq!(second_opened.binding.native_session_id, "native-provider-b-92");
+    assert_eq!(
+        second_opened.binding.native_session_id,
+        "native-provider-b-92"
+    );
     assert_eq!(
         second_opened.descriptor.connection_ref.to_string(),
         "connection/provider-b/acp"
@@ -86,7 +102,10 @@ fn open_fixture_surface(
     agent_session_ref: &str,
     native_session_id: &str,
     response_prefix: &str,
-) -> (oi_desktop_core::AikitAgentSurface, oi_desktop_core::AgentSurfaceReading) {
+) -> (
+    oi_desktop_core::AikitAgentSurface,
+    oi_desktop_core::AgentSurfaceReading,
+) {
     use oi_desktop_core::{AgentSurfaceOpenRequest, AikitAgentSurface};
 
     let script = format!(

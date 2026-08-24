@@ -139,9 +139,13 @@ fn root_webview_has_no_filesystem_shell_process_network_or_frame_capability() {
         "../../src-tauri/capabilities/main-window.json"
     ))
     .unwrap();
-    assert_eq!(capability["permissions"], serde_json::json!(["core:default"]));
+    assert_eq!(
+        capability["permissions"],
+        serde_json::json!(["core:default"])
+    );
 
-    let config: Value = serde_json::from_str(include_str!("../../src-tauri/tauri.conf.json")).unwrap();
+    let config: Value =
+        serde_json::from_str(include_str!("../../src-tauri/tauri.conf.json")).unwrap();
     let csp = &config["app"]["security"]["csp"];
     assert_eq!(csp["object-src"], "'none'");
     assert_eq!(csp["frame-src"], "'none'");

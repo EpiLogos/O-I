@@ -40,14 +40,19 @@ fn request(subject_ref: &str, operation_id: &str) -> ActionExecutionRequest {
 #[test]
 fn contextual_command_consumes_exactly_matching_preissued_authority() {
     let mut store = ActionAuthorityStore::default();
-    store.register_trusted(grant("authority/grant-1", "candidate/alpha")).unwrap();
+    store
+        .register_trusted(grant("authority/grant-1", "candidate/alpha"))
+        .unwrap();
 
     let authorised = store
         .authorize_matching_and_consume(&request("candidate/alpha", "op-1"))
         .unwrap();
 
     assert_eq!(authorised.grant_ref, "authority/grant-1");
-    assert_eq!(authorised.action_grant().action_ref, "factory.action/recognise");
+    assert_eq!(
+        authorised.action_grant().action_ref,
+        "factory.action/recognise"
+    );
     assert_eq!(store.remaining_uses("authority/grant-1"), Some(0));
 }
 
@@ -63,7 +68,9 @@ fn contextual_command_cannot_turn_discovery_into_authority() {
 #[test]
 fn contextual_command_rejects_wrong_subject_even_when_action_is_discoverable() {
     let mut store = ActionAuthorityStore::default();
-    store.register_trusted(grant("authority/grant-1", "candidate/alpha")).unwrap();
+    store
+        .register_trusted(grant("authority/grant-1", "candidate/alpha"))
+        .unwrap();
     let error = store
         .authorize_matching_and_consume(&request("candidate/beta", "op-1"))
         .unwrap_err();
@@ -74,8 +81,12 @@ fn contextual_command_rejects_wrong_subject_even_when_action_is_discoverable() {
 #[test]
 fn contextual_command_fails_closed_when_native_authority_is_ambiguous() {
     let mut store = ActionAuthorityStore::default();
-    store.register_trusted(grant("authority/grant-1", "candidate/alpha")).unwrap();
-    store.register_trusted(grant("authority/grant-2", "candidate/alpha")).unwrap();
+    store
+        .register_trusted(grant("authority/grant-1", "candidate/alpha"))
+        .unwrap();
+    store
+        .register_trusted(grant("authority/grant-2", "candidate/alpha"))
+        .unwrap();
 
     let error = store
         .authorize_matching_and_consume(&request("candidate/alpha", "op-1"))

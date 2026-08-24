@@ -52,7 +52,10 @@ fn package_envelope_never_replaces_native_contribution_or_action_identity() {
     .unwrap();
     let hosted = host_native_contribution(Some(&manifest), ready_contribution()).unwrap();
     assert_eq!(hosted.package.unwrap().package_ref, "package:factory-build");
-    assert_eq!(hosted.contribution.contribution_ref, "factory.surface/build");
+    assert_eq!(
+        hosted.contribution.contribution_ref,
+        "factory.surface/build"
+    );
     assert_eq!(
         hosted.contribution.actions[0].action_ref,
         "factory.action:recognise-candidate"
@@ -107,8 +110,5 @@ fn action_availability_capability_grant_and_authority_are_separate() {
     let invocation = authorize_action(&binding, &granted).unwrap();
     assert_eq!(invocation.action_ref, binding.action_ref);
     assert_eq!(invocation.authority_ref, "authority:human-confirmed");
-    assert_eq!(
-        invocation.capability_ref,
-        binding.required_capability_ref
-    );
+    assert_eq!(invocation.capability_ref, binding.required_capability_ref);
 }

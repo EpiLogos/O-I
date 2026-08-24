@@ -75,7 +75,10 @@ fn local_host_observes_factory_owned_file_provider_and_persists_authorised_actio
         capability_grant_ref: None,
     };
     assert!(host.dispatch(&emission, &absent_capability).is_err());
-    assert_eq!(host.observe().unwrap().snapshot.unwrap().revision, before.revision);
+    assert_eq!(
+        host.observe().unwrap().snapshot.unwrap().revision,
+        before.revision
+    );
 
     let grant = ActionAuthorityGrant {
         capability_ref: Some(REQUEST_MORE_EVIDENCE_CAPABILITY_REF.into()),

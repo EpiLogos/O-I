@@ -2,10 +2,8 @@ use oi_cli::skillset::{parse_manifest, AgentScope, SUITE_SKILLSET_SCHEMA};
 
 #[test]
 fn desktop_consumes_the_canonical_suite_skillset_contract() {
-    let manifest = parse_manifest(include_str!(
-        "../../../skills/suite-operator/skillset.json"
-    ))
-    .expect("canonical suite SkillSet fixture must parse through oi-cli");
+    let manifest = parse_manifest(include_str!("../../../skills/suite-operator/skillset.json"))
+        .expect("canonical suite SkillSet fixture must parse through oi-cli");
 
     assert_eq!(manifest.schema, SUITE_SKILLSET_SCHEMA);
     let base = manifest
@@ -23,8 +21,11 @@ fn desktop_consumes_the_canonical_suite_skillset_contract() {
     assert_eq!(root.scope, AgentScope::RootWorld);
 
     assert!(manifest.expected_native_skills.is_empty());
-    assert!(manifest
-        .skills
-        .iter()
-        .any(|skill| skill.skill_ref == "actuation:operator" && skill.owner_product == "Actuation"));
+    assert!(
+        manifest
+            .skills
+            .iter()
+            .any(|skill| skill.skill_ref == "actuation:operator"
+                && skill.owner_product == "Actuation")
+    );
 }

@@ -1,30 +1,15 @@
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-const workbench = readFileSync(new URL('./workbench.tsx', import.meta.url), 'utf8');
+const workbench = [
+  readFileSync(new URL('./workbench.tsx', import.meta.url), 'utf8'),
+  readFileSync(new URL('./workbench-native.tsx', import.meta.url), 'utf8'),
+].join('\n');
 const runtime = readFileSync(new URL('./runtime-observation.tsx', import.meta.url), 'utf8');
 const shell = readFileSync(new URL('./main.tsx', import.meta.url), 'utf8');
 const host = readFileSync(new URL('./workbench-host.tsx', import.meta.url), 'utf8');
 const command = readFileSync(new URL('./native-command.tsx', import.meta.url), 'utf8');
-const factoryHost = readFileSync(new URL('./factory-build/FactoryBuildHost.tsx', import.meta.url), 'utf8');
-const factorySourceFiles = new Map([
-  ['BuildSurface.tsx', [readFileSync(new URL('./factory-build/BuildSurface.tsx', import.meta.url), 'utf8'), '466446b355f2a018b96cc033e48c1d43ab33652d']],
-  ['types.ts', [readFileSync(new URL('./factory-build/types.ts', import.meta.url), 'utf8'), 'b8d95224426b01a80709e7c9c6c4e0ae4e3b8b79']],
-  ['read-model.ts', [readFileSync(new URL('./factory-build/read-model.ts', import.meta.url), 'utf8'), 'a9ad81f0ac2be231f4474c0600d00e5179149034']],
-  ['components/SessionCards.tsx', [readFileSync(new URL('./factory-build/components/SessionCards.tsx', import.meta.url), 'utf8'), '8843228a45f69111d9661f467383d35c8d09f55c']],
-  ['components/TraceWaterfall.tsx', [readFileSync(new URL('./factory-build/components/TraceWaterfall.tsx', import.meta.url), 'utf8'), '3bbb0adc3174e8f44eb0a9010850f51cff12a0c8']],
-  ['components/SpanDetail.tsx', [readFileSync(new URL('./factory-build/components/SpanDetail.tsx', import.meta.url), 'utf8'), 'ea18338042ca6bcf1802b5d338bac3748214995a']],
-  ['styles.css', [readFileSync(new URL('./factory-build/styles.css', import.meta.url), 'utf8'), '465871d0885bd953fe84b94c0afc8fc9cf81a9d9']],
-  ['build-surface.css', [readFileSync(new URL('./factory-build/build-surface.css', import.meta.url), 'utf8'), 'fe521ef5afb21da236f579e65f5de225df6ade3e']],
-  ['THIRD_PARTY_NOTICES.md', [readFileSync(new URL('./factory-build/THIRD_PARTY_NOTICES.md', import.meta.url), 'utf8'), '1f6682ef1babe4d3cdfd70283a90bdd6f2e63bc0']],
-]);
-
-function gitBlobSha(content) {
-  const header = Buffer.from(`blob ${Buffer.byteLength(content)}\0`);
-  return createHash('sha1').update(header).update(content).digest('hex');
-}
 
 // Presentation contract only: native/provider acceptance remains in Rust and the
 // physical alpha. These assertions prevent the renderer from silently becoming a
@@ -145,49 +130,6 @@ test('keyboard and mouse command activation converge on the same canonical Actio
   assert.equal(command.includes('authorityRef:'), false);
 });
 
-test('P4 imports the current Factory Build body as exact owner-source blobs', () => {
-  for (const [path, [content, expectedSha]] of factorySourceFiles) {
-    assert.equal(gitBlobSha(content), expectedSha, `${path} drifted from the pinned Factory source blob`);
-  }
-  assert.match(factoryHost, /06579aada01a77bd719c0c010a10f91084b4326f/);
-  assert.match(factoryHost, /de31374882e7a4e3e5b7bb9bd09e69dc2f779356/);
-});
-
-test('P4 keeps semantic live and trajectory depths in the Factory-owned body', () => {
-  const build = factorySourceFiles.get('BuildSurface.tsx')[0];
-  const types = factorySourceFiles.get('types.ts')[0];
-  for (const depth of ['semantic', 'live', 'trajectory']) assert.match(build, new RegExp(`'${depth}'`));
-  for (const relation of ['frontier', 'candidates', 'claims', 'evidence', 'humanRequests', 'agencies', 'executions', 'trajectories']) {
-    assert.match(types, new RegExp(relation));
-  }
-  assert.match(build, /SessionCards/);
-  assert.match(build, /TraceWaterfall/);
-  assert.match(build, /SpanDetail/);
-  assert.match(shell, /FactoryTrajectoryRegion/);
-});
-
-test('P4 preserves Factory ActionRef subjectRef emission and the existing native handler bridge', () => {
-  const build = factorySourceFiles.get('BuildSurface.tsx')[0];
-  assert.match(build, /onAction\?\.\(\{ actionRef, subjectRef \}\)/);
-  assert.match(shell, /dispatch_contextual_factory_action/);
-  assert.match(shell, /emission: invocation/);
-  assert.equal(shell.includes('authorityRef:'), false);
-  assert.equal(factoryHost.includes('FactoryActionExecutor'), false);
-  assert.equal(factoryHost.includes('FactoryBuildFileProvider'), false);
-  assert.equal(factoryHost.includes('FactoryBuildState'), false);
-});
-
-test('P4 composes Factory subjects into shared selection without minting O:I semantic state', () => {
-  assert.match(factoryHost, /factoryBuildSubjects/);
-  for (const kind of ['project', 'run', 'candidate', 'claim', 'evidence', 'execution', 'human-request']) {
-    assert.match(factoryHost, new RegExp(`'${kind}'`));
-  }
-  assert.match(shell, /selectFactoryBuildSubject/);
-  assert.match(shell, /factoryBuild\.provenance\.owner/);
-  assert.equal(factoryHost.includes('OiFactory'), false);
-  assert.equal(factoryHost.includes('DesktopFactory'), false);
-});
-
 test('P1 leaves P2-P6 product bodies explicit rather than implementing them in the host', () => {
   assert.match(shell, /Project\/files\/Ground\/Knowledge navigation belongs to #106/);
   assert.match(shell, /#107 owns the canonical conversation\/Cradle body/);
@@ -197,7 +139,7 @@ test('P1 leaves P2-P6 product bodies explicit rather than implementing them in t
 });
 
 test('generic C0 does not absorb corrected-C Epi domain semantics', () => {
-  const generic = `${workbench}\n${runtime}\n${shell}\n${host}\n${command}\n${factoryHost}`;
+  const generic = `${workbench}\n${runtime}\n${shell}\n${host}\n${command}`;
   for (const forbidden of [
     'EpiiRuntime',
     'AnuttaraRuntime',

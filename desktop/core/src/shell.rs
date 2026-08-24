@@ -129,7 +129,8 @@ impl DesktopHost {
         caller: BridgeCaller,
         destination: ShellDestination,
     ) -> Result<(), BridgeDenied> {
-        self.bridge.authorize(caller, BridgeCallClass::OpenDestination)?;
+        self.bridge
+            .authorize(caller, BridgeCallClass::OpenDestination)?;
         self.destination = destination;
         Ok(())
     }

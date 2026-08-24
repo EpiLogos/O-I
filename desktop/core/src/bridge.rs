@@ -20,12 +20,16 @@ pub enum BridgeCallClass {
     MutateSessionSpaceFocus,
     InteractAgentSession,
     ObserveKnowledge,
+    ObserveFlow,
+    MutateFlow,
+    ContemplateKnowledge,
+    ContemplateFlow,
     SelectSemanticRef,
     OpenDestination,
 }
 
 impl BridgeCallClass {
-    pub const ALL: [Self; 11] = [
+    pub const ALL: [Self; 15] = [
         Self::DiscloseComposition,
         Self::DiscloseContributions,
         Self::ObserveFactoryBuild,
@@ -35,6 +39,10 @@ impl BridgeCallClass {
         Self::MutateSessionSpaceFocus,
         Self::InteractAgentSession,
         Self::ObserveKnowledge,
+        Self::ObserveFlow,
+        Self::MutateFlow,
+        Self::ContemplateKnowledge,
+        Self::ContemplateFlow,
         Self::SelectSemanticRef,
         Self::OpenDestination,
     ];
@@ -47,8 +55,12 @@ pub struct BridgeDenied {
 }
 
 impl fmt::Display for BridgeDenied {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(formatter, "bridge caller {:?} is not authorised for {:?}", self.caller, self.call)
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            formatter,
+            "bridge caller {:?} is not authorised for {:?}",
+            self.caller, self.call
+        )
     }
 }
 

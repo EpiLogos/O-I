@@ -75,10 +75,7 @@ fn desktop_reads_and_focuses_the_same_canonical_session_space() {
         ..runtime.clone()
     };
     let unrelated = desktop
-        .read_session_space_with_runtime(
-            "session-space/personal-workbench",
-            Some(&wrong_runtime),
-        )
+        .read_session_space_with_runtime("session-space/personal-workbench", Some(&wrong_runtime))
         .unwrap();
     assert_eq!(unrelated.state.id(), &space);
     assert!(unrelated.runtime.is_none());
