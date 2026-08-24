@@ -1,0 +1,72 @@
+name: Flow owner-main finalize
+
+on:
+  push:
+    branches:
+      - feat/flow-desktop-138
+    paths:
+      - '.github/workflows/flow-owner-main-finalize.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/flow-desktop-138
+          fetch-depth: 0
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+          components: rustfmt, clippy
+
+      - name: Advance Factory to accepted current main
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('desktop/core/Cargo.toml')
+          text = path.read_text()
+          old = '621624c7c8a9919604ad36db451f1a30806fc0ce'
+          new = 'ec08c99a55a6320c6f59d3c73024b5d48063a989'
+          if old not in text and new not in text:
+              raise SystemExit('Factory owner pin moved unexpectedly')
+          path.write_text(text.replace(old, new))
+
+      - name: Regenerate exact native dependency graph
+        run: |
+          cargo generate-lockfile --manifest-path desktop/src-tauri/Cargo.toml
+          cargo fmt --manifest-path desktop/core/Cargo.toml
+          cargo fmt --manifest-path desktop/src-tauri/Cargo.toml
+
+      - name: Verify exact accepted-owner desktop core
+        run: |
+          cargo test --manifest-path desktop/core/Cargo.toml --all-targets
+          cargo clippy --manifest-path desktop/core/Cargo.toml --all-targets -- -D warnings
+
+      - name: Verify exact native shell
+        run: cargo check --manifest-path desktop/src-tauri/Cargo.toml --locked --target aarch64-apple-darwin
+
+      - name: Verify diff hygiene
+        run: git diff --check
+
+      - name: Publish only if branch stayed at this trigger head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin feat/flow-desktop-138
+          remote_head="$(git rev-parse origin/feat/flow-desktop-138)"
+          if [[ "$remote_head" != "$GITHUB_SHA" ]]; then
+            echo "branch moved during owner-main finalization: trigger=$GITHUB_SHA remote=$remote_head" >&2
+            exit 1
+          fi
+          git rm .github/workflows/flow-owner-main-finalize.yml
+          git add -u desktop/core/Cargo.toml desktop/src-tauri/Cargo.lock
+          git config user.name 'Epii'
+          git config user.email 'frank.g.taylor97@gmail.com'
+          git commit -m '[FLOW] Pin Factory accepted main in native desktop composition'
+          git push origin HEAD:feat/flow-desktop-138
