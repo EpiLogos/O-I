@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Exercise one exact current-main product source revision.
+"""Exercise one exact product source revision from O:I's source catalogue.
 
-This is intentionally distinct from the immutable released-artifact suite.  #97's
-remote handoff must establish that the source world a physical workstation is about
-to inhabit is the actual accepted native-main world, and that each product's native
-test contract passes at that exact revision.
+This is intentionally distinct from the immutable released-artifact suite. O:I #97's
+remote handoff uses this verifier for its explicitly in-scope native-main owners before
+a physical workstation inhabits that source world. The separately owned Quaternal
+Logic product may retain a stable suite pin while its own development programme moves;
+it is therefore not part of #97's current-main workflow matrix.
 """
 
 from __future__ import annotations
@@ -25,7 +26,7 @@ RELEASE_MANIFEST = ROOT / "suite/manifest.json"
 
 
 def fail(message: str) -> None:
-    raise SystemExit(f"current-main source verification failed: {message}")
+    raise SystemExit(f"exact source verification failed: {message}")
 
 
 def load(path: Path) -> dict:
@@ -58,16 +59,16 @@ def verify(product_id: str, receipt_path: Path | None) -> int:
     if not isinstance(repository, str) or not repository.startswith("https://github.com/"):
         fail(f"{product_id}: invalid repository {repository!r}")
     if not isinstance(revision, str) or len(revision) != 40:
-        fail(f"{product_id}: invalid current revision {revision!r}")
+        fail(f"{product_id}: invalid source revision {revision!r}")
     if install.get("revision") != revision or install.get("ref") != revision:
-        fail(f"{product_id}: current source descriptor is internally inconsistent")
+        fail(f"{product_id}: source descriptor is internally inconsistent")
 
     command = product.get("dev", {}).get("test", [])
     if not isinstance(command, list) or not command or not all(isinstance(part, str) and part for part in command):
-        fail(f"{product_id}: native current-source test command is missing")
+        fail(f"{product_id}: native source test command is missing")
 
     started = time.time()
-    temp_root = Path(tempfile.mkdtemp(prefix=f"oi-current-{product_id}-"))
+    temp_root = Path(tempfile.mkdtemp(prefix=f"oi-source-{product_id}-"))
     checkout = temp_root / "source"
     result = {
         "schema": "oi.current-main-source-evidence/v1",
@@ -85,9 +86,9 @@ def verify(product_id: str, receipt_path: Path | None) -> int:
         if run(["git", "-C", str(checkout), "remote", "add", "origin", repository]).returncode != 0:
             fail(f"{product_id}: remote configuration failed")
         if run(["git", "-C", str(checkout), "fetch", "--depth", "1", "origin", revision]).returncode != 0:
-            fail(f"{product_id}: exact current revision fetch failed")
+            fail(f"{product_id}: exact source revision fetch failed")
         if run(["git", "-C", str(checkout), "checkout", "--quiet", "--detach", "FETCH_HEAD"]).returncode != 0:
-            fail(f"{product_id}: exact current revision checkout failed")
+            fail(f"{product_id}: exact source revision checkout failed")
         head = subprocess.check_output(
             ["git", "-C", str(checkout), "rev-parse", "HEAD"], text=True
         ).strip()
@@ -97,7 +98,7 @@ def verify(product_id: str, receipt_path: Path | None) -> int:
 
         test = run(command, cwd=checkout)
         if test.returncode != 0:
-            fail(f"{product_id}: native current-source test contract exited {test.returncode}")
+            fail(f"{product_id}: native source test contract exited {test.returncode}")
         result["status"] = "passed"
         return 0
     finally:
