@@ -363,5 +363,7 @@ impl LocalProjectKnowledge {
 }
 
 fn parse_resource_refs(raw: Vec<String>) -> AikitResult<Vec<ResourceRef>> {
-    raw.into_iter().map(ResourceRef::parse).collect()
+    raw.into_iter()
+        .map(|value| ResourceRef::parse(&value))
+        .collect()
 }
