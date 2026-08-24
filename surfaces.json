@@ -83,7 +83,7 @@
       "public_name": "AIKit",
       "function": "context, capability, model, credential, SessionSpace and provider-process resolution",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "docs_ref": "e440153051d3b26481a369a4e53536056b54d3ec",
+      "docs_ref": "4b9b404c0603532e86c5652b7fd5062d2e344acf",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -96,8 +96,8 @@
       },
       "install": {
         "kind": "oi-managed-binary",
-        "ref": "e440153051d3b26481a369a4e53536056b54d3ec",
-        "revision": "e440153051d3b26481a369a4e53536056b54d3ec",
+        "ref": "4b9b404c0603532e86c5652b7fd5062d2e344acf",
+        "revision": "4b9b404c0603532e86c5652b7fd5062d2e344acf",
         "note": "Current #97 source pin for developer/source composition. Immutable released artifacts remain versioned by suite/manifest.json."
       },
       "verification": {
@@ -109,9 +109,9 @@
           "evidence": "process-exit-and-output"
         },
         "outstanding_requirements": [],
-        "note": "Current accepted AIKit main includes V2/SessionSpace/Knowledge/ProjectCentral/praxis, harness admission and bounded Living Knowledge Contemplate. Flow #122/#123 and other named lines remain explicit development exceptions."
+        "note": "Current accepted AIKit main includes V2/SessionSpace/Knowledge/ProjectCentral/praxis, harness admission, bounded Living Knowledge Contemplate, and accepted Flow standing context/Contemplate scope through PR #123."
       },
-      "compatibility": "AIKit main owns context, capability, SessionSpace, harness and Knowledge composition. Current Flow cognition remains an AIKit-owned development line and explicitly supports QL-absent operation."
+      "compatibility": "AIKit main owns context, capability, SessionSpace, harness, Knowledge and Flow cognition composition. Flow remains provider-neutral and its accepted conformance includes QL-absent operation."
     },
     {
       "id": "software-factory",
