@@ -1,0 +1,73 @@
+name: Living Wiki current-main cut
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/living-main-cut.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  compose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SOURCE_SHA: 2ebb2d2fd6d50ebc1db03a714b29f7692bd5aa47
+      TARGET_BRANCH: converge/living-wiki-w7-main
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: converge/living-wiki-w7-main
+          fetch-depth: 0
+      - name: Compose W7-green source field onto repaired main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main feat/flow-desktop-138
+          test "$(git rev-parse origin/main)" = "4e944c4de85bd86cdd0151ab764f166032f3f7d6"
+          git cat-file -e "$SOURCE_SHA^{commit}"
+
+          set +e
+          git merge --squash "$SOURCE_SHA"
+          merge_rc=$?
+          set -e
+          if [[ $merge_rc -ne 0 && -z "$(git diff --name-only --diff-filter=U)" ]]; then
+            echo "squash merge failed without resolvable file conflicts" >&2
+            exit $merge_rc
+          fi
+
+          while IFS= read -r path; do
+            [[ -z "$path" ]] && continue
+            git checkout --theirs -- "$path"
+            git add "$path"
+          done < <(git diff --name-only --diff-filter=U)
+
+          if [[ -n "$(git diff --name-only --diff-filter=U)" ]]; then
+            echo "unresolved squash conflicts remain" >&2
+            git diff --name-only --diff-filter=U >&2
+            exit 1
+          fi
+
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('.github/workflows/desktop.yml')
+          text = path.read_text()
+          living = "          node --test desktop/ui/src/living-wiki-model.test.mjs\n"
+          agency = "          node --test desktop/ui/src/agency-sidecar.test.mjs\n"
+          if living not in text:
+              raise SystemExit('Living Wiki desktop regression line missing from W7-green source')
+          if agency not in text:
+              text = text.replace(living, living + agency)
+          path.write_text(text)
+          PY
+
+          git rm .github/workflows/living-main-cut.yml
+          git add -A
+          git diff --cached --check
+          git config user.name 'Epii'
+          git config user.email 'frank.g.taylor97@gmail.com'
+          git commit -m '[LIVING-WIKI] Compose W7 field onto repaired current main'
+          git push origin HEAD:"$TARGET_BRANCH"
