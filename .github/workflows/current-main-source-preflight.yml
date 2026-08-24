@@ -20,19 +20,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # O:I #97 primary live-main source owners. Quaternal Logic remains the
+        # separately owned sixth product and is intentionally not a #97 live-main gate.
         product:
           - central
           - actuation
           - ai-kit
           - software-factory
           - workcell
-          - quaternal-logic
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
-      - name: Test exact current native-main source
+      - name: Test exact current in-scope native-main source
         run: >-
           python3 scripts/verify-current-main-source.py
           --product '${{ matrix.product }}'
