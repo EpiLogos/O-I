@@ -5,6 +5,8 @@ import {
   canContemplate,
   freshnessLabel,
   livingSummary,
+  ownerObservation,
+  qlPresentation,
   relatedLivingState,
 } from './living-wiki-model.ts';
 
@@ -71,6 +73,21 @@ function fixture() {
   };
 }
 
+function qlFixture() {
+  return {
+    subject: {
+      reference: 'wiki:reading:whole',
+      revision: 'r7',
+      subject_type: 'integrative-reading',
+      frame_ref: 'wiki:frame:whole',
+      context_refs: ['wiki:node:purpose', 'wiki:node:implementation'],
+    },
+    lens: 'mef:lens:L0@1',
+    sublens: 'mef:sublens:relation-family@1',
+    frame: 'cf5',
+  };
+}
+
 test('summary counts exact owner identities across direct and transitive impact', () => {
   assert.deepEqual(livingSummary(fixture()), { changed: 1, affected: 2, pending: 1 });
 });
@@ -107,4 +124,58 @@ test('contemplate action requires an explicit stable selection', () => {
   assert.equal(canContemplate(undefined), false);
   assert.equal(canContemplate(''), false);
   assert.equal(canContemplate('wiki:reading:whole'), true);
+});
+
+test('provider loss retains exact last owner reading without promoting it to current', () => {
+  const current = fixture();
+  const observed = ownerObservation(null, current);
+  assert.equal(observed.freshness, 'current');
+  assert.equal(observed.reading.cursor, 7);
+
+  const degraded = ownerObservation(observed.reading, null, 'Central observer unavailable');
+  assert.equal(degraded.freshness, 'last-observed');
+  assert.equal(degraded.reading, current);
+  assert.equal(degraded.reading.cursor, 7);
+  assert.equal(degraded.error, 'Central observer unavailable');
+
+  const absent = ownerObservation(null, null, 'No owner reading');
+  assert.equal(absent.freshness, 'unavailable');
+  assert.equal(absent.reading, null);
+});
+
+test('ordinary QL presentation is complete without exposing formal jargon', () => {
+  const view = qlPresentation('method:deep-reading', qlFixture(), 'ordinary');
+  assert.deepEqual(view, { available: true, depth: 'ordinary' });
+  assert.equal(view.lens, undefined);
+  assert.equal(view.frame, undefined);
+  assert.equal(view.summary, undefined);
+});
+
+test('explain QL presentation exposes only owner-supplied contribution and basis identity', () => {
+  const view = qlPresentation('method:deep-reading', qlFixture(), 'explain');
+  assert.equal(view.summary, 'Formal/refraction method contributes to this situated operation.');
+  assert.equal(view.method, 'method:deep-reading');
+  assert.equal(view.subject, 'wiki:reading:whole');
+  assert.equal(view.lens, 'mef:lens:L0@1');
+  assert.equal(view.subjectRevision, undefined);
+  assert.equal(view.contextRefs, undefined);
+});
+
+test('formal QL presentation preserves exact supplied subject lens frame and context refs', () => {
+  const view = qlPresentation('method:deep-reading', qlFixture(), 'formal');
+  assert.equal(view.subject, 'wiki:reading:whole');
+  assert.equal(view.subjectRevision, 'r7');
+  assert.equal(view.subjectType, 'integrative-reading');
+  assert.equal(view.frameRef, 'wiki:frame:whole');
+  assert.deepEqual(view.contextRefs, ['wiki:node:purpose', 'wiki:node:implementation']);
+  assert.equal(view.lens, 'mef:lens:L0@1');
+  assert.equal(view.sublens, 'mef:sublens:relation-family@1');
+  assert.equal(view.frame, 'cf5');
+});
+
+test('no QL or method attachment leaves ordinary Living Knowledge valid', () => {
+  assert.deepEqual(qlPresentation(undefined, undefined, 'ordinary'), {
+    available: false,
+    depth: 'ordinary',
+  });
 });

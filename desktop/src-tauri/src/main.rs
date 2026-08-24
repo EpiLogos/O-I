@@ -1,11 +1,14 @@
+mod living;
+
 use oi_desktop_core::{
-    host_native_contribution, load_context_resolution, ActionAuthorityStore, ActionExecutionRequest,
-    AgentSurfaceOpenRequest, AgentSurfaceReading, AikitAgentSurface, BoundedActionGrant,
-    BridgeCallClass, BridgeCaller, BridgePolicy, DesktopHost, FactoryActionRoundTrip,
-    FactoryBuildSnapshot, HostedContribution, LocalAikitSessionSpaceHost, LocalAikitWorkbench,
-    LocalFactoryHost, LocalProjectKnowledge, NativeContextResolution, NativeContributionReading,
-    SemanticRef, SessionSpaceFocusRequest, ShellDestination, ShellSnapshot, SurfaceActionEmission,
-    AIKIT_SESSION_SPACE_CONTRIBUTION_REF, FACTORY_BUILD_CONTRIBUTION_REF,
+    host_native_contribution, load_context_resolution, ActionAuthorityStore,
+    ActionExecutionRequest, AgentSurfaceOpenRequest, AgentSurfaceReading, AikitAgentSurface,
+    BoundedActionGrant, BridgeCallClass, BridgeCaller, BridgePolicy, DesktopHost,
+    FactoryActionRoundTrip, FactoryBuildSnapshot, HostedContribution, LocalAikitSessionSpaceHost,
+    LocalAikitWorkbench, LocalFactoryHost, LocalProjectKnowledge, NativeContextResolution,
+    NativeContributionReading, SemanticRef, SessionSpaceFocusRequest, ShellDestination,
+    ShellSnapshot, SurfaceActionEmission, AIKIT_SESSION_SPACE_CONTRIBUTION_REF,
+    FACTORY_BUILD_CONTRIBUTION_REF,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -67,7 +70,10 @@ fn shell_snapshot(state: State<'_, AppState>) -> Result<ShellSnapshot, String> {
 #[tauri::command]
 fn contribution_catalog(state: State<'_, AppState>) -> Result<Vec<HostedContribution>, String> {
     BridgePolicy
-        .authorize(BridgeCaller::ShellUi, BridgeCallClass::DiscloseContributions)
+        .authorize(
+            BridgeCaller::ShellUi,
+            BridgeCallClass::DiscloseContributions,
+        )
         .map_err(|error| error.to_string())?;
     Ok(state
         .contributions
@@ -110,7 +116,10 @@ fn dispatch_factory_action(
     operation_id: String,
 ) -> Result<FactoryActionRoundTrip, String> {
     BridgePolicy
-        .authorize(BridgeCaller::ShellUi, BridgeCallClass::DispatchFactoryAction)
+        .authorize(
+            BridgeCaller::ShellUi,
+            BridgeCallClass::DispatchFactoryAction,
+        )
         .map_err(|error| error.to_string())?;
     dispatch_factory_action_inner(&state, emission, operation_id, Some(authority_ref))
 }
@@ -128,7 +137,10 @@ fn dispatch_contextual_factory_action(
     operation_id: String,
 ) -> Result<FactoryActionRoundTrip, String> {
     BridgePolicy
-        .authorize(BridgeCaller::ShellUi, BridgeCallClass::DispatchFactoryAction)
+        .authorize(
+            BridgeCaller::ShellUi,
+            BridgeCallClass::DispatchFactoryAction,
+        )
         .map_err(|error| error.to_string())?;
     dispatch_factory_action_inner(&state, emission, operation_id, None)
 }
@@ -204,7 +216,9 @@ fn dispatch_factory_action_inner(
 /// O:I never runs a second resolver here: absence remains absence and the entire
 /// typed AIKit application result is returned without presentation inference.
 #[tauri::command]
-fn aikit_context_resolution(state: State<'_, AppState>) -> Result<Option<NativeContextResolution>, String> {
+fn aikit_context_resolution(
+    state: State<'_, AppState>,
+) -> Result<Option<NativeContextResolution>, String> {
     BridgePolicy
         .authorize(
             BridgeCaller::ShellUi,
@@ -230,7 +244,11 @@ fn aikit_session_spaces(state: State<'_, AppState>) -> Result<Value, String> {
     let aikit = aikit
         .as_ref()
         .ok_or_else(|| "native AIKit application is not available".to_owned())?;
-    to_value(aikit.list_session_spaces().map_err(|error| error.to_string())?)
+    to_value(
+        aikit
+            .list_session_spaces()
+            .map_err(|error| error.to_string())?,
+    )
 }
 
 #[tauri::command]
@@ -443,10 +461,7 @@ fn knowledge_relations(
 }
 
 #[tauri::command]
-fn knowledge_explain(
-    state: State<'_, AppState>,
-    resource_ref: String,
-) -> Result<Value, String> {
+fn knowledge_explain(state: State<'_, AppState>, resource_ref: String) -> Result<Value, String> {
     with_knowledge(&state, |knowledge| {
         to_value(
             knowledge
@@ -597,8 +612,8 @@ fn load_agent_provider() -> Result<Option<AgentProviderConfig>, String> {
     }
     let cwd = env::var("OI_AGENT_PROVIDER_CWD")
         .unwrap_or_else(|_| env::current_dir().unwrap_or_default().display().to_string());
-    let connection_ref = env::var("OI_AGENT_CONNECTION_REF")
-        .unwrap_or_else(|_| "connection/oi-desktop/acp".into());
+    let connection_ref =
+        env::var("OI_AGENT_CONNECTION_REF").unwrap_or_else(|_| "connection/oi-desktop/acp".into());
     let provenance = env::var("OI_AGENT_PROVIDER_PROVENANCE")
         .ok()
         .map(|value| vec![value])
@@ -622,8 +637,7 @@ fn load_action_authority() -> Result<ActionAuthorityStore, String> {
     };
     let content = fs::read_to_string(&path)
         .map_err(|error| format!("read OI_ACTION_AUTHORITY_FILE: {error}"))?;
-    fs::remove_file(&path)
-        .map_err(|error| format!("consume OI_ACTION_AUTHORITY_FILE: {error}"))?;
+    fs::remove_file(&path).map_err(|error| format!("consume OI_ACTION_AUTHORITY_FILE: {error}"))?;
     let grants: Vec<BoundedActionGrant> = serde_json::from_str(&content)
         .map_err(|error| format!("invalid bounded Action authority handoff: {error}"))?;
     let mut store = ActionAuthorityStore::default();
@@ -746,6 +760,9 @@ fn main() {
             agent_surface_send,
             agent_surface_cancel,
             agent_surface_close,
+            living::living_knowledge_status,
+            living::living_contemplate_preflight,
+            living::living_contemplate,
             knowledge_status,
             knowledge_search,
             knowledge_read,
