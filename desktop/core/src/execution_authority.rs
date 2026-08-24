@@ -70,7 +70,9 @@ impl ActionAuthorityStore {
         validate_grant(&grant)?;
         let grant_ref = grant.grant.authority_ref.clone();
         if self.grants.contains_key(&grant_ref) {
-            return Err(format!("Action authority `{grant_ref}` is already registered"));
+            return Err(format!(
+                "Action authority `{grant_ref}` is already registered"
+            ));
         }
         self.grants.insert(
             grant_ref,
@@ -123,10 +125,9 @@ impl ActionAuthorityStore {
         grant_ref: &str,
         request: &ActionExecutionRequest,
     ) -> Result<AuthorisedActionExecution, String> {
-        let stored = self
-            .grants
-            .get_mut(grant_ref)
-            .ok_or_else(|| "no native Action authority is registered for this request".to_owned())?;
+        let stored = self.grants.get_mut(grant_ref).ok_or_else(|| {
+            "no native Action authority is registered for this request".to_owned()
+        })?;
         if stored.revoked {
             return Err(format!("Action authority `{grant_ref}` is revoked"));
         }
@@ -156,7 +157,9 @@ impl ActionAuthorityStore {
             || grant.grant.native_owner != request.native_owner
             || grant.subject_ref != request.emission.subject_ref
         {
-            return Err("Action authority does not match the exact Action/owner/subject target".into());
+            return Err(
+                "Action authority does not match the exact Action/owner/subject target".into(),
+            );
         }
         if grant.binding_revision != request.binding_revision {
             return Err("Action authority binding revision is stale or substituted".into());
@@ -183,12 +186,9 @@ impl ActionAuthorityStore {
     }
 
     pub fn remaining_uses(&self, grant_ref: &str) -> Option<u32> {
-        self.grants.get(grant_ref).map(|stored| {
-            stored
-                .grant
-                .max_uses
-                .saturating_sub(stored.uses)
-        })
+        self.grants
+            .get(grant_ref)
+            .map(|stored| stored.grant.max_uses.saturating_sub(stored.uses))
     }
 }
 
@@ -204,14 +204,19 @@ fn semantic_binding_matches(stored: &StoredGrant, request: &ActionExecutionReque
 
 fn validate_grant(grant: &BoundedActionGrant) -> Result<(), String> {
     if grant.schema != BOUNDED_ACTION_GRANT_SCHEMA {
-        return Err(format!("unsupported Action grant schema `{}`", grant.schema));
+        return Err(format!(
+            "unsupported Action grant schema `{}`",
+            grant.schema
+        ));
     }
     if grant.grant.authority_ref.trim().is_empty()
         || grant.issuer_ref.trim().is_empty()
         || grant.subject_ref.trim().is_empty()
         || grant.binding_revision.trim().is_empty()
     {
-        return Err("bounded Action grant requires authority, issuer, subject and binding revision".into());
+        return Err(
+            "bounded Action grant requires authority, issuer, subject and binding revision".into(),
+        );
     }
     if grant.max_uses == 0 {
         return Err("bounded Action grant max_uses must be greater than zero".into());

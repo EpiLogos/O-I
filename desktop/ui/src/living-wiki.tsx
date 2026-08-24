@@ -88,8 +88,8 @@ export function LivingWikiWorkbench({ selection }: LivingWikiProps) {
   const reading = observation.reading;
   const summary = useMemo(() => reading ? livingSummary(reading) : null, [reading]);
   const related = useMemo(
-    () => reading ? relatedLivingState(reading, selection?.ref) : null,
-    [reading, selection?.ref],
+    () => reading ? relatedLivingState(reading, selection?.ref, selection?.provenance.source) : null,
+    [reading, selection?.ref, selection?.provenance.source],
   );
   const formal = useMemo(
     () => qlPresentation(preflight?.base?.method, preflight?.base?.ql, presentationDepth),

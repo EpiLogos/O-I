@@ -20,9 +20,9 @@ dependencies = [
 [[package]]
 name = "aikit-adapters"
 version = "0.1.0"
-source = "git+https://github.com/EpiLogos/ai-kit?rev=e440153051d3b26481a369a4e53536056b54d3ec#e440153051d3b26481a369a4e53536056b54d3ec"
+source = "git+https://github.com/EpiLogos/ai-kit?rev=4b9b404c0603532e86c5652b7fd5062d2e344acf#4b9b404c0603532e86c5652b7fd5062d2e344acf"
 dependencies = [
- "aikit-core 0.1.0 (git+https://github.com/EpiLogos/ai-kit?rev=e440153051d3b26481a369a4e53536056b54d3ec)",
+ "aikit-core 0.1.0 (git+https://github.com/EpiLogos/ai-kit?rev=4b9b404c0603532e86c5652b7fd5062d2e344acf)",
  "jiff",
  "serde",
  "serde_json",
@@ -30,6 +30,21 @@ dependencies = [
  "shell-words",
  "thiserror 2.0.20",
  "toml 0.9.12+spec-1.1.0",
+]
+
+[[package]]
+name = "aikit-core"
+version = "0.1.0"
+source = "git+https://github.com/EpiLogos/ai-kit?rev=4b9b404c0603532e86c5652b7fd5062d2e344acf#4b9b404c0603532e86c5652b7fd5062d2e344acf"
+dependencies = [
+ "blake3",
+ "jiff",
+ "regex",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.20",
+ "toml 0.9.12+spec-1.1.0",
+ "ulid 3.0.0",
 ]
 
 [[package]]
@@ -48,26 +63,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "aikit-core"
-version = "0.1.0"
-source = "git+https://github.com/EpiLogos/ai-kit?rev=e440153051d3b26481a369a4e53536056b54d3ec#e440153051d3b26481a369a4e53536056b54d3ec"
-dependencies = [
- "blake3",
- "jiff",
- "regex",
- "serde",
- "serde_json",
- "thiserror 2.0.20",
- "toml 0.9.12+spec-1.1.0",
- "ulid 3.0.0",
-]
-
-[[package]]
 name = "aikit-store"
 version = "0.1.0"
-source = "git+https://github.com/EpiLogos/ai-kit?rev=e440153051d3b26481a369a4e53536056b54d3ec#e440153051d3b26481a369a4e53536056b54d3ec"
+source = "git+https://github.com/EpiLogos/ai-kit?rev=4b9b404c0603532e86c5652b7fd5062d2e344acf#4b9b404c0603532e86c5652b7fd5062d2e344acf"
 dependencies = [
- "aikit-core 0.1.0 (git+https://github.com/EpiLogos/ai-kit?rev=e440153051d3b26481a369a4e53536056b54d3ec)",
+ "aikit-core 0.1.0 (git+https://github.com/EpiLogos/ai-kit?rev=4b9b404c0603532e86c5652b7fd5062d2e344acf)",
  "blake3",
  "fs4",
  "jiff",
@@ -2309,7 +2309,7 @@ name = "oi-desktop-core"
 version = "0.1.0"
 dependencies = [
  "aikit-adapters",
- "aikit-core 0.1.0 (git+https://github.com/EpiLogos/ai-kit?rev=e440153051d3b26481a369a4e53536056b54d3ec)",
+ "aikit-core 0.1.0 (git+https://github.com/EpiLogos/ai-kit?rev=4b9b404c0603532e86c5652b7fd5062d2e344acf)",
  "aikit-store",
  "epilogos-factory",
  "oi-cli",

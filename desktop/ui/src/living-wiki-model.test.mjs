@@ -105,6 +105,29 @@ test('selection relation is stable-ref exact rather than filename inference', ()
   assert.equal(filename.paths.length, 0);
 });
 
+test('FlowRef selection relates through its native owner SourceRef without identity collapse', () => {
+  const reading = fixture();
+  const sourceRef = 'central:source:project:test:notes/thread.md';
+  reading.changed[0].source_ref = sourceRef;
+  reading.impact.direct.changed_sources = [sourceRef];
+  reading.impact.direct.affected[0].source = sourceRef;
+  reading.impact.transitive[0].root_source = sourceRef;
+  reading.impact.paths[0].root_source = sourceRef;
+
+  const related = relatedLivingState(
+    reading,
+    'central:flow:project:test:thread',
+    sourceRef,
+  );
+  assert.equal(related.changed.length, 1);
+  assert.equal(related.affected.length, 2);
+  assert.equal(related.paths.length, 1);
+  assert.equal(related.pending, true);
+
+  const flowIdentityOnly = relatedLivingState(reading, 'central:flow:project:test:thread');
+  assert.equal(flowIdentityOnly.changed.length, 0);
+});
+
 test('freshness language preserves moved-basis semantics instead of declaring falsehood', () => {
   assert.equal(freshnessLabel('basis-changed'), 'Basis changed');
   assert.equal(freshnessLabel('integration-pending'), 'Pending integration');

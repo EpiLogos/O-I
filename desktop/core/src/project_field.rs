@@ -235,11 +235,13 @@ impl LocalProjectField {
             .semantic
             .account_context()
             .map_err(|error| error.to_string())?;
-        let source_horizon = self
-            .source_index
-            .horizon(&HorizonRequest::human(Some(self.binding.semantic.project.clone())));
+        let source_horizon = self.source_index.horizon(&HorizonRequest::human(Some(
+            self.binding.semantic.project.clone(),
+        )));
         let central_actions = self.central.action_ids();
-        let projects = self.central.reading(&central_actions, "work.list", json!({}));
+        let projects = self
+            .central
+            .reading(&central_actions, "work.list", json!({}));
         let ground = self.central.reading(
             &central_actions,
             "projectcentral.ground.inspect",

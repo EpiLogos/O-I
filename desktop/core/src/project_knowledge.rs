@@ -203,7 +203,8 @@ impl LocalProjectKnowledge {
         let horizon = adapt_central_horizon(central)
             .map_err(|error| AikitError::new("oi.living_wiki.central_horizon", error))?;
         let current_wiki_objects = self.wiki_objects();
-        let (dependencies, resource_dependencies) = wiki_living_dependencies(&current_wiki_objects)?;
+        let (dependencies, resource_dependencies) =
+            wiki_living_dependencies(&current_wiki_objects)?;
         let method = first_party_flow_method(None)?;
         let mut resources = MemoryResourceIndex::default();
         for record in first_party_flow_resource_records()? {
@@ -219,7 +220,10 @@ impl LocalProjectKnowledge {
         if !praxis.warnings.is_empty() {
             return Err(AikitError::new(
                 "oi.flow.praxis_unresolved",
-                format!("Flow Method/Praxis did not resolve cleanly: {}", praxis.warnings.join("; ")),
+                format!(
+                    "Flow Method/Praxis did not resolve cleanly: {}",
+                    praxis.warnings.join("; ")
+                ),
             ));
         }
         let request = ContemplateRequest {
@@ -256,7 +260,8 @@ impl LocalProjectKnowledge {
         let horizon = adapt_central_horizon(central)
             .map_err(|error| AikitError::new("oi.living_wiki.central_horizon", error))?;
         let current_wiki_objects = self.wiki_objects();
-        let (dependencies, resource_dependencies) = wiki_living_dependencies(&current_wiki_objects)?;
+        let (dependencies, resource_dependencies) =
+            wiki_living_dependencies(&current_wiki_objects)?;
         let method = first_party_flow_method(None)?;
         let mut resources = MemoryResourceIndex::default();
         for record in first_party_flow_resource_records()? {
@@ -272,7 +277,10 @@ impl LocalProjectKnowledge {
         if !praxis.warnings.is_empty() {
             return Err(AikitError::new(
                 "oi.flow.praxis_unresolved",
-                format!("Flow Method/Praxis did not resolve cleanly: {}", praxis.warnings.join("; ")),
+                format!(
+                    "Flow Method/Praxis did not resolve cleanly: {}",
+                    praxis.warnings.join("; ")
+                ),
             ));
         }
         let request = ContemplateRequest {
@@ -325,7 +333,8 @@ impl LocalProjectKnowledge {
         let horizon = adapt_central_horizon(central)
             .map_err(|error| AikitError::new("oi.living_wiki.central_horizon", error))?;
         let current_wiki_objects = self.wiki_objects();
-        let (dependencies, resource_dependencies) = wiki_living_dependencies(&current_wiki_objects)?;
+        let (dependencies, resource_dependencies) =
+            wiki_living_dependencies(&current_wiki_objects)?;
         explicit_bounded_contemplate(
             &ContemplateRequest {
                 project: self.binding.project.clone(),

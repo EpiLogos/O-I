@@ -29,10 +29,18 @@ pub fn load_context_resolution(path: impl AsRef<Path>) -> Result<ContextResoluti
 /// correlates the canonical AgentSession against the actually open ACP Surface.
 pub fn load_model_runtime(path: impl AsRef<Path>) -> Result<ModelRuntimeReadModel, String> {
     let path = path.as_ref();
-    let content = fs::read_to_string(path)
-        .map_err(|error| format!("read AIKit ModelRuntimeReadModel {}: {error}", path.display()))?;
-    let runtime: ModelRuntimeReadModel = serde_json::from_str(&content)
-        .map_err(|error| format!("decode AIKit ModelRuntimeReadModel {}: {error}", path.display()))?;
+    let content = fs::read_to_string(path).map_err(|error| {
+        format!(
+            "read AIKit ModelRuntimeReadModel {}: {error}",
+            path.display()
+        )
+    })?;
+    let runtime: ModelRuntimeReadModel = serde_json::from_str(&content).map_err(|error| {
+        format!(
+            "decode AIKit ModelRuntimeReadModel {}: {error}",
+            path.display()
+        )
+    })?;
     if runtime.version != MODEL_RUNTIME_RELATION_VERSION {
         return Err(format!(
             "unsupported AIKit ModelRuntimeReadModel `{}`; expected `{MODEL_RUNTIME_RELATION_VERSION}`",

@@ -75,10 +75,7 @@ pub(crate) fn flow_history(flow_ref: String) -> Result<Value, String> {
 }
 
 #[tauri::command]
-pub(crate) fn flow_bind(
-    state: State<'_, AppState>,
-    flow_ref: String,
-) -> Result<Value, String> {
+pub(crate) fn flow_bind(state: State<'_, AppState>, flow_ref: String) -> Result<Value, String> {
     BridgePolicy
         .authorize(BridgeCaller::ShellUi, BridgeCallClass::ObserveFlow)
         .map_err(|error| error.to_string())?;
@@ -90,7 +87,7 @@ pub(crate) fn flow_bind(
 pub(crate) fn flow_contemplate_preflight(
     state: State<'_, AppState>,
     flow_ref: String,
-    #[serde(default)] authority_refs: Vec<FlowAuthorityInput>,
+    authority_refs: Option<Vec<FlowAuthorityInput>>,
 ) -> Result<Value, String> {
     BridgePolicy
         .authorize(BridgeCaller::ShellUi, BridgeCallClass::ObserveFlow)
@@ -99,7 +96,7 @@ pub(crate) fn flow_contemplate_preflight(
     let context = current_context(&state)?;
     let runtime = current_model_runtime()?;
     let horizon = current_central_horizon()?;
-    let authority_refs = authority_refs_for(&standing, authority_refs)?;
+    let authority_refs = authority_refs_for(&standing, authority_refs.unwrap_or_default())?;
     let knowledge = state
         .knowledge
         .lock()
@@ -123,7 +120,7 @@ pub(crate) fn flow_contemplate_preflight(
 pub(crate) fn flow_contemplate(
     state: State<'_, AppState>,
     flow_ref: String,
-    #[serde(default)] authority_refs: Vec<FlowAuthorityInput>,
+    authority_refs: Option<Vec<FlowAuthorityInput>>,
 ) -> Result<Value, String> {
     BridgePolicy
         .authorize(BridgeCaller::ShellUi, BridgeCallClass::ContemplateFlow)
@@ -137,18 +134,20 @@ pub(crate) fn flow_contemplate(
         .as_deref()
         .ok_or_else(|| "AIKit ModelRuntimeReadModel has no canonical AgentSession".to_owned())?;
     if standing.binding.agent_session.as_str() != canonical_session {
-        return Err("Flow standing context does not retain the current canonical AgentSession".into());
+        return Err(
+            "Flow standing context does not retain the current canonical AgentSession".into(),
+        );
     }
-    let authority_refs = authority_refs_for(&standing, authority_refs)?;
+    let authority_refs = authority_refs_for(&standing, authority_refs.unwrap_or_default())?;
     let horizon = current_central_horizon()?;
 
     let mut surface = state
         .agent_surface
         .lock()
         .map_err(|_| "AgentSession Surface lock poisoned".to_owned())?;
-    let surface = surface
-        .as_mut()
-        .ok_or_else(|| "no AgentSession Surface is open for explicit Flow Contemplate".to_owned())?;
+    let surface = surface.as_mut().ok_or_else(|| {
+        "no AgentSession Surface is open for explicit Flow Contemplate".to_owned()
+    })?;
     let bound_session = surface
         .binding()
         .agent_session
@@ -212,7 +211,9 @@ fn current_client() -> Result<CentralFlowClient, String> {
     CentralFlowClient::discover(&project_root, central_root.as_deref())
 }
 
-fn current_context(state: &State<'_, AppState>) -> Result<oi_desktop_core::NativeContextResolution, String> {
+fn current_context(
+    state: &State<'_, AppState>,
+) -> Result<oi_desktop_core::NativeContextResolution, String> {
     state
         .aikit_context
         .lock()
@@ -273,6 +274,8 @@ fn authority_refs_for(
         format!("{:?}:{}", left.authority, left.reference)
             .cmp(&format!("{:?}:{}", right.authority, right.reference))
     });
-    refs.dedup_by(|left, right| left.authority == right.authority && left.reference == right.reference);
+    refs.dedup_by(|left, right| {
+        left.authority == right.authority && left.reference == right.reference
+    });
     Ok(refs)
 }

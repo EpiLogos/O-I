@@ -12,8 +12,8 @@ use std::process::Command;
 
 use aikit_core::{
     bind_flow_for_act, ContextResolution, FlowCapabilities, FlowLifecycle, FlowProvider,
-    FlowReadOutcome, FlowSourceDescriptor, FlowStandingContext, FlowWriteRequest,
-    FlowWriteResult, ResourceRef, SourceRef, SourceRevision,
+    FlowReadOutcome, FlowSourceDescriptor, FlowStandingContext, FlowWriteRequest, FlowWriteResult,
+    ResourceRef, SourceRef, SourceRevision,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -109,7 +109,11 @@ impl CentralFlowClient {
                 .unwrap_or("project")
                 .to_owned()
         });
-        Self::with(executable, central_root.map(Path::to_path_buf), project_query)
+        Self::with(
+            executable,
+            central_root.map(Path::to_path_buf),
+            project_query,
+        )
     }
 
     fn with(
@@ -279,6 +283,14 @@ impl CentralFlowClient {
         self.run("projectcentral.flow.history", json!({"flow_ref": flow_ref}))
     }
 
+    pub fn apply_agent_intent(
+        &mut self,
+        standing: &FlowStandingContext,
+        intent: &aikit_core::FlowMutationIntent,
+    ) -> Result<FlowWriteResult, String> {
+        aikit_core::apply_flow_mutation(self, standing, intent).map_err(|error| error.to_string())
+    }
+
     pub fn bind_for_act(
         &self,
         context: &ContextResolution,
@@ -385,20 +397,19 @@ impl FlowProvider for CentralFlowClient {
         );
         match data {
             Ok(data) => {
-                let flow: CentralFlowRecord = serde_json::from_value(
-                    data.get("flow").cloned().ok_or_else(|| {
+                let flow: CentralFlowRecord =
+                    serde_json::from_value(data.get("flow").cloned().ok_or_else(|| {
                         aikit_core::AikitError::new(
                             "oi.flow.central_write_shape",
                             "Central Flow write omitted flow record",
                         )
-                    })?,
-                )
-                .map_err(|error| {
-                    aikit_core::AikitError::new(
-                        "oi.flow.central_write_shape",
-                        format!("decode Central Flow write: {error}"),
-                    )
-                })?;
+                    })?)
+                    .map_err(|error| {
+                        aikit_core::AikitError::new(
+                            "oi.flow.central_write_shape",
+                            format!("decode Central Flow write: {error}"),
+                        )
+                    })?;
                 Ok(FlowWriteResult::Applied {
                     current: Self::descriptor(&flow).map_err(|error| {
                         aikit_core::AikitError::new("oi.flow.central_descriptor", error)
@@ -431,12 +442,40 @@ mod tests {
 
     #[test]
     fn desktop_flow_source_contains_no_direct_file_mutation_path() {
-        let source = include_str!("flow.rs");
+        let source = include_str!("flow.rs")
+            .split("\n#[cfg(test)]")
+            .next()
+            .unwrap();
         assert!(!source.contains("fs::write"));
         assert!(!source.contains("OpenOptions"));
         assert!(source.contains("projectcentral.flow.create"));
         assert!(source.contains("projectcentral.flow.write"));
         assert!(source.contains("bind_flow_for_act"));
+    }
+
+    #[test]
+    fn retained_notes_container_preserves_flow_identity_without_path_capture() {
+        let record = CentralFlowRecord {
+            flow_ref: "central:flow:project:test:notes-thread".into(),
+            source_ref: "central:source:project:test:notes/thread.md".into(),
+            path: "notes/2026-08-24-0340.md".into(),
+            created_at_unix_seconds: 1,
+            current_revision: "r7".into(),
+            lifecycle: "active".into(),
+            title: None,
+            scope_ref: "project:test".into(),
+            privacy: "inherits-source-authority".into(),
+            revisions: vec![],
+        };
+        let descriptor = CentralFlowClient::descriptor(&record).unwrap();
+        assert_eq!(descriptor.flow_ref.as_str(), record.flow_ref);
+        assert_eq!(descriptor.source_ref.as_str(), record.source_ref);
+        assert_eq!(descriptor.revision.as_str(), "r7");
+        assert_eq!(
+            descriptor.container_hint.as_deref(),
+            Some("notes/2026-08-24-0340.md")
+        );
+        assert_eq!(descriptor.provider.as_str(), CENTRAL_FLOW_PROVIDER_REF);
     }
 
     #[cfg(unix)]
@@ -454,7 +493,8 @@ mod tests {
         fs::create_dir_all(&root).unwrap();
         let executable = root.join("ctrl-fixture");
         let log = root.join("calls.log");
-        let script = format!(r#"#!/bin/sh
+        let script = format!(
+            r#"#!/bin/sh
 printf '%s\n' "$4" >> '{log}'
 case "$4" in
   projectcentral.flow.create)
@@ -465,7 +505,9 @@ case "$4" in
     ;;
   *) exit 7 ;;
 esac
-"#, log=log.display());
+"#,
+            log = log.display()
+        );
         fs::write(&executable, script).unwrap();
         let mut permissions = fs::metadata(&executable).unwrap().permissions();
         permissions.set_mode(0o755);

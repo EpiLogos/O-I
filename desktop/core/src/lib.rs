@@ -19,6 +19,10 @@ mod project_knowledge;
 mod shell;
 
 pub use agent_surface::{AgentSurfaceOpenRequest, AgentSurfaceReading, AikitAgentSurface};
+pub use aikit_core::{
+    FlowAuthorityRef, FlowContextAuthority, FlowMutationIntent, FlowStandingContext,
+    FlowWriteResult, ResourceRef,
+};
 pub use aikit_workbench::{
     LocalAikitWorkbench, SessionSpaceApplicationReading, SessionSpaceFocusRequest,
 };
@@ -30,6 +34,7 @@ pub use contribution::{
     HostedContribution, NativeActionInvocation, NativeContributionReading, PackageEnvelopeRef,
     SelectionProjection,
 };
+pub use epilogos_factory::build::FactoryBuildSnapshot;
 pub use execution_authority::{
     ActionAuthorityStore, ActionExecutionRequest, AuthorisedActionExecution, BoundedActionGrant,
     BOUNDED_ACTION_GRANT_SCHEMA,
@@ -42,11 +47,10 @@ pub use flow::{
 pub use flow_contemplate::{
     flow_contemplate_prompt, AcpFlowContemplateExecutor, FLOW_CONTEMPLATE_TRANSPORT_VERSION,
 };
-pub use epilogos_factory::build::FactoryBuildSnapshot;
 pub use live_product::{
-    correlate_session_spaces, dispatch_factory_action, observe_factory_build, FactoryActionRoundTrip,
-    FactoryHostObservation, SessionSpaceCorrelation, SessionSpaceCorrelationState,
-    SurfaceActionEmission, FACTORY_BUILD_CONTRIBUTION_REF,
+    correlate_session_spaces, dispatch_factory_action, observe_factory_build,
+    FactoryActionRoundTrip, FactoryHostObservation, SessionSpaceCorrelation,
+    SessionSpaceCorrelationState, SurfaceActionEmission, FACTORY_BUILD_CONTRIBUTION_REF,
 };
 pub use living_contemplate::{
     contemplate_prompt, AcpLivingContemplateExecutor, LIVING_CONTEMPLATE_TRANSPORT_VERSION,

@@ -200,9 +200,7 @@ fn explicit_oi_authority_reaches_factory_and_new_product_revision_returns_to_hos
         capability_grant_ref: Some("capability-grant/other".into()),
         ..no_capability.clone()
     };
-    assert!(
-        dispatch_factory_action(&mut state, &selection, &emission, &wrong_capability).is_err()
-    );
+    assert!(dispatch_factory_action(&mut state, &selection, &emission, &wrong_capability).is_err());
 
     let grant = ActionAuthorityGrant {
         capability_ref: Some(REQUEST_MORE_EVIDENCE_CAPABILITY_REF.into()),

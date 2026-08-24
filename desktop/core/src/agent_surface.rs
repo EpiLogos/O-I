@@ -10,8 +10,8 @@ use std::path::Path;
 
 use aikit_adapters::{
     AcpV1ConnectionAdapter, AgentConnectionAdapter, CancelRequest, ConnectionDescriptor,
-    ConnectionProcess, ConnectionSignal, ConnectionSignalKind, NativeSessionBinding,
-    PromptRequest, SessionOpenMode, SessionOpenRequest,
+    ConnectionProcess, ConnectionSignal, ConnectionSignalKind, NativeSessionBinding, PromptRequest,
+    SessionOpenMode, SessionOpenRequest,
 };
 use aikit_core::ResourceRef;
 use serde::{Deserialize, Serialize};
@@ -59,13 +59,13 @@ impl AikitAgentSurface {
         if request.argv.is_empty() {
             return Err("Agent Surface provider command is empty".into());
         }
-        let canonical = ResourceRef::parse(&request.agent_session_ref)
-            .map_err(|error| error.to_string())?;
+        let canonical =
+            ResourceRef::parse(&request.agent_session_ref).map_err(|error| error.to_string())?;
         if !canonical.as_str().starts_with("agent-session/") {
             return Err("canonical AgentSession ref must begin with `agent-session/`".into());
         }
-        let connection_ref = ResourceRef::parse(&request.connection_ref)
-            .map_err(|error| error.to_string())?;
+        let connection_ref =
+            ResourceRef::parse(&request.connection_ref).map_err(|error| error.to_string())?;
         let mode = parse_open_mode(request.mode.as_deref())?;
         let mut provenance = request.provenance;
         provenance.push("O:I generic conversation Surface via AIKit ACP adapter".into());
@@ -114,7 +114,9 @@ impl AikitAgentSurface {
             .ok_or_else(|| "ACP provider did not return a SessionOpened binding".to_owned())?;
         if binding.agent_session.as_ref() != Some(&canonical) {
             let _ = process.terminate();
-            return Err("ACP provider binding did not preserve the canonical AgentSession ref".into());
+            return Err(
+                "ACP provider binding did not preserve the canonical AgentSession ref".into(),
+            );
         }
         signals.extend(opened);
         let descriptor = adapter.descriptor();
@@ -158,7 +160,10 @@ impl AikitAgentSurface {
 
         let mut observed = Vec::new();
         for _ in 0..MAX_MESSAGES_PER_TURN {
-            let message = self.process.read_json().map_err(|error| error.to_string())?;
+            let message = self
+                .process
+                .read_json()
+                .map_err(|error| error.to_string())?;
             let signals = self
                 .adapter
                 .ingest(message)

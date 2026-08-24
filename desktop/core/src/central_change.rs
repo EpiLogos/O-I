@@ -90,7 +90,10 @@ mod tests {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let root = env::temp_dir().join(format!("oi-central-contract-{}-{nonce}", std::process::id()));
+        let root = env::temp_dir().join(format!(
+            "oi-central-contract-{}-{nonce}",
+            std::process::id()
+        ));
         fs::create_dir_all(&root).unwrap();
         let executable = root.join("ctrl-fixture");
         let argv_log = root.join("argv.log");
@@ -107,12 +110,8 @@ printf '%s\n' '{{"ok":true,"data":{{"schema":"central.source-change-horizon/v1",
         fs::set_permissions(&executable, permissions).unwrap();
 
         let central_root = root.join("Central");
-        let horizon = read_central_change_horizon_with(
-            &executable,
-            "test",
-            Some(&central_root),
-        )
-        .unwrap();
+        let horizon =
+            read_central_change_horizon_with(&executable, "test", Some(&central_root)).unwrap();
         assert_eq!(horizon.world_ref, "project:test");
         assert_eq!(horizon.provider, "central.filesystem-reconcile/v1");
         assert!(!horizon.source_payloads_exposed);
@@ -147,7 +146,8 @@ printf '%s\n' '{{"ok":true,"data":{{"schema":"central.source-change-horizon/v1",
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let root = env::temp_dir().join(format!("oi-central-status-{}-{nonce}", std::process::id()));
+        let root =
+            env::temp_dir().join(format!("oi-central-status-{}-{nonce}", std::process::id()));
         fs::create_dir_all(&root).unwrap();
         let executable = root.join("ctrl-fixture");
         fs::write(

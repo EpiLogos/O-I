@@ -1,5 +1,7 @@
 use aikit_adapters::SessionSpaceFileObservationProvider;
-use aikit_core::{SessionSpaceDefinition, SessionSpaceLifecycle, SessionSpaceRef, SessionSpaceRuntime};
+use aikit_core::{
+    SessionSpaceDefinition, SessionSpaceLifecycle, SessionSpaceRef, SessionSpaceRuntime,
+};
 use oi_desktop_core::{ContributionAvailability, LocalAikitSessionSpaceHost};
 use std::fs;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -7,7 +9,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 #[test]
 fn owner_published_session_space_replaces_degraded_fallback_without_inferred_authority() {
     let space = SessionSpaceRef::parse("session-space/oi-live-observation").unwrap();
-    let mut runtime = SessionSpaceRuntime::open(SessionSpaceDefinition::new(space.clone())).unwrap();
+    let mut runtime =
+        SessionSpaceRuntime::open(SessionSpaceDefinition::new(space.clone())).unwrap();
     let path = unique_observation_path();
     let publisher = SessionSpaceFileObservationProvider::publish(&path, &runtime).unwrap();
 

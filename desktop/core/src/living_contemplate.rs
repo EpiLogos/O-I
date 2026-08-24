@@ -33,7 +33,8 @@ impl BoundedContemplateExecutor for AcpLivingContemplateExecutor<'_> {
         preflight: &BoundedContemplatePreflight,
     ) -> AikitResult<ContemplateGenerated> {
         let prompt = contemplate_prompt(preflight)?;
-        let response = send_structured_agent_turn(self.surface, &prompt, "Living Knowledge Contemplate")?;
+        let response =
+            send_structured_agent_turn(self.surface, &prompt, "Living Knowledge Contemplate")?;
 
         // Knowledge shape, Wiki validation, integrative basis/Return validation and
         // human-source proposal authority all remain AIKit-owned here.

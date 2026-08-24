@@ -144,25 +144,35 @@ export function livingSummary(reading: LivingWikiDesktopReading): LivingSummary 
   };
 }
 
-export function relatedLivingState(reading: LivingWikiDesktopReading, resourceRef?: string) {
-  if (!resourceRef) return { changed: [], affected: [], paths: [], pending: false };
-  const changed = reading.changed.filter((entry) => entry.source_ref === resourceRef);
+export function relatedLivingState(
+  reading: LivingWikiDesktopReading,
+  resourceRef?: string,
+  sourceRef?: string,
+) {
+  const refs = new Set([resourceRef, sourceRef].filter((value): value is string => Boolean(value)));
+  if (!refs.size) return { changed: [], affected: [], paths: [], pending: false };
+  const changed = reading.changed.filter((entry) => refs.has(entry.source_ref));
   const affected = [
     ...reading.impact.direct.affected.filter(
-      (entry) => entry.resource === resourceRef || entry.source === resourceRef,
+      (entry) => refs.has(entry.resource) || refs.has(entry.source),
     ),
     ...reading.impact.transitive.filter(
-      (entry) => entry.resource === resourceRef || entry.root_source === resourceRef,
+      (entry) => refs.has(entry.resource) || refs.has(entry.root_source),
     ),
   ];
   const paths = reading.impact.paths.filter(
-    (entry) => entry.resource === resourceRef || entry.root_source === resourceRef,
+    (entry) => refs.has(entry.resource) || refs.has(entry.root_source),
   );
+  const relatedResources = new Set([
+    ...refs,
+    ...affected.map((entry) => entry.resource),
+    ...paths.map((entry) => entry.resource),
+  ]);
   return {
     changed,
     affected,
     paths,
-    pending: reading.impact.pending_integration.includes(resourceRef),
+    pending: reading.impact.pending_integration.some((resource) => relatedResources.has(resource)),
   };
 }
 

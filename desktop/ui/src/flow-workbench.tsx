@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 
+import { NativeDocumentEditor } from './native-document-editor';
 import { type WorkbenchEvidence, type WorkbenchSemanticRef } from './workbench-native';
 import './flow-workbench.css';
 
@@ -80,7 +81,7 @@ type FlowPreflight = {
     };
   };
   praxis: {
-    methods: Array<{ method: string; source: string; revision?: string }>;
+    methods: Array<{ method: string; resolution: unknown }>;
     warnings: string[];
   };
   authority_refs: Array<{ authority: string; reference: string }>;
@@ -373,16 +374,14 @@ export function FlowWorkbench({ selection, onSelect }: FlowProps) {
         <code>automatic Agent/model = {String(document.automatic_agent_or_model_invocation)}</code>
       </div>
       {document.dirty_external_revision_reconciled && <p className="oi-flow__notice">The owner reconciled a direct external edit into a new exact revision before this read.</p>}
-      <textarea
+      <NativeDocumentEditor
         className="oi-flow__editor"
-        aria-label="Current Flow"
+        ariaLabel="Current Flow"
         value={buffer}
-        onChange={(event) => setBuffer(event.target.value)}
-        placeholder=""
-        spellCheck
+        onChange={setBuffer}
       />
       <div className="oi-flow__actions">
-        <button type="button" disabled={busy !== ''} onClick={() => void bind()}>Bind current AgentSession</button>
+        <button type="button" disabled={busy !== '' || dirty} onClick={() => void bind()}>Bind current AgentSession</button>
         <button type="button" disabled={busy !== '' || dirty} onClick={() => void preview()}>Preview Contemplate</button>
         <button className="oi-flow__contemplate" type="button" disabled={busy !== '' || dirty} onClick={() => void contemplate()}>Contemplate Flow</button>
         {dirty && <span>Save or reconcile the human buffer before binding it to deliberate Agent work.</span>}

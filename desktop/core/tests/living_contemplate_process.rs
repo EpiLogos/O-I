@@ -12,11 +12,10 @@ mod unix {
     };
     use aikit_core::{
         bounded_contemplate_preflight, wiki_living_dependencies, BoundedContemplateExecutor,
-        ContemplateRequest, KnowledgeChangeHorizon, KnowledgeChangeKind,
-        KnowledgeObservedSource, KnowledgeSourceChange, ProjectRef, ProviderRef, ResourceRef,
-        RetractionMode, SemanticRevision, SourceRef, SourceRevision, WikiNode, WikiObject,
-        WikiProvenanceRef, DEFAULT_CONTEMPLATE_OBJECT_BUDGET,
-        DEFAULT_CONTEMPLATE_RELATION_DEPTH,
+        ContemplateRequest, KnowledgeChangeHorizon, KnowledgeChangeKind, KnowledgeObservedSource,
+        KnowledgeSourceChange, ProjectRef, ProviderRef, ResourceRef, RetractionMode,
+        SemanticRevision, SourceRef, SourceRevision, WikiNode, WikiObject, WikiProvenanceRef,
+        DEFAULT_CONTEMPLATE_OBJECT_BUDGET, DEFAULT_CONTEMPLATE_RELATION_DEPTH,
     };
     use oi_desktop_core::{
         AcpLivingContemplateExecutor, AgentSurfaceOpenRequest, AikitAgentSurface,
@@ -179,7 +178,9 @@ mod unix {
         fs::remove_dir_all(root).unwrap();
     }
 
-    fn open_fixture_surface(response_text: &str) -> (AikitAgentSurface, std::path::PathBuf, std::path::PathBuf) {
+    fn open_fixture_surface(
+        response_text: &str,
+    ) -> (AikitAgentSurface, std::path::PathBuf, std::path::PathBuf) {
         let nonce = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()

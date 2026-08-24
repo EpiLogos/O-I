@@ -1,3 +1,4 @@
+mod flow;
 mod living;
 
 use oi_desktop_core::{
@@ -760,6 +761,14 @@ fn main() {
             agent_surface_send,
             agent_surface_cancel,
             agent_surface_close,
+            flow::flow_list,
+            flow::flow_create,
+            flow::flow_open,
+            flow::flow_save,
+            flow::flow_history,
+            flow::flow_bind,
+            flow::flow_contemplate_preflight,
+            flow::flow_contemplate,
             living::living_knowledge_status,
             living::living_contemplate_preflight,
             living::living_contemplate,

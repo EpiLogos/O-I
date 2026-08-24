@@ -120,7 +120,7 @@ pub(crate) fn living_contemplate(
     }))
 }
 
-fn current_central_horizon() -> Result<oi_desktop_core::CentralSourceHorizon, String> {
+pub(crate) fn current_central_horizon() -> Result<oi_desktop_core::CentralSourceHorizon, String> {
     let project_root = env::var_os("OI_PROJECT_ROOT")
         .map(PathBuf::from)
         .ok_or_else(|| "OI_PROJECT_ROOT is required for Living Knowledge".to_owned())?;
@@ -128,9 +128,11 @@ fn current_central_horizon() -> Result<oi_desktop_core::CentralSourceHorizon, St
     read_central_change_horizon(&project_root, central_root.as_deref())
 }
 
-fn current_model_runtime() -> Result<NativeModelRuntimeReadModel, String> {
+pub(crate) fn current_model_runtime() -> Result<NativeModelRuntimeReadModel, String> {
     let path = env::var_os("OI_AIKIT_MODEL_RUNTIME")
         .map(PathBuf::from)
-        .ok_or_else(|| "OI_AIKIT_MODEL_RUNTIME is required for Contemplate preflight/execution".to_owned())?;
+        .ok_or_else(|| {
+            "OI_AIKIT_MODEL_RUNTIME is required for Contemplate preflight/execution".to_owned()
+        })?;
     load_model_runtime(path)
 }
