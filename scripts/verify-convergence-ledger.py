@@ -20,6 +20,12 @@ explicitly remove a ref that closed/deleted while the repair was running. Amendm
 are not an escape hatch: additions/replacements use the same required disposition,
 owner, reason, re-entry and closure-blocking fields and the final composed set must
 still equal live GitHub exactly.
+
+The one deliberate transition exception is the pull request currently transporting
+this ledger toward its base branch. During that PR's own CI event, its PR number is
+removed from the observed open-PR set before comparison. The checked-in ledger can
+therefore describe the surviving post-merge world, while the same verifier on a main
+push receives no exception and must equal GitHub literally.
 """
 
 from __future__ import annotations
@@ -123,6 +129,28 @@ def load() -> dict:
     return ledger
 
 
+def current_transport_pr() -> tuple[str, int] | None:
+    """Return the current PR transport only for a real pull_request Actions event."""
+    if os.environ.get("GITHUB_EVENT_NAME") != "pull_request":
+        return None
+    event_path = os.environ.get("GITHUB_EVENT_PATH")
+    if not event_path:
+        die("pull_request event is missing GITHUB_EVENT_PATH")
+    try:
+        event = read_json(Path(event_path))
+    except (OSError, json.JSONDecodeError) as error:
+        die(f"cannot read pull_request event payload: {error}")
+
+    repository = event.get("repository", {}).get("full_name")
+    number = event.get("number")
+    pull = event.get("pull_request")
+    if not isinstance(repository, str) or not repository:
+        die("pull_request event is missing repository.full_name")
+    if not isinstance(number, int) or number <= 0 or not isinstance(pull, dict):
+        die("pull_request event is missing a valid current PR number")
+    return repository, number
+
+
 def github_json(url: str):
     headers = {
         "Accept": "application/vnd.github+json",
@@ -186,6 +214,7 @@ def main() -> int:
     if not isinstance(repositories, list) or not repositories:
         die("repositories must be a non-empty list")
 
+    transport = current_transport_pr() if args.live else None
     seen_repositories = set()
     for entry in repositories:
         repo = entry.get("repository")
@@ -228,6 +257,8 @@ def main() -> int:
                 for pull in paged(repo, "pulls")
                 if pull.get("state") == "open"
             }
+            if transport is not None and transport[0] == repo:
+                live_prs.discard(transport[1])
 
             ledger_branches = set(branch_map)
             ledger_prs = set(pr_map)
@@ -251,6 +282,8 @@ def main() -> int:
     print("convergence ledger structure: PASS")
     if AMENDMENTS_PATH.exists():
         print("explicit concurrent amendments: INCLUDED")
+    if transport is not None:
+        print(f"current pull-request transport excluded from durable set: {transport[0]}#{transport[1]}")
     if args.live:
         print("live open-PR/non-main-branch set equality: PASS")
     if args.closure:
