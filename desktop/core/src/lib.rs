@@ -7,6 +7,7 @@ mod execution_authority;
 mod live_product;
 mod living_contemplate;
 mod living_focus;
+mod living_return;
 mod living_wiki;
 mod local_aikit;
 mod local_factory;
@@ -41,6 +42,10 @@ pub use living_contemplate::{
     contemplate_prompt, AcpLivingContemplateExecutor, LIVING_CONTEMPLATE_TRANSPORT_VERSION,
 };
 pub use living_focus::parse_living_focus;
+pub use living_return::{
+    project_agent_wiki_plan, LivingAgentWikiPlanReading, LivingHumanSourceProposal,
+    LivingWikiObjectSummary,
+};
 pub use living_wiki::{
     adapt_central_horizon, living_wiki_preflight, living_wiki_reading, parse_central_horizon,
     CentralSourceHorizon, LivingWikiDesktopReading, LIVING_WIKI_DESKTOP_VERSION,
