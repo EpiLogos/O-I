@@ -1,7 +1,7 @@
 {
   "schema": "oi.mainline-snapshot/v1",
-  "observed_at": "2026-08-23",
-  "purpose": "Durable current-main source snapshot for the six native O:I product owners. This is distinct from immutable released-artifact manifests.",
+  "observed_at": "2026-08-24",
+  "purpose": "Durable source snapshot for the six-product O:I composition. O:I #97 live-main convergence applies to its explicitly named primary repository set; Quaternal Logic remains represented as the separately owned parallel product and is not a #97 dependency gate.",
   "release_manifest": {
     "path": "suite/manifest.json",
     "suite_version": "0.1.0-prelocal.2",
@@ -14,9 +14,9 @@
     {
       "id": "central",
       "repository": "https://github.com/EpiLogos/Central",
-      "revision": "48a89d4edba275454be1ec6bdbc61951568ec7fc",
-      "state": "accepted-main-with-active-flow-exception",
-      "note": "Current main includes current-machine↔Workcell, ProjectCentral authored ground, NOW/DAY, Agent governance, Living Wiki Source Change Horizon, and accepted native macOS/Ubuntu/Automation/Package/Configuration/Notification extensions. Central #93 / PR #95 Flow remains active development and is not silently included."
+      "revision": "31d54eb4a6202c89c7f60ec004654916133dea94",
+      "state": "accepted-main",
+      "note": "Current Central main includes current-machine↔Workcell, ProjectCentral authored ground, NOW/DAY, Agent governance, Living Wiki Source Change Horizon, accepted native host extensions, and the stable Project Flow source owner merged through PR #96."
     },
     {
       "id": "actuation",
@@ -30,14 +30,14 @@
       "repository": "https://github.com/EpiLogos/ai-kit",
       "revision": "e440153051d3b26481a369a4e53536056b54d3ec",
       "state": "accepted-main-with-active-branch-exceptions",
-      "note": "Current main includes V2/SessionSpace/Knowledge/ProjectCentral/praxis, evidence-backed harness admission, Living Knowledge impact/freshness and bounded Contemplate preflight/return validation. Credential, Explain/History, TUI parity and instruction-craft PRs remain active exceptions."
+      "note": "Current main includes V2/SessionSpace/Knowledge/ProjectCentral/praxis, evidence-backed harness admission, Living Knowledge impact/freshness and bounded Contemplate preflight/return validation. Flow #122/#123, credential, Explain/History, TUI parity and instruction-craft remain explicit owner development."
     },
     {
       "id": "software-factory",
       "repository": "https://github.com/EpiLogos/agent-system-design",
       "revision": "ec08c99a55a6320c6f59d3c73024b5d48063a989",
       "state": "accepted-main-with-active-research-exceptions",
-      "note": "Current main preserves the Factory↔Actuation ownership correction while active Deep QL, optional QL client and persistent-hosting/DeepSeek-host research remain explicit development lines."
+      "note": "Current main preserves the Factory↔Actuation ownership correction while active Deep QL, optional QL client and persistent-hosting/DeepSeek-host research remain explicit development lines. QL-dependent Factory consumers remain Factory-owned exceptions; they do not pull the QL owner programme into #97."
     },
     {
       "id": "workcell",
@@ -50,8 +50,8 @@
       "id": "quaternal-logic",
       "repository": "https://github.com/EpiLogos/QL-MEF",
       "revision": "30171fb9f3646a1ef6e306357503d8a9df4a8a1c",
-      "state": "accepted-main-with-active-branch-exceptions",
-      "note": "Current main includes optional bounded Living Wiki QL depth over the accepted QL/MEF substrate. R4/Q6, musical/harmonic and dedicated Epi/Pratibimba computational programmes remain explicit owner development and are exhaustively represented in the convergence ledger."
+      "state": "parallel-native-owner-exception",
+      "note": "QL-MEF remains the separately owned sixth product. This stable suite pin precedes the currently moving QL/Epi computational and musical development tranche. O:I #97 deliberately does not chase, converge, clean up, or gate on that owner field; its dedicated convergence session returns any later suite handoff."
     }
   ]
 }
