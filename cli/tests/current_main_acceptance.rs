@@ -74,6 +74,18 @@ fn text(bytes: &[u8]) -> String {
     String::from_utf8(bytes.to_vec()).unwrap()
 }
 
+fn snapshot_revision(snapshot: &str, product_id: &str) -> String {
+    let value: Value = serde_json::from_str(snapshot).unwrap();
+    value["products"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|product| product["id"] == product_id)
+        .and_then(|product| product["revision"].as_str())
+        .unwrap()
+        .to_owned()
+}
+
 #[cfg(unix)]
 #[test]
 fn stale_three_action_central_is_not_accepted_for_current_personal_ground() {
@@ -145,12 +157,9 @@ fn dev_status_reports_current_main_pins_not_release_snapshot() {
         .iter()
         .find(|row| row["id"] == "central")
         .unwrap();
-    assert_eq!(
-        central["accepted_current_main"],
-        "7ed02e66edd12de3318ad7de86f2f4650b8f0e7a"
-    );
-    assert_ne!(
-        central["accepted_current_main"],
-        "78a545214ad70e055fae38ccae2d78443112f283"
-    );
+
+    let accepted = snapshot_revision(include_str!("../../suite/mainline.json"), "central");
+    let released = snapshot_revision(include_str!("../../suite/manifest.json"), "central");
+    assert_eq!(central["accepted_current_main"], accepted);
+    assert_ne!(accepted, released);
 }
