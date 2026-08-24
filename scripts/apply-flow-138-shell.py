@@ -123,6 +123,103 @@ replace(
     "<button type=\"button\" disabled={busy !== '' || dirty} onClick={() => void bind()}>Bind current AgentSession</button>",
 )
 
+# A Flow selection carries both stable FlowRef and its owner SourceRef. Living
+# Knowledge remains keyed by native source/resource refs, so presentation matches
+# both without changing either identity.
+living_model = "desktop/ui/src/living-wiki-model.ts"
+replace(
+    living_model,
+    '''export function relatedLivingState(reading: LivingWikiDesktopReading, resourceRef?: string) {
+  if (!resourceRef) return { changed: [], affected: [], paths: [], pending: false };
+  const changed = reading.changed.filter((entry) => entry.source_ref === resourceRef);
+  const affected = [
+    ...reading.impact.direct.affected.filter(
+      (entry) => entry.resource === resourceRef || entry.source === resourceRef,
+    ),
+    ...reading.impact.transitive.filter(
+      (entry) => entry.resource === resourceRef || entry.root_source === resourceRef,
+    ),
+  ];
+  const paths = reading.impact.paths.filter(
+    (entry) => entry.resource === resourceRef || entry.root_source === resourceRef,
+  );
+  return {
+    changed,
+    affected,
+    paths,
+    pending: reading.impact.pending_integration.includes(resourceRef),
+  };
+}
+''',
+    '''export function relatedLivingState(
+  reading: LivingWikiDesktopReading,
+  resourceRef?: string,
+  sourceRef?: string,
+) {
+  const refs = new Set([resourceRef, sourceRef].filter((value): value is string => Boolean(value)));
+  if (!refs.size) return { changed: [], affected: [], paths: [], pending: false };
+  const changed = reading.changed.filter((entry) => refs.has(entry.source_ref));
+  const affected = [
+    ...reading.impact.direct.affected.filter(
+      (entry) => refs.has(entry.resource) || refs.has(entry.source),
+    ),
+    ...reading.impact.transitive.filter(
+      (entry) => refs.has(entry.resource) || refs.has(entry.root_source),
+    ),
+  ];
+  const paths = reading.impact.paths.filter(
+    (entry) => refs.has(entry.resource) || refs.has(entry.root_source),
+  );
+  const relatedResources = new Set([
+    ...refs,
+    ...affected.map((entry) => entry.resource),
+    ...paths.map((entry) => entry.resource),
+  ]);
+  return {
+    changed,
+    affected,
+    paths,
+    pending: reading.impact.pending_integration.some((resource) => relatedResources.has(resource)),
+  };
+}
+''',
+)
+
+living_ui = "desktop/ui/src/living-wiki.tsx"
+replace(
+    living_ui,
+    "    () => reading ? relatedLivingState(reading, selection?.ref) : null,\n    [reading, selection?.ref],\n",
+    "    () => reading ? relatedLivingState(reading, selection?.ref, selection?.provenance.source) : null,\n    [reading, selection?.ref, selection?.provenance.source],\n",
+)
+
+living_test = "desktop/ui/src/living-wiki-model.test.mjs"
+alias_test_anchor = "test('freshness language preserves moved-basis semantics instead of declaring falsehood', () => {\n"
+alias_test = '''test('FlowRef selection relates through its native owner SourceRef without identity collapse', () => {
+  const reading = fixture();
+  const sourceRef = 'central:source:project:test:notes/thread.md';
+  reading.changed[0].source_ref = sourceRef;
+  reading.impact.direct.changed_sources = [sourceRef];
+  reading.impact.direct.affected[0].source = sourceRef;
+  reading.impact.transitive[0].root_source = sourceRef;
+  reading.impact.paths[0].root_source = sourceRef;
+
+  const related = relatedLivingState(
+    reading,
+    'central:flow:project:test:thread',
+    sourceRef,
+  );
+  assert.equal(related.changed.length, 1);
+  assert.equal(related.affected.length, 2);
+  assert.equal(related.paths.length, 1);
+  assert.equal(related.pending, true);
+
+  const flowIdentityOnly = relatedLivingState(reading, 'central:flow:project:test:thread');
+  assert.equal(flowIdentityOnly.changed.length, 0);
+});
+
+'''
+replace(living_test, alias_test_anchor, alias_test + alias_test_anchor)
+
 # Register Flow commands in the native host without adding state stores.
 main = "desktop/src-tauri/src/main.rs"
 replace(main, "mod living;\n", "mod flow;\nmod living;\n")
