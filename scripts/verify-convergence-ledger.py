@@ -5,6 +5,12 @@ The original false-positive closure demonstrated that counts and green selected-
 checks do not prove convergence completeness. This verifier compares the *sets* of
 live GitHub refs with the checked-in disposition ledger.
 
+O:I #97's authored primary repository set is O:I, Central, AIKit, Software Factory,
+Actuation and Workcell. Quaternal Logic / Epi computational development is an
+explicit parallel owner programme: in-scope consumer branches that depend on it
+remain ledgered in their owning primary repository, while the QL-MEF development
+ref field itself is not imported into this convergence pass.
+
 Regular mode validates structure only. `--live` queries GitHub and requires exact
 coverage. `--closure` additionally refuses any item still marked closure_blocking.
 
@@ -34,7 +40,6 @@ REQUIRED_REPOSITORIES = {
     "EpiLogos/ai-kit",
     "EpiLogos/agent-system-design",
     "EpiLogos/Workcell",
-    "EpiLogos/QL-MEF",
 }
 ALLOWED = {
     "KEEP_ACTIVE_EXCEPTION",
