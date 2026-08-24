@@ -1,0 +1,26 @@
+name: Flow 138 shell integration
+
+on:
+  push:
+    branches:
+      - feat/flow-desktop-138
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: python3 scripts/apply-flow-138-shell.py
+      - name: Commit Flow native-shell composition
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "[FLOW] Wire native Flow shell operations"
+          git push origin HEAD:feat/flow-desktop-138
