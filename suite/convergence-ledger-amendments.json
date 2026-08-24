@@ -1,7 +1,7 @@
 {
   "schema": "oi.convergence-ledger-amendments/v1",
   "observed_at": "2026-08-24",
-  "reason": "Explicit concurrent movements after the 2026-08-24 base census. Closed PRs are removed from the live open-PR set; surviving merged branches remain ledgered with retirement dispositions; new Flow convergence refs are added with their actual current owners.",
+  "reason": "Explicit concurrent movements after the 2026-08-24 base census. Closed PRs are removed from the live open-PR set; surviving merged branches remain ledgered with retirement dispositions; new Flow convergence refs and internal dependency-harmonisation PRs are added with their actual current owners.",
   "repositories": [
     {
       "repository": "EpiLogos/O-I",
@@ -47,6 +47,14 @@
           "owner": "O:I #137/#138",
           "reason": "current-main Flow + Living Wiki + P2 convergence candidate against accepted owner mains",
           "reentry_condition": "exact-owner finalizer and remote conformance return an acceptance disposition",
+          "closure_blocking": false
+        },
+        {
+          "number": 147,
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "O:I #106/#135/#138 dependency harmonisation",
+          "reason": "internal reverse-direction PR bringing accepted O:I main into the P2/Living development branch before Flow convergence; head is native main, not a competing product candidate",
+          "reentry_condition": "P2/Living ancestry has absorbed current main and PR #146 becomes the sole current-main Flow convergence surface",
           "closure_blocking": false
         }
       ]
