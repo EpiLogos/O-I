@@ -1,5 +1,5 @@
 name: Flow 138 exact-owner finalize
-# exact-owner finalizer pulse after Flow shell transport hardening
+# corrected Flow/document-surface conformance pulse
 
 on:
   push:
@@ -55,6 +55,7 @@ jobs:
         run: |
           npm ci --prefix desktop/ui --no-audit --no-fund
           npm --prefix desktop/ui run build
+          node --test desktop/ui/src/flow-workbench.test.mjs
           node --test desktop/ui/src/living-wiki-model.test.mjs
           node --test desktop/ui/src/project-field-presentation.test.mjs
 
