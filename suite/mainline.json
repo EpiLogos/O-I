@@ -28,9 +28,9 @@
     {
       "id": "ai-kit",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "revision": "e440153051d3b26481a369a4e53536056b54d3ec",
+      "revision": "4b9b404c0603532e86c5652b7fd5062d2e344acf",
       "state": "accepted-main-with-active-branch-exceptions",
-      "note": "Current main includes V2/SessionSpace/Knowledge/ProjectCentral/praxis, evidence-backed harness admission, Living Knowledge impact/freshness and bounded Contemplate preflight/return validation. Flow #122/#123, credential, Explain/History, TUI parity and instruction-craft remain explicit owner development."
+      "note": "Current main includes V2/SessionSpace/Knowledge/ProjectCentral/praxis, evidence-backed harness admission, Living Knowledge impact/freshness, bounded Contemplate, and accepted Flow standing-context/Contemplate scope through PR #123. Credential, Explain/History, TUI parity and instruction-craft remain explicit owner development."
     },
     {
       "id": "software-factory",
@@ -44,7 +44,7 @@
       "repository": "https://github.com/EpiLogos/Workcell",
       "revision": "3949f8c5e8e9f75d1e7b34d10f119da2881e5496",
       "state": "accepted-main-with-current-world-readiness-exception",
-      "note": "Accepted main contains the current portable materialisation/control/fabric/model-serving/process/secret foundation; current-world context-composition readiness remains an explicit development branch."
+      "note": "Accepted main contains the current portable materialisation/control/fabric/model-serving/process/secret foundation; current-world composition is now consumed by accepted O:I CurrentWorld while Workcell's own readiness branch remains explicit owner development."
     },
     {
       "id": "quaternal-logic",
