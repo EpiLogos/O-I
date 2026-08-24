@@ -1,5 +1,5 @@
 name: Flow 138 exact-owner finalize
-# corrected Flow/document-surface conformance pulse
+# FlowRef-owner-SourceRef Living relation acceptance pulse
 
 on:
   push:
