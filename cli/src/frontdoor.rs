@@ -4,6 +4,9 @@ pub fn cli_main() -> ExitCode {
         return match print_suite_v2_help() {
             Ok(()) => {
                 println!();
+                println!("Current world:");
+                println!("  oi current-world [--json]  disclose the situated six-product composition and current machine/Workcell relation");
+                println!();
                 println!("Existing-world adoption:");
                 println!("  oi adopt PATH [--json]   inspect and preserve a heterogeneous existing world; return native-owner handoffs without mutation");
                 ExitCode::SUCCESS
@@ -13,6 +16,9 @@ pub fn cli_main() -> ExitCode {
                 ExitCode::from(2)
             }
         };
+    }
+    if let Some(code) = current_world_main() {
+        return code;
     }
     if let Some(code) = existing_world_main() {
         return code;
