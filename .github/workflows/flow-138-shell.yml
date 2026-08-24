@@ -86,7 +86,7 @@ jobs:
         run: |
           set -euo pipefail
           git rm .github/workflows/flow-138-shell.yml
-          git add -A
+          git add -u
           git config user.name 'Epii'
           git config user.email 'frank.g.taylor97@gmail.com'
           git commit -m '[FLOW] Finalize native Flow + Living Wiki composition'
