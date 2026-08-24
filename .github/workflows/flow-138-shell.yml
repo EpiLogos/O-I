@@ -1,4 +1,5 @@
 name: Flow 138 exact-owner finalize
+# exact-owner finalizer pulse after Flow shell transport hardening
 
 on:
   push:
