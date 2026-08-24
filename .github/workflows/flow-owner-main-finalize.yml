@@ -1,9 +1,9 @@
 name: Flow owner-main finalize
 
 on:
-  push:
+  pull_request:
     branches:
-      - feat/flow-desktop-138
+      - main
     paths:
       - '.github/workflows/flow-owner-main-finalize.yml'
 
@@ -14,6 +14,8 @@ jobs:
   finalize:
     runs-on: macos-15
     timeout-minutes: 45
+    env:
+      TRIGGER_HEAD: ${{ github.event.pull_request.head.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -60,8 +62,8 @@ jobs:
           set -euo pipefail
           git fetch origin feat/flow-desktop-138
           remote_head="$(git rev-parse origin/feat/flow-desktop-138)"
-          if [[ "$remote_head" != "$GITHUB_SHA" ]]; then
-            echo "branch moved during owner-main finalization: trigger=$GITHUB_SHA remote=$remote_head" >&2
+          if [[ "$remote_head" != "$TRIGGER_HEAD" ]]; then
+            echo "branch moved during owner-main finalization: trigger=$TRIGGER_HEAD remote=$remote_head" >&2
             exit 1
           fi
           git rm .github/workflows/flow-owner-main-finalize.yml
