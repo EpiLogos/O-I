@@ -73,21 +73,6 @@ replace(
 ''',
 )
 
-flow_contemplate = "desktop/core/src/flow_contemplate.rs"
-replace(flow_contemplate, "    use super::*;\n\n", "")
-replace(
-    flow_contemplate,
-    '''        let source = include_str!("flow_contemplate.rs");
-        assert!(source.contains("send_structured_agent_turn"));
-''',
-    '''        let source = include_str!("flow_contemplate.rs")
-            .split("\\n#[cfg(test)]")
-            .next()
-            .unwrap();
-        assert!(source.contains("send_structured_agent_turn"));
-''',
-)
-
 # Export exact AIKit Flow types needed by the native shell; no local redefinition.
 lib = "desktop/core/src/lib.rs"
 replace(
