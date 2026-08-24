@@ -1,11 +1,11 @@
 {
   "schema": "oi.convergence-ledger-amendments/v1",
   "observed_at": "2026-08-24",
-  "reason": "Explicit concurrent movements after the 2026-08-24 base census. Closed PRs are removed from the live open-PR set; surviving merged branches remain ledgered with retirement dispositions; new Flow convergence refs and internal dependency-harmonisation PRs are added with their actual current owners.",
+  "reason": "Explicit concurrent movements after the 2026-08-24 base census. Closed PRs and the current repair transport PR are removed from the durable post-merge open-PR set; surviving merged branches remain ledgered with retirement dispositions; new Flow convergence refs and internal dependency-harmonisation PRs are added with their actual current owners.",
   "repositories": [
     {
       "repository": "EpiLogos/O-I",
-      "remove_open_pull_requests": [133, 136],
+      "remove_open_pull_requests": [129, 133, 136],
       "branches": [
         {
           "name": "feat/current-world-context-frame",
@@ -27,8 +27,8 @@
           "name": "converge/flow-living-137-main",
           "disposition": "KEEP_ACTIVE_EXCEPTION",
           "owner": "O:I #137/#138 / PR #146",
-          "reason": "current-main convergence branch combining P2, accepted Living Wiki and Flow over accepted Central/AIKit Flow owners",
-          "reentry_condition": "exact-owner Flow finalizer and conformance complete, then select the current-main convergence cut",
+          "reason": "current-main convergence staging branch combining P2, accepted Living Wiki and Flow over accepted Central/AIKit Flow owners",
+          "reentry_condition": "PR #146 exact-owner Flow finalizer and conformance complete, then retire convergence staging",
           "closure_blocking": false
         }
       ],
@@ -54,7 +54,7 @@
           "disposition": "KEEP_ACTIVE_EXCEPTION",
           "owner": "O:I #106/#135/#138 dependency harmonisation",
           "reason": "internal reverse-direction PR bringing accepted O:I main into the P2/Living development branch before Flow convergence; head is native main, not a competing product candidate",
-          "reentry_condition": "P2/Living ancestry has absorbed current main and PR #146 becomes the sole current-main Flow convergence surface",
+          "reentry_condition": "P2/Living ancestry has absorbed current main and PR #146 remains the sole current-main Flow convergence surface",
           "closure_blocking": false
         }
       ]
