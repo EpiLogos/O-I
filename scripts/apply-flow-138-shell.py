@@ -27,6 +27,37 @@ replacement = insert + r'''
 '''
 replace(flow, insert, replacement)
 
+# Consumer-side proof that Flow placement is owner-described rather than captured
+# by the first-party ProjectCentral/now convention.
+test_anchor = '''    #[cfg(unix)]
+    #[test]
+    fn blank_create_and_human_write_use_exact_central_owner_actions() {
+'''
+test = r'''    #[test]
+    fn retained_notes_container_preserves_flow_identity_without_path_capture() {
+        let record = CentralFlowRecord {
+            flow_ref: "central:flow:project:test:notes-thread".into(),
+            source_ref: "central:source:project:test:notes/thread.md".into(),
+            path: "notes/2026-08-24-0340.md".into(),
+            created_at_unix_seconds: 1,
+            current_revision: "r7".into(),
+            lifecycle: "active".into(),
+            title: None,
+            scope_ref: "project:test".into(),
+            privacy: "inherits-source-authority".into(),
+            revisions: vec![],
+        };
+        let descriptor = CentralFlowClient::descriptor(&record).unwrap();
+        assert_eq!(descriptor.flow_ref.as_str(), record.flow_ref);
+        assert_eq!(descriptor.source_ref.as_str(), record.source_ref);
+        assert_eq!(descriptor.revision.as_str(), "r7");
+        assert_eq!(descriptor.container_hint.as_deref(), Some("notes/2026-08-24-0340.md"));
+        assert_eq!(descriptor.provider.as_str(), CENTRAL_FLOW_PROVIDER_REF);
+    }
+
+'''
+replace(flow, test_anchor, test + test_anchor)
+
 # Export exact AIKit Flow types needed by the native shell; no local redefinition.
 lib = "desktop/core/src/lib.rs"
 replace(
@@ -43,6 +74,45 @@ replace(living, "fn current_model_runtime() -> Result<", "pub(crate) fn current_
 shell_flow = "desktop/src-tauri/src/flow.rs"
 replace(shell_flow, "#[serde(default)] authority_refs: Vec<FlowAuthorityInput>,", "authority_refs: Option<Vec<FlowAuthorityInput>>,")
 replace(shell_flow, "let authority_refs = authority_refs_for(&standing, authority_refs)?;", "let authority_refs = authority_refs_for(&standing, authority_refs.unwrap_or_default())?;", count=2)
+
+# Flow uses the shared native-document Canvas Surface. Flow-specific code retains
+# source/context chrome only; owner revision/save/conflict semantics stay outside
+# the editor component.
+ui = "desktop/ui/src/flow-workbench.tsx"
+replace(
+    ui,
+    "import { type WorkbenchEvidence, type WorkbenchSemanticRef } from './workbench-native';\n",
+    "import { NativeDocumentEditor } from './native-document-editor';\nimport { type WorkbenchEvidence, type WorkbenchSemanticRef } from './workbench-native';\n",
+)
+replace(
+    ui,
+    "methods: Array<{ method: string; source: string; revision?: string }>;
+",
+    "methods: Array<{ method: string; resolution: unknown }>;
+",
+)
+replace(
+    ui,
+    '''      <textarea
+        className="oi-flow__editor"
+        aria-label="Current Flow"
+        value={buffer}
+        onChange={(event) => setBuffer(event.target.value)}
+        placeholder=""
+        spellCheck
+      />''',
+    '''      <NativeDocumentEditor
+        className="oi-flow__editor"
+        ariaLabel="Current Flow"
+        value={buffer}
+        onChange={setBuffer}
+      />''',
+)
+replace(
+    ui,
+    "<button type=\"button\" disabled={busy !== ''} onClick={() => void bind()}>Bind current AgentSession</button>",
+    "<button type=\"button\" disabled={busy !== '' || dirty} onClick={() => void bind()}>Bind current AgentSession</button>",
+)
 
 # Register Flow commands in the native host without adding state stores.
 main = "desktop/src-tauri/src/main.rs"
