@@ -2,9 +2,9 @@ use std::env;
 use std::path::PathBuf;
 
 use oi_desktop_core::{
-    load_model_runtime, read_central_change_horizon, AcpLivingContemplateExecutor, BridgeCallClass,
-    BridgeCaller, BridgePolicy, NativeModelRuntimeReadModel,
-    LIVING_CONTEMPLATE_TRANSPORT_VERSION,
+    load_model_runtime, project_agent_wiki_plan, read_central_change_horizon,
+    AcpLivingContemplateExecutor, BridgeCallClass, BridgeCaller, BridgePolicy,
+    NativeModelRuntimeReadModel, LIVING_CONTEMPLATE_TRANSPORT_VERSION,
 };
 use serde_json::{json, Value};
 use tauri::State;
@@ -106,17 +106,13 @@ pub(crate) fn living_contemplate(
         .map_err(|error| error.to_string())?;
 
     let result = outcome.outcome;
+    let agent_wiki = project_agent_wiki_plan(&result.agent_wiki);
     Ok(json!({
         "version": LIVING_CONTEMPLATE_PROJECTION_VERSION,
         "transport": LIVING_CONTEMPLATE_TRANSPORT_VERSION,
         "agent_session": canonical_session,
         "preflight": outcome.preflight,
-        "agent_wiki": {
-            "current_index_revision": result.agent_wiki.current_index_revision,
-            "stale_resources": result.agent_wiki.stale_resources,
-            "next_objects": result.agent_wiki.next_objects,
-            "human_source_proposals": result.agent_wiki.human_source_proposals,
-        },
+        "agent_wiki": agent_wiki,
         "integrative_readings": result.integrative_readings,
         "candidates": result.candidates,
         "tensions": result.tensions,
