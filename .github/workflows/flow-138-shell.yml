@@ -1,26 +1,80 @@
-name: Flow 138 shell integration
+name: Flow 138 exact-owner finalize
 
 on:
   push:
     branches:
       - feat/flow-desktop-138
+    paths:
+      - '.github/workflows/flow-138-shell.yml'
 
 permissions:
   contents: write
 
 jobs:
-  apply:
-    if: github.actor != 'github-actions[bot]'
-    runs-on: ubuntu-latest
+  finalize:
+    runs-on: macos-15-arm64
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: feat/flow-desktop-138
           fetch-depth: 0
-      - run: python3 scripts/apply-flow-138-shell.py
-      - name: Commit Flow native-shell composition
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+          components: rustfmt, clippy
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Apply native Flow shell composition
+        run: python3 scripts/apply-flow-138-shell.py
+
+      - name: Pin accepted AIKit Flow owner main
+        shell: python
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          from pathlib import Path
+          path = Path('desktop/core/Cargo.toml')
+          text = path.read_text()
+          old = 'e440153051d3b26481a369a4e53536056b54d3ec'
+          new = '4b9b404c0603532e86c5652b7fd5062d2e344acf'
+          if old not in text and new not in text:
+              raise SystemExit('AIKit owner pin moved unexpectedly')
+          path.write_text(text.replace(old, new))
+
+      - name: Resolve exact native dependency graph
+        run: |
+          cargo generate-lockfile --manifest-path desktop/src-tauri/Cargo.toml
+          cargo fmt --manifest-path desktop/core/Cargo.toml
+          cargo fmt --manifest-path desktop/src-tauri/Cargo.toml
+
+      - name: Build and test Flow + Living workbench
+        run: |
+          npm ci --prefix desktop/ui --no-audit --no-fund
+          npm --prefix desktop/ui run build
+          node --test desktop/ui/src/living-wiki-model.test.mjs
+          node --test desktop/ui/src/project-field-presentation.test.mjs
+
+      - name: Test exact owner-composition core
+        run: |
+          cargo test --manifest-path desktop/core/Cargo.toml --all-targets
+          cargo clippy --manifest-path desktop/core/Cargo.toml --all-targets -- -D warnings
+
+      - name: Prove native shell on generated lock
+        run: cargo check --manifest-path desktop/src-tauri/Cargo.toml --locked --target aarch64-apple-darwin
+
+      - name: Preserve diff hygiene
+        run: git diff --check
+
+      - name: Commit exact-owner Flow integration and retire finalizer
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/flow-138-shell.yml
           git add -A
-          git commit -m "[FLOW] Wire native Flow shell operations"
+          git config user.name 'Epii'
+          git config user.email 'frank.g.taylor97@gmail.com'
+          git commit -m '[FLOW] Finalize native Flow + Living Wiki composition'
           git push origin HEAD:feat/flow-desktop-138
