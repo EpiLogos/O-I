@@ -10,6 +10,7 @@ use std::sync::Mutex;
 
 use aikit_adapters::ProjectCentralFilesystemBinding;
 use aikit_core::model_runtime::ModelRuntimeReadModel;
+use aikit_core::resource::MemoryResourceIndex;
 use aikit_core::{
     explicit_bounded_contemplate, explicit_flow_contemplate, first_party_flow_method,
     first_party_flow_resource_records, flow_contemplate_preflight, resolve_praxis,
@@ -18,10 +19,9 @@ use aikit_core::{
     FlowAuthorityRef, FlowContemplateExecutor, FlowContemplateOutcome, FlowContemplatePreflight,
     FlowContemplateRequest, FlowStandingContext, KnowledgeAddress, KnowledgeApplication,
     KnowledgeExplanation, KnowledgeProviderStatus, KnowledgeReading, KnowledgeRelationView,
-    KnowledgeSearchResult, MemoryResourceIndex, ProjectCentralBinding, ProjectReflectionReadModel,
-    QlRefractionRequest, ResourceRef, Result as AikitResult, SemanticWikiIndex,
-    SemanticWikiProvider, WikiObject, DEFAULT_CONTEMPLATE_OBJECT_BUDGET,
-    DEFAULT_CONTEMPLATE_RELATION_DEPTH,
+    KnowledgeSearchResult, ProjectCentralBinding, ProjectReflectionReadModel, QlRefractionRequest,
+    ResourceRef, Result as AikitResult, SemanticWikiIndex, SemanticWikiProvider, WikiObject,
+    DEFAULT_CONTEMPLATE_OBJECT_BUDGET, DEFAULT_CONTEMPLATE_RELATION_DEPTH,
 };
 use aikit_store::{AikitHome, KnowledgeApplicationReceipt, KnowledgeApplicationStore};
 use serde::Serialize;
