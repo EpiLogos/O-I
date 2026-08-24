@@ -107,6 +107,8 @@ jobs:
           suite = json.load(open(sys.argv[6]))
           verify = json.load(open(sys.argv[7]))
           receipt = json.load(open(sys.argv[8]))
+          mainline = json.load(open("suite/mainline.json"))
+          release = json.load(open("suite/manifest.json"))
 
           required = [
               "Control/user",
@@ -127,7 +129,10 @@ jobs:
           central = state["modules"]["central"]
           assert set(central) <= {"id", "public_name", "native_executable", "alias", "version", "docs", "skill", "root"}
           assert central["alias"] == "ctrl"
-          assert central["version"] == "7ed02e66edd12de3318ad7de86f2f4650b8f0e7a"
+          current_central = next(item for item in mainline["products"] if item["id"] == "central")["revision"]
+          released_central = next(item for item in release["products"] if item["id"] == "central")["revision"]
+          assert central["version"] == current_central
+          assert current_central != released_central
 
           central_status = next(item for item in status["surfaces"] if item["id"] == "central")
           assert central_status["state"] == "registered"
