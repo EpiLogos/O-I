@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { invoke } from '@tauri-apps/api/core';
 import '@epilogos/oi-design-system/tokens.css';
 import './shell.css';
+import type { CurrentWorldReading } from './current-world';
 import { RuntimeObservationSurface } from './runtime-observation';
 import { NativeSearchCommand } from './native-command';
 import {
@@ -41,6 +42,7 @@ type Snapshot = {
   destinations: Destination[];
   surfaces: Surface[];
   selection?: SemanticRef;
+  current_world?: CurrentWorldReading;
   warnings: string[];
 };
 
@@ -251,6 +253,8 @@ function App() {
           binding={binding}
           contributions={contributions}
           factoryBuild={factoryBuild}
+          selection={snapshot.selection}
+          currentWorld={snapshot.current_world}
           onSelect={selectWorkbenchRef}
           onRefreshFactory={refreshFactoryBuild}
         />
@@ -378,6 +382,8 @@ function RootCanvasSurface({
   binding,
   contributions,
   factoryBuild,
+  selection,
+  currentWorld,
   onSelect,
   onRefreshFactory,
 }: {
@@ -385,6 +391,8 @@ function RootCanvasSurface({
   binding: SurfacePresentationBinding;
   contributions: Contribution[];
   factoryBuild: FactoryBuildSnapshot | null;
+  selection?: WorkbenchSemanticRef;
+  currentWorld?: CurrentWorldReading;
   onSelect: (subject: WorkbenchSemanticRef, evidence: WorkbenchEvidence) => Promise<void>;
   onRefreshFactory: () => Promise<void>;
 }) {
@@ -397,7 +405,7 @@ function RootCanvasSurface({
         <p className="oi-eyebrow">Professional host · inherited application substrate</p>
         <h1>The local O:I workbench.</h1>
         <p className="oi-lead">Regions, tabs, splits and presentation focus compose around the same stable refs; SessionSpace, AgentSession and Knowledge remain AIKit/native application state.</p>
-        <WorkbenchSurface onSelect={onSelect} />
+        <WorkbenchSurface selection={selection} currentWorld={currentWorld} onSelect={onSelect} />
       </>
     );
   }
