@@ -71,6 +71,6 @@ mod tests {
         assert!(source.contains("send_structured_agent_turn"));
         assert!(source.contains("parse_flow_contemplate_generated"));
         assert!(!source.contains(concat!("AikitAgentSurface", "::open")));
-        assert!(!source.contains("Command::new"));
+        assert!(!source.contains(concat!("Command", "::new")));
     }
 }
