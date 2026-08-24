@@ -2,7 +2,7 @@
 
 Tracking: #131 · #132 · Central #87 · desktop programme #103
 
-O:I now has one whole-level reading for the world presently being inhabited. It composes native product presence and current material context without replacing the product-owned state beneath it.
+O:I has one whole-level reading for the world presently being inhabited. It composes native product presence and current material context without replacing the product-owned state beneath it.
 
 ```text
 0  Central           persistent ground / potential
@@ -30,6 +30,8 @@ Workcell / P4
 ```
 
 A maximal active composition is reported as `cf5`. Partial compositions retain their exact present positions and remain usable as situated worlds in their actual form.
+
+Quaternal Logic remains its own product and owner. This six-position reading does not make the moving QL-MEF development programme a dependency gate for Central, Actuation, AIKit, Factory, Workcell, or O:I #97 convergence. `cf5` reports the actual composition that is present; it does not transfer QL ownership into O:I.
 
 ## First local world
 

@@ -1,4 +1,4 @@
-name: Full suite preflight
+name: Released suite preflight
 
 on:
   pull_request:
@@ -51,7 +51,7 @@ jobs:
       - name: Build locked O:I CLI
         run: cargo build --manifest-path cli/Cargo.toml --bin oi --locked
 
-      - name: Install exact six-product release suite twice
+      - name: Install immutable six-product release suite twice
         shell: bash
         run: |
           set -euo pipefail
@@ -81,7 +81,7 @@ jobs:
           test "$(cat "$ROOT/Work/WORK-SENTINEL.txt")" = "ordinary-work-sentinel"
           jq -e '.products | to_entries | all(.value.attestation_locally_verified == true)' "$RUNNER_TEMP/installed-first.json"
 
-      - name: Status and portable doctor match the accepted manifest
+      - name: Release status and doctor match immutable release manifest
         shell: bash
         run: |
           set -euo pipefail
@@ -104,6 +104,23 @@ jobs:
             test "$actual" = "$expected"
           done
 
+      - name: Release truth and current-main truth remain explicitly distinct
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/verify-mainline-snapshot.py
+          python3 - <<'PY'
+          import json
+          release = json.load(open('suite/manifest.json'))
+          current = json.load(open('suite/mainline.json'))
+          release_by_id = {p['id']: p['revision'] for p in release['products']}
+          current_by_id = {p['id']: p['revision'] for p in current['products']}
+          assert set(release_by_id) == set(current_by_id)
+          assert any(release_by_id[k] != current_by_id[k] for k in release_by_id), (
+              'historical release and current-main source world unexpectedly collapsed into one revision set'
+          )
+          PY
+
       - name: Development launch affordances resolve
         shell: bash
         run: |
@@ -114,7 +131,7 @@ jobs:
           "$OI" web --check
           "$OI" app --check
 
-      - name: Developer federation includes O:I and fails closed on unsafe adoption
+      - name: Developer federation reports current-main truth and fails closed on unsafe state
         shell: bash
         run: |
           set -euo pipefail
@@ -125,12 +142,17 @@ jobs:
 
           ln -s "$GITHUB_WORKSPACE" "$ROOT/Work/O-I"
           "$OI" dev status --json > "$RUNNER_TEMP/dev-status.json"
-          jq -e '.schema == "oi.dev-status/v1" and (.repos | length == 7) and any(.repos[]; .id == "oi") and any(.repos[]; .id == "central")' "$RUNNER_TEMP/dev-status.json"
+          jq -e '.schema == "oi.current-main-dev-status/v1" and (.repos | length == 7) and any(.repos[]; .id == "oi") and any(.repos[]; .id == "central")' "$RUNNER_TEMP/dev-status.json"
 
           "$OI" dev build oi
           "$OI" dev test oi
-          "$OI" dev install oi
-          test -x "$OI_DATA_HOME/bin/oi"
+
+          # Pull-request CI is a detached merge ref, not accepted O:I main.  It must
+          # never be installable/registrable under the label "current-main".
+          if "$OI" dev install oi; then
+            echo 'detached PR/feature checkout was incorrectly accepted as current-main installation' >&2
+            exit 1
+          fi
 
           if "$OI" dev adopt central "$ROOT"; then
             echo 'Central self-nesting adoption unexpectedly succeeded' >&2
@@ -166,27 +188,6 @@ jobs:
           test -d "$LINKED/.git"
           test ! -e "$ROOT/Work/Workcell"
 
-      - name: Snapshot and receipt are views over the Suite Manifest
-        shell: bash
-        run: |
-          set -euo pipefail
-          export OI_HOME="$RUNNER_TEMP/oi-config"
-          export OI_DATA_HOME="$RUNNER_TEMP/oi-data"
-          OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
-          SNAPSHOT_ARGS=(--output "$RUNNER_TEMP/full-suite-snapshot.json" --require-full)
-          while IFS=$'\t' read -r id revision; do
-            SNAPSHOT_ARGS+=(--select "$id=$revision" --accepted-mainline "$id=$revision")
-          done < <(jq -r '.products[] | [.id, .revision] | @tsv' suite/manifest.json)
-
-          "$OI" snapshot "${SNAPSHOT_ARGS[@]}"
-          "$OI" verify \
-            --snapshot "$RUNNER_TEMP/full-suite-snapshot.json" \
-            --receipt "$RUNNER_TEMP/full-suite-composition-receipt.json" \
-            --require-full
-
-          jq -e '.kind == "oi.suite-snapshot/v1" and .completeness == "full-mainline" and (.surfaces | length == 6)' "$RUNNER_TEMP/full-suite-snapshot.json"
-          jq -e '.kind == "oi.composition-receipt/v1" and .result == "prelocal-passed" and (.surfaces | length == 6)' "$RUNNER_TEMP/full-suite-composition-receipt.json"
-
       - name: Bounded cleanup preserves human ground
         shell: bash
         run: |
@@ -205,10 +206,10 @@ jobs:
           test ! -e "$OI_DATA_HOME/cache"
           test ! -e "$ROOT/.central/oi/managed"
 
-      - name: Upload pre-local evidence
+      - name: Upload released-suite evidence
         uses: actions/upload-artifact@v4
         with:
-          name: oi-first-suite-preflight-${{ github.sha }}
+          name: oi-released-suite-preflight-${{ github.sha }}
           path: |
             ${{ runner.temp }}/manifest.json
             ${{ runner.temp }}/status.json
@@ -216,8 +217,6 @@ jobs:
             ${{ runner.temp }}/verify.json
             ${{ runner.temp }}/installed-first.json
             ${{ runner.temp }}/dev-status.json
-            ${{ runner.temp }}/full-suite-snapshot.json
-            ${{ runner.temp }}/full-suite-composition-receipt.json
             ${{ runner.temp }}/composition-first.json
             ${{ runner.temp }}/composition-second.json
           if-no-files-found: error

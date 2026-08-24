@@ -39,17 +39,18 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 if [ "${1:-}" = "action.list" ] || { [ "${1:-}" = "action" ] && [ "${2:-}" = "list" ]; }; then
-  printf '%s\n' '{"ok":true,"status":"success","action":"action.list","data":{"actions":[{"id":"action.list"},{"id":"central.init"},{"id":"central.doctor"}]}}'
+  printf '%s\n' '{"ok":true,"status":"success","action":"action.list","data":{"actions":[{"id":"action.list"},{"id":"central.init"},{"id":"central.doctor"},{"id":"projectcentral.inspect"},{"id":"projectcentral.doctor"},{"id":"projectcentral.init"}]}}'
   exit 0
 fi
 if [ "${1:-}" = "init" ]; then
   if [ "__INIT_STATUS__" != "0" ]; then exit __INIT_STATUS__; fi
-  /bin/mkdir -p "$ROOT/Control/user" "$ROOT/Control/agents" "$ROOT/Control/machines" "$ROOT/.central" "$ROOT/Work"
+  /bin/mkdir -p "$ROOT/Control/user" "$ROOT/Control/agents/governance" "$ROOT/Control/agents/wiki" "$ROOT/Control/machines" "$ROOT/.central" "$ROOT/Work"
+  printf '%s\n' '{"schema":"okf-wiki/v1","space_ref":"central:wiki:root","sources":[]}' > "$ROOT/Control/agents/wiki/wiki.json"
   printf '%s\n' '{"ok":true,"status":"success","action":"central.init","data":{}}'
   exit 0
 fi
 if [ "${1:-}" = "doctor" ]; then
-  if [ -d "$ROOT/Control/user" ] && [ -d "$ROOT/Control/agents" ] && [ -d "$ROOT/Control/machines" ] && [ -d "$ROOT/.central" ] && [ -d "$ROOT/Work" ]; then
+  if [ -d "$ROOT/Control/user" ] && [ -d "$ROOT/Control/agents/governance" ] && [ -d "$ROOT/Control/agents/wiki" ] && [ -f "$ROOT/Control/agents/wiki/wiki.json" ] && [ -d "$ROOT/Control/machines" ] && [ -d "$ROOT/.central" ] && [ -d "$ROOT/Work" ]; then
     printf '%s\n' '{"ok":true,"status":"success","action":"central.doctor","data":{"valid":true}}'
     exit 0
   fi
@@ -263,16 +264,22 @@ fn init_delegates_to_real_central_shape_and_is_idempotent() {
     }
     for relative in [
         "Control/user",
-        "Control/agents",
+        "Control/agents/governance",
+        "Control/agents/wiki",
         "Control/machines",
         ".central",
         "Work",
     ] {
         assert!(ground.join(relative).is_dir(), "missing {relative}");
     }
-    for relative in ["Control/user", "Control/agents", "Control/machines"] {
+    for relative in [
+        "Control/user",
+        "Control/agents/governance",
+        "Control/machines",
+    ] {
         assert_eq!(fs::read_dir(ground.join(relative)).unwrap().count(), 0);
     }
+    assert!(ground.join("Control/agents/wiki/wiki.json").is_file());
     let state: Value =
         serde_json::from_slice(&fs::read(home.path().join("composition.json")).unwrap()).unwrap();
     assert_eq!(state["personal_ground"], ground.display().to_string());

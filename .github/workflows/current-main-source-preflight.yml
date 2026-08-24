@@ -1,0 +1,47 @@
+name: Current-main source preflight
+
+on:
+  pull_request:
+    paths:
+      - 'surfaces.json'
+      - 'suite/mainline.json'
+      - 'suite/manifest.json'
+      - 'scripts/verify-current-main-source.py'
+      - '.github/workflows/current-main-source-preflight.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  current-source:
+    name: current-source / ${{ matrix.product }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        # O:I #97 primary live-main source owners. Quaternal Logic remains the
+        # separately owned sixth product and is intentionally not a #97 live-main gate.
+        product:
+          - central
+          - actuation
+          - ai-kit
+          - software-factory
+          - workcell
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: Test exact current in-scope native-main source
+        run: >-
+          python3 scripts/verify-current-main-source.py
+          --product '${{ matrix.product }}'
+          --receipt '${{ runner.temp }}/current-main-${{ matrix.product }}.json'
+      - name: Upload exact-source evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-main-${{ matrix.product }}
+          path: ${{ runner.temp }}/current-main-${{ matrix.product }}.json
+          if-no-files-found: warn

@@ -2,11 +2,23 @@
 
 {O:I} is composable. The `oi` binary installs the shared disclosure/composition layer; each product remains independently installable and continues to own its own configuration and runtime state.
 
+Two installation truths are deliberately kept separate:
+
+```text
+immutable released-artifact suite
+    a reproducible historical release, with fixed artifacts/digests
+
+current native-main source suite
+    the accepted source world used for development and the #97 physical handoff
+```
+
+A release remains useful after development advances. It must not be presented as the current development world merely because its artifacts still verify.
+
 ## Install the `oi` command
 
 ### npm-formatted native distribution
 
-The repository now defines `@epi-logos/oi` as the public distribution package for the native Rust CLI. It is a thin installer/launcher over O:I's prebuilt release artifacts, not a JavaScript reimplementation of `oi` and not the `oi.package/v1` extension envelope.
+The repository defines `@epi-logos/oi` as the public distribution package for the native Rust CLI. It is a thin installer/launcher over O:I's prebuilt release artifacts, not a JavaScript reimplementation of `oi` and not the `oi.package/v1` extension envelope.
 
 The `oi-v0.1.0-prelocal.4` release line publishes the npm package tarball beside the native binary archives. Once that release exists, the package can be installed without a repository checkout or Rust toolchain:
 
@@ -57,6 +69,8 @@ bash cli/install.sh
 
 The helper installs the built binary under a user-owned prefix and links `oi` into `~/.local/bin` by default. `OI_BIN_DIR` and `OI_CARGO_ROOT` can override those locations.
 
+For the current development world, use the checked-in `suite/mainline.json` / `surfaces.json` source pins and the `oi dev` flow below. `suite/manifest.json` remains the immutable historical release manifest and is not the authority for current source HEADs.
+
 ## First encounter
 
 After `oi` itself is installed, establish or discover the native personal ground:
@@ -69,21 +83,96 @@ oi ctrl doctor --json
 oi ctrl action list --json
 ```
 
-That is the base bootstrap. `oi install central` first looks for a compatible existing `ctrl`; if it finds one, it registers it. Otherwise it follows Central's own Cargo source-install contract at the pinned tested revision. O:I records only composition/handoff metadata.
+`oi install central` now treats the current ProjectCentral contract as the compatibility floor for the current-main path. An older `ctrl` exposing only the historical bootstrap trio is not accepted as the #97 current Central. If a current compatible executable is not present, O:I installs the exact Central source revision recorded by the current surface descriptor and verifies the resulting executable before registering it.
 
-`oi init --personal-ground` requires a real compatible Central surface and delegates initialization to native `ctrl`. It never synthesizes a partial imitation of Central. A fresh root is created by Central itself with:
+`oi init --personal-ground` delegates initialization to that native Central and verifies the current root/Wiki relation. A current fresh root contains:
 
 ```text
-Control/user/
-Control/agents/
-Control/machines/
+Control/
+├── user/
+├── agents/
+│   ├── governance/
+│   └── wiki/
+│       └── wiki.json
+└── machines/
 .central/
 Work/
 ```
 
-The Control roots start empty. O:I does not generate personal profiles, preferences, machine facts, or agent rules. An agent can later help author durable Control through Central's Control-maintenance or Machine-declaration Skills, with explicit human acceptance before durable mutation.
+`Control/agents/wiki/wiki.json` is the Central root Agent-Wiki federation source. O:I does not synthesize this structure itself and does not fabricate ProjectCentral identity, authored source, machine facts, or Agent governance.
 
 Because `oi ctrl ...` is a transparent alias, a non-default personal-ground path should be passed to native `ctrl` with `--root` (or configured through Central's own root mechanism). The simple sequence above uses the native default `$HOME/Central`.
+
+## #97 current-main workstation handoff
+
+The physical acceptance is useful only after the software world being tested is known to be the intended current world. The handoff therefore begins with source truth, not provider/hardware tests.
+
+Preserve any local work first. Do not reset, clean, overwrite, or move a dirty/diverged checkout merely to make this sequence pass. Reconcile unique local work explicitly, then establish the intended source world under Central `Work/`.
+
+The expected developer source locations are:
+
+```text
+$HOME/Central/Work/O-I
+$HOME/Central/Work/Central
+$HOME/Central/Work/Actuation
+$HOME/Central/Work/ai-kit
+$HOME/Central/Work/Software-Factory   # historical agent-system-design remote remains accepted
+$HOME/Central/Work/Workcell
+$HOME/Central/Work/Quaternal-Logic   # historical QL-MEF path is also recognised
+```
+
+Once the local repositories have been reconciled safely:
+
+```sh
+oi dev status --json
+```
+
+This reports each checkout against the **current native-main source pin**, not the immutable release SHA. Then:
+
+```sh
+oi dev sync
+```
+
+fetches/prunes every source and only fast-forwards a clean, non-diverged checkout. Dirty or locally-ahead work is preserved; diverged history is refused rather than rewritten.
+
+Exercise the current source itself:
+
+```sh
+oi dev test central
+oi dev test actuation
+oi dev test ai-kit
+oi dev test software-factory
+oi dev test workcell
+oi dev test quaternal-logic
+```
+
+Build/register the current native source world where appropriate:
+
+```sh
+oi dev install central
+oi dev install ai-kit
+oi dev install workcell
+```
+
+or use `oi dev install <product>` for the current-source registration supported by that product contract.
+
+The software-world gate immediately before physical/provider acceptance is:
+
+```sh
+oi dev acceptance --json
+```
+
+It requires the local O:I + six-product source world to be present, on `main`, clean, non-diverged and at the accepted current-main revisions; it also requires a ProjectCentral-capable Central and the current personal-root/Wiki shape. A failure here means the physical test is pointed at the wrong software world and should not be reinterpreted as a hardware/provider result.
+
+After that software-world gate, Central owns the recursive Project binding. For each existing Work project, including O:I, use Central's native ProjectCentral inspection/plan/apply/doctor path rather than shell-created metadata. O:I already carries its human-requested learning aperture at:
+
+```text
+Work/O-I/ProjectCentral/user/learnings/
+```
+
+Central may create/bind the surrounding `ProjectCentral/project.json`, canonical Agent Wiki and root federation without replacing that source material.
+
+Only then do the genuinely physical gates become meaningful: macOS-native/Raycast/Shortcuts/provider behavior on the reference workstation, Workcell materialisation on the Ubuntu reference machine, and private credential/network/GPU/model-provider relations. Those observations are returned evidence about the current software world, not substitutes for establishing it.
 
 ## Add existing installations
 
@@ -98,13 +187,13 @@ oi register quaternal-logic --root /path/to/QL-MEF
 
 A registration stores only facts required to find and describe the native surface. It does not import or rewrite product configuration.
 
-For Central specifically, `oi install central` is preferable when compatibility is not already known because it verifies `ctrl --version` and the required structured Actions before registering an existing executable.
+For Central specifically, `oi install central` is preferable when compatibility is not already known because the current-main route verifies the ProjectCentral-capable Action surface before accepting an existing executable.
 
 ## Install other surfaces through `oi`
 
-`oi install <module>` only follows installation mechanisms verified in the corresponding live product descriptor. AIKit also has a verified Cargo source-install route. The Agent Runtime, Software Factory, Workcell, and Quaternal Logic remain development/library surfaces rather than released CLIs; O:I does not invent installers or aliases for them.
+Released-artifact installation and current-source development remain distinct. `oi install [PRODUCT ...]` on the released-suite path installs immutable accepted artifacts described by `suite/manifest.json`. `oi dev ...` operates over the current native source world and uses the current mainline source pins.
 
-The wider system can therefore grow only as needed: use any agent runtime from the valid Central ground, then add AIKit or the other product surfaces when their capability is useful.
+Do not infer from a green released-artifact doctor that a developer checkout is current, and do not rewrite historical release metadata to make it appear current.
 
 ## Composition state
 
@@ -116,10 +205,10 @@ The local composition is a small JSON file, normally:
 
 Use `OI_HOME` to place the state elsewhere or `XDG_CONFIG_HOME` for the standard XDG location. Managed command artifacts installed by O:I can live beside that state, but product configuration and runtime state remain in the native product.
 
-Run `oi status --json` to inspect exactly what is registered and how each surface resolves.
+Run `oi status --json` to inspect registered/runtime composition. Run `oi dev status --json` when the question is whether the developer source world matches the current accepted mains.
 
 ## Failure behavior
 
-Installation and initialization commit composition metadata only after the native operation succeeds. A failed Central source install leaves prior composition metadata unchanged. A failed Central initialization does not record a false personal ground.
+Installation and initialization commit composition metadata only after the native operation succeeds. A failed current Central source install leaves prior composition metadata unchanged. A failed Central initialization does not record a false personal ground. An old Central executable is not accepted merely because it can perform the historical bootstrap trio.
 
-The setup rule is conservative: discover before installing, register before duplicating, and never turn the composition layer into the product that owns the operation.
+The setup rule is conservative: discover before installing, preserve before moving, make source/release standing explicit, delegate native ownership, and require the software-world gate before interpreting physical results.
