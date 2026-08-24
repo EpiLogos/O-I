@@ -58,6 +58,36 @@ test = r'''    #[test]
 '''
 replace(flow, test_anchor, test + test_anchor)
 
+# Source-audit tests inspect production code only. Fixture implementations inside
+# the test module may legitimately use std::fs, and the forbidden spellings in
+# assertions must not make the audit match itself.
+replace(
+    flow,
+    '''        let source = include_str!("flow.rs");
+        assert!(!source.contains("fs::write"));
+        assert!(!source.contains("OpenOptions"));
+''',
+    '''        let source = include_str!("flow.rs").split("\\n#[cfg(test)]").next().unwrap();
+        assert!(!source.contains("fs::write"));
+        assert!(!source.contains("OpenOptions"));
+''',
+)
+
+flow_contemplate = "desktop/core/src/flow_contemplate.rs"
+replace(flow_contemplate, "    use super::*;\n\n", "")
+replace(
+    flow_contemplate,
+    '''        let source = include_str!("flow_contemplate.rs");
+        assert!(source.contains("send_structured_agent_turn"));
+''',
+    '''        let source = include_str!("flow_contemplate.rs")
+            .split("\\n#[cfg(test)]")
+            .next()
+            .unwrap();
+        assert!(source.contains("send_structured_agent_turn"));
+''',
+)
+
 # Export exact AIKit Flow types needed by the native shell; no local redefinition.
 lib = "desktop/core/src/lib.rs"
 replace(
