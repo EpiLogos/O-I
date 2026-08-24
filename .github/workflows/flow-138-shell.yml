@@ -41,25 +41,6 @@ jobs:
         with:
           node-version: 22
 
-      - name: Repair transient finalizer literal
-        shell: python
-        run: |
-          from pathlib import Path
-          path = Path('scripts/apply-flow-138-shell.py')
-          lines = path.read_text().splitlines()
-          repaired = False
-          for index in range(len(lines) - 1):
-              if (
-                  lines[index] == '    "authority_refs: Option<Vec<FlowAuthorityInput>>,'
-                  and lines[index + 1] == '",' 
-              ):
-                  lines[index:index + 2] = ['    "authority_refs: Option<Vec<FlowAuthorityInput>>,",' ]
-                  repaired = True
-                  break
-          if not repaired:
-              raise SystemExit('transient authority-ref literal did not match expected malformed shape')
-          path.write_text('\n'.join(lines) + '\n')
-
       - name: Apply native Flow shell composition
         run: python3 scripts/apply-flow-138-shell.py
 
