@@ -1,0 +1,231 @@
+.oi-living {
+  display: grid;
+  gap: 14px;
+  width: 100%;
+}
+
+.oi-living__header,
+.oi-living__current,
+.oi-living__return > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.oi-living__header h3,
+.oi-living__current h4,
+.oi-living__return h4 {
+  margin: 2px 0 4px;
+}
+
+.oi-living__summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.oi-living__summary > div {
+  display: grid;
+  gap: 2px;
+  padding: 12px;
+  border: 1px solid var(--oi-border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--oi-surface) 92%, transparent);
+}
+
+.oi-living__summary strong {
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+.oi-living__summary span,
+.oi-living__owner-line,
+.oi-living__row small,
+.oi-living__path span,
+.oi-living__return small {
+  color: var(--oi-muted);
+}
+
+.oi-living__owner-line {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.oi-living__laws {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.oi-living__laws code {
+  padding: 4px 7px;
+  border-radius: 6px;
+  background: var(--oi-surface-raised);
+  font-size: 0.72rem;
+}
+
+.oi-living__details,
+.oi-living__preflight,
+.oi-living__return {
+  border: 1px solid var(--oi-border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--oi-surface) 94%, transparent);
+}
+
+.oi-living__details > summary,
+.oi-living__preflight > summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.oi-living__rows {
+  display: grid;
+  gap: 7px;
+  padding: 0 10px 10px;
+}
+
+.oi-living__row,
+.oi-living__path {
+  display: grid;
+  gap: 5px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  background: var(--oi-surface-raised);
+}
+
+.oi-living__row > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.oi-living__row strong,
+.oi-living__path strong,
+.oi-living__proposal span {
+  overflow-wrap: anywhere;
+}
+
+.oi-living__row em {
+  width: max-content;
+  font-size: 0.72rem;
+  font-style: normal;
+  color: var(--oi-muted);
+}
+
+.oi-living__path ol {
+  margin: 2px 0 0;
+  padding-left: 20px;
+}
+
+.oi-living__path li {
+  margin: 3px 0;
+  font-size: 0.78rem;
+}
+
+.oi-living__current {
+  padding: 12px;
+  border: 1px solid var(--oi-border);
+  border-radius: 10px;
+  background: var(--oi-surface-raised);
+}
+
+.oi-living__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.oi-living__contemplate {
+  font-weight: 650;
+}
+
+.oi-living__preflight {
+  padding-bottom: 10px;
+}
+
+.oi-living__preflight-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  padding: 0 10px;
+}
+
+.oi-living__preflight-grid > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 8px 9px;
+  border-radius: 7px;
+  background: var(--oi-surface-raised);
+}
+
+.oi-living__preflight-grid strong {
+  overflow-wrap: anywhere;
+  font-size: 0.78rem;
+}
+
+.oi-living__preflight > p {
+  margin: 9px 12px 0;
+}
+
+.oi-living__return {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.oi-living__return-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.oi-living__return-grid > article {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  min-width: 0;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--oi-surface-raised);
+}
+
+.oi-living__return-grid article > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.oi-living__return-grid p {
+  margin: 0;
+}
+
+.oi-living__proposal {
+  display: grid;
+  gap: 4px;
+  padding-top: 6px;
+  border-top: 1px solid var(--oi-border);
+}
+
+@media (max-width: 760px) {
+  .oi-living__summary,
+  .oi-living__preflight-grid,
+  .oi-living__return-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .oi-living__header,
+  .oi-living__current {
+    flex-direction: column;
+  }
+
+  .oi-living__actions {
+    justify-content: flex-start;
+  }
+}

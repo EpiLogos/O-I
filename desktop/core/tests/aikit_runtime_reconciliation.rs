@@ -58,7 +58,8 @@ fn desktop_reconciles_real_runtime_rows_but_does_not_infer_agent_continuity() {
         .unwrap();
     store.apply(&attach).unwrap();
 
-    let mut runtime = SessionSpaceRuntime::open(SessionSpaceDefinition::new(space.clone())).unwrap();
+    let mut runtime =
+        SessionSpaceRuntime::open(SessionSpaceDefinition::new(space.clone())).unwrap();
     let lease = runtime
         .bind_agent_session(SessionSpaceAgentSession {
             agent_session: agent_session.clone(),
@@ -94,7 +95,9 @@ fn desktop_reconciles_real_runtime_rows_but_does_not_infer_agent_continuity() {
     assert_eq!(observed.read_model.agent_sessions.len(), 1);
     assert_eq!(observed.read_model.connections.len(), 1);
     assert_eq!(
-        observed.read_model.connections[0].native_session_id.as_deref(),
+        observed.read_model.connections[0]
+            .native_session_id
+            .as_deref(),
         Some("provider-session-7")
     );
 

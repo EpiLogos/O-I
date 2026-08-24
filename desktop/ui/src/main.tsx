@@ -3,16 +3,9 @@ import ReactDOM from 'react-dom/client';
 import { invoke } from '@tauri-apps/api/core';
 import '@epilogos/oi-design-system/tokens.css';
 import './shell.css';
+import type { CurrentWorldReading } from './current-world';
 import { RuntimeObservationSurface } from './runtime-observation';
 import { NativeSearchCommand } from './native-command';
-import {
-  FactoryBuildCanvas,
-  FactoryBuildNavigator,
-  FactoryTrajectoryRegion,
-  type FactoryBuildSnapshot,
-  type FactoryBuildSubject,
-} from './factory-build/FactoryBuildHost';
-import type { ActionInvocation } from './factory-build/types';
 import {
   HostSurfaceDescriptor,
   ProfessionalWorkbenchHost,
@@ -49,6 +42,7 @@ type Snapshot = {
   destinations: Destination[];
   surfaces: Surface[];
   selection?: SemanticRef;
+  current_world?: CurrentWorldReading;
   warnings: string[];
 };
 
@@ -71,6 +65,51 @@ type Contribution = {
     provenance: { source: string; revision?: string };
   };
   package?: { package_ref: string; source_revision: string };
+};
+
+type FactoryBuildSnapshot = {
+  contract: 'factory.build-view/v1';
+  providerContract: 'factory.build-view-provider/v1';
+  revision: number;
+  provenance: {
+    owner: string;
+    factoryStateRevision: number;
+    runRevision: number;
+    runMapRevision: number;
+    source: string;
+  };
+  view: {
+    project: { projectRef: string; label: string };
+    run: { runRef: string; runMapRef: string; label: string; status: string };
+    frontier: { subjectRef: string; title: string; mode: string; summary: string };
+    candidates: Array<{
+      candidateRef: string;
+      label: string;
+      status: string;
+      claimRefs: string[];
+      evidenceRefs: string[];
+      producingExecutionRefs: string[];
+    }>;
+    humanRequests: Array<{
+      humanRequestRef: string;
+      question: string;
+      whyHuman: string;
+      evidenceRefs?: string[];
+    }>;
+    executions: Array<{
+      executionRef: string;
+      status: string;
+      sessionSpaceRef?: string;
+      harnessRef?: string;
+      nativeTrajectoryRef?: string;
+    }>;
+    actions: Array<{
+      actionRef: string;
+      label: string;
+      subjectKinds: string[];
+      requiredCapabilityRef: string;
+    }>;
+  };
 };
 
 const preview: Snapshot = {
@@ -102,7 +141,7 @@ const ROOT_SURFACES: Record<Destination, HostSurfaceDescriptor> = {
     title: 'Build',
     nativeOwner: 'o-i',
     region: 'canvas',
-    provenance: 'O:I host placement over the source-faithful Factory Build body',
+    provenance: 'O:I host destination over Factory native reading',
   },
   explore: {
     surfaceRef: 'surface/oi/explore-host',
@@ -169,43 +208,6 @@ function App() {
     }
   }
 
-  async function selectFactoryBuildSubject(subject: FactoryBuildSubject) {
-    if (!factoryBuild) return;
-    await selectWorkbenchRef(
-      {
-        ref: subject.ref,
-        kind: subject.kind,
-        native_owner: factoryBuild.provenance.owner,
-        provenance: {
-          source: factoryBuild.provenance.source,
-          revision: String(factoryBuild.revision),
-        },
-      },
-      {
-        title: subject.label,
-        summary: subject.summary,
-        detail: {
-          nativeOwner: factoryBuild.provenance.owner,
-          factoryBuildRevision: factoryBuild.revision,
-          runRef: factoryBuild.view.run.runRef,
-        },
-      },
-    );
-  }
-
-  async function dispatchFactoryBuildAction(invocation: ActionInvocation) {
-    try {
-      const result = await invoke('dispatch_contextual_factory_action', {
-        emission: invocation,
-        operationId: crypto.randomUUID(),
-      });
-      setActionResult(result);
-      await refreshFactoryBuild();
-    } catch (error) {
-      setActionResult({ error: error instanceof Error ? error.message : String(error) });
-    }
-  }
-
   function onSurfaceFocus(focus: SurfaceFocus) {
     const destination = DESTINATION_BY_SURFACE.get(focus.surfaceRef);
     if (destination) void openDestination(destination);
@@ -230,29 +232,17 @@ function App() {
         />
       )}
       navigator={(
-        <NavigatorHost
-          surfaces={surfaces}
-          snapshot={snapshot}
-          contributions={contributions}
-          factoryBuild={factoryBuild}
-          onFactorySelect={(subject) => void selectFactoryBuildSubject(subject)}
-        />
+        <NavigatorHost surfaces={surfaces} snapshot={snapshot} contributions={contributions} />
       )}
       sidecar={(
         <AgencySidecar selection={snapshot.selection} evidence={workbenchEvidence} rootAgency={rootAgency} />
       )}
-      lower={(
-        <LowerRegion
-          actionResult={actionResult}
-          factoryBuild={snapshot.destination === 'build' ? factoryBuild : null}
-        />
-      )}
+      lower={<LowerRegion actionResult={actionResult} />}
       system={<SystemRegion surfaces={snapshot.surfaces} contributions={contributions} warnings={snapshot.warnings} />}
       status={(
         <>
           <span>O:I · {snapshot.suite_condition}</span>
           <span>{snapshot.selection ? `selected ${snapshot.selection.ref}` : 'no semantic selection'}</span>
-          <span>{factoryBuild ? `Factory Build r${factoryBuild.revision}` : 'Factory Build unavailable'}</span>
           <span>selection ≠ Agent Context disclosure</span>
           <span>Surface ≠ Action</span>
         </>
@@ -263,8 +253,10 @@ function App() {
           binding={binding}
           contributions={contributions}
           factoryBuild={factoryBuild}
+          selection={snapshot.selection}
+          currentWorld={snapshot.current_world}
           onSelect={selectWorkbenchRef}
-          onFactoryAction={dispatchFactoryBuildAction}
+          onRefreshFactory={refreshFactoryBuild}
         />
       )}
     />
@@ -275,14 +267,10 @@ function NavigatorHost({
   surfaces,
   snapshot,
   contributions,
-  factoryBuild,
-  onFactorySelect,
 }: {
   surfaces: HostSurfaceDescriptor[];
   snapshot: Snapshot;
   contributions: Contribution[];
-  factoryBuild: FactoryBuildSnapshot | null;
-  onFactorySelect: (subject: FactoryBuildSubject) => void;
 }) {
   return (
     <div className="oi-p1-navigator">
@@ -304,9 +292,6 @@ function NavigatorHost({
           </span>
         ))}
       </div>
-      {snapshot.destination === 'build' && factoryBuild ? (
-        <FactoryBuildNavigator snapshot={factoryBuild} onSelect={onFactorySelect} />
-      ) : null}
     </div>
   );
 }
@@ -359,18 +344,11 @@ function AgencySidecar({
   );
 }
 
-function LowerRegion({
-  actionResult,
-  factoryBuild,
-}: {
-  actionResult: unknown;
-  factoryBuild: FactoryBuildSnapshot | null;
-}) {
+function LowerRegion({ actionResult }: { actionResult: unknown }) {
   return (
     <div className="oi-p1-lower">
       <p className="oi-eyebrow">Terminal · trajectory · events · evidence · material</p>
       <p className="oi-muted">P1 establishes the lower/deep host region. Product-specific bodies remain native-owned and are supplied by #106–#110 or alternate native Surfaces.</p>
-      {factoryBuild ? <FactoryTrajectoryRegion snapshot={factoryBuild} /> : null}
       <RuntimeObservationSurface />
       {actionResult != null && (
         <details><summary>Most recent native Action return</summary><pre>{JSON.stringify(actionResult, null, 2)}</pre></details>
@@ -404,15 +382,19 @@ function RootCanvasSurface({
   binding,
   contributions,
   factoryBuild,
+  selection,
+  currentWorld,
   onSelect,
-  onFactoryAction,
+  onRefreshFactory,
 }: {
   surface: HostSurfaceDescriptor;
   binding: SurfacePresentationBinding;
   contributions: Contribution[];
   factoryBuild: FactoryBuildSnapshot | null;
+  selection?: WorkbenchSemanticRef;
+  currentWorld?: CurrentWorldReading;
   onSelect: (subject: WorkbenchSemanticRef, evidence: WorkbenchEvidence) => Promise<void>;
-  onFactoryAction: (invocation: ActionInvocation) => Promise<void>;
+  onRefreshFactory: () => Promise<void>;
 }) {
   const destination = DESTINATION_BY_SURFACE.get(surface.surfaceRef) ?? 'home';
   const visibleContributions = contributions.filter((entry) => ownerVisibleAt(entry.contribution.native_owner, destination));
@@ -423,7 +405,7 @@ function RootCanvasSurface({
         <p className="oi-eyebrow">Professional host · inherited application substrate</p>
         <h1>The local O:I workbench.</h1>
         <p className="oi-lead">Regions, tabs, splits and presentation focus compose around the same stable refs; SessionSpace, AgentSession and Knowledge remain AIKit/native application state.</p>
-        <WorkbenchSurface onSelect={onSelect} />
+        <WorkbenchSurface selection={selection} currentWorld={currentWorld} onSelect={onSelect} />
       </>
     );
   }
@@ -433,9 +415,9 @@ function RootCanvasSurface({
       <>
         <SurfaceHeader destination={destination} binding={binding} />
         {factoryBuild ? (
-          <FactoryBuildCanvas snapshot={factoryBuild} onAction={(invocation) => void onFactoryAction(invocation)} />
+          <FactoryBuildSurface snapshot={factoryBuild} onRefresh={onRefreshFactory} />
         ) : (
-          <p className="oi-muted">No live FactoryBuildView provider is bound. #108 consumes the source-faithful Factory Build body; O:I will not fabricate it.</p>
+          <p className="oi-muted">No live FactoryBuildView provider is bound. #108 consumes the source-faithful Factory Build body; P1 will not fabricate it.</p>
         )}
         <ContributionSurface contributions={visibleContributions} />
       </>
@@ -458,6 +440,51 @@ function SurfaceHeader({ destination, binding }: { destination: Destination; bin
       <h1>{titleFor(destination)}</h1>
       <small className="oi-muted">Tab/split identity is presentation state and is never substituted for a native Surface or semantic subject ref.</small>
     </>
+  );
+}
+
+function FactoryBuildSurface({
+  snapshot,
+  onRefresh,
+}: {
+  snapshot: FactoryBuildSnapshot;
+  onRefresh: () => Promise<void>;
+}) {
+  return (
+    <section className="oi-contributions" aria-label="Live Factory Build Surface">
+      <p className="oi-eyebrow">Factory-owned live reading · revision {snapshot.revision}</p>
+      <article>
+        <div><span className="oi-contribution-state" data-state="ready">ready</span><h3>{snapshot.view.run.label}</h3></div>
+        <p>{snapshot.view.frontier.title}</p>
+        <dl>
+          <dt>Project</dt><dd>{snapshot.view.project.projectRef}</dd>
+          <dt>Run</dt><dd>{snapshot.view.run.runRef}</dd>
+          <dt>RunMap</dt><dd>{snapshot.view.run.runMapRef}</dd>
+          <dt>Frontier</dt><dd>{snapshot.view.frontier.mode} · {snapshot.view.frontier.summary}</dd>
+        </dl>
+        <button type="button" onClick={() => void onRefresh()}>Refresh native reading</button>
+      </article>
+      {snapshot.view.candidates.map((candidate) => (
+        <article key={candidate.candidateRef}>
+          <div><span className="oi-contribution-state" data-state="ready">{candidate.status}</span><h3>{candidate.label}</h3></div>
+          <p>{candidate.candidateRef}</p>
+          <small>{candidate.claimRefs.length} claims · {candidate.evidenceRefs.length} evidence refs</small>
+        </article>
+      ))}
+      {snapshot.view.humanRequests.map((request) => (
+        <article key={request.humanRequestRef}>
+          <div><span className="oi-contribution-state" data-state="degraded">human request</span><h3>{request.question}</h3></div>
+          <p>{request.whyHuman}</p>
+        </article>
+      ))}
+      {snapshot.view.actions.map((action) => (
+        <article key={action.actionRef}>
+          <div><span className="oi-contribution-state" data-state="ready">discoverable Action</span><h3>{action.label}</h3></div>
+          <p>{action.actionRef}</p>
+          <small>Requires native Capability grant: {action.requiredCapabilityRef}</small>
+        </article>
+      ))}
+    </section>
   );
 }
 
@@ -523,7 +550,7 @@ function copyFor(destination: Destination) {
   return {
     home: 'One native workspace over AIKit SessionSpace, AgentSession conversation and project Knowledge.',
     personal: 'P1 provides a host Surface only. Central/Actuation bodies and the Project/Ground editor field belong to #106/#107.',
-    build: 'Factory Build remains product-owned and source-faithful; O:I only hosts its current read model and canonical Actions.',
+    build: 'Factory Build remains product-owned and source-faithful; P1 only hosts its current read model and canonical Actions.',
     explore: 'P1 provides the host placement contract. Desktop ↔ Explore local/social parity and application body belong to #110.',
     system: 'P1 provides the region and current composition disclosure. The six-product System workbench belongs to #109.',
   }[destination];

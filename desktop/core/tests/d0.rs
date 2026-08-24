@@ -52,7 +52,10 @@ fn suite_states_are_truthful_and_non_boolean() {
         NativeSurfaceState::Missing,
     ]));
     assert_eq!(
-        empty.snapshot(BridgeCaller::ShellUi).unwrap().suite_condition,
+        empty
+            .snapshot(BridgeCaller::ShellUi)
+            .unwrap()
+            .suite_condition,
         SuiteCondition::Empty
     );
 
@@ -61,7 +64,10 @@ fn suite_states_are_truthful_and_non_boolean() {
         NativeSurfaceState::Missing,
     ]));
     assert_eq!(
-        partial.snapshot(BridgeCaller::ShellUi).unwrap().suite_condition,
+        partial
+            .snapshot(BridgeCaller::ShellUi)
+            .unwrap()
+            .suite_condition,
         SuiteCondition::Partial
     );
 
@@ -70,7 +76,10 @@ fn suite_states_are_truthful_and_non_boolean() {
         NativeSurfaceState::Broken,
     ]));
     assert_eq!(
-        broken.snapshot(BridgeCaller::ShellUi).unwrap().suite_condition,
+        broken
+            .snapshot(BridgeCaller::ShellUi)
+            .unwrap()
+            .suite_condition,
         SuiteCondition::Broken
     );
 
@@ -79,7 +88,9 @@ fn suite_states_are_truthful_and_non_boolean() {
         NativeSurfaceState::Registered,
     ]));
     assert_eq!(
-        full.snapshot(BridgeCaller::ShellUi).unwrap().suite_condition,
+        full.snapshot(BridgeCaller::ShellUi)
+            .unwrap()
+            .suite_condition,
         SuiteCondition::Full
     );
 }

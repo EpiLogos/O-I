@@ -1,0 +1,146 @@
+name: Living Wiki W7 conformance
+
+on:
+  pull_request:
+    paths:
+      - 'suite/living-wiki-w7.json'
+      - '.github/workflows/living-wiki-w7.yml'
+      - 'desktop/**'
+      - 'cli/src/current_world.rs'
+      - 'cli/src/lib.rs'
+
+permissions:
+  contents: read
+
+env:
+  CENTRAL_SHA: 31d54eb4a6202c89c7f60ec004654916133dea94
+  AIKIT_SHA: 4b9b404c0603532e86c5652b7fd5062d2e344acf
+  FACTORY_SHA: ec08c99a55a6320c6f59d3c73024b5d48063a989
+  QL_SHA: 9429a9fb5173f32138799046e8e2a4d7a2d86968
+  QL_LIVING_ANCESTOR: 30171fb9f3646a1ef6e306357503d8a9df4a8a1c
+
+jobs:
+  native-owners:
+    name: W7 native owner contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Central
+          ref: ${{ env.CENTRAL_SHA }}
+          path: owners/central
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/ai-kit
+          ref: ${{ env.AIKIT_SHA }}
+          path: owners/ai-kit
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/agent-system-design
+          ref: ${{ env.FACTORY_SHA }}
+          path: owners/factory
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/QL-MEF
+          ref: ${{ env.QL_SHA }}
+          path: owners/ql
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Prove exact accepted/current owner revisions
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C owners/central rev-parse HEAD)" = "$CENTRAL_SHA"
+          test "$(git -C owners/ai-kit rev-parse HEAD)" = "$AIKIT_SHA"
+          test "$(git -C owners/factory rev-parse HEAD)" = "$FACTORY_SHA"
+          test "$(git -C owners/ql rev-parse HEAD)" = "$QL_SHA"
+          git -C owners/ql merge-base --is-ancestor "$QL_LIVING_ANCESTOR" "$QL_SHA"
+      - name: W7 A — Central source truth and deterministic horizon
+        run: cargo test --manifest-path owners/central/Cargo.toml -p ctrl
+      - name: W7 A/C — AIKit impact freshness integrative reading and explicit Contemplate
+        run: cargo test --manifest-path owners/ai-kit/Cargo.toml -p aikit-core
+      - name: W7 B — Factory software Project orientation and returned evidence
+        run: cargo test --manifest-path owners/factory/Cargo.toml -p epilogos-factory
+      - name: W7 C — optional QL Wiki refraction Context Frame and Return preservation
+        run: cargo test --manifest-path owners/ql/Cargo.toml -p ql-wiki
+
+  oi-composition:
+    name: W7 O:I proving worlds
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate W7 manifest and exact consumer owner pins
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+          manifest = json.loads(Path('suite/living-wiki-w7.json').read_text())
+          assert manifest['schema'] == 'oi.living-wiki-w7/v1'
+          assert manifest['physical_evidence_claimed'] is False
+          assert [world['id'] for world in manifest['worlds']] == ['A', 'B', 'C']
+          expected = {
+              'central': '${{ env.CENTRAL_SHA }}',
+              'ai-kit': '${{ env.AIKIT_SHA }}',
+              'software-factory': '${{ env.FACTORY_SHA }}',
+              'quaternal-logic': '${{ env.QL_SHA }}',
+          }
+          for owner, revision in expected.items():
+              assert manifest['owners'][owner]['revision'] == revision
+          cargo = Path('desktop/core/Cargo.toml').read_text()
+          assert '${{ env.AIKIT_SHA }}' in cargo
+          assert '${{ env.FACTORY_SHA }}' in cargo
+          minimal = next(world for world in manifest['worlds'] if world['id'] == 'A')
+          assert any(
+              'zero automatic Agent/model invocation' in proposition
+              for proposition in minimal['proves']
+          )
+          assert any(
+              'Contemplate implicitly' in invariant
+              for invariant in manifest['global_invariants']
+          )
+      - name: Build rendered workbench from committed lock
+        run: |
+          npm ci --prefix desktop/ui --no-audit --no-fund
+          npm --prefix desktop/ui run build
+      - name: W7 A — minimal ordinary Project and zero implicit contemplation
+        run: |
+          node --test desktop/ui/src/living-wiki-model.test.mjs
+          cargo test --manifest-path desktop/core/Cargo.toml living_wiki::tests --lib
+          cargo test --manifest-path desktop/core/Cargo.toml --test living_contemplate_process
+      - name: W7 B — software Project authority and Factory return paths
+        run: |
+          cargo test --manifest-path desktop/core/Cargo.toml --test live_product_round_trip
+          cargo test --manifest-path desktop/core/Cargo.toml --test local_factory_provider
+          node --test desktop/ui/src/project-field-presentation.test.mjs
+      - name: W7 C — deep structured knowledge Flow source relation and optional QL removal law
+        run: |
+          node --test desktop/ui/src/flow-workbench.test.mjs
+          node --test desktop/ui/src/workbench-presentation.test.mjs
+          cargo test --manifest-path desktop/core/Cargo.toml flow::tests --lib
+      - name: Cross-world authority and regression closure
+        run: |
+          cargo test --manifest-path desktop/core/Cargo.toml --all-targets
+          cargo clippy --manifest-path desktop/core/Cargo.toml --all-targets -- -D warnings
+          git diff --check
+
+  native-shell:
+    name: W7 committed native shell
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+      - name: Prove exact committed dependency graph
+        run: cargo check --manifest-path desktop/src-tauri/Cargo.toml --locked --target aarch64-apple-darwin

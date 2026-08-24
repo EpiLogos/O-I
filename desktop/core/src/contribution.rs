@@ -116,7 +116,9 @@ pub fn host_native_contribution(
         Some(manifest) => {
             validate_manifest(manifest)?;
             if manifest.package_ref == contribution.contribution_ref {
-                return Err("package identity must remain distinct from contribution identity".into());
+                return Err(
+                    "package identity must remain distinct from contribution identity".into(),
+                );
             }
             let declared = manifest
                 .contributions
@@ -150,7 +152,9 @@ pub fn host_native_contribution(
                 .as_ref()
                 .is_some_and(|envelope| action.action_ref == envelope.package_ref)
         {
-            return Err("Action identity must remain distinct from package/contribution identity".into());
+            return Err(
+                "Action identity must remain distinct from package/contribution identity".into(),
+            );
         }
     }
 
@@ -212,20 +216,30 @@ fn validate_reading(contribution: &NativeContributionReading) -> Result<(), Stri
             contribution.schema
         ));
     }
-    if contribution.contribution_ref.trim().is_empty() || contribution.native_owner.trim().is_empty() {
+    if contribution.contribution_ref.trim().is_empty()
+        || contribution.native_owner.trim().is_empty()
+    {
         return Err("host reading requires stable native contribution_ref and native_owner".into());
     }
     if contribution.availability == ContributionAvailability::Ready {
-        if contribution.target_contract.as_deref().is_none_or(str::is_empty) {
+        if contribution
+            .target_contract
+            .as_deref()
+            .is_none_or(str::is_empty)
+        {
             return Err("ready host reading requires an observed native target contract".into());
         }
         if contribution.read_model_ref.is_none() && contribution.actions.is_empty() {
-            return Err("ready host reading must expose a Reading and/or canonical Action binding".into());
+            return Err(
+                "ready host reading must expose a Reading and/or canonical Action binding".into(),
+            );
         }
     }
     for action in &contribution.actions {
         if action.action_ref.trim().is_empty() || action.native_owner.trim().is_empty() {
-            return Err("canonical Action binding requires stable identity and native owner".into());
+            return Err(
+                "canonical Action binding requires stable identity and native owner".into(),
+            );
         }
     }
     Ok(())

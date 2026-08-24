@@ -7,7 +7,8 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const source = fs.readFileSync(path.join(here, 'agency-sidecar-entry.tsx'), 'utf8');
 const css = fs.readFileSync(path.join(here, 'agency-sidecar.css'), 'utf8');
-const inherited = fs.readFileSync(path.join(here, 'workbench.tsx'), 'utf8');
+const composedWorkbench = fs.readFileSync(path.join(here, 'workbench.tsx'), 'utf8');
+const inherited = fs.readFileSync(path.join(here, 'workbench-native.tsx'), 'utf8');
 const index = fs.readFileSync(path.join(here, '..', 'index.html'), 'utf8');
 
 test('P3 reuses the inherited canonical AgentSession conversation Surface', () => {
@@ -15,6 +16,8 @@ test('P3 reuses the inherited canonical AgentSession conversation Surface', () =
   assert.match(source, /<AgentEncounterSurface agentSessionRef=\{activeAgentSession\}/);
   assert.match(inherited, /invoke<AgentSurfaceReading>\('agent_surface_open'/);
   assert.match(inherited, /invoke<ConnectionSignal\[]>\('agent_surface_send'/);
+  assert.match(composedWorkbench, /WorkbenchSurface as NativeWorkbenchSurface/);
+  assert.match(composedWorkbench, /<NativeWorkbenchSurface onSelect=\{select\}/);
   assert.doesNotMatch(source, /DesktopChat/);
   assert.doesNotMatch(source, /localStorage|sessionStorage|indexedDB/);
 });

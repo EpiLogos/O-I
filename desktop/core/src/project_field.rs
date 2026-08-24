@@ -107,15 +107,16 @@ impl CentralOwnerCli {
             .arg("run")
             .arg(action)
             .arg(serde_json::to_string(&input).map_err(|error| error.to_string())?);
-        let output = command
-            .output()
-            .map_err(|error| format!("launch Central owner CLI {}: {error}", self.executable.display()))?;
+        let output = command.output().map_err(|error| {
+            format!(
+                "launch Central owner CLI {}: {error}",
+                self.executable.display()
+            )
+        })?;
         let stdout = String::from_utf8(output.stdout)
             .map_err(|error| format!("Central owner CLI returned non-UTF8 output: {error}"))?;
         let value: Value = serde_json::from_str(stdout.trim()).map_err(|error| {
-            format!(
-                "Central owner CLI returned invalid structured output for {action}: {error}"
-            )
+            format!("Central owner CLI returned invalid structured output for {action}: {error}")
         })?;
         if value.get("ok").and_then(Value::as_bool) == Some(true) {
             Ok(value.get("data").cloned().unwrap_or(Value::Null))
@@ -163,18 +164,6 @@ impl CentralOwnerCli {
     fn project_input(&self) -> Value {
         json!({ "project": self.project_query })
     }
-
-    fn invoke_allowed(&self, action: &str, input: Value) -> Result<Value, String> {
-        match action {
-            "work.open" | "work.reveal" | "projectcentral.ground.inspect"
-            | "projectcentral.ground.plan" | "projectcentral.now.inspect" => {
-                self.run(action, input)
-            }
-            _ => Err(format!(
-                "O:I P2 does not proxy Central Action {action}; mutation/authority remains with the native owner"
-            )),
-        }
-    }
 }
 
 pub struct LocalProjectField {
@@ -213,7 +202,10 @@ impl LocalProjectField {
             LocalSourceDiscoveryLimits::default(),
         )
         .map_err(|error| error.to_string())?;
-        let (project_map, project_map_error) = match project_map_source {
+        let configured_map = project_map_source
+            .map(Path::to_path_buf)
+            .or_else(|| env::var_os("OI_AIKIT_PROJECT_MAP").map(PathBuf::from));
+        let (project_map, project_map_error) = match configured_map.as_deref() {
             Some(path) => match load_project_map(path) {
                 Ok(map) => (Some(map), None),
                 Err(error) => (None, Some(error)),
@@ -227,7 +219,7 @@ impl LocalProjectField {
             source_provider,
             local_sources,
             project_map,
-            project_map_source: project_map_source.map(Path::to_path_buf),
+            project_map_source: configured_map,
             project_map_error,
         })
     }
@@ -243,11 +235,13 @@ impl LocalProjectField {
             .semantic
             .account_context()
             .map_err(|error| error.to_string())?;
-        let source_horizon = self
-            .source_index
-            .horizon(&HorizonRequest::human(Some(self.binding.semantic.project.clone())));
+        let source_horizon = self.source_index.horizon(&HorizonRequest::human(Some(
+            self.binding.semantic.project.clone(),
+        )));
         let central_actions = self.central.action_ids();
-        let projects = self.central.reading(&central_actions, "work.list", json!({}));
+        let projects = self
+            .central
+            .reading(&central_actions, "work.list", json!({}));
         let ground = self.central.reading(
             &central_actions,
             "projectcentral.ground.inspect",
@@ -289,6 +283,13 @@ impl LocalProjectField {
         })
     }
 
+    pub fn contains_source(&self, raw_resource: &str) -> bool {
+        ResourceRef::parse(raw_resource)
+            .ok()
+            .and_then(|resource| self.source_index.get(&resource))
+            .is_some()
+    }
+
     pub fn search_sources(&self, query: &str) -> Vec<aikit_core::ContextSourceHit> {
         self.source_index.search(
             &HorizonRequest::human(Some(self.binding.semantic.project.clone())),
@@ -327,10 +328,6 @@ impl LocalProjectField {
         let resource = ResourceRef::parse(raw_resource).map_err(|error| error.to_string())?;
         Ok(project_reflection(map, &resource, 4, 96))
     }
-
-    pub fn invoke_central_action(&self, action: &str, input: Value) -> Result<Value, String> {
-        self.central.invoke_allowed(action, input)
-    }
 }
 
 fn load_project_map(path: &Path) -> Result<ProjectMap, String> {
@@ -345,18 +342,13 @@ fn load_project_map(path: &Path) -> Result<ProjectMap, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
-    fn central_proxy_refuses_unowned_mutation_surface() {
-        let cli = CentralOwnerCli {
-            executable: PathBuf::from("ctrl"),
-            root: None,
-            project_query: "example".into(),
-        };
-        let error = cli
-            .invoke_allowed("projectcentral.ground.apply", json!({}))
-            .expect_err("P2 must not proxy human-authority mutation");
-        assert!(error.contains("mutation/authority remains with the native owner"));
+    fn project_field_keeps_read_authority_bounded() {
+        let source = include_str!("project_field.rs");
+        let forbidden = ["fn invoke_", "central_action"].concat();
+        assert!(source.contains("projectcentral.ground.inspect"));
+        assert!(source.contains("projectcentral.now.inspect"));
+        assert!(source.contains("RetrievalTarget::Human"));
+        assert!(!source.contains(&forbidden));
     }
 }
