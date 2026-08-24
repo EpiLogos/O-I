@@ -1,0 +1,135 @@
+.oi-flow-nav,
+.oi-flow {
+  border-top: 1px solid var(--oi-border, rgba(255,255,255,.1));
+  padding: 1rem;
+}
+
+.oi-flow-nav > header,
+.oi-flow__header,
+.oi-flow__standing > header,
+.oi-flow__preflight > header,
+.oi-flow__return > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.oi-flow-nav__actions,
+.oi-flow__header-actions,
+.oi-flow__actions {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
+.oi-flow-nav__list {
+  display: grid;
+  gap: .45rem;
+  margin: .75rem 0;
+}
+
+.oi-flow-nav__list > button {
+  text-align: left;
+  display: grid;
+  gap: .18rem;
+  padding: .65rem .7rem;
+  border: 1px solid transparent;
+  background: transparent;
+}
+
+.oi-flow-nav__list > button.is-active {
+  border-color: currentColor;
+}
+
+.oi-flow-nav__list span,
+.oi-flow-nav__list small,
+.oi-flow__standing small,
+.oi-flow__return small {
+  opacity: .7;
+}
+
+.oi-flow__editor {
+  width: 100%;
+  min-height: 19rem;
+  resize: vertical;
+  box-sizing: border-box;
+  margin: .9rem 0;
+  padding: 1rem;
+  font: inherit;
+  line-height: 1.55;
+  background: transparent;
+  color: inherit;
+  border: 1px solid var(--oi-border, rgba(255,255,255,.14));
+  border-radius: .45rem;
+}
+
+.oi-flow__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+  margin: .6rem 0;
+}
+
+.oi-flow__facts code {
+  font-size: .72rem;
+  opacity: .75;
+}
+
+.oi-flow__notice {
+  border-left: 2px solid currentColor;
+  padding-left: .75rem;
+}
+
+.oi-flow__standing,
+.oi-flow__preflight,
+.oi-flow__authorities,
+.oi-flow__return,
+.oi-flow__history {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--oi-border, rgba(255,255,255,.1));
+}
+
+.oi-flow__standing dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: .35rem .75rem;
+}
+
+.oi-flow__standing dt { opacity: .6; }
+.oi-flow__standing dd { margin: 0; overflow-wrap: anywhere; }
+
+.oi-flow__authorities > div,
+.oi-flow__return-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: .65rem;
+}
+
+.oi-flow__authorities article,
+.oi-flow__return-grid > article {
+  border: 1px solid var(--oi-border, rgba(255,255,255,.1));
+  padding: .7rem;
+  display: grid;
+  gap: .35rem;
+}
+
+.oi-flow__authorities small {
+  overflow-wrap: anywhere;
+  opacity: .7;
+}
+
+.oi-flow__return-grid > article > header {
+  display: flex;
+  justify-content: space-between;
+  gap: .5rem;
+}
+
+.oi-flow__history pre {
+  max-height: 24rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
