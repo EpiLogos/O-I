@@ -7,6 +7,17 @@ on:
       - feat/flow-desktop-138
     paths:
       - '.github/workflows/flow-138-shell.yml'
+  pull_request:
+    branches:
+      - feat/living-wiki-desktop-135
+    paths:
+      - '.github/workflows/flow-138-shell.yml'
+      - 'scripts/apply-flow-138-shell.py'
+      - 'desktop/core/**'
+      - 'desktop/src-tauri/**'
+      - 'desktop/ui/src/flow-workbench*'
+      - 'desktop/ui/src/native-document-editor.tsx'
+      - 'desktop/ui/src/living-wiki*'
 
 permissions:
   contents: write
