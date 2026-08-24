@@ -92,7 +92,13 @@ replace(living, "fn current_model_runtime() -> Result<", "pub(crate) fn current_
 
 # Tauri transport treats omitted authority refs as an ordinary empty set.
 shell_flow = "desktop/src-tauri/src/flow.rs"
-replace(shell_flow, "#[serde(default)] authority_refs: Vec<FlowAuthorityInput>,", "authority_refs: Option<Vec<FlowAuthorityInput>>,")
+replace(
+    shell_flow,
+    "#[serde(default)] authority_refs: Vec<FlowAuthorityInput>,",
+    "authority_refs: Option<Vec<FlowAuthorityInput>>,
+",
+    count=2,
+)
 replace(
     shell_flow,
     "let authority_refs = authority_refs_for(&standing, authority_refs)?;",
