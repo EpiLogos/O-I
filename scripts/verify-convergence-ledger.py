@@ -15,9 +15,11 @@ Regular mode validates structure only. `--live` queries GitHub and requires exac
 coverage. `--closure` additionally refuses any item still marked closure_blocking.
 
 A small amendments file may carry refs created concurrently while the repair is in
-flight or replace an earlier disposition after its ambiguity has been resolved.
-Amendments are not an escape hatch: they use the same required disposition, owner,
-reason, re-entry and closure-blocking fields and participate in exact set equality.
+flight, replace an earlier disposition after its ambiguity has been resolved, or
+explicitly remove a ref that closed/deleted while the repair was running. Amendments
+are not an escape hatch: additions/replacements use the same required disposition,
+owner, reason, re-entry and closure-blocking fields and the final composed set must
+still equal live GitHub exactly.
 """
 
 from __future__ import annotations
@@ -70,6 +72,15 @@ def keyed(items: list, key: str, context: str) -> dict:
     return result
 
 
+def removal_values(amendment: dict, field: str, expected_type: type, context: str) -> list:
+    values = amendment.get(field, [])
+    if not isinstance(values, list) or not all(isinstance(value, expected_type) for value in values):
+        die(f"{context}: {field} must be a list of {expected_type.__name__} values")
+    if len(values) != len(set(values)):
+        die(f"{context}: {field} contains duplicates")
+    return values
+
+
 def load() -> dict:
     ledger = read_json(LEDGER_PATH)
     if not AMENDMENTS_PATH.exists():
@@ -95,10 +106,18 @@ def load() -> dict:
             by_repo[repo] = target
 
         branches = keyed(target.get("branches", []), "name", f"{repo} branches")
+        for name in removal_values(amendment, "remove_branches", str, repo):
+            if name not in branches:
+                die(f"{repo}: amendment removes unknown branch {name!r}")
+            del branches[name]
         branches.update(keyed(amendment.get("branches", []), "name", f"{repo} branch amendments"))
         target["branches"] = list(branches.values())
 
         prs = keyed(target.get("open_pull_requests", []), "number", f"{repo} PRs")
+        for number in removal_values(amendment, "remove_open_pull_requests", int, repo):
+            if number not in prs:
+                die(f"{repo}: amendment removes unknown PR #{number}")
+            del prs[number]
         prs.update(keyed(amendment.get("open_pull_requests", []), "number", f"{repo} PR amendments"))
         target["open_pull_requests"] = list(prs.values())
     return ledger
