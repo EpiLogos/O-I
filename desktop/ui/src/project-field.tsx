@@ -4,6 +4,7 @@ import {
   ProjectFieldCanvas as ProjectFieldBaseCanvas,
   ProjectNavigator as ProjectBaseNavigator,
 } from './project-field-base';
+import { FlowNavigator, FlowWorkbench } from './flow-workbench';
 import { LivingWikiWorkbench } from './living-wiki';
 import { type WorkbenchEvidence, type WorkbenchSemanticRef } from './workbench-native';
 
@@ -12,17 +13,22 @@ export type ProjectFieldProps = {
   onSelect: (subject: WorkbenchSemanticRef, evidence: WorkbenchEvidence) => Promise<void>;
 };
 
-/// Preserve the accepted P2 Project Navigator exactly. Living Knowledge is a
-/// relation around the current workbench/selection, not a replacement navigator.
+/// Preserve the accepted P2 Project Navigator and add Flow as the ordinary-file
+/// live-thinking source role beside it. FlowRef comes from the native owner;
+/// navigation never derives identity from a timestamp/path.
 export function ProjectNavigator(props: ProjectFieldProps) {
-  return <ProjectBaseNavigator {...props} />;
+  return <>
+    <FlowNavigator {...props} />
+    <ProjectBaseNavigator {...props} />
+  </>;
 }
 
-/// Add Living Knowledge to the existing Project/document workbench while
-/// retaining P2 source/Ground/Knowledge/ProjectMap/NOW semantics unchanged.
-/// Both layers receive the same stable semantic selection.
+/// Flow uses the existing Project Canvas as its situated live document surface;
+/// ordinary source/Ground/Knowledge/ProjectMap/NOW and Living Knowledge remain
+/// unchanged parallel relations around the same stable semantic selection.
 export function ProjectFieldCanvas(props: ProjectFieldProps) {
   return <>
+    <FlowWorkbench {...props} />
     <ProjectFieldBaseCanvas {...props} />
     <LivingWikiWorkbench selection={props.selection} />
   </>;
