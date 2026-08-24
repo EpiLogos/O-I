@@ -5,6 +5,10 @@ on:
     branches: [repair/oi97-trust-closure]
     paths:
       - '.github/workflows/oi97-refresh-live-truth.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/oi97-refresh-live-truth.yml'
 
 permissions:
   contents: write
@@ -25,10 +29,6 @@ jobs:
           import json
           from pathlib import Path
 
-          # #97 primary convergence scope is O:I + five non-QL native owners.
-          # QL-MEF remains the sixth product in suite composition while its moving
-          # computational/Epi development is owned by the explicitly separate
-          # convergence programme and must not gate this ref-cleanup pass.
           PRIMARY_REPOS = [
               'EpiLogos/O-I',
               'EpiLogos/Central',
@@ -50,7 +50,6 @@ jobs:
           def branch_map(repo):
               return {item['name']: item for item in repos[repo].get('branches', [])}
 
-          # O:I: parallel Flow desktop work appeared while the repair was running.
           oi = repos['EpiLogos/O-I']
           oi_branches = branch_map('EpiLogos/O-I')
           oi_branches['feat/flow-desktop-138'] = {
@@ -63,7 +62,6 @@ jobs:
           }
           oi['branches'] = list(oi_branches.values())
 
-          # Central: Flow was reconstructed on post-#94 main and accepted as PR #96.
           central = repos['EpiLogos/Central']
           central_branches = branch_map('EpiLogos/Central')
           central_branches['feat/flow-source-93'] = {
@@ -85,7 +83,6 @@ jobs:
           central['branches'] = list(central_branches.values())
           central['open_pull_requests'] = []
 
-          # AIKit: Flow cognition is current development from accepted Living-Wiki main.
           aikit = repos['EpiLogos/ai-kit']
           aikit_branches = branch_map('EpiLogos/ai-kit')
           aikit_branches['feat/flow-context-122'] = {
@@ -124,7 +121,6 @@ jobs:
           ]
           ledger_path.write_text(json.dumps(ledger, indent=2) + '\n')
 
-          # Restore verifier hard boundary to exactly the six repositories authored by #97.
           verifier_path = Path('scripts/verify-convergence-ledger.py')
           verifier = verifier_path.read_text()
           verifier = verifier.replace(
@@ -135,9 +131,6 @@ jobs:
               raise SystemExit('QL-MEF still present in #97 REQUIRED_REPOSITORIES')
           verifier_path.write_text(verifier)
 
-          # Refresh the accepted source snapshot for in-scope owners. QL remains a
-          # separately pinned parallel product observation and is intentionally not
-          # live-equality-gated by #97.
           snapshot_path = Path('suite/mainline.json')
           snapshot = json.loads(snapshot_path.read_text())
           snapshot['observed_at'] = '2026-08-24'
@@ -154,8 +147,6 @@ jobs:
           })
           snapshot_path.write_text(json.dumps(snapshot, indent=2) + '\n')
 
-          # Mainline verifier: keep six-product structural/source coherence, but live
-          # equality is only a #97 gate for the five in-scope native product owners.
           mainline_verifier_path = Path('scripts/verify-mainline-snapshot.py')
           mv = mainline_verifier_path.read_text()
           marker = '''EXPECTED_IDS = {
@@ -201,9 +192,6 @@ jobs:
           )
           mainline_verifier_path.write_text(mv)
 
-          # Align the source catalogue with the same six-product snapshot. QL stays
-          # represented as a product without its moving owner programme becoming a
-          # generic #97 dependency.
           surfaces_path = Path('surfaces.json')
           surfaces = json.loads(surfaces_path.read_text())
           surfaces['verified_at'] = '2026-08-24'
