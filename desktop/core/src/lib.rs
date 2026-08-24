@@ -4,6 +4,8 @@ mod bridge;
 mod central_change;
 mod contribution;
 mod execution_authority;
+mod flow;
+mod flow_contemplate;
 mod live_product;
 mod living_contemplate;
 mod living_focus;
@@ -31,6 +33,14 @@ pub use contribution::{
 pub use execution_authority::{
     ActionAuthorityStore, ActionExecutionRequest, AuthorisedActionExecution, BoundedActionGrant,
     BOUNDED_ACTION_GRANT_SCHEMA,
+};
+pub use flow::{
+    CentralFlowClient, CentralFlowList, CentralFlowReading, CentralFlowRecord,
+    CentralFlowRevisionReceipt, FlowDesktopSnapshot, FlowDocumentReading,
+    CENTRAL_FLOW_PROVIDER_REF, OI_FLOW_DESKTOP_VERSION,
+};
+pub use flow_contemplate::{
+    flow_contemplate_prompt, AcpFlowContemplateExecutor, FLOW_CONTEMPLATE_TRANSPORT_VERSION,
 };
 pub use epilogos_factory::build::FactoryBuildSnapshot;
 pub use live_product::{
