@@ -9,16 +9,24 @@ use std::path::Path;
 use std::sync::Mutex;
 
 use aikit_adapters::ProjectCentralFilesystemBinding;
+use aikit_core::model_runtime::ModelRuntimeReadModel;
 use aikit_core::{
-    AikitError, FamiliarityContext, KnowledgeAddress, KnowledgeApplication, KnowledgeExplanation,
-    KnowledgeProviderStatus, KnowledgeReading, KnowledgeRelationView, KnowledgeSearchResult,
-    ProjectCentralBinding, ProjectReflectionReadModel, ResourceRef, Result as AikitResult,
-    SemanticWikiIndex, SemanticWikiProvider,
+    explicit_bounded_contemplate, wiki_living_dependencies, AikitError,
+    BoundedContemplateExecutor, BoundedContemplateOutcome, BoundedContemplatePreflight,
+    ContemplateRequest, FamiliarityContext, KnowledgeAddress, KnowledgeApplication,
+    KnowledgeExplanation, KnowledgeProviderStatus, KnowledgeReading, KnowledgeRelationView,
+    KnowledgeSearchResult, ProjectCentralBinding, ProjectReflectionReadModel, QlRefractionRequest,
+    ResourceRef, Result as AikitResult, SemanticWikiIndex, SemanticWikiProvider, WikiObject,
+    DEFAULT_CONTEMPLATE_OBJECT_BUDGET, DEFAULT_CONTEMPLATE_RELATION_DEPTH,
 };
 use aikit_store::{AikitHome, KnowledgeApplicationReceipt, KnowledgeApplicationStore};
 use serde::Serialize;
 use serde_json::Value;
 
+use crate::living_wiki::{
+    adapt_central_horizon, living_wiki_preflight, living_wiki_reading, CentralSourceHorizon,
+    LivingWikiDesktopReading,
+};
 use crate::project_field::{LocalProjectField, ProjectFieldSnapshot};
 
 #[derive(Debug, Serialize)]
@@ -148,6 +156,100 @@ impl LocalProjectKnowledge {
         }
     }
 
+    /// Compose Central's authoritative source horizon with AIKit's deterministic
+    /// impact/freshness closure. This method cannot invoke an Agent/model.
+    pub fn living_status(
+        &self,
+        central: &CentralSourceHorizon,
+    ) -> Result<LivingWikiDesktopReading, String> {
+        living_wiki_reading(central, &self.index)
+    }
+
+    /// AIKit-owned deterministic bounded Contemplate preflight. Runtime identity
+    /// is supplied by the native host, never by renderer selection state. O:I does
+    /// not rebuild or enlarge the owner field.
+    pub fn living_preflight(
+        &self,
+        central: &CentralSourceHorizon,
+        focus: Vec<ResourceRef>,
+        runtime: &ModelRuntimeReadModel,
+        ql: Option<QlRefractionRequest>,
+    ) -> Result<BoundedContemplatePreflight, String> {
+        living_wiki_preflight(
+            self.binding.project.clone(),
+            focus,
+            central,
+            &self.index,
+            runtime,
+            ql,
+        )
+    }
+
+    /// Renderer/native-shell facade over the same owner preflight. Strings are
+    /// accepted only as transport values and parsed immediately through AIKit's
+    /// canonical ResourceRef parser. Ordinary desktop correctness has no QL
+    /// requirement; formal profiles remain an explicit owner attachment.
+    pub fn living_preflight_refs(
+        &self,
+        central: &CentralSourceHorizon,
+        focus: Vec<String>,
+        runtime: &ModelRuntimeReadModel,
+    ) -> Result<BoundedContemplatePreflight, String> {
+        let focus = parse_resource_refs(focus).map_err(|error| error.to_string())?;
+        self.living_preflight(central, focus, runtime, None)
+    }
+
+    /// Cross the Agent/model line only when the caller explicitly supplies AIKit's
+    /// bounded executor. Human source effects remain proposal-only in AIKit's
+    /// returned Agent-Wiki maintenance plan.
+    pub fn contemplate(
+        &self,
+        central: &CentralSourceHorizon,
+        focus: Vec<ResourceRef>,
+        runtime: &ModelRuntimeReadModel,
+        ql: Option<QlRefractionRequest>,
+        executor: &mut dyn BoundedContemplateExecutor,
+    ) -> AikitResult<BoundedContemplateOutcome> {
+        let horizon = adapt_central_horizon(central)
+            .map_err(|error| AikitError::new("oi.living_wiki.central_horizon", error))?;
+        let current_wiki_objects = self.wiki_objects();
+        let (dependencies, resource_dependencies) = wiki_living_dependencies(&current_wiki_objects)?;
+        explicit_bounded_contemplate(
+            &ContemplateRequest {
+                project: self.binding.project.clone(),
+                focus,
+                horizon: &horizon,
+                dependencies: &dependencies,
+                current_wiki_objects: &current_wiki_objects,
+                runtime,
+                method: None,
+                ql,
+            },
+            &resource_dependencies,
+            DEFAULT_CONTEMPLATE_OBJECT_BUDGET,
+            DEFAULT_CONTEMPLATE_RELATION_DEPTH,
+            executor,
+        )
+    }
+
+    /// Stable-ref transport facade for explicit ordinary Contemplate. The same
+    /// ResourceRef parser and owner operation are used as the typed path above.
+    pub fn contemplate_refs(
+        &self,
+        central: &CentralSourceHorizon,
+        focus: Vec<String>,
+        runtime: &ModelRuntimeReadModel,
+        executor: &mut dyn BoundedContemplateExecutor,
+    ) -> AikitResult<BoundedContemplateOutcome> {
+        self.contemplate(
+            central,
+            parse_resource_refs(focus)?,
+            runtime,
+            None,
+            executor,
+        )
+    }
+
     pub fn search(&self, query: &str, limit: usize) -> AikitResult<KnowledgeSearchResult> {
         let result = self.application().search(query, limit);
         self.store.remember_search_hits(&result.hits)?;
@@ -217,6 +319,14 @@ impl LocalProjectKnowledge {
         self.store.history(Some(&self.context), resource.as_ref())
     }
 
+    fn wiki_objects(&self) -> Vec<WikiObject> {
+        self.index
+            .discover()
+            .into_iter()
+            .filter_map(|resource| self.index.resolve(&resource))
+            .collect()
+    }
+
     fn application(&self) -> KnowledgeApplication<'_> {
         KnowledgeApplication::new(self.context.clone())
             .with_wiki(SemanticWikiProvider::new(&self.index))
@@ -250,4 +360,10 @@ impl LocalProjectKnowledge {
             ),
         ))
     }
+}
+
+fn parse_resource_refs(raw: Vec<String>) -> AikitResult<Vec<ResourceRef>> {
+    raw.into_iter()
+        .map(|value| ResourceRef::parse(&value))
+        .collect()
 }
