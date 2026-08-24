@@ -1,6 +1,69 @@
 {
   "schema": "oi.convergence-ledger-amendments/v1",
-  "observed_at": "2026-08-23",
-  "reason": "The 2026-08-23 live census has absorbed the concurrent refs and disposition corrections directly into suite/convergence-ledger.json. This overlay is intentionally empty so live set equality is literal again; future concurrent refs must be added explicitly if they appear before the next base census refresh.",
-  "repositories": []
+  "observed_at": "2026-08-24",
+  "reason": "Explicit concurrent movements after the 2026-08-24 base census. Closed PRs are removed from the live open-PR set; surviving merged branches remain ledgered with retirement dispositions; new Flow convergence refs are added with their actual current owners.",
+  "repositories": [
+    {
+      "repository": "EpiLogos/O-I",
+      "remove_open_pull_requests": [133, 136],
+      "branches": [
+        {
+          "name": "feat/current-world-context-frame",
+          "disposition": "RETIRE_MERGED",
+          "owner": "O:I main / merged PR #133",
+          "reason": "CurrentWorld six-product Workcell composition is accepted on O:I main as 576d7d03b99b39f4d632aec1440a25e5126d6992.",
+          "reentry_condition": "delete merged remote branch after #133/main provenance is retained",
+          "closure_blocking": true
+        },
+        {
+          "name": "feat/living-wiki-desktop-135",
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "O:I #134/#135 / merged stacked PR #136; parent of active Flow line",
+          "reason": "Living Wiki composition was accepted into the P2 development ancestry and remains a live parent of the Flow desktop convergence; it is not yet an O:I mainline branch.",
+          "reentry_condition": "Flow/current-main convergence absorbs the accepted Living Wiki delta, then retire the historical stacked branch",
+          "closure_blocking": false
+        },
+        {
+          "name": "converge/flow-living-137-main",
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "O:I #137/#138 / PR #146",
+          "reason": "current-main convergence branch combining P2, accepted Living Wiki and Flow over accepted Central/AIKit Flow owners",
+          "reentry_condition": "exact-owner Flow finalizer and conformance complete, then select the current-main convergence cut",
+          "closure_blocking": false
+        }
+      ],
+      "open_pull_requests": [
+        {
+          "number": 145,
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "O:I #138",
+          "reason": "Flow desktop child over the accepted stacked Living Wiki/P2 ancestry",
+          "reentry_condition": "current-main convergence PR #146 absorbs the accepted Flow delta or explicitly supersedes this child",
+          "closure_blocking": false
+        },
+        {
+          "number": 146,
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "O:I #137/#138",
+          "reason": "current-main Flow + Living Wiki + P2 convergence candidate against accepted owner mains",
+          "reentry_condition": "exact-owner finalizer and remote conformance return an acceptance disposition",
+          "closure_blocking": false
+        }
+      ]
+    },
+    {
+      "repository": "EpiLogos/ai-kit",
+      "remove_open_pull_requests": [123],
+      "branches": [
+        {
+          "name": "feat/flow-context-122",
+          "disposition": "RETIRE_MERGED",
+          "owner": "AIKit current main / merged PR #123",
+          "reason": "Flow standing context and first-class Contemplate scope are accepted on AIKit main as 4b9b404c0603532e86c5652b7fd5062d2e344acf.",
+          "reentry_condition": "delete merged remote branch after #123/main provenance is retained",
+          "closure_blocking": true
+        }
+      ]
+    }
+  ]
 }
