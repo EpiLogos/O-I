@@ -97,7 +97,15 @@ jobs:
           cargo = Path('desktop/core/Cargo.toml').read_text()
           assert '${{ env.AIKIT_SHA }}' in cargo
           assert '${{ env.FACTORY_SHA }}' in cargo
-          assert 'automatic Agent/model' in ' '.join(manifest['global_invariants'])
+          minimal = next(world for world in manifest['worlds'] if world['id'] == 'A')
+          assert any(
+              'zero automatic Agent/model invocation' in proposition
+              for proposition in minimal['proves']
+          )
+          assert any(
+              'Contemplate implicitly' in invariant
+              for invariant in manifest['global_invariants']
+          )
       - name: Build rendered workbench from committed lock
         run: |
           npm ci --prefix desktop/ui --no-audit --no-fund
