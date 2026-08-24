@@ -30,7 +30,10 @@ test('document events do not invoke contemplation implicitly', () => {
   assert.doesNotMatch(effects, /flow_contemplate_preflight/);
   assert.match(flow, />Preview Contemplate</);
   assert.match(flow, />Contemplate Flow</);
-  assert.match(flow, /disabled=\{busy !== '' \|\| dirty\}[^>]*>Bind current AgentSession/);
+  // The JSX click handler contains `=>`, so a `[^>]*` source-text regex stops
+  // before the button label even when the dirty guard is present. Keep this
+  // source-level conformance check targeted to the complete Bind button line.
+  assert.match(flow, /disabled=\{busy !== '' \|\| dirty\}.*>Bind current AgentSession/);
 });
 
 test('returned authorities remain separately presented', () => {
