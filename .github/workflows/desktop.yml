@@ -25,7 +25,7 @@ on:
       - '.github/workflows/desktop.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   core:
@@ -84,13 +84,8 @@ jobs:
     if: github.event_name == 'pull_request' && github.head_ref == 'feat/living-wiki-desktop-135'
     runs-on: macos-15
     timeout-minutes: 30
-    env:
-      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: feat/living-wiki-desktop-135
-          fetch-depth: 0
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -123,16 +118,6 @@ jobs:
               text = text.replace(needle, replacement, 1)
           main.write_text(text)
 
-          knowledge = Path('desktop/core/src/project_knowledge.rs')
-          text = knowledge.read_text()
-          old = 'raw.into_iter().map(ResourceRef::parse).collect()'
-          new = 'raw.into_iter()\n        .map(|value| ResourceRef::parse(&value))\n        .collect()'
-          if old in text:
-              text = text.replace(old, new, 1)
-          elif new not in text:
-              raise SystemExit('stable-ref parser insertion point moved')
-          knowledge.write_text(text)
-
       - name: Resolve native dependency truth from Cargo
         run: |
           cargo generate-lockfile --manifest-path desktop/src-tauri/Cargo.toml
@@ -157,21 +142,15 @@ jobs:
       - name: Preserve diff hygiene
         run: git diff --check
 
-      - name: Commit only if the remote branch is still this exact head
-        shell: bash
+      - name: Stage proven native files
         run: |
-          set -euo pipefail
-          remote_head="$(git ls-remote origin refs/heads/feat/living-wiki-desktop-135 | cut -f1)"
-          if [ "$remote_head" != "$EXPECTED_HEAD" ]; then
-            echo "branch moved during native finalization: expected $EXPECTED_HEAD, found $remote_head" >&2
-            exit 1
-          fi
-          git add desktop/src-tauri/src/main.rs desktop/src-tauri/Cargo.lock desktop/core
-          if git diff --cached --quiet; then
-            echo 'No native finalization changes were produced' >&2
-            exit 1
-          fi
-          git config user.name 'Epii'
-          git config user.email 'frank.g.taylor97@gmail.com'
-          git commit -m 'feat: register Living Wiki native shell and lock exact owners'
-          git push origin HEAD:feat/living-wiki-desktop-135
+          mkdir -p living-native-proven/desktop/src-tauri/src living-native-proven/desktop/src-tauri
+          cp desktop/src-tauri/src/main.rs living-native-proven/desktop/src-tauri/src/main.rs
+          cp desktop/src-tauri/Cargo.lock living-native-proven/desktop/src-tauri/Cargo.lock
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: living-native-proven-${{ github.event.pull_request.head.sha }}
+          path: living-native-proven
+          if-no-files-found: error
+          retention-days: 1
