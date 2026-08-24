@@ -5,6 +5,9 @@ pub fn cli_main() -> ExitCode {
         return match print_suite_v2_help() {
             Ok(()) => {
                 println!();
+                println!("Current world:");
+                println!("  oi current-world [--json]      disclose the situated six-product composition and current machine/Workcell relation");
+                println!();
                 println!("Current-main development / #97 acceptance:");
                 println!("  oi install central             install/register current ProjectCentral-capable Central source");
                 println!("  oi dev status [--json]         compare local source world with current accepted native mains");
@@ -43,6 +46,9 @@ pub fn cli_main() -> ExitCode {
                 ExitCode::from(2)
             }
         };
+    }
+    if let Some(code) = current_world_main() {
+        return code;
     }
     if let Some(code) = existing_world_main() {
         return code;
