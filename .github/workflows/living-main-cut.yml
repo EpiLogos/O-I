@@ -26,6 +26,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git config user.name 'Epii'
+          git config user.email 'frank.g.taylor97@gmail.com'
           git fetch origin main feat/flow-desktop-138
           test "$(git rev-parse origin/main)" = "4e944c4de85bd86cdd0151ab764f166032f3f7d6"
           git cat-file -e "$SOURCE_SHA^{commit}"
@@ -67,7 +69,5 @@ jobs:
           git rm .github/workflows/living-main-cut.yml
           git add -A
           git diff --cached --check
-          git config user.name 'Epii'
-          git config user.email 'frank.g.taylor97@gmail.com'
           git commit -m '[LIVING-WIKI] Compose W7 field onto repaired current main'
           git push origin HEAD:"$TARGET_BRANCH"
