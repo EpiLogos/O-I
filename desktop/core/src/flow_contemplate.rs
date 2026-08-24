@@ -65,12 +65,14 @@ Flow preflight:\n{encoded}"
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     #[test]
     fn flow_transport_source_has_no_second_session_open_path() {
         let source = include_str!("flow_contemplate.rs");
         assert!(source.contains("send_structured_agent_turn"));
         assert!(source.contains("parse_flow_contemplate_generated"));
-        assert!(!source.contains(concat!("AikitAgentSurface", "::open")));
-        assert!(!source.contains(concat!("Command", "::new")));
+        assert!(!source.contains("AikitAgentSurface::open"));
+        assert!(!source.contains("Command::new"));
     }
 }
