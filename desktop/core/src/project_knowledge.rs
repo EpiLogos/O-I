@@ -2,13 +2,19 @@
 //!
 //! ProjectCentral remains source/ground authority and SemanticWiki remains Wiki
 //! relation authority. O:I composes their native AIKit readings; it does not own
-//! source identity, Project identity, Wiki state, ProjectMap graph state, or Agent
-//! Context disclosure. Stable selection remains a separate host concern.
+//! source identity, Project identity, Wiki state, ProjectMap graph state, authored
+//! relation parsing/resolution, or Agent Context disclosure. Stable selection
+//! remains a separate host concern.
 
 use std::path::Path;
 use std::sync::Mutex;
 
-use aikit_adapters::ProjectCentralFilesystemBinding;
+use aikit_adapters::{
+    authored_wiki_subject_relations, compile_authored_wiki_relations,
+    parse_authored_wiki_source, projectcentral_authored_wiki,
+    rebuild_semantic_wiki_with_authored_relations, AuthoredWikiRelationCompilation,
+    AuthoredWikiSourceProjection, AuthoredWikiSubjectRelations, ProjectCentralFilesystemBinding,
+};
 use aikit_core::model_runtime::ModelRuntimeReadModel;
 use aikit_core::resource::MemoryResourceIndex;
 use aikit_core::{
@@ -20,13 +26,15 @@ use aikit_core::{
     FlowContemplateRequest, FlowStandingContext, KnowledgeAddress, KnowledgeApplication,
     KnowledgeExplanation, KnowledgeProviderStatus, KnowledgeReading, KnowledgeRelationView,
     KnowledgeSearchResult, ProjectCentralBinding, ProjectReflectionReadModel, QlRefractionRequest,
-    ResourceRef, Result as AikitResult, SemanticWikiIndex, SemanticWikiProvider, WikiObject,
-    DEFAULT_CONTEMPLATE_OBJECT_BUDGET, DEFAULT_CONTEMPLATE_RELATION_DEPTH,
+    ResourceKind, ResourceRef, Result as AikitResult, SemanticWikiIndex, SemanticWikiProvider,
+    SourceRef, SourceRevision, WikiObject, DEFAULT_CONTEMPLATE_OBJECT_BUDGET,
+    DEFAULT_CONTEMPLATE_RELATION_DEPTH,
 };
 use aikit_store::{AikitHome, KnowledgeApplicationReceipt, KnowledgeApplicationStore};
 use serde::Serialize;
 use serde_json::Value;
 
+use crate::flow::FlowDocumentReading;
 use crate::living_wiki::{
     adapt_central_horizon, living_wiki_preflight, living_wiki_reading, CentralSourceHorizon,
     LivingWikiDesktopReading,
@@ -65,6 +73,12 @@ pub enum ProjectRelations {
 
 pub struct LocalProjectKnowledge {
     binding: ProjectCentralBinding,
+    /// Canonical/adopted Wiki objects before source-authored relation projection.
+    /// This basis is retained so a current Flow can be projected transiently into
+    /// the same relation field without recompiling already-compiled edges.
+    base_wiki_objects: Vec<WikiObject>,
+    authored_sources: Vec<AuthoredWikiSourceProjection>,
+    authored_compilation: AuthoredWikiRelationCompilation,
     index: SemanticWikiIndex,
     context: FamiliarityContext,
     store: KnowledgeApplicationStore,
@@ -103,14 +117,23 @@ impl LocalProjectKnowledge {
         let project_root = project_root.as_ref().to_path_buf();
         let binding = ProjectCentralFilesystemBinding::inspect(&project_root, central_root)?;
 
-        // Canonical project Wiki plus explicitly adopted Wikis form the default
-        // local project horizon. The optional Central root Wiki is not ambiently
-        // loaded; a caller must open it through an explicit source/context path.
-        let mut objects = binding.load_project_wiki()?;
+        // AIKit owns the source-authored relation compiler. O:I supplies the real
+        // ProjectCentral source world, then extends the canonical Wiki basis with
+        // explicitly adopted Wikis before performing one final deterministic
+        // compile/rebuild so targets in adopted worlds can resolve too.
+        let projected = projectcentral_authored_wiki(&binding)?;
+        let mut base_wiki_objects = projected.wiki_objects;
         for (_, adopted) in binding.load_adopted_wikis()? {
-            objects.extend(adopted);
+            base_wiki_objects.extend(adopted);
         }
-        let index = SemanticWikiIndex::rebuild(objects)?;
+        let authored_sources = projected.source_projections;
+        let authored_compilation =
+            compile_authored_wiki_relations(&authored_sources, &base_wiki_objects, &[])?;
+        let index = rebuild_semantic_wiki_with_authored_relations(
+            &base_wiki_objects,
+            &authored_compilation,
+        )?;
+
         let project = ResourceRef::parse(&binding.semantic.project.to_string())?;
         let context = FamiliarityContext {
             project: Some(project),
@@ -122,6 +145,9 @@ impl LocalProjectKnowledge {
             .map_err(|error| AikitError::new("oi.project_field.open", error))?;
         Ok(Self {
             binding: binding.semantic,
+            base_wiki_objects,
+            authored_sources,
+            authored_compilation,
             index,
             context,
             store: KnowledgeApplicationStore::new(aikit_home),
@@ -160,8 +186,76 @@ impl LocalProjectKnowledge {
         }
     }
 
+    /// Shared authored relation read for a stable Project source/Wiki subject.
+    /// Resolved outgoing/incoming relations come from AIKit's existing
+    /// SemanticWikiProvider; unresolved/ambiguous source addresses remain beside
+    /// them as pending authored evidence. O:I performs no Markdown parsing here.
+    pub fn authored_relations(
+        &self,
+        raw_resource: &str,
+    ) -> AikitResult<AuthoredWikiSubjectRelations> {
+        let resource = ResourceRef::parse(raw_resource)?;
+        let (kind, label) = self.subject_presentation(&resource)?;
+        authored_wiki_subject_relations(
+            &self.index,
+            &self.authored_compilation,
+            resource,
+            kind,
+            label,
+        )
+    }
+
+    /// Project the currently-open ordinary Flow body into the same accepted AIKit
+    /// relation field. The Flow source is treated conservatively as Observed here:
+    /// source role and individual revision actors remain distinct, and O:I does not
+    /// manufacture a whole-source human/Agent epistemic standing from UI history.
+    /// The projection is read-only, deterministic and never promotes Flow to a
+    /// canonical Wiki object.
+    pub fn flow_authored_relations(
+        &self,
+        document: &FlowDocumentReading,
+    ) -> AikitResult<AuthoredWikiSubjectRelations> {
+        let flow_ref = ResourceRef::parse(&document.flow.flow_ref)?;
+        let source_ref = SourceRef::parse(&document.flow.source_ref)?;
+        let revision = SourceRevision::parse(&document.flow.current_revision)?;
+        let flow_source = parse_authored_wiki_source(
+            flow_ref.clone(),
+            source_ref.clone(),
+            Some(revision),
+            vec![document.flow.path.clone()],
+            &document.content,
+        )?;
+
+        let mut sources = self
+            .authored_sources
+            .iter()
+            .filter(|source| source.source_ref != source_ref)
+            .cloned()
+            .collect::<Vec<_>>();
+        sources.push(flow_source);
+        let compilation =
+            compile_authored_wiki_relations(&sources, &self.base_wiki_objects, &[])?;
+        let index = rebuild_semantic_wiki_with_authored_relations(
+            &self.base_wiki_objects,
+            &compilation,
+        )?;
+        authored_wiki_subject_relations(
+            &index,
+            &compilation,
+            flow_ref,
+            ResourceKind::ContextSource,
+            document
+                .flow
+                .title
+                .clone()
+                .unwrap_or_else(|| document.flow.path.clone()),
+        )
+    }
+
     /// Compose Central's authoritative source horizon with AIKit's deterministic
-    /// impact/freshness closure. This method cannot invoke an Agent/model.
+    /// impact/freshness closure. The index already includes source-authored edges,
+    /// so their exact source provenance participates in the existing Wiki living
+    /// dependency derivation. This method cannot invoke an Agent/model.
     pub fn living_status(
         &self,
         central: &CentralSourceHorizon,
@@ -446,6 +540,42 @@ impl LocalProjectKnowledge {
             .into_iter()
             .filter_map(|resource| self.index.resolve(&resource))
             .collect()
+    }
+
+    fn subject_presentation(&self, resource: &ResourceRef) -> AikitResult<(ResourceKind, String)> {
+        if let Some(source) = self
+            .binding
+            .sources
+            .iter()
+            .find(|source| source.source.as_str() == resource.as_str())
+        {
+            return Ok((
+                ResourceKind::KnowledgeSource,
+                source.relative_path.display().to_string(),
+            ));
+        }
+        if let Some(object) = self.index.resolve(resource) {
+            let kind = match object {
+                WikiObject::Space(_) => ResourceKind::KnowledgeSpace,
+                WikiObject::Frame(_) => ResourceKind::KnowledgeFrame,
+                _ => ResourceKind::KnowledgeNode,
+            };
+            let label = match object {
+                WikiObject::Space(value) => value.title.unwrap_or_else(|| resource.to_string()),
+                WikiObject::Node(value) => value.title.unwrap_or_else(|| resource.to_string()),
+                WikiObject::Edge(value) => value.relation,
+                WikiObject::Frame(_) => resource.to_string(),
+                WikiObject::Reading(value) => value.reading_type,
+            };
+            return Ok((kind, label));
+        }
+        if !self.index.neighbours(resource, 1).is_empty() {
+            return Ok((ResourceKind::ContextSource, resource.to_string()));
+        }
+        Err(AikitError::new(
+            "oi.authored_relations.subject_unknown",
+            format!("{resource} is not present in the current Project relation field"),
+        ))
     }
 
     fn application(&self) -> KnowledgeApplication<'_> {
