@@ -43,26 +43,6 @@ jobs:
           if old not in text:
               raise SystemExit('expected ProjectRelations presentation assertion not found')
           presentation.write_text(text.replace(old, new))
-
-          old_sha = '4b9b404c0603532e86c5652b7fd5062d2e344acf'
-          new_sha = '6b2517862faccc7787b36ef45ef8d19186fe8128'
-          workflow = Path('.github/workflows/living-wiki-w7.yml')
-          text = workflow.read_text()
-          if old_sha not in text:
-              raise SystemExit('old W7 AIKit pin not found')
-          workflow.write_text(text.replace(old_sha, new_sha))
-
-          manifest = Path('suite/living-wiki-w7.json')
-          text = manifest.read_text()
-          if old_sha not in text:
-              raise SystemExit('old W7 manifest AIKit revision not found')
-          text = text.replace(old_sha, new_sha)
-          text = text.replace('"observed_at": "2026-08-24"', '"observed_at": "2026-08-25"')
-          text = text.replace(
-              '"role": "impact/freshness, integrative readings, explicit Contemplate, Flow standing context"',
-              '"role": "impact/freshness, integrative readings, explicit Contemplate, Flow standing context, authored Markdown/OKF relation compilation"',
-          )
-          manifest.write_text(text)
       - name: Regenerate exact committed native dependency graph
         run: cargo generate-lockfile --manifest-path desktop/src-tauri/Cargo.toml
       - name: Prove repaired graph
@@ -72,13 +52,12 @@ jobs:
           cargo clippy --manifest-path desktop/core/Cargo.toml --all-targets -- -D warnings
           node --test desktop/ui/src/project-field-presentation.test.mjs
           git diff --check
-      - name: Commit exact repair and remove one-shot workflow
+      - name: Commit exact non-workflow repair
         shell: bash
         run: |
           set -euo pipefail
-          git rm .github/workflows/wiki-relations-lock-repair.yml
-          git add desktop/core/src/project_knowledge.rs desktop/src-tauri/Cargo.lock desktop/ui/src/project-field-presentation.test.mjs .github/workflows/living-wiki-w7.yml suite/living-wiki-w7.json
+          git add desktop/core/src/project_knowledge.rs desktop/src-tauri/Cargo.lock desktop/ui/src/project-field-presentation.test.mjs
           git config user.name 'EpiLogos automation'
           git config user.email 'actions@users.noreply.github.com'
-          git commit -m '[WIKI-RELATIONS] Commit accepted owner graph and W7 reproof'
+          git commit -m '[WIKI-RELATIONS] Commit accepted owner graph repair'
           git push origin HEAD:feat/authored-wiki-relations-150
