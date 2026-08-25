@@ -1,0 +1,37 @@
+.oi-authored-relations {
+  display: grid;
+  gap: .8rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--oi-border, rgba(127, 127, 127, .22));
+  border-radius: .7rem;
+  padding: .85rem;
+  background: rgba(127, 127, 127, .025);
+}
+
+.oi-authored-relations__header,
+.oi-authored-relations__group > header,
+.oi-authored-relations__footer {
+  display: flex;
+  justify-content: space-between;
+  gap: .7rem;
+  align-items: flex-start;
+}
+
+.oi-authored-relations__header h3 { margin: .1rem 0 .3rem; }
+.oi-authored-relations__state { color: var(--oi-muted, #888); font-size: .72rem; }
+.oi-authored-relations__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .65rem; }
+.oi-authored-relations__group { min-width: 0; }
+.oi-authored-relations__group > header { border-bottom: 1px solid var(--oi-border, rgba(127, 127, 127, .18)); padding-bottom: .35rem; margin-bottom: .35rem; }
+.oi-authored-relations__group > div { display: grid; gap: .35rem; }
+.oi-authored-relation { border-bottom: 1px solid var(--oi-border, rgba(127, 127, 127, .14)); padding: .35rem 0; }
+.oi-authored-relation summary { display: flex; justify-content: space-between; gap: .5rem; cursor: pointer; }
+.oi-authored-relation summary > span { display: grid; gap: .1rem; }
+.oi-authored-relation summary small { color: var(--oi-muted, #888); font-size: .7rem; }
+.oi-authored-relation summary button { border: 0; padding: 0; background: transparent; color: inherit; text-align: right; text-decoration: underline; text-underline-offset: .15em; cursor: pointer; overflow-wrap: anywhere; }
+.oi-authored-relation summary code { color: var(--oi-muted, #888); overflow-wrap: anywhere; }
+.oi-authored-relation dl { display: grid; grid-template-columns: auto 1fr; gap: .25rem .55rem; font-size: .72rem; }
+.oi-authored-relation dt { color: var(--oi-muted, #888); }
+.oi-authored-relation dd { margin: 0; overflow-wrap: anywhere; }
+.oi-authored-relations__footer { flex-wrap: wrap; color: var(--oi-muted, #888); font-size: .68rem; border-top: 1px solid var(--oi-border, rgba(127, 127, 127, .18)); padding-top: .55rem; }
+
+@media (max-width: 900px) { .oi-authored-relations__grid { grid-template-columns: 1fr; } }
