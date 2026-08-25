@@ -93,7 +93,7 @@ pub struct ProjectSourceRelations {
 #[serde(untagged)]
 pub enum ProjectRelations {
     Knowledge(KnowledgeRelationView),
-    Source(ProjectSourceRelations),
+    Source(Box<ProjectSourceRelations>),
 }
 
 pub struct LocalProjectKnowledge {
@@ -497,10 +497,10 @@ impl LocalProjectKnowledge {
             let reflection = field
                 .reflection(raw_resource)
                 .map_err(|error| AikitError::new("oi.project_reflection.read", error))?;
-            return Ok(ProjectRelations::Source(ProjectSourceRelations {
+            return Ok(ProjectRelations::Source(Box::new(ProjectSourceRelations {
                 reflection,
                 authored: self.authored_relations(raw_resource)?,
-            }));
+            })));
         }
         let address = self.resolve_address(raw_resource)?;
         self.application()
