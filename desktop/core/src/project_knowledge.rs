@@ -8,34 +8,56 @@
 use std::path::Path;
 use std::sync::Mutex;
 
-use aikit_adapters::ProjectCentralFilesystemBinding;
+use aikit_adapters::{
+    authored_relation_dependencies, authored_wiki_subject_relations,
+    compile_authored_wiki_relations, projectcentral_authored_wiki,
+    rebuild_semantic_wiki_with_authored_relations, AuthoredWikiRelationCompilation,
+    AuthoredWikiSourceProjection, AuthoredWikiSubjectRelations, ProjectCentralFilesystemBinding,
+};
 use aikit_core::model_runtime::ModelRuntimeReadModel;
-use aikit_core::resource::MemoryResourceIndex;
+use aikit_core::resource::{MemoryResourceIndex, ResourceKind};
 use aikit_core::{
+    bounded_contemplate_preflight, deterministic_transitive_knowledge_impact,
     explicit_bounded_contemplate, explicit_flow_contemplate, first_party_flow_method,
     first_party_flow_resource_records, flow_contemplate_preflight, resolve_praxis,
     wiki_living_dependencies, AikitError, BoundedContemplateExecutor, BoundedContemplateOutcome,
     BoundedContemplatePreflight, ContemplateRequest, ContextResolution, FamiliarityContext,
     FlowAuthorityRef, FlowContemplateExecutor, FlowContemplateOutcome, FlowContemplatePreflight,
     FlowContemplateRequest, FlowStandingContext, KnowledgeAddress, KnowledgeApplication,
-    KnowledgeExplanation, KnowledgeProviderStatus, KnowledgeReading, KnowledgeRelationView,
-    KnowledgeSearchResult, ProjectCentralBinding, ProjectReflectionReadModel, QlRefractionRequest,
-    ResourceRef, Result as AikitResult, SemanticWikiIndex, SemanticWikiProvider, WikiObject,
+    KnowledgeDependency, KnowledgeExplanation, KnowledgeProviderStatus, KnowledgeReading,
+    KnowledgeRelationView, KnowledgeResourceDependency, KnowledgeSearchResult,
+    ProjectCentralBinding, ProjectReflectionReadModel, QlRefractionRequest, ResourceRef,
+    Result as AikitResult, SemanticWikiIndex, SemanticWikiProvider, WikiObject,
     DEFAULT_CONTEMPLATE_OBJECT_BUDGET, DEFAULT_CONTEMPLATE_RELATION_DEPTH,
+    DEFAULT_LIVING_IMPACT_DEPTH, DEFAULT_LIVING_IMPACT_RESOURCES,
 };
 use aikit_store::{AikitHome, KnowledgeApplicationReceipt, KnowledgeApplicationStore};
 use serde::Serialize;
 use serde_json::Value;
 
 use crate::living_wiki::{
-    adapt_central_horizon, living_wiki_preflight, living_wiki_reading, CentralSourceHorizon,
-    LivingWikiDesktopReading,
+    adapt_central_horizon, living_wiki_reading, CentralSourceHorizon, LivingWikiDesktopReading,
 };
 use crate::project_field::{LocalProjectField, ProjectFieldSnapshot};
+
+pub const OI_AUTHORED_RELATIONS_VERSION: &str = "oi.authored-wiki-relations/v1";
+
+#[derive(Debug, Serialize)]
+pub struct AuthoredRelationsStatus {
+    pub version: &'static str,
+    pub provider: &'static str,
+    pub sources: usize,
+    pub resolved_relations: usize,
+    pub pending_relations: usize,
+    pub living_dependencies: usize,
+    pub semantic_wiki_revision: String,
+    pub automatic_agent_or_model_invocation: bool,
+}
 
 #[derive(Debug, Serialize)]
 pub struct ProjectKnowledgeStatus {
     pub knowledge: KnowledgeProviderStatus,
+    pub authored_relations: AuthoredRelationsStatus,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub project_field: Option<ProjectFieldSnapshot>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -56,16 +78,30 @@ pub enum ProjectExplanation {
     Source(Value),
 }
 
+/// Keep the established Project reflection shape intact while adding AIKit's
+/// source-authored relation reading beside it. `flatten` means existing source
+/// relation consumers keep their current fields unchanged.
+#[derive(Debug, Serialize)]
+pub struct ProjectSourceRelations {
+    #[serde(flatten)]
+    pub reflection: ProjectReflectionReadModel,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub authored: Option<AuthoredWikiSubjectRelations>,
+}
+
 #[derive(Debug, Serialize)]
 #[serde(untagged)]
 pub enum ProjectRelations {
     Knowledge(KnowledgeRelationView),
-    Reflection(ProjectReflectionReadModel),
+    Source(ProjectSourceRelations),
 }
 
 pub struct LocalProjectKnowledge {
     binding: ProjectCentralBinding,
     index: SemanticWikiIndex,
+    authored_sources: Vec<AuthoredWikiSourceProjection>,
+    authored_compilation: AuthoredWikiRelationCompilation,
+    authored_dependencies: Vec<KnowledgeDependency>,
     context: FamiliarityContext,
     store: KnowledgeApplicationStore,
     project_field: Mutex<LocalProjectField>,
@@ -103,14 +139,21 @@ impl LocalProjectKnowledge {
         let project_root = project_root.as_ref().to_path_buf();
         let binding = ProjectCentralFilesystemBinding::inspect(&project_root, central_root)?;
 
-        // Canonical project Wiki plus explicitly adopted Wikis form the default
-        // local project horizon. The optional Central root Wiki is not ambiently
-        // loaded; a caller must open it through an explicit source/context path.
-        let mut objects = binding.load_project_wiki()?;
+        // AIKit owns source interpretation. O:I keeps its already-established
+        // canonical + explicitly adopted Wiki horizon, then asks the same AIKit
+        // compiler to resolve/materialise source-authored relations across it.
+        let authored = projectcentral_authored_wiki(&binding)?;
+        let authored_sources = authored.source_projections;
+        let mut objects = authored.wiki_objects;
         for (_, adopted) in binding.load_adopted_wikis()? {
             objects.extend(adopted);
         }
-        let index = SemanticWikiIndex::rebuild(objects)?;
+        let authored_compilation =
+            compile_authored_wiki_relations(&authored_sources, &objects, &[])?;
+        let index =
+            rebuild_semantic_wiki_with_authored_relations(&objects, &authored_compilation)?;
+        let authored_dependencies = authored_relation_dependencies(&authored_sources);
+
         let project = ResourceRef::parse(&binding.semantic.project.to_string())?;
         let context = FamiliarityContext {
             project: Some(project),
@@ -123,6 +166,9 @@ impl LocalProjectKnowledge {
         Ok(Self {
             binding: binding.semantic,
             index,
+            authored_sources,
+            authored_compilation,
+            authored_dependencies,
             context,
             store: KnowledgeApplicationStore::new(aikit_home),
             project_field: Mutex::new(project_field),
@@ -139,21 +185,34 @@ impl LocalProjectKnowledge {
 
     pub fn status(&self) -> ProjectKnowledgeStatus {
         let knowledge = self.application().status();
+        let authored_relations = AuthoredRelationsStatus {
+            version: OI_AUTHORED_RELATIONS_VERSION,
+            provider: "ai-kit",
+            sources: self.authored_sources.len(),
+            resolved_relations: self.authored_compilation.edges.len(),
+            pending_relations: self.authored_compilation.pending.len(),
+            living_dependencies: self.authored_dependencies.len(),
+            semantic_wiki_revision: self.index.revision().to_string(),
+            automatic_agent_or_model_invocation: false,
+        };
         match self.project_field.lock() {
             Ok(field) => match field.snapshot() {
                 Ok(project_field) => ProjectKnowledgeStatus {
                     knowledge,
+                    authored_relations,
                     project_field: Some(project_field),
                     project_field_error: None,
                 },
                 Err(error) => ProjectKnowledgeStatus {
                     knowledge,
+                    authored_relations,
                     project_field: None,
                     project_field_error: Some(error),
                 },
             },
             Err(_) => ProjectKnowledgeStatus {
                 knowledge,
+                authored_relations,
                 project_field: None,
                 project_field_error: Some("Project field lock poisoned".into()),
             },
@@ -161,17 +220,33 @@ impl LocalProjectKnowledge {
     }
 
     /// Compose Central's authoritative source horizon with AIKit's deterministic
-    /// impact/freshness closure. This method cannot invoke an Agent/model.
+    /// Wiki and source-authored dependency closure. This method cannot invoke an
+    /// Agent/model.
     pub fn living_status(
         &self,
         central: &CentralSourceHorizon,
     ) -> Result<LivingWikiDesktopReading, String> {
-        living_wiki_reading(central, &self.index)
+        let horizon = adapt_central_horizon(central)?;
+        let current_wiki_objects = self.wiki_objects();
+        let (dependencies, resource_dependencies) = self.living_dependencies(&current_wiki_objects)
+            .map_err(|error| error.to_string())?;
+        let impact = deterministic_transitive_knowledge_impact(
+            &horizon,
+            &dependencies,
+            &resource_dependencies,
+            DEFAULT_LIVING_IMPACT_DEPTH,
+            DEFAULT_LIVING_IMPACT_RESOURCES,
+        )
+        .map_err(|error| error.to_string())?;
+        let mut reading = living_wiki_reading(central, &self.index)?;
+        reading.impact = impact;
+        Ok(reading)
     }
 
     /// AIKit-owned deterministic bounded Contemplate preflight. Runtime identity
-    /// is supplied by the native host, never by renderer selection state. O:I does
-    /// not rebuild or enlarge the owner field.
+    /// is supplied by the native host, never by renderer selection state. O:I adds
+    /// only the exact AIKit-authored source dependency basis already materialised
+    /// for this Project horizon.
     pub fn living_preflight(
         &self,
         central: &CentralSourceHorizon,
@@ -179,14 +254,27 @@ impl LocalProjectKnowledge {
         runtime: &ModelRuntimeReadModel,
         ql: Option<QlRefractionRequest>,
     ) -> Result<BoundedContemplatePreflight, String> {
-        living_wiki_preflight(
-            self.binding.project.clone(),
-            focus,
-            central,
-            &self.index,
-            runtime,
-            ql,
+        let horizon = adapt_central_horizon(central)?;
+        let current_wiki_objects = self.wiki_objects();
+        let (dependencies, resource_dependencies) = self
+            .living_dependencies(&current_wiki_objects)
+            .map_err(|error| error.to_string())?;
+        bounded_contemplate_preflight(
+            &ContemplateRequest {
+                project: self.binding.project.clone(),
+                focus,
+                horizon: &horizon,
+                dependencies: &dependencies,
+                current_wiki_objects: &current_wiki_objects,
+                runtime,
+                method: None,
+                ql,
+            },
+            &resource_dependencies,
+            DEFAULT_CONTEMPLATE_OBJECT_BUDGET,
+            DEFAULT_CONTEMPLATE_RELATION_DEPTH,
         )
+        .map_err(|error| error.to_string())
     }
 
     /// Deterministic Flow-specialised preflight over this same local Wiki/change
@@ -204,7 +292,7 @@ impl LocalProjectKnowledge {
             .map_err(|error| AikitError::new("oi.living_wiki.central_horizon", error))?;
         let current_wiki_objects = self.wiki_objects();
         let (dependencies, resource_dependencies) =
-            wiki_living_dependencies(&current_wiki_objects)?;
+            self.living_dependencies(&current_wiki_objects)?;
         let method = first_party_flow_method(None)?;
         let mut resources = MemoryResourceIndex::default();
         for record in first_party_flow_resource_records()? {
@@ -261,7 +349,7 @@ impl LocalProjectKnowledge {
             .map_err(|error| AikitError::new("oi.living_wiki.central_horizon", error))?;
         let current_wiki_objects = self.wiki_objects();
         let (dependencies, resource_dependencies) =
-            wiki_living_dependencies(&current_wiki_objects)?;
+            self.living_dependencies(&current_wiki_objects)?;
         let method = first_party_flow_method(None)?;
         let mut resources = MemoryResourceIndex::default();
         for record in first_party_flow_resource_records()? {
@@ -334,7 +422,7 @@ impl LocalProjectKnowledge {
             .map_err(|error| AikitError::new("oi.living_wiki.central_horizon", error))?;
         let current_wiki_objects = self.wiki_objects();
         let (dependencies, resource_dependencies) =
-            wiki_living_dependencies(&current_wiki_objects)?;
+            self.living_dependencies(&current_wiki_objects)?;
         explicit_bounded_contemplate(
             &ContemplateRequest {
                 project: self.binding.project.clone(),
@@ -406,15 +494,44 @@ impl LocalProjectKnowledge {
     ) -> AikitResult<ProjectRelations> {
         if self.project_source_exists(raw_resource)? {
             let field = self.project_field()?;
-            return field
+            let reflection = field
                 .reflection(raw_resource)
-                .map(ProjectRelations::Reflection)
-                .map_err(|error| AikitError::new("oi.project_reflection.read", error));
+                .map_err(|error| AikitError::new("oi.project_reflection.read", error))?;
+            return Ok(ProjectRelations::Source(ProjectSourceRelations {
+                reflection,
+                authored: self.authored_relations(raw_resource)?,
+            }));
         }
         let address = self.resolve_address(raw_resource)?;
         self.application()
             .relations(&address, depth, max_nodes, max_edges)
             .map(ProjectRelations::Knowledge)
+    }
+
+    /// Shared authored relation/backlink/pending read over AIKit-owned state. The
+    /// renderer never sees source bytes and never reparses Markdown/OKF.
+    pub fn authored_relations(
+        &self,
+        raw_resource: &str,
+    ) -> AikitResult<Option<AuthoredWikiSubjectRelations>> {
+        let Some(source) = self.authored_sources.iter().find(|source| {
+            source.source_ref.as_str() == raw_resource || source.subject_ref.as_str() == raw_resource
+        }) else {
+            return Ok(None);
+        };
+        let label = source
+            .title
+            .clone()
+            .or_else(|| source.locators.first().cloned())
+            .unwrap_or_else(|| source.subject_ref.to_string());
+        authored_wiki_subject_relations(
+            &self.index,
+            &self.authored_compilation,
+            source.subject_ref.clone(),
+            ResourceKind::KnowledgeSource,
+            label,
+        )
+        .map(Some)
     }
 
     pub fn explain(&self, raw_resource: &str) -> AikitResult<ProjectExplanation> {
@@ -446,6 +563,28 @@ impl LocalProjectKnowledge {
             .into_iter()
             .filter_map(|resource| self.index.resolve(&resource))
             .collect()
+    }
+
+    fn living_dependencies(
+        &self,
+        current_wiki_objects: &[WikiObject],
+    ) -> AikitResult<(Vec<KnowledgeDependency>, Vec<KnowledgeResourceDependency>)> {
+        let (mut source_dependencies, resource_dependencies) =
+            wiki_living_dependencies(current_wiki_objects)?;
+        source_dependencies.extend(self.authored_dependencies.iter().cloned());
+        source_dependencies.sort_by(|left, right| {
+            left.dependent
+                .cmp(&right.dependent)
+                .then(left.source.cmp(&right.source))
+                .then(left.relation.cmp(&right.relation))
+        });
+        source_dependencies.dedup_by(|left, right| {
+            left.dependent == right.dependent
+                && left.source == right.source
+                && left.relation == right.relation
+                && left.basis_revision == right.basis_revision
+        });
+        Ok((source_dependencies, resource_dependencies))
     }
 
     fn application(&self) -> KnowledgeApplication<'_> {
