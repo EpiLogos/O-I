@@ -1,0 +1,107 @@
+name: OI97 post-W7 desktop finalize
+
+on:
+  push:
+    branches:
+      - converge/oi97-post-w7-desktop
+    paths:
+      - '.github/workflows/oi97-post-w7-finalize.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: converge/oi97-post-w7-desktop
+          fetch-depth: 0
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+          components: rustfmt, clippy
+
+      - name: Materialize exact post-W7 owner cut
+        shell: python
+        run: |
+          from pathlib import Path
+
+          OLD_AIKIT = '4b9b404c0603532e86c5652b7fd5062d2e344acf'
+          NEW_AIKIT = '40f39547b1c2afe00ca46ff7c30894b17be2b2bb'
+          OLD_FACTORY = 'ec08c99a55a6320c6f59d3c73024b5d48063a989'
+          NEW_FACTORY = '0731d654eab9357323f603f306332d3b7e0e71cb'
+
+          paths = [
+              Path('desktop/core/Cargo.toml'),
+              Path('suite/mainline.json'),
+              Path('surfaces.json'),
+              Path('suite/living-wiki-w7.json'),
+              Path('.github/workflows/living-wiki-w7.yml'),
+          ]
+          for path in paths:
+              text = path.read_text()
+              before = text
+              text = text.replace(OLD_AIKIT, NEW_AIKIT)
+              text = text.replace(OLD_FACTORY, NEW_FACTORY)
+              if text == before:
+                  raise SystemExit(f'{path}: expected live-owner pin replacement was absent')
+              path.write_text(text)
+
+          mainline = Path('suite/mainline.json')
+          text = mainline.read_text().replace('"observed_at": "2026-08-24"', '"observed_at": "2026-08-25"')
+          text = text.replace(
+              'Current main includes V2/SessionSpace/Knowledge/ProjectCentral/praxis, evidence-backed harness admission, Living Knowledge impact/freshness, bounded Contemplate, and accepted Flow standing-context/Contemplate scope through PR #123. Credential, Explain/History, TUI parity and instruction-craft remain explicit owner development.',
+              'Current main includes V2/SessionSpace/Knowledge/ProjectCentral/praxis, evidence-backed harness admission, Living Knowledge impact/freshness, bounded Contemplate, accepted Flow standing-context/Contemplate scope through PR #123, and the human-authority/instruction-craft convergence merged through PR #124. Credential, Explain/History and TUI parity remain explicit owner development.'
+          )
+          text = text.replace(
+              'Current main preserves the Factory↔Actuation ownership correction while active Deep QL, optional QL client and persistent-hosting/DeepSeek-host research remain explicit development lines. QL-dependent Factory consumers remain Factory-owned exceptions; they do not pull the QL owner programme into #97.',
+              'Current main preserves the Factory↔Actuation ownership correction and now includes live Build/Run cognition retention through PR #166. Active Deep QL, optional QL client and persistent-hosting/DeepSeek-host research remain explicit Factory-owned development lines and do not pull the QL owner programme into #97.'
+          )
+          mainline.write_text(text)
+
+          surfaces = Path('surfaces.json')
+          text = surfaces.read_text().replace('"verified_at": "2026-08-24"', '"verified_at": "2026-08-25"')
+          text = text.replace(
+              'Current accepted AIKit main includes V2/SessionSpace/Knowledge/ProjectCentral/praxis, harness admission, bounded Living Knowledge Contemplate, and accepted Flow standing context/Contemplate scope through PR #123.',
+              'Current accepted AIKit main includes V2/SessionSpace/Knowledge/ProjectCentral/praxis, harness admission, bounded Living Knowledge Contemplate, accepted Flow standing context/Contemplate scope through PR #123, and human-authority/instruction-craft convergence through PR #124.'
+          )
+          text = text.replace(
+              'Factory current main owns developmental Project/Run/Candidate/Evidence semantics with the corrected Actuation authority boundary. QL-dependent Factory research/client lines remain Factory-owned active exceptions and do not import the moving QL owner programme into #97.',
+              'Factory current main owns developmental Project/Run/Candidate/Evidence semantics with the corrected Actuation authority boundary and live Build/Run cognition retention through PR #166. QL-dependent Factory research/client lines remain Factory-owned active exceptions and do not import the moving QL owner programme into #97.'
+          )
+          surfaces.write_text(text)
+
+          w7 = Path('suite/living-wiki-w7.json')
+          w7.write_text(w7.read_text().replace('"observed_at": "2026-08-24"', '"observed_at": "2026-08-25"'))
+
+      - name: Regenerate exact committed native dependency graph
+        run: |
+          cargo generate-lockfile --manifest-path desktop/src-tauri/Cargo.toml
+          cargo fmt --manifest-path desktop/core/Cargo.toml
+          cargo fmt --manifest-path desktop/src-tauri/Cargo.toml
+
+      - name: Prove post-W7 desktop core against advanced owners
+        run: |
+          cargo test --manifest-path desktop/core/Cargo.toml --all-targets
+          cargo clippy --manifest-path desktop/core/Cargo.toml --all-targets -- -D warnings
+
+      - name: Prove Apple-Silicon native shell on exact lock
+        run: cargo check --manifest-path desktop/src-tauri/Cargo.toml --locked --target aarch64-apple-darwin
+
+      - name: Preserve source hygiene
+        run: git diff --check
+
+      - name: Commit materialized cut and retire finalizer
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/oi97-post-w7-finalize.yml
+          git add -u
+          git config user.name 'Epii'
+          git config user.email 'frank.g.taylor97@gmail.com'
+          git commit -m '[OI97] Refresh Flow/Living desktop against live owner mains'
+          git push origin HEAD:converge/oi97-post-w7-desktop
