@@ -40,7 +40,6 @@ jobs:
               Path('suite/mainline.json'),
               Path('surfaces.json'),
               Path('suite/living-wiki-w7.json'),
-              Path('.github/workflows/living-wiki-w7.yml'),
           ]
           for path in paths:
               text = path.read_text()
@@ -95,12 +94,11 @@ jobs:
       - name: Preserve source hygiene
         run: git diff --check
 
-      - name: Commit materialized cut and retire finalizer
+      - name: Publish tested product and receipt files
         shell: bash
         run: |
           set -euo pipefail
-          git rm .github/workflows/oi97-post-w7-finalize.yml
-          git add -u
+          git add desktop/core/Cargo.toml desktop/src-tauri/Cargo.lock suite/mainline.json surfaces.json suite/living-wiki-w7.json
           git config user.name 'Epii'
           git config user.email 'frank.g.taylor97@gmail.com'
           git commit -m '[OI97] Refresh Flow/Living desktop against live owner mains'
