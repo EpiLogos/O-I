@@ -4,6 +4,7 @@ import {
   ProjectFieldCanvas as ProjectFieldBaseCanvas,
   ProjectNavigator as ProjectBaseNavigator,
 } from './project-field-base';
+import { AuthoredRelationsWorkbench } from './authored-relations';
 import { FlowNavigator, FlowWorkbench } from './flow-workbench';
 import { LivingWikiWorkbench } from './living-wiki';
 import { type WorkbenchEvidence, type WorkbenchSemanticRef } from './workbench-native';
@@ -23,13 +24,15 @@ export function ProjectNavigator(props: ProjectFieldProps) {
   </>;
 }
 
-/// Flow uses the existing Project Canvas as its situated live document surface;
-/// ordinary source/Ground/Knowledge/ProjectMap/NOW and Living Knowledge remain
-/// unchanged parallel relations around the same stable semantic selection.
+/// The existing Project Canvas remains the linguistic/source surface. Authored
+/// relation disclosure consumes AIKit's owner read model beside it, preserving
+/// the same stable P1 selection through relation navigation, Living Knowledge and
+/// explicit Contemplate. O:I owns no parser, resolver, backlink store or graph.
 export function ProjectFieldCanvas(props: ProjectFieldProps) {
   return <>
     <FlowWorkbench {...props} />
     <ProjectFieldBaseCanvas {...props} />
+    <AuthoredRelationsWorkbench selection={props.selection} onSelect={props.onSelect} />
     <LivingWikiWorkbench selection={props.selection} />
   </>;
 }
