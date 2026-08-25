@@ -1,0 +1,55 @@
+name: Wiki relations lock finalize
+
+on:
+  push:
+    branches:
+      - feat/authored-wiki-relations-150
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/authored-wiki-relations-150
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Apply proven bounded source repair
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('desktop/core/src/project_knowledge.rs')
+          text = path.read_text()
+          text = text.replace('    Source(ProjectSourceRelations),', '    Source(Box<ProjectSourceRelations>),')
+          text = text.replace(
+              '''            return Ok(ProjectRelations::Source(ProjectSourceRelations {\n                reflection,\n                authored: self.authored_relations(raw_resource)?,\n            }));''',
+              '''            return Ok(ProjectRelations::Source(Box::new(ProjectSourceRelations {\n                reflection,\n                authored: self.authored_relations(raw_resource)?,\n            })));''',
+          )
+          path.write_text(text)
+      - name: Generate exact native Cargo lock
+        run: cargo generate-lockfile --manifest-path desktop/src-tauri/Cargo.toml
+      - name: Prove generated graph and repaired core
+        run: |
+          cargo metadata --manifest-path desktop/src-tauri/Cargo.toml --locked --no-deps >/dev/null
+          cargo test --manifest-path desktop/core/Cargo.toml --all-targets
+          cargo clippy --manifest-path desktop/core/Cargo.toml --all-targets -- -D warnings
+          node --test desktop/ui/src/project-field-presentation.test.mjs
+          git diff --check
+      - name: Commit only product/dependency state
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add desktop/core/src/project_knowledge.rs desktop/src-tauri/Cargo.lock
+          if git diff --cached --quiet; then
+            echo 'Exact native dependency graph already committed.'
+            exit 0
+          fi
+          git config user.name 'EpiLogos automation'
+          git config user.email 'actions@users.noreply.github.com'
+          git commit -m '[WIKI-RELATIONS] Commit exact accepted-owner dependency graph'
+          git push origin HEAD:feat/authored-wiki-relations-150
