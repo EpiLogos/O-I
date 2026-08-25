@@ -74,7 +74,8 @@ test('Ground mutation is not proxied through the desktop host', () => {
 test('ProjectMap integration is bounded AIKit reflection, not a desktop graph', () => {
   assert.match(core, /project_reflection\(map, &resource, 4, 96\)/);
   assert.match(projectFieldComposition, /No graph is copied into O:I/);
-  assert.match(knowledge, /ProjectRelations::Reflection/);
+  assert.match(knowledge, /ProjectReflectionReadModel/);
+  assert.match(knowledge, /ProjectRelations::Source/);
 });
 
 test('Living Knowledge composes around the accepted ProjectField rather than replacing it', () => {
