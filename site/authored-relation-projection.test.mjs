@@ -67,7 +67,7 @@ test('compiler ignores non-authored edges even when a public route exists', () =
 test('public compiler consumes relation objects and contains no source-language parser', async () => {
   const source = await readFile(new URL('../shared-field/presentation-projection.mjs', import.meta.url), 'utf8');
   assert.equal(source.includes('parse_authored_wiki_source'), false);
-  assert.equal(source.includes('[[‘), false);
+  assert.equal(source.includes('[['), false);
   assert.match(source, /origin !== 'authored'/);
   assert.match(source, /eligiblePublicRoutes/);
 });
