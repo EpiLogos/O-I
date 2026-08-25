@@ -1,4 +1,4 @@
-import { createProjection, validateProjection } from './index.mjs';
+import { SPARSE_REPRESENTATION_SCHEMA, createProjection, validateProjection } from './index.mjs';
 import { refineProjection } from './projection-refinement.mjs';
 import { WORLD_PRESENTATION_SCHEMA, validateWorldPresentation } from './presentation.mjs';
 
@@ -40,6 +40,70 @@ export function worldPresentationFromProjection(value) {
     throw new TypeError('World presentation world_ref must match Projection subject.ref');
   }
   return presentation;
+}
+
+/**
+ * Compile owner-supplied authored Wiki edges into an already-eligible public
+ * sparse Projection. `eligiblePublicRoutes` is the output of publication/privacy
+ * authority: absence from that mapping means the relation target stays private.
+ *
+ * This operation never parses source language and never mutates canonical source
+ * or the input Projection. It adds only presentation links for exact
+ * `origin=authored` edges incident on the projected subject.
+ */
+export function compileEligibleAuthoredRelationProjection(value, authoredEdges, eligiblePublicRoutes) {
+  const projection = validateProjection(value);
+  requireRecord(eligiblePublicRoutes, 'eligible public routes');
+  if (!Array.isArray(authoredEdges)) throw new TypeError('authored edges must be an array');
+
+  // A local/private relation cannot become public merely because it exists.
+  if (projection.audience.visibility !== 'public') return projection;
+  if (projection.representation.kind !== SPARSE_REPRESENTATION_SCHEMA) {
+    throw new TypeError(`Authored relation public compilation requires ${SPARSE_REPRESENTATION_SCHEMA}`);
+  }
+
+  const payload = requireRecord(projection.representation.payload, 'sparse projection representation');
+  if (payload.schema !== SPARSE_REPRESENTATION_SCHEMA) {
+    throw new TypeError(`Authored relation public compilation requires ${SPARSE_REPRESENTATION_SCHEMA} payload`);
+  }
+
+  const subjectRef = projection.subject.ref;
+  const items = [];
+  const seen = new Set();
+  for (const candidate of authoredEdges) {
+    const edge = requireRecord(candidate, 'authored edge');
+    if (edge.origin !== 'authored') continue;
+    const outgoing = edge.from_ref === subjectRef;
+    const incoming = edge.to_ref === subjectRef;
+    if (!outgoing && !incoming) continue;
+    const targetRef = outgoing ? edge.to_ref : edge.from_ref;
+    if (typeof targetRef !== 'string' || !targetRef) continue;
+    const href = eligiblePublicRoutes[targetRef];
+    if (typeof href !== 'string' || href.trim() === '') continue;
+    const key = `${edge.ref ?? ''}\0${targetRef}\0${edge.relation ?? ''}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const evidence = edge.authored_relation && typeof edge.authored_relation === 'object'
+      ? edge.authored_relation
+      : null;
+    items.push({
+      ref: targetRef,
+      label: evidence?.display ?? evidence?.raw_target ?? targetRef,
+      href,
+      description: `${edge.relation ?? 'references'} · authored · ${outgoing ? 'outgoing' : 'backlink'}`,
+    });
+  }
+
+  if (items.length === 0) return projection;
+  const groups = Array.isArray(payload.groups) ? clone(payload.groups) : [];
+  groups.push({ label: 'Related', items });
+  return createProjection({
+    ...projection,
+    representation: {
+      ...clone(projection.representation),
+      payload: { ...clone(payload), groups },
+    },
+  });
 }
 
 /**
