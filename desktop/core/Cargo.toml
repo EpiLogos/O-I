@@ -5,10 +5,10 @@ edition = "2021"
 publish = false
 
 [dependencies]
-aikit-core = { git = "https://github.com/EpiLogos/ai-kit", rev = "4b9b404c0603532e86c5652b7fd5062d2e344acf" }
-aikit-adapters = { git = "https://github.com/EpiLogos/ai-kit", rev = "4b9b404c0603532e86c5652b7fd5062d2e344acf" }
-aikit-store = { git = "https://github.com/EpiLogos/ai-kit", rev = "4b9b404c0603532e86c5652b7fd5062d2e344acf" }
-epilogos-factory = { git = "https://github.com/EpiLogos/agent-system-design", rev = "ec08c99a55a6320c6f59d3c73024b5d48063a989" }
+aikit-core = { git = "https://github.com/EpiLogos/ai-kit", rev = "40f39547b1c2afe00ca46ff7c30894b17be2b2bb" }
+aikit-adapters = { git = "https://github.com/EpiLogos/ai-kit", rev = "40f39547b1c2afe00ca46ff7c30894b17be2b2bb" }
+aikit-store = { git = "https://github.com/EpiLogos/ai-kit", rev = "40f39547b1c2afe00ca46ff7c30894b17be2b2bb" }
+epilogos-factory = { git = "https://github.com/EpiLogos/agent-system-design", rev = "0731d654eab9357323f603f306332d3b7e0e71cb" }
 oi-cli = { path = "../../cli" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

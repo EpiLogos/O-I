@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "verified_at": "2026-08-24",
+  "verified_at": "2026-08-25",
   "surfaces": [
     {
       "id": "central",
@@ -83,7 +83,7 @@
       "public_name": "AIKit",
       "function": "context, capability, model, credential, SessionSpace and provider-process resolution",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "docs_ref": "4b9b404c0603532e86c5652b7fd5062d2e344acf",
+      "docs_ref": "40f39547b1c2afe00ca46ff7c30894b17be2b2bb",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -96,8 +96,8 @@
       },
       "install": {
         "kind": "oi-managed-binary",
-        "ref": "4b9b404c0603532e86c5652b7fd5062d2e344acf",
-        "revision": "4b9b404c0603532e86c5652b7fd5062d2e344acf",
+        "ref": "40f39547b1c2afe00ca46ff7c30894b17be2b2bb",
+        "revision": "40f39547b1c2afe00ca46ff7c30894b17be2b2bb",
         "note": "Current #97 source pin for developer/source composition. Immutable released artifacts remain versioned by suite/manifest.json."
       },
       "verification": {
@@ -109,7 +109,7 @@
           "evidence": "process-exit-and-output"
         },
         "outstanding_requirements": [],
-        "note": "Current accepted AIKit main includes V2/SessionSpace/Knowledge/ProjectCentral/praxis, harness admission, bounded Living Knowledge Contemplate, and accepted Flow standing context/Contemplate scope through PR #123."
+        "note": "Current accepted AIKit main includes V2/SessionSpace/Knowledge/ProjectCentral/praxis, harness admission, bounded Living Knowledge Contemplate, accepted Flow standing context/Contemplate scope through PR #123, and human-authority/instruction-craft convergence through PR #124."
       },
       "compatibility": "AIKit main owns context, capability, SessionSpace, harness, Knowledge and Flow cognition composition. Flow remains provider-neutral and its accepted conformance includes QL-absent operation."
     },
@@ -118,7 +118,7 @@
       "public_name": "Software Factory",
       "function": "developmental Project, Run, Candidate, evidence and authorised Factory Action semantics",
       "repository": "https://github.com/EpiLogos/agent-system-design",
-      "docs_ref": "ec08c99a55a6320c6f59d3c73024b5d48063a989",
+      "docs_ref": "0731d654eab9357323f603f306332d3b7e0e71cb",
       "docs_path": "factory/README.md",
       "skill_paths": [],
       "native": {
@@ -131,8 +131,8 @@
       },
       "install": {
         "kind": "oi-managed-component",
-        "ref": "ec08c99a55a6320c6f59d3c73024b5d48063a989",
-        "revision": "ec08c99a55a6320c6f59d3c73024b5d48063a989",
+        "ref": "0731d654eab9357323f603f306332d3b7e0e71cb",
+        "revision": "0731d654eab9357323f603f306332d3b7e0e71cb",
         "note": "Current #97 source pin for developer/source composition. Immutable released artifacts remain versioned by suite/manifest.json; the live repository retains its historical agent-system-design name pending any repository-settings rename."
       },
       "verification": {
@@ -146,7 +146,7 @@
         "outstanding_requirements": [],
         "note": "Released-artifact acceptance consumes the O:I-managed release receipt, digest and provenance reference. Factory workspace tests remain a developer/source verification command."
       },
-      "compatibility": "Factory current main owns developmental Project/Run/Candidate/Evidence semantics with the corrected Actuation authority boundary. QL-dependent Factory research/client lines remain Factory-owned active exceptions and do not import the moving QL owner programme into #97."
+      "compatibility": "Factory current main owns developmental Project/Run/Candidate/Evidence semantics with the corrected Actuation authority boundary and live Build/Run cognition retention through PR #166. QL-dependent Factory research/client lines remain Factory-owned active exceptions and do not import the moving QL owner programme into #97."
     },
     {
       "id": "workcell",

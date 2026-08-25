@@ -1,6 +1,6 @@
 {
   "schema": "oi.mainline-snapshot/v1",
-  "observed_at": "2026-08-24",
+  "observed_at": "2026-08-25",
   "purpose": "Durable source snapshot for the six-product O:I composition. O:I #97 live-main convergence applies to its explicitly named primary repository set; Quaternal Logic remains represented as the separately owned parallel product and is not a #97 dependency gate.",
   "release_manifest": {
     "path": "suite/manifest.json",
@@ -28,16 +28,16 @@
     {
       "id": "ai-kit",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "revision": "4b9b404c0603532e86c5652b7fd5062d2e344acf",
+      "revision": "40f39547b1c2afe00ca46ff7c30894b17be2b2bb",
       "state": "accepted-main-with-active-branch-exceptions",
-      "note": "Current main includes V2/SessionSpace/Knowledge/ProjectCentral/praxis, evidence-backed harness admission, Living Knowledge impact/freshness, bounded Contemplate, and accepted Flow standing-context/Contemplate scope through PR #123. Credential, Explain/History, TUI parity and instruction-craft remain explicit owner development."
+      "note": "Current main includes V2/SessionSpace/Knowledge/ProjectCentral/praxis, evidence-backed harness admission, Living Knowledge impact/freshness, bounded Contemplate, accepted Flow standing-context/Contemplate scope through PR #123, and the human-authority/instruction-craft convergence merged through PR #124. Credential, Explain/History and TUI parity remain explicit owner development."
     },
     {
       "id": "software-factory",
       "repository": "https://github.com/EpiLogos/agent-system-design",
-      "revision": "ec08c99a55a6320c6f59d3c73024b5d48063a989",
+      "revision": "0731d654eab9357323f603f306332d3b7e0e71cb",
       "state": "accepted-main-with-active-research-exceptions",
-      "note": "Current main preserves the Factory↔Actuation ownership correction while active Deep QL, optional QL client and persistent-hosting/DeepSeek-host research remain explicit development lines. QL-dependent Factory consumers remain Factory-owned exceptions; they do not pull the QL owner programme into #97."
+      "note": "Current main preserves the Factory↔Actuation ownership correction and now includes live Build/Run cognition retention through PR #166. Active Deep QL, optional QL client and persistent-hosting/DeepSeek-host research remain explicit Factory-owned development lines and do not pull the QL owner programme into #97."
     },
     {
       "id": "workcell",

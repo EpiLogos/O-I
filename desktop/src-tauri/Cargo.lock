@@ -20,9 +20,9 @@ dependencies = [
 [[package]]
 name = "aikit-adapters"
 version = "0.1.0"
-source = "git+https://github.com/EpiLogos/ai-kit?rev=4b9b404c0603532e86c5652b7fd5062d2e344acf#4b9b404c0603532e86c5652b7fd5062d2e344acf"
+source = "git+https://github.com/EpiLogos/ai-kit?rev=40f39547b1c2afe00ca46ff7c30894b17be2b2bb#40f39547b1c2afe00ca46ff7c30894b17be2b2bb"
 dependencies = [
- "aikit-core 0.1.0 (git+https://github.com/EpiLogos/ai-kit?rev=4b9b404c0603532e86c5652b7fd5062d2e344acf)",
+ "aikit-core 0.1.0 (git+https://github.com/EpiLogos/ai-kit?rev=40f39547b1c2afe00ca46ff7c30894b17be2b2bb)",
  "jiff",
  "serde",
  "serde_json",
@@ -35,7 +35,7 @@ dependencies = [
 [[package]]
 name = "aikit-core"
 version = "0.1.0"
-source = "git+https://github.com/EpiLogos/ai-kit?rev=4b9b404c0603532e86c5652b7fd5062d2e344acf#4b9b404c0603532e86c5652b7fd5062d2e344acf"
+source = "git+https://github.com/EpiLogos/ai-kit?rev=40f39547b1c2afe00ca46ff7c30894b17be2b2bb#40f39547b1c2afe00ca46ff7c30894b17be2b2bb"
 dependencies = [
  "blake3",
  "jiff",
@@ -65,9 +65,9 @@ dependencies = [
 [[package]]
 name = "aikit-store"
 version = "0.1.0"
-source = "git+https://github.com/EpiLogos/ai-kit?rev=4b9b404c0603532e86c5652b7fd5062d2e344acf#4b9b404c0603532e86c5652b7fd5062d2e344acf"
+source = "git+https://github.com/EpiLogos/ai-kit?rev=40f39547b1c2afe00ca46ff7c30894b17be2b2bb#40f39547b1c2afe00ca46ff7c30894b17be2b2bb"
 dependencies = [
- "aikit-core 0.1.0 (git+https://github.com/EpiLogos/ai-kit?rev=4b9b404c0603532e86c5652b7fd5062d2e344acf)",
+ "aikit-core 0.1.0 (git+https://github.com/EpiLogos/ai-kit?rev=40f39547b1c2afe00ca46ff7c30894b17be2b2bb)",
  "blake3",
  "fs4",
  "jiff",
@@ -845,7 +845,7 @@ checksum = "4ef6b89e5b37196644d8796de5268852ff179b44e96276cf4290264843743bb7"
 [[package]]
 name = "epilogos-factory"
 version = "0.1.0"
-source = "git+https://github.com/EpiLogos/agent-system-design?rev=ec08c99a55a6320c6f59d3c73024b5d48063a989#ec08c99a55a6320c6f59d3c73024b5d48063a989"
+source = "git+https://github.com/EpiLogos/agent-system-design?rev=0731d654eab9357323f603f306332d3b7e0e71cb#0731d654eab9357323f603f306332d3b7e0e71cb"
 dependencies = [
  "serde",
  "serde_json",
@@ -2309,7 +2309,7 @@ name = "oi-desktop-core"
 version = "0.1.0"
 dependencies = [
  "aikit-adapters",
- "aikit-core 0.1.0 (git+https://github.com/EpiLogos/ai-kit?rev=4b9b404c0603532e86c5652b7fd5062d2e344acf)",
+ "aikit-core 0.1.0 (git+https://github.com/EpiLogos/ai-kit?rev=40f39547b1c2afe00ca46ff7c30894b17be2b2bb)",
  "aikit-store",
  "epilogos-factory",
  "oi-cli",

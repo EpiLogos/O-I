@@ -1,6 +1,6 @@
 {
   "schema": "oi.living-wiki-w7/v1",
-  "observed_at": "2026-08-24",
+  "observed_at": "2026-08-25",
   "wayfinder": "EpiLogos/O-I#134",
   "purpose": "Deterministic multi-world conformance for Living Wiki over accepted native owner mains. The O:I commit under test is supplied by the workflow run/PR receipt rather than self-referentially embedded here.",
   "physical_evidence_claimed": false,
@@ -12,12 +12,12 @@
     },
     "ai-kit": {
       "repository": "EpiLogos/ai-kit",
-      "revision": "4b9b404c0603532e86c5652b7fd5062d2e344acf",
+      "revision": "40f39547b1c2afe00ca46ff7c30894b17be2b2bb",
       "role": "impact/freshness, integrative readings, explicit Contemplate, Flow standing context"
     },
     "software-factory": {
       "repository": "EpiLogos/agent-system-design",
-      "revision": "ec08c99a55a6320c6f59d3c73024b5d48063a989",
+      "revision": "0731d654eab9357323f603f306332d3b7e0e71cb",
       "role": "software Project developmental orientation and returned Run/product evidence"
     },
     "quaternal-logic": {
