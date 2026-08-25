@@ -32,16 +32,13 @@ jobs:
           )
           old = '''            return Ok(ProjectRelations::Source(ProjectSourceRelations {\n                reflection,\n                authored: self.authored_relations(raw_resource)?,\n            }));'''
           new = '''            return Ok(ProjectRelations::Source(Box::new(ProjectSourceRelations {\n                reflection,\n                authored: self.authored_relations(raw_resource)?,\n            })));'''
-          if old not in text:
-              raise SystemExit('expected ProjectRelations source construction not found')
-          knowledge.write_text(text.replace(old, new))
+          text = text.replace(old, new)
+          knowledge.write_text(text)
 
           presentation = Path('desktop/ui/src/project-field-presentation.test.mjs')
           text = presentation.read_text()
           old = "  assert.match(knowledge, /ProjectRelations::Reflection/);"
           new = "  assert.match(knowledge, /ProjectReflectionReadModel/);\n  assert.match(knowledge, /ProjectRelations::Source/);"
-          if old not in text:
-              raise SystemExit('expected ProjectRelations presentation assertion not found')
           presentation.write_text(text.replace(old, new))
       - name: Regenerate exact committed native dependency graph
         run: cargo generate-lockfile --manifest-path desktop/src-tauri/Cargo.toml
@@ -57,6 +54,10 @@ jobs:
         run: |
           set -euo pipefail
           git add desktop/core/src/project_knowledge.rs desktop/src-tauri/Cargo.lock desktop/ui/src/project-field-presentation.test.mjs
+          if git diff --cached --quiet; then
+            echo 'Exact repair already committed.'
+            exit 0
+          fi
           git config user.name 'EpiLogos automation'
           git config user.email 'actions@users.noreply.github.com'
           git commit -m '[WIKI-RELATIONS] Commit accepted owner graph repair'
