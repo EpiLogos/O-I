@@ -1,0 +1,97 @@
+{
+  "schema": "oi.authored-wiki-relations-consumer-fixture/v1",
+  "selected_source": "source:note:flow",
+  "relations": {
+    "authored": {
+      "version": "aikit.authored-wiki-read/v1",
+      "subject_ref": "wiki:concept:flow",
+      "resolved": {
+        "query": { "focus": "wiki:concept:flow", "depth": 1, "max_nodes": 96, "max_edges": 192, "filters": [] },
+        "nodes": [
+          { "resource": "wiki:concept:flow", "kind": "knowledge-source", "label": "Flow" },
+          { "resource": "wiki:concept:living-wiki", "kind": "knowledge-node", "label": "Living Wiki" },
+          { "resource": "wiki:concept:agent-session", "kind": "knowledge-node", "label": "AgentSession" },
+          { "resource": "source:other", "kind": "knowledge-source", "label": "Other retained source" }
+        ],
+        "edges": [],
+        "truncated": false,
+        "warnings": []
+      },
+      "pending": [
+        {
+          "subject_ref": "wiki:concept:flow",
+          "source_authority": "authored",
+          "evidence": {
+            "profile": "aikit.authored-relation/v1",
+            "source_ref": "source:note:flow",
+            "source_revision": "rev-flow-7",
+            "relation": "references",
+            "raw_target": "Future Concept",
+            "raw_token": "[[Future Concept]]",
+            "channel": "body",
+            "anchor": { "start_byte": 118, "end_byte": 136 },
+            "resolution": { "state": "unresolved" }
+          }
+        }
+      ],
+      "automatic_agent_or_model_invocation": false
+    },
+    "authored_edges": [
+      {
+        "profile": "okf-wiki/v1",
+        "ref": "wiki:edge:authored:wikilink",
+        "revision": 7,
+        "provenance": [{ "source_ref": "source:note:flow", "source_revision": "rev-flow-7", "channel": "body", "anchor": { "start_byte": 10, "end_byte": 25 }, "raw_target": "Living Wiki", "source_authority": "authored" }],
+        "from_ref": "wiki:concept:flow",
+        "to_ref": "wiki:concept:living-wiki",
+        "relation": "references",
+        "origin": "authored",
+        "authored_relation": { "source_ref": "source:note:flow", "source_revision": "rev-flow-7", "relation": "references", "raw_target": "Living Wiki", "raw_token": "[[Living Wiki]]", "display": "Living Wiki", "channel": "body", "anchor": { "start_byte": 10, "end_byte": 25 }, "resolution": { "state": "resolved", "target_ref": "wiki:concept:living-wiki" } }
+      },
+      {
+        "profile": "okf-wiki/v1",
+        "ref": "wiki:edge:authored:markdown",
+        "revision": 7,
+        "provenance": [{ "source_ref": "source:note:flow", "source_revision": "rev-flow-7", "channel": "body", "anchor": { "start_byte": 32, "end_byte": 47 }, "raw_target": "AgentSession", "source_authority": "authored" }],
+        "from_ref": "wiki:concept:flow",
+        "to_ref": "wiki:concept:agent-session",
+        "relation": "references",
+        "origin": "authored",
+        "authored_relation": { "source_ref": "source:note:flow", "source_revision": "rev-flow-7", "relation": "references", "raw_target": "AgentSession", "raw_token": "[AgentSession](AgentSession.md)", "channel": "body", "anchor": { "start_byte": 32, "end_byte": 47 }, "resolution": { "state": "resolved", "target_ref": "wiki:concept:agent-session" } }
+      },
+      {
+        "profile": "okf-wiki/v1",
+        "ref": "wiki:edge:authored:metadata",
+        "revision": 7,
+        "provenance": [{ "source_ref": "source:note:flow", "source_revision": "rev-flow-7", "channel": "metadata", "anchor": { "field_path": "relations.develops[0]" }, "raw_target": "Living Wiki", "source_authority": "authored" }],
+        "from_ref": "wiki:concept:flow",
+        "to_ref": "wiki:concept:living-wiki",
+        "relation": "develops",
+        "origin": "authored",
+        "authored_relation": { "source_ref": "source:note:flow", "source_revision": "rev-flow-7", "relation": "develops", "raw_target": "Living Wiki", "raw_token": "Living Wiki", "channel": "metadata", "anchor": { "field_path": "relations.develops[0]" }, "resolution": { "state": "resolved", "target_ref": "wiki:concept:living-wiki" } }
+      },
+      {
+        "profile": "okf-wiki/v1",
+        "ref": "wiki:edge:authored:backlink",
+        "revision": 2,
+        "provenance": [{ "source_ref": "source:other", "source_revision": "rev-other-2", "channel": "body", "anchor": { "start_byte": 4, "end_byte": 12 }, "raw_target": "Flow", "source_authority": "observed" }],
+        "from_ref": "source:other",
+        "to_ref": "wiki:concept:flow",
+        "relation": "references",
+        "origin": "authored",
+        "authored_relation": { "source_ref": "source:other", "source_revision": "rev-other-2", "relation": "references", "raw_target": "Flow", "raw_token": "[[Flow]]", "channel": "body", "anchor": { "start_byte": 4, "end_byte": 12 }, "resolution": { "state": "resolved", "target_ref": "wiki:concept:flow" } }
+      }
+    ]
+  },
+  "flow_source": {
+    "flow_ref": "flow:stable:thread",
+    "source_ref": "source:flow:stable:thread",
+    "relative_path": "notes/live-thread.md",
+    "frontmatter_required": false,
+    "body": "Working through [[Living Wiki]] with [AgentSession](AgentSession.md)."
+  },
+  "eligible_public_routes": {
+    "wiki:concept:living-wiki": "/explore/living-wiki"
+  },
+  "private_target": "wiki:concept:agent-session"
+}
