@@ -1,0 +1,84 @@
+name: Wiki relations dependency repair
+
+on:
+  push:
+    branches:
+      - feat/authored-wiki-relations-150
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/authored-wiki-relations-150
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Apply bounded source repairs
+        shell: python
+        run: |
+          from pathlib import Path
+
+          knowledge = Path('desktop/core/src/project_knowledge.rs')
+          text = knowledge.read_text()
+          text = text.replace(
+              '    Source(ProjectSourceRelations),',
+              '    Source(Box<ProjectSourceRelations>),',
+          )
+          old = '''            return Ok(ProjectRelations::Source(ProjectSourceRelations {\n                reflection,\n                authored: self.authored_relations(raw_resource)?,\n            }));'''
+          new = '''            return Ok(ProjectRelations::Source(Box::new(ProjectSourceRelations {\n                reflection,\n                authored: self.authored_relations(raw_resource)?,\n            })));'''
+          if old not in text:
+              raise SystemExit('expected ProjectRelations source construction not found')
+          knowledge.write_text(text.replace(old, new))
+
+          presentation = Path('desktop/ui/src/project-field-presentation.test.mjs')
+          text = presentation.read_text()
+          old = "  assert.match(knowledge, /ProjectRelations::Reflection/);"
+          new = "  assert.match(knowledge, /ProjectReflectionReadModel/);\n  assert.match(knowledge, /ProjectRelations::Source/);"
+          if old not in text:
+              raise SystemExit('expected ProjectRelations presentation assertion not found')
+          presentation.write_text(text.replace(old, new))
+
+          old_sha = '4b9b404c0603532e86c5652b7fd5062d2e344acf'
+          new_sha = '6b2517862faccc7787b36ef45ef8d19186fe8128'
+          workflow = Path('.github/workflows/living-wiki-w7.yml')
+          text = workflow.read_text()
+          if old_sha not in text:
+              raise SystemExit('old W7 AIKit pin not found')
+          workflow.write_text(text.replace(old_sha, new_sha))
+
+          manifest = Path('suite/living-wiki-w7.json')
+          text = manifest.read_text()
+          if old_sha not in text:
+              raise SystemExit('old W7 manifest AIKit revision not found')
+          text = text.replace(old_sha, new_sha)
+          text = text.replace('"observed_at": "2026-08-24"', '"observed_at": "2026-08-25"')
+          text = text.replace(
+              '"role": "impact/freshness, integrative readings, explicit Contemplate, Flow standing context"',
+              '"role": "impact/freshness, integrative readings, explicit Contemplate, Flow standing context, authored Markdown/OKF relation compilation"',
+          )
+          manifest.write_text(text)
+      - name: Regenerate exact committed native dependency graph
+        run: cargo generate-lockfile --manifest-path desktop/src-tauri/Cargo.toml
+      - name: Prove repaired graph
+        run: |
+          cargo check --manifest-path desktop/src-tauri/Cargo.toml --locked
+          cargo test --manifest-path desktop/core/Cargo.toml --all-targets
+          cargo clippy --manifest-path desktop/core/Cargo.toml --all-targets -- -D warnings
+          node --test desktop/ui/src/project-field-presentation.test.mjs
+          git diff --check
+      - name: Commit exact repair and remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/wiki-relations-lock-repair.yml
+          git add desktop/core/src/project_knowledge.rs desktop/src-tauri/Cargo.lock desktop/ui/src/project-field-presentation.test.mjs .github/workflows/living-wiki-w7.yml suite/living-wiki-w7.json
+          git config user.name 'EpiLogos automation'
+          git config user.email 'actions@users.noreply.github.com'
+          git commit -m '[WIKI-RELATIONS] Commit accepted owner graph and W7 reproof'
+          git push origin HEAD:feat/authored-wiki-relations-150
