@@ -1,4 +1,5 @@
 name: Wiki relations Flow fixture closure
+# One-shot executor: product/test repair commits itself, then removes this workflow.
 
 on:
   push:
