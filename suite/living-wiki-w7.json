@@ -2,6 +2,7 @@
   "schema": "oi.living-wiki-w7/v1",
   "observed_at": "2026-08-27",
   "wayfinder": "EpiLogos/O-I#134",
+  "consumer_closure": "EpiLogos/O-I#150",
   "purpose": "Deterministic multi-world conformance for Living Wiki over accepted native owner mains. The O:I commit under test is supplied by the workflow run/PR receipt rather than self-referentially embedded here.",
   "physical_evidence_claimed": false,
   "owners": {
