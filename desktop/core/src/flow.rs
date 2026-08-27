@@ -492,6 +492,7 @@ mod tests {
         let root = env::temp_dir().join(format!("oi-flow-owner-{}-{nonce}", std::process::id()));
         fs::create_dir_all(&root).unwrap();
         let executable = root.join("ctrl-fixture");
+        let staging_executable = root.join("ctrl-fixture.staging");
         let log = root.join("calls.log");
         let script = format!(
             r#"#!/bin/sh
@@ -508,10 +509,11 @@ esac
 "#,
             log = log.display()
         );
-        fs::write(&executable, script).unwrap();
-        let mut permissions = fs::metadata(&executable).unwrap().permissions();
+        fs::write(&staging_executable, script).unwrap();
+        let mut permissions = fs::metadata(&staging_executable).unwrap().permissions();
         permissions.set_mode(0o755);
-        fs::set_permissions(&executable, permissions).unwrap();
+        fs::set_permissions(&staging_executable, permissions).unwrap();
+        fs::rename(&staging_executable, &executable).unwrap();
 
         let client = CentralFlowClient::with(executable, None, "test".into()).unwrap();
         let created = client.create_blank("human:desktop").unwrap();
