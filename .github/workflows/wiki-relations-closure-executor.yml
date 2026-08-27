@@ -22,7 +22,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Apply the already-authored bounded consumer patch with the proven type repair
+      - name: Apply the already-authored bounded consumer patch with proven repairs
         shell: python
         run: |
           from pathlib import Path
@@ -48,6 +48,14 @@ jobs:
               raise SystemExit('pending authored-relation evidence type repair anchor absent')
           patch = patch.replace(old, new, 1)
           exec(compile(patch, '<bounded-150-consumer>', 'exec'), {'__name__': '__main__'})
+
+          fixture = Path('shared-field/authored-relation-projection.test.mjs')
+          text = fixture.read_text()
+          empty_count = text.count('provenance: []')
+          if empty_count != 4:
+              raise SystemExit(f'expected four legacy empty provenance arrays, found {empty_count}')
+          provenance = "provenance: [{ kind: 'closure-fixture', ref: 'fixture:authored-relations', source_system: 'oi-test', revision: 'fixture@1' }]"
+          fixture.write_text(text.replace('provenance: []', provenance))
       - name: Prove desktop authored relations, Flow integration, and public privacy
         shell: bash
         run: |
