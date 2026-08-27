@@ -1,0 +1,64 @@
+name: Wiki relations Flow fixture closure
+
+on:
+  push:
+    branches:
+      - feat/authored-wiki-relations-150
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/authored-wiki-relations-150
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Make the executable fixture atomic before spawn
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('desktop/core/src/flow.rs')
+          text = path.read_text()
+          text = text.replace(
+              '        let executable = root.join("ctrl-fixture");\n        let log = root.join("calls.log");',
+              '        let executable = root.join("ctrl-fixture");\n        let staging_executable = root.join("ctrl-fixture.staging");\n        let log = root.join("calls.log");',
+              1,
+          )
+          old = '''        fs::write(&executable, script).unwrap();
+        let mut permissions = fs::metadata(&executable).unwrap().permissions();
+        permissions.set_mode(0o755);
+        fs::set_permissions(&executable, permissions).unwrap();
+'''
+          new = '''        fs::write(&staging_executable, script).unwrap();
+        let mut permissions = fs::metadata(&staging_executable).unwrap().permissions();
+        permissions.set_mode(0o755);
+        fs::set_permissions(&staging_executable, permissions).unwrap();
+        fs::rename(&staging_executable, &executable).unwrap();
+'''
+          if old not in text:
+              raise SystemExit('Flow executable fixture anchor absent')
+          path.write_text(text.replace(old, new, 1))
+      - name: Prove the canonical fixture under normal parallel test execution
+        run: |
+          set -euo pipefail
+          cargo fmt --manifest-path desktop/core/Cargo.toml --all
+          for attempt in 1 2 3; do
+            cargo test --manifest-path desktop/core/Cargo.toml --all-targets
+          done
+          cargo clippy --manifest-path desktop/core/Cargo.toml --all-targets -- -D warnings
+      - name: Commit only the fixture repair and retire this executor
+        run: |
+          set -euo pipefail
+          rm .github/workflows/wiki-relations-fixture-close.yml
+          git add desktop/core/src/flow.rs .github/workflows/wiki-relations-fixture-close.yml
+          git diff --cached --check
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git commit -m '[OI-WIKI-RELATIONS] Close Linux executable fixture race'
+          git push origin HEAD:feat/authored-wiki-relations-150
