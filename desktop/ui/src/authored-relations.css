@@ -1,0 +1,154 @@
+.oi-authored-relations {
+  display: grid;
+  gap: .8rem;
+  min-width: 0;
+  border: 1px solid var(--oi-border, rgba(127, 127, 127, .22));
+  border-radius: .7rem;
+  padding: .85rem;
+  background: rgba(127, 127, 127, .035);
+}
+
+.oi-authored-relations__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.oi-authored-relations__header h3 {
+  margin: .15rem 0 .35rem;
+}
+
+.oi-authored-relations__header p {
+  margin-bottom: 0;
+}
+
+.oi-authored-relations__state {
+  flex: 0 0 auto;
+  border: 1px solid var(--oi-border, rgba(127, 127, 127, .22));
+  border-radius: 999px;
+  padding: .3rem .55rem;
+  color: var(--oi-muted, #888);
+  font-size: .68rem;
+  white-space: nowrap;
+}
+
+.oi-authored-relations__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .65rem;
+}
+
+.oi-authored-relations__group {
+  min-width: 0;
+  border-top: 1px solid var(--oi-border, rgba(127, 127, 127, .22));
+  padding-top: .55rem;
+}
+
+.oi-authored-relations__group > header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .6rem;
+  margin-bottom: .35rem;
+}
+
+.oi-authored-relations__group > header small,
+.oi-authored-relation small,
+.oi-authored-relations__footer {
+  color: var(--oi-muted, #888);
+}
+
+.oi-authored-relation {
+  border-bottom: 1px solid var(--oi-border, rgba(127, 127, 127, .16));
+  padding: .4rem 0;
+}
+
+.oi-authored-relation summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .55rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.oi-authored-relation summary::-webkit-details-marker {
+  display: none;
+}
+
+.oi-authored-relation summary > span {
+  display: grid;
+  gap: .12rem;
+  min-width: 0;
+}
+
+.oi-authored-relation button {
+  max-width: 58%;
+  border: 1px solid transparent;
+  border-radius: .4rem;
+  padding: .28rem .4rem;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.oi-authored-relation button:hover {
+  border-color: var(--oi-border, rgba(127, 127, 127, .3));
+  background: rgba(127, 127, 127, .08);
+}
+
+.oi-authored-relation dl {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: .3rem .6rem;
+  margin: .55rem 0 .1rem;
+  font-size: .72rem;
+}
+
+.oi-authored-relation dt {
+  color: var(--oi-muted, #888);
+}
+
+.oi-authored-relation dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.oi-authored-relation code,
+.oi-authored-relations__footer code {
+  overflow-wrap: anywhere;
+}
+
+.oi-authored-relation--pending summary > code {
+  color: var(--oi-muted, #888);
+  overflow-wrap: anywhere;
+}
+
+.oi-authored-relations__footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem .8rem;
+  border-top: 1px solid var(--oi-border, rgba(127, 127, 127, .18));
+  padding-top: .55rem;
+  font-size: .68rem;
+}
+
+@media (max-width: 1000px) {
+  .oi-authored-relations__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .oi-authored-relations__header {
+    display: grid;
+  }
+
+  .oi-authored-relations__state {
+    justify-self: start;
+  }
+}
