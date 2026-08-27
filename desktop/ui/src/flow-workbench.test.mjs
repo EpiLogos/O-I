@@ -44,3 +44,13 @@ test('returned authorities remain separately presented', () => {
   assert.match(flow, /Agent Wiki \/ WikiReading/);
   assert.match(flow, /Human Ground/);
 });
+
+
+test('Flow relation visibility is deterministic and independent of AgentSession binding', () => {
+  assert.match(flow, /flow_relations/);
+  assert.match(flow, /refreshRelations/);
+  const relationRead = flow.match(/async function refreshRelations[\s\S]*?\n  }/);
+  assert.ok(relationRead);
+  assert.doesNotMatch(relationRead[0], /flow_bind|flow_contemplate|agent_surface/);
+  assert.match(flow, /Flow authored relations/);
+});

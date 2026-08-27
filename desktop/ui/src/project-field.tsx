@@ -4,6 +4,7 @@ import {
   ProjectFieldCanvas as ProjectFieldBaseCanvas,
   ProjectNavigator as ProjectBaseNavigator,
 } from './project-field-base';
+import { AuthoredRelationsWorkbench } from './authored-relations';
 import { FlowNavigator, FlowWorkbench } from './flow-workbench';
 import { LivingWikiWorkbench } from './living-wiki';
 import { type WorkbenchEvidence, type WorkbenchSemanticRef } from './workbench-native';
@@ -31,5 +32,6 @@ export function ProjectFieldCanvas(props: ProjectFieldProps) {
     <FlowWorkbench {...props} />
     <ProjectFieldBaseCanvas {...props} />
     <LivingWikiWorkbench selection={props.selection} />
+    <AuthoredRelationsWorkbench selection={props.selection} onSelect={props.onSelect} />
   </>;
 }
