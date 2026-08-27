@@ -765,6 +765,7 @@ fn main() {
             flow::flow_create,
             flow::flow_open,
             flow::flow_save,
+            flow::flow_relations,
             flow::flow_history,
             flow::flow_bind,
             flow::flow_contemplate_preflight,

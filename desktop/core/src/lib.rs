@@ -21,7 +21,7 @@ mod shell;
 pub use agent_surface::{AgentSurfaceOpenRequest, AgentSurfaceReading, AikitAgentSurface};
 pub use aikit_core::{
     FlowAuthorityRef, FlowContextAuthority, FlowMutationIntent, FlowStandingContext,
-    FlowWriteResult, ResourceRef,
+    FlowWriteResult, ResourceRef, SourceAuthority,
 };
 pub use aikit_workbench::{
     LocalAikitWorkbench, SessionSpaceApplicationReading, SessionSpaceFocusRequest,
@@ -77,7 +77,7 @@ pub use project_field::{
     LocalProjectField, NativeOwnerReading, ProjectFieldSnapshot, ProjectMapStatus,
     PROJECT_FIELD_VERSION,
 };
-pub use project_knowledge::LocalProjectKnowledge;
+pub use project_knowledge::{FlowAuthoredRelationsReading, LocalProjectKnowledge};
 pub use shell::{
     DesktopHost, RefProvenance, SemanticRef, ShellDestination, ShellSnapshot, SuiteCondition,
 };

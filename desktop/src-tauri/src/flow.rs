@@ -3,8 +3,8 @@ use std::path::PathBuf;
 
 use oi_desktop_core::{
     project_agent_wiki_plan, AcpFlowContemplateExecutor, BridgeCallClass, BridgeCaller,
-    BridgePolicy, CentralFlowClient, FlowAuthorityRef, FlowContextAuthority, FlowStandingContext,
-    ResourceRef, FLOW_CONTEMPLATE_TRANSPORT_VERSION,
+    BridgePolicy, CentralFlowClient, CentralFlowRecord, FlowAuthorityRef, FlowContextAuthority,
+    FlowStandingContext, ResourceRef, SourceAuthority, FLOW_CONTEMPLATE_TRANSPORT_VERSION,
 };
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -64,6 +64,37 @@ pub(crate) fn flow_save(
         "human:oi-desktop",
     )?)
     .map_err(|error| format!("serialize saved Flow: {error}"))
+}
+
+#[tauri::command]
+pub(crate) fn flow_relations(
+    state: State<'_, AppState>,
+    flow_ref: String,
+) -> Result<Value, String> {
+    BridgePolicy
+        .authorize(BridgeCaller::ShellUi, BridgeCallClass::ObserveFlow)
+        .map_err(|error| error.to_string())?;
+    let document = current_client()?.open(&flow_ref)?;
+    let knowledge = state
+        .knowledge
+        .lock()
+        .map_err(|_| "Knowledge workbench lock poisoned".to_owned())?;
+    let knowledge = knowledge
+        .as_ref()
+        .ok_or_else(|| "no local ProjectCentral Knowledge world is configured".to_owned())?;
+    serde_json::to_value(
+        knowledge
+            .flow_authored_relations(
+                &document.flow.flow_ref,
+                &document.flow.source_ref,
+                &document.flow.current_revision,
+                &document.flow.path,
+                flow_source_authority(&document.flow),
+                &document.content,
+            )
+            .map_err(|error| error.to_string())?,
+    )
+    .map_err(|error| format!("serialize Flow authored relations: {error}"))
 }
 
 #[tauri::command]
@@ -201,6 +232,18 @@ pub(crate) fn flow_contemplate(
         "human_source_mutation_performed": false,
         "automatic_agent_or_model_invocation": false
     }))
+}
+
+fn flow_source_authority(flow: &CentralFlowRecord) -> SourceAuthority {
+    match flow
+        .revisions
+        .last()
+        .map(|revision| revision.actor_kind.as_str())
+    {
+        Some("human") => SourceAuthority::Authored,
+        Some("agent") => SourceAuthority::Generated,
+        _ => SourceAuthority::Observed,
+    }
 }
 
 fn current_client() -> Result<CentralFlowClient, String> {

@@ -95,3 +95,10 @@ test('P2 composes CurrentWorld, Navigator and Canvas around the inherited Workbe
   assert.match(workbench, /<ProjectFieldCanvas/);
   assert.match(workbench, /<NativeWorkbenchSurface/);
 });
+
+
+test('authored relation workbench is mounted in the existing Project field and reuses canonical selection', () => {
+  assert.match(projectField, /AuthoredRelationsWorkbench/);
+  assert.match(projectField, /selection=\{props\.selection\}/);
+  assert.match(projectField, /onSelect=\{props\.onSelect\}/);
+});

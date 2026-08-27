@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 
+import { AuthoredRelationsWorkbench } from './authored-relations';
 import { NativeDocumentEditor } from './native-document-editor';
 import { type WorkbenchEvidence, type WorkbenchSemanticRef } from './workbench-native';
 import './flow-workbench.css';
@@ -43,6 +44,22 @@ type FlowDocument = {
   content: string;
   dirty_external_revision_reconciled: boolean;
   automatic_agent_or_model_invocation: boolean;
+};
+
+type FlowAuthoredRelations = {
+  authored: {
+    version: string;
+    subject_ref: string;
+    resolved: {
+      nodes: Array<{ resource: string; kind: string; label: string }>;
+      edges: Array<{ from: string; to: string; relation: string; direction: string; origin: unknown }>;
+      truncated: boolean;
+      warnings: string[];
+    };
+    pending: Array<{ source_authority: string; evidence: { raw_target: string; raw_token: string; relation?: string; channel: string; source_ref: string; source_revision?: string; anchor: { field_path?: string; start_byte?: number; end_byte?: number }; resolution: { state: string; candidate_refs?: string[] } } }>;
+    automatic_agent_or_model_invocation: boolean;
+  };
+  authored_edges: Array<{ ref: string; from_ref: string; to_ref: string; relation: string; origin: string; provenance: Array<{ source_ref: string; source_revision?: unknown; channel?: string; anchor?: { field_path?: string; start_byte?: number; end_byte?: number }; raw_target?: string }>; authored_relation?: { raw_target: string; raw_token: string; channel: string; source_ref: string; source_revision?: string; anchor: { field_path?: string; start_byte?: number; end_byte?: number } } }>;
 };
 
 type StandingContext = {
@@ -215,6 +232,8 @@ export function FlowWorkbench({ selection, onSelect }: FlowProps) {
   const [preflight, setPreflight] = useState<FlowPreflight | null>(null);
   const [result, setResult] = useState<FlowContemplateResult | null>(null);
   const [history, setHistory] = useState<unknown>(null);
+  const [relations, setRelations] = useState<FlowAuthoredRelations | null>(null);
+  const [relationError, setRelationError] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState<'open' | 'save' | 'bind' | 'preview' | 'contemplate' | 'history' | ''>('');
 
@@ -227,6 +246,28 @@ export function FlowWorkbench({ selection, onSelect }: FlowProps) {
     }, {});
   }, [preflight, result]);
 
+  async function refreshRelations(ref: string) {
+    try {
+      setRelations(await invoke<FlowAuthoredRelations>('flow_relations', { flowRef: ref }));
+      setRelationError('');
+    } catch (reason) {
+      setRelations(null);
+      setRelationError(messageFrom(reason));
+    }
+  }
+
+  async function followFlowRelation(target: string, label?: string) {
+    await onSelect({
+      ref: target,
+      kind: 'knowledge-relation',
+      native_owner: 'ai-kit',
+      provenance: { source: 'AIKit authored Flow relation' },
+    }, {
+      title: label ?? target,
+      summary: 'Resolved stable ref from Central-owned Flow source through AIKit relation compilation',
+    });
+  }
+
   async function open(ref: string) {
     setBusy('open');
     try {
@@ -238,6 +279,7 @@ export function FlowWorkbench({ selection, onSelect }: FlowProps) {
       setResult(null);
       setHistory(null);
       setError('');
+      await refreshRelations(next.flow.flow_ref);
       await onSelect(semanticFlow(next.flow), flowEvidence(next.flow));
     } catch (reason) {
       setDocument(null);
@@ -277,6 +319,7 @@ export function FlowWorkbench({ selection, onSelect }: FlowProps) {
       setPreflight(null);
       setResult(null);
       setError('');
+      await refreshRelations(next.flow.flow_ref);
       await onSelect(semanticFlow(next.flow), flowEvidence(next.flow));
     } catch (reason) {
       // The buffer is intentionally untouched. Owner-current revision is surfaced
@@ -332,6 +375,7 @@ export function FlowWorkbench({ selection, onSelect }: FlowProps) {
       const current = await invoke<FlowDocument>('flow_open', { flowRef: document.flow.flow_ref });
       setDocument(current);
       setBuffer(current.content);
+      await refreshRelations(current.flow.flow_ref);
       await onSelect(semanticFlow(current.flow), flowEvidence(current.flow));
     } catch (reason) { setResult(null); setError(messageFrom(reason)); }
     finally { setBusy(''); }
@@ -374,6 +418,7 @@ export function FlowWorkbench({ selection, onSelect }: FlowProps) {
         <code>automatic Agent/model = {String(document.automatic_agent_or_model_invocation)}</code>
       </div>
       {document.dirty_external_revision_reconciled && <p className="oi-flow__notice">The owner reconciled a direct external edit into a new exact revision before this read.</p>}
+      <FlowRelationReading reading={relations} error={relationError} onFollow={followFlowRelation} />
       <NativeDocumentEditor
         className="oi-flow__editor"
         ariaLabel="Current Flow"
@@ -446,6 +491,31 @@ export function FlowWorkbench({ selection, onSelect }: FlowProps) {
       <pre>{JSON.stringify(history, null, 2)}</pre>
     </details>}
   </section>;
+}
+
+function FlowRelationReading({ reading, error, onFollow }: { reading: FlowAuthoredRelations | null; error: string; onFollow: (target: string, label?: string) => Promise<void> }) {
+  if (!reading && !error) return null;
+  const authored = reading?.authored;
+  const focus = authored?.subject_ref;
+  const nodes = new Map((authored?.resolved.nodes ?? []).map((node) => [node.resource, node]));
+  const outgoing = (reading?.authored_edges ?? []).filter((edge) => edge.from_ref === focus);
+  const incoming = (reading?.authored_edges ?? []).filter((edge) => edge.to_ref === focus);
+  return <section className="oi-authored-relations" aria-label="Flow authored relations">
+    <header className="oi-authored-relations__header"><div><p className="oi-eyebrow">Flow · authored topology</p><h3>Relations in this thread</h3></div>{authored && <small>automatic Agent/model = {String(authored.automatic_agent_or_model_invocation)}</small>}</header>
+    {error && <p className="oi-workbench__error">Relations: {error}</p>}
+    {authored && <div className="oi-authored-relations__grid">
+      <article className="oi-authored-relations__group"><header><strong>Outgoing</strong><small>{outgoing.length}</small></header>{outgoing.map((edge) => { const target = edge.to_ref; const evidence = edge.authored_relation; return <details className="oi-authored-relation" key={edge.ref}><summary><strong>{edge.relation}</strong><button type="button" onClick={(event) => { event.preventDefault(); void onFollow(target, nodes.get(target)?.label ?? evidence?.raw_target); }}>{nodes.get(target)?.label ?? evidence?.raw_target ?? target}</button></summary><p><code>{evidence?.raw_token ?? target}</code> · {evidence?.channel ?? 'source'} · {flowAnchor(evidence?.anchor)}</p></details>; })}</article>
+      <article className="oi-authored-relations__group"><header><strong>Backlinks</strong><small>{incoming.length}</small></header>{incoming.map((edge) => { const target = edge.from_ref; const evidence = edge.authored_relation; return <details className="oi-authored-relation" key={edge.ref}><summary><strong>{edge.relation}</strong><button type="button" onClick={(event) => { event.preventDefault(); void onFollow(target, nodes.get(target)?.label ?? evidence?.raw_target); }}>{nodes.get(target)?.label ?? target}</button></summary><p><code>{evidence?.source_ref ?? edge.provenance[0]?.source_ref}</code> · {flowAnchor(evidence?.anchor ?? edge.provenance[0]?.anchor)}</p></details>; })}</article>
+      <article className="oi-authored-relations__group"><header><strong>Unresolved</strong><small>{authored.pending.length}</small></header>{authored.pending.map((pending, index) => <details className="oi-authored-relation oi-authored-relation--pending" key={`${pending.evidence.raw_target}:${index}`}><summary><strong>{pending.evidence.relation ?? 'references'}</strong><code>{pending.evidence.raw_target}</code></summary><p><code>{pending.evidence.raw_token}</code> · {pending.evidence.channel} · {flowAnchor(pending.evidence.anchor)} · {pending.evidence.resolution.state}</p></details>)}</article>
+    </div>}
+  </section>;
+}
+
+function flowAnchor(anchor?: { field_path?: string; start_byte?: number; end_byte?: number }) {
+  if (!anchor) return 'owner provenance';
+  if (anchor.field_path) return anchor.field_path;
+  if (anchor.start_byte != null && anchor.end_byte != null) return `bytes ${anchor.start_byte}–${anchor.end_byte}`;
+  return 'owner provenance';
 }
 
 function ReturnCard({ title, count, children }: { title: string; count: number; children: React.ReactNode }) {

@@ -10,10 +10,12 @@ use std::sync::Mutex;
 
 use aikit_adapters::{
     authored_relation_dependencies, authored_wiki_subject_relations,
-    compile_authored_wiki_relations, projectcentral_authored_wiki,
-    rebuild_semantic_wiki_with_authored_relations, AuthoredWikiRelationCompilation,
-    AuthoredWikiSourceProjection, AuthoredWikiSubjectRelations, ProjectCentralFilesystemBinding,
+    compile_authored_wiki_relations, parse_authored_wiki_source_with_authority,
+    projectcentral_authored_wiki, rebuild_semantic_wiki_with_authored_relations,
+    AuthoredWikiRelationCompilation, AuthoredWikiSourceProjection, AuthoredWikiSubjectRelations,
+    ProjectCentralFilesystemBinding,
 };
+use aikit_core::knowledge_wiki::WikiEdge;
 use aikit_core::model_runtime::ModelRuntimeReadModel;
 use aikit_core::resource::{MemoryResourceIndex, ResourceKind};
 use aikit_core::{
@@ -27,9 +29,10 @@ use aikit_core::{
     KnowledgeDependency, KnowledgeExplanation, KnowledgeProviderStatus, KnowledgeReading,
     KnowledgeRelationView, KnowledgeResourceDependency, KnowledgeSearchResult,
     ProjectCentralBinding, ProjectReflectionReadModel, QlRefractionRequest, ResourceRef,
-    Result as AikitResult, SemanticWikiIndex, SemanticWikiProvider, WikiObject,
-    DEFAULT_CONTEMPLATE_OBJECT_BUDGET, DEFAULT_CONTEMPLATE_RELATION_DEPTH,
-    DEFAULT_LIVING_IMPACT_DEPTH, DEFAULT_LIVING_IMPACT_RESOURCES,
+    Result as AikitResult, SemanticWikiIndex, SemanticWikiProvider, SourceAuthority, SourceRef,
+    SourceRevision, WikiObject, DEFAULT_CONTEMPLATE_OBJECT_BUDGET,
+    DEFAULT_CONTEMPLATE_RELATION_DEPTH, DEFAULT_LIVING_IMPACT_DEPTH,
+    DEFAULT_LIVING_IMPACT_RESOURCES,
 };
 use aikit_store::{AikitHome, KnowledgeApplicationReceipt, KnowledgeApplicationStore};
 use serde::Serialize;
@@ -87,6 +90,15 @@ pub struct ProjectSourceRelations {
     pub reflection: ProjectReflectionReadModel,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub authored: Option<AuthoredWikiSubjectRelations>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub authored_edges: Vec<WikiEdge>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct FlowAuthoredRelationsReading {
+    pub authored: AuthoredWikiSubjectRelations,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub authored_edges: Vec<WikiEdge>,
 }
 
 #[derive(Debug, Serialize)]
@@ -150,8 +162,7 @@ impl LocalProjectKnowledge {
         }
         let authored_compilation =
             compile_authored_wiki_relations(&authored_sources, &objects, &[])?;
-        let index =
-            rebuild_semantic_wiki_with_authored_relations(&objects, &authored_compilation)?;
+        let index = rebuild_semantic_wiki_with_authored_relations(&objects, &authored_compilation)?;
         let authored_dependencies = authored_relation_dependencies(&authored_sources);
 
         let project = ResourceRef::parse(&binding.semantic.project.to_string())?;
@@ -228,7 +239,8 @@ impl LocalProjectKnowledge {
     ) -> Result<LivingWikiDesktopReading, String> {
         let horizon = adapt_central_horizon(central)?;
         let current_wiki_objects = self.wiki_objects();
-        let (dependencies, resource_dependencies) = self.living_dependencies(&current_wiki_objects)
+        let (dependencies, resource_dependencies) = self
+            .living_dependencies(&current_wiki_objects)
             .map_err(|error| error.to_string())?;
         let impact = deterministic_transitive_knowledge_impact(
             &horizon,
@@ -500,6 +512,7 @@ impl LocalProjectKnowledge {
             return Ok(ProjectRelations::Source(Box::new(ProjectSourceRelations {
                 reflection,
                 authored: self.authored_relations(raw_resource)?,
+                authored_edges: self.authored_edges(raw_resource),
             })));
         }
         let address = self.resolve_address(raw_resource)?;
@@ -515,7 +528,8 @@ impl LocalProjectKnowledge {
         raw_resource: &str,
     ) -> AikitResult<Option<AuthoredWikiSubjectRelations>> {
         let Some(source) = self.authored_sources.iter().find(|source| {
-            source.source_ref.as_str() == raw_resource || source.subject_ref.as_str() == raw_resource
+            source.source_ref.as_str() == raw_resource
+                || source.subject_ref.as_str() == raw_resource
         }) else {
             return Ok(None);
         };
@@ -532,6 +546,67 @@ impl LocalProjectKnowledge {
             label,
         )
         .map(Some)
+    }
+
+    fn authored_edges(&self, raw_resource: &str) -> Vec<WikiEdge> {
+        let Some(source) = self.authored_sources.iter().find(|source| {
+            source.source_ref.as_str() == raw_resource
+                || source.subject_ref.as_str() == raw_resource
+        }) else {
+            return Vec::new();
+        };
+        let mut edges = self
+            .authored_compilation
+            .edges
+            .iter()
+            .filter(|edge| edge.from_ref == source.subject_ref || edge.to_ref == source.subject_ref)
+            .cloned()
+            .collect::<Vec<_>>();
+        edges.sort_by(|left, right| left.ref_id.cmp(&right.ref_id));
+        edges
+    }
+
+    /// Read source-authored topology from the exact Central-owned Flow source.
+    /// This is deterministic source interpretation: it does not bind an
+    /// AgentSession, resolve a model runtime or enter Contemplate.
+    pub fn flow_authored_relations(
+        &self,
+        flow_ref: &str,
+        source_ref: &str,
+        source_revision: &str,
+        source_locator: &str,
+        source_authority: SourceAuthority,
+        body: &str,
+    ) -> AikitResult<FlowAuthoredRelationsReading> {
+        let subject_ref = ResourceRef::parse(flow_ref)?;
+        let source = parse_authored_wiki_source_with_authority(
+            subject_ref.clone(),
+            SourceRef::parse(source_ref)?,
+            source_authority,
+            Some(SourceRevision::parse(source_revision)?),
+            vec![source_locator.to_owned()],
+            body,
+        )?;
+        let base_objects = self.wiki_objects();
+        let compilation = compile_authored_wiki_relations(&[source], &base_objects, &[])?;
+        let index = rebuild_semantic_wiki_with_authored_relations(&base_objects, &compilation)?;
+        let authored = authored_wiki_subject_relations(
+            &index,
+            &compilation,
+            subject_ref.clone(),
+            ResourceKind::KnowledgeSource,
+            source_locator,
+        )?;
+        let mut authored_edges = compilation
+            .edges
+            .into_iter()
+            .filter(|edge| edge.from_ref == subject_ref || edge.to_ref == subject_ref)
+            .collect::<Vec<_>>();
+        authored_edges.sort_by(|left, right| left.ref_id.cmp(&right.ref_id));
+        Ok(FlowAuthoredRelationsReading {
+            authored,
+            authored_edges,
+        })
     }
 
     pub fn explain(&self, raw_resource: &str) -> AikitResult<ProjectExplanation> {
