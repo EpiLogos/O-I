@@ -65,6 +65,8 @@ jobs:
           node --test desktop/ui/src/project-field-presentation.test.mjs
           node --test desktop/ui/src/living-wiki-model.test.mjs
           node --test desktop/ui/src/agency-sidecar.test.mjs
+          node --test desktop/ui/src/participant-composer.test.mjs
+          node --test desktop/ui/src/session-observatory-model.test.mjs
 
   native-shell:
     runs-on: macos-15
