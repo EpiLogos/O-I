@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { createParticipant } from './index.mjs';
-import { createExploreApplication } from './explore.mjs';
+import { createExploreSurfaceModel, EXPLORE_SURFACE_SEED_SCHEMA } from './explore-surface.mjs';
 import { createA2aBinding, createA2aPresence } from './a2a.mjs';
 import { searchA2aParticipation } from './a2a-explore.mjs';
 
@@ -10,7 +10,8 @@ const fieldRef = 'field:o-i:public';
 const agentRef = 'agent:parasakti';
 const participantRef = 'participant:public:parasakti';
 
-const explore = createExploreApplication({
+const explore = createExploreSurfaceModel({
+  schema: EXPLORE_SURFACE_SEED_SCHEMA,
   entries: [{
     ref: agentRef,
     kind: 'agent',
@@ -21,6 +22,8 @@ const explore = createExploreApplication({
     locators: [],
   }],
   relations: [],
+  presentations: [],
+  presentation_projections: [],
 });
 
 const participant = createParticipant({
