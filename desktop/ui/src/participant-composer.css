@@ -1,0 +1,121 @@
+.oi-participant-composer {
+  position: relative;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.oi-participant-composer__field {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  min-height: 2.45rem;
+  padding: 0.38rem 0.5rem;
+  border: 1px solid var(--oi-rule);
+  border-radius: 0.55rem;
+  background: color-mix(in srgb, var(--oi-surface) 88%, transparent);
+  cursor: text;
+}
+
+.oi-participant-composer__field > strong {
+  flex: 0 0 auto;
+  padding-top: 0.35rem;
+  font-size: 0.76rem;
+  color: var(--oi-muted);
+}
+
+.oi-participant-composer__chips {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.oi-participant-composer__chips input {
+  flex: 1 1 9rem;
+  min-width: 7rem;
+  border: 0;
+  outline: 0;
+  padding: 0.35rem 0.15rem;
+  color: var(--oi-foreground);
+  background: transparent;
+  font: inherit;
+}
+
+.oi-participant-composer__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
+  border: 1px solid color-mix(in srgb, var(--oi-focus) 32%, var(--oi-rule));
+  border-radius: 999px;
+  padding: 0.22rem 0.4rem 0.22rem 0.5rem;
+  background: color-mix(in srgb, var(--oi-focus) 9%, var(--oi-surface));
+  color: var(--oi-foreground);
+}
+
+.oi-participant-composer__chip small {
+  color: var(--oi-muted);
+  font-size: 0.62rem;
+}
+
+.oi-participant-composer__popover {
+  position: absolute;
+  z-index: 80;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: 0;
+  display: grid;
+  max-height: 18rem;
+  overflow: auto;
+  border: 1px solid var(--oi-rule);
+  border-radius: 0.65rem;
+  background: var(--oi-surface);
+  box-shadow: 0 1rem 2rem color-mix(in srgb, var(--oi-foreground) 12%, transparent);
+}
+
+.oi-participant-composer__popover > button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: center;
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--oi-rule) 65%, transparent);
+  padding: 0.55rem 0.65rem;
+  text-align: left;
+  color: var(--oi-foreground);
+  background: transparent;
+}
+
+.oi-participant-composer__popover > button[data-highlighted='true'],
+.oi-participant-composer__popover > button:hover {
+  background: color-mix(in srgb, var(--oi-focus) 10%, var(--oi-surface));
+}
+
+.oi-participant-composer__popover > button span {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+}
+
+.oi-participant-composer__popover small,
+.oi-participant-composer__popover code,
+.oi-participant-composer__popover p,
+.oi-participant-composer__popover footer {
+  color: var(--oi-muted);
+  font-size: 0.68rem;
+}
+
+.oi-participant-composer__popover p,
+.oi-participant-composer__popover footer {
+  margin: 0;
+  padding: 0.6rem 0.7rem;
+}
+
+.oi-participant-composer__popover footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-top: 1px solid var(--oi-rule);
+}
