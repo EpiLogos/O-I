@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "oi.reference-world",
+  "name": "O:I Reference World",
+  "version": "0.1.0",
+  "author": "EpiLogos",
+  "description": "Ambient O:I World, Agency and Attention disclosure over canonical O:I state.",
+  "kinds": [
+    "service",
+    "bar-widget",
+    "panel"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "service": "Service.qml",
+    "barWidget": "BarWidget.qml",
+    "panel": "Panel.qml"
+  },
+  "barWidget": {
+    "displayName": "O:I",
+    "description": "Current O:I World and attention aperture",
+    "category": "System",
+    "allowMultiple": false,
+    "defaultSection": "left"
+  }
+}
