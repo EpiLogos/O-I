@@ -8,6 +8,12 @@ pub fn cli_main() -> ExitCode {
                 println!("Current world:");
                 println!("  oi current-world [--json]      disclose the situated six-product composition and current machine/Workcell relation");
                 println!();
+                println!("Reference World hosts:");
+                println!("  oi host omarchy inspect [--json]   recognise the actual Omarchy host without mutation");
+                println!("  oi host omarchy plan [--json]      disclose the exact native integration changes that would be made");
+                println!("  oi host omarchy install [--json]   install/enable the native O:I contribution through Omarchy public mechanisms");
+                println!("  oi host omarchy verify [--json]    verify plugin, shell IPC and canonical Current World returned reality");
+                println!();
                 println!("Current-main development / #97 acceptance:");
                 println!("  oi install central             install/register current ProjectCentral-capable Central source");
                 println!("  oi dev status [--json]         compare local source world with current accepted native mains");
@@ -51,6 +57,9 @@ pub fn cli_main() -> ExitCode {
         return code;
     }
     if let Some(code) = existing_world_main() {
+        return code;
+    }
+    if let Some(code) = omarchy_host_main() {
         return code;
     }
     if let Some(code) = suite_v2_main() {
