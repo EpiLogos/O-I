@@ -1,0 +1,42 @@
+name: Omarchy Reference World
+
+on:
+  pull_request:
+    paths:
+      - 'cli/**'
+      - 'integrations/omarchy/**'
+      - '.github/workflows/omarchy-reference-world.yml'
+  push:
+    branches:
+      - feat/oi158-omarchy-reference-world
+    paths:
+      - 'cli/**'
+      - 'integrations/omarchy/**'
+      - '.github/workflows/omarchy-reference-world.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  oi-host-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Test O:I Omarchy recognition/adoption contract
+        run: cargo test --manifest-path cli/Cargo.toml omarchy_host_tests
+
+  omarchy-plugin-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout exact Omarchy conformance source
+        uses: actions/checkout@v4
+        with:
+          repository: omacom/omarchy
+          ref: b71dcad96e9d0b2962b7d225828a5cb6000ad720
+          path: .conformance/omarchy
+      - name: Validate native O:I plugin through Omarchy public validator
+        run: .conformance/omarchy/bin/omarchy-plugin-validate integrations/omarchy/oi.reference-world
+      - name: Confirm source pin matches implementation receipt
+        run: grep -F 'b71dcad96e9d0b2962b7d225828a5cb6000ad720' cli/src/omarchy_host.rs
