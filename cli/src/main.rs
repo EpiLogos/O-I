@@ -11,6 +11,7 @@ mod composition {
     include!("trust_closure_guard.rs");
     include!("frontdoor.rs");
     include!("existing_world.rs");
+    include!("omarchy_host.rs");
 }
 
 fn main() -> std::process::ExitCode {
