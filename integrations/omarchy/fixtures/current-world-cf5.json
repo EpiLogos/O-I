@@ -1,0 +1,24 @@
+{
+  "schema": "oi.current-world/v1",
+  "personal_ground": "/Central",
+  "current_machine": {
+    "role": "reference",
+    "central_source": "Control/machines/reference.json",
+    "workcell_ref": "workcell:reference",
+    "health": "healthy"
+  },
+  "positions": [
+    {"position":0,"product_id":"central","public_name":"Central","native_owner":"https://github.com/EpiLogos/Central","state":"registered","present":true},
+    {"position":1,"product_id":"actuation","public_name":"Actuation","native_owner":"https://github.com/EpiLogos/Actuation","state":"registered","present":true},
+    {"position":2,"product_id":"ai-kit","public_name":"AIKit","native_owner":"https://github.com/EpiLogos/ai-kit","state":"registered","present":true},
+    {"position":3,"product_id":"software-factory","public_name":"Software Factory","native_owner":"https://github.com/EpiLogos/Software-Factory","state":"registered","present":true},
+    {"position":4,"product_id":"workcell","public_name":"Workcell","native_owner":"https://github.com/EpiLogos/Workcell","state":"registered","present":true},
+    {"position":5,"product_id":"quaternal-logic","public_name":"Quaternal Logic","native_owner":"https://github.com/EpiLogos/QL-MEF","state":"registered","present":true}
+  ],
+  "context_frame": {
+    "reading": "cf5",
+    "maximal": true,
+    "present_positions": [0,1,2,3,4,5]
+  },
+  "warnings": []
+}
