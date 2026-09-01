@@ -4,7 +4,7 @@
 
 Use this skill when a user asks you to understand, install, inspect, compose, snapshot, verify, or enter a {O:I} system.
 
-{O:I} is the sparse shared Idea and composition layer around six product surfaces. It is not the place to reimplement the products. Your first job is to disclose the field clearly and route work to the surface that owns it.
+{O:I} is the sparse shared Idea and composition layer around six product surfaces. It is not the place to reimplement the products. Your first job is to disclose the active field clearly, use the installed suite front door where it is actually available, and preserve the native owner of every product operation.
 
 ## Functional field
 
@@ -66,6 +66,45 @@ oi kit ...   ->  aikit ...
 
 Alias dispatch is transparent. Native arguments, input/output, signal behavior, and exit status remain authoritative.
 
+## Operative praxis
+
+The target pre-`#97` suite UX is one first-hand `oi` instrument backed by AIKit's accepted general resolver. The implementation Wayfinder is `docs/OI-OPERATIVE-FRONTDOOR-WAYFINDER.md`; AIKit `#142` remains the runtime owner of `ResolveExpression`, typed refs, Search/Explain/History, Method discovery and the operative address grammar.
+
+**Do not pretend this resolver syntax exists when the installed AIKit/O:I composition does not expose the accepted contract.** On current compositions without that floor, use the verified aliases and native owner commands above.
+
+When the installed composition does expose the accepted resolver/front-door contract, operate in this order:
+
+1. **Resolve the present subject and World before inventory-scanning tools.** Use the semantic address/resolver to determine the canonical object, current context and relevant relations.
+2. **Prefer a Method when the intention is already intelligible.** A Method is the situated operational pattern that can draw together the relevant knowledge, Skills and Actions. Do not manually inspect a broad Skill catalogue when a Method already expresses the work.
+3. **Keep Skill, Capability and Action distinct.** A Skill explains reusable procedure. Capability says an operation is available. The native Action/authority seam decides whether it may actually happen.
+4. **Use Explain when resolution surprises you.** A ranked result should remain inspectable: semantic relevance first, then authored/context preference, then successful learned accessibility/familiarity, then stable identity.
+5. **Use History/familiarity to recover known paths, not to replace semantic identity.** A familiar alias or traversal may become easier to reach while the canonical ref remains authoritative.
+6. **Record familiarity only from successful use.** Displaying, hovering, ranking or failing an operation must not teach a path as successful praxis.
+7. **Dispatch canonical Actions through `oi` only when that front-door capability is present.** O:I forwards the selected canonical ActionRef to its native owner and preserves the real authority result; it does not guess shell commands or duplicate Action implementation.
+8. **Preserve surface parity.** CLI, TUI/palette, structured Agent, Pi and desktop projections should operate the same typed refs and resolver evidence rather than inventing surface-local identities or scoring laws.
+
+The intended relation is:
+
+```text
+present Focus / intention
+        ↓
+semantic address / ResolveExpression
+        ↓
+Method
+        ↓
+knowledge + Skills + Actions
+        ↓
+capability / authority
+        ↓
+Action / encounter
+        ↓
+Return
+        ↓
+revised World + successful familiarity
+```
+
+For Guardians, use this same ordinary instrument and broad tool ecology. Product differentiation comes from persistent product Focus, stewarded claims/dependencies, Wiki resonance, product-relative navigation history, attention over relevant Activity and unresolved Returns/Candidates. Do not create six private memory systems or six special tool inventories to simulate Guardian identity.
+
 ## Suite Snapshot
 
 Use `oi snapshot` to represent one exact composition candidate. A snapshot is sparse composition metadata, not product configuration or a transitive dependency lockfile.
@@ -124,4 +163,4 @@ Write for the user's experience of the field. Use {O:I} as the canonical written
 
 ## Guardrail
 
-Before adding code to this repository, ask whether the change is shared disclosure, setup, installation/registration, status, snapshot/verification composition, documentation, safe work placement, compatibility, or aliasing. If it changes what a native product can actually do, implement it in that product instead.
+Before adding code to this repository, ask whether the change is shared disclosure, setup, installation/registration, status, snapshot/verification composition, documentation, safe work placement, compatibility, aliasing, or thin suite-level resolver/Action dispatch. If it changes what a native product can actually do, implement it in that product instead.
