@@ -25,6 +25,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - name: Test O:I Omarchy recognition/adoption contract
         run: cargo test --manifest-path cli/Cargo.toml omarchy_host_tests
+      - name: Verify canonical Current World bridge and degradation contract
+        run: python3 integrations/omarchy/verify-reference-world-bridge.py
 
   omarchy-plugin-contract:
     runs-on: ubuntu-latest
