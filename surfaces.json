@@ -83,7 +83,7 @@
       "public_name": "AIKit",
       "function": "context, capability, model, credential, SessionSpace and provider-process resolution",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "docs_ref": "a0f70475e5c8f3d7a660a091685ac14a9afde637",
+      "docs_ref": "0b31cdf6592e06a3e9f4faa4820def7d9fd575ff",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -96,8 +96,8 @@
       },
       "install": {
         "kind": "oi-managed-binary",
-        "ref": "a0f70475e5c8f3d7a660a091685ac14a9afde637",
-        "revision": "a0f70475e5c8f3d7a660a091685ac14a9afde637",
+        "ref": "0b31cdf6592e06a3e9f4faa4820def7d9fd575ff",
+        "revision": "0b31cdf6592e06a3e9f4faa4820def7d9fd575ff",
         "note": "Current #97 source pin for developer/source composition. Immutable released artifacts remain versioned by suite/manifest.json."
       },
       "verification": {
@@ -109,7 +109,7 @@
           "evidence": "process-exit-and-output"
         },
         "outstanding_requirements": [],
-        "note": "Current accepted AIKit main includes ContextResolutionEvidence/ContextResolutionRef with operative ContextSource activation receipts, SessionSpace application state, Herdr/Hyprland provider composition, public working-environment conformance, native VersionedWorld/ProjectWorld relations, source-owned Method semantics, proof-before-automation Routine semantics, and the operative Resolve/search path."
+        "note": "Current accepted AIKit main includes ContextResolutionEvidence/ContextResolutionRef with operative ContextSource activation receipts, SessionSpace application state, Herdr/Hyprland provider composition, public working-environment conformance, native VersionedWorld/ProjectWorld relations, source-owned Method semantics, proof-before-automation Routine semantics, operative Resolve/search and canonical QL-shape operation in SemanticWiki/Contemplate."
       },
       "compatibility": "AIKit owns operational P4 context resolution, target-native activation evidence, effective Method/praxis resolution and Routine proof/trigger/authority state. It consumes Central AgentProfile only as an opaque source relation; Factory may correlate Method/proof/Routine refs without acquiring those semantics."
     },
