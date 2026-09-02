@@ -1,0 +1,56 @@
+name: OI159 Omarchy host deterministic proof
+
+on:
+  pull_request:
+    paths:
+      - 'cli/**'
+      - 'integrations/omarchy/**'
+      - 'docs/integrations/OMARCHY-HOST.md'
+      - '.github/workflows/oi159-omarchy-host.yml'
+  push:
+    branches:
+      - 'feat/oi159-omarchy-host-bootstrap'
+
+jobs:
+  omarchy-host:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - name: Install Rust 1.98
+        uses: dtolnay/rust-toolchain@1.98.0
+
+      - name: Prove O:I host planner and fake-HOME ownership laws
+        run: |
+          cargo test --manifest-path cli/Cargo.toml omarchy_host_tests
+          cargo clippy --manifest-path cli/Cargo.toml --all-targets -- -D warnings
+
+      - name: Fetch exact Omarchy contract revision
+        run: |
+          rm -rf /tmp/omarchy-contract
+          git init -q /tmp/omarchy-contract
+          git -C /tmp/omarchy-contract remote add origin https://github.com/omacom/omarchy.git
+          git -C /tmp/omarchy-contract fetch --depth 1 origin d3d23fdddef846ebb98b52122a6ece66211c0daf
+          git -C /tmp/omarchy-contract checkout -q --detach FETCH_HEAD
+          test "$(git -C /tmp/omarchy-contract rev-parse HEAD)" = "d3d23fdddef846ebb98b52122a6ece66211c0daf"
+
+      - name: Validate O:I plugins with pinned native Omarchy validator
+        run: |
+          /tmp/omarchy-contract/bin/omarchy-plugin-validate "$GITHUB_WORKSPACE/integrations/omarchy/org.epilogos.oi"
+          /tmp/omarchy-contract/bin/omarchy-plugin-validate "$GITHUB_WORKSPACE/integrations/omarchy/org.epilogos.oi.switcher"
+
+      - name: Prove deterministic CLI lifecycle in disposable HOME
+        run: |
+          tmp_home="$(mktemp -d)"
+          mkdir -p "$tmp_home/.config/omarchy"
+          printf '%s\n' '{"version":1,"plugins":[]}' > "$tmp_home/.config/omarchy/shell.json"
+          before="$(sha256sum "$tmp_home/.config/omarchy/shell.json" | cut -d' ' -f1)"
+          cargo run --quiet --manifest-path cli/Cargo.toml -- host omarchy plan --home "$tmp_home" --json >/tmp/oi159-plan.json
+          cargo run --quiet --manifest-path cli/Cargo.toml -- host omarchy realise --home "$tmp_home" --json >/tmp/oi159-realise.json
+          cargo run --quiet --manifest-path cli/Cargo.toml -- host omarchy verify --home "$tmp_home" --json >/tmp/oi159-verify.json
+          cargo run --quiet --manifest-path cli/Cargo.toml -- host omarchy realise --home "$tmp_home" --json >/tmp/oi159-realise-2.json
+          after="$(sha256sum "$tmp_home/.config/omarchy/shell.json" | cut -d' ' -f1)"
+          test "$before" = "$after"
+          grep -q '"contract_revision": "d3d23fdddef846ebb98b52122a6ece66211c0daf"' /tmp/oi159-verify.json
+          grep -q '"state": "exact"' /tmp/oi159-verify.json
+          ! grep -q 'shell.json.*create' /tmp/oi159-realise.json
