@@ -21,3 +21,4 @@ export * from './a2a-explore.mjs';
 export * from './spacetimedb-a2a.mjs';
 export * from './auth-binding.mjs';
 export * from './referent.mjs';
+export * from './versioned-world-application.mjs';
