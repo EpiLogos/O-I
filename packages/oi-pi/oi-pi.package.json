@@ -1,0 +1,36 @@
+{
+  "schema": "oi.package/v1",
+  "package_ref": "package:o-i/oi-pi",
+  "version": "0.1.0",
+  "source": {
+    "kind": "git",
+    "locator": "EpiLogos/O-I/packages/oi-pi",
+    "revision": "5996824c3acc28d0df081f6626d79b7b558b6894"
+  },
+  "compatibility": [
+    { "product": "ai-kit", "minimum_version": "0.1.0" }
+  ],
+  "permissions": [
+    "process_execution_readonly",
+    "filesystem_read"
+  ],
+  "effects": [],
+  "contributions": [
+    {
+      "contribution_ref": "contribution:oi/observatory-surface",
+      "target_product": "ai-kit",
+      "target_contract": "aikit.component-surface-authoring/v1",
+      "minimum_contract_version": "1.0.0",
+      "artifact": "contrib",
+      "permissions": [
+        "process_execution_readonly",
+        "filesystem_read"
+      ],
+      "effects": [],
+      "native_verification": {
+        "operation": "aikit verify-component-surface-authoring",
+        "evidence_format": "aikit.conformance/v1"
+      }
+    }
+  ]
+}
