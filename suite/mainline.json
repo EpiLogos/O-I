@@ -14,9 +14,9 @@
     {
       "id": "central",
       "repository": "https://github.com/EpiLogos/Central",
-      "revision": "77625f40081a3e38503d732f44c607a94888d9d6",
+      "revision": "2ed86ab1c8ecd7e7526c7d4f8f38f2083c47ef98",
       "state": "accepted-main",
-      "note": "Current Central main includes the sixfold Project Context Protocol, ProjectCentral authored Ground/governance, SourceHistory recovery, NOW/DAY and current machine/World source relations. Central retains source identity/standing while AIKit owns operational context resolution."
+      "note": "Current Central main includes the sixfold Project Context Protocol, ProjectCentral authored Ground/governance, SourceHistory recovery, NOW/DAY, current machine/World source relations and the durable personal/Project AgentProfile source contract. Central retains source identity/standing while AIKit owns effective Profile and operational context resolution."
     },
     {
       "id": "actuation",
@@ -28,16 +28,16 @@
     {
       "id": "ai-kit",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "revision": "4e35f499c50b987551ab124b4432757973e823ae",
+      "revision": "412e38f68867cdfd6019cea92469e76dbe5797c1",
       "state": "accepted-main",
-      "note": "Current main includes SessionSpace application state and content-addressed ContextResolutionEvidence/ContextResolutionRef, Herdr/Hyprland reference-provider composition, public external-provider conformance, Rust/credential convergence, native VersionedWorld Git operations and ProjectWorld material/version attachment."
+      "note": "Current main includes SessionSpace application state and content-addressed ContextResolutionEvidence/ContextResolutionRef whose basis now retains operative ContextSource activation receipts, plus Herdr/Hyprland reference-provider composition, public external-provider conformance, Rust/credential convergence, native VersionedWorld Git operations and ProjectWorld material/version attachment."
     },
     {
       "id": "software-factory",
       "repository": "https://github.com/EpiLogos/agent-system-design",
-      "revision": "f4b9aeaacce8bd2ad21f8d06fba10580d5e051ca",
+      "revision": "846e3043bffb923bff9d9a1166dece6abd1df16a",
       "state": "accepted-main-with-active-research-exceptions",
-      "note": "Current main includes Git developmental Worlds, the bounded Intent condition/return contract, and the owner-native Action projection contract. Factory retains the native Intent source ref and AIKit ContextResolution ref across Run → evidence-bearing Return; its canonical request-evidence Action now preserves caller lineage across desktop-human, situated-Agent and real headless projections while all three return through the same persistent Factory handler. Moving QL-dependent research remains separately owned."
+      "note": "Current main includes Git developmental Worlds, the bounded Intent condition/return contract, owner-native Run-scoped ProjectDevelopment persistence/reload, and the owner-native Action projection contract. Factory retains the native Intent source ref and AIKit ContextResolution ref across Run → persisted state → evidence-bearing Return; its canonical request-evidence Action preserves caller lineage across desktop-human, situated-Agent and real headless projections while all three return through the same persistent Factory handler. Moving QL-dependent research remains separately owned."
     },
     {
       "id": "workcell",
