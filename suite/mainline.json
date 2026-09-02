@@ -28,9 +28,9 @@
     {
       "id": "ai-kit",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "revision": "a0f70475e5c8f3d7a660a091685ac14a9afde637",
+      "revision": "0b31cdf6592e06a3e9f4faa4820def7d9fd575ff",
       "state": "accepted-main",
-      "note": "Current main includes SessionSpace application state and content-addressed ContextResolutionEvidence/ContextResolutionRef with operative ContextSource activation receipts, Herdr/Hyprland reference-provider composition, public external-provider conformance, native VersionedWorld Git operations, ProjectWorld material/version attachment, source-owned Method semantics, proof-before-automation Routine semantics, and the current operative Resolve/search path. Routine keeps exact Method proof, authority and trigger state AIKit-owned while retaining Central AgentProfile only as an opaque source relation."
+      "note": "Current main includes SessionSpace application state and content-addressed ContextResolutionEvidence/ContextResolutionRef with operative ContextSource activation receipts, Herdr/Hyprland reference-provider composition, public external-provider conformance, native VersionedWorld Git operations, ProjectWorld material/version attachment, source-owned Method semantics, proof-before-automation Routine semantics, operative Resolve/search, and accepted canonical QL-shape operation in SemanticWiki/Contemplate. Routine keeps exact Method proof, authority and trigger state AIKit-owned while retaining Central AgentProfile only as an opaque source relation."
     },
     {
       "id": "software-factory",
