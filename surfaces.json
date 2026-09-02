@@ -1,13 +1,13 @@
 {
   "schema": 1,
-  "verified_at": "2026-08-24",
+  "verified_at": "2026-09-02",
   "surfaces": [
     {
       "id": "central",
       "public_name": "Central",
       "function": "persistent personal ground",
       "repository": "https://github.com/EpiLogos/Central",
-      "docs_ref": "31d54eb4a6202c89c7f60ec004654916133dea94",
+      "docs_ref": "77625f40081a3e38503d732f44c607a94888d9d6",
       "docs_path": "README.md",
       "skill_paths": [
         "skills/control-maintenance/SKILL.md",
@@ -25,10 +25,10 @@
       },
       "install": {
         "kind": "oi-managed-binary",
-        "ref": "31d54eb4a6202c89c7f60ec004654916133dea94",
-        "revision": "31d54eb4a6202c89c7f60ec004654916133dea94",
+        "ref": "77625f40081a3e38503d732f44c607a94888d9d6",
+        "revision": "77625f40081a3e38503d732f44c607a94888d9d6",
         "path": "ctrl",
-        "note": "Current #97 source pin for developer/source installation. The immutable prelocal.2 release artifact remains described separately by suite/manifest.json; Central remains owner of Control, Work, ProjectCentral, Flow and .central semantics."
+        "note": "Current #97 source pin for developer/source installation. The immutable prelocal release artifact remains described separately by suite/manifest.json; Central remains owner of Control, Work, ProjectCentral, source authority and .central semantics."
       },
       "verification": {
         "status": "supported",
@@ -39,16 +39,16 @@
           "evidence": "native-json-stdout"
         },
         "outstanding_requirements": [],
-        "note": "Portable Central acceptance targets current main including ProjectCentral, current-machine↔Workcell, native host extensions and the accepted Flow source owner. Physical owner-world observations remain separate evidence."
+        "note": "Portable Central acceptance now includes the sixfold Project Context Protocol, ProjectCentral authored Ground/governance, SourceHistory recovery and current-machine relations. Physical owner-world observations remain separate evidence."
       },
-      "compatibility": "Central current main owns the personal/Project source world, current-machine relation, Living Wiki source-change horizon, Flow and native host extension seams. O:I composes these without taking ownership of their source or provider policy."
+      "compatibility": "Central current main owns Project source identity, standing and provenance, including the Project Context Protocol which delegates operational precedence/resolution to AIKit rather than defining it in Central."
     },
     {
       "id": "actuation",
       "public_name": "Actuation",
       "function": "Agency, WorldBinding, RootScope, Metagency, Determination and Return authority",
       "repository": "https://github.com/EpiLogos/Actuation",
-      "docs_ref": "bb36b3c20561359bdfbc5c826a11d15a5e693aed",
+      "docs_ref": "6b5419c2dd91dda2e260d309a08c078026256a73",
       "docs_path": "docs/WORLD-BOUND-ROOT-AGENCY.md",
       "skill_paths": [],
       "native": {
@@ -61,8 +61,8 @@
       },
       "install": {
         "kind": "oi-managed-component",
-        "ref": "bb36b3c20561359bdfbc5c826a11d15a5e693aed",
-        "revision": "bb36b3c20561359bdfbc5c826a11d15a5e693aed",
+        "ref": "6b5419c2dd91dda2e260d309a08c078026256a73",
+        "revision": "6b5419c2dd91dda2e260d309a08c078026256a73",
         "note": "Current mainline source pin for developer/source composition. Immutable released artifacts remain versioned by suite/manifest.json."
       },
       "verification": {
@@ -74,16 +74,16 @@
           "evidence": "oi.managed-artifact-evidence/v1"
         },
         "outstanding_requirements": [],
-        "note": "Released-artifact acceptance consumes the O:I-managed release receipt, digest and provenance reference. Native Actuation contract tests remain a developer/source verification command."
+        "note": "Current main includes semantic Activity over canonical ActuationStream in addition to the realised Actuation authority/runtime floor."
       },
-      "compatibility": "Actuation main is the current accepted portable authority foundation plus the realised Actuation loop and provider-neutral model-bearing contract."
+      "compatibility": "Actuation main owns Agency/WorldBinding/Actuation/Return meaning and now supplies the portable Activity projection consumed by O:I without turning observed Activity into Action identity."
     },
     {
       "id": "ai-kit",
       "public_name": "AIKit",
       "function": "context, capability, model, credential, SessionSpace and provider-process resolution",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "docs_ref": "4b9b404c0603532e86c5652b7fd5062d2e344acf",
+      "docs_ref": "4e35f499c50b987551ab124b4432757973e823ae",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -96,8 +96,8 @@
       },
       "install": {
         "kind": "oi-managed-binary",
-        "ref": "4b9b404c0603532e86c5652b7fd5062d2e344acf",
-        "revision": "4b9b404c0603532e86c5652b7fd5062d2e344acf",
+        "ref": "4e35f499c50b987551ab124b4432757973e823ae",
+        "revision": "4e35f499c50b987551ab124b4432757973e823ae",
         "note": "Current #97 source pin for developer/source composition. Immutable released artifacts remain versioned by suite/manifest.json."
       },
       "verification": {
@@ -109,16 +109,16 @@
           "evidence": "process-exit-and-output"
         },
         "outstanding_requirements": [],
-        "note": "Current accepted AIKit main includes V2/SessionSpace/Knowledge/ProjectCentral/praxis, harness admission, bounded Living Knowledge Contemplate, and accepted Flow standing context/Contemplate scope through PR #123."
+        "note": "Current accepted AIKit main includes ContextResolutionEvidence/ContextResolutionRef, SessionSpace application state, Herdr/Hyprland provider composition, public working-environment conformance, Rust 1.98/credential convergence, native VersionedWorld Git capability and ProjectWorld VersionedWorld attachment."
       },
-      "compatibility": "AIKit main owns context, capability, SessionSpace, harness, Knowledge and Flow cognition composition. Flow remains provider-neutral and its accepted conformance includes QL-absent operation."
+      "compatibility": "AIKit owns operational P4 context resolution and its content-addressed evidence ref, plus SessionSpace/provider/composition state; repository/worktree/provider identities remain subordinate to canonical Project and AgentSession identity."
     },
     {
       "id": "software-factory",
       "public_name": "Software Factory",
       "function": "developmental Project, Run, Candidate, evidence and authorised Factory Action semantics",
       "repository": "https://github.com/EpiLogos/agent-system-design",
-      "docs_ref": "ec08c99a55a6320c6f59d3c73024b5d48063a989",
+      "docs_ref": "71287c179e7686cb37cb25267958f0c390a1ecb7",
       "docs_path": "factory/README.md",
       "skill_paths": [],
       "native": {
@@ -131,9 +131,9 @@
       },
       "install": {
         "kind": "oi-managed-component",
-        "ref": "ec08c99a55a6320c6f59d3c73024b5d48063a989",
-        "revision": "ec08c99a55a6320c6f59d3c73024b5d48063a989",
-        "note": "Current #97 source pin for developer/source composition. Immutable released artifacts remain versioned by suite/manifest.json; the live repository retains its historical agent-system-design name pending any repository-settings rename."
+        "ref": "71287c179e7686cb37cb25267958f0c390a1ecb7",
+        "revision": "71287c179e7686cb37cb25267958f0c390a1ecb7",
+        "note": "Current #97 source pin for developer/source composition. Immutable released artifacts remain versioned by suite/manifest.json; the live repository retains its historical agent-system-design name."
       },
       "verification": {
         "status": "supported",
@@ -144,16 +144,16 @@
           "evidence": "oi.managed-artifact-evidence/v1"
         },
         "outstanding_requirements": [],
-        "note": "Released-artifact acceptance consumes the O:I-managed release receipt, digest and provenance reference. Factory workspace tests remain a developer/source verification command."
+        "note": "Current main includes Git developmental Worlds and the bounded P3 Intent → Run → evidence-bearing P5 return contract, preserving the opaque AIKit ContextResolution ref and native source identity."
       },
-      "compatibility": "Factory current main owns developmental Project/Run/Candidate/Evidence semantics with the corrected Actuation authority boundary. QL-dependent Factory research/client lines remain Factory-owned active exceptions and do not import the moving QL owner programme into #97."
+      "compatibility": "Factory owns developmental Project/Run/Candidate/Evidence/Recognition semantics; it consumes Central source refs and AIKit ContextResolution refs opaquely and refuses a returned P5 condition whose P3/P4 basis drifts."
     },
     {
       "id": "workcell",
       "public_name": "Workcell",
       "function": "material execution, model-serving base, process containment and secret materialisation",
       "repository": "https://github.com/EpiLogos/Workcell",
-      "docs_ref": "3949f8c5e8e9f75d1e7b34d10f119da2881e5496",
+      "docs_ref": "8320e05fc5bc2749c0f2ad24301d8dd1cda3d090",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -166,8 +166,8 @@
       },
       "install": {
         "kind": "oi-managed-binary",
-        "ref": "3949f8c5e8e9f75d1e7b34d10f119da2881e5496",
-        "revision": "3949f8c5e8e9f75d1e7b34d10f119da2881e5496",
+        "ref": "8320e05fc5bc2749c0f2ad24301d8dd1cda3d090",
+        "revision": "8320e05fc5bc2749c0f2ad24301d8dd1cda3d090",
         "note": "Current mainline source pin for developer/source composition. Immutable released artifacts remain versioned by suite/manifest.json; provider-specific physical resources are not materialised by O:I preflight."
       },
       "verification": {
@@ -182,17 +182,17 @@
           {
             "kind": "physical",
             "id": "workcell-reference-machine",
-            "description": "Reference Ubuntu Workcell material/runtime acceptance remains for the physical acceptance session."
+            "description": "Reference Ubuntu/Omarchy material/runtime acceptance remains for the physical #97 session."
           },
           {
             "kind": "provider",
             "id": "workcell-private-providers",
-            "description": "Private 1Password, Docker/Arrakis/Tailscale, GPU/model-serving and other local/provider-specific acceptance remains outside this pre-local session."
+            "description": "Private credentials, local networking/GPU/model-serving and other owner-machine provider acceptance remains outside this pre-local session."
           }
         ],
-        "note": "Cloud/source verification can prove the portable mainline while retaining physical/provider gates explicitly."
+        "note": "Current main includes deterministic OpenSandbox World materialisation/lifecycle and the first-party AIKit Gateway managed-service relation while preserving semantic ownership in AIKit."
       },
-      "compatibility": "Workcell main contains the current portable materialisation foundation, SDK, control/service/fabric/model-serving base, process authority and secret-materialisation seams."
+      "compatibility": "Workcell main owns materialisation/service lifecycle and provider provenance, including OpenSandbox and AIKit Gateway service bodies, without acquiring Project, AgentSession or Gateway protocol identity."
     },
     {
       "id": "quaternal-logic",
@@ -225,7 +225,7 @@
           "evidence": "oi.managed-artifact-evidence/v1"
         },
         "outstanding_requirements": [],
-        "note": "This stable QL-MEF suite pin records the separately owned product without making its currently moving computational/music/Epi programme a #97 closure dependency. QL owner convergence proceeds in its dedicated session."
+        "note": "This stable QL-MEF suite pin records the separately owned product without making its currently moving computational/music/Epi programme a #97 closure dependency."
       },
       "compatibility": "Quaternal Logic remains an optional, independently owned product in the six-position field. O:I can compose its accepted interfaces when present; #97 does not converge or gate on the active QL/Epi development topology."
     }
