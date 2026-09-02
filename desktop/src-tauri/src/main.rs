@@ -21,6 +21,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::State;
 
 const CONTRIBUTION_FIXTURES: &str = include_str!("../../fixtures/native-contributions.json");
+const EXPLORE_SURFACE_SEED_SCHEMA: &str = "oi.explore-browser-seed/v1";
 
 #[derive(Deserialize)]
 struct ContributionFixtures {
@@ -81,6 +82,36 @@ fn contribution_catalog(state: State<'_, AppState>) -> Result<Vec<HostedContribu
         .lock()
         .map_err(|_| "contribution catalog lock poisoned".to_owned())?
         .clone())
+}
+
+/// Optional local projected-field adapter for the installed Explore Surface.
+///
+/// This is a read-model/projection input only. The desktop neither discovers
+/// arbitrary local source through this command nor mutates the configured file.
+/// A native SharedField provider can replace the adapter without changing Explore
+/// semantic refs, Projection identity, admission policy or renderer behaviour.
+#[tauri::command]
+fn explore_surface_seed() -> Result<Option<Value>, String> {
+    BridgePolicy
+        .authorize(BridgeCaller::ShellUi, BridgeCallClass::DiscloseContributions)
+        .map_err(|error| error.to_string())?;
+    let Some(path) = env::var_os("OI_EXPLORE_SURFACE_SEED") else {
+        return Ok(None);
+    };
+    let content = fs::read_to_string(&path)
+        .map_err(|error| format!("read OI_EXPLORE_SURFACE_SEED: {error}"))?;
+    let value: Value = serde_json::from_str(&content)
+        .map_err(|error| format!("invalid OI_EXPLORE_SURFACE_SEED JSON: {error}"))?;
+    let schema = value
+        .get("schema")
+        .and_then(Value::as_str)
+        .ok_or_else(|| "OI_EXPLORE_SURFACE_SEED must disclose schema".to_owned())?;
+    if schema != EXPLORE_SURFACE_SEED_SCHEMA {
+        return Err(format!(
+            "unsupported OI_EXPLORE_SURFACE_SEED schema `{schema}`; expected `{EXPLORE_SURFACE_SEED_SCHEMA}`"
+        ));
+    }
+    Ok(Some(value))
 }
 
 #[tauri::command]
@@ -750,6 +781,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             shell_snapshot,
             contribution_catalog,
+            explore_surface_seed,
             factory_build_snapshot,
             dispatch_factory_action,
             dispatch_contextual_factory_action,

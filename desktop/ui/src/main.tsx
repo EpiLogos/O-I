@@ -6,6 +6,8 @@ import './shell.css';
 import type { CurrentWorldReading } from './current-world';
 import { RuntimeObservationSurface } from './runtime-observation';
 import { NativeSearchCommand } from './native-command';
+import { ExploreWorkbenchSurface } from './explore-workbench';
+import { SystemWorkbench } from './system-workbench';
 import {
   HostSurfaceDescriptor,
   ProfessionalWorkbenchHost,
@@ -148,14 +150,14 @@ const ROOT_SURFACES: Record<Destination, HostSurfaceDescriptor> = {
     title: 'Explore',
     nativeOwner: 'o-i',
     region: 'canvas',
-    provenance: 'O:I host destination; Explore application body remains #110',
+    provenance: 'O:I workbench projection of the renderer-neutral Explore application',
   },
   system: {
     surfaceRef: 'surface/oi/system-host',
     title: 'System',
     nativeOwner: 'o-i',
     region: 'canvas',
-    provenance: 'O:I host destination; six-product System body remains #109',
+    provenance: 'O:I six-product composition workbench; native state remains owner-owned',
   },
 };
 
@@ -167,12 +169,14 @@ function App() {
   const [snapshot, setSnapshot] = useState<Snapshot>(preview);
   const [contributions, setContributions] = useState<Contribution[]>([]);
   const [factoryBuild, setFactoryBuild] = useState<FactoryBuildSnapshot | null>(null);
+  const [aikitContext, setAikitContext] = useState<unknown>(null);
   const [workbenchEvidence, setWorkbenchEvidence] = useState<WorkbenchEvidence | null>(null);
   const [actionResult, setActionResult] = useState<unknown>(null);
 
   useEffect(() => {
     invoke<Snapshot>('shell_snapshot').then(setSnapshot).catch(() => setSnapshot(preview));
     invoke<Contribution[]>('contribution_catalog').then(setContributions).catch(() => setContributions([]));
+    invoke<unknown>('aikit_context_resolution').then(setAikitContext).catch(() => setAikitContext(null));
     void refreshFactoryBuild();
   }, []);
 
@@ -186,11 +190,20 @@ function App() {
     }
   }
 
+  async function refreshAikitContext() {
+    try {
+      setAikitContext(await invoke<unknown>('aikit_context_resolution'));
+    } catch {
+      setAikitContext(null);
+    }
+  }
+
   async function openDestination(destination: Destination) {
     try {
       await invoke('open_destination', { destination });
       setSnapshot(await invoke<Snapshot>('shell_snapshot'));
-      if (destination === 'build') await refreshFactoryBuild();
+      if (destination === 'build' || destination === 'system') await refreshFactoryBuild();
+      if (destination === 'system') await refreshAikitContext();
     } catch {
       setSnapshot((current) => ({ ...current, destination }));
     }
@@ -238,7 +251,16 @@ function App() {
         <AgencySidecar selection={snapshot.selection} evidence={workbenchEvidence} rootAgency={rootAgency} />
       )}
       lower={<LowerRegion actionResult={actionResult} />}
-      system={<SystemRegion surfaces={snapshot.surfaces} contributions={contributions} warnings={snapshot.warnings} />}
+      system={(
+        <SystemRegion
+          surfaces={snapshot.surfaces}
+          contributions={contributions}
+          aikitContext={aikitContext}
+          factoryBuild={factoryBuild}
+          currentWorld={snapshot.current_world}
+          warnings={snapshot.warnings}
+        />
+      )}
       status={(
         <>
           <span>O:I · {snapshot.suite_condition}</span>
@@ -251,8 +273,11 @@ function App() {
         <RootCanvasSurface
           surface={surface}
           binding={binding}
+          suiteSurfaces={snapshot.surfaces}
+          warnings={snapshot.warnings}
           contributions={contributions}
           factoryBuild={factoryBuild}
+          aikitContext={aikitContext}
           selection={snapshot.selection}
           currentWorld={snapshot.current_world}
           onSelect={selectWorkbenchRef}
@@ -360,28 +385,39 @@ function LowerRegion({ actionResult }: { actionResult: unknown }) {
 function SystemRegion({
   surfaces,
   contributions,
+  aikitContext,
+  factoryBuild,
+  currentWorld,
   warnings,
 }: {
   surfaces: Surface[];
   contributions: Contribution[];
+  aikitContext: unknown;
+  factoryBuild: FactoryBuildSnapshot | null;
+  currentWorld?: CurrentWorldReading;
   warnings: string[];
 }) {
   return (
-    <div className="oi-p1-system">
-      <p className="oi-eyebrow">Composition disclosure</p>
-      <p className="oi-muted">P1 exposes the stable System region only. #109 owns the six-product configuration workbench.</p>
-      <SystemSurface surfaces={surfaces} />
-      <ContributionSurface contributions={contributions} />
-      {warnings.map((warning) => <p key={warning} className="oi-muted">{warning}</p>)}
-    </div>
+    <SystemWorkbench
+      mode="rail"
+      surfaces={surfaces}
+      contributions={contributions}
+      aikitContext={aikitContext}
+      factoryBuild={factoryBuild}
+      currentWorld={currentWorld}
+      warnings={warnings}
+    />
   );
 }
 
 function RootCanvasSurface({
   surface,
   binding,
+  suiteSurfaces,
+  warnings,
   contributions,
   factoryBuild,
+  aikitContext,
   selection,
   currentWorld,
   onSelect,
@@ -389,8 +425,11 @@ function RootCanvasSurface({
 }: {
   surface: HostSurfaceDescriptor;
   binding: SurfacePresentationBinding;
+  suiteSurfaces: Surface[];
+  warnings: string[];
   contributions: Contribution[];
   factoryBuild: FactoryBuildSnapshot | null;
+  aikitContext: unknown;
   selection?: WorkbenchSemanticRef;
   currentWorld?: CurrentWorldReading;
   onSelect: (subject: WorkbenchSemanticRef, evidence: WorkbenchEvidence) => Promise<void>;
@@ -417,9 +456,36 @@ function RootCanvasSurface({
         {factoryBuild ? (
           <FactoryBuildSurface snapshot={factoryBuild} onRefresh={onRefreshFactory} />
         ) : (
-          <p className="oi-muted">No live FactoryBuildView provider is bound. #108 consumes the source-faithful Factory Build body; P1 will not fabricate it.</p>
+          <p className="oi-muted">No live FactoryBuildView provider is bound. #108 consumes the source-faithful Factory Build body; the host will not fabricate it.</p>
         )}
         <ContributionSurface contributions={visibleContributions} />
+      </>
+    );
+  }
+
+  if (destination === 'explore') {
+    return (
+      <>
+        <SurfaceHeader destination={destination} binding={binding} />
+        <p className="oi-lead">Search, READ and bounded GRAPH/TREE/LIST use the same renderer-neutral Explore application as hosted/browser and structured Agent access. Local rendering does not change Projection, SharedField or publication standing.</p>
+        <ExploreWorkbenchSurface onSelect={onSelect} />
+        <ContributionSurface contributions={visibleContributions} />
+      </>
+    );
+  }
+
+  if (destination === 'system') {
+    return (
+      <>
+        <SurfaceHeader destination={destination} binding={binding} />
+        <SystemWorkbench
+          surfaces={suiteSurfaces}
+          contributions={contributions}
+          aikitContext={aikitContext}
+          factoryBuild={factoryBuild}
+          currentWorld={currentWorld}
+          warnings={warnings}
+        />
       </>
     );
   }
@@ -512,22 +578,6 @@ function ContributionSurface({ contributions }: { contributions: Contribution[] 
   );
 }
 
-function SystemSurface({ surfaces }: { surfaces: Surface[] }) {
-  if (!surfaces.length) return <div className="oi-empty">No registered O:I surfaces disclosed.</div>;
-  return (
-    <div className="oi-surface-list">
-      {surfaces.map((surface) => (
-        <article key={surface.id}>
-          <span className="oi-surface-list__state">{surface.state}</span>
-          <h3>{surface.public_name}</h3>
-          <p>{surface.function}</p>
-          {surface.detail && <small>{surface.detail}</small>}
-        </article>
-      ))}
-    </div>
-  );
-}
-
 function ownerVisibleAt(owner: string, destination: Destination) {
   if (destination === 'home' || destination === 'system') return true;
   if (destination === 'personal') return owner === 'central' || owner === 'actuation' || owner === 'ai-kit';
@@ -542,7 +592,7 @@ function titleFor(destination: Destination) {
     personal: 'Personal ground.',
     build: 'Development in view.',
     explore: 'Addressable worlds.',
-    system: 'Composition, disclosed.',
+    system: 'Six owners, one composed field.',
   }[destination];
 }
 
@@ -550,9 +600,9 @@ function copyFor(destination: Destination) {
   return {
     home: 'One native workspace over AIKit SessionSpace, AgentSession conversation and project Knowledge.',
     personal: 'P1 provides a host Surface only. Central/Actuation bodies and the Project/Ground editor field belong to #106/#107.',
-    build: 'Factory Build remains product-owned and source-faithful; P1 only hosts its current read model and canonical Actions.',
-    explore: 'P1 provides the host placement contract. Desktop ↔ Explore local/social parity and application body belong to #110.',
-    system: 'P1 provides the region and current composition disclosure. The six-product System workbench belongs to #109.',
+    build: 'Factory Build remains product-owned and source-faithful; the host only composes its current read model and canonical Actions.',
+    explore: 'Explore is the workbench projection of the same renderer-neutral application used by hosted/browser and structured Agent Surfaces.',
+    system: 'System composes owner-native state without acquiring configuration, Action, credential, provider, Agent or Run authority.',
   }[destination];
 }
 

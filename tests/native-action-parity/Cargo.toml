@@ -1,0 +1,8 @@
+[package]
+name = "oi-native-action-parity"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+epilogos-factory = { git = "https://github.com/EpiLogos/agent-system-design", rev = "f4b9aeaacce8bd2ad21f8d06fba10580d5e051ca", package = "epilogos-factory" }
