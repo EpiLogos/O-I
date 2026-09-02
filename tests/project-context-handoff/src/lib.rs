@@ -1,30 +1,44 @@
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeMap;
+    use std::fs;
+    use std::time::{SystemTime, UNIX_EPOCH};
 
     use aikit_core::context::ContextDescriptor;
     use aikit_core::context_resolution::{
-        ContextResolution, ProjectionIntent, RetrievalPlan, ScopeResolution,
-        CONTEXT_RESOLUTION_VERSION,
+        Availability, ContextResolution, ProjectionIntent, ResolvedResource, RetrievalPlan,
+        ScopeResolution, CONTEXT_RESOLUTION_VERSION,
     };
     use aikit_core::policy::ManagedPolicy;
     use aikit_core::project::{
         ProjectBinding, ProjectBindingLocator, ProjectConstituentRef, ProjectRef,
     };
     use aikit_core::resolve::{resolution_hash, ResolvedView};
+    use aikit_core::resource::{
+        Eligibility, ResourceDescriptor, ResourceKind, ResourceRecord, ResourceRef, ResourceSource,
+        SourceAuthority, SourceRef, SourceRevision, SourceState,
+    };
     use aikit_core::scope::ScopeKind;
     use aikit_core::session_space_application::ContextResolutionEvidence;
+    use aikit_core::{
+        attach_context_activations, ContextActivationEvidenceBasis, ContextActivationMode,
+        ContextActivationReceipt, TargetId,
+    };
     use epilogos_factory::core::run::RunRef;
     use epilogos_factory::project_development::{
         BoundedIntentCondition, BoundedIntentReturn, BoundedIntentReturnState,
         IntentCriterionEvaluation, IntentCriterionState, ProjectDevelopmentError,
         ProjectDevelopmentLedger,
     };
+    use epilogos_factory::project_development_store::{
+        FileProjectDevelopmentStore, ProjectDevelopmentStore,
+    };
 
     #[test]
     fn exact_owner_p3_p4_p5_context_run_return_handoff() -> Result<(), Box<dyn std::error::Error>> {
         // P4 remains AIKit-owned. Build one real ContextResolution through the
-        // public owner contracts, then derive its content-addressed evidence ref.
+        // public owner contracts, then make operative activation evidence part of
+        // its content-addressed evidence basis.
         let context = ContextDescriptor::for_project("/tmp/oi-project-context-witness");
         let policy = ManagedPolicy::default();
         let active = BTreeMap::new();
@@ -51,7 +65,31 @@ mod tests {
                 path: "/tmp/oi-project-context-witness".into(),
             },
         );
-        let resolution = ContextResolution {
+
+        let context_source_ref = ResourceRef::parse("context-source:project:intent")?;
+        let mut source_descriptor = ResourceDescriptor::new(
+            context_source_ref.clone(),
+            ResourceKind::ContextSource,
+            "intent/feature.md",
+            "Human-authored Project Intent source admitted to operative context",
+        );
+        source_descriptor
+            .annotations
+            .insert("source-role".into(), "intent".into());
+        source_descriptor
+            .annotations
+            .insert("provenance".into(), "human-authored".into());
+        source_descriptor.sources.push(ResourceSource {
+            source: SourceRef::parse("source:central:project-intent")?,
+            authority: Some(SourceAuthority::Authored),
+            revision: Some(SourceRevision::parse("rev:1")?),
+            locator: None,
+            state: SourceState::Available,
+        });
+        let mut source_record = ResourceRecord::new(source_descriptor);
+        source_record.eligibility = Eligibility::Eligible;
+
+        let mut resolution = ContextResolution {
             version: CONTEXT_RESOLUTION_VERSION.into(),
             project_binding,
             deterministic,
@@ -66,7 +104,10 @@ mod tests {
             host: None,
             capabilities: vec![],
             actions: vec![],
-            context_sources: vec![],
+            context_sources: vec![ResolvedResource {
+                resource: source_record,
+                availability: Availability::Available,
+            }],
             model_candidates: vec![],
             harness_candidates: vec![],
             execution_offers: vec![],
@@ -75,14 +116,34 @@ mod tests {
                 active_capabilities: vec![],
             },
             retrieval: RetrievalPlan {
-                context_sources: vec![],
+                context_sources: vec![context_source_ref.clone()],
             },
+            context_activations: vec![],
             warnings: vec![],
         };
+
+        let pre_activation_evidence = ContextResolutionEvidence::from_resolution(&resolution)?;
+        let activation = ContextActivationReceipt::new(
+            context_source_ref,
+            TargetId::new("guidance"),
+            ContextActivationMode::Retrieved,
+            ContextActivationEvidenceBasis::Observed,
+            "context-source-provider",
+            "current Project",
+            "aikit-context-resolution",
+            true,
+            true,
+            vec!["evidence:w11-context-retrieval".into()],
+        )?;
+        attach_context_activations(&mut resolution, [activation.clone()])?;
         let context_evidence = ContextResolutionEvidence::from_resolution(&resolution)?;
         let context_resolution_ref = context_evidence.reference.to_string();
+
         assert!(context_resolution_ref.starts_with("context-resolution/"));
         assert_eq!(context_evidence.project().as_str(), "project:witness");
+        assert_ne!(pre_activation_evidence.reference, context_evidence.reference);
+        assert_eq!(context_evidence.basis.context_activations, vec![activation]);
+        assert!(context_evidence.basis.context_activations[0].materially_active);
 
         // P3 remains the native source's bounded determination. Factory records
         // its source ref and the AIKit P4 ref without parsing or replacing either.
@@ -100,8 +161,8 @@ mod tests {
             context_resolution_ref: context_resolution_ref.clone(),
         })?;
 
-        // P5 returns evidence against exactly the P3 source and P4 resolution
-        // which conditioned the Run.
+        // P5 returns evidence against exactly the P3 source and activation-bearing
+        // P4 resolution which conditioned the Run.
         ledger.set_intent_return(BoundedIntentReturn {
             run_ref: run_ref.clone(),
             return_ref: "factory:return/bounded-intent".into(),
@@ -120,8 +181,25 @@ mod tests {
             ledger.intent_return_state(),
             Some(BoundedIntentReturnState::Satisfied)
         );
+
+        // The accepted Factory owner boundary must preserve the P3→P4→P5
+        // relation across process/session restart rather than only in memory.
+        let nonce = SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos();
+        let store_root = std::env::temp_dir().join(format!(
+            "oi-project-context-handoff-{}-{nonce}",
+            std::process::id()
+        ));
+        let first_process = FileProjectDevelopmentStore::new(&store_root);
+        first_process.save(&ledger)?;
+        drop(first_process);
+
+        let reloaded_process = FileProjectDevelopmentStore::new(&store_root);
+        let mut reloaded = reloaded_process
+            .load(&run_ref)?
+            .expect("persisted Run-scoped developmental state must exist");
+        assert_eq!(reloaded, ledger);
         assert_eq!(
-            ledger
+            reloaded
                 .intent_return
                 .as_ref()
                 .expect("accepted return")
@@ -129,10 +207,10 @@ mod tests {
             context_resolution_ref
         );
 
-        // Changing the AIKit P4 identity on return is not a harmless string edit:
-        // Factory rejects the return rather than allowing context drift.
+        // Changing P4 identity after reload remains a real semantic mismatch:
+        // Factory rejects it rather than allowing restart to erase context lineage.
         let changed_context_ref = format!("{context_resolution_ref}-changed");
-        let mismatch = ledger
+        let mismatch = reloaded
             .set_intent_return(BoundedIntentReturn {
                 run_ref,
                 return_ref: "factory:return/context-mismatch".into(),
@@ -143,13 +221,14 @@ mod tests {
                 evidence_refs: vec![],
                 criterion_evaluations: vec![],
             })
-            .expect_err("P5 return must retain the exact P4 identity");
+            .expect_err("P5 return must retain the exact P4 identity after reload");
         assert!(matches!(
             mismatch,
             ProjectDevelopmentError::ContextResolutionMismatch { actual, .. }
                 if actual == changed_context_ref
         ));
 
+        fs::remove_dir_all(store_root)?;
         Ok(())
     }
 }
