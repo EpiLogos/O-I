@@ -5,7 +5,8 @@
   "scripts": {
     "acceptance": "tsx security-live-acceptance-v4-bootstrap.ts",
     "acceptance:a2a": "tsx a2a-phase2-ingress-live-acceptance.ts",
-    "acceptance:watch-notify": "tsx watch-notification-live-acceptance.ts"
+    "acceptance:watch-notify": "tsx watch-notification-live-acceptance.ts",
+    "acceptance:w11-return": "tsx application-return-live-acceptance.ts"
   },
   "dependencies": {
     "spacetimedb": "2.8.1"
