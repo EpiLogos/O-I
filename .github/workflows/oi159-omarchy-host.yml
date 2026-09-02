@@ -17,8 +17,10 @@ jobs:
     steps:
       - uses: actions/checkout@v7.0.1
 
-      - name: Install Rust 1.98
+      - name: Install Rust 1.98 with Clippy
         uses: dtolnay/rust-toolchain@1.98.0
+        with:
+          components: clippy
 
       - name: Prove O:I host planner and fake-HOME ownership laws
         run: |
