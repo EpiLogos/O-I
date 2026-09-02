@@ -8,6 +8,7 @@ on:
       - 'suite/manifest.json'
       - 'scripts/verify-current-main-source.py'
       - 'tests/project-context-handoff/**'
+      - 'tests/native-action-parity/**'
       - '.github/workflows/current-main-source-preflight.yml'
   workflow_dispatch:
 
@@ -55,3 +56,12 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - name: Exercise exact AIKit → Factory context/Run/Return seam
         run: cargo test --manifest-path tests/project-context-handoff/Cargo.toml
+
+  native-action-parity:
+    name: current-source / Factory Action human→Agent→headless
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Consume one exact-main Factory Action across projections
+        run: cargo test --manifest-path tests/native-action-parity/Cargo.toml
