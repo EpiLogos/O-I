@@ -6,4 +6,4 @@ publish = false
 
 [dependencies]
 aikit-core = { git = "https://github.com/EpiLogos/ai-kit", rev = "4e35f499c50b987551ab124b4432757973e823ae", package = "aikit-core" }
-epilogos-factory = { git = "https://github.com/EpiLogos/agent-system-design", rev = "71287c179e7686cb37cb25267958f0c390a1ecb7", package = "epilogos-factory" }
+epilogos-factory = { git = "https://github.com/EpiLogos/agent-system-design", rev = "f4b9aeaacce8bd2ad21f8d06fba10580d5e051ca", package = "epilogos-factory" }
