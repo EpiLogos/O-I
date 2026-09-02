@@ -1,0 +1,9 @@
+[package]
+name = "oi-project-context-handoff"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+aikit-core = { git = "https://github.com/EpiLogos/ai-kit", rev = "4e35f499c50b987551ab124b4432757973e823ae", package = "aikit-core" }
+epilogos-factory = { git = "https://github.com/EpiLogos/agent-system-design", rev = "71287c179e7686cb37cb25267958f0c390a1ecb7", package = "epilogos-factory" }
