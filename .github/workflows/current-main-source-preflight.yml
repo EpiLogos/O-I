@@ -7,6 +7,7 @@ on:
       - 'suite/mainline.json'
       - 'suite/manifest.json'
       - 'scripts/verify-current-main-source.py'
+      - 'tests/project-context-handoff/**'
       - '.github/workflows/current-main-source-preflight.yml'
   workflow_dispatch:
 
@@ -45,3 +46,12 @@ jobs:
           name: current-main-${{ matrix.product }}
           path: ${{ runner.temp }}/current-main-${{ matrix.product }}.json
           if-no-files-found: warn
+
+  project-context-handoff:
+    name: current-source / Project Context P3→P4→P5
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Exercise exact AIKit → Factory context/Run/Return seam
+        run: cargo test --manifest-path tests/project-context-handoff/Cargo.toml
