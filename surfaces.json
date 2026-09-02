@@ -118,7 +118,7 @@
       "public_name": "Software Factory",
       "function": "developmental Project, Run, Candidate, evidence and authorised Factory Action semantics",
       "repository": "https://github.com/EpiLogos/agent-system-design",
-      "docs_ref": "71287c179e7686cb37cb25267958f0c390a1ecb7",
+      "docs_ref": "f4b9aeaacce8bd2ad21f8d06fba10580d5e051ca",
       "docs_path": "factory/README.md",
       "skill_paths": [],
       "native": {
@@ -131,8 +131,8 @@
       },
       "install": {
         "kind": "oi-managed-component",
-        "ref": "71287c179e7686cb37cb25267958f0c390a1ecb7",
-        "revision": "71287c179e7686cb37cb25267958f0c390a1ecb7",
+        "ref": "f4b9aeaacce8bd2ad21f8d06fba10580d5e051ca",
+        "revision": "f4b9aeaacce8bd2ad21f8d06fba10580d5e051ca",
         "note": "Current #97 source pin for developer/source composition. Immutable released artifacts remain versioned by suite/manifest.json; the live repository retains its historical agent-system-design name."
       },
       "verification": {
@@ -144,9 +144,9 @@
           "evidence": "oi.managed-artifact-evidence/v1"
         },
         "outstanding_requirements": [],
-        "note": "Current main includes Git developmental Worlds and the bounded P3 Intent → Run → evidence-bearing P5 return contract, preserving the opaque AIKit ContextResolution ref and native source identity."
+        "note": "Current main includes Git developmental Worlds, the bounded P3 Intent → Run → evidence-bearing P5 return contract, and the canonical request-evidence Action projected through desktop-human, situated-Agent and real headless callers with preserved caller lineage and one persistent native handler."
       },
-      "compatibility": "Factory owns developmental Project/Run/Candidate/Evidence/Recognition semantics; it consumes Central source refs and AIKit ContextResolution refs opaquely and refuses a returned P5 condition whose P3/P4 basis drifts."
+      "compatibility": "Factory owns developmental Project/Run/Candidate/Evidence/Recognition and Action semantics; it consumes Central source refs and AIKit ContextResolution refs opaquely, refuses P3/P4 return drift, and now retains projection/caller attribution without allowing any projection to fork Action identity or business truth."
     },
     {
       "id": "workcell",
