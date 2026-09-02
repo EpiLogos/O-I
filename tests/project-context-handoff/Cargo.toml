@@ -5,5 +5,5 @@ edition = "2021"
 publish = false
 
 [dependencies]
-aikit-core = { git = "https://github.com/EpiLogos/ai-kit", rev = "a0f70475e5c8f3d7a660a091685ac14a9afde637", package = "aikit-core" }
+aikit-core = { git = "https://github.com/EpiLogos/ai-kit", rev = "0b31cdf6592e06a3e9f4faa4820def7d9fd575ff", package = "aikit-core" }
 epilogos-factory = { git = "https://github.com/EpiLogos/agent-system-design", rev = "50652ae5a02f86c11bd6bdbbb76b5180e79aa1f5", package = "epilogos-factory" }
