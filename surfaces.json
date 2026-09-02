@@ -7,7 +7,7 @@
       "public_name": "Central",
       "function": "persistent personal ground",
       "repository": "https://github.com/EpiLogos/Central",
-      "docs_ref": "77625f40081a3e38503d732f44c607a94888d9d6",
+      "docs_ref": "2ed86ab1c8ecd7e7526c7d4f8f38f2083c47ef98",
       "docs_path": "README.md",
       "skill_paths": [
         "skills/control-maintenance/SKILL.md",
@@ -25,10 +25,10 @@
       },
       "install": {
         "kind": "oi-managed-binary",
-        "ref": "77625f40081a3e38503d732f44c607a94888d9d6",
-        "revision": "77625f40081a3e38503d732f44c607a94888d9d6",
+        "ref": "2ed86ab1c8ecd7e7526c7d4f8f38f2083c47ef98",
+        "revision": "2ed86ab1c8ecd7e7526c7d4f8f38f2083c47ef98",
         "path": "ctrl",
-        "note": "Current #97 source pin for developer/source installation. The immutable prelocal release artifact remains described separately by suite/manifest.json; Central remains owner of Control, Work, ProjectCentral, source authority and .central semantics."
+        "note": "Current #97 source pin for developer/source installation. The immutable prelocal release artifact remains described separately by suite/manifest.json; Central remains owner of Control, Work, ProjectCentral, source authority, AgentProfile source relations and .central semantics."
       },
       "verification": {
         "status": "supported",
@@ -39,9 +39,9 @@
           "evidence": "native-json-stdout"
         },
         "outstanding_requirements": [],
-        "note": "Portable Central acceptance now includes the sixfold Project Context Protocol, ProjectCentral authored Ground/governance, SourceHistory recovery and current-machine relations. Physical owner-world observations remain separate evidence."
+        "note": "Portable Central acceptance includes the sixfold Project Context Protocol, ProjectCentral authored Ground/governance, SourceHistory recovery, NOW/DAY, current-machine relations and the durable personal/Project AgentProfile source contract. Physical owner-world observations remain separate evidence."
       },
-      "compatibility": "Central current main owns Project source identity, standing and provenance, including the Project Context Protocol which delegates operational precedence/resolution to AIKit rather than defining it in Central."
+      "compatibility": "Central current main owns Project source identity, standing and provenance, including Project Context and AgentProfile source relations; operational precedence/resolution remains AIKit-owned rather than defined in Central."
     },
     {
       "id": "actuation",
@@ -83,7 +83,7 @@
       "public_name": "AIKit",
       "function": "context, capability, model, credential, SessionSpace and provider-process resolution",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "docs_ref": "4e35f499c50b987551ab124b4432757973e823ae",
+      "docs_ref": "412e38f68867cdfd6019cea92469e76dbe5797c1",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -96,8 +96,8 @@
       },
       "install": {
         "kind": "oi-managed-binary",
-        "ref": "4e35f499c50b987551ab124b4432757973e823ae",
-        "revision": "4e35f499c50b987551ab124b4432757973e823ae",
+        "ref": "412e38f68867cdfd6019cea92469e76dbe5797c1",
+        "revision": "412e38f68867cdfd6019cea92469e76dbe5797c1",
         "note": "Current #97 source pin for developer/source composition. Immutable released artifacts remain versioned by suite/manifest.json."
       },
       "verification": {
@@ -109,16 +109,16 @@
           "evidence": "process-exit-and-output"
         },
         "outstanding_requirements": [],
-        "note": "Current accepted AIKit main includes ContextResolutionEvidence/ContextResolutionRef, SessionSpace application state, Herdr/Hyprland provider composition, public working-environment conformance, Rust 1.98/credential convergence, native VersionedWorld Git capability and ProjectWorld VersionedWorld attachment."
+        "note": "Current accepted AIKit main includes ContextResolutionEvidence/ContextResolutionRef with operative ContextSource activation receipts in its content-addressed basis, SessionSpace application state, Herdr/Hyprland provider composition, public working-environment conformance, Rust 1.98/credential convergence, native VersionedWorld Git capability and ProjectWorld VersionedWorld attachment."
       },
-      "compatibility": "AIKit owns operational P4 context resolution and its content-addressed evidence ref, plus SessionSpace/provider/composition state; repository/worktree/provider identities remain subordinate to canonical Project and AgentSession identity."
+      "compatibility": "AIKit owns operational P4 context resolution, target-native activation evidence and its content-addressed evidence ref, plus SessionSpace/provider/composition state; source standing remains native-owned and repository/worktree/provider identities remain subordinate to canonical Project and AgentSession identity."
     },
     {
       "id": "software-factory",
       "public_name": "Software Factory",
       "function": "developmental Project, Run, Candidate, evidence and authorised Factory Action semantics",
       "repository": "https://github.com/EpiLogos/agent-system-design",
-      "docs_ref": "f4b9aeaacce8bd2ad21f8d06fba10580d5e051ca",
+      "docs_ref": "846e3043bffb923bff9d9a1166dece6abd1df16a",
       "docs_path": "factory/README.md",
       "skill_paths": [],
       "native": {
@@ -131,8 +131,8 @@
       },
       "install": {
         "kind": "oi-managed-component",
-        "ref": "f4b9aeaacce8bd2ad21f8d06fba10580d5e051ca",
-        "revision": "f4b9aeaacce8bd2ad21f8d06fba10580d5e051ca",
+        "ref": "846e3043bffb923bff9d9a1166dece6abd1df16a",
+        "revision": "846e3043bffb923bff9d9a1166dece6abd1df16a",
         "note": "Current #97 source pin for developer/source composition. Immutable released artifacts remain versioned by suite/manifest.json; the live repository retains its historical agent-system-design name."
       },
       "verification": {
@@ -144,9 +144,9 @@
           "evidence": "oi.managed-artifact-evidence/v1"
         },
         "outstanding_requirements": [],
-        "note": "Current main includes Git developmental Worlds, the bounded P3 Intent → Run → evidence-bearing P5 return contract, and the canonical request-evidence Action projected through desktop-human, situated-Agent and real headless callers with preserved caller lineage and one persistent native handler."
+        "note": "Current main includes Git developmental Worlds, the bounded P3 Intent → Run → evidence-bearing P5 return contract, owner-native Run-scoped ProjectDevelopment persistence/reload, and the canonical request-evidence Action projected through desktop-human, situated-Agent and real headless callers with preserved caller lineage and one persistent native handler."
       },
-      "compatibility": "Factory owns developmental Project/Run/Candidate/Evidence/Recognition and Action semantics; it consumes Central source refs and AIKit ContextResolution refs opaquely, refuses P3/P4 return drift, and now retains projection/caller attribution without allowing any projection to fork Action identity or business truth."
+      "compatibility": "Factory owns developmental Project/Run/Candidate/Evidence/Recognition and Action semantics; it consumes Central source refs and AIKit ContextResolution refs opaquely, preserves their P3→P4→P5 relation across store reload, refuses return drift, and retains projection/caller attribution without allowing any projection to fork Action identity or business truth."
     },
     {
       "id": "workcell",
