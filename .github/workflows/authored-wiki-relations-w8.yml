@@ -91,7 +91,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Validate exact-main reroot, authored worlds and owner pins
+      - name: Validate exact-main reroot ancestry, authored worlds and owner pins
         shell: python
         run: |
           import json
@@ -100,9 +100,12 @@ jobs:
           manifest = json.loads(Path('suite/authored-wiki-relations-w8.json').read_text())
           assert manifest['schema'] == 'oi.authored-wiki-relations-w8/v1'
           assert manifest['physical_evidence_claimed'] is False
-          assert manifest['consumer_base_main'] == '${{ env.OI_CONSUMER_BASE_MAIN }}'
-          parent = subprocess.check_output(['git', 'rev-parse', 'HEAD^'], text=True).strip()
-          assert parent == '${{ env.OI_CONSUMER_BASE_MAIN }}', (parent, '${{ env.OI_CONSUMER_BASE_MAIN }}')
+          recorded_base = '${{ env.OI_CONSUMER_BASE_MAIN }}'
+          assert manifest['consumer_base_main'] == recorded_base
+          # W8's exact-main reroot remains provenance after later accepted work is
+          # layered above it. Requiring the historical reroot to remain HEAD^ would
+          # freeze every downstream consumer rather than prove ancestry integrity.
+          subprocess.run(['git', 'merge-base', '--is-ancestor', recorded_base, 'HEAD'], check=True)
           assert [(world['id'], world['name']) for world in manifest['worlds']] == [
               ('A', 'ordinary-markdown-wiki'),
               ('B', 'flow'),

@@ -130,12 +130,15 @@ test('keyboard and mouse command activation converge on the same canonical Actio
   assert.equal(command.includes('authorityRef:'), false);
 });
 
-test('P1 leaves P2-P6 product bodies explicit rather than implementing them in the host', () => {
+test('generic P1 host remains bounded while recovered System and Explore application bodies consume owner-native state', () => {
   assert.match(shell, /Project\/files\/Ground\/Knowledge navigation belongs to #106/);
   assert.match(shell, /#107 owns the canonical conversation\/Cradle body/);
   assert.match(shell, /#108 consumes the source-faithful Factory Build body/);
-  assert.match(shell, /six-product configuration workbench/);
-  assert.match(shell, /application body belong to #110/);
+  assert.match(shell, /import \{ SystemWorkbench \} from '.\/system-workbench'/);
+  assert.match(shell, /import \{ ExploreWorkbenchSurface \} from '.\/explore-workbench'/);
+  assert.match(shell, /O:I six-product composition workbench; native state remains owner-owned/);
+  assert.match(shell, /System composes owner-native state without acquiring configuration, Action, credential, provider, Agent or Run authority/);
+  assert.match(shell, /Explore is the workbench projection of the same renderer-neutral application used by hosted\/browser and structured Agent Surfaces/);
 });
 
 test('generic C0 does not absorb corrected-C Epi domain semantics', () => {
