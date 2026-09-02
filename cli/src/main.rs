@@ -9,8 +9,9 @@ mod composition {
     include!("current_world_command.rs");
     include!("trust_closure.rs");
     include!("trust_closure_guard.rs");
-    include!("frontdoor.rs");
     include!("existing_world.rs");
+    include!("omarchy_host.rs");
+    include!("frontdoor.rs");
 }
 
 fn main() -> std::process::ExitCode {

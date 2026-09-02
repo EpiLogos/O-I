@@ -18,7 +18,15 @@ pub fn cli_main() -> ExitCode {
                 println!("  oi dev acceptance [--json]     prove the local software world is the current clean mainline world before physical provider tests");
                 println!();
                 println!("Existing-world adoption:");
-                println!("  oi adopt PATH [--json]   inspect and preserve a heterogeneous existing world; return native-owner handoffs without mutation");
+                println!("  oi adopt PATH [--json]         inspect and preserve a heterogeneous existing world; return native-owner handoffs without mutation");
+                println!();
+                println!("Omarchy Reference World host:");
+                println!("  oi host omarchy plan [--home PATH] [--json]");
+                println!("                                inspect the source-pinned native host relation without mutation");
+                println!("  oi host omarchy realise --home PATH [--accept-managed-update] [--json]");
+                println!("                                materialise only O:I-owned plugin payloads; native enable/reload remains explicit");
+                println!("  oi host omarchy verify [--home PATH] [--json]");
+                println!("                                verify managed payload bytes without fabricating Omarchy/Hyprland uptake");
                 ExitCode::SUCCESS
             }
             Err(message) => {
@@ -51,6 +59,9 @@ pub fn cli_main() -> ExitCode {
         return code;
     }
     if let Some(code) = existing_world_main() {
+        return code;
+    }
+    if let Some(code) = omarchy_host_main() {
         return code;
     }
     if let Some(code) = suite_v2_main() {

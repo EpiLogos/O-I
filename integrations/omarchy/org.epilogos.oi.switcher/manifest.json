@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "org.epilogos.oi.switcher",
+  "name": "O:I switcher",
+  "version": "0.1.0-prelocal",
+  "author": "EpiLogos",
+  "description": "Focused O:I host switcher for canonical World and Surface entry points",
+  "kinds": [
+    "menu"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "menu": "Menu.qml"
+  }
+}
