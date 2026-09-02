@@ -9,6 +9,7 @@ on:
       - 'scripts/verify-current-main-source.py'
       - 'tests/project-context-handoff/**'
       - 'tests/native-action-parity/**'
+      - 'tests/journey-routine-handoff/**'
       - '.github/workflows/current-main-source-preflight.yml'
   workflow_dispatch:
 
@@ -65,3 +66,12 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - name: Consume one exact-main Factory Action across projections
         run: cargo test --manifest-path tests/native-action-parity/Cargo.toml
+
+  journey-routine-handoff:
+    name: current-source / AgentProfile→Method proof→Routine→Journey
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Exercise exact Central → AIKit → Factory W12 seam
+        run: cargo test --manifest-path tests/journey-routine-handoff/Cargo.toml

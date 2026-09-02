@@ -5,4 +5,4 @@ edition = "2021"
 publish = false
 
 [dependencies]
-epilogos-factory = { git = "https://github.com/EpiLogos/agent-system-design", rev = "f4b9aeaacce8bd2ad21f8d06fba10580d5e051ca", package = "epilogos-factory" }
+epilogos-factory = { git = "https://github.com/EpiLogos/agent-system-design", rev = "50652ae5a02f86c11bd6bdbbb76b5180e79aa1f5", package = "epilogos-factory" }
