@@ -35,9 +35,9 @@
     {
       "id": "software-factory",
       "repository": "https://github.com/EpiLogos/agent-system-design",
-      "revision": "71287c179e7686cb37cb25267958f0c390a1ecb7",
+      "revision": "f4b9aeaacce8bd2ad21f8d06fba10580d5e051ca",
       "state": "accepted-main-with-active-research-exceptions",
-      "note": "Current main includes Git developmental Worlds and the bounded Intent condition/return contract: Factory retains the native Intent source ref and AIKit ContextResolution ref across Run → evidence-bearing Return and refuses P4 basis drift. Moving QL-dependent research remains separately owned."
+      "note": "Current main includes Git developmental Worlds, the bounded Intent condition/return contract, and the owner-native Action projection contract. Factory retains the native Intent source ref and AIKit ContextResolution ref across Run → evidence-bearing Return; its canonical request-evidence Action now preserves caller lineage across desktop-human, situated-Agent and real headless projections while all three return through the same persistent Factory handler. Moving QL-dependent research remains separately owned."
     },
     {
       "id": "workcell",
