@@ -118,6 +118,12 @@ const entry = {
   revision: SOURCE_REVISION,
   visibility: 'public',
   sources: [{ system: 'central', ref: WORLD, revision: SOURCE_REVISION }],
+  provenance: [{
+    kind: 'project-world',
+    ref: WORLD,
+    source_system: 'central',
+    revision: SOURCE_REVISION,
+  }],
 };
 
 const publisherParticipant = createParticipant({
