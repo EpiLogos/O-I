@@ -3,7 +3,6 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const {
-  DEFAULT_RELEASE_TAG,
   NATIVE_VERSION,
   archiveBinaryPath,
   checksumAssetUrl,
@@ -13,6 +12,7 @@ const {
   parseChecksum,
   releaseAssetUrl,
   resolveTarget,
+  selectedReleaseTag,
   sha256File,
 } = require('../lib/release');
 
@@ -23,7 +23,7 @@ async function main() {
   }
 
   const target = resolveTarget();
-  const tag = process.env.OI_NPM_RELEASE_TAG || DEFAULT_RELEASE_TAG;
+  const tag = selectedReleaseTag();
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'oi-npm-'));
   const archive = path.join(temp, 'oi.tar.gz');
   const vendor = path.resolve(__dirname, '..', 'vendor');
@@ -31,7 +31,7 @@ async function main() {
   const stagedBinary = path.join(vendor, '.oi.installing');
 
   try {
-    console.log(`@epi-logos/oi: installing native O:I ${NATIVE_VERSION} for ${target} from ${tag}`);
+    console.log(`@epi-logos/oi: installing native O:I ${NATIVE_VERSION} for ${target} from explicitly selected release ${tag}`);
     const [checksumText] = await Promise.all([
       downloadText(checksumAssetUrl(tag, target)),
       downloadToFile(releaseAssetUrl(tag, target), archive),
