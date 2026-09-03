@@ -1,5 +1,6 @@
 mod flow;
 mod living;
+mod profile;
 
 use oi_desktop_core::{
     host_native_contribution, load_context_resolution, ActionAuthorityStore,
@@ -793,6 +794,10 @@ fn main() {
             agent_surface_send,
             agent_surface_cancel,
             agent_surface_close,
+            profile::agent_profile_list,
+            profile::agent_profile_read,
+            profile::agent_profile_save,
+            profile::agent_profile_remove,
             flow::flow_list,
             flow::flow_create,
             flow::flow_open,

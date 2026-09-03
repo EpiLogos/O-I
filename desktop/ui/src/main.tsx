@@ -7,6 +7,7 @@ import type { CurrentWorldReading } from './current-world';
 import { RuntimeObservationSurface } from './runtime-observation';
 import { NativeSearchCommand } from './native-command';
 import { ExploreWorkbenchSurface } from './explore-workbench';
+import { PersonalProfileSurface } from './personal-profile';
 import { SystemWorkbench } from './system-workbench';
 import {
   HostSurfaceDescriptor,
@@ -203,7 +204,7 @@ function App() {
       await invoke('open_destination', { destination });
       setSnapshot(await invoke<Snapshot>('shell_snapshot'));
       if (destination === 'build' || destination === 'system') await refreshFactoryBuild();
-      if (destination === 'system') await refreshAikitContext();
+      if (destination === 'personal' || destination === 'system') await refreshAikitContext();
     } catch {
       setSnapshot((current) => ({ ...current, destination }));
     }
@@ -449,6 +450,16 @@ function RootCanvasSurface({
     );
   }
 
+  if (destination === 'personal') {
+    return (
+      <>
+        <SurfaceHeader destination={destination} binding={binding} />
+        <PersonalProfileSurface aikitContext={aikitContext} />
+        <ContributionSurface contributions={visibleContributions} />
+      </>
+    );
+  }
+
   if (destination === 'build') {
     return (
       <>
@@ -599,7 +610,7 @@ function titleFor(destination: Destination) {
 function copyFor(destination: Destination) {
   return {
     home: 'One native workspace over AIKit SessionSpace, AgentSession conversation and project Knowledge.',
-    personal: 'P1 provides a host Surface only. Central/Actuation bodies and the Project/Ground editor field belong to #106/#107.',
+    personal: 'Central-authored AgentProfiles and AIKit effective resolution remain distinct while appearing in one Personal application field.',
     build: 'Factory Build remains product-owned and source-faithful; the host only composes its current read model and canonical Actions.',
     explore: 'Explore is the workbench projection of the same renderer-neutral application used by hosted/browser and structured Agent Surfaces.',
     system: 'System composes owner-native state without acquiring configuration, Action, credential, provider, Agent or Run authority.',
