@@ -150,8 +150,8 @@ export function PersonalProfileSurface({ aikitContext }: Props) {
     await refresh();
   }
 
-  const praxis = useMemo(() => {
-    if (!selected) return [] as Array<[string, string[]]>;
+  const praxis = useMemo<Array<[string, string[]]>>(() => {
+    if (!selected) return [];
     return [
       ['Skills', selected.profile.skill_refs ?? []],
       ['SkillSets', selected.profile.skill_set_refs ?? []],
