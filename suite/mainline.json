@@ -22,9 +22,9 @@
     {
       "id": "ai-kit",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "revision": "81ab25ce319453d3549a4e37280ba1ddd38613dd",
+      "revision": "00afe1b91f00f3881cac56459fa1cff8e7ba7183",
       "state": "accepted-main",
-      "note": "Current AIKit main includes SessionSpace, content-addressed ContextResolution evidence, Herdr/Hyprland reference composition with deterministic Herdr automation-provider coverage, VersionedWorld/ProjectWorld, Method, proof-before-automation Routine, operative Resolve/search, canonical QL-shape use, pre-local build-only standing and native installed doctor verification for #172."
+      "note": "Current AIKit main includes SessionSpace, content-addressed ContextResolution evidence, Herdr/Hyprland reference composition with deterministic Herdr automation-provider coverage, VersionedWorld/ProjectWorld, Method, proof-before-automation Routine, operative Resolve/search, canonical QL-shape use, Central-owned NOW/DAY/Flow temporal grounding through the public Action seam, pre-local build-only standing and native installed doctor verification for #172."
     },
     {
       "id": "software-factory",
