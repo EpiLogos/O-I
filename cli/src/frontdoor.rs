@@ -5,6 +5,15 @@ pub fn cli_main() -> ExitCode {
         return match print_suite_v2_help() {
             Ok(()) => {
                 println!();
+                println!("Native product command field:");
+                println!("  oi central ...                  delegate to Central / ctrl");
+                println!("  oi actuation ...                delegate to Actuation");
+                println!("  oi aikit ...                    delegate to AIKit");
+                println!("  oi factory ...                  delegate to Software Factory");
+                println!("  oi workcell ...                 delegate to Workcell");
+                println!("  oi ql ...                       delegate to Quaternal Logic");
+                println!("  compatibility: oi ctrl ..., oi kit ...");
+                println!();
                 println!("Current world:");
                 println!("  oi current-world [--json]      disclose the situated six-product composition and current machine/Workcell relation");
                 println!();
@@ -29,6 +38,15 @@ pub fn cli_main() -> ExitCode {
                 println!("                                verify managed payload bytes without fabricating Omarchy/Hyprland uptake");
                 ExitCode::SUCCESS
             }
+            Err(message) => {
+                eprintln!("oi: {message}");
+                ExitCode::from(2)
+            }
+        };
+    }
+    if let Some(result) = native_product_dispatch_route(&args) {
+        return match result {
+            Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
             Err(message) => {
                 eprintln!("oi: {message}");
                 ExitCode::from(2)
