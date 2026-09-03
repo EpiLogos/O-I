@@ -186,6 +186,13 @@ fn command_install_suite(args: &[OsString]) -> Result<i32, String> {
     fs::create_dir_all(&managed_root)
         .map_err(|error| format!("cannot create {}: {error}", managed_root.display()))?;
 
+    let recognition_before = inspect_existing_world(&personal_ground)?;
+    println!(
+        "World recognition before setup: {} native systems; {} extension requests",
+        recognition_before.recognition.observations.len(),
+        recognition_before.recognition.extension_requests.len()
+    );
+
     // Central has already been installed and registered through its native contract.
     if !composition.modules.contains_key("central") {
         return Err("Central is not registered after bootstrap; refusing partial suite installation".to_owned());
@@ -212,9 +219,33 @@ fn command_install_suite(args: &[OsString]) -> Result<i32, String> {
         println!("{}: {} @ {}", surface.public_name, checkout.display(), surface.docs_ref);
     }
     save_composition(&composition)?;
+
+    let recognition_after = inspect_existing_world(&personal_ground)?;
+    let receipt_dir = managed_root.join("receipts");
+    fs::create_dir_all(&receipt_dir)
+        .map_err(|error| format!("cannot create {}: {error}", receipt_dir.display()))?;
+    let receipt_path = receipt_dir.join("world-recognition-latest.json");
+    let receipt = serde_json::json!({
+        "schema": "oi.setup-world-recognition-receipt/v1",
+        "target": personal_ground.display().to_string(),
+        "before": recognition_before.recognition,
+        "after": recognition_after.recognition
+    });
+    fs::write(
+        &receipt_path,
+        serde_json::to_vec_pretty(&receipt).map_err(|error| error.to_string())?,
+    )
+    .map_err(|error| format!("cannot write {}: {error}", receipt_path.display()))?;
+
     println!("First-suite installation complete.");
     println!("Personal ground: {}", personal_ground.display());
     println!("Managed source/native material: {}", managed_root.display());
+    println!(
+        "World recognition after setup: {} native systems; {} extension requests",
+        recognition_after.recognition.observations.len(),
+        recognition_after.recognition.extension_requests.len()
+    );
+    println!("Recognition receipt: {}", receipt_path.display());
     println!("Control/ and Work/ were not modified by O:I installation.");
     println!("Next: oi status --json");
     Ok(0)
