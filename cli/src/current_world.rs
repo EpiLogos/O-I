@@ -27,6 +27,10 @@ pub struct CurrentWorldPosition {
     pub product_id: String,
     pub public_name: String,
     pub native_owner: String,
+    pub accepted_revision: String,
+    pub canonical_namespace: String,
+    #[serde(default)]
+    pub compatibility_aliases: Vec<String>,
     pub state: NativeSurfaceState,
     pub present: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -166,6 +170,9 @@ fn position_from_surface(
             product_id: product_id.to_owned(),
             public_name: surface.public_name.clone(),
             native_owner: surface.repository.clone(),
+            accepted_revision: surface.accepted_revision.clone(),
+            canonical_namespace: surface.canonical_namespace.clone(),
+            compatibility_aliases: surface.compatibility_aliases.clone(),
             state: surface.state,
             present: surface_present(surface),
             native_location: surface.resolved.clone(),
@@ -176,6 +183,9 @@ fn position_from_surface(
             product_id: product_id.to_owned(),
             public_name: public_name.to_owned(),
             native_owner: String::new(),
+            accepted_revision: String::new(),
+            canonical_namespace: String::new(),
+            compatibility_aliases: Vec::new(),
             state: NativeSurfaceState::Missing,
             present: false,
             native_location: None,
@@ -271,7 +281,13 @@ mod tests {
             public_name: id.to_owned(),
             function: String::new(),
             repository: format!("https://github.com/EpiLogos/{id}"),
+            accepted_revision: format!("{id}-revision"),
             native_entry: id.to_owned(),
+            canonical_namespace: id.to_owned(),
+            compatibility_aliases: Vec::new(),
+            structured_output: true,
+            structured_output_format: "json".to_owned(),
+            verification_args: vec!["verify".to_owned(), "--json".to_owned()],
             state,
             resolved: Some(format!("/native/{id}")),
             version: Some("test".to_owned()),
@@ -337,5 +353,18 @@ mod tests {
                 (5, "quaternal-logic"),
             ]
         );
+    }
+
+    #[test]
+    fn product_positions_preserve_command_and_owner_revision() {
+        let disclosure = SuiteCompositionDisclosure {
+            schema: "oi.desktop-composition-disclosure/v1".to_owned(),
+            personal_ground: None,
+            surfaces: vec![surface("central", NativeSurfaceState::Installed)],
+            warnings: Vec::new(),
+        };
+        let reading = CurrentWorldReading::from_disclosure(&disclosure);
+        assert_eq!(reading.positions[0].canonical_namespace, "central");
+        assert_eq!(reading.positions[0].accepted_revision, "central-revision");
     }
 }
