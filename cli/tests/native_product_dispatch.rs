@@ -53,7 +53,10 @@ mod unix {
         assert!(canonical.status.success());
         assert!(compatibility.status.success());
         assert_eq!(canonical.stdout, compatibility.stdout);
-        assert_eq!(String::from_utf8_lossy(&canonical.stdout), "same\nreceipt\n");
+        assert_eq!(
+            String::from_utf8_lossy(&canonical.stdout),
+            "same\nreceipt\n"
+        );
     }
 
     #[test]
