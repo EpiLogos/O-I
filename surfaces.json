@@ -234,7 +234,7 @@
       "public_name": "Quaternal Logic",
       "function": "deterministic QL kernel, MEF registry, Context Frame/Vāk registry and service boundary",
       "repository": "https://github.com/EpiLogos/QL-MEF",
-      "docs_ref": "da19d60e3e81473d354e71d5ec13a2582cff95e5",
+      "docs_ref": "db2b15987c9d99b2a0008cfe75c95f9df1c44715",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -255,8 +255,8 @@
       },
       "install": {
         "kind": "oi-managed-component",
-        "ref": "da19d60e3e81473d354e71d5ec13a2582cff95e5",
-        "revision": "da19d60e3e81473d354e71d5ec13a2582cff95e5",
+        "ref": "db2b15987c9d99b2a0008cfe75c95f9df1c44715",
+        "revision": "db2b15987c9d99b2a0008cfe75c95f9df1c44715",
         "note": "Current accepted owner main for #172/#97 source composition; immutable release artifacts remain separately versioned."
       },
       "verification": {

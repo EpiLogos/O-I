@@ -49,7 +49,7 @@
     {
       "id": "quaternal-logic",
       "repository": "https://github.com/EpiLogos/QL-MEF",
-      "revision": "da19d60e3e81473d354e71d5ec13a2582cff95e5",
+      "revision": "db2b15987c9d99b2a0008cfe75c95f9df1c44715",
       "state": "accepted-main-parallel-native-owner",
       "note": "Current QL-MEF main publishes the native `ql` CLI over accepted kernel/MEF/Context-Frame/Vāk registry surfaces. O:I composes that command relation without turning the separately owned moving QL/Epi research programme into a #97 dependency gate."
     }
