@@ -185,7 +185,9 @@ where
             if let Some(alias) = surface.native.alias {
                 if !alias.is_empty()
                     && alias != namespace
-                    && !compatibility_aliases.iter().any(|candidate| candidate == &alias)
+                    && !compatibility_aliases
+                        .iter()
+                        .any(|candidate| candidate == &alias)
                 {
                     compatibility_aliases.push(alias);
                 }
