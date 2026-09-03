@@ -17,8 +17,15 @@ pub fn cli_main() -> ExitCode {
                 println!("  oi dev install [PRODUCT]       install/register native commands only from clean exact current-main source");
                 println!("  oi dev acceptance [--json]     prove the local software world is the current clean mainline world before physical provider tests");
                 println!();
-                println!("Existing-world adoption:");
-                println!("  oi adopt PATH [--json]         inspect and preserve a heterogeneous existing world; return native-owner handoffs without mutation");
+                println!("Existing-world recognition / adoption:");
+                println!("  oi adopt PATH [--json]         inspect the existing World through the shared recognition engine and return owner handoffs without mutation");
+                println!("  oi recognition inspect PATH [--json]");
+                println!("                                run built-in + registered World recognition contributions");
+                println!("  oi recognition list [--json]  disclose accumulated local/embedded recognition adapters");
+                println!("  oi recognition register PACKAGE.json");
+                println!("                                verify and register an oi.world-recognition/v1 package contribution");
+                println!("  oi recognition unregister CONTRIBUTION_REF");
+                println!("                                remove a locally registered recognition contribution");
                 println!();
                 println!("Omarchy Reference World host:");
                 println!("  oi host omarchy plan [--home PATH] [--json]");
