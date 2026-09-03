@@ -55,16 +55,22 @@ Use Workcell for material execution demands, workspaces, providers, project runt
 
 Use Quaternal Logic for QL/MEF formal operations, refraction, operators and related structural research machinery.
 
-## Aliases
+## Product commands
 
-Only use aliases backed by verified native CLIs:
+All six native product centres have accepted commands composed into the `oi` namespace. Use the canonical namespace or, where available, the compatibility alias:
 
 ```text
-oi ctrl ...  ->  ctrl ...
-oi kit ...   ->  aikit ...
+oi central ...      -> ctrl ...        (alias: oi ctrl)
+oi actuation ...    -> actuation ...
+oi aikit ...        -> aikit ...       (alias: oi kit)
+oi factory ...      -> factory ...
+oi workcell ...     -> workcell ...    (alias: oi workcell)
+oi ql ...           -> ql ...
 ```
 
-Alias dispatch is transparent. Native arguments, input/output, signal behavior, and exit status remain authoritative.
+`oi products [--json]` discloses the complete six-product command field.
+
+Dispatch is transparent. On Unix the implementation uses process replacement, so native arguments, input/output, signal behavior and exit status remain authoritative.
 
 ## Operative praxis
 

@@ -652,9 +652,9 @@ The live product field now uses **Actuation** at position `1`.
 
 Actuation is the canonical developmental/reference home for first-class Agent, Agency, Actuation, agentic composition, model/harness research, and epistemic cultivation. An actual agent can still inhabit the Central world to which it is bound. AIKit resolves the operative body for that agent. Workcell provides material conditions. Factory uses Actuation where developmental work requires first-class agentic composition.
 
-Some earlier O:I composition descriptors still refer to the prior Agent Runtime experiment surface in `agent-system-design`. That runtime work is source and migration history for Actuation. Suite convergence should update the executable composition descriptor only when the current Actuation integration surface is ready to replace the prior registration contract.
+The prior Agent Runtime experiment surface in `agent-system-design` has been replaced. The current `surfaces.json` registers Actuation as its own centre with its own native `actuation` executable owned by `EpiLogos/Actuation`, and separately registers Software Factory with its own native `factory` executable owned by `EpiLogos/agent-system-design`. All six product commands are declared `"command_standing": "accepted-main"` and composed into the `oi` namespace. The executable composition descriptor now reflects the canonical product-field relation.
 
-This document fixes the **product-field relation** now. Installation metadata can follow the tested native product state during the O:I Suite Snapshot and local-acceptance convergence.
+This document fixes the **product-field relation** now. Installation metadata follows the tested native product state through the current `surfaces.json` and `suite/mainline.json`.
 
 ---
 
