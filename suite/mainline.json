@@ -1,6 +1,6 @@
 {
   "schema": "oi.mainline-snapshot/v1",
-  "observed_at": "2026-09-02",
+  "observed_at": "2026-09-03",
   "purpose": "Durable source snapshot for the six-product O:I composition at the current pre-#97 deterministic cut. O:I #97 live-main convergence applies to its explicitly named primary repository set; Quaternal Logic remains represented as the separately owned parallel product and is not a #97 dependency gate.",
   "release_manifest": {
     "path": "suite/manifest.json",
@@ -21,9 +21,9 @@
     {
       "id": "actuation",
       "repository": "https://github.com/EpiLogos/Actuation",
-      "revision": "6b5419c2dd91dda2e260d309a08c078026256a73",
+      "revision": "7175fddec62d11c78ee63eb750ffed1455accd55",
       "state": "accepted-main",
-      "note": "Accepted main includes the realised Actuation authority/runtime floor plus semantic Activity over canonical ActuationStream, retaining Activity distinct from Action/Invocation identity."
+      "note": "Current Actuation main includes the realised Actuation authority/runtime floor, semantic Activity over canonical ActuationStream, and the owner-native `actuation` executable over Agency/WorldBinding, realised Actuation, stream, Activity and model-bearing contracts. Activity remains distinct from Action/Invocation identity."
     },
     {
       "id": "ai-kit",

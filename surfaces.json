@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "verified_at": "2026-09-02",
+  "verified_at": "2026-09-03",
   "surfaces": [
     {
       "id": "central",
@@ -20,7 +20,13 @@
         "entry": "ctrl",
         "executable": "ctrl",
         "alias": "ctrl",
+        "namespace": "central",
+        "aliases": ["ctrl"],
         "version_command": ["--version"],
+        "capability_command": ["capabilities", "--json"],
+        "verification_command": ["doctor", "--json"],
+        "command_revision": "8746b64cac04a38e28d66378972ae3989144dab3",
+        "command_standing": "green-pr-head",
         "version_manifest": "ctrl/Cargo.toml"
       },
       "install": {
@@ -28,7 +34,7 @@
         "ref": "2bc8ca665d2019cc285cc45b4bcb891d794574ca",
         "revision": "2bc8ca665d2019cc285cc45b4bcb891d794574ca",
         "path": "ctrl",
-        "note": "Current #97 source pin for developer/source installation. The immutable prelocal release artifact remains described separately by suite/manifest.json; Central remains owner of Control, Work, ProjectCentral, source authority, persisted AgentProfile source relations, canonical AgentProfile Actions and .central semantics."
+        "note": "Current #97 source pin for developer/source installation. The immutable prelocal release artifact remains described separately by suite/manifest.json; Central remains owner of Control, Work, ProjectCentral, source authority, persisted AgentProfile source relations, canonical AgentProfile Actions and .central semantics. The command_revision separately records the green pre-#97 CLI doorway head until owner merge."
       },
       "verification": {
         "status": "supported",
@@ -52,18 +58,24 @@
       "docs_path": "docs/WORLD-BOUND-ROOT-AGENCY.md",
       "skill_paths": [],
       "native": {
-        "kind": "workbench",
-        "entry": "portable Actuation contracts and runtime foundation",
-        "executable": null,
+        "kind": "cli",
+        "entry": "actuation",
+        "executable": "actuation",
         "alias": null,
-        "version_command": null,
-        "version_manifest": null
+        "namespace": "actuation",
+        "aliases": [],
+        "version_command": ["--version"],
+        "capability_command": ["capabilities", "--json"],
+        "verification_command": ["verify", "--json"],
+        "command_revision": "5444ca384d46b37369646a58ff4d9cf15f812d2f",
+        "command_standing": "green-pr-head",
+        "version_manifest": "package.json"
       },
       "install": {
         "kind": "oi-managed-component",
         "ref": "6b5419c2dd91dda2e260d309a08c078026256a73",
         "revision": "6b5419c2dd91dda2e260d309a08c078026256a73",
-        "note": "Current mainline source pin for developer/source composition. Immutable released artifacts remain versioned by suite/manifest.json."
+        "note": "Current accepted source pin remains the owner main while the green native Actuation CLI head is carried separately as command_revision for pre-#97 convergence."
       },
       "verification": {
         "status": "supported",
@@ -74,9 +86,9 @@
           "evidence": "oi.managed-artifact-evidence/v1"
         },
         "outstanding_requirements": [],
-        "note": "Current main includes semantic Activity over canonical ActuationStream in addition to the realised Actuation authority/runtime floor."
+        "note": "Current main includes semantic Activity over canonical ActuationStream in addition to the realised Actuation authority/runtime floor. The green command head projects those accepted contracts through the native `actuation` executable."
       },
-      "compatibility": "Actuation main owns Agency/WorldBinding/Actuation/Return meaning and now supplies the portable Activity projection consumed by O:I without turning observed Activity into Action identity."
+      "compatibility": "Actuation owns Agency/WorldBinding/Actuation/Return meaning and the portable Activity projection consumed across the O:I world. Its native command surface projects those owner contracts for human and machine access."
     },
     {
       "id": "ai-kit",
@@ -91,7 +103,13 @@
         "entry": "aikit",
         "executable": "aikit",
         "alias": "kit",
+        "namespace": "aikit",
+        "aliases": ["kit"],
         "version_command": ["--version"],
+        "capability_command": ["capabilities", "list", "--json"],
+        "verification_command": ["doctor", "--json"],
+        "command_revision": "0b31cdf6592e06a3e9f4faa4820def7d9fd575ff",
+        "command_standing": "accepted-main",
         "version_manifest": "crates/aikit-cli/Cargo.toml"
       },
       "install": {
@@ -122,18 +140,24 @@
       "docs_path": "factory/README.md",
       "skill_paths": [],
       "native": {
-        "kind": "workbench",
-        "entry": "factory/ Rust implementation root",
-        "executable": null,
+        "kind": "cli",
+        "entry": "factory",
+        "executable": "factory",
         "alias": null,
-        "version_command": null,
+        "namespace": "factory",
+        "aliases": [],
+        "version_command": ["--version"],
+        "capability_command": ["capabilities", "--json"],
+        "verification_command": ["verify", "--json"],
+        "command_revision": "3d7360f2cbaf6f2949badd2b0396bffdb2cd39e6",
+        "command_standing": "green-pr-head",
         "version_manifest": "factory/Cargo.toml"
       },
       "install": {
         "kind": "oi-managed-component",
         "ref": "50652ae5a02f86c11bd6bdbbb76b5180e79aa1f5",
         "revision": "50652ae5a02f86c11bd6bdbbb76b5180e79aa1f5",
-        "note": "Current #97 source pin for developer/source composition. Immutable released artifacts remain versioned by suite/manifest.json; the live repository retains its historical agent-system-design name."
+        "note": "Current #97 source pin remains the accepted owner main while the six-for-six green Factory CLI head is carried separately as command_revision. The live repository retains its historical agent-system-design name."
       },
       "verification": {
         "status": "supported",
@@ -144,9 +168,9 @@
           "evidence": "oi.managed-artifact-evidence/v1"
         },
         "outstanding_requirements": [],
-        "note": "Current main includes Git developmental Worlds, bounded P3 Intent → Run → evidence-bearing P5 return, Run-scoped ProjectDevelopment persistence/reload, canonical request-evidence Action parity, accountable Journey Commission, and Journey-praxis/developmental-Build readings over Central AgentProfile and exact AIKit Method/proof/Routine refs."
+        "note": "Current main includes Git developmental Worlds, bounded P3 Intent → Run → evidence-bearing P5 return, Run-scoped ProjectDevelopment persistence/reload, canonical request-evidence Action parity, accountable Journey Commission, and Journey-praxis/developmental-Build readings over Central AgentProfile and exact AIKit Method/proof/Routine refs. The green command head projects the existing Build/provider/Action owners directly."
       },
-      "compatibility": "Factory owns developmental Project/Journey/Run/Candidate/Evidence/Recognition and Action semantics. It consumes Central source refs and AIKit ContextResolution/Method/proof/Routine refs opaquely, requires Routine proof to be grounded in Journey returned reality, and exposes stale AIKit proof only as developmental revalidation pressure."
+      "compatibility": "Factory owns developmental Project/Journey/Run/Candidate/Evidence/Recognition and Action semantics. It consumes Central source refs and AIKit ContextResolution/Method/proof/Routine refs opaquely, requires Routine proof to be grounded in Journey returned reality, and exposes stale AIKit proof as developmental revalidation pressure."
     },
     {
       "id": "workcell",
@@ -161,14 +185,20 @@
         "entry": "workcell",
         "executable": "workcell",
         "alias": "workcell",
+        "namespace": "workcell",
+        "aliases": [],
         "version_command": ["--version"],
+        "capability_command": ["--json", "discover"],
+        "verification_command": ["--json", "doctor"],
+        "command_revision": "0a0bd8b31b14a9386784e26da1867162eeaa98da",
+        "command_standing": "candidate-pr-head",
         "version_manifest": "crates/workcell-cli/Cargo.toml"
       },
       "install": {
         "kind": "oi-managed-binary",
         "ref": "8320e05fc5bc2749c0f2ad24301d8dd1cda3d090",
         "revision": "8320e05fc5bc2749c0f2ad24301d8dd1cda3d090",
-        "note": "Current mainline source pin for developer/source composition. Immutable released artifacts remain versioned by suite/manifest.json; provider-specific physical resources are not materialised by O:I preflight."
+        "note": "Current mainline source pin for developer/source composition. The command_revision is the pre-#97 version-disclosure head presently under native verification; provider-specific physical resources remain physical acceptance evidence rather than preflight materialisation."
       },
       "verification": {
         "status": "supported",
@@ -192,29 +222,35 @@
         ],
         "note": "Current main includes deterministic OpenSandbox World materialisation/lifecycle and the first-party AIKit Gateway managed-service relation while preserving semantic ownership in AIKit."
       },
-      "compatibility": "Workcell main owns materialisation/service lifecycle and provider provenance, including OpenSandbox and AIKit Gateway service bodies, without acquiring Project, AgentSession or Gateway protocol identity."
+      "compatibility": "Workcell owns materialisation/service lifecycle and provider provenance, including OpenSandbox and AIKit Gateway service bodies, while Project, AgentSession and Gateway protocol identity remain with their native owners."
     },
     {
       "id": "quaternal-logic",
       "public_name": "Quaternal Logic",
-      "function": "deterministic QL kernel, complete MEF registry, service boundary and optional clients",
+      "function": "deterministic QL kernel, complete MEF registry, service boundary and Vāk/formal operation surfaces",
       "repository": "https://github.com/EpiLogos/QL-MEF",
       "docs_ref": "30171fb9f3646a1ef6e306357503d8a9df4a8a1c",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
-        "kind": "workbench",
-        "entry": "Quaternal Logic Rust kernel, service and adapter workspace",
-        "executable": null,
+        "kind": "cli",
+        "entry": "ql",
+        "executable": "ql",
         "alias": null,
-        "version_command": null,
-        "version_manifest": "Cargo.toml"
+        "namespace": "ql",
+        "aliases": [],
+        "version_command": ["--version"],
+        "capability_command": ["capabilities", "--json"],
+        "verification_command": ["verify", "--json"],
+        "command_revision": "e72f569df0bc7323f990e6ec2a55ecd7b954a949",
+        "command_standing": "green-pr-head",
+        "version_manifest": "crates/ql-cli/Cargo.toml"
       },
       "install": {
         "kind": "oi-managed-component",
         "ref": "30171fb9f3646a1ef6e306357503d8a9df4a8a1c",
         "revision": "30171fb9f3646a1ef6e306357503d8a9df4a8a1c",
-        "note": "Stable suite source pin for the separately owned Quaternal Logic product. The currently moving QL/Epi computational and musical programmes converge through their own owner session rather than through O:I #97."
+        "note": "The stable suite source pin remains unchanged while the current five-for-five green QL native command head is carried separately as command_revision during pre-#97 harmonisation."
       },
       "verification": {
         "status": "supported",
@@ -225,9 +261,9 @@
           "evidence": "oi.managed-artifact-evidence/v1"
         },
         "outstanding_requirements": [],
-        "note": "This stable QL-MEF suite pin records the separately owned product without making its currently moving computational/music/Epi programme a #97 closure dependency."
+        "note": "Quaternal Logic now has a green native command spine over its deterministic kernel and QlService boundary. MEF/Context-Frame/Vāk command breadth continues on the same owner branch before the command head is promoted to accepted main."
       },
-      "compatibility": "Quaternal Logic remains an optional, independently owned product in the six-position field. O:I can compose its accepted interfaces when present; #97 does not converge or gate on the active QL/Epi development topology."
+      "compatibility": "Quaternal Logic owns the formal QL/MEF/Vāk field at the sixth product position. O:I composes its accepted owner interfaces through the same whole-suite command and desktop surfaces as the other five products."
     }
   ]
 }

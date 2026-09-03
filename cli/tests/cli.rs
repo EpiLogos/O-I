@@ -153,31 +153,43 @@ fn full_registered_composition_is_reported_without_invented_aliases() {
     let home = TempDir::new().unwrap();
     let bin = TempDir::new().unwrap();
     let ctrl = fake_central(bin.path(), 0);
+    let actuation = fake_executable(
+        bin.path(),
+        "actuation",
+        "if [ \"$1\" = '--version' ]; then echo 'actuation 0.1.0'; fi",
+    );
     let aikit = fake_executable(
         bin.path(),
         "aikit",
         "if [ \"$1\" = '--version' ]; then echo 'aikit 1.0.0'; fi",
+    );
+    let factory = fake_executable(
+        bin.path(),
+        "factory",
+        "if [ \"$1\" = '--version' ]; then echo 'factory 0.1.0'; fi",
     );
     let workcell = fake_executable(
         bin.path(),
         "workcell",
         "if [ \"$1\" = '--version' ]; then echo 'workcell 0.1.0'; fi",
     );
-    for (module, executable) in [("central", ctrl), ("ai-kit", aikit), ("workcell", workcell)] {
+    let ql = fake_executable(
+        bin.path(),
+        "ql",
+        "if [ \"$1\" = '--version' ]; then echo 'ql 0.1.0'; fi",
+    );
+    for (module, executable) in [
+        ("central", ctrl),
+        ("actuation", actuation),
+        ("ai-kit", aikit),
+        ("software-factory", factory),
+        ("workcell", workcell),
+        ("quaternal-logic", ql),
+    ] {
         let result = output(
             oi(home.path(), bin.path())
                 .args(["register", module, "--executable"])
                 .arg(executable),
-        );
-        assert!(result.status.success(), "{}", text(&result.stderr));
-    }
-    for module in ["actuation", "software-factory", "quaternal-logic"] {
-        let root = home.path().join(module);
-        fs::create_dir_all(&root).unwrap();
-        let result = output(
-            oi(home.path(), bin.path())
-                .args(["register", module, "--root"])
-                .arg(root),
         );
         assert!(result.status.success(), "{}", text(&result.stderr));
     }
