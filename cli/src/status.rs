@@ -27,6 +27,20 @@ struct NativeSurface {
     kind: String,
     entry: String,
     executable: Option<String>,
+    #[serde(default)]
+    alias: Option<String>,
+    #[serde(default)]
+    namespace: Option<String>,
+    #[serde(default)]
+    aliases: Vec<String>,
+    #[serde(default)]
+    version_command: Vec<String>,
+    #[serde(default)]
+    capability_command: Vec<String>,
+    #[serde(default)]
+    verification_command: Vec<String>,
+    #[serde(default)]
+    command_revision: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -64,6 +78,18 @@ pub struct SurfaceDisclosure {
     pub function: String,
     pub repository: String,
     pub native_entry: String,
+    #[serde(default)]
+    pub accepted_revision: String,
+    #[serde(default)]
+    pub canonical_namespace: String,
+    #[serde(default)]
+    pub compatibility_aliases: Vec<String>,
+    #[serde(default)]
+    pub version_command: Vec<String>,
+    #[serde(default)]
+    pub capability_command: Vec<String>,
+    #[serde(default)]
+    pub verification_command: Vec<String>,
     pub state: NativeSurfaceState,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub resolved: Option<String>,
@@ -96,7 +122,8 @@ impl SuiteCompositionDisclosure {
 
 /// Read the same O:I composition state and surface catalog used by the CLI without
 /// invoking a subprocess. Product-native health remains outside this adapter: the
-/// state here is only O:I registration/reachability disclosure.
+/// state here is only O:I registration/reachability disclosure plus the accepted
+/// owner command relation published by the shared suite descriptor.
 pub fn live_disclosure() -> Result<SuiteCompositionDisclosure, String> {
     let path = state_path()?;
     let composition_json = if path.exists() {
@@ -153,12 +180,31 @@ where
         .surfaces
         .into_iter()
         .map(|surface| {
+            let namespace = surface.native.namespace.unwrap_or_default();
+            let mut compatibility_aliases = surface.native.aliases;
+            if let Some(alias) = surface.native.alias {
+                if !alias.is_empty()
+                    && alias != namespace
+                    && !compatibility_aliases.iter().any(|candidate| candidate == &alias)
+                {
+                    compatibility_aliases.push(alias);
+                }
+            }
+            compatibility_aliases.sort();
+            compatibility_aliases.dedup();
+
             let mut disclosure = SurfaceDisclosure {
                 id: surface.id.clone(),
                 public_name: surface.public_name,
                 function: surface.function,
                 repository: surface.repository,
                 native_entry: surface.native.entry,
+                accepted_revision: surface.native.command_revision.unwrap_or_default(),
+                canonical_namespace: namespace,
+                compatibility_aliases,
+                version_command: surface.native.version_command,
+                capability_command: surface.native.capability_command,
+                verification_command: surface.native.verification_command,
                 state: NativeSurfaceState::Missing,
                 resolved: None,
                 version: None,
