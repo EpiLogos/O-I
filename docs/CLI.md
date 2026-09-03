@@ -28,7 +28,7 @@ The canonical O:I namespace is a sixfold projection over the six native product 
 
 ```text
 oi central   -> ctrl
-noi actuation -> actuation
+oi actuation -> actuation
 oi aikit     -> aikit
 oi factory   -> factory
 oi workcell  -> workcell
@@ -39,7 +39,7 @@ The two already-established short aliases remain compatibility routes:
 
 ```text
 oi ctrl -> ctrl
-noi kit  -> aikit
+oi kit  -> aikit
 ```
 
 Canonical namespace and compatibility alias both enter the same native executable relation. They do not define a second product command grammar.
