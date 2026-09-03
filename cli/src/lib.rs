@@ -4,3 +4,4 @@ pub mod package;
 pub mod product_command;
 pub mod skillset;
 pub mod status;
+pub mod world_recognition;

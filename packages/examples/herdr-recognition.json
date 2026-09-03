@@ -1,0 +1,27 @@
+{
+  "schema": "oi.package/v1",
+  "package_ref": "package:epilogos/herdr-recognition",
+  "version": "1.0.0",
+  "source": {
+    "kind": "git",
+    "locator": "https://github.com/herdrdev/herdr",
+    "revision": "facf0aafca011d147e798ad37e83799bdd29b75e"
+  },
+  "permissions": ["process_observation"],
+  "effects": [],
+  "contributions": [
+    {
+      "contribution_ref": "contribution:herdr/world-recognition",
+      "target_product": "oi",
+      "target_contract": "oi.world-recognition/v1",
+      "minimum_contract_version": "1.0.0",
+      "artifact": "builtin:herdr",
+      "permissions": ["process_observation"],
+      "effects": [],
+      "native_verification": {
+        "operation": "oi recognition verify contribution:herdr/world-recognition",
+        "evidence_format": "oi.world-recognition-verification/v1"
+      }
+    }
+  ]
+}
