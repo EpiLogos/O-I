@@ -1,6 +1,6 @@
 # O:I physical inhabitation alpha — owner-capability reconciliation (2026-09-03)
 
-## Test oracle (independently inspected machine, 2026-09-03)
+## Test oracle (independently inspected machine)
 
 | native system | observed | state |
 |---|---|---|
@@ -9,83 +9,60 @@
 | Herdr | 0.8.2, `~/.local/bin/herdr` | live |
 | Claude Code | 2.1.238, `~/.local/bin/claude` | installed |
 | Codex CLI | 0.153.0, `/opt/homebrew/bin/codex` | installed |
-| Gemini | `/opt/homebrew/bin/gemini` | broken (missing simdjson dylib) |
+| Gemini | 0.29.5, `/opt/homebrew/bin/gemini` | installed (was broken earlier this session; recovered) |
 | Pi | 0.84.4, `~/.local/bin/pi` | installed |
 | Ollama | 0.12.6, `/usr/local/bin/ollama` | installed |
-| Docker | `/usr/local/bin/docker` | installed |
+| Docker | 29.2.1, `/usr/local/bin/docker` | installed |
 
-## What O:I disclosed before this change
+## Ownership model (corrected)
 
-`oi recognition inspect /Users/admin/Central` recognised only **cmux** and **Herdr**.
+- **Actuation** owns the model/harness/agent-instance main body:
+  `actuation.model-bearing/v1` (plus agency / realised / stream / activity).
+- **AIKit** owns operative capability projection — its agent-client adapters project
+  skills/sources into clients and its mux adapters drive working environments.
+  AIKit does **not** own the harness body.
+- **Workcell** owns material/provider execution (`workcell.provider-sdk/v1`).
 
-- cmux observation carried `owner_bindings: []` even though AIKit ships an accepted
-  cmux working-environment/SessionSpace provider. → **owner/composition discovery defect**.
-- Herdr's AIKit binding existed only because the built-in recogniser hard-coded
-  `aikit.herdr-working-environment/v1`. → anti-pattern for the generic seam.
-- tmux, Claude, Codex were physically present and already related to the installed
-  AIKit (`aikit mux detect`, `aikit client status`), yet O:I disclosed none of it.
-  → the answer to "why cannot O:I already tell the human and Agent that tmux exists
-  and AIKit has a known relation to it" is: **the whole-level account never queried
-  the installed native owners' adapter/provider/connector registries.**
+## What the account now discloses
 
-## Change
+`oi recognition inspect /Users/admin/Central` composes:
 
-`oi.world-recognition` now runs an owner-participation reconciliation pass after
-native recognisers. It is O:I-owned whole composition, not recogniser-local, and it
-hard-codes no AIKit semantics into any native recogniser.
+- recognised native systems with version/degraded facts (cmux, Herdr, claude, codex,
+  gemini, pi, ollama, docker);
+- native-owner participations reconciled from owner registries, not recognisers:
+  - AIKit `mux detect` → `aikit.working-environment-provider/v1` (tmux, cmux)
+  - AIKit `client status` → `aikit.client-adapter/v1` (claude, codex, opencode, cursor)
+- native-owner semantic contracts disclosed from owner registries:
+  - Actuation `contract list` → `actuation.model-bearing/v1`, agency, realised,
+    stream, activity
+- an extension frontier, routed by native ownership:
+  - harness / model-provider → Actuation `actuation.model-bearing/v1`
+  - material-executor → Workcell `workcell.provider-sdk/v1`
 
-The first implemented owner source is AIKit's public registry disclosures:
+cmux carries its AIKit working-environment binding without the recogniser knowing
+AIKit semantics. tmux, claude and codex surface even though no O:I recogniser exists
+for them.
 
-- `aikit mux detect --json` → `aikit.working-environment-provider/v1` (tmux, cmux)
-- `aikit client status --json` → `aikit.harness-adapter/v1` (claude, codex, opencode, cursor)
+## Structure
 
-Each participation carries owner, native system identity, contract, readiness state
-(`installed` / `installed-running` / `installed-not-running` / `installed-unprojected`
-/ `degraded`), readiness facts, and source provenance. Recognised observations are
-joined to matching participations by native name/system ref, so cmux now carries its
-AIKit binding without the recogniser knowing AIKit semantics.
+`discover_world(target, registry)` remains the pure, target-scoped recognition
+engine (recognisers + source apertures) so registry tests stay isolated from the
+live machine. `discover_ground(target)` layers machine-global native-tool
+observation, owner-participation reconciliation, owner-contract disclosure and the
+extension frontier over it. The CLI (`oi recognition inspect`, `oi adopt`) and the
+desktop (`DesktopHost` → `ShellSnapshot.world_recognition`) consume the full
+`discover_ground` reading; the same structured JSON is the Agent surface.
 
-The account adds `owner_participations` (owner-discovered systems surfacing even
-when no O:I recogniser exists, e.g. tmux/claude/codex) and a
-`oi:builtin/owner-participation-reconciliation` provider entry.
+## Remaining classified gaps
 
-## What O:I discloses after this change
-
-`oi recognition inspect /Users/admin/Central` now reports:
-
-```text
-Owner participations:
-  AIKit  claude   aikit.harness-adapter/v1               installed
-  AIKit  cmux     aikit.working-environment-provider/v1  installed-not-running
-  AIKit  codex    aikit.harness-adapter/v1               installed
-  AIKit  cursor   aikit.harness-adapter/v1               installed-unprojected
-  AIKit  opencode aikit.harness-adapter/v1               installed-unprojected
-  AIKit  tmux     aikit.working-environment-provider/v1  installed-running
-```
-
-cmux's observation now carries:
-
-```json
-{"owner":"AIKit","contract":"aikit.working-environment-provider/v1",
- "state":"installed-not-running",
- "provenance":["AIKit crates/aikit-adapters/src/mux/cmux.rs","aikit mux detect"]}
-```
-
-## Remaining classified gaps (development pressure, not masked)
-
-- **Gemini, Pi, Ollama, Docker** — physically present, not yet disclosed by any
-  owner registry query. Gemini is currently broken on this machine. These are the
-  next owner-query/recogniser extensions, not a reason to duplicate native support.
-- **Harness edition/version** — the owner participation discloses the installed
-  relation and readiness but not the exact Claude/Codex version string; that belongs
-  to native observation (a recogniser) or an AIKit client-status version field.
-- **Desktop/Agent surface parity** — the CLI + JSON account now exposes the same
-  actuality to human and Agent. The desktop shell snapshot read model now carries
-  the reconciled World account (`ShellSnapshot.world_recognition`) via
-  `DesktopHost`, so the presentation surface can disclose it without duplicating
-  native semantics into frontend-local state. The React rendering of that field is
-  the remaining presentation increment.
+- **Desktop React rendering** of the World account is the next presentation step
+  (read model already exposed through `ShellSnapshot.world_recognition`).
+- **Continuing-run reconciliation** — the account re-observes on each run already;
+  automatic rescan-on-change (start/stop/install of tools) is not yet wired.
+- **Central connector registry** and **Workcell provider inventory** are not yet
+  queried as owner sources (Workcell providers are the next material case).
 
 ## Verification
 
-`cargo test` (cli): 14 lib + 13 main + 15 cli + 3 + 1 + 2 + 5 + 3 + 11 + 2 = all pass.
+`cargo test` (cli): 20 lib + 13 main + 15 cli + 3 + 1 + 2 + 5 + 3 + 11 + 2 = all pass.
+`cargo test` (desktop-core): all pass, including the World-account shell-snapshot test.
