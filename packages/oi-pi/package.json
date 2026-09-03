@@ -1,0 +1,19 @@
+{
+  "name": "oi-pi",
+  "version": "0.1.0",
+  "description": "O:I-for-Pi — the Pi-side half of the O:I Self-Development World's human-facing Surface (aikit:component-surface-authoring).",
+  "keywords": ["pi-package", "o-i", "aikit", "observatory", "surface"],
+  "license": "MIT",
+  "type": "module",
+  "pi": {
+    "extensions": ["./contrib"]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*",
+    "typebox": "*"
+  },
+  "scripts": {
+    "test": "node --test tests/"
+  }
+}
