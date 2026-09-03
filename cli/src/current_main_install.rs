@@ -1,40 +1,12 @@
-#[derive(Debug, Clone)]
-struct CurrentMainSourceInstall {
-    build: Vec<String>,
-    executable_path: String,
-}
-
-fn current_main_source_install(id: &str) -> Result<CurrentMainSourceInstall, String> {
-    let value: serde_json::Value = serde_json::from_str(CATALOG_JSON)
-        .map_err(|error| format!("embedded surface descriptors are invalid: {error}"))?;
-    let surface = value["surfaces"]
-        .as_array()
-        .and_then(|surfaces| surfaces.iter().find(|surface| surface["id"] == id))
-        .ok_or_else(|| format!("missing current-main surface descriptor for {id}"))?;
-    let install = &surface["native"]["source_install"];
-    let executable_path = install["executable_path"]
-        .as_str()
-        .filter(|value| !value.trim().is_empty())
-        .ok_or_else(|| format!("{id} has no native.source_install.executable_path"))?;
-    let build = install["build"]
-        .as_array()
-        .map(|parts| {
-            parts
-                .iter()
-                .map(|part| {
-                    part.as_str()
-                        .filter(|value| !value.trim().is_empty())
-                        .map(str::to_owned)
-                        .ok_or_else(|| format!("{id} native.source_install.build contains a non-string/empty argument"))
-                })
-                .collect::<Result<Vec<_>, _>>()
-        })
-        .transpose()?
-        .unwrap_or_default();
-    Ok(CurrentMainSourceInstall {
-        build,
-        executable_path: executable_path.to_owned(),
-    })
+fn current_main_source_install(
+    id: &str,
+) -> Result<oi_cli::product_command::SourceInstallDescriptor, String> {
+    oi_cli::product_command::product_command_catalogue()?
+        .products
+        .into_iter()
+        .find(|product| product.id == id)
+        .map(|product| product.source_install)
+        .ok_or_else(|| format!("missing current-main command descriptor for {id}"))
 }
 
 fn install_current_main_oi(root: &Path) -> Result<(), String> {
