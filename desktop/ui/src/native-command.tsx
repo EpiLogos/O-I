@@ -66,6 +66,25 @@ type Contribution = {
   };
 };
 
+type SurfaceDisclosure = {
+  id: string;
+  public_name: string;
+  function: string;
+  repository: string;
+  accepted_revision: string;
+  native_entry: string;
+  canonical_namespace: string;
+  compatibility_aliases: string[];
+  structured_output: boolean;
+  structured_output_format: string;
+  verification_args: string[];
+  state: 'missing' | 'installed' | 'registered' | 'broken';
+  resolved?: string;
+  version?: string;
+};
+
+type ShellSnapshot = { surfaces: SurfaceDisclosure[] };
+
 type SessionSpaceState = {
   definition: { id: string };
   label?: string;
@@ -97,7 +116,7 @@ type FactoryBuildSnapshot = {
 };
 
 export type NativePaletteResult = {
-  channel: 'reading' | 'action';
+  channel: 'reading' | 'action' | 'command';
   ref: string;
   kind: string;
   label: string;
@@ -151,20 +170,22 @@ export function NativeSearchCommand({
   }, [query, selection?.ref, open, mode]);
 
   const visible = useMemo(
-    () => results.filter((result) => mode === 'command' ? result.channel === 'action' : result.channel === 'reading'),
+    () => results.filter((result) => mode === 'command' ? result.channel !== 'reading' : result.channel === 'reading'),
     [results, mode],
   );
 
   async function refresh(nextQuery: string) {
     const trimmed = nextQuery.trim();
     const gathered: NativePaletteResult[] = [];
-    const [context, contributions, spaces, factory] = await Promise.all([
+    const [shell, context, contributions, spaces, factory] = await Promise.all([
+      invoke<ShellSnapshot>('shell_snapshot').catch(() => null),
       invoke<ContextResolution | null>('aikit_context_resolution').catch(() => null),
       invoke<Contribution[]>('contribution_catalog').catch(() => []),
       invoke<SessionSpaceState[]>('aikit_session_spaces').catch(() => []),
       invoke<FactoryBuildSnapshot | null>('factory_build_snapshot').catch(() => null),
     ]);
 
+    if (shell) gathered.push(...productCommandResults(shell.surfaces));
     if (context) gathered.push(...contextResults(context));
     gathered.push(...contributionResults(contributions, selection));
     gathered.push(...sessionSpaceResults(spaces));
@@ -198,6 +219,11 @@ export function NativeSearchCommand({
       });
       setStatus(`Selected ${result.ref}. Selection is a ref; Agent Context disclosure remains native-owned.`);
       setOpen(false);
+      return;
+    }
+
+    if (result.channel === 'command') {
+      setStatus(`${result.label} is the canonical O:I namespace for ${result.nativeOwner}. Product arguments remain native-owner syntax.`);
       return;
     }
 
@@ -276,8 +302,8 @@ export function NativeSearchCommand({
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 onKeyDown={onPaletteKeyDown}
-                placeholder={mode === 'command' ? 'Find a native Action' : 'Find a native Resource or Reading'}
-                aria-label={mode === 'command' ? 'Find native Action' : 'Find native Resource'}
+                placeholder={mode === 'command' ? 'Find a native Action or product command' : 'Find a native Resource or Reading'}
+                aria-label={mode === 'command' ? 'Find native Action or product command' : 'Find native Resource'}
               />
             </form>
             <div className="oi-native-command__results" role="listbox">
@@ -305,12 +331,12 @@ export function NativeSearchCommand({
                   </span>
                 </button>
               ))}
-              {!visible.length && <p>No current native {mode === 'command' ? 'Action' : 'Resource/Reading'} descriptors match.</p>}
+              {!visible.length && <p>No current native {mode === 'command' ? 'Action/command' : 'Resource/Reading'} descriptors match.</p>}
             </div>
             <footer>
               <span>ResourceRef / ActionRef preserved</span>
+              <span>product namespace ≠ Action authority</span>
               <span>discoverable ≠ authorised</span>
-              <span>selection ≠ Context disclosure</span>
             </footer>
           </section>
         </div>
@@ -318,6 +344,20 @@ export function NativeSearchCommand({
       {status && <span className="oi-native-command__status" role="status">{status}</span>}
     </>
   );
+}
+
+function productCommandResults(surfaces: SurfaceDisclosure[]): NativePaletteResult[] {
+  return surfaces.map((surface) => ({
+    channel: 'command',
+    ref: `oi.command/${surface.canonical_namespace}`,
+    kind: 'native-product-command',
+    label: `oi ${surface.canonical_namespace}`,
+    summary: `${surface.public_name} → ${surface.native_entry} · accepted ${surface.accepted_revision.slice(0, 12)}${surface.compatibility_aliases.length ? ` · aliases ${surface.compatibility_aliases.map((alias) => `oi ${alias}`).join(', ')}` : ''}`,
+    nativeOwner: surface.id,
+    source: `${surface.repository}@${surface.accepted_revision}`,
+    availability: surface.state === 'installed' || surface.state === 'registered' ? 'available' : surface.state === 'broken' ? 'degraded' : 'unavailable',
+    authority: `namespace only; native owner syntax and authority (${surface.structured_output ? surface.structured_output_format : 'interactive'})`,
+  }));
 }
 
 function contextResults(context: ContextResolution): NativePaletteResult[] {
@@ -451,7 +491,7 @@ function resultMatches(result: NativePaletteResult, query: string) {
 }
 
 function rankResult(result: NativePaletteResult, query: string) {
-  if (!query) return result.subjectRef ? 30 : 10;
+  if (!query) return result.subjectRef ? 30 : result.channel === 'command' ? 20 : 10;
   const lower = query.toLowerCase();
   if (result.label.toLowerCase().startsWith(lower)) return 100;
   if (result.ref.toLowerCase().includes(lower)) return 80;
