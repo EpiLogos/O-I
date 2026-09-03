@@ -83,6 +83,37 @@ underlying actuality; only presentation differs.
   (Central exposes `ctrl capabilities`/`ctrl doctor`; its connector Ports are the
   next authored-ground case).
 
+## AIKit operative surface (observed, not intended)
+
+The installed `aikit` binary (0.1.0) is **not** built from ai-kit `main`. It
+carries `agent`, `compose`, `task`, `session`, `panel`, `portal`, `ops`, `mux`,
+`tmux`/`cmux`, `client`, `capabilities` — a surface whose source lives on the
+local `codex/full-shape` branch (`crates/aikit-core/src/compose.rs` does not
+exist on `main`). The live client adapters O:I reconciles (`aikit mux detect`,
+`aikit client status`) come from this fuller-shape build.
+
+The thin-bootstrap/application design is real and already exercises the right
+boundary: a managed `aikit-context` Agent Skill (from
+`aikit-core::actor_bootstrap`, `aikit.actor-bootstrap/v2`) carries resolved
+Project/Run/Agent/Agency/Host/Harness/Model/session refs plus capability/action/
+context-source horizon counts and a runtime-body pointer; richer state stays
+on-demand through `aikit search`/`explain`/`history`/`capabilities`. Claude
+(`~/.claude/skills`) and Codex (`.agents/skills`) receive the projection
+(2 items each in the current live context).
+
+Two gaps observed for the Agent-UX vertical (not yet repaired):
+
+1. **No AIKit AgentProfile is authored** — `~/.aikit/profiles/` is empty, so
+   `aikit compose --profile agent/<group>/<name>` cannot yet produce a real
+   launch; the model-lane/harness/payload stage has no seed.
+2. **The O:I World account is not joined into the bootstrap** — the ActorBootstrap
+   carries Project/Agency/Harness/Model but not the `oi.world-recognition-account`
+   (recognised systems, owner participations, material capacities). The Agent can
+   answer "which Project/Agency/body" from AIKit, but not "which World" from the
+   same reconciliation the desktop shows. Joining the World account at the proper
+   owner boundary (an O:I-supplied bootstrap clause, not a copied account) is the
+   next cross-product seam.
+
 ## Verification
 
 `cargo test` (cli): all pass.
