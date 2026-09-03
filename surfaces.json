@@ -104,7 +104,7 @@
       "public_name": "AIKit",
       "function": "context, capability, model, credential, SessionSpace and provider-process resolution",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "docs_ref": "81ab25ce319453d3549a4e37280ba1ddd38613dd",
+      "docs_ref": "00afe1b91f00f3881cac56459fa1cff8e7ba7183",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -117,7 +117,7 @@
         "version_command": ["--version"],
         "capability_command": ["capabilities", "list", "--json"],
         "verification_command": ["doctor", "--json"],
-        "command_revision": "81ab25ce319453d3549a4e37280ba1ddd38613dd",
+        "command_revision": "00afe1b91f00f3881cac56459fa1cff8e7ba7183",
         "command_standing": "accepted-main",
         "source_install": {
           "build": ["cargo", "build", "--workspace", "--locked", "--release"],
@@ -127,8 +127,8 @@
       },
       "install": {
         "kind": "oi-managed-binary",
-        "ref": "81ab25ce319453d3549a4e37280ba1ddd38613dd",
-        "revision": "81ab25ce319453d3549a4e37280ba1ddd38613dd",
+        "ref": "00afe1b91f00f3881cac56459fa1cff8e7ba7183",
+        "revision": "00afe1b91f00f3881cac56459fa1cff8e7ba7183",
         "path": "crates/aikit-cli",
         "note": "Current #97 source/install pin; immutable released artifacts remain separately recorded in suite/manifest.json."
       },
@@ -141,9 +141,9 @@
           "evidence": "native-json-stdout"
         },
         "outstanding_requirements": [],
-        "note": "Current main includes SessionSpace, ContextResolution evidence, Method and proof-before-automation Routine, Herdr/Hyprland composition including deterministic Herdr automation provider coverage, and an installed native doctor lifecycle for #172."
+        "note": "Current main includes SessionSpace, ContextResolution evidence, Method and proof-before-automation Routine, Herdr/Hyprland composition including deterministic Herdr automation provider coverage, Central-owned NOW/DAY/Flow temporal grounding through the public Action seam, and an installed native doctor lifecycle for #172."
       },
-      "compatibility": "AIKit owns operational P4 context resolution, target-native activation, effective praxis and Routine proof/trigger/authority. Central AgentProfile is consumed only as authored source."
+      "compatibility": "AIKit owns operational P4 context resolution, target-native activation, effective praxis and Routine proof/trigger/authority. Central AgentProfile and temporal NOW/DAY/Flow are consumed only through Central-owned source/Action surfaces."
     },
     {
       "id": "software-factory",
