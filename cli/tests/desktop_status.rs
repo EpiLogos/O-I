@@ -3,8 +3,38 @@ use oi_cli::status::{disclosure_from_json, NativeSurfaceState};
 const CATALOG: &str = r#"{
   "schema": 1,
   "surfaces": [
-    {"id":"central","public_name":"Central","function":"ground","repository":"central","native":{"kind":"cli","entry":"ctrl","executable":"ctrl"}},
-    {"id":"factory","public_name":"Factory","function":"build","repository":"factory","native":{"kind":"workbench","entry":"source","executable":null}}
+    {
+      "id":"central",
+      "public_name":"Central",
+      "function":"ground",
+      "repository":"central",
+      "native":{
+        "kind":"cli",
+        "entry":"ctrl",
+        "executable":"ctrl",
+        "canonical_namespace":"central",
+        "compatibility_aliases":["ctrl"],
+        "structured_output":{"supported":true,"format":"json"}
+      },
+      "install":{"revision":"central-accepted"},
+      "verification":{"operation":{"args":["doctor","--json"]}}
+    },
+    {
+      "id":"factory",
+      "public_name":"Factory",
+      "function":"build",
+      "repository":"factory",
+      "native":{
+        "kind":"workbench",
+        "entry":"source",
+        "executable":null,
+        "canonical_namespace":"factory",
+        "compatibility_aliases":[],
+        "structured_output":{"supported":true,"format":"json"}
+      },
+      "install":{"revision":"factory-accepted"},
+      "verification":{"operation":{"args":["verify","--json"]}}
+    }
   ]
 }"#;
 
@@ -24,6 +54,8 @@ fn disclosure_distinguishes_empty_installed_registered_and_broken_without_native
     )
     .unwrap();
     assert_eq!(installed.surfaces[0].state, NativeSurfaceState::Installed);
+    assert_eq!(installed.surfaces[0].canonical_namespace, "central");
+    assert_eq!(installed.surfaces[0].accepted_revision, "central-accepted");
 
     let registered = r#"{
       "schema":1,
