@@ -153,6 +153,31 @@ impl DesktopHost {
         self.destination = destination;
         Ok(())
     }
+
+    /// Re-observe the live World without a restart. This is the same
+    /// deterministic discover/observe/reconcile operation the host already
+    /// performs at startup; it refreshes the read model, never grants new
+    /// authority and never invokes a model or Agent.
+    pub fn reconcile_world(&mut self) -> Result<WorldRecognitionAccount, String> {
+        let ground = self
+            .disclosure
+            .personal_ground
+            .as_deref()
+            .ok_or_else(|| "no personal ground configured for World reconciliation".to_owned())?;
+        match discover_ground(Path::new(ground)) {
+            Ok(account) => {
+                self.world_recognition = Some(account.clone());
+                Ok(account)
+            }
+            Err(error) => {
+                self.world_recognition = None;
+                self.current_world
+                    .warnings
+                    .push(format!("World recognition unavailable: {error}"));
+                Err(error)
+            }
+        }
+    }
 }
 
 fn suite_condition(surfaces: &[SurfaceDisclosure]) -> SuiteCondition {

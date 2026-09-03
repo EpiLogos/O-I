@@ -34,7 +34,7 @@ test('selection, retrieval and Agent Context disclosure remain distinct', () => 
 
 test('P2 projects the one P1 canonical selection instead of owning a second selection state', () => {
   assert.match(main, /selection=\{snapshot\.selection\}/);
-  assert.match(main, /<WorkbenchSurface selection=\{selection\} currentWorld=\{currentWorld\} onSelect=\{onSelect\} \/>/);
+  assert.match(main, /<WorkbenchSurface selection=\{selection\} currentWorld=\{currentWorld\} worldRecognition=\{worldRecognition\} onSelect=\{onSelect\} onReobserveWorld=\{onReobserveWorld\} \/>/);
   assert.match(workbench, /selection\?: WorkbenchSemanticRef/);
   assert.doesNotMatch(workbench, /useState<WorkbenchSemanticRef/);
   assert.match(workbench, /<ProjectNavigator selection=\{selection\}/);
@@ -56,6 +56,18 @@ test('Navigator consumes the one ShellSnapshot CurrentWorld without refetching o
   assert.match(currentWorld, /machine\.central_source/);
   assert.match(currentWorld, /machine\.workcell_ref/);
   assert.doesNotMatch(currentWorld, /type MachineModel/);
+});
+
+test('Reconciled World is projected from the one ShellSnapshot without a desktop World model', () => {
+  assert.match(shell, /pub world_recognition: Option<WorldRecognitionAccount>/);
+  assert.match(main, /world_recognition\?: WorldRecognitionAccount/);
+  assert.match(main, /worldRecognition=\{snapshot\.world_recognition\}/);
+  assert.match(workbench, /<WorldRecognitionNavigator account=\{worldRecognition\} onReobserve=\{onReobserveWorld\} \/>/);
+  const worldRecognitionModel = readFileSync(new URL('./world-recognition-model.mjs', import.meta.url), 'utf8');
+  assert.match(worldRecognitionModel, /oi\.world-recognition-account\/v1/);
+  assert.match(worldRecognitionModel, /owner_bindings/);
+  assert.doesNotMatch(worldRecognitionModel, /invoke\(/);
+  assert.doesNotMatch(worldRecognitionModel, /fetch\(/);
 });
 
 test('Navigator only labels CF5 from the CurrentWorld context-frame result', () => {

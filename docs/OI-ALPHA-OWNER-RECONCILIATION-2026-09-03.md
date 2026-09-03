@@ -67,15 +67,27 @@ underlying actuality; only presentation differs.
 
 ## Remaining classified gaps
 
-- **Desktop React rendering** of the World account is the next presentation step
-  (read model already exposed through `ShellSnapshot.world_recognition`).
-- **Continuing-run reconciliation** — the account re-observes on each run already;
-  automatic rescan-on-change (start/stop/install of tools) is not yet wired.
+- **Desktop React rendering** — now done. `WorldRecognitionNavigator` (plus the
+  pure `world-recognition-model.mjs` render model and its node tests) discloses
+  the reconciled World in the navigator: systems with version/degraded facts,
+  owner bindings, Actuation contracts, Workcell material capacities, the
+  extension frontier and provider errors. Default view stays a summary; detail
+  is collapsible.
+- **Continuing-run reconciliation** — the account re-observes on each run and
+  now also on demand from the desktop: `DesktopHost::reconcile_world()` +
+  `reconcile_world` Tauri command + a "Re-observe World" control. The account
+  refreshes the read model without a restart. Automatic rescan-on-change
+  (start/stop/install of tools detected without any user action) is still not
+  wired; a filesystem watch/periodic re-observe is the next deterministic step.
 - **Central connector/machine registry** is not yet queried as an owner source
   (Central exposes `ctrl capabilities`/`ctrl doctor`; its connector Ports are the
   next authored-ground case).
 
 ## Verification
 
-`cargo test` (cli): 21 lib + 13 main + 15 cli + 3 + 1 + 2 + 5 + 3 + 11 + 2 = all pass.
-`cargo test` (desktop-core): all pass, including the World-account shell-snapshot test.
+`cargo test` (cli): all pass.
+`cargo test` (desktop-core): all pass, including World-account shell-snapshot
+and `reconcile_world` refresh tests.
+`cargo check` (desktop src-tauri): passes.
+`node --test` (desktop ui): 70 pass.
+`npm run build` (desktop ui): tsc + vite build pass.

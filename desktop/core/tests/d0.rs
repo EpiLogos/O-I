@@ -170,3 +170,45 @@ fn shell_snapshot_carries_world_recognition_when_ground_is_set() {
     std::fs::remove_dir_all(&root).unwrap();
     result
 }
+
+#[test]
+fn reconcile_world_refreshes_the_read_model_without_a_restart() {
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    let root = std::env::temp_dir().join(format!(
+        "oi-desktop-reconcile-{}",
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    std::fs::create_dir_all(&root).unwrap();
+
+    let previous = std::env::var_os("OI_HOME");
+    std::env::set_var("OI_HOME", root.join("oi-state"));
+    let result = (|| {
+        let mut disclosure = disclosure(&[NativeSurfaceState::Registered]);
+        disclosure.personal_ground = Some(root.display().to_string());
+        let mut host = DesktopHost::new(disclosure);
+
+        let account = host.reconcile_world().expect("reconcile World account");
+        assert_eq!(account.schema, "oi.world-recognition-account/v1");
+        assert_eq!(account.target, root.display().to_string());
+
+        let snapshot = host.snapshot(BridgeCaller::ShellUi).unwrap();
+        assert!(snapshot.world_recognition.is_some());
+    })();
+    match previous {
+        Some(value) => std::env::set_var("OI_HOME", value),
+        None => std::env::remove_var("OI_HOME"),
+    }
+    std::fs::remove_dir_all(&root).unwrap();
+    result
+}
+
+#[test]
+fn reconcile_world_without_ground_is_an_honest_error_not_a_fabricated_world() {
+    let mut host = DesktopHost::new(disclosure(&[NativeSurfaceState::Registered]));
+    assert!(host.reconcile_world().is_err());
+    assert!(host.snapshot(BridgeCaller::ShellUi).unwrap().world_recognition.is_none());
+}

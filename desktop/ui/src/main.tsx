@@ -4,6 +4,7 @@ import { invoke } from '@tauri-apps/api/core';
 import '@epilogos/oi-design-system/tokens.css';
 import './shell.css';
 import type { CurrentWorldReading } from './current-world';
+import type { WorldRecognitionAccount } from './world-recognition';
 import { RuntimeObservationSurface } from './runtime-observation';
 import { NativeSearchCommand } from './native-command';
 import { ExploreWorkbenchSurface } from './explore-workbench';
@@ -46,6 +47,7 @@ type Snapshot = {
   surfaces: Surface[];
   selection?: SemanticRef;
   current_world?: CurrentWorldReading;
+  world_recognition?: WorldRecognitionAccount;
   warnings: string[];
 };
 
@@ -199,6 +201,14 @@ function App() {
     }
   }
 
+  async function reobserveWorld() {
+    try {
+      setSnapshot(await invoke<Snapshot>('reconcile_world'));
+    } catch {
+      invoke<Snapshot>('shell_snapshot').then(setSnapshot).catch(() => setSnapshot(preview));
+    }
+  }
+
   async function openDestination(destination: Destination) {
     try {
       await invoke('open_destination', { destination });
@@ -281,8 +291,10 @@ function App() {
           aikitContext={aikitContext}
           selection={snapshot.selection}
           currentWorld={snapshot.current_world}
+          worldRecognition={snapshot.world_recognition}
           onSelect={selectWorkbenchRef}
           onRefreshFactory={refreshFactoryBuild}
+          onReobserveWorld={reobserveWorld}
         />
       )}
     />
@@ -421,8 +433,10 @@ function RootCanvasSurface({
   aikitContext,
   selection,
   currentWorld,
+  worldRecognition,
   onSelect,
   onRefreshFactory,
+  onReobserveWorld,
 }: {
   surface: HostSurfaceDescriptor;
   binding: SurfacePresentationBinding;
@@ -433,8 +447,10 @@ function RootCanvasSurface({
   aikitContext: unknown;
   selection?: WorkbenchSemanticRef;
   currentWorld?: CurrentWorldReading;
+  worldRecognition?: WorldRecognitionAccount;
   onSelect: (subject: WorkbenchSemanticRef, evidence: WorkbenchEvidence) => Promise<void>;
   onRefreshFactory: () => Promise<void>;
+  onReobserveWorld?: () => void;
 }) {
   const destination = DESTINATION_BY_SURFACE.get(surface.surfaceRef) ?? 'home';
   const visibleContributions = contributions.filter((entry) => ownerVisibleAt(entry.contribution.native_owner, destination));
@@ -445,7 +461,7 @@ function RootCanvasSurface({
         <p className="oi-eyebrow">Professional host · inherited application substrate</p>
         <h1>The local O:I workbench.</h1>
         <p className="oi-lead">Regions, tabs, splits and presentation focus compose around the same stable refs; SessionSpace, AgentSession and Knowledge remain AIKit/native application state.</p>
-        <WorkbenchSurface selection={selection} currentWorld={currentWorld} onSelect={onSelect} />
+        <WorkbenchSurface selection={selection} currentWorld={currentWorld} worldRecognition={worldRecognition} onSelect={onSelect} onReobserveWorld={onReobserveWorld} />
       </>
     );
   }
