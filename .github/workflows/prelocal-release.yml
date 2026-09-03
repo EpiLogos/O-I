@@ -1,4 +1,4 @@
-name: Pre-local O:I release
+name: Pre-local O:I verification
 
 on:
   pull_request:
@@ -61,25 +61,27 @@ jobs:
           ../ui/node_modules/.bin/tauri build --bundles app --target aarch64-apple-darwin
       - name: Prove build did not rewrite locks
         run: git diff --exit-code -- desktop/src-tauri/Cargo.lock desktop/ui/package-lock.json
-      - name: Package desktop bundle
+      - name: Package exact-SHA desktop artifact
         shell: bash
         run: |
           set -euo pipefail
           bundle_dir='desktop/src-tauri/target/aarch64-apple-darwin/release/bundle/macos'
           app="$(find "$bundle_dir" -maxdepth 1 -type d -name '*.app' -print -quit)"
           test -n "$app"
+          short_sha="${GITHUB_SHA:0:12}"
           mkdir -p dist
-          archive='dist/oi-desktop-0.1.0-aarch64-apple-darwin.app.tar.gz'
+          archive="dist/oi-desktop-prelocal-${short_sha}-aarch64-apple-darwin.app.tar.gz"
           tar -C "$(dirname "$app")" -czf "$archive" "$(basename "$app")"
           shasum -a 256 "$archive" > "$archive.sha256"
       - uses: actions/attest@v4
         if: github.event_name == 'push'
         with:
-          subject-path: dist/oi-desktop-0.1.0-aarch64-apple-darwin.app.tar.gz
+          subject-path: dist/*.tar.gz
       - uses: actions/upload-artifact@v4
         if: github.event_name == 'push'
         with:
-          name: oi-desktop-aarch64-apple-darwin
+          name: oi-desktop-prelocal-${{ github.sha }}-aarch64-apple-darwin
+          retention-days: 14
           path: |
             dist/*.tar.gz
             dist/*.sha256
@@ -107,14 +109,17 @@ jobs:
           targets: ${{ matrix.target }}
       - name: Build locked O:I bootstrap
         run: cargo build --manifest-path cli/Cargo.toml --locked --release --target '${{ matrix.target }}' --bin oi
-      - name: Package
+      - name: Package exact-SHA pre-local artifact
         shell: bash
         run: |
           set -euo pipefail
-          name="oi-0.1.0-${{ matrix.target }}"
+          short_sha="${GITHUB_SHA:0:12}"
+          name="oi-prelocal-${short_sha}-${{ matrix.target }}"
           mkdir -p "dist/$name"
           cp "cli/target/${{ matrix.target }}/release/oi" "dist/$name/oi"
-          cp suite/manifest.json "dist/$name/suite-manifest.json"
+          cp suite/manifest.json "dist/$name/suite-build-record.json"
+          printf '%s
+' "$GITHUB_SHA" > "dist/$name/COMMIT"
           tar -C dist -czf "dist/$name.tar.gz" "$name"
           shasum -a 256 "dist/$name.tar.gz" > "dist/$name.tar.gz.sha256"
       - uses: actions/attest@v4
@@ -122,7 +127,8 @@ jobs:
           subject-path: dist/*.tar.gz
       - uses: actions/upload-artifact@v4
         with:
-          name: oi-${{ matrix.target }}
+          name: oi-prelocal-${{ github.sha }}-${{ matrix.target }}
+          retention-days: 14
           path: |
             dist/*.tar.gz
             dist/*.sha256
@@ -143,7 +149,7 @@ jobs:
       - name: Verify npm distribution package
         working-directory: packages/oi-cli
         run: npm test
-      - name: Pack npm distribution package
+      - name: Pack npm distribution artifact
         shell: bash
         run: |
           set -euo pipefail
@@ -157,43 +163,8 @@ jobs:
           subject-path: dist/*.tgz
       - uses: actions/upload-artifact@v4
         with:
-          name: oi-npm-package
+          name: oi-npm-prelocal-${{ github.sha }}
+          retention-days: 14
           path: |
             dist/*.tgz
             dist/*.sha256
-
-  release:
-    if: github.event_name == 'push'
-    needs: [artifact, desktop-bundle, npm-package]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: oi-*
-          path: dist
-          merge-multiple: true
-      - name: Publish immutable O:I bootstrap release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          tag='oi-v0.1.0-prelocal.4'
-          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "release $tag already exists; leaving the accepted immutable release untouched"
-            exit 0
-          fi
-          if ! gh release create "$tag" dist/*.tar.gz dist/*.tgz dist/*.sha256 \
-            --repo "$GITHUB_REPOSITORY" \
-            --target "$GITHUB_SHA" \
-            --prerelease \
-            --title 'O:I 0.1.0 pre-local.4' \
-            --notes 'Prebuilt O:I bootstrap, npm-formatted @epi-logos/oi distribution package, and locked Apple Silicon Tauri app bundle for the accepted six-product suite manifest. Physical workstation/provider acceptance is explicitly not claimed.'; then
-            if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-              echo "release $tag was created concurrently; leaving that accepted immutable release untouched"
-              exit 0
-            fi
-            exit 1
-          fi

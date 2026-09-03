@@ -1,4 +1,4 @@
-// O:I 0.1.0-prelocal.4 release-candidate front door.
+// O:I pre-local verification/build front door; no release standing is implied.
 mod composition {
     include!("composition.rs");
     include!("bootstrap.rs");
@@ -9,8 +9,10 @@ mod composition {
     include!("current_world_command.rs");
     include!("trust_closure.rs");
     include!("trust_closure_guard.rs");
+    include!("current_main_install.rs");
     include!("existing_world.rs");
     include!("omarchy_host.rs");
+    include!("product_command_route.rs");
     include!("frontdoor.rs");
 }
 

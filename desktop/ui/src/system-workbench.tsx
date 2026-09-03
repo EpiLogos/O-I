@@ -14,6 +14,29 @@ const AXIS_LABELS: Record<SystemStateAxis, string> = {
   provenance: 'Provenance',
 };
 
+type ProductCommandSurface = {
+  id: string;
+  public_name: string;
+  native_entry: string;
+  accepted_revision: string;
+  canonical_namespace: string;
+  compatibility_aliases: string[];
+  version_command: string[];
+  capability_command: string[];
+  verification_command: string[];
+  state: string;
+  resolved?: string;
+};
+
+const SURFACE_ID_BY_SYSTEM_PRODUCT: Record<string, string> = {
+  central: 'central',
+  actuation: 'actuation',
+  'ai-kit': 'ai-kit',
+  factory: 'software-factory',
+  workcell: 'workcell',
+  'ql-mef': 'quaternal-logic',
+};
+
 export function SystemWorkbench({
   surfaces,
   contributions,
@@ -32,8 +55,10 @@ export function SystemWorkbench({
   mode?: 'canvas' | 'rail';
 }) {
   const model = useMemo(() => buildSystemWorkbench({ surfaces, contributions, aikitContext, factoryBuild, currentWorld, warnings }), [surfaces, contributions, aikitContext, factoryBuild, currentWorld, warnings]);
+  const commands = useMemo(() => productCommandSurfaces(surfaces), [surfaces]);
   const [selectedId, setSelectedId] = useState('ai-kit');
   const selected = model.products.find((product) => product.id === selectedId) ?? model.products[0];
+  const selectedCommand = commandForProduct(commands, selected.id);
   const presentCount = model.constitution.present_positions.length;
   const constitutionLabel = model.condition === 'cf5' ? 'CF5' : model.condition;
   const machine = model.constitution.current_machine;
@@ -47,14 +72,18 @@ export function SystemWorkbench({
         </div>
         {machine && <p className="oi-system__authority"><code>{machine.role}</code> ↔ <code>{machine.workcell_ref ?? 'Workcell unresolved'}</code>{machine.health ? ` · ${machine.health}` : ''}</p>}
         <div className="oi-system__rail-products">
-          {model.products.map((product) => (
-            <button type="button" key={product.id} onClick={() => setSelectedId(product.id)} data-selected={product.id === selected.id}>
-              <span>{product.label}</span>
-              <small data-state={product.constitution.present ? product.constitution.state : 'unavailable'}>P{product.constitution.position} · {product.constitution.present ? product.constitution.state : 'absent'}</small>
-            </button>
-          ))}
+          {model.products.map((product) => {
+            const command = commandForProduct(commands, product.id);
+            return (
+              <button type="button" key={product.id} onClick={() => setSelectedId(product.id)} data-selected={product.id === selected.id}>
+                <span>{product.label}</span>
+                <small data-state={product.constitution.present ? product.constitution.state : 'unavailable'}>P{product.constitution.position} · {product.constitution.present ? product.constitution.state : 'absent'} · {command ? `oi ${command.canonical_namespace}` : 'command unresolved'}</small>
+              </button>
+            );
+          })}
         </div>
         <StateDigest product={selected} compact />
+        {selectedCommand && <p className="oi-system__authority">Command → <code>oi {selectedCommand.canonical_namespace}</code> → <code>{selectedCommand.native_entry}</code></p>}
         <p className="oi-system__authority">Authority → {selected.authority}</p>
       </section>
     );
@@ -78,33 +107,39 @@ export function SystemWorkbench({
       {machine && <p className="oi-system__authority">Machine → <code>{machine.role}</code> · {machine.central_source ?? 'Central source unresolved'} ↔ <code>{machine.workcell_ref ?? 'Workcell unresolved'}</code>{machine.health ? ` · ${machine.health}` : ''}</p>}
 
       <div className="oi-system__tabs" role="tablist" aria-label="System products">
-        {model.products.map((product) => (
-          <button
-            type="button"
-            role="tab"
-            aria-selected={product.id === selected.id}
-            key={product.id}
-            onClick={() => setSelectedId(product.id)}
-          >
-            <span>{product.label}</span>
-            <small data-state={product.constitution.present ? product.constitution.state : 'unavailable'}>P{product.constitution.position} · {product.constitution.present ? product.constitution.state : 'absent'}</small>
-          </button>
-        ))}
+        {model.products.map((product) => {
+          const command = commandForProduct(commands, product.id);
+          return (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={product.id === selected.id}
+              key={product.id}
+              onClick={() => setSelectedId(product.id)}
+            >
+              <span>{product.label}</span>
+              <small data-state={product.constitution.present ? product.constitution.state : 'unavailable'}>P{product.constitution.position} · {product.constitution.present ? product.constitution.state : 'absent'} · {command ? `oi ${command.canonical_namespace}` : 'command unresolved'}</small>
+            </button>
+          );
+        })}
       </div>
 
       <div className="oi-system__matrix-wrap">
         <table className="oi-system__matrix">
           <thead><tr><th>Owner</th>{model.state_axes.map((axis) => <th key={axis}>{AXIS_LABELS[axis]}</th>)}</tr></thead>
           <tbody>
-            {model.products.map((product) => (
-              <tr key={product.id} data-selected={product.id === selected.id} onClick={() => setSelectedId(product.id)}>
-                <th><strong>{product.label}</strong><small>P{product.constitution.position} · {product.constitution.present ? product.constitution.state : 'absent'} · {product.authority}</small></th>
-                {model.state_axes.map((axis) => {
-                  const state = product.states[axis];
-                  return <td key={axis}><span className="oi-system__state" data-state={state.status}>{state.status.replaceAll('_', ' ')}</span><p>{state.summary}</p></td>;
-                })}
-              </tr>
-            ))}
+            {model.products.map((product) => {
+              const command = commandForProduct(commands, product.id);
+              return (
+                <tr key={product.id} data-selected={product.id === selected.id} onClick={() => setSelectedId(product.id)}>
+                  <th><strong>{product.label}</strong><small>P{product.constitution.position} · {product.constitution.present ? product.constitution.state : 'absent'} · {command ? `oi ${command.canonical_namespace}` : 'command unresolved'} · {product.authority}</small></th>
+                  {model.state_axes.map((axis) => {
+                    const state = product.states[axis];
+                    return <td key={axis}><span className="oi-system__state" data-state={state.status}>{state.status.replaceAll('_', ' ')}</span><p>{state.summary}</p></td>;
+                  })}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -115,10 +150,16 @@ export function SystemWorkbench({
           <h3>{selected.label}</h3>
           <p>{selected.purpose}</p>
           <p className="oi-system__authority">Constitution → <strong>P{selected.constitution.position} · {selected.constitution.present ? selected.constitution.state : 'absent'}</strong></p>
+          {selectedCommand && <p className="oi-system__authority">Command → <strong><code>oi {selectedCommand.canonical_namespace}</code> → <code>{selectedCommand.native_entry}</code></strong></p>}
           <p className="oi-system__authority">Native authority → <strong>{selected.authority}</strong></p>
           <StateDigest product={selected} />
         </div>
         <div className="oi-system__inventory">
+          <Inventory title="Native command" empty="No canonical product command is disclosed." items={selectedCommand ? [{
+            id: `oi ${selectedCommand.canonical_namespace}`,
+            meta: `${selectedCommand.native_entry} · ${selectedCommand.state}${selectedCommand.compatibility_aliases.length ? ` · aliases ${selectedCommand.compatibility_aliases.map((alias) => `oi ${alias}`).join(', ')}` : ''}`,
+            foot: `accepted ${shortRevision(selectedCommand.accepted_revision)} · verify ${selectedCommand.verification_command.join(' ')}`,
+          }] : []} />
           <Inventory title="Resources / readings" empty="No native resource/read model is disclosed." items={selected.resources.map((resource) => ({
             id: resource.resource_ref,
             meta: `${resource.kind} · ${resource.availability}`,
@@ -142,6 +183,32 @@ export function SystemWorkbench({
       <div className="oi-system__invariants">{model.invariants.map((invariant) => <span key={invariant}>{invariant}</span>)}</div>
     </section>
   );
+}
+
+function productCommandSurfaces(surfaces: unknown[]): ProductCommandSurface[] {
+  return surfaces.filter((surface): surface is ProductCommandSurface => {
+    if (!surface || typeof surface !== 'object') return false;
+    const candidate = surface as Partial<ProductCommandSurface>;
+    return typeof candidate.id === 'string'
+      && typeof candidate.native_entry === 'string'
+      && typeof candidate.canonical_namespace === 'string'
+      && candidate.canonical_namespace.length > 0
+      && typeof candidate.accepted_revision === 'string'
+      && Array.isArray(candidate.compatibility_aliases)
+      && Array.isArray(candidate.version_command)
+      && Array.isArray(candidate.capability_command)
+      && Array.isArray(candidate.verification_command)
+      && typeof candidate.state === 'string';
+  });
+}
+
+function commandForProduct(commands: ProductCommandSurface[], systemProductId: string) {
+  const surfaceId = SURFACE_ID_BY_SYSTEM_PRODUCT[systemProductId];
+  return commands.find((command) => command.id === surfaceId);
+}
+
+function shortRevision(revision: string) {
+  return revision.slice(0, 12) || 'unresolved';
 }
 
 function StateDigest({ product, compact = false }: { product: SystemProduct; compact?: boolean }) {

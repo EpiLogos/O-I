@@ -15,6 +15,7 @@ mod living_wiki;
 mod local_aikit;
 mod local_factory;
 mod native_application;
+mod product_command;
 mod project_field;
 mod project_knowledge;
 mod shell;
@@ -76,6 +77,9 @@ pub use local_factory::{host_factory_snapshot, LocalFactoryHost};
 pub use native_application::{
     load_context_resolution, load_model_runtime, NativeContextResolution,
     NativeModelRuntimeReadModel,
+};
+pub use product_command::{
+    product_command_reading, ProductCommandReading, PRODUCT_COMMAND_READING_SCHEMA,
 };
 pub use project_field::{
     LocalProjectField, NativeOwnerReading, ProjectFieldSnapshot, ProjectMapStatus,

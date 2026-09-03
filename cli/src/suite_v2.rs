@@ -4,7 +4,8 @@ const SUITE_MANIFEST_JSON: &str = include_str!("../../suite/manifest.json");
 struct SuiteManifest {
     schema: String,
     suite_version: String,
-    accepted_at: String,
+    recorded_at: String,
+    standing: String,
     products: Vec<SuiteProduct>,
     #[serde(default)]
     physical_gates: Vec<SuiteGate>,
@@ -19,7 +20,7 @@ struct SuiteProduct {
     canonical_repository: Option<String>,
     checkout: String,
     revision: String,
-    release_tag: String,
+    historical_tag: String,
     artifact: SuiteArtifact,
     #[serde(default)]
     dev: SuiteDev,
@@ -122,8 +123,8 @@ fn suite_v2_main() -> Option<ExitCode> {
 
 fn print_suite_v2_help() -> Result<(), String> {
     let manifest = suite_manifest()?;
-    println!("{{O:I}} — accepted six-product suite operator");
-    println!("Suite: {} (accepted {})", manifest.suite_version, manifest.accepted_at);
+    println!("{{O:I}} — pre-local six-product artifact operator");
+    println!("Build record: {} (recorded {}; {})", manifest.suite_version, manifest.recorded_at, manifest.standing);
     println!();
     println!("Ordinary operation:");
     println!("  oi install [--personal-ground PATH] [PRODUCT ...]");
@@ -155,6 +156,9 @@ fn suite_manifest() -> Result<SuiteManifest, String> {
         .map_err(|error| format!("embedded suite manifest is invalid: {error}"))?;
     if manifest.schema != "oi.suite-manifest/v1" {
         return Err(format!("unsupported suite manifest schema {}", manifest.schema));
+    }
+    if manifest.standing != "historical-unratified-prelocal-build-record" {
+        return Err(format!("unsupported suite build standing {}", manifest.standing));
     }
     let mut ids = HashSet::new();
     for product in &manifest.products {
@@ -204,7 +208,7 @@ fn platform_target() -> Result<&'static str, String> {
     match (env::consts::OS, env::consts::ARCH) {
         ("macos", "aarch64") => Ok("aarch64-apple-darwin"),
         ("linux", "x86_64") => Ok("x86_64-unknown-linux-gnu"),
-        (os, arch) => Err(format!("no accepted first-suite binary target for {os}/{arch}")),
+        (os, arch) => Err(format!("no recorded pre-local build target for {os}/{arch}")),
     }
 }
 
@@ -215,7 +219,7 @@ fn selected_asset(product: &SuiteProduct) -> Result<&SuiteAsset, String> {
     }
     let target = platform_target()?;
     product.artifact.assets.iter().find(|asset| asset.target == target)
-        .ok_or_else(|| format!("{} has no accepted artifact for {target}", product.id))
+        .ok_or_else(|| format!("{} has no recorded pre-local build artifact for {target}", product.id))
 }
 
 fn parse_install_request(args: &[OsString], manifest: &SuiteManifest) -> Result<(Option<PathBuf>, Vec<String>), String> {
@@ -281,7 +285,7 @@ fn command_suite_v2_install(args: &[OsString]) -> Result<i32, String> {
         }
     }
 
-    println!("Installed accepted suite {}.", manifest.suite_version);
+    println!("Installed recorded pre-local build set {}.", manifest.suite_version);
     println!("Managed root: {}", data_root.display());
     println!("Control/ and Work/ were not used as artifact storage.");
     println!("Next: oi verify");
@@ -336,7 +340,7 @@ fn install_manifest_product(
     let archive = cache_dir.join(&asset.name);
     if !archive.is_file() || sha256_file(&archive).ok().as_deref() != Some(asset.sha256.as_str()) {
         let temp = cache_dir.join(format!(".{}.download", asset.name));
-        let url = format!("{}/releases/download/{}/{}", product.repository.trim_end_matches('/'), product.release_tag, asset.name);
+        let url = format!("{}/releases/download/{}/{}", product.repository.trim_end_matches('/'), product.historical_tag, asset.name);
         download_exact(&url, &temp)?;
         let actual = sha256_file(&temp)?;
         if actual != asset.sha256 {
@@ -365,13 +369,13 @@ fn install_manifest_product(
             .as_deref() == Some(asset.sha256.as_str());
     if !reusable {
         if product_root.exists() {
-            return Err(format!("managed product root {} exists without the accepted marker; refusing to rewrite it", product_root.display()));
+            return Err(format!("managed product root {} exists without the recorded build marker; refusing to rewrite it", product_root.display()));
         }
         let parent = product_root.parent().ok_or_else(|| "managed product root has no parent".to_owned())?;
         fs::create_dir_all(parent).map_err(|error| format!("cannot create {}: {error}", parent.display()))?;
         let temp_root = parent.join(format!(".{}-{}.tmp", product.revision, prelocal_now_ms()?));
         fs::create_dir_all(&temp_root).map_err(|error| format!("cannot create {}: {error}", temp_root.display()))?;
-        let tar = resolve_executable("tar").ok_or_else(|| "tar is required to unpack accepted suite artifacts".to_owned())?;
+        let tar = resolve_executable("tar").ok_or_else(|| "tar is required to unpack recorded pre-local build artifacts".to_owned())?;
         let status = Command::new(tar).arg("-xzf").arg(&archive).arg("-C").arg(&temp_root).status()
             .map_err(|error| format!("failed to unpack {}: {error}", asset.name))?;
         if !status.success() {
@@ -383,7 +387,7 @@ fn install_manifest_product(
             "id": product.id,
             "suite_version": receipt.suite_version,
             "revision": product.revision,
-            "release_tag": product.release_tag,
+            "historical_tag": product.historical_tag,
             "asset": asset.name,
             "sha256": asset.sha256,
             "attestation": asset.attestation,
@@ -446,7 +450,7 @@ fn install_manifest_product(
 }
 
 fn download_exact(url: &str, target: &Path) -> Result<(), String> {
-    let curl = resolve_executable("curl").ok_or_else(|| "curl is required for release-artifact installation".to_owned())?;
+    let curl = resolve_executable("curl").ok_or_else(|| "curl is required for pre-local build-artifact installation".to_owned())?;
     let status = Command::new(curl)
         .args(["--fail", "--location", "--retry", "5", "--retry-all-errors", "--silent", "--show-error", "--output"])
         .arg(target).arg(url).status()
@@ -529,7 +533,7 @@ fn command_suite_v2_update(args: &[OsString]) -> Result<i32, String> {
     } else {
         receipt.products.keys().map(OsString::from).collect()
     };
-    println!("Updating only to accepted suite manifest {} (never arbitrary latest).", manifest.suite_version);
+    println!("Updating only to recorded pre-local build set {} (never arbitrary latest).", manifest.suite_version);
     command_suite_v2_install(&ids)
 }
 
@@ -557,9 +561,9 @@ fn command_suite_v2_status(args: &[OsString]) -> Result<i32, String> {
     println!("Managed root: {}", data_root.display());
     for product in &manifest.products {
         match receipt.products.get(&product.id) {
-            Some(installed) if installed.revision == product.revision => println!("  {:<18} accepted  {}", product.public_name, product.revision),
-            Some(installed) => println!("  {:<18} drift     {} (accepted {})", product.public_name, installed.revision, product.revision),
-            None => println!("  {:<18} missing   accepted {}", product.public_name, product.revision),
+            Some(installed) if installed.revision == product.revision => println!("  {:<18} recorded  {}", product.public_name, product.revision),
+            Some(installed) => println!("  {:<18} drift     {} (recorded {})", product.public_name, installed.revision, product.revision),
+            None => println!("  {:<18} missing   recorded {}", product.public_name, product.revision),
         }
     }
     println!("Physical acceptance: NOT RUN (separate gate)");
@@ -582,8 +586,8 @@ fn command_suite_v2_doctor(args: &[OsString]) -> Result<i32, String> {
                 let asset = selected_asset(product)?;
                 let cached = data_root.join("cache").join(&product.id).join(&product.revision).join(&asset.name);
                 if !Path::new(&installed.root).is_dir() { Err("managed product root missing".to_owned()) }
-                else if !cached.is_file() { Err("verified release archive missing from managed cache".to_owned()) }
-                else if sha256_file(&cached)? != asset.sha256 { Err("cached release archive checksum mismatch".to_owned()) }
+                else if !cached.is_file() { Err("recorded build archive missing from managed cache".to_owned()) }
+                else if sha256_file(&cached)? != asset.sha256 { Err("cached build archive checksum mismatch".to_owned()) }
                 else if let Some(exe) = installed.executable.as_deref() {
                     verify_installed_product(product, Some(Path::new(exe)), composition.personal_ground.as_deref()).map_err(|e| e.to_string())
                 } else { Ok(()) }

@@ -3,7 +3,7 @@
 
 This guard separates three claims:
 
-1. suite/manifest.json is an immutable released-artifact snapshot;
+1. suite/manifest.json is a historical unratified pre-local build record;
 2. suite/mainline.json + surfaces.json describe one coherent six-product source cut;
 3. O:I #97 live-main convergence applies only to its explicitly authored primary
    repository set. Quaternal Logic remains the separately owned parallel product
@@ -70,7 +70,7 @@ def main() -> int:
 
     snapshot = load("suite/mainline.json")
     surfaces = load("surfaces.json")
-    release = load("suite/manifest.json")
+    build_record = load("suite/manifest.json")
 
     if snapshot.get("schema") != "oi.mainline-snapshot/v1":
         die("unexpected mainline snapshot schema")
@@ -85,13 +85,13 @@ def main() -> int:
     if set(surface_by_id) != EXPECTED_IDS or len(surface_list) != len(EXPECTED_IDS):
         die("surfaces.json and mainline snapshot do not describe the same six products")
 
-    release_relation = snapshot.get("release_manifest", {})
-    if release_relation.get("relation") != "historical-immutable-release-snapshot":
-        die("release/mainline provenance relation is not explicit")
-    if release_relation.get("suite_version") != release.get("suite_version"):
-        die("recorded historical release version does not match suite/manifest.json")
-    if release_relation.get("accepted_at") != release.get("accepted_at"):
-        die("recorded historical release date does not match suite/manifest.json")
+    record_relation = snapshot.get("build_record", {})
+    if record_relation.get("relation") != "historical-build-evidence-not-current-main-authority":
+        die("build-record/mainline provenance relation is not explicit")
+    if record_relation.get("suite_version") != build_record.get("suite_version"):
+        die("recorded historical build version does not match suite/manifest.json")
+    if record_relation.get("recorded_at") != build_record.get("recorded_at"):
+        die("recorded historical build date does not match suite/manifest.json")
 
     for product_id in sorted(EXPECTED_IDS):
         product = by_id[product_id]
@@ -127,8 +127,11 @@ def main() -> int:
     if args.live:
         print("live #97 in-scope native-main equality: PASS")
         print("Quaternal Logic parallel owner: represented, NOT #97 live-gated")
+    if build_record.get("standing") != "historical-unratified-prelocal-build-record":
+        die("historical build record has release/acceptance standing")
     print(
-        f"release snapshot remains distinct: {release['suite_version']} accepted {release['accepted_at']}"
+        f"historical build record remains distinct: {build_record['suite_version']} "
+        f"recorded {build_record['recorded_at']}; unratified"
     )
     return 0
 

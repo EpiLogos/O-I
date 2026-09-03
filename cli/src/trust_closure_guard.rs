@@ -38,18 +38,3 @@ fn current_source_install_ready(id: &str, root: PathBuf, accepted: Option<String
     }
     Ok(())
 }
-
-fn command_guarded_current_dev_install(args: &[OsString]) -> Result<i32, String> {
-    let manifest = suite_manifest()?;
-    let catalog = catalog()?;
-    let ground = configured_ground()?;
-    let ids = requested_dev_ids(args, &manifest)?;
-    for id in &ids {
-        current_source_install_ready(
-            id,
-            dev_source_path(&ground, id),
-            current_accepted_revision(&catalog, id),
-        )?;
-    }
-    command_current_dev_install(args)
-}

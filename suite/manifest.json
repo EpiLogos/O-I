@@ -1,7 +1,6 @@
 {
   "schema": "oi.suite-manifest/v1",
   "suite_version": "0.1.0-prelocal.2",
-  "accepted_at": "2026-08-17",
   "products": [
     {
       "id": "central",
@@ -10,7 +9,6 @@
       "canonical_repository": "https://github.com/EpiLogos/Central",
       "checkout": "Central",
       "revision": "78a545214ad70e055fae38ccae2d78443112f283",
-      "release_tag": "central-v0.1.0-prelocal.2",
       "artifact": {
         "kind": "cli",
         "entry": "ctrl",
@@ -31,9 +29,21 @@
         "installed_verify": []
       },
       "dev": {
-        "build": ["cargo", "build", "--workspace", "--locked", "--release"],
-        "test": ["cargo", "test", "--workspace", "--locked"]
-      }
+        "build": [
+          "cargo",
+          "build",
+          "--workspace",
+          "--locked",
+          "--release"
+        ],
+        "test": [
+          "cargo",
+          "test",
+          "--workspace",
+          "--locked"
+        ]
+      },
+      "historical_tag": "central-v0.1.0-prelocal.2"
     },
     {
       "id": "actuation",
@@ -42,7 +52,6 @@
       "canonical_repository": "https://github.com/EpiLogos/Actuation",
       "checkout": "Actuation",
       "revision": "03e03acb1ae47d60f26903209112258e60f83627",
-      "release_tag": "actuation-v0.1.0-prelocal.2",
       "artifact": {
         "kind": "component",
         "entry": null,
@@ -58,8 +67,14 @@
       },
       "dev": {
         "build": [],
-        "test": ["node", "--test", "contracts/agency.test.mjs", "contracts/model-bearing.test.mjs"]
-      }
+        "test": [
+          "node",
+          "--test",
+          "contracts/agency.test.mjs",
+          "contracts/model-bearing.test.mjs"
+        ]
+      },
+      "historical_tag": "actuation-v0.1.0-prelocal.2"
     },
     {
       "id": "ai-kit",
@@ -68,7 +83,6 @@
       "canonical_repository": "https://github.com/EpiLogos/ai-kit",
       "checkout": "ai-kit",
       "revision": "9ff28ca31c723b314ddf62b7f85b6e2611d53d66",
-      "release_tag": "aikit-v0.1.0-prelocal.2",
       "artifact": {
         "kind": "cli",
         "entry": "aikit",
@@ -86,12 +100,27 @@
             "attestation": "https://github.com/EpiLogos/ai-kit/attestations/41163813"
           }
         ],
-        "installed_verify": ["--version"]
+        "installed_verify": [
+          "--version"
+        ]
       },
       "dev": {
-        "build": ["cargo", "build", "--workspace", "--locked", "--release"],
-        "test": ["cargo", "test", "--workspace", "--all-targets", "--locked"]
-      }
+        "build": [
+          "cargo",
+          "build",
+          "--workspace",
+          "--locked",
+          "--release"
+        ],
+        "test": [
+          "cargo",
+          "test",
+          "--workspace",
+          "--all-targets",
+          "--locked"
+        ]
+      },
+      "historical_tag": "aikit-v0.1.0-prelocal.2"
     },
     {
       "id": "software-factory",
@@ -100,7 +129,6 @@
       "canonical_repository": "https://github.com/EpiLogos/Software-Factory",
       "checkout": "Software-Factory",
       "revision": "621624c7c8a9919604ad36db451f1a30806fc0ce",
-      "release_tag": "software-factory-v0.1.0-prelocal.2",
       "artifact": {
         "kind": "component",
         "entry": null,
@@ -115,9 +143,21 @@
         "installed_verify": []
       },
       "dev": {
-        "build": ["cargo", "build", "--workspace", "--locked", "--release"],
-        "test": ["cargo", "test", "--workspace", "--locked"]
-      }
+        "build": [
+          "cargo",
+          "build",
+          "--workspace",
+          "--locked",
+          "--release"
+        ],
+        "test": [
+          "cargo",
+          "test",
+          "--workspace",
+          "--locked"
+        ]
+      },
+      "historical_tag": "software-factory-v0.1.0-prelocal.2"
     },
     {
       "id": "workcell",
@@ -126,7 +166,6 @@
       "canonical_repository": "https://github.com/EpiLogos/Workcell",
       "checkout": "Workcell",
       "revision": "9277fdc852a468f1c53f62b766a38e06705fe482",
-      "release_tag": "workcell-v0.1.0-prelocal.2",
       "artifact": {
         "kind": "cli",
         "entry": "workcell",
@@ -144,12 +183,28 @@
             "attestation": "https://github.com/EpiLogos/Workcell/attestations/41163517"
           }
         ],
-        "installed_verify": ["--json", "doctor"]
+        "installed_verify": [
+          "--json",
+          "doctor"
+        ]
       },
       "dev": {
-        "build": ["cargo", "build", "--workspace", "--locked", "--release"],
-        "test": ["cargo", "test", "--workspace", "--all-targets", "--locked"]
-      }
+        "build": [
+          "cargo",
+          "build",
+          "--workspace",
+          "--locked",
+          "--release"
+        ],
+        "test": [
+          "cargo",
+          "test",
+          "--workspace",
+          "--all-targets",
+          "--locked"
+        ]
+      },
+      "historical_tag": "workcell-v0.1.0-prelocal.2"
     },
     {
       "id": "quaternal-logic",
@@ -158,7 +213,6 @@
       "canonical_repository": "https://github.com/EpiLogos/Quaternal-Logic",
       "checkout": "Quaternal-Logic",
       "revision": "cab0baf52f7d7726708d7fb13c6ac98f9b09b643",
-      "release_tag": "quaternal-logic-v0.1.0-prelocal.2",
       "artifact": {
         "kind": "component",
         "entry": null,
@@ -173,9 +227,22 @@
         "installed_verify": []
       },
       "dev": {
-        "build": ["cargo", "build", "--workspace", "--locked", "--release"],
-        "test": ["cargo", "test", "--workspace", "--all-targets", "--locked"]
-      }
+        "build": [
+          "cargo",
+          "build",
+          "--workspace",
+          "--locked",
+          "--release"
+        ],
+        "test": [
+          "cargo",
+          "test",
+          "--workspace",
+          "--all-targets",
+          "--locked"
+        ]
+      },
+      "historical_tag": "quaternal-logic-v0.1.0-prelocal.2"
     }
   ],
   "physical_gates": [
@@ -191,5 +258,8 @@
       "id": "private-provider-materialisation",
       "description": "Private credential, Tailscale, Docker/GPU and live model-provider materialisation are deferred and are not inferred from cloud CI."
     }
-  ]
+  ],
+  "recorded_at": "2026-08-17",
+  "standing": "historical-unratified-prelocal-build-record",
+  "purpose": "Historical checksummed and attested pre-local build evidence retained for reproducibility and deterministic installation tests; not release ratification, product acceptance, or current-main authority."
 }

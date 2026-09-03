@@ -27,6 +27,12 @@ pub struct CurrentWorldPosition {
     pub product_id: String,
     pub public_name: String,
     pub native_owner: String,
+    #[serde(default)]
+    pub accepted_revision: String,
+    #[serde(default)]
+    pub canonical_namespace: String,
+    #[serde(default)]
+    pub compatibility_aliases: Vec<String>,
     pub state: NativeSurfaceState,
     pub present: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -166,6 +172,9 @@ fn position_from_surface(
             product_id: product_id.to_owned(),
             public_name: surface.public_name.clone(),
             native_owner: surface.repository.clone(),
+            accepted_revision: surface.accepted_revision.clone(),
+            canonical_namespace: surface.canonical_namespace.clone(),
+            compatibility_aliases: surface.compatibility_aliases.clone(),
             state: surface.state,
             present: surface_present(surface),
             native_location: surface.resolved.clone(),
@@ -176,6 +185,9 @@ fn position_from_surface(
             product_id: product_id.to_owned(),
             public_name: public_name.to_owned(),
             native_owner: String::new(),
+            accepted_revision: String::new(),
+            canonical_namespace: String::new(),
+            compatibility_aliases: Vec::new(),
             state: NativeSurfaceState::Missing,
             present: false,
             native_location: None,
@@ -272,6 +284,12 @@ mod tests {
             function: String::new(),
             repository: format!("https://github.com/EpiLogos/{id}"),
             native_entry: id.to_owned(),
+            accepted_revision: format!("{id}-accepted"),
+            canonical_namespace: id.to_owned(),
+            compatibility_aliases: Vec::new(),
+            version_command: vec!["--version".to_owned()],
+            capability_command: vec!["capabilities".to_owned(), "--json".to_owned()],
+            verification_command: vec!["verify".to_owned(), "--json".to_owned()],
             state,
             resolved: Some(format!("/native/{id}")),
             version: Some("test".to_owned()),
@@ -298,6 +316,10 @@ mod tests {
         );
         assert_eq!(reading.context_frame.reading.as_deref(), Some("cf5"));
         assert!(reading.context_frame.maximal);
+        assert!(reading
+            .positions
+            .iter()
+            .all(|position| !position.accepted_revision.is_empty()));
     }
 
     #[test]

@@ -1,57 +1,58 @@
 {
   "schema": "oi.mainline-snapshot/v1",
-  "observed_at": "2026-09-02",
-  "purpose": "Durable source snapshot for the six-product O:I composition at the current pre-#97 deterministic cut. O:I #97 live-main convergence applies to its explicitly named primary repository set; Quaternal Logic remains represented as the separately owned parallel product and is not a #97 dependency gate.",
-  "release_manifest": {
-    "path": "suite/manifest.json",
-    "suite_version": "0.1.0-prelocal.2",
-    "accepted_at": "2026-08-17",
-    "relation": "historical-immutable-release-snapshot"
-  },
+  "observed_at": "2026-09-03",
+  "purpose": "Durable source snapshot for the six-product O:I composition at the current pre-#97 deterministic cut. O:I #97 live-main convergence applies to its explicitly named primary repository set; Quaternal Logic remains represented as the separately owned parallel product and is not a #97 live-main dependency gate.",
   "source_catalog": "surfaces.json",
   "coordinator_rule": "O:I itself is the repository containing this snapshot; its exact accepted commit is recorded by the owning PR/issue receipt rather than self-referentially inside this file.",
   "products": [
     {
       "id": "central",
       "repository": "https://github.com/EpiLogos/Central",
-      "revision": "2bc8ca665d2019cc285cc45b4bcb891d794574ca",
+      "revision": "0b636d1fa52f625451fb94a1dc86d589117b76bd",
       "state": "accepted-main",
-      "note": "Current Central main includes the sixfold Project Context Protocol, ProjectCentral authored Ground/governance, SourceHistory recovery, NOW/DAY, current machine/World source relations, the durable personal/Project AgentProfile source contract, owner-native AgentProfile persistence and canonical AgentProfile Actions. Central retains source identity/standing while AIKit owns effective Profile and operational context resolution."
+      "note": "Current Central main includes Project Context, ProjectCentral authored Ground/governance, NOW/DAY, current machine/World source relations, durable personal/Project AgentProfile source/persistence/Actions, authored RoutineRef assignment, and the native ctrl help/capabilities doorway. Central retains source standing while AIKit owns effective Profile/ContextResolution and Routine runtime state."
     },
     {
       "id": "actuation",
       "repository": "https://github.com/EpiLogos/Actuation",
-      "revision": "6b5419c2dd91dda2e260d309a08c078026256a73",
+      "revision": "b403cbf1be1c3d78316753db9bcde9f31eb2fb4e",
       "state": "accepted-main",
-      "note": "Accepted main includes the realised Actuation authority/runtime floor plus semantic Activity over canonical ActuationStream, retaining Activity distinct from Action/Invocation identity."
+      "note": "Current Actuation main includes the realised authority/runtime floor, semantic Activity over canonical ActuationStream, the owner-native actuation executable, selector-independent verification, pre-local build-only standing and native-CLI lifecycle installation."
     },
     {
       "id": "ai-kit",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "revision": "0b31cdf6592e06a3e9f4faa4820def7d9fd575ff",
+      "revision": "81ab25ce319453d3549a4e37280ba1ddd38613dd",
       "state": "accepted-main",
-      "note": "Current main includes SessionSpace application state and content-addressed ContextResolutionEvidence/ContextResolutionRef with operative ContextSource activation receipts, Herdr/Hyprland reference-provider composition, public external-provider conformance, native VersionedWorld Git operations, ProjectWorld material/version attachment, source-owned Method semantics, proof-before-automation Routine semantics, operative Resolve/search, and accepted canonical QL-shape operation in SemanticWiki/Contemplate. Routine keeps exact Method proof, authority and trigger state AIKit-owned while retaining Central AgentProfile only as an opaque source relation."
+      "note": "Current AIKit main includes SessionSpace, content-addressed ContextResolution evidence, Herdr/Hyprland reference composition with deterministic Herdr automation-provider coverage, VersionedWorld/ProjectWorld, Method, proof-before-automation Routine, operative Resolve/search, canonical QL-shape use, pre-local build-only standing and native installed doctor verification for #172."
     },
     {
       "id": "software-factory",
       "repository": "https://github.com/EpiLogos/agent-system-design",
-      "revision": "50652ae5a02f86c11bd6bdbbb76b5180e79aa1f5",
+      "revision": "7e8fadea5156d75eb872f55f4fd4938d47fb0648",
       "state": "accepted-main-with-active-research-exceptions",
-      "note": "Current main includes Git developmental Worlds, the bounded Intent condition/return contract, owner-native Run-scoped ProjectDevelopment persistence/reload, canonical Action projection, accountable Journey Commission, and the Journey-praxis/developmental-Build reading that correlates Central AgentProfile plus exact AIKit Method/proof/Routine refs with Factory-owned Run/Activity/Evidence/Return. Stale AIKit proof is exposed as developmental revalidation pressure without Factory acquiring scheduler or Routine semantics. Moving QL-dependent research remains separately owned."
+      "note": "Current Factory main includes Git developmental Worlds, bounded P3 Intent→Run→P5 return, ProjectDevelopment persistence, canonical Actions, Journey Commission, AgentProfile→Method proof→Routine developmental correlation, whole-relative proof/RunThought/NOW hardening, and the owner-native factory executable. Moving QL-dependent research remains separately owned."
     },
     {
       "id": "workcell",
       "repository": "https://github.com/EpiLogos/Workcell",
-      "revision": "8320e05fc5bc2749c0f2ad24301d8dd1cda3d090",
+      "revision": "25792dc3aa8e4c54088c0696cee00f8efefe03ad",
       "state": "accepted-main-with-physical-provider-gates",
-      "note": "Accepted main includes deterministic OpenSandbox World materialisation/lifecycle and the first-party AIKit Gateway managed-service body on top of the portable control/fabric/model-serving/process/secret foundation. Actual owner-machine/provider execution remains #97 evidence."
+      "note": "Current Workcell main includes deterministic OpenSandbox World materialisation/lifecycle, AIKit Gateway managed-service materiality, the portable process/secret/provider foundation, pre-local build-only standing and selector-independent native workcell version/doctor identity. Actual owner-machine/provider execution remains #97 evidence."
     },
     {
       "id": "quaternal-logic",
       "repository": "https://github.com/EpiLogos/QL-MEF",
-      "revision": "30171fb9f3646a1ef6e306357503d8a9df4a8a1c",
+      "revision": "590ea5464e0b422beaddea2669039e3d8c7fcb5c",
       "state": "parallel-native-owner-exception",
-      "note": "QL-MEF remains the separately owned sixth product. This stable suite pin precedes the currently moving QL/Epi computational and musical development tranche. O:I #97 deliberately does not chase, converge, clean up, or gate on that owner field; its dedicated convergence session returns any later suite handoff."
+      "note": "This accepted QL owner cut publishes the native ql executable and native-CLI lifecycle required by O:I #172 over current public kernel/service/MEF/Context-Frame/Vāk owners. The broader moving QL/Epi computational, musical and research programme remains separately owned and is not a #97 live-main dependency gate."
     }
-  ]
+  ],
+  "build_record": {
+    "path": "suite/manifest.json",
+    "suite_version": "0.1.0-prelocal.2",
+    "recorded_at": "2026-08-17",
+    "standing": "historical-unratified-prelocal-build-record",
+    "relation": "historical-build-evidence-not-current-main-authority"
+  }
 }
