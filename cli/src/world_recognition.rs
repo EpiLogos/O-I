@@ -16,8 +16,7 @@ pub const WORLD_RECOGNITION_VERIFICATION_SCHEMA: &str = "oi.world-recognition-ve
 
 const HERDR_UPSTREAM_REVISION: &str = "facf0aafca011d147e798ad37e83799bdd29b75e";
 const HERDR_AIKIT_PROVIDER_CONTRACT: &str = "aikit.herdr-working-environment/v1";
-const EMBEDDED_HERDR_PACKAGE: &str =
-    include_str!("../../packages/examples/herdr-recognition.json");
+const EMBEDDED_HERDR_PACKAGE: &str = include_str!("../../packages/examples/herdr-recognition.json");
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct RecognizedSourceAperture {
@@ -165,7 +164,9 @@ pub struct WorldRecognitionAccount {
     pub provider_errors: Vec<String>,
 }
 
-pub fn scan_existing_source_apertures(target: &Path) -> Result<Vec<RecognizedSourceAperture>, String> {
+pub fn scan_existing_source_apertures(
+    target: &Path,
+) -> Result<Vec<RecognizedSourceAperture>, String> {
     let mut sources = Vec::new();
     for (relative, class, owner, standing, treatment) in [
         (
@@ -271,8 +272,12 @@ pub fn load_registry(path: &Path) -> Result<RecognitionRegistry, String> {
     if !path.exists() {
         return Ok(RecognitionRegistry::default());
     }
-    let bytes = fs::read(path)
-        .map_err(|error| format!("cannot read recognition registry {}: {error}", path.display()))?;
+    let bytes = fs::read(path).map_err(|error| {
+        format!(
+            "cannot read recognition registry {}: {error}",
+            path.display()
+        )
+    })?;
     let registry: RecognitionRegistry = serde_json::from_slice(&bytes)
         .map_err(|error| format!("invalid recognition registry {}: {error}", path.display()))?;
     if registry.schema != WORLD_RECOGNITION_REGISTRY_SCHEMA {
@@ -325,8 +330,12 @@ pub fn register_recognition_package(
     registry_path: &Path,
 ) -> Result<Vec<RecognitionRegistration>, String> {
     let manifest_path = absolute_path(manifest_path)?;
-    let input = fs::read_to_string(&manifest_path)
-        .map_err(|error| format!("cannot read package manifest {}: {error}", manifest_path.display()))?;
+    let input = fs::read_to_string(&manifest_path).map_err(|error| {
+        format!(
+            "cannot read package manifest {}: {error}",
+            manifest_path.display()
+        )
+    })?;
     let manifest = parse_manifest(&input)?;
     let recognition_contributions: Vec<&PackageContribution> = manifest
         .contributions
@@ -413,9 +422,15 @@ pub fn unregister_recognition_contribution(
     Ok(true)
 }
 
-pub fn discover_world(target: &Path, registry_path: &Path) -> Result<WorldRecognitionAccount, String> {
+pub fn discover_world(
+    target: &Path,
+    registry_path: &Path,
+) -> Result<WorldRecognitionAccount, String> {
     if !target.is_dir() {
-        return Err(format!("recognition target is not a directory: {}", target.display()));
+        return Err(format!(
+            "recognition target is not a directory: {}",
+            target.display()
+        ));
     }
     let target = absolute_path(target)?;
     let sources = scan_existing_source_apertures(&target)?;
@@ -427,7 +442,10 @@ pub fn discover_world(target: &Path, registry_path: &Path) -> Result<WorldRecogn
         } else {
             "observed".to_owned()
         },
-        detail: format!("{} recognised source/configuration apertures", sources.len()),
+        detail: format!(
+            "{} recognised source/configuration apertures",
+            sources.len()
+        ),
     }];
     let mut observations = Vec::new();
     let mut extension_requests = Vec::new();
@@ -550,12 +568,13 @@ fn execute_registration(
             String::from_utf8_lossy(&output.stderr).trim()
         ));
     }
-    let result: RecognitionProviderResult = serde_json::from_slice(&output.stdout).map_err(|error| {
-        format!(
-            "recognition artifact {} returned invalid JSON: {error}",
-            registration.artifact
-        )
-    })?;
+    let result: RecognitionProviderResult =
+        serde_json::from_slice(&output.stdout).map_err(|error| {
+            format!(
+                "recognition artifact {} returned invalid JSON: {error}",
+                registration.artifact
+            )
+        })?;
     validate_provider_result(&result)?;
     Ok(Some(result))
 }
@@ -578,7 +597,9 @@ fn validate_provider_result(result: &RecognitionProviderResult) -> Result<(), St
             || observation.native_system.name.trim().is_empty()
             || observation.support.trim().is_empty()
         {
-            return Err("recognition observation identity/kind/name/support must not be empty".to_owned());
+            return Err(
+                "recognition observation identity/kind/name/support must not be empty".to_owned(),
+            );
         }
         if !observation_refs.insert(observation.observation_ref.as_str()) {
             return Err(format!(
@@ -600,7 +621,10 @@ fn validate_provider_result(result: &RecognitionProviderResult) -> Result<(), St
             return Err("recognition extension request fields must not be empty".to_owned());
         }
         if !extension_refs.insert(request.request_ref.as_str()) {
-            return Err(format!("duplicate extension request `{}`", request.request_ref));
+            return Err(format!(
+                "duplicate extension request `{}`",
+                request.request_ref
+            ));
         }
     }
     Ok(())
@@ -621,8 +645,8 @@ fn verify_artifact(artifact: &str) -> Result<(), String> {
             String::from_utf8_lossy(&output.stderr).trim()
         ));
     }
-    let verification: RecognitionVerificationResult =
-        serde_json::from_slice(&output.stdout).map_err(|error| {
+    let verification: RecognitionVerificationResult = serde_json::from_slice(&output.stdout)
+        .map_err(|error| {
             format!("recognition artifact {artifact} returned invalid verification JSON: {error}")
         })?;
     if verification.schema != WORLD_RECOGNITION_VERIFICATION_SCHEMA || !verification.ok {
@@ -637,7 +661,9 @@ fn resolve_artifact(manifest_path: &Path, artifact: &str) -> Result<String, Stri
     if artifact.starts_with("builtin:") {
         return match artifact {
             "builtin:herdr" => Ok(artifact.to_owned()),
-            _ => Err(format!("unknown built-in recognition artifact `{artifact}`")),
+            _ => Err(format!(
+                "unknown built-in recognition artifact `{artifact}`"
+            )),
         };
     }
     let path = Path::new(artifact);
@@ -843,12 +869,7 @@ fn herdr_native_relations(snapshot: &Value) -> Vec<NativeRelationObservation> {
     relations
 }
 
-fn collect_json_paths(
-    value: &Value,
-    prefix: &str,
-    depth: usize,
-    paths: &mut BTreeSet<String>,
-) {
+fn collect_json_paths(value: &Value, prefix: &str, depth: usize, paths: &mut BTreeSet<String>) {
     if depth >= 4 || paths.len() >= 256 {
         return;
     }
@@ -953,7 +974,9 @@ mod tests {
         fs::create_dir_all(root.join("ProjectCentral/user")).unwrap();
         fs::create_dir_all(root.join(".claude/skills/demo")).unwrap();
         let sources = scan_existing_source_apertures(&root).unwrap();
-        assert!(sources.iter().any(|source| source.path == "ProjectCentral/user"));
+        assert!(sources
+            .iter()
+            .any(|source| source.path == "ProjectCentral/user"));
         assert!(sources.iter().any(|source| source.path == ".claude/skills"));
         fs::remove_dir_all(root).unwrap();
     }
