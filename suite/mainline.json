@@ -2,12 +2,6 @@
   "schema": "oi.mainline-snapshot/v1",
   "observed_at": "2026-09-03",
   "purpose": "Durable source snapshot for the six-product O:I composition at the current pre-#97 deterministic cut. O:I #97 live-main convergence applies to its explicitly named primary repository set; Quaternal Logic remains represented as the separately owned parallel product and is not a #97 live-main dependency gate.",
-  "release_manifest": {
-    "path": "suite/manifest.json",
-    "suite_version": "0.1.0-prelocal.2",
-    "accepted_at": "2026-08-17",
-    "relation": "historical-immutable-release-snapshot"
-  },
   "source_catalog": "surfaces.json",
   "coordinator_rule": "O:I itself is the repository containing this snapshot; its exact accepted commit is recorded by the owning PR/issue receipt rather than self-referentially inside this file.",
   "products": [
@@ -53,5 +47,12 @@
       "state": "parallel-native-owner-exception",
       "note": "This accepted QL owner cut publishes the native ql executable and native-CLI lifecycle required by O:I #172 over current public kernel/service/MEF/Context-Frame/Vāk owners. The broader moving QL/Epi computational, musical and research programme remains separately owned and is not a #97 live-main dependency gate."
     }
-  ]
+  ],
+  "build_record": {
+    "path": "suite/manifest.json",
+    "suite_version": "0.1.0-prelocal.2",
+    "recorded_at": "2026-08-17",
+    "standing": "historical-unratified-prelocal-build-record",
+    "relation": "historical-build-evidence-not-current-main-authority"
+  }
 }

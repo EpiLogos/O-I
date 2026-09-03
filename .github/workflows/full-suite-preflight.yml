@@ -1,4 +1,4 @@
-name: Released suite preflight
+name: Pre-local suite verification
 
 on:
   pull_request:
@@ -51,7 +51,7 @@ jobs:
       - name: Build locked O:I CLI
         run: cargo build --manifest-path cli/Cargo.toml --bin oi --locked
 
-      - name: Install immutable six-product release suite twice
+      - name: Install recorded six-product pre-local build set twice
         shell: bash
         run: |
           set -euo pipefail
@@ -81,7 +81,7 @@ jobs:
           test "$(cat "$ROOT/Work/WORK-SENTINEL.txt")" = "ordinary-work-sentinel"
           jq -e '.products | to_entries | all(.value.attestation_locally_verified == true)' "$RUNNER_TEMP/installed-first.json"
 
-      - name: Release status and doctor match immutable release manifest
+      - name: Status and doctor match recorded pre-local build manifest
         shell: bash
         run: |
           set -euo pipefail
@@ -93,7 +93,7 @@ jobs:
           "$OI" doctor --json > "$RUNNER_TEMP/doctor.json"
           "$OI" verify --json > "$RUNNER_TEMP/verify.json"
 
-          jq -e '.schema == "oi.suite-manifest/v1" and .suite_version == "0.1.0-prelocal.2" and (.products | length == 6)' "$RUNNER_TEMP/manifest.json"
+          jq -e '.schema == "oi.suite-manifest/v1" and .suite_version == "0.1.0-prelocal.2" and .standing == "historical-unratified-prelocal-build-record" and (.products | length == 6)' "$RUNNER_TEMP/manifest.json"
           jq -e '.schema == "oi.suite-status/v1" and .suite_version == "0.1.0-prelocal.2" and (.installed.products | length == 6) and .physical_acceptance == false' "$RUNNER_TEMP/status.json"
           jq -e '.schema == "oi.suite-doctor/v1" and .ok == true and (.checks | length == 6) and .physical_acceptance == false' "$RUNNER_TEMP/doctor.json"
           cmp "$RUNNER_TEMP/doctor.json" "$RUNNER_TEMP/verify.json"
@@ -104,20 +104,20 @@ jobs:
             test "$actual" = "$expected"
           done
 
-      - name: Release truth and current-main truth remain explicitly distinct
+      - name: Recorded build evidence and current-main truth remain explicitly distinct
         shell: bash
         run: |
           set -euo pipefail
           python3 scripts/verify-mainline-snapshot.py
           python3 - <<'PY'
           import json
-          release = json.load(open('suite/manifest.json'))
+          build_record = json.load(open('suite/manifest.json'))
           current = json.load(open('suite/mainline.json'))
-          release_by_id = {p['id']: p['revision'] for p in release['products']}
+          build_by_id = {p['id']: p['revision'] for p in build_record['products']}
           current_by_id = {p['id']: p['revision'] for p in current['products']}
-          assert set(release_by_id) == set(current_by_id)
-          assert any(release_by_id[k] != current_by_id[k] for k in release_by_id), (
-              'historical release and current-main source world unexpectedly collapsed into one revision set'
+          assert set(build_by_id) == set(current_by_id)
+          assert any(build_by_id[k] != current_by_id[k] for k in build_by_id), (
+              'historical build record and current-main source world unexpectedly collapsed into one revision set'
           )
           PY
 
@@ -206,10 +206,10 @@ jobs:
           test ! -e "$OI_DATA_HOME/cache"
           test ! -e "$ROOT/.central/oi/managed"
 
-      - name: Upload released-suite evidence
+      - name: Upload pre-local suite verification evidence
         uses: actions/upload-artifact@v4
         with:
-          name: oi-released-suite-preflight-${{ github.sha }}
+          name: oi-prelocal-suite-verification-${{ github.sha }}
           path: |
             ${{ runner.temp }}/manifest.json
             ${{ runner.temp }}/status.json
