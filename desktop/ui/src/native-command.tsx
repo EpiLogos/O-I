@@ -262,7 +262,7 @@ export function NativeSearchCommand({
     }
     if (event.key === 'ArrowUp') {
       event.preventDefault();
-      setSelectedIndex((index) => Math.max(0, selectedIndex - 1));
+      setSelectedIndex((index) => Math.max(0, index - 1));
       return;
     }
     if (event.key === 'Enter') {
