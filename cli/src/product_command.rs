@@ -16,6 +16,12 @@ struct SurfaceSource {
     id: String,
     public_name: String,
     native: NativeCommandSource,
+    install: InstallSource,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct InstallSource {
+    kind: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -31,6 +37,20 @@ struct NativeCommandSource {
     verification_command: Option<Vec<String>>,
     command_revision: Option<String>,
     command_standing: Option<String>,
+    source_install: Option<SourceInstallSource>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct SourceInstallSource {
+    #[serde(default)]
+    build: Vec<String>,
+    executable_path: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+pub struct SourceInstallDescriptor {
+    pub build: Vec<String>,
+    pub executable_path: String,
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
@@ -45,6 +65,8 @@ pub struct ProductCommandDescriptor {
     pub verification_command: Vec<String>,
     pub command_revision: String,
     pub command_standing: String,
+    pub install_kind: String,
+    pub source_install: SourceInstallDescriptor,
 }
 
 impl ProductCommandDescriptor {
@@ -112,6 +134,26 @@ pub fn product_command_catalogue() -> Result<ProductCommandCatalogue, String> {
             &surface.id,
             "command_standing",
         )?;
+        let install_kind = required(surface.install.kind, &surface.id, "install.kind")?;
+        let source_install = surface
+            .native
+            .source_install
+            .ok_or_else(|| format!("{} is missing native.source_install", surface.id))?;
+        let executable_path = required(
+            source_install.executable_path,
+            &surface.id,
+            "source_install.executable_path",
+        )?;
+        if source_install
+            .build
+            .iter()
+            .any(|argument| argument.trim().is_empty())
+        {
+            return Err(format!(
+                "{} native.source_install.build contains an empty argument",
+                surface.id
+            ));
+        }
 
         let mut aliases = surface.native.aliases;
         if let Some(legacy) = surface.native.alias {
@@ -145,6 +187,11 @@ pub fn product_command_catalogue() -> Result<ProductCommandCatalogue, String> {
             verification_command,
             command_revision,
             command_standing,
+            install_kind,
+            source_install: SourceInstallDescriptor {
+                build: source_install.build,
+                executable_path,
+            },
         });
     }
 
@@ -188,6 +235,9 @@ mod tests {
             namespaces,
             vec!["central", "actuation", "aikit", "factory", "workcell", "ql"]
         );
+        assert!(catalogue.products.iter().all(|product| {
+            !product.install_kind.is_empty() && !product.source_install.executable_path.is_empty()
+        }));
     }
 
     #[test]
