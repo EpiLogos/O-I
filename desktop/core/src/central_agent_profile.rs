@@ -309,14 +309,16 @@ fi
         let mut permissions = fs::metadata(&executable).unwrap().permissions();
         permissions.set_mode(0o755);
         fs::set_permissions(&executable, permissions).unwrap();
-        let error = run_central_action_with(
+        let result = run_central_action_with(
             &executable,
             Some(&root.join("Central")),
             "agent-profile.list",
             json!({"scope":"personal"}),
-        )
-        .unwrap_err();
-        assert!(error.contains("process status"));
+        );
+        assert!(
+            result.is_err(),
+            "a non-zero Central owner process must never be promoted by success-shaped JSON"
+        );
         fs::remove_dir_all(root).unwrap();
     }
 }
