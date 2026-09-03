@@ -61,12 +61,36 @@ fn current_world_main() -> Option<ExitCode> {
                     .unwrap_or("situated composition")
             );
             for position in &reading.positions {
+                let revision = if position.accepted_revision.is_empty() {
+                    "unresolved"
+                } else {
+                    position.accepted_revision.as_str()
+                };
+                let namespace = if position.canonical_namespace.is_empty() {
+                    "unresolved".to_owned()
+                } else {
+                    format!("oi {}", position.canonical_namespace)
+                };
                 println!(
-                    "  {}  {:<18} {}",
+                    "  {}  {:<18} {:<11} {} -> {} @ {}",
                     position.position,
                     position.public_name,
-                    if position.present { "present" } else { "unavailable" }
+                    if position.present { "present" } else { "unavailable" },
+                    namespace,
+                    position.native_location.as_deref().unwrap_or("native executable unavailable"),
+                    revision
                 );
+                if !position.compatibility_aliases.is_empty() {
+                    println!(
+                        "     compatibility: {}",
+                        position
+                            .compatibility_aliases
+                            .iter()
+                            .map(|alias| format!("oi {alias}"))
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    );
+                }
             }
             for warning in &reading.warnings {
                 println!("  warning: {warning}");
