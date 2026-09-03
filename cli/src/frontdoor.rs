@@ -2,7 +2,7 @@ pub fn cli_main() -> ExitCode {
     let args: Vec<OsString> = env::args_os().skip(1).collect();
     let command = args.first().and_then(|value| value.to_str());
     if matches!(command, None | Some("help") | Some("--help") | Some("-h")) {
-        return match print_suite_v2_help() {
+        return match print_suite_v2_help().and_then(|_| print_product_command_help()) {
             Ok(()) => {
                 println!();
                 println!("Current world:");
@@ -29,6 +29,15 @@ pub fn cli_main() -> ExitCode {
                 println!("                                verify managed payload bytes without fabricating Omarchy/Hyprland uptake");
                 ExitCode::SUCCESS
             }
+            Err(message) => {
+                eprintln!("oi: {message}");
+                ExitCode::from(2)
+            }
+        };
+    }
+    if let Some(result) = product_command_route(&args) {
+        return match result {
+            Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
             Err(message) => {
                 eprintln!("oi: {message}");
                 ExitCode::from(2)
