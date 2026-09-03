@@ -35,6 +35,8 @@
 - native-owner semantic contracts disclosed from owner registries:
   - Actuation `contract list` → `actuation.model-bearing/v1`, agency, realised,
     stream, activity
+- native-owner material capacities disclosed from owner registries:
+  - Workcell `providers` → workspace / execution / artifact-storage, with health
 - an extension frontier, routed by native ownership:
   - harness / model-provider → Actuation `actuation.model-bearing/v1`
   - material-executor → Workcell `workcell.provider-sdk/v1`
@@ -48,10 +50,20 @@ for them.
 `discover_world(target, registry)` remains the pure, target-scoped recognition
 engine (recognisers + source apertures) so registry tests stay isolated from the
 live machine. `discover_ground(target)` layers machine-global native-tool
-observation, owner-participation reconciliation, owner-contract disclosure and the
-extension frontier over it. The CLI (`oi recognition inspect`, `oi adopt`) and the
-desktop (`DesktopHost` → `ShellSnapshot.world_recognition`) consume the full
-`discover_ground` reading; the same structured JSON is the Agent surface.
+observation, owner-participation reconciliation, owner-contract disclosure,
+owner-capacity disclosure and the extension frontier over it. The CLI
+(`oi recognition inspect`, `oi adopt`) and the desktop (`DesktopHost` →
+`ShellSnapshot.world_recognition`) consume the full `discover_ground` reading;
+the same structured JSON is the Agent surface.
+
+## Agent-as-inhabitant parity
+
+The same account answers the situated questions from structured state alone
+(no prompt knowledge): target (where am I), harnesses/models with version,
+operative owner participations with state, Actuation-owned semantic fields,
+Workcell material capacities with health, degraded facts, and the extension
+frontier with owner + SDK. Human (CLI text) and Agent (JSON) read the same
+underlying actuality; only presentation differs.
 
 ## Remaining classified gaps
 
@@ -59,10 +71,11 @@ desktop (`DesktopHost` → `ShellSnapshot.world_recognition`) consume the full
   (read model already exposed through `ShellSnapshot.world_recognition`).
 - **Continuing-run reconciliation** — the account re-observes on each run already;
   automatic rescan-on-change (start/stop/install of tools) is not yet wired.
-- **Central connector registry** and **Workcell provider inventory** are not yet
-  queried as owner sources (Workcell providers are the next material case).
+- **Central connector/machine registry** is not yet queried as an owner source
+  (Central exposes `ctrl capabilities`/`ctrl doctor`; its connector Ports are the
+  next authored-ground case).
 
 ## Verification
 
-`cargo test` (cli): 20 lib + 13 main + 15 cli + 3 + 1 + 2 + 5 + 3 + 11 + 2 = all pass.
+`cargo test` (cli): 21 lib + 13 main + 15 cli + 3 + 1 + 2 + 5 + 3 + 11 + 2 = all pass.
 `cargo test` (desktop-core): all pass, including the World-account shell-snapshot test.

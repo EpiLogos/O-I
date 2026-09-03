@@ -333,6 +333,18 @@ fn print_world_recognition_account(account: &WorldRecognitionAccount) {
             );
         }
     }
+    if !account.owner_capacities.is_empty() {
+        println!("Owner capacities (material/provider availability):");
+        for capacity in &account.owner_capacities {
+            println!(
+                "  {:<10} {:<40} {} [{}]",
+                capacity.owner,
+                capacity.capacity_ref,
+                capacity.state,
+                capacity.ports.join(", ")
+            );
+        }
+    }
     if !account.extension_requests.is_empty() {
         println!("Extension frontier:");
         for request in &account.extension_requests {

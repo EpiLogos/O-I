@@ -111,6 +111,19 @@ pub struct OwnerContract {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+pub struct OwnerCapacity {
+    pub owner: String,
+    pub capacity_ref: String,
+    #[serde(default)]
+    pub ports: Vec<String>,
+    pub state: String,
+    #[serde(default)]
+    pub facts: BTreeMap<String, Value>,
+    #[serde(default)]
+    pub provenance: Vec<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct RecognitionExtensionRequest {
     pub request_ref: String,
     pub native_system_ref: String,
@@ -188,6 +201,8 @@ pub struct WorldRecognitionAccount {
     pub owner_participations: Vec<OwnerParticipation>,
     #[serde(default)]
     pub owner_contracts: Vec<OwnerContract>,
+    #[serde(default)]
+    pub owner_capacities: Vec<OwnerCapacity>,
     pub extension_requests: Vec<RecognitionExtensionRequest>,
     #[serde(default)]
     pub provider_errors: Vec<String>,
@@ -543,6 +558,7 @@ pub fn discover_world(
         observations,
         owner_participations: Vec::new(),
         owner_contracts: Vec::new(),
+        owner_capacities: Vec::new(),
         extension_requests,
         provider_errors,
     })
@@ -612,6 +628,23 @@ fn enrich_world_account(account: &mut WorldRecognitionAccount) {
     });
     account.provider_errors.extend(contract_errors);
     account.owner_contracts = owner_contracts;
+
+    let (owner_capacities, capacity_errors) = query_owner_capacities();
+    account.providers.push(RecognitionProviderExecution {
+        provider_ref: "oi:builtin/owner-capacity-reconciliation".to_owned(),
+        package_ref: "oi:core".to_owned(),
+        status: if owner_capacities.is_empty() {
+            "not_present".to_owned()
+        } else {
+            "observed".to_owned()
+        },
+        detail: format!(
+            "{} native-owner capacities disclosed",
+            owner_capacities.len()
+        ),
+    });
+    account.provider_errors.extend(capacity_errors);
+    account.owner_capacities = owner_capacities;
 
     let mut frontier = compose_extension_frontier(&account.observations);
     account.extension_requests.append(&mut frontier);
@@ -766,6 +799,84 @@ fn actuation_contracts(data: &Value) -> Vec<OwnerContract> {
         });
     }
     out.sort_by(|left, right| left.field.cmp(&right.field));
+    out
+}
+
+fn query_owner_capacities() -> (Vec<OwnerCapacity>, Vec<String>) {
+    let mut capacities = Vec::new();
+    let mut errors = Vec::new();
+    let Some(workcell) = owner_executable("workcell", "workcell") else {
+        return (capacities, errors);
+    };
+    let workcell = workcell.display().to_string();
+    match run_json_plain(&workcell, &["providers", "--json"]) {
+        Ok(Some(data)) => capacities.extend(workcell_capacities(&data)),
+        Ok(None) => {}
+        Err(error) => errors.push(format!("Workcell provider registry: {error}")),
+    }
+    (capacities, errors)
+}
+
+fn workcell_capacities(data: &Value) -> Vec<OwnerCapacity> {
+    let mut out = Vec::new();
+    let Some(providers) = data.get("providers").and_then(Value::as_array) else {
+        return out;
+    };
+    for entry in providers {
+        let Some(capacity_ref) = entry.get("provider_ref").and_then(Value::as_str) else {
+            continue;
+        };
+        let health: Vec<String> = entry
+            .get("health")
+            .and_then(Value::as_array)
+            .map(|values| {
+                values
+                    .iter()
+                    .filter_map(Value::as_str)
+                    .map(str::to_owned)
+                    .collect()
+            })
+            .unwrap_or_default();
+        let mut ports: Vec<String> = entry
+            .get("ports")
+            .and_then(Value::as_array)
+            .map(|values| {
+                values
+                    .iter()
+                    .filter_map(Value::as_str)
+                    .map(str::to_owned)
+                    .collect()
+            })
+            .unwrap_or_default();
+        ports.sort();
+        ports.dedup();
+        let offers = entry.get("offers").and_then(Value::as_array).map(Vec::len);
+        let state = if health.iter().any(|entry| entry != "healthy") {
+            "degraded".to_owned()
+        } else if health.is_empty() {
+            "unknown".to_owned()
+        } else {
+            "healthy".to_owned()
+        };
+
+        let mut facts = BTreeMap::new();
+        if let Some(offers) = offers {
+            facts.insert("offers_count".to_owned(), json!(offers));
+        }
+        if !health.is_empty() {
+            facts.insert("health".to_owned(), json!(health));
+        }
+
+        out.push(OwnerCapacity {
+            owner: "Workcell".to_owned(),
+            capacity_ref: capacity_ref.to_owned(),
+            ports,
+            state,
+            facts,
+            provenance: vec!["workcell providers".to_owned()],
+        });
+    }
+    out.sort_by(|left, right| left.capacity_ref.cmp(&right.capacity_ref));
     out
 }
 
@@ -1981,5 +2092,40 @@ printf '%s\n' '{"schema":"oi.world-recognition-result/v1","provider_ref":"contri
         assert!(!requests
             .iter()
             .any(|request| request.native_system_ref == "native:broken:local"));
+    }
+
+    #[test]
+    fn workcell_provider_inventory_discloses_material_capacities() {
+        let data: Value = serde_json::from_str(
+            r#"{
+              "ok": true,
+              "providers": [
+                {"health":["healthy"],"offers":["offer:host-process"],"ports":["execution"],"provider_ref":"provider:collapsed-local-host-process"},
+                {"health":["healthy","healthy"],"offers":["offer:a","offer:b"],"ports":["artifact-storage","artifact-storage"],"provider_ref":"provider:collapsed-local-artifacts"},
+                {"health":["degraded"],"offers":["offer:ws"],"ports":["workspace"],"provider_ref":"provider:collapsed-local-workspace"}
+              ]
+            }"#,
+        )
+        .unwrap();
+        let capacities = workcell_capacities(&data);
+        assert_eq!(capacities.len(), 3);
+        let execution = capacities
+            .iter()
+            .find(|capacity| capacity.capacity_ref == "provider:collapsed-local-host-process")
+            .unwrap();
+        assert_eq!(execution.state, "healthy");
+        assert_eq!(execution.ports, vec!["execution".to_owned()]);
+        assert_eq!(execution.owner, "Workcell");
+        let workspace = capacities
+            .iter()
+            .find(|capacity| capacity.capacity_ref == "provider:collapsed-local-workspace")
+            .unwrap();
+        assert_eq!(workspace.state, "degraded");
+        let artifacts = capacities
+            .iter()
+            .find(|capacity| capacity.capacity_ref == "provider:collapsed-local-artifacts")
+            .unwrap();
+        assert_eq!(artifacts.ports, vec!["artifact-storage".to_owned()]);
+        assert_eq!(artifacts.facts.get("offers_count"), Some(&serde_json::json!(2)));
     }
 }
