@@ -557,6 +557,23 @@ pub fn discover_world(
     })
 }
 
+pub fn default_registry_path() -> Result<PathBuf, String> {
+    let base = if let Some(home) = env::var_os("OI_HOME").filter(|value| !value.is_empty()) {
+        PathBuf::from(home)
+    } else if let Some(xdg) = env::var_os("XDG_CONFIG_HOME").filter(|value| !value.is_empty()) {
+        PathBuf::from(xdg).join("oi")
+    } else if let Some(home) = env::var_os("HOME").filter(|value| !value.is_empty()) {
+        PathBuf::from(home).join(".config").join("oi")
+    } else {
+        return Err("cannot locate O:I state: set OI_HOME or HOME".to_owned());
+    };
+    Ok(base.join("world-recognition-registry.json"))
+}
+
+pub fn discover_ground(target: &Path) -> Result<WorldRecognitionAccount, String> {
+    discover_world(target, &default_registry_path()?)
+}
+
 fn query_owner_participations() -> (Vec<OwnerParticipation>, Vec<String>) {
     let mut participations = Vec::new();
     let mut errors = Vec::new();

@@ -13,4 +13,5 @@ site/*.config.d.ts
 /target/
 /cli/target/
 /desktop/core/target/
+/desktop/core/Cargo.lock
 /desktop/src-tauri/target/

@@ -139,3 +139,34 @@ fn bridge_surface_contains_no_generic_shell_or_filesystem_escape_hatch() {
     assert!(!source.contains("Command::new"));
     assert!(!source.contains("std::fs"));
 }
+#[test]
+fn shell_snapshot_carries_world_recognition_when_ground_is_set() {
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    let root = std::env::temp_dir().join(format!(
+        "oi-desktop-world-{}",
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    std::fs::create_dir_all(&root).unwrap();
+
+    let previous = std::env::var_os("OI_HOME");
+    std::env::set_var("OI_HOME", root.join("oi-state"));
+    let result = (|| {
+        let mut disclosure = disclosure(&[NativeSurfaceState::Registered]);
+        disclosure.personal_ground = Some(root.display().to_string());
+        let host = DesktopHost::new(disclosure);
+        let snapshot = host.snapshot(BridgeCaller::ShellUi).unwrap();
+        let account = snapshot.world_recognition.expect("world recognition account");
+        assert_eq!(account.schema, "oi.world-recognition-account/v1");
+        assert_eq!(account.target, root.display().to_string());
+    })();
+    match previous {
+        Some(value) => std::env::set_var("OI_HOME", value),
+        None => std::env::remove_var("OI_HOME"),
+    }
+    std::fs::remove_dir_all(&root).unwrap();
+    result
+}

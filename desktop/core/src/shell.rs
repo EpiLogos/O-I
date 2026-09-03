@@ -1,7 +1,9 @@
 use crate::{BridgeCallClass, BridgeCaller, BridgeDenied, BridgePolicy};
 use oi_cli::current_world::{live_current_world, CurrentWorldReading};
 use oi_cli::status::{NativeSurfaceState, SuiteCompositionDisclosure, SurfaceDisclosure};
+use oi_cli::world_recognition::{discover_ground, WorldRecognitionAccount};
 use serde::{Deserialize, Serialize};
+use std::path::Path;
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -48,7 +50,7 @@ pub struct RefProvenance {
     pub revision: Option<String>,
 }
 
-#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, PartialEq)]
 pub struct ShellSnapshot {
     pub schema: &'static str,
     pub destination: ShellDestination,
@@ -56,6 +58,8 @@ pub struct ShellSnapshot {
     pub current_world: CurrentWorldReading,
     pub surfaces: Vec<SurfaceDisclosure>,
     pub destinations: Vec<ShellDestination>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub world_recognition: Option<WorldRecognitionAccount>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub selection: Option<SemanticRef>,
     #[serde(default)]
@@ -66,6 +70,7 @@ pub struct ShellSnapshot {
 pub struct DesktopHost {
     disclosure: SuiteCompositionDisclosure,
     current_world: CurrentWorldReading,
+    world_recognition: Option<WorldRecognitionAccount>,
     destination: ShellDestination,
     selection: Option<SemanticRef>,
     bridge: BridgePolicy,
@@ -73,16 +78,29 @@ pub struct DesktopHost {
 
 impl DesktopHost {
     pub fn new(disclosure: SuiteCompositionDisclosure) -> Self {
-        let current_world = live_current_world().unwrap_or_else(|error| {
+        let mut current_world = live_current_world().unwrap_or_else(|error| {
             let mut reading = CurrentWorldReading::from_disclosure(&disclosure);
             reading.warnings.push(format!(
                 "live CurrentWorld enrichment unavailable; using suite disclosure: {error}"
             ));
             reading
         });
+        let world_recognition = disclosure
+            .personal_ground
+            .as_deref()
+            .and_then(|ground| match discover_ground(Path::new(ground)) {
+                Ok(account) => Some(account),
+                Err(error) => {
+                    current_world
+                        .warnings
+                        .push(format!("World recognition unavailable: {error}"));
+                    None
+                }
+            });
         Self {
             disclosure,
             current_world,
+            world_recognition,
             destination: ShellDestination::Home,
             selection: None,
             bridge: BridgePolicy,
@@ -108,6 +126,7 @@ impl DesktopHost {
             current_world: self.current_world.clone(),
             surfaces: self.disclosure.surfaces.clone(),
             destinations: ShellDestination::ALL.to_vec(),
+            world_recognition: self.world_recognition.clone(),
             selection: self.selection.clone(),
             warnings: self.disclosure.warnings.clone(),
         })
