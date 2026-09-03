@@ -20,6 +20,8 @@ struct CatalogSurface {
     function: String,
     repository: String,
     native: NativeSurface,
+    install: InstallSurface,
+    verification: VerificationSurface,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -27,6 +29,32 @@ struct NativeSurface {
     kind: String,
     entry: String,
     executable: Option<String>,
+    canonical_namespace: String,
+    #[serde(default)]
+    compatibility_aliases: Vec<String>,
+    structured_output: StructuredOutputSurface,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+struct StructuredOutputSurface {
+    supported: bool,
+    format: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+struct InstallSurface {
+    revision: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+struct VerificationSurface {
+    operation: VerificationOperation,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+struct VerificationOperation {
+    #[serde(default)]
+    args: Vec<String>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -63,7 +91,15 @@ pub struct SurfaceDisclosure {
     pub public_name: String,
     pub function: String,
     pub repository: String,
+    pub accepted_revision: String,
     pub native_entry: String,
+    pub canonical_namespace: String,
+    #[serde(default)]
+    pub compatibility_aliases: Vec<String>,
+    pub structured_output: bool,
+    pub structured_output_format: String,
+    #[serde(default)]
+    pub verification_args: Vec<String>,
     pub state: NativeSurfaceState,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub resolved: Option<String>,
@@ -96,7 +132,8 @@ impl SuiteCompositionDisclosure {
 
 /// Read the same O:I composition state and surface catalog used by the CLI without
 /// invoking a subprocess. Product-native health remains outside this adapter: the
-/// state here is only O:I registration/reachability disclosure.
+/// state here is only O:I registration/reachability disclosure plus the accepted
+/// owner revision and native command relation published by the suite descriptor.
 pub fn live_disclosure() -> Result<SuiteCompositionDisclosure, String> {
     let path = state_path()?;
     let composition_json = if path.exists() {
@@ -158,7 +195,13 @@ where
                 public_name: surface.public_name,
                 function: surface.function,
                 repository: surface.repository,
+                accepted_revision: surface.install.revision,
                 native_entry: surface.native.entry,
+                canonical_namespace: surface.native.canonical_namespace,
+                compatibility_aliases: surface.native.compatibility_aliases,
+                structured_output: surface.native.structured_output.supported,
+                structured_output_format: surface.native.structured_output.format,
+                verification_args: surface.verification.operation.args,
                 state: NativeSurfaceState::Missing,
                 resolved: None,
                 version: None,
