@@ -13,9 +13,7 @@ mod tests {
         AgentProfile, AgentProfileScope, AgentProfileStore, WorldGraph, WorldRecord, WorldRef,
         AGENT_PROFILE_SCHEMA,
     };
-    use epilogos_factory::build::{
-        FactoryBuildSelection, FactoryBuildState,
-    };
+    use epilogos_factory::build::{FactoryBuildSelection, FactoryBuildState};
     use epilogos_factory::core::run::{Project, ProjectRef, Run, RunRef};
     use epilogos_factory::journey::{Journey, JourneyCommission, JourneyReturn};
     use epilogos_factory::journey_build::developmental_build_snapshot;
@@ -49,7 +47,10 @@ mod tests {
         }
     }
 
-    fn routine_observation(routine: &Routine, explanation: &RoutineExplanation) -> JourneyRoutineObservation {
+    fn routine_observation(
+        routine: &Routine,
+        explanation: &RoutineExplanation,
+    ) -> JourneyRoutineObservation {
         JourneyRoutineObservation {
             contract: ROUTINE_VERSION.into(),
             routine_ref: explanation.routine.to_string(),
@@ -57,7 +58,10 @@ mod tests {
             method_revision: explanation.method_revision.to_string(),
             proof_ref: explanation.proof_ref.to_string(),
             routine_state: routine_state(explanation.state).into(),
-            agent_profile_ref: explanation.agent_profile_ref.as_ref().map(ToString::to_string),
+            agent_profile_ref: explanation
+                .agent_profile_ref
+                .as_ref()
+                .map(ToString::to_string),
             activity_refs: routine
                 .proof
                 .activity_refs
@@ -98,7 +102,11 @@ mod tests {
 
         let personal_world = WorldRef::new("world:personal")?;
         let mut worlds = WorldGraph::default();
-        worlds.insert(WorldRecord::new(personal_world.clone(), "world-rev-1", None))?;
+        worlds.insert(WorldRecord::new(
+            personal_world.clone(),
+            "world-rev-1",
+            None,
+        ))?;
 
         let mut authored_profile = AgentProfile::new(
             "agent-profile:researcher",
@@ -108,6 +116,7 @@ mod tests {
             personal_world,
         )?;
         authored_profile.method_refs = vec!["method:verified-research".into()];
+        authored_profile.routine_refs = vec!["routine:daily-research".into()];
         authored_profile.purpose = Some("Carry verified research returns through time.".into());
         authored_profile.validate_against(&worlds)?;
 
@@ -115,6 +124,10 @@ mod tests {
         let write = profile_store.save(&authored_profile, None)?;
         assert!(write.created);
         let profile_reading = profile_store.read(&authored_profile.profile_ref)?;
+        assert_eq!(
+            profile_reading.profile.routine_refs,
+            vec!["routine:daily-research".to_string()]
+        );
         let profile_handoff = profile_reading.profile.handoff();
         assert_eq!(profile_handoff.semantic_identity_owner, "Actuation");
         assert_eq!(profile_handoff.operational_resolution_owner, "AIKit");
@@ -231,7 +244,17 @@ mod tests {
         )?;
         routine.enable(&method)?;
         let explanation = routine.explain();
-        assert_eq!(explanation.agent_profile_ref.as_ref().map(ToString::to_string), Some(profile_handoff.profile_ref.clone()));
+        assert_eq!(
+            explanation
+                .agent_profile_ref
+                .as_ref()
+                .map(ToString::to_string),
+            Some(profile_handoff.profile_ref.clone())
+        );
+        assert!(profile_reading
+            .profile
+            .routine_refs
+            .contains(&explanation.routine.to_string()));
 
         // Factory consumes only owner-native refs/readings. It requires the Routine
         // proof to have already returned through this Journey before correlation.
@@ -255,9 +278,21 @@ mod tests {
                 method_revision: proof.method_revision.to_string(),
                 context_resolution_ref: proof.context_resolution_ref.to_string(),
                 body_condition_refs: vec!["harness-composition:research".into()],
-                activity_refs: proof.activity_refs.iter().map(ToString::to_string).collect(),
-                evidence_refs: proof.evidence_refs.iter().map(ToString::to_string).collect(),
-                return_refs: proof.return_refs.iter().map(ToString::to_string).collect(),
+                activity_refs: proof
+                    .activity_refs
+                    .iter()
+                    .map(ToString::to_string)
+                    .collect(),
+                evidence_refs: proof
+                    .evidence_refs
+                    .iter()
+                    .map(ToString::to_string)
+                    .collect(),
+                return_refs: proof
+                    .return_refs
+                    .iter()
+                    .map(ToString::to_string)
+                    .collect(),
                 proof: Some(JourneyMethodProofCorrelation {
                     contract: METHOD_PROOF_VERSION.into(),
                     proof_ref: proof.proof_ref.to_string(),
@@ -281,9 +316,18 @@ mod tests {
         assert_eq!(snapshot.build.view.run.run_ref, run_ref.to_string());
         assert_eq!(snapshot.commission.journey_ref, journey.journey_ref);
         assert_eq!(snapshot.praxis.journey_ref, journey.journey_ref);
-        assert_eq!(snapshot.praxis.agent_profiles[0].profile_ref, profile_handoff.profile_ref);
-        assert_eq!(snapshot.praxis.praxis_returns[0].method_ref, method.id.to_string());
-        assert_eq!(snapshot.praxis.routines[0].routine_ref, routine.id.to_string());
+        assert_eq!(
+            snapshot.praxis.agent_profiles[0].profile_ref,
+            profile_handoff.profile_ref
+        );
+        assert_eq!(
+            snapshot.praxis.praxis_returns[0].method_ref,
+            method.id.to_string()
+        );
+        assert_eq!(
+            snapshot.praxis.routines[0].routine_ref,
+            routine.id.to_string()
+        );
         assert!(snapshot.praxis.revalidation_required_routine_refs.is_empty());
 
         // Method drift is detected by AIKit, not Factory. Factory merely consumes
