@@ -1,13 +1,13 @@
 {
   "schema": 1,
-  "verified_at": "2026-09-02",
+  "verified_at": "2026-09-03",
   "surfaces": [
     {
       "id": "central",
       "public_name": "Central",
       "function": "persistent personal ground",
       "repository": "https://github.com/EpiLogos/Central",
-      "docs_ref": "2bc8ca665d2019cc285cc45b4bcb891d794574ca",
+      "docs_ref": "3d45044e3984e2f389e1e9237306ddeba4d3ca94",
       "docs_path": "README.md",
       "skill_paths": [
         "skills/control-maintenance/SKILL.md",
@@ -25,10 +25,10 @@
       },
       "install": {
         "kind": "oi-managed-binary",
-        "ref": "2bc8ca665d2019cc285cc45b4bcb891d794574ca",
-        "revision": "2bc8ca665d2019cc285cc45b4bcb891d794574ca",
+        "ref": "3d45044e3984e2f389e1e9237306ddeba4d3ca94",
+        "revision": "3d45044e3984e2f389e1e9237306ddeba4d3ca94",
         "path": "ctrl",
-        "note": "Current #97 source pin for developer/source installation. The immutable prelocal release artifact remains described separately by suite/manifest.json; Central remains owner of Control, Work, ProjectCentral, source authority, persisted AgentProfile source relations, canonical AgentProfile Actions and .central semantics."
+        "note": "Current #97 source pin for developer/source installation. The immutable prelocal release artifact remains described separately by suite/manifest.json; Central remains owner of Control, Work, ProjectCentral, source authority, persisted AgentProfile source relations, canonical AgentProfile Actions, authored RoutineRef assignments and .central semantics."
       },
       "verification": {
         "status": "supported",
@@ -39,51 +39,51 @@
           "evidence": "native-json-stdout"
         },
         "outstanding_requirements": [],
-        "note": "Portable Central acceptance includes the sixfold Project Context Protocol, ProjectCentral authored Ground/governance, SourceHistory recovery, NOW/DAY, current-machine relations, durable personal/Project AgentProfile source persistence and canonical owner Actions. Physical owner-world observations remain separate evidence."
+        "note": "Portable Central acceptance includes the sixfold Project Context Protocol, ProjectCentral authored Ground/governance, SourceHistory recovery, NOW/DAY, current-machine relations, Central Computer intent, durable personal/Project AgentProfile persistence, canonical owner Actions and authored Skill/SkillSet/Method/Routine refs. Routine proof/enable/trigger/authority remains AIKit-owned; physical owner-world observations remain separate evidence."
       },
-      "compatibility": "Central current main owns Project source identity, standing and provenance, including Project Context and AgentProfile source/save/read/Action relations; operational precedence/resolution remains AIKit-owned rather than defined in Central."
+      "compatibility": "Central current main owns Project source identity, standing and provenance, including Project Context and AgentProfile source/save/read/Action relations plus authored RoutineRef defaults; operational precedence/resolution and Routine state remain AIKit-owned rather than defined in Central."
     },
     {
       "id": "actuation",
       "public_name": "Actuation",
       "function": "Agency, WorldBinding, RootScope, Metagency, Determination and Return authority",
       "repository": "https://github.com/EpiLogos/Actuation",
-      "docs_ref": "6b5419c2dd91dda2e260d309a08c078026256a73",
+      "docs_ref": "7895fa05d87cb1f1ba121ba4f91b64a52484d212",
       "docs_path": "docs/WORLD-BOUND-ROOT-AGENCY.md",
       "skill_paths": [],
       "native": {
-        "kind": "workbench",
-        "entry": "portable Actuation contracts and runtime foundation",
-        "executable": null,
-        "alias": null,
-        "version_command": null,
-        "version_manifest": null
+        "kind": "cli",
+        "entry": "bin/actuation",
+        "executable": "actuation",
+        "alias": "actuation",
+        "version_command": ["--version"],
+        "version_manifest": ".oi/product.json"
       },
       "install": {
         "kind": "oi-managed-component",
-        "ref": "6b5419c2dd91dda2e260d309a08c078026256a73",
-        "revision": "6b5419c2dd91dda2e260d309a08c078026256a73",
-        "note": "Current mainline source pin for developer/source composition. Immutable released artifacts remain versioned by suite/manifest.json."
+        "ref": "7895fa05d87cb1f1ba121ba4f91b64a52484d212",
+        "revision": "7895fa05d87cb1f1ba121ba4f91b64a52484d212",
+        "note": "Current #97 source pin for developer/source composition. Actuation now publishes the maintained native CLI over its accepted semantic contracts; immutable released artifacts remain versioned separately by suite/manifest.json."
       },
       "verification": {
         "status": "supported",
         "operation": {
-          "id": "actuation.managed-artifact",
-          "runner": "managed-artifact",
-          "args": [],
-          "evidence": "oi.managed-artifact-evidence/v1"
+          "id": "actuation.verify",
+          "runner": "native-executable",
+          "args": ["verify", "--json"],
+          "evidence": "native-json-stdout"
         },
         "outstanding_requirements": [],
-        "note": "Current main includes semantic Activity over canonical ActuationStream in addition to the realised Actuation authority/runtime floor."
+        "note": "Current main includes semantic Activity over canonical ActuationStream plus the native actuation CLI projecting Agency, realised Actuation, stream, Activity and model-bearing contracts. Pre-local is an exact-SHA build channel, not release standing."
       },
-      "compatibility": "Actuation main owns Agency/WorldBinding/Actuation/Return meaning and now supplies the portable Activity projection consumed by O:I without turning observed Activity into Action identity."
+      "compatibility": "Actuation main owns Agency/WorldBinding/Actuation/Return meaning and the portable Activity/CLI projections consumed by O:I without turning observed Activity, command projection or material process identity into Action/Agency identity."
     },
     {
       "id": "ai-kit",
       "public_name": "AIKit",
       "function": "context, capability, model, credential, SessionSpace and provider-process resolution",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "docs_ref": "0b31cdf6592e06a3e9f4faa4820def7d9fd575ff",
+      "docs_ref": "58465dc21f1deedfd43ef82b188d495eebe4561a",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -96,8 +96,8 @@
       },
       "install": {
         "kind": "oi-managed-binary",
-        "ref": "0b31cdf6592e06a3e9f4faa4820def7d9fd575ff",
-        "revision": "0b31cdf6592e06a3e9f4faa4820def7d9fd575ff",
+        "ref": "58465dc21f1deedfd43ef82b188d495eebe4561a",
+        "revision": "58465dc21f1deedfd43ef82b188d495eebe4561a",
         "note": "Current #97 source pin for developer/source composition. Immutable released artifacts remain versioned by suite/manifest.json."
       },
       "verification": {
@@ -109,16 +109,16 @@
           "evidence": "process-exit-and-output"
         },
         "outstanding_requirements": [],
-        "note": "Current accepted AIKit main includes ContextResolutionEvidence/ContextResolutionRef with operative ContextSource activation receipts, SessionSpace application state, Herdr/Hyprland provider composition, public working-environment conformance, native VersionedWorld/ProjectWorld relations, source-owned Method semantics, proof-before-automation Routine semantics, operative Resolve/search and canonical QL-shape operation in SemanticWiki/Contemplate."
+        "note": "Current accepted AIKit main includes ContextResolutionEvidence/ContextResolutionRef with operative ContextSource activation receipts, SessionSpace application state, public working-environment conformance, native VersionedWorld/ProjectWorld relations, source-owned Method semantics, proof-before-automation Routine semantics, operative Resolve/search, canonical QL-shape operation, and the completed deterministic Herdr/Hyprland reference-provider automation slice."
       },
-      "compatibility": "AIKit owns operational P4 context resolution, target-native activation evidence, effective Method/praxis resolution and Routine proof/trigger/authority state. It consumes Central AgentProfile only as an opaque source relation; Factory may correlate Method/proof/Routine refs without acquiring those semantics."
+      "compatibility": "AIKit owns operational P4 context resolution, target-native activation evidence, effective Method/praxis resolution and Routine proof/trigger/authority state. It consumes Central AgentProfile authored RoutineRefs only as source/default relations; Factory may correlate Method/proof/Routine refs without acquiring those semantics."
     },
     {
       "id": "software-factory",
       "public_name": "Software Factory",
       "function": "developmental Project, Journey, Run, Candidate, evidence and authorised Factory Action semantics",
       "repository": "https://github.com/EpiLogos/agent-system-design",
-      "docs_ref": "50652ae5a02f86c11bd6bdbbb76b5180e79aa1f5",
+      "docs_ref": "c9b620fab742ead8defea334fb45cdc7558ed43d",
       "docs_path": "factory/README.md",
       "skill_paths": [],
       "native": {
@@ -131,9 +131,9 @@
       },
       "install": {
         "kind": "oi-managed-component",
-        "ref": "50652ae5a02f86c11bd6bdbbb76b5180e79aa1f5",
-        "revision": "50652ae5a02f86c11bd6bdbbb76b5180e79aa1f5",
-        "note": "Current #97 source pin for developer/source composition. Immutable released artifacts remain versioned by suite/manifest.json; the live repository retains its historical agent-system-design name."
+        "ref": "c9b620fab742ead8defea334fb45cdc7558ed43d",
+        "revision": "c9b620fab742ead8defea334fb45cdc7558ed43d",
+        "note": "Current #97 source pin for developer/source composition. Immutable released artifacts remain versioned by suite/manifest.json; the live repository retains its historical agent-system-design name and pre-local now carries exact-SHA build rather than release standing."
       },
       "verification": {
         "status": "supported",
@@ -144,16 +144,16 @@
           "evidence": "oi.managed-artifact-evidence/v1"
         },
         "outstanding_requirements": [],
-        "note": "Current main includes Git developmental Worlds, bounded P3 Intent → Run → evidence-bearing P5 return, Run-scoped ProjectDevelopment persistence/reload, canonical request-evidence Action parity, accountable Journey Commission, and Journey-praxis/developmental-Build readings over Central AgentProfile and exact AIKit Method/proof/Routine refs."
+        "note": "Current main includes Git developmental Worlds, bounded P3 Intent → Run → evidence-bearing P5 return, Run-scoped ProjectDevelopment persistence/reload, canonical request-evidence Action parity, accountable Journey Commission, Journey-praxis/developmental-Build readings over Central AgentProfile and exact AIKit Method/proof/Routine refs, and whole-relative proof/RunThought/NOW hardening against plausibility-as-closure."
       },
-      "compatibility": "Factory owns developmental Project/Journey/Run/Candidate/Evidence/Recognition and Action semantics. It consumes Central source refs and AIKit ContextResolution/Method/proof/Routine refs opaquely, requires Routine proof to be grounded in Journey returned reality, and exposes stale AIKit proof only as developmental revalidation pressure."
+      "compatibility": "Factory owns developmental Project/Journey/Run/Candidate/Evidence/Recognition and Action semantics. It consumes Central source refs and AIKit ContextResolution/Method/proof/Routine refs opaquely, requires proof to be whole-relative to the developmental burden, and exposes stale AIKit proof only as revalidation pressure."
     },
     {
       "id": "workcell",
       "public_name": "Workcell",
       "function": "material execution, model-serving base, process containment and secret materialisation",
       "repository": "https://github.com/EpiLogos/Workcell",
-      "docs_ref": "8320e05fc5bc2749c0f2ad24301d8dd1cda3d090",
+      "docs_ref": "bfb5287935ebb2e08677e219cb4de8c65a4b38a8",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -166,9 +166,9 @@
       },
       "install": {
         "kind": "oi-managed-binary",
-        "ref": "8320e05fc5bc2749c0f2ad24301d8dd1cda3d090",
-        "revision": "8320e05fc5bc2749c0f2ad24301d8dd1cda3d090",
-        "note": "Current mainline source pin for developer/source composition. Immutable released artifacts remain versioned by suite/manifest.json; provider-specific physical resources are not materialised by O:I preflight."
+        "ref": "bfb5287935ebb2e08677e219cb4de8c65a4b38a8",
+        "revision": "bfb5287935ebb2e08677e219cb4de8c65a4b38a8",
+        "note": "Current #97 source pin for developer/source composition. Immutable released artifacts remain versioned by suite/manifest.json; provider-specific physical resources are not materialised by O:I preflight and pre-local remains an exact-SHA build channel."
       },
       "verification": {
         "status": "supported",
@@ -190,7 +190,7 @@
             "description": "Private credentials, local networking/GPU/model-serving and other owner-machine provider acceptance remains outside this pre-local session."
           }
         ],
-        "note": "Current main includes deterministic OpenSandbox World materialisation/lifecycle and the first-party AIKit Gateway managed-service relation while preserving semantic ownership in AIKit."
+        "note": "Current main includes deterministic OpenSandbox World materialisation/lifecycle and the first-party AIKit Gateway managed-service relation while preserving semantic ownership in AIKit. Pre-local carries exact-SHA build evidence rather than release standing."
       },
       "compatibility": "Workcell main owns materialisation/service lifecycle and provider provenance, including OpenSandbox and AIKit Gateway service bodies, without acquiring Project, AgentSession or Gateway protocol identity."
     },
