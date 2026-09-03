@@ -7,7 +7,7 @@
       "public_name": "Central",
       "function": "persistent personal ground",
       "repository": "https://github.com/EpiLogos/Central",
-      "docs_ref": "2bc8ca665d2019cc285cc45b4bcb891d794574ca",
+      "docs_ref": "f8a88b622de4de0a049cc905cc33a409b5840f23",
       "docs_path": "README.md",
       "skill_paths": [
         "skills/control-maintenance/SKILL.md",
@@ -25,16 +25,16 @@
         "version_command": ["--version"],
         "capability_command": ["capabilities", "--json"],
         "verification_command": ["doctor", "--json"],
-        "command_revision": "8746b64cac04a38e28d66378972ae3989144dab3",
-        "command_standing": "green-pr-head",
+        "command_revision": "f8a88b622de4de0a049cc905cc33a409b5840f23",
+        "command_standing": "accepted-main",
         "version_manifest": "ctrl/Cargo.toml"
       },
       "install": {
         "kind": "oi-managed-binary",
-        "ref": "2bc8ca665d2019cc285cc45b4bcb891d794574ca",
-        "revision": "2bc8ca665d2019cc285cc45b4bcb891d794574ca",
+        "ref": "f8a88b622de4de0a049cc905cc33a409b5840f23",
+        "revision": "f8a88b622de4de0a049cc905cc33a409b5840f23",
         "path": "ctrl",
-        "note": "Current #97 source pin for developer/source installation. The immutable prelocal release artifact remains described separately by suite/manifest.json; Central remains owner of Control, Work, ProjectCentral, source authority, persisted AgentProfile source relations, canonical AgentProfile Actions and .central semantics. The command_revision separately records the green pre-#97 CLI doorway head until owner merge."
+        "note": "Current pre-#97 source/build pin. Central remains owner of Control, Work, ProjectCentral, source authority, persisted AgentProfile source relations, canonical AgentProfile Actions and .central semantics."
       },
       "verification": {
         "status": "supported",
@@ -54,7 +54,7 @@
       "public_name": "Actuation",
       "function": "Agency, WorldBinding, RootScope, Metagency, Determination and Return authority",
       "repository": "https://github.com/EpiLogos/Actuation",
-      "docs_ref": "6b5419c2dd91dda2e260d309a08c078026256a73",
+      "docs_ref": "7895fa05d87cb1f1ba121ba4f91b64a52484d212",
       "docs_path": "docs/WORLD-BOUND-ROOT-AGENCY.md",
       "skill_paths": [],
       "native": {
@@ -67,15 +67,15 @@
         "version_command": ["--version"],
         "capability_command": ["capabilities", "--json"],
         "verification_command": ["verify", "--json"],
-        "command_revision": "5444ca384d46b37369646a58ff4d9cf15f812d2f",
-        "command_standing": "green-pr-head",
+        "command_revision": "7895fa05d87cb1f1ba121ba4f91b64a52484d212",
+        "command_standing": "accepted-main",
         "version_manifest": "package.json"
       },
       "install": {
         "kind": "oi-managed-component",
-        "ref": "6b5419c2dd91dda2e260d309a08c078026256a73",
-        "revision": "6b5419c2dd91dda2e260d309a08c078026256a73",
-        "note": "Current accepted source pin remains the owner main while the green native Actuation CLI head is carried separately as command_revision for pre-#97 convergence."
+        "ref": "7895fa05d87cb1f1ba121ba4f91b64a52484d212",
+        "revision": "7895fa05d87cb1f1ba121ba4f91b64a52484d212",
+        "note": "Current pre-#97 source/build pin; pre-local artifacts are unratified verification evidence rather than release standing."
       },
       "verification": {
         "status": "supported",
@@ -86,7 +86,7 @@
           "evidence": "oi.managed-artifact-evidence/v1"
         },
         "outstanding_requirements": [],
-        "note": "Current main includes semantic Activity over canonical ActuationStream in addition to the realised Actuation authority/runtime floor. The green command head projects those accepted contracts through the native `actuation` executable."
+        "note": "Current main includes semantic Activity over canonical ActuationStream in addition to the realised Actuation authority/runtime floor and projects those accepted contracts through the native `actuation` executable."
       },
       "compatibility": "Actuation owns Agency/WorldBinding/Actuation/Return meaning and the portable Activity projection consumed across the O:I world. Its native command surface projects those owner contracts for human and machine access."
     },
@@ -95,7 +95,7 @@
       "public_name": "AIKit",
       "function": "context, capability, model, credential, SessionSpace and provider-process resolution",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "docs_ref": "0b31cdf6592e06a3e9f4faa4820def7d9fd575ff",
+      "docs_ref": "0eff91a76fcba27e004b2611bbe38622009906e8",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -108,15 +108,15 @@
         "version_command": ["--version"],
         "capability_command": ["capabilities", "list", "--json"],
         "verification_command": ["doctor", "--json"],
-        "command_revision": "0b31cdf6592e06a3e9f4faa4820def7d9fd575ff",
+        "command_revision": "0eff91a76fcba27e004b2611bbe38622009906e8",
         "command_standing": "accepted-main",
         "version_manifest": "crates/aikit-cli/Cargo.toml"
       },
       "install": {
         "kind": "oi-managed-binary",
-        "ref": "0b31cdf6592e06a3e9f4faa4820def7d9fd575ff",
-        "revision": "0b31cdf6592e06a3e9f4faa4820def7d9fd575ff",
-        "note": "Current #97 source pin for developer/source composition. Immutable released artifacts remain versioned by suite/manifest.json."
+        "ref": "0eff91a76fcba27e004b2611bbe38622009906e8",
+        "revision": "0eff91a76fcba27e004b2611bbe38622009906e8",
+        "note": "Current pre-#97 source/build pin. Pre-local verification builds exact-SHA Linux/macOS artifacts with checksums and attestations; it does not publish or ratify a release."
       },
       "verification": {
         "status": "supported",
@@ -136,7 +136,7 @@
       "public_name": "Software Factory",
       "function": "developmental Project, Journey, Run, Candidate, evidence and authorised Factory Action semantics",
       "repository": "https://github.com/EpiLogos/agent-system-design",
-      "docs_ref": "50652ae5a02f86c11bd6bdbbb76b5180e79aa1f5",
+      "docs_ref": "7e8fadea5156d75eb872f55f4fd4938d47fb0648",
       "docs_path": "factory/README.md",
       "skill_paths": [],
       "native": {
@@ -149,15 +149,15 @@
         "version_command": ["--version"],
         "capability_command": ["capabilities", "--json"],
         "verification_command": ["verify", "--json"],
-        "command_revision": "3d7360f2cbaf6f2949badd2b0396bffdb2cd39e6",
-        "command_standing": "green-pr-head",
+        "command_revision": "7e8fadea5156d75eb872f55f4fd4938d47fb0648",
+        "command_standing": "accepted-main",
         "version_manifest": "factory/Cargo.toml"
       },
       "install": {
         "kind": "oi-managed-component",
-        "ref": "50652ae5a02f86c11bd6bdbbb76b5180e79aa1f5",
-        "revision": "50652ae5a02f86c11bd6bdbbb76b5180e79aa1f5",
-        "note": "Current #97 source pin remains the accepted owner main while the six-for-six green Factory CLI head is carried separately as command_revision. The live repository retains its historical agent-system-design name."
+        "ref": "7e8fadea5156d75eb872f55f4fd4938d47fb0648",
+        "revision": "7e8fadea5156d75eb872f55f4fd4938d47fb0648",
+        "note": "Current pre-#97 source/build pin. The live repository retains its historical agent-system-design name while `factory` is the native product command."
       },
       "verification": {
         "status": "supported",
@@ -168,7 +168,7 @@
           "evidence": "oi.managed-artifact-evidence/v1"
         },
         "outstanding_requirements": [],
-        "note": "Current main includes Git developmental Worlds, bounded P3 Intent → Run → evidence-bearing P5 return, Run-scoped ProjectDevelopment persistence/reload, canonical request-evidence Action parity, accountable Journey Commission, and Journey-praxis/developmental-Build readings over Central AgentProfile and exact AIKit Method/proof/Routine refs. The green command head projects the existing Build/provider/Action owners directly."
+        "note": "Current main includes Git developmental Worlds, bounded P3 Intent → Run → evidence-bearing P5 return, Run-scoped ProjectDevelopment persistence/reload, canonical request-evidence Action parity, accountable Journey Commission, Journey-praxis/developmental-Build readings, and the native `factory` command over those existing providers/Actions."
       },
       "compatibility": "Factory owns developmental Project/Journey/Run/Candidate/Evidence/Recognition and Action semantics. It consumes Central source refs and AIKit ContextResolution/Method/proof/Routine refs opaquely, requires Routine proof to be grounded in Journey returned reality, and exposes stale AIKit proof as developmental revalidation pressure."
     },
@@ -177,7 +177,7 @@
       "public_name": "Workcell",
       "function": "material execution, model-serving base, process containment and secret materialisation",
       "repository": "https://github.com/EpiLogos/Workcell",
-      "docs_ref": "8320e05fc5bc2749c0f2ad24301d8dd1cda3d090",
+      "docs_ref": "25792dc3aa8e4c54088c0696cee00f8efefe03ad",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -190,15 +190,15 @@
         "version_command": ["--version"],
         "capability_command": ["--json", "discover"],
         "verification_command": ["--json", "doctor"],
-        "command_revision": "0a0bd8b31b14a9386784e26da1867162eeaa98da",
-        "command_standing": "candidate-pr-head",
+        "command_revision": "25792dc3aa8e4c54088c0696cee00f8efefe03ad",
+        "command_standing": "accepted-main",
         "version_manifest": "crates/workcell-cli/Cargo.toml"
       },
       "install": {
         "kind": "oi-managed-binary",
-        "ref": "8320e05fc5bc2749c0f2ad24301d8dd1cda3d090",
-        "revision": "8320e05fc5bc2749c0f2ad24301d8dd1cda3d090",
-        "note": "Current mainline source pin for developer/source composition. The command_revision is the pre-#97 version-disclosure head presently under native verification; provider-specific physical resources remain physical acceptance evidence rather than preflight materialisation."
+        "ref": "25792dc3aa8e4c54088c0696cee00f8efefe03ad",
+        "revision": "25792dc3aa8e4c54088c0696cee00f8efefe03ad",
+        "note": "Current pre-#97 source/build pin. Provider-specific physical resources remain physical acceptance evidence rather than preflight materialisation."
       },
       "verification": {
         "status": "supported",
@@ -220,7 +220,7 @@
             "description": "Private credentials, local networking/GPU/model-serving and other owner-machine provider acceptance remains outside this pre-local session."
           }
         ],
-        "note": "Current main includes deterministic OpenSandbox World materialisation/lifecycle and the first-party AIKit Gateway managed-service relation while preserving semantic ownership in AIKit."
+        "note": "Current main includes deterministic OpenSandbox World materialisation/lifecycle, the first-party AIKit Gateway managed-service relation, and stable selector-independent `workcell` executable version identity while preserving semantic ownership in native owners."
       },
       "compatibility": "Workcell owns materialisation/service lifecycle and provider provenance, including OpenSandbox and AIKit Gateway service bodies, while Project, AgentSession and Gateway protocol identity remain with their native owners."
     },
@@ -229,7 +229,7 @@
       "public_name": "Quaternal Logic",
       "function": "deterministic QL kernel, complete MEF registry, service boundary and Vāk/formal operation surfaces",
       "repository": "https://github.com/EpiLogos/QL-MEF",
-      "docs_ref": "30171fb9f3646a1ef6e306357503d8a9df4a8a1c",
+      "docs_ref": "da19d60e3e81473d354e71d5ec13a2582cff95e5",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -242,15 +242,15 @@
         "version_command": ["--version"],
         "capability_command": ["capabilities", "--json"],
         "verification_command": ["verify", "--json"],
-        "command_revision": "e72f569df0bc7323f990e6ec2a55ecd7b954a949",
-        "command_standing": "green-pr-head",
+        "command_revision": "da19d60e3e81473d354e71d5ec13a2582cff95e5",
+        "command_standing": "accepted-main",
         "version_manifest": "crates/ql-cli/Cargo.toml"
       },
       "install": {
         "kind": "oi-managed-component",
-        "ref": "30171fb9f3646a1ef6e306357503d8a9df4a8a1c",
-        "revision": "30171fb9f3646a1ef6e306357503d8a9df4a8a1c",
-        "note": "The stable suite source pin remains unchanged while the current five-for-five green QL native command head is carried separately as command_revision during pre-#97 harmonisation."
+        "ref": "da19d60e3e81473d354e71d5ec13a2582cff95e5",
+        "revision": "da19d60e3e81473d354e71d5ec13a2582cff95e5",
+        "note": "Current pre-#97 source/build pin for the sixth native product; active later QL/Epi research may continue without invalidating this accepted owner snapshot."
       },
       "verification": {
         "status": "supported",
@@ -261,7 +261,7 @@
           "evidence": "oi.managed-artifact-evidence/v1"
         },
         "outstanding_requirements": [],
-        "note": "Quaternal Logic now has a green native command spine over its deterministic kernel and QlService boundary. MEF/Context-Frame/Vāk command breadth continues on the same owner branch before the command head is promoted to accepted main."
+        "note": "Current Quaternal Logic main publishes native `ql` over the accepted deterministic kernel, QlService, twelve MEF LensRefs, seven Context Frames and the source-locked 109-entry Vāk registry. Vāk path execution/Recognition remains on its typed runtime boundary."
       },
       "compatibility": "Quaternal Logic owns the formal QL/MEF/Vāk field at the sixth product position. O:I composes its accepted owner interfaces through the same whole-suite command and desktop surfaces as the other five products."
     }
