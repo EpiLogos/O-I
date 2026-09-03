@@ -1,13 +1,13 @@
 {
   "schema": 1,
-  "verified_at": "2026-09-02",
+  "verified_at": "2026-09-03",
   "surfaces": [
     {
       "id": "central",
       "public_name": "Central",
       "function": "persistent personal ground",
       "repository": "https://github.com/EpiLogos/Central",
-      "docs_ref": "2bc8ca665d2019cc285cc45b4bcb891d794574ca",
+      "docs_ref": "0b636d1fa52f625451fb94a1dc86d589117b76bd",
       "docs_path": "README.md",
       "skill_paths": [
         "skills/control-maintenance/SKILL.md",
@@ -20,70 +20,86 @@
         "entry": "ctrl",
         "executable": "ctrl",
         "alias": "ctrl",
+        "canonical_namespace": "central",
+        "compatibility_aliases": ["ctrl"],
         "version_command": ["--version"],
-        "version_manifest": "ctrl/Cargo.toml"
+        "version_manifest": "ctrl/Cargo.toml",
+        "structured_output": {
+          "supported": true,
+          "format": "json",
+          "contract": "owner-native-operation-specific",
+          "note": "JSON/headless selectors remain native-owner command semantics; O:I records discoverability only."
+        }
       },
       "install": {
         "kind": "oi-managed-binary",
-        "ref": "2bc8ca665d2019cc285cc45b4bcb891d794574ca",
-        "revision": "2bc8ca665d2019cc285cc45b4bcb891d794574ca",
+        "ref": "0b636d1fa52f625451fb94a1dc86d589117b76bd",
+        "revision": "0b636d1fa52f625451fb94a1dc86d589117b76bd",
         "path": "ctrl",
-        "note": "Current #97 source pin for developer/source installation. The immutable prelocal release artifact remains described separately by suite/manifest.json; Central remains owner of Control, Work, ProjectCentral, source authority, persisted AgentProfile source relations, canonical AgentProfile Actions and .central semantics."
+        "note": "Current accepted owner main for #172/#97 source composition; immutable release artifacts remain separately versioned."
       },
       "verification": {
         "status": "supported",
         "operation": {
           "id": "central.doctor",
           "runner": "native-executable",
-          "args": ["--root", "{personal_ground}", "doctor", "--json"],
+          "args": ["doctor", "--json"],
           "evidence": "native-json-stdout"
         },
         "outstanding_requirements": [],
-        "note": "Portable Central acceptance includes the sixfold Project Context Protocol, ProjectCentral authored Ground/governance, SourceHistory recovery, NOW/DAY, current-machine relations, durable personal/Project AgentProfile source persistence and canonical owner Actions. Physical owner-world observations remain separate evidence."
+        "note": "Installed verification delegates to the product-owned lifecycle contract; O:I does not reinterpret product health."
       },
-      "compatibility": "Central current main owns Project source identity, standing and provenance, including Project Context and AgentProfile source/save/read/Action relations; operational precedence/resolution remains AIKit-owned rather than defined in Central."
+      "compatibility": "Central owns durable authored Ground/World, Project source standing/provenance and AgentProfile source relations; AIKit owns effective operational resolution."
     },
     {
       "id": "actuation",
       "public_name": "Actuation",
-      "function": "Agency, WorldBinding, RootScope, Metagency, Determination and Return authority",
+      "function": "Agency, WorldBinding, Actuation and Return authority",
       "repository": "https://github.com/EpiLogos/Actuation",
-      "docs_ref": "6b5419c2dd91dda2e260d309a08c078026256a73",
-      "docs_path": "docs/WORLD-BOUND-ROOT-AGENCY.md",
+      "docs_ref": "7895fa05d87cb1f1ba121ba4f91b64a52484d212",
+      "docs_path": "README.md",
       "skill_paths": [],
       "native": {
-        "kind": "workbench",
-        "entry": "portable Actuation contracts and runtime foundation",
-        "executable": null,
-        "alias": null,
-        "version_command": null,
-        "version_manifest": null
+        "kind": "cli",
+        "entry": "actuation",
+        "executable": "actuation",
+        "alias": "actuation",
+        "canonical_namespace": "actuation",
+        "compatibility_aliases": [],
+        "version_command": ["--version"],
+        "version_manifest": "package.json",
+        "structured_output": {
+          "supported": true,
+          "format": "json",
+          "contract": "owner-native-operation-specific",
+          "note": "JSON/headless selectors remain native-owner command semantics; O:I records discoverability only."
+        }
       },
       "install": {
         "kind": "oi-managed-component",
-        "ref": "6b5419c2dd91dda2e260d309a08c078026256a73",
-        "revision": "6b5419c2dd91dda2e260d309a08c078026256a73",
-        "note": "Current mainline source pin for developer/source composition. Immutable released artifacts remain versioned by suite/manifest.json."
+        "ref": "7895fa05d87cb1f1ba121ba4f91b64a52484d212",
+        "revision": "7895fa05d87cb1f1ba121ba4f91b64a52484d212",
+        "note": "Current accepted owner main for #172/#97 source composition; immutable release artifacts remain separately versioned."
       },
       "verification": {
         "status": "supported",
         "operation": {
-          "id": "actuation.managed-artifact",
-          "runner": "managed-artifact",
-          "args": [],
-          "evidence": "oi.managed-artifact-evidence/v1"
+          "id": "actuation.verify",
+          "runner": "native-executable",
+          "args": ["verify", "--json"],
+          "evidence": "native-json-stdout"
         },
         "outstanding_requirements": [],
-        "note": "Current main includes semantic Activity over canonical ActuationStream in addition to the realised Actuation authority/runtime floor."
+        "note": "Installed verification delegates to the product-owned lifecycle contract; O:I does not reinterpret product health."
       },
-      "compatibility": "Actuation main owns Agency/WorldBinding/Actuation/Return meaning and now supplies the portable Activity projection consumed by O:I without turning observed Activity into Action identity."
+      "compatibility": "Actuation owns Agency/WorldBinding/Actuation/Return and Activity meaning; O:I only projects its callable native surface."
     },
     {
       "id": "ai-kit",
       "public_name": "AIKit",
       "function": "context, capability, model, credential, SessionSpace and provider-process resolution",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "docs_ref": "0b31cdf6592e06a3e9f4faa4820def7d9fd575ff",
+      "docs_ref": "81ab25ce319453d3549a4e37280ba1ddd38613dd",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -91,69 +107,85 @@
         "entry": "aikit",
         "executable": "aikit",
         "alias": "kit",
+        "canonical_namespace": "aikit",
+        "compatibility_aliases": ["kit"],
         "version_command": ["--version"],
-        "version_manifest": "crates/aikit-cli/Cargo.toml"
+        "version_manifest": "crates/aikit-cli/Cargo.toml",
+        "structured_output": {
+          "supported": true,
+          "format": "json",
+          "contract": "owner-native-operation-specific",
+          "note": "JSON/headless selectors remain native-owner command semantics; O:I records discoverability only."
+        }
       },
       "install": {
         "kind": "oi-managed-binary",
-        "ref": "0b31cdf6592e06a3e9f4faa4820def7d9fd575ff",
-        "revision": "0b31cdf6592e06a3e9f4faa4820def7d9fd575ff",
-        "note": "Current #97 source pin for developer/source composition. Immutable released artifacts remain versioned by suite/manifest.json."
+        "ref": "81ab25ce319453d3549a4e37280ba1ddd38613dd",
+        "revision": "81ab25ce319453d3549a4e37280ba1ddd38613dd",
+        "note": "Current accepted owner main for #172/#97 source composition; immutable release artifacts remain separately versioned."
       },
       "verification": {
         "status": "supported",
         "operation": {
-          "id": "aikit.native-version",
+          "id": "aikit.doctor",
           "runner": "native-executable",
-          "args": ["--version"],
-          "evidence": "process-exit-and-output"
+          "args": ["doctor", "--json"],
+          "evidence": "native-json-stdout"
         },
         "outstanding_requirements": [],
-        "note": "Current accepted AIKit main includes ContextResolutionEvidence/ContextResolutionRef with operative ContextSource activation receipts, SessionSpace application state, Herdr/Hyprland provider composition, public working-environment conformance, native VersionedWorld/ProjectWorld relations, source-owned Method semantics, proof-before-automation Routine semantics, operative Resolve/search and canonical QL-shape operation in SemanticWiki/Contemplate."
+        "note": "Installed verification delegates to the product-owned lifecycle contract; O:I does not reinterpret product health."
       },
-      "compatibility": "AIKit owns operational P4 context resolution, target-native activation evidence, effective Method/praxis resolution and Routine proof/trigger/authority state. It consumes Central AgentProfile only as an opaque source relation; Factory may correlate Method/proof/Routine refs without acquiring those semantics."
+      "compatibility": "AIKit owns operative ContextResolution, capabilities, SessionSpace, provider activation, Method and Routine state; O:I delegates rather than reproducing those operations."
     },
     {
       "id": "software-factory",
       "public_name": "Software Factory",
       "function": "developmental Project, Journey, Run, Candidate, evidence and authorised Factory Action semantics",
       "repository": "https://github.com/EpiLogos/agent-system-design",
-      "docs_ref": "50652ae5a02f86c11bd6bdbbb76b5180e79aa1f5",
+      "docs_ref": "7e8fadea5156d75eb872f55f4fd4938d47fb0648",
       "docs_path": "factory/README.md",
       "skill_paths": [],
       "native": {
-        "kind": "workbench",
-        "entry": "factory/ Rust implementation root",
-        "executable": null,
-        "alias": null,
-        "version_command": null,
-        "version_manifest": "factory/Cargo.toml"
+        "kind": "cli",
+        "entry": "factory",
+        "executable": "factory",
+        "alias": "factory",
+        "canonical_namespace": "factory",
+        "compatibility_aliases": [],
+        "version_command": ["--version"],
+        "version_manifest": "factory/Cargo.toml",
+        "structured_output": {
+          "supported": true,
+          "format": "json",
+          "contract": "owner-native-operation-specific",
+          "note": "JSON/headless selectors remain native-owner command semantics; O:I records discoverability only."
+        }
       },
       "install": {
-        "kind": "oi-managed-component",
-        "ref": "50652ae5a02f86c11bd6bdbbb76b5180e79aa1f5",
-        "revision": "50652ae5a02f86c11bd6bdbbb76b5180e79aa1f5",
-        "note": "Current #97 source pin for developer/source composition. Immutable released artifacts remain versioned by suite/manifest.json; the live repository retains its historical agent-system-design name."
+        "kind": "oi-managed-native-cli",
+        "ref": "7e8fadea5156d75eb872f55f4fd4938d47fb0648",
+        "revision": "7e8fadea5156d75eb872f55f4fd4938d47fb0648",
+        "note": "Current accepted owner main for #172/#97 source composition; immutable release artifacts remain separately versioned."
       },
       "verification": {
         "status": "supported",
         "operation": {
-          "id": "software-factory.managed-artifact",
-          "runner": "managed-artifact",
-          "args": [],
-          "evidence": "oi.managed-artifact-evidence/v1"
+          "id": "software-factory.verify",
+          "runner": "native-executable",
+          "args": ["verify", "--json"],
+          "evidence": "native-json-stdout"
         },
         "outstanding_requirements": [],
-        "note": "Current main includes Git developmental Worlds, bounded P3 Intent → Run → evidence-bearing P5 return, Run-scoped ProjectDevelopment persistence/reload, canonical request-evidence Action parity, accountable Journey Commission, and Journey-praxis/developmental-Build readings over Central AgentProfile and exact AIKit Method/proof/Routine refs."
+        "note": "Installed verification delegates to the product-owned lifecycle contract; O:I does not reinterpret product health."
       },
-      "compatibility": "Factory owns developmental Project/Journey/Run/Candidate/Evidence/Recognition and Action semantics. It consumes Central source refs and AIKit ContextResolution/Method/proof/Routine refs opaquely, requires Routine proof to be grounded in Journey returned reality, and exposes stale AIKit proof only as developmental revalidation pressure."
+      "compatibility": "Factory owns developmental Project/Journey/Run/Candidate/Evidence/Recognition and canonical Factory Action semantics; O:I projects the native command without a second continuity store."
     },
     {
       "id": "workcell",
       "public_name": "Workcell",
       "function": "material execution, model-serving base, process containment and secret materialisation",
       "repository": "https://github.com/EpiLogos/Workcell",
-      "docs_ref": "8320e05fc5bc2749c0f2ad24301d8dd1cda3d090",
+      "docs_ref": "25792dc3aa8e4c54088c0696cee00f8efefe03ad",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -161,14 +193,22 @@
         "entry": "workcell",
         "executable": "workcell",
         "alias": "workcell",
+        "canonical_namespace": "workcell",
+        "compatibility_aliases": [],
         "version_command": ["--version"],
-        "version_manifest": "crates/workcell-cli/Cargo.toml"
+        "version_manifest": "crates/workcell-cli/Cargo.toml",
+        "structured_output": {
+          "supported": true,
+          "format": "json",
+          "contract": "owner-native-operation-specific",
+          "note": "JSON/headless selectors remain native-owner command semantics; O:I records discoverability only."
+        }
       },
       "install": {
         "kind": "oi-managed-binary",
-        "ref": "8320e05fc5bc2749c0f2ad24301d8dd1cda3d090",
-        "revision": "8320e05fc5bc2749c0f2ad24301d8dd1cda3d090",
-        "note": "Current mainline source pin for developer/source composition. Immutable released artifacts remain versioned by suite/manifest.json; provider-specific physical resources are not materialised by O:I preflight."
+        "ref": "25792dc3aa8e4c54088c0696cee00f8efefe03ad",
+        "revision": "25792dc3aa8e4c54088c0696cee00f8efefe03ad",
+        "note": "Current accepted owner main for #172/#97 source composition; immutable release artifacts remain separately versioned."
       },
       "verification": {
         "status": "supported",
@@ -183,51 +223,54 @@
             "kind": "physical",
             "id": "workcell-reference-machine",
             "description": "Reference Ubuntu/Omarchy material/runtime acceptance remains for the physical #97 session."
-          },
-          {
-            "kind": "provider",
-            "id": "workcell-private-providers",
-            "description": "Private credentials, local networking/GPU/model-serving and other owner-machine provider acceptance remains outside this pre-local session."
           }
         ],
-        "note": "Current main includes deterministic OpenSandbox World materialisation/lifecycle and the first-party AIKit Gateway managed-service relation while preserving semantic ownership in AIKit."
+        "note": "Installed verification delegates to the product-owned lifecycle contract; O:I does not reinterpret product health."
       },
-      "compatibility": "Workcell main owns materialisation/service lifecycle and provider provenance, including OpenSandbox and AIKit Gateway service bodies, without acquiring Project, AgentSession or Gateway protocol identity."
+      "compatibility": "Workcell owns materialisation, service lifecycle and provider provenance; actual owner-machine/provider execution remains physical evidence."
     },
     {
       "id": "quaternal-logic",
       "public_name": "Quaternal Logic",
-      "function": "deterministic QL kernel, complete MEF registry, service boundary and optional clients",
+      "function": "deterministic QL kernel, MEF registry, Context Frame/Vāk registry and service boundary",
       "repository": "https://github.com/EpiLogos/QL-MEF",
-      "docs_ref": "30171fb9f3646a1ef6e306357503d8a9df4a8a1c",
+      "docs_ref": "da19d60e3e81473d354e71d5ec13a2582cff95e5",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
-        "kind": "workbench",
-        "entry": "Quaternal Logic Rust kernel, service and adapter workspace",
-        "executable": null,
-        "alias": null,
-        "version_command": null,
-        "version_manifest": "Cargo.toml"
+        "kind": "cli",
+        "entry": "ql",
+        "executable": "ql",
+        "alias": "ql",
+        "canonical_namespace": "ql",
+        "compatibility_aliases": [],
+        "version_command": ["--version"],
+        "version_manifest": "Cargo.toml",
+        "structured_output": {
+          "supported": true,
+          "format": "json",
+          "contract": "owner-native-operation-specific",
+          "note": "JSON/headless selectors remain native-owner command semantics; O:I records discoverability only."
+        }
       },
       "install": {
         "kind": "oi-managed-component",
-        "ref": "30171fb9f3646a1ef6e306357503d8a9df4a8a1c",
-        "revision": "30171fb9f3646a1ef6e306357503d8a9df4a8a1c",
-        "note": "Stable suite source pin for the separately owned Quaternal Logic product. The currently moving QL/Epi computational and musical programmes converge through their own owner session rather than through O:I #97."
+        "ref": "da19d60e3e81473d354e71d5ec13a2582cff95e5",
+        "revision": "da19d60e3e81473d354e71d5ec13a2582cff95e5",
+        "note": "Current accepted owner main for #172/#97 source composition; immutable release artifacts remain separately versioned."
       },
       "verification": {
         "status": "supported",
         "operation": {
-          "id": "quaternal-logic.managed-artifact",
-          "runner": "managed-artifact",
-          "args": [],
-          "evidence": "oi.managed-artifact-evidence/v1"
+          "id": "quaternal-logic.verify",
+          "runner": "native-executable",
+          "args": ["verify", "--json"],
+          "evidence": "native-json-stdout"
         },
         "outstanding_requirements": [],
-        "note": "This stable QL-MEF suite pin records the separately owned product without making its currently moving computational/music/Epi programme a #97 closure dependency."
+        "note": "Installed verification delegates to the product-owned lifecycle contract; O:I does not reinterpret product health."
       },
-      "compatibility": "Quaternal Logic remains an optional, independently owned product in the six-position field. O:I can compose its accepted interfaces when present; #97 does not converge or gate on the active QL/Epi development topology."
+      "compatibility": "Quaternal Logic remains an independently owned formal/reflexive product; O:I composes its accepted native CLI and does not acquire QL/MEF semantics."
     }
   ]
 }
