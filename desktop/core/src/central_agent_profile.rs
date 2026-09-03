@@ -218,7 +218,12 @@ mod tests {
         let script = format!(
             r#"#!/bin/sh
 printf '%s\n' "$@" > '{}'
-action="$5"
+action=""
+for arg in "$@"; do
+  case "$arg" in
+    agent-profile.*) action="$arg" ;;
+  esac
+done
 if [ "$action" = "agent-profile.list" ]; then
   printf '%s\n' '{{"ok":true,"data":{{"scope":"personal","profiles":[],"source_payloads_disclosed":false}}}}'
 elif [ "$action" = "agent-profile.read" ]; then
