@@ -1,0 +1,168 @@
+name: Pre-local O:I build
+
+on:
+  pull_request:
+    paths:
+      - 'cli/**'
+      - 'suite/**'
+      - 'surfaces.json'
+      - 'desktop/**'
+      - 'packages/oi-design-system/**'
+      - 'packages/oi-cli/**'
+      - '.github/workflows/prelocal-build.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'cli/**'
+      - 'suite/**'
+      - 'surfaces.json'
+      - 'desktop/**'
+      - 'packages/oi-design-system/**'
+      - 'packages/oi-cli/**'
+      - '.github/workflows/prelocal-build.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test --manifest-path cli/Cargo.toml --locked
+
+  desktop-bundle:
+    runs-on: macos-15
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: desktop/ui/package-lock.json
+      - name: Install locked desktop UI graph
+        run: npm ci --prefix desktop/ui --no-audit --no-fund
+      - name: Prove locked native-shell graph
+        run: cargo check --manifest-path desktop/src-tauri/Cargo.toml --locked --target aarch64-apple-darwin
+      - name: Build Apple Silicon Tauri app bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd desktop/src-tauri
+          ../ui/node_modules/.bin/tauri build --bundles app --target aarch64-apple-darwin
+      - name: Prove build did not rewrite locks
+        run: git diff --exit-code -- desktop/src-tauri/Cargo.lock desktop/ui/package-lock.json
+      - name: Package exact-main desktop bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          bundle_dir='desktop/src-tauri/target/aarch64-apple-darwin/release/bundle/macos'
+          app="$(find "$bundle_dir" -maxdepth 1 -type d -name '*.app' -print -quit)"
+          test -n "$app"
+          mkdir -p dist
+          short_sha="${GITHUB_SHA::12}"
+          archive="dist/oi-desktop-0.1.0-${short_sha}-aarch64-apple-darwin.app.tar.gz"
+          tar -C "$(dirname "$app")" -czf "$archive" "$(basename "$app")"
+          shasum -a 256 "$archive" > "$archive.sha256"
+      - uses: actions/attest@v4
+        if: github.event_name == 'push'
+        with:
+          subject-path: dist/*.tar.gz
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'push'
+        with:
+          name: oi-desktop-aarch64-apple-darwin-${{ github.sha }}
+          path: |
+            dist/*.tar.gz
+            dist/*.sha256
+
+  artifact:
+    if: github.event_name == 'push'
+    needs: verify
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: macos-15
+            target: aarch64-apple-darwin
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - name: Build locked O:I bootstrap
+        run: cargo build --manifest-path cli/Cargo.toml --locked --release --target '${{ matrix.target }}' --bin oi
+      - name: Package exact-main O:I bootstrap
+        shell: bash
+        run: |
+          set -euo pipefail
+          short_sha="${GITHUB_SHA::12}"
+          name="oi-0.1.0-${short_sha}-${{ matrix.target }}"
+          mkdir -p "dist/$name"
+          cp "cli/target/${{ matrix.target }}/release/oi" "dist/$name/oi"
+          cp suite/manifest.json "dist/$name/suite-manifest.json"
+          printf '%s\n' "$GITHUB_SHA" > "dist/$name/source-commit.txt"
+          tar -C dist -czf "dist/$name.tar.gz" "$name"
+          shasum -a 256 "dist/$name.tar.gz" > "dist/$name.tar.gz.sha256"
+      - uses: actions/attest@v4
+        with:
+          subject-path: dist/*.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: oi-${{ matrix.target }}-${{ github.sha }}
+          path: |
+            dist/*.tar.gz
+            dist/*.sha256
+
+  npm-package:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify npm distribution package
+        working-directory: packages/oi-cli
+        run: npm test
+      - name: Pack npm distribution package
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          npm pack ./packages/oi-cli --pack-destination dist
+          for archive in dist/*.tgz; do
+            sha256sum "$archive" > "$archive.sha256"
+          done
+          printf '%s\n' "$GITHUB_SHA" > dist/source-commit.txt
+      - uses: actions/attest@v4
+        with:
+          subject-path: dist/*.tgz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: oi-npm-package-${{ github.sha }}
+          path: |
+            dist/*.tgz
+            dist/*.sha256
+            dist/source-commit.txt
