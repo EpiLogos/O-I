@@ -86,6 +86,22 @@ pub struct RecognitionObservation {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+pub struct OwnerParticipation {
+    pub owner: String,
+    pub native_system: NativeSystemObservation,
+    pub contract: String,
+    pub state: String,
+    #[serde(default)]
+    pub readiness: BTreeMap<String, Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub canonical_ref: Option<String>,
+    #[serde(default)]
+    pub provenance: Vec<String>,
+    #[serde(default)]
+    pub faculties: Vec<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct RecognitionExtensionRequest {
     pub request_ref: String,
     pub native_system_ref: String,
@@ -159,6 +175,8 @@ pub struct WorldRecognitionAccount {
     pub sources: Vec<RecognizedSourceAperture>,
     pub providers: Vec<RecognitionProviderExecution>,
     pub observations: Vec<RecognitionObservation>,
+    #[serde(default)]
+    pub owner_participations: Vec<OwnerParticipation>,
     pub extension_requests: Vec<RecognitionExtensionRequest>,
     #[serde(default)]
     pub provider_errors: Vec<String>,
@@ -506,15 +524,291 @@ pub fn discover_world(
     observations.sort_by(|left, right| left.observation_ref.cmp(&right.observation_ref));
     extension_requests.sort_by(|left, right| left.request_ref.cmp(&right.request_ref));
 
+    let (owner_participations, participation_errors) = query_owner_participations();
+    reconcile_owner_participations(&mut observations, &owner_participations);
+    providers.push(RecognitionProviderExecution {
+        provider_ref: "oi:builtin/owner-participation-reconciliation".to_owned(),
+        package_ref: "oi:core".to_owned(),
+        status: if owner_participations.is_empty() {
+            "not_present".to_owned()
+        } else {
+            "observed".to_owned()
+        },
+        detail: format!(
+            "{} native-owner participations reconciled",
+            owner_participations.len()
+        ),
+    });
+    provider_errors.extend(participation_errors);
+    let mut owner_participations = owner_participations;
+    owner_participations.sort_by(|left, right| {
+        (&left.owner, &left.native_system.name).cmp(&(&right.owner, &right.native_system.name))
+    });
+
     Ok(WorldRecognitionAccount {
         schema: WORLD_RECOGNITION_ACCOUNT_SCHEMA.to_owned(),
         target: target.display().to_string(),
         sources,
         providers,
         observations,
+        owner_participations,
         extension_requests,
         provider_errors,
     })
+}
+
+fn query_owner_participations() -> (Vec<OwnerParticipation>, Vec<String>) {
+    let mut participations = Vec::new();
+    let mut errors = Vec::new();
+    let Some(aikit) = resolve_executable("aikit") else {
+        return (participations, errors);
+    };
+    let aikit = aikit.display().to_string();
+
+    match run_json_envelope(&aikit, &["mux", "detect", "--json"]) {
+        Ok(Some(data)) => participations.extend(aikit_mux_participations(&data)),
+        Ok(None) => {}
+        Err(error) => errors.push(format!("AIKit mux registry: {error}")),
+    }
+    match run_json_envelope(&aikit, &["client", "status", "--json"]) {
+        Ok(Some(data)) => participations.extend(aikit_client_participations(&data)),
+        Ok(None) => {}
+        Err(error) => errors.push(format!("AIKit client registry: {error}")),
+    }
+    (participations, errors)
+}
+
+fn run_json_envelope(executable: &str, args: &[&str]) -> Result<Option<Value>, String> {
+    let output = Command::new(executable)
+        .args(args)
+        .stdin(Stdio::null())
+        .output()
+        .map_err(|error| format!("failed to start {executable}: {error}"))?;
+    if !output.status.success() {
+        return Err(format!(
+            "{executable} {} exited {}: {}",
+            args.join(" "),
+            output.status,
+            String::from_utf8_lossy(&output.stderr).trim()
+        ));
+    }
+    let value: Value = serde_json::from_slice(&output.stdout).map_err(|error| {
+        format!(
+            "{executable} {} returned invalid JSON: {error}",
+            args.join(" ")
+        )
+    })?;
+    if value.get("ok").and_then(Value::as_bool) != Some(true) {
+        return Ok(None);
+    }
+    Ok(value.get("data").cloned())
+}
+
+fn aikit_mux_participations(data: &Value) -> Vec<OwnerParticipation> {
+    let active = data.get("active").and_then(Value::as_str).map(str::to_owned);
+    let active_stack: Vec<String> = data
+        .get("active_stack")
+        .and_then(Value::as_array)
+        .map(|values| {
+            values
+                .iter()
+                .filter_map(Value::as_str)
+                .map(str::to_owned)
+                .collect()
+        })
+        .unwrap_or_default();
+    let mut out = Vec::new();
+    let Some(detected) = data.get("detected").and_then(Value::as_array) else {
+        return out;
+    };
+    for entry in detected {
+        let Some(mux) = entry.get("mux").and_then(Value::as_str) else {
+            continue;
+        };
+        if mux == "plain" {
+            continue;
+        }
+        let installed = entry
+            .get("installed")
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
+        let running = entry
+            .get("server_running")
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
+        let inside = entry
+            .get("inside")
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
+        let version = entry.get("version").and_then(Value::as_str).map(str::to_owned);
+        let binary = entry.get("binary").and_then(Value::as_str).map(str::to_owned);
+        let remote_tmux = entry.get("remote_tmux").and_then(Value::as_bool);
+        let detail = entry.get("detail").and_then(Value::as_str).map(str::to_owned);
+
+        let state = if !installed {
+            "not-installed".to_owned()
+        } else if active.as_deref() == Some(mux) && running {
+            "active".to_owned()
+        } else if running {
+            "installed-running".to_owned()
+        } else {
+            "installed-not-running".to_owned()
+        };
+
+        let mut readiness = BTreeMap::new();
+        readiness.insert("installed".to_owned(), json!(installed));
+        readiness.insert("server_running".to_owned(), json!(running));
+        readiness.insert("inside".to_owned(), json!(inside));
+        if let Some(remote) = remote_tmux {
+            readiness.insert("remote_tmux".to_owned(), json!(remote));
+        }
+        if let Some(active) = active.as_ref() {
+            readiness.insert("active".to_owned(), json!(active));
+        }
+        if !active_stack.is_empty() {
+            readiness.insert("active_stack".to_owned(), json!(active_stack));
+        }
+        if let Some(detail) = detail {
+            readiness.insert("detail".to_owned(), json!(detail));
+        }
+
+        out.push(OwnerParticipation {
+            owner: "AIKit".to_owned(),
+            native_system: NativeSystemObservation {
+                system_ref: format!("native:{mux}:local"),
+                kind: "working-environment".to_owned(),
+                name: mux.to_owned(),
+                version,
+                locator: binary,
+                source_revision: None,
+            },
+            contract: "aikit.working-environment-provider/v1".to_owned(),
+            state,
+            readiness,
+            canonical_ref: None,
+            provenance: vec![
+                format!("AIKit crates/aikit-adapters/src/mux/{mux}.rs"),
+                "aikit mux detect".to_owned(),
+            ],
+            faculties: vec![
+                "session".to_owned(),
+                "pane".to_owned(),
+                "surface".to_owned(),
+            ],
+        });
+    }
+    out
+}
+
+fn aikit_client_participations(data: &Value) -> Vec<OwnerParticipation> {
+    let mut out = Vec::new();
+    let Some(clients) = data.get("clients").and_then(Value::as_array) else {
+        return out;
+    };
+    for entry in clients {
+        let Some(client) = entry.get("client").and_then(Value::as_str) else {
+            continue;
+        };
+        // AIKit's broker is its own disclosure surface, not an external harness.
+        if client == "broker" {
+            continue;
+        }
+        let installed = entry
+            .get("installed")
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
+        let error = entry.get("error").and_then(Value::as_str).map(str::to_owned);
+        let effect = entry.get("effect").and_then(Value::as_str).map(str::to_owned);
+        let items = entry.get("items").and_then(Value::as_u64);
+        let config_dir = entry
+            .get("config_dir")
+            .and_then(Value::as_str)
+            .map(str::to_owned);
+
+        let unprojected = error
+            .as_deref()
+            .map(|error| error.contains("not yet projected"))
+            .unwrap_or(false)
+            || effect
+                .as_deref()
+                .map(|effect| effect.contains("not yet projected"))
+                .unwrap_or(false);
+        let state = if !installed {
+            "not-installed".to_owned()
+        } else if unprojected {
+            "installed-unprojected".to_owned()
+        } else if error.is_some() {
+            "degraded".to_owned()
+        } else {
+            "installed".to_owned()
+        };
+
+        let mut readiness = BTreeMap::new();
+        readiness.insert("installed".to_owned(), json!(installed));
+        if let Some(items) = items {
+            readiness.insert("items".to_owned(), json!(items));
+        }
+        if let Some(effect) = effect {
+            readiness.insert("effect".to_owned(), json!(effect));
+        }
+        if let Some(config_dir) = config_dir {
+            readiness.insert("config_dir".to_owned(), json!(config_dir));
+        }
+        if let Some(error) = error {
+            readiness.insert("error".to_owned(), json!(error));
+        }
+
+        out.push(OwnerParticipation {
+            owner: "AIKit".to_owned(),
+            native_system: NativeSystemObservation {
+                system_ref: format!("native:{client}:local"),
+                kind: "harness".to_owned(),
+                name: client.to_owned(),
+                version: None,
+                locator: None,
+                source_revision: None,
+            },
+            contract: "aikit.harness-adapter/v1".to_owned(),
+            state,
+            readiness,
+            canonical_ref: None,
+            provenance: vec![
+                format!("AIKit crates/aikit-adapters/src/clients/{client}.rs"),
+                "aikit client status".to_owned(),
+            ],
+            faculties: vec!["skill-projection".to_owned()],
+        });
+    }
+    out
+}
+
+fn reconcile_owner_participations(
+    observations: &mut [RecognitionObservation],
+    participations: &[OwnerParticipation],
+) {
+    for participation in participations {
+        for observation in observations.iter_mut() {
+            if !native_system_matches(&observation.native_system, &participation.native_system) {
+                continue;
+            }
+            if observation.owner_bindings.iter().any(|binding| {
+                binding.owner == participation.owner && binding.contract == participation.contract
+            }) {
+                continue;
+            }
+            observation.owner_bindings.push(OwnerParticipationBinding {
+                owner: participation.owner.clone(),
+                contract: participation.contract.clone(),
+                state: participation.state.clone(),
+                canonical_ref: participation.canonical_ref.clone(),
+                provenance: participation.provenance.clone(),
+            });
+        }
+    }
+}
+
+fn native_system_matches(left: &NativeSystemObservation, right: &NativeSystemObservation) -> bool {
+    left.name.eq_ignore_ascii_case(&right.name) || left.system_ref == right.system_ref
 }
 
 fn embedded_registrations() -> Result<Vec<RecognitionRegistration>, String> {
@@ -1125,5 +1419,137 @@ printf '%s\n' '{"schema":"oi.world-recognition-result/v1","provider_ref":"contri
         assert!(relations.iter().any(|relation| {
             relation.from_ref == "herdr:agent:a1" && relation.to_ref == "herdr:pane:p1"
         }));
+    }
+
+    #[test]
+    fn aikit_mux_detect_discloses_tmux_and_cmux_as_owner_participations() {
+        let data: Value = serde_json::from_str(
+            r#"{
+              "active": "plain",
+              "active_stack": ["plain"],
+              "declared": null,
+              "detected": [
+                {"binary":"/opt/homebrew/bin/tmux","installed":true,"mux":"tmux","server_running":true,"version":"3.6a","inside":false},
+                {"binary":"/Applications/cmux.app/Contents/Resources/bin/cmux","installed":true,"mux":"cmux","server_running":false,"version":"cmux 0.64.22 (102) [ddd4a01bc]","inside":false},
+                {"binary":null,"installed":true,"mux":"plain","server_running":true,"inside":true}
+              ]
+            }"#,
+        )
+        .unwrap();
+        let participations = aikit_mux_participations(&data);
+        assert_eq!(participations.len(), 2);
+        let tmux = participations
+            .iter()
+            .find(|participation| participation.native_system.name == "tmux")
+            .unwrap();
+        assert_eq!(tmux.contract, "aikit.working-environment-provider/v1");
+        assert_eq!(tmux.state, "installed-running");
+        assert_eq!(tmux.owner, "AIKit");
+        let cmux = participations
+            .iter()
+            .find(|participation| participation.native_system.name == "cmux")
+            .unwrap();
+        assert_eq!(cmux.state, "installed-not-running");
+        assert_eq!(
+            cmux.readiness.get("server_running"),
+            Some(&serde_json::json!(false))
+        );
+    }
+
+    #[test]
+    fn aikit_client_status_discloses_harness_participations_without_broker() {
+        let data: Value = serde_json::from_str(
+            r#"{
+              "clients": [
+                {"client":"claude","config_dir":"/Users/admin/.claude","effect":"restart Claude","error":null,"installed":true,"items":2,"notes":[]},
+                {"client":"codex","config_dir":"/Users/admin/.codex","effect":"next session only","error":null,"installed":true,"items":2,"notes":[]},
+                {"client":"opencode","config_dir":"/Users/admin/.config/opencode","effect":null,"error":"opencode's skill surface is not yet projected by AIKit","installed":true,"items":null,"notes":[]},
+                {"client":"broker","config_dir":"/Users/admin/.aikit","effect":"live","error":null,"installed":true,"items":2,"notes":[]}
+              ]
+            }"#,
+        )
+        .unwrap();
+        let participations = aikit_client_participations(&data);
+        assert_eq!(participations.len(), 3);
+        assert!(participations
+            .iter()
+            .all(|participation| participation.native_system.name != "broker"));
+        let claude = participations
+            .iter()
+            .find(|participation| participation.native_system.name == "claude")
+            .unwrap();
+        assert_eq!(claude.contract, "aikit.harness-adapter/v1");
+        assert_eq!(claude.state, "installed");
+        let opencode = participations
+            .iter()
+            .find(|participation| participation.native_system.name == "opencode")
+            .unwrap();
+        assert_eq!(opencode.state, "installed-unprojected");
+    }
+
+    #[test]
+    fn reconciliation_attaches_owner_binding_to_matching_observation_without_duplication() {
+        let participation = OwnerParticipation {
+            owner: "AIKit".to_owned(),
+            native_system: NativeSystemObservation {
+                system_ref: "native:cmux:local".to_owned(),
+                kind: "working-environment".to_owned(),
+                name: "cmux".to_owned(),
+                version: Some("0.64.22".to_owned()),
+                locator: None,
+                source_revision: None,
+            },
+            contract: "aikit.working-environment-provider/v1".to_owned(),
+            state: "installed-not-running".to_owned(),
+            readiness: BTreeMap::new(),
+            canonical_ref: None,
+            provenance: vec!["aikit mux detect".to_owned()],
+            faculties: vec!["session".to_owned()],
+        };
+        let observation = RecognitionObservation {
+            observation_ref: "observation:cmux:local".to_owned(),
+            native_system: NativeSystemObservation {
+                system_ref: "native:cmux:local".to_owned(),
+                kind: "working-environment".to_owned(),
+                name: "cmux".to_owned(),
+                version: None,
+                locator: None,
+                source_revision: None,
+            },
+            support: "supported".to_owned(),
+            faculties: Vec::new(),
+            relations: Vec::new(),
+            facts: BTreeMap::new(),
+            owner_bindings: Vec::new(),
+            evidence: Vec::new(),
+        };
+        let mut observations = vec![observation];
+        reconcile_owner_participations(&mut observations, &[participation.clone()]);
+        reconcile_owner_participations(&mut observations, &[participation]);
+        let observation = &observations[0];
+        assert_eq!(observation.owner_bindings.len(), 1);
+        assert_eq!(observation.owner_bindings[0].contract, "aikit.working-environment-provider/v1");
+        assert_eq!(observation.owner_bindings[0].state, "installed-not-running");
+    }
+
+    #[test]
+    fn native_system_match_is_case_insensitive_on_name() {
+        let left = NativeSystemObservation {
+            system_ref: "native:herdr:local".to_owned(),
+            kind: "working-environment".to_owned(),
+            name: "Herdr".to_owned(),
+            version: None,
+            locator: None,
+            source_revision: None,
+        };
+        let right = NativeSystemObservation {
+            system_ref: "native:herdr:local".to_owned(),
+            kind: "working-environment".to_owned(),
+            name: "herdr".to_owned(),
+            version: None,
+            locator: None,
+            source_revision: None,
+        };
+        assert!(native_system_matches(&left, &right));
     }
 }

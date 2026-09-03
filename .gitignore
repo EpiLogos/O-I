@@ -10,3 +10,7 @@ site/*.config.js
 site/*.config.d.ts
 *.log
 .DS_Store
+/target/
+/cli/target/
+/desktop/core/target/
+/desktop/src-tauri/target/

@@ -290,6 +290,18 @@ fn print_world_recognition_account(account: &WorldRecognitionAccount) {
             );
         }
     }
+    if !account.owner_participations.is_empty() {
+        println!("Owner participations:");
+        for participation in &account.owner_participations {
+            println!(
+                "  {:<8} {:<24} {:<38} {}",
+                participation.owner,
+                participation.native_system.name,
+                participation.contract,
+                participation.state
+            );
+        }
+    }
     if !account.extension_requests.is_empty() {
         println!("Extension requests:");
         for request in &account.extension_requests {
