@@ -7,7 +7,7 @@
       "public_name": "Central",
       "function": "persistent personal ground",
       "repository": "https://github.com/EpiLogos/Central",
-      "docs_ref": "f8a88b622de4de0a049cc905cc33a409b5840f23",
+      "docs_ref": "0b636d1fa52f625451fb94a1dc86d589117b76bd",
       "docs_path": "README.md",
       "skill_paths": [
         "skills/control-maintenance/SKILL.md",
@@ -21,18 +21,28 @@
         "executable": "ctrl",
         "alias": "ctrl",
         "namespace": "central",
-        "aliases": ["ctrl"],
-        "version_command": ["--version"],
-        "capability_command": ["capabilities", "--json"],
-        "verification_command": ["doctor", "--json"],
-        "command_revision": "f8a88b622de4de0a049cc905cc33a409b5840f23",
+        "aliases": [
+          "ctrl"
+        ],
+        "version_command": [
+          "--version"
+        ],
+        "capability_command": [
+          "capabilities",
+          "--json"
+        ],
+        "verification_command": [
+          "doctor",
+          "--json"
+        ],
+        "command_revision": "0b636d1fa52f625451fb94a1dc86d589117b76bd",
         "command_standing": "accepted-main",
         "version_manifest": "ctrl/Cargo.toml"
       },
       "install": {
         "kind": "oi-managed-binary",
-        "ref": "f8a88b622de4de0a049cc905cc33a409b5840f23",
-        "revision": "f8a88b622de4de0a049cc905cc33a409b5840f23",
+        "ref": "0b636d1fa52f625451fb94a1dc86d589117b76bd",
+        "revision": "0b636d1fa52f625451fb94a1dc86d589117b76bd",
         "path": "ctrl",
         "note": "Current pre-#97 source/build pin. Central remains owner of Control, Work, ProjectCentral, source authority, persisted AgentProfile source relations, canonical AgentProfile Actions and .central semantics."
       },
@@ -41,7 +51,12 @@
         "operation": {
           "id": "central.doctor",
           "runner": "native-executable",
-          "args": ["--root", "{personal_ground}", "doctor", "--json"],
+          "args": [
+            "--root",
+            "{personal_ground}",
+            "doctor",
+            "--json"
+          ],
           "evidence": "native-json-stdout"
         },
         "outstanding_requirements": [],
@@ -64,9 +79,17 @@
         "alias": null,
         "namespace": "actuation",
         "aliases": [],
-        "version_command": ["--version"],
-        "capability_command": ["capabilities", "--json"],
-        "verification_command": ["verify", "--json"],
+        "version_command": [
+          "--version"
+        ],
+        "capability_command": [
+          "capabilities",
+          "--json"
+        ],
+        "verification_command": [
+          "verify",
+          "--json"
+        ],
         "command_revision": "7895fa05d87cb1f1ba121ba4f91b64a52484d212",
         "command_standing": "accepted-main",
         "version_manifest": "package.json"
@@ -95,7 +118,7 @@
       "public_name": "AIKit",
       "function": "context, capability, model, credential, SessionSpace and provider-process resolution",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "docs_ref": "0eff91a76fcba27e004b2611bbe38622009906e8",
+      "docs_ref": "81ab25ce319453d3549a4e37280ba1ddd38613dd",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -104,18 +127,29 @@
         "executable": "aikit",
         "alias": "kit",
         "namespace": "aikit",
-        "aliases": ["kit"],
-        "version_command": ["--version"],
-        "capability_command": ["capabilities", "list", "--json"],
-        "verification_command": ["doctor", "--json"],
-        "command_revision": "0eff91a76fcba27e004b2611bbe38622009906e8",
+        "aliases": [
+          "kit"
+        ],
+        "version_command": [
+          "--version"
+        ],
+        "capability_command": [
+          "capabilities",
+          "list",
+          "--json"
+        ],
+        "verification_command": [
+          "doctor",
+          "--json"
+        ],
+        "command_revision": "81ab25ce319453d3549a4e37280ba1ddd38613dd",
         "command_standing": "accepted-main",
         "version_manifest": "crates/aikit-cli/Cargo.toml"
       },
       "install": {
         "kind": "oi-managed-binary",
-        "ref": "0eff91a76fcba27e004b2611bbe38622009906e8",
-        "revision": "0eff91a76fcba27e004b2611bbe38622009906e8",
+        "ref": "81ab25ce319453d3549a4e37280ba1ddd38613dd",
+        "revision": "81ab25ce319453d3549a4e37280ba1ddd38613dd",
         "note": "Current pre-#97 source/build pin. Pre-local verification builds exact-SHA Linux/macOS artifacts with checksums and attestations; it does not publish or ratify a release."
       },
       "verification": {
@@ -123,7 +157,9 @@
         "operation": {
           "id": "aikit.native-version",
           "runner": "native-executable",
-          "args": ["--version"],
+          "args": [
+            "--version"
+          ],
           "evidence": "process-exit-and-output"
         },
         "outstanding_requirements": [],
@@ -146,9 +182,17 @@
         "alias": null,
         "namespace": "factory",
         "aliases": [],
-        "version_command": ["--version"],
-        "capability_command": ["capabilities", "--json"],
-        "verification_command": ["verify", "--json"],
+        "version_command": [
+          "--version"
+        ],
+        "capability_command": [
+          "capabilities",
+          "--json"
+        ],
+        "verification_command": [
+          "verify",
+          "--json"
+        ],
         "command_revision": "7e8fadea5156d75eb872f55f4fd4938d47fb0648",
         "command_standing": "accepted-main",
         "version_manifest": "factory/Cargo.toml"
@@ -168,7 +212,7 @@
           "evidence": "oi.managed-artifact-evidence/v1"
         },
         "outstanding_requirements": [],
-        "note": "Current main includes Git developmental Worlds, bounded P3 Intent → Run → evidence-bearing P5 return, Run-scoped ProjectDevelopment persistence/reload, canonical request-evidence Action parity, accountable Journey Commission, Journey-praxis/developmental-Build readings, and the native `factory` command over those existing providers/Actions."
+        "note": "Current main includes Git developmental Worlds, bounded P3 Intent \u2192 Run \u2192 evidence-bearing P5 return, Run-scoped ProjectDevelopment persistence/reload, canonical request-evidence Action parity, accountable Journey Commission, Journey-praxis/developmental-Build readings, and the native `factory` command over those existing providers/Actions."
       },
       "compatibility": "Factory owns developmental Project/Journey/Run/Candidate/Evidence/Recognition and Action semantics. It consumes Central source refs and AIKit ContextResolution/Method/proof/Routine refs opaquely, requires Routine proof to be grounded in Journey returned reality, and exposes stale AIKit proof as developmental revalidation pressure."
     },
@@ -187,9 +231,17 @@
         "alias": "workcell",
         "namespace": "workcell",
         "aliases": [],
-        "version_command": ["--version"],
-        "capability_command": ["--json", "discover"],
-        "verification_command": ["--json", "doctor"],
+        "version_command": [
+          "--version"
+        ],
+        "capability_command": [
+          "--json",
+          "discover"
+        ],
+        "verification_command": [
+          "--json",
+          "doctor"
+        ],
         "command_revision": "25792dc3aa8e4c54088c0696cee00f8efefe03ad",
         "command_standing": "accepted-main",
         "version_manifest": "crates/workcell-cli/Cargo.toml"
@@ -205,7 +257,10 @@
         "operation": {
           "id": "workcell.doctor",
           "runner": "native-executable",
-          "args": ["--json", "doctor"],
+          "args": [
+            "--json",
+            "doctor"
+          ],
           "evidence": "native-json-stdout"
         },
         "outstanding_requirements": [
@@ -227,9 +282,9 @@
     {
       "id": "quaternal-logic",
       "public_name": "Quaternal Logic",
-      "function": "deterministic QL kernel, complete MEF registry, service boundary and Vāk/formal operation surfaces",
+      "function": "deterministic QL kernel, complete MEF registry, service boundary and V\u0101k/formal operation surfaces",
       "repository": "https://github.com/EpiLogos/QL-MEF",
-      "docs_ref": "da19d60e3e81473d354e71d5ec13a2582cff95e5",
+      "docs_ref": "db2b15987c9d99b2a0008cfe75c95f9df1c44715",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -239,17 +294,25 @@
         "alias": null,
         "namespace": "ql",
         "aliases": [],
-        "version_command": ["--version"],
-        "capability_command": ["capabilities", "--json"],
-        "verification_command": ["verify", "--json"],
-        "command_revision": "da19d60e3e81473d354e71d5ec13a2582cff95e5",
+        "version_command": [
+          "--version"
+        ],
+        "capability_command": [
+          "capabilities",
+          "--json"
+        ],
+        "verification_command": [
+          "verify",
+          "--json"
+        ],
+        "command_revision": "db2b15987c9d99b2a0008cfe75c95f9df1c44715",
         "command_standing": "accepted-main",
         "version_manifest": "crates/ql-cli/Cargo.toml"
       },
       "install": {
         "kind": "oi-managed-component",
-        "ref": "da19d60e3e81473d354e71d5ec13a2582cff95e5",
-        "revision": "da19d60e3e81473d354e71d5ec13a2582cff95e5",
+        "ref": "db2b15987c9d99b2a0008cfe75c95f9df1c44715",
+        "revision": "db2b15987c9d99b2a0008cfe75c95f9df1c44715",
         "note": "Current pre-#97 source/build pin for the sixth native product; active later QL/Epi research may continue without invalidating this accepted owner snapshot."
       },
       "verification": {
@@ -261,9 +324,9 @@
           "evidence": "oi.managed-artifact-evidence/v1"
         },
         "outstanding_requirements": [],
-        "note": "Current Quaternal Logic main publishes native `ql` over the accepted deterministic kernel, QlService, twelve MEF LensRefs, seven Context Frames and the source-locked 109-entry Vāk registry. Vāk path execution/Recognition remains on its typed runtime boundary."
+        "note": "Current Quaternal Logic main publishes native `ql` over the accepted deterministic kernel, QlService, twelve MEF LensRefs, seven Context Frames and the source-locked 109-entry V\u0101k registry. V\u0101k path execution/Recognition remains on its typed runtime boundary."
       },
-      "compatibility": "Quaternal Logic owns the formal QL/MEF/Vāk field at the sixth product position. O:I composes its accepted owner interfaces through the same whole-suite command and desktop surfaces as the other five products."
+      "compatibility": "Quaternal Logic owns the formal QL/MEF/V\u0101k field at the sixth product position. O:I composes its accepted owner interfaces through the same whole-suite command and desktop surfaces as the other five products."
     }
   ]
 }

@@ -14,44 +14,44 @@
     {
       "id": "central",
       "repository": "https://github.com/EpiLogos/Central",
-      "revision": "2bc8ca665d2019cc285cc45b4bcb891d794574ca",
+      "revision": "0b636d1fa52f625451fb94a1dc86d589117b76bd",
       "state": "accepted-main",
       "note": "Current Central main includes the sixfold Project Context Protocol, ProjectCentral authored Ground/governance, SourceHistory recovery, NOW/DAY, current machine/World source relations, the durable personal/Project AgentProfile source contract, owner-native AgentProfile persistence and canonical AgentProfile Actions. Central retains source identity/standing while AIKit owns effective Profile and operational context resolution."
     },
     {
       "id": "actuation",
       "repository": "https://github.com/EpiLogos/Actuation",
-      "revision": "7175fddec62d11c78ee63eb750ffed1455accd55",
+      "revision": "7895fa05d87cb1f1ba121ba4f91b64a52484d212",
       "state": "accepted-main",
       "note": "Current Actuation main includes the realised Actuation authority/runtime floor, semantic Activity over canonical ActuationStream, and the owner-native `actuation` executable over Agency/WorldBinding, realised Actuation, stream, Activity and model-bearing contracts. Activity remains distinct from Action/Invocation identity."
     },
     {
       "id": "ai-kit",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "revision": "0b31cdf6592e06a3e9f4faa4820def7d9fd575ff",
+      "revision": "81ab25ce319453d3549a4e37280ba1ddd38613dd",
       "state": "accepted-main",
       "note": "Current main includes SessionSpace application state and content-addressed ContextResolutionEvidence/ContextResolutionRef with operative ContextSource activation receipts, Herdr/Hyprland reference-provider composition, public external-provider conformance, native VersionedWorld Git operations, ProjectWorld material/version attachment, source-owned Method semantics, proof-before-automation Routine semantics, operative Resolve/search, and accepted canonical QL-shape operation in SemanticWiki/Contemplate. Routine keeps exact Method proof, authority and trigger state AIKit-owned while retaining Central AgentProfile only as an opaque source relation."
     },
     {
       "id": "software-factory",
       "repository": "https://github.com/EpiLogos/agent-system-design",
-      "revision": "50652ae5a02f86c11bd6bdbbb76b5180e79aa1f5",
+      "revision": "7e8fadea5156d75eb872f55f4fd4938d47fb0648",
       "state": "accepted-main-with-active-research-exceptions",
       "note": "Current main includes Git developmental Worlds, the bounded Intent condition/return contract, owner-native Run-scoped ProjectDevelopment persistence/reload, canonical Action projection, accountable Journey Commission, and the Journey-praxis/developmental-Build reading that correlates Central AgentProfile plus exact AIKit Method/proof/Routine refs with Factory-owned Run/Activity/Evidence/Return. Stale AIKit proof is exposed as developmental revalidation pressure without Factory acquiring scheduler or Routine semantics. Moving QL-dependent research remains separately owned."
     },
     {
       "id": "workcell",
       "repository": "https://github.com/EpiLogos/Workcell",
-      "revision": "8320e05fc5bc2749c0f2ad24301d8dd1cda3d090",
+      "revision": "25792dc3aa8e4c54088c0696cee00f8efefe03ad",
       "state": "accepted-main-with-physical-provider-gates",
       "note": "Accepted main includes deterministic OpenSandbox World materialisation/lifecycle and the first-party AIKit Gateway managed-service body on top of the portable control/fabric/model-serving/process/secret foundation. Actual owner-machine/provider execution remains #97 evidence."
     },
     {
       "id": "quaternal-logic",
       "repository": "https://github.com/EpiLogos/QL-MEF",
-      "revision": "30171fb9f3646a1ef6e306357503d8a9df4a8a1c",
+      "revision": "db2b15987c9d99b2a0008cfe75c95f9df1c44715",
       "state": "parallel-native-owner-exception",
-      "note": "QL-MEF remains the separately owned sixth product. This stable suite pin precedes the currently moving QL/Epi computational and musical development tranche. O:I #97 deliberately does not chase, converge, clean up, or gate on that owner field; its dedicated convergence session returns any later suite handoff."
+      "note": "This deterministic command cut records the current accepted Quaternal Logic native owner main so the six-product command field is exact. QL-MEF remains the separately owned moving research field: later QL/Epi movement does not become a primary #97 convergence gate unless an accepted O:I consumer explicitly requires it."
     }
   ]
 }
