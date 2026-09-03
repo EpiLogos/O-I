@@ -5,7 +5,6 @@ const { createHash } = require('node:crypto');
 const { spawnSync } = require('node:child_process');
 
 const REPOSITORY = 'EpiLogos/O-I';
-const DEFAULT_RELEASE_TAG = 'oi-v0.1.0-prelocal.4';
 const NATIVE_VERSION = '0.1.0';
 const MAX_REDIRECTS = 8;
 
@@ -13,9 +12,19 @@ function resolveTarget(platform = process.platform, arch = process.arch) {
   if (platform === 'darwin' && arch === 'arm64') return 'aarch64-apple-darwin';
   if (platform === 'linux' && arch === 'x64') return 'x86_64-unknown-linux-gnu';
   throw new Error(
-    `@epi-logos/oi does not yet publish a prebuilt binary for ${platform}/${arch}. ` +
-      'The current pre-local release supports Apple Silicon macOS and x64 Linux; use the source install on another platform.'
+    `@epi-logos/oi does not yet provide a prebuilt binary for ${platform}/${arch}. ` +
+      'The current prebuilt channel supports Apple Silicon macOS and x64 Linux; use the source install on another platform.'
   );
+}
+
+function selectedReleaseTag(env = process.env) {
+  const tag = String(env.OI_NPM_RELEASE_TAG || '').trim();
+  if (!tag) {
+    throw new Error(
+      'no O:I GitHub release is selected; set OI_NPM_RELEASE_TAG explicitly when exercising the GitHub Release download channel'
+    );
+  }
+  return tag;
 }
 
 function assetName(target, nativeVersion = NATIVE_VERSION) {
@@ -23,7 +32,9 @@ function assetName(target, nativeVersion = NATIVE_VERSION) {
 }
 
 function releaseAssetUrl(tag, target, nativeVersion = NATIVE_VERSION) {
-  return `https://github.com/${REPOSITORY}/releases/download/${tag}/${assetName(target, nativeVersion)}`;
+  const selected = String(tag || '').trim();
+  if (!selected) throw new Error('release asset lookup requires an explicit GitHub release tag');
+  return `https://github.com/${REPOSITORY}/releases/download/${selected}/${assetName(target, nativeVersion)}`;
 }
 
 function checksumAssetUrl(tag, target, nativeVersion = NATIVE_VERSION) {
@@ -120,7 +131,6 @@ function archiveBinaryPath(root, target, nativeVersion = NATIVE_VERSION) {
 }
 
 module.exports = {
-  DEFAULT_RELEASE_TAG,
   NATIVE_VERSION,
   REPOSITORY,
   archiveBinaryPath,
@@ -132,5 +142,6 @@ module.exports = {
   parseChecksum,
   releaseAssetUrl,
   resolveTarget,
+  selectedReleaseTag,
   sha256File,
 };
