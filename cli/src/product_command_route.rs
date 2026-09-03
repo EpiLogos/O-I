@@ -80,16 +80,29 @@ fn dispatch_product_command(
         .and_then(|registration| registration.native_executable.as_deref())
         .unwrap_or(product.executable.as_str());
 
-    let status = std::process::Command::new(executable)
-        .args(args)
-        .status()
-        .map_err(|error| {
+    let mut command = std::process::Command::new(executable);
+    command.args(args);
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::process::CommandExt;
+        let error = command.exec();
+        Err(format!(
+            "cannot exec {} native command `{executable}` for `oi {}`: {error}. Install/register the product command or make it available on PATH",
+            product.public_name, product.namespace
+        ))
+    }
+
+    #[cfg(not(unix))]
+    {
+        let status = command.status().map_err(|error| {
             format!(
                 "cannot launch {} native command `{executable}` for `oi {}`: {error}. Install/register the product command or make it available on PATH",
                 product.public_name, product.namespace
             )
         })?;
-    Ok(status.code().unwrap_or(1))
+        Ok(status.code().unwrap_or(1))
+    }
 }
 
 fn short_revision(revision: &str) -> &str {
