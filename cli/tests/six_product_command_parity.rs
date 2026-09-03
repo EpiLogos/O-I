@@ -2,6 +2,7 @@
 mod unix {
     use std::fs;
     use std::os::unix::fs::PermissionsExt;
+    use std::os::unix::process::ExitStatusExt;
     use std::path::Path;
     use std::process::{Command, Output};
     use tempfile::TempDir;
@@ -11,7 +12,7 @@ mod unix {
         fs::write(
             &path,
             format!(
-                "#!/bin/sh\nprintf 'native:{name}:%s:%s\\n' \"${{1:-}}\" \"${{2:-}}\"\nexit {exit}\n"
+                "#!/bin/sh\nif [ \"${{1:-}}\" = '__signal__' ]; then\n  kill -TERM $$\nfi\nprintf 'native:{name}:%s:%s\\n' \"${{1:-}}\" \"${{2:-}}\"\nexit {exit}\n"
             ),
         )
         .expect("write fake native executable");
@@ -73,5 +74,28 @@ mod unix {
             assert_eq!(canonical_output.stdout, compatibility_output.stdout);
             assert_eq!(canonical_output.stderr, compatibility_output.stderr);
         }
+    }
+
+    #[test]
+    fn unix_passthrough_preserves_native_signal_termination() {
+        let home = TempDir::new().expect("home");
+        let bin = TempDir::new().expect("bin");
+        fake_executable(bin.path(), "ctrl", 0);
+
+        let direct = Command::new(bin.path().join("ctrl"))
+            .arg("__signal__")
+            .output()
+            .expect("run native command directly");
+        let through_oi = Command::new(env!("CARGO_BIN_EXE_oi"))
+            .args(["central", "__signal__"])
+            .env("OI_HOME", home.path())
+            .env("PATH", bin.path())
+            .output()
+            .expect("run native command through O:I");
+
+        assert_eq!(direct.status.signal(), Some(15));
+        assert_eq!(through_oi.status.signal(), direct.status.signal());
+        assert_eq!(through_oi.stdout, direct.stdout);
+        assert_eq!(through_oi.stderr, direct.stderr);
     }
 }
