@@ -108,11 +108,16 @@ See [`docs/RESEARCH.md`](docs/RESEARCH.md), [`docs/RESEARCH-PROTOCOL.md`](docs/R
 `oi` is the shared doorway into the composed system. It can disclose what is installed and route a human or agent toward the native command and documentation surfaces without making the native products inaccessible on their own.
 
 ```text
-oi ctrl ...
-oi kit ...
+oi central ...      → ctrl         (alias: oi ctrl)
+oi actuation ...    → actuation
+oi aikit ...        → aikit        (alias: oi kit)
+oi factory ...      → factory
+oi workcell ...     → workcell     (alias: oi workcell)
+oi ql ...           → ql
+oi products [--json]
 ```
 
-The command namespace is composition convenience, not semantic ownership.
+The command namespace is composition convenience, not semantic ownership. All six product commands are declared `"command_standing": "accepted-main"` in `surfaces.json`. Source-level standing does not imply physical #97 acceptance; see `suite/mainline.json` for the three standing qualifications.
 
 ## Provenance and current state
 

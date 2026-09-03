@@ -180,12 +180,14 @@ Registration is first-class because a machine can already have one or more nativ
 
 ```text
 oi register central --executable /path/to/ctrl
+oi register actuation --executable /path/to/actuation
 oi register ai-kit --executable /path/to/aikit
-oi register workcell --root /path/to/Workcell
-oi register quaternal-logic --root /path/to/QL-MEF
+oi register software-factory --executable /path/to/factory
+oi register workcell --executable /path/to/workcell
+oi register quaternal-logic --executable /path/to/ql
 ```
 
-A registration stores only facts required to find and describe the native surface. It does not import or rewrite product configuration.
+All six products now have accepted native executables. A registration stores only the facts required to find and describe the native surface. It does not import or rewrite product configuration.
 
 For Central specifically, `oi install central` is preferable when compatibility is not already known because the current-main route verifies the ProjectCentral-capable Action surface before accepting an existing executable.
 

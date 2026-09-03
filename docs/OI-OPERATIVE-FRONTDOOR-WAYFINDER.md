@@ -59,11 +59,15 @@ Current `cli/src/frontdoor.rs` routes the existing suite, development, trust, cu
 
 Current suite installation already installs/registers the native AIKit executable. The missing O:I work is therefore a consumer/dispatch seam, not a local reimplementation of AIKit.
 
-Current `skills/oi/SKILL.md` explicitly guarantees only:
+Current `skills/oi/SKILL.md` documents the six-product command field:
 
 ```text
-oi ctrl ... → ctrl ...
-oi kit ...  → aikit ...
+oi central ...     → ctrl ...        (alias: oi ctrl)
+oi actuation ...   → actuation ...
+oi aikit ...       → aikit ...       (alias: oi kit)
+oi factory ...     → factory ...
+oi workcell ...    → workcell ...    (alias: oi workcell)
+oi ql ...          → ql ...
 ```
 
 and otherwise routes the Agent to the product owner.
