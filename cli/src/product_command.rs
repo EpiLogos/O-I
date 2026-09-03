@@ -22,6 +22,7 @@ struct SurfaceSource {
 #[derive(Debug, Clone, Deserialize)]
 struct InstallSource {
     kind: Option<String>,
+    revision: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -107,34 +108,48 @@ pub fn product_command_catalogue() -> Result<ProductCommandCatalogue, String> {
     let mut routes = HashSet::new();
     let mut products = Vec::with_capacity(source.surfaces.len());
     for surface in source.surfaces {
-        let namespace = required(surface.native.namespace, &surface.id, "namespace")?;
-        let executable = required(surface.native.executable, &surface.id, "executable")?;
+        let namespace = required(surface.native.namespace, &surface.id, "native.namespace")?;
+        let executable = required(surface.native.executable, &surface.id, "native.executable")?;
         let version_command = required_vec(
             surface.native.version_command,
             &surface.id,
-            "version_command",
+            "native.version_command",
         )?;
         let capability_command = required_vec(
             surface.native.capability_command,
             &surface.id,
-            "capability_command",
+            "native.capability_command",
         )?;
         let verification_command = required_vec(
             surface.native.verification_command,
             &surface.id,
-            "verification_command",
+            "native.verification_command",
         )?;
         let command_revision = required(
             surface.native.command_revision,
             &surface.id,
-            "command_revision",
+            "native.command_revision",
         )?;
         let command_standing = required(
             surface.native.command_standing,
             &surface.id,
-            "command_standing",
+            "native.command_standing",
         )?;
         let install_kind = required(surface.install.kind, &surface.id, "install.kind")?;
+        let install_revision = required(surface.install.revision, &surface.id, "install.revision")?;
+        if command_revision != install_revision {
+            return Err(format!(
+                "{} native.command_revision {} differs from install.revision {}",
+                surface.id, command_revision, install_revision
+            ));
+        }
+        if command_standing != "accepted-main" {
+            return Err(format!(
+                "{} native command standing is {}, expected accepted-main",
+                surface.id, command_standing
+            ));
+        }
+
         let source_install = surface
             .native
             .source_install
@@ -142,7 +157,7 @@ pub fn product_command_catalogue() -> Result<ProductCommandCatalogue, String> {
         let executable_path = required(
             source_install.executable_path,
             &surface.id,
-            "source_install.executable_path",
+            "native.source_install.executable_path",
         )?;
         if source_install
             .build
@@ -205,7 +220,7 @@ pub fn product_command_catalogue() -> Result<ProductCommandCatalogue, String> {
 fn required(value: Option<String>, product: &str, field: &str) -> Result<String, String> {
     value
         .filter(|value| !value.trim().is_empty())
-        .ok_or_else(|| format!("{product} is missing native.{field}"))
+        .ok_or_else(|| format!("{product} is missing {field}"))
 }
 
 fn required_vec(
@@ -215,7 +230,7 @@ fn required_vec(
 ) -> Result<Vec<String>, String> {
     value
         .filter(|items| !items.is_empty() && items.iter().all(|item| !item.trim().is_empty()))
-        .ok_or_else(|| format!("{product} is missing native.{field}"))
+        .ok_or_else(|| format!("{product} is missing {field}"))
 }
 
 #[cfg(test)]
@@ -223,7 +238,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn catalogue_is_complete_and_sixfold() {
+    fn catalogue_is_complete_sixfold_and_accepted() {
         let catalogue = product_command_catalogue().unwrap();
         assert_eq!(catalogue.products.len(), 6);
         let namespaces = catalogue
@@ -236,7 +251,9 @@ mod tests {
             vec!["central", "actuation", "aikit", "factory", "workcell", "ql"]
         );
         assert!(catalogue.products.iter().all(|product| {
-            !product.install_kind.is_empty() && !product.source_install.executable_path.is_empty()
+            !product.install_kind.is_empty()
+                && !product.source_install.executable_path.is_empty()
+                && product.command_standing == "accepted-main"
         }));
     }
 
