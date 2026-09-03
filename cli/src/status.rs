@@ -91,12 +91,16 @@ pub struct SurfaceDisclosure {
     pub public_name: String,
     pub function: String,
     pub repository: String,
+    #[serde(default)]
     pub accepted_revision: String,
     pub native_entry: String,
+    #[serde(default)]
     pub canonical_namespace: String,
     #[serde(default)]
     pub compatibility_aliases: Vec<String>,
+    #[serde(default)]
     pub structured_output: bool,
+    #[serde(default)]
     pub structured_output_format: String,
     #[serde(default)]
     pub verification_args: Vec<String>,
