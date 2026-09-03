@@ -80,8 +80,11 @@ cmux's observation now carries:
   relation and readiness but not the exact Claude/Codex version string; that belongs
   to native observation (a recogniser) or an AIKit client-status version field.
 - **Desktop/Agent surface parity** — the CLI + JSON account now exposes the same
-  actuality to human and Agent. Desktop presentation of the World account is the
-  next surface increment.
+  actuality to human and Agent. The desktop shell snapshot read model now carries
+  the reconciled World account (`ShellSnapshot.world_recognition`) via
+  `DesktopHost`, so the presentation surface can disclose it without duplicating
+  native semantics into frontend-local state. The React rendering of that field is
+  the remaining presentation increment.
 
 ## Verification
 
