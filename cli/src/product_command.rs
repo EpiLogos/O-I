@@ -70,7 +70,10 @@ pub fn product_command_catalogue() -> Result<ProductCommandCatalogue, String> {
     let source: SurfaceCatalogSource = serde_json::from_str(SURFACES_JSON)
         .map_err(|error| format!("embedded O:I surface catalogue is invalid: {error}"))?;
     if source.schema != 1 {
-        return Err(format!("unsupported O:I surface catalogue schema {}", source.schema));
+        return Err(format!(
+            "unsupported O:I surface catalogue schema {}",
+            source.schema
+        ));
     }
     if source.surfaces.len() != EXPECTED_PRODUCT_COUNT {
         return Err(format!(
@@ -84,11 +87,31 @@ pub fn product_command_catalogue() -> Result<ProductCommandCatalogue, String> {
     for surface in source.surfaces {
         let namespace = required(surface.native.namespace, &surface.id, "namespace")?;
         let executable = required(surface.native.executable, &surface.id, "executable")?;
-        let version_command = required_vec(surface.native.version_command, &surface.id, "version_command")?;
-        let capability_command = required_vec(surface.native.capability_command, &surface.id, "capability_command")?;
-        let verification_command = required_vec(surface.native.verification_command, &surface.id, "verification_command")?;
-        let command_revision = required(surface.native.command_revision, &surface.id, "command_revision")?;
-        let command_standing = required(surface.native.command_standing, &surface.id, "command_standing")?;
+        let version_command = required_vec(
+            surface.native.version_command,
+            &surface.id,
+            "version_command",
+        )?;
+        let capability_command = required_vec(
+            surface.native.capability_command,
+            &surface.id,
+            "capability_command",
+        )?;
+        let verification_command = required_vec(
+            surface.native.verification_command,
+            &surface.id,
+            "verification_command",
+        )?;
+        let command_revision = required(
+            surface.native.command_revision,
+            &surface.id,
+            "command_revision",
+        )?;
+        let command_standing = required(
+            surface.native.command_standing,
+            &surface.id,
+            "command_standing",
+        )?;
 
         let mut aliases = surface.native.aliases;
         if let Some(legacy) = surface.native.alias {
@@ -101,7 +124,10 @@ pub fn product_command_catalogue() -> Result<ProductCommandCatalogue, String> {
 
         for route in std::iter::once(namespace.as_str()).chain(aliases.iter().map(String::as_str)) {
             if route.is_empty() {
-                return Err(format!("{} declares an empty O:I command route", surface.id));
+                return Err(format!(
+                    "{} declares an empty O:I command route",
+                    surface.id
+                ));
             }
             if !routes.insert(route.to_owned()) {
                 return Err(format!("O:I product command route collision: {route}"));
