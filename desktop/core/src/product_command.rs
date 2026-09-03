@@ -11,8 +11,8 @@ pub struct ProductCommandReading {
 }
 
 /// Read the same O:I-owned six-product command catalogue used by the `oi` binary.
-/// The desktop can project these executable/probe facts into Command/System UI
-/// without maintaining a second product command registry.
+/// The desktop can project these executable/probe/install facts into Command/System
+/// UI without maintaining a second product command registry.
 pub fn product_command_reading() -> Result<ProductCommandReading, String> {
     let catalogue = product_command_catalogue()?;
     Ok(ProductCommandReading {
@@ -27,8 +27,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn desktop_reads_the_same_six_canonical_namespaces_as_oi_cli() {
+    fn desktop_reads_the_exact_same_six_product_catalogue_as_oi_cli() {
+        let catalogue = product_command_catalogue().unwrap();
         let reading = product_command_reading().unwrap();
+        assert_eq!(reading.verified_at, catalogue.verified_at);
+        assert_eq!(reading.products, catalogue.products);
         assert_eq!(reading.products.len(), 6);
         assert_eq!(
             reading
@@ -40,5 +43,10 @@ mod tests {
         );
         assert_eq!(reading.products[0].aliases, vec!["ctrl"]);
         assert_eq!(reading.products[2].aliases, vec!["kit"]);
+        assert!(reading.products.iter().all(|product| {
+            !product.install_kind.is_empty()
+                && !product.source_install.executable_path.is_empty()
+                && product.command_standing == "accepted-main"
+        }));
     }
 }
