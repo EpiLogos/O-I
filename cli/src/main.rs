@@ -11,6 +11,7 @@ mod composition {
     include!("trust_closure_guard.rs");
     include!("existing_world.rs");
     include!("omarchy_host.rs");
+    include!("product_command_route.rs");
     include!("frontdoor.rs");
 }
 
