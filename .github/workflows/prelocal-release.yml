@@ -116,7 +116,8 @@ jobs:
           mkdir -p "dist/$name"
           cp "cli/target/${{ matrix.target }}/release/oi" "dist/$name/oi"
           cp suite/manifest.json "dist/$name/suite-build-record.json"
-          printf '%s\n' "$GITHUB_SHA" > "dist/$name/COMMIT"
+          printf '%s
+' "$GITHUB_SHA" > "dist/$name/COMMIT"
           tar -C dist -czf "dist/$name.tar.gz" "$name"
           shasum -a 256 "dist/$name.tar.gz" > "dist/$name.tar.gz.sha256"
       - uses: actions/attest@v4
