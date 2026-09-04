@@ -1,5 +1,10 @@
+use crate::contribution::HostedContribution;
 use crate::events::KernelEvent;
-use crate::focus::{FocusRefError, GlobalFocus, WorldRef};
+use crate::focus::{FocusRefError, GlobalFocus};
+use crate::world::{
+    personal_world_ref, CentralWorldClient, CompositionReading, SourceWriteOutcome, SubjectOpen,
+    WorldSourceError, WorldService, WorldTreeReading,
+};
 use crate::{BridgeCallClass, BridgeCaller, BridgeDenied, BridgePolicy};
 use oi_cli::current_world::{live_current_world, CurrentWorldReading};
 use oi_cli::status::{NativeSurfaceState, SuiteCompositionDisclosure, SurfaceDisclosure};
@@ -98,6 +103,41 @@ impl From<BridgeDenied> for SelectionError {
     }
 }
 
+/// Why a subject could not be opened. An owner's refusal to serve the reading
+/// is *not* this error: it is disclosed in the reading as the observation it
+/// is (02 §10 — absence and refusal are disclosed, never failed).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum SubjectOpenError {
+    Denied(BridgeDenied),
+    InvalidSubject(FocusRefError),
+}
+
+impl fmt::Display for SubjectOpenError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Denied(denied) => denied.fmt(formatter),
+            Self::InvalidSubject(error) => error.fmt(formatter),
+        }
+    }
+}
+
+impl std::error::Error for SubjectOpenError {}
+
+impl From<BridgeDenied> for SubjectOpenError {
+    fn from(denied: BridgeDenied) -> Self {
+        Self::Denied(denied)
+    }
+}
+
+impl From<SelectionError> for SubjectOpenError {
+    fn from(error: SelectionError) -> Self {
+        match error {
+            SelectionError::Denied(denied) => Self::Denied(denied),
+            SelectionError::InvalidSubject(error) => Self::InvalidSubject(error),
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct DesktopHost {
     disclosure: SuiteCompositionDisclosure,
@@ -106,6 +146,11 @@ pub struct DesktopHost {
     destination: ShellDestination,
     focus: GlobalFocus,
     bridge: BridgePolicy,
+    /// The WorldService (02 §3): the first-class authored World read as a
+    /// selected Projection. It adds no authority — every live fact it reads
+    /// goes through the owner's own Action, and the bridge still gates who may
+    /// ask.
+    world: WorldService,
 }
 
 impl DesktopHost {
@@ -130,6 +175,11 @@ impl DesktopHost {
                 }
             });
         let focus = Self::initial_focus(&world_recognition);
+        // No Central root is passed: which root Central serves is Central's own
+        // concern (the desktop composes and discloses, never relocates its
+        // owner). The executable is discovered from the environment exactly as
+        // the other owner-Action adapters discover theirs.
+        let world = WorldService::discover(None);
         Self {
             disclosure,
             current_world,
@@ -137,6 +187,7 @@ impl DesktopHost {
             destination: ShellDestination::Home,
             focus,
             bridge: BridgePolicy,
+            world,
         }
     }
 
@@ -163,6 +214,125 @@ impl DesktopHost {
     /// The one global focus relation (02 §7) as kernel state.
     pub fn focus(&self) -> &GlobalFocus {
         &self.focus
+    }
+
+    /// The World tree read as a Projection (01 §2): `world:personal` at the
+    /// root, each `world:project:<id>` a descendant, every node carrying its
+    /// authored-ground identity, owner-declared source treatment and Wiki ref.
+    ///
+    /// A read mutates no kernel state and emits no event; the tree is a
+    /// reading, and degradation is local to the seam that could not serve it.
+    pub fn world_tree(&mut self, caller: BridgeCaller) -> Result<WorldTreeReading, BridgeDenied> {
+        self.bridge.authorize(caller, BridgeCallClass::ReadWorldTree)?;
+        Ok(self.world.read_tree(
+            self.world_recognition.as_ref(),
+            self.disclosure.personal_ground.as_deref(),
+            self.focus.project_ref().map(|project| project.ref_id.as_str()),
+        ))
+    }
+
+    /// The live composition reading (02 §2 `composition`, 02 §11 Retire):
+    /// what is present / degraded / absent, as observed from live recognition,
+    /// capability descriptors and the host's own read model. A
+    /// fixture-served constituent is an explicitly Degraded fallback and is
+    /// never a presence source (02 §10).
+    pub fn composition_reading(
+        &self,
+        caller: BridgeCaller,
+        hosted: &[HostedContribution],
+    ) -> Result<CompositionReading, BridgeDenied> {
+        self.bridge
+            .authorize(caller, BridgeCallClass::ReadComposition)?;
+        Ok(CompositionReading::compose(
+            self.world_recognition.as_ref(),
+            &self.disclosure,
+            hosted,
+        ))
+    }
+
+    /// `open subject` (02 §5): make `subject` the one current focus
+    /// kernel-wide and read it through its owner's authority gate. The focus
+    /// mutation and the reading are one operation, so a human and an Agent
+    /// opening the same ref reach the same actuality (04 §4).
+    ///
+    /// Opening a World-tree project node also binds the current Project
+    /// relation — resolved through WorldService's own tree, never inferred
+    /// from the ref's kind or string — which is how the project's sources are
+    /// then addressed (02 §7 co-reference).
+    ///
+    /// Returns the `FocusChanged` event the mutation produced, if the one
+    /// relation moved, beside the subject's reading. An owner refusal is
+    /// disclosed in the reading, not raised here.
+    pub fn open_subject(
+        &mut self,
+        caller: BridgeCaller,
+        subject: SemanticRef,
+    ) -> Result<SubjectOpen, SubjectOpenError> {
+        self.bridge
+            .authorize(caller, BridgeCallClass::OpenSubject)?;
+        // Resolution goes through the Projection; an open that needs a tree
+        // and holds none composes it once, rather than guessing from the ref.
+        if self.world.tree().is_none() {
+            self.world_tree(caller)?;
+        }
+        if let Some(project_ref) = self.world.project_ref_of(&subject) {
+            let already_bound = self
+                .focus
+                .project_ref()
+                .is_some_and(|bound| bound.ref_id == project_ref.ref_id);
+            if !already_bound {
+                let project = crate::focus::ProjectRef::try_from(project_ref)
+                    .map_err(SubjectOpenError::InvalidSubject)?;
+                self.focus.bind_project(project);
+            }
+        }
+        let focus_event = self.select(caller, subject.clone())?;
+        let focused_project = self
+            .focus
+            .project_ref()
+            .map(|project| project.ref_id.as_str());
+        let mut reading = self.world.open_subject(subject, focused_project);
+        // Selection is kernel state, and the reading is its projection (02
+        // §7): the reading carries `selected` from the one focus relation
+        // after the mutation, never from the read itself.
+        if self
+            .focus
+            .subject_ref()
+            .is_some_and(|selected| selected.ref_id == reading.subject.ref_id)
+        {
+            reading.access = reading.access.selected();
+        }
+        Ok(SubjectOpen {
+            focus_event,
+            reading,
+        })
+    }
+
+    /// Save one World source through Central's own authority gate (02 §9.4):
+    /// Central's compare-and-swap, Central's attribution, Central's refusal
+    /// semantics. The desktop adds no bypass, never parses conflict text, and
+    /// returns the `SourceChanged` event the write produced — none when
+    /// Central recorded no change.
+    pub fn save_subject(
+        &mut self,
+        caller: BridgeCaller,
+        source_ref: &str,
+        expected_revision: &str,
+        content: &str,
+        actor: &str,
+    ) -> Result<SourceWriteOutcome, WorldSourceError> {
+        self.bridge
+            .authorize(caller, BridgeCallClass::MutateWorldSource)?;
+        let focused_project = self.focus.project_ref().map(|project| project.ref_id.as_str());
+        self.world
+            .save_subject(source_ref, expected_revision, content, actor, focused_project)
+    }
+
+    /// The Central owner-Action client WorldService reads through, for hosts
+    /// that must reuse the same seam (a test or a fixture harness never
+    /// mints its own adapter).
+    pub fn central_world_client(&self) -> Option<&CentralWorldClient> {
+        self.world.client()
     }
 
     pub fn snapshot(&self, caller: BridgeCaller) -> Result<ShellSnapshot, BridgeDenied> {
@@ -224,39 +394,24 @@ impl DesktopHost {
     /// performs at startup; it refreshes the read model, never grants new
     /// authority and never invokes a model or Agent.
     ///
-    /// The composed World changed → the kernel emits `WorldChanged`, so every
-    /// surface re-renders reality instead of polling for it (02 §5). Returns
-    /// `Ok(None)` when the re-observation is identical to what is held.
-    pub fn reconcile_world(&mut self) -> Result<Option<KernelEvent>, String> {
+    /// Returns **every** event the reconciliation produced, in emission order:
+    /// `WorldChanged` when the composed World changed, plus `FocusChanged` when
+    /// the reconciliation also named the current World relation (every kernel
+    /// mutation emits the event it produced — there is no path that changes
+    /// focus without an event). An unchanged re-observation emits nothing.
+    pub fn reconcile_world(&mut self) -> Result<Vec<KernelEvent>, String> {
         let ground = self
             .disclosure
             .personal_ground
             .as_deref()
             .ok_or_else(|| "no personal ground configured for World reconciliation".to_owned())?;
         match discover_ground(Path::new(ground)) {
-            Ok(account) => {
-                let unchanged = self.world_recognition.as_ref() == Some(&account);
-                self.world_recognition = Some(account.clone());
-                self.bind_current_world_relation();
-                if unchanged {
-                    return Ok(None);
-                }
-                let world = self
-                    .focus
-                    .world
-                    .clone()
-                    .ok_or_else(|| "current World relation unresolved".to_owned())?;
-                Ok(Some(KernelEvent::WorldChanged {
-                    world,
-                    summary: format!(
-                        "World recognition re-observed for {} ({} source apertures).",
-                        account.target,
-                        account.sources.len()
-                    ),
-                }))
-            }
+            Ok(account) => self.reconcile_world_from(Some(account)),
             Err(error) => {
-                self.world_recognition = None;
+                // Recognition withdrawn is an observation, and unbinding the
+                // World relation it had established is disclosed as the event
+                // it produces — then the failure itself is returned.
+                let _ = self.reconcile_world_from(None);
                 self.current_world
                     .warnings
                     .push(format!("World recognition unavailable: {error}"));
@@ -265,39 +420,78 @@ impl DesktopHost {
         }
     }
 
-    /// Name the current World relation from the configured personal ground.
+    /// Reconcile from an already-observed recognition account — the pure core
+    /// of [`DesktopHost::reconcile_world`], so the invariant "every focus
+    /// mutation emits its event" is pinned directly on the reconciliation
+    /// path, not only on the live discovery path that happens to reach it.
+    ///
+    /// Passing `None` withdraws recognition: the World relation it had
+    /// established is unbound and that withdrawal is emitted, exactly as
+    /// binding it was.
+    pub fn reconcile_world_from(
+        &mut self,
+        account: Option<WorldRecognitionAccount>,
+    ) -> Result<Vec<KernelEvent>, String> {
+        let unchanged = self.world_recognition == account;
+        self.world_recognition = account;
+        let mut events = Vec::new();
+        if let Some(event) = self.bind_current_world_relation() {
+            events.push(event);
+        }
+        if unchanged {
+            return Ok(events);
+        }
+        let Some(account) = self.world_recognition.as_ref() else {
+            // Recognition withdrawn: the unbinding above is the disclosure of
+            // that withdrawal. There is no World left to name, so no
+            // `WorldChanged` — and nothing is fabricated in its place.
+            return Ok(events);
+        };
+        let world = self
+            .focus
+            .world
+            .clone()
+            .ok_or_else(|| "current World relation unresolved".to_owned())?;
+        events.push(KernelEvent::WorldChanged {
+            world,
+            summary: format!(
+                "World recognition re-observed for {} ({} source apertures).",
+                account.target,
+                account.sources.len()
+            ),
+        });
+        Ok(events)
+    }
+
+    /// Name the current World relation from the configured personal ground,
+    /// returning the `FocusChanged` event the binding produced — `None` when
+    /// the relation already stood, because a kernel operation that changes
+    /// nothing emits nothing.
     ///
     /// The host's own recognition is what establishes that a World exists here
-    /// at all (03 §A); naming that ground `world:personal` follows the design's
-    /// World-tree vocabulary (01 §2). When WorldService resolves Central's
-    /// WorldRef/WorldGraph, it becomes the authoritative source of this
-    /// relation and this derivation retires.
-    fn bind_current_world_relation(&mut self) {
-        if self.world_recognition.is_some() && self.focus.world.is_none() {
-            self.focus.bind_world(personal_world_ref());
+    /// at all (03 §A); WorldService names the relation (`world:personal`, the
+    /// root of the World tree, 01 §2), and this is the one place that binds or
+    /// releases it.
+    fn bind_current_world_relation(&mut self) -> Option<KernelEvent> {
+        match (self.world_recognition.is_some(), self.focus.world.is_some()) {
+            (true, false) => {
+                self.focus.bind_world(personal_world_ref());
+                Some(KernelEvent::FocusChanged {
+                    focus: self.focus.clone(),
+                })
+            }
+            (false, true) => {
+                self.focus.world = None;
+                Some(KernelEvent::FocusChanged {
+                    focus: self.focus.clone(),
+                })
+            }
+            _ => None,
         }
     }
 }
 
-/// The current World relation, named from the host's configured personal
-/// ground (01 §2: `world:personal` is the root of the World tree). Central
-/// world recognition is what establishes that this World exists here. When
-/// WorldService resolves Central's `WorldRef`/`WorldGraph`, it becomes the
-/// authoritative source of this relation and this derivation retires.
-fn personal_world_ref() -> WorldRef {
-    WorldRef::try_from(SemanticRef {
-        ref_id: "world:personal".to_owned(),
-        kind: "world".to_owned(),
-        native_owner: "central".to_owned(),
-        provenance: crate::RefProvenance {
-            source: "Central world recognition".to_owned(),
-            revision: None,
-        },
-    })
-    .expect("the built-in personal World ref is a whole ref")
-}
-
-fn suite_condition(surfaces: &[SurfaceDisclosure]) -> SuiteCondition {
+pub(crate) fn suite_condition(surfaces: &[SurfaceDisclosure]) -> SuiteCondition {
     if surfaces
         .iter()
         .any(|surface| surface.state == NativeSurfaceState::Broken)
@@ -318,4 +512,74 @@ fn suite_condition(surfaces: &[SurfaceDisclosure]) -> SuiteCondition {
         return SuiteCondition::Full;
     }
     SuiteCondition::Partial
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use oi_cli::world_recognition::RecognizedSourceAperture;
+
+    fn disclosure() -> SuiteCompositionDisclosure {
+        SuiteCompositionDisclosure {
+            schema: "oi.desktop-composition-disclosure/v1".to_owned(),
+            personal_ground: Some("/central".to_owned()),
+            surfaces: Vec::new(),
+            warnings: Vec::new(),
+        }
+    }
+
+    fn account() -> WorldRecognitionAccount {
+        WorldRecognitionAccount {
+            schema: "oi.world-recognition-account/v1".to_owned(),
+            target: "/central".to_owned(),
+            sources: vec![RecognizedSourceAperture {
+                path: "ProjectCentral/user".to_owned(),
+                class: "authored-project-ground".to_owned(),
+                owner: "Central".to_owned(),
+                standing: "authoritative-when-projectcentral-conformant".to_owned(),
+                treatment: "retain-in-place".to_owned(),
+                evidence: "directory-present".to_owned(),
+            }],
+            providers: Vec::new(),
+            observations: Vec::new(),
+            owner_participations: Vec::new(),
+            owner_contracts: Vec::new(),
+            owner_capacities: Vec::new(),
+            extension_requests: Vec::new(),
+            provider_errors: Vec::new(),
+        }
+    }
+
+    /// Pinned (K1 deferred minor M2): reconciliation may name or release the
+    /// current World relation, and whichever it does is emitted. There is no
+    /// path that mutates focus without the event that discloses it.
+    #[test]
+    fn reconciliation_emits_every_focus_mutation_it_makes() {
+        let mut host = DesktopHost::new(disclosure());
+        // Recognition was observed at startup with no world relation? No: the
+        // host binds it at startup. Withdraw recognition first so the binding
+        // path is reachable here.
+        host.world_recognition = None;
+        host.focus = GlobalFocus::unfocused();
+
+        // Binding the relation on reconciliation emits FocusChanged.
+        let events = host
+            .reconcile_world_from(Some(account()))
+            .expect("reconciliation from an observed account");
+        assert_eq!(events.len(), 2, "the focus mutation and the World change");
+        assert_eq!(events[0].tag(), "focus_changed");
+        assert_eq!(events[1].tag(), "world_changed");
+        assert!(host.focus.world.is_some());
+
+        // Reconciling the same account again mutates nothing and emits
+        // nothing.
+        let events = host.reconcile_world_from(Some(account())).unwrap();
+        assert!(events.is_empty(), "an unchanged re-observation emits nothing");
+
+        // Withdrawing recognition releases the relation and emits that too.
+        let events = host.reconcile_world_from(None).unwrap();
+        assert_eq!(events.len(), 1, "the withdrawal is disclosed as its event");
+        assert_eq!(events[0].tag(), "focus_changed");
+        assert!(host.focus.world.is_none(), "absence is held, not papered over");
+    }
 }

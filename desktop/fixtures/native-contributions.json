@@ -1,39 +1,39 @@
 {
   "schema": "oi.desktop-host-reading-fixtures/v1",
-  "verified_at": "2026-08-17",
+  "verified_at": "2026-09-04",
   "contributions": [
     {
       "schema": "oi.desktop-host-reading/v1",
       "contribution_ref": "oi.explore.surface/root",
       "native_owner": "oi-explore",
       "target_contract": "oi.explore.surface/v1",
-      "availability": "ready",
+      "availability": "degraded",
       "provenance": {"source": "EpiLogos/O-I#19", "revision": "3de1cc548252017877bdd7d80447b7dcac375551"},
       "regions": ["canvas", "navigator", "inspector"],
       "read_model_ref": {"ref": "oi.explore:surface:root", "kind": "surface", "native_owner": "oi-explore", "provenance": {"source": "shared-field/explore.mjs", "revision": "3de1cc548252017877bdd7d80447b7dcac375551"}},
       "accepted_selection_kinds": ["projection", "wiki_node", "project", "participant", "shared_field"],
       "actions": [],
-      "detail": "Consumes the canonical Explore read-model seam from PR #19. Encounter-security and A2A remain the authority/admission owners for hosted mutation, private Contact/Watch state and exchange; this desktop reading exposes none of those mutation powers or private relations. SpaceTimeDB transport identifiers remain non-canonical."
+      "detail": "Fixture fallback: this document is a static host reading, so the reading it serves is Degraded and never live, whatever it describes (02 §10). The canonical Explore read-model seam from PR #19 is what an observed live reading would consume. Encounter-security and A2A remain the authority/admission owners for hosted mutation, private Contact/Watch state and exchange; this desktop reading exposes none of those mutation powers or private relations. SpaceTimeDB transport identifiers remain non-canonical."
     },
     {
       "schema": "oi.desktop-host-reading/v1",
       "contribution_ref": "actuation.agency.reading/root-world",
       "native_owner": "actuation",
       "target_contract": "actuation.agency/v1",
-      "availability": "ready",
-      "provenance": {"source": "EpiLogos/Actuation#6", "revision": "b977939ec25c32b3dc8f5ed251b70e4c26933086"},
+      "availability": "degraded",
+      "provenance": {"source": "EpiLogos/Actuation#6"},
       "regions": ["inspector", "root_agency"],
-      "read_model_ref": {"ref": "actuation.agency:root-world", "kind": "agency_reading", "native_owner": "actuation", "provenance": {"source": "actuation.agency/v1", "revision": "b977939ec25c32b3dc8f5ed251b70e4c26933086"}},
+      "read_model_ref": {"ref": "actuation.agency:root-world", "kind": "agency_reading", "native_owner": "actuation", "provenance": {"source": "actuation.agency/v1"}},
       "accepted_selection_kinds": ["agency", "world_binding", "root_scope", "metagency_grant", "determination", "return"],
       "actions": [],
-      "detail": "Consumes verified Actuation PR #6. Root Agency remains a positional relation between WorldBinding and RootScope; O:I does not introduce a RootAgent subtype or infer metagency from presentation."
+      "detail": "Fixture fallback: a static document can only serve a Degraded reading, never a live one (02 §10), so no source revision is asserted here as if it were Actuation truth — the revision this entry once pinned is not an ancestor of Actuation main. Actuation PR #6's agency reading is what an observed live reading would consume. Root Agency remains a positional relation between WorldBinding and RootScope; O:I does not introduce a RootAgent subtype or infer metagency from presentation."
     },
     {
       "schema": "oi.desktop-host-reading/v1",
       "contribution_ref": "central.surface/personal",
       "native_owner": "central",
       "target_contract": "personal.show",
-      "availability": "ready",
+      "availability": "degraded",
       "provenance": {"source": "EpiLogos/Central#53", "revision": "3f0551090ae39bcef260a27b1a9db0da4729d8a3"},
       "regions": ["canvas", "navigator", "inspector"],
       "read_model_ref": {"ref": "personal.show", "kind": "action", "native_owner": "central", "provenance": {"source": "ctrl/src/personal.rs", "revision": "3f0551090ae39bcef260a27b1a9db0da4729d8a3"}},
@@ -45,7 +45,7 @@
         {"action_ref": "control.apply-proposal", "native_owner": "central", "availability": "available", "required_capability_ref": null},
         {"action_ref": "personal.notify", "native_owner": "central", "availability": "available", "required_capability_ref": null}
       ],
-      "detail": "Consumes Central PR #53's native Personal/root-world Action surface. Authored Control/Work remain filesystem-owned by Central; proposal is derived until explicit acceptance, and notification delivery is not human acknowledgement. O:I only hosts the reading and Action refs."
+      "detail": "Fixture fallback: this static document serves a Degraded reading, never a live one (02 §10); the Central owner Actions it names are the capability descriptors an observed live reading answers to. Consumes Central PR #53's native Personal/root-world Action surface. Authored Control/Work remain filesystem-owned by Central; proposal is derived until explicit acceptance, and notification delivery is not human acknowledgement. O:I only hosts the reading and Action refs."
     },
     {
       "schema": "oi.desktop-host-reading/v1",
@@ -58,7 +58,7 @@
       "read_model_ref": null,
       "accepted_selection_kinds": ["project", "run", "frontier", "candidate", "claim", "evidence", "human_request", "agency", "return", "execution", "trajectory", "harness_composition", "agent_session", "session_space", "surface", "material_binding"],
       "actions": [],
-      "detail": "Fallback only: Factory PR #146 now exposes the product-owned factory.build-view-provider/v1 plus a persistent local first-party provider and Factory-owned Action executor over canonical Factory state. The desktop keeps this reading degraded until OI_FACTORY_BUILD_STATE + Project/Run refs resolve an actual provider instance; it never renders the deterministic GUI fixture as live. When observed, the live reading replaces this same factory.surface/build contribution identity with the same Factory native owner."
+      "detail": "Fixture fallback: this static document serves a Degraded reading, never a live one (02 §10). Factory PR #146 now exposes the product-owned factory.build-view-provider/v1 plus a persistent local first-party provider and Factory-owned Action executor over canonical Factory state. The desktop keeps this reading degraded until OI_FACTORY_BUILD_STATE + Project/Run refs resolve an actual provider instance; it never renders the deterministic GUI fixture as live. When observed, the live reading replaces this same factory.surface/build contribution identity with the same Factory native owner."
     },
     {
       "schema": "oi.desktop-host-reading/v1",
@@ -71,7 +71,7 @@
       "read_model_ref": null,
       "accepted_selection_kinds": ["session_space", "project", "agent_session", "component", "surface", "connection", "provider", "harness", "capability", "action"],
       "actions": [],
-      "detail": "AIKit PR #68 contains the executable aikit.session-space/v1 runtime/read model, provider-observed desired-vs-live harmonisation, and target-owned aikit.session-space-contribution/v1 register/readback/remove lifecycle. This desktop fallback remains degraded only when it has no independently observed SessionSpaceReadModel instance; it never fabricates Active, provider health, Capability grant or Action authority."
+      "detail": "Fixture fallback: this static document serves a Degraded reading, never a live one (02 §10). AIKit PR #68 contains the executable aikit.session-space/v1 runtime/read model, provider-observed desired-vs-live harmonisation, and target-owned aikit.session-space-contribution/v1 register/readback/remove lifecycle. This desktop fallback remains degraded only when it has no independently observed SessionSpaceReadModel instance; it never fabricates Active, provider health, Capability grant or Action authority."
     },
     {
       "schema": "oi.desktop-host-reading/v1",
@@ -84,7 +84,7 @@
       "read_model_ref": {"ref": "aikit:harness-composition-topology:deepseek-maximal", "kind": "harness_composition_topology", "native_owner": "ai-kit", "provenance": {"source": "crates/aikit-adapters/src/composition_topology.rs", "revision": "15d7c9f1122336b50189bb1d70961084cbb9685b"}},
       "accepted_selection_kinds": ["component", "surface", "harness_composition", "action"],
       "actions": [],
-      "detail": "Consumes AIKit PR #68's target-neutral nested Component topology and live SessionSpace programme without reproducing Component/Surface semantics inside O:I. Rich UI, HumanCommand, Policy and LoopRuntime contributions remain target-native."
+      "detail": "Fixture fallback: this static document serves a Degraded reading, never a live one (02 §10). Consumes AIKit PR #68's target-neutral nested Component topology and live SessionSpace programme without reproducing Component/Surface semantics inside O:I. Rich UI, HumanCommand, Policy and LoopRuntime contributions remain target-native."
     }
   ]
 }

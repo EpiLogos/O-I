@@ -152,6 +152,14 @@ impl GlobalFocus {
         self.subject.as_ref().map(SubjectRef::semantic_ref)
     }
 
+    /// The one current Project relation exactly as the kernel holds it. This
+    /// is how WorldService addresses Central (02 §7 co-reference: readings are
+    /// addressed by the current relation, never by re-deriving a project from
+    /// a selected ref's string).
+    pub fn project_ref(&self) -> Option<&SemanticRef> {
+        self.project.as_ref().map(ProjectRef::semantic_ref)
+    }
+
     /// Make `subject` the one current focus. Replaces whatever subject was
     /// current — the invariant is exactly one current focus relation
     /// kernel-wide (03 §B), never an accumulation.

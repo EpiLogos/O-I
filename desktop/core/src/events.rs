@@ -31,6 +31,12 @@ pub const KERNEL_EVENT_VERSION: u32 = 1;
 
 /// Topic the desktop host forwards kernel events on. The renderer subscribes
 /// once to this topic and dispatches typed events to consumers.
+///
+/// Direction is one-way: kernel→renderer (K1 deferred minor M6). Nothing may
+/// be published back on this topic, and a Rust-side listener on it must never
+/// be treated as kernel truth — it is a disclosure channel with no authority,
+/// no bridge grant (02 §12) and no round trip. Kernel truth is pulled through
+/// the read models; events on this topic only trigger the re-render.
 pub const KERNEL_EVENT_TOPIC: &str = "oi:kernel-event";
 
 /// One typed application event (02 §5). Each variant names the exact refs that
@@ -148,6 +154,125 @@ impl KernelEvent {
             Self::SharedFieldChanged { .. } => "shared_field_changed",
         }
     }
+
+    /// Per-variant payload validation at the kernel's parse boundary (02 §4).
+    ///
+    /// Deserialization alone would accept an event that names a degenerate ref
+    /// — an empty identifier, a missing kind, an unattributed provenance —
+    /// because serde validates shape, not the whole-ref law the kernel's own
+    /// constructors enforce. An event this kernel could not have produced is
+    /// refused here, so a consumer never mistakes a malformed payload for an
+    /// observation.
+    pub fn validate(&self) -> Result<(), String> {
+        match self {
+            Self::FocusChanged { focus } => {
+                let relation = |name: &str| format!("FocusChanged.focus.{name}");
+                if let Some(world) = focus.world.as_ref() {
+                    whole_ref(&relation("world"), world.semantic_ref())?;
+                }
+                if let Some(project) = focus.project.as_ref() {
+                    whole_ref(&relation("project"), project.semantic_ref())?;
+                }
+                if let Some(subject) = focus.subject.as_ref() {
+                    whole_ref(&relation("subject"), subject.semantic_ref())?;
+                }
+                if let Some(journey) = focus.journey.as_ref() {
+                    whole_ref(&relation("journey"), journey.semantic_ref())?;
+                }
+                if let Some(encounter) = focus.agency_encounter.as_ref() {
+                    whole_ref(&relation("agency_encounter"), encounter.semantic_ref())?;
+                }
+                Ok(())
+            }
+            Self::WorldChanged { world, summary } => {
+                whole_ref("WorldChanged.world", world.semantic_ref())?;
+                non_empty("WorldChanged.summary", summary)
+            }
+            Self::SourceChanged { source, summary } => {
+                whole_ref("SourceChanged.source", source)?;
+                non_empty("SourceChanged.summary", summary)
+            }
+            Self::ActivityUpdated {
+                activity_ref,
+                subject,
+                summary,
+            } => {
+                non_empty("ActivityUpdated.activity_ref", activity_ref)?;
+                whole_ref("ActivityUpdated.subject", subject)?;
+                non_empty("ActivityUpdated.summary", summary)
+            }
+            Self::SessionChanged { session, summary } => {
+                whole_ref("SessionChanged.session", session)?;
+                non_empty("SessionChanged.summary", summary)
+            }
+            Self::KnowledgeChanged { subject, summary } => {
+                whole_ref("KnowledgeChanged.subject", subject)?;
+                non_empty("KnowledgeChanged.summary", summary)
+            }
+            Self::AttentionRaised {
+                attention_ref,
+                subject,
+                summary,
+            } => {
+                non_empty("AttentionRaised.attention_ref", attention_ref)?;
+                whole_ref("AttentionRaised.subject", subject)?;
+                non_empty("AttentionRaised.summary", summary)
+            }
+            Self::AttentionResolved {
+                attention_ref,
+                summary,
+            } => {
+                non_empty("AttentionResolved.attention_ref", attention_ref)?;
+                non_empty("AttentionResolved.summary", summary)
+            }
+            Self::RunChanged { run, summary } => {
+                whole_ref("RunChanged.run", run)?;
+                non_empty("RunChanged.summary", summary)
+            }
+            Self::JourneyChanged { journey, summary } => {
+                whole_ref("JourneyChanged.journey", journey)?;
+                non_empty("JourneyChanged.summary", summary)
+            }
+            Self::MaterialChanged { material, summary } => {
+                whole_ref("MaterialChanged.material", material)?;
+                non_empty("MaterialChanged.summary", summary)
+            }
+            Self::CompositionChanged { summary, .. } => {
+                non_empty("CompositionChanged.summary", summary)
+            }
+            Self::SharedFieldChanged { field, summary } => {
+                whole_ref("SharedFieldChanged.field", field)?;
+                non_empty("SharedFieldChanged.summary", summary)
+            }
+        }
+    }
+}
+
+/// A ref the kernel may name in an event: an identifier, a kind and a native
+/// owner, attributed. This is the same whole-ref law the kernel's focus
+/// constructors enforce at build time, applied where the wire meets the
+/// kernel.
+fn whole_ref(at: &str, reference: &SemanticRef) -> Result<(), String> {
+    for (part, value) in [
+        ("ref", &reference.ref_id),
+        ("kind", &reference.kind),
+        ("native_owner", &reference.native_owner),
+    ] {
+        if value.trim().is_empty() {
+            return Err(format!("{at} carries a {part} that is not a name"));
+        }
+    }
+    if reference.provenance.source.trim().is_empty() {
+        return Err(format!("{at} carries no provenance"));
+    }
+    Ok(())
+}
+
+fn non_empty(at: &str, value: &str) -> Result<(), String> {
+    if value.trim().is_empty() {
+        return Err(format!("{at} carries no observation"));
+    }
+    Ok(())
 }
 
 /// The envelope the desktop host forwards over the renderer event seam:
@@ -167,6 +292,44 @@ impl KernelEventEnvelope {
             version: KERNEL_EVENT_VERSION,
             event,
         }
+    }
+
+    /// The kernel's parse boundary (02 §4): contract identity and version are
+    /// checked on the raw envelope *before* the typed payload is decoded, so a
+    /// stale or foreign envelope is refused for the reason it is refused —
+    /// never silently accepted because its payload happened to decode.
+    ///
+    /// The payload is then validated per variant: an event that names a
+    /// degenerate ref is not an event this kernel could have produced, so it
+    /// is refused rather than degraded into a variant that lies about what
+    /// changed. This is the same enforcement the renderer's
+    /// `parseKernelEventEnvelope` applies; the kernel does not outsource its
+    /// own boundary.
+    pub fn parse(raw: &str) -> Result<Self, String> {
+        let value: serde_json::Value =
+            serde_json::from_str(raw).map_err(|error| format!("malformed kernel event envelope: {error}"))?;
+        let schema = value
+            .get("schema")
+            .and_then(serde_json::Value::as_str)
+            .ok_or("kernel event envelope carries no schema")?;
+        if schema != KERNEL_EVENT_SCHEMA {
+            return Err(format!(
+                "unsupported kernel event schema `{schema}`; this kernel speaks {KERNEL_EVENT_SCHEMA}"
+            ));
+        }
+        let version = value
+            .get("version")
+            .and_then(serde_json::Value::as_u64)
+            .ok_or("kernel event envelope carries no version")?;
+        if version != u64::from(KERNEL_EVENT_VERSION) {
+            return Err(format!(
+                "unsupported kernel event version {version}; this kernel speaks version {KERNEL_EVENT_VERSION}"
+            ));
+        }
+        let envelope: Self = serde_json::from_value(value)
+            .map_err(|error| format!("malformed kernel event payload: {error}"))?;
+        envelope.event.validate()?;
+        Ok(envelope)
     }
 }
 
@@ -294,6 +457,48 @@ mod tests {
 
         let stale = r#"{"schema":"oi.kernel-event/v1","version":0,"event":"focus_changed"}"#;
         assert!(serde_json::from_str::<KernelEventEnvelope>(stale).is_err());
+    }
+
+    /// Pinned (K1 deferred minors M1 + M4): the kernel's own parse boundary
+    /// enforces schema and version for the reason it refuses them, then the
+    /// payload per variant.
+    #[test]
+    fn the_kernel_parse_boundary_refuses_foreign_and_stale_envelopes_by_reason() {
+        let foreign = r#"{"schema":"other.kernel-event/v9","version":1,"event":"focus_changed"}"#;
+        let error = KernelEventEnvelope::parse(foreign).unwrap_err();
+        assert!(error.contains("schema"), "refused for the schema: {error}");
+
+        let stale = r#"{"schema":"oi.kernel-event/v1","version":0,"event":"focus_changed"}"#;
+        let error = KernelEventEnvelope::parse(stale).unwrap_err();
+        assert!(error.contains("version 0"), "refused for the version: {error}");
+
+        let unversioned = r#"{"schema":"oi.kernel-event/v1","event":"focus_changed"}"#;
+        let error = KernelEventEnvelope::parse(unversioned).unwrap_err();
+        assert!(error.contains("no version"), "{error}");
+
+        let parsed = KernelEventEnvelope::parse(&serde_json::to_string(&KernelEventEnvelope::new(
+            focus_changed(),
+        ))
+        .unwrap())
+        .expect("the kernel accepts its own envelope");
+        assert_eq!(parsed.event.tag(), "focus_changed");
+    }
+
+    #[test]
+    fn the_kernel_parse_boundary_refuses_a_payload_the_kernel_could_not_produce() {
+        // A well-formed tag whose payload names a degenerate ref is not an
+        // event this kernel produced; serde alone would accept it.
+        let degenerate = r#"{"schema":"oi.kernel-event/v1","version":1,"event":"source_changed","source":{"ref":"","kind":"file","native_owner":"central","provenance":{"source":"test"}},"summary":"saved"}"#;
+        let error = KernelEventEnvelope::parse(degenerate).unwrap_err();
+        assert!(error.contains("SourceChanged.source"), "{error}");
+
+        let unattributed = r#"{"schema":"oi.kernel-event/v1","version":1,"event":"source_changed","source":{"ref":"central/file:a.rs","kind":"file","native_owner":"central","provenance":{"source":"  "}},"summary":"saved"}"#;
+        let error = KernelEventEnvelope::parse(unattributed).unwrap_err();
+        assert!(error.contains("provenance"), "{error}");
+
+        let observationless = r#"{"schema":"oi.kernel-event/v1","version":1,"event":"composition_changed","condition":"partial","summary":"  "}"#;
+        let error = KernelEventEnvelope::parse(observationless).unwrap_err();
+        assert!(error.contains("CompositionChanged.summary"), "{error}");
     }
 
     #[test]

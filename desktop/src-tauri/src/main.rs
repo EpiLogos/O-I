@@ -73,44 +73,61 @@ fn shell_snapshot(state: State<'_, AppState>) -> Result<ShellSnapshot, String> {
 /// Re-observe the live World and return the refreshed shell snapshot. This is
 /// the same deterministic discovery the host performs at startup; it refreshes
 /// the read model without granting new authority or invoking a model/Agent.
-/// When the composed World changed, the kernel emits `WorldChanged` to every
+/// When the composed World changed, the kernel emits `WorldChanged` — beside
+/// `FocusChanged` when reconciliation also named the World relation — to every
 /// surface over the event seam.
 #[tauri::command]
 fn reconcile_world(
     state: State<'_, AppState>,
     app: tauri::AppHandle,
 ) -> Result<ShellSnapshot, String> {
-    let (event, snapshot) = {
+    let (events, snapshot) = {
         let mut host = state
             .host
             .lock()
             .map_err(|_| "desktop host lock poisoned".to_owned())?;
-        let event = host.reconcile_world().map_err(|error| error.to_string())?;
+        let events = host.reconcile_world().map_err(|error| error.to_string())?;
         let snapshot = host
             .snapshot(BridgeCaller::ShellUi)
             .map_err(|error| error.to_string())?;
-        (event, snapshot)
+        (events, snapshot)
     };
     // The kernel state changed → typed events → the projection re-renders
-    // reality (02 §5). The lock is released before the event is pushed.
-    forward_kernel_event(&app, event);
+    // reality (02 §5). The lock is released before the events are pushed.
+    forward_kernel_events(&app, events);
     Ok(snapshot)
 }
 
-/// Forward one kernel event to the renderer over the Tauri event seam.
+/// Forward the kernel events one operation produced, in the order the kernel
+/// emitted them, over the Tauri event seam.
 ///
 /// This is kernel→UI disclosure: it grants the renderer nothing, performs no
 /// bridge call and touches no BridgePolicy authority (02 §12). A renderer that
 /// is not listening misses nothing — the next snapshot pull re-reads the same
 /// kernel truth.
-fn forward_kernel_event(app: &tauri::AppHandle, event: Option<oi_desktop_core::KernelEvent>) {
-    let Some(event) = event else {
-        return;
-    };
+///
+/// Ordering invariant (02 §5 push, not poll): every kernel operation collects
+/// the events it produced *while* the host lock is held, then this forward
+/// happens *after* the lock is released, in that collection order. Tauri
+/// `emit` on one `AppHandle` from the main thread delivers in call order, and
+/// all kernel mutations are synchronous main-thread commands on the one host
+/// lock, so two operations can never interleave their event batches: a
+/// renderer applying events in arrival order reconstructs exactly the kernel's
+/// own mutation order. If a producer ever becomes async or multi-threaded, the
+/// forward must be serialised behind the same queue that serialises the
+/// mutations — not left to this comment.
+fn forward_kernel_events(app: &tauri::AppHandle, events: Vec<oi_desktop_core::KernelEvent>) {
     use tauri::Emitter;
-    if let Err(error) = app.emit(KERNEL_EVENT_TOPIC, KernelEventEnvelope::new(event)) {
-        eprintln!("O:I kernel event could not be forwarded: {error}");
+    for event in events {
+        if let Err(error) = app.emit(KERNEL_EVENT_TOPIC, KernelEventEnvelope::new(event)) {
+            eprintln!("O:I kernel event could not be forwarded: {error}");
+        }
     }
+}
+
+/// Forward a single kernel event, the shape most operations produce.
+fn forward_kernel_event(app: &tauri::AppHandle, event: Option<oi_desktop_core::KernelEvent>) {
+    forward_kernel_events(app, event.into_iter().collect());
 }
 
 #[tauri::command]
@@ -596,6 +613,119 @@ fn open_destination(
         .map_err(|error| error.to_string())
 }
 
+/// Read the World tree as a Projection (01 §2): `world:personal` at the root,
+/// each `world:project:<id>` a descendant, nodes carrying their
+/// authored-ground identity, owner-declared source treatment and Wiki ref.
+///
+/// The reading is served verbatim from what Central's own owner Actions and
+/// O:I recognition disclosed; a seam that cannot answer degrades its own level
+/// and names the reason in the reading's warnings. A read mutates no kernel
+/// state, so it emits no event — the tree is pulled, and the events that make
+/// it stale are pushed.
+#[tauri::command]
+fn world_tree(state: State<'_, AppState>) -> Result<oi_desktop_core::WorldTreeReading, String> {
+    state
+        .host
+        .lock()
+        .map_err(|_| "desktop host lock poisoned".to_owned())?
+        .world_tree(BridgeCaller::ShellUi)
+        .map_err(|error| error.to_string())
+}
+
+/// Read the live composition (02 §2, §11 Retire): what is present, degraded
+/// or absent, as observed from live recognition, capability descriptors and
+/// the host's own read model. Fixture-served constituents are disclosed as
+/// explicitly Degraded fallbacks and are never a presence source (02 §10).
+#[tauri::command]
+fn composition_reading(
+    state: State<'_, AppState>,
+) -> Result<oi_desktop_core::CompositionReading, String> {
+    let hosted = state
+        .contributions
+        .lock()
+        .map_err(|_| "contribution catalog lock poisoned".to_owned())?
+        .clone();
+    state
+        .host
+        .lock()
+        .map_err(|_| "desktop host lock poisoned".to_owned())?
+        .composition_reading(BridgeCaller::ShellUi, &hosted)
+        .map_err(|error| error.to_string())
+}
+
+/// `open subject` (02 §5): make `subject` the one kernel-wide focus, resolve
+/// its Project relation through the World tree when it is a World node, and
+/// read it through its owner's authority gate. Pushes `FocusChanged` when the
+/// one relation moved; the reading is returned beside it, so an agent and a
+/// human open the same ref and reach the same actuality (04 §4).
+#[tauri::command]
+fn open_subject(
+    state: State<'_, AppState>,
+    app: tauri::AppHandle,
+    subject: SemanticRef,
+) -> Result<oi_desktop_core::SubjectReading, String> {
+    let (event, reading) = {
+        let mut host = state
+            .host
+            .lock()
+            .map_err(|_| "desktop host lock poisoned".to_owned())?;
+        let opened = host
+            .open_subject(BridgeCaller::ShellUi, subject)
+            .map_err(|error| error.to_string())?;
+        (opened.focus_event, opened.reading)
+    };
+    forward_kernel_event(&app, event);
+    Ok(reading)
+}
+
+/// What a saved World source reports back to the renderer. The write's
+/// `SourceChanged` event is pushed over the event seam, not returned: events
+/// are disclosure, and every surface follows the same seam (02 §5).
+#[derive(Serialize)]
+struct SourceWriteReport {
+    source_ref: String,
+    revision: String,
+    changed: bool,
+}
+
+/// Save one World source through Central's own authority gate (02 §9.4):
+/// Central's compare-and-swap, Central's attribution, Central's refusal
+/// semantics. The desktop adds no bypass, never parses conflict text, and
+/// pushes `SourceChanged` only when Central recorded a change.
+#[tauri::command]
+fn save_subject(
+    state: State<'_, AppState>,
+    app: tauri::AppHandle,
+    source_ref: String,
+    expected_revision: String,
+    content: String,
+    actor: Option<String>,
+) -> Result<SourceWriteReport, String> {
+    let (event, report) = {
+        let mut host = state
+            .host
+            .lock()
+            .map_err(|_| "desktop host lock poisoned".to_owned())?;
+        let outcome = host
+            .save_subject(
+                BridgeCaller::ShellUi,
+                &source_ref,
+                &expected_revision,
+                &content,
+                actor.as_deref().unwrap_or("human:desktop"),
+            )
+            .map_err(|error| error.to_string())?;
+        let report = SourceWriteReport {
+            source_ref: outcome.source_ref.clone(),
+            revision: outcome.revision.clone(),
+            changed: outcome.changed,
+        };
+        (outcome.event, report)
+    };
+    forward_kernel_event(&app, event);
+    Ok(report)
+}
+
 fn with_knowledge<T>(
     state: &State<'_, AppState>,
     operation: impl FnOnce(&LocalProjectKnowledge) -> Result<T, String>,
@@ -873,6 +1003,10 @@ fn main() {
             knowledge_history,
             select_semantic_ref,
             open_destination,
+            world_tree,
+            composition_reading,
+            open_subject,
+            save_subject,
             reconcile_world
         ])
         .run(tauri::generate_context!())

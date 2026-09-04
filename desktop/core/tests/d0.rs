@@ -195,8 +195,8 @@ fn reconcile_world_refreshes_the_read_model_without_a_restart() {
         // immediate re-observation usually observes no change — and an
         // unchanged observation emits nothing (events are honest). Whatever is
         // emitted names the exact World relation the kernel now holds.
-        let event = host.reconcile_world().expect("reconcile World account");
-        if let Some(event) = event.as_ref() {
+        let events = host.reconcile_world().expect("reconcile World account");
+        for event in &events {
             let KernelEvent::WorldChanged { world, .. } = event else {
                 panic!("expected WorldChanged, got {}", event.tag());
             };
@@ -218,7 +218,7 @@ fn reconcile_world_refreshes_the_read_model_without_a_restart() {
         // The same rule holds on a later observation: the account composes
         // live owner participations and owners move between observations, so
         // the event is emitted only when the composed World really differs.
-        if let Some(event) = host.reconcile_world().unwrap() {
+        for event in host.reconcile_world().unwrap() {
             let KernelEvent::WorldChanged { world, .. } = &event else {
                 panic!("expected WorldChanged, got {}", event.tag());
             };
