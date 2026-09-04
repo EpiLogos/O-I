@@ -14,6 +14,7 @@ centres — from what the system is *for*.
 | [02-ARCHITECTURE.md](02-ARCHITECTURE.md) | The application kernel, services, seams, state layers, events and focus model. |
 | [03-UX-STATES.md](03-UX-STATES.md) | The complete UX state space, each state derived from intent. |
 | [04-VERIFICATION.md](04-VERIFICATION.md) | What is true when the design exists — the conditions the app meets, and the build order. |
+| [05-EXECUTION.md](05-EXECUTION.md) | The standing injunction for the orchestrator and subagents doing the development work. |
 
 ## Provenance class
 
