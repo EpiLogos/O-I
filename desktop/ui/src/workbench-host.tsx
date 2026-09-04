@@ -3,6 +3,7 @@ import './workbench-host.css';
 import {
   closeBinding,
   dismissRegion,
+  findBinding,
   isAtRest,
   moveBindingToSplit,
   parseLayout,
@@ -123,7 +124,9 @@ export function ProfessionalWorkbenchHost({
 }) {
   const surfaceMap = useMemo(() => new Map(surfaces.map((surface) => [surface.surfaceRef, surface])), [surfaces]);
   const [layout, setLayout] = useState<WorkbenchLayout>(() => restLayout(restSurfaceRef));
-  const [focusedBindingId, setFocusedBindingId] = useState<string | undefined>(undefined);
+  // Presentation focus lives in the layout itself, so every act that moves a
+  // binding also moves focus in one state update — no two setters can race.
+  const focusedBindingId = layout.focusedBindingId;
   const rootRef = useRef<HTMLElement | null>(null);
   const [storageReady, setStorageReady] = useState(false);
 
@@ -185,7 +188,10 @@ export function ProfessionalWorkbenchHost({
       }
       if (event.key === 'Escape') {
         event.preventDefault();
-        if (focusedBindingId) {
+        // An unpinned focused binding dismisses; a pinned one (the resting
+        // surface) is left alone — Escape never closes rest, it recovers it.
+        const focused = focusedBindingId ? findBinding(layout, focusedBindingId).tab : null;
+        if (focused && !focused.pinned) {
           dismissFocused();
         } else if (!isAtRest(layout, restSurfaceRef)) {
           setLayout((current) => returnToRest(current, restSurfaceRef));
@@ -231,9 +237,9 @@ export function ProfessionalWorkbenchHost({
    * semantic focus stays the kernel's (02 §6, §7) — a tab click never mints
    * selection. */
   function focusBinding(groupId: string, bindingId: string) {
-    setFocusedBindingId(bindingId);
     setLayout((current) => ({
       ...current,
+      focusedBindingId: bindingId,
       focusedGroupId: groupId,
       focusRegion: 'canvas',
       groups: current.groups.map((group) => group.groupId === groupId ? { ...group, activeBindingId: bindingId } : group),
@@ -247,61 +253,66 @@ export function ProfessionalWorkbenchHost({
     const surface = surfaceMap.get(surfaceRef);
     if (!surface) return;
     if (region === 'canvas') {
-      // Re-binding an already-open surface focuses it — never a second
-      // identity for the same Surface + subject (02 §8).
-      for (const group of layout.groups) {
-        const existing = group.tabs.find((tab) => tab.surfaceRef === surfaceRef && tab.subjectRef === subjectRef);
-        if (existing) {
-          setFocusedBindingId(existing.bindingId);
-          setLayout((current) => ({
-            ...current,
-            focusedGroupId: group.groupId,
-            focusRegion: 'canvas',
-            groups: current.groups.map((candidate) => candidate.groupId === group.groupId ? { ...candidate, activeBindingId: existing.bindingId } : candidate),
-          }));
-          return;
-        }
-      }
-      const groupId = layout.focusedGroupId || layout.groups[0]?.groupId || 'group-1';
-      const binding: SurfacePresentationBinding = {
-        bindingId: `presentation:${surfaceRef}:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`,
-        surfaceRef,
-        subjectRef,
-        provider: surface.nativeOwner,
-        presentation: surface.provenance,
-        region: 'canvas',
-        pinned: false,
-      };
-      setFocusedBindingId(binding.bindingId);
-      setLayout((current) => ({
-        ...current,
-        groups: current.groups.map((group) => {
-          if (group.groupId !== groupId) return group;
-          const active = group.tabs.find((tab) => tab.bindingId === group.activeBindingId);
-          if (active && !active.pinned) {
+      // Everything — the duplicate check and the placement — happens against
+      // the updater's `current`, so two opens in one tick can never mint two
+      // bindings for one subject (02 §8: one binding per Surface + subject).
+      setLayout((current) => {
+        for (const group of current.groups) {
+          const existing = group.tabs.find((tab) => tab.surfaceRef === surfaceRef && tab.subjectRef === subjectRef);
+          if (existing) {
             return {
-              ...group,
-              tabs: group.tabs.map((tab) => tab.bindingId === active.bindingId ? binding : tab),
-              activeBindingId: binding.bindingId,
+              ...current,
+              focusedBindingId: existing.bindingId,
+              focusedGroupId: group.groupId,
+              focusRegion: 'canvas',
+              groups: current.groups.map((candidate) => candidate.groupId === group.groupId ? { ...candidate, activeBindingId: existing.bindingId } : candidate),
             };
           }
-          return { ...group, tabs: [...group.tabs, binding], activeBindingId: binding.bindingId };
-        }),
-        focusedGroupId: groupId,
-        focusRegion: 'canvas',
-      }));
+        }
+        const groupId = current.focusedGroupId || current.groups[0]?.groupId || 'group-1';
+        const binding: SurfacePresentationBinding = {
+          bindingId: `presentation:${surfaceRef}:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`,
+          surfaceRef,
+          subjectRef,
+          provider: surface.nativeOwner,
+          presentation: surface.provenance,
+          region: 'canvas',
+          pinned: false,
+        };
+        return {
+          ...current,
+          focusedBindingId: binding.bindingId,
+          focusedGroupId: groupId,
+          focusRegion: 'canvas',
+          groups: current.groups.map((group) => {
+            if (group.groupId !== groupId) return group;
+            const active = group.tabs.find((tab) => tab.bindingId === group.activeBindingId);
+            if (active && !active.pinned) {
+              return {
+                ...group,
+                tabs: group.tabs.map((tab) => tab.bindingId === active.bindingId ? binding : tab),
+                activeBindingId: binding.bindingId,
+              };
+            }
+            return { ...group, tabs: [...group.tabs, binding], activeBindingId: binding.bindingId };
+          }),
+        };
+      });
       return;
     }
     setLayout((current) => summonSurface(current, surfaceRef, region, { provider: surface.nativeOwner, presentation: surface.provenance }));
   }
 
   /** Dismiss the focused binding: a summoned surface leaves no residue, and a
-   * canvas surface closes back into the tree (03 §J invariants). */
+   * canvas surface closes back into the tree (03 §J invariants). A pinned
+   * binding — the resting surface — has no dismiss: rest cannot dismiss
+   * itself, by Escape, by Cmd+W, or by the strip. */
   function dismissFocused() {
     if (!focusedBindingId) return;
     const target = focusedBindingId;
-    setFocusedBindingId(undefined);
-    setLayout((current) => closeBinding(current, target));
+    const { tab } = findBinding(layout, target, layout.focusedGroupId);
+    if (!tab || tab.pinned) return;
+    setLayout((current) => ({ ...closeBinding(current, target, current.focusedGroupId), focusedBindingId: undefined }));
   }
 
   /** Promote the focused summoned surface to the centre (03 §B B3): same
@@ -319,16 +330,7 @@ export function ProfessionalWorkbenchHost({
 
   /** Return to rest (03 §J): agency field + canvas, nothing else. */
   function rest() {
-    setFocusedBindingId(undefined);
     setLayout((current) => returnToRest(current, restSurfaceRef));
-  }
-
-  function closeActive() {
-    setLayout((current) => {
-      const group = current.groups.find((candidate) => candidate.groupId === current.focusedGroupId) ?? current.groups[0];
-      if (!group?.activeBindingId) return current;
-      return closeBinding(current, group.activeBindingId);
-    });
   }
 
   function reopenClosed() {
@@ -352,10 +354,10 @@ export function ProfessionalWorkbenchHost({
     if (!group?.tabs.length) return;
     const index = Math.max(0, group.tabs.findIndex((tab) => tab.bindingId === group.activeBindingId));
     const next = group.tabs[(index + delta + group.tabs.length) % group.tabs.length];
-    setFocusedBindingId(next.bindingId);
     onSurfaceFocus?.({ surfaceRef: next.surfaceRef, subjectRef: next.subjectRef });
     setLayout((current) => ({
       ...current,
+      focusedBindingId: next.bindingId,
       groups: current.groups.map((candidate) => candidate.groupId === group.groupId ? { ...candidate, activeBindingId: next.bindingId } : candidate),
     }));
   }
@@ -371,12 +373,17 @@ export function ProfessionalWorkbenchHost({
   }
 
   function togglePinned(groupId: string, bindingId: string) {
+    // The resting surface is pinned by grammar, not by preference: it can
+    // never be unpinned into dismissibility.
+    const group = layout.groups.find((candidate) => candidate.groupId === groupId);
+    const target = group?.tabs.find((tab) => tab.bindingId === bindingId);
+    if (!target || target.surfaceRef === restSurfaceRef) return;
     setLayout((current) => ({
       ...current,
-      groups: current.groups.map((group) => group.groupId === groupId ? {
-        ...group,
-        tabs: group.tabs.map((tab) => tab.bindingId === bindingId ? { ...tab, pinned: !tab.pinned } : tab),
-      } : group),
+      groups: current.groups.map((candidate) => candidate.groupId === groupId ? {
+        ...candidate,
+        tabs: candidate.tabs.map((tab) => tab.bindingId === bindingId ? { ...tab, pinned: !tab.pinned } : tab),
+      } : candidate),
     }));
   }
 
@@ -441,6 +448,10 @@ export function ProfessionalWorkbenchHost({
   const visibleGroups = layout.split === 'single' ? layout.groups.slice(0, 1) : layout.groups.slice(0, 2);
   const regionSurfaceProps = { surfaces, renderRegionSurface, onSurfaceFocus, onSummonSurface: openSurface };
   const atRest = isAtRest(layout, restSurfaceRef);
+  /** The binding the person is looking at, if it can be acted on. The pinned
+   * resting surface is deliberately excluded: rest offers nothing to promote,
+   * return or dismiss — it IS rest. */
+  const focusedBinding = focusedBindingId ? findBinding(layout, focusedBindingId, layout.focusedGroupId).tab : null;
   const summonTargets: Array<{ region: Exclude<WorkbenchHostRegion, 'canvas'>; label: string }> = [
     { region: 'navigator', label: 'World navigator' },
     { region: 'sidecar', label: 'Agency field' },
@@ -499,6 +510,25 @@ export function ProfessionalWorkbenchHost({
       <section className="oi-host-canvas" data-host-region="canvas" tabIndex={-1} aria-label="Primary Canvas">
         <div className="oi-host-canvas__toolbar">
           <div className="oi-host-canvas__identity">{identity}</div>
+          {/* Compose has one grammar for pointer and keyboard: these buttons
+           * call the exact functions the Cmd+\ / Cmd+Shift+\ paths call. */}
+          <div className="oi-host-canvas__layout-actions" role="toolbar" aria-label="Editor group layout">
+            <button type="button" data-split-action="horizontal" title="Open current Surface in horizontal split (⌘\)" onClick={() => openCurrentInSplit('horizontal')}>Split H</button>
+            <button type="button" data-split-action="vertical" title="Open current Surface in vertical split (⌘⇧\)" onClick={() => openCurrentInSplit('vertical')}>Split V</button>
+            <button type="button" data-split-action="move" title="Move current Surface to the split" onClick={() => moveActiveToSplit(layout.split === 'vertical' ? 'vertical' : 'horizontal')}>Move</button>
+            <button
+              type="button"
+              data-split-action="single"
+              title="Collapse back to one group"
+              onClick={() => setLayout((current) => ({
+                ...current,
+                split: 'single',
+                groups: current.groups.slice(0, 1),
+                focusedGroupId: current.groups[0]?.groupId ?? current.focusedGroupId,
+                focusedBindingId: current.groups[0]?.activeBindingId,
+              }))}
+            >Single</button>
+          </div>
           {command}
         </div>
 
@@ -517,10 +547,13 @@ export function ProfessionalWorkbenchHost({
                             {binding.pinned ? '● ' : ''}{descriptor?.title ?? 'Unavailable Surface'}
                           </button>
                           <button type="button" aria-label="Pin presentation" onClick={() => togglePinned(group.groupId, binding.bindingId)}>{binding.pinned ? '◇' : '◆'}</button>
-                          <button type="button" aria-label="Close presentation" onClick={() => {
-                            setLayout((current) => ({ ...current, focusedGroupId: group.groupId, groups: current.groups.map((candidate) => candidate.groupId === group.groupId ? { ...candidate, activeBindingId: binding.bindingId } : candidate) }));
-                            queueMicrotask(() => setLayout((current) => closeBinding(current, binding.bindingId)));
-                          }}>×</button>
+                          {/* A pinned binding is the resting surface: it has no
+                           * close, so no × is rendered for it at all. */}
+                          {!binding.pinned && (
+                            <button type="button" aria-label="Close presentation" onClick={() => {
+                              setLayout((current) => closeBinding(current, binding.bindingId, group.groupId));
+                            }}>×</button>
+                          )}
                         </div>
                       );
                     })}
@@ -557,7 +590,7 @@ export function ProfessionalWorkbenchHost({
               title={`Summon or dismiss ${REGION_LABELS[target.region]} (⌘${SUMMON_KEY_HINT[target.region]})`}
             >{REGION_LABELS[target.region]}</button>
           ))}
-          {focusedBindingId && (
+          {focusedBinding && !focusedBinding.pinned && (
             <>
               <button type="button" onClick={promoteFocused} title="Promote the focused surface to the centre (⌘Enter)">Promote</button>
               <button type="button" onClick={returnFocused} title="Return the focused surface to its summoned region (⌘R)">Return</button>

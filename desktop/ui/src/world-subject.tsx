@@ -89,8 +89,16 @@ export function WorldSubjectSurface({
   // structured fact — an unobserved reading carrying no content — and the
   // project node to open first comes from walking the composed Projection,
   // never from parsing the ref.
+  //
+  // K3 fix round 1 (Minor 8): the advice button only fires for the one
+  // unserved shape opening the project can actually cure — the kernel's
+  // structured `unserved_reason: 'no_project_relation'`. Owner refusals, a
+  // missing Central client and foreign owners keep the verbatim detail line
+  // and get no button.
   const unserved = model.content == null && model.provider.class === 'unobserved' && model.subject != null;
-  const projectAdvice = unserved && model.subject ? projectNodeForSource(treeReading ?? undefined, model.subject.ref) : null;
+  const projectAdvice = unserved && model.unserved_reason === 'no_project_relation' && model.subject
+    ? projectNodeForSource(treeReading ?? undefined, model.subject.ref)
+    : null;
 
   return (
     <article className="oi-world-subject">

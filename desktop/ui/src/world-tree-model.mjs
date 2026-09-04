@@ -352,5 +352,8 @@ export function buildSubjectModel(reading) {
       detail: reading.provider?.detail ?? null,
     },
     warnings: list(reading.warnings).map((warning) => text(warning)),
+    /** The kernel's structured why-it-is-unserved, carried verbatim — the
+     * desktop gates advice on this, never on warning prose (K3 fix 1). */
+    unserved_reason: typeof reading.unserved_reason === 'string' && reading.unserved_reason ? reading.unserved_reason : null,
   };
 }

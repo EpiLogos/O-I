@@ -923,6 +923,22 @@ impl From<WorldSourceError> for String {
     }
 }
 
+/// Why a subject reading is unserved. Structured so the desktop can act on
+/// the *kind* of refusal (K3 fix round 1: only a missing Project relation is
+/// one opening the project World node can cure) without mining the prose.
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum UnservedReason {
+    /// The subject's native owner has no adapter here at all.
+    NoOwnerAdapter,
+    /// No Project relation addresses this source, so Central refuses a read.
+    NoProjectRelation,
+    /// No Central owner-Action client is configured.
+    NoClient,
+    /// The owner was asked and refused.
+    OwnerRefused,
+}
+
 /// One opened subject's reading, at its honest provider class (02 §5 `open
 /// subject`, 04 §4 agent-native parity).
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -943,12 +959,16 @@ pub struct SubjectReading {
     pub provider: ProviderReading,
     #[serde(default)]
     pub warnings: Vec<String>,
+    /// Why nothing was served, when nothing was — structured, so advice can
+    /// be gated on the cure that exists rather than on warning prose.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub unserved_reason: Option<UnservedReason>,
 }
 
 impl SubjectReading {
     /// The honest reading of a subject no owner adapter serves: present as a
     /// ref, disclosed no further, never fabricated.
-    pub fn unserved(subject: SemanticRef, detail: impl Into<String>) -> Self {
+    pub fn unserved(subject: SemanticRef, reason: UnservedReason, detail: impl Into<String>) -> Self {
         Self {
             schema: SUBJECT_READING_SCHEMA.to_owned(),
             subject,
@@ -958,6 +978,7 @@ impl SubjectReading {
             revision: None,
             provider: ProviderReading::unobserved("oi.world-tree/v1", detail),
             warnings: Vec::new(),
+            unserved_reason: Some(reason),
         }
     }
 }
@@ -1334,6 +1355,7 @@ impl WorldService {
             let native_owner = subject.native_owner.clone();
             return SubjectReading::unserved(
                 subject,
+                UnservedReason::NoOwnerAdapter,
                 format!(
                     "no owner adapter serves `{native_owner}` subjects; the desktop does not interpret another owner's refs"
                 ),
@@ -1353,6 +1375,7 @@ impl WorldService {
                 revision: None,
                 provider: self.tree.as_ref().unwrap().provider.clone(),
                 warnings: Vec::new(),
+                unserved_reason: None,
                 subject,
             };
             reading.warnings.push(
@@ -1366,6 +1389,7 @@ impl WorldService {
             None => {
                 let mut reading = SubjectReading::unserved(
                     subject,
+                    UnservedReason::NoProjectRelation,
                     "no current Project relation addresses this source; Central refuses a source read without a project",
                 );
                 reading.warnings.push(
@@ -1379,6 +1403,7 @@ impl WorldService {
         let Some(client) = self.client.as_ref() else {
             return SubjectReading::unserved(
                 subject,
+                UnservedReason::NoClient,
                 "no Central owner-Action client is configured",
             );
         };
@@ -1421,12 +1446,14 @@ impl WorldService {
                     revision: Some(reading.revision.revision.clone()),
                     provider: ProviderReading::live("projectcentral.source.read"),
                     warnings,
+                    unserved_reason: None,
                     subject,
                 }
             }
             Err(error) => {
                 let mut reading = SubjectReading::unserved(
                     subject,
+                    UnservedReason::OwnerRefused,
                     format!("Central refused the source read: {error}"),
                 );
                 reading
@@ -2090,7 +2117,61 @@ mod tests {
         );
         assert_eq!(foreign.provider.class, ProviderClass::Unobserved);
         assert!(foreign.content.is_none());
+        assert_eq!(
+            foreign.unserved_reason,
+            Some(UnservedReason::NoOwnerAdapter),
+            "the reading names why nothing was served"
+        );
 
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    /// Pinned (K3 fix round 1, Minor 8): an unserved reading names *why* it is
+    /// unserved, structurally. Only the missing-Project-relation case is one
+    /// that opening the project World node can cure — the desktop may advise
+    /// it there and nowhere else.
+    #[cfg(unix)]
+    #[test]
+    fn unserved_readings_name_why_they_are_unserved() {
+        let source_ref = || SemanticRef {
+            ref_id: "project:o-i:ProjectCentral%2Fuser".to_owned(),
+            kind: "file".to_owned(),
+            native_owner: WORLD_NATIVE_OWNER.to_owned(),
+            provenance: crate::RefProvenance {
+                source: "world tree".to_owned(),
+                revision: None,
+            },
+        };
+
+        // No client at all, but a Project relation stands: the relation is
+        // addressable, and what is missing is any client to read through.
+        let bare = WorldService::with_client(None);
+        let reading = bare.open_subject(source_ref(), Some("o-i"));
+        assert_eq!(reading.unserved_reason, Some(UnservedReason::NoClient));
+
+        // Nothing focused and no configured project query: the Project
+        // relation is exactly what is missing.
+        let unbound = WorldService::with_client(Some(CentralWorldClient::with(
+            std::path::PathBuf::from("/bin/true"),
+            None,
+            None,
+        )));
+        let reading = unbound.open_subject(source_ref(), None);
+        assert_eq!(
+            reading.unserved_reason,
+            Some(UnservedReason::NoProjectRelation)
+        );
+
+        // The owner was asked and refused.
+        let (root, executable, _argv_log) =
+            fixture_ctrl(&[("projectcentral.source.read", String::new())]);
+        let refusing = WorldService::with_client(Some(CentralWorldClient::with(
+            executable,
+            None,
+            Some("o-i".to_owned()),
+        )));
+        let reading = refusing.open_subject(source_ref(), None);
+        assert_eq!(reading.unserved_reason, Some(UnservedReason::OwnerRefused));
         fs::remove_dir_all(root).unwrap();
     }
 

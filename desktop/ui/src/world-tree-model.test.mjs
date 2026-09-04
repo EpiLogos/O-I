@@ -200,11 +200,17 @@ test('a subject reading is rendered as what the owner served — an unserved rea
     access: {},
     provider: { class: 'unobserved', seam: 'oi.world-tree/v1', detail: 'no current Project relation addresses this source' },
     warnings: ['focus carries no Project relation, so the source was not read (reading ≠ selection)'],
+    unserved_reason: 'no_project_relation',
   });
   assert.ok(unserved);
   assert.equal(unserved.content, null, 'no content is invented for an unserved subject');
   assert.equal(unserved.provider.class, 'unobserved');
   assert.match(unserved.warnings[0], /reading ≠ selection/);
+  // the kernel's structured why-it-is-unserved is carried verbatim (K3 fix 1):
+  // advice is gated on this kind, never on mining the warning prose
+  assert.equal(unserved.unserved_reason, 'no_project_relation');
+  // and a served reading carries no reason at all
+  assert.equal(served.unserved_reason, null);
 });
 
 test('the focus relation narrows to the refs the tree compares', () => {

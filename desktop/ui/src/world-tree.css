@@ -194,3 +194,45 @@
   border-radius: 4px;
 }
 .oi-world-subject__node { margin: 0; max-width: 52ch; line-height: 1.55; color: color-mix(in srgb, currentColor 74%, transparent); }
+
+/* The walkable depth (02 §11): the desktop's own application surfaces, listed
+ * quietly at the foot of the tree. Not a destination menu — each entry names
+ * its SurfaceRef and opens through the one openSurface act. */
+.oi-world-tree__depth {
+  margin-top: auto;
+  padding-top: .6rem;
+  border-top: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+}
+.oi-world-tree__depth ul {
+  list-style: none;
+  margin: .25rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: .15rem;
+}
+.oi-world-tree__depth li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .5rem;
+}
+.oi-world-tree__depth li button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  padding: .14rem .3rem;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+}
+.oi-world-tree__depth li button:hover { background: color-mix(in srgb, currentColor 10%, transparent); }
+.oi-world-tree__depth li code {
+  font-size: 10px;
+  opacity: .55;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.oi-world-tree__depth .oi-muted { font-size: 10.5px; margin: .3rem 0 0; }

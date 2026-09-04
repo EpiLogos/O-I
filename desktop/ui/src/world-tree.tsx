@@ -30,6 +30,14 @@ export type WorldTreeFocus = {
  * relation, never from a node's access facts (K2 review F-M2 — a fresh read
  * never projects selection).
  */
+/** A desktop application surface the tree can walk to (02 §11): not a World
+ * node and not a destination in a menu — a Surface reached by its SurfaceRef. */
+export type WorldTreeDepth = {
+  surfaceRef: string;
+  title: string;
+  note?: string;
+};
+
 export function WorldTreeSurface({
   reading,
   composition,
@@ -37,6 +45,8 @@ export function WorldTreeSurface({
   error,
   busy = false,
   onOpen,
+  depth = [],
+  onOpenDepth,
 }: {
   reading?: WorldTreeReading | null;
   composition?: CompositionReading | null;
@@ -44,6 +54,8 @@ export function WorldTreeSurface({
   error?: string | null;
   busy?: boolean;
   onOpen: (subject: TreeSubjectRef) => void;
+  depth?: WorldTreeDepth[];
+  onOpenDepth?: (surfaceRef: string) => void;
 }) {
   const model = buildWorldTreeModel(reading ?? undefined);
   const compositionModel = buildCompositionModel(composition ?? undefined);
@@ -90,6 +102,31 @@ export function WorldTreeSurface({
         <ul className="oi-world-tree__root" role="tree" aria-label="World tree">
           <WorldTreeNodeRow node={model.root} focus={focus} depth={0} onOpen={onOpen} />
         </ul>
+      )}
+
+      {/* The walkable depth (02 §11): the desktop's own application surfaces,
+       * reachable from the tree that is the main view. These are desktop
+       * Surfaces — not World nodes, and not a destination menu — so each
+       * carries its SurfaceRef and opens through the one openSurface act.
+       * Pointer and keyboard do the same thing: one button, one handler. */}
+      {depth.length > 0 && onOpenDepth && (
+        <footer className="oi-world-tree__depth">
+          <p className="oi-eyebrow">Desktop depth</p>
+          <ul>
+            {depth.map((entry) => (
+              <li key={entry.surfaceRef}>
+                <button
+                  type="button"
+                  data-surface-ref={entry.surfaceRef}
+                  title={entry.note ?? entry.title}
+                  onClick={() => onOpenDepth(entry.surfaceRef)}
+                >{entry.title}</button>
+                <code>{entry.surfaceRef}</code>
+              </li>
+            ))}
+          </ul>
+          <p className="oi-muted">Application surfaces of this desktop — not World nodes. Each opens as a canvas Surface.</p>
+        </footer>
       )}
     </div>
   );

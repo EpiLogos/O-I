@@ -195,12 +195,18 @@ const CANVAS_SURFACES: HostSurfaceDescriptor[] = [
 const WORLD_TREE_SURFACE = 'surface/oi/world-tree';
 const WORLD_SUBJECT_SURFACE = 'surface/oi/world-subject';
 
-/** The one subject the shell has asked the owner to serve. Not a selection
- * copy: the kernel owns focus; this only remembers which reading to render. */
-type OpenedSubject = {
-  subject: TreeSubjectRef;
-  reading: SubjectReading | null;
-};
+/** The application hosts the tree can walk to (02 §11: reached as the canvas
+ * Surfaces they always were — the retirement of the destination menu minted no
+ * new Surface identity). */
+const DEPTH_SURFACE_REFS = [
+  'surface/oi/personal-host',
+  'surface/oi/build-host',
+  'surface/oi/explore-host',
+  'surface/oi/system-host',
+];
+const DEPTH_SURFACES = CANVAS_SURFACES
+  .filter((surface) => DEPTH_SURFACE_REFS.includes(surface.surfaceRef))
+  .map((surface) => ({ surfaceRef: surface.surfaceRef, title: surface.title, note: surface.provenance }));
 
 function App() {
   const [snapshot, setSnapshot] = useState<Snapshot>(preview);
@@ -213,9 +219,14 @@ function App() {
   const [worldTree, setWorldTree] = useState<WorldTreeReading | null>(null);
   const [composition, setComposition] = useState<CompositionReading | null>(null);
   const [worldError, setWorldError] = useState<string | null>(null);
-  const [opened, setOpened] = useState<OpenedSubject | null>(null);
+  // Readings are held PER SUBJECT, keyed by the subject each binding names —
+  // not one global "latest reading" (02 §8: a binding's subject_ref is WHICH
+  // SUBJECT IT SHOWS, so a pinned tab must never show another subject's
+  // document). Not a selection copy: the kernel owns focus.
+  const [subjectReadings, setSubjectReadings] = useState<Record<string, SubjectReading>>({});
+  const [openedSubjectRef, setOpenedSubjectRef] = useState<string | null>(null);
   const [subjectError, setSubjectError] = useState<string | null>(null);
-  const [saveState, setSaveState] = useState<SubjectSaveState>({});
+  const [subjectSaves, setSubjectSaves] = useState<Record<string, SubjectSaveState>>({});
   const [focusError, setFocusError] = useState<string | null>(null);
   const hostRef = useRef<WorkbenchHostHandle | null>(null);
 
@@ -230,8 +241,14 @@ function App() {
     // make a pulled tree stale, so each one re-reads it.
     if (event.event === 'world_changed' || event.event === 'focus_changed') void refreshWorldTree();
     if (event.event === 'composition_changed') void refreshComposition();
-    if (event.event === 'source_changed' && opened) void rereadSubject(opened.subject);
-  }), [opened]);
+    // A source change re-reads every OPEN subject — each binding keeps its own
+    // document current, not just the one on top.
+    if (event.event === 'source_changed') {
+      for (const reading of Object.values(subjectReadings)) {
+        if (reading.subject) void rereadSubject(reading.subject);
+      }
+    }
+  }), [subjectReadings]);
 
   useEffect(() => {
     invoke<Snapshot>('shell_snapshot').then(setSnapshot).catch(() => setSnapshot(preview));
@@ -294,10 +311,12 @@ function App() {
    * re-renders from that event. No optimistic local selection (02 §5 key loop). */
   async function openWorldSubject(subject: TreeSubjectRef) {
     setSubjectError(null);
-    setSaveState({});
+    setSubjectSaves((current) => ({ ...current, [subject.ref]: {} }));
     try {
       const reading = await invoke<SubjectReading>('open_subject', { subject });
-      setOpened({ subject, reading });
+      // Merged in by subject ref: opening B never rewrites A's reading.
+      setSubjectReadings((current) => ({ ...current, [subject.ref]: reading }));
+      setOpenedSubjectRef(subject.ref);
       hostRef.current?.openSurface(WORLD_SUBJECT_SURFACE, 'canvas', subject.ref);
     } catch (error) {
       setSubjectError(`Open refused: ${String(error)}`);
@@ -307,10 +326,10 @@ function App() {
 
   /** Save through the owner's authority gate (02 §9.4). A refusal is kept as
    * the structured failure it arrived as and disclosed as data — never mined
-   * out of prose (K2 fix F-M4). */
+   * out of prose (K2 fix F-M4). Save state is per subject, like the readings. */
   async function saveWorldSubject(subject: TreeSubjectRef, sourceRef: string | null, expectedRevision: string | number | null, content: string) {
     if (!sourceRef) return;
-    setSaveState({ busy: true });
+    setSubjectSaves((current) => ({ ...current, [subject.ref]: { busy: true } }));
     try {
       const report = await invoke<{ source_ref: string; revision: string; changed: boolean }>('save_subject', {
         sourceRef,
@@ -318,21 +337,27 @@ function App() {
         content,
         actor: 'human:desktop',
       });
-      setSaveState({ report });
+      setSubjectSaves((current) => ({ ...current, [subject.ref]: { report } }));
       await rereadSubject(subject);
     } catch (failure) {
-      setSaveState({ failure: failure as NonNullable<SubjectSaveState['failure']> });
+      setSubjectSaves((current) => ({ ...current, [subject.ref]: { failure: failure as NonNullable<SubjectSaveState['failure']> } }));
     }
   }
 
   async function rereadSubject(subject: TreeSubjectRef) {
-    setSaveState({});
+    setSubjectSaves((current) => ({ ...current, [subject.ref]: {} }));
     try {
       const reading = await invoke<SubjectReading>('open_subject', { subject });
-      setOpened((current) => (current && current.subject.ref === subject.ref ? { subject, reading } : current));
+      setSubjectReadings((current) => ({ ...current, [subject.ref]: reading }));
     } catch (error) {
       setSubjectError(`Re-read refused: ${String(error)}`);
     }
+  }
+
+  /** Walk to an application host from the tree (02 §11): the same act the
+   * host's own affordances perform — one openSurface, no second identity. */
+  function openDepthSurface(surfaceRef: string) {
+    hostRef.current?.openSurface(surfaceRef, 'canvas');
   }
 
   async function selectWorkbenchRef(subject: WorkbenchSemanticRef, evidence: WorkbenchEvidence) {
@@ -363,7 +388,7 @@ function App() {
       onHostReady={handleRef}
       identity={(
         <>
-          <strong>{opened?.subject.ref ?? focus?.project?.ref ?? focus?.world?.ref ?? 'World tree'}</strong>
+          <strong>{openedSubjectRef ?? focus?.project?.ref ?? focus?.world?.ref ?? 'World tree'}</strong>
           {focus?.world?.ref && <code>{focus.world.ref}</code>}
           {focus?.project?.ref && <code>{focus.project.ref}</code>}
         </>
@@ -386,6 +411,8 @@ function App() {
             focus={focus}
             error={worldError}
             onOpen={openWorldSubject}
+            depth={DEPTH_SURFACES}
+            onOpenDepth={openDepthSurface}
           />
         </NavigatorHost>
       )}
@@ -433,12 +460,16 @@ function App() {
           worldTree={worldTree}
           composition={composition}
           worldError={worldError}
-          opened={opened}
+          // Each subject binding renders ITS OWN subject's reading and save
+          // state, by the subjectRef the binding carries (02 §8) — never the
+          // globally latest one.
+          reading={binding.subjectRef ? subjectReadings[binding.subjectRef] ?? null : null}
           subjectError={subjectError}
-          saveState={saveState}
+          saveState={binding.subjectRef ? subjectSaves[binding.subjectRef] ?? {} : {}}
           onOpenSubject={openWorldSubject}
           onSaveSubject={saveWorldSubject}
           onRereadSubject={rereadSubject}
+          onOpenDepth={openDepthSurface}
         />
       )}
     />
@@ -596,12 +627,13 @@ function CanvasSurface({
   onReobserveWorld,
   worldTree,
   worldError,
-  opened,
+  reading,
   subjectError,
   saveState,
   onOpenSubject,
   onSaveSubject,
   onRereadSubject,
+  onOpenDepth,
 }: {
   surface: HostSurfaceDescriptor;
   binding: { bindingId: string; surfaceRef: string; subjectRef?: string };
@@ -620,12 +652,14 @@ function CanvasSurface({
   onReobserveWorld?: () => void;
   worldTree: WorldTreeReading | null;
   worldError: string | null;
-  opened: OpenedSubject | null;
+  /** THIS binding's subject reading, selected by `binding.subjectRef`. */
+  reading: SubjectReading | null;
   subjectError: string | null;
   saveState: SubjectSaveState;
   onOpenSubject: (subject: TreeSubjectRef) => Promise<void>;
   onSaveSubject: (subject: TreeSubjectRef, sourceRef: string | null, expectedRevision: string | number | null, content: string) => Promise<void>;
   onRereadSubject: (subject: TreeSubjectRef) => Promise<void>;
+  onOpenDepth: (surfaceRef: string) => void;
 }) {
   if (surface.surfaceRef === WORLD_TREE_SURFACE) {
     return (
@@ -635,6 +669,8 @@ function CanvasSurface({
         focus={focus}
         error={worldError}
         onOpen={onOpenSubject}
+        depth={DEPTH_SURFACES}
+        onOpenDepth={onOpenDepth}
       />
     );
   }
@@ -644,8 +680,11 @@ function CanvasSurface({
       <>
         <SurfacePresentationNote bindingId={binding.bindingId} title="Subject" />
         {subjectError && <p className="oi-world-tree__error" role="alert">{subjectError}</p>}
+        {!binding.subjectRef && (
+          <p className="oi-muted">This binding was restored without a subject — selection is never persisted (02 §6 rule 3). Open a subject from the World tree.</p>
+        )}
         <WorldSubjectSurface
-          reading={opened?.reading ?? null}
+          reading={reading}
           focus={focus}
           treeReading={worldTree}
           saveState={saveState}

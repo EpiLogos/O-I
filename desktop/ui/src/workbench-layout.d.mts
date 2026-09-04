@@ -25,6 +25,8 @@ export type WorkbenchLayout = {
   groups: Array<{ groupId: string; tabs: SurfaceBinding[]; activeBindingId?: string }>;
   summoned: SurfaceBinding[];
   focusedGroupId: string;
+  /** Which binding the person is looking at — presentation focus only. */
+  focusedBindingId?: string;
   focusRegion: 'navigator' | 'canvas' | 'sidecar' | 'lower' | 'system';
   closed: SurfaceBinding[];
 };
@@ -39,9 +41,17 @@ export function summonSurface(
   region: WorkbenchRegionName,
   descriptor?: { provider?: string; presentation?: string },
 ): WorkbenchLayout;
+/** Finds a binding by id — a canvas group or a summoned region; `preferredGroup`
+ * resolves which copy when one binding is shown in two groups (a split). */
+export function findBinding(
+  layout: WorkbenchLayout,
+  bindingId: string,
+  preferredGroup?: string,
+): { tab: SurfaceBinding | null; group: { groupId: string; tabs: SurfaceBinding[] } | null };
 export function promoteBinding(layout: WorkbenchLayout, bindingId: string): WorkbenchLayout;
 export function returnBinding(layout: WorkbenchLayout, bindingId: string): WorkbenchLayout;
-export function closeBinding(layout: WorkbenchLayout, bindingId: string): WorkbenchLayout;
+/** Refuses pinned bindings: the resting surface has no close. */
+export function closeBinding(layout: WorkbenchLayout, bindingId: string, preferredGroup?: string): WorkbenchLayout;
 export function bindSubject(layout: WorkbenchLayout, bindingId: string, subjectRef: string): WorkbenchLayout;
 export function returnToRest(layout: WorkbenchLayout, restSurfaceRef: string): WorkbenchLayout;
 export function splitBinding(layout: WorkbenchLayout, split: 'horizontal' | 'vertical'): WorkbenchLayout;

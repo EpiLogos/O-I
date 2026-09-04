@@ -216,3 +216,57 @@ test('a failed native selection discloses instead of failing silently (K1 M3)', 
   assert.match(shell, /try \{\n\s*await invoke\('select_semantic_ref', \{ subject \}\);\n\s*setFocusError\(null\);\n\s*\} catch \(error\) \{\n\s*setFocusError\(`Selection refused: \$\{String\(error\)\}`\);/);
   assert.match(shell, /\{focusError && <span role="alert">\{focusError\}<\/span>\}/);
 });
+
+test('the tree walks to the application hosts — pointer and keyboard through one button (K3 fix 1, Important 2)', () => {
+  // the four application hosts are named by the SurfaceRef they always had
+  assert.match(shell, /const DEPTH_SURFACE_REFS = \[/);
+  assert.match(shell, /'surface\/oi\/personal-host',/);
+  assert.match(shell, /'surface\/oi\/build-host',/);
+  assert.match(shell, /'surface\/oi\/explore-host',/);
+  assert.match(shell, /'surface\/oi\/system-host',/);
+  // the walk is the host's own openSurface act — one verb, no second identity
+  assert.match(shell, /function openDepthSurface\(surfaceRef: string\) \{/);
+  assert.match(shell, /hostRef\.current\?\.openSurface\(surfaceRef, 'canvas'\)/);
+  // the tree renders them as real buttons naming their SurfaceRef: one element,
+  // one handler, so a pointer click and keyboard Enter are the same act
+  const tree = readFileSync(new URL('./world-tree.tsx', import.meta.url), 'utf8');
+  assert.match(tree, /className="oi-world-tree__depth"/);
+  assert.match(tree, /<button\n\s+type="button"\n\s+data-surface-ref=\{entry\.surfaceRef\}/);
+  assert.match(tree, /onClick=\{\(\) => onOpenDepth\(entry\.surfaceRef\)\}/);
+  assert.match(tree, /Application surfaces of this desktop/);
+  // both World tree render paths (navigator and canvas) offer the walk
+  assert.equal((shell.match(/depth=\{DEPTH_SURFACES\}/g) || []).length, 2);
+});
+
+test('a subject binding shows its own subject — never the globally latest reading (K3 fix 1, Important 3)', () => {
+  // readings are held per subject and merged by ref: opening B never rewrites A
+  assert.match(shell, /const \[subjectReadings, setSubjectReadings\] = useState<Record<string, SubjectReading>>\(\{\}\);/);
+  assert.match(shell, /setSubjectReadings\(\(current\) => \(\{ \.\.\.current, \[subject\.ref\]: reading \}\)\)/);
+  assert.match(shell, /not one global "latest reading"/);
+  // the binding's own subjectRef selects the reading and the save state
+  assert.match(shell, /reading=\{binding\.subjectRef \? subjectReadings\[binding\.subjectRef\] \?\? null : null\}/);
+  assert.match(shell, /saveState=\{binding\.subjectRef \? subjectSaves\[binding\.subjectRef\] \?\? \{\} : \{\}\}/);
+  // save state is per subject too
+  assert.match(shell, /const \[subjectSaves, setSubjectSaves\] = useState<Record<string, SubjectSaveState>>\(\{\}\);/);
+  // a binding restored without a subject (selection is never persisted) says so
+  assert.match(shell, /This binding was restored without a subject/);
+  // a source change re-reads every open subject, not just the one on top
+  assert.match(shell, /for \(const reading of Object\.values\(subjectReadings\)\) \{/);
+});
+
+test('cold-host advice fires only for the unserved shape opening the project can cure (K3 fix 1, Minor 8)', () => {
+  const model = readFileSync(new URL('./world-tree-model.mjs', import.meta.url), 'utf8');
+  const subject = readFileSync(new URL('./world-subject.tsx', import.meta.url), 'utf8');
+  // the kernel's structured reason is carried verbatim, and the advice button
+  // is gated on it — never on warning prose, never on every unserved shape
+  assert.match(model, /unserved_reason: typeof reading\.unserved_reason === 'string'/);
+  assert.match(subject, /model\.unserved_reason === 'no_project_relation'/);
+});
+
+test('openSurface dedupes against the state updater, not the render closure (K3 fix 1, New-breakage 5)', () => {
+  assert.match(host, /function openSurface\(surfaceRef: string, region: WorkbenchHostRegion = 'canvas', subjectRef\?: string\) \{/);
+  // the duplicate-binding check reads `current` inside the updater, so two
+  // opens in one tick cannot mint two bindings for one subject
+  assert.match(host, /setLayout\(\(current\) => \{\n\s+for \(const group of current\.groups\) \{/);
+  assert.match(host, /const existing = group\.tabs\.find\(\(tab\) => tab\.surfaceRef === surfaceRef && tab\.subjectRef === subjectRef\);/);
+});

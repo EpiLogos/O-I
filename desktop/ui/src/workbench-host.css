@@ -89,6 +89,10 @@
 /* The identity line (01 §4): World/Project identity quietly beside the title.
  * Muted by design — it is context, not a navigation control. */
 .oi-host-canvas__toolbar { justify-content: space-between; flex-wrap: wrap; }
+
+/* Compose (split) — pointer path at parity with the Cmd+\ grammar. */
+.oi-host-canvas__layout-actions { display: flex; align-items: center; gap: .1rem; }
+.oi-host-canvas__layout-actions button { font-size: 11px; opacity: .78; }
 .oi-host-canvas__identity {
   display: flex;
   align-items: baseline;

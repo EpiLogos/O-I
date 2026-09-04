@@ -109,13 +109,15 @@ export type CompositionModel = {
 /** `oi.subject-reading/v1` as `open_subject` returns it. */
 export type SubjectReading = {
   schema: string;
-  subject?: unknown;
+  subject?: TreeSubjectRef;
   access?: unknown;
   source?: unknown;
   content?: unknown;
   revision?: unknown;
   provider?: { class?: string; seam?: string; detail?: unknown };
   warnings?: unknown;
+  /** Why nothing was served, when nothing was — structured kernel data. */
+  unserved_reason?: string;
 };
 
 export type SubjectModel = {
@@ -128,6 +130,8 @@ export type SubjectModel = {
   revision: string | number | null;
   provider: { class: string; seam: string; detail: unknown };
   warnings: string[];
+  /** The kernel's structured why-it-is-unserved, carried verbatim. */
+  unserved_reason: string | null;
 };
 
 /** A `SemanticRef` the tree hands to the kernel's select/open operation. */

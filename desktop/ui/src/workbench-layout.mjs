@@ -56,6 +56,9 @@ export function restLayout(restSurfaceRef) {
     groups: [{ groupId: 'group-1', tabs: [binding], activeBindingId: binding.bindingId }],
     summoned: [],
     focusedGroupId: 'group-1',
+    /** Which binding the person is looking at — presentation focus only
+     * (02 §6): the kernel's focus relation is never derived from it. */
+    focusedBindingId: binding.bindingId,
     focusRegion: 'canvas',
     closed: [],
   };
@@ -93,8 +96,19 @@ export function toggleRegion(layout, region) {
   return layout.regions[region]?.present ? dismissRegion(layout, region) : summonRegion(layout, region);
 }
 
-function findBinding(layout, bindingId) {
-  for (const group of layout.groups) {
+/**
+ * Find a binding by id, wherever it lives — a canvas group or a summoned
+ * region. Exported so the host's keyboard and pointer paths can both ask the
+ * same question about the focused binding (e.g. whether it is pinned).
+ *
+ * `preferredGroup` resolves which copy when one binding is shown in two
+ * groups (a split): the copy in the preferred group wins.
+ */
+export function findBinding(layout, bindingId, preferredGroup) {
+  const groups = preferredGroup
+    ? [...layout.groups].sort((a, b) => (a.groupId === preferredGroup ? -1 : b.groupId === preferredGroup ? 1 : 0))
+    : layout.groups;
+  for (const group of groups) {
     const tab = group.tabs.find((candidate) => candidate.bindingId === bindingId);
     if (tab) return { tab, group };
   }
@@ -173,10 +187,16 @@ export function returnBinding(layout, bindingId) {
   return next;
 }
 
-/** Close a binding. Canvas tabs are kept for reopen; summoned ones are not. */
-export function closeBinding(layout, bindingId) {
-  const { tab, group } = findBinding(layout, bindingId);
-  if (!tab) return layout;
+/**
+ * Close a binding. Canvas tabs are kept for reopen; summoned ones are not.
+ *
+ * A pinned binding — the resting surface, which IS rest — is refused: it has
+ * no close, by keyboard or by pointer (03 §J: rest is the product, and the
+ * tree is the surface that owns the canvas).
+ */
+export function closeBinding(layout, bindingId, preferredGroup) {
+  const { tab, group } = findBinding(layout, bindingId, preferredGroup);
+  if (!tab || tab.pinned) return layout;
   const next = clone(layout);
   if (group) {
     next.closed = [tab, ...next.closed].slice(0, 20);
@@ -234,21 +254,26 @@ export function returnToRest(layout, restSurfaceRef) {
     return { ...group, tabs: rest, activeBindingId: rest.at(-1).bindingId };
   });
   next.focusRegion = 'canvas';
+  next.focusedBindingId = next.groups[0]?.activeBindingId;
   return next;
 }
 
 /**
  * Split the focused group's active binding into a second group (03 §B `B2`).
- * The same binding, one more area — the `subjectRef` is carried untouched.
+ * The same binding, one more area — the `bindingId` and the `subjectRef` are
+ * carried untouched: one canonical Surface binding shown twice, never a second
+ * identity minted for it (02 §8).
  */
 export function splitBinding(layout, split) {
   if (split !== 'horizontal' && split !== 'vertical') return layout;
   const next = clone(layout);
   const source = next.groups.find((group) => group.groupId === next.focusedGroupId) ?? next.groups[0];
   const active = source?.tabs.find((tab) => tab.bindingId === source.activeBindingId);
-  if (!active) return next;
+  // A pinned binding is the resting surface itself; rest is one shape and is
+  // not composed into two panes of it.
+  if (!active || active.pinned) return next;
   const second = next.groups[1] ?? { groupId: 'group-2', tabs: [], activeBindingId: undefined };
-  const duplicate = { ...active, bindingId: bindingId(active.surfaceRef), pinned: false };
+  const duplicate = { ...active, pinned: false };
   next.groups = next.groups.length > 1
     ? next.groups.map((group) => group.groupId === second.groupId
       ? { ...group, tabs: [...group.tabs, duplicate], activeBindingId: duplicate.bindingId }
@@ -303,6 +328,7 @@ export function serializeLayout(layout) {
     groups: layout.groups.map((group) => ({ ...group, tabs: group.tabs.map(strip) })),
     summoned: layout.summoned.map(strip),
     focusedGroupId: layout.focusedGroupId,
+    focusedBindingId: layout.focusedBindingId,
     focusRegion: layout.focusRegion,
     closed: layout.closed.map(strip),
   });
@@ -312,8 +338,9 @@ export function serializeLayout(layout) {
  * Parse a persisted layout, failing closed to rest.
  *
  * Anything that is not a current-version layout — including one that still
- * carries semantic facts from an older shape — restores as rest. A restored
- * layout is presentation only; the kernel's focus is pulled from the kernel.
+ * carries semantic facts from an older shape, or one whose sub-objects are not
+ * the shape they claim — restores as rest. A restored layout is presentation
+ * only; the kernel's focus is pulled from the kernel.
  */
 export function parseLayout(raw, restSurfaceRef) {
   if (!raw) return restLayout(restSurfaceRef);
@@ -323,7 +350,7 @@ export function parseLayout(raw, restSurfaceRef) {
   } catch {
     return restLayout(restSurfaceRef);
   }
-  if (!parsed || typeof parsed !== 'object') return restLayout(restSurfaceRef);
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return restLayout(restSurfaceRef);
   if (parsed.version !== WORKBENCH_LAYOUT_VERSION) return restLayout(restSurfaceRef);
   const base = restLayout(restSurfaceRef);
   if (!parsed.groups?.length && !parsed.summoned?.length) return base;
@@ -333,21 +360,44 @@ export function parseLayout(raw, restSurfaceRef) {
     const { subjectRef: _discarded, ...rest } = tab ?? {};
     return rest;
   };
+  // Shape checks (fail closed): a same-version payload whose sub-objects are
+  // strings or arrays would otherwise spread into indexed props.
+  const isRecord = (value) => !!value && typeof value === 'object' && !Array.isArray(value);
+  const isTab = (tab) => isRecord(tab)
+    && typeof tab.bindingId === 'string'
+    && typeof tab.surfaceRef === 'string'
+    && (tab.subjectRef === undefined || typeof tab.subjectRef === 'string');
+  const isGroup = (group) => isRecord(group)
+    && typeof group.groupId === 'string'
+    && Array.isArray(group.tabs)
+    && group.tabs.every(isTab);
+  if (typeof parsed.regions !== 'undefined' && !isRecord(parsed.regions)) return base;
+  if (!Array.isArray(parsed.groups) || !Array.isArray(parsed.summoned) || !Array.isArray(parsed.closed)) return base;
+  if (!parsed.groups.every(isGroup) || !parsed.summoned.every(isTab) || !parsed.closed.every(isTab)) return base;
+  const regions = {};
+  for (const [region, state] of Object.entries(parsed.regions ?? {})) {
+    if (!(region in base.regions)) continue;
+    if (!isRecord(state) || typeof state.present !== 'boolean') return base;
+    if (state.width !== undefined && typeof state.width !== 'number') return base;
+    if (state.height !== undefined && typeof state.height !== 'number') return base;
+    regions[region] = { ...base.regions[region], ...state };
+  }
   return {
     ...base,
-    regions: { ...base.regions, ...Object.fromEntries(Object.entries(parsed.regions ?? {}).map(([region, state]) => [region, { ...base.regions[region], ...state }])) },
+    regions: { ...base.regions, ...regions },
     split: parsed.split === 'horizontal' || parsed.split === 'vertical' ? parsed.split : 'single',
-    groups: Array.isArray(parsed.groups) && parsed.groups.length
+    groups: parsed.groups.length
       ? parsed.groups.map((group) => ({
         ...group,
-        tabs: Array.isArray(group?.tabs) ? group.tabs.map(strip) : [],
+        tabs: group.tabs.map(strip),
         activeBindingId: typeof group?.activeBindingId === 'string' ? group.activeBindingId : undefined,
       }))
       : base.groups,
-    summoned: Array.isArray(parsed.summoned) ? parsed.summoned.map(strip) : [],
+    summoned: parsed.summoned.map(strip),
     focusedGroupId: typeof parsed.focusedGroupId === 'string' ? parsed.focusedGroupId : base.focusedGroupId,
+    focusedBindingId: typeof parsed.focusedBindingId === 'string' ? parsed.focusedBindingId : undefined,
     focusRegion: FOCUSABLE_REGIONS.includes(parsed.focusRegion) ? parsed.focusRegion : base.focusRegion,
-    closed: Array.isArray(parsed.closed) ? parsed.closed.map(strip) : [],
+    closed: parsed.closed.map(strip),
   };
 }
 
