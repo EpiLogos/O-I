@@ -1087,67 +1087,286 @@ fn native_system_matches(left: &NativeSystemObservation, right: &NativeSystemObs
     left.name.eq_ignore_ascii_case(&right.name) || left.system_ref == right.system_ref
 }
 
-const NATIVE_TOOL_PROBES: &[(&str, &str, &[&str])] = &[
-    ("claude", "harness", &["--version"]),
-    ("codex", "harness", &["--version"]),
-    ("gemini", "harness", &["--version"]),
-    ("pi", "harness", &["--version"]),
-    ("ollama", "model-provider", &["--version"]),
-    ("docker", "material-executor", &["--version"]),
+/// One entry in the built-in native-tool registry.
+///
+/// This is the curated floor. Anything richer or newer registers through the
+/// public `oi.world-recognition/v1` package/contribution path (as cmux and
+/// Herdr already do) — no code change, no drift. Version is always read from
+/// the live machine; nothing here asserts a fixed revision.
+#[derive(Clone, Copy)]
+struct NativeToolEntry {
+    name: &'static str,
+    /// Native taxonomy: harness, agent, model-provider, material-executor,
+    /// working-environment, collaboration-client.
+    kind: &'static str,
+    /// Version probe arguments. Empty means the tool exposes no version flag;
+    /// presence is still recorded and the probe gap is a fact, not an error.
+    version_args: &'static [&'static str],
+    /// When set, observe machine-global service state from this home-relative
+    /// directory instead of probing a PATH binary (e.g. a daemon).
+    service_dir: Option<&'static str>,
+}
+
+const NATIVE_TOOL_REGISTRY: &[NativeToolEntry] = &[
+    NativeToolEntry {
+        name: "claude",
+        kind: "harness",
+        version_args: &["--version"],
+        service_dir: None,
+    },
+    NativeToolEntry {
+        name: "codex",
+        kind: "harness",
+        version_args: &["--version"],
+        service_dir: None,
+    },
+    NativeToolEntry {
+        name: "gemini",
+        kind: "harness",
+        version_args: &["--version"],
+        service_dir: None,
+    },
+    NativeToolEntry {
+        name: "hermes",
+        kind: "harness",
+        version_args: &["--version"],
+        service_dir: None,
+    },
+    NativeToolEntry {
+        name: "pi",
+        kind: "harness",
+        version_args: &["--version"],
+        service_dir: None,
+    },
+    NativeToolEntry {
+        name: "ollama",
+        kind: "model-provider",
+        version_args: &["--version"],
+        service_dir: None,
+    },
+    NativeToolEntry {
+        name: "docker",
+        kind: "material-executor",
+        version_args: &["--version"],
+        service_dir: None,
+    },
+    // Buzz exposes no version flag; installed presence is the fact.
+    NativeToolEntry {
+        name: "buzz",
+        kind: "collaboration-client",
+        version_args: &[],
+        service_dir: None,
+    },
+    // Grok Bot is a daemon, not a PATH binary: observe its machine state.
+    NativeToolEntry {
+        name: "grok",
+        kind: "agent",
+        version_args: &[],
+        service_dir: Some(".grokbot"),
+    },
 ];
 
-/// Observe installed harnesses, model providers and material executors without
-/// claiming any owner participation. Presence, version and degraded state are
-/// whole-level O:I facts; which native owner can do something with them is
-/// composed separately by owner-participation reconciliation.
+/// Observe installed harnesses, agents, model providers, material executors and
+/// collaboration clients without claiming any owner participation. Presence,
+/// version and degraded state are whole-level O:I facts; which native owner can
+/// do something with them is composed separately by owner-participation
+/// reconciliation. Versions are read live — never asserted — so a tool upgrade
+/// is an observation, not a failure.
 fn recognize_installed_native_tools() -> Vec<RecognitionObservation> {
     let mut observations = Vec::new();
-    for (name, kind, probe) in NATIVE_TOOL_PROBES {
-        let Some(locator) = resolve_executable(name) else {
+    for entry in NATIVE_TOOL_REGISTRY {
+        if let Some(service_dir) = entry.service_dir {
+            if let Some(observation) = recognize_service_tool(entry, service_dir) {
+                observations.push(observation);
+            }
+            continue;
+        }
+        let Some(locator) = resolve_executable(entry.name) else {
             continue;
         };
-        let output = Command::new(&locator)
-            .args(*probe)
-            .stdin(Stdio::null())
-            .output();
-        let (version, degraded, detail) = match output {
-            Ok(output) => {
-                let stdout = String::from_utf8_lossy(&output.stdout);
-                let stderr = String::from_utf8_lossy(&output.stderr);
-                classify_probe(output.status.success(), &stdout, &stderr)
-            }
-            Err(error) => (None, true, Some(format!("failed to probe: {error}"))),
-        };
-
-        let mut facts = BTreeMap::new();
-        facts.insert("degraded".to_owned(), json!(degraded));
-        if let Some(detail) = detail {
-            facts.insert("detail".to_owned(), json!(detail));
-        }
-
-        observations.push(RecognitionObservation {
-            observation_ref: format!("observation:{name}:local"),
-            native_system: NativeSystemObservation {
-                system_ref: format!("native:{name}:local"),
-                kind: (*kind).to_owned(),
-                name: (*name).to_owned(),
-                version,
-                locator: Some(locator.display().to_string()),
-                source_revision: None,
-            },
-            support: "observed".to_owned(),
-            faculties: Vec::new(),
-            relations: Vec::new(),
-            facts,
-            owner_bindings: Vec::new(),
-            evidence: vec![RecognitionEvidence {
-                kind: "native-command".to_owned(),
-                source: locator.display().to_string(),
-                detail: format!("{name} {}", probe.join(" ")),
-            }],
-        });
+        observations.push(recognize_binary_tool(entry, &locator));
     }
     observations
+}
+
+fn recognize_binary_tool(
+    entry: &NativeToolEntry,
+    locator: &std::path::Path,
+) -> RecognitionObservation {
+    let mut facts = BTreeMap::new();
+    let (version, degraded, detail, source_revision, evidence) =
+        if entry.version_args.is_empty() {
+            facts.insert("version_flag".to_owned(), json!("none"));
+            (
+                None,
+                false,
+                None,
+                None,
+                vec![RecognitionEvidence {
+                    kind: "native-presence".to_owned(),
+                    source: locator.display().to_string(),
+                    detail: format!("{} installed; exposes no version flag", entry.name),
+                }],
+            )
+        } else {
+            let output = Command::new(locator)
+                .args(entry.version_args)
+                .stdin(Stdio::null())
+                .output();
+            match output {
+                Ok(output) => {
+                    let stdout = String::from_utf8_lossy(&output.stdout);
+                    let stderr = String::from_utf8_lossy(&output.stderr);
+                    let (version, degraded, detail) =
+                        classify_probe(output.status.success(), &stdout, &stderr);
+                    let source_revision =
+                        version.as_deref().and_then(parse_upstream_revision);
+                    (
+                        version,
+                        degraded,
+                        detail,
+                        source_revision,
+                        vec![RecognitionEvidence {
+                            kind: "native-command".to_owned(),
+                            source: locator.display().to_string(),
+                            detail: format!(
+                                "{} {}",
+                                entry.name,
+                                entry.version_args.join(" ")
+                            ),
+                        }],
+                    )
+                }
+                Err(error) => (
+                    None,
+                    true,
+                    Some(format!("failed to probe: {error}")),
+                    None,
+                    vec![RecognitionEvidence {
+                        kind: "native-command".to_owned(),
+                        source: locator.display().to_string(),
+                        detail: format!("probe failed: {error}"),
+                    }],
+                ),
+            }
+        };
+
+    facts.insert("degraded".to_owned(), json!(degraded));
+    if let Some(detail) = detail {
+        facts.insert("detail".to_owned(), json!(detail));
+    }
+
+    RecognitionObservation {
+        observation_ref: format!("observation:{}:local", entry.name),
+        native_system: NativeSystemObservation {
+            system_ref: format!("native:{}:local", entry.name),
+            kind: entry.kind.to_owned(),
+            name: entry.name.to_owned(),
+            version,
+            locator: Some(locator.display().to_string()),
+            source_revision,
+        },
+        support: "observed".to_owned(),
+        faculties: Vec::new(),
+        relations: Vec::new(),
+        facts,
+        owner_bindings: Vec::new(),
+        evidence,
+    }
+}
+
+/// Observe a home-relative service/daemon from its own machine-global state
+/// files rather than a PATH binary. Never invents a locator or a version.
+fn recognize_service_tool(
+    entry: &NativeToolEntry,
+    service_dir: &str,
+) -> Option<RecognitionObservation> {
+    let home = std::env::var_os("HOME")?;
+    let root = std::path::PathBuf::from(home).join(service_dir);
+    if !root.is_dir() {
+        return None;
+    }
+
+    let mut facts = BTreeMap::new();
+    let mut version = None;
+    let mut running = false;
+    let mut evidence = Vec::new();
+
+    if let Ok(daemon) = std::fs::read_to_string(root.join("local-exec-daemon.json")) {
+        if let Ok(value) = serde_json::from_str::<Value>(&daemon) {
+            running = value.get("pid").and_then(Value::as_i64).is_some();
+            if let Some(pid) = value.get("pid").and_then(Value::as_i64) {
+                facts.insert("pid".to_owned(), json!(pid));
+            }
+            if let Some(generation) = value.get("generation").and_then(Value::as_i64) {
+                facts.insert("generation".to_owned(), json!(generation));
+            }
+            evidence.push(RecognitionEvidence {
+                kind: "service-state".to_owned(),
+                source: root.join("local-exec-daemon.json").display().to_string(),
+                detail: "daemon state read live".to_owned(),
+            });
+        }
+    }
+    if let Ok(settings) = std::fs::read_to_string(root.join("settings.json")) {
+        if let Ok(value) = serde_json::from_str::<Value>(&settings) {
+            if let Some(schema) = value.get("version").and_then(Value::as_i64) {
+                version = Some(format!("settings schema {schema}"));
+            }
+            evidence.push(RecognitionEvidence {
+                kind: "service-settings".to_owned(),
+                source: root.join("settings.json").display().to_string(),
+                detail: "settings read live".to_owned(),
+            });
+        }
+    }
+
+    facts.insert("running".to_owned(), json!(running));
+    facts.insert("degraded".to_owned(), json!(false));
+    if evidence.is_empty() {
+        facts.insert(
+            "detail".to_owned(),
+            json!("service directory present; no readable state files"),
+        );
+        evidence.push(RecognitionEvidence {
+            kind: "service-presence".to_owned(),
+            source: root.display().to_string(),
+            detail: "service directory present".to_owned(),
+        });
+    }
+
+    Some(RecognitionObservation {
+        observation_ref: format!("observation:{}:local", entry.name),
+        native_system: NativeSystemObservation {
+            system_ref: format!("native:{}:local", entry.name),
+            kind: entry.kind.to_owned(),
+            name: entry.name.to_owned(),
+            version,
+            locator: Some(root.display().to_string()),
+            source_revision: None,
+        },
+        support: "observed".to_owned(),
+        faculties: Vec::new(),
+        relations: Vec::new(),
+        facts,
+        owner_bindings: Vec::new(),
+        evidence,
+    })
+}
+
+/// Recover an upstream source revision from a version banner that carries one
+/// (e.g. Hermes: `Hermes Agent v0.20.5 · upstream 6607f706 · local ab0d9841`).
+fn parse_upstream_revision(version: &str) -> Option<String> {
+    let marker = "upstream ";
+    let index = version.find(marker)?;
+    let rest = &version[index + marker.len()..];
+    let token = rest.split_whitespace().next()?;
+    let token = token.trim_end_matches(',').trim_end_matches('·');
+    if token.chars().all(|c| c.is_ascii_hexdigit()) && !token.is_empty() {
+        Some(token.to_owned())
+    } else {
+        None
+    }
 }
 
 fn classify_probe(
@@ -1155,11 +1374,13 @@ fn classify_probe(
     stdout: &str,
     stderr: &str,
 ) -> (Option<String>, bool, Option<String>) {
-    let version = if stdout.trim().is_empty() {
-        None
-    } else {
-        Some(stdout.trim().to_owned())
-    };
+    // A multi-line banner (Hermes, some SDKs) still yields one clean version
+    // line; the rest is noise for the version field, not lost evidence.
+    let version = stdout
+        .lines()
+        .map(str::trim)
+        .find(|line| !line.is_empty())
+        .map(str::to_owned);
     if status_success {
         (version, false, None)
     } else {
@@ -1176,6 +1397,12 @@ const EXTENSION_OWNERS: &[(&str, &str, &str, &str)] = &[
     // (native kind, owner, sdk, authoring domain)
     (
         "harness",
+        "Actuation",
+        "actuation.model-bearing/v1",
+        "model-bearing",
+    ),
+    (
+        "agent",
         "Actuation",
         "actuation.model-bearing/v1",
         "model-bearing",
@@ -2009,18 +2236,38 @@ printf '%s\n' '{"schema":"oi.world-recognition-result/v1","provider_ref":"contri
     }
 
     #[test]
-    fn native_tool_probe_table_uses_lowercase_names_for_owner_join() {
-        for (name, kind, probe) in NATIVE_TOOL_PROBES {
-            assert_eq!(*name, name.to_lowercase());
-            assert!(!probe.is_empty());
-            assert!(!kind.is_empty());
+    fn native_tool_registry_uses_lowercase_names_for_owner_join() {
+        for entry in NATIVE_TOOL_REGISTRY {
+            assert_eq!(entry.name, entry.name.to_lowercase());
+            assert!(!entry.kind.is_empty());
         }
-        assert!(NATIVE_TOOL_PROBES
+        assert!(NATIVE_TOOL_REGISTRY
             .iter()
-            .any(|(name, _, _)| *name == "claude"));
-        assert!(NATIVE_TOOL_PROBES
+            .any(|entry| entry.name == "claude" && !entry.version_args.is_empty()));
+        assert!(NATIVE_TOOL_REGISTRY
             .iter()
-            .any(|(name, _, _)| *name == "codex"));
+            .any(|entry| entry.name == "codex"));
+        assert!(NATIVE_TOOL_REGISTRY
+            .iter()
+            .any(|entry| entry.name == "hermes"));
+        assert!(NATIVE_TOOL_REGISTRY
+            .iter()
+            .any(|entry| entry.name == "buzz" && entry.version_args.is_empty()));
+        assert!(NATIVE_TOOL_REGISTRY
+            .iter()
+            .any(|entry| entry.name == "grok" && entry.service_dir == Some(".grokbot")));
+    }
+
+    #[test]
+    fn upstream_revision_is_parsed_from_version_banner_without_overclaiming() {
+        assert_eq!(
+            parse_upstream_revision(
+                "Hermes Agent v0.20.5 (2026.8.19) · upstream 6607f706 · local ab0d9841 (+1 carried commit)"
+            ),
+            Some("6607f706".to_owned())
+        );
+        assert_eq!(parse_upstream_revision("claude 2.1.238"), None);
+        assert_eq!(parse_upstream_revision("some text upstream not-a-hex"), None);
     }
 
     #[test]
