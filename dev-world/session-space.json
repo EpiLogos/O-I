@@ -5,13 +5,13 @@
     "version": "aikit.session-space/v1",
     "id": "session-space/oi-development",
     "projects": [
-      "project/epilogos/o-i",
-      "project/epilogos/central",
-      "project/epilogos/ai-kit",
-      "project/epilogos/actuation",
-      "project/epilogos/factory",
-      "project/epilogos/workcell",
-      "project/epilogos/ql-mef"
+      "project:o-i",
+      "project:central",
+      "project:ai-kit",
+      "project:actuation",
+      "project:factory",
+      "project:workcell",
+      "project:ql-mef"
     ],
     "provenance": [
       "O:I Development World carrier — dev-world/session-space.json (authored SessionSpace membership)"

@@ -20,13 +20,13 @@ become those relations. Canonical identity is AIKit-owned:
 
 ```
 session-space/oi-development
-  ├── project/epilogos/o-i          (parent context)
-  ├── project/epilogos/central
-  ├── project/epilogos/ai-kit
-  ├── project/epilogos/actuation
-  ├── project/epilogos/factory
-  ├── project/epilogos/workcell
-  ├── project/epilogos/ql-mef
+  ├── project:o-i                (parent context)
+  ├── project:central
+  ├── project:ai-kit
+  ├── project:actuation
+  ├── project:factory
+  ├── project:workcell
+  ├── project:ql-mef
   └── agent-session/epilogos/oi-parent-pi   (parent Pi, resumable)
 ```
 
