@@ -53,16 +53,6 @@ export const SYSTEM_PRODUCTS = [
   },
 ];
 
-const CURRENT_WORLD_PRODUCT_IDS = {
-  central: 'central',
-  actuation: 'actuation',
-  'ai-kit': 'ai-kit',
-  factory: 'software-factory',
-  workcell: 'workcell',
-  'ql-mef': 'quaternal-logic',
-};
-const CF5_POSITIONS = [0, 1, 2, 3, 4, 5];
-
 const STATUS = {
   available: 'available',
   degraded: 'degraded',
@@ -352,48 +342,66 @@ function pendingProviderProduct(input, product, noun, optional = false) {
   return result;
 }
 
-function constitutionFromCurrentWorld(currentWorld) {
-  const available = Boolean(currentWorld && typeof currentWorld === 'object');
-  const presentPositions = Array.isArray(currentWorld?.context_frame?.present_positions)
-    ? [...currentWorld.context_frame.present_positions]
-    : [];
-  const positions = SYSTEM_PRODUCTS.map((product, canonicalPosition) => {
-    const productId = CURRENT_WORLD_PRODUCT_IDS[product.id];
-    const reading = Array.isArray(currentWorld?.positions)
-      ? currentWorld.positions.find((entry) => entry?.product_id === productId)
-      : undefined;
+// ---------------------------------------------------------------------------
+// Live composition presence (02 §2, §11 Retire)
+// ---------------------------------------------------------------------------
+
+const PRESENCE_WORDS = Object.freeze({
+  present: 'present',
+  degraded: 'degraded',
+  absent: 'absent',
+});
+
+const COMPOSITION_SCHEMA = 'oi.composition-reading/v1';
+
+/**
+ * One owner's presence as the live composition reading observed it.
+ *
+ * This is the replacement for the retired static constitution table: presence
+ * is read from `oi.composition-reading/v1` and from nothing else. `capabilities`
+ * are the owner's capability descriptors — rendered as descriptors, never
+ * promoted to presence (K2 fix, S3 residual). An owner the reading does not
+ * name is *not disclosed*, which is not the same as absent.
+ */
+function compositionPresence(composition, product) {
+  if (!composition || typeof composition !== 'object' || composition.schema !== COMPOSITION_SCHEMA) {
     return {
-      system_product_id: product.id,
-      product_id: productId,
-      position: reading?.position ?? canonicalPosition,
-      present: reading?.present === true,
-      state: reading?.state ?? 'missing',
-      native_owner: reading?.native_owner ?? product.authority,
-      native_location: reading?.native_location ?? null,
-      version: reading?.version ?? null,
+      state: 'not_disclosed',
+      state_word: 'not disclosed',
+      provider_class: 'unobserved',
+      capabilities: [],
+      detail: 'No live composition reading was disclosed; presence is unknown, not absent.',
+      observed: false,
     };
-  });
-  const exactMaximalPositions = presentPositions.length === CF5_POSITIONS.length
-    && CF5_POSITIONS.every((position, index) => presentPositions[index] === position);
-  const maximal = available
-    && currentWorld?.context_frame?.maximal === true
-    && currentWorld?.context_frame?.reading === 'cf5'
-    && exactMaximalPositions
-    && positions.every((position) => position.present);
+  }
+  const constituents = Array.isArray(composition.constituents)
+    ? composition.constituents.filter((entry) => !!entry && typeof entry === 'object')
+    : [];
+  const constituent = constituents.find((entry) => product.owners.includes(entry.native_owner));
+  if (!constituent) {
+    return {
+      state: 'not_disclosed',
+      state_word: 'not disclosed',
+      provider_class: 'unobserved',
+      capabilities: [],
+      detail: `The composition reading names no ${product.label} constituent.`,
+      observed: false,
+    };
+  }
+  const state = typeof constituent.state === 'string' ? constituent.state : 'absent';
   return {
-    schema: currentWorld?.schema ?? 'oi.current-world/v1',
-    available,
-    reading: maximal ? 'cf5' : null,
-    maximal,
-    present_positions: presentPositions,
-    positions,
-    personal_ground: currentWorld?.personal_ground ?? null,
-    current_machine: currentWorld?.current_machine ?? null,
+    state: PRESENCE_WORDS[state] ?? state,
+    state_word: PRESENCE_WORDS[state] ?? state,
+    provider_class: typeof constituent.provider_class === 'string' ? constituent.provider_class : 'unobserved',
+    capabilities: Array.isArray(constituent.capabilities) ? constituent.capabilities.map((capability) => String(capability)) : [],
+    detail: typeof constituent.detail === 'string' ? constituent.detail : null,
+    observed: true,
   };
 }
 
 export function buildSystemWorkbench(input = {}) {
-  const constitution = constitutionFromCurrentWorld(input.currentWorld);
+  const composition = input.composition;
+  const readingLive = !!composition && typeof composition === 'object' && composition.schema === COMPOSITION_SCHEMA;
   const products = SYSTEM_PRODUCTS.map((product) => {
     let result;
     switch (product.id) {
@@ -405,28 +413,44 @@ export function buildSystemWorkbench(input = {}) {
       case 'ql-mef': result = pendingProviderProduct(input, product, 'Formal provider/capability/readiness', true); break;
       default: throw new Error(`unknown System product ${product.id}`);
     }
-    return {
-      ...result,
-      constitution: constitution.positions.find((position) => position.system_product_id === product.id),
-    };
+    return { ...result, presence: compositionPresence(composition, product) };
   });
 
+  const constituents = readingLive && Array.isArray(composition.constituents)
+    ? composition.constituents.filter((entry) => !!entry && typeof entry === 'object')
+    : [];
+  const counts = {
+    present: constituents.filter((entry) => entry.state === 'present').length,
+    degraded: constituents.filter((entry) => entry.state === 'degraded').length,
+    absent: constituents.filter((entry) => entry.state === 'absent').length,
+  };
   const gaps = products
     .filter((product) => ['not_disclosed', 'degraded', 'unsupported'].includes(product.states.observed.status))
     .map((product) => `${product.label}: ${product.states.observed.summary}`);
-  const warnings = [...new Set([...(input.warnings ?? []), ...(input.currentWorld?.warnings ?? [])])];
+  const warnings = [...new Set([
+    ...(input.warnings ?? []),
+    ...(readingLive && Array.isArray(composition.warnings) ? composition.warnings.map(String) : []),
+  ])];
 
   return {
     schema: 'oi.system-workbench/v1',
     state_axes: [...SYSTEM_STATE_AXES],
-    condition: !constitution.available ? 'unavailable' : constitution.maximal ? 'cf5' : 'partial',
-    constitution,
+    // The suite condition the reading itself carried — never a desktop
+    // derivation from positions or capability descriptors.
+    condition: readingLive && typeof composition.condition === 'string' ? composition.condition : 'unavailable',
+    composition: {
+      schema: readingLive ? COMPOSITION_SCHEMA : null,
+      condition: readingLive && typeof composition.condition === 'string' ? composition.condition : null,
+      constituents,
+      counts,
+      undisclosed: products.filter((product) => !product.presence.observed).map((product) => product.label),
+    },
     ordinary_operation_blocked: false,
     products,
     warnings,
     gaps,
     invariants: [
-      'CurrentWorld is the top-level six-product constitution reading.',
+      'The composition reading is presence as observed; capability descriptors are never presence.',
       'System is presentation/composition, never configuration authority.',
       'authored ≠ effective ≠ active ≠ staged ≠ expected effect ≠ observed.',
       'selected ≠ retrieved ≠ disclosed into Agent Context.',
