@@ -41,13 +41,16 @@ session-space/oi-development
 ## Launch (target operator experience)
 
 ```sh
-oi dev world                # resolve + reconcile the whole world; default provider = HerdR
-oi dev world --provider tmux
-oi dev world --provider herdr
-oi dev world --provider desktop
+oi dev world                # resolve the World and delegate materialisation (tokens resolved)
 oi dev world status         # compact readout: SessionSpace + active providers + parent Pi
 oi dev world focus pi       # resume/focus the parent Pi AgentSession (no new Pi minted)
 ```
+
+`oi dev world` now resolves `@project/*` and `@parent` tokens against the
+machine-state file, writes the token-resolved spec to a temp file, and prints
+the delegated `aikit session up <resolved>` — it observes and resolves, never
+mutates. Provider materialisation (`--provider herdr|tmux|desktop`) and
+`focus pi` remain the next launcher increments.
 
 Re-running any launcher form is idempotent and non-destructive: it never creates
 `oi-2`, a second Pi, a duplicate desktop session, or duplicate panes.
@@ -78,11 +81,11 @@ Proven (against a private socket, same code path):
 - a long-running process in a pane survives re-run;
 - AIKit restart (re-invocation) reconstructs the same binding, never a duplicate.
 
-Manual equivalents while the `oi dev world` launcher is being wired:
+Manual equivalents while the provider/focus increments land:
 
 ```sh
-# resolve tokens -> concrete spec, then reconcile idempotently
-aikit session up dev-world/session.toml    # (launcher resolves @project/* first)
+# tokens resolve via 'oi dev world'; then reconcile idempotently
+aikit session up dev-world/session.toml
 aikit session diff dev-world/session.toml
 aikit session attach oi-development
 ```
@@ -127,7 +130,8 @@ The parent Agent launch has its two missing seeds:
    renders it as a stable ref and stays thin (membership and the machine World
    stay on-demand).
 
-Remaining launcher wiring (`oi dev world`): resolve `@project/*` tokens against
-the machine-state file, reconcile the SessionSpec + SessionSpace, then supply
-`session_space` (and surface the O:I World-recognition account) into the harness
-projection. Until then the manual equivalents above hold.
+Remaining launcher increments (`oi dev world`): provider materialisation
+(`--provider herdr|tmux|desktop`), `focus pi`, and supplying `session_space`
+plus the O:I World-recognition account into the harness projection at launch.
+Until those land, `oi dev world` resolves + delegates and the manual
+equivalents above hold.
