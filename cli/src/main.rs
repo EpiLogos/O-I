@@ -13,6 +13,7 @@ mod composition {
     include!("existing_world.rs");
     include!("omarchy_host.rs");
     include!("product_command_route.rs");
+    include!("dev_world_command.rs");
     include!("frontdoor.rs");
 }
 

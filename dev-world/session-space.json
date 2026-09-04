@@ -1,0 +1,73 @@
+{
+  "version": "aikit.session-space-application/v1",
+  "revision": 0,
+  "definition": {
+    "version": "aikit.session-space/v1",
+    "id": "session-space/oi-development",
+    "projects": [
+      "project/epilogos/o-i",
+      "project/epilogos/central",
+      "project/epilogos/ai-kit",
+      "project/epilogos/actuation",
+      "project/epilogos/factory",
+      "project/epilogos/workcell",
+      "project/epilogos/ql-mef"
+    ],
+    "provenance": [
+      "O:I Development World carrier — dev-world/session-space.json (authored SessionSpace membership)"
+    ]
+  },
+  "label": "O:I Development World",
+  "project_contexts": {},
+  "agent_sessions": {
+    "agent-session/epilogos/oi-parent-pi": {
+      "agent_session": "agent-session/epilogos/oi-parent-pi",
+      "purpose": "parent O:I Pi AgentSession — the one resumable parent subject",
+      "provenance": [
+        "O:I Development World carrier"
+      ]
+    }
+  },
+  "surfaces": {},
+  "native_references": {
+    "provider/herdr": {
+      "reference": "provider/herdr",
+      "kind": "provider",
+      "purpose": "rich/default working-environment provider",
+      "provenance": [
+        "O:I Development World carrier"
+      ]
+    },
+    "provider/tmux": {
+      "reference": "provider/tmux",
+      "kind": "provider",
+      "purpose": "portable baseline multiplexer provider",
+      "provenance": [
+        "O:I Development World carrier"
+      ]
+    },
+    "provider/cmux": {
+      "reference": "provider/cmux",
+      "kind": "provider",
+      "purpose": "optional compatibility provider (never canonical in UI copy)",
+      "provenance": [
+        "O:I Development World carrier"
+      ]
+    },
+    "provider/oi-desktop": {
+      "reference": "provider/oi-desktop",
+      "kind": "provider",
+      "purpose": "integrated graphical disclosure of the same canonical world",
+      "provenance": [
+        "O:I Development World carrier"
+      ]
+    }
+  },
+  "focus": {
+    "target": "agent-session/epilogos/oi-parent-pi",
+    "region": "world",
+    "provenance": [
+      "O:I Development World carrier — default focus is the parent Pi AgentSession"
+    ]
+  }
+}
