@@ -1089,82 +1089,33 @@ fn native_system_matches(left: &NativeSystemObservation, right: &NativeSystemObs
 
 /// One entry in the built-in native-tool registry.
 ///
-/// This is the curated floor. Anything richer or newer registers through the
-/// public `oi.world-recognition/v1` package/contribution path (as cmux and
-/// Herdr already do) — no code change, no drift. Version is always read from
-/// the live machine; nothing here asserts a fixed revision.
-#[derive(Clone, Copy)]
+/// The registry itself is data, not code: `native_tools.json` ships the curated
+/// floor and this struct + [`recognize_installed_native_tools`] are the generic
+/// observation engine. Adding a tool edits JSON, not Rust. Anything richer or
+/// newer registers through the public `oi.world-recognition/v1` package path
+/// (as cmux and Herdr already do) — no source change at all. Version is always
+/// read from the live machine; nothing here asserts a fixed revision.
+#[derive(Debug, Clone, Deserialize)]
 struct NativeToolEntry {
-    name: &'static str,
+    name: String,
     /// Native taxonomy: harness, agent, model-provider, material-executor,
     /// working-environment, collaboration-client.
-    kind: &'static str,
+    kind: String,
     /// Version probe arguments. Empty means the tool exposes no version flag;
     /// presence is still recorded and the probe gap is a fact, not an error.
-    version_args: &'static [&'static str],
+    #[serde(default)]
+    version_args: Vec<String>,
     /// When set, observe machine-global service state from this home-relative
     /// directory instead of probing a PATH binary (e.g. a daemon).
-    service_dir: Option<&'static str>,
+    #[serde(default)]
+    service_dir: Option<String>,
 }
 
-const NATIVE_TOOL_REGISTRY: &[NativeToolEntry] = &[
-    NativeToolEntry {
-        name: "claude",
-        kind: "harness",
-        version_args: &["--version"],
-        service_dir: None,
-    },
-    NativeToolEntry {
-        name: "codex",
-        kind: "harness",
-        version_args: &["--version"],
-        service_dir: None,
-    },
-    NativeToolEntry {
-        name: "gemini",
-        kind: "harness",
-        version_args: &["--version"],
-        service_dir: None,
-    },
-    NativeToolEntry {
-        name: "hermes",
-        kind: "harness",
-        version_args: &["--version"],
-        service_dir: None,
-    },
-    NativeToolEntry {
-        name: "pi",
-        kind: "harness",
-        version_args: &["--version"],
-        service_dir: None,
-    },
-    NativeToolEntry {
-        name: "ollama",
-        kind: "model-provider",
-        version_args: &["--version"],
-        service_dir: None,
-    },
-    NativeToolEntry {
-        name: "docker",
-        kind: "material-executor",
-        version_args: &["--version"],
-        service_dir: None,
-    },
-    // Buzz exposes no version flag; installed presence is the fact.
-    NativeToolEntry {
-        name: "buzz",
-        kind: "collaboration-client",
-        version_args: &[],
-        service_dir: None,
-    },
-    // Grok Bot is a daemon, not a PATH binary: observe its machine state.
-    NativeToolEntry {
-        name: "grok",
-        kind: "agent",
-        version_args: &[],
-        service_dir: Some(".grokbot"),
-    },
-];
+const NATIVE_TOOL_REGISTRY_JSON: &str = include_str!("native_tools.json");
+
+fn native_tool_registry() -> Vec<NativeToolEntry> {
+    serde_json::from_str(NATIVE_TOOL_REGISTRY_JSON).unwrap_or_default()
+}
 
 /// Observe installed harnesses, agents, model providers, material executors and
 /// collaboration clients without claiming any owner participation. Presence,
@@ -1174,17 +1125,17 @@ const NATIVE_TOOL_REGISTRY: &[NativeToolEntry] = &[
 /// is an observation, not a failure.
 fn recognize_installed_native_tools() -> Vec<RecognitionObservation> {
     let mut observations = Vec::new();
-    for entry in NATIVE_TOOL_REGISTRY {
-        if let Some(service_dir) = entry.service_dir {
-            if let Some(observation) = recognize_service_tool(entry, service_dir) {
+    for entry in native_tool_registry() {
+        if let Some(service_dir) = entry.service_dir.as_deref() {
+            if let Some(observation) = recognize_service_tool(&entry, service_dir) {
                 observations.push(observation);
             }
             continue;
         }
-        let Some(locator) = resolve_executable(entry.name) else {
+        let Some(locator) = resolve_executable(&entry.name) else {
             continue;
         };
-        observations.push(recognize_binary_tool(entry, &locator));
+        observations.push(recognize_binary_tool(&entry, &locator));
     }
     observations
 }
@@ -1210,7 +1161,7 @@ fn recognize_binary_tool(
             )
         } else {
             let output = Command::new(locator)
-                .args(entry.version_args)
+                .args(&entry.version_args)
                 .stdin(Stdio::null())
                 .output();
             match output {
@@ -2237,25 +2188,16 @@ printf '%s\n' '{"schema":"oi.world-recognition-result/v1","provider_ref":"contri
 
     #[test]
     fn native_tool_registry_uses_lowercase_names_for_owner_join() {
-        for entry in NATIVE_TOOL_REGISTRY {
+        let registry = native_tool_registry();
+        for entry in &registry {
             assert_eq!(entry.name, entry.name.to_lowercase());
             assert!(!entry.kind.is_empty());
         }
-        assert!(NATIVE_TOOL_REGISTRY
-            .iter()
-            .any(|entry| entry.name == "claude" && !entry.version_args.is_empty()));
-        assert!(NATIVE_TOOL_REGISTRY
-            .iter()
-            .any(|entry| entry.name == "codex"));
-        assert!(NATIVE_TOOL_REGISTRY
-            .iter()
-            .any(|entry| entry.name == "hermes"));
-        assert!(NATIVE_TOOL_REGISTRY
-            .iter()
-            .any(|entry| entry.name == "buzz" && entry.version_args.is_empty()));
-        assert!(NATIVE_TOOL_REGISTRY
-            .iter()
-            .any(|entry| entry.name == "grok" && entry.service_dir == Some(".grokbot")));
+        assert!(registry.iter().any(|entry| entry.name == "claude" && !entry.version_args.is_empty()));
+        assert!(registry.iter().any(|entry| entry.name == "codex"));
+        assert!(registry.iter().any(|entry| entry.name == "hermes"));
+        assert!(registry.iter().any(|entry| entry.name == "buzz" && entry.version_args.is_empty()));
+        assert!(registry.iter().any(|entry| entry.name == "grok" && entry.service_dir.as_deref() == Some(".grokbot")));
     }
 
     #[test]
