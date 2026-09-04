@@ -1,3 +1,8 @@
+---
+name: oi
+description: Operate the installed O:I suite through the oi CLI — route work to the right product, navigate and augment the personal world through the AIKit branch, and keep Central as the durable authored ground.
+---
+
 # {O:I} Agent Skill
 
 ## Purpose
@@ -35,19 +40,37 @@ oi ctrl action list --json
 
 A fresh Central root must contain `Control/user`, `Control/agents`, `Control/machines`, `.central`, and `Work`. The three Control roots initially remain empty.
 
+## Guardian SkillSet and refresh
+
+`oi init --personal-ground` projects exactly one shipped SkillSet onto the ground: the O:I guardian Skills (`oi` and the suite operator) into the harness skill trees as receipt-gated derived copies. When AIKit is installed, the same pickup hands that tree to AIKit through its own confirmed procedures — `aikit adopt`, the `oi-guardian` SkillSet, and `aikit apply` — so AIKit becomes the owner of the harness-visible copies.
+
+Reconcile and refresh with `oi skills sync`. It re-projects the authoritative guardian SkillSet, preserves any locally edited copy instead of clobbering it, and keeps AIKit's collection current: when the authoritative source has moved ahead of AIKit-managed copies, sync drives AIKit's own refresh cycle (undo the recorded adoption Procedure, re-project, re-adopt) rather than writing through AIKit's ownership.
+
 ## Control authorship
 
 Do not generate default personal profiles, preferences, machine facts, or agent rules into Control.
 
 Durable Control content is human-authored or explicitly adopted. An agent can use Central's Control-maintenance and Machine-declaration Skills to propose durable material, but human acceptance is required before authored Control mutation.
 
-## Route by ownership
+## Route through the AIKit branch first
+
+For navigating and augmenting the personal world — context, knowledge, Skills, profiles, sessions, harness composition — go directly to the AIKit branch (`oi kit ...` forwards to `aikit ...`):
+
+- `aikit tree`, `aikit z`, `aikit collate` — see and resolve what is actually installed and running, where;
+- `aikit adopt`, `aikit set`, `aikit apply` — bring Skills into ownership, compose SkillSets, and project generations a harness will see;
+- `aikit use`, `aikit profile` — point a scope at the right Profile/SkillSet composition.
+
+AIKit is the suite's normal Skill resolver: when work needs a product procedure you do not already hold, resolve it through AIKit rather than reimplementing or hand-copying it. AIKit adoption and projection are its own confirmed procedures — do not run them as a side effect of other work.
+
+## Then route by ownership
+
+When the work is genuinely a product's own, route it there:
 
 Use Central for human-authored Control, ordinary Work, machine intent, machine reconciliation/recovery, and canonical Central Actions/Connectors.
 
 Use Actuation for first-class agency/actuation, model/harness/agent-instance research, and the QL runtime experiment programme.
 
-Use AIKit for capabilities, context sources, models, harnesses, profiles, Skills/tools, HarnessComposition, sessions, Surfaces, and local capability/context resolution.
+Use AIKit for its own source, store and resolver internals.
 
 Use Software Factory for developmental Projects, Runs, evidence, Candidates, repair, ExecutionDisposition and related developmental semantics.
 

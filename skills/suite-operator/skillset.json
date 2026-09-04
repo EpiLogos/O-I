@@ -2,6 +2,16 @@
   "schema": "oi.suite-skillset/v1",
   "profiles": [
     {
+      "profile_ref": "oi:skillset:base-guardian",
+      "purpose": "Default shipped SkillSet for a fresh personal ground: the O:I guardian Skills projected into harnesses at the Central root — suite routing through the oi CLI and AIKit-first world navigation and augmentation. Procedural composition only; grants no authority.",
+      "scope": "ordinary",
+      "inherits": [],
+      "members": [
+        {"skill_ref": "oi:skill:operate-suite", "requiredness": "required"},
+        {"skill_ref": "oi:skill:suite-operator", "requiredness": "required"}
+      ]
+    },
+    {
       "profile_ref": "oi:skillset:base-suite-operation",
       "purpose": "Smallest day-one procedural composition for inspecting and operating every installed native suite product without Root/metagentic administration.",
       "scope": "ordinary",

@@ -29,6 +29,9 @@ fn patched_run(args: &[OsString]) -> Option<Result<i32, String>> {
                 .map(|value| value == "--personal-ground" || value.starts_with("--personal-ground="))
                 .unwrap_or(false)
         }) => Some(command_init_personal(args.get(1..).unwrap_or_default())),
+        "skills" if args.len() == 2 && args[1].to_str() == Some("sync") => {
+            Some(command_skills_sync())
+        }
         "migrate" => Some(command_migrate_placement(args.get(1..).unwrap_or_default())),
         _ => None,
     }
@@ -326,10 +329,92 @@ fn command_init_personal(args: &[OsString]) -> Result<i32, String> {
 
     composition.personal_ground = Some(path.display().to_string());
     save_composition(&composition)?;
+
+    // Guardian SkillSet pickup — the bootstrap's cognition step. The ground
+    // receives exactly one shipped SkillSet: the O:I guardian Skills,
+    // projected as receipt-gated derived copies. AIKit remains the normal
+    // resolver for the wider suite; this step never drives AIKit procedures.
+    run_guardian_pickup(&path)?;
+
     println!("Initialized {{O:I}} composition: {}", state_path()?.display());
     println!("Personal ground: {}", path.display());
     println!("Central: {}", executable.display());
     println!("Next: oi status");
+    Ok(0)
+}
+
+/// Project the shipped guardian SkillSet onto the ground, print the report,
+/// and return it. Shared by init and `oi skills sync`.
+fn project_guardian(path: &Path) -> Result<crate::guardian::GuardianProjectionReport, String> {
+    let projection =
+        crate::guardian::project_guardian_skillset(path, &crate::guardian::oi_source_revision());
+    match projection {
+        Ok(report) => {
+            for line in crate::guardian::report_lines(&report) {
+                println!("{line}");
+            }
+            Ok(report)
+        }
+        Err(message) => Err(format!(
+            "guardian SkillSet projection failed: {message}; run 'oi skills sync' to retry"
+        )),
+    }
+}
+
+/// Hand the projected guardian SkillSet to AIKit — the suite's resolver —
+/// when AIKit is installed. Without AIKit the ground keeps the receipt-gated
+/// direct projection and `oi skills sync` hands it over once AIKit arrives.
+fn hand_guardian_to_aikit(
+    path: &Path,
+    projection: &crate::guardian::GuardianProjectionReport,
+) -> Result<(), String> {
+    match resolve_executable("aikit") {
+        // Pickup lines print as each step happens, so a mid-pickup failure
+        // leaves the executed steps on the record.
+        Some(aikit) => {
+            crate::guardian::aikit_pickup(path, &aikit, projection)?;
+        }
+        None => println!(
+            "AIKit not installed; the guardian SkillSet stays directly projected. Install AIKit and run 'oi skills sync' to collect it into the suite resolver."
+        ),
+    }
+    Ok(())
+}
+
+/// Run the bootstrap's cognition step: project the shipped guardian SkillSet
+/// onto the ground, then hand it to AIKit.
+fn run_guardian_pickup(path: &Path) -> Result<(), String> {
+    let report = project_guardian(path)?;
+    hand_guardian_to_aikit(path, &report)
+}
+
+/// Re-project the guardian SkillSet onto the configured personal ground and
+/// hand it to AIKit. Explicit reconciliation: local edits are preserved and
+/// reported as a failure to sync, never clobbered.
+fn command_skills_sync() -> Result<i32, String> {
+    let composition = load_composition()?;
+    let ground = composition
+        .personal_ground
+        .as_deref()
+        .ok_or_else(|| {
+            "personal ground is not set; run 'oi init --personal-ground PATH' first".to_owned()
+        })?
+        .to_owned();
+    let ground = PathBuf::from(ground);
+    crate::guardian::ensure_ground(&ground)?;
+    let report =
+        crate::guardian::project_guardian_skillset(&ground, &crate::guardian::oi_source_revision())?;
+    for line in crate::guardian::report_lines(&report) {
+        println!("{line}");
+    }
+    if report.conflicts().next().is_some() {
+        return Err(
+            "guardian projections carry local edits and were preserved; resolve them by hand \
+             or restore the derived copies, then sync again"
+                .to_owned(),
+        );
+    }
+    hand_guardian_to_aikit(&ground, &report)?;
     Ok(0)
 }
 

@@ -24,6 +24,9 @@ fn trust_closure_route(args: &[OsString]) -> Option<Result<i32, String>> {
                 .map(|value| value == "--personal-ground" || value.starts_with("--personal-ground="))
                 .unwrap_or(false)
         }) => Some(command_init_current_personal(args.get(1..).unwrap_or_default())),
+        "skills" if args.len() == 2 && args[1].to_str() == Some("sync") => {
+            Some(command_skills_sync())
+        }
         "dev" => Some(command_current_dev(args.get(1..).unwrap_or_default())),
         _ => None,
     }
@@ -285,6 +288,13 @@ fn command_init_current_personal(args: &[OsString]) -> Result<i32, String> {
 
     composition.personal_ground = Some(path.display().to_string());
     save_composition(&composition)?;
+
+    // Guardian SkillSet pickup — the bootstrap's cognition step. The ground
+    // receives exactly one shipped SkillSet: the O:I guardian Skills,
+    // projected as receipt-gated derived copies. AIKit remains the normal
+    // resolver for the wider suite; this step never drives AIKit procedures.
+    run_guardian_pickup(&path)?;
+
     println!("Initialized current-main {{O:I}} composition: {}", state_path()?.display());
     println!("Personal ground: {}", path.display());
     println!("Central: {}", executable.display());
