@@ -14,6 +14,7 @@ import {
   normalizeFocus,
   parseKernelEventEnvelope,
   reduceFocus,
+  sameFocus,
 } from './kernel-event-model.mjs';
 
 const SUBJECT = {
@@ -101,6 +102,57 @@ test('non focus events never move focus', () => {
   }));
   assert.deepEqual(consumer.current(), before);
   assert.equal(reduceFocus(before, null), before);
+  assert.equal(consumer.eventDerived(), false, 'non-focus events do not make the stream authoritative');
+});
+
+test('kernel focus that arrives after mount is adopted from the snapshot pull', () => {
+  // The second-mount trajectory (03 §B detaching and returning): the surface
+  // mounts into a kernel that already holds focus, and the pull — not an event
+  // — is the first kernel fact to reach it.
+  const consumer = createFocusConsumer();
+  assert.equal(consumer.current(), null);
+
+  const adopted = consumer.seed(focusFromSnapshot({ selection: SUBJECT }));
+  assert.equal(adopted?.subject.ref, SUBJECT.ref, 'the pull is the kernel\'s own focus, so it is adopted');
+  assert.equal(consumer.subject().ref, SUBJECT.ref);
+  assert.equal(consumer.eventDerived(), false);
+
+  // A repeated pull carrying the same relation keeps identity, so a polling
+  // surface re-pulling the unchanged kernel does not re-render the world.
+  const again = consumer.seed({ subject: { ...SUBJECT } });
+  assert.equal(again, adopted);
+  assert.equal(consumer.current(), adopted);
+
+  // A changed relation is still adopted: the pull is the newest kernel fact.
+  const moved = consumer.seed(normalizeFocus({ subject: NEXT_SUBJECT }));
+  assert.equal(moved?.subject.ref, NEXT_SUBJECT.ref);
+});
+
+test('after the first FocusChanged a snapshot seed is refused and cannot clobber event-derived focus', () => {
+  const consumer = createFocusConsumer(focusFromSnapshot({ selection: SUBJECT }));
+  consumer.apply(focusEnvelope({
+    subject: NEXT_SUBJECT,
+    world: { ref: 'world:personal', kind: 'world', native_owner: 'central', provenance: { source: 'Central world recognition' } },
+  }));
+  assert.equal(consumer.eventDerived(), true);
+  assert.equal(consumer.subject().ref, NEXT_SUBJECT.ref);
+
+  assert.equal(
+    consumer.seed(focusFromSnapshot({ selection: SUBJECT })),
+    null,
+    'a late pull is older than the event stream',
+  );
+  assert.equal(consumer.subject().ref, NEXT_SUBJECT.ref, 'event-derived focus survives the seed');
+  assert.equal(consumer.current().world.ref, 'world:personal');
+});
+
+test('sameFocus compares kernel facts, not object identity', () => {
+  const relation = normalizeFocus({ subject: SUBJECT });
+  assert.equal(sameFocus(relation, normalizeFocus({ subject: { ...SUBJECT } })), true);
+  assert.equal(sameFocus(relation, normalizeFocus({ subject: NEXT_SUBJECT })), false);
+  assert.equal(sameFocus(relation, null), false);
+  assert.equal(sameFocus(null, null), true);
+  assert.equal(sameFocus(emptyFocus(), normalizeFocus({})), true, 'absent slots compare equal to absent slots');
 });
 
 test('the source fans one subscription out to many consumers and isolates consumer failure', () => {

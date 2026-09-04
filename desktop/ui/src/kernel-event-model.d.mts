@@ -57,10 +57,14 @@ export type KernelEventSourceStatus = 'unbound' | 'live' | 'degraded';
 export function parseKernelEventEnvelope(raw: unknown): KernelEvent;
 export function emptyFocus(): KernelFocusRelation;
 export function normalizeFocus(value: KernelFocusRelation): KernelFocusRelation;
+export function sameFocus(left: KernelFocusRelation | null, right: KernelFocusRelation | null): boolean;
 export function focusFromSnapshot(snapshot: { focus?: KernelFocusRelation; selection?: KernelSemanticRef } | null | undefined): KernelFocusRelation | null;
 export function reduceFocus(current: KernelFocusRelation | null, envelope: KernelEvent): KernelFocusRelation | null;
 export function createFocusConsumer(initial?: KernelFocusRelation | null): {
   apply(envelope: KernelEvent): KernelFocusRelation | null;
+  /** Adopt a snapshot pull; refused (null) once a FocusChanged has been applied. */
+  seed(pulled: KernelFocusRelation | null): KernelFocusRelation | null;
+  eventDerived(): boolean;
   current(): KernelFocusRelation | null;
   subject(): KernelSemanticRef | null;
 };

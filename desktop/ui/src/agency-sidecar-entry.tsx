@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { invoke } from '@tauri-apps/api/core';
 import { AgentEncounterSurface, WorkbenchEvidence, WorkbenchSemanticRef } from './workbench';
-import { useKernelFocus } from './kernel-events';
+import { useKernelFocus, type KernelFocusRelation, type KernelSemanticRef } from './kernel-events';
 import './agency-sidecar.css';
 
 type SemanticRef = WorkbenchSemanticRef;
@@ -152,10 +152,6 @@ type ActionHorizonEntry = {
 };
 
 function CanonicalAgencySidecar() {
-  // The one kernel focus (02 §7), derived from FocusChanged events. This
-  // replaces the component-local selection copy this surface used to hold.
-  const focus = useKernelFocus();
-  const selection = focus?.subject ?? undefined;
   const [context, setContext] = useState<ContextResolution | null>(null);
   const [spaces, setSpaces] = useState<SessionSpaceState[]>([]);
   const [space, setSpace] = useState<SessionSpaceReading | null>(null);
@@ -163,6 +159,12 @@ function CanonicalAgencySidecar() {
   const [contributions, setContributions] = useState<Contribution[]>([]);
   const [encounterEvidence, setEncounterEvidence] = useState<WorkbenchEvidence | null>(null);
   const [error, setError] = useState('');
+  // The kernel focus this surface's own snapshot pull last carried. Adopted by
+  // the hook only until the first FocusChanged flows; afterwards the events are
+  // newer than any pull and this stays inert instead of clobbering them.
+  const [pulledFocus, setPulledFocus] = useState<KernelFocusRelation | KernelSemanticRef | null>(null);
+  const focus = useKernelFocus(pulledFocus);
+  const selection = focus?.subject ?? undefined;
 
   const refresh = useCallback(async (preferredAgentSession?: string | null) => {
     const [snapshot, nextContext, nextSpaces, nextContributions] = await Promise.all([
@@ -172,6 +174,7 @@ function CanonicalAgencySidecar() {
       invoke<Contribution[]>('contribution_catalog').catch(() => []),
     ]);
 
+    setPulledFocus(snapshot.focus ?? snapshot.selection ?? null);
     setContext(nextContext);
     setSpaces(nextSpaces);
     setContributions(nextContributions);

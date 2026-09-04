@@ -5,6 +5,7 @@ import {
   createFocusConsumer,
   createKernelEventSource,
   focusFromSnapshot,
+  sameFocus,
   type KernelEvent,
   type KernelEventSourceStatus,
   type KernelFocusRelation,
@@ -65,24 +66,23 @@ export function kernelEventStatus(): KernelEventSourceStatus {
 /**
  * The one global focus relation, derived from kernel events (02 §7).
  *
- * `seed` is the kernel's own focus from the bootstrap snapshot pull. After
- * that, only `FocusChanged` moves focus. This replaces component-local
- * selection copies: surfaces hold a mirror of kernel state, never a second
- * selection.
+ * `seed` is the kernel's own focus from a snapshot pull. The first render
+ * usually precedes that pull (the static preview carries no focus), so the
+ * seed is re-adopted every time it changes until the first `FocusChanged`
+ * flows — after that the event stream is newer than any pull and a late seed
+ * is refused rather than clobbering event-derived focus. This replaces
+ * component-local selection copies: surfaces hold a mirror of kernel state,
+ * never a second selection.
  */
 export function useKernelFocus(seed?: KernelFocusRelation | KernelSemanticRef | null): KernelFocusRelation | null {
   const [mirror, setMirror] = useState<KernelFocusRelation | null>(() => focus.current() ?? bootstrap(seed));
+  useEffect(() => subscribeKernelEvents((event) => {
+    if (event.event === 'focus_changed') setMirror(focus.current());
+  }), []);
   useEffect(() => {
-    if (!focus.current() && seed) {
-      const seeded = bootstrap(seed);
-      if (seeded) setMirror(seeded);
-    }
-    return subscribeKernelEvents((event) => {
-      if (event.event === 'focus_changed') setMirror(focus.current());
-    });
-    // The subscription lives for the component's lifetime; the seed is the
-    // bootstrap pull, taken once at mount.
-  }, []);
+    const adopted = focus.seed(bootstrap(seed));
+    if (adopted) setMirror((previous) => (sameFocus(previous, adopted) ? previous : adopted));
+  }, [seed]);
   return mirror;
 }
 

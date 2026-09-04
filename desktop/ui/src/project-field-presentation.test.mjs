@@ -9,6 +9,8 @@ const livingWiki = readFileSync(new URL('./living-wiki.tsx', import.meta.url), '
 const workbench = readFileSync(new URL('./workbench.tsx', import.meta.url), 'utf8');
 const currentWorld = readFileSync(new URL('./current-world.tsx', import.meta.url), 'utf8');
 const main = readFileSync(new URL('./main.tsx', import.meta.url), 'utf8');
+const kernelEvents = readFileSync(new URL('./kernel-events.tsx', import.meta.url), 'utf8');
+const agencySidecar = readFileSync(new URL('./agency-sidecar-entry.tsx', import.meta.url), 'utf8');
 const shell = readFileSync(new URL('../../core/src/shell.rs', import.meta.url), 'utf8');
 const core = readFileSync(new URL('../../core/src/project_field.rs', import.meta.url), 'utf8');
 const knowledge = readFileSync(new URL('../../core/src/project_knowledge.rs', import.meta.url), 'utf8');
@@ -33,9 +35,16 @@ test('selection, retrieval and Agent Context disclosure remain distinct', () => 
 });
 
 test('P2 projects the one P1 canonical selection instead of owning a second selection state', () => {
-  // The one canonical selection is the kernel's global focus relation: read
-  // from the snapshot pull, then moved only by kernel FocusChanged events.
+  // The one canonical selection is the kernel's global focus relation: adopted
+  // from the snapshot pull until the first kernel FocusChanged flows, then
+  // moved only by events. Both halves must be live — a pull that is never
+  // adopted, or a seed that can clobber newer events, would each be a lie.
   assert.match(main, /useKernelFocus\(snapshot\.focus \?\? snapshot\.selection\)/);
+  assert.match(kernelEvents, /useEffect\(\(\) => \{\s*\n\s*const adopted = focus\.seed\(bootstrap\(seed\)\);/);
+  assert.match(kernelEvents, /\}, \[seed\]\);/, 'the seed is re-adopted when the snapshot pull lands');
+  assert.match(kernelEvents, /sameFocus\(previous, adopted\) \? previous : adopted/, 'an unchanged pull keeps mirror identity');
+  assert.match(agencySidecar, /useKernelFocus\(pulledFocus\)/);
+  assert.match(agencySidecar, /setPulledFocus\(snapshot\.focus \?\? snapshot\.selection \?\? null\)/, 'the sidecar adopts the kernel focus from the pull it already makes');
   assert.match(main, /<WorkbenchSurface selection=\{selection\} currentWorld=\{currentWorld\} worldRecognition=\{worldRecognition\} onSelect=\{onSelect\} onReobserveWorld=\{onReobserveWorld\} \/>/);
   assert.match(workbench, /selection\?: WorkbenchSemanticRef/);
   assert.doesNotMatch(workbench, /useState<WorkbenchSemanticRef/);

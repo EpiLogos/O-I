@@ -78,6 +78,9 @@ export function emptyFocus() {
   return Object.freeze({ world: null, project: null, subject: null, journey: null, agency_encounter: null });
 }
 
+/** The five 02 §7 relation roles, in kernel serialisation order. */
+const FOCUS_SLOTS = ['world', 'project', 'subject', 'journey', 'agency_encounter'];
+
 function relation(value) {
   return value ? semanticRef(value, 'focus relation') : null;
 }
@@ -92,6 +95,26 @@ export function normalizeFocus(value) {
     journey: relation(focus.journey),
     agency_encounter: relation(focus.agency_encounter),
   });
+}
+
+function sameSemanticRef(left, right) {
+  if (left === right) return true;
+  if (!left || !right) return false;
+  return left.ref === right.ref
+    && left.kind === right.kind
+    && left.native_owner === right.native_owner
+    && JSON.stringify(left.provenance ?? null) === JSON.stringify(right.provenance ?? null);
+}
+
+/**
+ * Whether two focus relations carry the same kernel facts. Used to keep
+ * mirrors identity-stable: a repeated snapshot pull that says what the mirror
+ * already says must not re-render the world.
+ */
+export function sameFocus(left, right) {
+  if (left === right) return true;
+  if (!left || !right) return false;
+  return FOCUS_SLOTS.every((slot) => sameSemanticRef(left[slot], right[slot]));
 }
 
 /**
@@ -121,13 +144,38 @@ export function reduceFocus(current, envelope) {
 /**
  * A focus consumer derived from events. Presentation reads it; it owns no
  * semantic authority — the kernel does (02 §6).
+ *
+ * The kernel's focus reaches this consumer two honest ways: pushed as
+ * `focus_changed`, or pulled as a snapshot's `focus`/`selection` (a cold or
+ * re-mounting surface, focus restore, a second window). Until the first
+ * `focus_changed` flows, the pull is the newest kernel fact this surface has;
+ * once events flow they are newer than any pull, so further pulls are refused
+ * and can never clobber event-derived focus.
  */
 export function createFocusConsumer(initial = null) {
   let focus = initial ? normalizeFocus(initial) : null;
+  let eventDerived = false;
   return {
     apply(envelope) {
       focus = reduceFocus(focus, envelope);
+      if (envelope?.event === 'focus_changed') eventDerived = true;
       return focus;
+    },
+    /**
+     * Adopt kernel focus from a snapshot pull. Returns the adopted relation —
+     * the same object as before when it says what the mirror already says — or
+     * null when the pull was refused because events are authoritative.
+     */
+    seed(pulled) {
+      if (eventDerived) return null;
+      if (!pulled) return focus;
+      const next = normalizeFocus(pulled);
+      if (!focus || !sameFocus(focus, next)) focus = next;
+      return focus;
+    },
+    /** Whether at least one kernel `focus_changed` has been applied. */
+    eventDerived() {
+      return eventDerived;
     },
     current() {
       return focus;
