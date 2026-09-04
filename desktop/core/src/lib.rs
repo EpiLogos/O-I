@@ -4,7 +4,9 @@ mod bridge;
 mod central_agent_profile;
 mod central_change;
 mod contribution;
+mod events;
 mod execution_authority;
+mod focus;
 mod flow;
 mod flow_contemplate;
 mod live_product;
@@ -40,6 +42,9 @@ pub use contribution::{
     SelectionProjection,
 };
 pub use epilogos_factory::build::FactoryBuildSnapshot;
+pub use events::{
+    KernelEvent, KernelEventEnvelope, KERNEL_EVENT_SCHEMA, KERNEL_EVENT_TOPIC, KERNEL_EVENT_VERSION,
+};
 pub use execution_authority::{
     ActionAuthorityStore, ActionExecutionRequest, AuthorisedActionExecution, BoundedActionGrant,
     BOUNDED_ACTION_GRANT_SCHEMA,
@@ -48,6 +53,10 @@ pub use flow::{
     CentralFlowClient, CentralFlowList, CentralFlowReading, CentralFlowRecord,
     CentralFlowRevisionReceipt, FlowDesktopSnapshot, FlowDocumentReading,
     CENTRAL_FLOW_PROVIDER_REF, OI_FLOW_DESKTOP_VERSION,
+};
+pub use focus::{
+    AgencyEncounterRef, FocusRefError, GlobalFocus, JourneyRef, ProjectRef, SubjectRef, WorldRef,
+    GLOBAL_FOCUS_SCHEMA,
 };
 pub use flow_contemplate::{
     flow_contemplate_prompt, AcpFlowContemplateExecutor, FLOW_CONTEMPLATE_TRANSPORT_VERSION,
@@ -87,5 +96,6 @@ pub use project_field::{
 };
 pub use project_knowledge::{FlowAuthoredRelationsReading, LocalProjectKnowledge};
 pub use shell::{
-    DesktopHost, RefProvenance, SemanticRef, ShellDestination, ShellSnapshot, SuiteCondition,
+    DesktopHost, RefProvenance, SelectionError, SemanticRef, ShellDestination, ShellSnapshot,
+    SuiteCondition,
 };

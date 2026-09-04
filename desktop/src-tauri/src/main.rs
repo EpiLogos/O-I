@@ -6,11 +6,11 @@ use oi_desktop_core::{
     host_native_contribution, load_context_resolution, ActionAuthorityStore,
     ActionExecutionRequest, AgentSurfaceOpenRequest, AgentSurfaceReading, AikitAgentSurface,
     BoundedActionGrant, BridgeCallClass, BridgeCaller, BridgePolicy, DesktopHost,
-    FactoryActionRoundTrip, FactoryBuildSnapshot, HostedContribution, LocalAikitSessionSpaceHost,
-    LocalAikitWorkbench, LocalFactoryHost, LocalProjectKnowledge, NativeContextResolution,
-    NativeContributionReading, SemanticRef, SessionSpaceFocusRequest, ShellDestination,
-    ShellSnapshot, SurfaceActionEmission, AIKIT_SESSION_SPACE_CONTRIBUTION_REF,
-    FACTORY_BUILD_CONTRIBUTION_REF,
+    FactoryActionRoundTrip, FactoryBuildSnapshot, HostedContribution, KernelEventEnvelope,
+    LocalAikitSessionSpaceHost, LocalAikitWorkbench, LocalFactoryHost, LocalProjectKnowledge,
+    NativeContextResolution, NativeContributionReading, SemanticRef, SessionSpaceFocusRequest,
+    ShellDestination, ShellSnapshot, SurfaceActionEmission, AIKIT_SESSION_SPACE_CONTRIBUTION_REF,
+    FACTORY_BUILD_CONTRIBUTION_REF, KERNEL_EVENT_TOPIC,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -73,15 +73,44 @@ fn shell_snapshot(state: State<'_, AppState>) -> Result<ShellSnapshot, String> {
 /// Re-observe the live World and return the refreshed shell snapshot. This is
 /// the same deterministic discovery the host performs at startup; it refreshes
 /// the read model without granting new authority or invoking a model/Agent.
+/// When the composed World changed, the kernel emits `WorldChanged` to every
+/// surface over the event seam.
 #[tauri::command]
-fn reconcile_world(state: State<'_, AppState>) -> Result<ShellSnapshot, String> {
-    let mut host = state
-        .host
-        .lock()
-        .map_err(|_| "desktop host lock poisoned".to_owned())?;
-    host.reconcile_world().map_err(|error| error.to_string())?;
-    host.snapshot(BridgeCaller::ShellUi)
-        .map_err(|error| error.to_string())
+fn reconcile_world(
+    state: State<'_, AppState>,
+    app: tauri::AppHandle,
+) -> Result<ShellSnapshot, String> {
+    let (event, snapshot) = {
+        let mut host = state
+            .host
+            .lock()
+            .map_err(|_| "desktop host lock poisoned".to_owned())?;
+        let event = host.reconcile_world().map_err(|error| error.to_string())?;
+        let snapshot = host
+            .snapshot(BridgeCaller::ShellUi)
+            .map_err(|error| error.to_string())?;
+        (event, snapshot)
+    };
+    // The kernel state changed → typed events → the projection re-renders
+    // reality (02 §5). The lock is released before the event is pushed.
+    forward_kernel_event(&app, event);
+    Ok(snapshot)
+}
+
+/// Forward one kernel event to the renderer over the Tauri event seam.
+///
+/// This is kernel→UI disclosure: it grants the renderer nothing, performs no
+/// bridge call and touches no BridgePolicy authority (02 §12). A renderer that
+/// is not listening misses nothing — the next snapshot pull re-reads the same
+/// kernel truth.
+fn forward_kernel_event(app: &tauri::AppHandle, event: Option<oi_desktop_core::KernelEvent>) {
+    let Some(event) = event else {
+        return;
+    };
+    use tauri::Emitter;
+    if let Err(error) = app.emit(KERNEL_EVENT_TOPIC, KernelEventEnvelope::new(event)) {
+        eprintln!("O:I kernel event could not be forwarded: {error}");
+    }
 }
 
 #[tauri::command]
@@ -532,14 +561,26 @@ fn knowledge_history(
     })
 }
 
+/// Make `subject` the one application-wide focus (02 §7) and push
+/// `FocusChanged` to every surface. The renderer re-renders from the event
+/// that follows the real kernel state change; it never fakes the selection
+/// locally (02 §5).
 #[tauri::command]
-fn select_semantic_ref(state: State<'_, AppState>, subject: SemanticRef) -> Result<(), String> {
-    state
-        .host
-        .lock()
-        .map_err(|_| "desktop host lock poisoned".to_owned())?
-        .select(BridgeCaller::ShellUi, subject)
-        .map_err(|error| error.to_string())
+fn select_semantic_ref(
+    state: State<'_, AppState>,
+    app: tauri::AppHandle,
+    subject: SemanticRef,
+) -> Result<(), String> {
+    let event = {
+        let mut host = state
+            .host
+            .lock()
+            .map_err(|_| "desktop host lock poisoned".to_owned())?;
+        host.select(BridgeCaller::ShellUi, subject)
+            .map_err(|error| error.to_string())?
+    };
+    forward_kernel_event(&app, event);
+    Ok(())
 }
 
 #[tauri::command]

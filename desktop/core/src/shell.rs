@@ -1,8 +1,11 @@
+use crate::events::KernelEvent;
+use crate::focus::{FocusRefError, GlobalFocus, WorldRef};
 use crate::{BridgeCallClass, BridgeCaller, BridgeDenied, BridgePolicy};
 use oi_cli::current_world::{live_current_world, CurrentWorldReading};
 use oi_cli::status::{NativeSurfaceState, SuiteCompositionDisclosure, SurfaceDisclosure};
 use oi_cli::world_recognition::{discover_ground, WorldRecognitionAccount};
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use std::path::Path;
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -60,10 +63,39 @@ pub struct ShellSnapshot {
     pub destinations: Vec<ShellDestination>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub world_recognition: Option<WorldRecognitionAccount>,
+    /// The one current subject, carried for existing readers as a projection
+    /// of `focus` — never a second copy of the relation (02 §7).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub selection: Option<SemanticRef>,
+    /// The one global focus relation (02 §7), kernel-owned. Consumers
+    /// bootstrap from this pull and then follow `FocusChanged` events.
+    pub focus: GlobalFocus,
     #[serde(default)]
     pub warnings: Vec<String>,
+}
+
+/// Why a selection did not become the one current focus.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum SelectionError {
+    Denied(BridgeDenied),
+    InvalidSubject(FocusRefError),
+}
+
+impl fmt::Display for SelectionError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Denied(denied) => denied.fmt(formatter),
+            Self::InvalidSubject(error) => error.fmt(formatter),
+        }
+    }
+}
+
+impl std::error::Error for SelectionError {}
+
+impl From<BridgeDenied> for SelectionError {
+    fn from(denied: BridgeDenied) -> Self {
+        Self::Denied(denied)
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -72,7 +104,7 @@ pub struct DesktopHost {
     current_world: CurrentWorldReading,
     world_recognition: Option<WorldRecognitionAccount>,
     destination: ShellDestination,
-    selection: Option<SemanticRef>,
+    focus: GlobalFocus,
     bridge: BridgePolicy,
 }
 
@@ -97,14 +129,26 @@ impl DesktopHost {
                     None
                 }
             });
+        let focus = Self::initial_focus(&world_recognition);
         Self {
             disclosure,
             current_world,
             world_recognition,
             destination: ShellDestination::Home,
-            selection: None,
+            focus,
             bridge: BridgePolicy,
         }
+    }
+
+    /// The focus relation a cold start opens with: the current World relation
+    /// when recognition established that a World exists here (03 §A), and no
+    /// subject — `B0 No focus` (03 §B). Absence is never fabricated.
+    fn initial_focus(world_recognition: &Option<WorldRecognitionAccount>) -> GlobalFocus {
+        let mut focus = GlobalFocus::unfocused();
+        if world_recognition.is_some() {
+            focus.bind_world(personal_world_ref());
+        }
+        focus
     }
 
     pub fn with_current_world(mut self, current_world: CurrentWorldReading) -> Self {
@@ -114,6 +158,11 @@ impl DesktopHost {
 
     pub fn current_world(&self) -> &CurrentWorldReading {
         &self.current_world
+    }
+
+    /// The one global focus relation (02 §7) as kernel state.
+    pub fn focus(&self) -> &GlobalFocus {
+        &self.focus
     }
 
     pub fn snapshot(&self, caller: BridgeCaller) -> Result<ShellSnapshot, BridgeDenied> {
@@ -127,20 +176,36 @@ impl DesktopHost {
             surfaces: self.disclosure.surfaces.clone(),
             destinations: ShellDestination::ALL.to_vec(),
             world_recognition: self.world_recognition.clone(),
-            selection: self.selection.clone(),
+            selection: self.focus.subject_ref().cloned(),
+            focus: self.focus.clone(),
             warnings: self.disclosure.warnings.clone(),
         })
     }
 
+    /// Make `subject` the one current focus kernel-wide (02 §7, 03 §B) and
+    /// emit the `FocusChanged` event every surface may consume.
+    ///
+    /// Returns `Ok(None)` when nothing changed: re-selecting the current
+    /// subject mutates no kernel state and therefore emits no event. An
+    /// unauthorised caller is denied exactly as before; events add no renderer
+    /// authority (02 §12).
     pub fn select(
         &mut self,
         caller: BridgeCaller,
         subject: SemanticRef,
-    ) -> Result<(), BridgeDenied> {
+    ) -> Result<Option<KernelEvent>, SelectionError> {
         self.bridge
             .authorize(caller, BridgeCallClass::SelectSemanticRef)?;
-        self.selection = Some(subject);
-        Ok(())
+        let previous = self.focus.clone();
+        self.focus
+            .focus_subject(subject)
+            .map_err(SelectionError::InvalidSubject)?;
+        if self.focus == previous {
+            return Ok(None);
+        }
+        Ok(Some(KernelEvent::FocusChanged {
+            focus: self.focus.clone(),
+        }))
     }
 
     pub fn open_destination(
@@ -158,7 +223,11 @@ impl DesktopHost {
     /// deterministic discover/observe/reconcile operation the host already
     /// performs at startup; it refreshes the read model, never grants new
     /// authority and never invokes a model or Agent.
-    pub fn reconcile_world(&mut self) -> Result<WorldRecognitionAccount, String> {
+    ///
+    /// The composed World changed → the kernel emits `WorldChanged`, so every
+    /// surface re-renders reality instead of polling for it (02 §5). Returns
+    /// `Ok(None)` when the re-observation is identical to what is held.
+    pub fn reconcile_world(&mut self) -> Result<Option<KernelEvent>, String> {
         let ground = self
             .disclosure
             .personal_ground
@@ -166,8 +235,25 @@ impl DesktopHost {
             .ok_or_else(|| "no personal ground configured for World reconciliation".to_owned())?;
         match discover_ground(Path::new(ground)) {
             Ok(account) => {
+                let unchanged = self.world_recognition.as_ref() == Some(&account);
                 self.world_recognition = Some(account.clone());
-                Ok(account)
+                self.bind_current_world_relation();
+                if unchanged {
+                    return Ok(None);
+                }
+                let world = self
+                    .focus
+                    .world
+                    .clone()
+                    .ok_or_else(|| "current World relation unresolved".to_owned())?;
+                Ok(Some(KernelEvent::WorldChanged {
+                    world,
+                    summary: format!(
+                        "World recognition re-observed for {} ({} source apertures).",
+                        account.target,
+                        account.sources.len()
+                    ),
+                }))
             }
             Err(error) => {
                 self.world_recognition = None;
@@ -178,6 +264,37 @@ impl DesktopHost {
             }
         }
     }
+
+    /// Name the current World relation from the configured personal ground.
+    ///
+    /// The host's own recognition is what establishes that a World exists here
+    /// at all (03 §A); naming that ground `world:personal` follows the design's
+    /// World-tree vocabulary (01 §2). When WorldService resolves Central's
+    /// WorldRef/WorldGraph, it becomes the authoritative source of this
+    /// relation and this derivation retires.
+    fn bind_current_world_relation(&mut self) {
+        if self.world_recognition.is_some() && self.focus.world.is_none() {
+            self.focus.bind_world(personal_world_ref());
+        }
+    }
+}
+
+/// The current World relation, named from the host's configured personal
+/// ground (01 §2: `world:personal` is the root of the World tree). Central
+/// world recognition is what establishes that this World exists here. When
+/// WorldService resolves Central's `WorldRef`/`WorldGraph`, it becomes the
+/// authoritative source of this relation and this derivation retires.
+fn personal_world_ref() -> WorldRef {
+    WorldRef::try_from(SemanticRef {
+        ref_id: "world:personal".to_owned(),
+        kind: "world".to_owned(),
+        native_owner: "central".to_owned(),
+        provenance: crate::RefProvenance {
+            source: "Central world recognition".to_owned(),
+            revision: None,
+        },
+    })
+    .expect("the built-in personal World ref is a whole ref")
 }
 
 fn suite_condition(surfaces: &[SurfaceDisclosure]) -> SuiteCondition {

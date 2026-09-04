@@ -33,7 +33,9 @@ test('selection, retrieval and Agent Context disclosure remain distinct', () => 
 });
 
 test('P2 projects the one P1 canonical selection instead of owning a second selection state', () => {
-  assert.match(main, /selection=\{snapshot\.selection\}/);
+  // The one canonical selection is the kernel's global focus relation: read
+  // from the snapshot pull, then moved only by kernel FocusChanged events.
+  assert.match(main, /useKernelFocus\(snapshot\.focus \?\? snapshot\.selection\)/);
   assert.match(main, /<WorkbenchSurface selection=\{selection\} currentWorld=\{currentWorld\} worldRecognition=\{worldRecognition\} onSelect=\{onSelect\} onReobserveWorld=\{onReobserveWorld\} \/>/);
   assert.match(workbench, /selection\?: WorkbenchSemanticRef/);
   assert.doesNotMatch(workbench, /useState<WorkbenchSemanticRef/);

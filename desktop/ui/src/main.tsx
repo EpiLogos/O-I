@@ -17,6 +17,8 @@ import {
   SurfacePresentationBinding,
 } from './workbench-host';
 import { WorkbenchEvidence, WorkbenchSemanticRef, WorkbenchSurface } from './workbench';
+import { kernelEventStatus, subscribeKernelEvents, useKernelFocus } from './kernel-events';
+import type { KernelFocusRelation } from './kernel-event-model.mjs';
 
 type Destination = 'home' | 'personal' | 'build' | 'explore' | 'system';
 type SuiteCondition = 'empty' | 'partial' | 'broken' | 'full';
@@ -46,6 +48,8 @@ type Snapshot = {
   destinations: Destination[];
   surfaces: Surface[];
   selection?: SemanticRef;
+  /** The one global focus relation (02 §7), kernel-owned. */
+  focus?: KernelFocusRelation;
   current_world?: CurrentWorldReading;
   world_recognition?: WorldRecognitionAccount;
   warnings: string[];
@@ -175,6 +179,14 @@ function App() {
   const [aikitContext, setAikitContext] = useState<unknown>(null);
   const [workbenchEvidence, setWorkbenchEvidence] = useState<WorkbenchEvidence | null>(null);
   const [actionResult, setActionResult] = useState<unknown>(null);
+  const [lastEvent, setLastEvent] = useState<string>('');
+
+  // The one global focus (02 §7): bootstrapped from the kernel's snapshot pull,
+  // then moved only by FocusChanged events. No surface keeps its own copy.
+  const focus = useKernelFocus(snapshot.focus ?? snapshot.selection);
+  const selection = focus?.subject ?? undefined;
+
+  useEffect(() => subscribeKernelEvents((event) => setLastEvent(event.event)), []);
 
   useEffect(() => {
     invoke<Snapshot>('shell_snapshot').then(setSnapshot).catch(() => setSnapshot(preview));
@@ -222,14 +234,10 @@ function App() {
 
   async function selectWorkbenchRef(subject: WorkbenchSemanticRef, evidence: WorkbenchEvidence) {
     setWorkbenchEvidence(evidence);
-    try {
-      await invoke('select_semantic_ref', { subject });
-      setSnapshot(await invoke<Snapshot>('shell_snapshot'));
-    } catch {
-      // Browser preview has no native bridge. This fallback is presentation only;
-      // native builds always use the privileged stable-ref selection boundary.
-      setSnapshot((current) => ({ ...current, selection: subject }));
-    }
+    // The kernel mutates the one focus relation and pushes FocusChanged; the UI
+    // re-renders from that event. No optimistic local selection — without a
+    // native bridge nothing is selected (02 §5 key loop).
+    await invoke('select_semantic_ref', { subject });
   }
 
   function onSurfaceFocus(focus: SurfaceFocus) {
@@ -247,7 +255,7 @@ function App() {
       onSurfaceFocus={onSurfaceFocus}
       command={(
         <NativeSearchCommand
-          selection={snapshot.selection}
+          selection={selection}
           onSelect={selectWorkbenchRef}
           onActionResult={(result) => {
             setActionResult(result);
@@ -256,10 +264,10 @@ function App() {
         />
       )}
       navigator={(
-        <NavigatorHost surfaces={surfaces} snapshot={snapshot} contributions={contributions} />
+        <NavigatorHost surfaces={surfaces} snapshot={snapshot} contributions={contributions} selection={selection} />
       )}
       sidecar={(
-        <AgencySidecar selection={snapshot.selection} evidence={workbenchEvidence} rootAgency={rootAgency} />
+        <AgencySidecar selection={selection} evidence={workbenchEvidence} rootAgency={rootAgency} />
       )}
       lower={<LowerRegion actionResult={actionResult} />}
       system={(
@@ -275,7 +283,9 @@ function App() {
       status={(
         <>
           <span>O:I · {snapshot.suite_condition}</span>
-          <span>{snapshot.selection ? `selected ${snapshot.selection.ref}` : 'no semantic selection'}</span>
+          <span>{selection ? `selected ${selection.ref}` : 'no semantic selection'}</span>
+          <span>events {kernelEventStatus()}</span>
+          {lastEvent && <span>last event {lastEvent}</span>}
           <span>selection ≠ Agent Context disclosure</span>
           <span>Surface ≠ Action</span>
         </>
@@ -289,7 +299,7 @@ function App() {
           contributions={contributions}
           factoryBuild={factoryBuild}
           aikitContext={aikitContext}
-          selection={snapshot.selection}
+          selection={selection}
           currentWorld={snapshot.current_world}
           worldRecognition={snapshot.world_recognition}
           onSelect={selectWorkbenchRef}
@@ -305,10 +315,12 @@ function NavigatorHost({
   surfaces,
   snapshot,
   contributions,
+  selection,
 }: {
   surfaces: HostSurfaceDescriptor[];
   snapshot: Snapshot;
   contributions: Contribution[];
+  selection?: SemanticRef;
 }) {
   return (
     <div className="oi-p1-navigator">
@@ -320,7 +332,7 @@ function NavigatorHost({
       </div>
       <div className="oi-workbench__relations">
         <strong>Current selection</strong>
-        {snapshot.selection ? <code>{snapshot.selection.ref}</code> : <span className="oi-muted">None</span>}
+        {selection ? <code>{selection.ref}</code> : <span className="oi-muted">None</span>}
       </div>
       <div className="oi-workbench__relations">
         <strong>Native contributions</strong>

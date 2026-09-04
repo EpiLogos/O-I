@@ -1,7 +1,7 @@
 use oi_cli::status::{NativeSurfaceState, SuiteCompositionDisclosure, SurfaceDisclosure};
 use oi_desktop_core::{
-    BridgeCallClass, BridgeCaller, BridgePolicy, DesktopHost, SemanticRef, ShellDestination,
-    SuiteCondition,
+    BridgeCallClass, BridgeCaller, BridgePolicy, DesktopHost, KernelEvent, SemanticRef,
+    ShellDestination, SuiteCondition, WorldRef,
 };
 
 fn surface(id: &str, state: NativeSurfaceState) -> SurfaceDisclosure {
@@ -191,12 +191,40 @@ fn reconcile_world_refreshes_the_read_model_without_a_restart() {
         disclosure.personal_ground = Some(root.display().to_string());
         let mut host = DesktopHost::new(disclosure);
 
-        let account = host.reconcile_world().expect("reconcile World account");
-        assert_eq!(account.schema, "oi.world-recognition-account/v1");
-        assert_eq!(account.target, root.display().to_string());
+        // Startup already composed this World from the same ground, so an
+        // immediate re-observation usually observes no change — and an
+        // unchanged observation emits nothing (events are honest). Whatever is
+        // emitted names the exact World relation the kernel now holds.
+        let event = host.reconcile_world().expect("reconcile World account");
+        if let Some(event) = event.as_ref() {
+            let KernelEvent::WorldChanged { world, .. } = event else {
+                panic!("expected WorldChanged, got {}", event.tag());
+            };
+            assert_eq!(world.ref_id(), "world:personal");
+        }
 
         let snapshot = host.snapshot(BridgeCaller::ShellUi).unwrap();
-        assert!(snapshot.world_recognition.is_some());
+        let account = snapshot
+            .world_recognition
+            .expect("world recognition account");
+        assert_eq!(account.schema, "oi.world-recognition-account/v1");
+        assert_eq!(account.target, root.display().to_string());
+        assert_eq!(
+            snapshot.focus.world.as_ref().map(WorldRef::ref_id),
+            Some("world:personal"),
+            "the current World relation is kernel state"
+        );
+
+        // The same rule holds on a later observation: the account composes
+        // live owner participations and owners move between observations, so
+        // the event is emitted only when the composed World really differs.
+        if let Some(event) = host.reconcile_world().unwrap() {
+            let KernelEvent::WorldChanged { world, .. } = &event else {
+                panic!("expected WorldChanged, got {}", event.tag());
+            };
+            assert_eq!(world.ref_id(), "world:personal");
+        }
+        assert!(host.snapshot(BridgeCaller::ShellUi).unwrap().world_recognition.is_some());
     })();
     match previous {
         Some(value) => std::env::set_var("OI_HOME", value),
