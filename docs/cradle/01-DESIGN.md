@@ -69,6 +69,20 @@ make present; the Cradle renders that selected reading. The binding laws:
 - **Human and Agent read the same Projection** — one ref and revision; the Agent
   receives the structured reading with provenance, never scraped HTML.
 
+**One object; the World tree is the main view.** O:I is the parent system; its
+six full products (Central, Actuation, AIKit, Factory, Workcell, Quaternal
+Logic — positions 0–5) operate as one unified object, not a federation to
+render side by side. The Cradle is that one object's experience. Its main
+spatial view is the **World tree**: `world:personal` at the root, each
+`world:project:<id>` a descendant node, every node being the authored ground
+(`Control/` at root, `ProjectCentral/` per project). The wiki and graph
+semantics root around this same tree — each node carries its Agent-maintained
+Wiki (`okf-wiki/v1`), the root Wiki federates the project Wikis, and
+`source-relations.json` records accepted relations; Knowledge navigation
+traverses the tree rather than a flat index. O:I defines this base layout;
+composability lets the person augment it — promote a node, attach a surface,
+add a reading — without breaking the tree or re-owning any product's semantics.
+
 The rest of this document follows from this ground, not from a six-product
 grid.
 
@@ -149,6 +163,11 @@ promotion — never separate applications or modes of the data.
 The resting shape is the product. The full grammar is its depth.
 
 ## 5. The application hierarchy
+
+The six products are not six apps the desktop federates. They are **one
+object** — O:I — and the hierarchy below is how that one object is constituted
+in the present moment. The Cradle never renders six products; it renders the
+single situation those products together constitute.
 
 ```text
                        HUMAN
