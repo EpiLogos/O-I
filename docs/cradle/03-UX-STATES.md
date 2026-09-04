@@ -50,7 +50,7 @@ identity.
 ## C. Writing states — *the primary human act*
 
 Derived from: authored Flow as the default human act; authored ≠ commissioned ≠
-returned ≠ accepted (design §2; FLOW.md).
+returned ≠ accepted (design §3; FLOW.md).
 
 | State | Meaning | Rest shows |
 |---|---|---|
@@ -122,7 +122,7 @@ of a session is never ambiently public.
 ## F. Context and knowledge states — *what may be known here?*
 
 Derived from: the disclosure ladder (AIKit); legibility without capture (FP
-1′); remember-this as epistemic act (design §7); provenance distinctions
+1′); remember-this as epistemic act (design §8); provenance distinctions
 (authored/observed/generated, FP §0).
 
 Per subject-in-focus, on demand:
@@ -147,7 +147,7 @@ Recognition act makes it authored.
 
 Derived from: Commission → … → Recognition as the Factory's own spine; Journey
 above bounded Runs (#155 D8); "Factory is where work becomes structured
-multi-agent development" (design §4).
+multi-agent development" (design §5).
 
 | State | Meaning | Rest shows |
 |---|---|---|
@@ -167,7 +167,7 @@ one log.
 ## H. Material states — *where is this real?*
 
 Derived from: Workcell's materialisation intent; "my laptop is the default
-Workcell"; provider choices never leak upward (design §8).
+Workcell"; provider choices never leak upward (design §9).
 
 | State | Meaning | Rest shows |
 |---|---|---|
@@ -200,7 +200,7 @@ presented, not what was believed; contributions stay attributable.
 
 ## J. Presentation states — *the shape of the window*
 
-Derived from: austere rest with summoned depth (design §3); two state layers
+Derived from: austere rest with summoned depth (design §4); two state layers
 (architecture §6); the P1 keyboard grammar.
 
 | State | Meaning |

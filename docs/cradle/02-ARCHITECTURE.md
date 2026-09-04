@@ -62,7 +62,7 @@ products**; the last four genuinely belong to the application whole.
 
 | Service | Composes | Owns |
 |---|---|---|
-| `WorldService` | Central (`ctrl`), oi recognition | World tree, Ground, Work files, machine/install recognition |
+| `WorldService` | Central (`ctrl`), oi recognition | The first-class authored World (`WorldRef` tree with source treatment), Ground, Work files, machine/install recognition — read as a **selected Projection** (selection ≠ readability; omission by default), never as a profile database |
 | `AgencyService` | Actuation, AIKit sessions, Gateway #154 | Agencies, AgentSessions, activity, encounter continuity |
 | `KnowledgeService` | AIKit knowledge, Central | Search, semantic neighbourhoods, disclosure receipts, remember-this |
 | `DevelopmentService` | Factory | Journeys, Runs, Candidates, Evidence, Recognition |

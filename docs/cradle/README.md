@@ -45,3 +45,9 @@ system:
    Context disclosure. Presence ≠ authority. Masking ≠ missing.
 2. **Native ownership.** The desktop composes and discloses; it never
    reimplements a product's semantics.
+3. **Projection law.** The Cradle is a selected, provenance-preserving reading
+   of the Central authored world — not a copy, not a profile database.
+   Selection ≠ readability (omission is the default); refinement changes the
+   Projection, never the source; a change returns to durable Central source
+   only through explicit human authorship or an accepted proposal; human and
+   Agent read the same Projection ref and revision.

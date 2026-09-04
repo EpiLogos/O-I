@@ -27,7 +27,52 @@ up: the O:I desktop is the integral application body, and can itself become a
 native constituent of a still larger host environment. Neither level absorbs the
 other.
 
-## 2. The human premise: writing is the primary act
+## 2. The ground — Central as covenant, first-class World, and Projection
+
+Everything above is grounded in one fact the Cradle must not flatten into a
+file tree: **Central is a covenant space, and the World is its first-class
+object.** The Cradle is that World's Projection surface and Recognition moment
+— never a second source of truth, never a profile database.
+
+**The covenant.** Central's core is not the directory layout but the
+human–Agent relation it authors. `Control/agents/governance/` holds the laws:
+*consult authored ground* ("code is a poor witness of why a thing exists"),
+*you may propose* (the agent authors the proposal, the human authors the
+source), *recover before asking*, *recognition* (the human meets returned
+reality; a passing check is not Recognition), *completion* (evidence before
+claim), *smallest sufficient* (retrieve the least the act needs). These are the
+communication contract. Every Cradle surface honours them as living relations,
+never restates them as chrome.
+
+**The first-class World.** `Control/` is the authored ground — `user/` (human
+identity as a *selection with provenance*, not a copy of the vault), `agents/`
+(governance, Agent-maintained wiki, profiles, expressions), `machines/`
+(authored intent + observed drift). Over it sits Central's `WorldRef` /
+`WorldGraph`: authored Worlds with ancestry (`world:personal →
+world:project:<id>`), sources **with treatment** (canonical / retain-native /
+agent-maintained / derived), exclusions, agent-sets, placements. `Work/` stays
+ordinary Projects; `ProjectCentral/` recurses the same authored shape per
+project and links back to the root Wiki.
+
+**The Cradle is a Projection.** The person chooses the face of their world to
+make present; the Cradle renders that selected reading. The binding laws:
+
+- **Selection ≠ readability** — exists / readable / indexable / retrievable /
+  selected / projected / public are distinct; omission is the default; selecting
+  one file never projects its root.
+- **No profile shadow** — "my profile is the face of my world I have chosen to
+  make present here." An account is a reading over native source; several may
+  coexist; none silently replaces its source.
+- **Refinement ≠ mutation** — editing the projected face changes the Projection,
+  never Central; a change returns to durable source only through explicit human
+  authorship or an accepted proposal.
+- **Human and Agent read the same Projection** — one ref and revision; the Agent
+  receives the structured reading with provenance, never scraped HTML.
+
+The rest of this document follows from this ground, not from a six-product
+grid.
+
+## 3. The human premise: writing is the primary act
 
 The desktop's first human primitive is **writing, not navigating**.
 
@@ -60,7 +105,7 @@ Provenance distinctions survive the loop intact: **authored material ≠ sent
 commission ≠ returned work ≠ accepted revision.** The canvas never silently
 converts one into another.
 
-## 3. The everyday shape: austere, with depth summoned
+## 4. The everyday shape: austere, with depth summoned
 
 The three-panel/tabs workbench is a **latent spatial capability**, not three
 permanently occupied dashboards. Most of the time the Cradle is almost bare:
@@ -84,7 +129,7 @@ permanently occupied dashboards. Most of the time the Cradle is almost bare:
 ```
 
 - **Agency lives at the left** — a compact, live map of who is present and what
-  is actually happening (§5).
+  is actually happening (§6).
 - **The work lives in the centre** — the authored thing itself: document, code,
   conversation, trajectory, running application, shared thread. The centre shows
   the thing, not commentary about the thing.
@@ -103,7 +148,7 @@ promotion — never separate applications or modes of the data.
 
 The resting shape is the product. The full grammar is its depth.
 
-## 4. The application hierarchy
+## 5. The application hierarchy
 
 ```text
                        HUMAN
@@ -139,7 +184,7 @@ Journey, plan, AgentSet, Runs, Candidates, Evidence, Recognition. Material
 reality is felt, not stared at: "runs on this Mac" by default; placement becomes
 visible only when it becomes consequential.
 
-## 5. Agency at the left: a living map, not a chat sidebar
+## 6. Agency at the left: a living map, not a chat sidebar
 
 The left field is a compact **agency map and log** — presence, current intent,
 live activity, relations, sessions — inspired by the DeepSeek Harness's ability
@@ -167,7 +212,7 @@ and "Runtime" screens. The same agent, actuated through the Agency Gateway
 (#154), is encounterable from the desktop, a terminal, Telegram or Slack: these
 are encounter surfaces around one Agency, not new agents.
 
-## 6. Agents are durable teammates created from intent
+## 7. Agents are durable teammates created from intent
 
 Agent creation begins the way work with a person begins:
 
@@ -201,7 +246,7 @@ of competence around actual work — never autonomous self-rewriting; every step
 that would become durable ground or unattended authority passes a human
 recognition point.
 
-## 7. Knowledge is reached, not resident
+## 8. Knowledge is reached, not resident
 
 Knowledge does not occupy permanent screen space. It is part of what an agent or
 human can **reach from a World**, and appears in two scales:
@@ -230,7 +275,7 @@ Knowledge, the agent's own World-relative knowledge, or a proposal toward
 authored Ground), and generated material only becomes durable source through
 that explicit act.
 
-## 8. What each product means in the experience
+## 9. What each product means in the experience
 
 The desktop is bound to the native visions of the six centres as they describe
 themselves in their own repositories. The Cradle owes each of them a specific
@@ -250,7 +295,7 @@ Knowledge subject can acquire participants; the same addressing grammar (To: /
 @) reaches humans, agents and AgentSets; Projection, Contribution and Encounter
 keep provenance and alterity intact.
 
-## 9. Activity, attention, and where the human touches
+## 10. Activity, attention, and where the human touches
 
 Most activity stays quiet. A person should be able to work while five agents
 run, without watching five transcripts.
@@ -267,7 +312,7 @@ names the exact subject and resolves to it. This is founding position §4 made
 concrete — the person touches the system at authorship, authority, Commission,
 Recognition, revision and refusal, not inside every loop.
 
-## 10. The desktop as a research instrument
+## 11. The desktop as a research instrument
 
 O:I is a research programme: hold model capacity, vary the surrounding
 arrangement, observe what changes in the resulting agency
@@ -285,7 +330,7 @@ environment that hides its variables cannot run experiments. Quiet by default,
 inspectable on demand, honest about absence and degradation — these are research
 requirements, not aesthetic preferences.
 
-## 11. What success means
+## 12. What success means
 
 The Cradle succeeds when the everyday loop is real: **write something; bring
 Agency to it; let that Agency inhabit as much of the Worlds as it legitimately
