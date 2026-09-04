@@ -846,8 +846,16 @@ impl CentralWorldClient {
                 "actor_kind": actor_kind,
             }),
         )?;
-        let receipt: CentralWorldSourceWriteReceipt = serde_json::from_value(data)
-            .map_err(|error| format!("decode Central World source write receipt: {error}"))?;
+        // Central serves the receipt nested in its Action envelope —
+        // `data.receipt`, beside the Action-level zero-background-Agent
+        // disclosure — so the receipt is unwrapped from the envelope the owner
+        // actually serves (a flat receipt still decodes).
+        let receipt: CentralWorldSourceWriteReceipt = serde_json::from_value(
+            data.get("receipt")
+                .cloned()
+                .unwrap_or_else(|| data.clone()),
+        )
+        .map_err(|error| format!("decode Central World source write receipt: {error}"))?;
         if receipt.schema != "central.project-world-source-write-receipt/v1" {
             return Err(format!(
                 "unsupported Central World source write receipt schema `{}`",
@@ -1198,6 +1206,19 @@ pub struct WorldService {
     tree: Option<WorldTreeReading>,
 }
 
+/// The project identity of a World-tree node ref (`world:project:<id>`) as
+/// the given Projection discloses it — `None` when the Projection holds no
+/// such node. This lookup is the one place a World ref becomes an owner
+/// project id (02 §9.3): resolution runs against a composed Projection, never
+/// against the ref string alone.
+fn project_id_in(tree: &WorldTreeReading, ref_id: &str) -> Option<String> {
+    let node = tree.root.as_ref()?.find(ref_id)?;
+    node.world
+        .ref_id()
+        .strip_prefix(PROJECT_WORLD_PREFIX)
+        .map(str::to_owned)
+}
+
 impl WorldService {
     /// Discover the Central owner-Action client from the desktop's
     /// environment. An undiscoverable client is not an error: absence of the
@@ -1229,14 +1250,51 @@ impl WorldService {
         self.client.as_ref()
     }
 
+    /// The project identity Central's Actions are addressed with for the given
+    /// focus spelling (02 §7 co-reference).
+    ///
+    /// The current Project relation names a World node (`world:project:<id>`)
+    /// while Central's owner Actions address the owner's own project id; the
+    /// two vocabularies are reconciled through a composed Projection
+    /// (`project_id_of`), never by parsing the ref at a distance (02 §9.3).
+    /// A relation the Projection does not disclose resolves to nothing: the
+    /// read or write is then honestly unserved rather than addressed with a
+    /// World ref the owner cannot know, or silently re-addressed to some other
+    /// project. An argument that is already the owner's spelling (as the
+    /// configured project query or a caller holding an id provides) travels as
+    /// it stands.
+    fn central_project_id_in(
+        &self,
+        projection: Option<&WorldTreeReading>,
+        focused_project: &str,
+    ) -> Option<String> {
+        projection
+            .and_then(|tree| project_id_in(tree, focused_project))
+            .or_else(|| {
+                (!focused_project.starts_with(PROJECT_WORLD_PREFIX))
+                    .then(|| focused_project.to_owned())
+            })
+    }
+
+    /// The same reconciliation against the Projection this service last
+    /// composed.
+    fn central_project_id(&self, focused_project: &str) -> Option<String> {
+        self.central_project_id_in(self.tree.as_ref(), focused_project)
+    }
+
     /// Which project a source read or write is addressed with (02 §7
     /// co-reference): the current Project relation when focus carries one,
     /// else the project query the host configured — and never a guess parsed
     /// out of the source ref.
     fn address_project(&self, focused_project: Option<&str>) -> Option<String> {
-        focused_project
-            .map(str::to_owned)
-            .or_else(|| self.client.as_ref().and_then(|c| c.configured_project()).map(str::to_owned))
+        match focused_project {
+            Some(focused) => self.central_project_id(focused),
+            None => self
+                .client
+                .as_ref()
+                .and_then(|client| client.configured_project())
+                .map(str::to_owned),
+        }
     }
 
     /// The project identity of a World-tree node ref (`world:project:<id>`),
@@ -1247,12 +1305,7 @@ impl WorldService {
     /// re-owns another's nouns; focus.rs: relations are bound by the kernel
     /// service that resolves Worlds, never inferred).
     pub fn project_id_of(&self, ref_id: &str) -> Option<String> {
-        let tree = self.tree.as_ref()?;
-        let node = tree.root.as_ref()?.find(ref_id)?;
-        node.world
-            .ref_id()
-            .strip_prefix(PROJECT_WORLD_PREFIX)
-            .map(str::to_owned)
+        project_id_in(self.tree.as_ref()?, ref_id)
     }
 
     /// The current Project relation opening `subject` binds: the project World
@@ -1312,14 +1365,31 @@ impl WorldService {
                 .warnings
                 .push(format!("Central work.list unavailable: {error}")),
         }
+        // The bound Project relation is reconciled to the owner's project id
+        // through the Projection being composed (02 §7, 02 §9.3) — the same
+        // resolution a source read or write is addressed with. A relation the
+        // Projection does not disclose inspects nothing, and says so.
+        let focused_project = focused_project.and_then(|focused| {
+            self.central_project_id_in(Some(&reading), focused)
+                .or_else(|| {
+                reading.warnings.push(format!(
+                    "the bound Project relation `{focused}` is not a project the composed \
+                     Projection discloses; per-project ground was not inspected"
+                ));
+                None
+            })
+        });
         if let Some(project) = focused_project {
-            match client.ground_inspect(project) {
+            match client.ground_inspect(&project) {
                 Ok(inspection) => {
-                    let project_id = inspection
-                        .project_id
-                        .clone()
-                        .unwrap_or_else(|| project.to_owned());
-                    reading = reading.with_project_ground(&project_id, &inspection);
+                    // The ground attaches to the node the inspection was asked
+                    // about — the project the bound relation resolved to. The
+                    // owner's own `project_id` inside the answer is its
+                    // declared identity and is carried verbatim in the ground
+                    // reading; it is not the address the owner answers on (the
+                    // work-list spelling this tree's nodes are minted from),
+                    // so it does not select the node.
+                    reading = reading.with_project_ground(&project, &inspection);
                 }
                 Err(error) => reading
                     .warnings
@@ -1981,8 +2051,9 @@ mod tests {
     }
 
     /// A fixture `ctrl` executable that answers the named owner Actions with
-    /// the given JSON bodies, and logs every action it was asked to run so a
-    /// test can assert which owner calls did *not* happen. Passed no
+    /// the given JSON bodies, and logs every action it was asked to run —
+    /// `$4` (the action) and `$5` (the JSON input) — so a test can assert
+    /// which owner calls did *not* happen, and with which address. Passed no
     /// `--root`, so `$4` is the action name — the same layout the Flow
     /// client's fixture test uses.
     #[cfg(unix)]
@@ -1997,7 +2068,7 @@ mod tests {
         let staging = root.join("ctrl-fixture.staging");
         let argv_log = root.join("actions.log");
         let mut script = format!(
-            "#!/bin/sh\nprintf '%s\\n' \"$4\" >> '{}'\ncase \"$4\" in\n",
+            "#!/bin/sh\nprintf '%s %s\\n' \"$4\" \"$5\" >> '{}'\ncase \"$4\" in\n",
             argv_log.display()
         );
         for (index, (action, response)) in responses.iter().enumerate() {
@@ -2175,10 +2246,159 @@ mod tests {
         fs::remove_dir_all(root).unwrap();
     }
 
+    /// Pinned (v1 integration walk, live against a real Central): the current
+    /// Project relation is a World ref (`world:project:o-i`), while Central's
+    /// owner Actions address the owner's own project id (`o-i`). The two are
+    /// reconciled through the composed Projection — and a relation the
+    /// Projection does not disclose addresses nothing, rather than travelling
+    /// to the owner as a World ref it cannot resolve.
+    #[cfg(unix)]
+    #[test]
+    fn the_project_relation_resolves_through_the_projection_before_it_addresses_the_owner() {
+        let source_ref = || SemanticRef {
+            ref_id: "project:o-i:ProjectCentral%2Fuser".to_owned(),
+            kind: "file".to_owned(),
+            native_owner: WORLD_NATIVE_OWNER.to_owned(),
+            provenance: crate::RefProvenance {
+                source: "world tree".to_owned(),
+                revision: None,
+            },
+        };
+        let (root, executable, argv_log) = fixture_ctrl(&[
+            ("work.list", WORK_LIST_RESPONSE.to_owned()),
+            ("projectcentral.ground.inspect", GROUND_RESPONSE.to_owned()),
+            ("projectcentral.source.read", SOURCE_READ_RESPONSE.to_owned()),
+        ]);
+        let client = CentralWorldClient::with(executable, None, None);
+        let mut service = WorldService::with_client(Some(client));
+
+        // The relation, spelled the way focus holds it, enriches the tree it
+        // names: the inspection is asked with `o-i`, not with the World ref.
+        let tree = service.read_tree(
+            Some(&recognition()),
+            Some("/central"),
+            Some("world:project:o-i"),
+        );
+        assert!(tree.warnings.is_empty(), "the relation resolved: {:?}", tree.warnings);
+        assert!(
+            tree.root
+                .as_ref()
+                .unwrap()
+                .find("world:project:o-i")
+                .unwrap()
+                .wiki
+                .is_some(),
+            "the ground the owner served for `o-i` reached the node it names"
+        );
+
+        let reading = service.open_subject(source_ref(), Some("world:project:o-i"));
+        assert_eq!(reading.provider.class, ProviderClass::LiveProvider);
+
+        // A relation the Projection does not disclose addresses nothing: the
+        // read is honestly unserved, and no owner call carried a World ref.
+        let ghost = service.open_subject(source_ref(), Some("world:project:ghost"));
+        assert_eq!(
+            ghost.unserved_reason,
+            Some(UnservedReason::NoProjectRelation),
+            "an unresolved relation serves nothing: {:?}",
+            ghost.warnings
+        );
+        let write = service.save_subject(
+            "project:o-i:ProjectCentral%2Fuser",
+            "r7",
+            "next",
+            "human:desktop",
+            Some("world:project:ghost"),
+        );
+        match write {
+            Err(WorldSourceError::Owner(message)) => {
+                assert!(message.contains("no current Project relation"))
+            }
+            other => panic!("an unresolved relation writes nothing, got {other:?}"),
+        }
+        // And the tree read with such a relation discloses why it is unenriched.
+        let tree = service.read_tree(
+            Some(&recognition()),
+            Some("/central"),
+            Some("world:project:ghost"),
+        );
+        assert!(
+            tree.warnings
+                .iter()
+                .any(|warning| warning.contains("world:project:ghost")
+                    && warning.contains("not a project the composed Projection discloses")),
+            "the unresolved relation is disclosed: {:?}",
+            tree.warnings
+        );
+
+        let logged = fs::read_to_string(&argv_log).unwrap();
+        assert!(
+            !logged.contains("world:project:"),
+            "a World ref never travels to the owner as a project: {logged}"
+        );
+        assert_eq!(
+            logged.lines().filter(|line| line.contains("source.read")).count(),
+            1,
+            "the unresolved read never reached the owner: {logged}"
+        );
+        assert_eq!(
+            logged
+                .lines()
+                .filter(|line| line.contains("ground.inspect"))
+                .count(),
+            1,
+            "only the resolved relation inspected ground: {logged}"
+        );
+        assert!(
+            !logged.contains("source.write"),
+            "the unresolved write never reached the owner: {logged}"
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    /// Pinned (v1 integration walk, live against a real Central): the owner
+    /// addresses ground by its work-list spelling (`o-i`) and answers with its
+    /// own declared `project_id` (`example/o-i`) — two vocabularies. The
+    /// declared identity is never the attachment key: the ground lands on the
+    /// node the inspection was asked about, and the owner's declared source
+    /// refs travel verbatim.
+    #[cfg(unix)]
+    #[test]
+    fn a_ground_reaches_the_node_it_was_asked_about_even_when_the_owner_declares_another_id() {
+        let ground = GROUND_RESPONSE.replace("\"project_id\":\"o-i\"", "\"project_id\":\"example/o-i\"");
+        let (root, executable, _argv_log) = fixture_ctrl(&[
+            ("work.list", WORK_LIST_RESPONSE.to_owned()),
+            ("projectcentral.ground.inspect", ground),
+        ]);
+        let client = CentralWorldClient::with(executable, None, None);
+        let mut service = WorldService::with_client(Some(client));
+
+        let tree = service.read_tree(
+            Some(&recognition()),
+            Some("/central"),
+            Some("world:project:o-i"),
+        );
+        assert!(tree.warnings.is_empty(), "the ground attaches: {:?}", tree.warnings);
+        let project = tree.root.as_ref().unwrap().find("world:project:o-i").unwrap();
+        assert_eq!(
+            project.wiki.as_ref().expect("the Wiki attached").wiki_ref.as_deref(),
+            Some("okf-wiki:project:o-i")
+        );
+        assert_eq!(
+            project.sources[0].source_ref,
+            "project:o-i:ProjectCentral%2Fuser",
+            "the owner's declared source identity is preserved verbatim"
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
+
     #[cfg(unix)]
     #[test]
     fn a_source_write_emits_source_changed_only_when_central_recorded_a_change() {
-        let write = r#"{"ok":true,"data":{"schema":"central.project-world-source-write-receipt/v1","world_ref":"project:o-i","source":{"ref":"project:o-i:ProjectCentral%2Fuser","path":"ProjectCentral/user","roles":[],"provenance":"human-authored","standing":"authoritative","treatment":"projectcentral-user","agent_retrieval_allowed":true},"previous_revision":"r7","revision":{"revision":"r8","byte_len":5},"changed":true,"change_ref":"change:1","actor":"human:desktop","actor_kind":"human","agent_session_ref":null,"automatic_agent_or_model_invocation":false}}"#;
+        // The envelope Central's `projectcentral.source.write` actually serves:
+        // the receipt nested in the Action's `data` (pinned by the v1
+        // integration walk — see `CentralWorldClient::source_write`).
+        let write = r#"{"ok":true,"data":{"receipt":{"schema":"central.project-world-source-write-receipt/v1","world_ref":"project:o-i","source":{"ref":"project:o-i:ProjectCentral%2Fuser","path":"ProjectCentral/user","roles":[],"provenance":"human-authored","standing":"authoritative","treatment":"projectcentral-user","agent_retrieval_allowed":true},"previous_revision":"r7","revision":{"revision":"r8","byte_len":5},"changed":true,"change_ref":"change:1","actor":"human:desktop","actor_kind":"human","agent_session_ref":null,"automatic_agent_or_model_invocation":false},"automatic_agent_or_model_invocation":false}}"#;
         let unchanged = write.replace("\"changed\":true", "\"changed\":false").replace("\"revision\":\"r8\"", "\"revision\":\"r7\"");
         let (root, executable, _argv_log) = fixture_ctrl(&[
             ("projectcentral.source.write", write.to_owned()),

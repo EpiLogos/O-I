@@ -30,17 +30,24 @@ const GROUND_BODY: &str = r#"{"ok":true,"data":{"project_root":"/central/Work/o-
 
 const SOURCE_READ_BODY: &str = r#"{"ok":true,"data":{"schema":"central.project-world-source-reading/v1","world_ref":"project:o-i","source":{"ref":"project:o-i:ProjectCentral%2Fuser","path":"ProjectCentral/user","roles":["project-human-source-aperture"],"provenance":"human-authored","standing":"authoritative","treatment":"projectcentral-user","agent_retrieval_allowed":true},"revision":{"revision":"r7","byte_len":12},"content":"hello ground","content_encoding":"utf-8","automatic_agent_or_model_invocation":false}}"#;
 
-const SOURCE_WRITE_CHANGED_BODY: &str = r#"{"ok":true,"data":{"schema":"central.project-world-source-write-receipt/v1","world_ref":"project:o-i","source":{"ref":"project:o-i:ProjectCentral%2Fuser","path":"ProjectCentral/user","roles":[],"provenance":"human-authored","standing":"authoritative","treatment":"projectcentral-user","agent_retrieval_allowed":true},"previous_revision":"r7","revision":{"revision":"r8","byte_len":5},"changed":true,"change_ref":"change:1","actor":"human:desktop","actor_kind":"human","agent_session_ref":null,"automatic_agent_or_model_invocation":false}}"#;
+/// The write receipt, in the envelope Central's `projectcentral.source.write`
+/// actually serves: the receipt nested in the Action's `data`, beside the
+/// Action-level zero-background-Agent disclosure. Pinned by the v1
+/// integration walk — a flat `data` receipt was assumed before, and a live
+/// write decoded as a decode failure and surfaced as a false revision
+/// conflict.
+const SOURCE_WRITE_CHANGED_BODY: &str = r#"{"ok":true,"data":{"receipt":{"schema":"central.project-world-source-write-receipt/v1","world_ref":"project:o-i","source":{"ref":"project:o-i:ProjectCentral%2Fuser","path":"ProjectCentral/user","roles":[],"provenance":"human-authored","standing":"authoritative","treatment":"projectcentral-user","agent_retrieval_allowed":true},"previous_revision":"r7","revision":{"revision":"r8","byte_len":5},"changed":true,"change_ref":"change:1","actor":"human:desktop","actor_kind":"human","agent_session_ref":null,"automatic_agent_or_model_invocation":false},"automatic_agent_or_model_invocation":false}}"#;
 
-const SOURCE_WRITE_UNCHANGED_BODY: &str = r#"{"ok":true,"data":{"schema":"central.project-world-source-write-receipt/v1","world_ref":"project:o-i","source":{"ref":"project:o-i:ProjectCentral%2Fuser","path":"ProjectCentral/user","roles":[],"provenance":"human-authored","standing":"authoritative","treatment":"projectcentral-user","agent_retrieval_allowed":true},"previous_revision":"r7","revision":{"revision":"r7","byte_len":5},"changed":false,"change_ref":null,"actor":"human:desktop","actor_kind":"human","agent_session_ref":null,"automatic_agent_or_model_invocation":false}}"#;
+const SOURCE_WRITE_UNCHANGED_BODY: &str = r#"{"ok":true,"data":{"receipt":{"schema":"central.project-world-source-write-receipt/v1","world_ref":"project:o-i","source":{"ref":"project:o-i:ProjectCentral%2Fuser","path":"ProjectCentral/user","roles":[],"provenance":"human-authored","standing":"authoritative","treatment":"projectcentral-user","agent_retrieval_allowed":true},"previous_revision":"r7","revision":{"revision":"r7","byte_len":5},"changed":false,"change_ref":null,"actor":"human:desktop","actor_kind":"human","agent_session_ref":null,"automatic_agent_or_model_invocation":false},"automatic_agent_or_model_invocation":false}}"#;
 
 const SOURCE_WRITE_REFUSED_BODY: &str = r#"{"ok":false,"error":{"action":"projectcentral.source.write","status":"unavailable_capability","message":"source is authored human ground; agent-session writes propose rather than write"}}"#;
 
 const WORLD_SOURCE_REF: &str = "project:o-i:ProjectCentral%2Fuser";
 
 /// A fixture `ctrl` that answers the named owner Actions with JSON bodies and
-/// logs every action it was asked to run, so a test can assert which owner
-/// calls did *not* happen. No `--root` is passed, so `$4` is the action name.
+/// logs every action it was asked to run — `$4` (the action) and `$5` (the
+/// JSON input) — so a test can assert which owner calls did *not* happen, and
+/// with which address. No `--root` is passed, so `$4` is the action name.
 fn fixture_ctrl(responses: &[(&str, &str)]) -> (std::path::PathBuf, std::path::PathBuf, std::path::PathBuf) {
     let nonce = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -52,7 +59,7 @@ fn fixture_ctrl(responses: &[(&str, &str)]) -> (std::path::PathBuf, std::path::P
     let staging = root.join("ctrl-fixture.staging");
     let argv_log = root.join("actions.log");
     let mut script = format!(
-        "#!/bin/sh\nprintf '%s\\n' \"$4\" >> '{}'\ncase \"$4\" in\n",
+        "#!/bin/sh\nprintf '%s %s\\n' \"$4\" \"$5\" >> '{}'\ncase \"$4\" in\n",
         argv_log.display()
     );
     for (index, (action, body)) in responses.iter().enumerate() {
@@ -611,6 +618,98 @@ fn open_project_world(host: &mut DesktopHost) {
         },
     )
     .unwrap();
+}
+
+/// Pinned (v1 integration walk, live against a real Central): focus holds the
+/// Project relation as a World ref (`world:project:o-i`), while Central's
+/// owner Actions address the owner's own project id (`o-i`). Every seam the
+/// desktop drives — tree ground inspection, source read, source write — is
+/// asked with the owner's spelling, because the relation is reconciled through
+/// the composed Projection. Before the fix the World ref travelled verbatim
+/// and the real owner refused it ("Project root does not exist as a directory:
+/// …/Work/world:project:o-i"), which the fixtures here never caught because
+/// they answer any address.
+#[test]
+fn the_owner_is_addressed_with_its_project_id_never_the_world_ref() {
+    let ground = ground_dir("addressing");
+    let (fixture_root, executable, argv_log) = fixture_ctrl(&[
+        ("work.list", WORK_LIST_BODY),
+        ("projectcentral.ground.inspect", GROUND_BODY),
+        ("projectcentral.source.read", SOURCE_READ_BODY),
+        ("projectcentral.source.write", SOURCE_WRITE_CHANGED_BODY),
+    ]);
+    let mut host = with_env(
+        &[
+            ("OI_HOME", ground.join("oi-state").into_os_string()),
+            ("OI_CENTRAL_CTRL_BIN", executable.into_os_string()),
+        ],
+        || {
+            let mut disclosure = disclosure(&[NativeSurfaceState::Registered]);
+            disclosure.personal_ground = Some(ground.display().to_string());
+            DesktopHost::new(disclosure)
+        },
+    );
+
+    // The relation binds exactly the way the running app binds it: opening the
+    // project World node, which resolves through the Projection and then moves
+    // focus. `open_subject` composes the tree first (unfocused, so no ground
+    // inspection yet), then binds.
+    open_project_world(&mut host);
+    assert_eq!(
+        host.focus().project_ref().unwrap().ref_id,
+        "world:project:o-i",
+        "the relation stands as the World ref focus holds"
+    );
+
+    // The tree read the bound relation drives reaches the owner as `o-i`.
+    let tree = host.world_tree(BridgeCaller::ShellUi).unwrap();
+    assert!(tree.warnings.is_empty(), "the seam answered: {:?}", tree.warnings);
+    assert!(
+        tree.root
+            .as_ref()
+            .unwrap()
+            .find("world:project:o-i")
+            .unwrap()
+            .wiki
+            .is_some(),
+        "the inspection served the project the relation names"
+    );
+
+    // The source open and save of that project are addressed the same way.
+    let opened = host
+        .open_subject(BridgeCaller::ShellUi, world_source_subject())
+        .unwrap();
+    assert_eq!(opened.reading.provider.class, ProviderClass::LiveProvider);
+    host.save_subject(
+        BridgeCaller::ShellUi,
+        WORLD_SOURCE_REF,
+        "r7",
+        "the person's next words",
+        "human:desktop",
+    )
+    .expect("Central accepted the write");
+
+    let logged = fs::read_to_string(&argv_log).unwrap();
+    assert!(
+        !logged.contains("world:project:"),
+        "a World ref never travels to the owner as a project: {logged}"
+    );
+    for action in [
+        "projectcentral.ground.inspect",
+        "projectcentral.source.read",
+        "projectcentral.source.write",
+    ] {
+        assert!(
+            logged
+                .lines()
+                .any(|line| line.starts_with(action)
+                    && line.contains("\"project\":\"o-i\"")),
+            "{action} was asked with the owner's project id: {logged}"
+        );
+    }
+
+    fs::remove_dir_all(fixture_root).unwrap();
+    fs::remove_dir_all(ground).unwrap();
 }
 
 #[test]
