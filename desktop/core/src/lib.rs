@@ -97,15 +97,16 @@ pub use project_field::{
 };
 pub use project_knowledge::{FlowAuthoredRelationsReading, LocalProjectKnowledge};
 pub use shell::{
-    DesktopHost, RefProvenance, SelectionError, SemanticRef, ShellDestination, ShellSnapshot,
-    SubjectOpenError, SuiteCondition,
+    DesktopHost, ReconcileError, RefProvenance, SelectionError, SemanticRef, ShellDestination,
+    ShellSnapshot, SubjectOpenError, SuiteCondition,
 };
 pub use world::{
     personal_world_ref, project_world_ref, CentralGroundInspection, CentralGroundSource,
     CentralSourceRevision, CentralWorkItem, CentralWorkList, CentralWorldClient,
     CentralWorldSourceReading, CentralWorldSourceWriteReceipt, CompositionConstituent,
     CompositionReading, GroundIdentity, PresenceState, ProviderClass, ProviderReading,
-    SourceAccess, SourceTreatment, SubjectReading, WorldNode, WorldService, WorldSource,
-    WorldSourceError, WorldTreeReading, WorldWiki, COMPOSITION_READING_SCHEMA, PERSONAL_WORLD_REF,
-    PROJECT_WORLD_PREFIX, SUBJECT_READING_SCHEMA, WORLD_TREE_SCHEMA, WIKI_PROFILE,
+    SourceAccess, SourceTreatment, SubjectOpen, SubjectReading, WorldNode, WorldService,
+    WorldSource, WorldSourceError, WorldTreeReading, WorldWiki, COMPOSITION_READING_SCHEMA,
+    PERSONAL_WORLD_REF, PROJECT_WORLD_PREFIX, SUBJECT_READING_SCHEMA, WORLD_TREE_SCHEMA,
+    WIKI_PROFILE,
 };

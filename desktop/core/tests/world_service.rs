@@ -38,9 +38,10 @@ const SOURCE_WRITE_REFUSED_BODY: &str = r#"{"ok":false,"error":{"action":"projec
 
 const WORLD_SOURCE_REF: &str = "project:o-i:ProjectCentral%2Fuser";
 
-/// A fixture `ctrl` that answers the named owner Actions with JSON bodies. No
-/// `--root` is passed, so `$4` is the action name.
-fn fixture_ctrl(responses: &[(&str, &str)]) -> (std::path::PathBuf, std::path::PathBuf) {
+/// A fixture `ctrl` that answers the named owner Actions with JSON bodies and
+/// logs every action it was asked to run, so a test can assert which owner
+/// calls did *not* happen. No `--root` is passed, so `$4` is the action name.
+fn fixture_ctrl(responses: &[(&str, &str)]) -> (std::path::PathBuf, std::path::PathBuf, std::path::PathBuf) {
     let nonce = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
@@ -49,7 +50,11 @@ fn fixture_ctrl(responses: &[(&str, &str)]) -> (std::path::PathBuf, std::path::P
     fs::create_dir_all(&root).unwrap();
     let executable = root.join("ctrl-fixture");
     let staging = root.join("ctrl-fixture.staging");
-    let mut script = String::from("#!/bin/sh\ncase \"$4\" in\n");
+    let argv_log = root.join("actions.log");
+    let mut script = format!(
+        "#!/bin/sh\nprintf '%s\\n' \"$4\" >> '{}'\ncase \"$4\" in\n",
+        argv_log.display()
+    );
     for (index, (action, body)) in responses.iter().enumerate() {
         script.push_str(&format!(
             "  {action})\n    cat <<'BODY{index}'\n{body}\nBODY{index}\n    ;;\n"
@@ -61,7 +66,7 @@ fn fixture_ctrl(responses: &[(&str, &str)]) -> (std::path::PathBuf, std::path::P
     permissions.set_mode(0o755);
     fs::set_permissions(&staging, permissions).unwrap();
     fs::rename(&staging, &executable).unwrap();
-    (root, executable)
+    (root, executable, argv_log)
 }
 
 fn with_env(vars: &[(&str, OsString)], build: impl FnOnce() -> DesktopHost) -> DesktopHost {
@@ -168,7 +173,7 @@ fn world_source_subject() -> SemanticRef {
 #[test]
 fn the_world_tree_reading_is_a_projection_with_distinct_selection_facts() {
     let ground = ground_dir("tree");
-    let (fixture_root, executable) = fixture_ctrl(&[
+    let (fixture_root, executable, _argv_log) = fixture_ctrl(&[
         ("work.list", WORK_LIST_BODY),
         ("projectcentral.ground.inspect", GROUND_BODY),
     ]);
@@ -289,7 +294,7 @@ fn the_tree_degrades_locally_when_central_does_not_answer() {
 #[test]
 fn opening_a_subject_selects_it_reads_it_and_never_projects_its_root() {
     let ground = ground_dir("open");
-    let (_, executable) = fixture_ctrl(&[
+    let (_, executable, _argv_log) = fixture_ctrl(&[
         ("work.list", WORK_LIST_BODY),
         ("projectcentral.ground.inspect", GROUND_BODY),
         ("projectcentral.source.read", SOURCE_READ_BODY),
@@ -297,7 +302,7 @@ fn opening_a_subject_selects_it_reads_it_and_never_projects_its_root() {
     let mut host = with_env(
         &[
             ("OI_HOME", ground.join("oi-state").into_os_string()),
-            ("OI_CENTRAL_CTRL_BIN", executable.into_os_string()),
+            ("OI_CENTRAL_CTRL_BIN", executable.clone().into_os_string()),
         ],
         || {
             let mut disclosure = disclosure(&[NativeSurfaceState::Registered]);
@@ -308,36 +313,71 @@ fn opening_a_subject_selects_it_reads_it_and_never_projects_its_root() {
 
     // The project World node is opened first: it binds the current Project
     // relation resolved through the tree, and becomes the one focus.
-    let opened = host
-        .open_subject(
-            BridgeCaller::ShellUi,
-            SemanticRef {
-                ref_id: "world:project:o-i".to_owned(),
-                kind: "project".to_owned(),
-                native_owner: "central".to_owned(),
-                provenance: oi_desktop_core::RefProvenance {
-                    source: "world tree".to_owned(),
-                    revision: None,
-                },
-            },
-        )
-        .unwrap();
-    assert_eq!(opened.focus_event.expect("the relation moved").tag(), "focus_changed");
+    let project_ref = || SemanticRef {
+        ref_id: "world:project:o-i".to_owned(),
+        kind: "project".to_owned(),
+        native_owner: "central".to_owned(),
+        provenance: oi_desktop_core::RefProvenance {
+            source: "world tree".to_owned(),
+            revision: None,
+        },
+    };
+
+    // Pinned (K2 fix round 1, F-I2): `select` alone never binds a Project
+    // relation, so the subject can be the one current focus while its project
+    // is unbound. Opening it then must still emit the bind — the mutation is
+    // not swallowed by an unchanged selection.
+    host.select(BridgeCaller::ShellUi, project_ref()).unwrap();
+    assert!(host.focus().project_ref().is_none(), "select never binds a project");
+    let reopened = host.open_subject(BridgeCaller::ShellUi, project_ref()).unwrap();
     assert_eq!(
-        host.focus().project_ref().unwrap().ref_id,
-        "world:project:o-i",
-        "the Project relation is kernel state, resolved through the Projection"
+        reopened.events.len(),
+        1,
+        "the project bind emits even though the selection changed nothing: {:?}",
+        reopened.events
+    );
+    assert_eq!(host.focus().project_ref().unwrap().ref_id, "world:project:o-i");
+    // A node is disclosed as a node: no source facts are fabricated for it
+    // and no owner source read is made (K2 fix round 1, F-I3).
+    assert!(reopened.reading.source.is_none() && reopened.reading.content.is_none());
+    assert!(
+        reopened
+            .reading
+            .warnings
+            .iter()
+            .any(|warning| warning.contains("not a source")),
+        "{:?}",
+        reopened.reading.warnings
     );
 
+    // A fresh host that opens the node with nothing focused emits the bind
+    // *and* the selection — two focus mutations, two events.
+    let mut host = with_env(
+        &[
+            ("OI_HOME", ground.join("oi-state").into_os_string()),
+            (
+                "OI_CENTRAL_CTRL_BIN",
+                executable.into_os_string(),
+            ),
+        ],
+        || {
+            let mut disclosure = disclosure(&[NativeSurfaceState::Registered]);
+            disclosure.personal_ground = Some(ground.display().to_string());
+            DesktopHost::new(disclosure)
+        },
+    );
+    let opened = host.open_subject(BridgeCaller::ShellUi, project_ref()).unwrap();
+    assert_eq!(opened.events.len(), 2, "the bind and the selection each emit");
+    assert!(opened.events.iter().all(|event| event.tag() == "focus_changed"));
+
     // Opening one source of that project selects that source — and nothing
-    // else. The root is not projected, no other node is selected.
+    // else. The project relation already stands, so the selection alone
+    // emits. The root is not projected, no other node is selected.
     let opened = host
         .open_subject(BridgeCaller::ShellUi, world_source_subject())
         .unwrap();
-    assert_eq!(
-        opened.focus_event.expect("the focus moved").tag(),
-        "focus_changed"
-    );
+    assert_eq!(opened.events.len(), 1, "the selection alone moved");
+    assert_eq!(opened.events[0].tag(), "focus_changed");
     let reading = opened.reading;
     assert_eq!(reading.provider.class, ProviderClass::LiveProvider);
     assert_eq!(reading.content.as_deref(), Some("hello ground"));
@@ -385,7 +425,7 @@ fn opening_a_subject_selects_it_reads_it_and_never_projects_its_root() {
 #[test]
 fn a_world_source_write_goes_through_central_and_emits_source_changed_only_on_change() {
     let ground = ground_dir("write");
-    let (fixture_root, executable) = fixture_ctrl(&[
+    let (fixture_root, executable, _argv_log) = fixture_ctrl(&[
         ("work.list", WORK_LIST_BODY),
         ("projectcentral.ground.inspect", GROUND_BODY),
         ("projectcentral.source.read", SOURCE_READ_BODY),
@@ -451,7 +491,7 @@ fn a_world_source_write_goes_through_central_and_emits_source_changed_only_on_ch
 #[test]
 fn a_write_that_changes_nothing_emits_nothing() {
     let ground = ground_dir("unchanged");
-    let (fixture_root, unchanged_ctrl) = fixture_ctrl(&[
+    let (fixture_root, unchanged_ctrl, _argv_log) = fixture_ctrl(&[
         ("work.list", WORK_LIST_BODY),
         ("projectcentral.ground.inspect", GROUND_BODY),
         ("projectcentral.source.read", SOURCE_READ_BODY),
@@ -490,7 +530,7 @@ fn a_conflict_is_settled_by_revision_and_an_owner_refusal_is_returned_as_it_stan
     let ground = ground_dir("conflict");
     let moved = SOURCE_READ_BODY.replace("\"revision\":\"r7\"", "\"revision\":\"r9\"");
     let refused_write = r#"{"ok":false,"error":{"action":"projectcentral.source.write","status":"invalid_input","message":"World source revision conflict: expected r7, current r9"}}"#;
-    let (fixture_root, conflict_ctrl) = fixture_ctrl(&[
+    let (fixture_root, conflict_ctrl, _argv_log) = fixture_ctrl(&[
         ("work.list", WORK_LIST_BODY),
         ("projectcentral.ground.inspect", GROUND_BODY),
         ("projectcentral.source.read", moved.as_str()),
@@ -526,7 +566,7 @@ fn a_conflict_is_settled_by_revision_and_an_owner_refusal_is_returned_as_it_stan
 
     // A refusal that is not a conflict comes back as the owner stated it.
     let ground = ground_dir("refusal");
-    let (fixture_root, refused_ctrl) = fixture_ctrl(&[
+    let (fixture_root, refused_ctrl, _argv_log) = fixture_ctrl(&[
         ("work.list", WORK_LIST_BODY),
         ("projectcentral.ground.inspect", GROUND_BODY),
         ("projectcentral.source.read", SOURCE_READ_BODY),

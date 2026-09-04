@@ -962,11 +962,13 @@ impl SubjectReading {
     }
 }
 
-/// What `open subject` produced: the event the focus mutation produced, if the
-/// one relation moved, and the subject's reading at its honest provider class.
+/// What `open subject` produced: every focus event the operation's mutations
+/// produced, in emission order (the Project-relation bind and then the
+/// selection, each of which emits when it changes), and the subject's reading
+/// at its honest provider class.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SubjectOpen {
-    pub focus_event: Option<KernelEvent>,
+    pub events: Vec<KernelEvent>,
     pub reading: SubjectReading,
 }
 
@@ -1012,6 +1014,31 @@ pub struct CompositionReading {
     pub warnings: Vec<String>,
 }
 
+/// What one live owner-participation state means for presence (02 §10).
+///
+/// Classified against the **producer's own vocabulary** — no substring
+/// guessing. `cli/src/world_recognition.rs` emits exactly two state sets:
+/// the mux seam `not-installed | active | installed-running |
+/// installed-not-running`, and the client seam `not-installed |
+/// installed-unprojected | degraded | installed`. An installed-but-stopped
+/// server or an unprojected client is *not* present, and a state this kernel
+/// does not recognise degrades rather than fabricating presence.
+fn participation_presence(state: &str) -> (PresenceState, Option<String>) {
+    match state {
+        "active" | "installed-running" => (PresenceState::Present, None),
+        "installed" | "installed-not-running" | "installed-unprojected" | "degraded" => {
+            (PresenceState::Degraded, None)
+        }
+        "not-installed" => (PresenceState::Absent, None),
+        unrecognised => (
+            PresenceState::Degraded,
+            Some(format!(
+                "unrecognised owner-participation state `{unrecognised}`; degraded toward honesty, never fabricated presence"
+            )),
+        ),
+    }
+}
+
 impl CompositionReading {
     /// Compose the reading from what was observed.
     ///
@@ -1030,21 +1057,22 @@ impl CompositionReading {
 
         if let Some(recognition) = recognition {
             for participation in &recognition.owner_participations {
-                let degraded = participation.state.contains("degraded")
-                    || participation.state.contains("unavailable");
+                let (state, unrecognised) = participation_presence(&participation.state);
+                let mut detail = format!(
+                    "{} answered {} ({})",
+                    participation.owner, participation.contract, participation.state
+                );
+                if let Some(note) = unrecognised {
+                    warnings.push(format!("{} participation: {note}", participation.owner));
+                    detail.push_str("; ");
+                    detail.push_str(&note);
+                }
                 constituents.push(CompositionConstituent {
                     native_owner: participation.owner.clone(),
-                    state: if degraded {
-                        PresenceState::Degraded
-                    } else {
-                        PresenceState::Present
-                    },
+                    state,
                     provider_class: ProviderClass::LiveProvider,
                     capabilities: vec![participation.contract.clone()],
-                    detail: Some(format!(
-                        "{} answered {} ({})",
-                        participation.owner, participation.contract, participation.state
-                    )),
+                    detail: Some(detail),
                 });
             }
             for error in &recognition.provider_errors {
@@ -1286,6 +1314,13 @@ impl WorldService {
     /// routes by native owner (02 §9.3) and addresses Central with the
     /// current Project relation (02 §7).
     ///
+    /// A subject that is a node of the composed World tree — `world:personal`
+    /// or a `world:project:<id>` — is disclosed **as a node** (its ground
+    /// identity, Wiki and treatment reading, served by whatever served the
+    /// tree) and is never sent to the owner as a source read: a tree node is
+    /// not a source, and asking Central to read it as one would be a bogus
+    /// owner call.
+    ///
     /// A reading is a disclosure, not a selection: `access.selected` stays
     /// omitted here, and the kernel operation that also moves the one focus
     /// relation is what makes the subject selected (02 §5 `open subject`).
@@ -1303,6 +1338,28 @@ impl WorldService {
                     "no owner adapter serves `{native_owner}` subjects; the desktop does not interpret another owner's refs"
                 ),
             );
+        }
+        if let Some(node) = self
+            .tree
+            .as_ref()
+            .and_then(|tree| tree.root.as_ref())
+            .and_then(|root| root.find(&subject.ref_id))
+        {
+            let mut reading = SubjectReading {
+                schema: SUBJECT_READING_SCHEMA.to_owned(),
+                access: node.access,
+                source: None,
+                content: None,
+                revision: None,
+                provider: self.tree.as_ref().unwrap().provider.clone(),
+                warnings: Vec::new(),
+                subject,
+            };
+            reading.warnings.push(
+                "disclosed as a World node; a node is not a source, so no owner source read was made"
+                    .to_owned(),
+            );
+            return reading;
         }
         let project = match self.address_project(focused_project) {
             Some(project) => project,
@@ -1714,28 +1771,36 @@ mod tests {
         .unwrap()
     }
 
+    /// One live owner participation at the state the producer actually
+    /// emitted (`cli/src/world_recognition.rs`), for composition tests.
+    fn participation(owner: &str, contract: &str, state: &str) -> oi_cli::world_recognition::OwnerParticipation {
+        oi_cli::world_recognition::OwnerParticipation {
+            owner: owner.to_owned(),
+            native_system: oi_cli::world_recognition::NativeSystemObservation {
+                system_ref: "aikit".to_owned(),
+                kind: "working-environment".to_owned(),
+                name: owner.to_owned(),
+                version: None,
+                locator: None,
+                source_revision: None,
+            },
+            contract: contract.to_owned(),
+            state: state.to_owned(),
+            readiness: Default::default(),
+            canonical_ref: None,
+            provenance: Vec::new(),
+            faculties: Vec::new(),
+        }
+    }
+
     #[test]
     fn the_composition_reading_reports_presence_degradation_and_absence_as_observed() {
         let mut account = recognition();
-        account.owner_participations.push(
-            oi_cli::world_recognition::OwnerParticipation {
-                owner: "ai-kit".to_owned(),
-                native_system: oi_cli::world_recognition::NativeSystemObservation {
-                    system_ref: "aikit".to_owned(),
-                    kind: "working-environment".to_owned(),
-                    name: "AIKit".to_owned(),
-                    version: None,
-                    locator: None,
-                    source_revision: None,
-                },
-                contract: "aikit.mux/v1".to_owned(),
-                state: "present".to_owned(),
-                readiness: Default::default(),
-                canonical_ref: None,
-                provenance: Vec::new(),
-                faculties: Vec::new(),
-            },
-        );
+        account.owner_participations.push(participation(
+            "ai-kit",
+            "aikit.working-environment-provider/v1",
+            "installed-running",
+        ));
         let reading = CompositionReading::compose(
             Some(&account),
             &disclosure(&[NativeSurfaceState::Registered, NativeSurfaceState::Missing]),
@@ -1772,28 +1837,106 @@ mod tests {
         assert!(reading.warnings.iter().any(|warning| warning.contains("fixture")));
     }
 
+    /// Pinned (K2 fix round 1, F-C1): composition classifies the producer's
+    /// actual participation states explicitly. An installed-but-stopped
+    /// server, an unprojected client and an uninstalled mux are *not*
+    /// present, and a state no producer emits degrades instead of fabricating
+    /// presence (02 §10).
+    #[test]
+    fn every_producer_participation_state_maps_honestly() {
+        let present = ["active", "installed-running"];
+        let degraded = ["installed", "installed-not-running", "installed-unprojected", "degraded"];
+        let absent = ["not-installed"];
+
+        for state in present {
+            let mut account = recognition();
+            account
+                .owner_participations
+                .push(participation("ai-kit", "aikit.working-environment-provider/v1", state));
+            let reading = CompositionReading::compose(Some(&account), &disclosure(&[]), &[]);
+            let aikit = reading
+                .constituents
+                .iter()
+                .find(|constituent| constituent.native_owner == "ai-kit")
+                .unwrap();
+            assert_eq!(aikit.state, PresenceState::Present, "state `{state}`");
+            assert_eq!(aikit.provider_class, ProviderClass::LiveProvider);
+            assert!(aikit.provider_class.claims_live(), "state `{state}`");
+        }
+
+        for state in degraded {
+            let mut account = recognition();
+            account
+                .owner_participations
+                .push(participation("ai-kit", "aikit.client-adapter/v1", state));
+            let reading = CompositionReading::compose(Some(&account), &disclosure(&[]), &[]);
+            let aikit = reading
+                .constituents
+                .iter()
+                .find(|constituent| constituent.native_owner == "ai-kit")
+                .unwrap();
+            assert_eq!(aikit.state, PresenceState::Degraded, "state `{state}`");
+            assert!(
+                reading.warnings.is_empty(),
+                "a known state is not a warning: state `{state}`"
+            );
+        }
+
+        for state in absent {
+            let mut account = recognition();
+            account
+                .owner_participations
+                .push(participation("ai-kit", "aikit.working-environment-provider/v1", state));
+            let reading = CompositionReading::compose(Some(&account), &disclosure(&[]), &[]);
+            let aikit = reading
+                .constituents
+                .iter()
+                .find(|constituent| constituent.native_owner == "ai-kit")
+                .unwrap();
+            assert_eq!(aikit.state, PresenceState::Absent, "state `{state}`");
+        }
+
+        // A state no producer emits is degraded toward honesty, and the
+        // reading names the state it could not recognise.
+        let mut account = recognition();
+        account.owner_participations.push(participation(
+            "ai-kit",
+            "aikit.client-adapter/v1",
+            "warp-detected",
+        ));
+        let reading = CompositionReading::compose(Some(&account), &disclosure(&[]), &[]);
+        let aikit = reading
+            .constituents
+            .iter()
+            .find(|constituent| constituent.native_owner == "ai-kit")
+            .unwrap();
+        assert_eq!(aikit.state, PresenceState::Degraded);
+        // The owner did answer live — the class says so — but what it
+        // answered is not presence.
+        assert_eq!(aikit.provider_class, ProviderClass::LiveProvider);
+        assert!(
+            aikit.detail
+                .as_deref()
+                .is_some_and(|detail| detail.contains("warp-detected")),
+            "the constituent's detail names the unrecognised state: {:?}",
+            aikit.detail
+        );
+        assert!(
+            reading
+                .warnings
+                .iter()
+                .any(|warning| warning.contains("warp-detected")),
+            "the unrecognised state is named: {:?}",
+            reading.warnings
+        );
+    }
+
     #[test]
     fn a_fixture_never_degrades_or_upgrades_a_live_reading() {
         let mut account = recognition();
-        account.owner_participations.push(
-            oi_cli::world_recognition::OwnerParticipation {
-                owner: "central".to_owned(),
-                native_system: oi_cli::world_recognition::NativeSystemObservation {
-                    system_ref: "ctrl".to_owned(),
-                    kind: "working-environment".to_owned(),
-                    name: "Central".to_owned(),
-                    version: None,
-                    locator: None,
-                    source_revision: None,
-                },
-                contract: "central.ctrl/v1".to_owned(),
-                state: "present".to_owned(),
-                readiness: Default::default(),
-                canonical_ref: None,
-                provenance: Vec::new(),
-                faculties: Vec::new(),
-            },
-        );
+        account
+            .owner_participations
+            .push(participation("central", "aikit.client-adapter/v1", "active"));
         let hosted_central = vec![hosted("central", crate::ContributionAvailability::Ready)];
         let reading = CompositionReading::compose(
             Some(&account),
@@ -1811,10 +1954,12 @@ mod tests {
     }
 
     /// A fixture `ctrl` executable that answers the named owner Actions with
-    /// the given JSON bodies. Passed no `--root`, so `$4` is the action name —
-    /// the same layout the Flow client's fixture test uses.
+    /// the given JSON bodies, and logs every action it was asked to run so a
+    /// test can assert which owner calls did *not* happen. Passed no
+    /// `--root`, so `$4` is the action name — the same layout the Flow
+    /// client's fixture test uses.
     #[cfg(unix)]
-    fn fixture_ctrl(responses: &[(&str, String)]) -> (std::path::PathBuf, std::path::PathBuf) {
+    fn fixture_ctrl(responses: &[(&str, String)]) -> (std::path::PathBuf, std::path::PathBuf, std::path::PathBuf) {
         let nonce = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
@@ -1823,7 +1968,11 @@ mod tests {
         fs::create_dir_all(&root).unwrap();
         let executable = root.join("ctrl-fixture");
         let staging = root.join("ctrl-fixture.staging");
-        let mut script = String::from("#!/bin/sh\ncase \"$4\" in\n");
+        let argv_log = root.join("actions.log");
+        let mut script = format!(
+            "#!/bin/sh\nprintf '%s\\n' \"$4\" >> '{}'\ncase \"$4\" in\n",
+            argv_log.display()
+        );
         for (index, (action, response)) in responses.iter().enumerate() {
             script.push_str(&format!("  {action})\n    cat <<'BODY{index}'\n{response}\nBODY{index}\n    ;;\n"));
         }
@@ -1833,7 +1982,7 @@ mod tests {
         permissions.set_mode(0o755);
         fs::set_permissions(&staging, permissions).unwrap();
         fs::rename(&staging, &executable).unwrap();
-        (root, executable)
+        (root, executable, argv_log)
     }
 
     const WORK_LIST_RESPONSE: &str = r#"{"ok":true,"data":{"items":[{"name":"o-i","path":"/central/Work/o-i"}]}}"#;
@@ -1843,7 +1992,7 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn tree_read_and_subject_open_go_through_central_owner_actions_only() {
-        let (root, executable) = fixture_ctrl(&[
+        let (root, executable, argv_log) = fixture_ctrl(&[
             ("work.list", WORK_LIST_RESPONSE.to_owned()),
             ("projectcentral.ground.inspect", GROUND_RESPONSE.to_owned()),
             ("projectcentral.source.read", SOURCE_READ_RESPONSE.to_owned()),
@@ -1863,6 +2012,46 @@ mod tests {
             project.sources[0].treatment.declared(),
             "projectcentral-user",
             "the owner's declared treatment survives the adapter verbatim"
+        );
+
+        // Pinned (K2 fix round 1, F-I3): opening a World-tree node discloses
+        // the node from the Projection and makes **no** owner source read — a
+        // tree node is not a source, and asking Central to read it as one
+        // would be a bogus owner call.
+        let node = service.open_subject(
+            SemanticRef {
+                ref_id: "world:project:o-i".to_owned(),
+                kind: "project".to_owned(),
+                native_owner: WORLD_NATIVE_OWNER.to_owned(),
+                provenance: crate::RefProvenance {
+                    source: "world tree".to_owned(),
+                    revision: None,
+                },
+            },
+            Some("o-i"),
+        );
+        assert_eq!(
+            node.provider.class,
+            ProviderClass::Recognition,
+            "a node is disclosed by whatever served the tree, not by a source read"
+        );
+        assert!(node.source.is_none() && node.content.is_none() && node.revision.is_none());
+        assert!(node.access.exists && !node.access.selected);
+        assert!(
+            node.warnings
+                .iter()
+                .any(|warning| warning.contains("not a source")),
+            "the node disclosure says what it is: {:?}",
+            node.warnings
+        );
+        let logged = fs::read_to_string(&argv_log).unwrap();
+        assert!(
+            logged.contains("work.list") && logged.contains("projectcentral.ground.inspect"),
+            "the tree seams ran: {logged}"
+        );
+        assert!(
+            !logged.contains("projectcentral.source.read"),
+            "a project-node open must not read a tree node as a source: {logged}"
         );
 
         let reading = service.open_subject(
@@ -1910,7 +2099,7 @@ mod tests {
     fn a_source_write_emits_source_changed_only_when_central_recorded_a_change() {
         let write = r#"{"ok":true,"data":{"schema":"central.project-world-source-write-receipt/v1","world_ref":"project:o-i","source":{"ref":"project:o-i:ProjectCentral%2Fuser","path":"ProjectCentral/user","roles":[],"provenance":"human-authored","standing":"authoritative","treatment":"projectcentral-user","agent_retrieval_allowed":true},"previous_revision":"r7","revision":{"revision":"r8","byte_len":5},"changed":true,"change_ref":"change:1","actor":"human:desktop","actor_kind":"human","agent_session_ref":null,"automatic_agent_or_model_invocation":false}}"#;
         let unchanged = write.replace("\"changed\":true", "\"changed\":false").replace("\"revision\":\"r8\"", "\"revision\":\"r7\"");
-        let (root, executable) = fixture_ctrl(&[
+        let (root, executable, _argv_log) = fixture_ctrl(&[
             ("projectcentral.source.write", write.to_owned()),
             (
                 "projectcentral.source.read",
@@ -1933,7 +2122,7 @@ mod tests {
         assert!(summary.contains("Central's authority gate"));
 
         // The same write that changes nothing mutates no kernel state.
-        let (root2, executable2) = fixture_ctrl(&[
+        let (root2, executable2, _argv_log2) = fixture_ctrl(&[
             ("projectcentral.source.write", unchanged.clone()),
             ("projectcentral.source.read", SOURCE_READ_RESPONSE.to_owned()),
         ]);
@@ -1955,7 +2144,7 @@ mod tests {
     fn a_revision_conflict_is_settled_by_rereading_not_by_parsing_conflict_text() {
         let refused = r#"{"ok":false,"error":{"action":"projectcentral.source.write","status":"invalid_input","message":"World source revision conflict: expected r7, current r9"}}"#;
         let moved = SOURCE_READ_RESPONSE.replace("\"revision\":\"r7\"", "\"revision\":\"r9\"");
-        let (root, executable) = fixture_ctrl(&[
+        let (root, executable, _argv_log) = fixture_ctrl(&[
             ("projectcentral.source.write", refused.to_owned()),
             ("projectcentral.source.read", moved),
         ]);
@@ -1978,7 +2167,7 @@ mod tests {
     #[test]
     fn an_owner_refusal_that_is_not_a_conflict_is_returned_as_it_stands() {
         let refused = r#"{"ok":false,"error":{"action":"projectcentral.source.write","status":"unavailable_capability","message":"source is authored human ground; agent-session writes propose rather than write"}}"#;
-        let (root, executable) = fixture_ctrl(&[
+        let (root, executable, _argv_log) = fixture_ctrl(&[
             ("projectcentral.source.write", refused.to_owned()),
             ("projectcentral.source.read", SOURCE_READ_RESPONSE.to_owned()),
         ]);

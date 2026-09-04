@@ -198,10 +198,31 @@ fn run_central_action_with(
 mod tests {
     use super::*;
 
+    /// Stage a script to `path` atomically: write and chmod a sibling, then
+    /// rename it over the executable, so a concurrent reader of that path
+    /// only ever sees a complete, executable file. Fix round 1
+    /// (out-of-findings): the shared write+chmod here raced the other test
+    /// under parallel load.
     #[cfg(unix)]
-    fn fixture() -> (PathBuf, PathBuf, PathBuf) {
+    fn stage_executable(path: &std::path::Path, script: &str) {
         use std::fs;
         use std::os::unix::fs::PermissionsExt;
+
+        let staged = path.with_extension("staging");
+        fs::write(&staged, script).unwrap();
+        let mut permissions = fs::metadata(&staged).unwrap().permissions();
+        permissions.set_mode(0o755);
+        fs::set_permissions(&staged, permissions).unwrap();
+        fs::rename(&staged, path).unwrap();
+    }
+
+    /// A per-test fixture: `label` keeps the two tests' roots and executables
+    /// distinct even under a nanosecond-nonce collision, so one test can
+    /// never execute the other's script (fix round 1, out-of-findings — this
+    /// shared-prefix overwrite was the observed `exit status: 7` flake).
+    #[cfg(unix)]
+    fn fixture(label: &str) -> (PathBuf, PathBuf, PathBuf) {
+        use std::fs;
         use std::time::{SystemTime, UNIX_EPOCH};
 
         let nonce = SystemTime::now()
@@ -209,11 +230,11 @@ mod tests {
             .unwrap()
             .as_nanos();
         let root = env::temp_dir().join(format!(
-            "oi-agent-profile-contract-{}-{nonce}",
+            "oi-agent-profile-contract-{label}-{}-{nonce}",
             std::process::id()
         ));
         fs::create_dir_all(&root).unwrap();
-        let executable = root.join("ctrl-fixture");
+        let executable = root.join(format!("ctrl-fixture-{label}"));
         let argv_log = root.join("argv.log");
         let script = format!(
             r#"#!/bin/sh
@@ -236,10 +257,7 @@ fi
 "#,
             argv_log.display()
         );
-        fs::write(&executable, script).unwrap();
-        let mut permissions = fs::metadata(&executable).unwrap().permissions();
-        permissions.set_mode(0o755);
-        fs::set_permissions(&executable, permissions).unwrap();
+        stage_executable(&executable, &script);
         (root, executable, argv_log)
     }
 
@@ -248,7 +266,7 @@ fi
     fn invokes_canonical_central_profile_actions_without_reading_profile_files() {
         use std::fs;
 
-        let (root, executable, argv_log) = fixture();
+        let (root, executable, argv_log) = fixture("canonical");
         let client = CentralAgentProfileClient {
             executable,
             central_root: Some(root.join("Central")),
@@ -298,17 +316,14 @@ fi
     #[test]
     fn process_failure_cannot_be_promoted_by_success_shaped_payload() {
         use std::fs;
-        use std::os::unix::fs::PermissionsExt;
 
-        let (root, executable, _) = fixture();
-        fs::write(
+        let (root, executable, _) = fixture("failure");
+        // Staged atomically into this test's own executable path, so the
+        // canonical-actions test can never run this exit-7 script.
+        stage_executable(
             &executable,
             "#!/bin/sh\nprintf '%s\\n' '{\"ok\":true,\"data\":{}}'\nexit 7\n",
-        )
-        .unwrap();
-        let mut permissions = fs::metadata(&executable).unwrap().permissions();
-        permissions.set_mode(0o755);
-        fs::set_permissions(&executable, permissions).unwrap();
+        );
         let result = run_central_action_with(
             &executable,
             Some(&root.join("Central")),

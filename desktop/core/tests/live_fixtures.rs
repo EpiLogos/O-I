@@ -261,3 +261,84 @@ fn the_composition_reading_reports_the_fixture_catalog_as_degraded_fallback_only
         "no fixture fallback is recorded for an owner recognition observed"
     );
 }
+
+/// Pinned (K2 fix round 1, S3 residual): a fixture action's `availability` is
+/// a capability **descriptor** — what the owner's own Action surface offers —
+/// and is never provider presence. `system-workbench-model.mjs` renders this
+/// field verbatim, so the retirement surface K3 builds on it must not be able
+/// to turn `"available"` into a §10 violation: the reading that fixture
+/// serves stays Degraded no matter what its actions describe.
+#[test]
+fn fixture_action_availability_is_a_capability_descriptor_never_presence() {
+    let raw = include_str!("../../fixtures/native-contributions.json");
+    let value: serde_json::Value = serde_json::from_str(raw).expect("fixture must parse");
+
+    let mut descriptor_actions = 0usize;
+    for entry in value["contributions"].as_array().expect("contributions") {
+        let contribution = entry;
+        // The reading-level availability is the honest provider fact: this
+        // static document serves Degraded, whatever it describes.
+        assert_eq!(
+            contribution["availability"].as_str(),
+            Some("degraded"),
+            "{} must stay a Degraded fixture reading",
+            contribution["contribution_ref"].as_str().unwrap_or("?")
+        );
+        for action in contribution["actions"].as_array().unwrap_or(&Vec::new()) {
+            let availability = action["availability"].as_str().unwrap_or_else(|| {
+                panic!(
+                    "action {} must declare its descriptor availability",
+                    action["action_ref"]
+                )
+            });
+            assert!(
+                matches!(availability, "available" | "unavailable"),
+                "action availability `{availability}` is outside the descriptor vocabulary"
+            );
+            descriptor_actions += 1;
+        }
+    }
+    assert!(
+        descriptor_actions > 0,
+        "the fixture still carries the action descriptors this pin exists for"
+    );
+
+    // And behaviourally: composing the very catalog whose actions describe
+    // themselves as available yields Degraded fixture constituents — the
+    // descriptor never lifts presence.
+    let fixtures: ContributionFixtures = serde_json::from_str(raw).expect("fixture must parse");
+    let hosted = fixtures
+        .contributions
+        .into_iter()
+        .map(|contribution| host_native_contribution(None, contribution).unwrap())
+        .collect::<Vec<_>>();
+    assert!(
+        hosted
+            .iter()
+            .any(|entry| entry
+                .contribution
+                .actions
+                .iter()
+                .any(|action| action.availability == oi_desktop_core::ActionAvailability::Available)),
+        "the catalog still carries available-described actions"
+    );
+    let reading = CompositionReading::compose(
+        None,
+        &SuiteCompositionDisclosure {
+            schema: "oi.desktop-composition-disclosure/v1".to_owned(),
+            personal_ground: None,
+            surfaces: Vec::new(),
+            warnings: Vec::new(),
+        },
+        &hosted,
+    );
+    for constituent in &reading.constituents {
+        assert_eq!(
+            constituent.state,
+            PresenceState::Degraded,
+            "{} stays Degraded whatever its action descriptors say",
+            constituent.native_owner
+        );
+        assert_eq!(constituent.provider_class, ProviderClass::Fixture);
+    }
+}

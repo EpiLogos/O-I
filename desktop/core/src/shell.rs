@@ -138,6 +138,29 @@ impl From<SelectionError> for SubjectOpenError {
     }
 }
 
+/// Why live World reconciliation could not complete — carrying the events the
+/// attempt nonetheless produced. Withdrawing recognition unbinds the World
+/// relation it had established, and that focus mutation emits
+/// **unconditionally**: the renderer's event-derived focus mirror has to
+/// follow the kernel even on an error path, or the two diverge with no event
+/// left to reconcile them (K2 fix round 1, F-I1).
+#[derive(Clone, Debug)]
+pub struct ReconcileError {
+    /// The events the reconciliation produced before failing — at least the
+    /// `FocusChanged` that withdraws the World relation, when one stood.
+    pub events: Vec<KernelEvent>,
+    /// The observation failure itself, as it stands.
+    pub reason: String,
+}
+
+impl fmt::Display for ReconcileError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.reason.fmt(formatter)
+    }
+}
+
+impl std::error::Error for ReconcileError {}
+
 #[derive(Clone, Debug)]
 pub struct DesktopHost {
     disclosure: SuiteCompositionDisclosure,
@@ -260,33 +283,63 @@ impl DesktopHost {
     /// from the ref's kind or string — which is how the project's sources are
     /// then addressed (02 §7 co-reference).
     ///
-    /// Returns the `FocusChanged` event the mutation produced, if the one
-    /// relation moved, beside the subject's reading. An owner refusal is
+    /// Returns **every** focus event the operation's mutations produced, in
+    /// emission order: the Project-relation bind and then the selection, each
+    /// of which emits its own `FocusChanged` when it changes — so binding the
+    /// relation emits even when the selection itself changes nothing (K2 fix
+    /// round 1, F-I2; there is no focus mutation without its event). The
+    /// subject's reading comes back beside them. An owner refusal is
     /// disclosed in the reading, not raised here.
     pub fn open_subject(
         &mut self,
         caller: BridgeCaller,
         subject: SemanticRef,
     ) -> Result<SubjectOpen, SubjectOpenError> {
+        // Both classes are authorised before anything mutates, so an
+        // authorisation refusal can never arrive after a mutation was made.
         self.bridge
             .authorize(caller, BridgeCallClass::OpenSubject)?;
+        self.bridge
+            .authorize(caller, BridgeCallClass::SelectSemanticRef)?;
         // Resolution goes through the Projection; an open that needs a tree
         // and holds none composes it once, rather than guessing from the ref.
         if self.world.tree().is_none() {
             self.world_tree(caller)?;
         }
-        if let Some(project_ref) = self.world.project_ref_of(&subject) {
-            let already_bound = self
-                .focus
-                .project_ref()
-                .is_some_and(|bound| bound.ref_id == project_ref.ref_id);
-            if !already_bound {
-                let project = crate::focus::ProjectRef::try_from(project_ref)
-                    .map_err(SubjectOpenError::InvalidSubject)?;
-                self.focus.bind_project(project);
+        let project_to_bind = match self.world.project_ref_of(&subject) {
+            Some(project)
+                if !self
+                    .focus
+                    .project_ref()
+                    .is_some_and(|bound| bound.ref_id == project.ref_id) =>
+            {
+                Some(
+                    crate::focus::ProjectRef::try_from(project)
+                        .map_err(SubjectOpenError::InvalidSubject)?,
+                )
             }
+            _ => None,
+        };
+        // The whole mutation is validated on a scratch relation first, so an
+        // invalid subject mutates no kernel state and no event can lie about
+        // a change that never happened.
+        let mut next = self.focus.clone();
+        if let Some(project) = &project_to_bind {
+            next.bind_project(project.clone());
         }
-        let focus_event = self.select(caller, subject.clone())?;
+        next.focus_subject(subject.clone())
+            .map_err(SubjectOpenError::InvalidSubject)?;
+
+        // Commit. Each mutation emits the event that discloses it.
+        let mut events = Vec::new();
+        if let Some(project) = project_to_bind {
+            self.focus.bind_project(project);
+            events.push(KernelEvent::FocusChanged {
+                focus: self.focus.clone(),
+            });
+        }
+        // Already authorised and validated above; this cannot fail.
+        events.extend(self.select(caller, subject.clone())?);
         let focused_project = self
             .focus
             .project_ref()
@@ -302,10 +355,7 @@ impl DesktopHost {
         {
             reading.access = reading.access.selected();
         }
-        Ok(SubjectOpen {
-            focus_event,
-            reading,
-        })
+        Ok(SubjectOpen { events, reading })
     }
 
     /// Save one World source through Central's own authority gate (02 §9.4):
@@ -399,23 +449,38 @@ impl DesktopHost {
     /// the reconciliation also named the current World relation (every kernel
     /// mutation emits the event it produced — there is no path that changes
     /// focus without an event). An unchanged re-observation emits nothing.
-    pub fn reconcile_world(&mut self) -> Result<Vec<KernelEvent>, String> {
-        let ground = self
-            .disclosure
-            .personal_ground
-            .as_deref()
-            .ok_or_else(|| "no personal ground configured for World reconciliation".to_owned())?;
+    ///
+    /// When the observation itself fails, the error is a [`ReconcileError`]
+    /// that **carries the events the attempt produced**: withdrawing a failed
+    /// observation unbinds the World relation, and that `FocusChanged` reaches
+    /// the renderer even though the call fails (K2 fix round 1, F-I1) — a
+    /// kernel state change is never dropped for lack of a success value.
+    pub fn reconcile_world(&mut self) -> Result<Vec<KernelEvent>, ReconcileError> {
+        let ground = self.disclosure.personal_ground.as_deref().ok_or_else(|| ReconcileError {
+            events: Vec::new(),
+            reason: "no personal ground configured for World reconciliation".to_owned(),
+        })?;
         match discover_ground(Path::new(ground)) {
-            Ok(account) => self.reconcile_world_from(Some(account)),
+            Ok(account) => self.reconcile_world_from(Some(account)).map_err(|reason| {
+                ReconcileError {
+                    events: Vec::new(),
+                    reason,
+                }
+            }),
             Err(error) => {
                 // Recognition withdrawn is an observation, and unbinding the
                 // World relation it had established is disclosed as the event
-                // it produces — then the failure itself is returned.
-                let _ = self.reconcile_world_from(None);
+                // it produces — unconditionally, even though this observation
+                // failed. The events travel with the error so the host still
+                // forwards them.
+                let events = self.reconcile_world_from(None).unwrap_or_default();
                 self.current_world
                     .warnings
                     .push(format!("World recognition unavailable: {error}"));
-                Err(error)
+                Err(ReconcileError {
+                    events,
+                    reason: error,
+                })
             }
         }
     }

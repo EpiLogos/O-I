@@ -240,3 +240,66 @@ fn reconcile_world_without_ground_is_an_honest_error_not_a_fabricated_world() {
     assert!(host.reconcile_world().is_err());
     assert!(host.snapshot(BridgeCaller::ShellUi).unwrap().world_recognition.is_none());
 }
+
+/// Pinned (K2 fix round 1, F-I1): a reconciliation whose observation fails is
+/// not exempt from "every focus mutation emits". Withdrawing the failed
+/// observation unbinds the World relation, and that `FocusChanged` travels
+/// with the error — the renderer's focus mirror must follow the kernel even
+/// when the call fails.
+#[test]
+fn a_failed_reconciliation_still_emits_the_world_relation_it_withdraws() {
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    let root = std::env::temp_dir().join(format!(
+        "oi-desktop-reconcile-error-{}",
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    std::fs::create_dir_all(&root).unwrap();
+
+    let previous = std::env::var_os("OI_HOME");
+    std::env::set_var("OI_HOME", root.join("oi-state"));
+    let result = (|| {
+        let mut disclosure = disclosure(&[NativeSurfaceState::Registered]);
+        disclosure.personal_ground = Some(root.display().to_string());
+        let mut host = DesktopHost::new(disclosure);
+        assert!(
+            host.focus().world.is_some(),
+            "startup recognition established the World relation"
+        );
+
+        // The ground itself vanishes: the observation cannot be made.
+        std::fs::remove_dir_all(&root).unwrap();
+        let error = host.reconcile_world().unwrap_err();
+        assert!(
+            !error.reason.is_empty(),
+            "the failure is stated, not swallowed"
+        );
+        assert_eq!(
+            error.events.len(),
+            1,
+            "the withdrawal the attempt produced travels with the error: {:?}",
+            error.events
+        );
+        assert_eq!(error.events[0].tag(), "focus_changed");
+        assert!(
+            host.focus().world.is_none(),
+            "the kernel holds the withdrawal, it did not paper over it"
+        );
+        assert!(
+            host.snapshot(BridgeCaller::ShellUi)
+                .unwrap()
+                .world_recognition
+                .is_none(),
+            "recognition withdrawn is an observation, not an error state"
+        );
+    })();
+    match previous {
+        Some(value) => std::env::set_var("OI_HOME", value),
+        None => std::env::remove_var("OI_HOME"),
+    }
+    std::fs::remove_dir_all(&root).ok();
+    result
+}
