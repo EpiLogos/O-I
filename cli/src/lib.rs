@@ -1,5 +1,6 @@
 pub mod current_world;
 pub mod dev_world;
+pub mod guardian;
 pub mod native_lifecycle;
 pub mod package;
 pub mod product_command;

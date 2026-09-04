@@ -204,6 +204,11 @@ pub enum DirectProjectionState {
     Removed,
     Unchanged,
     ConflictPreserved,
+    /// The projected destination now symlinks into AIKit's capsule store:
+    /// AIKit adopted the tree and took ownership of the harness-visible
+    /// copies. O:I reads them as current derived state and never writes
+    /// through another product's symlink.
+    AikitManaged,
 }
 
 #[derive(Clone, Debug, Serialize, PartialEq, Eq)]
@@ -664,19 +669,38 @@ pub fn remove_direct_projection(
     })
 }
 
-fn generated_projection(
+/// The derivation marker carried by every generated projection, used to
+/// recognise derived copies wherever they land (including AIKit's store).
+pub const DERIVED_PROJECTION_MARKER: &str = "<!-- O:I DERIVED SKILL PROJECTION;";
+
+pub fn generated_projection(
     skill: &NativeSkillReference,
     source_revision: &str,
     authoritative_content: &str,
 ) -> String {
-    format!(
-        "<!-- O:I DERIVED SKILL PROJECTION; canonical source = {}/{} @ {}; skill_ref = {}; local edits never become authoritative. -->\n{}",
+    let header = format!(
+        "{DERIVED_PROJECTION_MARKER} canonical source = {}/{} @ {}; skill_ref = {}; local edits never become authoritative. -->",
         skill.source.repository,
         skill.source.path,
         source_revision,
-        skill.skill_ref,
-        authoritative_content
-    )
+        skill.skill_ref
+    );
+    // An Agent Skill must start with its frontmatter block, so the derivation
+    // marker sits between the frontmatter and the body — never before it.
+    let mut lines = authoritative_content.lines();
+    if lines.next().map(str::trim) == Some("---") {
+        let mut frontmatter = vec!["---".to_owned()];
+        for line in lines.by_ref() {
+            frontmatter.push(line.to_owned());
+            if line.trim() == "---" {
+                break;
+            }
+        }
+        let frontmatter = frontmatter.join("\n");
+        let rest = lines.collect::<Vec<_>>().join("\n");
+        return format!("{frontmatter}\n{header}\n\n{rest}");
+    }
+    format!("{header}\n{authoritative_content}")
 }
 
 fn projection_receipt_path(destination: &Path) -> PathBuf {
