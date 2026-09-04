@@ -2,12 +2,15 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { invoke } from '@tauri-apps/api/core';
 import { AgentEncounterSurface, WorkbenchEvidence, WorkbenchSemanticRef } from './workbench';
+import { useKernelFocus, type KernelFocusRelation, type KernelSemanticRef } from './kernel-events';
 import './agency-sidecar.css';
 
 type SemanticRef = WorkbenchSemanticRef;
 
 type ShellSnapshot = {
   selection?: SemanticRef;
+  /** The one global focus relation (02 §7), kernel-owned. */
+  focus?: Parameters<typeof useKernelFocus>[0];
 };
 
 type Availability = 'available' | { unresolved: { reasons: string[] } } | { unavailable: { reasons: string[] } };
@@ -149,7 +152,6 @@ type ActionHorizonEntry = {
 };
 
 function CanonicalAgencySidecar() {
-  const [selection, setSelection] = useState<SemanticRef | undefined>();
   const [context, setContext] = useState<ContextResolution | null>(null);
   const [spaces, setSpaces] = useState<SessionSpaceState[]>([]);
   const [space, setSpace] = useState<SessionSpaceReading | null>(null);
@@ -157,6 +159,12 @@ function CanonicalAgencySidecar() {
   const [contributions, setContributions] = useState<Contribution[]>([]);
   const [encounterEvidence, setEncounterEvidence] = useState<WorkbenchEvidence | null>(null);
   const [error, setError] = useState('');
+  // The kernel focus this surface's own snapshot pull last carried. Adopted by
+  // the hook only until the first FocusChanged flows; afterwards the events are
+  // newer than any pull and this stays inert instead of clobbering them.
+  const [pulledFocus, setPulledFocus] = useState<KernelFocusRelation | KernelSemanticRef | null>(null);
+  const focus = useKernelFocus(pulledFocus);
+  const selection = focus?.subject ?? undefined;
 
   const refresh = useCallback(async (preferredAgentSession?: string | null) => {
     const [snapshot, nextContext, nextSpaces, nextContributions] = await Promise.all([
@@ -166,12 +174,12 @@ function CanonicalAgencySidecar() {
       invoke<Contribution[]>('contribution_catalog').catch(() => []),
     ]);
 
-    setSelection(snapshot.selection);
+    setPulledFocus(snapshot.focus ?? snapshot.selection ?? null);
     setContext(nextContext);
     setSpaces(nextSpaces);
     setContributions(nextContributions);
 
-    const selectedAgent = snapshot.selection?.kind === 'agent-session' ? snapshot.selection.ref : null;
+    const selectedAgent = selection?.kind === 'agent-session' ? selection.ref : null;
     const candidateAgent = preferredAgentSession ?? selectedAgent ?? activeAgentSession;
     const containing = candidateAgent
       ? nextSpaces.find((candidate) => Boolean(candidate.agent_sessions[candidateAgent]))
@@ -204,7 +212,7 @@ function CanonicalAgencySidecar() {
         ? reading.state.focus.target
         : refs[0] ?? null;
     setActiveAgentSession(nextAgent);
-  }, [activeAgentSession]);
+  }, [activeAgentSession, selection]);
 
   useEffect(() => {
     void refresh().catch((nextError) => setError(messageFrom(nextError)));
@@ -239,7 +247,7 @@ function CanonicalAgencySidecar() {
       };
       await invoke('select_semantic_ref', { subject });
       setActiveAgentSession(agentSessionRef);
-      setSelection(subject);
+      // Focus follows the kernel's FocusChanged event; nothing is set locally.
       await refresh(agentSessionRef);
       setError('');
     } catch (nextError) {
@@ -250,7 +258,6 @@ function CanonicalAgencySidecar() {
   async function selectFromEncounter(subject: SemanticRef, evidence: WorkbenchEvidence) {
     try {
       await invoke('select_semantic_ref', { subject });
-      setSelection(subject);
       setEncounterEvidence(evidence);
       await refresh(subject.kind === 'agent-session' ? subject.ref : activeAgentSession);
     } catch (nextError) {

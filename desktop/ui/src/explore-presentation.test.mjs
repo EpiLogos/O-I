@@ -104,7 +104,9 @@ test('P6 mounts the shared renderer-neutral Explore application and Read Author 
   assert.doesNotMatch(renderer + authoring + adapter, /refineWorldPresentationProjection|publishProjection|performA2aExchange/);
   assert.match(adapter, /invoke<unknown \| null>\('explore_surface_seed'\)/);
   assert.match(adapter, /privacy: 'selection != Agent Context disclosure != Projection selection != SharedField admission != public != remote Agent authority'/);
-  assert.match(host, /destination === 'explore'/);
+  // K3: destination navigation is retired — Explore is reached as a canvas
+  // Surface by its SurfaceRef, not by a destination-set switch.
+  assert.match(host, /surfaceRef === 'surface\/oi\/explore-host'/);
   assert.match(host, /<ExploreWorkbenchSurface onSelect=\{onSelect\} \/>/);
 });
 

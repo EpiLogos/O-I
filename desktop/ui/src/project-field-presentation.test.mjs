@@ -9,6 +9,8 @@ const livingWiki = readFileSync(new URL('./living-wiki.tsx', import.meta.url), '
 const workbench = readFileSync(new URL('./workbench.tsx', import.meta.url), 'utf8');
 const currentWorld = readFileSync(new URL('./current-world.tsx', import.meta.url), 'utf8');
 const main = readFileSync(new URL('./main.tsx', import.meta.url), 'utf8');
+const kernelEvents = readFileSync(new URL('./kernel-events.tsx', import.meta.url), 'utf8');
+const agencySidecar = readFileSync(new URL('./agency-sidecar-entry.tsx', import.meta.url), 'utf8');
 const shell = readFileSync(new URL('../../core/src/shell.rs', import.meta.url), 'utf8');
 const core = readFileSync(new URL('../../core/src/project_field.rs', import.meta.url), 'utf8');
 const knowledge = readFileSync(new URL('../../core/src/project_knowledge.rs', import.meta.url), 'utf8');
@@ -33,8 +35,17 @@ test('selection, retrieval and Agent Context disclosure remain distinct', () => 
 });
 
 test('P2 projects the one P1 canonical selection instead of owning a second selection state', () => {
-  assert.match(main, /selection=\{snapshot\.selection\}/);
-  assert.match(main, /<WorkbenchSurface selection=\{selection\} currentWorld=\{currentWorld\} onSelect=\{onSelect\} \/>/);
+  // The one canonical selection is the kernel's global focus relation: adopted
+  // from the snapshot pull until the first kernel FocusChanged flows, then
+  // moved only by events. Both halves must be live — a pull that is never
+  // adopted, or a seed that can clobber newer events, would each be a lie.
+  assert.match(main, /useKernelFocus\(snapshot\.focus \?\? snapshot\.selection\)/);
+  assert.match(kernelEvents, /useEffect\(\(\) => \{\s*\n\s*const adopted = focus\.seed\(bootstrap\(seed\)\);/);
+  assert.match(kernelEvents, /\}, \[seed\]\);/, 'the seed is re-adopted when the snapshot pull lands');
+  assert.match(kernelEvents, /sameFocus\(previous, adopted\) \? previous : adopted/, 'an unchanged pull keeps mirror identity');
+  assert.match(agencySidecar, /useKernelFocus\(pulledFocus\)/);
+  assert.match(agencySidecar, /setPulledFocus\(snapshot\.focus \?\? snapshot\.selection \?\? null\)/, 'the sidecar adopts the kernel focus from the pull it already makes');
+  assert.match(main, /<WorkbenchSurface selection=\{selection\} currentWorld=\{currentWorld\} worldRecognition=\{worldRecognition\} onSelect=\{onSelect\} onReobserveWorld=\{onReobserveWorld\} \/>/);
   assert.match(workbench, /selection\?: WorkbenchSemanticRef/);
   assert.doesNotMatch(workbench, /useState<WorkbenchSemanticRef/);
   assert.match(workbench, /<ProjectNavigator selection=\{selection\}/);
@@ -56,6 +67,18 @@ test('Navigator consumes the one ShellSnapshot CurrentWorld without refetching o
   assert.match(currentWorld, /machine\.central_source/);
   assert.match(currentWorld, /machine\.workcell_ref/);
   assert.doesNotMatch(currentWorld, /type MachineModel/);
+});
+
+test('Reconciled World is projected from the one ShellSnapshot without a desktop World model', () => {
+  assert.match(shell, /pub world_recognition: Option<WorldRecognitionAccount>/);
+  assert.match(main, /world_recognition\?: WorldRecognitionAccount/);
+  assert.match(main, /worldRecognition=\{snapshot\.world_recognition\}/);
+  assert.match(workbench, /<WorldRecognitionNavigator account=\{worldRecognition\} onReobserve=\{onReobserveWorld\} \/>/);
+  const worldRecognitionModel = readFileSync(new URL('./world-recognition-model.mjs', import.meta.url), 'utf8');
+  assert.match(worldRecognitionModel, /oi\.world-recognition-account\/v1/);
+  assert.match(worldRecognitionModel, /owner_bindings/);
+  assert.doesNotMatch(worldRecognitionModel, /invoke\(/);
+  assert.doesNotMatch(worldRecognitionModel, /fetch\(/);
 });
 
 test('Navigator only labels CF5 from the CurrentWorld context-frame result', () => {

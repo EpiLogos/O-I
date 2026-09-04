@@ -11,16 +11,15 @@
 .oi-system__tabs small, .oi-system__rail-products small, .oi-system__state, .oi-system__digest strong { font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; }
 .oi-system [data-state='available'] { text-decoration: underline; text-decoration-color: var(--oi-meta-relation); text-underline-offset: .2em; }
 .oi-system [data-state='degraded'], .oi-system [data-state='not_disclosed'], .oi-system [data-state='unsupported'], .oi-system [data-state='none'] { color: var(--oi-muted); }
-.oi-system__matrix-wrap { overflow: auto; border-bottom: 1px solid var(--oi-rule); }
-.oi-system__matrix { width: 100%; min-width: 92rem; border-collapse: collapse; table-layout: fixed; }
-.oi-system__matrix th, .oi-system__matrix td { vertical-align: top; padding: .85rem; border-right: 1px solid var(--oi-rule); border-bottom: 1px solid var(--oi-rule); text-align: left; }
-.oi-system__matrix thead th { position: sticky; top: 0; background: var(--oi-surface); z-index: 1; color: var(--oi-muted); font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; }
-.oi-system__matrix tbody tr { cursor: pointer; }
-.oi-system__matrix tbody tr[data-selected='true'] { background: var(--oi-surface-raised, rgba(127,127,127,.05)); }
-.oi-system__matrix tbody th { width: 10rem; }
-.oi-system__matrix tbody th strong, .oi-system__matrix tbody th small { display: block; }
-.oi-system__matrix tbody th small { margin-top: .35rem; color: var(--oi-muted); font-weight: 400; overflow-wrap: anywhere; }
-.oi-system__matrix td p { margin: .45rem 0 0; color: var(--oi-muted); font-size: .76rem; line-height: 1.35; }
+/* The live composition strip: presence as observed, one row per constituent.
+ * This replaces the retired static constitution matrix. */
+.oi-system__composition { list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1px; margin: 0 0 1rem; padding: 0; border: 1px solid var(--oi-rule); border-radius: 6px; overflow: hidden; background: var(--oi-rule); }
+.oi-system__composition li { display: flex; flex-wrap: wrap; align-items: baseline; gap: .35rem; padding: .5rem .6rem; background: var(--oi-surface); }
+.oi-system__composition li[data-state='absent'] { opacity: .68; }
+.oi-system__composition li[data-state='degraded'] strong { color: var(--oi-degraded, #8a5a00); }
+.oi-system__composition li p { flex-basis: 100%; margin: 0; font-size: .7rem; color: var(--oi-muted); }
+.oi-system__composition li small { color: var(--oi-muted); }
+
 .oi-system__detail { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(20rem, .9fr); gap: var(--oi-space-7); align-items: start; }
 .oi-system__detail h3 { margin: .15rem 0; font-size: 2.2rem; font-weight: 500; letter-spacing: -.04em; }
 .oi-system__authority { color: var(--oi-muted); font-size: var(--oi-type-sm); overflow-wrap: anywhere; }

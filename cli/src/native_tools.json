@@ -1,0 +1,11 @@
+[
+  { "name": "claude", "kind": "harness", "version_args": ["--version"] },
+  { "name": "codex", "kind": "harness", "version_args": ["--version"] },
+  { "name": "gemini", "kind": "harness", "version_args": ["--version"] },
+  { "name": "hermes", "kind": "harness", "version_args": ["--version"] },
+  { "name": "pi", "kind": "harness", "version_args": ["--version"] },
+  { "name": "ollama", "kind": "model-provider", "version_args": ["--version"] },
+  { "name": "docker", "kind": "material-executor", "version_args": ["--version"] },
+  { "name": "buzz", "kind": "collaboration-client", "version_args": [] },
+  { "name": "grok", "kind": "agent", "version_args": [], "service_dir": ".grokbot" }
+]

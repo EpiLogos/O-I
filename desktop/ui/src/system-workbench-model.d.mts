@@ -16,25 +16,23 @@ export type SystemResource = {
   availability: string;
   source: string;
 };
-export type SystemConstitutionPosition = {
-  system_product_id: string;
-  product_id: string;
-  position: number;
-  present: boolean;
-  state: string;
-  native_owner: string;
-  native_location: string | null;
-  version: string | null;
+/** One owner's presence as the live composition reading observed it. */
+export type SystemPresence = {
+  /** `present | degraded | absent` as observed, or `not_disclosed`. */
+  state: 'present' | 'degraded' | 'absent' | 'not_disclosed';
+  state_word: string;
+  provider_class: string;
+  /** Capability descriptors — never read as presence. */
+  capabilities: string[];
+  detail: string | null;
+  observed: boolean;
 };
-export type SystemConstitution = {
-  schema: string;
-  available: boolean;
-  reading: 'cf5' | null;
-  maximal: boolean;
-  present_positions: number[];
-  positions: SystemConstitutionPosition[];
-  personal_ground: string | null;
-  current_machine: { role: string; central_source?: string; workcell_ref?: string; health?: string } | null;
+export type SystemComposition = {
+  schema: 'oi.composition-reading/v1' | null;
+  condition: string | null;
+  constituents: Array<{ native_owner?: unknown; state?: unknown; provider_class?: unknown; capabilities?: unknown; detail?: unknown }>;
+  counts: { present: number; degraded: number; absent: number };
+  undisclosed: string[];
 };
 export type SystemProduct = {
   id: string;
@@ -42,7 +40,7 @@ export type SystemProduct = {
   owners: string[];
   authority: string;
   purpose: string;
-  constitution: SystemConstitutionPosition;
+  presence: SystemPresence;
   states: Record<SystemStateAxis, SystemStateCell>;
   actions: SystemAction[];
   resources: SystemResource[];
@@ -51,8 +49,8 @@ export type SystemProduct = {
 export type SystemWorkbenchModel = {
   schema: 'oi.system-workbench/v1';
   state_axes: SystemStateAxis[];
-  condition: 'unavailable' | 'partial' | 'cf5';
-  constitution: SystemConstitution;
+  condition: 'unavailable' | 'empty' | 'partial' | 'broken' | 'full';
+  composition: SystemComposition;
   ordinary_operation_blocked: false;
   products: SystemProduct[];
   warnings: string[];
@@ -66,6 +64,6 @@ export function buildSystemWorkbench(input?: {
   contributions?: unknown[];
   aikitContext?: unknown;
   factoryBuild?: unknown;
-  currentWorld?: unknown;
+  composition?: unknown;
   warnings?: string[];
 }): SystemWorkbenchModel;

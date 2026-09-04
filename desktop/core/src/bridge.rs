@@ -28,10 +28,21 @@ pub enum BridgeCallClass {
     ContemplateFlow,
     SelectSemanticRef,
     OpenDestination,
+    /// Read the World tree as a Projection (01 §2). A read mutates no kernel
+    /// state; the class exists so the bridge still gates who may ask.
+    ReadWorldTree,
+    /// Read the live composition: what is present, degraded or absent.
+    ReadComposition,
+    /// Open a subject: make it the one current focus and read it through its
+    /// owner's authority gate.
+    OpenSubject,
+    /// Save a World source through its owner's authority gate. Distinct from
+    /// every reading class: a write is a mutation of authored ground.
+    MutateWorldSource,
 }
 
 impl BridgeCallClass {
-    pub const ALL: [Self; 17] = [
+    pub const ALL: [Self; 21] = [
         Self::DiscloseComposition,
         Self::DiscloseContributions,
         Self::ObserveFactoryBuild,
@@ -49,6 +60,10 @@ impl BridgeCallClass {
         Self::ContemplateFlow,
         Self::SelectSemanticRef,
         Self::OpenDestination,
+        Self::ReadWorldTree,
+        Self::ReadComposition,
+        Self::OpenSubject,
+        Self::MutateWorldSource,
     ];
 }
 
