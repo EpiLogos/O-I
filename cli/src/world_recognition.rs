@@ -86,6 +86,44 @@ pub struct RecognitionObservation {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+pub struct OwnerParticipation {
+    pub owner: String,
+    pub native_system: NativeSystemObservation,
+    pub contract: String,
+    pub state: String,
+    #[serde(default)]
+    pub readiness: BTreeMap<String, Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub canonical_ref: Option<String>,
+    #[serde(default)]
+    pub provenance: Vec<String>,
+    #[serde(default)]
+    pub faculties: Vec<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+pub struct OwnerContract {
+    pub owner: String,
+    pub contract: String,
+    pub field: String,
+    #[serde(default)]
+    pub provenance: Vec<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+pub struct OwnerCapacity {
+    pub owner: String,
+    pub capacity_ref: String,
+    #[serde(default)]
+    pub ports: Vec<String>,
+    pub state: String,
+    #[serde(default)]
+    pub facts: BTreeMap<String, Value>,
+    #[serde(default)]
+    pub provenance: Vec<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct RecognitionExtensionRequest {
     pub request_ref: String,
     pub native_system_ref: String,
@@ -159,6 +197,12 @@ pub struct WorldRecognitionAccount {
     pub sources: Vec<RecognizedSourceAperture>,
     pub providers: Vec<RecognitionProviderExecution>,
     pub observations: Vec<RecognitionObservation>,
+    #[serde(default)]
+    pub owner_participations: Vec<OwnerParticipation>,
+    #[serde(default)]
+    pub owner_contracts: Vec<OwnerContract>,
+    #[serde(default)]
+    pub owner_capacities: Vec<OwnerCapacity>,
     pub extension_requests: Vec<RecognitionExtensionRequest>,
     #[serde(default)]
     pub provider_errors: Vec<String>,
@@ -512,9 +556,864 @@ pub fn discover_world(
         sources,
         providers,
         observations,
+        owner_participations: Vec::new(),
+        owner_contracts: Vec::new(),
+        owner_capacities: Vec::new(),
         extension_requests,
         provider_errors,
     })
+}
+
+/// Layer machine-global native-tool observation, native-owner participation
+/// reconciliation, owner semantic-contract disclosure and the extension frontier
+/// over a target-scoped World account. Kept separate from [`discover_world`] so
+/// registry/recogniser tests stay isolated from the live machine.
+fn enrich_world_account(account: &mut WorldRecognitionAccount) {
+    let tool_observations = recognize_installed_native_tools();
+    let tool_count = tool_observations.len();
+    account.observations.extend(tool_observations);
+    account.providers.push(RecognitionProviderExecution {
+        provider_ref: "oi:builtin/native-tool-observation".to_owned(),
+        package_ref: "oi:core".to_owned(),
+        status: if tool_count == 0 {
+            "not_present".to_owned()
+        } else {
+            "observed".to_owned()
+        },
+        detail: format!("{tool_count} installed native tools observed"),
+    });
+
+    account
+        .observations
+        .sort_by(|left, right| left.observation_ref.cmp(&right.observation_ref));
+    account
+        .extension_requests
+        .sort_by(|left, right| left.request_ref.cmp(&right.request_ref));
+
+    let (owner_participations, participation_errors) = query_owner_participations();
+    reconcile_owner_participations(&mut account.observations, &owner_participations);
+    account.providers.push(RecognitionProviderExecution {
+        provider_ref: "oi:builtin/owner-participation-reconciliation".to_owned(),
+        package_ref: "oi:core".to_owned(),
+        status: if owner_participations.is_empty() {
+            "not_present".to_owned()
+        } else {
+            "observed".to_owned()
+        },
+        detail: format!(
+            "{} native-owner participations reconciled",
+            owner_participations.len()
+        ),
+    });
+    account.provider_errors.extend(participation_errors);
+    let mut owner_participations = owner_participations;
+    owner_participations.sort_by(|left, right| {
+        (&left.owner, &left.native_system.name).cmp(&(&right.owner, &right.native_system.name))
+    });
+    account.owner_participations = owner_participations;
+
+    let (owner_contracts, contract_errors) = query_owner_contracts();
+    account.providers.push(RecognitionProviderExecution {
+        provider_ref: "oi:builtin/owner-contract-reconciliation".to_owned(),
+        package_ref: "oi:core".to_owned(),
+        status: if owner_contracts.is_empty() {
+            "not_present".to_owned()
+        } else {
+            "observed".to_owned()
+        },
+        detail: format!(
+            "{} native-owner contracts disclosed",
+            owner_contracts.len()
+        ),
+    });
+    account.provider_errors.extend(contract_errors);
+    account.owner_contracts = owner_contracts;
+
+    let (owner_capacities, capacity_errors) = query_owner_capacities();
+    account.providers.push(RecognitionProviderExecution {
+        provider_ref: "oi:builtin/owner-capacity-reconciliation".to_owned(),
+        package_ref: "oi:core".to_owned(),
+        status: if owner_capacities.is_empty() {
+            "not_present".to_owned()
+        } else {
+            "observed".to_owned()
+        },
+        detail: format!(
+            "{} native-owner capacities disclosed",
+            owner_capacities.len()
+        ),
+    });
+    account.provider_errors.extend(capacity_errors);
+    account.owner_capacities = owner_capacities;
+
+    let mut frontier = compose_extension_frontier(&account.observations);
+    account.extension_requests.append(&mut frontier);
+    account
+        .extension_requests
+        .sort_by(|left, right| left.request_ref.cmp(&right.request_ref));
+    account
+        .extension_requests
+        .dedup_by(|left, right| left.request_ref == right.request_ref);
+}
+
+pub fn state_dir() -> Result<PathBuf, String> {
+    if let Some(home) = env::var_os("OI_HOME").filter(|value| !value.is_empty()) {
+        return Ok(PathBuf::from(home));
+    }
+    if let Some(xdg) = env::var_os("XDG_CONFIG_HOME").filter(|value| !value.is_empty()) {
+        return Ok(PathBuf::from(xdg).join("oi"));
+    }
+    if let Some(home) = env::var_os("HOME").filter(|value| !value.is_empty()) {
+        return Ok(PathBuf::from(home).join(".config").join("oi"));
+    }
+    Err("cannot locate O:I state: set OI_HOME or HOME".to_owned())
+}
+
+pub fn default_registry_path() -> Result<PathBuf, String> {
+    Ok(state_dir()?.join("world-recognition-registry.json"))
+}
+
+pub fn discover_ground(target: &Path) -> Result<WorldRecognitionAccount, String> {
+    let mut account = discover_world(target, &default_registry_path()?)?;
+    enrich_world_account(&mut account);
+    Ok(account)
+}
+
+fn query_owner_participations() -> (Vec<OwnerParticipation>, Vec<String>) {
+    let mut participations = Vec::new();
+    let mut errors = Vec::new();
+    let Some(aikit) = owner_executable("ai-kit", "aikit") else {
+        return (participations, errors);
+    };
+    let aikit = aikit.display().to_string();
+
+    match run_json_envelope(&aikit, &["mux", "detect", "--json"]) {
+        Ok(Some(data)) => participations.extend(aikit_mux_participations(&data)),
+        Ok(None) => {}
+        Err(error) => errors.push(format!("AIKit mux registry: {error}")),
+    }
+    match run_json_envelope(&aikit, &["client", "status", "--json"]) {
+        Ok(Some(data)) => participations.extend(aikit_client_participations(&data)),
+        Ok(None) => {}
+        Err(error) => errors.push(format!("AIKit client registry: {error}")),
+    }
+    (participations, errors)
+}
+
+fn run_json_envelope(executable: &str, args: &[&str]) -> Result<Option<Value>, String> {
+    let output = Command::new(executable)
+        .args(args)
+        .stdin(Stdio::null())
+        .output()
+        .map_err(|error| format!("failed to start {executable}: {error}"))?;
+    if !output.status.success() {
+        return Err(format!(
+            "{executable} {} exited {}: {}",
+            args.join(" "),
+            output.status,
+            String::from_utf8_lossy(&output.stderr).trim()
+        ));
+    }
+    let value: Value = serde_json::from_slice(&output.stdout).map_err(|error| {
+        format!(
+            "{executable} {} returned invalid JSON: {error}",
+            args.join(" ")
+        )
+    })?;
+    if value.get("ok").and_then(Value::as_bool) != Some(true) {
+        return Ok(None);
+    }
+    Ok(value.get("data").cloned())
+}
+
+fn run_json_plain(executable: &str, args: &[&str]) -> Result<Option<Value>, String> {
+    let output = Command::new(executable)
+        .args(args)
+        .stdin(Stdio::null())
+        .output()
+        .map_err(|error| format!("failed to start {executable}: {error}"))?;
+    if !output.status.success() {
+        return Err(format!(
+            "{executable} {} exited {}: {}",
+            args.join(" "),
+            output.status,
+            String::from_utf8_lossy(&output.stderr).trim()
+        ));
+    }
+    let value: Value = serde_json::from_slice(&output.stdout).map_err(|error| {
+        format!(
+            "{executable} {} returned invalid JSON: {error}",
+            args.join(" ")
+        )
+    })?;
+    Ok(Some(value))
+}
+
+fn registered_owner_executable(owner_key: &str) -> Option<PathBuf> {
+    let composition = state_dir().ok()?.join("composition.json");
+    let text = fs::read_to_string(composition).ok()?;
+    let value: Value = serde_json::from_str(&text).ok()?;
+    let path = value
+        .pointer(&format!("/modules/{owner_key}/native_executable"))?
+        .as_str()?;
+    let path = PathBuf::from(path);
+    is_executable(&path).then_some(path)
+}
+
+fn owner_executable(owner_key: &str, path_name: &str) -> Option<PathBuf> {
+    resolve_executable(path_name).or_else(|| registered_owner_executable(owner_key))
+}
+
+fn query_owner_contracts() -> (Vec<OwnerContract>, Vec<String>) {
+    let mut contracts = Vec::new();
+    let mut errors = Vec::new();
+    let Some(actuation) = owner_executable("actuation", "actuation") else {
+        return (contracts, errors);
+    };
+    let actuation = actuation.display().to_string();
+    match run_json_plain(&actuation, &["contract", "list", "--json"]) {
+        Ok(Some(data)) => contracts.extend(actuation_contracts(&data)),
+        Ok(None) => {}
+        Err(error) => errors.push(format!("Actuation contract registry: {error}")),
+    }
+    (contracts, errors)
+}
+
+fn actuation_contracts(data: &Value) -> Vec<OwnerContract> {
+    let mut out = Vec::new();
+    let Some(object) = data.as_object() else {
+        return out;
+    };
+    for (field, contract) in object {
+        let Some(contract) = contract.as_str() else {
+            continue;
+        };
+        if !contract.starts_with("actuation.") {
+            continue;
+        }
+        out.push(OwnerContract {
+            owner: "Actuation".to_owned(),
+            contract: contract.to_owned(),
+            field: field.replace('_', "-"),
+            provenance: vec!["actuation contract list".to_owned()],
+        });
+    }
+    out.sort_by(|left, right| left.field.cmp(&right.field));
+    out
+}
+
+fn query_owner_capacities() -> (Vec<OwnerCapacity>, Vec<String>) {
+    let mut capacities = Vec::new();
+    let mut errors = Vec::new();
+    let Some(workcell) = owner_executable("workcell", "workcell") else {
+        return (capacities, errors);
+    };
+    let workcell = workcell.display().to_string();
+    match run_json_plain(&workcell, &["providers", "--json"]) {
+        Ok(Some(data)) => capacities.extend(workcell_capacities(&data)),
+        Ok(None) => {}
+        Err(error) => errors.push(format!("Workcell provider registry: {error}")),
+    }
+    (capacities, errors)
+}
+
+fn workcell_capacities(data: &Value) -> Vec<OwnerCapacity> {
+    let mut out = Vec::new();
+    let Some(providers) = data.get("providers").and_then(Value::as_array) else {
+        return out;
+    };
+    for entry in providers {
+        let Some(capacity_ref) = entry.get("provider_ref").and_then(Value::as_str) else {
+            continue;
+        };
+        let health: Vec<String> = entry
+            .get("health")
+            .and_then(Value::as_array)
+            .map(|values| {
+                values
+                    .iter()
+                    .filter_map(Value::as_str)
+                    .map(str::to_owned)
+                    .collect()
+            })
+            .unwrap_or_default();
+        let mut ports: Vec<String> = entry
+            .get("ports")
+            .and_then(Value::as_array)
+            .map(|values| {
+                values
+                    .iter()
+                    .filter_map(Value::as_str)
+                    .map(str::to_owned)
+                    .collect()
+            })
+            .unwrap_or_default();
+        ports.sort();
+        ports.dedup();
+        let offers = entry.get("offers").and_then(Value::as_array).map(Vec::len);
+        let state = if health.iter().any(|entry| entry != "healthy") {
+            "degraded".to_owned()
+        } else if health.is_empty() {
+            "unknown".to_owned()
+        } else {
+            "healthy".to_owned()
+        };
+
+        let mut facts = BTreeMap::new();
+        if let Some(offers) = offers {
+            facts.insert("offers_count".to_owned(), json!(offers));
+        }
+        if !health.is_empty() {
+            facts.insert("health".to_owned(), json!(health));
+        }
+
+        out.push(OwnerCapacity {
+            owner: "Workcell".to_owned(),
+            capacity_ref: capacity_ref.to_owned(),
+            ports,
+            state,
+            facts,
+            provenance: vec!["workcell providers".to_owned()],
+        });
+    }
+    out.sort_by(|left, right| left.capacity_ref.cmp(&right.capacity_ref));
+    out
+}
+
+fn aikit_mux_participations(data: &Value) -> Vec<OwnerParticipation> {
+    let active = data.get("active").and_then(Value::as_str).map(str::to_owned);
+    let active_stack: Vec<String> = data
+        .get("active_stack")
+        .and_then(Value::as_array)
+        .map(|values| {
+            values
+                .iter()
+                .filter_map(Value::as_str)
+                .map(str::to_owned)
+                .collect()
+        })
+        .unwrap_or_default();
+    let mut out = Vec::new();
+    let Some(detected) = data.get("detected").and_then(Value::as_array) else {
+        return out;
+    };
+    for entry in detected {
+        let Some(mux) = entry.get("mux").and_then(Value::as_str) else {
+            continue;
+        };
+        if mux == "plain" {
+            continue;
+        }
+        let installed = entry
+            .get("installed")
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
+        let running = entry
+            .get("server_running")
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
+        let inside = entry
+            .get("inside")
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
+        let version = entry.get("version").and_then(Value::as_str).map(str::to_owned);
+        let binary = entry.get("binary").and_then(Value::as_str).map(str::to_owned);
+        let remote_tmux = entry.get("remote_tmux").and_then(Value::as_bool);
+        let detail = entry.get("detail").and_then(Value::as_str).map(str::to_owned);
+
+        let state = if !installed {
+            "not-installed".to_owned()
+        } else if active.as_deref() == Some(mux) && running {
+            "active".to_owned()
+        } else if running {
+            "installed-running".to_owned()
+        } else {
+            "installed-not-running".to_owned()
+        };
+
+        let mut readiness = BTreeMap::new();
+        readiness.insert("installed".to_owned(), json!(installed));
+        readiness.insert("server_running".to_owned(), json!(running));
+        readiness.insert("inside".to_owned(), json!(inside));
+        if let Some(remote) = remote_tmux {
+            readiness.insert("remote_tmux".to_owned(), json!(remote));
+        }
+        if let Some(active) = active.as_ref() {
+            readiness.insert("active".to_owned(), json!(active));
+        }
+        if !active_stack.is_empty() {
+            readiness.insert("active_stack".to_owned(), json!(active_stack));
+        }
+        if let Some(detail) = detail {
+            readiness.insert("detail".to_owned(), json!(detail));
+        }
+
+        out.push(OwnerParticipation {
+            owner: "AIKit".to_owned(),
+            native_system: NativeSystemObservation {
+                system_ref: format!("native:{mux}:local"),
+                kind: "working-environment".to_owned(),
+                name: mux.to_owned(),
+                version,
+                locator: binary,
+                source_revision: None,
+            },
+            contract: "aikit.working-environment-provider/v1".to_owned(),
+            state,
+            readiness,
+            canonical_ref: None,
+            provenance: vec![
+                format!("AIKit crates/aikit-adapters/src/mux/{mux}.rs"),
+                "aikit mux detect".to_owned(),
+            ],
+            faculties: vec![
+                "session".to_owned(),
+                "pane".to_owned(),
+                "surface".to_owned(),
+            ],
+        });
+    }
+    out
+}
+
+fn aikit_client_participations(data: &Value) -> Vec<OwnerParticipation> {
+    let mut out = Vec::new();
+    let Some(clients) = data.get("clients").and_then(Value::as_array) else {
+        return out;
+    };
+    for entry in clients {
+        let Some(client) = entry.get("client").and_then(Value::as_str) else {
+            continue;
+        };
+        // AIKit's broker is its own disclosure surface, not an external harness.
+        if client == "broker" {
+            continue;
+        }
+        let installed = entry
+            .get("installed")
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
+        let error = entry.get("error").and_then(Value::as_str).map(str::to_owned);
+        let effect = entry.get("effect").and_then(Value::as_str).map(str::to_owned);
+        let items = entry.get("items").and_then(Value::as_u64);
+        let config_dir = entry
+            .get("config_dir")
+            .and_then(Value::as_str)
+            .map(str::to_owned);
+
+        let unprojected = error
+            .as_deref()
+            .map(|error| error.contains("not yet projected"))
+            .unwrap_or(false)
+            || effect
+                .as_deref()
+                .map(|effect| effect.contains("not yet projected"))
+                .unwrap_or(false);
+        let state = if !installed {
+            "not-installed".to_owned()
+        } else if unprojected {
+            "installed-unprojected".to_owned()
+        } else if error.is_some() {
+            "degraded".to_owned()
+        } else {
+            "installed".to_owned()
+        };
+
+        let mut readiness = BTreeMap::new();
+        readiness.insert("installed".to_owned(), json!(installed));
+        if let Some(items) = items {
+            readiness.insert("items".to_owned(), json!(items));
+        }
+        if let Some(effect) = effect {
+            readiness.insert("effect".to_owned(), json!(effect));
+        }
+        if let Some(config_dir) = config_dir {
+            readiness.insert("config_dir".to_owned(), json!(config_dir));
+        }
+        if let Some(error) = error {
+            readiness.insert("error".to_owned(), json!(error));
+        }
+
+        out.push(OwnerParticipation {
+            owner: "AIKit".to_owned(),
+            native_system: NativeSystemObservation {
+                system_ref: format!("native:{client}:local"),
+                kind: "harness".to_owned(),
+                name: client.to_owned(),
+                version: None,
+                locator: None,
+                source_revision: None,
+            },
+            contract: "aikit.client-adapter/v1".to_owned(),
+            state,
+            readiness,
+            canonical_ref: None,
+            provenance: vec![
+                format!("AIKit crates/aikit-adapters/src/clients/{client}.rs"),
+                "aikit client status (operative capability projection)".to_owned(),
+            ],
+            faculties: vec!["skill-projection".to_owned()],
+        });
+    }
+    out
+}
+
+fn reconcile_owner_participations(
+    observations: &mut [RecognitionObservation],
+    participations: &[OwnerParticipation],
+) {
+    for participation in participations {
+        for observation in observations.iter_mut() {
+            if !native_system_matches(&observation.native_system, &participation.native_system) {
+                continue;
+            }
+            if observation.owner_bindings.iter().any(|binding| {
+                binding.owner == participation.owner && binding.contract == participation.contract
+            }) {
+                continue;
+            }
+            observation.owner_bindings.push(OwnerParticipationBinding {
+                owner: participation.owner.clone(),
+                contract: participation.contract.clone(),
+                state: participation.state.clone(),
+                canonical_ref: participation.canonical_ref.clone(),
+                provenance: participation.provenance.clone(),
+            });
+        }
+    }
+}
+
+fn native_system_matches(left: &NativeSystemObservation, right: &NativeSystemObservation) -> bool {
+    left.name.eq_ignore_ascii_case(&right.name) || left.system_ref == right.system_ref
+}
+
+/// One entry in the built-in native-tool registry.
+///
+/// The registry itself is data, not code: `native_tools.json` ships the curated
+/// floor and this struct + [`recognize_installed_native_tools`] are the generic
+/// observation engine. Adding a tool edits JSON, not Rust. Anything richer or
+/// newer registers through the public `oi.world-recognition/v1` package path
+/// (as cmux and Herdr already do) — no source change at all. Version is always
+/// read from the live machine; nothing here asserts a fixed revision.
+#[derive(Debug, Clone, Deserialize)]
+struct NativeToolEntry {
+    name: String,
+    /// Native taxonomy: harness, agent, model-provider, material-executor,
+    /// working-environment, collaboration-client.
+    kind: String,
+    /// Version probe arguments. Empty means the tool exposes no version flag;
+    /// presence is still recorded and the probe gap is a fact, not an error.
+    #[serde(default)]
+    version_args: Vec<String>,
+    /// When set, observe machine-global service state from this home-relative
+    /// directory instead of probing a PATH binary (e.g. a daemon).
+    #[serde(default)]
+    service_dir: Option<String>,
+}
+
+const NATIVE_TOOL_REGISTRY_JSON: &str = include_str!("native_tools.json");
+
+fn native_tool_registry() -> Vec<NativeToolEntry> {
+    serde_json::from_str(NATIVE_TOOL_REGISTRY_JSON).unwrap_or_default()
+}
+
+/// Observe installed harnesses, agents, model providers, material executors and
+/// collaboration clients without claiming any owner participation. Presence,
+/// version and degraded state are whole-level O:I facts; which native owner can
+/// do something with them is composed separately by owner-participation
+/// reconciliation. Versions are read live — never asserted — so a tool upgrade
+/// is an observation, not a failure.
+fn recognize_installed_native_tools() -> Vec<RecognitionObservation> {
+    let mut observations = Vec::new();
+    for entry in native_tool_registry() {
+        if let Some(service_dir) = entry.service_dir.as_deref() {
+            if let Some(observation) = recognize_service_tool(&entry, service_dir) {
+                observations.push(observation);
+            }
+            continue;
+        }
+        let Some(locator) = resolve_executable(&entry.name) else {
+            continue;
+        };
+        observations.push(recognize_binary_tool(&entry, &locator));
+    }
+    observations
+}
+
+fn recognize_binary_tool(
+    entry: &NativeToolEntry,
+    locator: &std::path::Path,
+) -> RecognitionObservation {
+    let mut facts = BTreeMap::new();
+    let (version, degraded, detail, source_revision, evidence) =
+        if entry.version_args.is_empty() {
+            facts.insert("version_flag".to_owned(), json!("none"));
+            (
+                None,
+                false,
+                None,
+                None,
+                vec![RecognitionEvidence {
+                    kind: "native-presence".to_owned(),
+                    source: locator.display().to_string(),
+                    detail: format!("{} installed; exposes no version flag", entry.name),
+                }],
+            )
+        } else {
+            let output = Command::new(locator)
+                .args(&entry.version_args)
+                .stdin(Stdio::null())
+                .output();
+            match output {
+                Ok(output) => {
+                    let stdout = String::from_utf8_lossy(&output.stdout);
+                    let stderr = String::from_utf8_lossy(&output.stderr);
+                    let (version, degraded, detail) =
+                        classify_probe(output.status.success(), &stdout, &stderr);
+                    let source_revision =
+                        version.as_deref().and_then(parse_upstream_revision);
+                    (
+                        version,
+                        degraded,
+                        detail,
+                        source_revision,
+                        vec![RecognitionEvidence {
+                            kind: "native-command".to_owned(),
+                            source: locator.display().to_string(),
+                            detail: format!(
+                                "{} {}",
+                                entry.name,
+                                entry.version_args.join(" ")
+                            ),
+                        }],
+                    )
+                }
+                Err(error) => (
+                    None,
+                    true,
+                    Some(format!("failed to probe: {error}")),
+                    None,
+                    vec![RecognitionEvidence {
+                        kind: "native-command".to_owned(),
+                        source: locator.display().to_string(),
+                        detail: format!("probe failed: {error}"),
+                    }],
+                ),
+            }
+        };
+
+    facts.insert("degraded".to_owned(), json!(degraded));
+    if let Some(detail) = detail {
+        facts.insert("detail".to_owned(), json!(detail));
+    }
+
+    RecognitionObservation {
+        observation_ref: format!("observation:{}:local", entry.name),
+        native_system: NativeSystemObservation {
+            system_ref: format!("native:{}:local", entry.name),
+            kind: entry.kind.to_owned(),
+            name: entry.name.to_owned(),
+            version,
+            locator: Some(locator.display().to_string()),
+            source_revision,
+        },
+        support: "observed".to_owned(),
+        faculties: Vec::new(),
+        relations: Vec::new(),
+        facts,
+        owner_bindings: Vec::new(),
+        evidence,
+    }
+}
+
+/// Observe a home-relative service/daemon from its own machine-global state
+/// files rather than a PATH binary. Never invents a locator or a version.
+fn recognize_service_tool(
+    entry: &NativeToolEntry,
+    service_dir: &str,
+) -> Option<RecognitionObservation> {
+    let home = std::env::var_os("HOME")?;
+    let root = std::path::PathBuf::from(home).join(service_dir);
+    if !root.is_dir() {
+        return None;
+    }
+
+    let mut facts = BTreeMap::new();
+    let mut version = None;
+    let mut running = false;
+    let mut evidence = Vec::new();
+
+    if let Ok(daemon) = std::fs::read_to_string(root.join("local-exec-daemon.json")) {
+        if let Ok(value) = serde_json::from_str::<Value>(&daemon) {
+            running = value.get("pid").and_then(Value::as_i64).is_some();
+            if let Some(pid) = value.get("pid").and_then(Value::as_i64) {
+                facts.insert("pid".to_owned(), json!(pid));
+            }
+            if let Some(generation) = value.get("generation").and_then(Value::as_i64) {
+                facts.insert("generation".to_owned(), json!(generation));
+            }
+            evidence.push(RecognitionEvidence {
+                kind: "service-state".to_owned(),
+                source: root.join("local-exec-daemon.json").display().to_string(),
+                detail: "daemon state read live".to_owned(),
+            });
+        }
+    }
+    if let Ok(settings) = std::fs::read_to_string(root.join("settings.json")) {
+        if let Ok(value) = serde_json::from_str::<Value>(&settings) {
+            if let Some(schema) = value.get("version").and_then(Value::as_i64) {
+                version = Some(format!("settings schema {schema}"));
+            }
+            evidence.push(RecognitionEvidence {
+                kind: "service-settings".to_owned(),
+                source: root.join("settings.json").display().to_string(),
+                detail: "settings read live".to_owned(),
+            });
+        }
+    }
+
+    facts.insert("running".to_owned(), json!(running));
+    facts.insert("degraded".to_owned(), json!(false));
+    if evidence.is_empty() {
+        facts.insert(
+            "detail".to_owned(),
+            json!("service directory present; no readable state files"),
+        );
+        evidence.push(RecognitionEvidence {
+            kind: "service-presence".to_owned(),
+            source: root.display().to_string(),
+            detail: "service directory present".to_owned(),
+        });
+    }
+
+    Some(RecognitionObservation {
+        observation_ref: format!("observation:{}:local", entry.name),
+        native_system: NativeSystemObservation {
+            system_ref: format!("native:{}:local", entry.name),
+            kind: entry.kind.to_owned(),
+            name: entry.name.to_owned(),
+            version,
+            locator: Some(root.display().to_string()),
+            source_revision: None,
+        },
+        support: "observed".to_owned(),
+        faculties: Vec::new(),
+        relations: Vec::new(),
+        facts,
+        owner_bindings: Vec::new(),
+        evidence,
+    })
+}
+
+/// Recover an upstream source revision from a version banner that carries one
+/// (e.g. Hermes: `Hermes Agent v0.20.5 · upstream 6607f706 · local ab0d9841`).
+fn parse_upstream_revision(version: &str) -> Option<String> {
+    let marker = "upstream ";
+    let index = version.find(marker)?;
+    let rest = &version[index + marker.len()..];
+    let token = rest.split_whitespace().next()?;
+    let token = token.trim_end_matches(',').trim_end_matches('·');
+    if token.chars().all(|c| c.is_ascii_hexdigit()) && !token.is_empty() {
+        Some(token.to_owned())
+    } else {
+        None
+    }
+}
+
+fn classify_probe(
+    status_success: bool,
+    stdout: &str,
+    stderr: &str,
+) -> (Option<String>, bool, Option<String>) {
+    // A multi-line banner (Hermes, some SDKs) still yields one clean version
+    // line; the rest is noise for the version field, not lost evidence.
+    let version = stdout
+        .lines()
+        .map(str::trim)
+        .find(|line| !line.is_empty())
+        .map(str::to_owned);
+    if status_success {
+        (version, false, None)
+    } else {
+        let detail = if stderr.trim().is_empty() {
+            "probe exited non-zero without stderr".to_owned()
+        } else {
+            stderr.trim().to_owned()
+        };
+        (version, true, Some(detail))
+    }
+}
+
+const EXTENSION_OWNERS: &[(&str, &str, &str, &str)] = &[
+    // (native kind, owner, sdk, authoring domain)
+    (
+        "harness",
+        "Actuation",
+        "actuation.model-bearing/v1",
+        "model-bearing",
+    ),
+    (
+        "agent",
+        "Actuation",
+        "actuation.model-bearing/v1",
+        "model-bearing",
+    ),
+    (
+        "model-provider",
+        "Actuation",
+        "actuation.model-bearing/v1",
+        "model-bearing",
+    ),
+    (
+        "material-executor",
+        "Workcell",
+        "workcell.provider-sdk/v1",
+        "provider",
+    ),
+];
+
+/// Emit the extension path for recognised systems that no installed owner
+/// currently participates in. Degraded systems are a repair concern, not a
+/// missing-support concern, and are excluded. The routing follows native
+/// ownership: model/harness/agent-instance goes to Actuation, material
+/// execution to Workcell.
+fn compose_extension_frontier(
+    observations: &[RecognitionObservation],
+) -> Vec<RecognitionExtensionRequest> {
+    let mut requests = Vec::new();
+    for observation in observations {
+        if !observation.owner_bindings.is_empty() {
+            continue;
+        }
+        if observation
+            .facts
+            .get("degraded")
+            .and_then(Value::as_bool)
+            == Some(true)
+        {
+            continue;
+        }
+        let Some((kind, owner, sdk, domain)) = EXTENSION_OWNERS
+            .iter()
+            .find(|(kind, _, _, _)| *kind == observation.native_system.kind)
+        else {
+            continue;
+        };
+        let name = observation.native_system.name.as_str();
+        requests.push(RecognitionExtensionRequest {
+            request_ref: format!("extension:{name}:{owner}"),
+            native_system_ref: observation.native_system.system_ref.clone(),
+            owner: (*owner).to_owned(),
+            reason: format!(
+                "{kind} present with no installed owner participation",
+            ),
+            sdk: (*sdk).to_owned(),
+            authoring_skill: format!("{owner} {domain} authoring Skill"),
+            conformance: format!("{sdk} conformance"),
+            package_target: "oi.package/v1".to_owned(),
+        });
+    }
+    requests
 }
 
 fn embedded_registrations() -> Result<Vec<RecognitionRegistration>, String> {
@@ -1125,5 +2024,297 @@ printf '%s\n' '{"schema":"oi.world-recognition-result/v1","provider_ref":"contri
         assert!(relations.iter().any(|relation| {
             relation.from_ref == "herdr:agent:a1" && relation.to_ref == "herdr:pane:p1"
         }));
+    }
+
+    #[test]
+    fn aikit_mux_detect_discloses_tmux_and_cmux_as_owner_participations() {
+        let data: Value = serde_json::from_str(
+            r#"{
+              "active": "plain",
+              "active_stack": ["plain"],
+              "declared": null,
+              "detected": [
+                {"binary":"/opt/homebrew/bin/tmux","installed":true,"mux":"tmux","server_running":true,"version":"3.6a","inside":false},
+                {"binary":"/Applications/cmux.app/Contents/Resources/bin/cmux","installed":true,"mux":"cmux","server_running":false,"version":"cmux 0.64.22 (102) [ddd4a01bc]","inside":false},
+                {"binary":null,"installed":true,"mux":"plain","server_running":true,"inside":true}
+              ]
+            }"#,
+        )
+        .unwrap();
+        let participations = aikit_mux_participations(&data);
+        assert_eq!(participations.len(), 2);
+        let tmux = participations
+            .iter()
+            .find(|participation| participation.native_system.name == "tmux")
+            .unwrap();
+        assert_eq!(tmux.contract, "aikit.working-environment-provider/v1");
+        assert_eq!(tmux.state, "installed-running");
+        assert_eq!(tmux.owner, "AIKit");
+        let cmux = participations
+            .iter()
+            .find(|participation| participation.native_system.name == "cmux")
+            .unwrap();
+        assert_eq!(cmux.state, "installed-not-running");
+        assert_eq!(
+            cmux.readiness.get("server_running"),
+            Some(&serde_json::json!(false))
+        );
+    }
+
+    #[test]
+    fn aikit_client_status_discloses_harness_participations_without_broker() {
+        let data: Value = serde_json::from_str(
+            r#"{
+              "clients": [
+                {"client":"claude","config_dir":"/Users/admin/.claude","effect":"restart Claude","error":null,"installed":true,"items":2,"notes":[]},
+                {"client":"codex","config_dir":"/Users/admin/.codex","effect":"next session only","error":null,"installed":true,"items":2,"notes":[]},
+                {"client":"opencode","config_dir":"/Users/admin/.config/opencode","effect":null,"error":"opencode's skill surface is not yet projected by AIKit","installed":true,"items":null,"notes":[]},
+                {"client":"broker","config_dir":"/Users/admin/.aikit","effect":"live","error":null,"installed":true,"items":2,"notes":[]}
+              ]
+            }"#,
+        )
+        .unwrap();
+        let participations = aikit_client_participations(&data);
+        assert_eq!(participations.len(), 3);
+        assert!(participations
+            .iter()
+            .all(|participation| participation.native_system.name != "broker"));
+        let claude = participations
+            .iter()
+            .find(|participation| participation.native_system.name == "claude")
+            .unwrap();
+        assert_eq!(claude.contract, "aikit.client-adapter/v1");
+        assert_eq!(claude.state, "installed");
+        let opencode = participations
+            .iter()
+            .find(|participation| participation.native_system.name == "opencode")
+            .unwrap();
+        assert_eq!(opencode.state, "installed-unprojected");
+    }
+
+    #[test]
+    fn reconciliation_attaches_owner_binding_to_matching_observation_without_duplication() {
+        let participation = OwnerParticipation {
+            owner: "AIKit".to_owned(),
+            native_system: NativeSystemObservation {
+                system_ref: "native:cmux:local".to_owned(),
+                kind: "working-environment".to_owned(),
+                name: "cmux".to_owned(),
+                version: Some("0.64.22".to_owned()),
+                locator: None,
+                source_revision: None,
+            },
+            contract: "aikit.working-environment-provider/v1".to_owned(),
+            state: "installed-not-running".to_owned(),
+            readiness: BTreeMap::new(),
+            canonical_ref: None,
+            provenance: vec!["aikit mux detect".to_owned()],
+            faculties: vec!["session".to_owned()],
+        };
+        let observation = RecognitionObservation {
+            observation_ref: "observation:cmux:local".to_owned(),
+            native_system: NativeSystemObservation {
+                system_ref: "native:cmux:local".to_owned(),
+                kind: "working-environment".to_owned(),
+                name: "cmux".to_owned(),
+                version: None,
+                locator: None,
+                source_revision: None,
+            },
+            support: "supported".to_owned(),
+            faculties: Vec::new(),
+            relations: Vec::new(),
+            facts: BTreeMap::new(),
+            owner_bindings: Vec::new(),
+            evidence: Vec::new(),
+        };
+        let mut observations = vec![observation];
+        reconcile_owner_participations(&mut observations, &[participation.clone()]);
+        reconcile_owner_participations(&mut observations, &[participation]);
+        let observation = &observations[0];
+        assert_eq!(observation.owner_bindings.len(), 1);
+        assert_eq!(observation.owner_bindings[0].contract, "aikit.working-environment-provider/v1");
+        assert_eq!(observation.owner_bindings[0].state, "installed-not-running");
+    }
+
+    #[test]
+    fn native_system_match_is_case_insensitive_on_name() {
+        let left = NativeSystemObservation {
+            system_ref: "native:herdr:local".to_owned(),
+            kind: "working-environment".to_owned(),
+            name: "Herdr".to_owned(),
+            version: None,
+            locator: None,
+            source_revision: None,
+        };
+        let right = NativeSystemObservation {
+            system_ref: "native:herdr:local".to_owned(),
+            kind: "working-environment".to_owned(),
+            name: "herdr".to_owned(),
+            version: None,
+            locator: None,
+            source_revision: None,
+        };
+        assert!(native_system_matches(&left, &right));
+    }
+
+    #[test]
+    fn classify_probe_success_captures_version_without_degradation() {
+        let (version, degraded, detail) = classify_probe(true, "claude 2.1.238 (Claude Code)\n", "");
+        assert_eq!(version.as_deref(), Some("claude 2.1.238 (Claude Code)"));
+        assert!(!degraded);
+        assert!(detail.is_none());
+    }
+
+    #[test]
+    fn classify_probe_failure_is_degraded_with_stderr_detail() {
+        let (version, degraded, detail) = classify_probe(
+            false,
+            "",
+            "dyld: Library not loaded: /opt/homebrew/opt/simdjson/lib/libsimdjson.29.dylib",
+        );
+        assert_eq!(version, None);
+        assert!(degraded);
+        assert!(detail.unwrap().contains("simdjson"));
+    }
+
+    #[test]
+    fn classify_probe_failure_without_stderr_is_still_degraded() {
+        let (version, degraded, detail) = classify_probe(false, "", "");
+        assert_eq!(version, None);
+        assert!(degraded);
+        assert!(detail.unwrap().contains("non-zero"));
+    }
+
+    #[test]
+    fn native_tool_registry_uses_lowercase_names_for_owner_join() {
+        let registry = native_tool_registry();
+        for entry in &registry {
+            assert_eq!(entry.name, entry.name.to_lowercase());
+            assert!(!entry.kind.is_empty());
+        }
+        assert!(registry.iter().any(|entry| entry.name == "claude" && !entry.version_args.is_empty()));
+        assert!(registry.iter().any(|entry| entry.name == "codex"));
+        assert!(registry.iter().any(|entry| entry.name == "hermes"));
+        assert!(registry.iter().any(|entry| entry.name == "buzz" && entry.version_args.is_empty()));
+        assert!(registry.iter().any(|entry| entry.name == "grok" && entry.service_dir.as_deref() == Some(".grokbot")));
+    }
+
+    #[test]
+    fn upstream_revision_is_parsed_from_version_banner_without_overclaiming() {
+        assert_eq!(
+            parse_upstream_revision(
+                "Hermes Agent v0.20.5 (2026.8.19) · upstream 6607f706 · local ab0d9841 (+1 carried commit)"
+            ),
+            Some("6607f706".to_owned())
+        );
+        assert_eq!(parse_upstream_revision("claude 2.1.238"), None);
+        assert_eq!(parse_upstream_revision("some text upstream not-a-hex"), None);
+    }
+
+    #[test]
+    fn actuation_contract_list_discloses_model_bearing_field_ownership() {
+        let data: Value = serde_json::from_str(
+            r#"{
+              "agency":"actuation.agency/v1",
+              "realised":"actuation.realised/v1",
+              "stream":"actuation.stream/v1",
+              "activity":"actuation.activity/v1",
+              "model_bearing":"actuation.model-bearing/v1"
+            }"#,
+        )
+        .unwrap();
+        let contracts = actuation_contracts(&data);
+        assert_eq!(contracts.len(), 5);
+        let model = contracts
+            .iter()
+            .find(|contract| contract.field == "model-bearing")
+            .unwrap();
+        assert_eq!(model.contract, "actuation.model-bearing/v1");
+        assert_eq!(model.owner, "Actuation");
+        assert!(contracts
+            .iter()
+            .all(|contract| contract.contract.starts_with("actuation.")));
+    }
+
+    #[test]
+    fn extension_frontier_routes_harness_and_model_to_actuation_and_material_to_workcell() {
+        let observed = |name: &str, kind: &str| RecognitionObservation {
+            observation_ref: format!("observation:{name}:local"),
+            native_system: NativeSystemObservation {
+                system_ref: format!("native:{name}:local"),
+                kind: kind.to_owned(),
+                name: name.to_owned(),
+                version: None,
+                locator: None,
+                source_revision: None,
+            },
+            support: "observed".to_owned(),
+            faculties: Vec::new(),
+            relations: Vec::new(),
+            facts: BTreeMap::new(),
+            owner_bindings: Vec::new(),
+            evidence: Vec::new(),
+        };
+        let mut degraded = observed("broken", "harness");
+        degraded.facts.insert("degraded".to_owned(), json!(true));
+
+        let requests = compose_extension_frontier(&[
+            observed("pi", "harness"),
+            observed("ollama", "model-provider"),
+            observed("docker", "material-executor"),
+            degraded,
+        ]);
+        assert_eq!(requests.len(), 3);
+        let pi = requests
+            .iter()
+            .find(|request| request.native_system_ref == "native:pi:local")
+            .unwrap();
+        assert_eq!(pi.owner, "Actuation");
+        assert_eq!(pi.sdk, "actuation.model-bearing/v1");
+        let docker = requests
+            .iter()
+            .find(|request| request.native_system_ref == "native:docker:local")
+            .unwrap();
+        assert_eq!(docker.owner, "Workcell");
+        assert_eq!(docker.sdk, "workcell.provider-sdk/v1");
+        assert!(!requests
+            .iter()
+            .any(|request| request.native_system_ref == "native:broken:local"));
+    }
+
+    #[test]
+    fn workcell_provider_inventory_discloses_material_capacities() {
+        let data: Value = serde_json::from_str(
+            r#"{
+              "ok": true,
+              "providers": [
+                {"health":["healthy"],"offers":["offer:host-process"],"ports":["execution"],"provider_ref":"provider:collapsed-local-host-process"},
+                {"health":["healthy","healthy"],"offers":["offer:a","offer:b"],"ports":["artifact-storage","artifact-storage"],"provider_ref":"provider:collapsed-local-artifacts"},
+                {"health":["degraded"],"offers":["offer:ws"],"ports":["workspace"],"provider_ref":"provider:collapsed-local-workspace"}
+              ]
+            }"#,
+        )
+        .unwrap();
+        let capacities = workcell_capacities(&data);
+        assert_eq!(capacities.len(), 3);
+        let execution = capacities
+            .iter()
+            .find(|capacity| capacity.capacity_ref == "provider:collapsed-local-host-process")
+            .unwrap();
+        assert_eq!(execution.state, "healthy");
+        assert_eq!(execution.ports, vec!["execution".to_owned()]);
+        assert_eq!(execution.owner, "Workcell");
+        let workspace = capacities
+            .iter()
+            .find(|capacity| capacity.capacity_ref == "provider:collapsed-local-workspace")
+            .unwrap();
+        assert_eq!(workspace.state, "degraded");
+        let artifacts = capacities
+            .iter()
+            .find(|capacity| capacity.capacity_ref == "provider:collapsed-local-artifacts")
+            .unwrap();
+        assert_eq!(artifacts.ports, vec!["artifact-storage".to_owned()]);
+        assert_eq!(artifacts.facts.get("offers_count"), Some(&serde_json::json!(2)));
     }
 }

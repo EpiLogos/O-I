@@ -70,6 +70,20 @@ fn shell_snapshot(state: State<'_, AppState>) -> Result<ShellSnapshot, String> {
         .map_err(|error| error.to_string())
 }
 
+/// Re-observe the live World and return the refreshed shell snapshot. This is
+/// the same deterministic discovery the host performs at startup; it refreshes
+/// the read model without granting new authority or invoking a model/Agent.
+#[tauri::command]
+fn reconcile_world(state: State<'_, AppState>) -> Result<ShellSnapshot, String> {
+    let mut host = state
+        .host
+        .lock()
+        .map_err(|_| "desktop host lock poisoned".to_owned())?;
+    host.reconcile_world().map_err(|error| error.to_string())?;
+    host.snapshot(BridgeCaller::ShellUi)
+        .map_err(|error| error.to_string())
+}
+
 #[tauri::command]
 fn contribution_catalog(state: State<'_, AppState>) -> Result<Vec<HostedContribution>, String> {
     BridgePolicy
@@ -817,7 +831,8 @@ fn main() {
             knowledge_explain,
             knowledge_history,
             select_semantic_ref,
-            open_destination
+            open_destination,
+            reconcile_world
         ])
         .run(tauri::generate_context!())
         .expect("failed to run O:I desktop");

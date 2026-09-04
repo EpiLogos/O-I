@@ -10,3 +10,9 @@ site/*.config.js
 site/*.config.d.ts
 *.log
 .DS_Store
+/target/
+/cli/target/
+/desktop/core/target/
+/desktop/core/Cargo.lock
+/desktop/src-tauri/target/
+/desktop/src-tauri/gen/

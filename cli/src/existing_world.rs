@@ -1,5 +1,5 @@
 use oi_cli::world_recognition::{
-    discover_world, effective_registrations, register_recognition_package,
+    discover_ground, effective_registrations, register_recognition_package,
     unregister_recognition_contribution, RecognizedSourceAperture, WorldRecognitionAccount,
 };
 
@@ -162,7 +162,7 @@ fn command_world_recognition(args: &[OsString]) -> Result<i32, String> {
             }
             let target = target
                 .ok_or_else(|| "usage: oi recognition inspect PATH [--json]".to_owned())?;
-            let account = discover_world(&target, &registry_path)?;
+            let account = discover_ground(&target)?;
             if json_mode {
                 println!(
                     "{}",
@@ -189,7 +189,7 @@ fn world_recognition_registry_path() -> Result<PathBuf, String> {
 }
 
 fn inspect_existing_world(target: &Path) -> Result<ExistingWorldAdoptionAccount, String> {
-    let recognition = discover_world(target, &world_recognition_registry_path()?)?;
+    let recognition = discover_ground(target)?;
     let sources = recognition.sources.clone();
 
     Ok(ExistingWorldAdoptionAccount {
@@ -201,8 +201,8 @@ fn inspect_existing_world(target: &Path) -> Result<ExistingWorldAdoptionAccount,
         owner_handoffs: vec![
             ExistingWorldOwnerHandoff {
                 owner: "Actuation".to_owned(),
-                relation: "what-realised-agency-loop-exists".to_owned(),
-                contract: "actuation.realised/v1".to_owned(),
+                relation: "what-model-harness-agent-instance-and-realised-agency-loop-exists".to_owned(),
+                contract: "actuation.model-bearing/v1".to_owned(),
                 required_for_minimal_adoption: false,
                 state: "resolve through the native Actuation application/command surface when available"
                     .to_owned(),
@@ -210,8 +210,8 @@ fn inspect_existing_world(target: &Path) -> Result<ExistingWorldAdoptionAccount,
             },
             ExistingWorldOwnerHandoff {
                 owner: "AIKit".to_owned(),
-                relation: "how-context-praxis-harness-and-environment-are-resolved".to_owned(),
-                contract: "aikit.harness-adapter/v1".to_owned(),
+                relation: "how-operative-capability-projection-into-clients-and-environments-is-resolved".to_owned(),
+                contract: "aikit.client-adapter/v1".to_owned(),
                 required_for_minimal_adoption: false,
                 state: "consume accepted adapters/providers; missing support returns the public adapter SDK path"
                     .to_owned(),
@@ -282,20 +282,79 @@ fn print_world_recognition_account(account: &WorldRecognitionAccount) {
     } else {
         println!("Native systems:");
         for observation in &account.observations {
+            let degraded = observation
+                .facts
+                .get("degraded")
+                .and_then(|value| value.as_bool())
+                .unwrap_or(false);
+            let status = if degraded {
+                format!("{} [degraded]", observation.support)
+            } else {
+                observation.support.clone()
+            };
+            let version = observation
+                .native_system
+                .version
+                .as_deref()
+                .unwrap_or("");
             println!(
-                "  {:<24} {:<24} {}",
+                "  {:<16} {:<22} {:<24} {}",
                 observation.native_system.name,
-                observation.support,
-                observation.native_system.system_ref
+                status,
+                observation.native_system.system_ref,
+                version
+            );
+            for binding in &observation.owner_bindings {
+                println!(
+                    "    ↳ {:<8} {} {}",
+                    binding.owner, binding.contract, binding.state
+                );
+            }
+        }
+    }
+    if !account.owner_participations.is_empty() {
+        println!("Owner participations:");
+        for participation in &account.owner_participations {
+            println!(
+                "  {:<8} {:<24} {:<38} {}",
+                participation.owner,
+                participation.native_system.name,
+                participation.contract,
+                participation.state
+            );
+        }
+    }
+    if !account.owner_contracts.is_empty() {
+        println!("Owner contracts (semantic-field ownership):");
+        for contract in &account.owner_contracts {
+            println!(
+                "  {:<10} {:<34} {}",
+                contract.owner, contract.contract, contract.field
+            );
+        }
+    }
+    if !account.owner_capacities.is_empty() {
+        println!("Owner capacities (material/provider availability):");
+        for capacity in &account.owner_capacities {
+            println!(
+                "  {:<10} {:<40} {} [{}]",
+                capacity.owner,
+                capacity.capacity_ref,
+                capacity.state,
+                capacity.ports.join(", ")
             );
         }
     }
     if !account.extension_requests.is_empty() {
-        println!("Extension requests:");
+        println!("Extension frontier:");
         for request in &account.extension_requests {
             println!(
-                "  {} → {} / {}",
+                "  {:<24} → {:<10} {}",
                 request.native_system_ref, request.owner, request.sdk
+            );
+            println!(
+                "      reason: {} · skill: {} · conformance: {}",
+                request.reason, request.authoring_skill, request.conformance
             );
         }
     }
@@ -426,8 +485,8 @@ mod existing_world_tests {
                     .find(|entry| entry.owner == owner)
                     .unwrap()
             };
-            assert_eq!(by_owner("Actuation").contract, "actuation.realised/v1");
-            assert_eq!(by_owner("AIKit").contract, "aikit.harness-adapter/v1");
+            assert_eq!(by_owner("Actuation").contract, "actuation.model-bearing/v1");
+            assert_eq!(by_owner("AIKit").contract, "aikit.client-adapter/v1");
             assert!(!by_owner("Quaternal Logic").required_for_minimal_adoption);
             assert!(!account.ql_required);
         });

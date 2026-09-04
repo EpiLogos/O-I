@@ -52,6 +52,14 @@ pub fn cli_main() -> ExitCode {
         };
     }
     if command == Some("dev")
+        && args.get(1).and_then(|value| value.to_str()) == Some("world")
+    {
+        return match dev_world_main() {
+            Some(code) => code,
+            None => ExitCode::from(2),
+        };
+    }
+    if command == Some("dev")
         && args.get(1).and_then(|value| value.to_str()) == Some("install")
     {
         return match command_descriptor_current_dev_install(args.get(2..).unwrap_or_default()) {
@@ -75,6 +83,9 @@ pub fn cli_main() -> ExitCode {
         return code;
     }
     if let Some(code) = existing_world_main() {
+        return code;
+    }
+    if let Some(code) = dev_world_main() {
         return code;
     }
     if let Some(code) = omarchy_host_main() {
