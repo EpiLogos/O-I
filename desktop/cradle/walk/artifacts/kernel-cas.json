@@ -1,0 +1,2011 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "kernel-cas",
+  "generated_at": "2026-09-05T16:14:45.054Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 1861,
+  "checks": [
+    {
+      "ok": true,
+      "label": "austere rest unchanged with the kernel mounted (census 6 nodes)"
+    },
+    {
+      "ok": true,
+      "label": "the real horizon lists 4 participating sources (≥3, no fixtures)"
+    },
+    {
+      "ok": true,
+      "label": "every listed ref is Central's canonical grammar (central:source:project:project:o-i:…)"
+    },
+    {
+      "ok": true,
+      "label": "every row carries the horizon's live revision"
+    },
+    {
+      "ok": true,
+      "label": "the walk's real file is listed: ProjectCentral/user/learnings/README.md"
+    },
+    {
+      "ok": true,
+      "label": "read.sources through the channel carries the same real listing the index renders"
+    },
+    {
+      "ok": true,
+      "label": "the real file's content renders verbatim in the editor"
+    },
+    {
+      "ok": true,
+      "label": "the canonical revision shown is the horizon's"
+    },
+    {
+      "ok": true,
+      "label": "the surface carries the owner's ref verbatim"
+    },
+    {
+      "ok": true,
+      "label": "exactly one source_opened event for the open"
+    },
+    {
+      "ok": true,
+      "label": "the open focused the file's ref (one focus event, same ref)"
+    },
+    {
+      "ok": true,
+      "label": "exactly one surface_changed event for the new surface"
+    },
+    {
+      "ok": true,
+      "label": "the dirty marker renders (buffer ≠ canonical)"
+    },
+    {
+      "ok": true,
+      "label": "the tab carries the dirty state too"
+    },
+    {
+      "ok": true,
+      "label": "continued typing emits nothing (no duplicate buffer-dirty for one state)"
+    },
+    {
+      "ok": true,
+      "label": "exactly one save-success (source_changed) event"
+    },
+    {
+      "ok": true,
+      "label": "the revision advanced on save: …0aed651ab4539664 -> …90b9c9b86c229dfc"
+    },
+    {
+      "ok": true,
+      "label": "the canonical layer shown advanced to the receipt revision"
+    },
+    {
+      "ok": true,
+      "label": "the buffer is clean again (both layers synced)"
+    },
+    {
+      "ok": true,
+      "label": "exactly one conflict (source_write_conflict) event"
+    },
+    {
+      "ok": true,
+      "label": "the conflict is structured with both revisions: expected ≠ current (…c9b86c229dfc ≠ …a6879ea67ed0)"
+    },
+    {
+      "ok": true,
+      "label": "the cradle buffer is intact (dirty, preserved — no data loss)"
+    },
+    {
+      "ok": true,
+      "label": "the buffer stays dirty through the conflict"
+    },
+    {
+      "ok": true,
+      "label": "the surfaced panel carries the same expected/current pair as the event"
+    },
+    {
+      "ok": true,
+      "label": "the canonical side is readable and shows the external edit (the other preserved side)"
+    },
+    {
+      "ok": true,
+      "label": "invoke.source_reread crosses the seam and returns its receipt",
+      "data": {
+        "seq_range": {
+          "from": 9,
+          "to": 9
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "the re-read is one canonical re-open event"
+    },
+    {
+      "ok": true,
+      "label": "the buffer's base rebased onto the current canonical revision"
+    },
+    {
+      "ok": true,
+      "label": "the cradle edit survived the re-read (still dirty — the layers stay distinct)"
+    },
+    {
+      "ok": true,
+      "label": "invoke.source_save crosses the seam (typed call, not a UI shortcut)"
+    },
+    {
+      "ok": true,
+      "label": "after the re-read, the second save succeeds — exactly one save-success event"
+    },
+    {
+      "ok": true,
+      "label": "the revision advanced again on the reconciled save (…aacf5728ed4b3bc6)"
+    },
+    {
+      "ok": true,
+      "label": "read.state shows the file's kernel surface binding"
+    },
+    {
+      "ok": true,
+      "label": "invoke.surface_focus returns ok with its receipt seq range",
+      "data": {
+        "seq_range": {
+          "from": 12,
+          "to": 12
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "the harness-driven focus change emits exactly one focus event"
+    },
+    {
+      "ok": true,
+      "label": "the focus event carries the same ref (the one global focus relation)"
+    },
+    {
+      "ok": true,
+      "label": "the renderer's active tab is unmoved — the channel drove the kernel relation, not the UI"
+    },
+    {
+      "ok": true,
+      "label": "the original content restored through a real save — the revision returns to the original hash"
+    },
+    {
+      "ok": true,
+      "label": "the file on disk is byte-identical to how the walk found it"
+    },
+    {
+      "ok": true,
+      "label": "the event log is strictly monotonic 1..14 with no gaps and no duplicate emission",
+      "data": {
+        "histogram": {
+          "surface_changed": 2,
+          "source_opened": 2,
+          "focus_changed": 3,
+          "buffer_dirty": 3,
+          "source_changed": 3,
+          "source_write_conflict": 1
+        }
+      }
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "read.sources",
+      "duration_ms": 4.6,
+      "data": {
+        "schema": "oi.source-listing/v1",
+        "project": "o-i",
+        "sources": [
+          {
+            "ref": "central:source:project:project:o-i:ProjectCentral/agents/wiki/wiki.json",
+            "path": "ProjectCentral/agents/wiki/wiki.json",
+            "treatment": "projectcentral-agent-wiki",
+            "agent_retrieval_allowed": true,
+            "revision": "central.content-fnv1a64/v1:334:50e99f28bc1aff60"
+          },
+          {
+            "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/2026-08-21-oi97-false-convergence.md",
+            "path": "ProjectCentral/user/learnings/2026-08-21-oi97-false-convergence.md",
+            "treatment": "projectcentral-user",
+            "agent_retrieval_allowed": true,
+            "revision": "central.content-fnv1a64/v1:13659:dcc45ee7a47e23d8"
+          },
+          {
+            "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/2026-08-23-physical-gate-is-not-branch-parking.md",
+            "path": "ProjectCentral/user/learnings/2026-08-23-physical-gate-is-not-branch-parking.md",
+            "treatment": "projectcentral-user",
+            "agent_retrieval_allowed": true,
+            "revision": "central.content-fnv1a64/v1:2682:b39c1d0afa4ae52f"
+          },
+          {
+            "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+            "path": "ProjectCentral/user/learnings/README.md",
+            "treatment": "projectcentral-user",
+            "agent_retrieval_allowed": true,
+            "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664"
+          }
+        ],
+        "availability": "horizon"
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.events",
+      "duration_ms": 0,
+      "data": {
+        "receipts": [
+          {
+            "seq": 1,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "surface_changed",
+            "surface_id": "s1",
+            "summary": "Surface opened: Sources."
+          }
+        ],
+        "count": 1,
+        "first_seq": 1,
+        "last_seq": 1
+      }
+    },
+    {
+      "ok": true,
+      "op": "ui.open_real_file",
+      "duration_ms": 98
+    },
+    {
+      "ok": true,
+      "op": "read.events",
+      "duration_ms": 0,
+      "data": {
+        "receipts": [
+          {
+            "seq": 2,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "surface_changed",
+            "surface_id": "s2",
+            "surface_ref": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral"
+              }
+            },
+            "summary": "Surface opened: README.md."
+          },
+          {
+            "seq": 3,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_opened",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664"
+              }
+            },
+            "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664",
+            "summary": "Opened from the owner's reading at revision 0aed651ab4539664 (2389 bytes)."
+          },
+          {
+            "seq": 4,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "focus_changed",
+            "focus": {
+              "subject": {
+                "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+                "kind": "source",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "central.projectcentral"
+                }
+              }
+            }
+          }
+        ],
+        "count": 3,
+        "first_seq": 2,
+        "last_seq": 4,
+        "since_seq": 1
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.events",
+      "duration_ms": 0,
+      "data": {
+        "receipts": [
+          {
+            "seq": 1,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "surface_changed",
+            "surface_id": "s1",
+            "summary": "Surface opened: Sources."
+          },
+          {
+            "seq": 2,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "surface_changed",
+            "surface_id": "s2",
+            "surface_ref": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral"
+              }
+            },
+            "summary": "Surface opened: README.md."
+          },
+          {
+            "seq": 3,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_opened",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664"
+              }
+            },
+            "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664",
+            "summary": "Opened from the owner's reading at revision 0aed651ab4539664 (2389 bytes)."
+          },
+          {
+            "seq": 4,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "focus_changed",
+            "focus": {
+              "subject": {
+                "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+                "kind": "source",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "central.projectcentral"
+                }
+              }
+            }
+          },
+          {
+            "seq": 5,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "buffer_dirty",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664"
+              }
+            },
+            "dirty": true,
+            "summary": "The cradle buffer crossed the clean/dirty line: it now differs from the canonical layer."
+          }
+        ],
+        "count": 5,
+        "first_seq": 1,
+        "last_seq": 5
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.events",
+      "duration_ms": 0.2,
+      "data": {
+        "receipts": [],
+        "count": 0,
+        "first_seq": null,
+        "last_seq": null,
+        "since_seq": 5
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.events",
+      "duration_ms": 0.1,
+      "data": {
+        "receipts": [
+          {
+            "seq": 1,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "surface_changed",
+            "surface_id": "s1",
+            "summary": "Surface opened: Sources."
+          },
+          {
+            "seq": 2,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "surface_changed",
+            "surface_id": "s2",
+            "surface_ref": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral"
+              }
+            },
+            "summary": "Surface opened: README.md."
+          },
+          {
+            "seq": 3,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_opened",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664"
+              }
+            },
+            "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664",
+            "summary": "Opened from the owner's reading at revision 0aed651ab4539664 (2389 bytes)."
+          },
+          {
+            "seq": 4,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "focus_changed",
+            "focus": {
+              "subject": {
+                "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+                "kind": "source",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "central.projectcentral"
+                }
+              }
+            }
+          },
+          {
+            "seq": 5,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "buffer_dirty",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664"
+              }
+            },
+            "dirty": true,
+            "summary": "The cradle buffer crossed the clean/dirty line: it now differs from the canonical layer."
+          }
+        ],
+        "count": 5,
+        "first_seq": 1,
+        "last_seq": 5
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.events",
+      "duration_ms": 0,
+      "data": {
+        "receipts": [],
+        "count": 0,
+        "first_seq": null,
+        "last_seq": null,
+        "since_seq": 5
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.events",
+      "duration_ms": 0.1,
+      "data": {
+        "receipts": [
+          {
+            "seq": 6,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_changed",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc"
+              }
+            },
+            "revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc",
+            "summary": "Saved through the owner's CAS: revision advanced 0aed651ab4539664 -> 90b9c9b86c229dfc."
+          }
+        ],
+        "count": 1,
+        "first_seq": 6,
+        "last_seq": 6,
+        "since_seq": 5
+      }
+    },
+    {
+      "ok": true,
+      "op": "ui.save",
+      "duration_ms": 117
+    },
+    {
+      "ok": true,
+      "op": "read.events",
+      "duration_ms": 0,
+      "data": {
+        "receipts": [
+          {
+            "seq": 6,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_changed",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc"
+              }
+            },
+            "revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc",
+            "summary": "Saved through the owner's CAS: revision advanced 0aed651ab4539664 -> 90b9c9b86c229dfc."
+          }
+        ],
+        "count": 1,
+        "first_seq": 6,
+        "last_seq": 6,
+        "since_seq": 5
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.events",
+      "duration_ms": 0,
+      "data": {
+        "receipts": [
+          {
+            "seq": 1,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "surface_changed",
+            "surface_id": "s1",
+            "summary": "Surface opened: Sources."
+          },
+          {
+            "seq": 2,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "surface_changed",
+            "surface_id": "s2",
+            "surface_ref": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral"
+              }
+            },
+            "summary": "Surface opened: README.md."
+          },
+          {
+            "seq": 3,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_opened",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664"
+              }
+            },
+            "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664",
+            "summary": "Opened from the owner's reading at revision 0aed651ab4539664 (2389 bytes)."
+          },
+          {
+            "seq": 4,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "focus_changed",
+            "focus": {
+              "subject": {
+                "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+                "kind": "source",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "central.projectcentral"
+                }
+              }
+            }
+          },
+          {
+            "seq": 5,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "buffer_dirty",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664"
+              }
+            },
+            "dirty": true,
+            "summary": "The cradle buffer crossed the clean/dirty line: it now differs from the canonical layer."
+          },
+          {
+            "seq": 6,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_changed",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc"
+              }
+            },
+            "revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc",
+            "summary": "Saved through the owner's CAS: revision advanced 0aed651ab4539664 -> 90b9c9b86c229dfc."
+          },
+          {
+            "seq": 7,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "buffer_dirty",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc"
+              }
+            },
+            "dirty": true,
+            "summary": "The cradle buffer crossed the clean/dirty line: it now differs from the canonical layer."
+          }
+        ],
+        "count": 7,
+        "first_seq": 1,
+        "last_seq": 7
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.events",
+      "duration_ms": 0,
+      "data": {
+        "receipts": [],
+        "count": 0,
+        "first_seq": null,
+        "last_seq": null,
+        "since_seq": 7
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.events",
+      "duration_ms": 0.1,
+      "data": {
+        "receipts": [
+          {
+            "seq": 8,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_write_conflict",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc"
+              }
+            },
+            "expected_revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc",
+            "current_revision": "central.content-fnv1a64/v1:2534:e431a6879ea67ed0",
+            "summary": "The owner's CAS refused the save: the revision moved underneath the buffer. Both sides are preserved."
+          }
+        ],
+        "count": 1,
+        "first_seq": 8,
+        "last_seq": 8,
+        "since_seq": 7
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.events",
+      "duration_ms": 0,
+      "data": {
+        "receipts": [
+          {
+            "seq": 8,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_write_conflict",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc"
+              }
+            },
+            "expected_revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc",
+            "current_revision": "central.content-fnv1a64/v1:2534:e431a6879ea67ed0",
+            "summary": "The owner's CAS refused the save: the revision moved underneath the buffer. Both sides are preserved."
+          }
+        ],
+        "count": 1,
+        "first_seq": 8,
+        "last_seq": 8,
+        "since_seq": 7
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 69,
+      "data": {
+        "file": "kernel-cas-conflict.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.events",
+      "duration_ms": 0.1,
+      "data": {
+        "receipts": [
+          {
+            "seq": 1,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "surface_changed",
+            "surface_id": "s1",
+            "summary": "Surface opened: Sources."
+          },
+          {
+            "seq": 2,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "surface_changed",
+            "surface_id": "s2",
+            "surface_ref": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral"
+              }
+            },
+            "summary": "Surface opened: README.md."
+          },
+          {
+            "seq": 3,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_opened",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664"
+              }
+            },
+            "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664",
+            "summary": "Opened from the owner's reading at revision 0aed651ab4539664 (2389 bytes)."
+          },
+          {
+            "seq": 4,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "focus_changed",
+            "focus": {
+              "subject": {
+                "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+                "kind": "source",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "central.projectcentral"
+                }
+              }
+            }
+          },
+          {
+            "seq": 5,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "buffer_dirty",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664"
+              }
+            },
+            "dirty": true,
+            "summary": "The cradle buffer crossed the clean/dirty line: it now differs from the canonical layer."
+          },
+          {
+            "seq": 6,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_changed",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc"
+              }
+            },
+            "revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc",
+            "summary": "Saved through the owner's CAS: revision advanced 0aed651ab4539664 -> 90b9c9b86c229dfc."
+          },
+          {
+            "seq": 7,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "buffer_dirty",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc"
+              }
+            },
+            "dirty": true,
+            "summary": "The cradle buffer crossed the clean/dirty line: it now differs from the canonical layer."
+          },
+          {
+            "seq": 8,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_write_conflict",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc"
+              }
+            },
+            "expected_revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc",
+            "current_revision": "central.content-fnv1a64/v1:2534:e431a6879ea67ed0",
+            "summary": "The owner's CAS refused the save: the revision moved underneath the buffer. Both sides are preserved."
+          }
+        ],
+        "count": 8,
+        "first_seq": 1,
+        "last_seq": 8
+      }
+    },
+    {
+      "ok": true,
+      "op": "invoke.source_reread",
+      "duration_ms": 9.1,
+      "seq_range": {
+        "from": 9,
+        "to": 9
+      },
+      "data": {
+        "outcome": {
+          "result": "source_reread",
+          "buffer": {
+            "source_ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+            "content": "# O:I learning ledger\n\nThis directory exists because system trust depends on retaining failures as inspectable source rather than rewriting the history after a repair succeeds.\n\nIt was created at the human owner's explicit request during the repair of O:I #97, after a convergence process claimed completion while material current work remained outside `main` and the install/release/source views described different software worlds.\n\n## Standing and provenance\n\nThe **existence and purpose of this learning aperture are human-requested**.\n\nIndividual entries may be written by a human or an Agent. Every entry must state its provenance and evidence standing. Agent-written analysis does **not** become a human-authored position merely because it lives under `ProjectCentral/user/**`; where Central's authored-ground relation ledger is available, use it to record the accepted standing explicitly.\n\nUse these distinctions:\n\n- **authored position** — what the human deliberately means, requires or adopts;\n- **design/operational commitment** — a rule the system is meant to preserve;\n- **implementation fact** — what code/history actually contains;\n- **observed result** — what a run, merge, test or incident actually returned;\n- **current development state** — work underway but not yet accepted;\n- **inference** — an interpretation drawn from evidence and labelled as such.\n\n## What belongs here\n\nRecord incidents where the system created avoidable uncertainty, false confidence, provenance loss, duplicate work, stale state, misleading verification, destructive cleanup risk, owner-boundary confusion, or unnecessary human context repair.\n\nThe purpose is not blame or a museum of mistakes. The purpose is to make the causal mechanism recoverable so the architecture, tests, Skills, prompts and operating practice can change.\n\nA useful incident entry answers:\n\n1. What did we believe had happened?\n2. What had actually happened?\n3. Which evidence falsified the belief?\n4. Why did the existing verification fail to detect it?\n5. Was the failure in specification, execution, tooling, acceptance design, or several layers?\n6. What concrete repair was made?\n7. What durable guard now prevents or exposes recurrence?\n8. What remains unproven or physically gated?\n\nDo not delete an incident because the defect is fixed. Add the repair and later evidence to the same causal history.\n\n<!-- u0.4 kernel seam walk: edit one -->\nmore typing that is not a new state change\n\n<!-- u0.4 kernel seam walk: edit two (the cradle side) -->\n",
+            "saved_content": "# O:I learning ledger\n\nThis directory exists because system trust depends on retaining failures as inspectable source rather than rewriting the history after a repair succeeds.\n\nIt was created at the human owner's explicit request during the repair of O:I #97, after a convergence process claimed completion while material current work remained outside `main` and the install/release/source views described different software worlds.\n\n## Standing and provenance\n\nThe **existence and purpose of this learning aperture are human-requested**.\n\nIndividual entries may be written by a human or an Agent. Every entry must state its provenance and evidence standing. Agent-written analysis does **not** become a human-authored position merely because it lives under `ProjectCentral/user/**`; where Central's authored-ground relation ledger is available, use it to record the accepted standing explicitly.\n\nUse these distinctions:\n\n- **authored position** — what the human deliberately means, requires or adopts;\n- **design/operational commitment** — a rule the system is meant to preserve;\n- **implementation fact** — what code/history actually contains;\n- **observed result** — what a run, merge, test or incident actually returned;\n- **current development state** — work underway but not yet accepted;\n- **inference** — an interpretation drawn from evidence and labelled as such.\n\n## What belongs here\n\nRecord incidents where the system created avoidable uncertainty, false confidence, provenance loss, duplicate work, stale state, misleading verification, destructive cleanup risk, owner-boundary confusion, or unnecessary human context repair.\n\nThe purpose is not blame or a museum of mistakes. The purpose is to make the causal mechanism recoverable so the architecture, tests, Skills, prompts and operating practice can change.\n\nA useful incident entry answers:\n\n1. What did we believe had happened?\n2. What had actually happened?\n3. Which evidence falsified the belief?\n4. Why did the existing verification fail to detect it?\n5. Was the failure in specification, execution, tooling, acceptance design, or several layers?\n6. What concrete repair was made?\n7. What durable guard now prevents or exposes recurrence?\n8. What remains unproven or physically gated?\n\nDo not delete an incident because the defect is fixed. Add the repair and later evidence to the same causal history.\n\n<!-- u0.4 kernel seam walk: edit one -->\nmore typing that is not a new state change\nexternal edit from outside the cradle (u0.4 conflict probe)\n",
+            "base_revision": "central.content-fnv1a64/v1:2534:e431a6879ea67ed0",
+            "dirty": true,
+            "path": "ProjectCentral/user/learnings/README.md"
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.events",
+      "duration_ms": 0,
+      "data": {
+        "receipts": [
+          {
+            "seq": 9,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_opened",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2534:e431a6879ea67ed0"
+              }
+            },
+            "revision": "central.content-fnv1a64/v1:2534:e431a6879ea67ed0",
+            "summary": "Re-read the canonical layer: now based on revision e431a6879ea67ed0."
+          }
+        ],
+        "count": 1,
+        "first_seq": 9,
+        "last_seq": 9,
+        "since_seq": 8
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.events",
+      "duration_ms": 0,
+      "data": {
+        "receipts": [
+          {
+            "seq": 1,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "surface_changed",
+            "surface_id": "s1",
+            "summary": "Surface opened: Sources."
+          },
+          {
+            "seq": 2,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "surface_changed",
+            "surface_id": "s2",
+            "surface_ref": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral"
+              }
+            },
+            "summary": "Surface opened: README.md."
+          },
+          {
+            "seq": 3,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_opened",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664"
+              }
+            },
+            "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664",
+            "summary": "Opened from the owner's reading at revision 0aed651ab4539664 (2389 bytes)."
+          },
+          {
+            "seq": 4,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "focus_changed",
+            "focus": {
+              "subject": {
+                "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+                "kind": "source",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "central.projectcentral"
+                }
+              }
+            }
+          },
+          {
+            "seq": 5,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "buffer_dirty",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664"
+              }
+            },
+            "dirty": true,
+            "summary": "The cradle buffer crossed the clean/dirty line: it now differs from the canonical layer."
+          },
+          {
+            "seq": 6,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_changed",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc"
+              }
+            },
+            "revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc",
+            "summary": "Saved through the owner's CAS: revision advanced 0aed651ab4539664 -> 90b9c9b86c229dfc."
+          },
+          {
+            "seq": 7,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "buffer_dirty",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc"
+              }
+            },
+            "dirty": true,
+            "summary": "The cradle buffer crossed the clean/dirty line: it now differs from the canonical layer."
+          },
+          {
+            "seq": 8,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_write_conflict",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc"
+              }
+            },
+            "expected_revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc",
+            "current_revision": "central.content-fnv1a64/v1:2534:e431a6879ea67ed0",
+            "summary": "The owner's CAS refused the save: the revision moved underneath the buffer. Both sides are preserved."
+          },
+          {
+            "seq": 9,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_opened",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2534:e431a6879ea67ed0"
+              }
+            },
+            "revision": "central.content-fnv1a64/v1:2534:e431a6879ea67ed0",
+            "summary": "Re-read the canonical layer: now based on revision e431a6879ea67ed0."
+          }
+        ],
+        "count": 9,
+        "first_seq": 1,
+        "last_seq": 9
+      }
+    },
+    {
+      "ok": true,
+      "op": "invoke.source_save",
+      "duration_ms": 14,
+      "seq_range": {
+        "from": 10,
+        "to": 10
+      },
+      "data": {
+        "outcome": {
+          "result": "source_saved",
+          "buffer": {
+            "source_ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+            "content": "# O:I learning ledger\n\nThis directory exists because system trust depends on retaining failures as inspectable source rather than rewriting the history after a repair succeeds.\n\nIt was created at the human owner's explicit request during the repair of O:I #97, after a convergence process claimed completion while material current work remained outside `main` and the install/release/source views described different software worlds.\n\n## Standing and provenance\n\nThe **existence and purpose of this learning aperture are human-requested**.\n\nIndividual entries may be written by a human or an Agent. Every entry must state its provenance and evidence standing. Agent-written analysis does **not** become a human-authored position merely because it lives under `ProjectCentral/user/**`; where Central's authored-ground relation ledger is available, use it to record the accepted standing explicitly.\n\nUse these distinctions:\n\n- **authored position** — what the human deliberately means, requires or adopts;\n- **design/operational commitment** — a rule the system is meant to preserve;\n- **implementation fact** — what code/history actually contains;\n- **observed result** — what a run, merge, test or incident actually returned;\n- **current development state** — work underway but not yet accepted;\n- **inference** — an interpretation drawn from evidence and labelled as such.\n\n## What belongs here\n\nRecord incidents where the system created avoidable uncertainty, false confidence, provenance loss, duplicate work, stale state, misleading verification, destructive cleanup risk, owner-boundary confusion, or unnecessary human context repair.\n\nThe purpose is not blame or a museum of mistakes. The purpose is to make the causal mechanism recoverable so the architecture, tests, Skills, prompts and operating practice can change.\n\nA useful incident entry answers:\n\n1. What did we believe had happened?\n2. What had actually happened?\n3. Which evidence falsified the belief?\n4. Why did the existing verification fail to detect it?\n5. Was the failure in specification, execution, tooling, acceptance design, or several layers?\n6. What concrete repair was made?\n7. What durable guard now prevents or exposes recurrence?\n8. What remains unproven or physically gated?\n\nDo not delete an incident because the defect is fixed. Add the repair and later evidence to the same causal history.\n\n<!-- u0.4 kernel seam walk: edit one -->\nmore typing that is not a new state change\n\n<!-- u0.4 kernel seam walk: edit two (the cradle side) -->\n",
+            "saved_content": "# O:I learning ledger\n\nThis directory exists because system trust depends on retaining failures as inspectable source rather than rewriting the history after a repair succeeds.\n\nIt was created at the human owner's explicit request during the repair of O:I #97, after a convergence process claimed completion while material current work remained outside `main` and the install/release/source views described different software worlds.\n\n## Standing and provenance\n\nThe **existence and purpose of this learning aperture are human-requested**.\n\nIndividual entries may be written by a human or an Agent. Every entry must state its provenance and evidence standing. Agent-written analysis does **not** become a human-authored position merely because it lives under `ProjectCentral/user/**`; where Central's authored-ground relation ledger is available, use it to record the accepted standing explicitly.\n\nUse these distinctions:\n\n- **authored position** — what the human deliberately means, requires or adopts;\n- **design/operational commitment** — a rule the system is meant to preserve;\n- **implementation fact** — what code/history actually contains;\n- **observed result** — what a run, merge, test or incident actually returned;\n- **current development state** — work underway but not yet accepted;\n- **inference** — an interpretation drawn from evidence and labelled as such.\n\n## What belongs here\n\nRecord incidents where the system created avoidable uncertainty, false confidence, provenance loss, duplicate work, stale state, misleading verification, destructive cleanup risk, owner-boundary confusion, or unnecessary human context repair.\n\nThe purpose is not blame or a museum of mistakes. The purpose is to make the causal mechanism recoverable so the architecture, tests, Skills, prompts and operating practice can change.\n\nA useful incident entry answers:\n\n1. What did we believe had happened?\n2. What had actually happened?\n3. Which evidence falsified the belief?\n4. Why did the existing verification fail to detect it?\n5. Was the failure in specification, execution, tooling, acceptance design, or several layers?\n6. What concrete repair was made?\n7. What durable guard now prevents or exposes recurrence?\n8. What remains unproven or physically gated?\n\nDo not delete an incident because the defect is fixed. Add the repair and later evidence to the same causal history.\n\n<!-- u0.4 kernel seam walk: edit one -->\nmore typing that is not a new state change\n\n<!-- u0.4 kernel seam walk: edit two (the cradle side) -->\n",
+            "base_revision": "central.content-fnv1a64/v1:2534:aacf5728ed4b3bc6",
+            "dirty": false,
+            "path": "ProjectCentral/user/learnings/README.md"
+          },
+          "previous_revision": "central.content-fnv1a64/v1:2534:e431a6879ea67ed0",
+          "revision": "central.content-fnv1a64/v1:2534:aacf5728ed4b3bc6",
+          "changed": true
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.events",
+      "duration_ms": 0,
+      "data": {
+        "receipts": [
+          {
+            "seq": 10,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_changed",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2534:aacf5728ed4b3bc6"
+              }
+            },
+            "revision": "central.content-fnv1a64/v1:2534:aacf5728ed4b3bc6",
+            "summary": "Saved through the owner's CAS: revision advanced e431a6879ea67ed0 -> aacf5728ed4b3bc6."
+          }
+        ],
+        "count": 1,
+        "first_seq": 10,
+        "last_seq": 10,
+        "since_seq": 9
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.state",
+      "duration_ms": 3.1,
+      "data": {
+        "focus": {},
+        "surfaces": {
+          "s1": {
+            "surface_id": "s1",
+            "kind": "sources",
+            "title": "Sources"
+          },
+          "s2": {
+            "surface_id": "s2",
+            "kind": "source",
+            "source_ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+            "title": "README.md"
+          }
+        },
+        "buffers": {
+          "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md": {
+            "source_ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+            "content": "# O:I learning ledger\n\nThis directory exists because system trust depends on retaining failures as inspectable source rather than rewriting the history after a repair succeeds.\n\nIt was created at the human owner's explicit request during the repair of O:I #97, after a convergence process claimed completion while material current work remained outside `main` and the install/release/source views described different software worlds.\n\n## Standing and provenance\n\nThe **existence and purpose of this learning aperture are human-requested**.\n\nIndividual entries may be written by a human or an Agent. Every entry must state its provenance and evidence standing. Agent-written analysis does **not** become a human-authored position merely because it lives under `ProjectCentral/user/**`; where Central's authored-ground relation ledger is available, use it to record the accepted standing explicitly.\n\nUse these distinctions:\n\n- **authored position** — what the human deliberately means, requires or adopts;\n- **design/operational commitment** — a rule the system is meant to preserve;\n- **implementation fact** — what code/history actually contains;\n- **observed result** — what a run, merge, test or incident actually returned;\n- **current development state** — work underway but not yet accepted;\n- **inference** — an interpretation drawn from evidence and labelled as such.\n\n## What belongs here\n\nRecord incidents where the system created avoidable uncertainty, false confidence, provenance loss, duplicate work, stale state, misleading verification, destructive cleanup risk, owner-boundary confusion, or unnecessary human context repair.\n\nThe purpose is not blame or a museum of mistakes. The purpose is to make the causal mechanism recoverable so the architecture, tests, Skills, prompts and operating practice can change.\n\nA useful incident entry answers:\n\n1. What did we believe had happened?\n2. What had actually happened?\n3. Which evidence falsified the belief?\n4. Why did the existing verification fail to detect it?\n5. Was the failure in specification, execution, tooling, acceptance design, or several layers?\n6. What concrete repair was made?\n7. What durable guard now prevents or exposes recurrence?\n8. What remains unproven or physically gated?\n\nDo not delete an incident because the defect is fixed. Add the repair and later evidence to the same causal history.\n\n<!-- u0.4 kernel seam walk: edit one -->\nmore typing that is not a new state change\n\n<!-- u0.4 kernel seam walk: edit two (the cradle side) -->\n",
+            "saved_content": "# O:I learning ledger\n\nThis directory exists because system trust depends on retaining failures as inspectable source rather than rewriting the history after a repair succeeds.\n\nIt was created at the human owner's explicit request during the repair of O:I #97, after a convergence process claimed completion while material current work remained outside `main` and the install/release/source views described different software worlds.\n\n## Standing and provenance\n\nThe **existence and purpose of this learning aperture are human-requested**.\n\nIndividual entries may be written by a human or an Agent. Every entry must state its provenance and evidence standing. Agent-written analysis does **not** become a human-authored position merely because it lives under `ProjectCentral/user/**`; where Central's authored-ground relation ledger is available, use it to record the accepted standing explicitly.\n\nUse these distinctions:\n\n- **authored position** — what the human deliberately means, requires or adopts;\n- **design/operational commitment** — a rule the system is meant to preserve;\n- **implementation fact** — what code/history actually contains;\n- **observed result** — what a run, merge, test or incident actually returned;\n- **current development state** — work underway but not yet accepted;\n- **inference** — an interpretation drawn from evidence and labelled as such.\n\n## What belongs here\n\nRecord incidents where the system created avoidable uncertainty, false confidence, provenance loss, duplicate work, stale state, misleading verification, destructive cleanup risk, owner-boundary confusion, or unnecessary human context repair.\n\nThe purpose is not blame or a museum of mistakes. The purpose is to make the causal mechanism recoverable so the architecture, tests, Skills, prompts and operating practice can change.\n\nA useful incident entry answers:\n\n1. What did we believe had happened?\n2. What had actually happened?\n3. Which evidence falsified the belief?\n4. Why did the existing verification fail to detect it?\n5. Was the failure in specification, execution, tooling, acceptance design, or several layers?\n6. What concrete repair was made?\n7. What durable guard now prevents or exposes recurrence?\n8. What remains unproven or physically gated?\n\nDo not delete an incident because the defect is fixed. Add the repair and later evidence to the same causal history.\n\n<!-- u0.4 kernel seam walk: edit one -->\nmore typing that is not a new state change\n\n<!-- u0.4 kernel seam walk: edit two (the cradle side) -->\n",
+            "base_revision": "central.content-fnv1a64/v1:2534:aacf5728ed4b3bc6",
+            "dirty": false,
+            "path": "ProjectCentral/user/learnings/README.md"
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.events",
+      "duration_ms": 0,
+      "data": {
+        "receipts": [
+          {
+            "seq": 1,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "surface_changed",
+            "surface_id": "s1",
+            "summary": "Surface opened: Sources."
+          },
+          {
+            "seq": 2,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "surface_changed",
+            "surface_id": "s2",
+            "surface_ref": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral"
+              }
+            },
+            "summary": "Surface opened: README.md."
+          },
+          {
+            "seq": 3,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_opened",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664"
+              }
+            },
+            "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664",
+            "summary": "Opened from the owner's reading at revision 0aed651ab4539664 (2389 bytes)."
+          },
+          {
+            "seq": 4,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "focus_changed",
+            "focus": {
+              "subject": {
+                "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+                "kind": "source",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "central.projectcentral"
+                }
+              }
+            }
+          },
+          {
+            "seq": 5,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "buffer_dirty",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664"
+              }
+            },
+            "dirty": true,
+            "summary": "The cradle buffer crossed the clean/dirty line: it now differs from the canonical layer."
+          },
+          {
+            "seq": 6,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_changed",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc"
+              }
+            },
+            "revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc",
+            "summary": "Saved through the owner's CAS: revision advanced 0aed651ab4539664 -> 90b9c9b86c229dfc."
+          },
+          {
+            "seq": 7,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "buffer_dirty",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc"
+              }
+            },
+            "dirty": true,
+            "summary": "The cradle buffer crossed the clean/dirty line: it now differs from the canonical layer."
+          },
+          {
+            "seq": 8,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_write_conflict",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc"
+              }
+            },
+            "expected_revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc",
+            "current_revision": "central.content-fnv1a64/v1:2534:e431a6879ea67ed0",
+            "summary": "The owner's CAS refused the save: the revision moved underneath the buffer. Both sides are preserved."
+          },
+          {
+            "seq": 9,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_opened",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2534:e431a6879ea67ed0"
+              }
+            },
+            "revision": "central.content-fnv1a64/v1:2534:e431a6879ea67ed0",
+            "summary": "Re-read the canonical layer: now based on revision e431a6879ea67ed0."
+          },
+          {
+            "seq": 10,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_changed",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2534:aacf5728ed4b3bc6"
+              }
+            },
+            "revision": "central.content-fnv1a64/v1:2534:aacf5728ed4b3bc6",
+            "summary": "Saved through the owner's CAS: revision advanced e431a6879ea67ed0 -> aacf5728ed4b3bc6."
+          },
+          {
+            "seq": 11,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "focus_changed",
+            "focus": {}
+          }
+        ],
+        "count": 11,
+        "first_seq": 1,
+        "last_seq": 11
+      }
+    },
+    {
+      "ok": true,
+      "op": "invoke.surface_focus",
+      "duration_ms": 2.6,
+      "seq_range": {
+        "from": 12,
+        "to": 12
+      },
+      "data": {
+        "outcome": {
+          "result": "surface_focused",
+          "snapshot": {
+            "focus": {
+              "subject": {
+                "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+                "kind": "source",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "central.projectcentral"
+                }
+              }
+            },
+            "surfaces": {
+              "s1": {
+                "surface_id": "s1",
+                "kind": "sources",
+                "title": "Sources"
+              },
+              "s2": {
+                "surface_id": "s2",
+                "kind": "source",
+                "source_ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+                "title": "README.md"
+              }
+            },
+            "buffers": {
+              "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md": {
+                "source_ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+                "content": "# O:I learning ledger\n\nThis directory exists because system trust depends on retaining failures as inspectable source rather than rewriting the history after a repair succeeds.\n\nIt was created at the human owner's explicit request during the repair of O:I #97, after a convergence process claimed completion while material current work remained outside `main` and the install/release/source views described different software worlds.\n\n## Standing and provenance\n\nThe **existence and purpose of this learning aperture are human-requested**.\n\nIndividual entries may be written by a human or an Agent. Every entry must state its provenance and evidence standing. Agent-written analysis does **not** become a human-authored position merely because it lives under `ProjectCentral/user/**`; where Central's authored-ground relation ledger is available, use it to record the accepted standing explicitly.\n\nUse these distinctions:\n\n- **authored position** — what the human deliberately means, requires or adopts;\n- **design/operational commitment** — a rule the system is meant to preserve;\n- **implementation fact** — what code/history actually contains;\n- **observed result** — what a run, merge, test or incident actually returned;\n- **current development state** — work underway but not yet accepted;\n- **inference** — an interpretation drawn from evidence and labelled as such.\n\n## What belongs here\n\nRecord incidents where the system created avoidable uncertainty, false confidence, provenance loss, duplicate work, stale state, misleading verification, destructive cleanup risk, owner-boundary confusion, or unnecessary human context repair.\n\nThe purpose is not blame or a museum of mistakes. The purpose is to make the causal mechanism recoverable so the architecture, tests, Skills, prompts and operating practice can change.\n\nA useful incident entry answers:\n\n1. What did we believe had happened?\n2. What had actually happened?\n3. Which evidence falsified the belief?\n4. Why did the existing verification fail to detect it?\n5. Was the failure in specification, execution, tooling, acceptance design, or several layers?\n6. What concrete repair was made?\n7. What durable guard now prevents or exposes recurrence?\n8. What remains unproven or physically gated?\n\nDo not delete an incident because the defect is fixed. Add the repair and later evidence to the same causal history.\n\n<!-- u0.4 kernel seam walk: edit one -->\nmore typing that is not a new state change\n\n<!-- u0.4 kernel seam walk: edit two (the cradle side) -->\n",
+                "saved_content": "# O:I learning ledger\n\nThis directory exists because system trust depends on retaining failures as inspectable source rather than rewriting the history after a repair succeeds.\n\nIt was created at the human owner's explicit request during the repair of O:I #97, after a convergence process claimed completion while material current work remained outside `main` and the install/release/source views described different software worlds.\n\n## Standing and provenance\n\nThe **existence and purpose of this learning aperture are human-requested**.\n\nIndividual entries may be written by a human or an Agent. Every entry must state its provenance and evidence standing. Agent-written analysis does **not** become a human-authored position merely because it lives under `ProjectCentral/user/**`; where Central's authored-ground relation ledger is available, use it to record the accepted standing explicitly.\n\nUse these distinctions:\n\n- **authored position** — what the human deliberately means, requires or adopts;\n- **design/operational commitment** — a rule the system is meant to preserve;\n- **implementation fact** — what code/history actually contains;\n- **observed result** — what a run, merge, test or incident actually returned;\n- **current development state** — work underway but not yet accepted;\n- **inference** — an interpretation drawn from evidence and labelled as such.\n\n## What belongs here\n\nRecord incidents where the system created avoidable uncertainty, false confidence, provenance loss, duplicate work, stale state, misleading verification, destructive cleanup risk, owner-boundary confusion, or unnecessary human context repair.\n\nThe purpose is not blame or a museum of mistakes. The purpose is to make the causal mechanism recoverable so the architecture, tests, Skills, prompts and operating practice can change.\n\nA useful incident entry answers:\n\n1. What did we believe had happened?\n2. What had actually happened?\n3. Which evidence falsified the belief?\n4. Why did the existing verification fail to detect it?\n5. Was the failure in specification, execution, tooling, acceptance design, or several layers?\n6. What concrete repair was made?\n7. What durable guard now prevents or exposes recurrence?\n8. What remains unproven or physically gated?\n\nDo not delete an incident because the defect is fixed. Add the repair and later evidence to the same causal history.\n\n<!-- u0.4 kernel seam walk: edit one -->\nmore typing that is not a new state change\n\n<!-- u0.4 kernel seam walk: edit two (the cradle side) -->\n",
+                "base_revision": "central.content-fnv1a64/v1:2534:aacf5728ed4b3bc6",
+                "dirty": false,
+                "path": "ProjectCentral/user/learnings/README.md"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.events",
+      "duration_ms": 0,
+      "data": {
+        "receipts": [
+          {
+            "seq": 12,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "focus_changed",
+            "focus": {
+              "subject": {
+                "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+                "kind": "source",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "central.projectcentral"
+                }
+              }
+            }
+          }
+        ],
+        "count": 1,
+        "first_seq": 12,
+        "last_seq": 12,
+        "since_seq": 11
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 28,
+      "data": {
+        "file": "kernel-cas-focus.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.events",
+      "duration_ms": 0,
+      "data": {
+        "receipts": [
+          {
+            "seq": 1,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "surface_changed",
+            "surface_id": "s1",
+            "summary": "Surface opened: Sources."
+          },
+          {
+            "seq": 2,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "surface_changed",
+            "surface_id": "s2",
+            "surface_ref": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral"
+              }
+            },
+            "summary": "Surface opened: README.md."
+          },
+          {
+            "seq": 3,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_opened",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664"
+              }
+            },
+            "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664",
+            "summary": "Opened from the owner's reading at revision 0aed651ab4539664 (2389 bytes)."
+          },
+          {
+            "seq": 4,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "focus_changed",
+            "focus": {
+              "subject": {
+                "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+                "kind": "source",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "central.projectcentral"
+                }
+              }
+            }
+          },
+          {
+            "seq": 5,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "buffer_dirty",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664"
+              }
+            },
+            "dirty": true,
+            "summary": "The cradle buffer crossed the clean/dirty line: it now differs from the canonical layer."
+          },
+          {
+            "seq": 6,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_changed",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc"
+              }
+            },
+            "revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc",
+            "summary": "Saved through the owner's CAS: revision advanced 0aed651ab4539664 -> 90b9c9b86c229dfc."
+          },
+          {
+            "seq": 7,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "buffer_dirty",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc"
+              }
+            },
+            "dirty": true,
+            "summary": "The cradle buffer crossed the clean/dirty line: it now differs from the canonical layer."
+          },
+          {
+            "seq": 8,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_write_conflict",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc"
+              }
+            },
+            "expected_revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc",
+            "current_revision": "central.content-fnv1a64/v1:2534:e431a6879ea67ed0",
+            "summary": "The owner's CAS refused the save: the revision moved underneath the buffer. Both sides are preserved."
+          },
+          {
+            "seq": 9,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_opened",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2534:e431a6879ea67ed0"
+              }
+            },
+            "revision": "central.content-fnv1a64/v1:2534:e431a6879ea67ed0",
+            "summary": "Re-read the canonical layer: now based on revision e431a6879ea67ed0."
+          },
+          {
+            "seq": 10,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_changed",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2534:aacf5728ed4b3bc6"
+              }
+            },
+            "revision": "central.content-fnv1a64/v1:2534:aacf5728ed4b3bc6",
+            "summary": "Saved through the owner's CAS: revision advanced e431a6879ea67ed0 -> aacf5728ed4b3bc6."
+          },
+          {
+            "seq": 11,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "focus_changed",
+            "focus": {}
+          },
+          {
+            "seq": 12,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "focus_changed",
+            "focus": {
+              "subject": {
+                "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+                "kind": "source",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "central.projectcentral"
+                }
+              }
+            }
+          },
+          {
+            "seq": 13,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "buffer_dirty",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2534:aacf5728ed4b3bc6"
+              }
+            },
+            "dirty": true,
+            "summary": "The cradle buffer crossed the clean/dirty line: it now differs from the canonical layer."
+          }
+        ],
+        "count": 13,
+        "first_seq": 1,
+        "last_seq": 13
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.events",
+      "duration_ms": 0,
+      "data": {
+        "receipts": [],
+        "count": 0,
+        "first_seq": null,
+        "last_seq": null,
+        "since_seq": 13
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.events",
+      "duration_ms": 0,
+      "data": {
+        "receipts": [
+          {
+            "seq": 14,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_changed",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664"
+              }
+            },
+            "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664",
+            "summary": "Saved through the owner's CAS: revision advanced aacf5728ed4b3bc6 -> 0aed651ab4539664."
+          }
+        ],
+        "count": 1,
+        "first_seq": 14,
+        "last_seq": 14,
+        "since_seq": 13
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.events",
+      "duration_ms": 0,
+      "data": {
+        "receipts": [
+          {
+            "seq": 14,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_changed",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664"
+              }
+            },
+            "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664",
+            "summary": "Saved through the owner's CAS: revision advanced aacf5728ed4b3bc6 -> 0aed651ab4539664."
+          }
+        ],
+        "count": 1,
+        "first_seq": 14,
+        "last_seq": 14,
+        "since_seq": 13
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.events",
+      "duration_ms": 0,
+      "data": {
+        "receipts": [
+          {
+            "seq": 1,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "surface_changed",
+            "surface_id": "s1",
+            "summary": "Surface opened: Sources."
+          },
+          {
+            "seq": 2,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "surface_changed",
+            "surface_id": "s2",
+            "surface_ref": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral"
+              }
+            },
+            "summary": "Surface opened: README.md."
+          },
+          {
+            "seq": 3,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_opened",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664"
+              }
+            },
+            "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664",
+            "summary": "Opened from the owner's reading at revision 0aed651ab4539664 (2389 bytes)."
+          },
+          {
+            "seq": 4,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "focus_changed",
+            "focus": {
+              "subject": {
+                "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+                "kind": "source",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "central.projectcentral"
+                }
+              }
+            }
+          },
+          {
+            "seq": 5,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "buffer_dirty",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664"
+              }
+            },
+            "dirty": true,
+            "summary": "The cradle buffer crossed the clean/dirty line: it now differs from the canonical layer."
+          },
+          {
+            "seq": 6,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_changed",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc"
+              }
+            },
+            "revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc",
+            "summary": "Saved through the owner's CAS: revision advanced 0aed651ab4539664 -> 90b9c9b86c229dfc."
+          },
+          {
+            "seq": 7,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "buffer_dirty",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc"
+              }
+            },
+            "dirty": true,
+            "summary": "The cradle buffer crossed the clean/dirty line: it now differs from the canonical layer."
+          },
+          {
+            "seq": 8,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_write_conflict",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc"
+              }
+            },
+            "expected_revision": "central.content-fnv1a64/v1:2474:90b9c9b86c229dfc",
+            "current_revision": "central.content-fnv1a64/v1:2534:e431a6879ea67ed0",
+            "summary": "The owner's CAS refused the save: the revision moved underneath the buffer. Both sides are preserved."
+          },
+          {
+            "seq": 9,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_opened",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2534:e431a6879ea67ed0"
+              }
+            },
+            "revision": "central.content-fnv1a64/v1:2534:e431a6879ea67ed0",
+            "summary": "Re-read the canonical layer: now based on revision e431a6879ea67ed0."
+          },
+          {
+            "seq": 10,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_changed",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2534:aacf5728ed4b3bc6"
+              }
+            },
+            "revision": "central.content-fnv1a64/v1:2534:aacf5728ed4b3bc6",
+            "summary": "Saved through the owner's CAS: revision advanced e431a6879ea67ed0 -> aacf5728ed4b3bc6."
+          },
+          {
+            "seq": 11,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "focus_changed",
+            "focus": {}
+          },
+          {
+            "seq": 12,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "focus_changed",
+            "focus": {
+              "subject": {
+                "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+                "kind": "source",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "central.projectcentral"
+                }
+              }
+            }
+          },
+          {
+            "seq": 13,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "buffer_dirty",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2534:aacf5728ed4b3bc6"
+              }
+            },
+            "dirty": true,
+            "summary": "The cradle buffer crossed the clean/dirty line: it now differs from the canonical layer."
+          },
+          {
+            "seq": 14,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "source_changed",
+            "source": {
+              "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral",
+                "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664"
+              }
+            },
+            "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664",
+            "summary": "Saved through the owner's CAS: revision advanced aacf5728ed4b3bc6 -> 0aed651ab4539664."
+          }
+        ],
+        "count": 14,
+        "first_seq": 1,
+        "last_seq": 14,
+        "captured_at": "2026-09-05T16:14:46.913Z"
+      }
+    }
+  ],
+  "metrics": {
+    "open_file_ms": 98,
+    "save_ms": 117,
+    "kernel_events_total": 14
+  },
+  "screenshots": [
+    "kernel-cas-conflict.png",
+    "kernel-cas-focus.png"
+  ]
+}

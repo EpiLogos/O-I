@@ -1,0 +1,116 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "rest",
+  "generated_at": "2026-09-05T16:14:40.426Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": null,
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 132,
+  "checks": [
+    {
+      "ok": true,
+      "label": "cold start < 3000 ms (FCP 72.0 ms)"
+    },
+    {
+      "ok": true,
+      "label": "with no bridge injected the kernel transport is honestly unavailable",
+      "data": {
+        "transport": {
+          "kind": "unavailable",
+          "reason": "no kernel transport: neither the Tauri host nor a dev walk bridge is reachable"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "body has exactly one child (#root)"
+    },
+    {
+      "ok": true,
+      "label": "root renders .rest"
+    },
+    {
+      "ok": true,
+      "label": "rest = agency field left + canvas centre only"
+    },
+    {
+      "ok": true,
+      "label": "canvas contains the writing surface (textarea)"
+    },
+    {
+      "ok": true,
+      "label": "agency field is honest absence (renders no children)"
+    },
+    {
+      "ok": true,
+      "label": "caret is in the canvas at rest"
+    },
+    {
+      "ok": true,
+      "label": "zero elements beyond the rest shape (found 6 nodes)"
+    },
+    {
+      "ok": true,
+      "label": "To: affordance reachable by keyboard (Tab)"
+    },
+    {
+      "ok": true,
+      "label": "To: opens the address draft line"
+    },
+    {
+      "ok": true,
+      "label": "Escape returns the caret to the canvas"
+    },
+    {
+      "ok": true,
+      "label": "rest restored after addressing closes (found 6 nodes)"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "capture.timing",
+      "duration_ms": 11.1,
+      "data": {
+        "fcp_ms": 72,
+        "dom_content_loaded_ms": 46.3,
+        "load_ms": 46.4
+      }
+    },
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-05T16:14:40.496Z",
+        "transport": {
+          "kind": "unavailable",
+          "reason": "no kernel transport: neither the Tauri host nor a dev walk bridge is reachable"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 24,
+      "data": {
+        "file": "rest-rest.png"
+      }
+    }
+  ],
+  "metrics": {
+    "cold_start_fcp_ms": 72
+  },
+  "screenshots": [
+    "rest-rest.png"
+  ]
+}

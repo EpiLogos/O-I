@@ -1,5 +1,5 @@
 /**
- * The Cradle root (U0.3b + U0.4). One layout state, persisted to
+ * The Cradle root (U0.3b + U0.4 + U0.6). One layout state, persisted to
  * localStorage and restored on load (map §5 U0.3b). Zero surfaces =
  * austere rest, exactly the U0.3 shape. ≥1 surface = the Workbench frame
  * (law 12).
@@ -12,9 +12,14 @@
  * the active binding — the one global focus relation moves, exactly one
  * event when it actually moves). Keyboard, pointer, and context-menu
  * invocations all funnel through one executor.
+ *
+ * U0.6 mounts the walk channel (dev/walk builds only, map §3 D10): the
+ * typed `__cradle.walk` client binds the same KernelApi below — the same
+ * seam, never a second authority path — and is absent from production
+ * bundles by the build gate above.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ComponentType } from "react";
 import { Rest } from "./Rest";
 import { KernelProvider, useKernel } from "./kernel/KernelProvider";
 import type { ListedSource } from "./kernel/types";
@@ -52,10 +57,25 @@ function snapshotOf(state: LayoutState): RestorePoint {
   };
 }
 
+/** The U0.6 walk gate, baked by vite.config.ts: true in dev (`vite serve`)
+ * and in walk bundles (`WALK=1 vite build`); `false` in a plain production
+ * build, where the dynamic import below is dead-code-eliminated and the
+ * `__cradle.walk` chunk is never emitted (map §3 D10: dev tooling only). */
+declare const __CRADLE_WALK__: boolean;
+
 export function Cradle() {
+  const [WalkChannel, setWalkChannel] = useState<ComponentType | null>(null);
+  useEffect(() => {
+    if (__CRADLE_WALK__) {
+      void import("./walk/WalkChannel").then((module) => {
+        setWalkChannel(() => module.WalkChannel);
+      });
+    }
+  }, []);
   return (
     <KernelProvider>
       <CradleFrame />
+      {WalkChannel ? <WalkChannel /> : null}
     </KernelProvider>
   );
 }
