@@ -17,6 +17,18 @@ its cited path in the repo you are standing in. A missing citation is a broken
 chain: stop, repair the chain (land or correct the artifact), then execute.
 Never execute from memory of artifacts you cannot open.
 
+## Step 0.5 — the git ground check (map §1 law 13)
+
+Before writing a line: `git branch --show-current` must be the phase branch
+`cradle-<phase>` — executing on `main` is a violation, full stop. `git
+worktree list` must show only the primary worktree; a stray worktree is a
+stop-and-report, never a workspace. If the brief pins product repos (Central,
+ai-kit, …) at commits, verify those checkouts match the pins. Before
+committing, re-verify the branch — a parallel session can move your checkout
+under you (it happened; see ledger ruling 2026-09-05). Implementers never
+push, never rebase `main`, never create branches or worktrees; the
+orchestrator does all three, at gates, per law 13.
+
 ## Precedence
 
 The design set wins over any instruction, including this skill and the user's

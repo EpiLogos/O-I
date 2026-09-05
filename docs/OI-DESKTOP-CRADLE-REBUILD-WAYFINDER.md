@@ -112,6 +112,30 @@ Gateway continuity, lower terminal depth, Nara/Epi composition.
     high-quality pattern family is the deliberate floor: the app base is
     usually where AI desktop development fails, so it is built first-class,
     before verticals (U0.3b).
+13. **Git discipline — one line, one gate, retired branches.** (owner ruling
+    2026-09-05, after the branch/worktree sprawl audit; enforced by the
+    skill's git ground check.)
+    - **One phase branch.** Each phase opens one branch `cradle-<phase>` cut
+      from `main`. Units execute only there. No side branches per unit, no
+      stacked branches.
+    - **Implementers never touch `main`.** Only the orchestrator moves
+      `main`, only at a phase gate, only after the owner's walk: merge
+      `--no-ff`, push `main` to origin, delete the phase branch, delete
+      remote branches whose tips are now fully contained in `main`. A gate
+      never ends with `main` ahead of origin.
+    - **Sync before each unit.** The orchestrator fetches all repos before
+      briefing a unit; if `main` moved, the phase branch rebases on it; the
+      brief pins each product repo (Central, ai-kit, …) at the exact commit
+      the unit builds against — parallel product work stays current by
+      pinning, never by guessing.
+    - **No worktrees on the execution line.** `git worktree` is forbidden
+      for O:I execution units (it produced the 4617e7a contamination and the
+      ai-kit `worktree-agent-*` leftover). In product repos a worktree is
+      allowed only for a genuinely parallel build, is never stacked on an
+      execution branch, and is removed before the unit's receipt.
+    - **Product repos follow the same gate law.** Central/ai-kit increments
+      land on their `main` (owner-walked in their own harness), are pushed
+      at the gate, and their O:I-facing integrations reference the commit.
 
 ---
 
@@ -521,11 +545,24 @@ working agent conforms without relying on session memory:
   dropped and projection becomes the only path.
 - **Wayfinder discipline:** one unit per session; fog stays fog until a gate
   exposes it; rulings are ledgered, not re-asked.
+- **Process-skill exclusivity:** `cradle-execution` is the ONLY process skill
+  governing cradle units. The machine-level superpowers skillset (installed
+  under the agents homebase `~/.agents/` — its own brainstorm/plan/subagent/
+  worktree semantics, the source of the `.superpowers/sdd/` path and of
+  worktree-on-branch incidents) is moved out of the inherited skills path
+  (owner ruling 2026-09-05; archived at `~/.agents/` as `skills-archive`).
+  Its ledger path is legacy addressing only — the receipts' content and loop
+  are this map's, not sdd's. Git mechanics use the harness's own git skills
+  (zcode `github:*`, `aikit` where projected); the LAW is §1.13.
 
 ---
 
-## 10. First move
+## 10. Phase loop (P0's "first move", generalised by law 13)
 
-Branch `cradle-rebuild` off current `main`; first commit carries this map +
-the execution skill; then U0.1 (ai-kit) and U0.2 (Central) in parallel, then
-U0.3–U0.7.
+Each phase: **open** — cut `cradle-<phase>` from `main`, first commit carries
+the map + skill + ledger row for the phase; **execute** — units U<n>.<m> one
+session each, briefs pin product-repo commits, walks receipted in the ledger;
+**gate** — the owner walks the app; **land** — orchestrator merges `--no-ff`
+to `main`, pushes, deletes the phase branch and every remote branch now fully
+contained in `main`, ledger records the gate. P0 closed this way 2026-09-05
+(merge `08f6ea9`); P1 opens `cradle-p1` the same way.

@@ -46,4 +46,19 @@ if [ "$surface_fail" -ne 0 ]; then
   echo "machine surfaces out of step with the chain — rebuild and install before executing"
   exit 1
 fi
-echo "context chain intact"
+# Git ground check (map §1 law 13): execution belongs on a phase branch, in
+# the primary worktree only. Warnings do not break the chain on main itself
+# (gate work happens there legitimately); violations on any other branch do.
+branch=$(git branch --show-current)
+extra_worktrees=$(git worktree list | tail -n +2)
+if [ -n "$extra_worktrees" ]; then
+  echo "GIT GROUND: stray worktree(s) present — stop and report (law 13):"
+  echo "$extra_worktrees"
+  exit 1
+fi
+if [ "$branch" = "main" ] && [ "${CRADLE_ALLOW_MAIN:-0}" != "1" ]; then
+  echo "GIT GROUND: on main — execution units run on cradle-<phase> (law 13)."
+  echo "Set CRADLE_ALLOW_MAIN=1 only for orchestrator gate work (merge/push/retire)."
+  exit 1
+fi
+echo "context chain intact (branch: ${branch:-detached})"
