@@ -13,6 +13,10 @@
  */
 
 import { useEffect } from "react";
+import { useKernel } from "../kernel/KernelProvider";
+import type { ListedSource } from "../kernel/types";
+import { SourceSurface } from "./SourceSurface";
+import { SourcesIndex } from "./SourcesIndex";
 import { groupsOf, renderOrder } from "./engine";
 import type { ActionArg, LayoutState, Pane, SurfaceId } from "./types";
 
@@ -22,21 +26,32 @@ export interface WorkbenchProps {
   execute: (ref: string, arg?: ActionArg) => void;
   openBindingMenu: (surfaceId: SurfaceId, x: number, y: number) => void;
   openFrameMenu: (x: number, y: number) => void;
+  /** Open a real source surface from the index listing (U0.4). */
+  openSource: (source: ListedSource) => void;
 }
 
 export function Workbench(props: WorkbenchProps) {
   const { state, menuOpen } = props;
+  const kernel = useKernel();
   if (!state.root) return null;
 
   // D16: focus follows the active binding — keep DOM focus on the active
-  // tab of the focused group after keyboard/menu/layout operations.
+  // tab of the focused group after keyboard/menu/layout operations. The
+  // frame never steals the caret from a surface body (U0.4: editors own
+  // their focus while the person is in them); it only re-anchors focus
+  // that is loose on the page.
   useEffect(() => {
     if (menuOpen) return;
     const g = groupsOf(state.root).find((g) => g.id === state.focusedGroupId);
     if (!g?.active) return;
     const el = document.querySelector<HTMLElement>(`[data-surface-id="${g.active}"]`);
-    if (el && document.activeElement !== el && !el.contains(document.activeElement))
-      el.focus();
+    if (!el) return;
+    const active = document.activeElement as HTMLElement | null;
+    if (active && active !== document.body) {
+      // Focus held anywhere inside a pane belongs to that surface.
+      if (active.closest(".pane.group")) return;
+    }
+    if (document.activeElement !== el && !el.contains(document.activeElement)) el.focus();
   });
 
   const depth = state.agencyDepth;
@@ -62,7 +77,7 @@ export function Workbench(props: WorkbenchProps) {
         ) : null}
       </aside>
       <main className="surface-host" aria-label="Canvas">
-        <PaneNode pane={state.root} {...props} />
+        <PaneNode pane={state.root} {...props} kernelDirty={(ref) => !!ref && !!kernel.snapshot.buffers[ref]?.dirty} />
       </main>
     </div>
   );
@@ -72,6 +87,8 @@ export function Workbench(props: WorkbenchProps) {
 
 interface PaneProps extends WorkbenchProps {
   pane: Pane;
+  /** Whether the source surface's buffer is dirty (kernel two-layer state). */
+  kernelDirty: (ref: string | undefined) => boolean;
 }
 
 function PaneNode(props: PaneProps) {
@@ -133,6 +150,7 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
             title={state.surfaces[id].title}
             active={active === id}
             pinned={group.pinned.includes(id)}
+            dirty={props.kernelDirty(state.surfaces[id].ref)}
             groupId={group.id}
             execute={execute}
             openBindingMenu={openBindingMenu}
@@ -157,10 +175,28 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
           openBindingMenu(active, e.clientX, e.clientY);
         }}
       >
-        {activeBinding ? <SurfaceCard binding={activeBinding} /> : null}
+        {activeBinding ? <SurfaceBody binding={activeBinding} openSource={props.openSource} /> : null}
       </div>
     </section>
   );
+}
+
+/** The surface body by kind: real owner surfaces where they exist (U0.4:
+ * 'source', 'sources'), the clearly-named test card otherwise. */
+function SurfaceBody({
+  binding,
+  openSource,
+}: {
+  binding: { id: string; kind: string; ref?: string; title: string };
+  openSource: (source: ListedSource) => void;
+}) {
+  if (binding.kind === "source") {
+    return <SourceSurface binding={binding} />;
+  }
+  if (binding.kind === "sources") {
+    return <SourcesIndex binding={binding} onOpenSource={openSource} />;
+  }
+  return <SurfaceCard binding={binding} />;
 }
 
 interface TabProps {
@@ -168,12 +204,14 @@ interface TabProps {
   title: string;
   active: boolean;
   pinned: boolean;
+  /** The two-layer dirty state shows on the binding itself (U0.4). */
+  dirty: boolean;
   groupId: string;
   execute: (ref: string, arg?: ActionArg) => void;
   openBindingMenu: (surfaceId: SurfaceId, x: number, y: number) => void;
 }
 
-function Tab({ id, title, active, pinned, groupId, execute, openBindingMenu }: TabProps) {
+function Tab({ id, title, active, pinned, dirty, groupId, execute, openBindingMenu }: TabProps) {
   return (
     <div
       role="tab"
@@ -185,6 +223,7 @@ function Tab({ id, title, active, pinned, groupId, execute, openBindingMenu }: T
       data-title={title}
       data-active={active}
       data-pinned={pinned}
+      data-dirty={dirty}
       title={`${title}${pinned ? " (pinned)" : ""}`}
       onClick={() => execute("surface.activate", { surfaceId: id })}
       onAuxClick={(e) => {
@@ -237,6 +276,11 @@ function Tab({ id, title, active, pinned, groupId, execute, openBindingMenu }: T
       }}
     >
       <span className="tab-title">{title}</span>
+      {dirty ? (
+        <span className="tab-dirty" aria-hidden="true" title="Unsaved buffer">
+          ●
+        </span>
+      ) : null}
       {pinned ? (
         <span className="tab-pin" aria-hidden="true" title="Pinned">
           ◈

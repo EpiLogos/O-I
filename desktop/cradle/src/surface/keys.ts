@@ -8,6 +8,12 @@
  *
  *   SURFACES
  *     ⌘T                open surface                  (pointer: strip “+”)
+ *     ⌘O                open the sources index — the project's
+ *                       participating sources from the owner's horizon
+ *                       (U0.4 kernel seam); Enter/click opens a real file
+ *     ⌘S                save the focused source surface through the
+ *                       owner's compare-and-swap (handled in the source
+ *                       editor, not here — it is the editor's act)
  *     ⌘⌥N               open silent test binding      (kind 'test:silent' —
  *                                                       discloses no Actions)
  *     ⌘W                close surface                 (pointer: tab ×,
@@ -87,9 +93,10 @@ export function frameActionForKey(
     if (code === "KeyD") return { ref: "surface.split-down" };
     return null;
   }
-  // ⌘… — open, close, split right, jump to nth tab
+  // ⌘… — open, sources index, close, split right, jump to nth tab
   if (mod) {
     if (code === "KeyT") return { ref: "surface.open" };
+    if (code === "KeyO") return { ref: "surface.open-sources" };
     if (code === "KeyW") return { ref: "surface.close" };
     if (code === "KeyD") return { ref: "surface.split-right" };
     const digit = code.match(/^Digit([1-9])$/);

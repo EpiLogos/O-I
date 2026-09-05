@@ -32,15 +32,14 @@ pub mod focus;
 pub mod refs;
 pub mod world;
 
+pub use flow::CentralClient;
+
 use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 
 use events::{KernelEvent, KernelEventLog, KernelEventReceipt};
-use flow::{
-    CentralClient, CRADLE_ACTOR, CRADLE_ACTOR_KIND, OwnerCallError, SourceReading,
-    SourceWriteFailure,
-};
+use flow::{CRADLE_ACTOR, CRADLE_ACTOR_KIND, OwnerCallError, SourceReading, SourceWriteFailure};
 use focus::GlobalFocus;
 use refs::{source_semantic_ref, SemanticRef};
 use world::{participating_sources, SourceListing};
@@ -97,13 +96,14 @@ pub struct SourceBuffer {
 }
 
 /// The whole kernel state, pulled by read models (events only trigger
-/// re-renders — the pull is the truth).
+/// re-renders — the pull is the truth). Empty maps serialise as `{}` (not
+/// omitted): the wire shape is stable for the typed consumer.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct KernelSnapshot {
     pub focus: GlobalFocus,
-    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    #[serde(default)]
     pub surfaces: BTreeMap<String, SurfaceState>,
-    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    #[serde(default)]
     pub buffers: BTreeMap<String, SourceBuffer>,
 }
 
@@ -630,9 +630,22 @@ impl Kernel {
         let Some(surface) = self.surfaces.get(&surface_id) else {
             return Err(format!("no surface `{surface_id}` is open"));
         };
+        // Focus follows the active binding (D16). A surface with no
+        // semantic ref (the sources index) holds no subject: the relation
+        // returns to B0 No focus — an observation, never fabricated.
         let Some(source_ref) = surface.source_ref.clone() else {
-            // A surface with no semantic ref (the sources index) moves
-            // nothing: honest, no fabricated focus.
+            if self.focus.subject_ref().is_some() {
+                self.focus.clear_subject();
+                let receipt = self.log.record(KernelEvent::FocusChanged {
+                    focus: self.focus.clone(),
+                });
+                return Ok(KernelOpOutcome {
+                    receipts: vec![receipt],
+                    result: KernelOpResult::SurfaceFocused {
+                        snapshot: self.snapshot(),
+                    },
+                });
+            }
             return Ok(KernelOpOutcome {
                 receipts: Vec::new(),
                 result: KernelOpResult::SurfaceFocused {

@@ -224,7 +224,7 @@ fn non_empty(at: &str, value: &str) -> Result<(), String> {
 
 /// The envelope the desktop host forwards over the renderer event seam:
 /// contract identity and version first, the typed event beside it.
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct KernelEventEnvelope {
     pub schema: String,
     pub version: u32,

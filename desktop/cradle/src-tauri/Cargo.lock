@@ -2104,8 +2104,17 @@ dependencies = [
 name = "oi-cradle"
 version = "0.1.0"
 dependencies = [
+ "oi-cradle-kernel",
  "tauri",
  "tauri-build",
+]
+
+[[package]]
+name = "oi-cradle-kernel"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

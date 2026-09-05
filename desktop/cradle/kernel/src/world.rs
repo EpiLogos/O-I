@@ -94,12 +94,14 @@ pub enum ListingAvailability {
     Unavailable { reason: String },
 }
 
-/// A project's participating sources at their honest availability.
+/// A project's participating sources at their honest availability. Empty
+/// sources serialise as `[]` (not omitted): the wire shape is stable for
+/// the typed consumer.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct SourceListing {
     pub schema: String,
     pub project: String,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub sources: Vec<ListedSource>,
     pub availability: ListingAvailability,
 }

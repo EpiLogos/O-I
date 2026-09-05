@@ -1,16 +1,23 @@
 /**
- * The Cradle root (U0.3b). One layout state, persisted to localStorage and
- * restored on load (map §5 U0.3b: "layout state persisted across restart").
- * Zero surfaces = austere rest, exactly the U0.3 shape (agency field +
- * canvas + To: only). ≥1 surface = the Workbench frame (law 12: rest is
- * *what is on screen*, the OS grammar is *how you manipulate what appears*).
+ * The Cradle root (U0.3b + U0.4). One layout state, persisted to
+ * localStorage and restored on load (map §5 U0.3b). Zero surfaces =
+ * austere rest, exactly the U0.3 shape. ≥1 surface = the Workbench frame
+ * (law 12).
  *
- * Keyboard, pointer, and context-menu invocations all funnel through one
- * executor (registry.executeFrameAction) — parity by construction.
+ * U0.4 mounts the kernel seam: the frame's surface bindings and the
+ * kernel's surface/buffer state stay reconciled through three effects —
+ * mount (a layout binding new to the kernel opens kernel-side; a source
+ * surface also opens its buffer through the owner), unmount (a binding
+ * gone from the layout closes kernel-side), and focus (D16: focus follows
+ * the active binding — the one global focus relation moves, exactly one
+ * event when it actually moves). Keyboard, pointer, and context-menu
+ * invocations all funnel through one executor.
  */
 
 import { useEffect, useRef, useState } from "react";
 import { Rest } from "./Rest";
+import { KernelProvider, useKernel } from "./kernel/KernelProvider";
+import type { ListedSource } from "./kernel/types";
 import { ContextMenu, type MenuState } from "./surface/ContextMenu";
 import { Workbench } from "./surface/Workbench";
 import { frameActionForKey } from "./surface/keys";
@@ -21,7 +28,13 @@ import {
   frameDisclosures,
   type MenuContext,
 } from "./surface/registry";
-import { stepDepthDown } from "./surface/engine";
+import {
+  activeBindingId,
+  groupsOf,
+  makeSourceBinding,
+  openBinding,
+  stepDepthDown,
+} from "./surface/engine";
 import type {
   ActionArg,
   ActionDisclosure,
@@ -40,6 +53,15 @@ function snapshotOf(state: LayoutState): RestorePoint {
 }
 
 export function Cradle() {
+  return (
+    <KernelProvider>
+      <CradleFrame />
+    </KernelProvider>
+  );
+}
+
+function CradleFrame() {
+  const kernel = useKernel();
   const [state, setState] = useState<LayoutState>(loadLayout);
   // The restore point: the layout as this session loaded it. `Restore
   // layout` (⌘⌥R / strip menu) returns the frame here.
@@ -49,17 +71,93 @@ export function Cradle() {
   menuRef.current = menu;
   const stateRef = useRef(state);
   stateRef.current = state;
+  const kernelSurfaces = kernel.snapshot.surfaces;
+  const lastFocusedSurface = useRef<SurfaceId | null>(null);
 
   // Persist on every change — the layout is app state, continuously saved.
   useEffect(() => {
     saveLayout(state);
   }, [state]);
 
+  // -------------------------------------------------------------------------
+  // Kernel reconciliation (U0.4)
+  //
+  // The layout's OPEN surfaces (in the pane tree — `surfaces` also carries
+  // closed bindings for the reopen stack) reconcile with the kernel's
+  // surface state:
+  //   mount — a binding the kernel does not know opens kernel-side; a
+  //           source surface opens its buffer through the owner's read and
+  //           focuses: surface_changed, source_opened, focus_changed, one
+  //           receipt each;
+  //   unmount — a binding gone from the tree closes kernel-side (closing
+  //           the focused surface clears the focus relation, a second
+  //           receipt).
+  // In-flight mounts/unmounts are guarded so one state change never
+  // double-emits.
+  const pendingMount = useRef<Set<SurfaceId>>(new Set());
+  const pendingClose = useRef<Set<SurfaceId>>(new Set());
+  useEffect(() => {
+    const openIds = new Set(groupsOf(state.root).flatMap((group) => group.tabs));
+    for (const surfaceId of openIds) {
+      const binding = state.surfaces[surfaceId];
+      if (!binding || kernelSurfaces[surfaceId] || pendingMount.current.has(surfaceId)) {
+        continue;
+      }
+      pendingMount.current.add(surfaceId);
+      void (async () => {
+        try {
+          await kernel.surfaceOpen(binding.id, binding.kind, binding.ref, binding.title);
+          if (binding.kind === "source" && binding.ref) {
+            await kernel.apply({ op: "source_open", source_ref: binding.ref });
+          }
+          await kernel.surfaceFocus(binding.id);
+        } finally {
+          pendingMount.current.delete(binding.id);
+        }
+      })();
+    }
+    for (const surfaceId of Object.keys(kernelSurfaces)) {
+      if (openIds.has(surfaceId) || pendingClose.current.has(surfaceId)) continue;
+      pendingClose.current.add(surfaceId);
+      void kernel
+        .surfaceClose(surfaceId)
+        .catch(() => undefined)
+        .finally(() => pendingClose.current.delete(surfaceId));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.root, state.surfaces, kernelSurfaces]);
+
+  // Focus follows the active binding (D16): the one global focus relation
+  // moves with the frame's active surface — and only when it actually
+  // moves (the kernel emits nothing for a re-focus of the same ref).
+  const activeId = activeBindingId(state);
+  useEffect(() => {
+    if (!activeId) return;
+    if (lastFocusedSurface.current === activeId) return;
+    if (!kernel.snapshot.surfaces[activeId]) return; // the mount path focuses it
+    lastFocusedSurface.current = activeId;
+    void kernel.surfaceFocus(activeId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeId, kernel.snapshot.surfaces]);
+
   const execute = (ref: string, arg?: ActionArg) =>
     setState((s) => executeFrameAction(s, ref, arg, restorePoint.current));
 
-  // The frame keyboard map (keys.ts) + Escape. Attached always, so ⌘T opens
-  // from rest and every operation has its keyboard path.
+  /** Open a real source from the index listing: one layout binding carrying
+   * the owner's canonical ref verbatim — the kernel mount effect opens the
+   * buffer through the owner's read. */
+  const openSource = (source: ListedSource) => {
+    const current = stateRef.current;
+    const binding = makeSourceBinding(current, source.ref, source.path);
+    if (current.surfaces[binding.id]) {
+      execute("surface.activate", { surfaceId: binding.id });
+      return;
+    }
+    setState((s) => openBinding(s, makeSourceBinding(s, source.ref, source.path)));
+  };
+
+  // The frame keyboard map (keys.ts) + Escape. Attached always, so ⌘T/⌘O
+  // open from rest and every operation has its keyboard path.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -125,6 +223,7 @@ export function Cradle() {
           execute={execute}
           openBindingMenu={openBindingMenu}
           openFrameMenu={openFrameMenu}
+          openSource={openSource}
         />
       ) : (
         <Rest />

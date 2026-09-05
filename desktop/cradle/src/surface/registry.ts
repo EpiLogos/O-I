@@ -25,6 +25,7 @@ import {
   moveTab,
   neighbourGroup,
   openBinding,
+  openSourcesIndex,
   openSurfaceCount,
   reopenClosed,
   restoreLayout,
@@ -49,9 +50,12 @@ export interface MenuContext {
 /**
  * Kinds the frame honestly discloses its own operations for. Owner kinds
  * join when their surfaces mount — until then their menus are empty, never
- * invented.
+ * invented. 'source' and 'sources' (U0.4) are real frame-managed kinds;
+ * the frame's own operations (close/split/pin) apply to them. The owner's
+ * own canonical Actions arrive with the owner-seam units — none are
+ * fabricated here (law 4).
  */
-const FRAME_DISCLOSED_KINDS = new Set(["test"]);
+const FRAME_DISCLOSED_KINDS = new Set(["test", "source", "sources"]);
 
 /** Actions disclosed for one binding (its tab / its content right-click). */
 export function bindingDisclosures(
@@ -113,6 +117,8 @@ export function executeFrameAction(
       return openBinding(state, makeTestBinding(state, "test"));
     case "surface.open-silent":
       return openBinding(state, makeTestBinding(state, "test:silent"));
+    case "surface.open-sources":
+      return openSourcesIndex(state);
     case "surface.close":
       return closeSurface(state, active());
     case "surface.reopen":

@@ -153,6 +153,32 @@ export function makeTestBinding(
 }
 
 // ---------------------------------------------------------------------------
+// real bindings — kinds the kernel seam owns (U0.4)
+
+/** The sources index (⌘O): the project's participating sources as the
+ * owner disclosed them. One index at a time — a second ⌘O focuses it. */
+export function openSourcesIndex(state: LayoutState): LayoutState {
+  const existing = Object.values(state.surfaces).find((b) => b.kind === "sources");
+  if (existing) return activateSurface(state, existing.id);
+  return openBinding(state, { id: nextId(state, "s"), kind: "sources", title: "Sources" });
+}
+
+/** A real source surface (kind 'source'): the binding carries the owner's
+ * canonical ref verbatim — never a path-derived identity. */
+export function makeSourceBinding(
+  state: LayoutState,
+  sourceRef: string,
+  path: string,
+): SurfaceBinding {
+  const existing = Object.values(state.surfaces).find(
+    (b) => b.kind === "source" && b.ref === sourceRef,
+  );
+  if (existing) return existing;
+  const title = path.split("/").pop() || path;
+  return { id: nextId(state, "s"), kind: "source", ref: sourceRef, title };
+}
+
+// ---------------------------------------------------------------------------
 // operations
 
 export function openBinding(
