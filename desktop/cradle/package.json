@@ -7,7 +7,8 @@
     "dev": "vite --port 1421",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --port 4173 --strictPort",
-    "walk:rest": "node walk/u0.3-walk.mjs"
+    "walk:rest": "node walk/u0.3-walk.mjs",
+    "walk:surfaces": "node walk/u0.3b-walk.mjs"
   },
   "dependencies": {
     "@epilogos/oi-design-system": "file:../../packages/oi-design-system",
