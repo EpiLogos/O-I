@@ -32,3 +32,7 @@
 .world-wiki p, .world-wiki li { font-size: var(--oi-type-xs); color: var(--oi-muted); overflow-wrap: anywhere; }
 .world-wiki ul { padding-left: var(--oi-space-3); }
 .world-rooted { margin-top: var(--oi-space-4) !important; }
+
+.world-source-list { list-style: none; margin: var(--oi-space-2) 0; }
+.world-source-list button { width: 100%; overflow-wrap: anywhere; font-size: var(--oi-type-xs); }
+.world-navigator h3 { font-size: var(--oi-type-sm); font-weight: 500; }

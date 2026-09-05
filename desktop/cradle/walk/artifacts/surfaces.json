@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "surfaces",
-  "generated_at": "2026-09-05T23:00:10.394Z",
+  "generated_at": "2026-09-05T23:18:36.223Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,11 +12,11 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 2567,
+  "duration_ms": 2527,
   "checks": [
     {
       "ok": true,
-      "label": "cold start < 3000 ms (FCP 28.0 ms)"
+      "label": "cold start < 3000 ms (FCP 24.0 ms)"
     },
     {
       "ok": true,
@@ -207,11 +207,11 @@
     {
       "ok": true,
       "op": "capture.timing",
-      "duration_ms": 0.1,
+      "duration_ms": 31.2,
       "data": {
-        "fcp_ms": 28,
-        "dom_content_loaded_ms": 9.3,
-        "load_ms": 9.3
+        "fcp_ms": 24,
+        "dom_content_loaded_ms": 5.3,
+        "load_ms": 5.3
       }
     },
     {
@@ -220,7 +220,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-05T23:00:10.460Z",
+        "mounted_at": "2026-09-05T23:18:36.268Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -231,7 +231,7 @@
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "receipts": [
           {
@@ -371,7 +371,7 @@
     {
       "ok": true,
       "op": "ui.open_4_tabs",
-      "duration_ms": 40,
+      "duration_ms": 31,
       "data": {
         "tabs": 4
       }
@@ -379,7 +379,7 @@
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "receipts": [
           {
@@ -519,7 +519,7 @@
     {
       "ok": true,
       "op": "ui.tile",
-      "duration_ms": 54
+      "duration_ms": 84
     },
     {
       "ok": true,
@@ -532,7 +532,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 44,
+      "duration_ms": 40,
       "data": {
         "file": "surfaces-menu.png"
       }
@@ -540,12 +540,12 @@
     {
       "ok": true,
       "op": "ui.drag_between_splits",
-      "duration_ms": 103
+      "duration_ms": 105
     },
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 0.3,
+      "duration_ms": 0.4,
       "data": {
         "layout": {
           "root": {
@@ -655,7 +655,7 @@
     {
       "ok": true,
       "op": "ui.reload_restore",
-      "duration_ms": 27
+      "duration_ms": 36
     },
     {
       "ok": true,
@@ -770,12 +770,12 @@
     {
       "ok": true,
       "op": "ui.close_all_to_rest",
-      "duration_ms": 6
+      "duration_ms": 8
     },
     {
       "ok": true,
       "op": "capture.events",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "receipts": [
           {
@@ -945,7 +945,7 @@
             "event": "focus_changed",
             "focus": {
               "subject": {
-                "ref": "test:5",
+                "ref": "test:1",
                 "kind": "source",
                 "native_owner": "central",
                 "provenance": {
@@ -956,6 +956,22 @@
           },
           {
             "seq": 12,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "focus_changed",
+            "focus": {
+              "subject": {
+                "ref": "test:5",
+                "kind": "source",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "central.projectcentral"
+                }
+              }
+            }
+          },
+          {
+            "seq": 13,
             "schema": "oi.kernel-event/v1",
             "version": 1,
             "event": "surface_changed",
@@ -971,27 +987,11 @@
             "summary": "Surface closed: Test surface 5."
           },
           {
-            "seq": 13,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "focus_changed",
-            "focus": {}
-          },
-          {
             "seq": 14,
             "schema": "oi.kernel-event/v1",
             "version": 1,
             "event": "focus_changed",
-            "focus": {
-              "subject": {
-                "ref": "test:1",
-                "kind": "source",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "central.projectcentral"
-                }
-              }
-            }
+            "focus": {}
           },
           {
             "seq": 15,
@@ -1324,17 +1324,17 @@
         "count": 35,
         "first_seq": 1,
         "last_seq": 35,
-        "captured_at": "2026-09-05T23:00:12.954Z"
+        "captured_at": "2026-09-05T23:18:38.748Z"
       }
     }
   ],
   "metrics": {
-    "cold_start_fcp_ms": 28,
-    "open_4_tabs_ms": 40,
-    "tile_ms": 54,
-    "drag_between_splits_ms": 103,
-    "reload_restore_ms": 27,
-    "close_all_to_rest_ms": 6,
+    "cold_start_fcp_ms": 24,
+    "open_4_tabs_ms": 31,
+    "tile_ms": 84,
+    "drag_between_splits_ms": 105,
+    "reload_restore_ms": 36,
+    "close_all_to_rest_ms": 8,
     "kernel_events_total": 35
   },
   "screenshots": [

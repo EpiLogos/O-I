@@ -29,6 +29,7 @@ export interface SourceConflictState {
  * `saved_content`/`base_revision` = the Central-owned canonical layer. */
 export interface SourceBufferState {
   source_ref: SourceRef;
+  project: string;
   content: string;
   saved_content: string;
   base_revision: string;

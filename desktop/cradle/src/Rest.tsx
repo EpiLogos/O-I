@@ -14,7 +14,7 @@ import { useEffect, useRef, useState } from "react";
  * held locally and nothing is resolved, sent, or simulated — resolution is
  * the U2.3 seam, not this shell.
  */
-export function Rest() {
+export function Rest({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   const [addressing, setAddressing] = useState(false);
   const [draft, setDraft] = useState("");
   const canvasRef = useRef<HTMLTextAreaElement>(null);
@@ -35,6 +35,8 @@ export function Rest() {
         <textarea
           ref={canvasRef}
           className="canvas-surface"
+          value={value}
+          onChange={e => onChange(e.target.value)}
           aria-label="Writing surface"
           spellCheck={false}
         />

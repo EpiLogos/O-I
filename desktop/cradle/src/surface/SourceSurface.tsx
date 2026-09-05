@@ -29,10 +29,9 @@ export function SourceSurface(props: SourceSurfaceProps) {
   const { binding } = props;
   const kernel = useKernel();
   const buffer = kernel.snapshot.buffers[binding.ref ?? ""];
+  const error = kernel.sourceErrors[binding.ref ?? ""];
   const [text, setText] = useState(buffer?.content ?? "");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const bufferRef = useRef(buffer);
-  bufferRef.current = buffer;
 
   // Mirror the kernel buffer into the textarea only when the buffer's
   // content changed from OUTSIDE this surface (open, re-read, save) —
@@ -41,8 +40,10 @@ export function SourceSurface(props: SourceSurfaceProps) {
   // synchronously, so the async edit op's return can never race the caret
   // back to a stale clean layer.
   const lastSynced = useRef<string | null>(null);
+  const pendingEdits = useRef(0);
   useEffect(() => {
     if (!buffer) return;
+    if (pendingEdits.current > 0) return;
     if (buffer.dirty) return; // the person's layer is never clobbered
     if (lastSynced.current === buffer.content) return;
     lastSynced.current = buffer.content;
@@ -66,13 +67,16 @@ export function SourceSurface(props: SourceSurfaceProps) {
   const onEdit = (value: string) => {
     setText(value);
     lastSynced.current = value; // this surface authored it — no mirror-back
-    void kernel.editBuffer(binding.ref ?? "", value);
+    pendingEdits.current += 1;
+    void kernel.editBuffer(binding.ref ?? "", value).finally(() => {
+      pendingEdits.current -= 1;
+    });
   };
 
   const onSave = () => {
-    if (!binding.ref || bufferRef.current?.dirty || bufferRef.current?.conflict) {
-      void kernel.saveSource(binding.ref ?? "");
-    }
+    // Always queue an explicit save after preceding edits. The renderer's
+    // dirty flag can still be one response behind a fast Cmd+S.
+    if (binding.ref) void kernel.saveSource(binding.ref);
   };
 
   // ⌘S saves from anywhere in this surface (textarea, conflict panel) —
@@ -96,7 +100,7 @@ export function SourceSurface(props: SourceSurfaceProps) {
   if (!buffer) {
     return (
       <div className="source-editor" data-kind="source" data-ref={binding.ref}>
-        <p className="source-note source-note-muted">opening {binding.ref}…</p>
+        <p className="source-note source-note-muted" role="status">{error ?? `Opening ${binding.title}…`}</p>
       </div>
     );
   }
@@ -112,7 +116,9 @@ export function SourceSurface(props: SourceSurfaceProps) {
       data-conflicted={saveFailed}
       onKeyDown={onKeyDown}
     >
+      {error && <p className="source-note" role="alert">{error}</p>}
       <div className="source-status" role="status">
+        <span>{buffer.project}</span>
         <span className="source-revision" data-revision={buffer.base_revision}>
           canonical {shortRevision(buffer.base_revision)}
         </span>
@@ -123,7 +129,7 @@ export function SourceSurface(props: SourceSurfaceProps) {
         ) : (
           <span className="source-clean-marker">clean</span>
         )}
-        <span className="source-hint">⌘S save</span>
+        <button type="button" className="source-save" onClick={onSave} disabled={!buffer.dirty}>Save · ⌘S</button>
       </div>
       <textarea
         ref={textareaRef}

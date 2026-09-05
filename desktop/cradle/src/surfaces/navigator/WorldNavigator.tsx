@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useKernel } from "../../kernel/KernelProvider";
-import type { GroundReading, WikiReading } from "../../kernel/types";
+import type { GroundReading, WikiReading, ListedSource } from "../../kernel/types";
 import "./navigator.css";
 
 function Wiki({ wiki, label }: { wiki: WikiReading; label: string }) {
@@ -27,7 +27,7 @@ function Ground({ ground }: { ground: GroundReading }) {
 
 /** Summoned reading over Central's owner operations; selection lives in the
  * kernel. Local state is only filter text and in-flight presentation. */
-export function WorldNavigator({ onClose }: { onClose: () => void }) {
+export function WorldNavigator({ onClose, onOpenSource }: { onClose: () => void; onOpenSource: (source: ListedSource, project: string) => void }) {
   const kernel = useKernel();
   const reading = kernel.snapshot.navigator;
   const [filter, setFilter] = useState("");
@@ -74,6 +74,17 @@ export function WorldNavigator({ onClose }: { onClose: () => void }) {
           <p className="world-rooted">Rooted in Central personal ground</p>
           <p>{selected.projectcentral.reason ?? (selected.projectcentral.state === "absent" ? "Ordinary Work project · no ProjectCentral binding" : selected.projectcentral.state)}</p>
           <Ground ground={selected.projectcentral} />
+          {reading?.sources && <section aria-label="Project sources">
+            <h3>Sources</h3>
+            {reading.sources.availability !== "horizon" && <p role="status">{typeof reading.sources.availability === "object" && ("ground_only" in reading.sources.availability ? reading.sources.availability.ground_only.reason : reading.sources.availability.unavailable.reason)}</p>}
+            <ul className="world-source-list">
+              {reading.sources.sources.map(source => <li key={source.ref}>
+                <button data-source-ref={source.ref} onClick={() => onOpenSource(source, selected.name)}>{source.path}</button>
+              </li>)}
+            </ul>
+            {!reading.sources.sources.length && <p>Central disclosed no participating sources</p>}
+          </section>}
+
           <Wiki wiki={selected.projectcentral.agent_wiki.wiki} label="Project wiki" />
           <Wiki wiki={root.control.agent_wiki.wiki} label="Root wiki" />
           {selected.projectcentral.agent_wiki.wiki.space_ref && <p data-federation="true">{root.control.agent_wiki.wiki.child_space_refs.includes(selected.projectcentral.agent_wiki.wiki.space_ref) ? "Project wiki is linked from the root wiki" : "No root wiki link is disclosed for this project"}</p>}

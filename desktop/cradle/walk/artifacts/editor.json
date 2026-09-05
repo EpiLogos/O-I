@@ -1,0 +1,235 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "editor",
+  "generated_at": "2026-09-05T23:18:45.550Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 1863,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Ten distinct existing documents are copied into real Central-owned test ground"
+    },
+    {
+      "ok": true,
+      "label": "Document 1 opens through real Central in <1s (64ms)",
+      "data": {
+        "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+        "path": "ProjectCentral/user/00 01-DESIGN.md"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Document 1 renders the exact original content"
+    },
+    {
+      "ok": true,
+      "label": "Document 2 opens through real Central in <1s (70ms)",
+      "data": {
+        "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
+        "path": "ProjectCentral/user/01 02-ARCHITECTURE.md"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Document 2 renders the exact original content"
+    },
+    {
+      "ok": true,
+      "label": "Document 3 opens through real Central in <1s (62ms)",
+      "data": {
+        "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
+        "path": "ProjectCentral/user/02 03-UX-STATES.md"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Document 3 renders the exact original content"
+    },
+    {
+      "ok": true,
+      "label": "Document 4 opens through real Central in <1s (65ms)",
+      "data": {
+        "ref": "central:source:project:editor-walk:ProjectCentral/user/03%2004-VERIFICATION.md",
+        "path": "ProjectCentral/user/03 04-VERIFICATION.md"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Document 4 renders the exact original content"
+    },
+    {
+      "ok": true,
+      "label": "Document 5 opens through real Central in <1s (65ms)",
+      "data": {
+        "ref": "central:source:project:editor-walk:ProjectCentral/user/04%2005-EXECUTION.md",
+        "path": "ProjectCentral/user/04 05-EXECUTION.md"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Document 5 renders the exact original content"
+    },
+    {
+      "ok": true,
+      "label": "Document 6 opens through real Central in <1s (66ms)",
+      "data": {
+        "ref": "central:source:project:editor-walk:ProjectCentral/user/05%20FLOW.md",
+        "path": "ProjectCentral/user/05 FLOW.md"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Document 6 renders the exact original content"
+    },
+    {
+      "ok": true,
+      "label": "Document 7 opens through real Central in <1s (67ms)",
+      "data": {
+        "ref": "central:source:project:editor-walk:ProjectCentral/user/06%20CANONICAL-PRODUCT-FIELD.md",
+        "path": "ProjectCentral/user/06 CANONICAL-PRODUCT-FIELD.md"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Document 7 renders the exact original content"
+    },
+    {
+      "ok": true,
+      "label": "Document 8 opens through real Central in <1s (79ms)",
+      "data": {
+        "ref": "central:source:project:editor-walk:ProjectCentral/user/07%20OI-DESKTOP-APPLICATION-SPEC.md",
+        "path": "ProjectCentral/user/07 OI-DESKTOP-APPLICATION-SPEC.md"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Document 8 renders the exact original content"
+    },
+    {
+      "ok": true,
+      "label": "Document 9 opens through real Central in <1s (67ms)",
+      "data": {
+        "ref": "central:source:project:editor-walk:ProjectCentral/user/08%20OI-CENTRAL-FOUNDATION-2026-09-04.md",
+        "path": "ProjectCentral/user/08 OI-CENTRAL-FOUNDATION-2026-09-04.md"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Document 9 renders the exact original content"
+    },
+    {
+      "ok": true,
+      "label": "Document 10 opens through real Central in <1s (83ms)",
+      "data": {
+        "ref": "central:source:project:editor-walk:ProjectCentral/user/09%20FOUNDING-POSITIONS.md",
+        "path": "ProjectCentral/user/09 FOUNDING-POSITIONS.md"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Document 10 renders the exact original content"
+    },
+    {
+      "ok": true,
+      "label": "Switching dirty documents preserves the first buffer"
+    },
+    {
+      "ok": true,
+      "label": "Switching back preserves the distinct second buffer"
+    },
+    {
+      "ok": true,
+      "label": "After selecting another project, Save writes only to the source’s original project"
+    },
+    {
+      "ok": true,
+      "label": "Saving one document never commits another dirty buffer"
+    },
+    {
+      "ok": true,
+      "label": "Real owner revision advances on save"
+    },
+    {
+      "ok": true,
+      "label": "Source identity remains stable across save"
+    },
+    {
+      "ok": true,
+      "label": "Reopening a closed source keeps the same owner revision and ref"
+    },
+    {
+      "ok": true,
+      "label": "Actual owner exclusion is visible as a source-scoped refusal"
+    },
+    {
+      "ok": true,
+      "label": "Refused save changes no source bytes"
+    },
+    {
+      "ok": true,
+      "label": "Refusal preserves the dirty buffer"
+    },
+    {
+      "ok": true,
+      "label": "Closing sources restores the original writing canvas"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-05T23:18:45.580Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 68,
+      "data": {
+        "file": "editor-source-saved.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 29,
+      "data": {
+        "file": "editor-owner-refusal.png"
+      }
+    }
+  ],
+  "metrics": {
+    "open_file_1_ms": 64,
+    "open_file_2_ms": 70,
+    "open_file_3_ms": 62,
+    "open_file_4_ms": 65,
+    "open_file_5_ms": 65,
+    "open_file_6_ms": 66,
+    "open_file_7_ms": 67,
+    "open_file_8_ms": 79,
+    "open_file_9_ms": 67,
+    "open_file_10_ms": 83,
+    "open_file_max_ms": 83
+  },
+  "screenshots": [
+    "editor-source-saved.png",
+    "editor-owner-refusal.png"
+  ]
+}

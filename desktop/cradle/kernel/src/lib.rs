@@ -82,6 +82,9 @@ pub struct SourceConflict {
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct SourceBuffer {
     pub source_ref: String,
+    /// Owner query retained at open; later selection never reroutes a save.
+    #[serde(default)]
+    pub project: String,
     /// The cradle-held buffer (presentation layer).
     pub content: String,
     /// The canonical content at `base_revision`.
@@ -373,7 +376,8 @@ impl Kernel {
             .as_ref()
             .map(|buffer| buffer.base_revision != reading.revision.revision)
             .unwrap_or(true);
-        let buffer = self.sync_buffer_from_reading(&reading, true);
+        let route = project.unwrap_or(self.client.configured_project()).to_owned();
+        let buffer = self.sync_buffer_from_reading(&reading, true, &route);
         let receipt = changed.then(|| {
             self.log.record(KernelEvent::SourceOpened {
                 source: source_semantic_ref(source_ref, Some(&reading.revision.revision))
@@ -395,7 +399,7 @@ impl Kernel {
     /// Re-read the canonical layer and sync the buffer to it. A clean
     /// buffer mirrors the canonical content; a dirty buffer keeps its
     /// content and only rebases (both layers stay distinct).
-    fn sync_buffer_from_reading(&mut self, reading: &SourceReading, reset_content: bool) -> SourceBuffer {
+    fn sync_buffer_from_reading(&mut self, reading: &SourceReading, reset_content: bool, project: &str) -> SourceBuffer {
         let source_ref = reading.source.source_ref.clone();
         let previous = self.buffers.get(&source_ref);
         let keep_dirty = previous.map(|buffer| buffer.dirty).unwrap_or(false);
@@ -407,6 +411,7 @@ impl Kernel {
         let dirty = keep_dirty && content != reading.content;
         let buffer = SourceBuffer {
             source_ref: source_ref.clone(),
+            project: project.to_owned(),
             content,
             saved_content: reading.content.clone(),
             base_revision: reading.revision.revision.clone(),
@@ -455,6 +460,8 @@ impl Kernel {
         let Some(buffer) = self.buffers.get(source_ref) else {
             return Err(format!("no open buffer for `{source_ref}`; nothing to save"));
         };
+        let route = if buffer.project.is_empty() { project.unwrap_or(self.client.configured_project()) } else { &buffer.project }.to_owned();
+        let project = Some(route.as_str());
         let expected = buffer.base_revision.clone();
         let content = buffer.content.clone();
         match self.client.source_write(
@@ -581,6 +588,9 @@ impl Kernel {
         project: Option<&str>,
         source_ref: &str,
     ) -> Result<KernelOpOutcome, String> {
+        let route = self.buffers.get(source_ref).map(|b| b.project.as_str()).filter(|p| !p.is_empty())
+            .or(project).unwrap_or(self.client.configured_project()).to_owned();
+        let project = Some(route.as_str());
         let had_conflict = self
             .buffers
             .get(source_ref)
@@ -598,7 +608,7 @@ impl Kernel {
         // Nothing changed — same revision, no conflict to clear — nothing
         // is emitted.
         let changed = moved || had_conflict;
-        let buffer = self.sync_buffer_from_reading(&reading, false);
+        let buffer = self.sync_buffer_from_reading(&reading, false, &route);
         let receipt = changed.then(|| {
             self.log.record(KernelEvent::SourceOpened {
                 source: source_semantic_ref(source_ref, Some(&reading.revision.revision))

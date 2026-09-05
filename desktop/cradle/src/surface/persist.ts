@@ -24,7 +24,8 @@ function validBinding(raw: unknown): SurfaceBinding | null {
   if (typeof o.id !== "string" || typeof o.kind !== "string" || typeof o.title !== "string")
     return null;
   if (o.ref !== undefined && typeof o.ref !== "string") return null;
-  return { id: o.id, kind: o.kind, ref: o.ref as string | undefined, title: o.title };
+  if (o.project !== undefined && typeof o.project !== "string") return null;
+  return { project: o.project as string | undefined, id: o.id, kind: o.kind, ref: o.ref as string | undefined, title: o.title };
 }
 
 function validPane(raw: unknown, surfaces: Record<SurfaceId, SurfaceBinding>): Pane | null {

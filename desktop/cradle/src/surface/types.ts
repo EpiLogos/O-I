@@ -43,6 +43,7 @@ export interface SurfaceBinding {
   kind: string;
   /** Stable ref into the owner's grammar, when one exists. */
   ref?: string;
+  project?: string;
   title: string;
 }
 
