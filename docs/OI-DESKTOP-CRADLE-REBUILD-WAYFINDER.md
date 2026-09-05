@@ -303,10 +303,17 @@ noted. Each unit names its relation cell from §2.
 Gate: the cradle opens, austere rest, over the real `~/Central` ground,
 tokenised, window-managed, driven by the walk harness.
 
-- **U0.1 ai-kit sane port** `(S→S2)` · ai-kit `aikit-core/{agent,compose}.rs`
-  + deps → `resolve` → store/CLI onto `main`, per D11 order · walk:
-  `aikit compose --profile agent/epilogos/oi-development --json` on a main
-  build returns a real ComposePlan (model honestly unset); workspace tests green.
+- **U0.1 ai-kit composition surface confirmed** `(S→S2)` · *updated 2026-09-05:
+  the harmonisation already landed — ai-kit `main` carries the full shape
+  under new names (`composition.rs`, `profile.rs`, `actor_composition.rs`,
+  the `knowledge_*` family); `codex/full-shape` and its worktree were deleted
+  post-port; D11's port order is history, not work.* · locate the composition
+  surface by symbol (AgentProfile / compose plan / actor resolution), not
+  filename, and confirm the entrypoints U2.1 will consume · walk: on a fresh
+  `main` build, compose from `agent/epilogos/oi-development` returns a real
+  plan with model honestly unset; workspace tests green; if the `aikit
+  compose` CLI name changed in harmonisation, that is a finding to record,
+  not a failure to force.
 - **U0.2 Central source-ref canonicalisation** `(S→S0)` · Central
   `world_source.rs` · one canonical ref grammar accepted by
   `source.read/write/inspect` (D12) · walk: inspect-disclosed ref is
