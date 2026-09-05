@@ -72,3 +72,269 @@ Programme of record: docs/OI-GIT-AND-SKILLS-NORMALISATION-PROGRAMME.md
 - The programme doc `docs/OI-GIT-AND-SKILLS-NORMALISATION-PROGRAMME.md` was never actually staged by the charter commit (bdacd09 committed only this ledger); committed verbatim this session (no edits) so the record is durable.
 - One self-inflicted merge hiccup, recorded for honesty: `git pull --rebase` on my own `--no-ff` merge tried to flatten it and conflicted; aborted, verified origin/main had not moved, pushed the merge as-is. No force-push at any point.
 - Commits landed this session: deb3863 (cursor docs merge), 7c4bf5c + f127232 (oi-pi merge + test-glob fix), b5c410c (w12-routine merge), ledger update, programme doc, final walk receipts (f6f24d3 tip at time of this record).
+
+---
+
+## S-PRODUCTS execution receipt — six product repos, [OI-GIT-NORM], 2026-09-05
+
+Executed under the merge-to-one-state ruling (most-mature-code-into-main by safe
+method per branch). Set proof at the end. Build/test conventions discovered and
+run, per repo, are recorded with each. No force-push at any point; no unverified
+branch deleted; ai-kit skipped on live-session evidence (details below).
+
+### Quaternal-Logic — main pushed, branches: 0 remaining (was 58 heads)
+
+- **Main**: green on `cargo test --workspace --all-targets --locked` (all suites
+  ok), pushed `cddd97d..51ae787` = the 69-commit Epi-Logos corpus (S/S′ 12×12
+  relational field, Ta-Onta capability matrix, Pratibimba records, wayfinders,
+  CI re-point), then advanced twice more by merges below; final accepted main
+  `7819813`.
+- **Brought into main (3)**:
+  - `feat/epi-matrix-p1-vak-context` — rebased clean (1 commit, +213 ql-cli
+    lib.rs), tests green, pushed `51ae787..a98192c`, branch deleted.
+  - `agent/external-context-frame-reading` — rebased clean (7 commits,
+    context_frame_target.rs + external reading test + doc), tests green, pushed
+    `a98192c..02da279`, branch deleted.
+  - `agent/31-musical-harmonic-system` — rebase conflicted on two module-decl
+    lib.rs files; merged `--no-ff` instead, conflicts resolved by union (pure
+    additive `mod`/`pub use` hunks; one shared closing brace repaired, tests
+    green after fix — first post-merge run caught my own resolution error, fixed
+    before push). Musical harmonic system now on main: traversal
+    classification + D completion, relation-pair classifier, harmonic-ratio
+    fixtures, JANKO figure. Merge commit `9d8dbcb` (amended), pushed
+    `02da279..7819813`, branch deleted.
+- **Quarried then deleted (8)**: `agent/epi-c-r4-holographic-kernel` →
+  `quarry/notes/quaternal-logic-agent-epi-c-r4-holographic-kernel.md`
+  (three-layer law: coordinate mapping ≠ conjugation ≠ positional complement;
+  bioquaternion slash-flip dynamics; frozen-upstream provenance);
+  `agent/epi-r2-first-pass-map` + `agent/issue-42-six-guardians` — verified
+  bit-identical duplicate pair (per N5 hazard 1), ONE record
+  `quarry/notes/quaternal-logic-guardians-fourfold-pair.md` (canonical six-row
+  M/S/S′/M′ fourfold: Anuttara/Central/Khora … Epii/QL/Aletheia; identity law +
+  non-identities), both deleted; JS-era group `agent/q1-deterministic-kernel`,
+  `agent/q2-mef-registry{,-candidate,-final}`,
+  `agent/q3-provider-service-transport` →
+  `quarry/notes/quaternal-logic-js-era-q1-q2-q3-group.md` (per N5 hazard 3:
+  schemas/v1 recorded as the clearest statement of MEF intent), all deleted.
+- **Deleted after verification, content-superseded (6)**:
+  `agent/rust-q1-deterministic-kernel` (spot-check: branch symbols e.g. QlAddress
+  re-derived across main's ql-core, 37 main commits past merge-base);
+  `agent/epi-c-kernel-migration-floor` (35/37 files byte-identical, 2 versioned
+  drifts); `agent/epi-pre-d-bimba-map-parity` (7/9 identical, main newer);
+  `agent/epi-pre-d-main-convergence` (7/10 identical); `converge/oi97-native-cli-current-main`
+  — **reclassified from the hazard list**: main ALREADY declares artifact kind
+  `rust-cli`, entry `target/release/ql`, `oi-managed-native-cli` install; the
+  branch carried the OLDER `oi-managed-component` admission and all code files
+  byte-identical (5/7) — the artifact-kind hazard as described was inverted by
+  the newer unpushed main commits; nothing to bring over. Deleted.
+  `fix/gitignore-build-artifacts` was already gone at origin (pruned; same in
+  every repo).
+- **Deleted ancestry-merged ghosts (41)**: 85-ql-shape-algebra,
+  epi-bimba-coordinate-parity-protocol{,-ci,-final,-pr,-review},
+  epi-c-r1-r2-native-floor, epi-pratibimba-b-returned-reality,
+  epi-pratibimba-c-returned-reality, holographic-receipt-returned-evidence,
+  native-ql-skills-21, q5-runtime-refraction, q6-pairing-square-grammar,
+  qw0-wiki-structural-contract, qw1-okf-meta-wiki, qw2-wiki-refraction-contract,
+  qw3-meta-portal, qw4-second-wiki-proof, rust-q1-candidate, rust-q2-mef-registry,
+  rust-q3-provider-service, rust-q4-client-adapters, visual-product-understanding,
+  converge/oi-017-lifecycle, converge/oi-017-prelocal2,
+  cursor/docs-cli-surface-standing-c148, cursor/r3-docs-standing-alignment-c937,
+  docs/canonical-musical-derivation-v3, docs/mark-aim-figure-ground,
+  docs/product-meaning-harmonisation, docs/qv-data-authority-guard,
+  epi-logos/relation-map-home, feat/current-world-composition-readiness,
+  feat/epi-vak-agent-native-runtime, feat/living-wiki-refraction-profile,
+  feat/oi97-native-cli, fix/oi97-native-cli-install-mode,
+  fix/pre97-prelocal-build-channel, research/deep-subsystem-capability-matrices,
+  research/epi-capability-matrices-full, research/epi-capability-matrices-full-r2.
+  (tips contained in main; GitHub "unmerged" was ancestry-only).
+
+### Software-Factory — main pushed; branches: 1 remaining, by architecture
+
+- **Classification table written first** (the only repo without one):
+  `quarry/software-factory-branches.md`, same method as N2–N6 (per-file identity
+  scans + CI/canon cross-reads).
+- **Main**: green on the discovered convention — `cargo test --workspace
+  --all-targets --locked` (96 pass), `cargo fmt --check` (factory/), `clippy
+  -D warnings` clean, foundation `npm test` (33 pass), native run-smoke ok.
+  Pushed `…→3d90941` (30 commits: run-thought #163 line, journey praxis w12,
+  git development worlds #157, project-context intent return, oi97 CLI
+  convergence, branch-gated CI re-point).
+- **`.oi/product.json` hazard does NOT apply**: main already declares kind
+  `cli`, entry `target/release/factory`, installed verify `factory verify
+  --json`. `converge/oi97-native-cli-current-main` deleted (all files
+  byte-identical to main).
+- **Deleted after verification, content-superseded (7)**:
+  `converge/context-development-persistence` (store+test identical),
+  `hardening/whole-relative-verification` (all code identical; its SKILL.md
+  files are OLDER than main's same-day 13:01/13:02 whole-relative compose
+  commits — SF's sibling of ai-kit's whole-relative line already landed),
+  `harmonize/actuation-runtime-boundary` (only unique add on main in evolved
+  form), `oi157/git-development-worlds` (git_development.rs identical),
+  `agent/factory-q4-client-adapter` (targets the q2-era in-repo QL module
+  removed by the standalone-module architecture — docs/canon/ql-mef-module/
+  00…06 on main restate the client-boundary contract),
+  `build/factory-root-contracts-2026-08-13` (manifest+schema on main;
+  validation re-derived in Rust authority.rs + authority_manifest.rs test).
+- **`research/deepseek-harness-maximal-host` — consolidated then deleted**: its
+  only unique content = 2 docs commits; the DSH maximal-reference host doc
+  already exists on ql/deep-runtime in later normative #139 form (cherry-pick
+  resolved empty, skipped); the EXECUTION-INTELLIGENCE-INTEGRATION.md amendment
+  ("preserve composable harness body provenance") cherry-picked onto the track
+  (`07f1dc9`) and pushed. Branch deleted — one series1 track remains.
+- **Deleted ancestry-merged ghosts (23)**: agent/factory-rust-foundation,
+  agent/ql-deep-runtime (the early merge point — NOT the live ql/deep-runtime),
+  agent/ql-mef-module-vision-spec, converge/oi157-git-development-registry,
+  converge/oi97-persistent-agency-current, design/persistent-agency-material-hosting,
+  feat/current-world-composition-readiness, feat/factory-action-projection-lineage,
+  feat/journey-commission-accountability, feat/journey-praxis-routine-w12,
+  feat/oi155-journey, feat/oi157-git-development-world, feat/oi97-native-cli,
+  feat/project-context-intent-return, feat/run-thought-build-optic-163,
+  feat/run-thought-build-write-163, feat/run-thought-field-163,
+  fix/pre97-prelocal-build-channel, program/coordinated-build-2026-08-13,
+  repair/oi97-actuation-boundary-provenance, repair/oi97-delete-duplicate-refs,
+  tmp-noop, fix/gitignore-build-artifacts (already gone at origin).
+- **Exception kept (1)**: `ql/deep-runtime` — KEEP-LIVE. Owner: SF architecture
+  itself. Reason: main's `ql-agent-experiments/deep-ql/README.md` designates the
+  branch as the materialised deep-ql track (dir on main is "branch-point marker
+  only"); main's `.github/workflows/ql-series1-live.yml` workflow_dispatch
+  defaults to `ref: ql/deep-runtime`; `comparison/STATUS.md` reserves
+  comparison/ for #95; foundation-freeze.json on main is status=frozen, so the
+  track's precondition holds. Re-entry: fold into main when the #95/#100
+  programme closes (comparison activation). Updated this session with the canon
+  amendment (see above).
+
+### Actuation — main pushed, branches: 0 remaining (was 10 heads)
+
+- **Main**: green on the discovered convention — `bin/actuation verify --json`
+  (status ok), node --test over the full CI file list + verify-listed suites
+  (54 pass), `./bin/actuation --version`, `capabilities --json`. Pushed
+  `bd8927b..6eef70e` (5 commits: harness-detection catalog + detection engine
+  proof, instantiation/v1 rename + evidence-gated recorder, installable
+  package.json bin entries, CI re-point).
+- **`.oi/product.json` hazard: already resolved on main by the newer commits** —
+  main declares kind `cli`, entry `bin/actuation`, `oi-managed-native-cli`,
+  installed verify `actuation verify --json`; `feat/oi97-native-cli` carried the
+  OLDER `oi-managed-component` admission and older cli/*.mjs. Reclassified
+  ghost; deleted (nothing to bring over).
+- **Brought into main (1)**: `agent/26-prime-recursive-actuation` — rebased
+  clean onto main (14 additive files: Prime recursive relational Agency
+  experiment under experiments/ql-runtime/prime, embedded ql-relational skill,
+  parseable harmonic probe evidence, source-lock, CI), all 54 tests + its own 8
+  prime-structural tests green, verify ok, pushed `6eef70e..faa5b79`, branch
+  deleted.
+- **Quarried then deleted (1)**: `research/epistemic-cultivation` →
+  `quarry/notes/actuation-research-epistemic-cultivation.md` (model-condition
+  v0 contract semantics — provenance-not-identity; epistemic cultivation as
+  first-class role; L0/L0′ disclosure floor; relation to main's evolved
+  contracts/model-bearing-v1).
+- **Deleted after verification (2)**: `feat/actuation-stream-v1` (all 5 files
+  byte-identical on main), `feat/oi155-semantic-activity` (all 5 identical).
+- **Deleted ancestry-merged ghosts (4)**: feat/current-world-composition-readiness,
+  fix/oi97-native-cli-install-mode, fix/pre97-prelocal-build-channel,
+  foundation/first-class-actuation. `fix/gitignore-build-artifacts` already
+  gone at origin (pruned).
+
+### Workcell — main pushed, branches: 0 remaining (was 10 heads)
+
+- **Main**: green on `cargo test --workspace --all-targets --locked`
+  (186 pass). Pushed `25792dc..dc076fd` (3 commits: executable-identity
+  doorway docs merge, CI re-point).
+- **Deleted after verification (1)**: `feat/aikit-gateway-service` — its 3 files
+  exist on main in evolved form; main re-pinned AIKIT_GATEWAY_SOURCE_REVISION
+  past the branch's pin (both pins verified present in ai-kit; main touched the
+  files 09-01, branch tip 08-31).
+- **Deleted ancestry-merged ghosts (8)**: converge/oi154-aikit-gateway-service,
+  converge/oi155-opensandbox-worlds, converge/pre97-cli-version-current-main,
+  cursor/executable-identity-doorway-4a68, feat/context-composition-readiness,
+  feat/oi97-cli-version, feat/opensandbox-world-hosting-43,
+  fix/pre97-prelocal-build-channel.
+
+### Central — main NOT pushed (red), branches: 0 remaining (was 36 heads)
+
+- **Main is RED at the 4-commit unpushed stack** (`8ef8f33..eb24d3e`, added
+  2026-09-05 ~22:00 by a parallel world-map/skills session): commit `8ef8f33`
+  ("Suppress real GUI surfaces…CENTRAL_NO_REAL_OPEN") added a test calling
+  `error.to_string()` on `PortError`, which implements neither `Display` nor
+  `ToString` — `central-macos-connectors` (lib test) fails to compile.
+  One-line repair options (implement Display for PortError in
+  crates/connector-sdk, or assert on `error.message`) exist but the stack is
+  another session's in-flight work: per programme law, red main = stop, record,
+  do not push, do not repair in place. **Central's 4 unpushed commits remain
+  unpushed; accepted main stays 07dcfb3 (pinned in suite/mainline.json).**
+- **All 35 non-main branches handled** (the superseding content was already on
+  origin/main before the red stack, so deletions are safe independent of it):
+  - 14 unmerged, each spot-checked with the same per-file identity scan: every
+    branch has ZERO files absent from main (the N2 "landed by re-derivation"
+    pattern confirmed) — agent/oi-watch-notification-conformance,
+    agent/personal-surface-notifications, build/central-ticket-14,
+    build/central-ticket-15, build/central-ticket-16,
+    agent/projectcentral-authored-ground, agent/projectcentral-now-day,
+    docs/central-human-altitude-framing, feat/layered-agent-governance-sources,
+    feat/flow-source-93 (bot-authored tip noted, not treated as design record),
+    feat/oi155-recursive-world-agentset, oi157/source-history-provider,
+    oi97-ubuntu, fix/gitignore-build-artifacts. All deleted.
+  - 21 ancestry-merged ghosts deleted: converge/oi157-source-history-provider,
+    converge/oi97-authored-ground-governance, converge/oi97-native-extensions,
+    converge/oi97-projectcentral-now-day, converge/pre97-cli-doorway-current-main,
+    cursor/cli-doorway-docs-4cb3, feat/agent-profile-actions,
+    feat/agent-profile-routine-refs, feat/agent-profile-source,
+    feat/agent-profile-store, feat/central-computer-projection,
+    feat/current-machine-workcell-binding, feat/flow-source-93-main48,
+    feat/living-wiki-source-horizon, feat/oi157-source-history-contract,
+    feat/oi97-cli-doorway, feat/project-context-protocol,
+    fix/documentation-standing-ladder, fix/pre97-prelocal-build-channel,
+    oi97-macos-native, repair/oi97-projectcentral-doc-truth.
+
+### ai-kit — SKIPPED ENTIRELY (live session); branches untouched (32)
+
+Live-session evidence, observed repeatedly between commands: main HEAD advanced
+during my session (87cb76d 22:09 → c3c574a → e531c9a 22:20 "feat(detection):
+consume Actuation harness detection" — i.e. the session is building directly on
+the Actuation main I pushed), and the dirty tree grew from 5 to 80+ entries
+including a full in-flight `skills/` → `registry/` restructure (Track K) and
+`actuation_model_bearing.rs` → `actuation_instantiation.rs` (mirroring
+Actuation's contract rename). Per the never-fight-a-live-session law: no test
+run, no push, no branch work. **Open items for a follow-up session**: main push
+(local 3+ ahead and moving), the N3 table's 32 branches incl. hazards
+`hardening/whole-relative-contemplate` (whole-relative verifier — note SF's
+sibling already landed on SF main), `agent/dsh-adapter-main` (DSH harness
+adapter — note the DSH maximal-host reference lives on SF's ql/deep-runtime,
+quarry-recorded), the three 271-file rust198 replay branches (verify once,
+delete all three), and `dev/oi158-herdr-hyprland-proving` (credential replay
+under a wrong name, no hyprland content).
+
+### O:I bookkeeping (this repo)
+
+- `suite/mainline.json` + `surfaces.json` repinned to the new accepted mains:
+  central 07dcfb3 (unchanged, red stack unpushed), actuation faa5b79, ai-kit
+  25cfdc7 (live remote), software-factory 3d90941, workcell dc076fd,
+  quaternal-logic 7819813; observed_at 2026-09-05; notes refreshed for the four
+  pushed products. `scripts/verify-mainline-snapshot.py` PASS and
+  `--live` PASS (all five #97 in-scope products equal live main; QL represented
+  under its parallel-owner exception, not live-gated).
+- New research/records committed: `quarry/software-factory-branches.md` +
+  4 quarry notes (3 QL, 1 Actuation).
+
+### SET PROOF — every branch accounted (observed set == merged + deleted + exceptions)
+
+- Quaternal-Logic: 57 non-main observed = 3 merged-into-main + 8 quarried-deleted
+  + 6 verified-superseded-deleted + 40 deleted (39 ghosts by ancestry + 1
+  already-gone-at-origin gitignore pruned) + 0 kept. Remaining refs: main only.
+- Software-Factory: 32 non-main observed = 0 merged + 1 consolidated-then-deleted
+  + 7 verified-superseded-deleted + 23 deleted (22 ghosts + 1 already-gone) +
+  **1 exception kept (ql/deep-runtime, architecture-live, updated)**. Remaining
+  refs: main + ql/deep-runtime.
+- Actuation: 9 non-main observed = 1 merged-into-main + 1 quarried-deleted +
+  3 verified-superseded-deleted (incl. reclassified oi97-native-cli) + 4
+  ghost-deleted + 0 kept (+1 already-gone). Remaining refs: main only.
+- Workcell: 9 non-main observed = 0 merged + 1 verified-superseded-deleted +
+  8 ghost-deleted + 0 kept. Remaining refs: main only.
+- Central: 35 non-main observed = 0 merged + 14 verified-superseded-deleted +
+  21 ghost-deleted + 0 kept (+1 already-gone). Remaining refs: main only
+  (unpushed-red stack recorded above).
+- ai-kit: 32 non-main observed = **0 touched — live session; explicitly
+  deferred with hazards enumerated above**. Remaining refs: main + 32 branches.
+- Suite state after this session: 5 of 6 product repos have exactly one main
+  (+1 architecture-live SF branch); Central's main red and unpushed by law;
+  ai-kit under active parallel ownership. Nothing was deleted unverified;
+  counts are diagnostics — this list is the proof.

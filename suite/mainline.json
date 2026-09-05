@@ -1,6 +1,6 @@
 {
   "schema": "oi.mainline-snapshot/v1",
-  "observed_at": "2026-09-03",
+  "observed_at": "2026-09-05",
   "purpose": "Durable source snapshot for the six-product O:I composition at the current pre-#97 deterministic cut. O:I #97 live-main convergence applies to its explicitly named primary repository set; Quaternal Logic remains represented as the separately owned parallel product and is not a #97 live-main dependency gate.",
   "source_catalog": "surfaces.json",
   "coordinator_rule": "O:I itself is the repository containing this snapshot; its exact accepted commit is recorded by the owning PR/issue receipt rather than self-referentially inside this file.",
@@ -8,44 +8,44 @@
     {
       "id": "central",
       "repository": "https://github.com/EpiLogos/Central",
-      "revision": "0b636d1fa52f625451fb94a1dc86d589117b76bd",
+      "revision": "07dcfb3530b9acd2e24c9571aa5b467852f8e7f4",
       "state": "accepted-main",
       "note": "Current Central main includes Project Context, ProjectCentral authored Ground/governance, NOW/DAY, current machine/World source relations, durable personal/Project AgentProfile source/persistence/Actions, authored RoutineRef assignment, and the native ctrl help/capabilities doorway. Central retains source standing while AIKit owns effective Profile/ContextResolution and Routine runtime state."
     },
     {
       "id": "actuation",
       "repository": "https://github.com/EpiLogos/Actuation",
-      "revision": "b403cbf1be1c3d78316753db9bcde9f31eb2fb4e",
+      "revision": "faa5b79f75230ef259d5e523fcade491b23dc3eb",
       "state": "accepted-main",
-      "note": "Current Actuation main includes the realised authority/runtime floor, semantic Activity over canonical ActuationStream, the owner-native actuation executable, selector-independent verification, pre-local build-only standing and native-CLI lifecycle installation."
+      "note": "Current Actuation main includes the realised authority/runtime floor, semantic Activity over canonical ActuationStream, the owner-native installable actuation CLI (oi-managed-native-cli with installed verify), actuation.instantiation/v1 evidence-gated receipts, the actuation.harness-detection/v1 contract with its live detection engine proof, and the Prime recursive relational Agency experiment (#26/#81) under experiments/ql-runtime/prime."
     },
     {
       "id": "ai-kit",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "revision": "d346aacdeb6d5d66d9ec8865db4b2a3c0bd09b50",
+      "revision": "25cfdc72c29671673f1434abdea454442c91a47c",
       "state": "accepted-main",
       "note": "Current AIKit main includes SessionSpace, content-addressed ContextResolution evidence, Herdr/Hyprland reference composition with deterministic Herdr automation-provider coverage, VersionedWorld/ProjectWorld, Method, proof-before-automation Routine, operative Resolve/search, canonical QL-shape use, Central-owned NOW/DAY/Flow temporal grounding through the public Action seam, pre-local build-only standing, native installed doctor verification for #172, and CI conformance that the committed builtin capability registry contains only valid manifests."
     },
     {
       "id": "software-factory",
       "repository": "https://github.com/EpiLogos/agent-system-design",
-      "revision": "7e8fadea5156d75eb872f55f4fd4938d47fb0648",
+      "revision": "3d9094177a7216697619db0a3c16bafb6bb815ca",
       "state": "accepted-main-with-active-research-exceptions",
-      "note": "Current Factory main includes Git developmental Worlds, bounded P3 Intent→Run→P5 return, ProjectDevelopment persistence, canonical Actions, Journey Commission, AgentProfile→Method proof→Routine developmental correlation, whole-relative proof/RunThought/NOW hardening, and the owner-native factory executable. Moving QL-dependent research remains separately owned."
+      "note": "Current Factory main includes Git developmental Worlds, bounded P3 Intent→Run→P5 return, ProjectDevelopment persistence, canonical Actions, Journey Commission, AgentProfile→Method proof→Routine developmental correlation, whole-relative proof/RunThought/NOW hardening, the run-thought field line (#163) and the owner-native factory CLI (oi-managed-native-cli artifact-kind admission on main). The ql/deep-runtime research track remains the separately owned live branch (#95/#100)."
     },
     {
       "id": "workcell",
       "repository": "https://github.com/EpiLogos/Workcell",
-      "revision": "25792dc3aa8e4c54088c0696cee00f8efefe03ad",
+      "revision": "dc076fdf0c3e12835c17ded95ef199e200f7f8e1",
       "state": "accepted-main-with-physical-provider-gates",
-      "note": "Current Workcell main includes deterministic OpenSandbox World materialisation/lifecycle, AIKit Gateway managed-service materiality, the portable process/secret/provider foundation, pre-local build-only standing and selector-independent native workcell version/doctor identity. Actual owner-machine/provider execution remains #97 evidence."
+      "note": "Current Workcell main includes deterministic OpenSandbox World materialisation/lifecycle, AIKit Gateway managed-service materiality, the portable process/secret/provider foundation, pre-local build-only standing, selector-independent native workcell version/doctor identity, and the executable-identity / control-service-and-agent-hosting docs line. Actual owner-machine/provider execution remains #97 evidence."
     },
     {
       "id": "quaternal-logic",
       "repository": "https://github.com/EpiLogos/QL-MEF",
-      "revision": "590ea5464e0b422beaddea2669039e3d8c7fcb5c",
+      "revision": "781981374eaa1f02952249dcdbca1af671d1ece4",
       "state": "parallel-native-owner-exception",
-      "note": "This accepted QL owner cut publishes the native ql executable and native-CLI lifecycle required by O:I #172 over current public kernel/service/MEF/Context-Frame/Vāk owners. The broader moving QL/Epi computational, musical and research programme remains separately owned and is not a #97 live-main dependency gate."
+      "note": "This accepted QL owner cut publishes the native ql executable and native-CLI lifecycle over current public kernel/service/MEF/Context-Frame/Vāk owners, and now carries the Epi-Logos research corpus (S/S' 12x12 relational field, Ta-Onta capability matrix, Pratibimba records), the musical harmonic system (#31/#76), generic external Context Frame reading, and the EPI-MATRIX P1 bounded Vāk context. The broader moving QL/Epi computational and research programme remains separately owned and is not a #97 live-main dependency gate."
     }
   ],
   "build_record": {

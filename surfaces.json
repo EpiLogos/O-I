@@ -7,7 +7,7 @@
       "public_name": "Central",
       "function": "persistent personal ground",
       "repository": "https://github.com/EpiLogos/Central",
-      "docs_ref": "0b636d1fa52f625451fb94a1dc86d589117b76bd",
+      "docs_ref": "07dcfb3530b9acd2e24c9571aa5b467852f8e7f4",
       "docs_path": "README.md",
       "skill_paths": [
         "skills/control-maintenance/SKILL.md",
@@ -21,22 +21,38 @@
         "executable": "ctrl",
         "alias": "ctrl",
         "namespace": "central",
-        "aliases": ["ctrl"],
-        "version_command": ["--version"],
-        "capability_command": ["capabilities", "--json"],
-        "verification_command": ["doctor", "--json"],
+        "aliases": [
+          "ctrl"
+        ],
+        "version_command": [
+          "--version"
+        ],
+        "capability_command": [
+          "capabilities",
+          "--json"
+        ],
+        "verification_command": [
+          "doctor",
+          "--json"
+        ],
         "command_revision": "0b636d1fa52f625451fb94a1dc86d589117b76bd",
         "command_standing": "accepted-main",
         "source_install": {
-          "build": ["cargo", "build", "--workspace", "--locked", "--release"],
+          "build": [
+            "cargo",
+            "build",
+            "--workspace",
+            "--locked",
+            "--release"
+          ],
           "executable_path": "target/release/ctrl"
         },
         "version_manifest": "ctrl/Cargo.toml"
       },
       "install": {
         "kind": "oi-managed-binary",
-        "ref": "0b636d1fa52f625451fb94a1dc86d589117b76bd",
-        "revision": "0b636d1fa52f625451fb94a1dc86d589117b76bd",
+        "ref": "07dcfb3530b9acd2e24c9571aa5b467852f8e7f4",
+        "revision": "07dcfb3530b9acd2e24c9571aa5b467852f8e7f4",
         "path": "ctrl",
         "note": "Current #97 source/install pin. Central owns Control, Work, ProjectCentral, source authority, AgentProfile persistence/Actions and authored Skill/SkillSet/Method/Routine assignments. Routine enable/proof/trigger/authority remains AIKit-owned."
       },
@@ -45,7 +61,12 @@
         "operation": {
           "id": "central.doctor",
           "runner": "native-executable",
-          "args": ["--root", "{personal_ground}", "doctor", "--json"],
+          "args": [
+            "--root",
+            "{personal_ground}",
+            "doctor",
+            "--json"
+          ],
           "evidence": "native-json-stdout"
         },
         "outstanding_requirements": [],
@@ -58,7 +79,7 @@
       "public_name": "Actuation",
       "function": "Agency, WorldBinding, RootScope, Metagency, Determination and Return authority",
       "repository": "https://github.com/EpiLogos/Actuation",
-      "docs_ref": "b403cbf1be1c3d78316753db9bcde9f31eb2fb4e",
+      "docs_ref": "faa5b79f75230ef259d5e523fcade491b23dc3eb",
       "docs_path": "docs/WORLD-BOUND-ROOT-AGENCY.md",
       "skill_paths": [],
       "native": {
@@ -68,9 +89,17 @@
         "alias": null,
         "namespace": "actuation",
         "aliases": [],
-        "version_command": ["--version"],
-        "capability_command": ["capabilities", "--json"],
-        "verification_command": ["verify", "--json"],
+        "version_command": [
+          "--version"
+        ],
+        "capability_command": [
+          "capabilities",
+          "--json"
+        ],
+        "verification_command": [
+          "verify",
+          "--json"
+        ],
         "command_revision": "b403cbf1be1c3d78316753db9bcde9f31eb2fb4e",
         "command_standing": "accepted-main",
         "source_install": {
@@ -81,8 +110,8 @@
       },
       "install": {
         "kind": "oi-managed-native-cli",
-        "ref": "b403cbf1be1c3d78316753db9bcde9f31eb2fb4e",
-        "revision": "b403cbf1be1c3d78316753db9bcde9f31eb2fb4e",
+        "ref": "faa5b79f75230ef259d5e523fcade491b23dc3eb",
+        "revision": "faa5b79f75230ef259d5e523fcade491b23dc3eb",
         "path": "bin/actuation",
         "note": "Current accepted owner main publishes the dependency-free native Actuation command and declares native CLI installation."
       },
@@ -91,7 +120,10 @@
         "operation": {
           "id": "actuation.verify",
           "runner": "native-executable",
-          "args": ["verify", "--json"],
+          "args": [
+            "verify",
+            "--json"
+          ],
           "evidence": "native-json-stdout"
         },
         "outstanding_requirements": [],
@@ -104,7 +136,7 @@
       "public_name": "AIKit",
       "function": "context, capability, model, credential, SessionSpace and provider-process resolution",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "docs_ref": "d346aacdeb6d5d66d9ec8865db4b2a3c0bd09b50",
+      "docs_ref": "25cfdc72c29671673f1434abdea454442c91a47c",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -113,22 +145,39 @@
         "executable": "aikit",
         "alias": "kit",
         "namespace": "aikit",
-        "aliases": ["kit"],
-        "version_command": ["--version"],
-        "capability_command": ["capabilities", "list", "--json"],
-        "verification_command": ["doctor", "--json"],
+        "aliases": [
+          "kit"
+        ],
+        "version_command": [
+          "--version"
+        ],
+        "capability_command": [
+          "capabilities",
+          "list",
+          "--json"
+        ],
+        "verification_command": [
+          "doctor",
+          "--json"
+        ],
         "command_revision": "d346aacdeb6d5d66d9ec8865db4b2a3c0bd09b50",
         "command_standing": "accepted-main",
         "source_install": {
-          "build": ["cargo", "build", "--workspace", "--locked", "--release"],
+          "build": [
+            "cargo",
+            "build",
+            "--workspace",
+            "--locked",
+            "--release"
+          ],
           "executable_path": "target/release/aikit"
         },
         "version_manifest": "crates/aikit-cli/Cargo.toml"
       },
       "install": {
         "kind": "oi-managed-binary",
-        "ref": "d346aacdeb6d5d66d9ec8865db4b2a3c0bd09b50",
-        "revision": "d346aacdeb6d5d66d9ec8865db4b2a3c0bd09b50",
+        "ref": "25cfdc72c29671673f1434abdea454442c91a47c",
+        "revision": "25cfdc72c29671673f1434abdea454442c91a47c",
         "path": "crates/aikit-cli",
         "note": "Current #97 source/install pin; immutable released artifacts remain separately recorded in suite/manifest.json."
       },
@@ -137,7 +186,10 @@
         "operation": {
           "id": "aikit.doctor",
           "runner": "native-executable",
-          "args": ["doctor", "--json"],
+          "args": [
+            "doctor",
+            "--json"
+          ],
           "evidence": "native-json-stdout"
         },
         "outstanding_requirements": [],
@@ -150,7 +202,7 @@
       "public_name": "Software Factory",
       "function": "developmental Project, Journey, Run, Candidate, evidence and authorised Factory Action semantics",
       "repository": "https://github.com/EpiLogos/agent-system-design",
-      "docs_ref": "7e8fadea5156d75eb872f55f4fd4938d47fb0648",
+      "docs_ref": "3d9094177a7216697619db0a3c16bafb6bb815ca",
       "docs_path": "factory/README.md",
       "skill_paths": [],
       "native": {
@@ -160,21 +212,35 @@
         "alias": null,
         "namespace": "factory",
         "aliases": [],
-        "version_command": ["--version"],
-        "capability_command": ["capabilities", "--json"],
-        "verification_command": ["verify", "--json"],
+        "version_command": [
+          "--version"
+        ],
+        "capability_command": [
+          "capabilities",
+          "--json"
+        ],
+        "verification_command": [
+          "verify",
+          "--json"
+        ],
         "command_revision": "7e8fadea5156d75eb872f55f4fd4938d47fb0648",
         "command_standing": "accepted-main",
         "source_install": {
-          "build": ["cargo", "build", "--workspace", "--locked", "--release"],
+          "build": [
+            "cargo",
+            "build",
+            "--workspace",
+            "--locked",
+            "--release"
+          ],
           "executable_path": "target/release/factory"
         },
         "version_manifest": "factory/Cargo.toml"
       },
       "install": {
         "kind": "oi-managed-native-cli",
-        "ref": "7e8fadea5156d75eb872f55f4fd4938d47fb0648",
-        "revision": "7e8fadea5156d75eb872f55f4fd4938d47fb0648",
+        "ref": "3d9094177a7216697619db0a3c16bafb6bb815ca",
+        "revision": "3d9094177a7216697619db0a3c16bafb6bb815ca",
         "path": "factory",
         "note": "Current accepted owner main publishes the native Factory CLI over FactoryBuild/provider/Action owners; the historical repository name remains agent-system-design pending canonical rename."
       },
@@ -183,7 +249,10 @@
         "operation": {
           "id": "software-factory.verify",
           "runner": "native-executable",
-          "args": ["verify", "--json"],
+          "args": [
+            "verify",
+            "--json"
+          ],
           "evidence": "native-json-stdout"
         },
         "outstanding_requirements": [],
@@ -196,7 +265,7 @@
       "public_name": "Workcell",
       "function": "material execution, model-serving base, process containment and secret materialisation",
       "repository": "https://github.com/EpiLogos/Workcell",
-      "docs_ref": "25792dc3aa8e4c54088c0696cee00f8efefe03ad",
+      "docs_ref": "dc076fdf0c3e12835c17ded95ef199e200f7f8e1",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -206,21 +275,35 @@
         "alias": "workcell",
         "namespace": "workcell",
         "aliases": [],
-        "version_command": ["--version"],
-        "capability_command": ["--json", "discover"],
-        "verification_command": ["--json", "doctor"],
+        "version_command": [
+          "--version"
+        ],
+        "capability_command": [
+          "--json",
+          "discover"
+        ],
+        "verification_command": [
+          "--json",
+          "doctor"
+        ],
         "command_revision": "25792dc3aa8e4c54088c0696cee00f8efefe03ad",
         "command_standing": "accepted-main",
         "source_install": {
-          "build": ["cargo", "build", "--workspace", "--locked", "--release"],
+          "build": [
+            "cargo",
+            "build",
+            "--workspace",
+            "--locked",
+            "--release"
+          ],
           "executable_path": "target/release/workcell"
         },
         "version_manifest": "crates/workcell-cli/Cargo.toml"
       },
       "install": {
         "kind": "oi-managed-binary",
-        "ref": "25792dc3aa8e4c54088c0696cee00f8efefe03ad",
-        "revision": "25792dc3aa8e4c54088c0696cee00f8efefe03ad",
+        "ref": "dc076fdf0c3e12835c17ded95ef199e200f7f8e1",
+        "revision": "dc076fdf0c3e12835c17ded95ef199e200f7f8e1",
         "path": "crates/workcell-cli",
         "note": "Current #97 source/install pin including selector-independent native executable identity. Provider-specific physical resources remain physical acceptance evidence."
       },
@@ -229,7 +312,10 @@
         "operation": {
           "id": "workcell.doctor",
           "runner": "native-executable",
-          "args": ["--json", "doctor"],
+          "args": [
+            "--json",
+            "doctor"
+          ],
           "evidence": "native-json-stdout"
         },
         "outstanding_requirements": [
@@ -253,7 +339,7 @@
       "public_name": "Quaternal Logic",
       "function": "deterministic QL kernel, complete MEF registry, service boundary and Vāk/formal operation surfaces",
       "repository": "https://github.com/EpiLogos/QL-MEF",
-      "docs_ref": "590ea5464e0b422beaddea2669039e3d8c7fcb5c",
+      "docs_ref": "781981374eaa1f02952249dcdbca1af671d1ece4",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -263,21 +349,35 @@
         "alias": null,
         "namespace": "ql",
         "aliases": [],
-        "version_command": ["--version"],
-        "capability_command": ["capabilities", "--json"],
-        "verification_command": ["verify", "--json"],
+        "version_command": [
+          "--version"
+        ],
+        "capability_command": [
+          "capabilities",
+          "--json"
+        ],
+        "verification_command": [
+          "verify",
+          "--json"
+        ],
         "command_revision": "590ea5464e0b422beaddea2669039e3d8c7fcb5c",
         "command_standing": "accepted-main",
         "source_install": {
-          "build": ["cargo", "build", "--workspace", "--locked", "--release"],
+          "build": [
+            "cargo",
+            "build",
+            "--workspace",
+            "--locked",
+            "--release"
+          ],
           "executable_path": "target/release/ql"
         },
         "version_manifest": "crates/ql-cli/Cargo.toml"
       },
       "install": {
         "kind": "oi-managed-native-cli",
-        "ref": "590ea5464e0b422beaddea2669039e3d8c7fcb5c",
-        "revision": "590ea5464e0b422beaddea2669039e3d8c7fcb5c",
+        "ref": "781981374eaa1f02952249dcdbca1af671d1ece4",
+        "revision": "781981374eaa1f02952249dcdbca1af671d1ece4",
         "path": "crates/ql-cli",
         "note": "Accepted native CLI owner cut for O:I #172. The wider moving QL/Epi research programme remains separately owned and does not become a #97 live-main gate."
       },
@@ -286,7 +386,10 @@
         "operation": {
           "id": "quaternal-logic.verify",
           "runner": "native-executable",
-          "args": ["verify", "--json"],
+          "args": [
+            "verify",
+            "--json"
+          ],
           "evidence": "native-json-stdout"
         },
         "outstanding_requirements": [],
