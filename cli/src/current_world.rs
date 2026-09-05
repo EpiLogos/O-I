@@ -294,6 +294,11 @@ mod tests {
             resolved: Some(format!("/native/{id}")),
             version: Some("test".to_owned()),
             detail: None,
+            native_kind: "cli".to_owned(),
+            registered_version: None,
+            live_revision: None,
+            path_executable: None,
+            drift: None,
         }
     }
 
