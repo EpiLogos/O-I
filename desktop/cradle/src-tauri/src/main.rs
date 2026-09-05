@@ -18,17 +18,22 @@ struct KernelHost(Mutex<Kernel>);
 /// kernel event topic (one event per state change, exactly as the kernel
 /// recorded it).
 #[tauri::command]
-fn kernel_op(app: AppHandle, host: State<KernelHost>, op: KernelOp) -> Result<KernelOpOutcome, String> {
-    let (outcome, receipts) = {
-        let mut kernel = host.0.lock().expect("kernel mutex");
-        let outcome = kernel.apply(op)?;
-        let receipts = outcome.receipts.clone();
-        (outcome, receipts)
-    };
-    for receipt in receipts {
-        let _ = app.emit(KERNEL_EVENT_TOPIC, &receipt);
-    }
-    Ok(outcome)
+async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, String> {
+    // Native owner reads may scan a large World. Keep them off the UI thread;
+    // the kernel mutex still serialises mutations and event order.
+    tauri::async_runtime::spawn_blocking(move || {
+        let host = app.state::<KernelHost>();
+        let (outcome, receipts) = {
+            let mut kernel = host.0.lock().map_err(|_| "kernel lock unavailable")?;
+            let outcome = kernel.apply(op)?;
+            let receipts = outcome.receipts.clone();
+            (outcome, receipts)
+        };
+        for receipt in receipts {
+            let _ = app.emit(KERNEL_EVENT_TOPIC, &receipt);
+        }
+        Ok(outcome)
+    }).await.map_err(|e| e.to_string())?
 }
 
 /// The ordered, observable event log, read by cursor. This is the typed

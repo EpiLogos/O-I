@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "kernel-cas",
-  "generated_at": "2026-09-05T21:28:10.254Z",
+  "generated_at": "2026-09-05T23:00:14.215Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 1794,
+  "duration_ms": 1990,
   "checks": [
     {
       "ok": true,
@@ -201,10 +201,11 @@
     {
       "ok": true,
       "op": "read.sources",
-      "duration_ms": 6.3,
+      "duration_ms": 19.2,
       "data": {
         "schema": "oi.source-listing/v1",
         "project": "o-i",
+        "world_ref": "project:project:o-i",
         "sources": [
           {
             "ref": "central:source:project:project:o-i:ProjectCentral/agents/wiki/wiki.json",
@@ -261,12 +262,12 @@
     {
       "ok": true,
       "op": "ui.open_real_file",
-      "duration_ms": 93
+      "duration_ms": 139
     },
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "receipts": [
           {
@@ -512,7 +513,7 @@
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "receipts": [],
         "count": 0,
@@ -554,12 +555,12 @@
     {
       "ok": true,
       "op": "ui.save",
-      "duration_ms": 111
+      "duration_ms": 113
     },
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "receipts": [
           {
@@ -709,7 +710,7 @@
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "receipts": [],
         "count": 0,
@@ -783,7 +784,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 41,
+      "duration_ms": 39,
       "data": {
         "file": "kernel-cas-conflict.png"
       }
@@ -791,7 +792,7 @@
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "receipts": [
           {
@@ -929,7 +930,7 @@
     {
       "ok": true,
       "op": "invoke.source_reread",
-      "duration_ms": 4.4,
+      "duration_ms": 7.2,
       "seq_range": {
         "from": 9,
         "to": 9
@@ -951,7 +952,7 @@
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "receipts": [
           {
@@ -1136,7 +1137,7 @@
     {
       "ok": true,
       "op": "invoke.source_save",
-      "duration_ms": 14.7,
+      "duration_ms": 14.3,
       "seq_range": {
         "from": 10,
         "to": 10
@@ -1191,7 +1192,7 @@
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 2.4,
+      "duration_ms": 2.1,
       "data": {
         "focus": {},
         "surfaces": {
@@ -1216,13 +1217,20 @@
             "dirty": false,
             "path": "ProjectCentral/user/learnings/README.md"
           }
+        },
+        "navigator": {
+          "root": null,
+          "project": null,
+          "sources": null,
+          "project_ref": null,
+          "error": null
         }
       }
     },
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "receipts": [
           {
@@ -1401,7 +1409,7 @@
     {
       "ok": true,
       "op": "invoke.surface_focus",
-      "duration_ms": 1.9,
+      "duration_ms": 2,
       "seq_range": {
         "from": 12,
         "to": 12
@@ -1442,6 +1450,13 @@
                 "dirty": false,
                 "path": "ProjectCentral/user/learnings/README.md"
               }
+            },
+            "navigator": {
+              "root": null,
+              "project": null,
+              "sources": null,
+              "project_ref": null,
+              "error": null
             }
           }
         }
@@ -1450,7 +1465,7 @@
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "receipts": [
           {
@@ -1479,7 +1494,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 15,
+      "duration_ms": 23,
       "data": {
         "file": "kernel-cas-focus.png"
       }
@@ -1741,7 +1756,7 @@
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "receipts": [
           {
@@ -1771,7 +1786,7 @@
     {
       "ok": true,
       "op": "capture.events",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "receipts": [
           {
@@ -1995,13 +2010,13 @@
         "count": 14,
         "first_seq": 1,
         "last_seq": 14,
-        "captured_at": "2026-09-05T21:28:12.045Z"
+        "captured_at": "2026-09-05T23:00:16.203Z"
       }
     }
   ],
   "metrics": {
-    "open_file_ms": 93,
-    "save_ms": 111,
+    "open_file_ms": 139,
+    "save_ms": 113,
     "kernel_events_total": 14
   },
   "screenshots": [

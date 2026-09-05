@@ -171,3 +171,21 @@ walk reproducible and evidence-bearing (map §1 law 2/9, §7):
 - Screenshots accompany every receipt (APP-SPEC §17: visual acceptance is
   human evidence) — the owner views `walk/artifacts/*.png` and re-walks
   the app itself; the receipts are the apparatus, never the acceptor.
+
+### U1.1: World and native packaging
+
+`all` now includes `navigator` (real Central World mapping, project focus,
+root/project wiki relations, absence and caret retention) and `native` (actual
+Tauri frontend hook/build, macOS app bundle metadata, production walk-channel
+exclusion). On other hosts `native` builds the native executable without a
+macOS bundle.
+
+World is summoned with Cmd/Ctrl+B or by right-clicking the Agency field and
+choosing World. Escape or its close button returns to the prior caret.
+
+The U1.1 receipt used Central from suite/mainline.json, compiled from a `git
+archive` of that exact commit into `/tmp/oi-cradle-pins/<revision>`, leaving
+active product checkouts and installed binaries untouched. Set
+`OI_CENTRAL_CTRL_BIN` to that build's `target/release/ctrl` when repeating the
+pinned walk. `navigator-native.json` records the exact binary/revision and the
+computer-use operations on the real app; native PNG and AX receipts are beside it.

@@ -1,0 +1,2796 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "navigator",
+  "generated_at": "2026-09-05T23:00:17.433Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 3414,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Every project row matches the real Central World map in owner order",
+      "data": [
+        "Work/Actuation",
+        "Work/Central",
+        "Work/O-I",
+        "Work/Quaternal-Logic",
+        "Work/Software-Factory",
+        "Work/Workcell",
+        "Work/ai-kit",
+        "Work/epi",
+        "Work/github-recovery-mirror",
+        "Work/legacy",
+        "Work/personal",
+        "Work/projects"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "Summoning retains the original writing buffer"
+    },
+    {
+      "ok": true,
+      "label": "Filter narrows only real projects"
+    },
+    {
+      "ok": true,
+      "label": "Kernel holds the selected owner project reading"
+    },
+    {
+      "ok": true,
+      "label": "Project ref is the owner manifest identity verbatim"
+    },
+    {
+      "ok": true,
+      "label": "Global focus carries the selected project"
+    },
+    {
+      "ok": true,
+      "label": "Ground relations show their real owner location"
+    },
+    {
+      "ok": true,
+      "label": "Root wiki identity is reachable from the project"
+    },
+    {
+      "ok": true,
+      "label": "Distinct project wiki identity is preserved"
+    },
+    {
+      "ok": true,
+      "label": "Federation statement agrees with real root wiki children"
+    },
+    {
+      "ok": true,
+      "label": "Selecting the root clears the old project selection and focus"
+    },
+    {
+      "ok": true,
+      "label": "Escape dismisses to the same writing"
+    },
+    {
+      "ok": true,
+      "label": "Dismiss restores writing caret"
+    },
+    {
+      "ok": true,
+      "label": "Pointer context menu summons the same World surface"
+    },
+    {
+      "ok": true,
+      "label": "Ordinary Work project stays truthfully unbound"
+    },
+    {
+      "ok": true,
+      "label": "Unbound project clears stale focus and fabricates no identity"
+    },
+    {
+      "ok": true,
+      "label": "Pointer close returns to rest"
+    },
+    {
+      "ok": true,
+      "label": "Pointer summon and close restore the original caret rather than the removed menu item"
+    },
+    {
+      "ok": true,
+      "label": "World event log is contiguous and ordered",
+      "data": [
+        {
+          "seq": 1,
+          "schema": "oi.kernel-event/v1",
+          "version": 1,
+          "event": "world_changed",
+          "summary": "Central navigator reading changed"
+        },
+        {
+          "seq": 2,
+          "schema": "oi.kernel-event/v1",
+          "version": 1,
+          "event": "world_changed",
+          "summary": "Central navigator reading changed"
+        },
+        {
+          "seq": 3,
+          "schema": "oi.kernel-event/v1",
+          "version": 1,
+          "event": "focus_changed",
+          "focus": {
+            "world": {
+              "ref": "project:project:o-i",
+              "kind": "world",
+              "native_owner": "central",
+              "provenance": {
+                "source": "projectcentral.change.horizon"
+              }
+            },
+            "project": {
+              "ref": "project:o-i",
+              "kind": "project",
+              "native_owner": "central",
+              "provenance": {
+                "source": "projectcentral.inspect"
+              }
+            },
+            "subject": {
+              "ref": "project:o-i",
+              "kind": "project",
+              "native_owner": "central",
+              "provenance": {
+                "source": "projectcentral.inspect"
+              }
+            }
+          }
+        },
+        {
+          "seq": 4,
+          "schema": "oi.kernel-event/v1",
+          "version": 1,
+          "event": "world_changed",
+          "summary": "Central navigator reading changed"
+        },
+        {
+          "seq": 5,
+          "schema": "oi.kernel-event/v1",
+          "version": 1,
+          "event": "focus_changed",
+          "focus": {}
+        },
+        {
+          "seq": 6,
+          "schema": "oi.kernel-event/v1",
+          "version": 1,
+          "event": "world_changed",
+          "summary": "Central navigator reading changed"
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "label": "World and focus each publish state changes"
+    },
+    {
+      "ok": true,
+      "label": "Unavailable owner transport fabricates no project rows"
+    },
+    {
+      "ok": true,
+      "label": "Unavailable transport is disclosed locally in the navigator"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-05T23:00:18.907Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.state",
+      "duration_ms": 1.8,
+      "data": {
+        "focus": {
+          "world": {
+            "ref": "project:project:o-i",
+            "kind": "world",
+            "native_owner": "central",
+            "provenance": {
+              "source": "projectcentral.change.horizon"
+            }
+          },
+          "project": {
+            "ref": "project:o-i",
+            "kind": "project",
+            "native_owner": "central",
+            "provenance": {
+              "source": "projectcentral.inspect"
+            }
+          },
+          "subject": {
+            "ref": "project:o-i",
+            "kind": "project",
+            "native_owner": "central",
+            "provenance": {
+              "source": "projectcentral.inspect"
+            }
+          }
+        },
+        "surfaces": {},
+        "buffers": {},
+        "navigator": {
+          "root": {
+            "control": {
+              "agent_expressions": {
+                "exists": true,
+                "path": "Control/agents/expressions",
+                "sources": 14
+              },
+              "agent_governance": {
+                "exists": true,
+                "path": "Control/agents/governance",
+                "sources": 14
+              },
+              "agent_wiki": {
+                "exists": true,
+                "path": "Control/agents/wiki",
+                "sources": 1,
+                "wiki": {
+                  "child_space_refs": [
+                    "central:wiki:project:actuation",
+                    "central:wiki:project:ai-kit",
+                    "central:wiki:project:central",
+                    "central:wiki:project:factory",
+                    "central:wiki:project:o-i",
+                    "central:wiki:project:project:ai-kit",
+                    "central:wiki:project:project:o-i",
+                    "central:wiki:project:ql-mef",
+                    "central:wiki:project:workcell"
+                  ],
+                  "dangling_child_space_refs": [
+                    "central:wiki:project:actuation",
+                    "central:wiki:project:ai-kit",
+                    "central:wiki:project:central",
+                    "central:wiki:project:factory",
+                    "central:wiki:project:o-i",
+                    "central:wiki:project:ql-mef",
+                    "central:wiki:project:workcell"
+                  ],
+                  "path": "Control/agents/wiki/wiki.json",
+                  "present": true,
+                  "revision": 11,
+                  "space_ref": "central:wiki:root"
+                }
+              },
+              "machines": {
+                "exists": true,
+                "path": "Control/machines",
+                "sources": 7
+              },
+              "path": "Control",
+              "relations": {
+                "declared_overrides": 5,
+                "path": "Control/relations/source-relations.json",
+                "present": true,
+                "schema": "central.control.ground-relations/v1"
+              },
+              "source_bindings": 34,
+              "unresolved_provenance_sources": 28,
+              "user": {
+                "exists": true,
+                "path": "Control/user",
+                "sources": 19
+              }
+            },
+            "ground_state": "healthy",
+            "mixed_root": {
+              "detected": false,
+              "signals": []
+            },
+            "root": "/Users/admin/Central",
+            "root_state": "directory",
+            "schema": "central.world-map/v1",
+            "valid": true,
+            "work": {
+              "exists": true,
+              "loose_files": 13,
+              "path": "Work",
+              "projects": [
+                {
+                  "name": "Actuation",
+                  "path": "Work/Actuation",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/Actuation/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/Actuation/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/Actuation/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/Actuation/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/Actuation/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/Actuation/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/Actuation/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 172
+                },
+                {
+                  "name": "Central",
+                  "path": "Work/Central",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/Central/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/Central/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/Central/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/Central/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/Central/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/Central/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/Central/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 170
+                },
+                {
+                  "name": "O-I",
+                  "path": "Work/O-I",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": true,
+                      "path": "Work/O-I/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": true,
+                      "path": "Work/O-I/ProjectCentral/agents/wiki",
+                      "sources": 1,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/O-I/ProjectCentral/agents/wiki/wiki.json",
+                        "present": true,
+                        "revision": 1,
+                        "space_ref": "central:wiki:project:project:o-i"
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "manifest_errors": [],
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/O-I/ProjectCentral/now",
+                      "present": true,
+                      "promotions": 0
+                    },
+                    "outcome": "already_conformant",
+                    "path": "Work/O-I/ProjectCentral",
+                    "reason": "ProjectCentral human-source and Agent-Wiki fractal is present and readable.",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/O-I/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "healthy",
+                    "user": {
+                      "exists": true,
+                      "path": "Work/O-I/ProjectCentral/user",
+                      "sources": 3
+                    },
+                    "wiki_candidates": [
+                      {
+                        "source": "ProjectCentral/agents/wiki/wiki.json",
+                        "space_ref": "central:wiki:project:project:o-i"
+                      }
+                    ]
+                  },
+                  "source_files": 460
+                },
+                {
+                  "name": "Quaternal-Logic",
+                  "path": "Work/Quaternal-Logic",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/Quaternal-Logic/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/Quaternal-Logic/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/Quaternal-Logic/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/Quaternal-Logic/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/Quaternal-Logic/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/Quaternal-Logic/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/Quaternal-Logic/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 283
+                },
+                {
+                  "name": "Software-Factory",
+                  "path": "Work/Software-Factory",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/Software-Factory/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/Software-Factory/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/Software-Factory/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/Software-Factory/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/Software-Factory/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/Software-Factory/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/Software-Factory/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 415
+                },
+                {
+                  "name": "Workcell",
+                  "path": "Work/Workcell",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/Workcell/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/Workcell/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/Workcell/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/Workcell/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/Workcell/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/Workcell/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/Workcell/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 169
+                },
+                {
+                  "name": "ai-kit",
+                  "path": "Work/ai-kit",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": true,
+                      "path": "Work/ai-kit/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": true,
+                      "path": "Work/ai-kit/ProjectCentral/agents/wiki",
+                      "sources": 1,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/ai-kit/ProjectCentral/agents/wiki/wiki.json",
+                        "present": true,
+                        "revision": 1,
+                        "space_ref": "central:wiki:project:project:ai-kit"
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "manifest_errors": [],
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/ai-kit/ProjectCentral/now",
+                      "present": true,
+                      "promotions": 0
+                    },
+                    "outcome": "already_conformant",
+                    "path": "Work/ai-kit/ProjectCentral",
+                    "reason": "ProjectCentral human-source and Agent-Wiki fractal is present and readable.",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/ai-kit/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "healthy",
+                    "user": {
+                      "exists": true,
+                      "path": "Work/ai-kit/ProjectCentral/user",
+                      "sources": 0
+                    },
+                    "wiki_candidates": [
+                      {
+                        "source": "ProjectCentral/agents/wiki/wiki.json",
+                        "space_ref": "central:wiki:project:project:ai-kit"
+                      }
+                    ]
+                  },
+                  "source_files": 577
+                },
+                {
+                  "name": "epi",
+                  "path": "Work/epi",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/epi/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/epi/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/epi/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/epi/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/epi/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/epi/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/epi/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 33464
+                },
+                {
+                  "name": "github-recovery-mirror",
+                  "path": "Work/github-recovery-mirror",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/github-recovery-mirror/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/github-recovery-mirror/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/github-recovery-mirror/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/github-recovery-mirror/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/github-recovery-mirror/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/github-recovery-mirror/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/github-recovery-mirror/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 2277
+                },
+                {
+                  "name": "legacy",
+                  "path": "Work/legacy",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/legacy/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/legacy/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/legacy/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/legacy/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/legacy/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/legacy/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/legacy/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 25923
+                },
+                {
+                  "name": "personal",
+                  "path": "Work/personal",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/personal/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/personal/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/personal/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/personal/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/personal/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/personal/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/personal/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 1584
+                },
+                {
+                  "name": "projects",
+                  "path": "Work/projects",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/projects/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/projects/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/projects/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/projects/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/projects/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/projects/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/projects/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 1718
+                }
+              ]
+            }
+          },
+          "project": {
+            "ground_state": "healthy",
+            "position": {
+              "exists": true,
+              "index": 3,
+              "project_count": 12,
+              "work_root": "Work"
+            },
+            "project": {
+              "name": "O-I",
+              "path": "Work/O-I",
+              "projectcentral": {
+                "agent_governance": {
+                  "exists": true,
+                  "path": "Work/O-I/ProjectCentral/agents/governance",
+                  "sources": 0
+                },
+                "agent_wiki": {
+                  "exists": true,
+                  "path": "Work/O-I/ProjectCentral/agents/wiki",
+                  "sources": 1,
+                  "wiki": {
+                    "child_space_refs": [],
+                    "dangling_child_space_refs": [],
+                    "path": "Work/O-I/ProjectCentral/agents/wiki/wiki.json",
+                    "present": true,
+                    "revision": 1,
+                    "space_ref": "central:wiki:project:project:o-i"
+                  }
+                },
+                "flows": {
+                  "active": 0,
+                  "flows": [],
+                  "history": ".central/flow-revisions",
+                  "present": false,
+                  "registry": ".central/flows.json"
+                },
+                "manifest_errors": [],
+                "now": {
+                  "active_items": 0,
+                  "day_records": 0,
+                  "human_scratch": 0,
+                  "inactive_items": 0,
+                  "invalid_items": 0,
+                  "open_questions": 0,
+                  "path": "Work/O-I/ProjectCentral/now",
+                  "present": true,
+                  "promotions": 0
+                },
+                "outcome": "already_conformant",
+                "path": "Work/O-I/ProjectCentral",
+                "reason": "ProjectCentral human-source and Agent-Wiki fractal is present and readable.",
+                "relations": {
+                  "declared_overrides": 0,
+                  "path": "Work/O-I/ProjectCentral/relations/source-relations.json",
+                  "present": false
+                },
+                "state": "healthy",
+                "user": {
+                  "exists": true,
+                  "path": "Work/O-I/ProjectCentral/user",
+                  "sources": 3
+                },
+                "wiki_candidates": [
+                  {
+                    "source": "ProjectCentral/agents/wiki/wiki.json",
+                    "space_ref": "central:wiki:project:project:o-i"
+                  }
+                ]
+              },
+              "source_files": 460
+            },
+            "projection": "project",
+            "root": "/Users/admin/Central",
+            "schema": "central.world-map/v1",
+            "sources": {
+              "bindings": 4,
+              "by_provenance": {
+                "agent-maintained": 1,
+                "unresolved": 3
+              },
+              "unresolved_provenance": 3
+            }
+          },
+          "sources": {
+            "schema": "oi.source-listing/v1",
+            "project": "O-I",
+            "world_ref": "project:project:o-i",
+            "sources": [
+              {
+                "ref": "central:source:project:project:o-i:ProjectCentral/agents/wiki/wiki.json",
+                "path": "ProjectCentral/agents/wiki/wiki.json",
+                "treatment": "projectcentral-agent-wiki",
+                "agent_retrieval_allowed": true,
+                "revision": "central.content-fnv1a64/v1:334:50e99f28bc1aff60"
+              },
+              {
+                "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/2026-08-21-oi97-false-convergence.md",
+                "path": "ProjectCentral/user/learnings/2026-08-21-oi97-false-convergence.md",
+                "treatment": "projectcentral-user",
+                "agent_retrieval_allowed": true,
+                "revision": "central.content-fnv1a64/v1:13659:dcc45ee7a47e23d8"
+              },
+              {
+                "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/2026-08-23-physical-gate-is-not-branch-parking.md",
+                "path": "ProjectCentral/user/learnings/2026-08-23-physical-gate-is-not-branch-parking.md",
+                "treatment": "projectcentral-user",
+                "agent_retrieval_allowed": true,
+                "revision": "central.content-fnv1a64/v1:2682:b39c1d0afa4ae52f"
+              },
+              {
+                "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+                "path": "ProjectCentral/user/learnings/README.md",
+                "treatment": "projectcentral-user",
+                "agent_retrieval_allowed": true,
+                "revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664"
+              }
+            ],
+            "availability": "horizon"
+          },
+          "project_ref": "project:o-i",
+          "error": null
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 21,
+      "data": {
+        "file": "navigator-project-ground.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.state",
+      "duration_ms": 2.7,
+      "data": {
+        "focus": {},
+        "surfaces": {},
+        "buffers": {},
+        "navigator": {
+          "root": {
+            "control": {
+              "agent_expressions": {
+                "exists": true,
+                "path": "Control/agents/expressions",
+                "sources": 14
+              },
+              "agent_governance": {
+                "exists": true,
+                "path": "Control/agents/governance",
+                "sources": 14
+              },
+              "agent_wiki": {
+                "exists": true,
+                "path": "Control/agents/wiki",
+                "sources": 1,
+                "wiki": {
+                  "child_space_refs": [
+                    "central:wiki:project:actuation",
+                    "central:wiki:project:ai-kit",
+                    "central:wiki:project:central",
+                    "central:wiki:project:factory",
+                    "central:wiki:project:o-i",
+                    "central:wiki:project:project:ai-kit",
+                    "central:wiki:project:project:o-i",
+                    "central:wiki:project:ql-mef",
+                    "central:wiki:project:workcell"
+                  ],
+                  "dangling_child_space_refs": [
+                    "central:wiki:project:actuation",
+                    "central:wiki:project:ai-kit",
+                    "central:wiki:project:central",
+                    "central:wiki:project:factory",
+                    "central:wiki:project:o-i",
+                    "central:wiki:project:ql-mef",
+                    "central:wiki:project:workcell"
+                  ],
+                  "path": "Control/agents/wiki/wiki.json",
+                  "present": true,
+                  "revision": 11,
+                  "space_ref": "central:wiki:root"
+                }
+              },
+              "machines": {
+                "exists": true,
+                "path": "Control/machines",
+                "sources": 7
+              },
+              "path": "Control",
+              "relations": {
+                "declared_overrides": 5,
+                "path": "Control/relations/source-relations.json",
+                "present": true,
+                "schema": "central.control.ground-relations/v1"
+              },
+              "source_bindings": 34,
+              "unresolved_provenance_sources": 28,
+              "user": {
+                "exists": true,
+                "path": "Control/user",
+                "sources": 19
+              }
+            },
+            "ground_state": "healthy",
+            "mixed_root": {
+              "detected": false,
+              "signals": []
+            },
+            "root": "/Users/admin/Central",
+            "root_state": "directory",
+            "schema": "central.world-map/v1",
+            "valid": true,
+            "work": {
+              "exists": true,
+              "loose_files": 13,
+              "path": "Work",
+              "projects": [
+                {
+                  "name": "Actuation",
+                  "path": "Work/Actuation",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/Actuation/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/Actuation/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/Actuation/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/Actuation/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/Actuation/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/Actuation/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/Actuation/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 172
+                },
+                {
+                  "name": "Central",
+                  "path": "Work/Central",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/Central/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/Central/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/Central/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/Central/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/Central/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/Central/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/Central/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 170
+                },
+                {
+                  "name": "O-I",
+                  "path": "Work/O-I",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": true,
+                      "path": "Work/O-I/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": true,
+                      "path": "Work/O-I/ProjectCentral/agents/wiki",
+                      "sources": 1,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/O-I/ProjectCentral/agents/wiki/wiki.json",
+                        "present": true,
+                        "revision": 1,
+                        "space_ref": "central:wiki:project:project:o-i"
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "manifest_errors": [],
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/O-I/ProjectCentral/now",
+                      "present": true,
+                      "promotions": 0
+                    },
+                    "outcome": "already_conformant",
+                    "path": "Work/O-I/ProjectCentral",
+                    "reason": "ProjectCentral human-source and Agent-Wiki fractal is present and readable.",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/O-I/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "healthy",
+                    "user": {
+                      "exists": true,
+                      "path": "Work/O-I/ProjectCentral/user",
+                      "sources": 3
+                    },
+                    "wiki_candidates": [
+                      {
+                        "source": "ProjectCentral/agents/wiki/wiki.json",
+                        "space_ref": "central:wiki:project:project:o-i"
+                      }
+                    ]
+                  },
+                  "source_files": 460
+                },
+                {
+                  "name": "Quaternal-Logic",
+                  "path": "Work/Quaternal-Logic",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/Quaternal-Logic/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/Quaternal-Logic/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/Quaternal-Logic/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/Quaternal-Logic/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/Quaternal-Logic/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/Quaternal-Logic/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/Quaternal-Logic/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 283
+                },
+                {
+                  "name": "Software-Factory",
+                  "path": "Work/Software-Factory",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/Software-Factory/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/Software-Factory/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/Software-Factory/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/Software-Factory/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/Software-Factory/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/Software-Factory/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/Software-Factory/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 415
+                },
+                {
+                  "name": "Workcell",
+                  "path": "Work/Workcell",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/Workcell/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/Workcell/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/Workcell/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/Workcell/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/Workcell/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/Workcell/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/Workcell/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 169
+                },
+                {
+                  "name": "ai-kit",
+                  "path": "Work/ai-kit",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": true,
+                      "path": "Work/ai-kit/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": true,
+                      "path": "Work/ai-kit/ProjectCentral/agents/wiki",
+                      "sources": 1,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/ai-kit/ProjectCentral/agents/wiki/wiki.json",
+                        "present": true,
+                        "revision": 1,
+                        "space_ref": "central:wiki:project:project:ai-kit"
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "manifest_errors": [],
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/ai-kit/ProjectCentral/now",
+                      "present": true,
+                      "promotions": 0
+                    },
+                    "outcome": "already_conformant",
+                    "path": "Work/ai-kit/ProjectCentral",
+                    "reason": "ProjectCentral human-source and Agent-Wiki fractal is present and readable.",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/ai-kit/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "healthy",
+                    "user": {
+                      "exists": true,
+                      "path": "Work/ai-kit/ProjectCentral/user",
+                      "sources": 0
+                    },
+                    "wiki_candidates": [
+                      {
+                        "source": "ProjectCentral/agents/wiki/wiki.json",
+                        "space_ref": "central:wiki:project:project:ai-kit"
+                      }
+                    ]
+                  },
+                  "source_files": 577
+                },
+                {
+                  "name": "epi",
+                  "path": "Work/epi",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/epi/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/epi/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/epi/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/epi/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/epi/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/epi/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/epi/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 33464
+                },
+                {
+                  "name": "github-recovery-mirror",
+                  "path": "Work/github-recovery-mirror",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/github-recovery-mirror/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/github-recovery-mirror/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/github-recovery-mirror/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/github-recovery-mirror/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/github-recovery-mirror/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/github-recovery-mirror/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/github-recovery-mirror/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 2277
+                },
+                {
+                  "name": "legacy",
+                  "path": "Work/legacy",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/legacy/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/legacy/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/legacy/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/legacy/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/legacy/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/legacy/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/legacy/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 25923
+                },
+                {
+                  "name": "personal",
+                  "path": "Work/personal",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/personal/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/personal/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/personal/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/personal/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/personal/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/personal/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/personal/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 1584
+                },
+                {
+                  "name": "projects",
+                  "path": "Work/projects",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/projects/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/projects/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/projects/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/projects/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/projects/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/projects/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/projects/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 1718
+                }
+              ]
+            }
+          },
+          "project": null,
+          "sources": null,
+          "project_ref": null,
+          "error": null
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.state",
+      "duration_ms": 2.6,
+      "data": {
+        "focus": {},
+        "surfaces": {},
+        "buffers": {},
+        "navigator": {
+          "root": {
+            "control": {
+              "agent_expressions": {
+                "exists": true,
+                "path": "Control/agents/expressions",
+                "sources": 14
+              },
+              "agent_governance": {
+                "exists": true,
+                "path": "Control/agents/governance",
+                "sources": 14
+              },
+              "agent_wiki": {
+                "exists": true,
+                "path": "Control/agents/wiki",
+                "sources": 1,
+                "wiki": {
+                  "child_space_refs": [
+                    "central:wiki:project:actuation",
+                    "central:wiki:project:ai-kit",
+                    "central:wiki:project:central",
+                    "central:wiki:project:factory",
+                    "central:wiki:project:o-i",
+                    "central:wiki:project:project:ai-kit",
+                    "central:wiki:project:project:o-i",
+                    "central:wiki:project:ql-mef",
+                    "central:wiki:project:workcell"
+                  ],
+                  "dangling_child_space_refs": [
+                    "central:wiki:project:actuation",
+                    "central:wiki:project:ai-kit",
+                    "central:wiki:project:central",
+                    "central:wiki:project:factory",
+                    "central:wiki:project:o-i",
+                    "central:wiki:project:ql-mef",
+                    "central:wiki:project:workcell"
+                  ],
+                  "path": "Control/agents/wiki/wiki.json",
+                  "present": true,
+                  "revision": 11,
+                  "space_ref": "central:wiki:root"
+                }
+              },
+              "machines": {
+                "exists": true,
+                "path": "Control/machines",
+                "sources": 7
+              },
+              "path": "Control",
+              "relations": {
+                "declared_overrides": 5,
+                "path": "Control/relations/source-relations.json",
+                "present": true,
+                "schema": "central.control.ground-relations/v1"
+              },
+              "source_bindings": 34,
+              "unresolved_provenance_sources": 28,
+              "user": {
+                "exists": true,
+                "path": "Control/user",
+                "sources": 19
+              }
+            },
+            "ground_state": "healthy",
+            "mixed_root": {
+              "detected": false,
+              "signals": []
+            },
+            "root": "/Users/admin/Central",
+            "root_state": "directory",
+            "schema": "central.world-map/v1",
+            "valid": true,
+            "work": {
+              "exists": true,
+              "loose_files": 13,
+              "path": "Work",
+              "projects": [
+                {
+                  "name": "Actuation",
+                  "path": "Work/Actuation",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/Actuation/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/Actuation/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/Actuation/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/Actuation/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/Actuation/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/Actuation/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/Actuation/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 172
+                },
+                {
+                  "name": "Central",
+                  "path": "Work/Central",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/Central/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/Central/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/Central/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/Central/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/Central/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/Central/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/Central/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 170
+                },
+                {
+                  "name": "O-I",
+                  "path": "Work/O-I",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": true,
+                      "path": "Work/O-I/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": true,
+                      "path": "Work/O-I/ProjectCentral/agents/wiki",
+                      "sources": 1,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/O-I/ProjectCentral/agents/wiki/wiki.json",
+                        "present": true,
+                        "revision": 1,
+                        "space_ref": "central:wiki:project:project:o-i"
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "manifest_errors": [],
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/O-I/ProjectCentral/now",
+                      "present": true,
+                      "promotions": 0
+                    },
+                    "outcome": "already_conformant",
+                    "path": "Work/O-I/ProjectCentral",
+                    "reason": "ProjectCentral human-source and Agent-Wiki fractal is present and readable.",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/O-I/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "healthy",
+                    "user": {
+                      "exists": true,
+                      "path": "Work/O-I/ProjectCentral/user",
+                      "sources": 3
+                    },
+                    "wiki_candidates": [
+                      {
+                        "source": "ProjectCentral/agents/wiki/wiki.json",
+                        "space_ref": "central:wiki:project:project:o-i"
+                      }
+                    ]
+                  },
+                  "source_files": 460
+                },
+                {
+                  "name": "Quaternal-Logic",
+                  "path": "Work/Quaternal-Logic",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/Quaternal-Logic/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/Quaternal-Logic/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/Quaternal-Logic/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/Quaternal-Logic/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/Quaternal-Logic/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/Quaternal-Logic/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/Quaternal-Logic/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 283
+                },
+                {
+                  "name": "Software-Factory",
+                  "path": "Work/Software-Factory",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/Software-Factory/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/Software-Factory/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/Software-Factory/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/Software-Factory/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/Software-Factory/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/Software-Factory/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/Software-Factory/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 415
+                },
+                {
+                  "name": "Workcell",
+                  "path": "Work/Workcell",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/Workcell/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/Workcell/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/Workcell/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/Workcell/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/Workcell/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/Workcell/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/Workcell/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 169
+                },
+                {
+                  "name": "ai-kit",
+                  "path": "Work/ai-kit",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": true,
+                      "path": "Work/ai-kit/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": true,
+                      "path": "Work/ai-kit/ProjectCentral/agents/wiki",
+                      "sources": 1,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/ai-kit/ProjectCentral/agents/wiki/wiki.json",
+                        "present": true,
+                        "revision": 1,
+                        "space_ref": "central:wiki:project:project:ai-kit"
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "manifest_errors": [],
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/ai-kit/ProjectCentral/now",
+                      "present": true,
+                      "promotions": 0
+                    },
+                    "outcome": "already_conformant",
+                    "path": "Work/ai-kit/ProjectCentral",
+                    "reason": "ProjectCentral human-source and Agent-Wiki fractal is present and readable.",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/ai-kit/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "healthy",
+                    "user": {
+                      "exists": true,
+                      "path": "Work/ai-kit/ProjectCentral/user",
+                      "sources": 0
+                    },
+                    "wiki_candidates": [
+                      {
+                        "source": "ProjectCentral/agents/wiki/wiki.json",
+                        "space_ref": "central:wiki:project:project:ai-kit"
+                      }
+                    ]
+                  },
+                  "source_files": 577
+                },
+                {
+                  "name": "epi",
+                  "path": "Work/epi",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/epi/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/epi/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/epi/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/epi/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/epi/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/epi/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/epi/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 33464
+                },
+                {
+                  "name": "github-recovery-mirror",
+                  "path": "Work/github-recovery-mirror",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/github-recovery-mirror/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/github-recovery-mirror/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/github-recovery-mirror/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/github-recovery-mirror/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/github-recovery-mirror/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/github-recovery-mirror/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/github-recovery-mirror/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 2277
+                },
+                {
+                  "name": "legacy",
+                  "path": "Work/legacy",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/legacy/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/legacy/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/legacy/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/legacy/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/legacy/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/legacy/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/legacy/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 25923
+                },
+                {
+                  "name": "personal",
+                  "path": "Work/personal",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/personal/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/personal/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/personal/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/personal/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/personal/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/personal/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/personal/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 1584
+                },
+                {
+                  "name": "projects",
+                  "path": "Work/projects",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/projects/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/projects/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/projects/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/projects/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/projects/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/projects/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/projects/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 1718
+                }
+              ]
+            }
+          },
+          "project": {
+            "ground_state": "healthy",
+            "position": {
+              "exists": true,
+              "index": 1,
+              "project_count": 12,
+              "work_root": "Work"
+            },
+            "project": {
+              "name": "Actuation",
+              "path": "Work/Actuation",
+              "projectcentral": {
+                "agent_governance": {
+                  "exists": false,
+                  "path": "Work/Actuation/ProjectCentral/agents/governance",
+                  "sources": 0
+                },
+                "agent_wiki": {
+                  "exists": false,
+                  "path": "Work/Actuation/ProjectCentral/agents/wiki",
+                  "sources": 0,
+                  "wiki": {
+                    "child_space_refs": [],
+                    "dangling_child_space_refs": [],
+                    "path": "Work/Actuation/ProjectCentral/agents/wiki/wiki.json",
+                    "present": false
+                  }
+                },
+                "flows": {
+                  "active": 0,
+                  "flows": [],
+                  "history": ".central/flow-revisions",
+                  "present": false,
+                  "registry": ".central/flows.json"
+                },
+                "now": {
+                  "active_items": 0,
+                  "day_records": 0,
+                  "human_scratch": 0,
+                  "inactive_items": 0,
+                  "invalid_items": 0,
+                  "open_questions": 0,
+                  "path": "Work/Actuation/ProjectCentral/now",
+                  "present": false,
+                  "promotions": 0
+                },
+                "path": "Work/Actuation/ProjectCentral",
+                "relations": {
+                  "declared_overrides": 0,
+                  "path": "Work/Actuation/ProjectCentral/relations/source-relations.json",
+                  "present": false
+                },
+                "state": "absent",
+                "user": {
+                  "exists": false,
+                  "path": "Work/Actuation/ProjectCentral/user",
+                  "sources": 0
+                }
+              },
+              "source_files": 172
+            },
+            "projection": "project",
+            "root": "/Users/admin/Central",
+            "schema": "central.world-map/v1",
+            "sources": {
+              "bindings": 0,
+              "by_provenance": {},
+              "error": "project source bindings cannot be read: No such file or directory (os error 2)",
+              "unresolved_provenance": 0
+            }
+          },
+          "sources": null,
+          "project_ref": null,
+          "error": null
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.events",
+      "duration_ms": 0,
+      "data": {
+        "receipts": [
+          {
+            "seq": 1,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "world_changed",
+            "summary": "Central navigator reading changed"
+          },
+          {
+            "seq": 2,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "world_changed",
+            "summary": "Central navigator reading changed"
+          },
+          {
+            "seq": 3,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "focus_changed",
+            "focus": {
+              "world": {
+                "ref": "project:project:o-i",
+                "kind": "world",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.change.horizon"
+                }
+              },
+              "project": {
+                "ref": "project:o-i",
+                "kind": "project",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.inspect"
+                }
+              },
+              "subject": {
+                "ref": "project:o-i",
+                "kind": "project",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.inspect"
+                }
+              }
+            }
+          },
+          {
+            "seq": 4,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "world_changed",
+            "summary": "Central navigator reading changed"
+          },
+          {
+            "seq": 5,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "focus_changed",
+            "focus": {}
+          },
+          {
+            "seq": 6,
+            "schema": "oi.kernel-event/v1",
+            "version": 1,
+            "event": "world_changed",
+            "summary": "Central navigator reading changed"
+          }
+        ],
+        "count": 6,
+        "first_seq": 1,
+        "last_seq": 6
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 25,
+      "data": {
+        "file": "navigator-restored-writing.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-05T23:00:20.828Z",
+        "transport": {
+          "kind": "unavailable",
+          "reason": "no kernel transport: neither the Tauri host nor a dev walk bridge is reachable"
+        },
+        "url": "http://localhost:4173/"
+      }
+    }
+  ],
+  "metrics": {
+    "world_summon_ms": 817
+  },
+  "screenshots": [
+    "navigator-project-ground.png",
+    "navigator-restored-writing.png"
+  ]
+}

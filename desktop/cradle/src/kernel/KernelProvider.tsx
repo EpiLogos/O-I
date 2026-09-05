@@ -84,6 +84,7 @@ export function KernelProvider(props: { children: ReactNode }) {
   const merge = useCallback((outcome: KernelOutcome) => {
     admitReceipts(outcome.receipts ?? []);
     switch (outcome.result) {
+      case "world_read":
       case "state":
       case "surface_opened":
       case "surface_closed":

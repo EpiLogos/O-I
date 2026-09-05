@@ -105,6 +105,7 @@ pub struct KernelSnapshot {
     pub surfaces: BTreeMap<String, SurfaceState>,
     #[serde(default)]
     pub buffers: BTreeMap<String, SourceBuffer>,
+    pub navigator: world::NavigatorReading,
 }
 
 /// The kernel itself. All mutation goes through [`Kernel::apply`]; every
@@ -116,6 +117,7 @@ pub struct Kernel {
     log: KernelEventLog,
     surfaces: BTreeMap<String, SurfaceState>,
     buffers: BTreeMap<String, SourceBuffer>,
+    navigator: world::NavigatorReading,
 }
 
 // ---------------------------------------------------------------------------
@@ -131,6 +133,8 @@ pub struct Kernel {
 pub enum KernelOp {
     /// Pull the whole kernel state (read model; emits nothing).
     State,
+    WorldRead,
+    ProjectRead { project: String },
     /// List a project's participating sources from the owner's
     /// disclosures (read-only; emits nothing).
     SourcesList { #[serde(default)] project: Option<String> },
@@ -182,6 +186,7 @@ pub struct KernelOpOutcome {
 #[serde(tag = "result", rename_all = "snake_case")]
 pub enum KernelOpResult {
     State { snapshot: KernelSnapshot },
+    WorldRead { snapshot: KernelSnapshot },
     SourcesListed { listing: SourceListing },
     SourceOpened { buffer: SourceBuffer },
     BufferEdited { buffer: SourceBuffer },
@@ -213,6 +218,7 @@ impl Kernel {
             log: KernelEventLog::new(),
             surfaces: BTreeMap::new(),
             buffers: BTreeMap::new(),
+            navigator: world::NavigatorReading::default(),
         }
     }
 
@@ -231,6 +237,7 @@ impl Kernel {
             focus: self.focus.clone(),
             surfaces: self.surfaces.clone(),
             buffers: self.buffers.clone(),
+            navigator: self.navigator.clone(),
         }
     }
 
@@ -238,6 +245,8 @@ impl Kernel {
     /// exactly one receipt per kernel state change.
     pub fn apply(&mut self, op: KernelOp) -> Result<KernelOpOutcome, String> {
         match op {
+            KernelOp::WorldRead => self.navigate(None),
+            KernelOp::ProjectRead { project } => self.navigate(Some(&project)),
             KernelOp::State => Ok(KernelOpOutcome {
                 receipts: Vec::new(),
                 result: KernelOpResult::State {
@@ -276,6 +285,66 @@ impl Kernel {
     // -----------------------------------------------------------------------
     // Source buffers — the two state layers
     // -----------------------------------------------------------------------
+
+    fn navigate(&mut self, project: Option<&str>) -> Result<KernelOpOutcome, String> {
+        let before = self.navigator.clone();
+        let old_focus = self.focus.clone();
+        let result = if let Some(query) = project {
+            // Resolve only a project the owner's current root map disclosed.
+            let known = self.navigator.root.as_ref().and_then(|r| r["work"]["projects"].as_array())
+                .is_some_and(|rows| rows.iter().any(|p| p["name"].as_str() == Some(query)));
+            if !known { return Err("Project is outside the disclosed World mapping; refresh World first".into()); }
+            world::read_project(&self.client, query).map(|reading| {
+                let bound = reading["project"]["projectcentral"]["state"] != "absent";
+                let sources = bound.then(|| participating_sources(&self.client, Some(query)));
+                let project_ref = if bound {
+                    self.client.run("projectcentral.inspect", serde_json::json!({"project": query})).ok()
+                        .and_then(|v| v["manifest"]["project_id"].as_str().filter(|id| !id.trim().is_empty()).map(str::to_owned))
+                } else { None };
+                self.focus.project = None;
+                self.focus.world = None;
+                self.focus.clear_subject();
+                let semantic = |id: String, kind: &str| SemanticRef {
+                    ref_id: id, kind: kind.into(), native_owner: "central".into(),
+                    provenance: refs::RefProvenance { source: "projectcentral.inspect".into(), revision: None },
+                };
+                if let Some(id) = project_ref.as_ref() {
+                    let reference = semantic(id.clone(), "project");
+                    self.focus.bind_project(focus::ProjectRef::try_from(reference.clone()).expect("owner project ref"));
+                    self.focus.focus_subject(reference).expect("owner project ref");
+                }
+                if let Some(id) = sources.as_ref().and_then(|s| s.world_ref.as_ref()).filter(|id| !id.trim().is_empty()) {
+                    let mut reference = semantic(id.clone(), "world");
+                    reference.provenance.source = "projectcentral.change.horizon".into();
+                    self.focus.bind_world(focus::WorldRef::try_from(reference).expect("owner world ref"));
+                }
+                self.navigator.project = Some(reading);
+                self.navigator.sources = sources;
+                self.navigator.project_ref = project_ref;
+            })
+        } else {
+            world::read_world(&self.client).map(|reading| {
+                if self.navigator.project.is_some() {
+                    self.focus.project = None;
+                    self.focus.world = None;
+                    self.focus.clear_subject();
+                }
+                self.navigator.root = Some(reading);
+                self.navigator.project = None;
+                self.navigator.sources = None;
+                self.navigator.project_ref = None;
+            })
+        };
+        self.navigator.error = result.err();
+        let mut receipts = Vec::new();
+        if self.navigator != before {
+            receipts.push(self.log.record(KernelEvent::WorldChanged { summary: "Central navigator reading changed".into() }));
+        }
+        if self.focus != old_focus {
+            receipts.push(self.log.record(KernelEvent::FocusChanged { focus: self.focus.clone() }));
+        }
+        Ok(KernelOpOutcome { receipts, result: KernelOpResult::WorldRead { snapshot: self.snapshot() } })
+    }
 
     fn source_open(
         &mut self,
