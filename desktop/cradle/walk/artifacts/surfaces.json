@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "surfaces",
-  "generated_at": "2026-09-05T16:30:48.391Z",
+  "generated_at": "2026-09-05T16:32:16.826Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 2428,
+  "duration_ms": 2461,
   "checks": [
     {
       "ok": true,
@@ -210,8 +210,8 @@
       "duration_ms": 0.2,
       "data": {
         "fcp_ms": 24,
-        "dom_content_loaded_ms": 4.8,
-        "load_ms": 4.8
+        "dom_content_loaded_ms": 5.7,
+        "load_ms": 5.7
       }
     },
     {
@@ -220,7 +220,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-05T16:30:48.425Z",
+        "mounted_at": "2026-09-05T16:32:16.863Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -519,12 +519,12 @@
     {
       "ok": true,
       "op": "ui.tile",
-      "duration_ms": 54
+      "duration_ms": 59
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 30,
+      "duration_ms": 20,
       "data": {
         "file": "surfaces-tiled.png"
       }
@@ -540,7 +540,7 @@
     {
       "ok": true,
       "op": "ui.drag_between_splits",
-      "duration_ms": 101
+      "duration_ms": 103
     },
     {
       "ok": true,
@@ -655,12 +655,12 @@
     {
       "ok": true,
       "op": "ui.reload_restore",
-      "duration_ms": 31
+      "duration_ms": 34
     },
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "layout": {
           "root": {
@@ -770,7 +770,7 @@
     {
       "ok": true,
       "op": "ui.close_all_to_rest",
-      "duration_ms": 6
+      "duration_ms": 5
     },
     {
       "ok": true,
@@ -1324,17 +1324,17 @@
         "count": 35,
         "first_seq": 1,
         "last_seq": 35,
-        "captured_at": "2026-09-05T16:30:50.817Z"
+        "captured_at": "2026-09-05T16:32:19.284Z"
       }
     }
   ],
   "metrics": {
     "cold_start_fcp_ms": 24,
     "open_4_tabs_ms": 35,
-    "tile_ms": 54,
-    "drag_between_splits_ms": 101,
-    "reload_restore_ms": 31,
-    "close_all_to_rest_ms": 6,
+    "tile_ms": 59,
+    "drag_between_splits_ms": 103,
+    "reload_restore_ms": 34,
+    "close_all_to_rest_ms": 5,
     "kernel_events_total": 35
   },
   "screenshots": [
