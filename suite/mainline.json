@@ -8,7 +8,7 @@
     {
       "id": "central",
       "repository": "https://github.com/EpiLogos/Central",
-      "revision": "832f2e5508cec43fed2b7599ddab2b4bd29b7653",
+      "revision": "f66794a712609ea29760355d66f632d669ad7c98",
       "state": "accepted-main",
       "note": "Current Central main includes Project Context, ProjectCentral authored Ground/governance, NOW/DAY, current machine/World source relations, durable personal/Project AgentProfile source/persistence/Actions, authored RoutineRef assignment, and the native ctrl help/capabilities doorway. Central retains source standing while AIKit owns effective Profile/ContextResolution and Routine runtime state."
     },

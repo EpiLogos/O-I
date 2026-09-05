@@ -7,7 +7,7 @@
       "public_name": "Central",
       "function": "persistent personal ground",
       "repository": "https://github.com/EpiLogos/Central",
-      "docs_ref": "832f2e5508cec43fed2b7599ddab2b4bd29b7653",
+      "docs_ref": "f66794a712609ea29760355d66f632d669ad7c98",
       "docs_path": "README.md",
       "skill_paths": [
         "skills/control-maintenance/SKILL.md",
@@ -37,7 +37,7 @@
           "doctor",
           "--json"
         ],
-        "command_revision": "832f2e5508cec43fed2b7599ddab2b4bd29b7653",
+        "command_revision": "f66794a712609ea29760355d66f632d669ad7c98",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [
@@ -53,8 +53,8 @@
       },
       "install": {
         "kind": "oi-managed-binary",
-        "ref": "832f2e5508cec43fed2b7599ddab2b4bd29b7653",
-        "revision": "832f2e5508cec43fed2b7599ddab2b4bd29b7653",
+        "ref": "f66794a712609ea29760355d66f632d669ad7c98",
+        "revision": "f66794a712609ea29760355d66f632d669ad7c98",
         "path": "ctrl",
         "note": "Current #97 source/install pin. Central owns Control, Work, ProjectCentral, source authority, AgentProfile persistence/Actions and authored Skill/SkillSet/Method/Routine assignments. Routine enable/proof/trigger/authority remains AIKit-owned."
       },
