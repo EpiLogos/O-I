@@ -28,6 +28,7 @@
 
 pub mod events;
 pub mod flow;
+pub mod history;
 pub mod focus;
 pub mod refs;
 pub mod world;
@@ -149,6 +150,7 @@ pub enum KernelOp {
     /// Set the cradle-held buffer content. Emits `buffer_dirty` exactly
     /// once per clean/dirty crossing — continued typing emits nothing.
     SourceEdit { source_ref: String, content: String },
+    SourceHistory { source_ref: String },
     /// CAS-save the buffer through `projectcentral.source.write`.
     SourceSave {
         #[serde(default)] project: Option<String>,
@@ -192,6 +194,7 @@ pub enum KernelOpResult {
     WorldRead { snapshot: KernelSnapshot },
     SourcesListed { listing: SourceListing },
     SourceOpened { buffer: SourceBuffer },
+    SourceHistory { history: history::SourceHistory },
     BufferEdited { buffer: SourceBuffer },
     /// A save that recorded a change (or landed unchanged on an equal
     /// canonical): the receipt revision is the canonical layer now.
@@ -262,6 +265,11 @@ impl Kernel {
                     listing: participating_sources(&self.client, project.as_deref()),
                 },
             }),
+            KernelOp::SourceHistory { source_ref } => {
+                let buffer = self.buffers.get(&source_ref).ok_or("open the source before reading its history")?;
+                let history = history::read(&self.client, &buffer.project, &source_ref).map_err(|e| e.to_string())?;
+                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::SourceHistory { history } })
+            }
             KernelOp::SourceOpen { project, source_ref } => {
                 self.source_open(project.as_deref(), &source_ref)
             }

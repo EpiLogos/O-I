@@ -90,6 +90,7 @@ export type KernelOp =
   | { op: "project_read"; project: string }
   | { op: "sources_list"; project?: string }
   | { op: "source_open"; source_ref: SourceRef; project?: string }
+  | { op: "source_history"; source_ref: SourceRef }
   | { op: "source_edit"; source_ref: SourceRef; content: string }
   | { op: "source_save"; source_ref: SourceRef; project?: string }
   | { op: "source_reread"; source_ref: SourceRef; project?: string }
@@ -111,6 +112,7 @@ export type KernelOpResult =
   | { result: "world_read"; snapshot: KernelSnapshotState }
   | { result: "sources_listed"; listing: SourceListingState }
   | { result: "source_opened"; buffer: SourceBufferState }
+  | { result: "source_history"; history: SourceHistoryReading }
   | { result: "buffer_edited"; buffer: SourceBufferState }
   | {
       result: "source_saved";
@@ -177,4 +179,15 @@ export interface ProjectWorld {
 export interface NavigatorReading {
   root: RootWorld | null; project: ProjectWorld | null;
   sources: SourceListingState | null; project_ref: string | null; error: string | null;
+}
+
+export interface SourceChangeReading {
+  change_ref: string; source_ref: string; cursor: number;
+  before_revision: string | null; after_revision: string | null;
+  kind: string; observed_at_unix_seconds: number;
+  actor: string | null; actor_kind: string | null; agent_session_ref: string | null;
+}
+export interface SourceHistoryReading {
+  source_ref: string; world_ref: string; provider: string; cursor: number;
+  changes: SourceChangeReading[];
 }
