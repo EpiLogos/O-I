@@ -405,6 +405,18 @@ Gate: the person's world is navigable and real sources are written safely.
   tabs in one project share project context; narrow the window → sides
   degrade panel → strip → collapsed while the canvas keeps its writing
   minimum.
+- **U1.6 System region** `(S × S→{0..5})` (owner ruling 2026-09-05, answering
+  the flagged no-home gap; contract = APP-SPEC §10 + §17.9) ·
+  `cradle/surfaces/system/` — the six-product composition and configuration
+  workbench: open System, explain each product's current
+  contribution/configuration state including authored/effective/active
+  distinctions, stage + apply a real native configuration change through the
+  owning product and see returned effective state; Workcell lives
+  behind-the-scenes (APP-SPEC §9.5: its material relations are inspectable,
+  never displayed as a dashboard of themselves) · walk: all six products
+  present with truthful state (unavailable ≠ error); one real config change
+  staged/applied through its owner; zero capability-reporting panels (law
+  10) — every row names its owner operation.
 
 ### P2 — Agency vertical (the encounter)
 
@@ -545,6 +557,14 @@ working agent conforms without relying on session memory:
   dropped and projection becomes the only path.
 - **Wayfinder discipline:** one unit per session; fog stays fog until a gate
   exposes it; rulings are ledgered, not re-asked.
+- **External implementers:** the same laws bind any implementer regardless
+  of harness — including computer-use-capable external agents engaged by the
+  owner (ruling 2026-09-05): the loop, the design-set precedence, the
+  walk-as-acceptance, law-13 git discipline. Their computer-use is a walk
+  asset: driving the real app UI is functional acceptance, and their
+  receipts land in the same ledger. **Pi is the designated agent-harness ACP
+  passthrough for main testing** (ruling 2026-09-05): the claude/codex
+  adapters prove the U2.1 seam; Pi carries the main-test passthrough.
 - **Process-skill exclusivity:** `cradle-execution` is the ONLY process skill
   governing cradle units. The machine-level superpowers skillset (installed
   under the agents homebase `~/.agents/` — its own brainstorm/plan/subagent/
