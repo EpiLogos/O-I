@@ -303,17 +303,19 @@ noted. Each unit names its relation cell from §2.
 Gate: the cradle opens, austere rest, over the real `~/Central` ground,
 tokenised, window-managed, driven by the walk harness.
 
-- **U0.1 ai-kit composition surface confirmed** `(S→S2)` · *updated 2026-09-05:
-  the harmonisation already landed — ai-kit `main` carries the full shape
-  under new names (`composition.rs`, `profile.rs`, `actor_composition.rs`,
-  the `knowledge_*` family); `codex/full-shape` and its worktree were deleted
-  post-port; D11's port order is history, not work.* · locate the composition
-  surface by symbol (AgentProfile / compose plan / actor resolution), not
-  filename, and confirm the entrypoints U2.1 will consume · walk: on a fresh
-  `main` build, compose from `agent/epilogos/oi-development` returns a real
-  plan with model honestly unset; workspace tests green; if the `aikit
-  compose` CLI name changed in harmonisation, that is a finding to record,
-  not a failure to force.
+- **U0.1 ai-kit composition surface confirmed** `(S→S2)` · *updated 2026-09-05
+  (machine repaired): the `aikit compose` CLI lost in the harmonisation port
+  is restored on `main` (ai-kit e300ed0) and installed; the stale binaries
+  that masked it (aikit 10 Aug, ctrl 3 Sep) were rebuilt and installed from
+  current HEAD; O-I + ai-kit `ProjectCentral` ground initialised via
+  `projectcentral.init` (`project:o-i`, `project:ai-kit`).* · walk: `aikit
+  compose --json` in a project returns a real plan (`aikit.actor-bootstrap/v2`)
+  with model and harness honestly unset; missing authored ground is disclosed
+  as absence (`composed_inputs: null`), never an error, never guessed ·
+  remaining owner tail: an AgentProfile via `ctrl action run
+  agent-profile.save` — never fabricated by the cradle · entrypoints U2.1
+  consumes: `aikit-adapters/src/agent_session_host.rs` + `clients/`
+  (confirmed present).
 - **U0.2 Central source-ref canonicalisation** `(S→S0)` · Central
   `world_source.rs` · one canonical ref grammar accepted by
   `source.read/write/inspect` (D12) · walk: inspect-disclosed ref is
