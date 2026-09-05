@@ -1,0 +1,528 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "history",
+  "generated_at": "2026-09-05T23:26:34.731Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 577,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Initial history matches actual retained Central records"
+    },
+    {
+      "ok": true,
+      "label": "Conflict preserves the exact local writing"
+    },
+    {
+      "ok": true,
+      "label": "Conflict displays the exact concurrently saved canonical side"
+    },
+    {
+      "ok": true,
+      "label": "Failed CAS never overwrites the concurrent source"
+    },
+    {
+      "ok": true,
+      "label": "Conflict names the actual competing owner revision"
+    },
+    {
+      "ok": true,
+      "label": "A refused save adds no owner history record"
+    },
+    {
+      "ok": true,
+      "label": "Conflict refreshes history to include the competing owner write"
+    },
+    {
+      "ok": true,
+      "label": "Explicit re-read preserves the reconciled writing"
+    },
+    {
+      "ok": true,
+      "label": "Re-read uses the resulting canonical revision as the CAS base"
+    },
+    {
+      "ok": true,
+      "label": "Resolved save commits both reconciled contributions"
+    },
+    {
+      "ok": true,
+      "label": "History increments exactly once for the resolved save"
+    },
+    {
+      "ok": true,
+      "label": "History uses the owner change ref without inventing identity"
+    },
+    {
+      "ok": true,
+      "label": "History preserves the native write attribution"
+    },
+    {
+      "ok": true,
+      "label": "History excludes every other source"
+    },
+    {
+      "ok": true,
+      "label": "A no-change save creates no fabricated history row"
+    },
+    {
+      "ok": true,
+      "label": "Reopened source reads the durable owner history"
+    },
+    {
+      "ok": true,
+      "label": "Reopening preserves the saved reconciliation"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-05T23:26:34.758Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 13,
+      "data": {
+        "file": "history-both-sides.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.state",
+      "duration_ms": 5.3,
+      "data": {
+        "focus": {
+          "world": {
+            "ref": "project:editor-walk",
+            "kind": "world",
+            "native_owner": "central",
+            "provenance": {
+              "source": "projectcentral.change.horizon"
+            }
+          },
+          "project": {
+            "ref": "editor-walk",
+            "kind": "project",
+            "native_owner": "central",
+            "provenance": {
+              "source": "projectcentral.inspect"
+            }
+          },
+          "subject": {
+            "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+            "kind": "source",
+            "native_owner": "central",
+            "provenance": {
+              "source": "central.projectcentral"
+            }
+          }
+        },
+        "surfaces": {
+          "s1": {
+            "surface_id": "s1",
+            "kind": "source",
+            "source_ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+            "title": "00 01-DESIGN.md"
+          }
+        },
+        "buffers": {
+          "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md": {
+            "source_ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+            "project": "Editor",
+            "content": "Local writing to reconcile.\nConcurrent writing from another real Central caller.\n",
+            "saved_content": "Local writing to reconcile.\nConcurrent writing from another real Central caller.\n",
+            "base_revision": "central.content-fnv1a64/v1:81:09310540562177e3",
+            "dirty": false,
+            "path": "ProjectCentral/user/00 01-DESIGN.md"
+          }
+        },
+        "navigator": {
+          "root": {
+            "control": {
+              "agent_expressions": {
+                "exists": false,
+                "path": "Control/agents/expressions",
+                "sources": 0
+              },
+              "agent_governance": {
+                "exists": true,
+                "path": "Control/agents/governance",
+                "sources": 0
+              },
+              "agent_wiki": {
+                "exists": true,
+                "path": "Control/agents/wiki",
+                "sources": 1,
+                "wiki": {
+                  "child_space_refs": [
+                    "central:wiki:project:editor-walk"
+                  ],
+                  "dangling_child_space_refs": [],
+                  "path": "Control/agents/wiki/wiki.json",
+                  "present": true,
+                  "revision": 2,
+                  "space_ref": "central:wiki:root"
+                }
+              },
+              "machines": {
+                "exists": true,
+                "path": "Control/machines",
+                "sources": 0
+              },
+              "path": "Control",
+              "relations": {
+                "declared_overrides": 0,
+                "path": "Control/relations/source-relations.json",
+                "present": false
+              },
+              "source_bindings": 1,
+              "unresolved_provenance_sources": 0,
+              "user": {
+                "exists": true,
+                "path": "Control/user",
+                "sources": 0
+              }
+            },
+            "ground_state": "healthy",
+            "mixed_root": {
+              "detected": false,
+              "signals": []
+            },
+            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-KwAJNu",
+            "root_state": "directory",
+            "schema": "central.world-map/v1",
+            "valid": true,
+            "work": {
+              "exists": true,
+              "loose_files": 0,
+              "path": "Work",
+              "projects": [
+                {
+                  "name": "Editor",
+                  "path": "Work/Editor",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": true,
+                      "path": "Work/Editor/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": true,
+                      "path": "Work/Editor/ProjectCentral/agents/wiki",
+                      "sources": 1,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/Editor/ProjectCentral/agents/wiki/wiki.json",
+                        "present": true,
+                        "revision": 1,
+                        "space_ref": "central:wiki:project:editor-walk"
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "manifest_errors": [],
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/Editor/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "outcome": "already_conformant",
+                    "path": "Work/Editor/ProjectCentral",
+                    "reason": "ProjectCentral human-source and Agent-Wiki fractal is present and readable.",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/Editor/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "healthy",
+                    "user": {
+                      "exists": true,
+                      "path": "Work/Editor/ProjectCentral/user",
+                      "sources": 10
+                    },
+                    "wiki_candidates": [
+                      {
+                        "source": "ProjectCentral/agents/wiki/wiki.json",
+                        "space_ref": "central:wiki:project:editor-walk"
+                      }
+                    ]
+                  },
+                  "source_files": 0
+                },
+                {
+                  "name": "Other",
+                  "path": "Work/Other",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/Other/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": false,
+                      "path": "Work/Other/ProjectCentral/agents/wiki",
+                      "sources": 0,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/Other/ProjectCentral/agents/wiki/wiki.json",
+                        "present": false
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "now": {
+                      "active_items": 0,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/Other/ProjectCentral/now",
+                      "present": false,
+                      "promotions": 0
+                    },
+                    "path": "Work/Other/ProjectCentral",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/Other/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "absent",
+                    "user": {
+                      "exists": false,
+                      "path": "Work/Other/ProjectCentral/user",
+                      "sources": 0
+                    }
+                  },
+                  "source_files": 0
+                }
+              ]
+            }
+          },
+          "project": {
+            "ground_state": "healthy",
+            "position": {
+              "exists": true,
+              "index": 1,
+              "project_count": 2,
+              "work_root": "Work"
+            },
+            "project": {
+              "name": "Editor",
+              "path": "Work/Editor",
+              "projectcentral": {
+                "agent_governance": {
+                  "exists": true,
+                  "path": "Work/Editor/ProjectCentral/agents/governance",
+                  "sources": 0
+                },
+                "agent_wiki": {
+                  "exists": true,
+                  "path": "Work/Editor/ProjectCentral/agents/wiki",
+                  "sources": 1,
+                  "wiki": {
+                    "child_space_refs": [],
+                    "dangling_child_space_refs": [],
+                    "path": "Work/Editor/ProjectCentral/agents/wiki/wiki.json",
+                    "present": true,
+                    "revision": 1,
+                    "space_ref": "central:wiki:project:editor-walk"
+                  }
+                },
+                "flows": {
+                  "active": 0,
+                  "flows": [],
+                  "history": ".central/flow-revisions",
+                  "present": false,
+                  "registry": ".central/flows.json"
+                },
+                "manifest_errors": [],
+                "now": {
+                  "active_items": 0,
+                  "day_records": 0,
+                  "human_scratch": 0,
+                  "inactive_items": 0,
+                  "invalid_items": 0,
+                  "open_questions": 0,
+                  "path": "Work/Editor/ProjectCentral/now",
+                  "present": false,
+                  "promotions": 0
+                },
+                "outcome": "already_conformant",
+                "path": "Work/Editor/ProjectCentral",
+                "reason": "ProjectCentral human-source and Agent-Wiki fractal is present and readable.",
+                "relations": {
+                  "declared_overrides": 0,
+                  "path": "Work/Editor/ProjectCentral/relations/source-relations.json",
+                  "present": false
+                },
+                "state": "healthy",
+                "user": {
+                  "exists": true,
+                  "path": "Work/Editor/ProjectCentral/user",
+                  "sources": 10
+                },
+                "wiki_candidates": [
+                  {
+                    "source": "ProjectCentral/agents/wiki/wiki.json",
+                    "space_ref": "central:wiki:project:editor-walk"
+                  }
+                ]
+              },
+              "source_files": 0
+            },
+            "projection": "project",
+            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-KwAJNu",
+            "schema": "central.world-map/v1",
+            "sources": {
+              "bindings": 11,
+              "by_provenance": {
+                "agent-maintained": 1,
+                "unresolved": 10
+              },
+              "unresolved_provenance": 10
+            }
+          },
+          "sources": {
+            "schema": "oi.source-listing/v1",
+            "project": "Editor",
+            "world_ref": "project:editor-walk",
+            "sources": [
+              {
+                "ref": "central:source:project:editor-walk:ProjectCentral/agents/wiki/wiki.json",
+                "path": "ProjectCentral/agents/wiki/wiki.json",
+                "treatment": "projectcentral-agent-wiki",
+                "agent_retrieval_allowed": true,
+                "revision": "central.content-fnv1a64/v1:334:6bb39a125a8be34e"
+              },
+              {
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+                "path": "ProjectCentral/user/00 01-DESIGN.md",
+                "treatment": "projectcentral-user",
+                "agent_retrieval_allowed": true,
+                "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd"
+              },
+              {
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
+                "path": "ProjectCentral/user/01 02-ARCHITECTURE.md",
+                "treatment": "projectcentral-user",
+                "agent_retrieval_allowed": true,
+                "revision": "central.content-fnv1a64/v1:13074:25135d9a7415c81b"
+              },
+              {
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
+                "path": "ProjectCentral/user/02 03-UX-STATES.md",
+                "treatment": "projectcentral-user",
+                "agent_retrieval_allowed": true,
+                "revision": "central.content-fnv1a64/v1:14063:257354083a124031"
+              },
+              {
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/03%2004-VERIFICATION.md",
+                "path": "ProjectCentral/user/03 04-VERIFICATION.md",
+                "treatment": "projectcentral-user",
+                "agent_retrieval_allowed": true,
+                "revision": "central.content-fnv1a64/v1:8319:71e8d7f4566d7794"
+              },
+              {
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/04%2005-EXECUTION.md",
+                "path": "ProjectCentral/user/04 05-EXECUTION.md",
+                "treatment": "projectcentral-user",
+                "agent_retrieval_allowed": true,
+                "revision": "central.content-fnv1a64/v1:6374:49bf8a60d55ee354"
+              },
+              {
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/05%20FLOW.md",
+                "path": "ProjectCentral/user/05 FLOW.md",
+                "treatment": "projectcentral-user",
+                "agent_retrieval_allowed": true,
+                "revision": "central.content-fnv1a64/v1:13572:84d370eea6743b70"
+              },
+              {
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/06%20CANONICAL-PRODUCT-FIELD.md",
+                "path": "ProjectCentral/user/06 CANONICAL-PRODUCT-FIELD.md",
+                "treatment": "projectcentral-user",
+                "agent_retrieval_allowed": true,
+                "revision": "central.content-fnv1a64/v1:28844:9e8098f36501a372"
+              },
+              {
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/07%20OI-DESKTOP-APPLICATION-SPEC.md",
+                "path": "ProjectCentral/user/07 OI-DESKTOP-APPLICATION-SPEC.md",
+                "treatment": "projectcentral-user",
+                "agent_retrieval_allowed": true,
+                "revision": "central.content-fnv1a64/v1:33832:406c9e2db5b8f4a1"
+              },
+              {
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/08%20OI-CENTRAL-FOUNDATION-2026-09-04.md",
+                "path": "ProjectCentral/user/08 OI-CENTRAL-FOUNDATION-2026-09-04.md",
+                "treatment": "projectcentral-user",
+                "agent_retrieval_allowed": true,
+                "revision": "central.content-fnv1a64/v1:6954:e602979fc1a58084"
+              },
+              {
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/09%20FOUNDING-POSITIONS.md",
+                "path": "ProjectCentral/user/09 FOUNDING-POSITIONS.md",
+                "treatment": "projectcentral-user",
+                "agent_retrieval_allowed": true,
+                "revision": "central.content-fnv1a64/v1:48971:5b33788f76a09cc4"
+              }
+            ],
+            "availability": "horizon"
+          },
+          "project_ref": "editor-walk",
+          "error": null
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 26,
+      "data": {
+        "file": "history-resolved-history.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "history-both-sides.png",
+    "history-resolved-history.png"
+  ]
+}

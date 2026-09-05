@@ -550,3 +550,13 @@
 .source-save { font: inherit; border: 1px solid var(--oi-rule); background: var(--oi-surface); color: var(--oi-foreground); padding: var(--oi-space-1) var(--oi-space-2); cursor: pointer; margin-left: auto; }
 .source-save:disabled { color: var(--oi-muted); cursor: default; }
 .source-save:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-focus); }
+
+.source-history-toggle, .source-history button { font: inherit; color: var(--oi-muted); border: 1px solid var(--oi-rule); background: var(--oi-surface); padding: var(--oi-space-2); cursor: pointer; }
+.source-history { padding: var(--oi-space-4); border-top: 1px solid var(--oi-rule); overflow: auto; max-height: 35vh; flex-shrink: 0; }
+.source-history-heading { display: flex; align-items: center; justify-content: space-between; }
+.source-history h2 { font: inherit; margin: 0; }
+.source-history-rows { list-style: none; margin: 0; padding: 0; }
+.source-history-rows li { padding: var(--oi-space-3) 0; border-bottom: 1px solid var(--oi-rule); }
+.source-history time { margin-left: var(--oi-space-4); color: var(--oi-muted); font-size: var(--oi-type-sm); }
+.source-history details { margin-top: var(--oi-space-2); font-size: var(--oi-type-sm); }
+.source-history dd { overflow-wrap: anywhere; }

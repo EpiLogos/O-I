@@ -39,6 +39,7 @@ const SCENARIOS = {
   "kernel-cas": { module: "scenarios/kernel-cas.mjs", kernel: true, aliases: ["u0.4"] },
   navigator: { module: "scenarios/navigator.mjs", kernel: true, aliases: ["u1.1"] },
   editor: { module: "scenarios/editor.mjs", kernel: true, aliases: ["u1.2"] },
+  history: { module: "scenarios/history.mjs", kernel: true, aliases: ["u1.3"] },
   native: { module: "scenarios/native.mjs", kernel: false, aliases: ["package"] },
 };
 

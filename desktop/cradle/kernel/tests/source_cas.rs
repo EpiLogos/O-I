@@ -104,3 +104,28 @@ fn genuinely_missing_owner_is_unavailable_without_fabricated_sources() {
     assert!(matches!(listing.availability, oi_cradle_kernel::world::ListingAvailability::Unavailable { .. }));
     assert!(outcome.receipts.is_empty());
 }
+
+#[test]
+fn history_is_durable_owner_state_and_rechecks_current_retrieval_gate() {
+    let ground = Ground::new();
+    let mut kernel = Kernel::new(ground.client.clone());
+    ground.open(&mut kernel);
+    let read = |kernel: &mut Kernel| {
+        let result = kernel.apply(KernelOp::SourceHistory { source_ref: ground.source.clone() }).unwrap();
+        assert!(result.receipts.is_empty());
+        let KernelOpResult::SourceHistory { history } = result.result else { panic!("history") };
+        history
+    };
+    let initial = read(&mut kernel);
+    ground.edit(&mut kernel, "First saved revision\n");
+    kernel.apply(KernelOp::SourceSave { project: None, source_ref: ground.source.clone() }).unwrap();
+    let saved = read(&mut kernel);
+    assert_eq!(saved.changes.len(), initial.changes.len() + 1);
+    assert_eq!(saved.changes[0].source_ref, ground.source);
+    assert_eq!(saved.changes[0].actor.as_deref(), Some("human:desktop"));
+    let mut restarted = Kernel::new(ground.client.clone());
+    ground.open(&mut restarted);
+    assert_eq!(read(&mut restarted), saved);
+    fs::write(ground.root.join("Work/Editor/ProjectCentral/user/.no-agent-retrieval"), "").unwrap();
+    assert!(restarted.apply(KernelOp::SourceHistory { source_ref: ground.source.clone() }).is_err());
+}

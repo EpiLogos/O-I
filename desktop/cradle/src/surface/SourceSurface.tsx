@@ -12,6 +12,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { SourceHistory } from "./SourceHistory";
 import { useKernel } from "../kernel/KernelProvider";
 import type { SurfaceBinding } from "./types";
 
@@ -30,6 +31,7 @@ export function SourceSurface(props: SourceSurfaceProps) {
   const kernel = useKernel();
   const buffer = kernel.snapshot.buffers[binding.ref ?? ""];
   const error = kernel.sourceErrors[binding.ref ?? ""];
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [text, setText] = useState(buffer?.content ?? "");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -129,6 +131,7 @@ export function SourceSurface(props: SourceSurfaceProps) {
         ) : (
           <span className="source-clean-marker">clean</span>
         )}
+        <button type="button" className="source-history-toggle" aria-expanded={historyOpen} onClick={() => setHistoryOpen(open => !open)}>History</button>
         <button type="button" className="source-save" onClick={onSave} disabled={!buffer.dirty}>Save · ⌘S</button>
       </div>
       <textarea
@@ -140,6 +143,7 @@ export function SourceSurface(props: SourceSurfaceProps) {
         value={text}
         onChange={(event) => onEdit(event.target.value)}
       />
+      {historyOpen && <SourceHistory sourceRef={binding.ref} revision={buffer.conflict?.current_revision ?? buffer.base_revision} />}
       {conflict ? (
         <div className="source-conflict" role="alert" data-conflict-kind="revision-conflict">
           <p className="source-conflict-title">
