@@ -1,5 +1,7 @@
 schema = 1
 enable = [
   "skill/aikit/product-understanding",
+  "skill/aikit/meta-harness-craft",
   "guidance/aikit/living-project-collaboration",
+  "guidance/aikit/world-situated-agency",
 ]
