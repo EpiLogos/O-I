@@ -1,142 +1,817 @@
 {
   "schema": "oi.convergence-ledger/v1",
-  "observed_at": "2026-08-24",
+  "observed_at": "2026-09-05",
   "purpose": "Durable set-level evidence for O:I #97. Every live open PR and every live non-main branch in the six explicitly authored primary repositories is represented here. QL-MEF/Epi moving development remains a separate owner programme; only its consumers that actually live in these six repositories are in this ledger.",
   "closure_ready": false,
   "closure_rule": "At #97 closure every live in-scope item must still be covered, and every closure_blocking disposition must have been resolved or explicitly converted to a non-blocking active exception with owner and re-entry condition.",
   "repositories": [
     {
       "repository": "EpiLogos/O-I",
+      "observed_at": "2026-09-05",
+      "note": "Full OI-GIT-NORM S-DESKTOP accounting of every non-main branch live at session start (34). Live heads after this session: main + agent/explore-projection-space only (verified git ls-remote --heads origin).",
       "branches": [
-        {"name":"agent/explore-projection-space","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"O:I #18 / PR #72","reason":"current Explore projection-native SharedField programme","reentry_condition":"hosted deployment + independently authored/federated world acceptance","closure_blocking":false},
-        {"name":"agent/oi-d-current-situated-cosmic","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"O:I #101 / PR #117","reason":"current Epi D host consumer line; its QL/Epi producer dependencies remain in the separate owner programme","reentry_condition":"dedicated Epi/QL/O:I D convergence returns its host disposition","closure_blocking":false},
-        {"name":"agent/oi-desktop-p1-host-105","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"desktop P1 ancestry for PRs #120/#122/#123/#136","reason":"live parent ancestry still consumed by active desktop lines","reentry_condition":"children are rebased/converged off this parent","closure_blocking":false},
-        {"name":"agent/oi-desktop-p2-project-field-106","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"O:I #106 / PR #123; base for PR #136","reason":"current Project/Ground/Knowledge desktop field with explicit owner gaps","reentry_condition":"native owner gaps settle and current line converges","closure_blocking":false},
-        {"name":"agent/oi-desktop-p5-system-109","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"O:I #109 / PR #122","reason":"current six-product System workbench; remotely green and integration-ready","reentry_condition":"current-main reconstruction/integration disposition","closure_blocking":false},
-        {"name":"agent/oi-desktop-p6-explore-parity-110","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"O:I #110 / PR #120","reason":"current desktop↔Explore parity line","reentry_condition":"Explore/provider acceptance and convergence","closure_blocking":false},
-        {"name":"agent/oi-epi-cosmic-123-instrument","disposition":"ARCHIVE_PROVENANCE_ONLY","owner":"Epi/O:I successor programmes","reason":"historical Epi host/provenance line superseded by later owner work","reentry_condition":"delete after successor lineage preserves relevant evidence","closure_blocking":true},
-        {"name":"agent/oi-epi-mode-kernel-bridge","disposition":"ARCHIVE_PROVENANCE_ONLY","owner":"Epi/O:I successor programmes","reason":"historical Epi host/provenance line superseded by later owner work","reentry_condition":"delete after successor lineage preserves relevant evidence","closure_blocking":true},
-        {"name":"agent/oi-epi-nara-coordinate-parity","disposition":"ARCHIVE_PROVENANCE_ONLY","owner":"Epi/O:I successor programmes","reason":"historical Epi host/provenance line superseded by later owner work","reentry_condition":"delete after successor lineage preserves relevant evidence","closure_blocking":true},
-        {"name":"agent/oi-epi-nara-lived-vertical","disposition":"ARCHIVE_PROVENANCE_ONLY","owner":"Epi/O:I successor programmes","reason":"historical Epi host/provenance line superseded by later owner work","reentry_condition":"delete after successor lineage preserves relevant evidence","closure_blocking":true},
-        {"name":"agent/oi-epi-personal-450-composed","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"parent of active O:I Epi D PR #117","reason":"corrected-C ancestry still required by active D host","reentry_condition":"PR #117 is rebased/converged off this parent","closure_blocking":false},
-        {"name":"agent/oi-epi-personal-450-return","disposition":"ARCHIVE_PROVENANCE_ONLY","owner":"Epi/O:I successor programmes","reason":"historical Epi host/provenance line superseded by later owner work","reentry_condition":"delete after successor lineage preserves relevant evidence","closure_blocking":true},
-        {"name":"agent/oi-epi-personal-return","disposition":"ARCHIVE_PROVENANCE_ONLY","owner":"Epi/O:I successor programmes","reason":"historical Epi host/provenance line superseded by later owner work","reentry_condition":"delete after successor lineage preserves relevant evidence","closure_blocking":true},
-        {"name":"agent/oi-pre-d-personal-map-lineage","disposition":"ARCHIVE_PROVENANCE_ONLY","owner":"Epi/O:I successor programmes","reason":"historical Epi host/provenance line superseded by later owner work","reentry_condition":"delete after successor lineage preserves relevant evidence","closure_blocking":true},
-        {"name":"agent/praxis-logos-position","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"O:I #91 / PR #92","reason":"authored Logos-as-operative-praxis position","reentry_condition":"praxis programme merge/supersession decision","closure_blocking":false},
-        {"name":"agent/ql-relational-field","disposition":"ARCHIVE_PROVENANCE_ONLY","owner":"historical O:I/QL relation work","reason":"historical O:I-side relational development map; current QL ownership is external to #97","reentry_condition":"delete after any still-current provenance is linked from its successor","closure_blocking":true},
-        {"name":"agent/site-structured-content","disposition":"RETIRE_MERGED","owner":"O:I main","reason":"merged recovered site line on current O:I main","reentry_condition":"delete merged remote branch after retained history is referenced","closure_blocking":true},
-        {"name":"docs/flow-source-relation","disposition":"RETIRE_MERGED","owner":"O:I #139 / merged PR #142","reason":"Flow authored relation is on O:I main as f8bc4341cc64e1715b7578a24ca62609e35adfa6","reentry_condition":"delete merged remote branch after retained history is referenced","closure_blocking":true},
-        {"name":"docs/human-agent-covenant","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"concurrent O:I authored-position work","reason":"current Human-Agent Covenant source line","reentry_condition":"attach/converge through its native authored-position owner","closure_blocking":false},
-        {"name":"feat/current-world-context-frame","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"O:I #131/#132 / PR #133","reason":"current-world six-product Workcell composition; remotely green/integration-ready","reentry_condition":"reconstruct/integrate against current in-scope owner mains without making QL's moving programme a gate","closure_blocking":false},
-        {"name":"feat/flow-desktop-138","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"O:I #138 / Flow desktop programme","reason":"active Flow application work composing accepted Central Flow and current AIKit Flow cognition into the existing Project/Canvas/AgentSession workbench","reentry_condition":"the #138 implementation line returns an owned PR/candidate and is reconciled with the selected desktop ancestry","closure_blocking":false},
-        {"name":"feat/living-wiki-desktop-135","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"O:I #134/#135 / PR #136","reason":"active parallel Living Wiki desktop composition","reentry_condition":"owner programme finishes typed host/render/acceptance and converges","closure_blocking":false},
-        {"name":"repair/oi97-trust-closure","disposition":"REPAIR_ACTIVE","owner":"O:I #97 / PR #129","reason":"current trust-closure repair line","reentry_condition":"live scoped snapshot/ledger verification green, then merge repair","closure_blocking":true},
-        {"name":"research/meta-harness-context-craft","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"O:I #91 / PR #130","reason":"owned meta-harness/context-craft source research","reentry_condition":"reconcile onto current main then merge/supersede","closure_blocking":false}
+        {
+          "name": "cursor/docs-six-product-command-field-db87",
+          "disposition": "MERGED_TO_MAIN_2026-09-05",
+          "owner": "O:I main (S-DESKTOP, OI-GIT-NORM)",
+          "reason": "docs pair: nine docs corrected to the six-product native command field main's cli/product_command_route + surfaces.json already implement; merged --no-ff as deb3863 after README conflict resolution",
+          "reentry_condition": "branch deleted after merge",
+          "closure_blocking": false
+        },
+        {
+          "name": "agent/oi97-local-prep",
+          "disposition": "MERGED_TO_MAIN_2026-09-05",
+          "owner": "O:I main (S-DESKTOP, OI-GIT-NORM)",
+          "reason": "all 19 files new on main: packages/oi-pi (O:I-for-Pi surface half) + docs/PI-PACKAGE-SPEC.md + docs/PI-ORCHESTRATION-HANDOVER.md; 18/18 package tests green; merged --no-ff as 7c4bf5c (+ test-glob fix f127232)",
+          "reentry_condition": "branch deleted after merge",
+          "closure_blocking": false
+        },
+        {
+          "name": "converge/oi97-w12-routine-profile-current-mains",
+          "disposition": "MERGED_TO_MAIN_2026-09-05",
+          "owner": "O:I main (S-DESKTOP, OI-GIT-NORM)",
+          "reason": "branch's newer exact-owner W12 witness landed (tests/journey-routine-handoff proves Central RoutineRef assignment; main's copy was the pre-recut Sep 2 version); main's newer post-#188 suite/mainline.json + surfaces.json kept; 3 witness crates compile, tests pass; merged --no-ff as b5c410c",
+          "reentry_condition": "branch deleted after merge",
+          "closure_blocking": false
+        },
+        {
+          "name": "docs/flow-source-relation",
+          "disposition": "RETIRE_MERGED",
+          "owner": "O:I main / merged PR #142",
+          "reason": "Flow source relation is on O:I main as f8bc4341cc64e1715b7578a24ca62609e35adfa6 (branch tip docs/FLOW.md blob identical); main evolved the file after",
+          "reentry_condition": "deleted 2026-09-05 after identity verification",
+          "closure_blocking": false
+        },
+        {
+          "name": "converge/pre97-final-aikit-registry-repin",
+          "disposition": "RETIRE_MERGED",
+          "owner": "O:I main",
+          "reason": "its exact one-line repin (ai-kit -> d346aacdeb6d5d66d9ec8865db4b2a3c0bd09b50) is already main's current suite/mainline.json pin",
+          "reentry_condition": "deleted 2026-09-05 after pin identity verification",
+          "closure_blocking": false
+        },
+        {
+          "name": "feat/oi155-inhabitation",
+          "disposition": "CLOSED_SUPERSEDED_BY_CURRENT_MAIN",
+          "owner": "O:I main (#167 admit)",
+          "reason": "every non-desktop file byte-identical to main (shared-field/*, site/explore-read-model.mjs) after the #167 admit; desktop/ui parts target the removed pre-rebuild app",
+          "reentry_condition": "deleted 2026-09-05 after per-file blob identity proof",
+          "closure_blocking": false
+        },
+        {
+          "name": "feat/oi157-versioned-world-integration",
+          "disposition": "CLOSED_SUPERSEDED_BY_CURRENT_MAIN",
+          "owner": "O:I main (#167 admit)",
+          "reason": "subset of oi155 (oi155 tip merges this line); shared-field versioned-world files identical to main",
+          "reentry_condition": "deleted 2026-09-05",
+          "closure_blocking": false
+        },
+        {
+          "name": "feat/oi158-omarchy-reference-world",
+          "disposition": "CLOSED_SUPERSEDED_BY_CURRENT_MAIN",
+          "owner": "O:I main (#159 landing)",
+          "reason": "oi.reference-world plugin + bridge fixtures superseded by main's org.epilogos.oi plugin, source-pinned cli/omarchy_host.rs and oi159-omarchy-host.yml deterministic CI proof; [OI155]-base content identical to main",
+          "reentry_condition": "deleted 2026-09-05",
+          "closure_blocking": false
+        },
+        {
+          "name": "feat/oi172-six-product-native-command-field",
+          "disposition": "CLOSED_SUPERSEDED_BY_CURRENT_MAIN",
+          "owner": "O:I main (#175 + later evolution)",
+          "reason": "six-product command field landed and evolved beyond the branch (cli/product_command_route.rs with oi products + catalogue resolution, install descriptors, six_product_command_parity test); branch's frontdoor/dispatch is the earlier iteration",
+          "reentry_condition": "deleted 2026-09-05 after per-file direction proof",
+          "closure_blocking": false
+        },
+        {
+          "name": "feat/oi173-adapter-driven-world-recognition",
+          "disposition": "CLOSED_SUPERSEDED_BY_CURRENT_MAIN",
+          "owner": "O:I main (#185 landing)",
+          "reason": "world-recognition contract artifacts (schema, herdr example, docs, packages README) byte-identical on main; cli recognition surface evolved further (recognition register/unregister)",
+          "reentry_condition": "deleted 2026-09-05",
+          "closure_blocking": false
+        },
+        {
+          "name": "converge/pre97-six-product-command-current-main",
+          "disposition": "CLOSED_SUPERSEDED_BY_CURRENT_MAIN",
+          "owner": "O:I main",
+          "reason": "earlier iteration of the [OI97-CLI] shared command catalogue commits that are on main (main's product_command.rs carries newer install/source-install structs); desktop/core half targets the removed app",
+          "reentry_condition": "deleted 2026-09-05",
+          "closure_blocking": false
+        },
+        {
+          "name": "converge/oi97-exact-main-w12",
+          "disposition": "CLOSED_SUPERSEDED_BY_CURRENT_MAIN",
+          "owner": "O:I main (#171)",
+          "reason": "witness tests byte-identical to main; remaining delta was stale suite/surfaces pins older than main's",
+          "reentry_condition": "deleted 2026-09-05",
+          "closure_blocking": false
+        },
+        {
+          "name": "converge/oi97-exact-main-context-reload",
+          "disposition": "CLOSED_SUPERSEDED_BY_CURRENT_MAIN",
+          "owner": "O:I main (#168)",
+          "reason": "project-context witness lib.rs byte-identical to main; remaining delta was stale pins",
+          "reentry_condition": "deleted 2026-09-05",
+          "closure_blocking": false
+        },
+        {
+          "name": "fix/pre97-prelocal-build-channel",
+          "disposition": "CLOSED_SUPERSEDED_BY_CURRENT_MAIN",
+          "owner": "O:I main (#187 + rebuild)",
+          "reason": "release-selection semantics (packages/oi-cli release/install/test, npm-publish.yml) byte-identical on main; prelocal workflow superseded by #187 restore and the rebuild's cradle-path adaptation",
+          "reentry_condition": "deleted 2026-09-05",
+          "closure_blocking": false
+        },
+        {
+          "name": "feat/flow-desktop-138",
+          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "owner": "cradle rebuild U0.7 (08f6ea9)",
+          "reason": "Flow workbench over projectcentral.flow.* for the deleted desktop/{ui,core}; function record quarry/notes/feat-flow-desktop-138.md (U4.1/U4.2, authority-seam tests)",
+          "reentry_condition": "none \u2014 re-derive per cradle wayfinder units when built",
+          "closure_blocking": false
+        },
+        {
+          "name": "agent/oi-desktop-p2-project-field-106",
+          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "owner": "cradle rebuild U0.7 (08f6ea9)",
+          "reason": "Project field composition + source-class UI law for the deleted app; record quarry/notes/agent-oi-desktop-p2-project-field-106.md (U1.1/U1.4)",
+          "reentry_condition": "none \u2014 re-derive per cradle wayfinder units",
+          "closure_blocking": false
+        },
+        {
+          "name": "feat/living-wiki-desktop-135",
+          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "owner": "cradle rebuild U0.7 (08f6ea9)",
+          "reason": "Source Change Horizon + privacy-preserving impact for the deleted app; record quarry/notes/feat-living-wiki-desktop-135.md (U3.2/U3.4)",
+          "reentry_condition": "none \u2014 re-derive per cradle wayfinder units",
+          "closure_blocking": false
+        },
+        {
+          "name": "agent/oi-d-current-situated-cosmic",
+          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "owner": "cradle rebuild U0.7 (08f6ea9)",
+          "reason": "opaque Cosmic host + corrected-C binding semantics; record quarry/notes/agent-oi-d-current-situated-cosmic.md (fog Nara/Epi, U3.3)",
+          "reentry_condition": "none \u2014 fog-row record",
+          "closure_blocking": false
+        },
+        {
+          "name": "agent/oi-epi-cosmic-123-instrument",
+          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "owner": "cradle rebuild U0.7 (08f6ea9)",
+          "reason": "one integrated instrument / six deep workspaces; record quarry/notes/agent-oi-epi-cosmic-123-instrument.md (fog Nara/Epi)",
+          "reentry_condition": "none \u2014 fog-row record",
+          "closure_blocking": false
+        },
+        {
+          "name": "agent/oi-pre-d-personal-map-lineage",
+          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "owner": "cradle rebuild U0.7 (08f6ea9)",
+          "reason": "personal 4/5/0 packets Map lineage; record quarry/notes/agent-oi-pre-d-personal-map-lineage.md (U3.3)",
+          "reentry_condition": "none \u2014 re-derive per cradle wayfinder units",
+          "closure_blocking": false
+        },
+        {
+          "name": "agent/oi-epi-personal-450-return",
+          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "owner": "cradle rebuild U0.7 (08f6ea9)",
+          "reason": "Central NOW host inspect/return/reject/promote; record quarry/notes/agent-oi-epi-personal-450-return.md (U3.3)",
+          "reentry_condition": "none \u2014 re-derive per cradle wayfinder units",
+          "closure_blocking": false
+        },
+        {
+          "name": "agent/oi-desktop-p6-explore-parity-110",
+          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "owner": "cradle rebuild U0.7 (08f6ea9)",
+          "reason": "one shared Explore Surface model Read/Author/Preview; record quarry/notes/agent-oi-desktop-p6-explore-parity-110.md (U3.4/U3.5)",
+          "reentry_condition": "none \u2014 re-derive per cradle wayfinder units",
+          "closure_blocking": false
+        },
+        {
+          "name": "agent/oi-epi-personal-450-composed",
+          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "owner": "cradle rebuild U0.7 (08f6ea9)",
+          "reason": "parent-bounded Action authority for protected child subjects; record quarry/notes/agent-oi-epi-personal-450-composed.md (U0.3b/U2.5 pattern)",
+          "reentry_condition": "none \u2014 fog-row record",
+          "closure_blocking": false
+        },
+        {
+          "name": "agent/oi-desktop-p5-system-109",
+          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "owner": "cradle rebuild U0.7 (08f6ea9)",
+          "reason": "six owners x seven axes System workbench, CurrentWorld partial constitution; record quarry/notes/agent-oi-desktop-p5-system-109.md; System region has NO cradle unit \u2014 OWNER-TO-DECIDE",
+          "reentry_condition": "owner decision: charter a System-region unit or fold into fog",
+          "closure_blocking": false
+        },
+        {
+          "name": "agent/oi-desktop-p1-host-105",
+          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "owner": "cradle rebuild U0.7 (08f6ea9)",
+          "reason": "region-generic Surface placement + canonical Action emission + authority-seam tests; record quarry/notes/agent-oi-desktop-p1-host-105.md (U0.3b)",
+          "reentry_condition": "none \u2014 re-derive per cradle wayfinder units",
+          "closure_blocking": false
+        },
+        {
+          "name": "converge/living-wiki-w7-main",
+          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "owner": "cradle rebuild U0.7 (08f6ea9)",
+          "reason": "W7 multi-world conformance suite definition; record quarry/notes/converge-living-wiki-w7-main.md (U3.4 walk inputs)",
+          "reentry_condition": "none \u2014 scenario shape recorded",
+          "closure_blocking": false
+        },
+        {
+          "name": "feat/wiki-authored-relations",
+          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "owner": "cradle rebuild U0.7 (08f6ea9)",
+          "reason": "source-authored wiki relations via AIKit compiler; record quarry/notes/feat-wiki-authored-relations.md (U3.4/U3.5, W1.5)",
+          "reentry_condition": "none \u2014 re-derive per cradle wayfinder units",
+          "closure_blocking": false
+        },
+        {
+          "name": "agent/oi-epi-nara-coordinate-parity",
+          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "owner": "cradle rebuild U0.7 (08f6ea9)",
+          "reason": "Nara coordinate lineage + protected privacy classes + write-first canvas; record quarry/notes/agent-oi-epi-nara-coordinate-parity.md (fog Nara/Epi; Nara daily-canvas UX law flagged OWNER-TO-DECIDE)",
+          "reentry_condition": "owner decision when Nara/Epi fog lifts",
+          "closure_blocking": false
+        },
+        {
+          "name": "agent/oi-epi-personal-return",
+          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "owner": "cradle rebuild U0.7 (08f6ea9)",
+          "reason": "M4 prime Nara first lived Epi canvas; record quarry/notes/agent-oi-epi-personal-return.md; tip f9f1a53 identical to agent/oi-epi-nara-lived-vertical \u2014 one record, two deletions",
+          "reentry_condition": "none",
+          "closure_blocking": false
+        },
+        {
+          "name": "agent/oi-epi-nara-lived-vertical",
+          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "owner": "cradle rebuild U0.7 (08f6ea9)",
+          "reason": "tip f9f1a53 identical to agent/oi-epi-personal-return \u2014 same content, two names; single quarry record covers both",
+          "reentry_condition": "none",
+          "closure_blocking": false
+        },
+        {
+          "name": "agent/oi-epi-mode-kernel-bridge",
+          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "owner": "cradle rebuild U0.7 (08f6ea9)",
+          "reason": "Epi mounting pattern over the native contribution contract; record quarry/notes/agent-oi-epi-mode-kernel-bridge.md (U0.3b pattern, mounting law)",
+          "reentry_condition": "none \u2014 fog-row record",
+          "closure_blocking": false
+        },
+        {
+          "name": "agent/ql-relational-field",
+          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "owner": "cradle rebuild U0.7 (08f6ea9)",
+          "reason": "docs+CSV+skill (not desktop): 144-relation machine-readable reference sheet + oi-relational-development skill; record quarry/notes/agent-ql-relational-field.md; CSV is branch-only and homeless \u2014 OWNER-TO-DECIDE",
+          "reentry_condition": "owner decision: home the 144-relation CSV or let it rest in the note",
+          "closure_blocking": false
+        },
+        {
+          "name": "converge/oi97-post-w7-desktop",
+          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "owner": "cradle rebuild U0.7 (08f6ea9)",
+          "reason": "retired materializer (pinned snapshot + surfaces catalog), retired itself in final commit; record quarry/notes/converge-oi97-post-w7-desktop.md (NOTHING-NEW verdict)",
+          "reentry_condition": "none",
+          "closure_blocking": false
+        },
+        {
+          "name": "agent/explore-projection-space",
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "O:I #18 / PR #72 (open)",
+          "reason": "live SpaceTimeDB/Encounter-security probe and Explore projection revision algebra; record quarry/notes/agent-explore-projection-space.md (U3.4 + fog Gateway/SpaceTimeDB)",
+          "reentry_condition": "hosted deployment + independently authored/federated world acceptance",
+          "closure_blocking": false
+        }
       ],
       "open_pull_requests": [
-        {"number":136,"disposition":"KEEP_ACTIVE_EXCEPTION","owner":"O:I #134/#135","reason":"active parallel Living Wiki desktop composition","reentry_condition":"complete owner-host/render/acceptance then converge","closure_blocking":false},
-        {"number":133,"disposition":"KEEP_ACTIVE_EXCEPTION","owner":"O:I #131/#132","reason":"remotely green current-world six-product composition","reentry_condition":"reconstruct/integrate against current in-scope owner mains","closure_blocking":false},
-        {"number":130,"disposition":"KEEP_ACTIVE_EXCEPTION","owner":"O:I #91","reason":"meta-harness/context-craft owner PR","reentry_condition":"reconcile onto current O:I main then merge/supersede","closure_blocking":false},
-        {"number":129,"disposition":"REPAIR_ACTIVE","owner":"O:I #97","reason":"trust-closure repair","reentry_condition":"scoped live snapshot/ledger verification green then merge","closure_blocking":true},
-        {"number":123,"disposition":"KEEP_ACTIVE_EXCEPTION","owner":"O:I #106","reason":"P2 Project field with explicit owner gaps","reentry_condition":"owner gaps settle then converge","closure_blocking":false},
-        {"number":122,"disposition":"KEEP_ACTIVE_EXCEPTION","owner":"O:I #109","reason":"remotely green six-product System workbench","reentry_condition":"current-main integration disposition","closure_blocking":false},
-        {"number":120,"disposition":"KEEP_ACTIVE_EXCEPTION","owner":"O:I #110","reason":"desktop↔Explore parity","reentry_condition":"Explore/provider seam settles then converge","closure_blocking":false},
-        {"number":117,"disposition":"KEEP_ACTIVE_EXCEPTION","owner":"O:I #101","reason":"Epi D host consumer line","reentry_condition":"dedicated Epi/QL/O:I D convergence","closure_blocking":false},
-        {"number":92,"disposition":"KEEP_ACTIVE_EXCEPTION","owner":"O:I #91","reason":"authored operative-praxis position","reentry_condition":"praxis programme merge/supersession","closure_blocking":false},
-        {"number":72,"disposition":"KEEP_ACTIVE_EXCEPTION","owner":"O:I #18","reason":"projection-native SharedField/Explore programme","reentry_condition":"real hosted/federated authored-world acceptance","closure_blocking":false}
+        {
+          "number": 72,
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "O:I #18",
+          "reason": "projection-native SharedField/Explore programme \u2014 the one kept live branch",
+          "reentry_condition": "real hosted/federated authored-world acceptance",
+          "closure_blocking": false
+        }
       ]
     },
     {
       "repository": "EpiLogos/Central",
       "branches": [
-        {"name":"agent/oi-watch-notification-conformance","disposition":"RETIRE_MERGED","owner":"Central current main","reason":"Watch notification conformance reconstituted and merged through #94","reentry_condition":"delete merged remote branch after history receipt is retained","closure_blocking":true},
-        {"name":"agent/personal-surface-notifications","disposition":"RETIRE_MERGED","owner":"Central current main","reason":"Personal/UserNotification reconstituted and merged through #94","reentry_condition":"delete merged remote branch after history receipt is retained","closure_blocking":true},
-        {"name":"agent/projectcentral-authored-ground","disposition":"RETIRE_MERGED","owner":"Central current main","reason":"authored Project ground reconstituted and merged through #91","reentry_condition":"delete merged remote branch after history receipt is retained","closure_blocking":true},
-        {"name":"agent/projectcentral-now-day","disposition":"RETIRE_MERGED","owner":"Central current main","reason":"NOW/DAY reconstituted and merged through #91","reentry_condition":"delete merged remote branch after history receipt is retained","closure_blocking":true},
-        {"name":"build/central-ticket-14","disposition":"RETIRE_SUPERSEDED","owner":"Central #91/#94 convergence","reason":"historical macOS parent superseded by current-main #94","reentry_condition":"delete superseded remote branch","closure_blocking":true},
-        {"name":"build/central-ticket-15","disposition":"RETIRE_SUPERSEDED","owner":"Central #91/#94 convergence","reason":"historical Automation/Raycast stack superseded by current-main #94","reentry_condition":"delete superseded remote branch","closure_blocking":true},
-        {"name":"build/central-ticket-16","disposition":"RETIRE_SUPERSEDED","owner":"Central #91/#94 convergence","reason":"historical Homebrew/chezmoi stack superseded by current-main #94","reentry_condition":"delete superseded remote branch","closure_blocking":true},
-        {"name":"converge/oi97-authored-ground-governance","disposition":"RETIRE_MERGED","owner":"Central current main","reason":"#91 convergence branch merged","reentry_condition":"delete merged remote branch after history receipt is retained","closure_blocking":true},
-        {"name":"converge/oi97-native-extensions","disposition":"RETIRE_MERGED","owner":"Central current main","reason":"#94 convergence branch merged","reentry_condition":"delete merged remote branch after history receipt is retained","closure_blocking":true},
-        {"name":"converge/oi97-projectcentral-now-day","disposition":"RETIRE_SUPERSEDED","owner":"Central #91 convergence","reason":"intermediate NOW/DAY convergence superseded by merged #91","reentry_condition":"delete superseded remote branch","closure_blocking":true},
-        {"name":"docs/central-human-altitude-framing","disposition":"RETIRE_MERGED","owner":"Central current main","reason":"human-altitude framing reconstituted and merged through #91","reentry_condition":"delete merged remote branch after history receipt is retained","closure_blocking":true},
-        {"name":"feat/current-machine-workcell-binding","disposition":"RETIRE_MERGED","owner":"Central current main","reason":"current-machine↔Workcell owner seam merged to main","reentry_condition":"delete merged remote branch after history receipt is retained","closure_blocking":true},
-        {"name":"feat/flow-source-93-main48","disposition":"RETIRE_MERGED","owner":"Central #93 / merged PR #96","reason":"stable Project Flow source owner accepted on main as 31d54eb4a6202c89c7f60ec004654916133dea94","reentry_condition":"delete merged remote branch after PR #96/main provenance is retained","closure_blocking":true},
-        {"name":"feat/flow-source-93","disposition":"RETIRE_SUPERSEDED","owner":"Central #93 / superseded PR #95","reason":"original pre-#94 Flow branch was explicitly superseded by current-main reconstruction PR #96","reentry_condition":"delete superseded remote branch after #95→#96 provenance is retained","closure_blocking":true},
-        {"name":"feat/layered-agent-governance-sources","disposition":"RETIRE_MERGED","owner":"Central current main","reason":"Agent governance reconstituted and merged through #91","reentry_condition":"delete merged remote branch after history receipt is retained","closure_blocking":true},
-        {"name":"feat/living-wiki-source-horizon","disposition":"RETIRE_MERGED","owner":"Central current main","reason":"Living Wiki Source Change Horizon merged to main","reentry_condition":"delete merged remote branch after history receipt is retained","closure_blocking":true},
-        {"name":"oi97-macos-native","disposition":"RETIRE_SUPERSEDED","owner":"Central #94 convergence","reason":"historical O:I #97 macOS candidate superseded by merged current-main composition","reentry_condition":"delete superseded remote branch","closure_blocking":true},
-        {"name":"oi97-ubuntu","disposition":"RETIRE_SUPERSEDED","owner":"Central #94 convergence","reason":"historical Ubuntu candidate superseded by merged current-main composition","reentry_condition":"delete superseded remote branch","closure_blocking":true},
-        {"name":"repair/oi97-projectcentral-doc-truth","disposition":"RETIRE_MERGED","owner":"Central current main","reason":"ProjectCentral documentation truth repair merged to main","reentry_condition":"delete merged remote branch after history receipt is retained","closure_blocking":true}
+        {
+          "name": "agent/oi-watch-notification-conformance",
+          "disposition": "RETIRE_MERGED",
+          "owner": "Central current main",
+          "reason": "Watch notification conformance reconstituted and merged through #94",
+          "reentry_condition": "delete merged remote branch after history receipt is retained",
+          "closure_blocking": true
+        },
+        {
+          "name": "agent/personal-surface-notifications",
+          "disposition": "RETIRE_MERGED",
+          "owner": "Central current main",
+          "reason": "Personal/UserNotification reconstituted and merged through #94",
+          "reentry_condition": "delete merged remote branch after history receipt is retained",
+          "closure_blocking": true
+        },
+        {
+          "name": "agent/projectcentral-authored-ground",
+          "disposition": "RETIRE_MERGED",
+          "owner": "Central current main",
+          "reason": "authored Project ground reconstituted and merged through #91",
+          "reentry_condition": "delete merged remote branch after history receipt is retained",
+          "closure_blocking": true
+        },
+        {
+          "name": "agent/projectcentral-now-day",
+          "disposition": "RETIRE_MERGED",
+          "owner": "Central current main",
+          "reason": "NOW/DAY reconstituted and merged through #91",
+          "reentry_condition": "delete merged remote branch after history receipt is retained",
+          "closure_blocking": true
+        },
+        {
+          "name": "build/central-ticket-14",
+          "disposition": "RETIRE_SUPERSEDED",
+          "owner": "Central #91/#94 convergence",
+          "reason": "historical macOS parent superseded by current-main #94",
+          "reentry_condition": "delete superseded remote branch",
+          "closure_blocking": true
+        },
+        {
+          "name": "build/central-ticket-15",
+          "disposition": "RETIRE_SUPERSEDED",
+          "owner": "Central #91/#94 convergence",
+          "reason": "historical Automation/Raycast stack superseded by current-main #94",
+          "reentry_condition": "delete superseded remote branch",
+          "closure_blocking": true
+        },
+        {
+          "name": "build/central-ticket-16",
+          "disposition": "RETIRE_SUPERSEDED",
+          "owner": "Central #91/#94 convergence",
+          "reason": "historical Homebrew/chezmoi stack superseded by current-main #94",
+          "reentry_condition": "delete superseded remote branch",
+          "closure_blocking": true
+        },
+        {
+          "name": "converge/oi97-authored-ground-governance",
+          "disposition": "RETIRE_MERGED",
+          "owner": "Central current main",
+          "reason": "#91 convergence branch merged",
+          "reentry_condition": "delete merged remote branch after history receipt is retained",
+          "closure_blocking": true
+        },
+        {
+          "name": "converge/oi97-native-extensions",
+          "disposition": "RETIRE_MERGED",
+          "owner": "Central current main",
+          "reason": "#94 convergence branch merged",
+          "reentry_condition": "delete merged remote branch after history receipt is retained",
+          "closure_blocking": true
+        },
+        {
+          "name": "converge/oi97-projectcentral-now-day",
+          "disposition": "RETIRE_SUPERSEDED",
+          "owner": "Central #91 convergence",
+          "reason": "intermediate NOW/DAY convergence superseded by merged #91",
+          "reentry_condition": "delete superseded remote branch",
+          "closure_blocking": true
+        },
+        {
+          "name": "docs/central-human-altitude-framing",
+          "disposition": "RETIRE_MERGED",
+          "owner": "Central current main",
+          "reason": "human-altitude framing reconstituted and merged through #91",
+          "reentry_condition": "delete merged remote branch after history receipt is retained",
+          "closure_blocking": true
+        },
+        {
+          "name": "feat/current-machine-workcell-binding",
+          "disposition": "RETIRE_MERGED",
+          "owner": "Central current main",
+          "reason": "current-machine\u2194Workcell owner seam merged to main",
+          "reentry_condition": "delete merged remote branch after history receipt is retained",
+          "closure_blocking": true
+        },
+        {
+          "name": "feat/flow-source-93-main48",
+          "disposition": "RETIRE_MERGED",
+          "owner": "Central #93 / merged PR #96",
+          "reason": "stable Project Flow source owner accepted on main as 31d54eb4a6202c89c7f60ec004654916133dea94",
+          "reentry_condition": "delete merged remote branch after PR #96/main provenance is retained",
+          "closure_blocking": true
+        },
+        {
+          "name": "feat/flow-source-93",
+          "disposition": "RETIRE_SUPERSEDED",
+          "owner": "Central #93 / superseded PR #95",
+          "reason": "original pre-#94 Flow branch was explicitly superseded by current-main reconstruction PR #96",
+          "reentry_condition": "delete superseded remote branch after #95\u2192#96 provenance is retained",
+          "closure_blocking": true
+        },
+        {
+          "name": "feat/layered-agent-governance-sources",
+          "disposition": "RETIRE_MERGED",
+          "owner": "Central current main",
+          "reason": "Agent governance reconstituted and merged through #91",
+          "reentry_condition": "delete merged remote branch after history receipt is retained",
+          "closure_blocking": true
+        },
+        {
+          "name": "feat/living-wiki-source-horizon",
+          "disposition": "RETIRE_MERGED",
+          "owner": "Central current main",
+          "reason": "Living Wiki Source Change Horizon merged to main",
+          "reentry_condition": "delete merged remote branch after history receipt is retained",
+          "closure_blocking": true
+        },
+        {
+          "name": "oi97-macos-native",
+          "disposition": "RETIRE_SUPERSEDED",
+          "owner": "Central #94 convergence",
+          "reason": "historical O:I #97 macOS candidate superseded by merged current-main composition",
+          "reentry_condition": "delete superseded remote branch",
+          "closure_blocking": true
+        },
+        {
+          "name": "oi97-ubuntu",
+          "disposition": "RETIRE_SUPERSEDED",
+          "owner": "Central #94 convergence",
+          "reason": "historical Ubuntu candidate superseded by merged current-main composition",
+          "reentry_condition": "delete superseded remote branch",
+          "closure_blocking": true
+        },
+        {
+          "name": "repair/oi97-projectcentral-doc-truth",
+          "disposition": "RETIRE_MERGED",
+          "owner": "Central current main",
+          "reason": "ProjectCentral documentation truth repair merged to main",
+          "reentry_condition": "delete merged remote branch after history receipt is retained",
+          "closure_blocking": true
+        }
       ],
       "open_pull_requests": []
     },
     {
       "repository": "EpiLogos/ai-kit",
       "branches": [
-        {"name":"agent/aikit-v2-ql-mef","disposition":"RETIRE_SUPERSEDED","owner":"AIKit current architecture / separate QL owner","reason":"old stacked optional QL client tranche predates current accepted V2/main architecture","reentry_condition":"confirm retained interoperability evidence then delete","closure_blocking":true},
-        {"name":"agent/harness-admission-sdk","disposition":"RETIRE_MERGED","owner":"AIKit current main","reason":"harness admission merged through #116 and preserved by later main","reentry_condition":"delete merged remote branch after history is retained","closure_blocking":true},
-        {"name":"agent/native-credential-provider","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"AIKit #71 / PR #87","reason":"active native credential-provider line","reentry_condition":"provider acceptance/merge decision","closure_blocking":false},
-        {"name":"agent/praxis-project-reflection","disposition":"RETIRE_MERGED","owner":"AIKit current main","reason":"praxis/project-reflection accepted into main","reentry_condition":"delete merged remote branch after history is retained","closure_blocking":true},
-        {"name":"agent/tui-v2-application-domain-parity","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"AIKit V2 #28/#40-#46 / PR #74","reason":"active application-domain parity line","reentry_condition":"current V2 parity convergence","closure_blocking":false},
-        {"name":"agent/v2-explain-history-evidence-convergence","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"AIKit #44 / PR #86","reason":"active Explain/History evidence convergence","reentry_condition":"current Knowledge/application dependencies converge","closure_blocking":false},
-        {"name":"feat/current-world-composition-readiness","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"O:I current-world owner coordination","reason":"current-world readiness branch without open PR","reentry_condition":"current-world programme decides merge/supersession","closure_blocking":false},
-        {"name":"feat/flow-context-122","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"AIKit #122 / PR #123","reason":"active Flow standing-context and Contemplate scope; provider-neutral conformance explicitly exercises ql=None","reentry_condition":"AIKit #122 acceptance/merge or explicit supersession","closure_blocking":false},
-        {"name":"feat/human-authority-collaboration","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"AIKit #103 / PR #106","reason":"active human-authority collaboration line","reentry_condition":"reconcile with current Central governance/main and merge/supersede","closure_blocking":false},
-        {"name":"feat/instruction-architecture-craft","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"AIKit #105 / PR #107","reason":"active instruction/Skill craft child","reentry_condition":"parent/current governance convergence then merge/supersede","closure_blocking":false},
-        {"name":"feat/living-wiki-bounded-preflight","disposition":"RETIRE_MERGED","owner":"AIKit current main","reason":"bounded Contemplate preflight merged to current main","reentry_condition":"delete merged remote branch after history is retained","closure_blocking":true},
-        {"name":"feat/living-wiki-complete-118","disposition":"RETIRE_MERGED","owner":"AIKit current main","reason":"Living Knowledge completion returned into current main ancestry","reentry_condition":"delete merged remote branch after history is retained","closure_blocking":true},
-        {"name":"feat/living-wiki-knowledge-application","disposition":"RETIRE_MERGED","owner":"AIKit current main","reason":"Living Knowledge application returned into current main ancestry","reentry_condition":"delete merged remote branch after history is retained","closure_blocking":true},
-        {"name":"praxis/meta-harness-context-craft","disposition":"RECONCILE_BEFORE_CLOSURE","owner":"AIKit praxis/meta-harness programme","reason":"PR #117 is no longer open while the branch remains","reentry_condition":"compare with current main and O:I PR #130; merge, archive or delete","closure_blocking":true}
+        {
+          "name": "agent/aikit-v2-ql-mef",
+          "disposition": "RETIRE_SUPERSEDED",
+          "owner": "AIKit current architecture / separate QL owner",
+          "reason": "old stacked optional QL client tranche predates current accepted V2/main architecture",
+          "reentry_condition": "confirm retained interoperability evidence then delete",
+          "closure_blocking": true
+        },
+        {
+          "name": "agent/harness-admission-sdk",
+          "disposition": "RETIRE_MERGED",
+          "owner": "AIKit current main",
+          "reason": "harness admission merged through #116 and preserved by later main",
+          "reentry_condition": "delete merged remote branch after history is retained",
+          "closure_blocking": true
+        },
+        {
+          "name": "agent/native-credential-provider",
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "AIKit #71 / PR #87",
+          "reason": "active native credential-provider line",
+          "reentry_condition": "provider acceptance/merge decision",
+          "closure_blocking": false
+        },
+        {
+          "name": "agent/praxis-project-reflection",
+          "disposition": "RETIRE_MERGED",
+          "owner": "AIKit current main",
+          "reason": "praxis/project-reflection accepted into main",
+          "reentry_condition": "delete merged remote branch after history is retained",
+          "closure_blocking": true
+        },
+        {
+          "name": "agent/tui-v2-application-domain-parity",
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "AIKit V2 #28/#40-#46 / PR #74",
+          "reason": "active application-domain parity line",
+          "reentry_condition": "current V2 parity convergence",
+          "closure_blocking": false
+        },
+        {
+          "name": "agent/v2-explain-history-evidence-convergence",
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "AIKit #44 / PR #86",
+          "reason": "active Explain/History evidence convergence",
+          "reentry_condition": "current Knowledge/application dependencies converge",
+          "closure_blocking": false
+        },
+        {
+          "name": "feat/current-world-composition-readiness",
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "O:I current-world owner coordination",
+          "reason": "current-world readiness branch without open PR",
+          "reentry_condition": "current-world programme decides merge/supersession",
+          "closure_blocking": false
+        },
+        {
+          "name": "feat/flow-context-122",
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "AIKit #122 / PR #123",
+          "reason": "active Flow standing-context and Contemplate scope; provider-neutral conformance explicitly exercises ql=None",
+          "reentry_condition": "AIKit #122 acceptance/merge or explicit supersession",
+          "closure_blocking": false
+        },
+        {
+          "name": "feat/human-authority-collaboration",
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "AIKit #103 / PR #106",
+          "reason": "active human-authority collaboration line",
+          "reentry_condition": "reconcile with current Central governance/main and merge/supersede",
+          "closure_blocking": false
+        },
+        {
+          "name": "feat/instruction-architecture-craft",
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "AIKit #105 / PR #107",
+          "reason": "active instruction/Skill craft child",
+          "reentry_condition": "parent/current governance convergence then merge/supersede",
+          "closure_blocking": false
+        },
+        {
+          "name": "feat/living-wiki-bounded-preflight",
+          "disposition": "RETIRE_MERGED",
+          "owner": "AIKit current main",
+          "reason": "bounded Contemplate preflight merged to current main",
+          "reentry_condition": "delete merged remote branch after history is retained",
+          "closure_blocking": true
+        },
+        {
+          "name": "feat/living-wiki-complete-118",
+          "disposition": "RETIRE_MERGED",
+          "owner": "AIKit current main",
+          "reason": "Living Knowledge completion returned into current main ancestry",
+          "reentry_condition": "delete merged remote branch after history is retained",
+          "closure_blocking": true
+        },
+        {
+          "name": "feat/living-wiki-knowledge-application",
+          "disposition": "RETIRE_MERGED",
+          "owner": "AIKit current main",
+          "reason": "Living Knowledge application returned into current main ancestry",
+          "reentry_condition": "delete merged remote branch after history is retained",
+          "closure_blocking": true
+        },
+        {
+          "name": "praxis/meta-harness-context-craft",
+          "disposition": "RECONCILE_BEFORE_CLOSURE",
+          "owner": "AIKit praxis/meta-harness programme",
+          "reason": "PR #117 is no longer open while the branch remains",
+          "reentry_condition": "compare with current main and O:I PR #130; merge, archive or delete",
+          "closure_blocking": true
+        }
       ],
       "open_pull_requests": [
-        {"number":123,"disposition":"KEEP_ACTIVE_EXCEPTION","owner":"AIKit #122","reason":"current Flow standing-context / Contemplate implementation on accepted AIKit main","reentry_condition":"owner acceptance/merge or explicit supersession","closure_blocking":false},
-        {"number":107,"disposition":"KEEP_ACTIVE_EXCEPTION","owner":"AIKit #105","reason":"instruction architecture craft","reentry_condition":"current parent/governance convergence","closure_blocking":false},
-        {"number":106,"disposition":"KEEP_ACTIVE_EXCEPTION","owner":"AIKit #103","reason":"human-authority collaboration","reentry_condition":"current Central/AIKit source convergence","closure_blocking":false},
-        {"number":87,"disposition":"KEEP_ACTIVE_EXCEPTION","owner":"AIKit #71","reason":"native credential providers","reentry_condition":"provider acceptance/merge","closure_blocking":false},
-        {"number":86,"disposition":"KEEP_ACTIVE_EXCEPTION","owner":"AIKit #44","reason":"Explain/History convergence","reentry_condition":"Knowledge/application dependencies settle","closure_blocking":false},
-        {"number":74,"disposition":"KEEP_ACTIVE_EXCEPTION","owner":"AIKit V2 #28/#40-#46","reason":"TUI application-domain parity","reentry_condition":"V2 parity convergence","closure_blocking":false}
+        {
+          "number": 123,
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "AIKit #122",
+          "reason": "current Flow standing-context / Contemplate implementation on accepted AIKit main",
+          "reentry_condition": "owner acceptance/merge or explicit supersession",
+          "closure_blocking": false
+        },
+        {
+          "number": 107,
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "AIKit #105",
+          "reason": "instruction architecture craft",
+          "reentry_condition": "current parent/governance convergence",
+          "closure_blocking": false
+        },
+        {
+          "number": 106,
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "AIKit #103",
+          "reason": "human-authority collaboration",
+          "reentry_condition": "current Central/AIKit source convergence",
+          "closure_blocking": false
+        },
+        {
+          "number": 87,
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "AIKit #71",
+          "reason": "native credential providers",
+          "reentry_condition": "provider acceptance/merge",
+          "closure_blocking": false
+        },
+        {
+          "number": 86,
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "AIKit #44",
+          "reason": "Explain/History convergence",
+          "reentry_condition": "Knowledge/application dependencies settle",
+          "closure_blocking": false
+        },
+        {
+          "number": 74,
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "AIKit V2 #28/#40-#46",
+          "reason": "TUI application-domain parity",
+          "reentry_condition": "V2 parity convergence",
+          "closure_blocking": false
+        }
       ]
     },
     {
       "repository": "EpiLogos/agent-system-design",
       "branches": [
-        {"name":"agent/factory-q4-client-adapter","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"Factory #77/#119 / PR #132","reason":"active optional QL-MEF client consumer adapter; QL owner remains parallel/outside #97","reentry_condition":"current Factory/QL client-boundary disposition after owner handoff","closure_blocking":false},
-        {"name":"agent/factory-rust-foundation","disposition":"RECONCILE_BEFORE_CLOSURE","owner":"Factory #97 cleanup","reason":"surviving historical branch has no current open owner PR","reentry_condition":"compare unique delta with current Factory main and retire or attach owner","closure_blocking":true},
-        {"name":"agent/ql-deep-runtime","disposition":"RECONCILE_BEFORE_CLOSURE","owner":"Factory #97 cleanup","reason":"surviving historical Factory-side QL branch has no current open owner PR","reentry_condition":"compare against current Factory Deep QL line and separate QL ownership; retire or attach owner","closure_blocking":true},
-        {"name":"agent/ql-mef-module-vision-spec","disposition":"RETIRE_SUPERSEDED","owner":"Factory/QL current owner programmes","reason":"historical Factory-side QL ownership framing superseded by standalone QL-MEF owner","reentry_condition":"delete after successor provenance is linked","closure_blocking":true},
-        {"name":"build/factory-root-contracts-2026-08-13","disposition":"RECONCILE_BEFORE_CLOSURE","owner":"Factory #97 cleanup","reason":"surviving historical branch has no current open owner PR","reentry_condition":"compare unique delta with current Factory main and retire or attach owner","closure_blocking":true},
-        {"name":"design/persistent-agency-material-hosting","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"Factory persistent-agency programme / PR #142","reason":"active cross-product design amendment","reentry_condition":"AIKit/Workcell/Factory owner decision","closure_blocking":false},
-        {"name":"feat/current-world-composition-readiness","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"O:I current-world owner coordination","reason":"current-world readiness branch","reentry_condition":"current-world programme merge/supersession","closure_blocking":false},
-        {"name":"harmonize/actuation-runtime-boundary","disposition":"RETIRE_MERGED","owner":"Factory current main","reason":"Factory↔Actuation ownership correction is on current main","reentry_condition":"delete merged remote branch","closure_blocking":true},
-        {"name":"program/coordinated-build-2026-08-13","disposition":"RETIRE_SUPERSEDED","owner":"Factory current programmes","reason":"historical coordinated-build programme no longer has an open owner PR","reentry_condition":"delete after successor provenance is linked","closure_blocking":true},
-        {"name":"ql/deep-runtime","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"Factory Deep QL / PR #130","reason":"active Factory-owned Deep QL Series 1 research consumer line; separate QL owner development remains outside #97","reentry_condition":"live Series 1 evidence and current ownership determine continuation","closure_blocking":false},
-        {"name":"repair/oi97-actuation-boundary-provenance","disposition":"RETIRE_MERGED","owner":"Factory current main","reason":"#97 ownership/provenance repair is on current main","reentry_condition":"delete merged remote branch","closure_blocking":true},
-        {"name":"repair/oi97-delete-duplicate-refs","disposition":"RECONCILE_BEFORE_CLOSURE","owner":"Factory #97 cleanup","reason":"surviving repair branch has no current open owner PR","reentry_condition":"compare unique delta with current Factory main and retire or attach owner","closure_blocking":true},
-        {"name":"research/deepseek-harness-maximal-host","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"Factory experiment programme / PR #141","reason":"active maximal-reference host research amendment","reentry_condition":"experiment/AIKit harness owner decision","closure_blocking":false}
+        {
+          "name": "agent/factory-q4-client-adapter",
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "Factory #77/#119 / PR #132",
+          "reason": "active optional QL-MEF client consumer adapter; QL owner remains parallel/outside #97",
+          "reentry_condition": "current Factory/QL client-boundary disposition after owner handoff",
+          "closure_blocking": false
+        },
+        {
+          "name": "agent/factory-rust-foundation",
+          "disposition": "RECONCILE_BEFORE_CLOSURE",
+          "owner": "Factory #97 cleanup",
+          "reason": "surviving historical branch has no current open owner PR",
+          "reentry_condition": "compare unique delta with current Factory main and retire or attach owner",
+          "closure_blocking": true
+        },
+        {
+          "name": "agent/ql-deep-runtime",
+          "disposition": "RECONCILE_BEFORE_CLOSURE",
+          "owner": "Factory #97 cleanup",
+          "reason": "surviving historical Factory-side QL branch has no current open owner PR",
+          "reentry_condition": "compare against current Factory Deep QL line and separate QL ownership; retire or attach owner",
+          "closure_blocking": true
+        },
+        {
+          "name": "agent/ql-mef-module-vision-spec",
+          "disposition": "RETIRE_SUPERSEDED",
+          "owner": "Factory/QL current owner programmes",
+          "reason": "historical Factory-side QL ownership framing superseded by standalone QL-MEF owner",
+          "reentry_condition": "delete after successor provenance is linked",
+          "closure_blocking": true
+        },
+        {
+          "name": "build/factory-root-contracts-2026-08-13",
+          "disposition": "RECONCILE_BEFORE_CLOSURE",
+          "owner": "Factory #97 cleanup",
+          "reason": "surviving historical branch has no current open owner PR",
+          "reentry_condition": "compare unique delta with current Factory main and retire or attach owner",
+          "closure_blocking": true
+        },
+        {
+          "name": "design/persistent-agency-material-hosting",
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "Factory persistent-agency programme / PR #142",
+          "reason": "active cross-product design amendment",
+          "reentry_condition": "AIKit/Workcell/Factory owner decision",
+          "closure_blocking": false
+        },
+        {
+          "name": "feat/current-world-composition-readiness",
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "O:I current-world owner coordination",
+          "reason": "current-world readiness branch",
+          "reentry_condition": "current-world programme merge/supersession",
+          "closure_blocking": false
+        },
+        {
+          "name": "harmonize/actuation-runtime-boundary",
+          "disposition": "RETIRE_MERGED",
+          "owner": "Factory current main",
+          "reason": "Factory\u2194Actuation ownership correction is on current main",
+          "reentry_condition": "delete merged remote branch",
+          "closure_blocking": true
+        },
+        {
+          "name": "program/coordinated-build-2026-08-13",
+          "disposition": "RETIRE_SUPERSEDED",
+          "owner": "Factory current programmes",
+          "reason": "historical coordinated-build programme no longer has an open owner PR",
+          "reentry_condition": "delete after successor provenance is linked",
+          "closure_blocking": true
+        },
+        {
+          "name": "ql/deep-runtime",
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "Factory Deep QL / PR #130",
+          "reason": "active Factory-owned Deep QL Series 1 research consumer line; separate QL owner development remains outside #97",
+          "reentry_condition": "live Series 1 evidence and current ownership determine continuation",
+          "closure_blocking": false
+        },
+        {
+          "name": "repair/oi97-actuation-boundary-provenance",
+          "disposition": "RETIRE_MERGED",
+          "owner": "Factory current main",
+          "reason": "#97 ownership/provenance repair is on current main",
+          "reentry_condition": "delete merged remote branch",
+          "closure_blocking": true
+        },
+        {
+          "name": "repair/oi97-delete-duplicate-refs",
+          "disposition": "RECONCILE_BEFORE_CLOSURE",
+          "owner": "Factory #97 cleanup",
+          "reason": "surviving repair branch has no current open owner PR",
+          "reentry_condition": "compare unique delta with current Factory main and retire or attach owner",
+          "closure_blocking": true
+        },
+        {
+          "name": "research/deepseek-harness-maximal-host",
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "Factory experiment programme / PR #141",
+          "reason": "active maximal-reference host research amendment",
+          "reentry_condition": "experiment/AIKit harness owner decision",
+          "closure_blocking": false
+        }
       ],
       "open_pull_requests": [
-        {"number":142,"disposition":"KEEP_ACTIVE_EXCEPTION","owner":"Factory persistent-agency programme","reason":"persistent agency material-hosting design","reentry_condition":"owner acceptance/supersession","closure_blocking":false},
-        {"number":141,"disposition":"KEEP_ACTIVE_EXCEPTION","owner":"Factory experiment programme","reason":"DeepSeek Harness maximal-reference host research","reentry_condition":"experiment owner decision","closure_blocking":false},
-        {"number":132,"disposition":"KEEP_ACTIVE_EXCEPTION","owner":"Factory #77/#119","reason":"optional QL client adapter owned by Factory; QL owner remains parallel","reentry_condition":"current Factory/QL client-boundary decision","closure_blocking":false},
-        {"number":130,"disposition":"KEEP_ACTIVE_EXCEPTION","owner":"Factory Deep QL programme","reason":"live Deep QL Series 1 research","reentry_condition":"live evidence/current ownership disposition","closure_blocking":false}
+        {
+          "number": 142,
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "Factory persistent-agency programme",
+          "reason": "persistent agency material-hosting design",
+          "reentry_condition": "owner acceptance/supersession",
+          "closure_blocking": false
+        },
+        {
+          "number": 141,
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "Factory experiment programme",
+          "reason": "DeepSeek Harness maximal-reference host research",
+          "reentry_condition": "experiment owner decision",
+          "closure_blocking": false
+        },
+        {
+          "number": 132,
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "Factory #77/#119",
+          "reason": "optional QL client adapter owned by Factory; QL owner remains parallel",
+          "reentry_condition": "current Factory/QL client-boundary decision",
+          "closure_blocking": false
+        },
+        {
+          "number": 130,
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "Factory Deep QL programme",
+          "reason": "live Deep QL Series 1 research",
+          "reentry_condition": "live evidence/current ownership disposition",
+          "closure_blocking": false
+        }
       ]
     },
     {
       "repository": "EpiLogos/Actuation",
       "branches": [
-        {"name":"feat/current-world-composition-readiness","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"O:I current-world owner coordination","reason":"current-world readiness branch","reentry_condition":"current-world programme merge/supersession","closure_blocking":false},
-        {"name":"foundation/first-class-actuation","disposition":"RECONCILE_BEFORE_CLOSURE","owner":"Actuation #97 cleanup","reason":"historical foundation ref survives while accepted main has advanced","reentry_condition":"prove merged/superseded relative to current main and PR #3 ancestry","closure_blocking":true},
-        {"name":"research/epistemic-cultivation","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"Actuation research / PR #3","reason":"active model-bearing agency and epistemic-cultivation research","reentry_condition":"research programme returns accepted tranche or explicit archive","closure_blocking":false}
+        {
+          "name": "feat/current-world-composition-readiness",
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "O:I current-world owner coordination",
+          "reason": "current-world readiness branch",
+          "reentry_condition": "current-world programme merge/supersession",
+          "closure_blocking": false
+        },
+        {
+          "name": "foundation/first-class-actuation",
+          "disposition": "RECONCILE_BEFORE_CLOSURE",
+          "owner": "Actuation #97 cleanup",
+          "reason": "historical foundation ref survives while accepted main has advanced",
+          "reentry_condition": "prove merged/superseded relative to current main and PR #3 ancestry",
+          "closure_blocking": true
+        },
+        {
+          "name": "research/epistemic-cultivation",
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "Actuation research / PR #3",
+          "reason": "active model-bearing agency and epistemic-cultivation research",
+          "reentry_condition": "research programme returns accepted tranche or explicit archive",
+          "closure_blocking": false
+        }
       ],
       "open_pull_requests": [
-        {"number":3,"disposition":"KEEP_ACTIVE_EXCEPTION","owner":"Actuation research programme","reason":"model-bearing agency/epistemic-cultivation research","reentry_condition":"accepted research tranche or explicit archive","closure_blocking":false}
+        {
+          "number": 3,
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "Actuation research programme",
+          "reason": "model-bearing agency/epistemic-cultivation research",
+          "reentry_condition": "accepted research tranche or explicit archive",
+          "closure_blocking": false
+        }
       ]
     },
     {
       "repository": "EpiLogos/Workcell",
       "branches": [
-        {"name":"feat/context-composition-readiness","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"O:I current-world owner coordination","reason":"active Workcell context-composition readiness branch","reentry_condition":"current-world programme merge/supersession","closure_blocking":false}
+        {
+          "name": "feat/context-composition-readiness",
+          "disposition": "KEEP_ACTIVE_EXCEPTION",
+          "owner": "O:I current-world owner coordination",
+          "reason": "active Workcell context-composition readiness branch",
+          "reentry_condition": "current-world programme merge/supersession",
+          "closure_blocking": false
+        }
       ],
       "open_pull_requests": []
     }
@@ -154,5 +829,6 @@
       "reason": "current Epi producer/deep-subsystem work remains coordinated source ground for the separate QL/Epi programme rather than generic #97 cleanup scope",
       "reentry_condition": "the producer programme returns an explicit reviewed owner/host convergence handoff"
     }
-  ]
+  ],
+  "closure_status_note": "O:I repository accounting is complete (set proof: 34 in-scope branches = 3 merged 2026-09-05 + 2 retire-merged + 9 closed-superseded-by-current-main + 19 closed-superseded-by-rebuild + 1 keep-active-exception; live refs = main + agent/explore-projection-space). closure_ready stays false because the other five repositories in this ledger are S-PRODUCTS' concurrent scope and are not yet re-verified against their live refs."
 }
