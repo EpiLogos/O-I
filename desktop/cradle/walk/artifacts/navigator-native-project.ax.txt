@@ -1,0 +1,97 @@
+Window: "O:I", App: O-I.
+0 standard window O:I, Secondary Actions: Raise
+	1 scroll area
+		2 HTML content Description: O:I, URL: tauri://localhost
+			3 container Agency field
+			4 container Canvas
+				5 text entry area (settable) Writing surface, Value: Writing stays with me. Still here.
+					6 text (settable) Writing stays with me. Still here.
+				7 button To:
+			8 container World navigator
+				9 container
+					10 heading World, Value: 1
+						11 text World
+					12 button Refresh
+					13 button Close World navigator
+				14 search text field (settable) Filter projects, Value: O-I, Placeholder: Find a project
+					15 text (settable) O-I
+					16 button cancel
+				17 button Central /Users/admin/Central
+				18 container Work projects
+					19 button O-I healthy
+				20 container Project ground
+					21 heading O-I, Value: 2
+						22 text O-I
+					23 text Work/O-I
+					24 text project:o-i
+					25 text project:project:o-i
+					26 text Rooted in Central personal ground
+					27 text ProjectCentral human-source and Agent-Wiki fractal is present and readable.
+					28 description list
+						29 text Human ground
+						30 container
+							31 text Work/O-I/ProjectCentral/user 3 sources
+						32 text Agent governance
+						33 container
+							34 text Work/O-I/ProjectCentral/agents/governance 0 sources
+						35 text Ground relations
+						36 container
+							37 text Work/O-I/ProjectCentral/relations/source-relations.json no declared overrides
+					38 container (expanded) Secondary Actions: Collapse
+						39 summary Project wiki bound, Value: on
+							40 text Project wiki
+							41 text bound
+						42 text Work/O-I/ProjectCentral/agents/wiki/wiki.json
+						43 text central:wiki:project:project:o-i
+						44 container
+							45 text Revision  1
+					46 container (expanded) Secondary Actions: Collapse
+						47 summary Root wiki bound, Value: on
+							48 text Root wiki
+							49 text bound
+						50 text Control/agents/wiki/wiki.json
+						51 text central:wiki:root
+						52 container
+							53 text Revision  11
+						54 content list Root wiki children
+							55 container central:wiki:project:actuation — unresolved
+								56 list marker •
+								57 text central:wiki:project:actuation  — unresolved
+							58 container central:wiki:project:ai-kit — unresolved
+								59 list marker •
+								60 text central:wiki:project:ai-kit  — unresolved
+							61 container central:wiki:project:central — unresolved
+								62 list marker •
+								63 text central:wiki:project:central  — unresolved
+							64 container central:wiki:project:factory — unresolved
+								65 list marker •
+								66 text central:wiki:project:factory  — unresolved
+							67 container central:wiki:project:o-i — unresolved
+								68 list marker •
+								69 text central:wiki:project:o-i  — unresolved
+							70 container central:wiki:project:project:ai-kit
+								71 list marker •
+								72 text central:wiki:project:project:ai-kit
+							73 container central:wiki:project:project:o-i
+								74 list marker •
+								75 text central:wiki:project:project:o-i
+							76 container central:wiki:project:ql-mef — unresolved
+								77 list marker •
+								78 text central:wiki:project:ql-mef  — unresolved
+							79 container central:wiki:project:workcell — unresolved
+								80 list marker •
+								81 text central:wiki:project:workcell  — unresolved
+					82 text Project wiki is linked from the root wiki
+	83 close button
+	84 full screen button Help: this button also has an action to zoom the window, Secondary Actions: zoom the window
+	85 minimize button
+	86 text O:I
+87 menu bar
+	88 O-I
+	89 File
+	90 Edit
+	91 View
+	92 Window
+	93 Help
+
+The focused UI element is 47 summary Root wiki bound, Value: on

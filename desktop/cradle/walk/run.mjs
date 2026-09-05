@@ -37,6 +37,8 @@ const SCENARIOS = {
   rest: { module: "scenarios/rest.mjs", kernel: false, aliases: ["u0.3"] },
   surfaces: { module: "scenarios/surfaces.mjs", kernel: true, aliases: ["u0.3b"] },
   "kernel-cas": { module: "scenarios/kernel-cas.mjs", kernel: true, aliases: ["u0.4"] },
+  navigator: { module: "scenarios/navigator.mjs", kernel: true, aliases: ["u1.1"] },
+  native: { module: "scenarios/native.mjs", kernel: false, aliases: ["package"] },
 };
 
 // ---------------------------------------------------------------------------

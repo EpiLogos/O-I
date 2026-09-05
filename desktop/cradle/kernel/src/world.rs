@@ -101,6 +101,8 @@ pub enum ListingAvailability {
 pub struct SourceListing {
     pub schema: String,
     pub project: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub world_ref: Option<String>,
     #[serde(default)]
     pub sources: Vec<ListedSource>,
     pub availability: ListingAvailability,
@@ -145,6 +147,7 @@ pub fn participating_sources(
                             revision: Some(source.revision.revision.clone()),
                         })
                         .collect(),
+                    world_ref: Some(horizon.world_ref),
                     project,
                     availability: ListingAvailability::Horizon,
                 }
@@ -183,12 +186,14 @@ fn degraded_ground(client: &CentralClient, project: &str, reason: String) -> Sou
                 })
                 .collect(),
             project: project.to_owned(),
+            world_ref: None,
             availability: ListingAvailability::GroundOnly { reason },
         },
         Err(error) => SourceListing {
             schema: SOURCE_LISTING_SCHEMA.to_owned(),
             sources: Vec::new(),
             project: project.to_owned(),
+            world_ref: None,
             availability: ListingAvailability::Unavailable {
                 reason: format!("horizon: {reason}; ground: {error}"),
             },
@@ -227,4 +232,31 @@ mod tests {
             "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md"
         );
     }
+}
+
+/// A transient projection of Central's mappings, never a second World store.
+/// Owner payloads are preserved, including local absence and diagnostics.
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+pub struct NavigatorReading {
+    pub root: Option<serde_json::Value>,
+    pub project: Option<serde_json::Value>,
+    pub sources: Option<SourceListing>,
+    pub project_ref: Option<String>,
+    pub error: Option<String>,
+}
+
+pub fn read_world(client: &CentralClient) -> Result<serde_json::Value, String> {
+    let data = client.run("central.world", json!({})).map_err(|e| e.to_string())?;
+    if data["schema"] != "central.world-map/v1" || !data["work"]["projects"].is_array() {
+        return Err("Central world mapping has an unsupported shape".into());
+    }
+    Ok(data)
+}
+
+pub fn read_project(client: &CentralClient, project: &str) -> Result<serde_json::Value, String> {
+    let data = client.run("central.world.project", json!({"project": project})).map_err(|e| e.to_string())?;
+    if data["schema"] != "central.world-map/v1" || data["projection"] != "project" || !data["project"]["path"].is_string() {
+        return Err("Central project mapping has an unsupported shape".into());
+    }
+    Ok(data)
 }
