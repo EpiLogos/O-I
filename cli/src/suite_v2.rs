@@ -596,12 +596,46 @@ fn command_suite_v2_doctor(args: &[OsString]) -> Result<i32, String> {
         if result.is_err() { ok = false; }
         checks.push(json!({"product": product.id, "ok": result.is_ok(), "detail": result.err()}));
     }
+    // Registered source surfaces: the managed-release checks above see only
+    // recorded receipts. What this machine actually runs also includes
+    // registered checkouts and whatever PATH resolves first. Found 2026-09-05:
+    // a machine executing a pre-harmonisation aikit (and no ctrl) reported
+    // ok across the board. Live drift is a failing condition, same class as a
+    // drifted receipt.
+    let mut surface_checks = Vec::new();
+    match oi_cli::status::live_disclosure() {
+        Ok(disclosure) => {
+            for surface in &disclosure.surfaces {
+                // Drift is the failing condition. A PATH shadow is recorded and
+                // reported; it fails only when its content actually differs
+                // (status.rs puts that finding in `drift` too).
+                let surface_ok = surface.drift.is_none();
+                if !surface_ok { ok = false; }
+                let detail = match (&surface.drift, &surface.detail) {
+                    (Some(drift), Some(note)) => format!("{drift}; {note}"),
+                    (Some(drift), None) => drift.clone(),
+                    (None, other) => other.clone().unwrap_or_default(),
+                };
+                surface_checks.push(json!({
+                    "surface": surface.id,
+                    "state": surface.state,
+                    "ok": surface_ok,
+                    "registered_version": surface.registered_version,
+                    "live_revision": surface.live_revision,
+                    "path_executable": surface.path_executable,
+                    "detail": detail,
+                }));
+            }
+        }
+        Err(error) => { ok = false; surface_checks.push(json!({"surface": "suite", "ok": false, "detail": error})); }
+    }
     if json_mode {
         println!("{}", serde_json::to_string_pretty(&json!({
             "schema": "oi.suite-doctor/v1",
             "suite_version": manifest.suite_version,
             "ok": ok,
             "checks": checks,
+            "surfaces": surface_checks,
             "physical_gates": manifest.physical_gates,
             "physical_acceptance": false
         })).map_err(|e| e.to_string())?);
@@ -609,6 +643,12 @@ fn command_suite_v2_doctor(args: &[OsString]) -> Result<i32, String> {
         println!("Suite {} verification: {}", manifest.suite_version, if ok { "PASS" } else { "FAIL" });
         for check in checks {
             println!("  {:<18} {}{}", check["product"].as_str().unwrap_or("?"), if check["ok"].as_bool().unwrap_or(false) { "PASS" } else { "FAIL" }, check["detail"].as_str().map(|d| format!(" — {d}")).unwrap_or_default());
+        }
+        for check in &surface_checks {
+            println!("  {:<18} {}{}", check["surface"].as_str().unwrap_or("?"), if check["ok"].as_bool().unwrap_or(false) { "PASS" } else { "FAIL" }, check["detail"].as_str().map(|d| {
+                let d = if d.is_empty() { "in step" } else { d };
+                format!(" — {d}")
+            }).unwrap_or_else(|| " — in step".to_owned()));
         }
         for gate in &manifest.physical_gates { println!("  DEFERRED {} — {}", gate.id, gate.description); }
     }

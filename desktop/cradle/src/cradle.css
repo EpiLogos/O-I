@@ -1,0 +1,548 @@
+/*
+ * Workbench + context menu + agency depths (U0.3b).
+ * Every colour, spacing, size, and motion value comes from
+ * @epilogos/oi-design-system tokens — no raw values live here.
+ * The rest shape itself keeps rest.css untouched (austere rest preserved).
+ */
+
+.workbench {
+  position: relative;
+  display: flex;
+  height: 100%;
+}
+
+/* ---------------------------------------------------------------------------
+ * Agency column — depth states only (D17). At strip it is the same reserved
+ * column as rest; at full it is a true overlay: the canvas is masked
+ * dimensionally (its layout width is untouched), never reflowed.
+ */
+
+.agency-column {
+  flex: none;
+  border-right: 1px solid var(--oi-rule);
+  transition: width var(--oi-motion-normal) var(--oi-motion-ease);
+}
+
+.agency-column.depth-collapsed {
+  width: 0;
+  border-right: none;
+}
+
+.agency-column.depth-strip {
+  width: var(--oi-space-7);
+}
+
+.agency-column.depth-panel {
+  width: calc(var(--oi-space-7) * 4);
+}
+
+/* Full = true overlay (D17). The column stays in flow at panel width, so
+ * the canvas below keeps its layout — masked dimensionally, never reflowed. */
+.agency-column.depth-full {
+  position: relative;
+  width: calc(var(--oi-space-7) * 4);
+  z-index: 5;
+}
+
+.agency-overlay {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 100vw;
+  background: var(--oi-surface);
+  z-index: 0;
+}
+
+.agency-note {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-1);
+  padding: var(--oi-space-2);
+}
+
+.agency-note-label {
+  font-size: var(--oi-type-xs);
+  letter-spacing: var(--oi-tracking-label);
+  color: var(--oi-foreground);
+}
+
+.agency-note-body {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+}
+
+/* ---------------------------------------------------------------------------
+ * Surface host (APP-SPEC §5 — the canvas is a Surface host).
+ */
+
+.surface-host {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pane {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+}
+
+.pane.split[data-pane-dir="h"] {
+  flex-direction: row;
+}
+
+.pane.split[data-pane-dir="v"] {
+  flex-direction: column;
+}
+
+.pane.split[data-pane-dir="h"] > .pane + .pane {
+  border-left: 1px solid var(--oi-rule);
+}
+
+.pane.split[data-pane-dir="v"] > .pane + .pane {
+  border-top: 1px solid var(--oi-rule);
+}
+
+.pane.group {
+  flex-direction: column;
+}
+
+/* The unfocused group recedes; the focused group carries the frame. */
+.pane.group:not(.focused) .tab.active {
+  color: var(--oi-muted);
+  border-bottom-color: var(--oi-relation);
+}
+
+.pane.group:not(.focused) .surface-body {
+  opacity: 0.75;
+}
+
+/* ---------------------------------------------------------------------------
+ * Tab strip — one tab per open Surface binding (D16).
+ */
+
+.tab-strip {
+  flex: none;
+  display: flex;
+  align-items: stretch;
+  gap: var(--oi-space-1);
+  min-height: calc(var(--oi-space-4) + var(--oi-space-1));
+  padding: 0 var(--oi-space-1);
+  border-bottom: 1px solid var(--oi-rule);
+  overflow-x: auto;
+}
+
+.tab-strip.drop {
+  box-shadow: inset 0 2px 0 var(--oi-focus);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oi-space-1);
+  padding: var(--oi-space-1) var(--oi-space-2);
+  font-size: var(--oi-type-sm);
+  color: var(--oi-muted);
+  border-bottom: 1px solid transparent;
+  cursor: pointer;
+  max-width: calc(var(--oi-space-7) * 4);
+  overflow: hidden;
+  white-space: nowrap;
+  transition: color var(--oi-motion-fast) var(--oi-motion-ease);
+}
+
+.tab.active {
+  color: var(--oi-foreground);
+  border-bottom-color: var(--oi-focus);
+}
+
+.tab:hover {
+  color: var(--oi-foreground);
+}
+
+.tab:focus-visible {
+  outline: var(--oi-focus-ring-width) solid var(--oi-focus);
+  outline-offset: -1px;
+}
+
+.tab.drop-before {
+  box-shadow: inset 2px 0 0 var(--oi-focus);
+}
+
+.tab-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tab-pin {
+  color: var(--oi-relation);
+  font-size: var(--oi-type-xs);
+}
+
+.tab-close {
+  flex: none;
+  border: none;
+  background: transparent;
+  color: var(--oi-muted);
+  font-size: var(--oi-type-sm);
+  line-height: 1;
+  padding: 0 var(--oi-space-1);
+  cursor: pointer;
+  transition: color var(--oi-motion-fast) var(--oi-motion-ease);
+}
+
+.tab-close:hover,
+.tab-close:focus-visible {
+  color: var(--oi-foreground);
+  outline: none;
+}
+
+.strip-open {
+  margin-left: auto;
+  flex: none;
+  border: none;
+  background: transparent;
+  color: var(--oi-muted);
+  font-size: var(--oi-type-sm);
+  padding: 0 var(--oi-space-2);
+  cursor: pointer;
+  transition: color var(--oi-motion-fast) var(--oi-motion-ease);
+}
+
+.strip-open:hover,
+.strip-open:focus-visible {
+  color: var(--oi-foreground);
+  outline: none;
+}
+
+/* ---------------------------------------------------------------------------
+ * Surface bodies — today only honestly-labelled test bindings.
+ */
+
+.surface-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--oi-space-3);
+}
+
+.test-surface {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-2);
+  max-width: calc(var(--oi-space-7) * 6);
+}
+
+.test-title {
+  color: var(--oi-foreground);
+  font-size: var(--oi-type-body);
+}
+
+.test-facts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-1);
+}
+
+.test-facts > div {
+  display: flex;
+  gap: var(--oi-space-2);
+  font-size: var(--oi-type-sm);
+}
+
+.test-facts dt {
+  color: var(--oi-muted);
+  min-width: var(--oi-space-7);
+}
+
+.test-facts dd {
+  color: var(--oi-foreground);
+}
+
+.test-note {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+  max-width: calc(var(--oi-space-7) * 6);
+}
+
+/* ---------------------------------------------------------------------------
+ * Context menu — the canonical-Actions disclosure UI (D15).
+ */
+
+.ctx-menu {
+  position: fixed;
+  z-index: var(--oi-z-popover);
+  min-width: calc(var(--oi-space-7) * 3);
+  padding: var(--oi-space-1) 0;
+  background: var(--oi-surface);
+  border: 1px solid var(--oi-rule);
+}
+
+.ctx-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: var(--oi-space-1) var(--oi-space-2);
+  font-size: var(--oi-type-sm);
+  color: var(--oi-foreground);
+  cursor: pointer;
+}
+
+.ctx-item:not([disabled]):hover,
+.ctx-item:not([disabled]):focus-visible {
+  box-shadow: inset 2px 0 0 var(--oi-focus);
+  outline: none;
+}
+
+.ctx-item[disabled] {
+  color: var(--oi-muted);
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* ---------------------------------------------------------------------------
+ * Source surfaces (U0.4) — the kernel seam's minimal editor and the
+ * participating-sources index. Every value from oi-design-system tokens.
+ */
+
+.tab-dirty {
+  color: var(--oi-gold);
+  font-size: var(--oi-type-xs);
+}
+
+/* The editor: the textarea IS the cradle-held buffer (presentation layer);
+ * the status line shows the Central-owned canonical revision. */
+
+.source-editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+}
+
+.source-status {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-3);
+  padding: var(--oi-space-1) var(--oi-space-2);
+  border-bottom: 1px solid var(--oi-rule);
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+}
+
+.source-revision {
+  letter-spacing: var(--oi-tracking-label);
+}
+
+.source-dirty-marker {
+  color: var(--oi-gold);
+}
+
+.source-clean-marker {
+  color: var(--oi-muted);
+}
+
+.source-hint {
+  margin-left: auto;
+  color: var(--oi-muted);
+}
+
+.source-editor .source-textarea {
+  flex: 1;
+  resize: none;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--oi-foreground);
+  caret-color: var(--oi-foreground);
+  font-size: var(--oi-type-sm);
+  line-height: 1.5;
+  padding: var(--oi-space-2);
+  min-width: 0;
+}
+
+.source-editor.conflicted .source-textarea {
+  box-shadow: inset 2px 0 0 var(--oi-gold);
+}
+
+.source-note {
+  padding: var(--oi-space-2);
+  font-size: var(--oi-type-sm);
+  color: var(--oi-foreground);
+}
+
+.source-note-muted {
+  color: var(--oi-muted);
+}
+
+/* The structured conflict: both sides preserved, nothing overwritten. */
+
+.source-conflict {
+  border-top: 1px solid var(--oi-rule);
+  padding: var(--oi-space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-2);
+  max-height: calc(var(--oi-space-7) * 6);
+  overflow: auto;
+  background: var(--oi-paper);
+}
+
+.source-conflict-title {
+  font-size: var(--oi-type-sm);
+  color: var(--oi-foreground);
+}
+
+.source-conflict-revisions {
+  display: flex;
+  gap: var(--oi-space-5);
+  margin: 0;
+}
+
+.source-conflict-revisions dt {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+  letter-spacing: var(--oi-tracking-label);
+}
+
+.source-conflict-revisions dd {
+  margin: 0;
+  font-size: var(--oi-type-sm);
+  color: var(--oi-foreground);
+}
+
+.source-conflict-sides {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+}
+
+.source-conflict-canonical {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-1);
+}
+
+.source-conflict-canonical-label {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+  letter-spacing: var(--oi-tracking-label);
+}
+
+.source-conflict-canonical-body {
+  margin: 0;
+  padding: var(--oi-space-2);
+  border: 1px solid var(--oi-rule);
+  background: var(--oi-surface);
+  color: var(--oi-foreground);
+  font-size: var(--oi-type-xs);
+  white-space: pre-wrap;
+  overflow: auto;
+  max-height: calc(var(--oi-space-7) * 3);
+}
+
+.source-reread {
+  align-self: flex-start;
+  border: 1px solid var(--oi-rule);
+  background: var(--oi-surface);
+  color: var(--oi-foreground);
+  font-size: var(--oi-type-sm);
+  padding: var(--oi-space-1) var(--oi-space-2);
+  cursor: pointer;
+}
+
+.source-reread:hover,
+.source-reread:focus-visible {
+  box-shadow: inset 2px 0 0 var(--oi-focus);
+  outline: none;
+}
+
+.source-conflict-hint {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+}
+
+/* The sources index: real participating sources, honest unavailability. */
+
+.sources-index {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+  padding: var(--oi-space-2);
+  gap: var(--oi-space-2);
+  overflow: auto;
+}
+
+.sources-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-3);
+}
+
+.sources-title {
+  font-size: var(--oi-type-title);
+  color: var(--oi-foreground);
+}
+
+.sources-project {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+  letter-spacing: var(--oi-tracking-label);
+}
+
+.sources-unavailable {
+  font-size: var(--oi-type-sm);
+  color: var(--oi-muted);
+  padding: var(--oi-space-2);
+  border: 1px solid var(--oi-rule);
+}
+
+.sources-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-1);
+}
+
+.source-row-open {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-3);
+  width: 100%;
+  text-align: left;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: var(--oi-space-1) var(--oi-space-2);
+  font-size: var(--oi-type-sm);
+  color: var(--oi-foreground);
+  cursor: pointer;
+}
+
+.source-row-open:hover,
+.source-row-open:focus-visible {
+  border-color: var(--oi-rule);
+  background: var(--oi-surface);
+  outline: none;
+}
+
+.source-row-path {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.source-row-treatment,
+.source-row-revision {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+  letter-spacing: var(--oi-tracking-label);
+}

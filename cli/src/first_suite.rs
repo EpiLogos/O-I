@@ -289,8 +289,8 @@ fn command_dev_launch(kind: &str, args: &[OsString]) -> Result<i32, String> {
         "app" => (
             "cargo",
             vec!["tauri".to_owned(), "dev".to_owned()],
-            root.join("desktop/src-tauri"),
-            root.join("desktop/src-tauri/tauri.conf.json"),
+            root.join("desktop/cradle/src-tauri"),
+            root.join("desktop/cradle/src-tauri/tauri.conf.json"),
         ),
         _ => return Err(format!("unsupported development surface '{kind}'")),
     };

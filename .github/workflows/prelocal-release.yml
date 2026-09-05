@@ -48,24 +48,24 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-          cache-dependency-path: desktop/ui/package-lock.json
-      - name: Install locked desktop UI graph
-        run: npm ci --prefix desktop/ui --no-audit --no-fund
+          cache-dependency-path: desktop/cradle/package-lock.json
+      - name: Install locked cradle graph
+        run: npm ci --prefix desktop/cradle --no-audit --no-fund
       - name: Prove locked native-shell graph
-        run: cargo check --manifest-path desktop/src-tauri/Cargo.toml --locked --target aarch64-apple-darwin
+        run: cargo check --manifest-path desktop/cradle/src-tauri/Cargo.toml --locked --target aarch64-apple-darwin
       - name: Build Apple Silicon Tauri app bundle
         shell: bash
         run: |
           set -euo pipefail
-          cd desktop/src-tauri
-          ../ui/node_modules/.bin/tauri build --bundles app --target aarch64-apple-darwin
+          cd desktop/cradle/src-tauri
+          ../node_modules/.bin/tauri build --bundles app --target aarch64-apple-darwin
       - name: Prove build did not rewrite locks
-        run: git diff --exit-code -- desktop/src-tauri/Cargo.lock desktop/ui/package-lock.json
+        run: git diff --exit-code -- desktop/cradle/src-tauri/Cargo.lock desktop/cradle/package-lock.json
       - name: Package exact-SHA desktop artifact
         shell: bash
         run: |
           set -euo pipefail
-          bundle_dir='desktop/src-tauri/target/aarch64-apple-darwin/release/bundle/macos'
+          bundle_dir='desktop/cradle/src-tauri/target/aarch64-apple-darwin/release/bundle/macos'
           app="$(find "$bundle_dir" -maxdepth 1 -type d -name '*.app' -print -quit)"
           test -n "$app"
           short_sha="${GITHUB_SHA:0:12}"

@@ -5,7 +5,6 @@ on:
     paths:
       - 'suite/living-wiki-w7.json'
       - '.github/workflows/living-wiki-w7.yml'
-      - 'desktop/**'
       - 'cli/src/current_world.rs'
       - 'cli/src/lib.rs'
 
@@ -73,10 +72,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
       - name: Validate W7 manifest and exact consumer owner pins
         shell: python
         run: |
@@ -94,9 +89,6 @@ jobs:
           }
           for owner, revision in expected.items():
               assert manifest['owners'][owner]['revision'] == revision
-          cargo = Path('desktop/core/Cargo.toml').read_text()
-          assert '${{ env.AIKIT_SHA }}' in cargo
-          assert '${{ env.FACTORY_SHA }}' in cargo
           minimal = next(world for world in manifest['worlds'] if world['id'] == 'A')
           assert any(
               'zero automatic Agent/model invocation' in proposition
@@ -106,41 +98,11 @@ jobs:
               'Contemplate implicitly' in invariant
               for invariant in manifest['global_invariants']
           )
-      - name: Build rendered workbench from committed lock
-        run: |
-          npm ci --prefix desktop/ui --no-audit --no-fund
-          npm --prefix desktop/ui run build
-      - name: W7 A — minimal ordinary Project and zero implicit contemplation
-        run: |
-          node --test desktop/ui/src/living-wiki-model.test.mjs
-          cargo test --manifest-path desktop/core/Cargo.toml living_wiki::tests --lib
-          cargo test --manifest-path desktop/core/Cargo.toml --test living_contemplate_process
-      - name: W7 B — software Project authority and Factory return paths
-        run: |
-          cargo test --manifest-path desktop/core/Cargo.toml --test live_product_round_trip
-          cargo test --manifest-path desktop/core/Cargo.toml --test local_factory_provider
-          node --test desktop/ui/src/project-field-presentation.test.mjs
-      - name: W7 C — deep structured knowledge Flow source relation and optional QL removal law
-        run: |
-          node --test desktop/ui/src/flow-workbench.test.mjs
-          node --test desktop/ui/src/workbench-presentation.test.mjs
-          cargo test --manifest-path desktop/core/Cargo.toml flow::tests --lib
-      - name: Cross-world authority and regression closure
-        run: |
-          cargo test --manifest-path desktop/core/Cargo.toml --all-targets
-          cargo clippy --manifest-path desktop/core/Cargo.toml --all-targets -- -D warnings
-          git diff --check
+      - name: Preserve source hygiene
+        run: git diff --check
 
-  native-shell:
-    name: W7 committed native shell
-    runs-on: macos-15
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-apple-darwin
-      - name: Prove exact committed dependency graph
-        run: cargo check --manifest-path desktop/src-tauri/Cargo.toml --locked --target aarch64-apple-darwin
+  # The W7 O:I-side desktop conformance steps (legacy desktop/core + desktop/ui
+  # + desktop/src-tauri proofs) were removed with the legacy line by the U0.7
+  # disposition audit (cradle rebuild). The owner contracts above still prove
+  # the pinned native revisions; suite/living-wiki-w7.json remains the
+  # historical record of the full original cut.

@@ -1,24 +1,45 @@
+/*
+ * O:I design-system tokens — the house visual vocabulary.
+ *
+ * Every value is extracted from the live production language in `site/src`
+ * (#25 extraction list; wayfinder D9 + law 11: tokens precede components,
+ * the host themes). No value is invented here. Consumers use `var(--oi-*)`
+ * only — never raw colours, spacing, type, radii, z-layers, durations, or
+ * focus values. Hosts theme by overriding these tokens; composable and
+ * agent-native bodies never self-chrome.
+ *
+ * Gold stays scarce: `--oi-gold` exists only to feed `--oi-meta-relation`
+ * (the meta-relation role). No other role may carry it.
+ */
+
 :root {
   color-scheme: light dark;
 
-  /* O:I foundation — extracted verbatim from the current public front door. */
+  /* ===== section: foundation tokens ===== */
   --oi-black: #050505;
   --oi-white: #f7f7f4;
   --oi-paper: #ffffff;
   --oi-ink: #0a0a0a;
   --oi-gold: #a8873f;
 
-  /* semantic colour */
+  /* ===== section: semantic tokens — surface / text / muted / rule roles ===== */
   --oi-surface: var(--oi-paper);
   --oi-foreground: var(--oi-ink);
   --oi-muted: rgba(10, 10, 10, 0.58);
   --oi-rule: rgba(10, 10, 10, 0.2);
-  --oi-relation: rgba(10, 10, 10, 0.55);
   --oi-focus: var(--oi-ink);
   --oi-projection: rgba(10, 10, 10, 0.7);
-  --oi-meta-relation: var(--oi-gold);
 
-  /* rhythm */
+  /* ===== section: relation / focus / projection roles — scarce gold meta-relation ===== */
+  --oi-relation: rgba(10, 10, 10, 0.55);
+  --oi-meta-relation: var(--oi-gold);
+  /* World host hooks (site explore.css `world-presentation`): a world
+   * provider may override these to carry its own ground; they default to
+   * the paper/ink foundation. */
+  --oi-world-surface: var(--oi-paper);
+  --oi-world-foreground: var(--oi-ink);
+
+  /* ===== section: spacing / rhythm ===== */
   --oi-space-1: 0.5rem;
   --oi-space-2: 0.75rem;
   --oi-space-3: 1rem;
@@ -29,7 +50,12 @@
   --oi-section-x: clamp(1.25rem, 5vw, 5rem);
   --oi-section-y: clamp(5rem, 10vw, 10rem);
 
-  /* typography */
+  /* ===== section: typography ===== */
+  /* Family stacks — verbatim from the site body (index.css, explore.css)
+   * and the site code faces (pages.css, explore.css, direct-authoring.css). */
+  --oi-font-sans: 'Avenir Next', Avenir, 'Helvetica Neue', Arial, sans-serif;
+  --oi-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  /* Scale steps. */
   --oi-type-xs: 0.68rem;
   --oi-type-sm: 0.82rem;
   --oi-type-body: clamp(1.02rem, 1.35vw, 1.28rem);
@@ -37,12 +63,44 @@
   --oi-type-display: clamp(3.5rem, 8vw, 8.5rem);
   --oi-tracking-label: 0.14em;
 
-  /* motion */
+  /* ===== section: radii ===== */
+  /* From the site's authored-surface language (direct-authoring.css).
+   * The default house edge is square (radius 0) — radii are the exception,
+   * used only where the site already uses them. */
+  --oi-radius-xs: 4px;
+  --oi-radius-sm: 10px;
+  --oi-radius-md: 12px;
+  --oi-radius-lg: 14px;
+  --oi-radius-xl: 18px;
+  --oi-radius-pill: 999px;
+
+  /* ===== section: z-layers ===== */
+  /* The site's stacking altitudes: sticky app bars (40), the front-door
+   * nav above stage layers (50), sliding side panes (60), modal popover
+   * planes (80), floating notices above all (90). Local stacking inside
+   * a component (0–5) is not a house layer. */
+  --oi-z-nav: 40;
+  --oi-z-nav-top: 50;
+  --oi-z-drawer: 60;
+  --oi-z-popover: 80;
+  --oi-z-notice: 90;
+
+  /* ===== section: motion ===== */
   --oi-motion-fast: 160ms;
   --oi-motion-normal: 240ms;
   --oi-motion-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  /* ===== section: focus / keyboard states ===== */
+  /* The keyboard ring: 2px of --oi-focus on :focus-visible (unanimous in
+   * site). Dense/app surfaces offset 3px (explore.css); spacious front-door
+   * surfaces offset 5px (index.css). */
+  --oi-focus-ring-width: 2px;
+  --oi-focus-ring-offset: 3px;
+  --oi-focus-ring-offset-loose: 5px;
 }
 
+/* Surface themes — the host themes by swapping these role values
+ * (law 11). Role names never change between themes. */
 .oi-surface-light {
   --oi-surface: var(--oi-paper);
   --oi-foreground: var(--oi-ink);
@@ -63,6 +121,11 @@
   --oi-projection: rgba(247, 247, 244, 0.72);
 }
 
+/* Reduced-motion convention: the motion durations collapse to ~0 under
+ * `prefers-reduced-motion: reduce`, so any transition built from
+ * `var(--oi-motion-*)` degrades automatically. Consumers that animate via
+ * raw keyframes or JS timings apply the same convention themselves (the
+ * site also collapses all animation/transition durations to 0.01ms). */
 @media (prefers-reduced-motion: reduce) {
   :root {
     --oi-motion-fast: 0.01ms;

@@ -269,9 +269,9 @@ mod tests {
             },
             desktop: DesktopConfig {
                 source_root: "/Central/Work/O-I/desktop".into(),
-                ui_dir: "/Central/Work/O-I/desktop/ui".into(),
-                core_dir: "/Central/Work/O-I/desktop/core".into(),
-                dev_port: 1420,
+                ui_dir: "/Central/Work/O-I/desktop/cradle/src".into(),
+                core_dir: "/Central/Work/O-I/desktop/cradle/kernel".into(),
+                dev_port: 1421,
             },
         }
     }

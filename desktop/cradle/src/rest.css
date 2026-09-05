@@ -1,0 +1,106 @@
+/*
+ * Rest — every colour, spacing, size, and motion value comes from
+ * @epilogos/oi-design-system tokens. No raw values live here.
+ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--oi-surface);
+  color: var(--oi-foreground);
+  font-size: var(--oi-type-body);
+  caret-color: var(--oi-foreground);
+}
+
+.rest {
+  display: flex;
+  height: 100%;
+}
+
+/* Agency field — reserved column, honest absence. */
+.agency-field {
+  width: var(--oi-space-7);
+  flex: none;
+  border-right: 1px solid var(--oi-rule);
+}
+
+/* Canvas — the quiet writing surface, centre of rest. */
+.canvas {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: var(--oi-space-6) var(--oi-space-6) var(--oi-space-4)
+    var(--oi-space-6);
+  position: relative;
+}
+
+.canvas-surface {
+  flex: 1;
+  resize: none;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--oi-foreground);
+  caret-color: var(--oi-foreground);
+  font-size: var(--oi-type-body);
+  line-height: 1.6;
+}
+
+.canvas-surface::placeholder {
+  color: var(--oi-muted);
+}
+
+/* The single prompt affordance — unobtrusive, keyboard reachable. */
+.to-affordance {
+  align-self: flex-end;
+  border: none;
+  background: transparent;
+  color: var(--oi-muted);
+  font-size: var(--oi-type-sm);
+  letter-spacing: var(--oi-tracking-label);
+  padding: var(--oi-space-1) var(--oi-space-2);
+  cursor: pointer;
+  transition: color var(--oi-motion-fast) var(--oi-motion-ease);
+}
+
+.to-affordance:hover,
+.to-affordance:focus-visible {
+  color: var(--oi-foreground);
+  outline: none;
+}
+
+.address-line {
+  align-self: flex-end;
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-1);
+}
+
+.address-label {
+  color: var(--oi-muted);
+  font-size: var(--oi-type-sm);
+  letter-spacing: var(--oi-tracking-label);
+}
+
+.address-input {
+  border: none;
+  border-bottom: 1px solid var(--oi-rule);
+  outline: none;
+  background: transparent;
+  color: var(--oi-foreground);
+  caret-color: var(--oi-foreground);
+  font-size: var(--oi-type-sm);
+  padding: var(--oi-space-1) 0;
+  width: var(--oi-space-7);
+}

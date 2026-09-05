@@ -303,10 +303,19 @@ noted. Each unit names its relation cell from §2.
 Gate: the cradle opens, austere rest, over the real `~/Central` ground,
 tokenised, window-managed, driven by the walk harness.
 
-- **U0.1 ai-kit sane port** `(S→S2)` · ai-kit `aikit-core/{agent,compose}.rs`
-  + deps → `resolve` → store/CLI onto `main`, per D11 order · walk:
-  `aikit compose --profile agent/epilogos/oi-development --json` on a main
-  build returns a real ComposePlan (model honestly unset); workspace tests green.
+- **U0.1 ai-kit composition surface confirmed** `(S→S2)` · *updated 2026-09-05
+  (machine repaired): the `aikit compose` CLI lost in the harmonisation port
+  is restored on `main` (ai-kit e300ed0) and installed; the stale binaries
+  that masked it (aikit 10 Aug, ctrl 3 Sep) were rebuilt and installed from
+  current HEAD; O-I + ai-kit `ProjectCentral` ground initialised via
+  `projectcentral.init` (`project:o-i`, `project:ai-kit`).* · walk: `aikit
+  compose --json` in a project returns a real plan (`aikit.actor-bootstrap/v2`)
+  with model and harness honestly unset; missing authored ground is disclosed
+  as absence (`composed_inputs: null`), never an error, never guessed ·
+  remaining owner tail: an AgentProfile via `ctrl action run
+  agent-profile.save` — never fabricated by the cradle · entrypoints U2.1
+  consumes: `aikit-adapters/src/agent_session_host.rs` + `clients/`
+  (confirmed present).
 - **U0.2 Central source-ref canonicalisation** `(S→S0)` · Central
   `world_source.rs` · one canonical ref grammar accepted by
   `source.read/write/inspect` (D12) · walk: inspect-disclosed ref is
