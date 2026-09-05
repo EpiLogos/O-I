@@ -11,7 +11,7 @@ Use this O:I-owned Skill to operate the installed suite as a composed whole. O:I
 
 - Semantic ref: `oi:skill:suite-operator`
 - Native owner: `EpiLogos/O-I`
-- Suite manifest: `skills/suite-operator/skillset.json`
+- Suite manifest: `skills/suite-operator/skillset.toml`
 - Manifest schema: `oi.suite-skillset/v1`
 - Effective read model: `oi.effective-skillset/v1`
 - Normal resolver: AIKit when installed

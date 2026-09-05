@@ -220,8 +220,8 @@ pub struct DirectProjectionOutcome {
 }
 
 pub fn parse_manifest(input: &str) -> Result<SuiteSkillSetManifest, String> {
-    let manifest: SuiteSkillSetManifest = serde_json::from_str(input)
-        .map_err(|error| format!("suite SkillSet manifest is not valid JSON: {error}"))?;
+    let manifest: SuiteSkillSetManifest = toml::from_str(input)
+        .map_err(|error| format!("suite SkillSet manifest is not valid TOML: {error}"))?;
     validate_manifest(&manifest)?;
     Ok(manifest)
 }

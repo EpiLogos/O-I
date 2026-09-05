@@ -18,8 +18,8 @@ use super::skillset::{
 };
 
 pub const GUARDIAN_PROFILE_REF: &str = "oi:skillset:base-guardian";
-pub const SUITE_SKILLSET_MANIFEST_JSON: &str =
-    include_str!("../../skills/suite-operator/skillset.json");
+pub const SUITE_SKILLSET_MANIFEST_TOML: &str =
+    include_str!("../../skills/suite-operator/skillset.toml");
 
 /// Authoritative guardian Skill sources shipped with this CLI, keyed by the
 /// manifest's `source.path`.
@@ -102,7 +102,7 @@ impl GuardianProjectionReport {
 }
 
 pub fn guardian_manifest() -> Result<SuiteSkillSetManifest, String> {
-    parse_manifest(SUITE_SKILLSET_MANIFEST_JSON)
+    parse_manifest(SUITE_SKILLSET_MANIFEST_TOML)
 }
 
 fn guardian_skill_directory(content: &str, source_path: &str) -> Result<String, String> {

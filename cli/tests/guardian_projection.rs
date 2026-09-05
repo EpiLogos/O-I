@@ -29,16 +29,17 @@ fn guardian_refs() -> Vec<String> {
 fn guardian_profile_resolves_to_the_shipped_oi_skills_only() {
     let manifest = guardian_manifest().unwrap();
     assert_eq!(manifest.schema, "oi.suite-skillset/v1");
-    // The two pre-existing profiles remain intact alongside the guardian one.
-    for expected in [
-        "oi:skillset:base-guardian",
-        "oi:skillset:base-suite-operation",
-        "oi:skillset:root-metagentic-operation",
-    ] {
+    // O:I ships exactly one profile — its guardian pair. Cross-product skill
+    // composition belongs to AIKit's sets, not to this manifest.
+    assert_eq!(manifest.profiles.len(), 1);
+    assert_eq!(manifest.profiles[0].profile_ref, "oi:skillset:base-guardian");
+    for skill in &manifest.skills {
         assert!(
-            manifest.profiles.iter().any(|p| p.profile_ref == expected),
-            "missing profile {expected}"
+            skill.skill_ref.starts_with("oi:skill:"),
+            "shipped manifest carries a non-O:I skill: {}",
+            skill.skill_ref
         );
+        assert_eq!(skill.owner_product, "O:I");
     }
 
     assert_eq!(

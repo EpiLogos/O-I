@@ -1,32 +1,42 @@
 # Canonical suite operator SkillSet
 
-O:I composes source-owned procedural competence; it does not become the owner of native product procedures.
+O:I composes and explains source-owned procedural competence; it does not become the owner of native product procedures, and it is not a Skill registry. Registration and set composition are AIKit functionality.
 
-The governing path is:
+## What O:I ships
+
+The shipped manifest (`skills/suite-operator/skillset.toml`, schema `oi.suite-skillset/v1`, TOML because AIKit's authored sets are TOML) declares exactly one profile and two Skills — O:I's own guardian pair:
 
 ```text
-native repository authoritative Skill source + revision
-  -> O:I oi.suite-skillset/v1 composition
-  -> AIKit effective Skill/SkillSet resolution and projection where installed
+oi:skillset:base-guardian
+  oi:skill:operate-suite    (skills/oi/SKILL.md)
+  oi:skill:suite-operator   (skills/suite-operator/SKILL.md)
+```
+
+Both entries carry `revision_policy = "resolve_authoritative_installed_revision"`: O:I resolves each Skill's authoritative revision from the installed native owner rather than pinning one by hand. A projected copy carries its source revision in its receipt header; local edits never become authoritative.
+
+A test guards this shape: `shipped_manifest_declares_only_oi_owned_skills` fails if the shipped manifest ever names another product's Skills again. That is deliberate. The manifest once pinned every suite product's Skills; that made it a second registry in a second format, and its silent path drift proved the point.
+
+## How the rest of the suite is composed
+
+Each product keeps its Skills as native files in its own repository (Central `skills/`, Quaternal Logic `skills/`, AIKit `registry/`). AIKit is the suite's normal resolver: `aikit source add-directory` discovers those trees, `sync` snapshots them, `aikit trust record` records review, `aikit set create` composes TOML sets across products, and `aikit enable`/scopes project them. O:I routes refs and explains composition; it never registers or pins foreign Skills.
+
+The governing path is now:
+
+```text
+native repository authoritative Skill source
+  -> AIKit source discovery / sync / trust / TOML sets
+  -> scope-enabled projection
   -> Agent procedural competence
   -> native Capability / Action / authority gate
 ```
 
-The manifest contains **no `awaiting_native_publication` entries**. It pins accepted native-owner `main` revisions for Central, AIKit, Actuation, Software Factory, Workcell and QL-MEF. Those source revisions are explicit provenance and are independently compared with observed installed revisions; later owner changes therefore become reviewable drift rather than silent projected-source replacement.
-
 ## Base versus Root
 
-`oi:skillset:base-suite-operation` contains the day-one operator floor for all installed products. An ordinary worker can therefore understand Actuation's bounded Agency operations without becoming Root.
-
-`oi:skillset:root-metagentic-operation` inherits Base and adds native authoring/extension procedures. The resolver rejects this profile for `AgentScope::Ordinary`. Even for `AgentScope::RootWorld`, the enum is projection eligibility/read-model input: Actuation must independently establish the real positional Root relation and native authority grants.
-
-## AIKit relation
-
-AIKit #73 publishes `aikit:operator`, `aikit:project-author` and `aikit:extension-developer` as native source sets. O:I names the actual member Skill refs it needs so provenance remains inspectable per Skill; AIKit remains responsible for materialising/resolving those sets and applying trust/policy/platform/target gates. O:I does not implement a second Skill registry.
+`oi:skillset:base-suite-operation` and `oi:skillset:root-metagentic-operation` remain real capabilities of the resolution machinery and are exercised by the test fixtures, but they are no longer shipped as registered sets. The resolver still rejects Root-scope profiles for `AgentScope::Ordinary`, and even for `AgentScope::RootWorld` the enum is projection eligibility/read-model input: Actuation must independently establish the real positional Root relation and native authority grants.
 
 ## Provenance and drift
 
-Every external native Skill in the manifest has repository, source path and exact pinned source revision. `EffectiveSkillSet` carries expected and observed source revision independently. A mismatch degrades the view rather than silently substituting the new source.
+`EffectiveSkillSet` carries expected and observed source revision independently. A mismatch degrades the view rather than silently substituting the new source. Surface records (`surfaces.json`, `suite/mainline.json`) continue to pin accepted-main revisions per product; those are acceptance records, not Skill registrations.
 
 ## Fallback
 

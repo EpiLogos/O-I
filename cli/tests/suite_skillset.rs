@@ -9,8 +9,125 @@ use std::fs;
 use tempfile::tempdir;
 
 fn canonical_manifest() -> SuiteSkillSetManifest {
-    parse_manifest(include_str!("../../skills/suite-operator/skillset.json")).unwrap()
+    parse_manifest(MULTI_PRODUCT_MANIFEST_TOML).unwrap()
 }
+
+/// An in-code fixture representing the general multi-product composition the
+/// resolution machinery handles: per-product owner/purpose/source entries and
+/// Base/Root profile inheritance. This is NOT the shipped manifest — the
+/// shipped one declares only O:I's guardian pair (see the
+/// `shipped_manifest_declares_only_oi_owned_skills` guard below). O:I used to
+/// pin every product's skills in the shipped file; that was a second skill
+/// registry, and registration is AIKit's job.
+const MULTI_PRODUCT_MANIFEST_TOML: &str = r#"
+schema = "oi.suite-skillset/v1"
+
+[[profiles]]
+profile_ref = "oi:skillset:base-guardian"
+purpose = "Guardian projection fixture."
+scope = "ordinary"
+inherits = []
+
+[[profiles.members]]
+skill_ref = "oi:skill:operate-suite"
+requiredness = "required"
+
+[[profiles.members]]
+skill_ref = "oi:skill:suite-operator"
+requiredness = "required"
+
+[[profiles]]
+profile_ref = "oi:skillset:base-suite-operation"
+purpose = "Day-one operator floor fixture."
+scope = "ordinary"
+inherits = []
+
+[[profiles.members]]
+skill_ref = "oi:skill:suite-operator"
+requiredness = "required"
+
+[[profiles.members]]
+skill_ref = "oi:skill:operate-suite"
+requiredness = "required"
+
+[[profiles.members]]
+skill_ref = "central:skill:control-maintenance"
+requiredness = "if_product_installed"
+
+[[profiles.members]]
+skill_ref = "aikit:operation"
+requiredness = "if_product_installed"
+
+[[profiles.members]]
+skill_ref = "actuation:operator"
+requiredness = "if_product_installed"
+
+[[profiles]]
+profile_ref = "oi:skillset:root-metagentic-operation"
+purpose = "Root eligibility fixture."
+scope = "root_world"
+inherits = ["oi:skillset:base-suite-operation"]
+
+[[profiles.members]]
+skill_ref = "central:skill:connector-authoring"
+requiredness = "if_product_installed"
+
+[[skills]]
+skill_ref = "oi:skill:operate-suite"
+owner_product = "O:I"
+purpose = "Compose and explain the installed suite."
+source = { repository = "EpiLogos/O-I", path = "skills/oi/SKILL.md", revision_policy = "resolve_authoritative_installed_revision" }
+risk_class = "suite-operation"
+
+[[skills]]
+skill_ref = "oi:skill:suite-operator"
+owner_product = "O:I"
+purpose = "Operate the installed suite."
+source = { repository = "EpiLogos/O-I", path = "skills/suite-operator/SKILL.md", revision_policy = "resolve_authoritative_installed_revision" }
+risk_class = "suite-operation"
+
+[[skills]]
+skill_ref = "central:skill:control-maintenance"
+owner_product = "Central"
+purpose = "Operate durable authored Control."
+source = { repository = "EpiLogos/Central", path = "skills/control-maintenance/SKILL.md", revision_policy = "pinned", pinned_revision = "7d6ebbd056e9eb30d2a2d1d477e7d6fb32e37010" }
+risk_class = "authored-ground"
+
+[[skills]]
+skill_ref = "central:skill:machine-declaration"
+owner_product = "Central"
+purpose = "Reconcile authored machine intent."
+source = { repository = "EpiLogos/Central", path = "skills/machine-declaration/SKILL.md", revision_policy = "pinned", pinned_revision = "7d6ebbd056e9eb30d2a2d1d477e7d6fb32e37010" }
+risk_class = "machine-operation"
+
+[[skills]]
+skill_ref = "central:skill:connector-authoring"
+owner_product = "Central"
+purpose = "Author Central providers."
+source = { repository = "EpiLogos/Central", path = "skills/connector-authoring/SKILL.md", revision_policy = "pinned", pinned_revision = "7d6ebbd056e9eb30d2a2d1d477e7d6fb32e37010" }
+risk_class = "extension-authoring"
+
+[[skills]]
+skill_ref = "central:skill:connector-hardening"
+owner_product = "Central"
+purpose = "Harden Central providers."
+source = { repository = "EpiLogos/Central", path = "skills/connector-hardening/SKILL.md", revision_policy = "pinned", pinned_revision = "7d6ebbd056e9eb30d2a2d1d477e7d6fb32e37010" }
+risk_class = "extension-hardening"
+
+[[skills]]
+skill_ref = "aikit:operation"
+owner_product = "AIKit"
+purpose = "Operate AIKit context and resolution."
+source = { repository = "EpiLogos/ai-kit", path = "registry/capsules/skill/aikit/operation/payload/SKILL.md", revision_policy = "pinned", pinned_revision = "e9c4125e710a979a8a517d2940fb300f801806f0" }
+risk_class = "runtime-operation"
+
+[[skills]]
+skill_ref = "actuation:operator"
+owner_product = "Actuation"
+purpose = "Operate Agent/Agency/WorldBinding through Actuation's contract."
+source = { repository = "EpiLogos/Actuation", path = "skills/actuation-operation/SKILL.md", revision_policy = "pinned", pinned_revision = "2eb4d9801949b2bd591c2ab20ef3b037895c3a6e" }
+risk_class = "authority-sensitive"
+"#;
 
 fn observation(skill_ref: &str, revision: &str) -> SkillObservation {
     SkillObservation {
@@ -165,7 +282,7 @@ fn aikit_dynamic_resolution_uses_native_references_not_copied_skill_bodies() {
     assert!(effective.skills.iter().all(
         |skill| !skill.source_repository.is_empty() && skill.source_path.ends_with("SKILL.md")
     ));
-    let manifest_text = include_str!("../../skills/suite-operator/skillset.json");
+    let manifest_text = MULTI_PRODUCT_MANIFEST_TOML;
     assert!(!manifest_text.contains("## Native Skill ownership and gaps"));
 }
 
@@ -332,4 +449,25 @@ fn desktop_and_tui_can_share_the_same_serializable_effective_skillset_read_model
         desktop["profile_ref"],
         "oi:skillset:root-metagentic-operation"
     );
+}
+
+#[test]
+fn shipped_manifest_declares_only_oi_owned_skills() {
+    let manifest =
+        parse_manifest(include_str!("../../skills/suite-operator/skillset.toml")).unwrap();
+    assert_eq!(manifest.profiles.len(), 1);
+    assert_eq!(manifest.profiles[0].profile_ref, "oi:skillset:base-guardian");
+    assert!(manifest.expected_native_skills.is_empty());
+    // O:I owns exactly its two guardian Skills here. Every other product's
+    // skills are composed by AIKit's sets; pinning them in this file made it
+    // a second registry in a second format.
+    assert_eq!(manifest.skills.len(), 2);
+    for skill in &manifest.skills {
+        assert!(skill.skill_ref.starts_with("oi:skill:"), "{}", skill.skill_ref);
+        assert_eq!(skill.owner_product, "O:I");
+        assert_eq!(
+            skill.source.revision_policy,
+            oi_cli::skillset::RevisionPolicy::ResolveAuthoritativeInstalledRevision
+        );
+    }
 }
