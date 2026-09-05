@@ -9,7 +9,7 @@ on:
       - '.github/workflows/oi159-omarchy-host.yml'
   push:
     branches:
-      - 'feat/oi159-omarchy-host-bootstrap'
+      - main
 
 jobs:
   omarchy-host:

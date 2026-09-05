@@ -3,10 +3,7 @@ name: Shared field
 on:
   push:
     branches:
-      - platform/shared-field-explore
-      - research/cordis-composable-agency
-      - agent/oi-017-encounter-security
-      - agent/oi-017-exchange-authority
+      - main
     paths:
       - 'shared-field/**'
       - '.github/workflows/shared-field.yml'

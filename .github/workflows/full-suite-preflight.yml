@@ -15,7 +15,6 @@ on:
   push:
     branches:
       - main
-      - converge/oi-017-first-suite
     paths:
       - "cli/**"
       - "suite/**"
