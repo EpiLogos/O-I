@@ -7,13 +7,15 @@
       "public_name": "Central",
       "function": "persistent personal ground",
       "repository": "https://github.com/EpiLogos/Central",
-      "docs_ref": "07dcfb3530b9acd2e24c9571aa5b467852f8e7f4",
+      "docs_ref": "832f2e5508cec43fed2b7599ddab2b4bd29b7653",
       "docs_path": "README.md",
       "skill_paths": [
         "skills/control-maintenance/SKILL.md",
         "skills/machine-declaration/SKILL.md",
         "skills/connector-authoring/SKILL.md",
-        "skills/connector-hardening/SKILL.md"
+        "skills/connector-hardening/SKILL.md",
+        "skills/projectcentral-ontology/SKILL.md",
+        "skills/documentation-standing/SKILL.md"
       ],
       "native": {
         "kind": "cli",
@@ -35,7 +37,7 @@
           "doctor",
           "--json"
         ],
-        "command_revision": "0b636d1fa52f625451fb94a1dc86d589117b76bd",
+        "command_revision": "832f2e5508cec43fed2b7599ddab2b4bd29b7653",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [
@@ -51,8 +53,8 @@
       },
       "install": {
         "kind": "oi-managed-binary",
-        "ref": "07dcfb3530b9acd2e24c9571aa5b467852f8e7f4",
-        "revision": "07dcfb3530b9acd2e24c9571aa5b467852f8e7f4",
+        "ref": "832f2e5508cec43fed2b7599ddab2b4bd29b7653",
+        "revision": "832f2e5508cec43fed2b7599ddab2b4bd29b7653",
         "path": "ctrl",
         "note": "Current #97 source/install pin. Central owns Control, Work, ProjectCentral, source authority, AgentProfile persistence/Actions and authored Skill/SkillSet/Method/Routine assignments. Routine enable/proof/trigger/authority remains AIKit-owned."
       },
@@ -100,7 +102,7 @@
           "verify",
           "--json"
         ],
-        "command_revision": "b403cbf1be1c3d78316753db9bcde9f31eb2fb4e",
+        "command_revision": "faa5b79f75230ef259d5e523fcade491b23dc3eb",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [],
@@ -160,7 +162,7 @@
           "doctor",
           "--json"
         ],
-        "command_revision": "d346aacdeb6d5d66d9ec8865db4b2a3c0bd09b50",
+        "command_revision": "25cfdc72c29671673f1434abdea454442c91a47c",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [
@@ -223,7 +225,7 @@
           "verify",
           "--json"
         ],
-        "command_revision": "7e8fadea5156d75eb872f55f4fd4938d47fb0648",
+        "command_revision": "3d9094177a7216697619db0a3c16bafb6bb815ca",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [
@@ -256,7 +258,7 @@
           "evidence": "native-json-stdout"
         },
         "outstanding_requirements": [],
-        "note": "Current main includes Journey/Commission/Run developmental continuity, AgentProfile→Method proof→Routine correlation, whole-relative proof/RunThought/NOW hardening, canonical Actions and the native Factory command surface."
+        "note": "Current main includes Journey/Commission/Run developmental continuity, AgentProfile\u2192Method proof\u2192Routine correlation, whole-relative proof/RunThought/NOW hardening, canonical Actions and the native Factory command surface."
       },
       "compatibility": "Factory owns developmental Project/Journey/Run/Candidate/Evidence/Recognition and Action semantics; it consumes Central and AIKit refs without acquiring their runtime/source semantics."
     },
@@ -286,7 +288,7 @@
           "--json",
           "doctor"
         ],
-        "command_revision": "25792dc3aa8e4c54088c0696cee00f8efefe03ad",
+        "command_revision": "dc076fdf0c3e12835c17ded95ef199e200f7f8e1",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [
@@ -337,7 +339,7 @@
     {
       "id": "quaternal-logic",
       "public_name": "Quaternal Logic",
-      "function": "deterministic QL kernel, complete MEF registry, service boundary and Vāk/formal operation surfaces",
+      "function": "deterministic QL kernel, complete MEF registry, service boundary and V\u0101k/formal operation surfaces",
       "repository": "https://github.com/EpiLogos/QL-MEF",
       "docs_ref": "781981374eaa1f02952249dcdbca1af671d1ece4",
       "docs_path": "README.md",
@@ -360,7 +362,7 @@
           "verify",
           "--json"
         ],
-        "command_revision": "590ea5464e0b422beaddea2669039e3d8c7fcb5c",
+        "command_revision": "781981374eaa1f02952249dcdbca1af671d1ece4",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [
@@ -393,7 +395,7 @@
           "evidence": "native-json-stdout"
         },
         "outstanding_requirements": [],
-        "note": "The accepted `ql` command projects current public kernel/service/MEF/Context-Frame/Vāk owners. O:I composes it without moving formal semantics into the suite."
+        "note": "The accepted `ql` command projects current public kernel/service/MEF/Context-Frame/V\u0101k owners. O:I composes it without moving formal semantics into the suite."
       },
       "compatibility": "Quaternal Logic remains the separately owned sixth product; its accepted CLI is present in the six-command field while its broader moving research topology remains outside #97 live-main convergence."
     }

@@ -8,7 +8,7 @@
     {
       "id": "central",
       "repository": "https://github.com/EpiLogos/Central",
-      "revision": "07dcfb3530b9acd2e24c9571aa5b467852f8e7f4",
+      "revision": "832f2e5508cec43fed2b7599ddab2b4bd29b7653",
       "state": "accepted-main",
       "note": "Current Central main includes Project Context, ProjectCentral authored Ground/governance, NOW/DAY, current machine/World source relations, durable personal/Project AgentProfile source/persistence/Actions, authored RoutineRef assignment, and the native ctrl help/capabilities doorway. Central retains source standing while AIKit owns effective Profile/ContextResolution and Routine runtime state."
     },
@@ -31,7 +31,7 @@
       "repository": "https://github.com/EpiLogos/agent-system-design",
       "revision": "3d9094177a7216697619db0a3c16bafb6bb815ca",
       "state": "accepted-main-with-active-research-exceptions",
-      "note": "Current Factory main includes Git developmental Worlds, bounded P3 Intent→Run→P5 return, ProjectDevelopment persistence, canonical Actions, Journey Commission, AgentProfile→Method proof→Routine developmental correlation, whole-relative proof/RunThought/NOW hardening, the run-thought field line (#163) and the owner-native factory CLI (oi-managed-native-cli artifact-kind admission on main). The ql/deep-runtime research track remains the separately owned live branch (#95/#100)."
+      "note": "Current Factory main includes Git developmental Worlds, bounded P3 Intent\u2192Run\u2192P5 return, ProjectDevelopment persistence, canonical Actions, Journey Commission, AgentProfile\u2192Method proof\u2192Routine developmental correlation, whole-relative proof/RunThought/NOW hardening, the run-thought field line (#163) and the owner-native factory CLI (oi-managed-native-cli artifact-kind admission on main). The ql/deep-runtime research track remains the separately owned live branch (#95/#100)."
     },
     {
       "id": "workcell",
@@ -45,7 +45,7 @@
       "repository": "https://github.com/EpiLogos/QL-MEF",
       "revision": "781981374eaa1f02952249dcdbca1af671d1ece4",
       "state": "parallel-native-owner-exception",
-      "note": "This accepted QL owner cut publishes the native ql executable and native-CLI lifecycle over current public kernel/service/MEF/Context-Frame/Vāk owners, and now carries the Epi-Logos research corpus (S/S' 12x12 relational field, Ta-Onta capability matrix, Pratibimba records), the musical harmonic system (#31/#76), generic external Context Frame reading, and the EPI-MATRIX P1 bounded Vāk context. The broader moving QL/Epi computational and research programme remains separately owned and is not a #97 live-main dependency gate."
+      "note": "This accepted QL owner cut publishes the native ql executable and native-CLI lifecycle over current public kernel/service/MEF/Context-Frame/V\u0101k owners, and now carries the Epi-Logos research corpus (S/S' 12x12 relational field, Ta-Onta capability matrix, Pratibimba records), the musical harmonic system (#31/#76), generic external Context Frame reading, and the EPI-MATRIX P1 bounded V\u0101k context. The broader moving QL/Epi computational and research programme remains separately owned and is not a #97 live-main dependency gate."
     }
   ],
   "build_record": {
