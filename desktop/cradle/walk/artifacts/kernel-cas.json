@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "kernel-cas",
-  "generated_at": "2026-09-05T21:26:47.585Z",
+  "generated_at": "2026-09-05T21:28:10.254Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 2011,
+  "duration_ms": 1794,
   "checks": [
     {
       "ok": true,
@@ -201,7 +201,7 @@
     {
       "ok": true,
       "op": "read.sources",
-      "duration_ms": 13.4,
+      "duration_ms": 6.3,
       "data": {
         "schema": "oi.source-listing/v1",
         "project": "o-i",
@@ -241,7 +241,7 @@
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "receipts": [
           {
@@ -261,7 +261,7 @@
     {
       "ok": true,
       "op": "ui.open_real_file",
-      "duration_ms": 133
+      "duration_ms": 93
     },
     {
       "ok": true,
@@ -414,7 +414,7 @@
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "receipts": [],
         "count": 0,
@@ -512,7 +512,7 @@
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "receipts": [],
         "count": 0,
@@ -554,7 +554,7 @@
     {
       "ok": true,
       "op": "ui.save",
-      "duration_ms": 120
+      "duration_ms": 111
     },
     {
       "ok": true,
@@ -589,7 +589,7 @@
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "receipts": [
           {
@@ -783,7 +783,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 37,
+      "duration_ms": 41,
       "data": {
         "file": "kernel-cas-conflict.png"
       }
@@ -929,7 +929,7 @@
     {
       "ok": true,
       "op": "invoke.source_reread",
-      "duration_ms": 9,
+      "duration_ms": 4.4,
       "seq_range": {
         "from": 9,
         "to": 9
@@ -1136,7 +1136,7 @@
     {
       "ok": true,
       "op": "invoke.source_save",
-      "duration_ms": 13.3,
+      "duration_ms": 14.7,
       "seq_range": {
         "from": 10,
         "to": 10
@@ -1401,7 +1401,7 @@
     {
       "ok": true,
       "op": "invoke.surface_focus",
-      "duration_ms": 2,
+      "duration_ms": 1.9,
       "seq_range": {
         "from": 12,
         "to": 12
@@ -1479,7 +1479,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 18,
+      "duration_ms": 15,
       "data": {
         "file": "kernel-cas-focus.png"
       }
@@ -1995,13 +1995,13 @@
         "count": 14,
         "first_seq": 1,
         "last_seq": 14,
-        "captured_at": "2026-09-05T21:26:49.595Z"
+        "captured_at": "2026-09-05T21:28:12.045Z"
       }
     }
   ],
   "metrics": {
-    "open_file_ms": 133,
-    "save_ms": 120,
+    "open_file_ms": 93,
+    "save_ms": 111,
     "kernel_events_total": 14
   },
   "screenshots": [
