@@ -197,8 +197,16 @@ function makeHarness({ scenario, page, baseUrl, bridgeUrl, kernelScenario }) {
      * receipt it returns is recorded verbatim as data. */
     async channel(path, args = [], options = {}) {
       const walkReceipt = await page.evaluate(
-        ([path, args]) => {
-          const channel = globalThis.__cradle?.walk;
+        async ([path, args]) => {
+          // The channel mounts through a build-gated dynamic import inside
+          // the provider's effects — wait for that mount instead of failing
+          // a scenario on the load race (10 s ceiling, then the honest error).
+          const deadline = Date.now() + 10_000;
+          let channel = globalThis.__cradle?.walk;
+          while (!channel && Date.now() < deadline) {
+            await new Promise((resolve) => setTimeout(resolve, 50));
+            channel = globalThis.__cradle?.walk;
+          }
           const fn = path
             .split(".")
             .reduce((obj, key) => (obj === undefined || obj === null ? obj : obj[key]), channel);

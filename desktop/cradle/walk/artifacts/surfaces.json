@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "surfaces",
-  "generated_at": "2026-09-05T16:14:41.459Z",
+  "generated_at": "2026-09-05T16:18:34.860Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 2419,
+  "duration_ms": 2359,
   "checks": [
     {
       "ok": true,
@@ -194,11 +194,11 @@
     },
     {
       "ok": true,
-      "label": "the kernel event log is strictly monotonic 1..45 with no gaps and no duplicate emission",
+      "label": "the kernel event log is strictly monotonic 1..35 with no gaps and no duplicate emission",
       "data": {
         "histogram": {
-          "surface_changed": 20,
-          "focus_changed": 25
+          "surface_changed": 16,
+          "focus_changed": 19
         }
       }
     }
@@ -207,11 +207,11 @@
     {
       "ok": true,
       "op": "capture.timing",
-      "duration_ms": 29.6,
+      "duration_ms": 30.6,
       "data": {
         "fcp_ms": 24,
-        "dom_content_loaded_ms": 5,
-        "load_ms": 5.1
+        "dom_content_loaded_ms": 4.5,
+        "load_ms": 4.5
       }
     },
     {
@@ -220,7 +220,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-05T16:14:41.495Z",
+        "mounted_at": "2026-09-05T16:18:34.894Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -231,7 +231,7 @@
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "receipts": [
           {
@@ -371,7 +371,7 @@
     {
       "ok": true,
       "op": "ui.open_4_tabs",
-      "duration_ms": 37,
+      "duration_ms": 27,
       "data": {
         "tabs": 4
       }
@@ -519,12 +519,12 @@
     {
       "ok": true,
       "op": "ui.tile",
-      "duration_ms": 53
+      "duration_ms": 52
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 31,
+      "duration_ms": 14,
       "data": {
         "file": "surfaces-tiled.png"
       }
@@ -540,12 +540,12 @@
     {
       "ok": true,
       "op": "ui.drag_between_splits",
-      "duration_ms": 105
+      "duration_ms": 100
     },
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 0.3,
+      "duration_ms": 0.4,
       "data": {
         "layout": {
           "root": {
@@ -655,12 +655,12 @@
     {
       "ok": true,
       "op": "ui.reload_restore",
-      "duration_ms": 24
+      "duration_ms": 33
     },
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "layout": {
           "root": {
@@ -770,12 +770,12 @@
     {
       "ok": true,
       "op": "ui.close_all_to_rest",
-      "duration_ms": 7
+      "duration_ms": 6
     },
     {
       "ok": true,
       "op": "capture.events",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "receipts": [
           {
@@ -1319,156 +1319,23 @@
                 }
               }
             }
-          },
-          {
-            "seq": 36,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "surface_changed",
-            "surface_id": "s1",
-            "surface_ref": {
-              "ref": "test:1",
-              "kind": "source",
-              "native_owner": "central",
-              "provenance": {
-                "source": "central.projectcentral"
-              }
-            },
-            "summary": "Surface closed: Test surface 1."
-          },
-          {
-            "seq": 37,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "focus_changed",
-            "focus": {
-              "subject": {
-                "ref": "test:4",
-                "kind": "source",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "central.projectcentral"
-                }
-              }
-            }
-          },
-          {
-            "seq": 38,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "surface_changed",
-            "surface_id": "s4",
-            "surface_ref": {
-              "ref": "test:4",
-              "kind": "source",
-              "native_owner": "central",
-              "provenance": {
-                "source": "central.projectcentral"
-              }
-            },
-            "summary": "Surface closed: Test surface 4."
-          },
-          {
-            "seq": 39,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "focus_changed",
-            "focus": {}
-          },
-          {
-            "seq": 40,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "focus_changed",
-            "focus": {
-              "subject": {
-                "ref": "test:2",
-                "kind": "source",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "central.projectcentral"
-                }
-              }
-            }
-          },
-          {
-            "seq": 41,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "surface_changed",
-            "surface_id": "s2",
-            "surface_ref": {
-              "ref": "test:2",
-              "kind": "source",
-              "native_owner": "central",
-              "provenance": {
-                "source": "central.projectcentral"
-              }
-            },
-            "summary": "Surface closed: Test surface 2."
-          },
-          {
-            "seq": 42,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "focus_changed",
-            "focus": {}
-          },
-          {
-            "seq": 43,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "focus_changed",
-            "focus": {
-              "subject": {
-                "ref": "test:3",
-                "kind": "source",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "central.projectcentral"
-                }
-              }
-            }
-          },
-          {
-            "seq": 44,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "surface_changed",
-            "surface_id": "s3",
-            "surface_ref": {
-              "ref": "test:3",
-              "kind": "source",
-              "native_owner": "central",
-              "provenance": {
-                "source": "central.projectcentral"
-              }
-            },
-            "summary": "Surface closed: Test surface 3."
-          },
-          {
-            "seq": 45,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "focus_changed",
-            "focus": {}
           }
         ],
-        "count": 45,
+        "count": 35,
         "first_seq": 1,
-        "last_seq": 45,
-        "captured_at": "2026-09-05T16:14:43.874Z"
+        "last_seq": 35,
+        "captured_at": "2026-09-05T16:18:37.217Z"
       }
     }
   ],
   "metrics": {
     "cold_start_fcp_ms": 24,
-    "open_4_tabs_ms": 37,
-    "tile_ms": 53,
-    "drag_between_splits_ms": 105,
-    "reload_restore_ms": 24,
-    "close_all_to_rest_ms": 7,
-    "kernel_events_total": 45
+    "open_4_tabs_ms": 27,
+    "tile_ms": 52,
+    "drag_between_splits_ms": 100,
+    "reload_restore_ms": 33,
+    "close_all_to_rest_ms": 6,
+    "kernel_events_total": 35
   },
   "screenshots": [
     "surfaces-tiled.png",
