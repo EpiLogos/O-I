@@ -118,8 +118,8 @@ The expected responsibility boundary remains:
 Central
   persistent personal/machine ground and intent
 
-Agent Runtime
-  actuation / agent loop
+Actuation
+  situated agency, actuation, metagency, determination and Return
 
 AIKit
   capability, context, HarnessComposition and Surface resolution

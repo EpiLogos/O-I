@@ -13,19 +13,44 @@ oi install <module>
 oi docs [topic|module]
 oi migrate <path>
 
-oi <module-alias> [native arguments...]
+oi products [--json]
+
+oi central ...          -> ctrl ...
+oi actuation ...        -> actuation ...
+oi aikit ...            -> aikit ...
+oi factory ...          -> factory ...
+oi workcell ...         -> workcell ...
+oi ql ...               -> ql ...
 ```
 
-## Native aliases
+## `oi products`
 
-Only aliases backed by real native CLIs are assigned:
+`oi products` discloses the six-product command field: executable, namespace, probe commands, revision and standing for every product. `oi products --json` emits the same facts as structured JSON.
+
+## Product commands
+
+All six native product centres now have accepted native commands composed into the `oi` namespace. Each is declared `"command_standing": "accepted-main"` in `surfaces.json` and validated at compile time.
+
+| `oi` command | Native executable | Owner repository |
+|---|---|---|
+| `oi central` | `ctrl` | `EpiLogos/Central` |
+| `oi actuation` | `actuation` | `EpiLogos/Actuation` |
+| `oi aikit` | `aikit` | `EpiLogos/ai-kit` |
+| `oi factory` | `factory` | `EpiLogos/agent-system-design` |
+| `oi workcell` | `workcell` | `EpiLogos/Workcell` |
+| `oi ql` | `ql` | `EpiLogos/QL-MEF` |
+
+## Aliases
+
+Three compatibility aliases are assigned, each backed by a verified native CLI:
 
 ```text
-ctrl  -> ctrl   # Central
-kit   -> aikit  # AIKit
+ctrl      -> ctrl       # Central
+kit       -> aikit      # AIKit
+workcell  -> workcell   # Workcell
 ```
 
-Software Factory, Workcell, Quaternal Logic, and the current Agent Runtime experiment have no invented aliases.
+These are the only aliases. `oi ctrl ...` and `oi central ...` both resolve to the same Central product command. Actuation, Software Factory and Quaternal Logic have no separate aliases.
 
 ## `oi status`
 
@@ -58,7 +83,7 @@ Explicit registration remains available for existing installations. It stores mo
 
 ## Transparent dispatch
 
-`oi ctrl ...` and `oi kit ...` preserve the native command boundary. On Unix the implementation uses process replacement, so arguments, stdin/stdout/stderr, signals, and exit status belong to the native command rather than a reimplementation in O:I.
+Every product command preserves the native command boundary. On Unix the implementation uses process replacement (`exec`), so arguments, stdin/stdout/stderr, signals and exit status belong to the native command rather than a reimplementation in O:I. `oi central ...`, `oi ctrl ...`, `oi actuation ...`, `oi aikit ...`, `oi kit ...`, `oi factory ...`, `oi workcell ...` and `oi ql ...` all dispatch transparently through this mechanism.
 
 ## `oi migrate`
 
@@ -68,4 +93,4 @@ Migration is a narrow composition-level placement operation. Central defines `Wo
 
 ## Success criterion
 
-A new human or agent can install `oi`, install or register Central through the native contract, initialize a valid personal ground, inspect status/doctor/Actions, use `oi ctrl` transparently, and place existing ordinary work under Central without O:I absorbing Central, Factory, AIKit, or Workcell behavior.
+A new human or agent can install `oi`, install or register Central through the native contract, initialize a valid personal ground, inspect status/doctor/Actions, use any of the six product commands transparently, and place existing ordinary work under Central without O:I absorbing Central, Actuation, AIKit, Factory, Workcell or Quaternal Logic behavior.

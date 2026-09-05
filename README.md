@@ -211,6 +211,22 @@ The present family has six native product centres — centres of responsibility 
 
 A real act can touch two centres or all six, enter at different points, substitute another technology, or never require one of them at all. Composition is relation, not compulsory adoption.
 
+## The `oi` front door
+
+`oi` is the shared doorway into the composed system. It discloses what is installed and routes a human or Agent toward the native command and documentation surfaces without making the native products inaccessible on their own.
+
+```text
+oi central ...      -> ctrl         (compatibility alias: oi ctrl)
+oi actuation ...    -> actuation
+oi aikit ...        -> aikit         (compatibility alias: oi kit)
+oi factory ...      -> factory
+oi workcell ...     -> workcell
+oi ql ...           -> ql
+oi products [--json]
+```
+
+The command namespace is composition convenience, not semantic ownership. All six product commands are declared `"command_standing": "accepted-main"` in `surfaces.json`. Source-level standing does not imply physical #97 acceptance; see `suite/mainline.json` for the standing qualifications.
+
 ## Operating Infrastructure
 
 The acronym holds both poles of one field: **Operating Infrastructure** is the engineering face; **Objective Internality** is the same field from the actor's side.
@@ -239,4 +255,5 @@ Claims live at different altitudes. Start where the kind of claim you need lives
 
 ### Current state (temporal)
 
+D
 As of this writing, the family ships six native product centres linked above. Repo names, namespace layouts, and concrete installation paths change; treat any present-tense packaging claim as temporal context, not position. Issues and PRs are current development state, not automatically accepted reality.
