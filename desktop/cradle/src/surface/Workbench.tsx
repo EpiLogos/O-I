@@ -175,7 +175,7 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
           openBindingMenu(active, e.clientX, e.clientY);
         }}
       >
-        {activeBinding ? <SurfaceBody binding={activeBinding} openSource={props.openSource} /> : null}
+        {activeBinding ? <SurfaceBody key={activeBinding.id} binding={activeBinding} openSource={props.openSource} /> : null}
       </div>
     </section>
   );

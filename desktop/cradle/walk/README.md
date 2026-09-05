@@ -189,3 +189,14 @@ active product checkouts and installed binaries untouched. Set
 `OI_CENTRAL_CTRL_BIN` to that build's `target/release/ctrl` when repeating the
 pinned walk. `navigator-native.json` records the exact binary/revision and the
 computer-use operations on the real app; native PNG and AX receipts are beside it.
+
+### U1.2: Source editor
+
+`editor` provisions a temporary Central root with the actual pinned `ctrl`,
+initializes a real project, and copies ten existing documents into its source
+ground. UI operations open, edit, switch, save and reopen their owner refs. The
+walk also selects a different project before saving, invokes a real exclusion
+refusal, and checks that initial writing survives closing sources. No owner
+executable or response is mocked. Temporary ground is removed after the walk.
+`editor-native.json` records an actual O-I source edit/save/restore and retained
+writing, observed through computer-use on the native bundle.

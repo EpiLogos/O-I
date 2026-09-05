@@ -169,13 +169,14 @@ export function makeSourceBinding(
   state: LayoutState,
   sourceRef: string,
   path: string,
+  project?: string,
 ): SurfaceBinding {
   const existing = Object.values(state.surfaces).find(
     (b) => b.kind === "source" && b.ref === sourceRef,
   );
   if (existing) return existing;
   const title = path.split("/").pop() || path;
-  return { id: nextId(state, "s"), kind: "source", ref: sourceRef, title };
+  return { id: nextId(state, "s"), kind: "source", ref: sourceRef, project, title };
 }
 
 // ---------------------------------------------------------------------------

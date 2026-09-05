@@ -83,6 +83,7 @@ export function Cradle() {
 
 function CradleFrame() {
   const kernel = useKernel();
+  const [writing, setWriting] = useState("");
   const [navigatorOpen, setNavigatorOpen] = useState(false);
   const navigatorRef = useRef(false);
   navigatorRef.current = navigatorOpen;
@@ -149,7 +150,7 @@ function CradleFrame() {
         try {
           await kernel.surfaceOpen(binding.id, binding.kind, binding.ref, binding.title);
           if (binding.kind === "source" && binding.ref) {
-            await kernel.apply({ op: "source_open", source_ref: binding.ref });
+            await kernel.apply({ op: "source_open", source_ref: binding.ref, project: binding.project });
           }
           await kernel.surfaceFocus(binding.id);
         } finally {
@@ -187,14 +188,14 @@ function CradleFrame() {
   /** Open a real source from the index listing: one layout binding carrying
    * the owner's canonical ref verbatim — the kernel mount effect opens the
    * buffer through the owner's read. */
-  const openSource = (source: ListedSource) => {
+  const openSource = (source: ListedSource, project?: string) => {
     const current = stateRef.current;
-    const binding = makeSourceBinding(current, source.ref, source.path);
-    if (current.surfaces[binding.id]) {
+    const binding = makeSourceBinding(current, source.ref, source.path, project);
+    if (groupsOf(current.root).some(g => g.tabs.includes(binding.id))) {
       execute("surface.activate", { surfaceId: binding.id });
       return;
     }
-    setState((s) => openBinding(s, makeSourceBinding(s, source.ref, source.path)));
+    setState((s) => openBinding({ ...s, closedStack: s.closedStack.filter(id => id !== binding.id) }, makeSourceBinding(s, source.ref, source.path, project)));
   };
 
   // The frame keyboard map (keys.ts) + Escape. Attached always, so ⌘T/⌘O
@@ -283,9 +284,9 @@ function CradleFrame() {
           openSource={openSource}
         />
       ) : (
-        <Rest />
+        <Rest value={writing} onChange={setWriting} />
       )}
-      {navigatorOpen ? <WorldNavigator onClose={dismissWorld} /> : null}
+      {navigatorOpen ? <WorldNavigator onClose={dismissWorld} onOpenSource={(source, project) => { setNavigatorOpen(false); openSource(source, project); }} /> : null}
       {menu ? (
         <ContextMenu menu={menu} onInvoke={invoke} onClose={() => setMenu(null)} />
       ) : null}

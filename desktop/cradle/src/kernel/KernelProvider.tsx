@@ -38,6 +38,7 @@ export interface KernelApi {
   listing: SourceListingState | null;
   listingError: string | null;
   opError: string | null;
+  sourceErrors: Record<string, string>;
   apply: (op: KernelOp) => Promise<KernelOutcome | null>;
   refreshListing: () => Promise<void>;
   /** Typed conveniences the surfaces share. */
@@ -66,6 +67,8 @@ export function KernelProvider(props: { children: ReactNode }) {
   const [receipts, setReceipts] = useState<KernelReceipt[]>([]);
   const [listing, setListing] = useState<SourceListingState | null>(null);
   const [listingError, setListingError] = useState<string | null>(null);
+  const [sourceErrors, setSourceErrors] = useState<Record<string, string>>({});
+  const errorOperations = useRef<Record<string, string>>({});
   const [opError, setOpError] = useState<string | null>(null);
   const seenSeq = useRef(0);
   const applySerial = useRef(Promise.resolve());
@@ -116,6 +119,25 @@ export function KernelProvider(props: { children: ReactNode }) {
       const run = applySerial.current.then(async () => {
         const call = await kernelOp(transport, op);
         setOpError(call.error ?? null);
+        if ("source_ref" in op && op.source_ref && op.op.startsWith("source_")) {
+          const ref = op.source_ref;
+          let reason = call.error;
+          if (call.outcome?.result === "source_save_failed") {
+            const failure = call.outcome.failure;
+            reason = failure.kind === "owner-refused" ? failure.message : failure.kind === "unavailable" ? failure.detail : undefined;
+          }
+          setSourceErrors(held => {
+            const next = { ...held };
+            if (reason) {
+              next[ref] = reason;
+              errorOperations.current[ref] = op.op;
+            } else if (errorOperations.current[ref] === op.op) {
+              delete next[ref];
+              delete errorOperations.current[ref];
+            }
+            return next;
+          });
+        }
         if (call.outcome) merge(call.outcome);
         return call.outcome;
       });
@@ -219,6 +241,7 @@ export function KernelProvider(props: { children: ReactNode }) {
       listing,
       listingError,
       opError,
+      sourceErrors,
       apply,
       refreshListing,
       openSource,
@@ -236,6 +259,7 @@ export function KernelProvider(props: { children: ReactNode }) {
       listing,
       listingError,
       opError,
+      sourceErrors,
       apply,
       refreshListing,
       openSource,
