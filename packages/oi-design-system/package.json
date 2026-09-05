@@ -2,8 +2,14 @@
   "name": "@epilogos/oi-design-system",
   "version": "0.1.0",
   "private": true,
-  "files": ["tokens.css"],
+  "files": ["tokens.css", "assets"],
   "exports": {
-    "./tokens.css": "./tokens.css"
+    "./tokens.css": "./tokens.css",
+    "./assets/oi-mark.svg": "./assets/oi-mark.svg",
+    "./assets/oi-glyph.svg": "./assets/oi-glyph.svg",
+    "./assets/oi-cube.svg": "./assets/oi-cube.svg"
+  },
+  "scripts": {
+    "verify": "node checks/verify.mjs"
   }
 }

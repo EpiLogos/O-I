@@ -166,7 +166,7 @@
 }
 
 .tab:focus-visible {
-  outline: 1px solid var(--oi-focus);
+  outline: var(--oi-focus-ring-width) solid var(--oi-focus);
   outline-offset: -1px;
 }
 
@@ -276,7 +276,7 @@
 
 .ctx-menu {
   position: fixed;
-  z-index: 10;
+  z-index: var(--oi-z-popover);
   min-width: calc(var(--oi-space-7) * 3);
   padding: var(--oi-space-1) 0;
   background: var(--oi-surface);
