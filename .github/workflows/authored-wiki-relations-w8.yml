@@ -5,7 +5,6 @@ on:
     paths:
       - 'suite/authored-wiki-relations-w8.json'
       - '.github/workflows/authored-wiki-relations-w8.yml'
-      - 'desktop/**'
       - 'shared-field/**'
       - 'site/**'
 
@@ -87,7 +86,6 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-      - uses: dtolnay/rust-toolchain@stable
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -115,27 +113,10 @@ jobs:
           assert manifest['owners']['central']['revision'] == '${{ env.CENTRAL_SHA }}'
           assert manifest['owners']['ai-kit']['revision'] == '${{ env.AIKIT_SHA }}'
           assert manifest['owners']['software-factory']['revision'] == '${{ env.FACTORY_SHA }}'
-          cargo = Path('desktop/core/Cargo.toml').read_text()
-          assert '${{ env.AIKIT_SHA }}' in cargo
-          assert 'aikit-adapters' in cargo
           assert all(not world['requires_ql'] for world in manifest['worlds'])
           assert any('deleting derived SemanticWiki' in p for p in manifest['worlds'][0]['proves'])
           assert any('public Projection' in p for p in manifest['cross_world_acceptance'])
           assert any('O:I owns no Markdown/OKF parser' in p for p in manifest['cross_world_acceptance'])
-      - name: Build rendered workbench from its committed UI graph
-        run: |
-          npm ci --prefix desktop/ui --no-audit --no-fund
-          npm --prefix desktop/ui run build
-      - name: O:I core — owner read-model consumption and Living/Flow regressions
-        run: |
-          cargo test --manifest-path desktop/core/Cargo.toml --all-targets
-          cargo clippy --manifest-path desktop/core/Cargo.toml --all-targets -- -D warnings
-      - name: A/B/C/D — workbench keeps language primary over one stable Project field
-        run: |
-          node --test desktop/ui/src/flow-workbench.test.mjs
-          node --test desktop/ui/src/living-wiki-model.test.mjs
-          node --test desktop/ui/src/project-field-presentation.test.mjs
-          node --test desktop/ui/src/workbench-presentation.test.mjs
       - name: Cross-world Projection — authored relation eligibility/privacy authority remains canonical
         run: |
           node --test shared-field/authored-relation-projection.test.mjs
@@ -144,23 +125,23 @@ jobs:
           node --test site/explore-read-model.test.mjs
           node --test site/projection-renderer.test.mjs
           node --test site/public-content.test.mjs
-      - name: Source-before-index, no second parser/index and explicit Contemplate boundary
+      - name: No second parser/index in renderer surfaces
         shell: python
         run: |
           from pathlib import Path
-          core = Path('desktop/core/src/project_knowledge.rs').read_text()
-          assert 'projectcentral_authored_wiki' in core
-          assert 'compile_authored_wiki_relations' in core
-          assert 'rebuild_semantic_wiki_with_authored_relations' in core
-          assert 'automatic_agent_or_model_invocation: false' in core
-          assert 'authored_relation_dependencies' in core
-          for root in [Path('desktop/ui/src'), Path('site')]:
-              for path in root.rglob('*'):
-                  if not path.is_file() or path.suffix not in {'.ts', '.tsx', '.js', '.mjs'}:
-                      continue
-                  text = path.read_text(errors='ignore')
-                  assert 'parse_authored_wiki_source' not in text, f'renderer parser leakage: {path}'
-                  assert 'compile_authored_wiki_relations' not in text, f'renderer compiler leakage: {path}'
-                  assert 'SemanticWikiIndex::rebuild' not in text, f'renderer index leakage: {path}'
+          for path in Path('site').rglob('*'):
+              if not path.is_file() or path.suffix not in {'.ts', '.tsx', '.js', '.mjs'}:
+                  continue
+              text = path.read_text(errors='ignore')
+              assert 'parse_authored_wiki_source' not in text, f'renderer parser leakage: {path}'
+              assert 'compile_authored_wiki_relations' not in text, f'renderer compiler leakage: {path}'
+              assert 'SemanticWikiIndex::rebuild' not in text, f'renderer index leakage: {path}'
       - name: Preserve source hygiene
         run: git diff --check
+
+  # The W8 O:I-side desktop conformance steps (legacy desktop/core +
+  # desktop/ui proofs and their Cargo pin assertions) were removed with the
+  # legacy line by the U0.7 disposition audit (cradle rebuild). The owner
+  # contracts above still prove the pinned native revisions;
+  # suite/authored-wiki-relations-w8.json remains the historical record of the
+  # full original cut.
