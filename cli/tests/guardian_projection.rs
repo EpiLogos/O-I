@@ -138,6 +138,30 @@ fn guardian_sources_carry_discoverable_frontmatter() {
     }
 }
 
+#[test]
+fn guardian_payload_files_ship_beside_a_manifest_skill() {
+    // A declared payload sibling belongs to a shipped guardian Skill: its
+    // directory must be a manifest source path, so the projection can place
+    // it beside that Skill's SKILL.md. A payload without its Skill (or a
+    // Skill whose tooling never ships) is a projection fault.
+    let manifest = guardian_manifest().unwrap();
+    assert!(!oi_cli::guardian::GUARDIAN_SKILL_PAYLOAD_FILES.is_empty());
+    for (path, _) in oi_cli::guardian::GUARDIAN_SKILL_PAYLOAD_FILES {
+        let (directory, file) = path.rsplit_once('/').unwrap();
+        assert!(
+            !file.is_empty() && file != "SKILL.md",
+            "{path} must declare a sibling payload, not the SKILL.md itself"
+        );
+        assert!(
+            manifest
+                .skills
+                .iter()
+                .any(|skill| skill.source.path == format!("{directory}/SKILL.md")),
+            "payload {path} does not sit beside a shipped guardian Skill"
+        );
+    }
+}
+
 fn ground() -> (TempDir, PathBuf) {
     let temp = TempDir::new().unwrap();
     let ground = temp.path().join("Central");
@@ -188,6 +212,53 @@ fn pickup_projects_guardian_set_into_harness_trees_with_receipts() {
                 serde_json::from_slice(&fs::read(&receipt).unwrap()).unwrap();
             assert_eq!(receipt["schema"], "oi.skill-projection-receipt/v1");
             assert_eq!(receipt["source_revision"], oi_source_revision());
+        }
+    }
+
+    // The strap is a directory payload: its procedure executor, renderer,
+    // manifest and verification suite ride beside its SKILL.md,
+    // byte-identical to the shipped sources. Skills without declared
+    // siblings project SKILL.md and its receipt only.
+    let strap_siblings = [
+        (
+            "now.py",
+            include_str!("../../skills/central-session-strap/now.py"),
+        ),
+        (
+            "render-context.py",
+            include_str!("../../skills/central-session-strap/render-context.py"),
+        ),
+        (
+            "skill.json",
+            include_str!("../../skills/central-session-strap/skill.json"),
+        ),
+        (
+            "verify.sh",
+            include_str!("../../skills/central-session-strap/verify.sh"),
+        ),
+    ];
+    for root in GUARDIAN_HARNESS_SKILL_ROOTS {
+        let strap_directory = ground.join(root).join("central-session-strap");
+        for (name, source) in strap_siblings {
+            let sibling = strap_directory.join(name);
+            assert_eq!(
+                fs::read_to_string(&sibling).unwrap(),
+                source,
+                "{sibling:?} must be byte-identical to the shipped source"
+            );
+        }
+    }
+    for name in ["oi", "oi-suite-operator"] {
+        for root in GUARDIAN_HARNESS_SKILL_ROOTS {
+            let entries: Vec<_> = fs::read_dir(ground.join(root).join(name))
+                .unwrap()
+                .map(|entry| entry.unwrap().file_name())
+                .collect();
+            assert_eq!(
+                entries.len(),
+                2,
+                "{name} projects SKILL.md and its receipt only: {entries:?}"
+            );
         }
     }
 
@@ -415,8 +486,10 @@ fn sync_respects_a_adopted_aikit_managed_tree_instead_of_deadlocking() {
     );
 
     // Simulate AIKit ownership: payload copies in a store, destinations
-    // rewired as symlinks — for the whole `.claude` tree AIKit adopted.
+    // rewired as symlinks — for the whole `.claude` tree AIKit adopted,
+    // payload siblings included.
     let mut managed_destinations = Vec::new();
+    let mut managed_skill_destinations = Vec::new();
     for name in ["oi", "oi-suite-operator", "central-session-strap"] {
         let projected = projected_paths(&ground, name).remove(0);
         let store = home
@@ -432,7 +505,19 @@ fn sync_respects_a_adopted_aikit_managed_tree_instead_of_deadlocking() {
         fs::copy(&receipt, store.join("SKILL.md.oi-projection.json")).unwrap();
         fs::remove_file(&receipt).unwrap();
         std::os::unix::fs::symlink(store.join("SKILL.md.oi-projection.json"), &receipt).unwrap();
-        managed_destinations.push(projected);
+        managed_destinations.push(projected.clone());
+        managed_skill_destinations.push(projected.clone());
+        for entry in fs::read_dir(projected.parent().unwrap()).unwrap().flatten() {
+            let file_name = entry.file_name();
+            if file_name == "SKILL.md" || file_name == "SKILL.md.oi-projection.json" {
+                continue;
+            }
+            let sibling = entry.path();
+            fs::copy(&sibling, store.join(&file_name)).unwrap();
+            fs::remove_file(&sibling).unwrap();
+            std::os::unix::fs::symlink(store.join(&file_name), &sibling).unwrap();
+            managed_destinations.push(sibling);
+        }
     }
 
     // A post-adoption aikit whose adopt refuses, like the real one does on a
@@ -489,14 +574,18 @@ exit 2
         "sync must not re-adopt an AIKit-managed tree: {aikit_log}"
     );
 
-    // The managed symlinks were left exactly as AIKit left them.
+    // The managed symlinks were left exactly as AIKit left them: every
+    // destination is a link; the SKILL.md copies still carry the derivation
+    // marker (payload siblings are byte-identical copies without one).
     for projected in &managed_destinations {
-        let content = fs::read_to_string(projected).unwrap();
-        assert!(content.contains("O:I DERIVED SKILL PROJECTION"));
         assert!(fs::symlink_metadata(projected)
             .unwrap()
             .file_type()
             .is_symlink());
+    }
+    for projected in &managed_skill_destinations {
+        let content = fs::read_to_string(projected).unwrap();
+        assert!(content.contains("O:I DERIVED SKILL PROJECTION"));
     }
 }
 
@@ -777,6 +866,44 @@ fn sync_refreshes_a_stale_adopted_tree_through_aikit_procedures() {
                 .unwrap()
                 .contains("stale drift marker"),
             "payload for {name} was not refreshed"
+        );
+    }
+
+    // The strap's payload siblings ride the whole cycle: undo restores them,
+    // the re-projection leaves them byte-identical, and the re-adopt relinks
+    // them into the refreshed store. The executor a fresh ground needs is
+    // never dropped by a refresh.
+    let strap_siblings = [
+        (
+            "now.py",
+            include_str!("../../skills/central-session-strap/now.py"),
+        ),
+        (
+            "render-context.py",
+            include_str!("../../skills/central-session-strap/render-context.py"),
+        ),
+        (
+            "skill.json",
+            include_str!("../../skills/central-session-strap/skill.json"),
+        ),
+        (
+            "verify.sh",
+            include_str!("../../skills/central-session-strap/verify.sh"),
+        ),
+    ];
+    for (name, source) in strap_siblings {
+        let sibling = ground
+            .join(".claude/skills")
+            .join("central-session-strap")
+            .join(name);
+        assert!(
+            fs::symlink_metadata(&sibling).unwrap().file_type().is_symlink(),
+            "{name} was not relinked by the re-adopt"
+        );
+        assert_eq!(
+            fs::read_to_string(&sibling).unwrap(),
+            source,
+            "{name} did not survive the refresh cycle byte-identical"
         );
     }
 }
