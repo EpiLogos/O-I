@@ -234,7 +234,7 @@ fn prelocal_catalog() -> Result<PrelocalCatalog, String> {
             )
         })?
     } else {
-        CATALOG_JSON.to_owned()
+        crate::catalog_source::resolve()?.json
     };
     let catalog: PrelocalCatalog = serde_json::from_str(&source)
         .map_err(|error| format!("embedded surface verification descriptors are invalid: {error}"))?;

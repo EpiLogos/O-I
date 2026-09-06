@@ -33,7 +33,7 @@ fn trust_closure_route(args: &[OsString]) -> Option<Result<i32, String>> {
 }
 
 fn current_central_source_details() -> Result<(String, String, String), String> {
-    let value: serde_json::Value = serde_json::from_str(CATALOG_JSON)
+    let value: serde_json::Value = serde_json::from_str(&crate::catalog_source::resolve()?.json)
         .map_err(|error| format!("embedded surface descriptors are invalid: {error}"))?;
     let central = value["surfaces"]
         .as_array()

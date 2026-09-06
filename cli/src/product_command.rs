@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
-const SURFACES_JSON: &str = include_str!("../../surfaces.json");
 const EXPECTED_PRODUCT_COUNT: usize = 6;
 
 #[derive(Debug, Clone, Deserialize)]
@@ -90,8 +89,9 @@ impl ProductCommandCatalogue {
 }
 
 pub fn product_command_catalogue() -> Result<ProductCommandCatalogue, String> {
-    let source: SurfaceCatalogSource = serde_json::from_str(SURFACES_JSON)
-        .map_err(|error| format!("embedded O:I surface catalogue is invalid: {error}"))?;
+    let resolved = crate::catalog_source::resolve()?;
+    let source: SurfaceCatalogSource = serde_json::from_str(&resolved.json)
+        .map_err(|error| format!("O:I surface catalogue ({}) is invalid: {error}", resolved.origin))?;
     if source.schema != 1 {
         return Err(format!(
             "unsupported O:I surface catalogue schema {}",
