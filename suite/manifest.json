@@ -68,10 +68,8 @@
       "dev": {
         "build": [],
         "test": [
-          "node",
-          "--test",
-          "contracts/agency.test.mjs",
-          "contracts/model-bearing.test.mjs"
+          "npm",
+          "test"
         ]
       },
       "historical_tag": "actuation-v0.1.0-prelocal.2"
