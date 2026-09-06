@@ -1,3 +1,4 @@
+use oi_cli::modality::InstallModality;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::collections::{BTreeMap, HashSet};
@@ -48,6 +49,11 @@ struct NativeSurface {
 struct InstallSurface {
     kind: String,
     note: String,
+    /// The installation modality this descriptor's install path serves
+    /// (#192). Additive and optional: descriptors that predate the field
+    /// deserialize as [`InstallModality::Unknown`].
+    #[serde(default)]
+    modality: InstallModality,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -84,6 +90,17 @@ struct Registration {
     skill: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     root: Option<String>,
+    /// The installation modality that produced this registration, recorded
+    /// at install/init time (#192). Legacy state without the field
+    /// deserializes as [`InstallModality::Unknown`] and is disclosed as
+    /// such — never inferred retroactively.
+    #[serde(default)]
+    modality: InstallModality,
+    /// The declared install source of this registration (e.g.
+    /// `existing-path-ctrl`, `oi-pinned-source`), recorded when the source
+    /// was chosen. Absent for legacy state.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    install_source: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -100,6 +117,11 @@ struct StatusRow {
     docs: String,
     compatibility: String,
     detail: Option<String>,
+    /// Modality recorded for this registration at install/init time;
+    /// `None` when the surface is not registered (nothing produced it).
+    modality: Option<InstallModality>,
+    /// Declared install source of this registration, when recorded.
+    install_source: Option<String>,
 }
 
 fn main() -> ExitCode {
@@ -266,10 +288,14 @@ fn status_rows(catalog: &Catalog, composition: &Composition) -> Vec<StatusRow> {
                 docs,
                 compatibility: surface.compatibility.clone(),
                 detail: None,
+                modality: None,
+                install_source: None,
             };
 
             if let Some(registration) = composition.modules.get(&surface.id) {
                 row.version = registration.version.clone();
+                row.modality = Some(registration.modality);
+                row.install_source = registration.install_source.clone();
                 if surface.native.kind == "cli" {
                     let candidate = registration
                         .native_executable
@@ -343,7 +369,14 @@ fn command_init(catalog: &Catalog, args: &[OsString]) -> Result<i32, String> {
             continue;
         };
         if let Some(path) = resolve_executable(executable) {
-            let registration = registration_for(surface, Some(path), None, None)?;
+            let registration = registration_in_modality(
+                surface,
+                Some(path),
+                None,
+                None,
+                InstallModality::ExistingGroundReconcile,
+                None,
+            )?;
             ensure_alias_available(&composition, &registration)?;
             composition.modules.insert(surface.id.clone(), registration);
         }
@@ -470,7 +503,14 @@ fn command_register(catalog: &Catalog, args: &[OsString]) -> Result<i32, String>
         }
     }
 
-    let registration = registration_for(surface, executable, root, version)?;
+    let registration = registration_in_modality(
+        surface,
+        executable,
+        root,
+        version,
+        InstallModality::ExistingGroundReconcile,
+        None,
+    )?;
     let mut composition = load_composition()?;
     ensure_alias_available(&composition, &registration)?;
     composition
@@ -479,6 +519,7 @@ fn command_register(catalog: &Catalog, args: &[OsString]) -> Result<i32, String>
     save_composition(&composition)?;
 
     println!("Registered: {}", surface.public_name);
+    println!("Modality: {}", registration.modality.as_str());
     if let Some(native) = &registration.native_executable {
         println!("Native command: {native}");
     } else if let Some(root) = &registration.root {
@@ -513,7 +554,13 @@ fn command_install(catalog: &Catalog, args: &[OsString]) -> Result<i32, String> 
                 "Found existing {} installation; registering it instead of reinstalling.",
                 surface.public_name
             );
-            return register_existing(catalog, surface, executable);
+            return register_existing_in_modality(
+                catalog,
+                surface,
+                executable,
+                InstallModality::ExistingGroundReconcile,
+                Some("existing-path-executable".to_owned()),
+            );
         }
     }
 
@@ -562,15 +609,39 @@ fn install_aikit(catalog: &Catalog, surface: &Surface) -> Result<i32, String> {
         .ok_or_else(|| {
             "AIKit installed but aikit could not be found. Add Cargo's bin directory to PATH and run 'oi register ai-kit'.".to_owned()
         })?;
-    register_existing(catalog, surface, executable)
+    // A pinned source build serves the frame the descriptor declares; a
+    // descriptor that predates the field still describes a source build.
+    let modality = if surface.install.modality == InstallModality::Unknown {
+        InstallModality::DeveloperSource
+    } else {
+        surface.install.modality
+    };
+    register_existing_in_modality(
+        catalog,
+        surface,
+        executable,
+        modality,
+        Some("aikit-source-build".to_owned()),
+    )
 }
 
-fn register_existing(
+/// Register an already-present executable, recording the modality and
+/// declared install source of the registration (#192).
+fn register_existing_in_modality(
     _catalog: &Catalog,
     surface: &Surface,
     executable: PathBuf,
+    modality: InstallModality,
+    install_source: Option<String>,
 ) -> Result<i32, String> {
-    let registration = registration_for(surface, Some(executable), None, None)?;
+    let registration = registration_in_modality(
+        surface,
+        Some(executable),
+        None,
+        None,
+        modality,
+        install_source,
+    )?;
     let mut composition = load_composition()?;
     ensure_alias_available(&composition, &registration)?;
     composition
@@ -667,11 +738,18 @@ fn find_surface<'a>(catalog: &'a Catalog, query: &str) -> Result<&'a Surface, St
         .ok_or_else(|| format!("unknown module '{query}'"))
 }
 
-fn registration_for(
+/// Build a registration with the installation modality (#192) and the
+/// declared install source recorded on it. Every install or init path
+/// calls this with the frame it actually serves so the composition
+/// discloses its provenance.
+#[allow(clippy::too_many_arguments)]
+fn registration_in_modality(
     surface: &Surface,
     executable: Option<PathBuf>,
     root: Option<PathBuf>,
     explicit_version: Option<String>,
+    modality: InstallModality,
+    install_source: Option<String>,
 ) -> Result<Registration, String> {
     let resolved_executable = executable.map(|path| path.display().to_string());
     let version = explicit_version.or_else(|| {
@@ -719,6 +797,8 @@ fn registration_for(
         docs,
         skill,
         root: root.map(|path| path.display().to_string()),
+        modality,
+        install_source,
     })
 }
 

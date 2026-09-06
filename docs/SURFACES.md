@@ -50,3 +50,18 @@ All six product centres now publish accepted native CLIs composed into the `oi` 
 `oi products [--json]` discloses the complete command field. The composition descriptors in `surfaces.json` retain the discovery, native-install, version, documentation, Skill, and compatibility facts O:I needs for handoff.
 
 Source-level command standing is `accepted-main` for all six products. This does not imply physical #97 acceptance. `suite/mainline.json` records the three standing qualifications: Workcell as `accepted-main-with-physical-provider-gates`, Software Factory as `accepted-main-with-active-research-exceptions`, and Quaternal Logic as `parallel-native-owner-exception`.
+
+## Installation modality of each descriptor
+
+Every install descriptor in `surfaces.json` declares the installation modality (context frame, #192) its install path serves — an optional-with-default field, so older external descriptors stay valid (they read as `unknown`). The canonical vocabulary lives in `cli/src/modality.rs` and is documented in `docs/INSTALL.md`:
+
+| Surface | `install.modality` | Why |
+|---|---|---|
+| Central | `fresh-ground` | its pinned source install is the fresh-ground bootstrap entry (`oi install central`), including the `machine.adopt-current` step at init |
+| Actuation | `developer-source` | its source pin serves the developer source world (`oi dev install`) |
+| AIKit | `developer-source` | its source pin serves the developer source world |
+| Software Factory | `developer-source` | its source pin serves the developer source world |
+| Workcell | `developer-source` | its source pin serves the developer source world |
+| Quaternal Logic | `developer-source` | its source pin serves the developer source world |
+
+Recorded modalities are disclosed per registration by `oi status [--json]` / `oi doctor [--json]`, and `oi current-world --json` reports the composition's frame as `composition_modality`. Registrations that predate the field disclose `unknown`; nothing is inferred retroactively.

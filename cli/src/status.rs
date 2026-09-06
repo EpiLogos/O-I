@@ -1,3 +1,4 @@
+use crate::modality::InstallModality;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::env;
@@ -62,6 +63,12 @@ struct Registration {
     version: Option<String>,
     #[serde(default)]
     root: Option<String>,
+    /// Modality recorded at install/init time (#192); legacy state without
+    /// the field reads as `unknown` and is disclosed as such.
+    #[serde(default)]
+    modality: InstallModality,
+    #[serde(default)]
+    install_source: Option<String>,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -119,6 +126,14 @@ pub struct SurfaceDisclosure {
     /// Human-readable drift finding; None when the surface is in step.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub drift: Option<String>,
+    /// The installation modality recorded for this registration (#192):
+    /// `None` when the surface is not registered (no frame produced it),
+    /// `Some(Unknown)` for legacy registrations that predate the field.
+    #[serde(default)]
+    pub modality: Option<InstallModality>,
+    /// The declared install source recorded with the registration, if any.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub install_source: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -409,10 +424,14 @@ where
                 live_revision: None,
                 path_executable: None,
                 drift: None,
+                modality: None,
+                install_source: None,
             };
 
             if let Some(registration) = composition.modules.get(&surface.id) {
                 disclosure.version = registration.version.clone();
+                disclosure.modality = Some(registration.modality);
+                disclosure.install_source = registration.install_source.clone();
                 if surface.native.kind == "cli" {
                     let candidate = registration
                         .native_executable
@@ -538,9 +557,68 @@ mod tests {
                 live_revision: None,
                 path_executable: None,
                 drift: None,
+                modality: None,
+                install_source: None,
             }],
             warnings: Vec::new(),
         }
+    }
+
+    #[test]
+    fn modality_disclosure_distinguishes_recorded_legacy_and_unregistered() {
+        // A registration that records its modality discloses it; a legacy
+        // registration without the field discloses `unknown`; an
+        // unregistered surface discloses no modality at all.
+        let registered = r#"{
+            "schema": 1,
+            "modules": {
+                "ai-kit": {"native_executable": "/bin/aikit", "modality": "developer-source",
+                            "install_source": "developer-source-build"}
+            }
+        }"#;
+        let legacy = r#"{
+            "schema": 1,
+            "modules": {"ai-kit": {"native_executable": "/bin/aikit"}}
+        }"#;
+        let catalog = r#"{
+            "schema": 1,
+            "surfaces": [{
+                "id": "ai-kit", "public_name": "AIKit", "function": "resolution",
+                "repository": "https://github.com/EpiLogos/ai-kit",
+                "native": {"kind": "cli", "entry": "aikit", "executable": "aikit"}
+            }]
+        }"#;
+
+        let recorded = disclosure_from_json(catalog, Some(registered), |_| None, |_| false)
+            .unwrap()
+            .surfaces[0]
+            .clone();
+        assert_eq!(
+            recorded.modality,
+            Some(InstallModality::DeveloperSource),
+            "recorded modality must be disclosed"
+        );
+        assert_eq!(
+            recorded.install_source.as_deref(),
+            Some("developer-source-build")
+        );
+
+        let old = disclosure_from_json(catalog, Some(legacy), |_| None, |_| false)
+            .unwrap()
+            .surfaces[0]
+            .clone();
+        assert_eq!(
+            old.modality,
+            Some(InstallModality::Unknown),
+            "legacy registrations must disclose unknown, not a guess"
+        );
+        assert_eq!(old.install_source, None);
+
+        let unregistered = disclosure_from_json(catalog, None, |_| None, |_| false)
+            .unwrap()
+            .surfaces[0]
+            .clone();
+        assert_eq!(unregistered.modality, None);
     }
 
     #[test]

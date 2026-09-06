@@ -46,68 +46,27 @@ fn finalize_central_suite_registration() -> Result<(), String> {
         .and_then(|registration| registration.native_executable.as_deref())
         .and_then(resolve_executable)
         .ok_or_else(|| "Central native executable disappeared after bootstrap".to_owned())?;
-    let registration = registration_for(
+    let registration = registration_in_modality(
         central,
         Some(executable.clone()),
         Some(checkout.clone()),
         Some(central.docs_ref.clone()),
+        oi_cli::modality::InstallModality::FreshGround,
+        Some("pinned-source-checkout".to_owned()),
     )?;
     composition.modules.insert("central".to_owned(), registration);
     save_composition(&composition)?;
-    adopt_current_machine(&executable, &personal_ground)?;
+    // Fresh-ground machine adoption through the registered ctrl's own
+    // Action (Central #87), shared with `oi init --personal-ground`.
+    match adopt_current_machine_through_ctrl(&executable, &personal_ground)? {
+        MachineAdoptionReport::Adopted(adopted) => println!(
+            "machine-adoption: {} ({} \u{2194} {})",
+            adopted.outcome, adopted.role, adopted.workcell_ref
+        ),
+        MachineAdoptionReport::Unavailable { ctrl_version } => println!(
+            "machine-adoption: unavailable (ctrl {ctrl_version} lacks {MACHINE_ADOPT_CURRENT_ACTION})"
+        ),
+    }
     println!("Central source: {} @ {}", checkout.display(), central.docs_ref);
-    Ok(())
-}
-
-fn adopt_current_machine(ctrl_executable: &Path, personal_ground: &Path) -> Result<(), String> {
-    let bin_dir = ctrl_executable
-        .parent()
-        .ok_or_else(|| "Central executable has no installation directory".to_owned())?;
-    let adopter = bin_dir.join(if cfg!(windows) {
-        "central-machine-adopt.exe"
-    } else {
-        "central-machine-adopt"
-    });
-    if !is_executable(&adopter) {
-        return Err(format!(
-            "Central installation does not expose current-machine adoption at {}",
-            adopter.display()
-        ));
-    }
-
-    let output = Command::new(&adopter)
-        .arg("--root")
-        .arg(personal_ground)
-        .args([
-            "--role",
-            oi_cli::current_world::DEFAULT_MACHINE_ROLE,
-            "--workcell-ref",
-            oi_cli::current_world::DEFAULT_LOCAL_WORKCELL_REF,
-            "--json",
-        ])
-        .stdin(Stdio::null())
-        .output()
-        .map_err(|error| format!("failed to establish current Central machine relation: {error}"))?;
-    if !output.status.success() {
-        return Err(format!(
-            "Central current-machine adoption failed: {}",
-            String::from_utf8_lossy(&output.stderr).trim()
-        ));
-    }
-
-    let payload: serde_json::Value = serde_json::from_slice(&output.stdout)
-        .map_err(|error| format!("Central current-machine adoption returned invalid JSON: {error}"))?;
-    if payload["ok"] != true
-        || payload["workcell_ref"] != oi_cli::current_world::DEFAULT_LOCAL_WORKCELL_REF
-    {
-        return Err("Central current-machine adoption returned an unexpected result".to_owned());
-    }
-
-    let outcome = payload["outcome"].as_str().unwrap_or("established");
-    println!(
-        "Current machine: {} ↔ {} ({outcome})",
-        oi_cli::current_world::DEFAULT_MACHINE_ROLE,
-        oi_cli::current_world::DEFAULT_LOCAL_WORKCELL_REF
-    );
     Ok(())
 }

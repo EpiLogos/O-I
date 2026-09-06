@@ -120,15 +120,26 @@ jobs:
           ]
           for relative in required:
               assert (root / relative).is_dir(), relative
-          for relative in ["Control/user", "Control/agents/governance", "Control/machines"]:
+          for relative in ["Control/user", "Control/agents/governance"]:
               assert list((root / relative).iterdir()) == [], relative
+          # Fresh-ground machine adoption (Central #87 through O:I #192):
+          # exactly one authored current-machine declaration, bound to the
+          # local Workcell.
+          assert [p.name for p in (root / "Control/machines").iterdir()] == ["current.json"]
+          machine = json.load(open(root / "Control/machines/current.json"))
+          assert machine["role"] == "current"
+          assert machine["bindings"] == [{"kind": "workcell", "reference": "workcell:local"}]
           assert (root / "Control/agents/wiki/wiki.json").is_file()
 
           assert set(state) == {"schema", "personal_ground", "modules"}
           assert state["personal_ground"] == str(root)
           central = state["modules"]["central"]
-          assert set(central) <= {"id", "public_name", "native_executable", "alias", "version", "docs", "skill", "root"}
+          assert set(central) <= {"id", "public_name", "native_executable", "alias", "version", "docs", "skill", "root", "modality", "install_source"}
           assert central["alias"] == "ctrl"
+          # Installation modality (#192): the fresh-ground frame is recorded
+          # on the registration, with the pinned source build declared.
+          assert central["modality"] == "fresh-ground"
+          assert central["install_source"] == "oi-pinned-source-build"
           current_central = next(item for item in mainline["products"] if item["id"] == "central")["revision"]
           released_central = next(item for item in release["products"] if item["id"] == "central")["revision"]
           assert central["version"] == current_central
@@ -136,6 +147,8 @@ jobs:
 
           central_status = next(item for item in status["surfaces"] if item["id"] == "central")
           assert central_status["state"] == "registered"
+          assert central_status["modality"] == "fresh-ground"
+          assert central_status["install_source"] == "oi-pinned-source-build"
           assert doctor["status"] == "success" and doctor["data"]["valid"] is True
           ids = {item["id"] for item in actions["data"]["actions"]}
           assert {
@@ -145,6 +158,7 @@ jobs:
               "projectcentral.inspect",
               "projectcentral.doctor",
               "projectcentral.init",
+              "machine.adopt-current",
           } <= ids
 
           assert suite["kind"] == "oi.suite-snapshot/v1"

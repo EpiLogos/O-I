@@ -286,6 +286,7 @@ fn command_suite_v2_install(args: &[OsString]) -> Result<i32, String> {
     }
 
     println!("Installed recorded pre-local build set {}.", manifest.suite_version);
+    println!("Modality: fresh-ground (recorded-release-artifact bootstrap)");
     println!("Managed root: {}", data_root.display());
     println!("Control/ and Work/ were not used as artifact storage.");
     println!("Next: oi verify");
@@ -430,7 +431,14 @@ fn install_manifest_product(
     };
 
     let surface = find_surface(catalog, &product.id)?;
-    let registration = registration_for(surface, executable.clone(), Some(material_root.clone()), Some(product.revision.clone()))?;
+    let registration = registration_in_modality(
+        surface,
+        executable.clone(),
+        Some(material_root.clone()),
+        Some(product.revision.clone()),
+        oi_cli::modality::InstallModality::FreshGround,
+        Some("recorded-release-artifact".to_owned()),
+    )?;
     ensure_alias_available(composition, &registration)?;
     composition.modules.insert(product.id.clone(), registration);
 
@@ -620,6 +628,8 @@ fn command_suite_v2_doctor(args: &[OsString]) -> Result<i32, String> {
                     "surface": surface.id,
                     "state": surface.state,
                     "ok": surface_ok,
+                    "modality": surface.modality,
+                    "install_source": surface.install_source,
                     "registered_version": surface.registered_version,
                     "live_revision": surface.live_revision,
                     "path_executable": surface.path_executable,
@@ -939,7 +949,14 @@ fn command_dev_install_v2(args: &[OsString]) -> Result<i32, String> {
         let executable = product.artifact.entry.as_deref().map(|entry| root.join("target/release").join(entry)).filter(|path| is_executable(path));
         if product.artifact.entry.is_some() && executable.is_none() { return Err(format!("{} build did not produce expected release executable", id)); }
         let surface = find_surface(&catalog, &id)?;
-        let registration = registration_for(surface, executable, Some(root.clone()), Some(product.revision.clone()))?;
+        let registration = registration_in_modality(
+            surface,
+            executable,
+            Some(root.clone()),
+            Some(product.revision.clone()),
+            oi_cli::modality::InstallModality::DeveloperSource,
+            Some("developer-source-build".to_owned()),
+        )?;
         ensure_alias_available(&composition, &registration)?;
         composition.modules.insert(id.clone(), registration);
         println!("{id}: registered developer source/build at {}", root.display());

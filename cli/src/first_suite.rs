@@ -208,11 +208,13 @@ fn command_install_suite(args: &[OsString]) -> Result<i32, String> {
         } else {
             None
         };
-        let registration = registration_for(
+        let registration = registration_in_modality(
             surface,
             executable,
             Some(checkout.clone()),
             Some(surface.docs_ref.clone()),
+            oi_cli::modality::InstallModality::FreshGround,
+            Some("pinned-source-checkout".to_owned()),
         )?;
         ensure_alias_available(&composition, &registration)?;
         composition.modules.insert(surface.id.clone(), registration);

@@ -13,28 +13,111 @@ pub fn patched_main() -> ExitCode {
     }
 }
 
+/// One intercepted bootstrap subcommand (#192): the installation modality
+/// (context frame) the entry serves, a note naming that frame's duty, an
+/// example argv proving the matcher is servable (the dispatch-parity
+/// proof), the argv matcher, and the handler. This table is the single
+/// point of truth for `patched_run` — an intercepted subcommand without a
+/// table entry (or an entry without a declared modality) fails the
+/// dispatch-parity tests below. The `modality`/`note`/`example` fields are
+/// the declaration itself; production dispatch reads `subcommand`,
+/// `matches` and `run`, the parity tests read the rest.
+#[cfg_attr(not(test), allow(dead_code))]
+struct BootstrapDispatchEntry {
+    /// The leading subcommand this entry intercepts.
+    subcommand: &'static str,
+    /// The installation modality this entry serves; never `unknown`.
+    modality: InstallModality,
+    /// What the intercepted command does inside that frame.
+    note: &'static str,
+    /// A representative argv that `matches` accepts.
+    example: &'static [&'static str],
+    matches: fn(&[OsString]) -> bool,
+    run: fn(&[OsString]) -> Result<i32, String>,
+}
+
+const BOOTSTRAP_DISPATCH: &[BootstrapDispatchEntry] = &[
+    BootstrapDispatchEntry {
+        subcommand: "install",
+        modality: InstallModality::FreshGround,
+        note: "legacy fallback Central source install (`install central|ctrl`); the current-main route in trust_closure_route intercepts first",
+        example: &["install", "central"],
+        matches: matches_install_central,
+        run: run_install_central,
+    },
+    BootstrapDispatchEntry {
+        subcommand: "init",
+        modality: InstallModality::FreshGround,
+        note: "establish a personal ground through a compatible Central (`init --personal-ground PATH`)",
+        example: &["init", "--personal-ground", "/tmp/Central"],
+        matches: matches_init_personal_ground,
+        run: run_init_personal_ground,
+    },
+    BootstrapDispatchEntry {
+        subcommand: "skills",
+        modality: InstallModality::ExistingGroundReconcile,
+        note: "re-project the guardian SkillSet onto the existing ground and hand it to AIKit (the harness-strap step)",
+        example: &["skills", "sync"],
+        matches: matches_skills_sync,
+        run: run_skills_sync,
+    },
+    BootstrapDispatchEntry {
+        subcommand: "migrate",
+        modality: InstallModality::ExistingGroundReconcile,
+        note: "place an existing work tree under the ground's Work/ field without rewriting it",
+        example: &["migrate", "/tmp/existing-project"],
+        matches: matches_any_argv,
+        run: run_migrate_placement,
+    },
+];
+
 fn patched_run(args: &[OsString]) -> Option<Result<i32, String>> {
     let command = args.first().and_then(|value| value.to_str())?;
-    match command {
-        "install" if args.len() == 2 => {
-            let module = args[1].to_string_lossy().to_ascii_lowercase();
-            if matches!(module.as_str(), "central" | "ctrl") {
-                return Some(command_install_central());
-            }
-            None
-        }
-        "init" if args.iter().any(|value| {
-            value
-                .to_str()
-                .map(|value| value == "--personal-ground" || value.starts_with("--personal-ground="))
-                .unwrap_or(false)
-        }) => Some(command_init_personal(args.get(1..).unwrap_or_default())),
-        "skills" if args.len() == 2 && args[1].to_str() == Some("sync") => {
-            Some(command_skills_sync())
-        }
-        "migrate" => Some(command_migrate_placement(args.get(1..).unwrap_or_default())),
-        _ => None,
-    }
+    BOOTSTRAP_DISPATCH
+        .iter()
+        .find(|entry| entry.subcommand == command && (entry.matches)(args))
+        .map(|entry| (entry.run)(args))
+}
+
+fn matches_install_central(args: &[OsString]) -> bool {
+    args.len() == 2
+        && matches!(
+            args[1].to_string_lossy().to_ascii_lowercase().as_str(),
+            "central" | "ctrl"
+        )
+}
+
+fn matches_init_personal_ground(args: &[OsString]) -> bool {
+    args.iter().any(|value| {
+        value
+            .to_str()
+            .map(|value| value == "--personal-ground" || value.starts_with("--personal-ground="))
+            .unwrap_or(false)
+    })
+}
+
+fn matches_skills_sync(args: &[OsString]) -> bool {
+    args.len() == 2 && args[1].to_str() == Some("sync")
+}
+
+fn matches_any_argv(_args: &[OsString]) -> bool {
+    true
+}
+
+fn run_install_central(_args: &[OsString]) -> Result<i32, String> {
+    command_install_central()
+}
+
+fn run_init_personal_ground(args: &[OsString]) -> Result<i32, String> {
+    command_init_personal(args.get(1..).unwrap_or_default())
+}
+
+fn run_skills_sync(_args: &[OsString]) -> Result<i32, String> {
+    command_skills_sync()
+}
+
+fn run_migrate_placement(args: &[OsString]) -> Result<i32, String> {
+    command_migrate_placement(args.get(1..).unwrap_or_default())
 }
 
 fn central_install_details() -> Result<(String, String, String), String> {
@@ -111,7 +194,13 @@ fn command_install_central() -> Result<i32, String> {
     {
         if central_compatible(&executable) {
             println!("Found existing compatible Central installation; registering it instead of reinstalling.");
-            return register_existing(&catalog, surface, executable);
+            return register_existing_in_modality(
+                &catalog,
+                surface,
+                executable,
+                InstallModality::FreshGround,
+                Some("existing-path-ctrl".to_owned()),
+            );
         }
         println!("Detected ctrl is not compatible with the required Central bootstrap contract; installing the pinned native source instead.");
     }
@@ -125,7 +214,13 @@ fn command_install_central() -> Result<i32, String> {
     let managed = install_root.join("bin/ctrl");
     if is_executable(&managed) && central_compatible(&managed) {
         println!("Found existing compatible managed Central installation; registering it.");
-        return register_existing(&catalog, surface, managed);
+        return register_existing_in_modality(
+            &catalog,
+            surface,
+            managed,
+            InstallModality::FreshGround,
+            Some("oi-managed-pinned-source".to_owned()),
+        );
     }
 
     let git = resolve_executable("git")
@@ -209,7 +304,13 @@ fn command_install_central() -> Result<i32, String> {
         return Err("Central installed but the resulting ctrl does not satisfy the required bootstrap contract; prior composition state remains unchanged".to_owned());
     }
 
-    register_existing(&catalog, surface, managed)
+    register_existing_in_modality(
+        &catalog,
+        surface,
+        managed,
+        InstallModality::FreshGround,
+        Some("oi-pinned-source-build".to_owned()),
+    )
 }
 
 fn parse_personal_ground(args: &[OsString]) -> Result<PathBuf, String> {
@@ -296,7 +397,14 @@ fn command_init_personal(args: &[OsString]) -> Result<i32, String> {
             if surface.id == "central" && !central_compatible(&candidate) {
                 continue;
             }
-            let registration = registration_for(surface, Some(candidate), None, None)?;
+            let registration = registration_in_modality(
+                surface,
+                Some(candidate),
+                None,
+                None,
+                InstallModality::ExistingGroundReconcile,
+                Some("existing-path-executable".to_owned()),
+            )?;
             ensure_alias_available(&composition, &registration)?;
             composition.modules.insert(surface.id.clone(), registration);
         }
@@ -308,7 +416,14 @@ fn command_init_personal(args: &[OsString]) -> Result<i32, String> {
     })?;
 
     if !composition.modules.contains_key("central") {
-        let registration = registration_for(central_surface, Some(executable.clone()), None, None)?;
+        let registration = registration_in_modality(
+            central_surface,
+            Some(executable.clone()),
+            None,
+            None,
+            InstallModality::FreshGround,
+            Some("existing-path-ctrl".to_owned()),
+        )?;
         ensure_alias_available(&composition, &registration)?;
         composition.modules.insert("central".to_owned(), registration);
     }
@@ -497,4 +612,113 @@ fn command_migrate_placement(args: &[OsString]) -> Result<i32, String> {
     println!("No Project, Factory, AIKit, or Workcell object was created or renamed.");
     println!("Derived systems that remember the old path may now need an explicit refresh.");
     Ok(0)
+}
+
+#[cfg(test)]
+mod bootstrap_dispatch_tests {
+    use super::*;
+
+    fn os_args(example: &[&str]) -> Vec<OsString> {
+        example.iter().map(OsString::from).collect()
+    }
+
+    /// Set proof (#192 acceptance): every intercepted bootstrap subcommand
+    /// lives in the dispatch table, every table entry declares a real
+    /// modality, and every entry is servable — its own example argv
+    /// satisfies its matcher and names its subcommand.
+    #[test]
+    fn every_dispatch_entry_is_servable_and_declares_a_real_modality() {
+        assert!(!BOOTSTRAP_DISPATCH.is_empty());
+        for entry in BOOTSTRAP_DISPATCH {
+            assert!(
+                !entry.subcommand.is_empty(),
+                "dispatch entry must name its subcommand"
+            );
+            assert_ne!(
+                entry.modality,
+                InstallModality::Unknown,
+                "{} must declare a real modality, not unknown",
+                entry.subcommand
+            );
+            assert!(
+                InstallModality::from_name(entry.modality.as_str()).is_some(),
+                "{} declares non-canonical modality",
+                entry.subcommand
+            );
+            assert!(!entry.note.is_empty(), "{} must document its frame", entry.subcommand);
+            assert_eq!(
+                entry.example.first().copied(),
+                Some(entry.subcommand),
+                "{} example argv must start with the subcommand",
+                entry.subcommand
+            );
+            let argv = os_args(entry.example);
+            assert!(
+                (entry.matches)(&argv),
+                "{} matcher rejects its own example {:?}",
+                entry.subcommand, entry.example
+            );
+        }
+    }
+
+    /// No orphan subcommands: the table keys are exactly the subcommands
+    /// `patched_run` routes, and argv shapes the old string-matching
+    /// declined still fall through untouched.
+    #[test]
+    fn dispatch_has_no_orphans_and_preserves_fallthrough() {
+        let mut subcommands: Vec<&str> = BOOTSTRAP_DISPATCH
+            .iter()
+            .map(|entry| entry.subcommand)
+            .collect();
+        subcommands.sort_unstable();
+        subcommands.dedup();
+        assert_eq!(subcommands.len(), BOOTSTRAP_DISPATCH.len(), "duplicate table keys");
+
+        // Behaviour-preserving fallthrough: argv the previous string
+        // matching declined must still reach the underlying main().
+        for declined in [
+            vec!["status"],
+            vec!["status", "--json"],
+            vec!["install"],
+            vec!["install", "ai-kit"],
+            vec!["install", "central", "extra"],
+            vec!["init"],
+            vec!["skills"],
+            vec!["skills", "sync", "extra"],
+            vec!["help"],
+        ] {
+            assert!(
+                patched_run(&os_args(&declined)).is_none(),
+                "argv {declined:?} must fall through to main()"
+            );
+        }
+
+        // And the intercepted shapes still resolve to a table entry.
+        for entry in BOOTSTRAP_DISPATCH {
+            let argv = os_args(entry.example);
+            let chosen = BOOTSTRAP_DISPATCH
+                .iter()
+                .find(|candidate| candidate.subcommand == argv[0].to_str().unwrap_or("")
+                    && (candidate.matches)(&argv));
+            assert!(
+                chosen.is_some(),
+                "argv {:?} must resolve through the table",
+                entry.example
+            );
+        }
+    }
+
+    /// The bootstrap frames are drawn from the canonical vocabulary — no
+    /// synonyms, no undeclared frames.
+    #[test]
+    fn dispatch_modalities_come_from_the_canonical_vocabulary() {
+        for entry in BOOTSTRAP_DISPATCH {
+            let named = InstallModality::from_name(entry.modality.as_str())
+                .expect("canonical modality name");
+            assert!(
+                InstallModality::ALL.contains(&named),
+                "modality must belong to the canonical set"
+            );
+        }
+    }
 }
