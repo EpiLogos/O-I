@@ -23,7 +23,8 @@ pub const SUITE_SKILLSET_MANIFEST_TOML: &str =
     include_str!("../../skills/suite-operator/skillset.toml");
 
 /// Authoritative guardian Skill sources shipped with this CLI, keyed by the
-/// manifest's `source.path`.
+/// manifest's `source.path`. A member's sibling payload files (see
+/// `GUARDIAN_SKILL_PAYLOAD_FILES`) materialise beside its SKILL.md.
 pub const GUARDIAN_SKILL_SOURCES: &[(&str, &str)] = &[
     (
         "skills/oi/SKILL.md",
@@ -36,6 +37,31 @@ pub const GUARDIAN_SKILL_SOURCES: &[(&str, &str)] = &[
     (
         "skills/central-session-strap/SKILL.md",
         include_str!("../../skills/central-session-strap/SKILL.md"),
+    ),
+];
+
+/// Sibling payload files a guardian Skill ships beside its SKILL.md, keyed by
+/// the same `source.path` scheme. Some guardian Skills are a directory, not
+/// one file: the strap's root-register NOW/DAY executor (`now.py`), its
+/// governance renderer and its verification suite are the procedure the Skill
+/// text teaches. Members without declared siblings project SKILL.md (and its
+/// receipt) exactly as before.
+pub const GUARDIAN_SKILL_PAYLOAD_FILES: &[(&str, &str)] = &[
+    (
+        "skills/central-session-strap/now.py",
+        include_str!("../../skills/central-session-strap/now.py"),
+    ),
+    (
+        "skills/central-session-strap/render-context.py",
+        include_str!("../../skills/central-session-strap/render-context.py"),
+    ),
+    (
+        "skills/central-session-strap/skill.json",
+        include_str!("../../skills/central-session-strap/skill.json"),
+    ),
+    (
+        "skills/central-session-strap/verify.sh",
+        include_str!("../../skills/central-session-strap/verify.sh"),
     ),
 ];
 
@@ -157,6 +183,100 @@ fn guardian_source_content(
         })
 }
 
+/// The declared sibling payload files of one guardian Skill: `(file name,
+/// authoritative content)` pairs to materialise beside its SKILL.md.
+fn guardian_sibling_payloads(source_path: &str) -> Vec<(&str, &'static str)> {
+    let directory = match source_path.rsplit_once('/') {
+        Some((directory, _)) => format!("{directory}/"),
+        None => return Vec::new(),
+    };
+    GUARDIAN_SKILL_PAYLOAD_FILES
+        .iter()
+        .filter(|(path, _)| path.starts_with(&directory))
+        .map(|(path, content)| (&path[directory.len()..], *content))
+        .collect()
+}
+
+/// Materialise one declared payload sibling as byte-identical derived state.
+/// Unlike a SKILL.md projection, a sibling carries no derivation marker and
+/// no receipt: its honesty is byte identity with the shipped source. A
+/// locally edited copy is preserved and surfaced, never clobbered; a symlink
+/// is AIKit-managed state and is never written through. Filesystem failures
+/// surface as errors, as a SKILL.md materialisation would.
+fn materialise_payload_sibling(
+    destination: &Path,
+    authoritative_content: &str,
+) -> Result<DirectProjectionOutcome, String> {
+    if fs::symlink_metadata(destination)
+        .map(|metadata| metadata.file_type().is_symlink())
+        .unwrap_or(false)
+    {
+        return Ok(match fs::read_to_string(destination) {
+            Ok(current) if current == authoritative_content => DirectProjectionOutcome {
+                state: DirectProjectionState::AikitManaged,
+                receipt: None,
+                detail: None,
+            },
+            Ok(_) => DirectProjectionOutcome {
+                state: DirectProjectionState::AikitManaged,
+                receipt: None,
+                detail: Some(format!(
+                    "AIKit-managed copy at {} differs from the authoritative guardian source; update it through AIKit",
+                    destination.display()
+                )),
+            },
+            Err(error) => DirectProjectionOutcome {
+                state: DirectProjectionState::ConflictPreserved,
+                receipt: None,
+                detail: Some(format!(
+                    "payload {} is a symlink that could not be read ({error}); left untouched",
+                    destination.display()
+                )),
+            },
+        });
+    }
+    if !destination.exists() {
+        if let Some(parent) = destination.parent() {
+            fs::create_dir_all(parent)
+                .map_err(|error| format!("could not create projection directory: {error}"))?;
+        }
+        fs::write(destination, authoritative_content).map_err(|error| {
+            format!(
+                "could not write derived Skill payload {}: {error}",
+                destination.display()
+            )
+        })?;
+        return Ok(DirectProjectionOutcome {
+            state: DirectProjectionState::Created,
+            receipt: None,
+            detail: None,
+        });
+    }
+    match fs::read_to_string(destination) {
+        Ok(current) if current == authoritative_content => Ok(DirectProjectionOutcome {
+            state: DirectProjectionState::Unchanged,
+            receipt: None,
+            detail: None,
+        }),
+        Ok(_) => Ok(conflict_payload(
+            destination,
+            "payload holds a local edit; preserved without overwrite".to_owned(),
+        )),
+        Err(error) => Err(format!(
+            "could not read existing guardian payload {}: {error}",
+            destination.display()
+        )),
+    }
+}
+
+fn conflict_payload(destination: &Path, detail: String) -> DirectProjectionOutcome {
+    DirectProjectionOutcome {
+        state: DirectProjectionState::ConflictPreserved,
+        receipt: None,
+        detail: Some(format!("payload {}: {detail}", destination.display())),
+    }
+}
+
 pub fn project_guardian_skillset(
     ground: &Path,
     source_revision: &str,
@@ -223,6 +343,18 @@ pub fn project_guardian_skillset(
                 state: outcome.state,
                 detail: outcome.detail,
             });
+            // Declared payload siblings ride with their SKILL.md: the same
+            // harness roots, the same preservation law, byte-identical.
+            for (sibling, sibling_content) in guardian_sibling_payloads(&relation.source_path) {
+                let destination = ground.join(harness_root).join(&directory).join(sibling);
+                let outcome = materialise_payload_sibling(&destination, sibling_content)?;
+                destinations.push(GuardianDestinationOutcome {
+                    harness_root: (*harness_root).to_owned(),
+                    destination,
+                    state: outcome.state,
+                    detail: outcome.detail,
+                });
+            }
         }
         outcomes.push(GuardianProjectionOutcome {
             skill_ref: relation.skill_ref.clone(),
