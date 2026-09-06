@@ -15,9 +15,9 @@
     {
       "id": "actuation",
       "repository": "https://github.com/EpiLogos/Actuation",
-      "revision": "faa5b79f75230ef259d5e523fcade491b23dc3eb",
+      "revision": "7c59dbcb295faf42e1cb85d873efe57d85af86b7",
       "state": "accepted-main",
-      "note": "Current Actuation main includes the realised authority/runtime floor, semantic Activity over canonical ActuationStream, the owner-native installable actuation CLI (oi-managed-native-cli with installed verify), actuation.instantiation/v1 evidence-gated receipts, the actuation.harness-detection/v1 contract with its live detection engine proof, and the Prime recursive relational Agency experiment (#26/#81) under experiments/ql-runtime/prime."
+      "note": "Current Actuation main includes the realised authority/runtime floor, semantic Activity over canonical ActuationStream, the owner-native installable actuation CLI (oi-managed-native-cli with installed verify), actuation.instantiation/v1 evidence-gated receipts, the actuation.harness-detection/v1 contract with its live detection engine proof, and the Prime recursive relational Agency experiment (#26/#81) under experiments/ql-runtime/prime, plus the 0.2.0 CLI surface catch-up: single-source command table with parity-tested surface/help/README derivation, opt-in --versions disclosure, real http/daemon service probes, the harness catalog command with detect --only, instantiation --out JSONL, the catalog validator with its JSON-schema catalog document, and repaired CI gates."
     },
     {
       "id": "ai-kit",

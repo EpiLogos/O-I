@@ -81,7 +81,7 @@
       "public_name": "Actuation",
       "function": "Agency, WorldBinding, RootScope, Metagency, Determination and Return authority",
       "repository": "https://github.com/EpiLogos/Actuation",
-      "docs_ref": "faa5b79f75230ef259d5e523fcade491b23dc3eb",
+      "docs_ref": "7c59dbcb295faf42e1cb85d873efe57d85af86b7",
       "docs_path": "docs/WORLD-BOUND-ROOT-AGENCY.md",
       "skill_paths": [],
       "native": {
@@ -102,7 +102,7 @@
           "verify",
           "--json"
         ],
-        "command_revision": "faa5b79f75230ef259d5e523fcade491b23dc3eb",
+        "command_revision": "7c59dbcb295faf42e1cb85d873efe57d85af86b7",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [],
@@ -112,8 +112,8 @@
       },
       "install": {
         "kind": "oi-managed-native-cli",
-        "ref": "faa5b79f75230ef259d5e523fcade491b23dc3eb",
-        "revision": "faa5b79f75230ef259d5e523fcade491b23dc3eb",
+        "ref": "7c59dbcb295faf42e1cb85d873efe57d85af86b7",
+        "revision": "7c59dbcb295faf42e1cb85d873efe57d85af86b7",
         "path": "bin/actuation",
         "note": "Current accepted owner main publishes the dependency-free native Actuation command and declares native CLI installation."
       },
