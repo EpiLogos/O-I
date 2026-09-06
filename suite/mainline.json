@@ -1,6 +1,6 @@
 {
   "schema": "oi.mainline-snapshot/v1",
-  "observed_at": "2026-09-05",
+  "observed_at": "2026-09-06",
   "purpose": "Durable source snapshot for the six-product O:I composition at the current pre-#97 deterministic cut. O:I #97 live-main convergence applies to its explicitly named primary repository set; Quaternal Logic remains represented as the separately owned parallel product and is not a #97 live-main dependency gate.",
   "source_catalog": "surfaces.json",
   "coordinator_rule": "O:I itself is the repository containing this snapshot; its exact accepted commit is recorded by the owning PR/issue receipt rather than self-referentially inside this file.",
@@ -22,9 +22,9 @@
     {
       "id": "ai-kit",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "revision": "ab1f72cd05a690e7ad2a64e839fb67210e4b783d",
+      "revision": "7d7f827024a448c3466b750988a694354b47b225",
       "state": "accepted-main",
-      "note": "Current AIKit main includes SessionSpace, content-addressed ContextResolution evidence, Herdr/Hyprland reference composition with deterministic Herdr automation-provider coverage, VersionedWorld/ProjectWorld, Method, proof-before-automation Routine, operative Resolve/search, canonical QL-shape use, Central-owned NOW/DAY/Flow temporal grounding through the public Action seam, pre-local build-only standing, native installed doctor verification for #172, and CI conformance that the committed builtin capability registry contains only valid manifests."
+      "note": "Current AIKit main includes SessionSpace, content-addressed ContextResolution evidence, Herdr/Hyprland reference composition with deterministic Herdr automation-provider coverage, VersionedWorld/ProjectWorld, Method, proof-before-automation Routine, operative Resolve/search, canonical QL-shape use, Central-owned NOW/DAY/Flow temporal grounding through the public Action seam, pre-local build-only standing, native installed doctor verification for #172, and CI conformance that the committed builtin capability registry contains only valid manifests. Refreshed 2026-09-06 to 7d7f827 (macOS PTY renderer CI fix) after the ab1f72c retirement-aware skills cut; O:I-facing capabilities/doctor surface verified intact."
     },
     {
       "id": "software-factory",
