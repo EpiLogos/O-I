@@ -1,0 +1,26 @@
+   Compiling aikit-cli v0.1.0 (/private/tmp/astra-aikit-user-ground/crates/aikit-cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 15.92s
+     Running tests/adopt_command.rs (target/debug/deps/adopt_command-7a3f9061eace7af4)
+
+running 15 tests
+test adoption_refuses_a_skill_tree_that_escapes_through_a_directory_symlink ... ok
+test adoption_refuses_a_fourth_control_layout ... ok
+test confirmation_is_refused_when_the_source_changed_after_preview ... ok
+test adoption_without_confirmation_is_a_real_diff_and_writes_nothing ... ok
+test control_adoption_preserves_retirement_and_refuses_external_links ... ok
+test control_adoption_refuses_changed_review_and_conflicting_staged_bytes ... ok
+test confirmed_adoption_moves_authority_and_undo_restores_the_foreign_tree ... ok
+test linked_skill_confirmation_is_refused_when_only_the_link_target_changes ... ok
+test authority_record_refuses_a_journal_from_an_unrelated_procedure_kind ... ok
+test adoption_moves_a_linked_skill_without_mutating_its_external_target ... ok
+test authority_record_cannot_claim_a_source_root_the_procedure_did_not_move ... ok
+test the_tree_reports_an_adopted_root_as_adopted_not_foreign ... ok
+test control_adoption_stages_exact_ground_and_preserves_originals_until_cutover ... ok
+test personal_and_project_adoption_use_central_scopes_without_machine_attribution ... ok
+test control_cutover_uses_a_real_generation_and_undo_restores_the_original_tree has been running for over 60 seconds
+test control_cutover_uses_a_real_generation_and_undo_restores_the_original_tree ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 64.08s
+
+    Checking aikit-cli v0.1.0 (/private/tmp/astra-aikit-user-ground/crates/aikit-cli)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 7.94s

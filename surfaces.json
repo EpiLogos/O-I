@@ -140,7 +140,7 @@
       "public_name": "AIKit",
       "function": "context, capability, model, credential, SessionSpace and provider-process resolution",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "docs_ref": "5187bfd243f75f1c8366f03a73d8c825ddde21a1",
+      "docs_ref": "aa4abc32ba093d55e28d6f77dda21ba0e5e4ccdf",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -164,7 +164,7 @@
           "doctor",
           "--json"
         ],
-        "command_revision": "5187bfd243f75f1c8366f03a73d8c825ddde21a1",
+        "command_revision": "aa4abc32ba093d55e28d6f77dda21ba0e5e4ccdf",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [
@@ -181,8 +181,8 @@
       "install": {
         "kind": "oi-managed-binary",
         "modality": "developer-source",
-        "ref": "5187bfd243f75f1c8366f03a73d8c825ddde21a1",
-        "revision": "5187bfd243f75f1c8366f03a73d8c825ddde21a1",
+        "ref": "aa4abc32ba093d55e28d6f77dda21ba0e5e4ccdf",
+        "revision": "aa4abc32ba093d55e28d6f77dda21ba0e5e4ccdf",
         "path": "crates/aikit-cli",
         "note": "Current #97 source/install pin; immutable released artifacts remain separately recorded in suite/manifest.json."
       },

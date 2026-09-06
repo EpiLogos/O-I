@@ -22,9 +22,9 @@
     {
       "id": "ai-kit",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "revision": "5187bfd243f75f1c8366f03a73d8c825ddde21a1",
+      "revision": "aa4abc32ba093d55e28d6f77dda21ba0e5e4ccdf",
       "state": "accepted-main",
-      "note": "Current AIKit main includes SessionSpace, content-addressed ContextResolution evidence, Herdr/Hyprland reference composition with deterministic Herdr automation-provider coverage, VersionedWorld/ProjectWorld, Method, proof-before-automation Routine, operative Resolve/search, canonical QL-shape use, Central-owned NOW/DAY/Flow temporal grounding through the public Action seam, pre-local build-only standing, native installed doctor verification for #172, and CI conformance that the committed builtin capability registry contains only valid manifests. Refreshed 2026-09-06 to published 5187bfd: Central personal/project/machine skill adoption, explicit unresolved-standing withholding, and reviewed reversible handoff to native generation-backed skill paths. Native lifecycle tests, workspace Clippy and release build pass; real personal Control cutover is not implied by this pin."
+      "note": "Current AIKit main includes SessionSpace, content-addressed ContextResolution evidence, Herdr/Hyprland reference composition with deterministic Herdr automation-provider coverage, VersionedWorld/ProjectWorld, Method, proof-before-automation Routine, operative Resolve/search, canonical QL-shape use, Central-owned NOW/DAY/Flow temporal grounding through the public Action seam, pre-local build-only standing, native installed doctor verification for #172, and CI conformance that the committed builtin capability registry contains only valid manifests. Refreshed 2026-09-06 to published aa4abc3: Central personal/project/machine skill adoption, explicit unresolved-standing withholding, and reviewed reversible handoff to native generation-backed skill paths. Generation-backed roots are identified through native generation metadata. Native lifecycle tests, workspace Clippy and release build pass; real personal Control cutover is not implied by this pin."
     },
     {
       "id": "software-factory",
