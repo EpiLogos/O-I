@@ -114,6 +114,11 @@ fn command_rolling_dev_gate(args: &[OsString]) -> Result<i32, String> {
     envs.insert("CARGO_TARGET_DIR".into(), exported.join("target").to_string_lossy().into_owned());
     let mut checks = Vec::new();
     let executable = exported.join(&descriptor.executable_path);
+    let mut bindings = BTreeMap::<String,String>::new();
+    bindings.insert(if product=="central" {"OI_CENTRAL_CTRL_BIN"} else {"OI_AIKIT_BIN"}.into(),executable.to_string_lossy().into_owned());
+    if product=="ai-kit" {
+        bindings.insert("OI_AIKIT_SESSION_SPACE_BIN".into(),executable.with_file_name("aikit-session-space").to_string_lossy().into_owned());
+    }
     println!("{product} {selection} {revision}; isolated gate {}", gate.display());
     let outcome = (|| -> Result<(), String> {
         for (name, command) in [("owner-build", &descriptor.build), ("owner-test", &test)] {
@@ -123,8 +128,10 @@ fn command_rolling_dev_gate(args: &[OsString]) -> Result<i32, String> {
             result?;
         }
         if !is_executable(&executable) { return Err(format!("native build did not produce {}", executable.display())); }
-        let binding = if product == "central" { "OI_CENTRAL_CTRL_BIN" } else { "OI_AIKIT_BIN" };
-        envs.insert(binding.into(), executable.to_string_lossy().into_owned());
+        for (binding, path) in &bindings {
+            if !is_executable(Path::new(path)) { return Err(format!("native build did not produce the {binding} contribution: {path}")); }
+            envs.insert(binding.clone(),path.clone());
+        }
         // An isolated consumer target prevents collision with the running app.
         envs.insert("CARGO_TARGET_DIR".into(), gate.join("consumer-target").to_string_lossy().into_owned());
         let command = vec!["cargo", "test", "--locked"].into_iter().map(str::to_owned).collect::<Vec<_>>();
@@ -159,7 +166,8 @@ fn command_rolling_dev_gate(args: &[OsString]) -> Result<i32, String> {
         "consumer":{"path":consumer,"captured_source":consumer_source,"source_hashes":consumer_hashes,"head":git_output(&consumer,&["rev-parse","HEAD"]).ok(),"dirty":git_output(&consumer,&["status","--porcelain"]).map(|s|!s.is_empty()).unwrap_or(true),"dependency_locks":rolling_lock_hashes(&consumer_source)?},
         "composition_snapshot":"snapshot.json", "result":if outcome.is_ok(){"passed"}else{"failed"},
         "error":outcome.as_ref().err(), "scope":"Selected owner native tests and Cradle kernel consumer; desktop visual and full-suite acceptance remain separate",
-        "bindings":{if product == "central" {"OI_CENTRAL_CTRL_BIN"} else {"OI_AIKIT_BIN"}:executable}
+        "bindings":bindings,
+        "contribution_hashes":bindings.iter().filter_map(|(name,path)|sha256_file(Path::new(path)).ok().map(|hash|(name.clone(),hash))).collect::<BTreeMap<_,_>>()
     });
     prelocal_write_json(&gate.join("receipt.json"), &receipt)?;
     println!("{}", gate.join("receipt.json").display());
