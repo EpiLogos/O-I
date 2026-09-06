@@ -9,7 +9,8 @@ pub fn cli_main() -> ExitCode {
                 println!("  oi current-world [--json]      disclose the situated six-product composition and current machine/Workcell relation");
                 println!();
                 println!("Current-main development / #97 acceptance:");
-                println!("  oi install central             install/register current ProjectCentral-capable Central source");
+                println!("  oi install central [--source existing|pinned]");
+                println!("                                install/register current ProjectCentral-capable Central source; the source is exclusive-and-declared when both a compatible ctrl and the pinned install apply");
                 println!("  oi dev status [--json]         compare local source world with current accepted native mains");
                 println!("  oi dev sync [PRODUCT]          fetch/prune and fast-forward clean local source only");
                 println!("  oi dev build [PRODUCT]         build current local source through native product build contract");

@@ -14,6 +14,32 @@ current native-main source suite
 
 A release remains useful after development advances. It must not be presented as the current development world merely because its artifacts still verify.
 
+## Installation modalities
+
+Every path that installs, registers, establishes or reconciles an {O:I} composition belongs to exactly one named modality (context frame) — `cli/src/modality.rs` is the canonical vocabulary, and the install descriptors in `surfaces.json` carry a `modality` field. The frame is recorded in composition state at install/init time and disclosed by `oi status [--json]`, `oi doctor [--json]` and `oi current-world [--json]`. Legacy state that predates the field discloses `modality: unknown` honestly; it is never inferred retroactively.
+
+| Modality | What it is | Entry points |
+|---|---|---|
+| `fresh-ground` | Establish a personal ground from nothing: compatible Central (`oi install central`), ground init (`oi init --personal-ground PATH`), the recorded first-suite bootstrap, and the released-artifact bootstrap (`oi install [PRODUCT ...]`). Includes the `machine.adopt-current` step and the guardian-SkillSet pickup. | `oi install central [--source existing\|pinned]`, `oi init --personal-ground PATH`, `oi install [--personal-ground PATH]` |
+| `existing-ground-reconcile` | Operate on a ground that already exists without reinstalling it: re-project the guardian SkillSet (`oi skills sync`, which also hands it to AIKit — the harness-strap step), place an existing work tree under `Work/` (`oi migrate`), and plain registration of detected natives (`oi register`, `oi init` without a ground). | `oi skills sync`, `oi migrate PATH`, `oi register …`, `oi install ai-kit` source path |
+| `developer-source` | The developer source world under the ground's `Work/`, pinned to current accepted mains. | `oi dev status/sync/build/test/install/acceptance`, `oi dev install <product>`, `oi install <product>` source pins |
+| `existing-world-adoption` | Recognise and adopt an already-inhabited world before composing through native owners (#93). | `oi adopt PATH`, `oi recognition …` |
+| `reference-world-host` | The reference-world host relation; O:I materialises only its own plugin payloads against the pinned Omarchy contract. | `oi host omarchy plan/realise/verify` |
+| `harness-strap` | Harness admission and strapping delegated to AIKit (ai-kit #114). O:I's strap step today is the guardian-SkillSet handoff to the installed AIKit and the `oi.package/v1` native lifecycle envelope; harness admission proper is not reimplemented here. | (inside `init` / `oi skills sync`; `native_lifecycle.rs`) |
+
+Each modality exists to deliver one operative-UX outcome from `docs/OI-OPERATIVE-FRONTDOOR-WAYFINDER.md`: bootstrap acceptance is UX acceptance, not just command success. The per-modality UX thread is documented on the vocabulary itself (`cli/src/modality.rs`).
+
+### Install sources are exclusive-and-declared
+
+When a compatible pre-existing `ctrl` and the O:I-pinned source install both apply, `oi install central` refuses with an explicit error naming both candidates instead of silently masking one. Resolve it with an explicit choice:
+
+```sh
+oi install central --source existing   # accept the compatible ctrl already on this machine
+oi install central --source pinned     # use/build the O:I-managed pinned source install
+```
+
+The chosen source is recorded on the registration (`install_source`) and disclosed by `oi status --json` / `oi doctor --json` alongside the modality. A registration is likewise never silently swapped for a different PATH executable: two distinct compatible `ctrl`s surface as an explicit conflict.
+
 ## Install the `oi` command
 
 ### npm-formatted native distribution
@@ -83,7 +109,7 @@ oi ctrl doctor --json
 oi ctrl action list --json
 ```
 
-`oi install central` now treats the current ProjectCentral contract as the compatibility floor for the current-main path. An older `ctrl` exposing only the historical bootstrap trio is not accepted as the #97 current Central. If a current compatible executable is not present, O:I installs the exact Central source revision recorded by the current surface descriptor and verifies the resulting executable before registering it.
+`oi install central` now treats the current ProjectCentral contract as the compatibility floor for the current-main path. An older `ctrl` exposing only the historical bootstrap trio is not accepted as the #97 current Central. If a current compatible executable is not present, O:I installs the exact Central source revision recorded by the current surface descriptor and verifies the resulting executable before registering it. When a compatible executable and the pinned install both exist, the install source must be declared explicitly (see *Install sources are exclusive-and-declared* above).
 
 `oi init --personal-ground` delegates initialization to that native Central and verifies the current root/Wiki relation. A current fresh root contains:
 
@@ -95,11 +121,14 @@ Control/
 │   └── wiki/
 │       └── wiki.json
 └── machines/
+    └── current.json
 .central/
 Work/
 ```
 
 `Control/agents/wiki/wiki.json` is the Central root Agent-Wiki federation source. O:I does not synthesize this structure itself and does not fabricate ProjectCentral identity, authored source, machine facts, or Agent governance.
+
+After the ground passes doctor, `oi init --personal-ground` performs the fresh-ground machine-adoption step (Central #87): it calls `machine.adopt-current` (role `current`, Workcell binding `workcell:local`) through the registered `ctrl` and discloses the outcome — `machine-adoption: created|bound|unchanged (current ↔ workcell:local)`. The step is idempotent. A `workcell_binding_conflict` (the authored declaration already binds a different Workcell) fails the command loudly with the existing binding named; it is never swallowed. A `ctrl` that predates the Action cannot block ground establishment: the init discloses `machine-adoption: unavailable (ctrl <version> lacks machine.adopt-current)` and continues.
 
 Because `oi ctrl ...` is a transparent alias, a non-default personal-ground path should be passed to native `ctrl` with `--root` (or configured through Central's own root mechanism). The simple sequence above uses the native default `$HOME/Central`.
 
@@ -205,9 +234,9 @@ The local composition is a small JSON file, normally:
 ~/.config/oi/composition.json
 ```
 
-Use `OI_HOME` to place the state elsewhere or `XDG_CONFIG_HOME` for the standard XDG location. Managed command artifacts installed by O:I can live beside that state, but product configuration and runtime state remain in the native product.
+Each module registration records the installation modality that produced it and, where a choice existed, the declared install source. Use `OI_HOME` to place the state elsewhere or `XDG_CONFIG_HOME` for the standard XDG location. Managed command artifacts installed by O:I can live beside that state, but product configuration and runtime state remain in the native product.
 
-Run `oi status --json` to inspect registered/runtime composition. Run `oi dev status --json` when the question is whether the developer source world matches the current accepted mains.
+Run `oi status --json` to inspect registered/runtime composition, including each registration's `modality` and `install_source`. `oi current-world --json` discloses the composition's frame as `composition_modality` (the modality recorded on the Central registration, which owns the ground). Run `oi dev status --json` when the question is whether the developer source world matches the current accepted mains.
 
 ## Failure behavior
 

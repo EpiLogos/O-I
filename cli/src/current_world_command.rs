@@ -29,6 +29,7 @@ fn current_world_main() -> Option<ExitCode> {
                 "Ground: {}",
                 reading.personal_ground.as_deref().unwrap_or("not configured")
             );
+            println!("Composition modality: {}", reading.composition_modality.as_str());
             if let Some(machine) = reading.current_machine.as_ref() {
                 println!(
                     "Machine: {}{}{}",

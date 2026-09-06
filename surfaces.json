@@ -53,6 +53,7 @@
       },
       "install": {
         "kind": "oi-managed-binary",
+        "modality": "fresh-ground",
         "ref": "616749373a60f55e9fd99e4f2b0bebf2c73a674b",
         "revision": "616749373a60f55e9fd99e4f2b0bebf2c73a674b",
         "path": "ctrl",
@@ -112,6 +113,7 @@
       },
       "install": {
         "kind": "oi-managed-native-cli",
+        "modality": "developer-source",
         "ref": "faa5b79f75230ef259d5e523fcade491b23dc3eb",
         "revision": "faa5b79f75230ef259d5e523fcade491b23dc3eb",
         "path": "bin/actuation",
@@ -178,6 +180,7 @@
       },
       "install": {
         "kind": "oi-managed-binary",
+        "modality": "developer-source",
         "ref": "ab1f72cd05a690e7ad2a64e839fb67210e4b783d",
         "revision": "ab1f72cd05a690e7ad2a64e839fb67210e4b783d",
         "path": "crates/aikit-cli",
@@ -241,6 +244,7 @@
       },
       "install": {
         "kind": "oi-managed-native-cli",
+        "modality": "developer-source",
         "ref": "3d9094177a7216697619db0a3c16bafb6bb815ca",
         "revision": "3d9094177a7216697619db0a3c16bafb6bb815ca",
         "path": "factory",
@@ -304,6 +308,7 @@
       },
       "install": {
         "kind": "oi-managed-binary",
+        "modality": "developer-source",
         "ref": "dc076fdf0c3e12835c17ded95ef199e200f7f8e1",
         "revision": "dc076fdf0c3e12835c17ded95ef199e200f7f8e1",
         "path": "crates/workcell-cli",
@@ -378,6 +383,7 @@
       },
       "install": {
         "kind": "oi-managed-native-cli",
+        "modality": "developer-source",
         "ref": "781981374eaa1f02952249dcdbca1af671d1ece4",
         "revision": "781981374eaa1f02952249dcdbca1af671d1ece4",
         "path": "crates/ql-cli",

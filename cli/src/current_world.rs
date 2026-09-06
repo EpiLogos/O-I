@@ -1,3 +1,4 @@
+use crate::modality::InstallModality;
 use crate::status::{
     live_disclosure, NativeSurfaceState, SuiteCompositionDisclosure, SurfaceDisclosure,
 };
@@ -39,6 +40,11 @@ pub struct CurrentWorldPosition {
     pub native_location: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub version: Option<String>,
+    /// The installation modality recorded for this surface's registration
+    /// (#192): `None` when not registered, `Some(InstallModality::Unknown)`
+    /// for legacy state that predates the field.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub modality: Option<InstallModality>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -65,6 +71,12 @@ pub struct CurrentWorldReading {
     pub schema: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub personal_ground: Option<String>,
+    /// The installation modality of the current composition (#192): the
+    /// modality recorded on the Central registration, because Central owns
+    /// the ground the composition stands on. `InstallModality::Unknown`
+    /// when Central is not registered or its registration predates the
+    /// field — never a guess.
+    pub composition_modality: InstallModality,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub current_machine: Option<CurrentMachineRelation>,
     pub positions: Vec<CurrentWorldPosition>,
@@ -90,9 +102,16 @@ impl CurrentWorldReading {
             })
             .collect::<Vec<_>>();
         let context_frame = context_frame_status(&positions);
+        let composition_modality = disclosure
+            .surfaces
+            .iter()
+            .find(|surface| surface.id == "central")
+            .and_then(|surface| surface.modality)
+            .unwrap_or(InstallModality::Unknown);
         Self {
             schema: CURRENT_WORLD_SCHEMA.to_owned(),
             personal_ground: disclosure.personal_ground.clone(),
+            composition_modality,
             current_machine: None,
             positions,
             context_frame,
@@ -179,6 +198,7 @@ fn position_from_surface(
             present: surface_present(surface),
             native_location: surface.resolved.clone(),
             version: surface.version.clone(),
+            modality: surface.modality,
         },
         None => CurrentWorldPosition {
             position,
@@ -192,6 +212,7 @@ fn position_from_surface(
             present: false,
             native_location: None,
             version: None,
+            modality: None,
         },
     }
 }
@@ -299,6 +320,12 @@ mod tests {
             live_revision: None,
             path_executable: None,
             drift: None,
+            modality: if state == NativeSurfaceState::Registered {
+                Some(InstallModality::FreshGround)
+            } else {
+                None
+            },
+            install_source: None,
         }
     }
 
@@ -364,5 +391,31 @@ mod tests {
                 (5, "quaternal-logic"),
             ]
         );
+    }
+
+    #[test]
+    fn composition_modality_follows_the_central_registration_and_defaults_honestly() {
+        // Central owns the ground: the composition's modality is the
+        // modality recorded on Central's registration.
+        let full = SuiteCompositionDisclosure {
+            schema: "oi.desktop-composition-disclosure/v1".to_owned(),
+            personal_ground: Some("/Central".to_owned()),
+            surfaces: PRODUCT_POSITIONS
+                .iter()
+                .map(|(_, id, _)| surface(id, NativeSurfaceState::Registered))
+                .collect(),
+            warnings: Vec::new(),
+        };
+        let reading = CurrentWorldReading::from_disclosure(&full);
+        assert_eq!(reading.composition_modality, InstallModality::FreshGround);
+        assert_eq!(
+            reading.positions[0].modality,
+            Some(InstallModality::FreshGround)
+        );
+
+        // Without a Central registration there is no frame to name.
+        let disclosure = SuiteCompositionDisclosure::unavailable("none");
+        let reading = CurrentWorldReading::from_disclosure(&disclosure);
+        assert_eq!(reading.composition_modality, InstallModality::Unknown);
     }
 }
