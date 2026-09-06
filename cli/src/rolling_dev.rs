@@ -81,6 +81,17 @@ fn capture_rolling_consumer(source: &Path, destination: &Path) -> Result<BTreeMa
     Ok(hashes)
 }
 
+fn rolling_cleanup_compiler_caches(exported: &Path, gate: &Path, executable: &Path) -> Vec<serde_json::Value> {
+    let mut cleanup = Vec::new();
+    for cache in [exported.join("target/debug"), gate.join("consumer-target")] {
+        if cache.is_dir() && !executable.starts_with(&cache) {
+            let result = fs::remove_dir_all(&cache);
+            cleanup.push(json!({"path":cache,"removed":result.is_ok(),"error":result.err().map(|e|e.to_string())}));
+        }
+    }
+    cleanup
+}
+
 fn command_rolling_dev_gate(args: &[OsString]) -> Result<i32, String> {
     let (product, candidate) = match args {
         [id] if id == "central" || id == "ai-kit" => (id.to_str().unwrap(), None),
@@ -109,7 +120,17 @@ fn command_rolling_dev_gate(args: &[OsString]) -> Result<i32, String> {
     let consumer = dev_source_path(&ground, "oi");
     let consumer_source = gate.join("cradle-kernel");
     let consumer_hashes = capture_rolling_consumer(&consumer.join("desktop/cradle/kernel"), &consumer_source)?;
-    let mut envs = BTreeMap::new();
+    // Fresh acceptance exports do not benefit from multi-gigabyte debug and
+    // incremental caches. Preserve explicit developer overrides and record
+    // these non-secret compiler settings alongside the exact composition.
+    let compiler_environment = [
+        ("CARGO_PROFILE_DEV_DEBUG", "0"),
+        ("CARGO_PROFILE_TEST_DEBUG", "0"),
+        ("CARGO_INCREMENTAL", "0"),
+    ].into_iter().map(|(name, default)| {
+        (name.to_owned(), std::env::var(name).unwrap_or_else(|_| default.to_owned()))
+    }).collect::<BTreeMap<_, _>>();
+    let mut envs = compiler_environment.clone();
     // Do not inherit a target-dir override that would overwrite a live build.
     envs.insert("CARGO_TARGET_DIR".into(), exported.join("target").to_string_lossy().into_owned());
     let mut checks = Vec::new();
@@ -143,17 +164,10 @@ fn command_rolling_dev_gate(args: &[OsString]) -> Result<i32, String> {
         Ok(())
     })();
     // Compiler caches are rebuildable, not reproduction evidence. Keep the
-    // exported source, lockfiles, native executable, logs and receipts; avoid
-    // accumulating a fresh multi-gigabyte debug target at every increment.
-    let mut cache_cleanup = Vec::new();
-    if outcome.is_ok() {
-        for cache in [exported.join("target/debug"), gate.join("consumer-target")] {
-            if cache.is_dir() && !executable.starts_with(&cache) {
-                let result = fs::remove_dir_all(&cache);
-                cache_cleanup.push(json!({"path":cache,"removed":result.is_ok(),"error":result.err().map(|e|e.to_string())}));
-            }
-        }
-    }
+    // exported source, lockfiles, native executable, logs and receipts. Failed
+    // compiler caches are also disposable: releasing them before writing the
+    // receipt lets a disk-exhausted build retain its failure evidence.
+    let cache_cleanup = rolling_cleanup_compiler_caches(&exported, &gate, &executable);
     let mut options = SnapshotOptions::default();
     options.selections.insert(product.into(), revision.clone());
     let snapshot = build_snapshot(&prelocal_catalog()?, &prelocal_composition()?, &options)?;
@@ -164,7 +178,8 @@ fn command_rolling_dev_gate(args: &[OsString]) -> Result<i32, String> {
         "executable":executable, "executable_sha256": if executable.is_file(){Some(sha256_file(&executable)?)}else{None},
         "dependency_locks":locks, "checks":checks, "compiler_cache_cleanup":cache_cleanup,
         "consumer":{"path":consumer,"captured_source":consumer_source,"source_hashes":consumer_hashes,"head":git_output(&consumer,&["rev-parse","HEAD"]).ok(),"dirty":git_output(&consumer,&["status","--porcelain"]).map(|s|!s.is_empty()).unwrap_or(true),"dependency_locks":rolling_lock_hashes(&consumer_source)?},
-        "composition_snapshot":"snapshot.json", "result":if outcome.is_ok(){"passed"}else{"failed"},
+        "composition_snapshot":"snapshot.json", "compiler_environment":compiler_environment,
+        "result":if outcome.is_ok(){"passed"}else{"failed"},
         "error":outcome.as_ref().err(), "scope":"Selected owner native tests and Cradle kernel consumer; desktop visual and full-suite acceptance remain separate",
         "bindings":bindings,
         "contribution_hashes":bindings.iter().filter_map(|(name,path)|sha256_file(Path::new(path)).ok().map(|hash|(name.clone(),hash))).collect::<BTreeMap<_,_>>()
@@ -179,6 +194,35 @@ fn command_rolling_dev_gate(args: &[OsString]) -> Result<i32, String> {
 mod rolling_dev_tests {
     use super::*;
     fn git(root: &Path, args: &[&str]) -> String { git_output(root, args).unwrap() }
+    #[test]
+    fn failed_build_cache_cleanup_keeps_source_locks_logs_and_contribution() {
+        let temp = tempfile::tempdir().unwrap();
+        let gate = temp.path();
+        let source = gate.join("source");
+        let executable = source.join("target/release/owner");
+        for dir in [source.join("target/debug"), gate.join("consumer-target"), source.join("target/release")] {
+            fs::create_dir_all(dir).unwrap();
+        }
+        let evidence = [source.join("Cargo.lock"), source.join("source.rs"), gate.join("owner-test.log"), executable.clone()];
+        for path in &evidence { fs::write(path, b"retained evidence").unwrap(); }
+        fs::write(source.join("target/debug/partial.o"), b"failed compilation").unwrap();
+        let result = rolling_cleanup_compiler_caches(&source, gate, &executable);
+        assert_eq!(result.len(), 2);
+        assert!(result.iter().all(|item| item["removed"] == true));
+        assert!(!source.join("target/debug").exists());
+        assert!(!gate.join("consumer-target").exists());
+        for path in evidence { assert_eq!(fs::read(path).unwrap(), b"retained evidence"); }
+    }
+    #[test]
+    fn a_native_contribution_inside_a_debug_target_is_never_discarded() {
+        let temp = tempfile::tempdir().unwrap();
+        let source = temp.path().join("source");
+        let executable = source.join("target/debug/owner");
+        fs::create_dir_all(executable.parent().unwrap()).unwrap();
+        fs::write(&executable, b"native contribution").unwrap();
+        assert!(rolling_cleanup_compiler_caches(&source, temp.path(), &executable).is_empty());
+        assert_eq!(fs::read(executable).unwrap(), b"native contribution");
+    }
     #[test]
     fn main_selection_and_export_preserve_busy_checkout_and_exact_lock() {
         let dir = tempfile::tempdir().unwrap();
