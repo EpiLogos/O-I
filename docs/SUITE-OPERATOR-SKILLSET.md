@@ -4,12 +4,13 @@ O:I composes and explains source-owned procedural competence; it does not become
 
 ## What O:I ships
 
-The shipped manifest (`skills/suite-operator/skillset.toml`, schema `oi.suite-skillset/v1`, TOML because AIKit's authored sets are TOML) declares exactly one profile and two Skills — O:I's own guardian pair:
+The shipped manifest (`skills/suite-operator/skillset.toml`, schema `oi.suite-skillset/v1`, TOML because AIKit's authored sets are TOML) declares exactly one profile and three Skills — O:I's own guardian set:
 
 ```text
 oi:skillset:base-guardian
-  oi:skill:operate-suite    (skills/oi/SKILL.md)
-  oi:skill:suite-operator   (skills/suite-operator/SKILL.md)
+  oi:skill:operate-suite          (skills/oi/SKILL.md)
+  oi:skill:suite-operator         (skills/suite-operator/SKILL.md)
+  oi:skill:central-session-strap  (skills/central-session-strap/SKILL.md)
 ```
 
 Both entries carry `revision_policy = "resolve_authoritative_installed_revision"`: O:I resolves each Skill's authoritative revision from the installed native owner rather than pinning one by hand. A projected copy carries its source revision in its receipt header; local edits never become authoritative.

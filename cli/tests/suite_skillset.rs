@@ -15,7 +15,7 @@ fn canonical_manifest() -> SuiteSkillSetManifest {
 /// An in-code fixture representing the general multi-product composition the
 /// resolution machinery handles: per-product owner/purpose/source entries and
 /// Base/Root profile inheritance. This is NOT the shipped manifest — the
-/// shipped one declares only O:I's guardian pair (see the
+/// shipped one declares only O:I's guardian skills (see the
 /// `shipped_manifest_declares_only_oi_owned_skills` guard below). O:I used to
 /// pin every product's skills in the shipped file; that was a second skill
 /// registry, and registration is AIKit's job.
@@ -461,10 +461,10 @@ fn shipped_manifest_declares_only_oi_owned_skills() {
         "oi:skillset:base-guardian"
     );
     assert!(manifest.expected_native_skills.is_empty());
-    // O:I owns exactly its two guardian Skills here. Every other product's
+    // O:I owns exactly its three guardian Skills here. Every other product's
     // skills are composed by AIKit's sets; pinning them in this file made it
     // a second registry in a second format.
-    assert_eq!(manifest.skills.len(), 2);
+    assert_eq!(manifest.skills.len(), 3);
     for skill in &manifest.skills {
         assert!(
             skill.skill_ref.starts_with("oi:skill:"),
