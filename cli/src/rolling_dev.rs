@@ -82,13 +82,13 @@ fn capture_rolling_consumer(source: &Path, destination: &Path) -> Result<BTreeMa
 }
 
 fn command_rolling_dev_gate(args: &[OsString]) -> Result<i32, String> {
-    let candidate = match args {
-        [id] if id == "central" => None,
-        [id, flag, sha] if id == "central" && flag == "--candidate" => Some(sha.to_str().ok_or("candidate must be UTF-8")?),
-        _ => return Err("usage: oi dev gate central [--candidate EXACT_SHA]; other consumer gates are not yet declared".into()),
+    let (product, candidate) = match args {
+        [id] if id == "central" || id == "ai-kit" => (id.to_str().unwrap(), None),
+        [id, flag, sha] if (id == "central" || id == "ai-kit") && flag == "--candidate" => (id.to_str().unwrap(), Some(sha.to_str().ok_or("candidate must be UTF-8")?)),
+        _ => return Err("usage: oi dev gate central|ai-kit [--candidate EXACT_SHA]".into()),
     };
     let ground = configured_ground()?;
-    let source = dev_source_path(&ground, "central");
+    let source = dev_source_path(&ground, product);
     if candidate.is_none() {
         // Refresh the named remote main only. No pull, branch checkout or
         // mutation of an occupied working tree; missing network fails openly.
@@ -98,14 +98,14 @@ fn command_rolling_dev_gate(args: &[OsString]) -> Result<i32, String> {
         if !status.success() { return Err("could not refresh origin/main; use an explicit exact candidate for offline work".into()); }
     }
     let (revision, selection) = rolling_revision(&source, candidate)?;
-    let gate = oi_data_root()?.join("receipts/dev").join(format!("central-{}-{}-{}", &revision[..12], prelocal_now_ms()?, std::process::id()));
+    let gate = oi_data_root()?.join("receipts/dev").join(format!("{product}-{}-{}-{}", &revision[..12], prelocal_now_ms()?, std::process::id()));
     fs::create_dir_all(&gate).map_err(|e| e.to_string())?;
     let exported = gate.join("source");
     export_rolling_source(&source, &revision, &exported)?;
     let locks = rolling_lock_hashes(&exported)?;
-    let descriptor = current_main_source_install("central")?;
+    let descriptor = current_main_source_install(product)?;
     let manifest = suite_manifest()?;
-    let test = manifest.products.iter().find(|p| p.id == "central").ok_or("Central test contract missing")?.dev.test.clone();
+    let test = manifest.products.iter().find(|p| p.id == product).ok_or("Native test contract missing")?.dev.test.clone();
     let consumer = dev_source_path(&ground, "oi");
     let consumer_source = gate.join("cradle-kernel");
     let consumer_hashes = capture_rolling_consumer(&consumer.join("desktop/cradle/kernel"), &consumer_source)?;
@@ -114,7 +114,7 @@ fn command_rolling_dev_gate(args: &[OsString]) -> Result<i32, String> {
     envs.insert("CARGO_TARGET_DIR".into(), exported.join("target").to_string_lossy().into_owned());
     let mut checks = Vec::new();
     let executable = exported.join(&descriptor.executable_path);
-    println!("Central {selection} {revision}; isolated gate {}", gate.display());
+    println!("{product} {selection} {revision}; isolated gate {}", gate.display());
     let outcome = (|| -> Result<(), String> {
         for (name, command) in [("owner-build", &descriptor.build), ("owner-test", &test)] {
             println!("{name}: running (log {}/{name}.log)", gate.display());
@@ -123,7 +123,8 @@ fn command_rolling_dev_gate(args: &[OsString]) -> Result<i32, String> {
             result?;
         }
         if !is_executable(&executable) { return Err(format!("native build did not produce {}", executable.display())); }
-        envs.insert("OI_CENTRAL_CTRL_BIN".into(), executable.to_string_lossy().into_owned());
+        let binding = if product == "central" { "OI_CENTRAL_CTRL_BIN" } else { "OI_AIKIT_BIN" };
+        envs.insert(binding.into(), executable.to_string_lossy().into_owned());
         // An isolated consumer target prevents collision with the running app.
         envs.insert("CARGO_TARGET_DIR".into(), gate.join("consumer-target").to_string_lossy().into_owned());
         let command = vec!["cargo", "test", "--locked"].into_iter().map(str::to_owned).collect::<Vec<_>>();
@@ -134,19 +135,31 @@ fn command_rolling_dev_gate(args: &[OsString]) -> Result<i32, String> {
         if rolling_lock_hashes(&exported)? != locks { return Err("owner operation modified dependency lockfiles".into()); }
         Ok(())
     })();
+    // Compiler caches are rebuildable, not reproduction evidence. Keep the
+    // exported source, lockfiles, native executable, logs and receipts; avoid
+    // accumulating a fresh multi-gigabyte debug target at every increment.
+    let mut cache_cleanup = Vec::new();
+    if outcome.is_ok() {
+        for cache in [exported.join("target/debug"), gate.join("consumer-target")] {
+            if cache.is_dir() && !executable.starts_with(&cache) {
+                let result = fs::remove_dir_all(&cache);
+                cache_cleanup.push(json!({"path":cache,"removed":result.is_ok(),"error":result.err().map(|e|e.to_string())}));
+            }
+        }
+    }
     let mut options = SnapshotOptions::default();
-    options.selections.insert("central".into(), revision.clone());
+    options.selections.insert(product.into(), revision.clone());
     let snapshot = build_snapshot(&prelocal_catalog()?, &prelocal_composition()?, &options)?;
     prelocal_write_json(&gate.join("snapshot.json"), &snapshot)?;
     let receipt = json!({
-        "schema":"oi.rolling-dev-gate/v1", "product":"central", "selection":selection,
+        "schema":"oi.rolling-dev-gate/v1", "product":product, "selection":selection,
         "revision":revision, "source_repository":source, "build_source":exported,
         "executable":executable, "executable_sha256": if executable.is_file(){Some(sha256_file(&executable)?)}else{None},
-        "dependency_locks":locks, "checks":checks,
+        "dependency_locks":locks, "checks":checks, "compiler_cache_cleanup":cache_cleanup,
         "consumer":{"path":consumer,"captured_source":consumer_source,"source_hashes":consumer_hashes,"head":git_output(&consumer,&["rev-parse","HEAD"]).ok(),"dirty":git_output(&consumer,&["status","--porcelain"]).map(|s|!s.is_empty()).unwrap_or(true),"dependency_locks":rolling_lock_hashes(&consumer_source)?},
         "composition_snapshot":"snapshot.json", "result":if outcome.is_ok(){"passed"}else{"failed"},
-        "error":outcome.as_ref().err(), "scope":"Central native tests and Cradle kernel consumer; desktop visual and full-suite acceptance remain separate",
-        "bindings":{"OI_CENTRAL_CTRL_BIN":executable}
+        "error":outcome.as_ref().err(), "scope":"Selected owner native tests and Cradle kernel consumer; desktop visual and full-suite acceptance remain separate",
+        "bindings":{if product == "central" {"OI_CENTRAL_CTRL_BIN"} else {"OI_AIKIT_BIN"}:executable}
     });
     prelocal_write_json(&gate.join("receipt.json"), &receipt)?;
     println!("{}", gate.join("receipt.json").display());

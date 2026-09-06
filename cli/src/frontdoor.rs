@@ -17,7 +17,7 @@ pub fn cli_main() -> ExitCode {
                 println!("  oi dev test [PRODUCT]          test current local source through native product test contract");
                 println!("  oi dev install [PRODUCT]       install/register native commands only from clean exact current-main source");
                 println!("  oi dev acceptance [--json]     prove the local software world is the current clean mainline world before physical provider tests");
-                println!("  oi dev gate central [--candidate SHA]  build an isolated current-main/candidate artifact; test owner + Cradle consumer; record exact evidence");
+                println!("  oi dev gate central|ai-kit [--candidate SHA]  build an isolated current-main/candidate artifact; test owner + Cradle consumer; record exact evidence");
                 println!();
                 println!("Existing-world recognition / adoption:");
                 println!("  oi adopt PATH [--json]         inspect the existing World through the shared recognition engine and return owner handoffs without mutation");

@@ -23,3 +23,5 @@ verified against current Central with temporary native Central ground.
 Presentation consequence recorded without rewriting design: the programme's
 spatial default supersedes the six-node rest assertions; sidebar browsing must
 not activate a different workspace. Shell repair follows this gate.
+
+The same bounded gate now accepts `ai-kit`, using its existing descriptor and full native test contract and binding `OI_AIKIT_BIN` explicitly for the captured Cradle consumer. Candidate wiki membership `9bc4aa16e74aa6e9f6f7160604c4d935c8548263` passed owner build/tests and consumer; its receipt is `ai-kit-9bc4aa16e74a-1788692850706-14275`. The source owner subsequently landed `5cbb1e59b4a2acc1060728e376449e5fd3199d8f` and a fresh gate is verifying that composition. Failed disk-space verification remains recorded as failed, never rewritten into a pass. Successful future gates remove only their own rebuildable debug/consumer compiler caches, preserving exported source, lockfiles, release executable, logs, hashes and snapshots. CLI tests: 95/95 (`/tmp/oi-implementation-20260906/aikit-gate-cli-tests.log`).
