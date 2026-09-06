@@ -1,0 +1,302 @@
+[
+  {
+    "name": ".DS_Store",
+    "kind": "non-skill"
+  },
+  {
+    "name": "apply-cmea",
+    "kind": "external-source",
+    "target": "/Users/admin/Documents/quaternal-logic-plugin/epi-logos/skills/apply-cmea",
+    "target_exists": false,
+    "tracked_source_candidate": "/Users/admin/Central/Work/epi/Epi-Logos-C-Experiments/Body/S/S5/plugins/epi-logos/skills/apply-cmea",
+    "candidate_exists": true
+  },
+  {
+    "name": "apply-tetralemma",
+    "kind": "external-source",
+    "target": "/Users/admin/Documents/quaternal-logic-plugin/epi-logos/skills/apply-tetralemma",
+    "target_exists": false,
+    "tracked_source_candidate": "/Users/admin/Central/Work/epi/Epi-Logos-C-Experiments/Body/S/S5/plugins/epi-logos/skills/apply-tetralemma",
+    "candidate_exists": true
+  },
+  {
+    "name": "brandkit",
+    "kind": "master",
+    "ground_exists": true,
+    "same_paths_and_bytes": true,
+    "missing": [],
+    "different": []
+  },
+  {
+    "name": "choose-modality",
+    "kind": "external-source",
+    "target": "/Users/admin/Documents/quaternal-logic-plugin/epi-logos/skills/choose-modality",
+    "target_exists": false,
+    "tracked_source_candidate": "/Users/admin/Central/Work/epi/Epi-Logos-C-Experiments/Body/S/S5/plugins/epi-logos/skills/choose-modality",
+    "candidate_exists": true
+  },
+  {
+    "name": "choose-topological-mode",
+    "kind": "external-source",
+    "target": "/Users/admin/Documents/quaternal-logic-plugin/epi-logos/skills/choose-topological-mode",
+    "target_exists": false,
+    "tracked_source_candidate": "/Users/admin/Central/Work/epi/Epi-Logos-C-Experiments/Body/S/S5/plugins/epi-logos/skills/choose-topological-mode",
+    "candidate_exists": true
+  },
+  {
+    "name": "compress-thought-artifacts",
+    "kind": "external-source",
+    "target": "/Users/admin/Documents/quaternal-logic-plugin/epi-logos/skills/compress-thought-artifacts",
+    "target_exists": false,
+    "tracked_source_candidate": "/Users/admin/Central/Work/epi/Epi-Logos-C-Experiments/Body/S/S5/plugins/epi-logos/skills/compress-thought-artifacts",
+    "candidate_exists": true
+  },
+  {
+    "name": "converse-pedagogically",
+    "kind": "external-source",
+    "target": "/Users/admin/Documents/quaternal-logic-plugin/epi-logos/skills/converse-pedagogically",
+    "target_exists": false,
+    "tracked_source_candidate": "/Users/admin/Central/Work/epi/Epi-Logos-C-Experiments/Body/S/S5/plugins/epi-logos/skills/converse-pedagogically",
+    "candidate_exists": true
+  },
+  {
+    "name": "design-taste-frontend",
+    "kind": "master",
+    "ground_exists": true,
+    "same_paths_and_bytes": true,
+    "missing": [],
+    "different": []
+  },
+  {
+    "name": "design-taste-frontend-v1",
+    "kind": "master",
+    "ground_exists": true,
+    "same_paths_and_bytes": true,
+    "missing": [],
+    "different": []
+  },
+  {
+    "name": "design-taste-frontend-v2",
+    "kind": "master",
+    "ground_exists": true,
+    "same_paths_and_bytes": true,
+    "missing": [],
+    "different": []
+  },
+  {
+    "name": "engage-encounter-axis",
+    "kind": "external-source",
+    "target": "/Users/admin/Documents/quaternal-logic-plugin/epi-logos/skills/engage-encounter-axis",
+    "target_exists": false,
+    "tracked_source_candidate": "/Users/admin/Central/Work/epi/Epi-Logos-C-Experiments/Body/S/S5/plugins/epi-logos/skills/engage-encounter-axis",
+    "candidate_exists": true
+  },
+  {
+    "name": "epi-logos-argument-cartography",
+    "kind": "external-source",
+    "target": "/Users/admin/Documents/quaternal-logic-plugin/epi-logos/skills/epi-logos-argument-cartography",
+    "target_exists": false,
+    "tracked_source_candidate": "/Users/admin/Central/Work/epi/Epi-Logos-C-Experiments/Body/S/S5/plugins/epi-logos/skills/epi-logos-argument-cartography",
+    "candidate_exists": true
+  },
+  {
+    "name": "epi-logos-vault-compiler",
+    "kind": "external-source",
+    "target": "/Users/admin/Documents/quaternal-logic-plugin/epi-logos/skills/epi-logos-vault-compiler",
+    "target_exists": false,
+    "tracked_source_candidate": "/Users/admin/Central/Work/epi/Epi-Logos-C-Experiments/Body/S/S5/plugins/epi-logos/skills/epi-logos-vault-compiler",
+    "candidate_exists": false
+  },
+  {
+    "name": "epi-logos-voice",
+    "kind": "external-source",
+    "target": "/Users/admin/Documents/quaternal-logic-plugin/epi-logos/skills/epi-logos-voice",
+    "target_exists": false,
+    "tracked_source_candidate": "/Users/admin/Central/Work/epi/Epi-Logos-C-Experiments/Body/S/S5/plugins/epi-logos/skills/epi-logos-voice",
+    "candidate_exists": true
+  },
+  {
+    "name": "etymological-archaeology",
+    "kind": "external-source",
+    "target": "/Users/admin/Documents/quaternal-logic-plugin/epi-logos/skills/etymological-archaeology",
+    "target_exists": false,
+    "tracked_source_candidate": "/Users/admin/Central/Work/epi/Epi-Logos-C-Experiments/Body/S/S5/plugins/epi-logos/skills/etymological-archaeology",
+    "candidate_exists": true
+  },
+  {
+    "name": "find-skills",
+    "kind": "master",
+    "ground_exists": true,
+    "same_paths_and_bytes": true,
+    "missing": [],
+    "different": []
+  },
+  {
+    "name": "full-output-enforcement",
+    "kind": "master",
+    "ground_exists": true,
+    "same_paths_and_bytes": true,
+    "missing": [],
+    "different": []
+  },
+  {
+    "name": "gpt-taste",
+    "kind": "master",
+    "ground_exists": true,
+    "same_paths_and_bytes": true,
+    "missing": [],
+    "different": []
+  },
+  {
+    "name": "high-end-visual-design",
+    "kind": "master",
+    "ground_exists": true,
+    "same_paths_and_bytes": true,
+    "missing": [],
+    "different": []
+  },
+  {
+    "name": "image-to-code",
+    "kind": "master",
+    "ground_exists": true,
+    "same_paths_and_bytes": true,
+    "missing": [],
+    "different": []
+  },
+  {
+    "name": "imagegen-frontend-mobile",
+    "kind": "master",
+    "ground_exists": true,
+    "same_paths_and_bytes": true,
+    "missing": [],
+    "different": []
+  },
+  {
+    "name": "imagegen-frontend-web",
+    "kind": "master",
+    "ground_exists": true,
+    "same_paths_and_bytes": true,
+    "missing": [],
+    "different": []
+  },
+  {
+    "name": "industrial-brutalist-ui",
+    "kind": "master",
+    "ground_exists": true,
+    "same_paths_and_bytes": true,
+    "missing": [],
+    "different": []
+  },
+  {
+    "name": "manage-thought-artifacts",
+    "kind": "external-source",
+    "target": "/Users/admin/Documents/quaternal-logic-plugin/epi-logos/skills/manage-thought-artifacts",
+    "target_exists": false,
+    "tracked_source_candidate": "/Users/admin/Central/Work/epi/Epi-Logos-C-Experiments/Body/S/S5/plugins/epi-logos/skills/manage-thought-artifacts",
+    "candidate_exists": true
+  },
+  {
+    "name": "minimalist-ui",
+    "kind": "master",
+    "ground_exists": true,
+    "same_paths_and_bytes": true,
+    "missing": [],
+    "different": []
+  },
+  {
+    "name": "quaternal-i-ching",
+    "kind": "external-source",
+    "target": "/Users/admin/Documents/quaternal-logic-plugin/epi-logos/skills/quaternal-i-ching",
+    "target_exists": false,
+    "tracked_source_candidate": "/Users/admin/Central/Work/epi/Epi-Logos-C-Experiments/Body/S/S5/plugins/epi-logos/skills/quaternal-i-ching",
+    "candidate_exists": true
+  },
+  {
+    "name": "quaternal-tarot",
+    "kind": "external-source",
+    "target": "/Users/admin/Documents/quaternal-logic-plugin/epi-logos/skills/quaternal-tarot",
+    "target_exists": false,
+    "tracked_source_candidate": "/Users/admin/Central/Work/epi/Epi-Logos-C-Experiments/Body/S/S5/plugins/epi-logos/skills/quaternal-tarot",
+    "candidate_exists": true
+  },
+  {
+    "name": "ralph-tui-create-beads",
+    "kind": "master",
+    "ground_exists": true,
+    "same_paths_and_bytes": true,
+    "missing": [],
+    "different": []
+  },
+  {
+    "name": "ralph-tui-create-beads-rust",
+    "kind": "master",
+    "ground_exists": true,
+    "same_paths_and_bytes": true,
+    "missing": [],
+    "different": []
+  },
+  {
+    "name": "ralph-tui-create-json",
+    "kind": "master",
+    "ground_exists": true,
+    "same_paths_and_bytes": true,
+    "missing": [],
+    "different": []
+  },
+  {
+    "name": "ralph-tui-prd",
+    "kind": "master",
+    "ground_exists": true,
+    "same_paths_and_bytes": true,
+    "missing": [],
+    "different": []
+  },
+  {
+    "name": "redesign-existing-projects",
+    "kind": "master",
+    "ground_exists": true,
+    "same_paths_and_bytes": true,
+    "missing": [],
+    "different": []
+  },
+  {
+    "name": "run-l4-prime-loop",
+    "kind": "external-source",
+    "target": "/Users/admin/Documents/quaternal-logic-plugin/epi-logos/skills/run-l4-prime-loop",
+    "target_exists": false,
+    "tracked_source_candidate": "/Users/admin/Central/Work/epi/Epi-Logos-C-Experiments/Body/S/S5/plugins/epi-logos/skills/run-l4-prime-loop",
+    "candidate_exists": true
+  },
+  {
+    "name": "run-positional-coherence",
+    "kind": "external-source",
+    "target": "/Users/admin/Documents/quaternal-logic-plugin/epi-logos/skills/run-positional-coherence",
+    "target_exists": false,
+    "tracked_source_candidate": "/Users/admin/Central/Work/epi/Epi-Logos-C-Experiments/Body/S/S5/plugins/epi-logos/skills/run-positional-coherence",
+    "candidate_exists": true
+  },
+  {
+    "name": "stitch-design-taste",
+    "kind": "master",
+    "ground_exists": true,
+    "same_paths_and_bytes": true,
+    "missing": [],
+    "different": []
+  },
+  {
+    "name": "unix-atomic-skill-maker",
+    "kind": "master",
+    "ground_exists": true,
+    "same_paths_and_bytes": true,
+    "missing": [],
+    "different": []
+  },
+  {
+    "name": "using-epi-logos",
+    "kind": "external-source",
+    "target": "/Users/admin/Documents/quaternal-logic-plugin/epi-logos/skills/using-epi-logos",
+    "target_exists": false,
+    "tracked_source_candidate": "/Users/admin/Central/Work/epi/Epi-Logos-C-Experiments/Body/S/S5/plugins/epi-logos/skills/using-epi-logos",
+    "candidate_exists": true
+  }
+]

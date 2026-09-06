@@ -1,0 +1,11 @@
+Central: central-0.1.0-aarch64-apple-darwin.tar.gz @ 78a545214ad70e055fae38ccae2d78443112f283
+Actuation: actuation-0.1.0-component.tar.gz @ 03e03acb1ae47d60f26903209112258e60f83627
+AIKit: ai-kit-0.1.0-aarch64-apple-darwin.tar.gz @ 9ff28ca31c723b314ddf62b7f85b6e2611d53d66
+Software Factory: software-factory-0.1.0-component.tar.gz @ 621624c7c8a9919604ad36db451f1a30806fc0ce
+Workcell: workcell-0.1.0-aarch64-apple-darwin.tar.gz @ 9277fdc852a468f1c53f62b766a38e06705fe482
+Quaternal Logic: quaternal-logic-0.1.0-component.tar.gz @ cab0baf52f7d7726708d7fb13c6ac98f9b09b643
+Initialized Central at /tmp/astra-ground
+Installed recorded pre-local build set 0.1.0-prelocal.2.
+Managed root: /tmp/astra-ground-state/oi-data
+Control/ and Work/ were not used as artifact storage.
+Next: oi verify

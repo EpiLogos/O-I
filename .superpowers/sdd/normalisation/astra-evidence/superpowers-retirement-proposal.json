@@ -1,0 +1,147 @@
+{
+  "schema": "oi.astra-migration-proposal/v1",
+  "state": "proposed-not-applied",
+  "scope": "superpowers archive retirement",
+  "skills": [
+    {
+      "name": "brainstorming",
+      "source": "/Users/admin/.codex/superpowers/skills/brainstorming",
+      "proposed_ground": "Control/machines/current/skills/brainstorming",
+      "standing": "retired",
+      "provenance": "adopted",
+      "retirement_reason": "Retained from the existing superpowers skills archive; withheld from projection.",
+      "human_acceptance": "required before writing real Control"
+    },
+    {
+      "name": "dispatching-parallel-agents",
+      "source": "/Users/admin/.codex/superpowers/skills/dispatching-parallel-agents",
+      "proposed_ground": "Control/machines/current/skills/dispatching-parallel-agents",
+      "standing": "retired",
+      "provenance": "adopted",
+      "retirement_reason": "Retained from the existing superpowers skills archive; withheld from projection.",
+      "human_acceptance": "required before writing real Control"
+    },
+    {
+      "name": "executing-plans",
+      "source": "/Users/admin/.codex/superpowers/skills/executing-plans",
+      "proposed_ground": "Control/machines/current/skills/executing-plans",
+      "standing": "retired",
+      "provenance": "adopted",
+      "retirement_reason": "Retained from the existing superpowers skills archive; withheld from projection.",
+      "human_acceptance": "required before writing real Control"
+    },
+    {
+      "name": "finishing-a-development-branch",
+      "source": "/Users/admin/.codex/superpowers/skills/finishing-a-development-branch",
+      "proposed_ground": "Control/machines/current/skills/finishing-a-development-branch",
+      "standing": "retired",
+      "provenance": "adopted",
+      "retirement_reason": "Retained from the existing superpowers skills archive; withheld from projection.",
+      "human_acceptance": "required before writing real Control"
+    },
+    {
+      "name": "receiving-code-review",
+      "source": "/Users/admin/.codex/superpowers/skills/receiving-code-review",
+      "proposed_ground": "Control/machines/current/skills/receiving-code-review",
+      "standing": "retired",
+      "provenance": "adopted",
+      "retirement_reason": "Retained from the existing superpowers skills archive; withheld from projection.",
+      "human_acceptance": "required before writing real Control"
+    },
+    {
+      "name": "requesting-code-review",
+      "source": "/Users/admin/.codex/superpowers/skills/requesting-code-review",
+      "proposed_ground": "Control/machines/current/skills/requesting-code-review",
+      "standing": "retired",
+      "provenance": "adopted",
+      "retirement_reason": "Retained from the existing superpowers skills archive; withheld from projection.",
+      "human_acceptance": "required before writing real Control"
+    },
+    {
+      "name": "sanity-check",
+      "source": "/Users/admin/.codex/superpowers/skills/sanity-check",
+      "proposed_ground": "Control/machines/current/skills/sanity-check",
+      "standing": "retired",
+      "provenance": "adopted",
+      "retirement_reason": "Retained from the existing superpowers skills archive; withheld from projection.",
+      "human_acceptance": "required before writing real Control"
+    },
+    {
+      "name": "subagent-driven-development",
+      "source": "/Users/admin/.codex/superpowers/skills/subagent-driven-development",
+      "proposed_ground": "Control/machines/current/skills/subagent-driven-development",
+      "standing": "retired",
+      "provenance": "adopted",
+      "retirement_reason": "Retained from the existing superpowers skills archive; withheld from projection.",
+      "human_acceptance": "required before writing real Control"
+    },
+    {
+      "name": "systematic-debugging",
+      "source": "/Users/admin/.codex/superpowers/skills/systematic-debugging",
+      "proposed_ground": "Control/machines/current/skills/systematic-debugging",
+      "standing": "retired",
+      "provenance": "adopted",
+      "retirement_reason": "Retained from the existing superpowers skills archive; withheld from projection.",
+      "human_acceptance": "required before writing real Control"
+    },
+    {
+      "name": "test-driven-development",
+      "source": "/Users/admin/.codex/superpowers/skills/test-driven-development",
+      "proposed_ground": "Control/machines/current/skills/test-driven-development",
+      "standing": "retired",
+      "provenance": "adopted",
+      "retirement_reason": "Retained from the existing superpowers skills archive; withheld from projection.",
+      "human_acceptance": "required before writing real Control"
+    },
+    {
+      "name": "using-git-worktrees",
+      "source": "/Users/admin/.codex/superpowers/skills/using-git-worktrees",
+      "proposed_ground": "Control/machines/current/skills/using-git-worktrees",
+      "standing": "retired",
+      "provenance": "adopted",
+      "retirement_reason": "Retained from the existing superpowers skills archive; withheld from projection.",
+      "human_acceptance": "required before writing real Control"
+    },
+    {
+      "name": "using-superpowers",
+      "source": "/Users/admin/.codex/superpowers/skills/using-superpowers",
+      "proposed_ground": "Control/machines/current/skills/using-superpowers",
+      "standing": "retired",
+      "provenance": "adopted",
+      "retirement_reason": "Retained from the existing superpowers skills archive; withheld from projection.",
+      "human_acceptance": "required before writing real Control"
+    },
+    {
+      "name": "verification-before-completion",
+      "source": "/Users/admin/.codex/superpowers/skills/verification-before-completion",
+      "proposed_ground": "Control/machines/current/skills/verification-before-completion",
+      "standing": "retired",
+      "provenance": "adopted",
+      "retirement_reason": "Retained from the existing superpowers skills archive; withheld from projection.",
+      "human_acceptance": "required before writing real Control"
+    },
+    {
+      "name": "writing-plans",
+      "source": "/Users/admin/.codex/superpowers/skills/writing-plans",
+      "proposed_ground": "Control/machines/current/skills/writing-plans",
+      "standing": "retired",
+      "provenance": "adopted",
+      "retirement_reason": "Retained from the existing superpowers skills archive; withheld from projection.",
+      "human_acceptance": "required before writing real Control"
+    },
+    {
+      "name": "writing-skills",
+      "source": "/Users/admin/.codex/superpowers/skills/writing-skills",
+      "proposed_ground": "Control/machines/current/skills/writing-skills",
+      "standing": "retired",
+      "provenance": "adopted",
+      "retirement_reason": "Retained from the existing superpowers skills archive; withheld from projection.",
+      "human_acceptance": "required before writing real Control"
+    }
+  ],
+  "negative_evidence": [
+    "No real Control changes",
+    "No original deletions",
+    "No active skill projections changed"
+  ]
+}

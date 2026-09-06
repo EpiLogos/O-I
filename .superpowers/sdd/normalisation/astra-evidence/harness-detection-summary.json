@@ -1,0 +1,69 @@
+{
+  "schema": "actuation.harness-detection/v1",
+  "catalog_revision": 2,
+  "availability": "complete",
+  "detection_ref": "detection:2026-09-06T10:22:53.349Z",
+  "observed_at": "2026-09-06T10:22:53.349Z",
+  "harnesses": [
+    {
+      "slug": "claude-code",
+      "harness_ref": "harness/claude-code",
+      "state": "detected"
+    },
+    {
+      "slug": "codex",
+      "harness_ref": "harness/codex",
+      "state": "detected"
+    },
+    {
+      "slug": "gemini",
+      "harness_ref": "harness/gemini",
+      "state": "detected"
+    },
+    {
+      "slug": "gemini-antigravity",
+      "harness_ref": "harness/gemini-antigravity",
+      "state": "detected"
+    },
+    {
+      "slug": "pi",
+      "harness_ref": "harness/pi",
+      "state": "detected"
+    },
+    {
+      "slug": "hermes",
+      "harness_ref": "harness/hermes",
+      "state": "detected"
+    },
+    {
+      "slug": "hermes-acp",
+      "harness_ref": "harness/hermes-acp",
+      "state": "detected"
+    },
+    {
+      "slug": "grok-bot",
+      "harness_ref": "harness/grok-bot",
+      "state": "detected"
+    },
+    {
+      "slug": "ollama",
+      "harness_ref": "harness/ollama",
+      "state": "detected"
+    },
+    {
+      "slug": "openclaw",
+      "harness_ref": "harness/openclaw",
+      "state": "detected"
+    },
+    {
+      "slug": "kimi",
+      "harness_ref": "harness/kimi",
+      "state": "detected"
+    },
+    {
+      "slug": "zcode",
+      "harness_ref": "harness/zcode",
+      "state": "detected"
+    }
+  ]
+}
