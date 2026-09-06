@@ -7,7 +7,6 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::UNIX_EPOCH;
 
-const CATALOG_JSON: &str = include_str!("../../surfaces.json");
 const STATE_SCHEMA: u32 = 1;
 
 #[derive(Clone, Debug, Deserialize)]
@@ -172,7 +171,7 @@ pub fn live_disclosure() -> Result<SuiteCompositionDisclosure, String> {
     };
 
     disclosure_from_json(
-        CATALOG_JSON,
+        &crate::catalog_source::resolve()?.json,
         composition_json.as_deref(),
         |candidate| resolve_executable(candidate).map(|path| path.display().to_string()),
         |candidate| Path::new(candidate).is_dir(),

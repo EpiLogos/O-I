@@ -4,6 +4,8 @@ mod guardian;
 #[path = "skillset.rs"]
 #[allow(dead_code)] // the bin ships the whole SkillSet language; it drives the guardian subset
 mod skillset;
+#[path = "catalog_source.rs"]
+mod catalog_source;
 mod composition {
     include!("composition.rs");
     include!("bootstrap.rs");
