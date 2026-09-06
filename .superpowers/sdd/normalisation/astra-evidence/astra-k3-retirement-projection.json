@@ -1,0 +1,1931 @@
+[
+  {
+    "command": [
+      "/tmp/astra-current-state/oi/installs/central-current/616749373a60f55e9fd99e4f2b0bebf2c73a674b/bin/ctrl",
+      "--root",
+      "/private/tmp/astra-current-ground",
+      "--json",
+      "action",
+      "run",
+      "control.skills.retire",
+      "{\"scope\": \"control-machine\", \"machine\": \"current\", \"name\": \"brainstorming\", \"retired_by\": \"scratch-acceptance\", \"retirement_reason\": \"Scratch rehearsal of archived superpowers retirement; no real Control mutation.\"}"
+    ],
+    "exit": 0,
+    "result": {
+      "ok": true,
+      "status": "success",
+      "action": "control.skills.retire",
+      "data": {
+        "manifest_mutated": true,
+        "manifest_path": "Control/machines/current/skills/brainstorming/skill.json",
+        "previous_standing": "active",
+        "skill": {
+          "body_source_ref": "central:source:control:root:Control/machines/current/skills/brainstorming/SKILL.md",
+          "machine": "current",
+          "manifest_present": true,
+          "name": "brainstorming",
+          "path": "Control/machines/current/skills/brainstorming",
+          "project": null,
+          "provenance": "adopted",
+          "retirement": {
+            "retired_at_unix_seconds": 1788692676,
+            "retired_by": "scratch-acceptance",
+            "retirement_reason": "Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          },
+          "scope": "control-machine",
+          "standing": "retired"
+        },
+        "skill_bytes_mutated": false,
+        "skill_directory_mutated": false,
+        "standing": "retired"
+      }
+    }
+  },
+  {
+    "command": [
+      "/tmp/astra-current-state/oi/installs/central-current/616749373a60f55e9fd99e4f2b0bebf2c73a674b/bin/ctrl",
+      "--root",
+      "/private/tmp/astra-current-ground",
+      "--json",
+      "action",
+      "run",
+      "control.skills.retire",
+      "{\"scope\": \"control-machine\", \"machine\": \"current\", \"name\": \"dispatching-parallel-agents\", \"retired_by\": \"scratch-acceptance\", \"retirement_reason\": \"Scratch rehearsal of archived superpowers retirement; no real Control mutation.\"}"
+    ],
+    "exit": 0,
+    "result": {
+      "ok": true,
+      "status": "success",
+      "action": "control.skills.retire",
+      "data": {
+        "manifest_mutated": true,
+        "manifest_path": "Control/machines/current/skills/dispatching-parallel-agents/skill.json",
+        "previous_standing": "active",
+        "skill": {
+          "body_source_ref": "central:source:control:root:Control/machines/current/skills/dispatching-parallel-agents/SKILL.md",
+          "machine": "current",
+          "manifest_present": true,
+          "name": "dispatching-parallel-agents",
+          "path": "Control/machines/current/skills/dispatching-parallel-agents",
+          "project": null,
+          "provenance": "adopted",
+          "retirement": {
+            "retired_at_unix_seconds": 1788692676,
+            "retired_by": "scratch-acceptance",
+            "retirement_reason": "Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          },
+          "scope": "control-machine",
+          "standing": "retired"
+        },
+        "skill_bytes_mutated": false,
+        "skill_directory_mutated": false,
+        "standing": "retired"
+      }
+    }
+  },
+  {
+    "command": [
+      "/tmp/astra-current-state/oi/installs/central-current/616749373a60f55e9fd99e4f2b0bebf2c73a674b/bin/ctrl",
+      "--root",
+      "/private/tmp/astra-current-ground",
+      "--json",
+      "action",
+      "run",
+      "control.skills.retire",
+      "{\"scope\": \"control-machine\", \"machine\": \"current\", \"name\": \"executing-plans\", \"retired_by\": \"scratch-acceptance\", \"retirement_reason\": \"Scratch rehearsal of archived superpowers retirement; no real Control mutation.\"}"
+    ],
+    "exit": 0,
+    "result": {
+      "ok": true,
+      "status": "success",
+      "action": "control.skills.retire",
+      "data": {
+        "manifest_mutated": true,
+        "manifest_path": "Control/machines/current/skills/executing-plans/skill.json",
+        "previous_standing": "active",
+        "skill": {
+          "body_source_ref": "central:source:control:root:Control/machines/current/skills/executing-plans/SKILL.md",
+          "machine": "current",
+          "manifest_present": true,
+          "name": "executing-plans",
+          "path": "Control/machines/current/skills/executing-plans",
+          "project": null,
+          "provenance": "adopted",
+          "retirement": {
+            "retired_at_unix_seconds": 1788692676,
+            "retired_by": "scratch-acceptance",
+            "retirement_reason": "Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          },
+          "scope": "control-machine",
+          "standing": "retired"
+        },
+        "skill_bytes_mutated": false,
+        "skill_directory_mutated": false,
+        "standing": "retired"
+      }
+    }
+  },
+  {
+    "command": [
+      "/tmp/astra-current-state/oi/installs/central-current/616749373a60f55e9fd99e4f2b0bebf2c73a674b/bin/ctrl",
+      "--root",
+      "/private/tmp/astra-current-ground",
+      "--json",
+      "action",
+      "run",
+      "control.skills.retire",
+      "{\"scope\": \"control-machine\", \"machine\": \"current\", \"name\": \"finishing-a-development-branch\", \"retired_by\": \"scratch-acceptance\", \"retirement_reason\": \"Scratch rehearsal of archived superpowers retirement; no real Control mutation.\"}"
+    ],
+    "exit": 0,
+    "result": {
+      "ok": true,
+      "status": "success",
+      "action": "control.skills.retire",
+      "data": {
+        "manifest_mutated": true,
+        "manifest_path": "Control/machines/current/skills/finishing-a-development-branch/skill.json",
+        "previous_standing": "active",
+        "skill": {
+          "body_source_ref": "central:source:control:root:Control/machines/current/skills/finishing-a-development-branch/SKILL.md",
+          "machine": "current",
+          "manifest_present": true,
+          "name": "finishing-a-development-branch",
+          "path": "Control/machines/current/skills/finishing-a-development-branch",
+          "project": null,
+          "provenance": "adopted",
+          "retirement": {
+            "retired_at_unix_seconds": 1788692676,
+            "retired_by": "scratch-acceptance",
+            "retirement_reason": "Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          },
+          "scope": "control-machine",
+          "standing": "retired"
+        },
+        "skill_bytes_mutated": false,
+        "skill_directory_mutated": false,
+        "standing": "retired"
+      }
+    }
+  },
+  {
+    "command": [
+      "/tmp/astra-current-state/oi/installs/central-current/616749373a60f55e9fd99e4f2b0bebf2c73a674b/bin/ctrl",
+      "--root",
+      "/private/tmp/astra-current-ground",
+      "--json",
+      "action",
+      "run",
+      "control.skills.retire",
+      "{\"scope\": \"control-machine\", \"machine\": \"current\", \"name\": \"receiving-code-review\", \"retired_by\": \"scratch-acceptance\", \"retirement_reason\": \"Scratch rehearsal of archived superpowers retirement; no real Control mutation.\"}"
+    ],
+    "exit": 0,
+    "result": {
+      "ok": true,
+      "status": "success",
+      "action": "control.skills.retire",
+      "data": {
+        "manifest_mutated": true,
+        "manifest_path": "Control/machines/current/skills/receiving-code-review/skill.json",
+        "previous_standing": "active",
+        "skill": {
+          "body_source_ref": "central:source:control:root:Control/machines/current/skills/receiving-code-review/SKILL.md",
+          "machine": "current",
+          "manifest_present": true,
+          "name": "receiving-code-review",
+          "path": "Control/machines/current/skills/receiving-code-review",
+          "project": null,
+          "provenance": "adopted",
+          "retirement": {
+            "retired_at_unix_seconds": 1788692676,
+            "retired_by": "scratch-acceptance",
+            "retirement_reason": "Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          },
+          "scope": "control-machine",
+          "standing": "retired"
+        },
+        "skill_bytes_mutated": false,
+        "skill_directory_mutated": false,
+        "standing": "retired"
+      }
+    }
+  },
+  {
+    "command": [
+      "/tmp/astra-current-state/oi/installs/central-current/616749373a60f55e9fd99e4f2b0bebf2c73a674b/bin/ctrl",
+      "--root",
+      "/private/tmp/astra-current-ground",
+      "--json",
+      "action",
+      "run",
+      "control.skills.retire",
+      "{\"scope\": \"control-machine\", \"machine\": \"current\", \"name\": \"requesting-code-review\", \"retired_by\": \"scratch-acceptance\", \"retirement_reason\": \"Scratch rehearsal of archived superpowers retirement; no real Control mutation.\"}"
+    ],
+    "exit": 0,
+    "result": {
+      "ok": true,
+      "status": "success",
+      "action": "control.skills.retire",
+      "data": {
+        "manifest_mutated": true,
+        "manifest_path": "Control/machines/current/skills/requesting-code-review/skill.json",
+        "previous_standing": "active",
+        "skill": {
+          "body_source_ref": "central:source:control:root:Control/machines/current/skills/requesting-code-review/SKILL.md",
+          "machine": "current",
+          "manifest_present": true,
+          "name": "requesting-code-review",
+          "path": "Control/machines/current/skills/requesting-code-review",
+          "project": null,
+          "provenance": "adopted",
+          "retirement": {
+            "retired_at_unix_seconds": 1788692676,
+            "retired_by": "scratch-acceptance",
+            "retirement_reason": "Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          },
+          "scope": "control-machine",
+          "standing": "retired"
+        },
+        "skill_bytes_mutated": false,
+        "skill_directory_mutated": false,
+        "standing": "retired"
+      }
+    }
+  },
+  {
+    "command": [
+      "/tmp/astra-current-state/oi/installs/central-current/616749373a60f55e9fd99e4f2b0bebf2c73a674b/bin/ctrl",
+      "--root",
+      "/private/tmp/astra-current-ground",
+      "--json",
+      "action",
+      "run",
+      "control.skills.retire",
+      "{\"scope\": \"control-machine\", \"machine\": \"current\", \"name\": \"sanity-check\", \"retired_by\": \"scratch-acceptance\", \"retirement_reason\": \"Scratch rehearsal of archived superpowers retirement; no real Control mutation.\"}"
+    ],
+    "exit": 0,
+    "result": {
+      "ok": true,
+      "status": "success",
+      "action": "control.skills.retire",
+      "data": {
+        "manifest_mutated": true,
+        "manifest_path": "Control/machines/current/skills/sanity-check/skill.json",
+        "previous_standing": "active",
+        "skill": {
+          "body_source_ref": "central:source:control:root:Control/machines/current/skills/sanity-check/SKILL.md",
+          "machine": "current",
+          "manifest_present": true,
+          "name": "sanity-check",
+          "path": "Control/machines/current/skills/sanity-check",
+          "project": null,
+          "provenance": "adopted",
+          "retirement": {
+            "retired_at_unix_seconds": 1788692676,
+            "retired_by": "scratch-acceptance",
+            "retirement_reason": "Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          },
+          "scope": "control-machine",
+          "standing": "retired"
+        },
+        "skill_bytes_mutated": false,
+        "skill_directory_mutated": false,
+        "standing": "retired"
+      }
+    }
+  },
+  {
+    "command": [
+      "/tmp/astra-current-state/oi/installs/central-current/616749373a60f55e9fd99e4f2b0bebf2c73a674b/bin/ctrl",
+      "--root",
+      "/private/tmp/astra-current-ground",
+      "--json",
+      "action",
+      "run",
+      "control.skills.retire",
+      "{\"scope\": \"control-machine\", \"machine\": \"current\", \"name\": \"subagent-driven-development\", \"retired_by\": \"scratch-acceptance\", \"retirement_reason\": \"Scratch rehearsal of archived superpowers retirement; no real Control mutation.\"}"
+    ],
+    "exit": 0,
+    "result": {
+      "ok": true,
+      "status": "success",
+      "action": "control.skills.retire",
+      "data": {
+        "manifest_mutated": true,
+        "manifest_path": "Control/machines/current/skills/subagent-driven-development/skill.json",
+        "previous_standing": "active",
+        "skill": {
+          "body_source_ref": "central:source:control:root:Control/machines/current/skills/subagent-driven-development/SKILL.md",
+          "machine": "current",
+          "manifest_present": true,
+          "name": "subagent-driven-development",
+          "path": "Control/machines/current/skills/subagent-driven-development",
+          "project": null,
+          "provenance": "adopted",
+          "retirement": {
+            "retired_at_unix_seconds": 1788692676,
+            "retired_by": "scratch-acceptance",
+            "retirement_reason": "Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          },
+          "scope": "control-machine",
+          "standing": "retired"
+        },
+        "skill_bytes_mutated": false,
+        "skill_directory_mutated": false,
+        "standing": "retired"
+      }
+    }
+  },
+  {
+    "command": [
+      "/tmp/astra-current-state/oi/installs/central-current/616749373a60f55e9fd99e4f2b0bebf2c73a674b/bin/ctrl",
+      "--root",
+      "/private/tmp/astra-current-ground",
+      "--json",
+      "action",
+      "run",
+      "control.skills.retire",
+      "{\"scope\": \"control-machine\", \"machine\": \"current\", \"name\": \"systematic-debugging\", \"retired_by\": \"scratch-acceptance\", \"retirement_reason\": \"Scratch rehearsal of archived superpowers retirement; no real Control mutation.\"}"
+    ],
+    "exit": 0,
+    "result": {
+      "ok": true,
+      "status": "success",
+      "action": "control.skills.retire",
+      "data": {
+        "manifest_mutated": true,
+        "manifest_path": "Control/machines/current/skills/systematic-debugging/skill.json",
+        "previous_standing": "active",
+        "skill": {
+          "body_source_ref": "central:source:control:root:Control/machines/current/skills/systematic-debugging/SKILL.md",
+          "machine": "current",
+          "manifest_present": true,
+          "name": "systematic-debugging",
+          "path": "Control/machines/current/skills/systematic-debugging",
+          "project": null,
+          "provenance": "adopted",
+          "retirement": {
+            "retired_at_unix_seconds": 1788692676,
+            "retired_by": "scratch-acceptance",
+            "retirement_reason": "Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          },
+          "scope": "control-machine",
+          "standing": "retired"
+        },
+        "skill_bytes_mutated": false,
+        "skill_directory_mutated": false,
+        "standing": "retired"
+      }
+    }
+  },
+  {
+    "command": [
+      "/tmp/astra-current-state/oi/installs/central-current/616749373a60f55e9fd99e4f2b0bebf2c73a674b/bin/ctrl",
+      "--root",
+      "/private/tmp/astra-current-ground",
+      "--json",
+      "action",
+      "run",
+      "control.skills.retire",
+      "{\"scope\": \"control-machine\", \"machine\": \"current\", \"name\": \"test-driven-development\", \"retired_by\": \"scratch-acceptance\", \"retirement_reason\": \"Scratch rehearsal of archived superpowers retirement; no real Control mutation.\"}"
+    ],
+    "exit": 0,
+    "result": {
+      "ok": true,
+      "status": "success",
+      "action": "control.skills.retire",
+      "data": {
+        "manifest_mutated": true,
+        "manifest_path": "Control/machines/current/skills/test-driven-development/skill.json",
+        "previous_standing": "active",
+        "skill": {
+          "body_source_ref": "central:source:control:root:Control/machines/current/skills/test-driven-development/SKILL.md",
+          "machine": "current",
+          "manifest_present": true,
+          "name": "test-driven-development",
+          "path": "Control/machines/current/skills/test-driven-development",
+          "project": null,
+          "provenance": "adopted",
+          "retirement": {
+            "retired_at_unix_seconds": 1788692676,
+            "retired_by": "scratch-acceptance",
+            "retirement_reason": "Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          },
+          "scope": "control-machine",
+          "standing": "retired"
+        },
+        "skill_bytes_mutated": false,
+        "skill_directory_mutated": false,
+        "standing": "retired"
+      }
+    }
+  },
+  {
+    "command": [
+      "/tmp/astra-current-state/oi/installs/central-current/616749373a60f55e9fd99e4f2b0bebf2c73a674b/bin/ctrl",
+      "--root",
+      "/private/tmp/astra-current-ground",
+      "--json",
+      "action",
+      "run",
+      "control.skills.retire",
+      "{\"scope\": \"control-machine\", \"machine\": \"current\", \"name\": \"using-git-worktrees\", \"retired_by\": \"scratch-acceptance\", \"retirement_reason\": \"Scratch rehearsal of archived superpowers retirement; no real Control mutation.\"}"
+    ],
+    "exit": 0,
+    "result": {
+      "ok": true,
+      "status": "success",
+      "action": "control.skills.retire",
+      "data": {
+        "manifest_mutated": true,
+        "manifest_path": "Control/machines/current/skills/using-git-worktrees/skill.json",
+        "previous_standing": "active",
+        "skill": {
+          "body_source_ref": "central:source:control:root:Control/machines/current/skills/using-git-worktrees/SKILL.md",
+          "machine": "current",
+          "manifest_present": true,
+          "name": "using-git-worktrees",
+          "path": "Control/machines/current/skills/using-git-worktrees",
+          "project": null,
+          "provenance": "adopted",
+          "retirement": {
+            "retired_at_unix_seconds": 1788692676,
+            "retired_by": "scratch-acceptance",
+            "retirement_reason": "Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          },
+          "scope": "control-machine",
+          "standing": "retired"
+        },
+        "skill_bytes_mutated": false,
+        "skill_directory_mutated": false,
+        "standing": "retired"
+      }
+    }
+  },
+  {
+    "command": [
+      "/tmp/astra-current-state/oi/installs/central-current/616749373a60f55e9fd99e4f2b0bebf2c73a674b/bin/ctrl",
+      "--root",
+      "/private/tmp/astra-current-ground",
+      "--json",
+      "action",
+      "run",
+      "control.skills.retire",
+      "{\"scope\": \"control-machine\", \"machine\": \"current\", \"name\": \"using-superpowers\", \"retired_by\": \"scratch-acceptance\", \"retirement_reason\": \"Scratch rehearsal of archived superpowers retirement; no real Control mutation.\"}"
+    ],
+    "exit": 0,
+    "result": {
+      "ok": true,
+      "status": "success",
+      "action": "control.skills.retire",
+      "data": {
+        "manifest_mutated": true,
+        "manifest_path": "Control/machines/current/skills/using-superpowers/skill.json",
+        "previous_standing": "active",
+        "skill": {
+          "body_source_ref": "central:source:control:root:Control/machines/current/skills/using-superpowers/SKILL.md",
+          "machine": "current",
+          "manifest_present": true,
+          "name": "using-superpowers",
+          "path": "Control/machines/current/skills/using-superpowers",
+          "project": null,
+          "provenance": "adopted",
+          "retirement": {
+            "retired_at_unix_seconds": 1788692676,
+            "retired_by": "scratch-acceptance",
+            "retirement_reason": "Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          },
+          "scope": "control-machine",
+          "standing": "retired"
+        },
+        "skill_bytes_mutated": false,
+        "skill_directory_mutated": false,
+        "standing": "retired"
+      }
+    }
+  },
+  {
+    "command": [
+      "/tmp/astra-current-state/oi/installs/central-current/616749373a60f55e9fd99e4f2b0bebf2c73a674b/bin/ctrl",
+      "--root",
+      "/private/tmp/astra-current-ground",
+      "--json",
+      "action",
+      "run",
+      "control.skills.retire",
+      "{\"scope\": \"control-machine\", \"machine\": \"current\", \"name\": \"verification-before-completion\", \"retired_by\": \"scratch-acceptance\", \"retirement_reason\": \"Scratch rehearsal of archived superpowers retirement; no real Control mutation.\"}"
+    ],
+    "exit": 0,
+    "result": {
+      "ok": true,
+      "status": "success",
+      "action": "control.skills.retire",
+      "data": {
+        "manifest_mutated": true,
+        "manifest_path": "Control/machines/current/skills/verification-before-completion/skill.json",
+        "previous_standing": "active",
+        "skill": {
+          "body_source_ref": "central:source:control:root:Control/machines/current/skills/verification-before-completion/SKILL.md",
+          "machine": "current",
+          "manifest_present": true,
+          "name": "verification-before-completion",
+          "path": "Control/machines/current/skills/verification-before-completion",
+          "project": null,
+          "provenance": "adopted",
+          "retirement": {
+            "retired_at_unix_seconds": 1788692676,
+            "retired_by": "scratch-acceptance",
+            "retirement_reason": "Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          },
+          "scope": "control-machine",
+          "standing": "retired"
+        },
+        "skill_bytes_mutated": false,
+        "skill_directory_mutated": false,
+        "standing": "retired"
+      }
+    }
+  },
+  {
+    "command": [
+      "/tmp/astra-current-state/oi/installs/central-current/616749373a60f55e9fd99e4f2b0bebf2c73a674b/bin/ctrl",
+      "--root",
+      "/private/tmp/astra-current-ground",
+      "--json",
+      "action",
+      "run",
+      "control.skills.retire",
+      "{\"scope\": \"control-machine\", \"machine\": \"current\", \"name\": \"writing-plans\", \"retired_by\": \"scratch-acceptance\", \"retirement_reason\": \"Scratch rehearsal of archived superpowers retirement; no real Control mutation.\"}"
+    ],
+    "exit": 0,
+    "result": {
+      "ok": true,
+      "status": "success",
+      "action": "control.skills.retire",
+      "data": {
+        "manifest_mutated": true,
+        "manifest_path": "Control/machines/current/skills/writing-plans/skill.json",
+        "previous_standing": "active",
+        "skill": {
+          "body_source_ref": "central:source:control:root:Control/machines/current/skills/writing-plans/SKILL.md",
+          "machine": "current",
+          "manifest_present": true,
+          "name": "writing-plans",
+          "path": "Control/machines/current/skills/writing-plans",
+          "project": null,
+          "provenance": "adopted",
+          "retirement": {
+            "retired_at_unix_seconds": 1788692676,
+            "retired_by": "scratch-acceptance",
+            "retirement_reason": "Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          },
+          "scope": "control-machine",
+          "standing": "retired"
+        },
+        "skill_bytes_mutated": false,
+        "skill_directory_mutated": false,
+        "standing": "retired"
+      }
+    }
+  },
+  {
+    "command": [
+      "/tmp/astra-current-state/oi/installs/central-current/616749373a60f55e9fd99e4f2b0bebf2c73a674b/bin/ctrl",
+      "--root",
+      "/private/tmp/astra-current-ground",
+      "--json",
+      "action",
+      "run",
+      "control.skills.retire",
+      "{\"scope\": \"control-machine\", \"machine\": \"current\", \"name\": \"writing-skills\", \"retired_by\": \"scratch-acceptance\", \"retirement_reason\": \"Scratch rehearsal of archived superpowers retirement; no real Control mutation.\"}"
+    ],
+    "exit": 0,
+    "result": {
+      "ok": true,
+      "status": "success",
+      "action": "control.skills.retire",
+      "data": {
+        "manifest_mutated": true,
+        "manifest_path": "Control/machines/current/skills/writing-skills/skill.json",
+        "previous_standing": "active",
+        "skill": {
+          "body_source_ref": "central:source:control:root:Control/machines/current/skills/writing-skills/SKILL.md",
+          "machine": "current",
+          "manifest_present": true,
+          "name": "writing-skills",
+          "path": "Control/machines/current/skills/writing-skills",
+          "project": null,
+          "provenance": "adopted",
+          "retirement": {
+            "retired_at_unix_seconds": 1788692676,
+            "retired_by": "scratch-acceptance",
+            "retirement_reason": "Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          },
+          "scope": "control-machine",
+          "standing": "retired"
+        },
+        "skill_bytes_mutated": false,
+        "skill_directory_mutated": false,
+        "standing": "retired"
+      }
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "source",
+      "add-directory",
+      "machine-ground",
+      "/tmp/astra-current-ground/Control/machines/current/skills",
+      "--control-ground"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": null,
+        "session_id": null
+      },
+      "data": {
+        "control_ground": true,
+        "id": "machine-ground",
+        "kind": "directory",
+        "portable": false
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "source",
+      "sync",
+      "machine-ground"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": null,
+        "session_id": null
+      },
+      "data": {
+        "active_snapshot": null,
+        "candidate_snapshot": "446086dd4cc686339415b3f95f02eec97f6f197692fc4e2945ff56ca62e13023",
+        "git_commit": null,
+        "id": "machine-ground",
+        "skills": 35
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "source",
+      "promote",
+      "machine-ground",
+      "--trust"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": null,
+        "session_id": null
+      },
+      "data": {
+        "active_snapshot": "446086dd4cc686339415b3f95f02eec97f6f197692fc4e2945ff56ca62e13023",
+        "id": "machine-ground",
+        "skills": 35,
+        "trusted_skills": 35
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "set",
+      "create",
+      "k3-migration",
+      "skill/machine-ground/brandkit",
+      "skill/machine-ground/design-taste-frontend",
+      "skill/machine-ground/design-taste-frontend-v1",
+      "skill/machine-ground/design-taste-frontend-v2",
+      "skill/machine-ground/find-skills",
+      "skill/machine-ground/full-output-enforcement",
+      "skill/machine-ground/gpt-taste",
+      "skill/machine-ground/high-end-visual-design",
+      "skill/machine-ground/image-to-code",
+      "skill/machine-ground/imagegen-frontend-mobile",
+      "skill/machine-ground/imagegen-frontend-web",
+      "skill/machine-ground/industrial-brutalist-ui",
+      "skill/machine-ground/minimalist-ui",
+      "skill/machine-ground/ralph-tui-create-beads",
+      "skill/machine-ground/ralph-tui-create-beads-rust",
+      "skill/machine-ground/ralph-tui-create-json",
+      "skill/machine-ground/ralph-tui-prd",
+      "skill/machine-ground/redesign-existing-projects",
+      "skill/machine-ground/stitch-design-taste",
+      "skill/machine-ground/unix-atomic-skill-maker",
+      "skill/machine-ground/brainstorming",
+      "skill/machine-ground/dispatching-parallel-agents",
+      "skill/machine-ground/executing-plans",
+      "skill/machine-ground/finishing-a-development-branch",
+      "skill/machine-ground/receiving-code-review",
+      "skill/machine-ground/requesting-code-review",
+      "skill/machine-ground/sanity-check",
+      "skill/machine-ground/subagent-driven-development",
+      "skill/machine-ground/systematic-debugging",
+      "skill/machine-ground/test-driven-development",
+      "skill/machine-ground/using-git-worktrees",
+      "skill/machine-ground/using-superpowers",
+      "skill/machine-ground/verification-before-completion",
+      "skill/machine-ground/writing-plans",
+      "skill/machine-ground/writing-skills"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": null,
+        "session_id": null
+      },
+      "data": {
+        "diff": "procedure prc_01M1V68FJ5WS17FSKMTK20G9ZH (5ba5777cb7c7) \u2014 2 edits, staged staged\nnote: create writable set `k3-migration`\n\ncreate directory /tmp/astra-k3-state/skillsets/k3-migration\n  create /tmp/astra-k3-state/skillsets/k3-migration\n  before: <absent>\n  after:\n    <directory>\n  undo: remove what was created\n\nwrite /tmp/astra-k3-state/skillsets/k3-migration/members (1574 bytes)\n  create /tmp/astra-k3-state/skillsets/k3-migration/members\n  before: <absent>\n  after:\n    # One capsule id per line. A set is a folder; this is its membership.\n    # Blank lines and `#` comments are ignored.\n    skill/machine-ground/brainstorming\n    skill/machine-ground/brandkit\n    skill/machine-ground/design-taste-frontend\n    skill/machine-ground/design-taste-frontend-v1\n    skill/machine-ground/design-taste-frontend-v2\n    skill/machine-ground/dispatching-parallel-agents\n    skill/machine-ground/executing-plans\n    skill/machine-ground/find-skills\n    skill/machine-ground/finishing-a-development-branch\n    skill/machine-ground/full-output-enforcement\n    skill/machine-ground/gpt-taste\n    skill/machine-ground/high-end-visual-design\n    skill/machine-ground/image-to-code\n    skill/machine-ground/imagegen-frontend-mobile\n    skill/machine-ground/imagegen-frontend-web\n    skill/machine-ground/industrial-brutalist-ui\n    skill/machine-ground/minimalist-ui\n    skill/machine-ground/ralph-tui-create-beads\n    skill/machine-ground/ralph-tui-create-beads-rust\n    skill/machine-ground/ralph-tui-create-json\n    skill/machine-ground/ralph-tui-prd\n    skill/machine-ground/receiving-code-review\n    skill/machine-ground/redesign-existing-projects\n    skill/machine-ground/requesting-code-review\n    skill/machine-ground/sanity-check\n    skill/machine-ground/stitch-design-taste\n    skill/machine-ground/subagent-driven-development\n    skill/machine-ground/systematic-debugging\n    skill/machine-ground/test-driven-development\n    skill/machine-ground/unix-atomic-skill-maker\n    skill/machine-ground/using-git-worktrees\n    skill/machine-ground/using-superpowers\n    skill/machine-ground/verification-before-completion\n    skill/machine-ground/writing-plans\n    skill/machine-ground/writing-skills\n  undo: remove what was created\n",
+        "edits": 2,
+        "expanded_from": [],
+        "members": 35,
+        "name": "k3-migration",
+        "path": "/tmp/astra-k3-state/skillsets/k3-migration",
+        "procedure": "prc_01M1V68FJ5WS17FSKMTK20G9ZH",
+        "undo": "aikit procedure undo prc_01M1V68FJ5WS17FSKMTK20G9ZH"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "project",
+      "bind",
+      "k3-acceptance",
+      "--directory",
+      "/tmp/astra-current-ground/Work/k3-acceptance",
+      "--set",
+      "k3-migration"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": null,
+        "session_id": null
+      },
+      "data": {
+        "directories": [
+          "/private/tmp/astra-current-ground/Work/k3-acceptance"
+        ],
+        "inherit_default_skill_sets": true,
+        "project": "k3-acceptance",
+        "repositories": [],
+        "skill_sets": [
+          "k3-migration"
+        ]
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/brandkit",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/brandkit",
+        "enabled": true,
+        "generation": "gen_9e1370ef884bf0d8",
+        "replaced": null,
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/design-taste-frontend",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/design-taste-frontend",
+        "enabled": true,
+        "generation": "gen_954196b7015c5056",
+        "replaced": "gen_9e1370ef884bf0d8",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/design-taste-frontend-v1",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/design-taste-frontend-v1",
+        "enabled": true,
+        "generation": "gen_f2b1d7f714734dac",
+        "replaced": "gen_954196b7015c5056",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/design-taste-frontend-v2",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/design-taste-frontend-v2",
+        "enabled": true,
+        "generation": "gen_f75f7d1b6d0e1279",
+        "replaced": "gen_f2b1d7f714734dac",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/find-skills",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/find-skills",
+        "enabled": true,
+        "generation": "gen_2c28bc05e33578c5",
+        "replaced": "gen_f75f7d1b6d0e1279",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/full-output-enforcement",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/full-output-enforcement",
+        "enabled": true,
+        "generation": "gen_dd2c9ccc9411d097",
+        "replaced": "gen_2c28bc05e33578c5",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/gpt-taste",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/gpt-taste",
+        "enabled": true,
+        "generation": "gen_726131ba4d7d885d",
+        "replaced": "gen_dd2c9ccc9411d097",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/high-end-visual-design",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/high-end-visual-design",
+        "enabled": true,
+        "generation": "gen_246557ea77432bd7",
+        "replaced": "gen_726131ba4d7d885d",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/image-to-code",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/image-to-code",
+        "enabled": true,
+        "generation": "gen_d188fe1d82b623a2",
+        "replaced": "gen_246557ea77432bd7",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/imagegen-frontend-mobile",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/imagegen-frontend-mobile",
+        "enabled": true,
+        "generation": "gen_6a9bd67890c91740",
+        "replaced": "gen_d188fe1d82b623a2",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/imagegen-frontend-web",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/imagegen-frontend-web",
+        "enabled": true,
+        "generation": "gen_184482d711660d27",
+        "replaced": "gen_6a9bd67890c91740",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/industrial-brutalist-ui",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/industrial-brutalist-ui",
+        "enabled": true,
+        "generation": "gen_7a4fa2912f6e1bbb",
+        "replaced": "gen_184482d711660d27",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/minimalist-ui",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/minimalist-ui",
+        "enabled": true,
+        "generation": "gen_0a11cfeaa0c1c866",
+        "replaced": "gen_7a4fa2912f6e1bbb",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/ralph-tui-create-beads",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/ralph-tui-create-beads",
+        "enabled": true,
+        "generation": "gen_21b1a19dce24489b",
+        "replaced": "gen_0a11cfeaa0c1c866",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/ralph-tui-create-beads-rust",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/ralph-tui-create-beads-rust",
+        "enabled": true,
+        "generation": "gen_fbcdf2f1e0c0288e",
+        "replaced": "gen_21b1a19dce24489b",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/ralph-tui-create-json",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/ralph-tui-create-json",
+        "enabled": true,
+        "generation": "gen_3d187365484bb16b",
+        "replaced": "gen_fbcdf2f1e0c0288e",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/ralph-tui-prd",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/ralph-tui-prd",
+        "enabled": true,
+        "generation": "gen_e25c07e2a47c294c",
+        "replaced": "gen_3d187365484bb16b",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/redesign-existing-projects",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/redesign-existing-projects",
+        "enabled": true,
+        "generation": "gen_5799a554edea6abc",
+        "replaced": "gen_e25c07e2a47c294c",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/stitch-design-taste",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/stitch-design-taste",
+        "enabled": true,
+        "generation": "gen_8288066fd4c401d7",
+        "replaced": "gen_5799a554edea6abc",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/unix-atomic-skill-maker",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/unix-atomic-skill-maker",
+        "enabled": true,
+        "generation": "gen_7b635d61d265d45f",
+        "replaced": "gen_8288066fd4c401d7",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/brainstorming",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/brainstorming",
+        "enabled": true,
+        "generation": "gen_0e3d8d05338d004c",
+        "replaced": "gen_7b635d61d265d45f",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/dispatching-parallel-agents",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/dispatching-parallel-agents",
+        "enabled": true,
+        "generation": "gen_e0c3354f836e42e5",
+        "replaced": "gen_0e3d8d05338d004c",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/executing-plans",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/executing-plans",
+        "enabled": true,
+        "generation": "gen_73fa16bda7ffb0fa",
+        "replaced": "gen_e0c3354f836e42e5",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/finishing-a-development-branch",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/finishing-a-development-branch",
+        "enabled": true,
+        "generation": "gen_cee34641bfdb3cd2",
+        "replaced": "gen_73fa16bda7ffb0fa",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/receiving-code-review",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/receiving-code-review",
+        "enabled": true,
+        "generation": "gen_c76623005f0ffa46",
+        "replaced": "gen_cee34641bfdb3cd2",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/requesting-code-review",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/requesting-code-review",
+        "enabled": true,
+        "generation": "gen_289977257bb31ed2",
+        "replaced": "gen_c76623005f0ffa46",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/sanity-check",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/sanity-check",
+        "enabled": true,
+        "generation": "gen_12a5ccaeb246302a",
+        "replaced": "gen_289977257bb31ed2",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/subagent-driven-development",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/subagent-driven-development",
+        "enabled": true,
+        "generation": "gen_86472a4cdb49b70c",
+        "replaced": "gen_12a5ccaeb246302a",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/systematic-debugging",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/systematic-debugging",
+        "enabled": true,
+        "generation": "gen_b6c14c59019e72ae",
+        "replaced": "gen_86472a4cdb49b70c",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/test-driven-development",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/test-driven-development",
+        "enabled": true,
+        "generation": "gen_d2c407b5ec99e27b",
+        "replaced": "gen_b6c14c59019e72ae",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/using-git-worktrees",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/using-git-worktrees",
+        "enabled": true,
+        "generation": "gen_a7803ac37ad81962",
+        "replaced": "gen_d2c407b5ec99e27b",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/using-superpowers",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/using-superpowers",
+        "enabled": true,
+        "generation": "gen_12f36166ddc207cd",
+        "replaced": "gen_a7803ac37ad81962",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/verification-before-completion",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/verification-before-completion",
+        "enabled": true,
+        "generation": "gen_03b752b15ef7b23f",
+        "replaced": "gen_12f36166ddc207cd",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/writing-plans",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/writing-plans",
+        "enabled": true,
+        "generation": "gen_10944e63ddae78cc",
+        "replaced": "gen_03b752b15ef7b23f",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/machine-ground/writing-skills",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/machine-ground/writing-skills",
+        "enabled": true,
+        "generation": "gen_db3ef82a850b9da8",
+        "replaced": "gen_10944e63ddae78cc",
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "apply"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "generation": "gen_db3ef82a850b9da8",
+        "label": null,
+        "replaced": "gen_db3ef82a850b9da8"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/Users/admin/Central/Work/ai-kit/target/debug/aikit",
+      "--json",
+      "set",
+      "show",
+      "k3-migration"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_ASTRAK3NATIVE0000000000",
+        "project_root": "/private/tmp/astra-current-ground/Work/k3-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "children": [],
+        "complete": false,
+        "description": "",
+        "members": 35,
+        "name": "k3-migration",
+        "patterns": [],
+        "projected": [
+          "skill/machine-ground/brandkit",
+          "skill/machine-ground/design-taste-frontend",
+          "skill/machine-ground/design-taste-frontend-v1",
+          "skill/machine-ground/design-taste-frontend-v2",
+          "skill/machine-ground/find-skills",
+          "skill/machine-ground/full-output-enforcement",
+          "skill/machine-ground/gpt-taste",
+          "skill/machine-ground/high-end-visual-design",
+          "skill/machine-ground/image-to-code",
+          "skill/machine-ground/imagegen-frontend-mobile",
+          "skill/machine-ground/imagegen-frontend-web",
+          "skill/machine-ground/industrial-brutalist-ui",
+          "skill/machine-ground/minimalist-ui",
+          "skill/machine-ground/ralph-tui-create-beads",
+          "skill/machine-ground/ralph-tui-create-beads-rust",
+          "skill/machine-ground/ralph-tui-create-json",
+          "skill/machine-ground/ralph-tui-prd",
+          "skill/machine-ground/redesign-existing-projects",
+          "skill/machine-ground/stitch-design-taste",
+          "skill/machine-ground/unix-atomic-skill-maker"
+        ],
+        "provenance": "composed",
+        "summary": "sets/k3-migration \u2014 35 members, 20 projected, 15 withheld (retired)",
+        "withheld": [
+          {
+            "capability": "skill/machine-ground/brainstorming",
+            "reason": "withheld-retired on its Control ground: Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          },
+          {
+            "capability": "skill/machine-ground/dispatching-parallel-agents",
+            "reason": "withheld-retired on its Control ground: Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          },
+          {
+            "capability": "skill/machine-ground/executing-plans",
+            "reason": "withheld-retired on its Control ground: Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          },
+          {
+            "capability": "skill/machine-ground/finishing-a-development-branch",
+            "reason": "withheld-retired on its Control ground: Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          },
+          {
+            "capability": "skill/machine-ground/receiving-code-review",
+            "reason": "withheld-retired on its Control ground: Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          },
+          {
+            "capability": "skill/machine-ground/requesting-code-review",
+            "reason": "withheld-retired on its Control ground: Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          },
+          {
+            "capability": "skill/machine-ground/sanity-check",
+            "reason": "withheld-retired on its Control ground: Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          },
+          {
+            "capability": "skill/machine-ground/subagent-driven-development",
+            "reason": "withheld-retired on its Control ground: Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          },
+          {
+            "capability": "skill/machine-ground/systematic-debugging",
+            "reason": "withheld-retired on its Control ground: Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          },
+          {
+            "capability": "skill/machine-ground/test-driven-development",
+            "reason": "withheld-retired on its Control ground: Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          },
+          {
+            "capability": "skill/machine-ground/using-git-worktrees",
+            "reason": "withheld-retired on its Control ground: Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          },
+          {
+            "capability": "skill/machine-ground/using-superpowers",
+            "reason": "withheld-retired on its Control ground: Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          },
+          {
+            "capability": "skill/machine-ground/verification-before-completion",
+            "reason": "withheld-retired on its Control ground: Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          },
+          {
+            "capability": "skill/machine-ground/writing-plans",
+            "reason": "withheld-retired on its Control ground: Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          },
+          {
+            "capability": "skill/machine-ground/writing-skills",
+            "reason": "withheld-retired on its Control ground: Scratch rehearsal of archived superpowers retirement; no real Control mutation."
+          }
+        ]
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  }
+]

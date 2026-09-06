@@ -1,0 +1,146 @@
+{
+  "machine": [
+    {
+      "name": "brandkit",
+      "read_only_origin": "/Users/admin/.agents/skills/brandkit"
+    },
+    {
+      "name": "design-taste-frontend",
+      "read_only_origin": "/Users/admin/.agents/skills/design-taste-frontend"
+    },
+    {
+      "name": "design-taste-frontend-v1",
+      "read_only_origin": "/Users/admin/.agents/skills/design-taste-frontend-v1"
+    },
+    {
+      "name": "design-taste-frontend-v2",
+      "read_only_origin": "/Users/admin/.agents/skills/design-taste-frontend-v2"
+    },
+    {
+      "name": "find-skills",
+      "read_only_origin": "/Users/admin/.agents/skills/find-skills"
+    },
+    {
+      "name": "full-output-enforcement",
+      "read_only_origin": "/Users/admin/.agents/skills/full-output-enforcement"
+    },
+    {
+      "name": "gpt-taste",
+      "read_only_origin": "/Users/admin/.agents/skills/gpt-taste"
+    },
+    {
+      "name": "high-end-visual-design",
+      "read_only_origin": "/Users/admin/.agents/skills/high-end-visual-design"
+    },
+    {
+      "name": "image-to-code",
+      "read_only_origin": "/Users/admin/.agents/skills/image-to-code"
+    },
+    {
+      "name": "imagegen-frontend-mobile",
+      "read_only_origin": "/Users/admin/.agents/skills/imagegen-frontend-mobile"
+    },
+    {
+      "name": "imagegen-frontend-web",
+      "read_only_origin": "/Users/admin/.agents/skills/imagegen-frontend-web"
+    },
+    {
+      "name": "industrial-brutalist-ui",
+      "read_only_origin": "/Users/admin/.agents/skills/industrial-brutalist-ui"
+    },
+    {
+      "name": "minimalist-ui",
+      "read_only_origin": "/Users/admin/.agents/skills/minimalist-ui"
+    },
+    {
+      "name": "ralph-tui-create-beads",
+      "read_only_origin": "/Users/admin/.agents/skills/ralph-tui-create-beads"
+    },
+    {
+      "name": "ralph-tui-create-beads-rust",
+      "read_only_origin": "/Users/admin/.agents/skills/ralph-tui-create-beads-rust"
+    },
+    {
+      "name": "ralph-tui-create-json",
+      "read_only_origin": "/Users/admin/.agents/skills/ralph-tui-create-json"
+    },
+    {
+      "name": "ralph-tui-prd",
+      "read_only_origin": "/Users/admin/.agents/skills/ralph-tui-prd"
+    },
+    {
+      "name": "redesign-existing-projects",
+      "read_only_origin": "/Users/admin/.agents/skills/redesign-existing-projects"
+    },
+    {
+      "name": "stitch-design-taste",
+      "read_only_origin": "/Users/admin/.agents/skills/stitch-design-taste"
+    },
+    {
+      "name": "unix-atomic-skill-maker",
+      "read_only_origin": "/Users/admin/.agents/skills/unix-atomic-skill-maker"
+    }
+  ],
+  "archive": [
+    {
+      "name": "brainstorming",
+      "read_only_origin": "/Users/admin/.codex/superpowers/skills/brainstorming"
+    },
+    {
+      "name": "dispatching-parallel-agents",
+      "read_only_origin": "/Users/admin/.codex/superpowers/skills/dispatching-parallel-agents"
+    },
+    {
+      "name": "executing-plans",
+      "read_only_origin": "/Users/admin/.codex/superpowers/skills/executing-plans"
+    },
+    {
+      "name": "finishing-a-development-branch",
+      "read_only_origin": "/Users/admin/.codex/superpowers/skills/finishing-a-development-branch"
+    },
+    {
+      "name": "receiving-code-review",
+      "read_only_origin": "/Users/admin/.codex/superpowers/skills/receiving-code-review"
+    },
+    {
+      "name": "requesting-code-review",
+      "read_only_origin": "/Users/admin/.codex/superpowers/skills/requesting-code-review"
+    },
+    {
+      "name": "sanity-check",
+      "read_only_origin": "/Users/admin/.codex/superpowers/skills/sanity-check"
+    },
+    {
+      "name": "subagent-driven-development",
+      "read_only_origin": "/Users/admin/.codex/superpowers/skills/subagent-driven-development"
+    },
+    {
+      "name": "systematic-debugging",
+      "read_only_origin": "/Users/admin/.codex/superpowers/skills/systematic-debugging"
+    },
+    {
+      "name": "test-driven-development",
+      "read_only_origin": "/Users/admin/.codex/superpowers/skills/test-driven-development"
+    },
+    {
+      "name": "using-git-worktrees",
+      "read_only_origin": "/Users/admin/.codex/superpowers/skills/using-git-worktrees"
+    },
+    {
+      "name": "using-superpowers",
+      "read_only_origin": "/Users/admin/.codex/superpowers/skills/using-superpowers"
+    },
+    {
+      "name": "verification-before-completion",
+      "read_only_origin": "/Users/admin/.codex/superpowers/skills/verification-before-completion"
+    },
+    {
+      "name": "writing-plans",
+      "read_only_origin": "/Users/admin/.codex/superpowers/skills/writing-plans"
+    },
+    {
+      "name": "writing-skills",
+      "read_only_origin": "/Users/admin/.codex/superpowers/skills/writing-skills"
+    }
+  ]
+}

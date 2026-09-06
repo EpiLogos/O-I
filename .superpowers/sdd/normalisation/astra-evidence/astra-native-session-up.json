@@ -1,0 +1,1 @@
+{"error":{"code":"mux.ambiguous","details":{"active":"","installed":"tmux,cmux","resolution":"run `aikit mux install tmux` or `aikit mux install cmux`"},"message":"more than one multiplexer is installed; name `tmux` or `cmux` explicitly"},"ok":false,"schema":1}

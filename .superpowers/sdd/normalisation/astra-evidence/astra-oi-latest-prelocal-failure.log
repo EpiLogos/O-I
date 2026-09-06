@@ -1,0 +1,23 @@
+desktop-bundle	Build Apple Silicon Tauri app bundle	﻿2026-09-06T11:03:57.6352010Z ##[group]Run set -euo pipefail
+desktop-bundle	Build Apple Silicon Tauri app bundle	2026-09-06T11:03:57.6352510Z [36;1mset -euo pipefail[0m
+desktop-bundle	Build Apple Silicon Tauri app bundle	2026-09-06T11:03:57.6353680Z [36;1mcd desktop/cradle/src-tauri[0m
+desktop-bundle	Build Apple Silicon Tauri app bundle	2026-09-06T11:03:57.6354680Z [36;1m../node_modules/.bin/tauri build --bundles app --target aarch64-apple-darwin[0m
+desktop-bundle	Build Apple Silicon Tauri app bundle	2026-09-06T11:03:57.6609520Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+desktop-bundle	Build Apple Silicon Tauri app bundle	2026-09-06T11:03:57.6609910Z env:
+desktop-bundle	Build Apple Silicon Tauri app bundle	2026-09-06T11:03:57.6610120Z   CARGO_HOME: /Users/runner/.cargo
+desktop-bundle	Build Apple Silicon Tauri app bundle	2026-09-06T11:03:57.6610420Z   CARGO_INCREMENTAL: 0
+desktop-bundle	Build Apple Silicon Tauri app bundle	2026-09-06T11:03:57.6610670Z   CARGO_TERM_COLOR: always
+desktop-bundle	Build Apple Silicon Tauri app bundle	2026-09-06T11:03:57.6610930Z ##[endgroup]
+desktop-bundle	Build Apple Silicon Tauri app bundle	2026-09-06T11:03:58.1585580Z         Info Looking up installed tauri packages to check mismatched versions...
+desktop-bundle	Build Apple Silicon Tauri app bundle	2026-09-06T11:03:58.9080000Z      Running beforeBuildCommand `npm --prefix .. run build`
+desktop-bundle	Build Apple Silicon Tauri app bundle	2026-09-06T11:03:59.0530970Z npm error code ENOENT
+desktop-bundle	Build Apple Silicon Tauri app bundle	2026-09-06T11:03:59.0531480Z npm error syscall open
+desktop-bundle	Build Apple Silicon Tauri app bundle	2026-09-06T11:03:59.0532020Z npm error path /Users/runner/work/O-I/O-I/desktop/package.json
+desktop-bundle	Build Apple Silicon Tauri app bundle	2026-09-06T11:03:59.0532850Z npm error errno -2
+desktop-bundle	Build Apple Silicon Tauri app bundle	2026-09-06T11:03:59.0533740Z npm error enoent Could not read package.json: Error: ENOENT: no such file or directory, open '/Users/runner/work/O-I/O-I/desktop/package.json'
+desktop-bundle	Build Apple Silicon Tauri app bundle	2026-09-06T11:03:59.0534730Z npm error enoent This is related to npm not being able to find a file.
+desktop-bundle	Build Apple Silicon Tauri app bundle	2026-09-06T11:03:59.0535170Z npm error enoent
+desktop-bundle	Build Apple Silicon Tauri app bundle	2026-09-06T11:03:59.0539420Z npm error A complete log of this run can be found in: /Users/runner/.npm/_logs/2026-09-06T11_03_59_015Z-debug-0.log
+desktop-bundle	Build Apple Silicon Tauri app bundle	2026-09-06T11:03:59.0566700Z beforeBuildCommand `npm --prefix .. run build` failed with exit code 254
+desktop-bundle	Build Apple Silicon Tauri app bundle	2026-09-06T11:03:59.0580700Z        Error beforeBuildCommand `npm --prefix .. run build` failed with exit code 254
+desktop-bundle	Build Apple Silicon Tauri app bundle	2026-09-06T11:03:59.0604470Z ##[error]Process completed with exit code 1.
