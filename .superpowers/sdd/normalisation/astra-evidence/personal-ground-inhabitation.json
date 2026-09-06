@@ -1,0 +1,2284 @@
+[
+  {
+    "command": [
+      "/tmp/astra-aikit-user-ground/target/debug/aikit",
+      "--json",
+      "search",
+      "brandkit"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_PERSONALGROUND00000000",
+        "project_root": null,
+        "session_id": null
+      },
+      "data": {
+        "expression": {
+          "expression": {
+            "expression": {
+              "node": "subject",
+              "value": "brandkit"
+            },
+            "node": "address"
+          },
+          "node": "unary",
+          "op": "potential"
+        },
+        "path": {
+          "candidates": [
+            {
+              "exact": false,
+              "horizons": [
+                "h5"
+              ],
+              "kind": "capability",
+              "ranking": {
+                "active_in_context": true,
+                "current_project": false,
+                "learned_contextual_frecency_milli": 0,
+                "learned_contextual_observations": 0,
+                "learned_frecency_milli": 0,
+                "learned_observations": 0,
+                "learned_path_contextual_frecency_milli": 0,
+                "learned_path_contextual_observations": 0,
+                "learned_path_frecency_milli": 0,
+                "learned_path_observations": 0
+              },
+              "resource": "skill/personal/brandkit",
+              "score": 90000
+            }
+          ],
+          "expression": {
+            "expression": {
+              "expression": {
+                "node": "subject",
+                "value": "brandkit"
+              },
+              "node": "address"
+            },
+            "node": "unary",
+            "op": "potential"
+          },
+          "identity": "resolve-path:bfca54ae87acabc3",
+          "steps": [
+            {
+              "candidates": [
+                "skill/personal/brandkit"
+              ],
+              "kind": "subject",
+              "value": "brandkit"
+            },
+            {
+              "candidates": [
+                "skill/personal/brandkit"
+              ],
+              "kind": "address"
+            },
+            {
+              "kind": "relation",
+              "op": "potential"
+            }
+          ],
+          "version": "aikit.operative-resolve/v1"
+        },
+        "rows": [
+          {
+            "active": true,
+            "id": "skill/personal/brandkit",
+            "kind": "skill",
+            "name": "brandkit",
+            "resource_kind": "capability",
+            "runnable": false,
+            "summary": "Premium brand-kit image generation skill for creating high-end brand-guidelines boards, logo systems, identity decks, and visual-world presentations. Trained for minimalist, cinematic, editorial, dark-tech, luxury, cultural, security, gaming, developer-tool, and consumer-app brand systems. Optimized for intentional logo concepting, refined composition, sparse typography, strong symbolic meaning, premium mockups, art-directed imagery, and flexible grid layouts. \u00b7 evidence: current context: active in the resolved context"
+          }
+        ]
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/tmp/astra-aikit-user-ground/target/debug/aikit",
+      "--json",
+      "explain",
+      "skill/personal/brandkit"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_PERSONALGROUND00000000",
+        "project_root": null,
+        "session_id": null
+      },
+      "data": {
+        "active": true,
+        "declared_enabled": true,
+        "dependencies": [],
+        "exports": [],
+        "id": "skill/personal/brandkit",
+        "render": "skill/personal/brandkit@9e3b46\nState: active\nTrust: trusted\nMaturity: draft\nSelected by:\n  enabled by global /tmp/astra-personal-ground-proof/aikit/scopes/global/profile.toml\nRequired by:\n  none\nDependencies:\n  none\nProjection:\n  shell\n  claude-code\n  codex\n  deepseek-harness\nActivation means: projected into the relevant agent skill surface\n",
+        "required_by": [],
+        "revision": "9e3b468eb13b4de681381fac0a23c60fd741608c0052d209f5cb2bded27f65c5",
+        "selected_by": [
+          "enabled by global /tmp/astra-personal-ground-proof/aikit/scopes/global/profile.toml"
+        ],
+        "skill_usage_overlays": [],
+        "unavailable": null
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/tmp/astra-aikit-user-ground/target/debug/aikit",
+      "--json",
+      "explain",
+      "skill/personal/brainstorming"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_PERSONALGROUND00000000",
+        "project_root": null,
+        "session_id": null
+      },
+      "data": {
+        "active": false,
+        "declared_enabled": true,
+        "dependencies": [],
+        "exports": [],
+        "id": "skill/personal/brainstorming",
+        "render": "skill/personal/brainstorming@e5db3b\nState: unavailable \u2014 withheld-retired on its Control ground: Scratch acceptance of archived superpowers; real human ground unchanged.\nTrust: trusted\nMaturity: draft\nSelected by:\n  enabled by global /tmp/astra-personal-ground-proof/aikit/scopes/global/profile.toml\nRequired by:\n  none\nDependencies:\n  none\nActivation means: projected into the relevant agent skill surface\n",
+        "required_by": [],
+        "revision": "e5db3b84661ebd91d57e07c865b549d193eb2df9d33f68abfdd7d89bd7995101",
+        "selected_by": [
+          "enabled by global /tmp/astra-personal-ground-proof/aikit/scopes/global/profile.toml"
+        ],
+        "skill_usage_overlays": [],
+        "unavailable": "withheld-retired on its Control ground: Scratch acceptance of archived superpowers; real human ground unchanged."
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/tmp/astra-aikit-user-ground/target/debug/aikit",
+      "--json",
+      "z",
+      "brandkit"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_PERSONALGROUND00000000",
+        "project_root": null,
+        "session_id": null
+      },
+      "data": {
+        "action": "open",
+        "activated": false,
+        "candidates": [
+          {
+            "active": true,
+            "capability": "skill/personal/brandkit",
+            "exact_export_name": false,
+            "in_current_project": false,
+            "score": 0.8999999761581421,
+            "successful_runs": 0
+          }
+        ],
+        "capability": "skill/personal/brandkit",
+        "decision": "act",
+        "query": "brandkit"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/tmp/astra-aikit-user-ground/target/debug/aikit",
+      "--json",
+      "history"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_PERSONALGROUND00000000",
+        "project_root": null,
+        "session_id": null
+      },
+      "data": {
+        "entries": [
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_6398f5914181a31e"
+            ],
+            "details": {
+              "baseGeneration": "gen_c4a5c936f5aa3ff3",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_6398f5914181a31e",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696224415,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_6398f5914181a31e",
+            "summary": "generation gen_6398f5914181a31e \u00b7 resolution 8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_c4a5c936f5aa3ff3"
+            ],
+            "details": {
+              "baseGeneration": "gen_9172eae5a799b087",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_c4a5c936f5aa3ff3",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696224338,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_c4a5c936f5aa3ff3",
+            "summary": "generation gen_c4a5c936f5aa3ff3 \u00b7 resolution 8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_9172eae5a799b087"
+            ],
+            "details": {
+              "baseGeneration": "gen_50bf00d2691ee206",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_9172eae5a799b087",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696224144,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_9172eae5a799b087",
+            "summary": "generation gen_9172eae5a799b087 \u00b7 resolution 8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_50bf00d2691ee206"
+            ],
+            "details": {
+              "baseGeneration": "gen_dfbf8782feca5f61",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_50bf00d2691ee206",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696224043,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_50bf00d2691ee206",
+            "summary": "generation gen_50bf00d2691ee206 \u00b7 resolution 8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_dfbf8782feca5f61"
+            ],
+            "details": {
+              "baseGeneration": "gen_3ffa384eacd47b6b",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_dfbf8782feca5f61",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696223931,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_dfbf8782feca5f61",
+            "summary": "generation gen_dfbf8782feca5f61 \u00b7 resolution 8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_3ffa384eacd47b6b"
+            ],
+            "details": {
+              "baseGeneration": "gen_98dc8ec2382b9693",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_3ffa384eacd47b6b",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696223817,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_3ffa384eacd47b6b",
+            "summary": "generation gen_3ffa384eacd47b6b \u00b7 resolution 8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_98dc8ec2382b9693"
+            ],
+            "details": {
+              "baseGeneration": "gen_56a991161456dfaf",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_98dc8ec2382b9693",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696223709,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_98dc8ec2382b9693",
+            "summary": "generation gen_98dc8ec2382b9693 \u00b7 resolution 8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_56a991161456dfaf"
+            ],
+            "details": {
+              "baseGeneration": "gen_7e55235479a254d0",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_56a991161456dfaf",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696223603,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_56a991161456dfaf",
+            "summary": "generation gen_56a991161456dfaf \u00b7 resolution 8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_7e55235479a254d0"
+            ],
+            "details": {
+              "baseGeneration": "gen_3bb663e74112f86c",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_7e55235479a254d0",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696223523,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_7e55235479a254d0",
+            "summary": "generation gen_7e55235479a254d0 \u00b7 resolution 8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_3bb663e74112f86c"
+            ],
+            "details": {
+              "baseGeneration": "gen_c432534e8c4f24b7",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_3bb663e74112f86c",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696223447,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_3bb663e74112f86c",
+            "summary": "generation gen_3bb663e74112f86c \u00b7 resolution 8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_c432534e8c4f24b7"
+            ],
+            "details": {
+              "baseGeneration": "gen_b2319038643f23b9",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_c432534e8c4f24b7",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696223360,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_c432534e8c4f24b7",
+            "summary": "generation gen_c432534e8c4f24b7 \u00b7 resolution 8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_b2319038643f23b9"
+            ],
+            "details": {
+              "baseGeneration": "gen_f90d8b6e52cb8f0b",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_b2319038643f23b9",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696223263,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_b2319038643f23b9",
+            "summary": "generation gen_b2319038643f23b9 \u00b7 resolution 8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_f90d8b6e52cb8f0b"
+            ],
+            "details": {
+              "baseGeneration": "gen_1a56774fe546ca16",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_f90d8b6e52cb8f0b",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696223182,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_f90d8b6e52cb8f0b",
+            "summary": "generation gen_f90d8b6e52cb8f0b \u00b7 resolution 8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_1a56774fe546ca16"
+            ],
+            "details": {
+              "baseGeneration": "gen_4438aba6d4d1d0e7",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_1a56774fe546ca16",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696223106,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_1a56774fe546ca16",
+            "summary": "generation gen_1a56774fe546ca16 \u00b7 resolution 8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_4438aba6d4d1d0e7"
+            ],
+            "details": {
+              "baseGeneration": "gen_cdb6c9508f2d0886",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_4438aba6d4d1d0e7",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696223025,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_4438aba6d4d1d0e7",
+            "summary": "generation gen_4438aba6d4d1d0e7 \u00b7 resolution 8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_cdb6c9508f2d0886"
+            ],
+            "details": {
+              "baseGeneration": "gen_2fb407f54a31fe7d",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_cdb6c9508f2d0886",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696222946,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_cdb6c9508f2d0886",
+            "summary": "generation gen_cdb6c9508f2d0886 \u00b7 resolution 8216b869e551744b2e300d17612132dcb50a6db439c4db2b8a3629ffcab7756c \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_2fb407f54a31fe7d"
+            ],
+            "details": {
+              "baseGeneration": "gen_56d46946700a3791",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "9475b4eea72f83283f0309e97ca7c0e0436744a531176b936e626671078f15ba",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_2fb407f54a31fe7d",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696222864,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_2fb407f54a31fe7d",
+            "summary": "generation gen_2fb407f54a31fe7d \u00b7 resolution 9475b4eea72f83283f0309e97ca7c0e0436744a531176b936e626671078f15ba \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_56d46946700a3791"
+            ],
+            "details": {
+              "baseGeneration": "gen_452ea7c63ce374da",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "a71f6d46c3b3167dc24e0ac2280c454b9e4d3f50c9299b891d056fca61838658",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_56d46946700a3791",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696222790,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_56d46946700a3791",
+            "summary": "generation gen_56d46946700a3791 \u00b7 resolution a71f6d46c3b3167dc24e0ac2280c454b9e4d3f50c9299b891d056fca61838658 \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_452ea7c63ce374da"
+            ],
+            "details": {
+              "baseGeneration": "gen_a1302714867ba522",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "95c32bb6a884afc41342c2b649495018b3b6d5bfcafc36d96b91ba9949af3a8b",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_452ea7c63ce374da",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696222716,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_452ea7c63ce374da",
+            "summary": "generation gen_452ea7c63ce374da \u00b7 resolution 95c32bb6a884afc41342c2b649495018b3b6d5bfcafc36d96b91ba9949af3a8b \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_a1302714867ba522"
+            ],
+            "details": {
+              "baseGeneration": "gen_b38f50875bb54d4b",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "d8f29315e8c4a451d2f34355d613b3e1b0f703670efbd9e77d850402823aaed9",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_a1302714867ba522",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696222637,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_a1302714867ba522",
+            "summary": "generation gen_a1302714867ba522 \u00b7 resolution d8f29315e8c4a451d2f34355d613b3e1b0f703670efbd9e77d850402823aaed9 \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_b38f50875bb54d4b"
+            ],
+            "details": {
+              "baseGeneration": "gen_df073bed940ec27e",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "09617164a8cd0b2e9856e4ca921d7205a01f58754ddc398008a48c74c25b382e",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_b38f50875bb54d4b",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696222570,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_b38f50875bb54d4b",
+            "summary": "generation gen_b38f50875bb54d4b \u00b7 resolution 09617164a8cd0b2e9856e4ca921d7205a01f58754ddc398008a48c74c25b382e \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_df073bed940ec27e"
+            ],
+            "details": {
+              "baseGeneration": "gen_5bd791bc50a4a2b1",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "b3afd7db4e7f04d885b87d3824a26cfdc4c08cba410e6ea955956883be006a88",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_df073bed940ec27e",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696222504,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_df073bed940ec27e",
+            "summary": "generation gen_df073bed940ec27e \u00b7 resolution b3afd7db4e7f04d885b87d3824a26cfdc4c08cba410e6ea955956883be006a88 \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_5bd791bc50a4a2b1"
+            ],
+            "details": {
+              "baseGeneration": "gen_c6f594d143b914f7",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "ad684f1b63033944db9a3cd4e9e54c556655a198d99bb1ff80bef5740308a09b",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_5bd791bc50a4a2b1",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696222434,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_5bd791bc50a4a2b1",
+            "summary": "generation gen_5bd791bc50a4a2b1 \u00b7 resolution ad684f1b63033944db9a3cd4e9e54c556655a198d99bb1ff80bef5740308a09b \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_c6f594d143b914f7"
+            ],
+            "details": {
+              "baseGeneration": "gen_a4d62a862f9036ac",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "18c214bc6fa988b3211f5b6760726d216a1b697de48502073e1631ecc1f1e93e",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_c6f594d143b914f7",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696222369,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_c6f594d143b914f7",
+            "summary": "generation gen_c6f594d143b914f7 \u00b7 resolution 18c214bc6fa988b3211f5b6760726d216a1b697de48502073e1631ecc1f1e93e \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_a4d62a862f9036ac"
+            ],
+            "details": {
+              "baseGeneration": "gen_2fb0c7136587395d",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "a3ab97f28b2b8b795aeff5f0ae4c440f8bf2fb55560d96f5ff2e54283589d89e",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_a4d62a862f9036ac",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696222303,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_a4d62a862f9036ac",
+            "summary": "generation gen_a4d62a862f9036ac \u00b7 resolution a3ab97f28b2b8b795aeff5f0ae4c440f8bf2fb55560d96f5ff2e54283589d89e \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_2fb0c7136587395d"
+            ],
+            "details": {
+              "baseGeneration": "gen_051e1b8849d326ed",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "de028ebf4f42bfc96dc7cc5eb4910771daad5f0fadc6167d006e04dea64997c3",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_2fb0c7136587395d",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696222237,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_2fb0c7136587395d",
+            "summary": "generation gen_2fb0c7136587395d \u00b7 resolution de028ebf4f42bfc96dc7cc5eb4910771daad5f0fadc6167d006e04dea64997c3 \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_051e1b8849d326ed"
+            ],
+            "details": {
+              "baseGeneration": "gen_be282205715eb028",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "70526738338f62fed5f7ad169fe6419ab945b978d6acb11f052b7ec38722aa17",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_051e1b8849d326ed",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696222178,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_051e1b8849d326ed",
+            "summary": "generation gen_051e1b8849d326ed \u00b7 resolution 70526738338f62fed5f7ad169fe6419ab945b978d6acb11f052b7ec38722aa17 \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_be282205715eb028"
+            ],
+            "details": {
+              "baseGeneration": "gen_8ec3474b2bd69897",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "2715e2729b635c839ebf73ef802a2d367fe7b352dec62cb98780daf46b1937b4",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_be282205715eb028",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696222121,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_be282205715eb028",
+            "summary": "generation gen_be282205715eb028 \u00b7 resolution 2715e2729b635c839ebf73ef802a2d367fe7b352dec62cb98780daf46b1937b4 \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_8ec3474b2bd69897"
+            ],
+            "details": {
+              "baseGeneration": "gen_81082299404af22d",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "b7c205988c0cb1ea0662d8761df21ecfa764f8827ac9a63215794e4e6607701c",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_8ec3474b2bd69897",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696222061,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_8ec3474b2bd69897",
+            "summary": "generation gen_8ec3474b2bd69897 \u00b7 resolution b7c205988c0cb1ea0662d8761df21ecfa764f8827ac9a63215794e4e6607701c \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_81082299404af22d"
+            ],
+            "details": {
+              "baseGeneration": "gen_813eaf6220fd9656",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "9564b8b6635d01f6e79fcfb3600ac2b64e36184cdc3ba12cf7094176a7277c8c",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_81082299404af22d",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696222005,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_81082299404af22d",
+            "summary": "generation gen_81082299404af22d \u00b7 resolution 9564b8b6635d01f6e79fcfb3600ac2b64e36184cdc3ba12cf7094176a7277c8c \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_813eaf6220fd9656"
+            ],
+            "details": {
+              "baseGeneration": "gen_852a73d89f2316e7",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "7899083ca78200dff188de50f998365d8edb404011cf324395f6366962fe4a0e",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_813eaf6220fd9656",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696221953,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_813eaf6220fd9656",
+            "summary": "generation gen_813eaf6220fd9656 \u00b7 resolution 7899083ca78200dff188de50f998365d8edb404011cf324395f6366962fe4a0e \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_852a73d89f2316e7"
+            ],
+            "details": {
+              "baseGeneration": "gen_89f944846ce4e4de",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "4f42ffb739a05ad53afb60c0f5c2923be8a07a32f5f655f34a2edb5837b64a82",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_852a73d89f2316e7",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696221901,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_852a73d89f2316e7",
+            "summary": "generation gen_852a73d89f2316e7 \u00b7 resolution 4f42ffb739a05ad53afb60c0f5c2923be8a07a32f5f655f34a2edb5837b64a82 \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_89f944846ce4e4de"
+            ],
+            "details": {
+              "baseGeneration": "gen_9cdaf3c6ca76f731",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "854433670457cc655ffc0c5e80508c55ad7140421fed4af0aa917d6c6ef88822",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_89f944846ce4e4de",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696221850,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_89f944846ce4e4de",
+            "summary": "generation gen_89f944846ce4e4de \u00b7 resolution 854433670457cc655ffc0c5e80508c55ad7140421fed4af0aa917d6c6ef88822 \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_9cdaf3c6ca76f731"
+            ],
+            "details": {
+              "baseGeneration": "gen_84edd179643ac2f4",
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "8aabd061843bbbcbb72bac1fbad13bd89a1e2d97884af079ef5913088e551482",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_9cdaf3c6ca76f731",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696221801,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_9cdaf3c6ca76f731",
+            "summary": "generation gen_9cdaf3c6ca76f731 \u00b7 resolution 8aabd061843bbbcbb72bac1fbad13bd89a1e2d97884af079ef5913088e551482 \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "generation/gen_84edd179643ac2f4"
+            ],
+            "details": {
+              "catalogRevision": "1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd",
+              "context": "ctx_PERSONALGROUND00000000",
+              "isolation": "Shared",
+              "materialization": "Link",
+              "notes": "deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "resolutionHash": "37b4753ce7a83e26fb6452c669a78e129278633d3d72b821c9b02919968177a5",
+              "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:next session only \u2014 plain Codex discovers project-stable skills at task start, deepseek-harness:brokered \u2014 DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+            },
+            "id": "gen_84edd179643ac2f4",
+            "kind": "generation",
+            "occurred_at_unix_ms": 1788696221751,
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "generation/gen_84edd179643ac2f4",
+            "summary": "generation gen_84edd179643ac2f4 \u00b7 resolution 37b4753ce7a83e26fb6452c669a78e129278633d3d72b821c9b02919968177a5 \u00b7 catalog 1fb9a504b38c990a3bce8b5f7751b393c3353c96f2abef941efc3421f1269fbd"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "personal",
+              "procedure/prc_01M1V9MRP8MKXP75CCKX9CVR6M"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "skill-set",
+              "planDigest": "ba5d7aebb71194ff34344c6a7125efd20c3a8e9a50ae5d70ea398463f6064ab1",
+              "touchedPaths": "/tmp/astra-personal-ground-proof/aikit/skillsets/personal, /tmp/astra-personal-ground-proof/aikit/skillsets/personal/members",
+              "undoJournalPresent": "true"
+            },
+            "id": "prc_01M1V9MRP8MKXP75CCKX9CVR6M",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MRP8MKXP75CCKX9CVR6M",
+            "summary": "Procedure prc_01M1V9MRP8MKXP75CCKX9CVR6M \u00b7 skill-set \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MNHQDHZBN4GKXZWY8VDT",
+              "skill/personal-ground/brainstorming",
+              "skill/personal-ground/dispatching-parallel-agents",
+              "skill/personal-ground/executing-plans",
+              "skill/personal-ground/finishing-a-development-branch",
+              "skill/personal-ground/receiving-code-review",
+              "skill/personal-ground/requesting-code-review",
+              "skill/personal-ground/sanity-check",
+              "skill/personal-ground/subagent-driven-development",
+              "skill/personal-ground/systematic-debugging",
+              "skill/personal-ground/test-driven-development",
+              "skill/personal-ground/using-git-worktrees",
+              "skill/personal-ground/using-superpowers",
+              "skill/personal-ground/verification-before-completion",
+              "skill/personal-ground/writing-plans",
+              "skill/personal-ground/writing-skills"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "52",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "5daea234e380df39fcd76b8db137705ce93f41046dd0a7af071b58635596229f",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/brainstorming/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/brainstorming/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/dispatching-parallel-agents/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/dispatching-parallel-agents/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/executing-plans/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/executing-plans/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/finishing-a-development-branch/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/finishing-a-development-branch/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/receiving-code-review/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/receiving-code-review/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/requesting-code-review/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/requesting-code-review/code-reviewer.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/requesting-code-review/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/sanity-check/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/sanity-check/agents/openai.yaml, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/sanity-check/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/subagent-driven-development/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/subagent-driven-development/code-quality-reviewer-prompt.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/subagent-driven-development/implementer-prompt.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/subagent-driven-development/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/subagent-driven-development/spec-reviewer-prompt.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/systematic-debugging/CREATION-LOG.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/systematic-debugging/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/systematic-debugging/condition-based-waiting-example.ts, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/systematic-debugging/condition-based-waiting.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/systematic-debugging/defense-in-depth.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/systematic-debugging/find-polluter.sh, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/systematic-debugging/root-cause-tracing.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/systematic-debugging/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/systematic-debugging/test-academic.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/systematic-debugging/test-pressure-1.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/systematic-debugging/test-pressure-2.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/systematic-debugging/test-pressure-3.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/test-driven-development/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/test-driven-development/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/test-driven-development/testing-anti-patterns.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/using-git-worktrees/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/using-git-worktrees/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/using-superpowers/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/using-superpowers/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/verification-before-completion/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/verification-before-completion/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/writing-plans/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/writing-plans/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/writing-skills/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/writing-skills/anthropic-best-practices.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/writing-skills/examples/CLAUDE_MD_TESTING.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/writing-skills/graphviz-conventions.dot, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/writing-skills/persuasion-principles.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/writing-skills/render-graphs.js, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/writing-skills/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/writing-skills/testing-skills-with-subagents.md",
+              "undoJournalPresent": "true"
+            },
+            "id": "prc_01M1V9MNHQDHZBN4GKXZWY8VDT",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MNHQDHZBN4GKXZWY8VDT",
+            "summary": "Procedure prc_01M1V9MNHQDHZBN4GKXZWY8VDT \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MNC23MENX7KB9G4E7ABV",
+              "skill/personal-ground/brainstorming",
+              "skill/personal-ground/dispatching-parallel-agents",
+              "skill/personal-ground/executing-plans",
+              "skill/personal-ground/finishing-a-development-branch",
+              "skill/personal-ground/receiving-code-review",
+              "skill/personal-ground/requesting-code-review",
+              "skill/personal-ground/sanity-check",
+              "skill/personal-ground/subagent-driven-development",
+              "skill/personal-ground/systematic-debugging",
+              "skill/personal-ground/test-driven-development",
+              "skill/personal-ground/using-git-worktrees",
+              "skill/personal-ground/using-superpowers",
+              "skill/personal-ground/verification-before-completion",
+              "skill/personal-ground/writing-plans",
+              "skill/personal-ground/writing-skills"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "52",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "5daea234e380df39fcd76b8db137705ce93f41046dd0a7af071b58635596229f",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/brainstorming/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/brainstorming/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/dispatching-parallel-agents/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/dispatching-parallel-agents/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/executing-plans/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/executing-plans/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/finishing-a-development-branch/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/finishing-a-development-branch/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/receiving-code-review/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/receiving-code-review/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/requesting-code-review/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/requesting-code-review/code-reviewer.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/requesting-code-review/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/sanity-check/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/sanity-check/agents/openai.yaml, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/sanity-check/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/subagent-driven-development/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/subagent-driven-development/code-quality-reviewer-prompt.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/subagent-driven-development/implementer-prompt.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/subagent-driven-development/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/subagent-driven-development/spec-reviewer-prompt.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/systematic-debugging/CREATION-LOG.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/systematic-debugging/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/systematic-debugging/condition-based-waiting-example.ts, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/systematic-debugging/condition-based-waiting.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/systematic-debugging/defense-in-depth.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/systematic-debugging/find-polluter.sh, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/systematic-debugging/root-cause-tracing.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/systematic-debugging/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/systematic-debugging/test-academic.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/systematic-debugging/test-pressure-1.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/systematic-debugging/test-pressure-2.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/systematic-debugging/test-pressure-3.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/test-driven-development/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/test-driven-development/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/test-driven-development/testing-anti-patterns.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/using-git-worktrees/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/using-git-worktrees/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/using-superpowers/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/using-superpowers/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/verification-before-completion/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/verification-before-completion/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/writing-plans/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/writing-plans/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/writing-skills/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/writing-skills/anthropic-best-practices.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/writing-skills/examples/CLAUDE_MD_TESTING.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/writing-skills/graphviz-conventions.dot, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/writing-skills/persuasion-principles.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/writing-skills/render-graphs.js, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/writing-skills/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/writing-skills/testing-skills-with-subagents.md",
+              "undoJournalPresent": "false"
+            },
+            "id": "prc_01M1V9MNC23MENX7KB9G4E7ABV",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MNC23MENX7KB9G4E7ABV",
+            "summary": "Procedure prc_01M1V9MNC23MENX7KB9G4E7ABV \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MNA6AY90VGXWRYGYDK7C",
+              "skill/personal-ground/unix-atomic-skill-maker"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "5",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "cc32ec968c5420989dfe44b652ab82fc172589da52d4bb6b51185fb3edf2f369",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/unix-atomic-skill-maker/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/unix-atomic-skill-maker/agents/openai.yaml, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/unix-atomic-skill-maker/scripts/create_skill.py, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/unix-atomic-skill-maker/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/unix-atomic-skill-maker/tests/test_create_skill.py",
+              "undoJournalPresent": "true"
+            },
+            "id": "prc_01M1V9MNA6AY90VGXWRYGYDK7C",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MNA6AY90VGXWRYGYDK7C",
+            "summary": "Procedure prc_01M1V9MNA6AY90VGXWRYGYDK7C \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MN9319GEAYKA8SCSAMY5",
+              "skill/personal-ground/unix-atomic-skill-maker"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "5",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "cc32ec968c5420989dfe44b652ab82fc172589da52d4bb6b51185fb3edf2f369",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/unix-atomic-skill-maker/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/unix-atomic-skill-maker/agents/openai.yaml, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/unix-atomic-skill-maker/scripts/create_skill.py, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/unix-atomic-skill-maker/skill.json, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/unix-atomic-skill-maker/tests/test_create_skill.py",
+              "undoJournalPresent": "false"
+            },
+            "id": "prc_01M1V9MN9319GEAYKA8SCSAMY5",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MN9319GEAYKA8SCSAMY5",
+            "summary": "Procedure prc_01M1V9MN9319GEAYKA8SCSAMY5 \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MN7JZZ81MDHBVC6ZMSM0",
+              "skill/personal-ground/stitch-design-taste"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "3",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "69539b6e7c3beacf72497032e2fb5b81d79a4cc3c644c516ae12573eff50bac0",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/stitch-design-taste/DESIGN.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/stitch-design-taste/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/stitch-design-taste/skill.json",
+              "undoJournalPresent": "true"
+            },
+            "id": "prc_01M1V9MN7JZZ81MDHBVC6ZMSM0",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MN7JZZ81MDHBVC6ZMSM0",
+            "summary": "Procedure prc_01M1V9MN7JZZ81MDHBVC6ZMSM0 \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MN686MWSZ7H36R7FANTV",
+              "skill/personal-ground/stitch-design-taste"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "3",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "69539b6e7c3beacf72497032e2fb5b81d79a4cc3c644c516ae12573eff50bac0",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/stitch-design-taste/DESIGN.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/stitch-design-taste/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/stitch-design-taste/skill.json",
+              "undoJournalPresent": "false"
+            },
+            "id": "prc_01M1V9MN686MWSZ7H36R7FANTV",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MN686MWSZ7H36R7FANTV",
+            "summary": "Procedure prc_01M1V9MN686MWSZ7H36R7FANTV \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MN4X3WC54P4AD2RTYHAJ",
+              "skill/personal-ground/redesign-existing-projects"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "2a3063ccc1efc01b318f93e73711b676b9d35e166647cca94ab2ded18ac82db6",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/redesign-existing-projects/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/redesign-existing-projects/skill.json",
+              "undoJournalPresent": "true"
+            },
+            "id": "prc_01M1V9MN4X3WC54P4AD2RTYHAJ",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MN4X3WC54P4AD2RTYHAJ",
+            "summary": "Procedure prc_01M1V9MN4X3WC54P4AD2RTYHAJ \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MN3VBEY4XA4XTV98JEJR",
+              "skill/personal-ground/redesign-existing-projects"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "2a3063ccc1efc01b318f93e73711b676b9d35e166647cca94ab2ded18ac82db6",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/redesign-existing-projects/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/redesign-existing-projects/skill.json",
+              "undoJournalPresent": "false"
+            },
+            "id": "prc_01M1V9MN3VBEY4XA4XTV98JEJR",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MN3VBEY4XA4XTV98JEJR",
+            "summary": "Procedure prc_01M1V9MN3VBEY4XA4XTV98JEJR \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MN2KYDMS6ZFXJFH86612",
+              "skill/personal-ground/ralph-tui-prd"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "eaa9eb41b09f8dff91ec7a2604f018ebd22fd4bbe1cd9b80325b4b9265d5c62a",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/ralph-tui-prd/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/ralph-tui-prd/skill.json",
+              "undoJournalPresent": "true"
+            },
+            "id": "prc_01M1V9MN2KYDMS6ZFXJFH86612",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MN2KYDMS6ZFXJFH86612",
+            "summary": "Procedure prc_01M1V9MN2KYDMS6ZFXJFH86612 \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MN1QTTKS3NR7PDVXVRKJ",
+              "skill/personal-ground/ralph-tui-prd"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "eaa9eb41b09f8dff91ec7a2604f018ebd22fd4bbe1cd9b80325b4b9265d5c62a",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/ralph-tui-prd/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/ralph-tui-prd/skill.json",
+              "undoJournalPresent": "false"
+            },
+            "id": "prc_01M1V9MN1QTTKS3NR7PDVXVRKJ",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MN1QTTKS3NR7PDVXVRKJ",
+            "summary": "Procedure prc_01M1V9MN1QTTKS3NR7PDVXVRKJ \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MN0J067C3XFXYG1FGG9J",
+              "skill/personal-ground/ralph-tui-create-json"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "9a85d4fdf532cda3148e7bf85a16f75e5bca10c90426b6f912d735e8ae89bf88",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/ralph-tui-create-json/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/ralph-tui-create-json/skill.json",
+              "undoJournalPresent": "true"
+            },
+            "id": "prc_01M1V9MN0J067C3XFXYG1FGG9J",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MN0J067C3XFXYG1FGG9J",
+            "summary": "Procedure prc_01M1V9MN0J067C3XFXYG1FGG9J \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MMZS892ZZGR9CYTMZ4AN",
+              "skill/personal-ground/ralph-tui-create-json"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "9a85d4fdf532cda3148e7bf85a16f75e5bca10c90426b6f912d735e8ae89bf88",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/ralph-tui-create-json/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/ralph-tui-create-json/skill.json",
+              "undoJournalPresent": "false"
+            },
+            "id": "prc_01M1V9MMZS892ZZGR9CYTMZ4AN",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MMZS892ZZGR9CYTMZ4AN",
+            "summary": "Procedure prc_01M1V9MMZS892ZZGR9CYTMZ4AN \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MMYR3Z9SFQ3B78E0WA5W",
+              "skill/personal-ground/ralph-tui-create-beads-rust"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "039da22744865b9b6fdf2f805ac2e52b737e85bf44e4e0ba3da38dbc4fcca4bc",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/ralph-tui-create-beads-rust/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/ralph-tui-create-beads-rust/skill.json",
+              "undoJournalPresent": "true"
+            },
+            "id": "prc_01M1V9MMYR3Z9SFQ3B78E0WA5W",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MMYR3Z9SFQ3B78E0WA5W",
+            "summary": "Procedure prc_01M1V9MMYR3Z9SFQ3B78E0WA5W \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MMXYX19Y3FHS44WF40YC",
+              "skill/personal-ground/ralph-tui-create-beads-rust"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "039da22744865b9b6fdf2f805ac2e52b737e85bf44e4e0ba3da38dbc4fcca4bc",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/ralph-tui-create-beads-rust/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/ralph-tui-create-beads-rust/skill.json",
+              "undoJournalPresent": "false"
+            },
+            "id": "prc_01M1V9MMXYX19Y3FHS44WF40YC",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MMXYX19Y3FHS44WF40YC",
+            "summary": "Procedure prc_01M1V9MMXYX19Y3FHS44WF40YC \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MMX02CJY8EEQ7D2Y9QJN",
+              "skill/personal-ground/ralph-tui-create-beads"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "139b894e84139c42714ebe436421019b187ad34d74f8593b1e0c46942cfd92ff",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/ralph-tui-create-beads/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/ralph-tui-create-beads/skill.json",
+              "undoJournalPresent": "true"
+            },
+            "id": "prc_01M1V9MMX02CJY8EEQ7D2Y9QJN",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MMX02CJY8EEQ7D2Y9QJN",
+            "summary": "Procedure prc_01M1V9MMX02CJY8EEQ7D2Y9QJN \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MMW379RYVB88PDYB71A3",
+              "skill/personal-ground/ralph-tui-create-beads"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "139b894e84139c42714ebe436421019b187ad34d74f8593b1e0c46942cfd92ff",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/ralph-tui-create-beads/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/ralph-tui-create-beads/skill.json",
+              "undoJournalPresent": "false"
+            },
+            "id": "prc_01M1V9MMW379RYVB88PDYB71A3",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MMW379RYVB88PDYB71A3",
+            "summary": "Procedure prc_01M1V9MMW379RYVB88PDYB71A3 \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MMV6DRYGH814RJ9RCV9N",
+              "skill/personal-ground/minimalist-ui"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "7b64765ca7fdcbbf605c8b4b1dd1ad670e37ebde2d09ec0b2ceb7d252335d39a",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/minimalist-ui/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/minimalist-ui/skill.json",
+              "undoJournalPresent": "true"
+            },
+            "id": "prc_01M1V9MMV6DRYGH814RJ9RCV9N",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MMV6DRYGH814RJ9RCV9N",
+            "summary": "Procedure prc_01M1V9MMV6DRYGH814RJ9RCV9N \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MMTER4M52YS2J9AGP9BA",
+              "skill/personal-ground/minimalist-ui"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "7b64765ca7fdcbbf605c8b4b1dd1ad670e37ebde2d09ec0b2ceb7d252335d39a",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/minimalist-ui/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/minimalist-ui/skill.json",
+              "undoJournalPresent": "false"
+            },
+            "id": "prc_01M1V9MMTER4M52YS2J9AGP9BA",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MMTER4M52YS2J9AGP9BA",
+            "summary": "Procedure prc_01M1V9MMTER4M52YS2J9AGP9BA \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MMSJAYNZZDGR8CMY8QA4",
+              "skill/personal-ground/industrial-brutalist-ui"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "ceb94424b84e7f0130e0fe59fcdab1f3b74106343ae7bbda52c5424ba31bce96",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/industrial-brutalist-ui/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/industrial-brutalist-ui/skill.json",
+              "undoJournalPresent": "true"
+            },
+            "id": "prc_01M1V9MMSJAYNZZDGR8CMY8QA4",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MMSJAYNZZDGR8CMY8QA4",
+            "summary": "Procedure prc_01M1V9MMSJAYNZZDGR8CMY8QA4 \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MMRQT9P984GA4C346THB",
+              "skill/personal-ground/industrial-brutalist-ui"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "ceb94424b84e7f0130e0fe59fcdab1f3b74106343ae7bbda52c5424ba31bce96",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/industrial-brutalist-ui/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/industrial-brutalist-ui/skill.json",
+              "undoJournalPresent": "false"
+            },
+            "id": "prc_01M1V9MMRQT9P984GA4C346THB",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MMRQT9P984GA4C346THB",
+            "summary": "Procedure prc_01M1V9MMRQT9P984GA4C346THB \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MMQ7HN4NHEF30SC6MEDR",
+              "skill/personal-ground/imagegen-frontend-web"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "b00f48c58410f5c30bd7a93e3154d4893e01b7fbdfe6cbabb09a323e16a6634b",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/imagegen-frontend-web/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/imagegen-frontend-web/skill.json",
+              "undoJournalPresent": "true"
+            },
+            "id": "prc_01M1V9MMQ7HN4NHEF30SC6MEDR",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MMQ7HN4NHEF30SC6MEDR",
+            "summary": "Procedure prc_01M1V9MMQ7HN4NHEF30SC6MEDR \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MMNZAH312WEERAN3QEWN",
+              "skill/personal-ground/imagegen-frontend-web"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "b00f48c58410f5c30bd7a93e3154d4893e01b7fbdfe6cbabb09a323e16a6634b",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/imagegen-frontend-web/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/imagegen-frontend-web/skill.json",
+              "undoJournalPresent": "false"
+            },
+            "id": "prc_01M1V9MMNZAH312WEERAN3QEWN",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MMNZAH312WEERAN3QEWN",
+            "summary": "Procedure prc_01M1V9MMNZAH312WEERAN3QEWN \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MMMK8WZQJXQX469SG9Y8",
+              "skill/personal-ground/imagegen-frontend-mobile"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "2d0c1129f073adcad7f3f7073d2f4427eaaac2e8080f6b25f5da1ce37c793c02",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/imagegen-frontend-mobile/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/imagegen-frontend-mobile/skill.json",
+              "undoJournalPresent": "true"
+            },
+            "id": "prc_01M1V9MMMK8WZQJXQX469SG9Y8",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MMMK8WZQJXQX469SG9Y8",
+            "summary": "Procedure prc_01M1V9MMMK8WZQJXQX469SG9Y8 \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MMK5BD5Z55QMYV0JHKAN",
+              "skill/personal-ground/imagegen-frontend-mobile"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "2d0c1129f073adcad7f3f7073d2f4427eaaac2e8080f6b25f5da1ce37c793c02",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/imagegen-frontend-mobile/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/imagegen-frontend-mobile/skill.json",
+              "undoJournalPresent": "false"
+            },
+            "id": "prc_01M1V9MMK5BD5Z55QMYV0JHKAN",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MMK5BD5Z55QMYV0JHKAN",
+            "summary": "Procedure prc_01M1V9MMK5BD5Z55QMYV0JHKAN \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MMHTPK8YTTDC4MXGG0DN",
+              "skill/personal-ground/image-to-code"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "f3398f3475c1c5f573a264eea2ac2e3abc6553fd30cfcb445c5c85032a173a53",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/image-to-code/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/image-to-code/skill.json",
+              "undoJournalPresent": "true"
+            },
+            "id": "prc_01M1V9MMHTPK8YTTDC4MXGG0DN",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MMHTPK8YTTDC4MXGG0DN",
+            "summary": "Procedure prc_01M1V9MMHTPK8YTTDC4MXGG0DN \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MMGK62HR97P6AVNDM3AS",
+              "skill/personal-ground/image-to-code"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "f3398f3475c1c5f573a264eea2ac2e3abc6553fd30cfcb445c5c85032a173a53",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/image-to-code/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/image-to-code/skill.json",
+              "undoJournalPresent": "false"
+            },
+            "id": "prc_01M1V9MMGK62HR97P6AVNDM3AS",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MMGK62HR97P6AVNDM3AS",
+            "summary": "Procedure prc_01M1V9MMGK62HR97P6AVNDM3AS \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MMFTFK9FE0NKAEXB45HE",
+              "skill/personal-ground/high-end-visual-design"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "8fa760d469869d6bb8e43f2ccd7f5ecd9d08760e7df1625bbc06317c5010d12f",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/high-end-visual-design/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/high-end-visual-design/skill.json",
+              "undoJournalPresent": "true"
+            },
+            "id": "prc_01M1V9MMFTFK9FE0NKAEXB45HE",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MMFTFK9FE0NKAEXB45HE",
+            "summary": "Procedure prc_01M1V9MMFTFK9FE0NKAEXB45HE \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MMF6XMYR61G8N7T5B26K",
+              "skill/personal-ground/high-end-visual-design"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "8fa760d469869d6bb8e43f2ccd7f5ecd9d08760e7df1625bbc06317c5010d12f",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/high-end-visual-design/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/high-end-visual-design/skill.json",
+              "undoJournalPresent": "false"
+            },
+            "id": "prc_01M1V9MMF6XMYR61G8N7T5B26K",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MMF6XMYR61G8N7T5B26K",
+            "summary": "Procedure prc_01M1V9MMF6XMYR61G8N7T5B26K \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MMEEC5SS48N85ZJCK65A",
+              "skill/personal-ground/gpt-taste"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "bc5e41221f0c00bcbf60b5560019da740ede84aac4cda839add0e555e8a983a2",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/gpt-taste/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/gpt-taste/skill.json",
+              "undoJournalPresent": "true"
+            },
+            "id": "prc_01M1V9MMEEC5SS48N85ZJCK65A",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MMEEC5SS48N85ZJCK65A",
+            "summary": "Procedure prc_01M1V9MMEEC5SS48N85ZJCK65A \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MMDTWVYFRGZNNBKK4DB4",
+              "skill/personal-ground/gpt-taste"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "bc5e41221f0c00bcbf60b5560019da740ede84aac4cda839add0e555e8a983a2",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/gpt-taste/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/gpt-taste/skill.json",
+              "undoJournalPresent": "false"
+            },
+            "id": "prc_01M1V9MMDTWVYFRGZNNBKK4DB4",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MMDTWVYFRGZNNBKK4DB4",
+            "summary": "Procedure prc_01M1V9MMDTWVYFRGZNNBKK4DB4 \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MMD2JQEM3ZP7SVSKSZMQ",
+              "skill/personal-ground/full-output-enforcement"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "06129a0c24a470b43733fa585fe660ab690bd74ddf77940ba851eb71edb655d3",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/full-output-enforcement/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/full-output-enforcement/skill.json",
+              "undoJournalPresent": "true"
+            },
+            "id": "prc_01M1V9MMD2JQEM3ZP7SVSKSZMQ",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MMD2JQEM3ZP7SVSKSZMQ",
+            "summary": "Procedure prc_01M1V9MMD2JQEM3ZP7SVSKSZMQ \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MMCGH74SRKB7NMXZGPBX",
+              "skill/personal-ground/full-output-enforcement"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "06129a0c24a470b43733fa585fe660ab690bd74ddf77940ba851eb71edb655d3",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/full-output-enforcement/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/full-output-enforcement/skill.json",
+              "undoJournalPresent": "false"
+            },
+            "id": "prc_01M1V9MMCGH74SRKB7NMXZGPBX",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MMCGH74SRKB7NMXZGPBX",
+            "summary": "Procedure prc_01M1V9MMCGH74SRKB7NMXZGPBX \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MMBSK272SXE723SD0073",
+              "skill/personal-ground/find-skills"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "0c63f97510cd8fe81e94b4938d39762a530e4b544f89a42076ada20ac2445d29",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/find-skills/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/find-skills/skill.json",
+              "undoJournalPresent": "true"
+            },
+            "id": "prc_01M1V9MMBSK272SXE723SD0073",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MMBSK272SXE723SD0073",
+            "summary": "Procedure prc_01M1V9MMBSK272SXE723SD0073 \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MMB3MAD7EQG7SK19J3CP",
+              "skill/personal-ground/find-skills"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "0c63f97510cd8fe81e94b4938d39762a530e4b544f89a42076ada20ac2445d29",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/find-skills/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/find-skills/skill.json",
+              "undoJournalPresent": "false"
+            },
+            "id": "prc_01M1V9MMB3MAD7EQG7SK19J3CP",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MMB3MAD7EQG7SK19J3CP",
+            "summary": "Procedure prc_01M1V9MMB3MAD7EQG7SK19J3CP \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MM955QZ8AJFJF4R41VJQ",
+              "skill/personal-ground/design-taste-frontend-v2"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "6f1aae301a6a9b47e04a31bbcd741495cd5edc955c3a8cc5323f05b9b8fff9a2",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/design-taste-frontend-v2/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/design-taste-frontend-v2/skill.json",
+              "undoJournalPresent": "true"
+            },
+            "id": "prc_01M1V9MM955QZ8AJFJF4R41VJQ",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MM955QZ8AJFJF4R41VJQ",
+            "summary": "Procedure prc_01M1V9MM955QZ8AJFJF4R41VJQ \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MM75YB92PWW6SRFRBXGE",
+              "skill/personal-ground/design-taste-frontend-v2"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "6f1aae301a6a9b47e04a31bbcd741495cd5edc955c3a8cc5323f05b9b8fff9a2",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/design-taste-frontend-v2/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/design-taste-frontend-v2/skill.json",
+              "undoJournalPresent": "false"
+            },
+            "id": "prc_01M1V9MM75YB92PWW6SRFRBXGE",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MM75YB92PWW6SRFRBXGE",
+            "summary": "Procedure prc_01M1V9MM75YB92PWW6SRFRBXGE \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MM5YS44AV86BWDJBQC1Q",
+              "skill/personal-ground/design-taste-frontend-v1"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "20aae2ffdbd0aa7c6d835e1b143bc750c6bcb61584c2d2eb56a22fed46348da7",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/design-taste-frontend-v1/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/design-taste-frontend-v1/skill.json",
+              "undoJournalPresent": "true"
+            },
+            "id": "prc_01M1V9MM5YS44AV86BWDJBQC1Q",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MM5YS44AV86BWDJBQC1Q",
+            "summary": "Procedure prc_01M1V9MM5YS44AV86BWDJBQC1Q \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MM522DERR65W758V7QHD",
+              "skill/personal-ground/design-taste-frontend-v1"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "20aae2ffdbd0aa7c6d835e1b143bc750c6bcb61584c2d2eb56a22fed46348da7",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/design-taste-frontend-v1/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/design-taste-frontend-v1/skill.json",
+              "undoJournalPresent": "false"
+            },
+            "id": "prc_01M1V9MM522DERR65W758V7QHD",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MM522DERR65W758V7QHD",
+            "summary": "Procedure prc_01M1V9MM522DERR65W758V7QHD \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MM3J6C8EPKC3D6Z18B0N",
+              "skill/personal-ground/design-taste-frontend"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "4c4967c30d27e7cb40e9b38934dbea22aae966001caab43ea41de265185e3ef6",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/design-taste-frontend/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/design-taste-frontend/skill.json",
+              "undoJournalPresent": "true"
+            },
+            "id": "prc_01M1V9MM3J6C8EPKC3D6Z18B0N",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MM3J6C8EPKC3D6Z18B0N",
+            "summary": "Procedure prc_01M1V9MM3J6C8EPKC3D6Z18B0N \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MM1Z0W2TKQBFAKVKHXQ1",
+              "skill/personal-ground/design-taste-frontend"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "4c4967c30d27e7cb40e9b38934dbea22aae966001caab43ea41de265185e3ef6",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/design-taste-frontend/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/design-taste-frontend/skill.json",
+              "undoJournalPresent": "false"
+            },
+            "id": "prc_01M1V9MM1Z0W2TKQBFAKVKHXQ1",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MM1Z0W2TKQBFAKVKHXQ1",
+            "summary": "Procedure prc_01M1V9MM1Z0W2TKQBFAKVKHXQ1 \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MM149C7343YC86KJDM8X",
+              "skill/personal-ground/brandkit"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "29a0b8d12f13251a0e7f48df9dab3abbe629089a8694bd2e797989eff6cb1234",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/brandkit/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/brandkit/skill.json",
+              "undoJournalPresent": "true"
+            },
+            "id": "prc_01M1V9MM149C7343YC86KJDM8X",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MM149C7343YC86KJDM8X",
+            "summary": "Procedure prc_01M1V9MM149C7343YC86KJDM8X \u00b7 adopt \u00b7 current satisfaction is recorded"
+          },
+          {
+            "authorities": [
+              "generated"
+            ],
+            "canonical_refs": [
+              "procedure/prc_01M1V9MM0C39D3FN5P28EGS7S5",
+              "skill/personal-ground/brandkit"
+            ],
+            "details": {
+              "currentSatisfactionRecorded": "true",
+              "editCount": "2",
+              "gitCommitRecordPresent": "false",
+              "isolation": "staged",
+              "kind": "adopt",
+              "planDigest": "29a0b8d12f13251a0e7f48df9dab3abbe629089a8694bd2e797989eff6cb1234",
+              "touchedPaths": "/private/tmp/astra-personal-ground-proof/Central/Control/user/skills/brandkit/SKILL.md, /private/tmp/astra-personal-ground-proof/Central/Control/user/skills/brandkit/skill.json",
+              "undoJournalPresent": "false"
+            },
+            "id": "prc_01M1V9MM0C39D3FN5P28EGS7S5",
+            "kind": "procedure",
+            "provenance": [],
+            "recoverability": "inspect-only",
+            "schema": "aikit.explain-history/v1",
+            "subject": "procedure/prc_01M1V9MM0C39D3FN5P28EGS7S5",
+            "summary": "Procedure prc_01M1V9MM0C39D3FN5P28EGS7S5 \u00b7 adopt \u00b7 current satisfaction is recorded"
+          }
+        ],
+        "schema": "aikit.explain-history/v1"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  }
+]
