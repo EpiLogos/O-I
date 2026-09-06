@@ -207,8 +207,15 @@ pub fn retain_factory_return(live: &Path, workcell_path: &Path, output: &Path) -
         let praxis: PraxisResolution = serde_json::from_value(receipt["praxis"].clone())?;
         let context: ContextResolutionEvidence =
             serde_json::from_value(receipt["context_resolution"].clone())?;
+        if serde_json::to_value(&context)? != receipt["context_resolution"] {
+            return Err("linked AIKit core cannot preserve this ContextResolution evidence; build against the issuing contract instead of dropping fields".into());
+        }
         let context_value = serde_json::to_value(&context)?;
-        let context_project_path = Path::new(text(&context_value["basis"]["project_binding"]["locator"], "path")?).canonicalize()?;
+        let context_project_path = Path::new(text(
+            &context_value["basis"]["project_binding"]["locator"],
+            "path",
+        )?)
+        .canonicalize()?;
         if context_project_path != root {
             return Err("native Method context belongs to another Project directory".into());
         }
