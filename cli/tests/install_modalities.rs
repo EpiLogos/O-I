@@ -12,11 +12,13 @@ use tempfile::TempDir;
 
 fn oi(home: &Path, path: &Path) -> Command {
     let mut command = Command::new(env!("CARGO_BIN_EXE_oi"));
-    // HOME is overridden too: the managed artifact root (doctor, suite
-    // install) must resolve inside the sandbox, never the developer's
-    // real application-data directory.
+    // HOME and OI_DATA_HOME are overridden too: the managed artifact root
+    // (doctor, suite install) must resolve inside the sandbox — never the
+    // developer's real application-data directory, and never a data root
+    // exported by the surrounding CI job.
     command
         .env("OI_HOME", home)
+        .env("OI_DATA_HOME", home.join("oi-data"))
         .env("HOME", home)
         .env("PATH", path);
     command
