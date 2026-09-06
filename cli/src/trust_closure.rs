@@ -350,6 +350,7 @@ fn command_current_dev_status(args: &[OsString]) -> Result<i32, String> {
             "branch": state.branch,
             "head": state.head,
             "accepted_current_main": state.accepted,
+            "observed_origin_main": git_output(&state.path, &["rev-parse", "refs/remotes/origin/main^{commit}"]).ok(),
             "dirty": state.dirty,
             "ahead": state.ahead,
             "behind": state.behind,
@@ -358,12 +359,12 @@ fn command_current_dev_status(args: &[OsString]) -> Result<i32, String> {
         println!("{}", serde_json::to_string_pretty(&json!({
             "schema": "oi.current-main-dev-status/v1",
             "release_suite": manifest.suite_version,
-            "truth_basis": "surfaces.json current native-main source pins",
+            "truth_basis": "observed local HEAD and origin/main; accepted_current_main is historical descriptor evidence, not a development ceiling",
             "repos": values,
         })).map_err(|error| error.to_string())?);
     } else {
         println!("Current-main developer federation");
-        println!("{:<19} {:<10} {:<8} {:<8} {:<8} Head / accepted current main", "Source", "Branch", "Dirty", "Ahead", "Behind");
+        println!("{:<19} {:<10} {:<8} {:<8} {:<8} Head / observed origin/main", "Source", "Branch", "Dirty", "Ahead", "Behind");
         for state in states {
             if !state.present {
                 println!("{:<19} {:<10} {:<8} {:<8} {:<8} {}", state.id, "missing", "—", "—", "—", state.path.display());
@@ -377,7 +378,7 @@ fn command_current_dev_status(args: &[OsString]) -> Result<i32, String> {
                 state.ahead.map(|value| value.to_string()).unwrap_or_else(|| "?".to_owned()),
                 state.behind.map(|value| value.to_string()).unwrap_or_else(|| "?".to_owned()),
                 state.head.as_deref().unwrap_or("?"),
-                state.accepted.as_deref().unwrap_or("upstream main"),
+                git_output(&state.path, &["rev-parse", "refs/remotes/origin/main^{commit}"]).unwrap_or_else(|_| "unavailable".into()),
             );
         }
     }
