@@ -82,7 +82,7 @@
       "public_name": "Actuation",
       "function": "Agency, WorldBinding, RootScope, Metagency, Determination and Return authority",
       "repository": "https://github.com/EpiLogos/Actuation",
-      "docs_ref": "faa5b79f75230ef259d5e523fcade491b23dc3eb",
+      "docs_ref": "2b458afdf284c5ece368a51340c64db4fe758486",
       "docs_path": "docs/WORLD-BOUND-ROOT-AGENCY.md",
       "skill_paths": [],
       "native": {
@@ -103,7 +103,7 @@
           "verify",
           "--json"
         ],
-        "command_revision": "faa5b79f75230ef259d5e523fcade491b23dc3eb",
+        "command_revision": "2b458afdf284c5ece368a51340c64db4fe758486",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [],
@@ -114,8 +114,8 @@
       "install": {
         "kind": "oi-managed-native-cli",
         "modality": "developer-source",
-        "ref": "faa5b79f75230ef259d5e523fcade491b23dc3eb",
-        "revision": "faa5b79f75230ef259d5e523fcade491b23dc3eb",
+        "ref": "2b458afdf284c5ece368a51340c64db4fe758486",
+        "revision": "2b458afdf284c5ece368a51340c64db4fe758486",
         "path": "bin/actuation",
         "note": "Current accepted owner main publishes the dependency-free native Actuation command and declares native CLI installation."
       },
@@ -140,7 +140,7 @@
       "public_name": "AIKit",
       "function": "context, capability, model, credential, SessionSpace and provider-process resolution",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "docs_ref": "9a7402ec401471c9701e5efaecd619297659c489",
+      "docs_ref": "bc7c1588210690ba3696b5eef6c86226f9a89deb",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -164,7 +164,7 @@
           "doctor",
           "--json"
         ],
-        "command_revision": "9a7402ec401471c9701e5efaecd619297659c489",
+        "command_revision": "bc7c1588210690ba3696b5eef6c86226f9a89deb",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [
@@ -181,8 +181,8 @@
       "install": {
         "kind": "oi-managed-binary",
         "modality": "developer-source",
-        "ref": "9a7402ec401471c9701e5efaecd619297659c489",
-        "revision": "9a7402ec401471c9701e5efaecd619297659c489",
+        "ref": "bc7c1588210690ba3696b5eef6c86226f9a89deb",
+        "revision": "bc7c1588210690ba3696b5eef6c86226f9a89deb",
         "path": "crates/aikit-cli",
         "note": "Current #97 source/install pin; immutable released artifacts remain separately recorded in suite/manifest.json."
       },
@@ -271,7 +271,7 @@
       "public_name": "Workcell",
       "function": "material execution, model-serving base, process containment and secret materialisation",
       "repository": "https://github.com/EpiLogos/Workcell",
-      "docs_ref": "dc076fdf0c3e12835c17ded95ef199e200f7f8e1",
+      "docs_ref": "b9cd5e02b862b5f4c8793ec96cfd32611f068522",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -292,7 +292,7 @@
           "--json",
           "doctor"
         ],
-        "command_revision": "dc076fdf0c3e12835c17ded95ef199e200f7f8e1",
+        "command_revision": "b9cd5e02b862b5f4c8793ec96cfd32611f068522",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [
@@ -309,8 +309,8 @@
       "install": {
         "kind": "oi-managed-binary",
         "modality": "developer-source",
-        "ref": "dc076fdf0c3e12835c17ded95ef199e200f7f8e1",
-        "revision": "dc076fdf0c3e12835c17ded95ef199e200f7f8e1",
+        "ref": "b9cd5e02b862b5f4c8793ec96cfd32611f068522",
+        "revision": "b9cd5e02b862b5f4c8793ec96cfd32611f068522",
         "path": "crates/workcell-cli",
         "note": "Current #97 source/install pin including selector-independent native executable identity. Provider-specific physical resources remain physical acceptance evidence."
       },

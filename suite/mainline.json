@@ -15,16 +15,16 @@
     {
       "id": "actuation",
       "repository": "https://github.com/EpiLogos/Actuation",
-      "revision": "faa5b79f75230ef259d5e523fcade491b23dc3eb",
+      "revision": "2b458afdf284c5ece368a51340c64db4fe758486",
       "state": "accepted-main",
-      "note": "Current Actuation main includes the realised authority/runtime floor, semantic Activity over canonical ActuationStream, the owner-native installable actuation CLI (oi-managed-native-cli with installed verify), actuation.instantiation/v1 evidence-gated receipts, the actuation.harness-detection/v1 contract with its live detection engine proof, and the Prime recursive relational Agency experiment (#26/#81) under experiments/ql-runtime/prime."
+      "note": "Current Actuation main includes the realised authority/runtime floor, semantic Activity over canonical ActuationStream, the owner-native installable actuation CLI (oi-managed-native-cli with installed verify), actuation.instantiation/v1 evidence-gated receipts, the actuation.harness-detection/v1 contract with catalog r2 (zcode), environment/self detection and its live detection engine proof, and the Prime recursive relational Agency experiment (#26/#81) under experiments/ql-runtime/prime."
     },
     {
       "id": "ai-kit",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "revision": "9a7402ec401471c9701e5efaecd619297659c489",
+      "revision": "bc7c1588210690ba3696b5eef6c86226f9a89deb",
       "state": "accepted-main",
-      "note": "Current AIKit main includes SessionSpace, content-addressed ContextResolution evidence, Herdr/Hyprland reference composition with deterministic Herdr automation-provider coverage, VersionedWorld/ProjectWorld, Method, proof-before-automation Routine, operative Resolve/search, canonical QL-shape use, Central-owned NOW/DAY/Flow temporal grounding through the public Action seam, pre-local build-only standing, native installed doctor verification for #172, and CI conformance that the committed builtin capability registry contains only valid manifests. Refreshed 2026-09-06 to published 9a7402e (also preserving native Central project identity in session binding): Central personal/project/machine skill adoption, explicit unresolved-standing withholding, and reviewed reversible handoff to native generation-backed skill paths. Generation-backed roots are identified through native generation metadata. Native lifecycle tests, workspace Clippy and release build pass; real personal Control cutover is not implied by this pin."
+      "note": "Current AIKit main includes SessionSpace, content-addressed ContextResolution evidence, Herdr/Hyprland reference composition with deterministic Herdr automation-provider coverage, VersionedWorld/ProjectWorld, Method, proof-before-automation Routine, operative Resolve/search, canonical QL-shape use, Central-owned NOW/DAY/Flow temporal grounding through the public Action seam, pre-local build-only standing, native installed doctor verification for #172, and CI conformance that the committed builtin capability registry contains only valid manifests. Refreshed 2026-09-06 to published bc7c158 (including native Pi RPC and Central project identity in session binding): Central personal/project/machine skill adoption, explicit unresolved-standing withholding, and reviewed reversible handoff to native generation-backed skill paths. Generation-backed roots are identified through native generation metadata. Native lifecycle tests, workspace Clippy and release build pass; real personal Control cutover is verified separately in the normalization receipt. Local directory promotion needs no additional trust flag; mixed harness directories reconcile through native reversible Procedures."
     },
     {
       "id": "software-factory",
@@ -36,7 +36,7 @@
     {
       "id": "workcell",
       "repository": "https://github.com/EpiLogos/Workcell",
-      "revision": "dc076fdf0c3e12835c17ded95ef199e200f7f8e1",
+      "revision": "b9cd5e02b862b5f4c8793ec96cfd32611f068522",
       "state": "accepted-main-with-physical-provider-gates",
       "note": "Current Workcell main includes deterministic OpenSandbox World materialisation/lifecycle, AIKit Gateway managed-service materiality, the portable process/secret/provider foundation, pre-local build-only standing, selector-independent native workcell version/doctor identity, and the executable-identity / control-service-and-agent-hosting docs line. Actual owner-machine/provider execution remains #97 evidence."
     },

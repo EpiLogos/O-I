@@ -1,0 +1,51 @@
+{
+  "cradle_source_sha256": "0702f31edf1387967b4e0b36b9297d179125e8a9740103cff097a70d65656779",
+  "cradle_projections": {
+    ".agents/skills": "0702f31edf1387967b4e0b36b9297d179125e8a9740103cff097a70d65656779",
+    ".claude/skills": "0702f31edf1387967b4e0b36b9297d179125e8a9740103cff097a70d65656779",
+    ".codex/skills": "0702f31edf1387967b4e0b36b9297d179125e8a9740103cff097a70d65656779"
+  },
+  "active": [
+    "brandkit",
+    "central-ground-keeping",
+    "design-taste-frontend",
+    "design-taste-frontend-v1",
+    "design-taste-frontend-v2",
+    "find-skills",
+    "full-output-enforcement",
+    "gpt-taste",
+    "high-end-visual-design",
+    "image-to-code",
+    "imagegen-frontend-mobile",
+    "imagegen-frontend-web",
+    "industrial-brutalist-ui",
+    "minimalist-ui",
+    "ralph-tui-create-beads",
+    "ralph-tui-create-beads-rust",
+    "ralph-tui-create-json",
+    "ralph-tui-prd",
+    "redesign-existing-projects",
+    "stitch-design-taste",
+    "unix-atomic-skill-maker",
+    "wayfinder"
+  ],
+  "retired": [
+    "brainstorming",
+    "dispatching-parallel-agents",
+    "executing-plans",
+    "finishing-a-development-branch",
+    "receiving-code-review",
+    "requesting-code-review",
+    "sanity-check",
+    "subagent-driven-development",
+    "systematic-debugging",
+    "test-driven-development",
+    "using-git-worktrees",
+    "using-superpowers",
+    "verification-before-completion",
+    "writing-plans",
+    "writing-skills"
+  ],
+  "wrong_scope": [],
+  "remaining_machine_masters": []
+}
