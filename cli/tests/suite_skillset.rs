@@ -456,14 +456,21 @@ fn shipped_manifest_declares_only_oi_owned_skills() {
     let manifest =
         parse_manifest(include_str!("../../skills/suite-operator/skillset.toml")).unwrap();
     assert_eq!(manifest.profiles.len(), 1);
-    assert_eq!(manifest.profiles[0].profile_ref, "oi:skillset:base-guardian");
+    assert_eq!(
+        manifest.profiles[0].profile_ref,
+        "oi:skillset:base-guardian"
+    );
     assert!(manifest.expected_native_skills.is_empty());
     // O:I owns exactly its two guardian Skills here. Every other product's
     // skills are composed by AIKit's sets; pinning them in this file made it
     // a second registry in a second format.
     assert_eq!(manifest.skills.len(), 2);
     for skill in &manifest.skills {
-        assert!(skill.skill_ref.starts_with("oi:skill:"), "{}", skill.skill_ref);
+        assert!(
+            skill.skill_ref.starts_with("oi:skill:"),
+            "{}",
+            skill.skill_ref
+        );
         assert_eq!(skill.owner_product, "O:I");
         assert_eq!(
             skill.source.revision_policy,

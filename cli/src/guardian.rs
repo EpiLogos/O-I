@@ -13,8 +13,8 @@ use std::path::{Path, PathBuf};
 use super::skillset::{
     generated_projection, materialise_direct_projection, parse_manifest, resolve_profile,
     AgentScope, AuthorityObservation, DirectProjectionOutcome, DirectProjectionState,
-    NativeSkillReference, DERIVED_PROJECTION_MARKER, SkillAvailability, SkillObservation,
-    SkillResolutionMode, SuiteSkillSetManifest,
+    NativeSkillReference, SkillAvailability, SkillObservation, SkillResolutionMode,
+    SuiteSkillSetManifest, DERIVED_PROJECTION_MARKER,
 };
 
 pub const GUARDIAN_PROFILE_REF: &str = "oi:skillset:base-guardian";
@@ -138,9 +138,7 @@ fn guardian_skill_directory(content: &str, source_path: &str) -> Result<String, 
     ))
 }
 
-fn guardian_source_content(
-    source_path: &str,
-) -> Result<&'static str, String> {
+fn guardian_source_content(source_path: &str) -> Result<&'static str, String> {
     GUARDIAN_SKILL_SOURCES
         .iter()
         .find(|(path, _)| *path == source_path)
@@ -198,10 +196,7 @@ pub fn project_guardian_skillset(
             .ok_or_else(|| format!("manifest lost `{}` during resolution", relation.skill_ref))?;
         let mut destinations = Vec::new();
         for harness_root in GUARDIAN_HARNESS_SKILL_ROOTS {
-            let destination = ground
-                .join(harness_root)
-                .join(&directory)
-                .join("SKILL.md");
+            let destination = ground.join(harness_root).join(&directory).join("SKILL.md");
             let outcome = if fs::symlink_metadata(&destination)
                 .map(|metadata| metadata.file_type().is_symlink())
                 .unwrap_or(false)
@@ -375,9 +370,7 @@ fn run_aikit_envelope(
             ));
         }
         Ok(_) => {
-            return Err(format!(
-                "aikit {step} returned an invalid JSON envelope"
-            ));
+            return Err(format!("aikit {step} returned an invalid JSON envelope"));
         }
         Err(error) => {
             return Err(format!(
@@ -455,12 +448,19 @@ fn reconcile_capsule_residue(
     if !capsule.is_dir() || !is_empty_directory_tree(&capsule) {
         return Ok(false);
     }
-    fs::remove_dir_all(&capsule)
-        .map_err(|error| format!("cannot clear capsule residue at {}: {error}", capsule.display()))?;
-    emit_pickup_line(lines, format!(
-        "  aikit: cleared empty capsule residue at {} left by the undone adoption Procedure",
-        capsule.display()
-    ));
+    fs::remove_dir_all(&capsule).map_err(|error| {
+        format!(
+            "cannot clear capsule residue at {}: {error}",
+            capsule.display()
+        )
+    })?;
+    emit_pickup_line(
+        lines,
+        format!(
+            "  aikit: cleared empty capsule residue at {} left by the undone adoption Procedure",
+            capsule.display()
+        ),
+    );
     Ok(true)
 }
 
@@ -495,7 +495,11 @@ fn adopt_foreign_tree(
         let envelope = run_aikit_envelope(
             aikit,
             ground,
-            &["adopt", skills_root.to_string_lossy().as_ref(), &namespace_arg],
+            &[
+                "adopt",
+                skills_root.to_string_lossy().as_ref(),
+                &namespace_arg,
+            ],
         )?;
         if envelope["ok"] == serde_json::json!(true) {
             break envelope["data"].clone();
@@ -520,7 +524,13 @@ fn adopt_foreign_tree(
         let applied = run_aikit(
             aikit,
             ground,
-            &["adopt", skills_root.to_string_lossy().as_ref(), &namespace_arg, "--yes", &expect],
+            &[
+                "adopt",
+                skills_root.to_string_lossy().as_ref(),
+                &namespace_arg,
+                "--yes",
+                &expect,
+            ],
         )?;
         if applied["applied"] != serde_json::json!(true) {
             return Err("aikit adopt completed without applying".to_owned());
@@ -529,7 +539,10 @@ fn adopt_foreign_tree(
     };
     let adopted_capsules = aikit_strings(&applied, "capsules");
     if adopted_capsules.is_empty() {
-        emit_pickup_line(lines, "  aikit: no new guardian capsules to adopt; SkillSet already collected".to_owned());
+        emit_pickup_line(
+            lines,
+            "  aikit: no new guardian capsules to adopt; SkillSet already collected".to_owned(),
+        );
     } else {
         emit_pickup_line(
             lines,
@@ -537,7 +550,8 @@ fn adopt_foreign_tree(
             "  aikit: adopted {} guardian capsule(s) under skill/{AIKIT_GUARDIAN_NAMESPACE}: {}",
             adopted_capsules.len(),
             adopted_capsules.join(", ")
-        ));
+        ),
+        );
     }
     Ok(adopted_capsules)
 }
@@ -633,8 +647,7 @@ pub fn aikit_pickup(
     let stale_managed: Vec<&GuardianDestinationOutcome> = claude_destinations
         .iter()
         .filter(|destination| {
-            destination.state == DirectProjectionState::AikitManaged
-                && destination.detail.is_some()
+            destination.state == DirectProjectionState::AikitManaged && destination.detail.is_some()
         })
         .copied()
         .collect();
@@ -658,8 +671,7 @@ pub fn aikit_pickup(
     // topped up with any capsules it does not yet hold. Membership is what
     // the set projects in this context plus what it withholds.
     let set = AIKIT_GUARDIAN_SET.to_owned();
-    let set_members;
-    if run_aikit(aikit, ground, &["set", "show", &set]).is_ok() {
+    let set_members = if run_aikit(aikit, ground, &["set", "show", &set]).is_ok() {
         let show = run_aikit(aikit, ground, &["set", "show", &set])?;
         let mut held = aikit_strings(&show, "projected");
         held.extend(
@@ -683,22 +695,28 @@ pub fn aikit_pickup(
             add.extend(missing.iter().map(String::as_str));
             run_aikit(aikit, ground, &add)?;
         }
-        set_members = held.len() + missing.len();
+        held.len() + missing.len()
     } else {
         let mut create = vec!["set", "create", set.as_str()];
         create.extend(adopted_capsules.iter().map(String::as_str));
         let created = run_aikit(aikit, ground, &create)?;
-        set_members = created["members"].as_u64().unwrap_or(0) as usize;
-    }
+        created["members"].as_u64().unwrap_or(0) as usize
+    };
 
     let generation = run_aikit(aikit, ground, &["apply"])?["generation"]
         .as_str()
         .map(str::to_owned);
 
-    emit_pickup_line(&mut lines, format!("  aikit: SkillSet {set} holds {set_members} member(s)"));
+    emit_pickup_line(
+        &mut lines,
+        format!("  aikit: SkillSet {set} holds {set_members} member(s)"),
+    );
     match &generation {
         Some(id) => emit_pickup_line(&mut lines, format!("  aikit: applied generation {id}")),
-        None => emit_pickup_line(&mut lines, "  aikit: applied without a generation id".to_owned()),
+        None => emit_pickup_line(
+            &mut lines,
+            "  aikit: applied without a generation id".to_owned(),
+        ),
     }
 
     Ok(AikitPickupReport {
