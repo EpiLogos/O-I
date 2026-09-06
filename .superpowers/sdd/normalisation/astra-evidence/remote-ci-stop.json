@@ -1,0 +1,16 @@
+{
+  "status": "stopped-red-main",
+  "aikit": {
+    "revision": "ab1f72cd05a690e7ad2a64e839fb67210e4b783d",
+    "run": "https://github.com/EpiLogos/ai-kit/actions/runs/34027734513",
+    "failure": "Linux Clippy dead_code: strip_ansi_into at crates/aikit-cli/tests/mux_install.rs:782; local macOS Clippy passed",
+    "passing": "All crate test jobs, Native Skills, Persistent Surface, Pre-local verification"
+  },
+  "oi": {
+    "revision": "0d488b4f002e30c17c8cb4e6dcf2e70fddf60398",
+    "run": "https://github.com/EpiLogos/O-I/actions/runs/34027848702",
+    "failure": "Rust format gate; other O:I verification runs also red, not yet fully diagnosed",
+    "passing": "Mainline snapshot truth"
+  },
+  "action": "No further repair or push. Evidence staged locally."
+}

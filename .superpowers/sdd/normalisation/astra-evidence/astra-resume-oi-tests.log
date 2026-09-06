@@ -1,0 +1,170 @@
+   Compiling libc v0.2.189
+   Compiling bitflags v2.13.1
+   Compiling fastrand v2.5.0
+   Compiling once_cell v1.21.4
+   Compiling getrandom v0.4.3
+   Compiling errno v0.3.14
+   Compiling rustix v1.1.4
+   Compiling rand v0.10.2
+   Compiling ulid v3.0.0
+   Compiling aikit-core v0.1.0 (https://github.com/EpiLogos/ai-kit?rev=9ff28ca31c723b314ddf62b7f85b6e2611d53d66#9ff28ca3)
+   Compiling tempfile v3.27.0
+   Compiling oi-cli v0.1.0 (/private/tmp/astra-oi-main/cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 11.20s
+     Running unittests src/lib.rs (cli/target/debug/deps/oi_cli-677f1d3dceea4a41)
+
+running 26 tests
+test dev_world::tests::setup_disclosure_is_schema_stable ... ok
+test current_world::tests::product_positions_are_canonical_and_stable ... ok
+test current_world::tests::maximal_six_product_presence_is_cf5 ... ok
+test current_world::tests::partial_composition_retains_exact_positions ... ok
+test dev_world::tests::session_spec_tokens_resolve_to_machine_paths_without_silent_guessing ... ok
+test world_recognition::tests::actuation_contract_list_discloses_model_bearing_field_ownership ... ok
+test product_command::tests::canonical_namespaces_and_compatibility_aliases_resolve_same_product ... ok
+test product_command::tests::catalogue_is_complete_sixfold_and_accepted ... ok
+test world_recognition::tests::classify_probe_failure_is_degraded_with_stderr_detail ... ok
+test world_recognition::tests::aikit_client_status_discloses_harness_participations_without_broker ... ok
+test world_recognition::tests::aikit_mux_detect_discloses_tmux_and_cmux_as_owner_participations ... ok
+test world_recognition::tests::classify_probe_failure_without_stderr_is_still_degraded ... ok
+test world_recognition::tests::classify_probe_success_captures_version_without_degradation ... ok
+test status::tests::in_step_surface_stays_clean ... ok
+test world_recognition::tests::embedded_herdr_package_is_a_real_oi_recognition_contribution ... ok
+test world_recognition::tests::extension_frontier_routes_harness_and_model_to_actuation_and_material_to_workcell ... ok
+test status::tests::drift_records_revision_gap_shadow_and_stale_binary ... ok
+test world_recognition::tests::herdr_snapshot_relations_keep_native_ids_native ... ok
+test world_recognition::tests::native_system_match_is_case_insensitive_on_name ... ok
+test world_recognition::tests::reconciliation_attaches_owner_binding_to_matching_observation_without_duplication ... ok
+test world_recognition::tests::native_tool_registry_uses_lowercase_names_for_owner_join ... ok
+test world_recognition::tests::upstream_revision_is_parsed_from_version_banner_without_overclaiming ... ok
+test world_recognition::tests::workcell_provider_inventory_discloses_material_capacities ... ok
+test world_recognition::tests::source_aperture_scan_is_a_provider_over_existing_native_world ... ok
+test world_recognition::tests::unsupported_target_can_return_owner_sdk_extension_path ... ok
+test world_recognition::tests::registering_conformant_adapter_changes_the_next_world_reading ... ok
+
+test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.24s
+
+     Running unittests src/main.rs (cli/target/debug/deps/oi-20baf6f2c9e64879)
+
+running 13 tests
+test composition::current_main_install_tests::actuation_uses_its_owner_native_source_entry_without_inventing_a_build ... ok
+test composition::omarchy_host_tests::source_pin_and_native_loader_split_are_explicit ... ok
+test composition::current_main_install_tests::every_product_has_a_current_main_native_source_install ... ok
+test composition::existing_world_tests::embedded_recognition_package_is_visible_without_entering_six_product_composition ... ok
+test composition::tests::adopt_target_for_central_is_work_central ... ok
+test composition::tests::dev_source_path_maps_central_into_work_not_the_ground_itself ... ok
+test composition::omarchy_host_tests::plan_never_claims_or_changes_native_shell_json ... ok
+test composition::omarchy_host_tests::managed_plugin_drift_requires_explicit_reviewed_replacement ... ok
+test composition::omarchy_host_tests::realise_is_idempotent_and_verifiable_without_native_activation_fabrication ... ok
+test composition::existing_world_tests::owner_handoffs_keep_what_how_material_development_and_optional_ql_separate ... ok
+test composition::existing_world_tests::bare_existing_directory_is_valid_without_central_aikit_workcell_factory_or_ql ... ok
+test composition::existing_world_tests::native_skill_and_instruction_sources_are_retained_not_reclassified_or_moved ... ok
+test composition::existing_world_tests::projectcentral_apertures_keep_central_ownership ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.24s
+
+     Running tests/cli.rs (cli/target/debug/deps/cli-6a1646795e98e807)
+
+running 15 tests
+test docs_resolves_quaternal_logic_to_the_live_ql_mef_repository ... ok
+test init_without_central_refuses_to_synthesize_a_personal_ground ... ok
+test empty_status_reports_missing_surfaces ... ok
+test central_init_failure_does_not_record_false_personal_ground ... ok
+test status_distinguishes_detected_installation_from_registration ... ok
+test init_delegates_to_real_central_shape_and_is_idempotent ... ok
+test alias_exec_preserves_arguments_stdio_and_exit_status ... ok
+test alias_collision_is_explicit ... ok
+test migration_places_existing_work_tree_without_changing_its_contents ... ok
+test migration_refuses_target_collision_without_changing_source ... ok
+test register_central_discovers_an_existing_compatible_ctrl ... ok
+test register_creates_only_composition_metadata ... ok
+test central_install_failure_leaves_prior_composition_recoverable ... ok
+test status_marks_deleted_registered_executable_broken ... ok
+test full_registered_composition_is_reported_without_invented_aliases ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.12s
+
+     Running tests/current_main_acceptance.rs (cli/target/debug/deps/current_main_acceptance-55d04cef8d5f10d8)
+
+running 3 tests
+test dev_status_reports_current_main_pins_not_release_snapshot ... ok
+test current_projectcentral_central_initializes_the_real_root_shape ... ok
+test stale_three_action_central_is_not_accepted_for_current_personal_ground ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.32s
+
+     Running tests/desktop_status.rs (cli/target/debug/deps/desktop_status-95b9f193e2feacc5)
+
+running 1 test
+test disclosure_distinguishes_empty_installed_registered_and_broken_without_native_health_claims ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/guardian_projection.rs (cli/target/debug/deps/guardian_projection-b085a7b3f23032ab)
+
+running 9 tests
+test guardian_sources_carry_discoverable_frontmatter ... ok
+test guardian_profile_resolves_to_the_shipped_oi_skills_only ... ok
+test pickup_projects_guardian_set_into_harness_trees_with_receipts ... ok
+test pickup_preserves_local_edits_instead_of_clobbering ... ok
+test bootstrap_projects_guardian_skillset_into_a_fresh_ground ... ok
+test bootstrap_hands_the_guardian_set_to_aikit_when_installed ... ok
+test sync_respects_a_adopted_aikit_managed_tree_instead_of_deadlocking ... ok
+test sync_refreshes_a_stale_adopted_tree_through_aikit_procedures ... ok
+test sync_refuses_to_clear_capsule_residue_that_holds_content ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.97s
+
+     Running tests/native_lifecycle.rs (cli/target/debug/deps/native_lifecycle-101b050fedf790b7)
+
+running 2 tests
+test incompatible_native_contract_fails_before_registration ... ok
+test package_lifecycle_calls_real_aikit_registration_and_preserves_space_identity ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/package_sdk.rs (cli/target/debug/deps/package_sdk-54eefc4cf34bb373)
+
+running 5 tests
+test one_package_carries_multiple_native_contribution_kinds_without_identity_collapse ... ok
+test package_disclosures_are_whole_envelope_facts_not_native_policy_replacements ... ok
+test lifecycle_receipt_requires_one_native_outcome_per_contribution ... ok
+test cross_product_model_package_keeps_aikit_and_workcell_contracts_independent ... ok
+test missing_or_old_native_contract_is_reported_without_oi_inventing_health ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/six_product_command_parity.rs (cli/target/debug/deps/six_product_command_parity-b7543cfb1f311e11)
+
+running 3 tests
+test unix::unix_passthrough_preserves_native_signal_termination ... ok
+test unix::compatibility_aliases_are_identical_to_canonical_routes ... ok
+test unix::all_six_canonical_namespaces_preserve_native_argv_stdout_and_exit ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.24s
+
+     Running tests/suite_skillset.rs (cli/target/debug/deps/suite_skillset-cf7eb0fc2654aa71)
+
+running 12 tests
+test ordinary_agency_cannot_receive_root_metagentic_profile ... ok
+test installed_product_without_native_skill_is_disclosed_as_gap_not_fake_competence ... ok
+test aikit_dynamic_resolution_uses_native_references_not_copied_skill_bodies ... ok
+test ordinary_base_profile_does_not_receive_root_extension_authoring_skills ... ok
+test root_profile_is_only_projected_after_positional_scope_is_supplied ... ok
+test shipped_manifest_declares_only_oi_owned_skills ... ok
+test non_oi_central_skill_cannot_use_direct_projection_fallback ... ok
+test desktop_and_tui_can_share_the_same_serializable_effective_skillset_read_model ... ok
+test skill_availability_capability_grant_and_action_authority_are_independent ... ok
+test authoritative_revision_update_replaces_only_untouched_derived_projection ... ok
+test oi_and_central_without_aikit_have_legal_direct_projection_path ... ok
+test user_owned_and_locally_edited_projection_conflicts_are_preserved ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/verification.rs (cli/target/debug/deps/verification-dbdcf7f7dff36d11)
+
+running 2 tests
+test snapshot_revision_mismatch_is_incompatible_not_failed_native_health ... ok
+test snapshot_and_receipt_preserve_native_result_and_physical_gate ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.14s
+

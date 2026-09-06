@@ -146,12 +146,17 @@ jobs:
           "$OI" dev build oi
           "$OI" dev test oi
 
-          # Pull-request CI is a detached merge ref, not accepted O:I main.  It must
-          # never be installable/registrable under the label "current-main".
-          if "$OI" dev install oi; then
+          # Construct the rejected state explicitly: push CI checks out main,
+          # while pull-request CI normally checks out a detached merge ref.
+          DETACHED="$RUNNER_TEMP/oi-detached-source"
+          git clone --quiet --no-hardlinks "$GITHUB_WORKSPACE" "$DETACHED"
+          git -C "$DETACHED" checkout --quiet --detach HEAD
+          ln -sfn "$DETACHED" "$ROOT/Work/O-I"
+          if "$OI" dev install oi > "$RUNNER_TEMP/detached-install.log" 2>&1; then
             echo 'detached PR/feature checkout was incorrectly accepted as current-main installation' >&2
             exit 1
           fi
+          grep -F 'refusing current-main install from branch DETACHED' "$RUNNER_TEMP/detached-install.log"
 
           if "$OI" dev adopt central "$ROOT"; then
             echo 'Central self-nesting adoption unexpectedly succeeded' >&2

@@ -621,10 +621,7 @@ fn enrich_world_account(account: &mut WorldRecognitionAccount) {
         } else {
             "observed".to_owned()
         },
-        detail: format!(
-            "{} native-owner contracts disclosed",
-            owner_contracts.len()
-        ),
+        detail: format!("{} native-owner contracts disclosed", owner_contracts.len()),
     });
     account.provider_errors.extend(contract_errors);
     account.owner_contracts = owner_contracts;
@@ -881,7 +878,10 @@ fn workcell_capacities(data: &Value) -> Vec<OwnerCapacity> {
 }
 
 fn aikit_mux_participations(data: &Value) -> Vec<OwnerParticipation> {
-    let active = data.get("active").and_then(Value::as_str).map(str::to_owned);
+    let active = data
+        .get("active")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
     let active_stack: Vec<String> = data
         .get("active_stack")
         .and_then(Value::as_array)
@@ -916,10 +916,19 @@ fn aikit_mux_participations(data: &Value) -> Vec<OwnerParticipation> {
             .get("inside")
             .and_then(Value::as_bool)
             .unwrap_or(false);
-        let version = entry.get("version").and_then(Value::as_str).map(str::to_owned);
-        let binary = entry.get("binary").and_then(Value::as_str).map(str::to_owned);
+        let version = entry
+            .get("version")
+            .and_then(Value::as_str)
+            .map(str::to_owned);
+        let binary = entry
+            .get("binary")
+            .and_then(Value::as_str)
+            .map(str::to_owned);
         let remote_tmux = entry.get("remote_tmux").and_then(Value::as_bool);
-        let detail = entry.get("detail").and_then(Value::as_str).map(str::to_owned);
+        let detail = entry
+            .get("detail")
+            .and_then(Value::as_str)
+            .map(str::to_owned);
 
         let state = if !installed {
             "not-installed".to_owned()
@@ -993,8 +1002,14 @@ fn aikit_client_participations(data: &Value) -> Vec<OwnerParticipation> {
             .get("installed")
             .and_then(Value::as_bool)
             .unwrap_or(false);
-        let error = entry.get("error").and_then(Value::as_str).map(str::to_owned);
-        let effect = entry.get("effect").and_then(Value::as_str).map(str::to_owned);
+        let error = entry
+            .get("error")
+            .and_then(Value::as_str)
+            .map(str::to_owned);
+        let effect = entry
+            .get("effect")
+            .and_then(Value::as_str)
+            .map(str::to_owned);
         let items = entry.get("items").and_then(Value::as_u64);
         let config_dir = entry
             .get("config_dir")
@@ -1145,62 +1160,56 @@ fn recognize_binary_tool(
     locator: &std::path::Path,
 ) -> RecognitionObservation {
     let mut facts = BTreeMap::new();
-    let (version, degraded, detail, source_revision, evidence) =
-        if entry.version_args.is_empty() {
-            facts.insert("version_flag".to_owned(), json!("none"));
-            (
-                None,
-                false,
-                None,
-                None,
-                vec![RecognitionEvidence {
-                    kind: "native-presence".to_owned(),
-                    source: locator.display().to_string(),
-                    detail: format!("{} installed; exposes no version flag", entry.name),
-                }],
-            )
-        } else {
-            let output = Command::new(locator)
-                .args(&entry.version_args)
-                .stdin(Stdio::null())
-                .output();
-            match output {
-                Ok(output) => {
-                    let stdout = String::from_utf8_lossy(&output.stdout);
-                    let stderr = String::from_utf8_lossy(&output.stderr);
-                    let (version, degraded, detail) =
-                        classify_probe(output.status.success(), &stdout, &stderr);
-                    let source_revision =
-                        version.as_deref().and_then(parse_upstream_revision);
-                    (
-                        version,
-                        degraded,
-                        detail,
-                        source_revision,
-                        vec![RecognitionEvidence {
-                            kind: "native-command".to_owned(),
-                            source: locator.display().to_string(),
-                            detail: format!(
-                                "{} {}",
-                                entry.name,
-                                entry.version_args.join(" ")
-                            ),
-                        }],
-                    )
-                }
-                Err(error) => (
-                    None,
-                    true,
-                    Some(format!("failed to probe: {error}")),
-                    None,
+    let (version, degraded, detail, source_revision, evidence) = if entry.version_args.is_empty() {
+        facts.insert("version_flag".to_owned(), json!("none"));
+        (
+            None,
+            false,
+            None,
+            None,
+            vec![RecognitionEvidence {
+                kind: "native-presence".to_owned(),
+                source: locator.display().to_string(),
+                detail: format!("{} installed; exposes no version flag", entry.name),
+            }],
+        )
+    } else {
+        let output = Command::new(locator)
+            .args(&entry.version_args)
+            .stdin(Stdio::null())
+            .output();
+        match output {
+            Ok(output) => {
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                let stderr = String::from_utf8_lossy(&output.stderr);
+                let (version, degraded, detail) =
+                    classify_probe(output.status.success(), &stdout, &stderr);
+                let source_revision = version.as_deref().and_then(parse_upstream_revision);
+                (
+                    version,
+                    degraded,
+                    detail,
+                    source_revision,
                     vec![RecognitionEvidence {
                         kind: "native-command".to_owned(),
                         source: locator.display().to_string(),
-                        detail: format!("probe failed: {error}"),
+                        detail: format!("{} {}", entry.name, entry.version_args.join(" ")),
                     }],
-                ),
+                )
             }
-        };
+            Err(error) => (
+                None,
+                true,
+                Some(format!("failed to probe: {error}")),
+                None,
+                vec![RecognitionEvidence {
+                    kind: "native-command".to_owned(),
+                    source: locator.display().to_string(),
+                    detail: format!("probe failed: {error}"),
+                }],
+            ),
+        }
+    };
 
     facts.insert("degraded".to_owned(), json!(degraded));
     if let Some(detail) = detail {
@@ -1385,12 +1394,7 @@ fn compose_extension_frontier(
         if !observation.owner_bindings.is_empty() {
             continue;
         }
-        if observation
-            .facts
-            .get("degraded")
-            .and_then(Value::as_bool)
-            == Some(true)
-        {
+        if observation.facts.get("degraded").and_then(Value::as_bool) == Some(true) {
             continue;
         }
         let Some((kind, owner, sdk, domain)) = EXTENSION_OWNERS
@@ -1404,9 +1408,7 @@ fn compose_extension_frontier(
             request_ref: format!("extension:{name}:{owner}"),
             native_system_ref: observation.native_system.system_ref.clone(),
             owner: (*owner).to_owned(),
-            reason: format!(
-                "{kind} present with no installed owner participation",
-            ),
+            reason: format!("{kind} present with no installed owner participation",),
             sdk: (*sdk).to_owned(),
             authoring_skill: format!("{owner} {domain} authoring Skill"),
             conformance: format!("{sdk} conformance"),
@@ -2129,11 +2131,14 @@ printf '%s\n' '{"schema":"oi.world-recognition-result/v1","provider_ref":"contri
             evidence: Vec::new(),
         };
         let mut observations = vec![observation];
-        reconcile_owner_participations(&mut observations, &[participation.clone()]);
+        reconcile_owner_participations(&mut observations, std::slice::from_ref(&participation));
         reconcile_owner_participations(&mut observations, &[participation]);
         let observation = &observations[0];
         assert_eq!(observation.owner_bindings.len(), 1);
-        assert_eq!(observation.owner_bindings[0].contract, "aikit.working-environment-provider/v1");
+        assert_eq!(
+            observation.owner_bindings[0].contract,
+            "aikit.working-environment-provider/v1"
+        );
         assert_eq!(observation.owner_bindings[0].state, "installed-not-running");
     }
 
@@ -2160,7 +2165,8 @@ printf '%s\n' '{"schema":"oi.world-recognition-result/v1","provider_ref":"contri
 
     #[test]
     fn classify_probe_success_captures_version_without_degradation() {
-        let (version, degraded, detail) = classify_probe(true, "claude 2.1.238 (Claude Code)\n", "");
+        let (version, degraded, detail) =
+            classify_probe(true, "claude 2.1.238 (Claude Code)\n", "");
         assert_eq!(version.as_deref(), Some("claude 2.1.238 (Claude Code)"));
         assert!(!degraded);
         assert!(detail.is_none());
@@ -2193,11 +2199,17 @@ printf '%s\n' '{"schema":"oi.world-recognition-result/v1","provider_ref":"contri
             assert_eq!(entry.name, entry.name.to_lowercase());
             assert!(!entry.kind.is_empty());
         }
-        assert!(registry.iter().any(|entry| entry.name == "claude" && !entry.version_args.is_empty()));
+        assert!(registry
+            .iter()
+            .any(|entry| entry.name == "claude" && !entry.version_args.is_empty()));
         assert!(registry.iter().any(|entry| entry.name == "codex"));
         assert!(registry.iter().any(|entry| entry.name == "hermes"));
-        assert!(registry.iter().any(|entry| entry.name == "buzz" && entry.version_args.is_empty()));
-        assert!(registry.iter().any(|entry| entry.name == "grok" && entry.service_dir.as_deref() == Some(".grokbot")));
+        assert!(registry
+            .iter()
+            .any(|entry| entry.name == "buzz" && entry.version_args.is_empty()));
+        assert!(registry
+            .iter()
+            .any(|entry| entry.name == "grok" && entry.service_dir.as_deref() == Some(".grokbot")));
     }
 
     #[test]
@@ -2209,7 +2221,10 @@ printf '%s\n' '{"schema":"oi.world-recognition-result/v1","provider_ref":"contri
             Some("6607f706".to_owned())
         );
         assert_eq!(parse_upstream_revision("claude 2.1.238"), None);
-        assert_eq!(parse_upstream_revision("some text upstream not-a-hex"), None);
+        assert_eq!(
+            parse_upstream_revision("some text upstream not-a-hex"),
+            None
+        );
     }
 
     #[test]
@@ -2315,6 +2330,9 @@ printf '%s\n' '{"schema":"oi.world-recognition-result/v1","provider_ref":"contri
             .find(|capacity| capacity.capacity_ref == "provider:collapsed-local-artifacts")
             .unwrap();
         assert_eq!(artifacts.ports, vec!["artifact-storage".to_owned()]);
-        assert_eq!(artifacts.facts.get("offers_count"), Some(&serde_json::json!(2)));
+        assert_eq!(
+            artifacts.facts.get("offers_count"),
+            Some(&serde_json::json!(2))
+        );
     }
 }

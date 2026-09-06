@@ -1,0 +1,26 @@
+   Compiling aikit-core v0.1.0 (/Users/admin/Central/Work/ai-kit/crates/aikit-core)
+   Compiling aikit-store v0.1.0 (/Users/admin/Central/Work/ai-kit/crates/aikit-store)
+   Compiling aikit-adapters v0.1.0 (/Users/admin/Central/Work/ai-kit/crates/aikit-adapters)
+   Compiling aikit-tui v0.1.0 (/Users/admin/Central/Work/ai-kit/crates/aikit-tui)
+   Compiling aikit-cli v0.1.0 (/Users/admin/Central/Work/ai-kit/crates/aikit-cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 10.82s
+     Running tests/mux_install.rs (target/debug/deps/mux_install-2c1f9781bf8f68f5)
+
+running 14 tests
+test a_key_that_could_inject_tmux_configuration_is_rejected_before_writing ... ok
+test compact_root_table_syntax_still_conflicts_with_the_global_hotkey ... ok
+test an_effective_live_binding_is_a_conflict_even_when_the_config_is_empty ... ok
+test a_live_binding_that_only_mentions_aikit_words_is_not_mistaken_for_ownership ... ok
+test prefix_and_named_table_bindings_do_not_collide_with_the_global_hotkey ... ok
+test custom_key_is_written_and_a_missing_server_is_reported_honestly ... ok
+test an_existing_binding_is_refused_unless_replacement_is_explicit ... ok
+test installing_twice_is_a_successful_byte_for_byte_no_op ... ok
+test a_running_private_server_is_reloaded_and_the_live_binding_is_verified ... ok
+test changing_the_managed_key_removes_the_old_live_binding ... ok
+test undo_restores_a_user_binding_that_was_explicitly_replaced ... ok
+test procedure_undo_restores_both_the_config_and_the_live_key_table ... ok
+test unnamed_install_refuses_to_guess_when_both_real_muxes_are_installed ... ok
+test the_installed_alt_a_opens_the_real_surface_and_ctrl_t_switches_modes ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.11s
+

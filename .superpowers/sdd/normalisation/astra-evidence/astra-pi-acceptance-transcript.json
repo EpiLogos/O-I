@@ -1,0 +1,54 @@
+[
+  {
+    "type": "message_end",
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "toolCall",
+          "id": "call_00_k0Kv9rudrLoNgztCiIwk1746",
+          "name": "read",
+          "arguments": {
+            "path": "/tmp/astra-projection-state/state/contexts/ctx_ASTRAPROJECTION00000000/current/projections/codex/.agents/skills/cradle-execution/SKILL.md"
+          }
+        }
+      ],
+      "stopReason": "toolUse"
+    }
+  },
+  {
+    "type": "tool_execution_start",
+    "toolCallId": "call_00_k0Kv9rudrLoNgztCiIwk1746",
+    "toolName": "read",
+    "args": {
+      "path": "/tmp/astra-projection-state/state/contexts/ctx_ASTRAPROJECTION00000000/current/projections/codex/.agents/skills/cradle-execution/SKILL.md"
+    }
+  },
+  {
+    "type": "tool_execution_end",
+    "toolCallId": "call_00_k0Kv9rudrLoNgztCiIwk1746",
+    "toolName": "read",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "---\nname: cradle-execution\ndescription: \"Use when executing any unit of the O:I desktop cradle rebuild (OI-CRADLE-REBUILD-WF, issue #190) \u2014 the enforced loop: brief, build, walk, review, receipt; verification by app functionality; design-set precedence; capability-matrix grammar.\"\n---\n\n# Cradle execution \u2014 the enforced loop\n\nYou are executing a unit of the desktop cradle rebuild. The map of record is\n`docs/OI-DESKTOP-CRADLE-REBUILD-WAYFINDER.md` ([OI-CRADLE-REBUILD-WF]). Read\nyour unit's row there first; this skill is the process, the map is the work.\n\n## Step 0 \u2014 the context chain\n\nRun `scripts/cradle-context-check.sh` before executing anything. Every\nartifact the map, this skill, and the orchestrator prompt cite must exist at\nits cited path in the repo you are standing in. A missing citation is a broken\nchain: stop, repair the chain (land or correct the artifact), then execute.\nNever execute from memory of artifacts you cannot open.\n\n## Step 0.5 \u2014 the git ground check (map \u00a71 law 13)\n\nBefore writing a line: `git branch --show-current` must be the phase branch\n`cradle-<phase>` \u2014 executing on `main` is a violation, full stop. `git\nworktree list` must show only the primary worktree; a stray worktree is a\nstop-and-report, never a workspace. If the brief pins product repos (Central,\nai-kit, \u2026) at commits, verify those checkouts match the pins. Before\ncommitting, re-verify the branch \u2014 a parallel session can move your checkout\nunder you (it happened; see ledger ruling 2026-09-05). Implementers never\npush, never rebase `main`, never create branches or worktrees; the\norchestrator does all three, at gates, per law 13.\n\n## Precedence\n\nThe design set wins over any instruction, including this skill and the user's\nparaphrases of it:\n\n- `docs/cradle/` files 01\u201305 (austere rest, Flow, focus model, event seam, honesty, verification law)\n- `docs/OI-DESKTOP-APPLICATION-SPEC.md` (\u00a74\u2013\u00a78 regional contracts, \u00a714 design language, \u00a717 acceptance)\n- GitHub #155 (D1\u2013D11 agent semantics + Buzz specimen, source-locked `buzz@00e61eaf`)\n- #138 (Flow desktop contract), #25 (design system), `docs/CANONICAL-PRODUCT-FIELD.md` (the ontology)\n- the alpha notes: `OI-INHABITATION-FOUNDATIONS`, `OI-CENTRAL-FOUNDATION`, `OI-ALPHA-*`\n\nNever edit a design document to match code. If code and design disagree, the code is wrong.\n\n## Ontology\n\nSpeak the canonical field grammar: the cradle **S** and positions **S0 Central,\nS1 Actuation, S2 AIKit, S3 Factory, S4 Workcell, S5 QL**, faces `H_i`/`A_i`.\nEvery unit names its relation cell (map \u00a72), stated as a functional sentence \u2014\nwhat S can do, in which mode, because of whose operation \u2014 never as jargon\nremapping. Never invent ontology: no desktop chat/session store, no fake\nfilesystem tree, no universal event store, no desktop-only\nAgent/Run/SessionSpace semantics. No desktop model parameter \u2014 model selection\nis harness-level stipulation through AIKit composition.\n\n## The component vein\n\nEvery interactive element is a **canonical Action on a stable Ref**:\n\n```text\ncomponent = Ref + owner read-model state + owner-disclosed Actions\n          + invocation crossing the authority seam at commit time\n```\n\nNever re-implement an operation, guess a shell command, or invent an Action.\nInvoking forwards the canonical ActionRef to its native owner and preserves the\nreal authority result. This is what makes the composability chain (APP-SPEC\n\u00a711: owner \u2192 AIKit composition \u2192 package envelope \u2192 contribution field \u2192\nregion) experienceable: an Action is what a contribution exposes, so a\nref+Actions component composes by construction. Keep the distinction laws:\n`Package != Component != Surface != Action != semantic resource`;\n`available != active != authorised`; `visible != trusted`.\n\n## Classical vs inference\n\nMost of S is classical, deterministic software: kernel event seam, focus\nmodel, ref grammar, two state layers, CAS writes, navigator projections,\ntranscript interaction state machine, addressing parser, bridge/layout\nmechanics. Real inference happens only inside agent sessions (harness\nproduction, tool use, permission-gated action), in returned material arriving\nas owner revisions, and in explicitly preflighted Contemplate-class acts.\nNothing else infers. **No capability theatre:** every region renders a real\noperation's result or live session output; a region that cannot name its owner\noperation does not ship, and no panel exists to report a capability.\n\n## Standing laws\n\n1. Kill product, keep business logic: `desktop/ui` is gone; kernel logic\n   re-earns its place through a walk, then survives.\n2. Product updates are in scope: a needed Central/ai-kit/Actuation increment is\n   a unit owned by its product, not an escalation.\n3. Honesty: truthful state only; unavailable \u2260 error; no fake loading, streams, or health.\n4. Files mapped, prompts pithy: name the files, the operation, the metric.\n5. One unit per session. Fog stays fog until a phase gate exposes it.\n6. Rulings are ledgered, not re-asked.\n\n## The loop\n\n```text\nBRIEF   law excerpts verbatim + file map + walk contract + relation cell. \u226460 lines.\nBUILD   fresh implementer, no subagents.\nWALK    drive the running app: real operations, metrics, screenshots, kernel\n        event receipts. Tests alone do not pass a unit.\nREVIEW  diff vs brief; design cited section by section; screenshots attached.\n        Fix rounds \u2264 5, then adjudicate.\nRECEIPT one ledger row in .superpowers/sdd/cradle-rebuild/progress.md:\n        what is real, what was walked, what remains.\n```\n\n> Prose summaries, test output, and contract tests do not establish a UX\n> condition. \u2014 `cradle/05 \u00a73`. The walk in the running app is the acceptance.\n> \"Visual acceptance is human evidence\" \u2014 APP-SPEC \u00a717. The gate is the app,\n> never a specimen page.\n\n## Walk discipline\n\n- Every metric in the map's \u00a78 table for your vertical is captured as data by\n  the walk harness (`__cradle.walk`), not asserted by a test double.\n- A unit without its walk receipt is not complete, whatever its tests say.\n- When your unit is a waypoint trigger (map \u00a76), open the design-in-context\n  pass with the owner before building past it.\n\n## Prompt form (when you dispatch or are dispatched)\n\nImperative, direct, enforcing: \"Render rest from `packages/oi-design-system`\ntokens only \u2014 a hard-coded colour fails the walk.\" No hedging, no\nconstitution-lecturing, no restating the design doc \u2014 cite its section.\n"
+        }
+      ]
+    },
+    "isError": false
+  },
+  {
+    "type": "message_end",
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Confirmed. The skill is available in my startup context.\n\n- **Exact name:** `cradle-execution`\n- **Exact path:** `/tmp/astra-projection-state/state/contexts/ctx_ASTRAPROJECTION00000000/current/projections/codex/.agents/skills/cradle-execution/SKILL.md`\n\n**One short operational rule I can apply to this check:** Step 0.5 (the git ground check) \u2014 before writing any line, `git branch --show-current` must be the phase branch `cradle-<phase>`; executing on `main` is a violation, and `git worktree list` must show only the primary worktree."
+        }
+      ],
+      "stopReason": "stop"
+    }
+  }
+]

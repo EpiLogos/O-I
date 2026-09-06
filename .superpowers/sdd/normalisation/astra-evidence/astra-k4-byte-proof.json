@@ -1,0 +1,18 @@
+{
+  "source_ref": "0d488b4f002e30c17c8cb4e6dcf2e70fddf60398",
+  "source_path": "skills/cradle-execution/SKILL.md",
+  "source_sha256": "0702f31edf1387967b4e0b36b9297d179125e8a9740103cff097a70d65656779",
+  "generation": "/private/tmp/astra-projection-state/state/contexts/ctx_ASTRAPROJECTION00000000/generations/gen_948c302d43a9f36b",
+  "projections": [
+    {
+      "path": "/tmp/astra-projection-state/state/contexts/ctx_ASTRAPROJECTION00000000/current/projections/codex/.agents/skills/cradle-execution/SKILL.md",
+      "sha256": "0702f31edf1387967b4e0b36b9297d179125e8a9740103cff097a70d65656779",
+      "equals_source": true
+    },
+    {
+      "path": "/tmp/astra-projection-state/state/contexts/ctx_ASTRAPROJECTION00000000/current/projections/claude/.claude/skills/cradle-execution/SKILL.md",
+      "sha256": "0702f31edf1387967b4e0b36b9297d179125e8a9740103cff097a70d65656779",
+      "equals_source": true
+    }
+  ]
+}

@@ -1,0 +1,194 @@
+[
+  {
+    "args": [
+      "source",
+      "promote",
+      "oi",
+      "--trust"
+    ],
+    "exit": 0,
+    "reply": {
+      "context": {
+        "context_id": "ctx_ASTRAPROJECTION00000000",
+        "project_root": null,
+        "session_id": null
+      },
+      "data": {
+        "active_snapshot": "e464b2900c76d94cc29ed9b3b4a208ff3ba19f210f88080f81809532d5a48e97",
+        "id": "oi",
+        "skills": 4,
+        "trusted_skills": 4
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "args": [
+      "set",
+      "create",
+      "oi-native",
+      "skill/oi/cradle-execution"
+    ],
+    "exit": 0,
+    "reply": {
+      "context": {
+        "context_id": "ctx_ASTRAPROJECTION00000000",
+        "project_root": null,
+        "session_id": null
+      },
+      "data": {
+        "diff": "procedure prc_01M1V4PSSR7E2P8H2P7S18DJV0 (80c573496b3d) \u2014 2 edits, staged staged\nnote: create writable set `oi-native`\n\ncreate directory /tmp/astra-projection-state/skillsets/oi-native\n  create /tmp/astra-projection-state/skillsets/oi-native\n  before: <absent>\n  after:\n    <directory>\n  undo: remove what was created\n\nwrite /tmp/astra-projection-state/skillsets/oi-native/members (140 bytes)\n  create /tmp/astra-projection-state/skillsets/oi-native/members\n  before: <absent>\n  after:\n    # One capsule id per line. A set is a folder; this is its membership.\n    # Blank lines and `#` comments are ignored.\n    skill/oi/cradle-execution\n  undo: remove what was created\n",
+        "edits": 2,
+        "expanded_from": [],
+        "members": 1,
+        "name": "oi-native",
+        "path": "/tmp/astra-projection-state/skillsets/oi-native",
+        "procedure": "prc_01M1V4PSSR7E2P8H2P7S18DJV0",
+        "undo": "aikit procedure undo prc_01M1V4PSSR7E2P8H2P7S18DJV0"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "args": [
+      "project",
+      "bind",
+      "harness-acceptance",
+      "--directory",
+      "/tmp/astra-ground/Work/harness-acceptance",
+      "--set",
+      "oi-native"
+    ],
+    "exit": 0,
+    "reply": {
+      "context": {
+        "context_id": "ctx_ASTRAPROJECTION00000000",
+        "project_root": null,
+        "session_id": null
+      },
+      "data": {
+        "directories": [
+          "/private/tmp/astra-ground/Work/harness-acceptance"
+        ],
+        "inherit_default_skill_sets": true,
+        "project": "harness-acceptance",
+        "repositories": [],
+        "skill_sets": [
+          "oi-native"
+        ]
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "args": [
+      "enable",
+      "skill/oi/cradle-execution",
+      "--scope",
+      "project"
+    ],
+    "exit": 0,
+    "reply": {
+      "context": {
+        "context_id": "ctx_ASTRAPROJECTION00000000",
+        "project_root": "/private/tmp/astra-ground/Work/harness-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/oi/cradle-execution",
+        "enabled": true,
+        "generation": "gen_948c302d43a9f36b",
+        "replaced": null,
+        "scope": "project"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "args": [
+      "apply"
+    ],
+    "exit": 0,
+    "reply": {
+      "context": {
+        "context_id": "ctx_ASTRAPROJECTION00000000",
+        "project_root": "/private/tmp/astra-ground/Work/harness-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "generation": "gen_948c302d43a9f36b",
+        "label": null,
+        "replaced": "gen_948c302d43a9f36b"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "args": [
+      "set",
+      "show",
+      "oi-native"
+    ],
+    "exit": 0,
+    "reply": {
+      "context": {
+        "context_id": "ctx_ASTRAPROJECTION00000000",
+        "project_root": "/private/tmp/astra-ground/Work/harness-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "children": [],
+        "complete": true,
+        "description": "",
+        "members": 1,
+        "name": "oi-native",
+        "patterns": [],
+        "projected": [
+          "skill/oi/cradle-execution"
+        ],
+        "provenance": "composed",
+        "summary": "sets/oi-native \u2014 1 member, 1 projected",
+        "withheld": []
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "args": [
+      "client",
+      "launch",
+      "claude"
+    ],
+    "exit": 0,
+    "reply": {
+      "context": {
+        "context_id": "ctx_ASTRAPROJECTION00000000",
+        "project_root": "/private/tmp/astra-ground/Work/harness-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "client": "claude",
+        "command": [
+          "claude",
+          "--add-dir",
+          "/tmp/astra-projection-state/state/contexts/ctx_ASTRAPROJECTION00000000/current/projections/claude"
+        ]
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  }
+]

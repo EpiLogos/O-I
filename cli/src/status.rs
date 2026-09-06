@@ -179,11 +179,7 @@ fn live_sha256(path: &Path) -> Option<String> {
     let tool = resolve_executable("shasum")
         .map(|shasum| (shasum, vec!["-a".to_owned(), "256".to_owned()]))
         .or_else(|| resolve_executable("sha256sum").map(|sum| (sum, Vec::new())))?;
-    let output = Command::new(tool.0)
-        .args(&tool.1)
-        .arg(path)
-        .output()
-        .ok()?;
+    let output = Command::new(tool.0).args(&tool.1).arg(path).output().ok()?;
     if !output.status.success() {
         return None;
     }
@@ -276,10 +272,7 @@ pub fn annotate_live_drift<GitProbe, PathProbe, HashProbe>(
                         "PATH resolves {} to {}, not the registered executable",
                         surface.native_entry, path_executable
                     );
-                    match (
-                        hash_probe(resolved_path),
-                        hash_probe(shadow_path),
-                    ) {
+                    match (hash_probe(resolved_path), hash_probe(shadow_path)) {
                         (Some(registered), Some(shadow)) if registered != shadow => {
                             findings.push(format!(
                                 "PATH copy at {} differs from the registered executable — that is the binary this machine runs",
@@ -307,8 +300,7 @@ pub fn annotate_live_drift<GitProbe, PathProbe, HashProbe>(
             surface.registered_version = surface.version.clone();
             match &surface.version {
                 Some(recorded)
-                    if !recorded.is_empty()
-                        && !recorded.starts_with(&checkout.head[..7]) =>
+                    if !recorded.is_empty() && !recorded.starts_with(&checkout.head[..7]) =>
                 {
                     findings.push(format!(
                         "registered {} but checkout HEAD is {}",
@@ -321,12 +313,11 @@ pub fn annotate_live_drift<GitProbe, PathProbe, HashProbe>(
             // runs yesterday's source. Only check when the resolved path is a
             // file and the build timestamp is knowable.
             if resolved_path.is_file() {
-                if let (Some(committed_at), Ok(metadata)) = (
-                    checkout.committed_at,
-                    fs::metadata(resolved_path),
-                ) {
+                if let (Some(committed_at), Ok(metadata)) =
+                    (checkout.committed_at, fs::metadata(resolved_path))
+                {
                     if let Ok(modified) = metadata.modified() {
-                        if let Some(modified_at) = modified.duration_since(UNIX_EPOCH).ok() {
+                        if let Ok(modified_at) = modified.duration_since(UNIX_EPOCH) {
                             if modified_at.as_secs() < committed_at {
                                 findings.push(
                                     "registered executable predates checkout HEAD — rebuild and reinstall"
@@ -592,7 +583,11 @@ mod tests {
             surface.path_executable.as_deref(),
             Some("/usr/local/bin/aikit")
         );
-        assert!(surface.detail.as_deref().unwrap_or_default().contains("PATH resolves aikit"));
+        assert!(surface
+            .detail
+            .as_deref()
+            .unwrap_or_default()
+            .contains("PATH resolves aikit"));
         fs::remove_file(&executable).ok();
     }
 
@@ -618,7 +613,11 @@ mod tests {
         );
 
         let surface = &disclosure.surfaces[0];
-        assert!(surface.drift.is_none(), "clean surface must not drift: {:?}", surface.drift);
+        assert!(
+            surface.drift.is_none(),
+            "clean surface must not drift: {:?}",
+            surface.drift
+        );
         assert!(surface.path_executable.is_none());
         fs::remove_file(&executable).ok();
     }
