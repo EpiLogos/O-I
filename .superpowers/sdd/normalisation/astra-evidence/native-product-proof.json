@@ -1,0 +1,19 @@
+{
+  "repository": "https://github.com/EpiLogos/O-I.git",
+  "revision": "1d13af0f10d8887d2a9f2744035f0f24396eaab9",
+  "source": "skills/cradle-execution/SKILL.md",
+  "projections": {
+    ".agents/skills": {
+      "link": "/private/tmp/astra-personal-ground-proof/aikit/state/contexts/ctx_PERSONALGROUND00000000/current/projections/codex/.agents/skills",
+      "sha256": "0702f31edf1387967b4e0b36b9297d179125e8a9740103cff097a70d65656779"
+    },
+    ".claude/skills": {
+      "link": "/private/tmp/astra-personal-ground-proof/aikit/state/contexts/ctx_PERSONALGROUND00000000/current/projections/claude/.claude/skills",
+      "sha256": "0702f31edf1387967b4e0b36b9297d179125e8a9740103cff097a70d65656779"
+    },
+    ".codex/skills": {
+      "link": "/private/tmp/astra-personal-ground-proof/aikit/state/contexts/ctx_PERSONALGROUND00000000/current/projections/codex/.agents/skills",
+      "sha256": "0702f31edf1387967b4e0b36b9297d179125e8a9740103cff097a70d65656779"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+   Compiling aikit-core v0.1.0 (/private/tmp/astra-aikit-user-ground/crates/aikit-core)
+   Compiling aikit-adapters v0.1.0 (/private/tmp/astra-aikit-user-ground/crates/aikit-adapters)
+   Compiling aikit-store v0.1.0 (/private/tmp/astra-aikit-user-ground/crates/aikit-store)
+   Compiling aikit-tui v0.1.0 (/private/tmp/astra-aikit-user-ground/crates/aikit-tui)
+   Compiling aikit-cli v0.1.0 (/private/tmp/astra-aikit-user-ground/crates/aikit-cli)
+    Finished `release` profile [optimized] target(s) in 1m 45s
