@@ -88,8 +88,8 @@
     "ai-kit": "cargo test --manifest-path owners/ai-kit/Cargo.toml -p aikit-core",
     "software-factory": "cargo test --manifest-path owners/factory/Cargo.toml -p epilogos-factory",
     "quaternal-logic": "cargo test --manifest-path owners/ql/Cargo.toml -p ql-wiki",
-    "oi-core": "cargo test --manifest-path desktop/core/Cargo.toml --all-targets",
-    "oi-ui": "node --test desktop/ui/src/flow-workbench.test.mjs desktop/ui/src/living-wiki-model.test.mjs desktop/ui/src/project-field-presentation.test.mjs desktop/ui/src/workbench-presentation.test.mjs",
-    "oi-native": "cargo check --manifest-path desktop/src-tauri/Cargo.toml --locked --target aarch64-apple-darwin"
+    "oi-core": "cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --all-targets",
+    "oi-ui": "npm run walk --prefix desktop/cradle -- knowledge",
+    "oi-native": "cargo check --manifest-path desktop/cradle/src-tauri/Cargo.toml --locked --target aarch64-apple-darwin"
   }
 }
