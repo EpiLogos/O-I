@@ -1,5 +1,6 @@
 # The O:I guardian SkillSet — the one SkillSet the bootstrap projects onto a
-# fresh personal ground: the `oi` router and the suite operator.
+# fresh personal ground: the `oi` router, the suite operator, and the Central
+# session strap.
 #
 # O:I declares only what it owns. Every other product's skills stay
 # authoritative in their own repository and are composed, reviewed and
@@ -23,6 +24,10 @@ requiredness = "required"
 skill_ref = "oi:skill:suite-operator"
 requiredness = "required"
 
+[[profiles.members]]
+skill_ref = "oi:skill:central-session-strap"
+requiredness = "required"
+
 [[skills]]
 skill_ref = "oi:skill:operate-suite"
 owner_product = "O:I"
@@ -39,6 +44,17 @@ skill_ref = "oi:skill:suite-operator"
 owner_product = "O:I"
 purpose = "Compose and explain the installed suite from source-owned native refs without copying procedures or authority."
 source = { repository = "EpiLogos/O-I", path = "skills/suite-operator/SKILL.md", revision_policy = "resolve_authoritative_installed_revision" }
+compatibility = []
+required_actions = []
+required_capabilities = []
+risk_class = "suite-operation"
+permission_requirements = []
+
+[[skills]]
+skill_ref = "oi:skill:central-session-strap"
+owner_product = "O:I"
+purpose = "Strap a harness session standing in the personal ground to the Central field: register orientation, NOW placement, the NOW/DAY lifecycle, wiki return routing and derived governance context."
+source = { repository = "EpiLogos/O-I", path = "skills/central-session-strap/SKILL.md", revision_policy = "resolve_authoritative_installed_revision" }
 compatibility = []
 required_actions = []
 required_capabilities = []

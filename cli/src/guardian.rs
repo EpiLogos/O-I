@@ -1,8 +1,9 @@
 //! The O:I guardian SkillSet — the bootstrap's cognition step.
 //!
 //! A fresh personal ground receives exactly one shipped SkillSet projected
-//! into its harnesses: the O:I guardian Skills (the `oi` router and the suite
-//! operator). Everything else in the suite stays authoritative in its own
+//! into its harnesses: the O:I guardian Skills (the `oi` router, the suite
+//! operator, and the Central session strap). Everything else in the suite
+//! stays authoritative in its own
 //! product repository and is resolved on demand — AIKit remains the normal
 //! resolver for that. Projected copies are derived state with receipts; local
 //! edits never become authoritative and are never clobbered.
@@ -31,6 +32,10 @@ pub const GUARDIAN_SKILL_SOURCES: &[(&str, &str)] = &[
     (
         "skills/suite-operator/SKILL.md",
         include_str!("../../skills/suite-operator/SKILL.md"),
+    ),
+    (
+        "skills/central-session-strap/SKILL.md",
+        include_str!("../../skills/central-session-strap/SKILL.md"),
     ),
 ];
 
