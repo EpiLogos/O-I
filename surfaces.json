@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "verified_at": "2026-09-03",
+  "verified_at": "2026-09-06",
   "surfaces": [
     {
       "id": "central",
@@ -207,7 +207,7 @@
       "public_name": "Software Factory",
       "function": "developmental Project, Journey, Run, Candidate, evidence and authorised Factory Action semantics",
       "repository": "https://github.com/EpiLogos/agent-system-design",
-      "docs_ref": "3d9094177a7216697619db0a3c16bafb6bb815ca",
+      "docs_ref": "8ba2c041bf5311ddd4eeb41d58aad40c644fcbce",
       "docs_path": "factory/README.md",
       "skill_paths": [],
       "native": {
@@ -228,7 +228,7 @@
           "verify",
           "--json"
         ],
-        "command_revision": "3d9094177a7216697619db0a3c16bafb6bb815ca",
+        "command_revision": "8ba2c041bf5311ddd4eeb41d58aad40c644fcbce",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [
@@ -245,10 +245,10 @@
       "install": {
         "kind": "oi-managed-native-cli",
         "modality": "developer-source",
-        "ref": "3d9094177a7216697619db0a3c16bafb6bb815ca",
-        "revision": "3d9094177a7216697619db0a3c16bafb6bb815ca",
+        "ref": "8ba2c041bf5311ddd4eeb41d58aad40c644fcbce",
+        "revision": "8ba2c041bf5311ddd4eeb41d58aad40c644fcbce",
         "path": "factory",
-        "note": "Current accepted owner main publishes the native Factory CLI over FactoryBuild/provider/Action owners; the historical repository name remains agent-system-design pending canonical rename."
+        "note": "Current accepted owner main publishes the native Factory CLI over FactoryBuild/provider/Action owners and receives composed agent capability through typed stable refs (#188); the historical repository name remains agent-system-design pending canonical rename."
       },
       "verification": {
         "status": "supported",
@@ -262,7 +262,7 @@
           "evidence": "native-json-stdout"
         },
         "outstanding_requirements": [],
-        "note": "Current main includes Journey/Commission/Run developmental continuity, AgentProfile\u2192Method proof\u2192Routine correlation, whole-relative proof/RunThought/NOW hardening, canonical Actions and the native Factory command surface."
+        "note": "Current main includes Journey/Commission/Run developmental continuity, AgentProfile→Method proof→Routine correlation, whole-relative proof/RunThought/NOW hardening, canonical Actions, the native Factory command surface, and the composed agent-capability intake through stable refs (#188) with its pin-bound conformance lane (scripts/validate_agent_capability_intake.py)."
       },
       "compatibility": "Factory owns developmental Project/Journey/Run/Candidate/Evidence/Recognition and Action semantics; it consumes Central and AIKit refs without acquiring their runtime/source semantics."
     },
@@ -344,7 +344,7 @@
     {
       "id": "quaternal-logic",
       "public_name": "Quaternal Logic",
-      "function": "deterministic QL kernel, complete MEF registry, service boundary and V\u0101k/formal operation surfaces",
+      "function": "deterministic QL kernel, complete MEF registry, service boundary and Vāk/formal operation surfaces",
       "repository": "https://github.com/EpiLogos/QL-MEF",
       "docs_ref": "781981374eaa1f02952249dcdbca1af671d1ece4",
       "docs_path": "README.md",
@@ -401,7 +401,7 @@
           "evidence": "native-json-stdout"
         },
         "outstanding_requirements": [],
-        "note": "The accepted `ql` command projects current public kernel/service/MEF/Context-Frame/V\u0101k owners. O:I composes it without moving formal semantics into the suite."
+        "note": "The accepted `ql` command projects current public kernel/service/MEF/Context-Frame/Vāk owners. O:I composes it without moving formal semantics into the suite."
       },
       "compatibility": "Quaternal Logic remains the separately owned sixth product; its accepted CLI is present in the six-command field while its broader moving research topology remains outside #97 live-main convergence."
     }
