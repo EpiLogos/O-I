@@ -53,3 +53,13 @@ tracking refs.
 **FOG-NOTE (S→S5 QL row) + DATA-KEEP** — the CSV is reference data worth
 carrying into the fog row's notes (it is branch-only knowledge: not on
 main). The skill is a Track K question, not an N8 merge question.
+
+## Current disposition — 2026-09-06
+
+The current documentation task has reconciled this data into the six products'
+`ProjectCentral/user/capability-matrix.csv`, view `suite-relations`, using
+Central's `docs/CAPABILITY-MATRIX-PROTOCOL.md`. Comparison with the exact old
+`ca78ec4:data/ql-relational-field.csv` preserves every original relation ID and
+all six semantic/tracking fields: no missing relations or differing values.
+Those source changes await their owning task's publication. Do not create a
+parallel reference sheet or resurrect the old branch's separate skill.

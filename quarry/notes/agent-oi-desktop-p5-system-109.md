@@ -58,3 +58,11 @@ gets a state, every state names its owner, and nothing is invented.
 constitution, no-activation-theatre) inform U1.1 and the Factory-import fog
 row, but the System region itself has no consuming unit in map §5; flagged
 to the owner in `quarry/oi-branches.md`.
+
+## Current disposition — 2026-09-06
+
+The gap above was closed by the existing cradle wayfinder **U1.6 System region**
+(APP-SPEC §10 + §17.9). System/settings belongs in the desktop execution
+programme. Use that contract; this quarry note does not require a new owner
+decision or a second System design. Native configuration, truthful state and
+one real owner-mediated staged/applied change are its acceptance.
