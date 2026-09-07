@@ -171,3 +171,32 @@ walk reproducible and evidence-bearing (map §1 law 2/9, §7):
 - Screenshots accompany every receipt (APP-SPEC §17: visual acceptance is
   human evidence) — the owner views `walk/artifacts/*.png` and re-walks
   the app itself; the receipts are the apparatus, never the acceptor.
+
+### U1.1: World and native packaging
+
+`all` now includes `navigator` (real Central World mapping, project focus,
+root/project wiki relations, absence and caret retention) and `native` (actual
+Tauri frontend hook/build, macOS app bundle metadata, production walk-channel
+exclusion). On other hosts `native` builds the native executable without a
+macOS bundle.
+
+World is summoned with Cmd/Ctrl+B or by right-clicking the Agency field and
+choosing World. Escape or its close button returns to the prior caret.
+
+The U1.1 receipt used Central from suite/mainline.json, compiled from a `git
+archive` of that exact commit into `/tmp/oi-cradle-pins/<revision>`, leaving
+active product checkouts and installed binaries untouched. Set
+`OI_CENTRAL_CTRL_BIN` to that build's `target/release/ctrl` when repeating the
+pinned walk. `navigator-native.json` records the exact binary/revision and the
+computer-use operations on the real app; native PNG and AX receipts are beside it.
+
+### U1.2: Source editor
+
+`editor` provisions a temporary Central root with the actual pinned `ctrl`,
+initializes a real project, and copies ten existing documents into its source
+ground. UI operations open, edit, switch, save and reopen their owner refs. The
+walk also selects a different project before saving, invokes a real exclusion
+refusal, and checks that initial writing survives closing sources. No owner
+executable or response is mocked. Temporary ground is removed after the walk.
+`editor-native.json` records an actual O-I source edit/save/restore and retained
+writing, observed through computer-use on the native bundle.

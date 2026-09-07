@@ -45,7 +45,12 @@ pub const KERNEL_EVENT_TOPIC: &str = "oi:kernel-event";
 /// is a disclosure trigger, never a second source of truth.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(tag = "event", rename_all = "snake_case")]
+// FocusChanged carries the full GlobalFocus reading so the event stays a
+// verbatim disclosure; kernel events are emitted sparsely, so the variant
+// size cost is not on a hot path.
+#[allow(clippy::large_enum_variant)]
 pub enum KernelEvent {
+    WorldChanged { summary: String },
     /// The one global focus relation moved (02 §7, 03 §B).
     FocusChanged {
         focus: GlobalFocus,
@@ -98,6 +103,7 @@ impl KernelEvent {
     /// subject without matching every variant.
     pub fn subject(&self) -> Option<&SemanticRef> {
         match self {
+            Self::WorldChanged { .. } => None,
             Self::FocusChanged { focus } => focus.subject_ref(),
             Self::SurfaceChanged { surface_ref, .. } => surface_ref.as_ref(),
             Self::SourceOpened { source, .. }
@@ -110,6 +116,7 @@ impl KernelEvent {
     /// The event tag exactly as it is tagged on the wire.
     pub fn tag(&self) -> &'static str {
         match self {
+            Self::WorldChanged { .. } => "world_changed",
             Self::FocusChanged { .. } => "focus_changed",
             Self::SurfaceChanged { .. } => "surface_changed",
             Self::SourceOpened { .. } => "source_opened",
@@ -125,6 +132,7 @@ impl KernelEvent {
     /// is refused here.
     pub fn validate(&self) -> Result<(), String> {
         match self {
+            Self::WorldChanged { summary } => non_empty("WorldChanged.summary", summary),
             Self::FocusChanged { focus } => {
                 let relation = |name: &str| format!("FocusChanged.focus.{name}");
                 if let Some(world) = focus.world.as_ref() {

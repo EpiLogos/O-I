@@ -1,4 +1,6 @@
 // O:I pre-local verification/build front door; no release standing is implied.
+#[path = "catalog_source.rs"]
+mod catalog_source;
 #[path = "guardian.rs"]
 mod guardian;
 #[path = "skillset.rs"]
@@ -15,6 +17,7 @@ mod composition {
     include!("trust_closure.rs");
     include!("trust_closure_guard.rs");
     include!("current_main_install.rs");
+    include!("rolling_dev.rs");
     include!("existing_world.rs");
     include!("omarchy_host.rs");
     include!("product_command_route.rs");

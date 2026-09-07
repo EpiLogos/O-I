@@ -20,6 +20,7 @@
  */
 
 import { useEffect, useRef, useState, type ComponentType } from "react";
+import { WorldNavigator } from "./surfaces/navigator/WorldNavigator";
 import { Rest } from "./Rest";
 import { KernelProvider, useKernel } from "./kernel/KernelProvider";
 import type { ListedSource } from "./kernel/types";
@@ -82,6 +83,27 @@ export function Cradle() {
 
 function CradleFrame() {
   const kernel = useKernel();
+  const [writing, setWriting] = useState("");
+  const [navigatorOpen, setNavigatorOpen] = useState(false);
+  const navigatorRef = useRef(false);
+  navigatorRef.current = navigatorOpen;
+  const returnFocus = useRef<HTMLElement | null>(null);
+  const rememberWorkFocus = () => {
+    const active = document.activeElement as HTMLElement | null;
+    if (active && active !== document.body && !active.closest(".ctx-menu,.world-navigator")) {
+      returnFocus.current = active;
+    } else if (!returnFocus.current?.isConnected) {
+      returnFocus.current = document.querySelector<HTMLElement>(".pane.focused .source-textarea,.canvas-surface");
+    }
+  };
+  const summonWorld = () => {
+    rememberWorkFocus();
+    setNavigatorOpen(true);
+  };
+  const dismissWorld = () => {
+    setNavigatorOpen(false);
+    requestAnimationFrame(() => returnFocus.current?.focus());
+  };
   const [state, setState] = useState<LayoutState>(loadLayout);
   // The restore point: the layout as this session loaded it. `Restore
   // layout` (⌘⌥R / strip menu) returns the frame here.
@@ -128,7 +150,7 @@ function CradleFrame() {
         try {
           await kernel.surfaceOpen(binding.id, binding.kind, binding.ref, binding.title);
           if (binding.kind === "source" && binding.ref) {
-            await kernel.apply({ op: "source_open", source_ref: binding.ref });
+            await kernel.apply({ op: "source_open", source_ref: binding.ref, project: binding.project });
           }
           await kernel.surfaceFocus(binding.id);
         } finally {
@@ -166,20 +188,28 @@ function CradleFrame() {
   /** Open a real source from the index listing: one layout binding carrying
    * the owner's canonical ref verbatim — the kernel mount effect opens the
    * buffer through the owner's read. */
-  const openSource = (source: ListedSource) => {
+  const openSource = (source: ListedSource, project?: string) => {
     const current = stateRef.current;
-    const binding = makeSourceBinding(current, source.ref, source.path);
-    if (current.surfaces[binding.id]) {
+    const binding = makeSourceBinding(current, source.ref, source.path, project);
+    if (groupsOf(current.root).some(g => g.tabs.includes(binding.id))) {
       execute("surface.activate", { surfaceId: binding.id });
       return;
     }
-    setState((s) => openBinding(s, makeSourceBinding(s, source.ref, source.path)));
+    setState((s) => openBinding({ ...s, closedStack: s.closedStack.filter(id => id !== binding.id) }, makeSourceBinding(s, source.ref, source.path, project)));
   };
 
   // The frame keyboard map (keys.ts) + Escape. Attached always, so ⌘T/⌘O
   // open from rest and every operation has its keyboard path.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.code === "KeyB") {
+        e.preventDefault();
+        if (navigatorRef.current) dismissWorld(); else summonWorld();
+        return;
+      }
+      if (e.key === "Escape" && navigatorRef.current) {
+        e.preventDefault(); dismissWorld(); return;
+      }
       if (e.key === "Escape") {
         if (menuRef.current) {
           setMenu(null);
@@ -193,8 +223,15 @@ function CradleFrame() {
       e.preventDefault();
       setState((s) => executeFrameAction(s, act.ref, act.arg, restorePoint.current));
     };
+    const onContext = (e: MouseEvent) => {
+      if (!(e.target as HTMLElement).closest(".agency-field,.agency-column")) return;
+      e.preventDefault();
+      rememberWorkFocus();
+      setMenu({ x: e.clientX, y: e.clientY, items: [{ action_ref: "frame.world", title: "World (⌘B)", enabled: true }] });
+    };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("contextmenu", onContext);
+    return () => { window.removeEventListener("keydown", onKey); window.removeEventListener("contextmenu", onContext); };
   }, []);
 
   // Context-menu plumbing (D15): open exactly what is disclosed — an object
@@ -218,6 +255,7 @@ function CradleFrame() {
 
   const invoke = (item: ActionDisclosure, surfaceId?: SurfaceId) => {
     setMenu(null);
+    if (item.action_ref === "frame.world") { summonWorld(); return; }
     setState((s) =>
       executeFrameAction(s, item.action_ref, { surfaceId }, restorePoint.current),
     );
@@ -246,8 +284,9 @@ function CradleFrame() {
           openSource={openSource}
         />
       ) : (
-        <Rest />
+        <Rest value={writing} onChange={setWriting} />
       )}
+      {navigatorOpen ? <WorldNavigator onClose={dismissWorld} onOpenSource={(source, project) => { setNavigatorOpen(false); openSource(source, project); }} /> : null}
       {menu ? (
         <ContextMenu menu={menu} onInvoke={invoke} onClose={() => setMenu(null)} />
       ) : null}

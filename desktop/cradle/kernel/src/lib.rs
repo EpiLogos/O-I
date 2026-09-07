@@ -28,6 +28,7 @@
 
 pub mod events;
 pub mod flow;
+pub mod history;
 pub mod focus;
 pub mod refs;
 pub mod world;
@@ -82,6 +83,9 @@ pub struct SourceConflict {
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct SourceBuffer {
     pub source_ref: String,
+    /// Owner query retained at open; later selection never reroutes a save.
+    #[serde(default)]
+    pub project: String,
     /// The cradle-held buffer (presentation layer).
     pub content: String,
     /// The canonical content at `base_revision`.
@@ -105,6 +109,7 @@ pub struct KernelSnapshot {
     pub surfaces: BTreeMap<String, SurfaceState>,
     #[serde(default)]
     pub buffers: BTreeMap<String, SourceBuffer>,
+    pub navigator: world::NavigatorReading,
 }
 
 /// The kernel itself. All mutation goes through [`Kernel::apply`]; every
@@ -116,6 +121,7 @@ pub struct Kernel {
     log: KernelEventLog,
     surfaces: BTreeMap<String, SurfaceState>,
     buffers: BTreeMap<String, SourceBuffer>,
+    navigator: world::NavigatorReading,
 }
 
 // ---------------------------------------------------------------------------
@@ -131,6 +137,8 @@ pub struct Kernel {
 pub enum KernelOp {
     /// Pull the whole kernel state (read model; emits nothing).
     State,
+    WorldRead,
+    ProjectRead { project: String },
     /// List a project's participating sources from the owner's
     /// disclosures (read-only; emits nothing).
     SourcesList { #[serde(default)] project: Option<String> },
@@ -142,6 +150,7 @@ pub enum KernelOp {
     /// Set the cradle-held buffer content. Emits `buffer_dirty` exactly
     /// once per clean/dirty crossing — continued typing emits nothing.
     SourceEdit { source_ref: String, content: String },
+    SourceHistory { source_ref: String },
     /// CAS-save the buffer through `projectcentral.source.write`.
     SourceSave {
         #[serde(default)] project: Option<String>,
@@ -182,8 +191,10 @@ pub struct KernelOpOutcome {
 #[serde(tag = "result", rename_all = "snake_case")]
 pub enum KernelOpResult {
     State { snapshot: KernelSnapshot },
+    WorldRead { snapshot: KernelSnapshot },
     SourcesListed { listing: SourceListing },
     SourceOpened { buffer: SourceBuffer },
+    SourceHistory { history: history::SourceHistory },
     BufferEdited { buffer: SourceBuffer },
     /// A save that recorded a change (or landed unchanged on an equal
     /// canonical): the receipt revision is the canonical layer now.
@@ -213,6 +224,7 @@ impl Kernel {
             log: KernelEventLog::new(),
             surfaces: BTreeMap::new(),
             buffers: BTreeMap::new(),
+            navigator: world::NavigatorReading::default(),
         }
     }
 
@@ -231,6 +243,7 @@ impl Kernel {
             focus: self.focus.clone(),
             surfaces: self.surfaces.clone(),
             buffers: self.buffers.clone(),
+            navigator: self.navigator.clone(),
         }
     }
 
@@ -238,6 +251,8 @@ impl Kernel {
     /// exactly one receipt per kernel state change.
     pub fn apply(&mut self, op: KernelOp) -> Result<KernelOpOutcome, String> {
         match op {
+            KernelOp::WorldRead => self.navigate(None),
+            KernelOp::ProjectRead { project } => self.navigate(Some(&project)),
             KernelOp::State => Ok(KernelOpOutcome {
                 receipts: Vec::new(),
                 result: KernelOpResult::State {
@@ -250,6 +265,11 @@ impl Kernel {
                     listing: participating_sources(&self.client, project.as_deref()),
                 },
             }),
+            KernelOp::SourceHistory { source_ref } => {
+                let buffer = self.buffers.get(&source_ref).ok_or("open the source before reading its history")?;
+                let history = history::read(&self.client, &buffer.project, &source_ref).map_err(|e| e.to_string())?;
+                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::SourceHistory { history } })
+            }
             KernelOp::SourceOpen { project, source_ref } => {
                 self.source_open(project.as_deref(), &source_ref)
             }
@@ -276,6 +296,66 @@ impl Kernel {
     // -----------------------------------------------------------------------
     // Source buffers — the two state layers
     // -----------------------------------------------------------------------
+
+    fn navigate(&mut self, project: Option<&str>) -> Result<KernelOpOutcome, String> {
+        let before = self.navigator.clone();
+        let old_focus = self.focus.clone();
+        let result = if let Some(query) = project {
+            // Resolve only a project the owner's current root map disclosed.
+            let known = self.navigator.root.as_ref().and_then(|r| r["work"]["projects"].as_array())
+                .is_some_and(|rows| rows.iter().any(|p| p["name"].as_str() == Some(query)));
+            if !known { return Err("Project is outside the disclosed World mapping; refresh World first".into()); }
+            world::read_project(&self.client, query).map(|reading| {
+                let bound = reading["project"]["projectcentral"]["state"] != "absent";
+                let sources = bound.then(|| participating_sources(&self.client, Some(query)));
+                let project_ref = if bound {
+                    self.client.run("projectcentral.inspect", serde_json::json!({"project": query})).ok()
+                        .and_then(|v| v["manifest"]["project_id"].as_str().filter(|id| !id.trim().is_empty()).map(str::to_owned))
+                } else { None };
+                self.focus.project = None;
+                self.focus.world = None;
+                self.focus.clear_subject();
+                let semantic = |id: String, kind: &str| SemanticRef {
+                    ref_id: id, kind: kind.into(), native_owner: "central".into(),
+                    provenance: refs::RefProvenance { source: "projectcentral.inspect".into(), revision: None },
+                };
+                if let Some(id) = project_ref.as_ref() {
+                    let reference = semantic(id.clone(), "project");
+                    self.focus.bind_project(focus::ProjectRef::try_from(reference.clone()).expect("owner project ref"));
+                    self.focus.focus_subject(reference).expect("owner project ref");
+                }
+                if let Some(id) = sources.as_ref().and_then(|s| s.world_ref.as_ref()).filter(|id| !id.trim().is_empty()) {
+                    let mut reference = semantic(id.clone(), "world");
+                    reference.provenance.source = "projectcentral.change.horizon".into();
+                    self.focus.bind_world(focus::WorldRef::try_from(reference).expect("owner world ref"));
+                }
+                self.navigator.project = Some(reading);
+                self.navigator.sources = sources;
+                self.navigator.project_ref = project_ref;
+            })
+        } else {
+            world::read_world(&self.client).map(|reading| {
+                if self.navigator.project.is_some() {
+                    self.focus.project = None;
+                    self.focus.world = None;
+                    self.focus.clear_subject();
+                }
+                self.navigator.root = Some(reading);
+                self.navigator.project = None;
+                self.navigator.sources = None;
+                self.navigator.project_ref = None;
+            })
+        };
+        self.navigator.error = result.err();
+        let mut receipts = Vec::new();
+        if self.navigator != before {
+            receipts.push(self.log.record(KernelEvent::WorldChanged { summary: "Central navigator reading changed".into() }));
+        }
+        if self.focus != old_focus {
+            receipts.push(self.log.record(KernelEvent::FocusChanged { focus: self.focus.clone() }));
+        }
+        Ok(KernelOpOutcome { receipts, result: KernelOpResult::WorldRead { snapshot: self.snapshot() } })
+    }
 
     fn source_open(
         &mut self,
@@ -304,7 +384,8 @@ impl Kernel {
             .as_ref()
             .map(|buffer| buffer.base_revision != reading.revision.revision)
             .unwrap_or(true);
-        let buffer = self.sync_buffer_from_reading(&reading, true);
+        let route = project.unwrap_or(self.client.configured_project()).to_owned();
+        let buffer = self.sync_buffer_from_reading(&reading, true, &route);
         let receipt = changed.then(|| {
             self.log.record(KernelEvent::SourceOpened {
                 source: source_semantic_ref(source_ref, Some(&reading.revision.revision))
@@ -326,7 +407,7 @@ impl Kernel {
     /// Re-read the canonical layer and sync the buffer to it. A clean
     /// buffer mirrors the canonical content; a dirty buffer keeps its
     /// content and only rebases (both layers stay distinct).
-    fn sync_buffer_from_reading(&mut self, reading: &SourceReading, reset_content: bool) -> SourceBuffer {
+    fn sync_buffer_from_reading(&mut self, reading: &SourceReading, reset_content: bool, project: &str) -> SourceBuffer {
         let source_ref = reading.source.source_ref.clone();
         let previous = self.buffers.get(&source_ref);
         let keep_dirty = previous.map(|buffer| buffer.dirty).unwrap_or(false);
@@ -338,6 +419,7 @@ impl Kernel {
         let dirty = keep_dirty && content != reading.content;
         let buffer = SourceBuffer {
             source_ref: source_ref.clone(),
+            project: project.to_owned(),
             content,
             saved_content: reading.content.clone(),
             base_revision: reading.revision.revision.clone(),
@@ -386,6 +468,8 @@ impl Kernel {
         let Some(buffer) = self.buffers.get(source_ref) else {
             return Err(format!("no open buffer for `{source_ref}`; nothing to save"));
         };
+        let route = if buffer.project.is_empty() { project.unwrap_or(self.client.configured_project()) } else { &buffer.project }.to_owned();
+        let project = Some(route.as_str());
         let expected = buffer.base_revision.clone();
         let content = buffer.content.clone();
         match self.client.source_write(
@@ -512,6 +596,9 @@ impl Kernel {
         project: Option<&str>,
         source_ref: &str,
     ) -> Result<KernelOpOutcome, String> {
+        let route = self.buffers.get(source_ref).map(|b| b.project.as_str()).filter(|p| !p.is_empty())
+            .or(project).unwrap_or(self.client.configured_project()).to_owned();
+        let project = Some(route.as_str());
         let had_conflict = self
             .buffers
             .get(source_ref)
@@ -529,7 +616,7 @@ impl Kernel {
         // Nothing changed — same revision, no conflict to clear — nothing
         // is emitted.
         let changed = moved || had_conflict;
-        let buffer = self.sync_buffer_from_reading(&reading, false);
+        let buffer = self.sync_buffer_from_reading(&reading, false, &route);
         let receipt = changed.then(|| {
             self.log.record(KernelEvent::SourceOpened {
                 source: source_semantic_ref(source_ref, Some(&reading.revision.revision))

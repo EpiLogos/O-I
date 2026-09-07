@@ -29,6 +29,7 @@ export interface SourceConflictState {
  * `saved_content`/`base_revision` = the Central-owned canonical layer. */
 export interface SourceBufferState {
   source_ref: SourceRef;
+  project: string;
   content: string;
   saved_content: string;
   base_revision: string;
@@ -48,6 +49,7 @@ export interface KernelSnapshotState {
   focus: GlobalFocusState;
   surfaces: Record<string, SurfaceKernelState>;
   buffers: Record<string, SourceBufferState>;
+  navigator?: NavigatorReading;
 }
 
 /** One participating source as the owner disclosed it. */
@@ -67,6 +69,7 @@ export type ListingAvailability =
 export interface SourceListingState {
   schema: string;
   project: string;
+  world_ref?: string;
   sources: ListedSource[];
   availability: ListingAvailability;
 }
@@ -83,8 +86,11 @@ export interface KernelReceipt {
 /** The operation payloads (the Rust `KernelOp`, tagged snake_case). */
 export type KernelOp =
   | { op: "state" }
+  | { op: "world_read" }
+  | { op: "project_read"; project: string }
   | { op: "sources_list"; project?: string }
   | { op: "source_open"; source_ref: SourceRef; project?: string }
+  | { op: "source_history"; source_ref: SourceRef }
   | { op: "source_edit"; source_ref: SourceRef; content: string }
   | { op: "source_save"; source_ref: SourceRef; project?: string }
   | { op: "source_reread"; source_ref: SourceRef; project?: string }
@@ -103,8 +109,10 @@ export type KernelOp =
  * the wire the tag and the payload sit flat beside `receipts`. */
 export type KernelOpResult =
   | { result: "state"; snapshot: KernelSnapshotState }
+  | { result: "world_read"; snapshot: KernelSnapshotState }
   | { result: "sources_listed"; listing: SourceListingState }
   | { result: "source_opened"; buffer: SourceBufferState }
+  | { result: "source_history"; history: SourceHistoryReading }
   | { result: "buffer_edited"; buffer: SourceBufferState }
   | {
       result: "source_saved";
@@ -143,3 +151,43 @@ export type KernelTransportStatus =
   | { kind: "tauri" }
   | { kind: "bridge"; url: string }
   | { kind: "unavailable"; reason: string };
+
+// Central's central.world-map/v1 read models. Paths are owner locators,
+// not refs manufactured by the renderer.
+export interface WikiReading {
+  path: string; present: boolean; space_ref?: string; revision?: number;
+  child_space_refs: string[]; dangling_child_space_refs: string[]; error?: string;
+}
+export interface GroundArea { path: string; exists: boolean; sources: number }
+export interface RelationsReading { path: string; present: boolean; declared_overrides: number; error?: string }
+export interface GroundReading {
+  path: string; user: GroundArea; agent_governance: GroundArea;
+  agent_wiki: GroundArea & { wiki: WikiReading }; relations: RelationsReading;
+}
+export interface WorldProject {
+  name: string; path: string; source_files: number;
+  projectcentral: GroundReading & { state: string; reason?: string; error?: string; missing?: string[] };
+}
+export interface RootWorld {
+  schema: string; root: string; ground_state: string; control: GroundReading;
+  work: { path: string; exists: boolean; projects: WorldProject[] };
+}
+export interface ProjectWorld {
+  schema: string; root: string; projection: "project"; project: WorldProject;
+  position: { work_root: string; exists: boolean; index?: number; project_count: number };
+}
+export interface NavigatorReading {
+  root: RootWorld | null; project: ProjectWorld | null;
+  sources: SourceListingState | null; project_ref: string | null; error: string | null;
+}
+
+export interface SourceChangeReading {
+  change_ref: string; source_ref: string; cursor: number;
+  before_revision: string | null; after_revision: string | null;
+  kind: string; observed_at_unix_seconds: number;
+  actor: string | null; actor_kind: string | null; agent_session_ref: string | null;
+}
+export interface SourceHistoryReading {
+  source_ref: string; world_ref: string; provider: string; cursor: number;
+  changes: SourceChangeReading[];
+}

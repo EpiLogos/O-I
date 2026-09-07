@@ -42,7 +42,7 @@ A fresh Central root must contain `Control/user`, `Control/agents`, `Control/mac
 
 ## Guardian SkillSet and refresh
 
-`oi init --personal-ground` projects exactly one shipped SkillSet onto the ground: the O:I guardian Skills (`oi` and the suite operator) into the harness skill trees as receipt-gated derived copies. When AIKit is installed, the same pickup hands that tree to AIKit through its own confirmed procedures — `aikit adopt`, the `oi-guardian` SkillSet, and `aikit apply` — so AIKit becomes the owner of the harness-visible copies.
+`oi init --personal-ground` projects exactly one shipped SkillSet onto the ground: the O:I guardian Skills (`oi`, the suite operator, and the Central session strap) into the harness skill trees as receipt-gated derived copies. When AIKit is installed, the same pickup hands that tree to AIKit through its own confirmed procedures — `aikit adopt`, the `oi-guardian` SkillSet, and `aikit apply` — so AIKit becomes the owner of the harness-visible copies.
 
 Reconcile and refresh with `oi skills sync`. It re-projects the authoritative guardian SkillSet, preserves any locally edited copy instead of clobbering it, and keeps AIKit's collection current: when the authoritative source has moved ahead of AIKit-managed copies, sync drives AIKit's own refresh cycle (undo the recorded adoption Procedure, re-project, re-adopt) rather than writing through AIKit's ownership.
 

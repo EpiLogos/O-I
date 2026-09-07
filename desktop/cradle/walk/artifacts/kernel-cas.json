@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "kernel-cas",
-  "generated_at": "2026-09-05T21:28:10.254Z",
+  "generated_at": "2026-09-05T23:26:27.205Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 1794,
+  "duration_ms": 1800,
   "checks": [
     {
       "ok": true,
@@ -201,10 +201,11 @@
     {
       "ok": true,
       "op": "read.sources",
-      "duration_ms": 6.3,
+      "duration_ms": 7.4,
       "data": {
         "schema": "oi.source-listing/v1",
         "project": "o-i",
+        "world_ref": "project:project:o-i",
         "sources": [
           {
             "ref": "central:source:project:project:o-i:ProjectCentral/agents/wiki/wiki.json",
@@ -261,7 +262,7 @@
     {
       "ok": true,
       "op": "ui.open_real_file",
-      "duration_ms": 93
+      "duration_ms": 107
     },
     {
       "ok": true,
@@ -524,7 +525,7 @@
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "receipts": [
           {
@@ -554,7 +555,7 @@
     {
       "ok": true,
       "op": "ui.save",
-      "duration_ms": 111
+      "duration_ms": 115
     },
     {
       "ok": true,
@@ -783,7 +784,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 41,
+      "duration_ms": 29,
       "data": {
         "file": "kernel-cas-conflict.png"
       }
@@ -929,7 +930,7 @@
     {
       "ok": true,
       "op": "invoke.source_reread",
-      "duration_ms": 4.4,
+      "duration_ms": 5.2,
       "seq_range": {
         "from": 9,
         "to": 9
@@ -939,6 +940,7 @@
           "result": "source_reread",
           "buffer": {
             "source_ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+            "project": "o-i",
             "content": "# O:I learning ledger\n\nThis directory exists because system trust depends on retaining failures as inspectable source rather than rewriting the history after a repair succeeds.\n\nIt was created at the human owner's explicit request during the repair of O:I #97, after a convergence process claimed completion while material current work remained outside `main` and the install/release/source views described different software worlds.\n\n## Standing and provenance\n\nThe **existence and purpose of this learning aperture are human-requested**.\n\nIndividual entries may be written by a human or an Agent. Every entry must state its provenance and evidence standing. Agent-written analysis does **not** become a human-authored position merely because it lives under `ProjectCentral/user/**`; where Central's authored-ground relation ledger is available, use it to record the accepted standing explicitly.\n\nUse these distinctions:\n\n- **authored position** — what the human deliberately means, requires or adopts;\n- **design/operational commitment** — a rule the system is meant to preserve;\n- **implementation fact** — what code/history actually contains;\n- **observed result** — what a run, merge, test or incident actually returned;\n- **current development state** — work underway but not yet accepted;\n- **inference** — an interpretation drawn from evidence and labelled as such.\n\n## What belongs here\n\nRecord incidents where the system created avoidable uncertainty, false confidence, provenance loss, duplicate work, stale state, misleading verification, destructive cleanup risk, owner-boundary confusion, or unnecessary human context repair.\n\nThe purpose is not blame or a museum of mistakes. The purpose is to make the causal mechanism recoverable so the architecture, tests, Skills, prompts and operating practice can change.\n\nA useful incident entry answers:\n\n1. What did we believe had happened?\n2. What had actually happened?\n3. Which evidence falsified the belief?\n4. Why did the existing verification fail to detect it?\n5. Was the failure in specification, execution, tooling, acceptance design, or several layers?\n6. What concrete repair was made?\n7. What durable guard now prevents or exposes recurrence?\n8. What remains unproven or physically gated?\n\nDo not delete an incident because the defect is fixed. Add the repair and later evidence to the same causal history.\n\n<!-- u0.4 kernel seam walk: edit one -->\nmore typing that is not a new state change\n\n<!-- u0.4 kernel seam walk: edit two (the cradle side) -->\n",
             "saved_content": "# O:I learning ledger\n\nThis directory exists because system trust depends on retaining failures as inspectable source rather than rewriting the history after a repair succeeds.\n\nIt was created at the human owner's explicit request during the repair of O:I #97, after a convergence process claimed completion while material current work remained outside `main` and the install/release/source views described different software worlds.\n\n## Standing and provenance\n\nThe **existence and purpose of this learning aperture are human-requested**.\n\nIndividual entries may be written by a human or an Agent. Every entry must state its provenance and evidence standing. Agent-written analysis does **not** become a human-authored position merely because it lives under `ProjectCentral/user/**`; where Central's authored-ground relation ledger is available, use it to record the accepted standing explicitly.\n\nUse these distinctions:\n\n- **authored position** — what the human deliberately means, requires or adopts;\n- **design/operational commitment** — a rule the system is meant to preserve;\n- **implementation fact** — what code/history actually contains;\n- **observed result** — what a run, merge, test or incident actually returned;\n- **current development state** — work underway but not yet accepted;\n- **inference** — an interpretation drawn from evidence and labelled as such.\n\n## What belongs here\n\nRecord incidents where the system created avoidable uncertainty, false confidence, provenance loss, duplicate work, stale state, misleading verification, destructive cleanup risk, owner-boundary confusion, or unnecessary human context repair.\n\nThe purpose is not blame or a museum of mistakes. The purpose is to make the causal mechanism recoverable so the architecture, tests, Skills, prompts and operating practice can change.\n\nA useful incident entry answers:\n\n1. What did we believe had happened?\n2. What had actually happened?\n3. Which evidence falsified the belief?\n4. Why did the existing verification fail to detect it?\n5. Was the failure in specification, execution, tooling, acceptance design, or several layers?\n6. What concrete repair was made?\n7. What durable guard now prevents or exposes recurrence?\n8. What remains unproven or physically gated?\n\nDo not delete an incident because the defect is fixed. Add the repair and later evidence to the same causal history.\n\n<!-- u0.4 kernel seam walk: edit one -->\nmore typing that is not a new state change\nexternal edit from outside the cradle (u0.4 conflict probe)\n",
             "base_revision": "central.content-fnv1a64/v1:2534:e431a6879ea67ed0",
@@ -1146,6 +1148,7 @@
           "result": "source_saved",
           "buffer": {
             "source_ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+            "project": "o-i",
             "content": "# O:I learning ledger\n\nThis directory exists because system trust depends on retaining failures as inspectable source rather than rewriting the history after a repair succeeds.\n\nIt was created at the human owner's explicit request during the repair of O:I #97, after a convergence process claimed completion while material current work remained outside `main` and the install/release/source views described different software worlds.\n\n## Standing and provenance\n\nThe **existence and purpose of this learning aperture are human-requested**.\n\nIndividual entries may be written by a human or an Agent. Every entry must state its provenance and evidence standing. Agent-written analysis does **not** become a human-authored position merely because it lives under `ProjectCentral/user/**`; where Central's authored-ground relation ledger is available, use it to record the accepted standing explicitly.\n\nUse these distinctions:\n\n- **authored position** — what the human deliberately means, requires or adopts;\n- **design/operational commitment** — a rule the system is meant to preserve;\n- **implementation fact** — what code/history actually contains;\n- **observed result** — what a run, merge, test or incident actually returned;\n- **current development state** — work underway but not yet accepted;\n- **inference** — an interpretation drawn from evidence and labelled as such.\n\n## What belongs here\n\nRecord incidents where the system created avoidable uncertainty, false confidence, provenance loss, duplicate work, stale state, misleading verification, destructive cleanup risk, owner-boundary confusion, or unnecessary human context repair.\n\nThe purpose is not blame or a museum of mistakes. The purpose is to make the causal mechanism recoverable so the architecture, tests, Skills, prompts and operating practice can change.\n\nA useful incident entry answers:\n\n1. What did we believe had happened?\n2. What had actually happened?\n3. Which evidence falsified the belief?\n4. Why did the existing verification fail to detect it?\n5. Was the failure in specification, execution, tooling, acceptance design, or several layers?\n6. What concrete repair was made?\n7. What durable guard now prevents or exposes recurrence?\n8. What remains unproven or physically gated?\n\nDo not delete an incident because the defect is fixed. Add the repair and later evidence to the same causal history.\n\n<!-- u0.4 kernel seam walk: edit one -->\nmore typing that is not a new state change\n\n<!-- u0.4 kernel seam walk: edit two (the cradle side) -->\n",
             "saved_content": "# O:I learning ledger\n\nThis directory exists because system trust depends on retaining failures as inspectable source rather than rewriting the history after a repair succeeds.\n\nIt was created at the human owner's explicit request during the repair of O:I #97, after a convergence process claimed completion while material current work remained outside `main` and the install/release/source views described different software worlds.\n\n## Standing and provenance\n\nThe **existence and purpose of this learning aperture are human-requested**.\n\nIndividual entries may be written by a human or an Agent. Every entry must state its provenance and evidence standing. Agent-written analysis does **not** become a human-authored position merely because it lives under `ProjectCentral/user/**`; where Central's authored-ground relation ledger is available, use it to record the accepted standing explicitly.\n\nUse these distinctions:\n\n- **authored position** — what the human deliberately means, requires or adopts;\n- **design/operational commitment** — a rule the system is meant to preserve;\n- **implementation fact** — what code/history actually contains;\n- **observed result** — what a run, merge, test or incident actually returned;\n- **current development state** — work underway but not yet accepted;\n- **inference** — an interpretation drawn from evidence and labelled as such.\n\n## What belongs here\n\nRecord incidents where the system created avoidable uncertainty, false confidence, provenance loss, duplicate work, stale state, misleading verification, destructive cleanup risk, owner-boundary confusion, or unnecessary human context repair.\n\nThe purpose is not blame or a museum of mistakes. The purpose is to make the causal mechanism recoverable so the architecture, tests, Skills, prompts and operating practice can change.\n\nA useful incident entry answers:\n\n1. What did we believe had happened?\n2. What had actually happened?\n3. Which evidence falsified the belief?\n4. Why did the existing verification fail to detect it?\n5. Was the failure in specification, execution, tooling, acceptance design, or several layers?\n6. What concrete repair was made?\n7. What durable guard now prevents or exposes recurrence?\n8. What remains unproven or physically gated?\n\nDo not delete an incident because the defect is fixed. Add the repair and later evidence to the same causal history.\n\n<!-- u0.4 kernel seam walk: edit one -->\nmore typing that is not a new state change\n\n<!-- u0.4 kernel seam walk: edit two (the cradle side) -->\n",
             "base_revision": "central.content-fnv1a64/v1:2534:aacf5728ed4b3bc6",
@@ -1191,7 +1194,7 @@
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 2.4,
+      "duration_ms": 3.1,
       "data": {
         "focus": {},
         "surfaces": {
@@ -1210,12 +1213,20 @@
         "buffers": {
           "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md": {
             "source_ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+            "project": "o-i",
             "content": "# O:I learning ledger\n\nThis directory exists because system trust depends on retaining failures as inspectable source rather than rewriting the history after a repair succeeds.\n\nIt was created at the human owner's explicit request during the repair of O:I #97, after a convergence process claimed completion while material current work remained outside `main` and the install/release/source views described different software worlds.\n\n## Standing and provenance\n\nThe **existence and purpose of this learning aperture are human-requested**.\n\nIndividual entries may be written by a human or an Agent. Every entry must state its provenance and evidence standing. Agent-written analysis does **not** become a human-authored position merely because it lives under `ProjectCentral/user/**`; where Central's authored-ground relation ledger is available, use it to record the accepted standing explicitly.\n\nUse these distinctions:\n\n- **authored position** — what the human deliberately means, requires or adopts;\n- **design/operational commitment** — a rule the system is meant to preserve;\n- **implementation fact** — what code/history actually contains;\n- **observed result** — what a run, merge, test or incident actually returned;\n- **current development state** — work underway but not yet accepted;\n- **inference** — an interpretation drawn from evidence and labelled as such.\n\n## What belongs here\n\nRecord incidents where the system created avoidable uncertainty, false confidence, provenance loss, duplicate work, stale state, misleading verification, destructive cleanup risk, owner-boundary confusion, or unnecessary human context repair.\n\nThe purpose is not blame or a museum of mistakes. The purpose is to make the causal mechanism recoverable so the architecture, tests, Skills, prompts and operating practice can change.\n\nA useful incident entry answers:\n\n1. What did we believe had happened?\n2. What had actually happened?\n3. Which evidence falsified the belief?\n4. Why did the existing verification fail to detect it?\n5. Was the failure in specification, execution, tooling, acceptance design, or several layers?\n6. What concrete repair was made?\n7. What durable guard now prevents or exposes recurrence?\n8. What remains unproven or physically gated?\n\nDo not delete an incident because the defect is fixed. Add the repair and later evidence to the same causal history.\n\n<!-- u0.4 kernel seam walk: edit one -->\nmore typing that is not a new state change\n\n<!-- u0.4 kernel seam walk: edit two (the cradle side) -->\n",
             "saved_content": "# O:I learning ledger\n\nThis directory exists because system trust depends on retaining failures as inspectable source rather than rewriting the history after a repair succeeds.\n\nIt was created at the human owner's explicit request during the repair of O:I #97, after a convergence process claimed completion while material current work remained outside `main` and the install/release/source views described different software worlds.\n\n## Standing and provenance\n\nThe **existence and purpose of this learning aperture are human-requested**.\n\nIndividual entries may be written by a human or an Agent. Every entry must state its provenance and evidence standing. Agent-written analysis does **not** become a human-authored position merely because it lives under `ProjectCentral/user/**`; where Central's authored-ground relation ledger is available, use it to record the accepted standing explicitly.\n\nUse these distinctions:\n\n- **authored position** — what the human deliberately means, requires or adopts;\n- **design/operational commitment** — a rule the system is meant to preserve;\n- **implementation fact** — what code/history actually contains;\n- **observed result** — what a run, merge, test or incident actually returned;\n- **current development state** — work underway but not yet accepted;\n- **inference** — an interpretation drawn from evidence and labelled as such.\n\n## What belongs here\n\nRecord incidents where the system created avoidable uncertainty, false confidence, provenance loss, duplicate work, stale state, misleading verification, destructive cleanup risk, owner-boundary confusion, or unnecessary human context repair.\n\nThe purpose is not blame or a museum of mistakes. The purpose is to make the causal mechanism recoverable so the architecture, tests, Skills, prompts and operating practice can change.\n\nA useful incident entry answers:\n\n1. What did we believe had happened?\n2. What had actually happened?\n3. Which evidence falsified the belief?\n4. Why did the existing verification fail to detect it?\n5. Was the failure in specification, execution, tooling, acceptance design, or several layers?\n6. What concrete repair was made?\n7. What durable guard now prevents or exposes recurrence?\n8. What remains unproven or physically gated?\n\nDo not delete an incident because the defect is fixed. Add the repair and later evidence to the same causal history.\n\n<!-- u0.4 kernel seam walk: edit one -->\nmore typing that is not a new state change\n\n<!-- u0.4 kernel seam walk: edit two (the cradle side) -->\n",
             "base_revision": "central.content-fnv1a64/v1:2534:aacf5728ed4b3bc6",
             "dirty": false,
             "path": "ProjectCentral/user/learnings/README.md"
           }
+        },
+        "navigator": {
+          "root": null,
+          "project": null,
+          "sources": null,
+          "project_ref": null,
+          "error": null
         }
       }
     },
@@ -1401,7 +1412,7 @@
     {
       "ok": true,
       "op": "invoke.surface_focus",
-      "duration_ms": 1.9,
+      "duration_ms": 2.6,
       "seq_range": {
         "from": 12,
         "to": 12
@@ -1436,12 +1447,20 @@
             "buffers": {
               "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md": {
                 "source_ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+                "project": "o-i",
                 "content": "# O:I learning ledger\n\nThis directory exists because system trust depends on retaining failures as inspectable source rather than rewriting the history after a repair succeeds.\n\nIt was created at the human owner's explicit request during the repair of O:I #97, after a convergence process claimed completion while material current work remained outside `main` and the install/release/source views described different software worlds.\n\n## Standing and provenance\n\nThe **existence and purpose of this learning aperture are human-requested**.\n\nIndividual entries may be written by a human or an Agent. Every entry must state its provenance and evidence standing. Agent-written analysis does **not** become a human-authored position merely because it lives under `ProjectCentral/user/**`; where Central's authored-ground relation ledger is available, use it to record the accepted standing explicitly.\n\nUse these distinctions:\n\n- **authored position** — what the human deliberately means, requires or adopts;\n- **design/operational commitment** — a rule the system is meant to preserve;\n- **implementation fact** — what code/history actually contains;\n- **observed result** — what a run, merge, test or incident actually returned;\n- **current development state** — work underway but not yet accepted;\n- **inference** — an interpretation drawn from evidence and labelled as such.\n\n## What belongs here\n\nRecord incidents where the system created avoidable uncertainty, false confidence, provenance loss, duplicate work, stale state, misleading verification, destructive cleanup risk, owner-boundary confusion, or unnecessary human context repair.\n\nThe purpose is not blame or a museum of mistakes. The purpose is to make the causal mechanism recoverable so the architecture, tests, Skills, prompts and operating practice can change.\n\nA useful incident entry answers:\n\n1. What did we believe had happened?\n2. What had actually happened?\n3. Which evidence falsified the belief?\n4. Why did the existing verification fail to detect it?\n5. Was the failure in specification, execution, tooling, acceptance design, or several layers?\n6. What concrete repair was made?\n7. What durable guard now prevents or exposes recurrence?\n8. What remains unproven or physically gated?\n\nDo not delete an incident because the defect is fixed. Add the repair and later evidence to the same causal history.\n\n<!-- u0.4 kernel seam walk: edit one -->\nmore typing that is not a new state change\n\n<!-- u0.4 kernel seam walk: edit two (the cradle side) -->\n",
                 "saved_content": "# O:I learning ledger\n\nThis directory exists because system trust depends on retaining failures as inspectable source rather than rewriting the history after a repair succeeds.\n\nIt was created at the human owner's explicit request during the repair of O:I #97, after a convergence process claimed completion while material current work remained outside `main` and the install/release/source views described different software worlds.\n\n## Standing and provenance\n\nThe **existence and purpose of this learning aperture are human-requested**.\n\nIndividual entries may be written by a human or an Agent. Every entry must state its provenance and evidence standing. Agent-written analysis does **not** become a human-authored position merely because it lives under `ProjectCentral/user/**`; where Central's authored-ground relation ledger is available, use it to record the accepted standing explicitly.\n\nUse these distinctions:\n\n- **authored position** — what the human deliberately means, requires or adopts;\n- **design/operational commitment** — a rule the system is meant to preserve;\n- **implementation fact** — what code/history actually contains;\n- **observed result** — what a run, merge, test or incident actually returned;\n- **current development state** — work underway but not yet accepted;\n- **inference** — an interpretation drawn from evidence and labelled as such.\n\n## What belongs here\n\nRecord incidents where the system created avoidable uncertainty, false confidence, provenance loss, duplicate work, stale state, misleading verification, destructive cleanup risk, owner-boundary confusion, or unnecessary human context repair.\n\nThe purpose is not blame or a museum of mistakes. The purpose is to make the causal mechanism recoverable so the architecture, tests, Skills, prompts and operating practice can change.\n\nA useful incident entry answers:\n\n1. What did we believe had happened?\n2. What had actually happened?\n3. Which evidence falsified the belief?\n4. Why did the existing verification fail to detect it?\n5. Was the failure in specification, execution, tooling, acceptance design, or several layers?\n6. What concrete repair was made?\n7. What durable guard now prevents or exposes recurrence?\n8. What remains unproven or physically gated?\n\nDo not delete an incident because the defect is fixed. Add the repair and later evidence to the same causal history.\n\n<!-- u0.4 kernel seam walk: edit one -->\nmore typing that is not a new state change\n\n<!-- u0.4 kernel seam walk: edit two (the cradle side) -->\n",
                 "base_revision": "central.content-fnv1a64/v1:2534:aacf5728ed4b3bc6",
                 "dirty": false,
                 "path": "ProjectCentral/user/learnings/README.md"
               }
+            },
+            "navigator": {
+              "root": null,
+              "project": null,
+              "sources": null,
+              "project_ref": null,
+              "error": null
             }
           }
         }
@@ -1479,7 +1498,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 15,
+      "duration_ms": 25,
       "data": {
         "file": "kernel-cas-focus.png"
       }
@@ -1771,7 +1790,7 @@
     {
       "ok": true,
       "op": "capture.events",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "receipts": [
           {
@@ -1995,13 +2014,13 @@
         "count": 14,
         "first_seq": 1,
         "last_seq": 14,
-        "captured_at": "2026-09-05T21:28:12.045Z"
+        "captured_at": "2026-09-05T23:26:29.003Z"
       }
     }
   ],
   "metrics": {
-    "open_file_ms": 93,
-    "save_ms": 111,
+    "open_file_ms": 107,
+    "save_ms": 115,
     "kernel_events_total": 14
   },
   "screenshots": [

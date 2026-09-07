@@ -9,7 +9,6 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode, Stdio};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-const CATALOG_JSON: &str = include_str!("../../surfaces.json");
 const OI_REPOSITORY: &str = "https://github.com/EpiLogos/O-I";
 const STATE_SCHEMA: u32 = 1;
 
@@ -165,6 +164,7 @@ fn run(args: &[OsString]) -> Result<i32, String> {
         "install" => command_install(&catalog, &args[1..]),
         "docs" => command_docs(&catalog, &args[1..]),
         "migrate" => command_migrate(&catalog, &args[1..]),
+        "catalogue" => command_catalogue(&args[1..]),
         "version" | "--version" | "-V" => {
             println!("oi {}", env!("CARGO_PKG_VERSION"));
             Ok(0)
@@ -176,8 +176,9 @@ fn run(args: &[OsString]) -> Result<i32, String> {
 }
 
 fn catalog() -> Result<Catalog, String> {
-    let catalog: Catalog = serde_json::from_str(CATALOG_JSON)
-        .map_err(|error| format!("embedded surface descriptors are invalid: {error}"))?;
+    let resolved = crate::catalog_source::resolve()?;
+    let catalog: Catalog = serde_json::from_str(&resolved.json)
+        .map_err(|error| format!("surface descriptors ({}) are invalid: {error}", resolved.origin))?;
     if catalog.schema != 1 {
         return Err(format!(
             "unsupported surface descriptor schema {}",
@@ -205,6 +206,8 @@ fn print_help(catalog: &Catalog) {
     println!("  oi register <module> [--executable PATH] [--root PATH] [--version TEXT]");
     println!("  oi install <module>");
     println!("  oi docs [topic|module]");
+    println!("  oi catalogue show [--json]");
+    println!("  oi catalogue adopt <surfaces.json>");
     println!("  oi migrate <path>");
     println!("  oi <alias> [native arguments...]");
     println!();
@@ -221,6 +224,71 @@ fn print_help(catalog: &Catalog) {
     println!();
     println!("The wrapper owns setup, discovery, documentation, registration and handoff only.");
     println!("Product behaviour remains in the native product surfaces.");
+}
+
+fn command_catalogue(args: &[OsString]) -> Result<i32, String> {
+    let sub = args.first().and_then(|value| value.to_str()).unwrap_or("show");
+    match sub {
+        "show" => {
+            let resolved = crate::catalog_source::resolve()?;
+            let value: serde_json::Value = serde_json::from_str(&resolved.json)
+                .map_err(|error| format!("catalogue ({}) is invalid: {error}", resolved.origin))?;
+            let verified_at = value["verified_at"].as_str().unwrap_or("(unrecorded)");
+            let surfaces = value["surfaces"].as_array().map(Vec::len).unwrap_or(0);
+            let json_mode = args.iter().any(|one| one == "--json");
+            if json_mode {
+                println!(
+                    "{}",
+                    serde_json::json!({
+                        "origin": resolved.origin,
+                        "path": resolved.path.as_ref().map(|path| path.display().to_string()),
+                        "verified_at": verified_at,
+                        "surfaces": surfaces,
+                    })
+                );
+                return Ok(0);
+            }
+            match &resolved.path {
+                Some(path) => println!("O:I catalogue: runtime ({})", path.display()),
+                None => println!("O:I catalogue: embedded snapshot (bootstrap fallback)"),
+            }
+            println!("verified_at {verified_at} · {surfaces} surfaces");
+            println!("adopt a live catalogue with: oi catalogue adopt <surfaces.json>");
+            Ok(0)
+        }
+        "adopt" => {
+            let source = args
+                .get(1)
+                .map(PathBuf::from)
+                .ok_or_else(|| "usage: oi catalogue adopt <surfaces.json>".to_owned())?;
+            let json = fs::read_to_string(&source)
+                .map_err(|error| format!("cannot read {}: {error}", source.display()))?;
+            crate::catalog_source::validate(&json, &source.display().to_string())?;
+            let value: serde_json::Value = serde_json::from_str(&json)
+                .map_err(|error| format!("catalogue {} is invalid: {error}", source.display()))?;
+            let verified_at = value["verified_at"].as_str().unwrap_or("(unrecorded)");
+            let destination = crate::catalog_source::state_catalogue_path()?;
+            let parent = destination
+                .parent()
+                .ok_or_else(|| "catalogue state path has no parent".to_owned())?;
+            fs::create_dir_all(parent)
+                .map_err(|error| format!("cannot create {}: {error}", parent.display()))?;
+            let temporary = parent.join("catalogue.json.tmp");
+            fs::write(&temporary, &json)
+                .map_err(|error| format!("cannot write {}: {error}", temporary.display()))?;
+            fs::rename(&temporary, &destination)
+                .map_err(|error| format!("cannot replace {}: {error}", destination.display()))?;
+            println!(
+                "Catalogue adopted: {} -> {} (verified_at {verified_at})",
+                source.display(),
+                destination.display()
+            );
+            Ok(0)
+        }
+        other => Err(format!(
+            "unknown catalogue command '{other}'; expected show or adopt"
+        )),
+    }
 }
 
 fn command_status(catalog: &Catalog, args: &[OsString]) -> Result<i32, String> {

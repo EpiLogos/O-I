@@ -1,0 +1,39 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "native",
+  "generated_at": "2026-09-05T23:26:35.954Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": null,
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 4417,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Real Tauri frontend hook and native build complete"
+    },
+    {
+      "ok": true,
+      "label": "O-I.app contains the native executable"
+    },
+    {
+      "ok": true,
+      "label": "Bundle preserves product name and application identity"
+    },
+    {
+      "ok": true,
+      "label": "Native frontend excludes the development walk channel"
+    }
+  ],
+  "ops": [],
+  "metrics": {
+    "native_build_ms": 4411
+  },
+  "screenshots": []
+}

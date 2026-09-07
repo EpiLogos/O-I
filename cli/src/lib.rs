@@ -1,3 +1,4 @@
+pub mod catalog_source;
 pub mod current_world;
 pub mod dev_world;
 pub mod guardian;

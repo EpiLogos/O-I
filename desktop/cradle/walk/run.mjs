@@ -37,6 +37,10 @@ const SCENARIOS = {
   rest: { module: "scenarios/rest.mjs", kernel: false, aliases: ["u0.3"] },
   surfaces: { module: "scenarios/surfaces.mjs", kernel: true, aliases: ["u0.3b"] },
   "kernel-cas": { module: "scenarios/kernel-cas.mjs", kernel: true, aliases: ["u0.4"] },
+  navigator: { module: "scenarios/navigator.mjs", kernel: true, aliases: ["u1.1"] },
+  editor: { module: "scenarios/editor.mjs", kernel: true, aliases: ["u1.2"] },
+  history: { module: "scenarios/history.mjs", kernel: true, aliases: ["u1.3"] },
+  native: { module: "scenarios/native.mjs", kernel: false, aliases: ["package"] },
 };
 
 // ---------------------------------------------------------------------------
@@ -278,6 +282,8 @@ async function runScenario(name, { baseUrl }) {
   console.log(`\n=== scenario: ${name} ===`);
   mkdirSync(artifactsDir, { recursive: true });
 
+  const scenario = await import(`${fileURLToPath(new URL(spec.module, import.meta.url))}`);
+  const provision = await scenario.setup?.({ cradleRoot });
   let bridgeUrl = null;
   let bridgeService = null;
   if (spec.kernel) {
@@ -294,6 +300,7 @@ async function runScenario(name, { baseUrl }) {
         "--",
         `127.0.0.1:${BRIDGE_PORT}`,
       ],
+      { env: { ...process.env, ...provision?.env } },
     );
     await waitForHttp(`${BRIDGE_URL}/state`, "the walk bridge", 180_000);
     console.log(`  walk bridge up: ${BRIDGE_URL} (fresh kernel, seq from 1)`);
@@ -309,7 +316,7 @@ async function runScenario(name, { baseUrl }) {
   }
 
   const ctx = makeHarness({ scenario: name, page, baseUrl, bridgeUrl, kernelScenario: spec.kernel });
-  const scenario = await import(`${fileURLToPath(new URL(spec.module, import.meta.url))}`);
+  ctx.provision = provision;
   let receipt;
   try {
     await scenario.default(ctx);
@@ -321,6 +328,7 @@ async function runScenario(name, { baseUrl }) {
     console.error(`  SCENARIO ERROR: ${receipt.error}`);
   } finally {
     await browser.close();
+    provision?.cleanup?.();
   }
 
   // A fresh bridge per kernel scenario: stop just the bridge (the preview
