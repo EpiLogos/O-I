@@ -1,0 +1,221 @@
+{
+  "schema": "oi.core-primitive-field/v0.2",
+  "status": "author-ratified-organisational-form; repository-harmonisation-pending",
+  "meta_concept": {
+    "name": "Objective Internality",
+    "role": "governing meta-concept above the matrix"
+  },
+  "ql_law": "QL determines at every level relative to that level",
+  "shape": {
+    "name": "QL 6x6 + parent S",
+    "parent_row": "S",
+    "product_rows": [
+      "S0",
+      "S1",
+      "S2",
+      "S3",
+      "S4",
+      "S5"
+    ],
+    "positions": [
+      {
+        "position": 0,
+        "name": "Identity / Centre",
+        "ql_function": "implicit ground / source / referential centre / potential",
+        "definition": "What is the identity or centre from which this local field proceeds? What persists as its referential ground before further differentiation?"
+      },
+      {
+        "position": 1,
+        "name": "Form / Artifact",
+        "ql_function": "material/content determination / manifest what",
+        "definition": "What determinate thing, content, artifact or manifest form is present here? ‘Form’ in this constitutional family means formed/manifest actuality—the WHAT—not QL #3 formal cause."
+      },
+      {
+        "position": 2,
+        "name": "Potency / Praxis",
+        "ql_function": "efficient cause / how / power in operation",
+        "definition": "What power, capability, method, action or praxis can operate here, and how is transformation actuated?"
+      },
+      {
+        "position": 3,
+        "name": "Transformation / Trajectory",
+        "ql_function": "formal mediation / relation / pattern of becoming",
+        "definition": "What relation, mediation or patterned trajectory connects and transforms the determinate forms?"
+      },
+      {
+        "position": 4,
+        "name": "Embodiment / Actuality",
+        "ql_function": "contextual arena / Context Frame / situated application",
+        "definition": "In what encompassing context, embodiment, life-world or material situation does the relation become actual?"
+      },
+      {
+        "position": 5,
+        "name": "Evidence / Continuity",
+        "ql_function": "quintessence / synthesis / Return / recursive continuity",
+        "definition": "What returned difference, evidence, memory, recognition or continuity is retained and becomes available to subsequent ground?"
+      }
+    ],
+    "matrix_address_format": "<row>/P<ql_position>",
+    "recursive_address_note": "Keep matrix row/position coordinates separate from QL dot-path recursion."
+  },
+  "rows": [
+    {
+      "row": "S",
+      "name": "O:I parent / shared field",
+      "function": "Whole-level, cross-product and inter-world relations",
+      "cells": {
+        "0": ["World", "Identity", "Ref", "Participant", "CommonReferent", "Self / Other situated positions"],
+        "1": ["Projection", "ReferentBinding", "shared representation / presentation", "Presence form"],
+        "2": ["Participation", "Contribution", "Addressing", "Admission", "Authority binding"],
+        "3": ["Relation", "Activity", "revision path", "versioned-world relation", "inter-world trajectory"],
+        "4": ["SharedField", "Encounter", "Presence-in-field", "Contact / mediated actuality"],
+        "5": ["Provenance", "Recognition", "Return path", "retained encounter history", "reconciliation evidence"]
+      },
+      "anchors": [
+        "O-I/docs/positions/FOUNDING-POSITIONS.md",
+        "O-I/docs/ARCHITECTURE.md",
+        "O-I/docs/OBJECTIVE-CO-INTERNALITY.md",
+        "O-I/docs/SHARED-FIELD.md",
+        "O-I/shared-field/COMMON-REFERENT.md"
+      ]
+    },
+    {
+      "row": "S0",
+      "name": "Central",
+      "function": "Persistent authored ground / durable worldhood",
+      "cells": {
+        "0": ["Central", "Project", "ProjectCentral", "Machine", "AgentProfile", "Control identity"],
+        "1": ["Ground", "Source", "Control source", "Flow source", "Machine declaration"],
+        "2": ["Authorship", "Governance", "Action", "human acceptance / mutation authority"],
+        "3": ["Change proposal", "NOW / DAY development", "Flow revision", "Project adoption / migration"],
+        "4": ["Work", "CentralComputer", "Machine role", "Workcell binding / local world"],
+        "5": ["Observation", "Inference", "Derived state", "source provenance", "revision / history"]
+      },
+      "anchors": [
+        "Central/docs/CENTRAL-SYSTEM-SPEC.md",
+        "Central/ctrl/src/world.rs",
+        "Central/ctrl/src/world_map.rs",
+        "Central/ctrl/src/world_source.rs",
+        "Central/ctrl/src/projectcentral.rs",
+        "Central/ctrl/src/projectcentral_ground.rs",
+        "Central/ctrl/src/projectcentral_now.rs",
+        "Central/ctrl/src/projectcentral_flow.rs",
+        "Central/ctrl/src/machine.rs",
+        "Central/ctrl/src/central_computer.rs",
+        "Central/ctrl/src/agent_profile.rs",
+        "Central/ctrl/src/agent_governance.rs"
+      ]
+    },
+    {
+      "row": "S1",
+      "name": "Actuation",
+      "function": "Situated agency / determination / Return",
+      "cells": {
+        "0": ["Agent", "Agency", "AgenticLocus", "agency lineage identity"],
+        "1": ["WorldBinding", "AgenticComposition", "Instantiation form", "Activity form"],
+        "2": ["Authority", "MetagencyGrant", "Delegation", "Agency bounds", "acting power"],
+        "3": ["Determination", "ActuationStream", "Activity", "self-differentiation / delegation / derivation / federation"],
+        "4": ["Instantiation", "Execution relation", "RealisedActuation", "bound-world actuality"],
+        "5": ["Return", "lineage / attribution", "recognition state", "world-mutation state"]
+      },
+      "anchors": [
+        "Actuation/docs/WORLD-BOUND-ROOT-AGENCY.md",
+        "Actuation/docs/REALISED-ACTUATION-LOOP.md",
+        "Actuation/contracts/agency-v1.schema.json",
+        "Actuation/contracts/activity-v1.schema.json",
+        "Actuation/contracts/instantiation-v1.schema.json",
+        "Actuation/contracts/actuation-stream-v1.schema.json",
+        "Actuation/contracts/realised-actuation-v1.schema.json"
+      ]
+    },
+    {
+      "row": "S2",
+      "name": "AIKit",
+      "function": "Resolution / context cognition / disclosed potency",
+      "cells": {
+        "0": ["Profile", "Scope", "Resource", "ProjectBinding", "resource / source identity"],
+        "1": ["Context", "ContextSource", "Surface", "Projection", "WikiSpace", "WikiNode", "WikiEdge", "WikiFrame", "WikiReading"],
+        "2": ["Capability", "Skill", "Method", "SkillSet", "ActionSet", "Procedure"],
+        "3": ["ContextResolution", "Generation", "KnowledgeChangeHorizon", "KnowledgeDependency", "KnowledgeImpact", "KnowledgeRoute"],
+        "4": ["Component", "Composition / HarnessComposition", "SessionSpace", "WorldInhabitation", "KnowledgeApplication"],
+        "5": ["Trust", "Familiarity", "FitnessObservation", "UsageSignal", "WikiProvenanceRef", "SemanticRevision", "reading basis / history"]
+      },
+      "anchors": [
+        "ai-kit/docs/v2/01-PRODUCT-AND-OWNERSHIP.md",
+        "ai-kit/crates/aikit-core/src/context.rs",
+        "ai-kit/crates/aikit-core/src/context_resolution.rs",
+        "ai-kit/crates/aikit-core/src/resource/",
+        "ai-kit/crates/aikit-core/src/composition.rs",
+        "ai-kit/crates/aikit-core/src/session_space.rs",
+        "ai-kit/crates/aikit-core/src/world_inhabitation.rs",
+        "ai-kit/crates/aikit-core/src/knowledge_wiki.rs",
+        "ai-kit/crates/aikit-core/src/knowledge_navigation.rs",
+        "ai-kit/crates/aikit-core/src/knowledge_living.rs",
+        "ai-kit/crates/aikit-core/src/knowledge_living_relations.rs"
+      ]
+    },
+    {
+      "row": "S3",
+      "name": "Software Factory",
+      "function": "Developmental form / intelligible transformation",
+      "cells": {
+        "0": ["Project", "developmental actor identity", "Run identity"],
+        "1": ["Artifact", "Claim", "Decision", "Candidate", "HumanRequest"],
+        "2": ["Method", "Capability", "Action", "Commission", "developmental praxis"],
+        "3": ["Run", "RunMap", "ProjectMap", "ProjectDevelopment", "SourceIntegration", "developmental frontier"],
+        "4": ["Execution", "Checkout", "Gate", "Application", "candidate experience"],
+        "5": ["Evidence", "Event", "Trace", "Recognition", "Project Canon", "returned Ground"]
+      },
+      "anchors": [
+        "agent-system-design/docs/canon/QL-SOFTWARE-FACTORY-PRIMITIVE-RELATIONS.md",
+        "agent-system-design/docs/canon/PRAXIS-PRIMITIVES.md",
+        "agent-system-design/docs/canon/QL-SOFTWARE-FACTORY-ARCHITECTURE-SPEC.md",
+        "agent-system-design/docs/canon/PROJECT-DEVELOPMENT-ORIENTATION-AND-RETURN.md"
+      ]
+    },
+    {
+      "row": "S4",
+      "name": "Workcell",
+      "function": "Materialisation / contextual actuality",
+      "cells": {
+        "0": ["Workcell", "material-world identity", "opaque client / semantic refs"],
+        "1": ["ExecutionDemand", "BindingGraph", "MaterialisationPlan", "workspace / service / fabric binding forms"],
+        "2": ["Material requirements", "OperationalOffer", "provider capability / capacity", "control-plane operations"],
+        "3": ["Plan", "Prepare", "Lifecycle", "Reconcile", "Candidate materialisation trajectory"],
+        "4": ["MaterialisedExecutionWorld", "Workspace", "Runtime", "Service", "Endpoint", "Host"],
+        "5": ["Observed state", "material evidence", "collected artifacts", "recovery / retention state"]
+      },
+      "anchors": [
+        "Workcell/README.md",
+        "Workcell/docs/ARCHITECTURE.md",
+        "Workcell/docs/MATERIALISATION-SPEC.md",
+        "Workcell/docs/LIFECYCLE-AND-CANDIDATES.md",
+        "Workcell/docs/CONNECTIVITY-FABRIC.md"
+      ]
+    },
+    {
+      "row": "S5",
+      "name": "Quaternal Logic",
+      "function": "Formal relation / refraction / recursive intelligibility",
+      "cells": {
+        "0": ["Subject identity", "Ref", "QLAddress", "Position", "Whole / anchor"],
+        "1": ["QLForm", "Lens", "State6", "PrimitiveTick", "addressable reading / formal artifact"],
+        "2": ["Operator", "Locate", "Relate", "Refract", "VĀK instruction", "synthesising operation"],
+        "3": ["Relation", "Conjugacy", "Cross relation", "complement / mediation", "nesting / traversal"],
+        "4": ["ContextFrame", "MEF address", "Resonance", "situated reading field"],
+        "5": ["Synthesis / Return", "Reading provenance", "conformance evidence", "returned differentiation"]
+      },
+      "anchors": [
+        "QL-MEF/README.md",
+        "QL-MEF/docs/HOLOGRAPHIC-KERNEL-FORMAL-REFERENCE.md",
+        "QL-MEF/c/include/ql/primitive.h",
+        "QL-MEF/c/src/primitive.c"
+      ]
+    }
+  ],
+  "canonical_markdown": "docs/CORE-PRIMITIVE-FIELD.md",
+  "machine_views": [
+    "suite/core-primitive-field.json",
+    "suite/core-primitive-field.csv"
+  ]
+}
