@@ -140,7 +140,7 @@
       "public_name": "AIKit",
       "function": "context, capability, model, credential, SessionSpace and provider-process resolution",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "docs_ref": "63c2f89244ab721b8008483e7313b6a80232e25f",
+      "docs_ref": "e8684f81750c684527ce06757ecc2fdff0871690",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -164,7 +164,7 @@
           "doctor",
           "--json"
         ],
-        "command_revision": "63c2f89244ab721b8008483e7313b6a80232e25f",
+        "command_revision": "e8684f81750c684527ce06757ecc2fdff0871690",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [
@@ -181,8 +181,8 @@
       "install": {
         "kind": "oi-managed-binary",
         "modality": "developer-source",
-        "ref": "63c2f89244ab721b8008483e7313b6a80232e25f",
-        "revision": "63c2f89244ab721b8008483e7313b6a80232e25f",
+        "ref": "e8684f81750c684527ce06757ecc2fdff0871690",
+        "revision": "e8684f81750c684527ce06757ecc2fdff0871690",
         "path": "crates/aikit-cli",
         "note": "Current #97 source/install pin; immutable released artifacts remain separately recorded in suite/manifest.json."
       },
@@ -271,7 +271,7 @@
       "public_name": "Workcell",
       "function": "material execution, model-serving base, process containment and secret materialisation",
       "repository": "https://github.com/EpiLogos/Workcell",
-      "docs_ref": "20520fe16b76b884877df3403df5ae776cbc035f",
+      "docs_ref": "8eb521eefcfde0f88386d7782438a925d48e66d7",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -292,7 +292,7 @@
           "--json",
           "doctor"
         ],
-        "command_revision": "20520fe16b76b884877df3403df5ae776cbc035f",
+        "command_revision": "8eb521eefcfde0f88386d7782438a925d48e66d7",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [
@@ -309,8 +309,8 @@
       "install": {
         "kind": "oi-managed-binary",
         "modality": "developer-source",
-        "ref": "20520fe16b76b884877df3403df5ae776cbc035f",
-        "revision": "20520fe16b76b884877df3403df5ae776cbc035f",
+        "ref": "8eb521eefcfde0f88386d7782438a925d48e66d7",
+        "revision": "8eb521eefcfde0f88386d7782438a925d48e66d7",
         "path": "crates/workcell-cli",
         "note": "Current #97 source/install pin including selector-independent native executable identity. Provider-specific physical resources remain physical acceptance evidence."
       },
