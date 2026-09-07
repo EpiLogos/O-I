@@ -45,6 +45,10 @@ pub const KERNEL_EVENT_TOPIC: &str = "oi:kernel-event";
 /// is a disclosure trigger, never a second source of truth.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(tag = "event", rename_all = "snake_case")]
+// FocusChanged carries the full GlobalFocus reading so the event stays a
+// verbatim disclosure; kernel events are emitted sparsely, so the variant
+// size cost is not on a hot path.
+#[allow(clippy::large_enum_variant)]
 pub enum KernelEvent {
     WorldChanged { summary: String },
     /// The one global focus relation moved (02 §7, 03 §B).

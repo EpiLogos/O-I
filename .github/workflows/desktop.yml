@@ -37,6 +37,17 @@ jobs:
         run: |
           cargo test --manifest-path cli/Cargo.toml --all-targets --locked
           cargo clippy --manifest-path cli/Cargo.toml --all-targets --locked -- -D warnings
+      - name: Build pinned Central ctrl for cradle kernel integration
+        shell: bash
+        run: |
+          set -euo pipefail
+          CENTRAL_SHA="$(python3 -c "import json; s=json.load(open('surfaces.json')); print(next(x['native']['command_revision'] for x in s['surfaces'] if x['id']=='central'))")"
+          git clone --quiet https://github.com/EpiLogos/Central.git "$RUNNER_TEMP/central"
+          git -C "$RUNNER_TEMP/central" checkout --quiet --detach "$CENTRAL_SHA"
+          test "$(git -C "$RUNNER_TEMP/central" rev-parse HEAD)" = "$CENTRAL_SHA"
+          cargo build --manifest-path "$RUNNER_TEMP/central/Cargo.toml" --workspace --locked --release
+          test -x "$RUNNER_TEMP/central/target/release/ctrl"
+          echo "OI_CENTRAL_CTRL_BIN=$RUNNER_TEMP/central/target/release/ctrl" >> "$GITHUB_ENV"
       - name: Test and lint cradle kernel
         run: |
           cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --all-targets

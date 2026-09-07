@@ -7,7 +7,7 @@
       "public_name": "Central",
       "function": "persistent personal ground",
       "repository": "https://github.com/EpiLogos/Central",
-      "docs_ref": "616749373a60f55e9fd99e4f2b0bebf2c73a674b",
+      "docs_ref": "daec44cc5fdde2a9785855e05f3bf55e87623b04",
       "docs_path": "README.md",
       "skill_paths": [
         "skills/control-maintenance/SKILL.md",
@@ -37,7 +37,7 @@
           "doctor",
           "--json"
         ],
-        "command_revision": "616749373a60f55e9fd99e4f2b0bebf2c73a674b",
+        "command_revision": "daec44cc5fdde2a9785855e05f3bf55e87623b04",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [
@@ -54,8 +54,8 @@
       "install": {
         "kind": "oi-managed-binary",
         "modality": "fresh-ground",
-        "ref": "616749373a60f55e9fd99e4f2b0bebf2c73a674b",
-        "revision": "616749373a60f55e9fd99e4f2b0bebf2c73a674b",
+        "ref": "daec44cc5fdde2a9785855e05f3bf55e87623b04",
+        "revision": "daec44cc5fdde2a9785855e05f3bf55e87623b04",
         "path": "ctrl",
         "note": "Current #97 source/install pin. Central owns Control, Work, ProjectCentral, source authority, AgentProfile persistence/Actions and authored Skill/SkillSet/Method/Routine assignments. Routine enable/proof/trigger/authority remains AIKit-owned."
       },
@@ -82,7 +82,7 @@
       "public_name": "Actuation",
       "function": "Agency, WorldBinding, RootScope, Metagency, Determination and Return authority",
       "repository": "https://github.com/EpiLogos/Actuation",
-      "docs_ref": "2b458afdf284c5ece368a51340c64db4fe758486",
+      "docs_ref": "bdfdb987a6a4b29a41959b9fa84b38db65af0012",
       "docs_path": "docs/WORLD-BOUND-ROOT-AGENCY.md",
       "skill_paths": [],
       "native": {
@@ -103,7 +103,7 @@
           "verify",
           "--json"
         ],
-        "command_revision": "2b458afdf284c5ece368a51340c64db4fe758486",
+        "command_revision": "bdfdb987a6a4b29a41959b9fa84b38db65af0012",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [],
@@ -114,8 +114,8 @@
       "install": {
         "kind": "oi-managed-native-cli",
         "modality": "developer-source",
-        "ref": "2b458afdf284c5ece368a51340c64db4fe758486",
-        "revision": "2b458afdf284c5ece368a51340c64db4fe758486",
+        "ref": "bdfdb987a6a4b29a41959b9fa84b38db65af0012",
+        "revision": "bdfdb987a6a4b29a41959b9fa84b38db65af0012",
         "path": "bin/actuation",
         "note": "Current accepted owner main publishes the dependency-free native Actuation command and declares native CLI installation."
       },
@@ -140,7 +140,7 @@
       "public_name": "AIKit",
       "function": "context, capability, model, credential, SessionSpace and provider-process resolution",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "docs_ref": "bc7c1588210690ba3696b5eef6c86226f9a89deb",
+      "docs_ref": "63c2f89244ab721b8008483e7313b6a80232e25f",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -164,7 +164,7 @@
           "doctor",
           "--json"
         ],
-        "command_revision": "bc7c1588210690ba3696b5eef6c86226f9a89deb",
+        "command_revision": "63c2f89244ab721b8008483e7313b6a80232e25f",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [
@@ -181,8 +181,8 @@
       "install": {
         "kind": "oi-managed-binary",
         "modality": "developer-source",
-        "ref": "bc7c1588210690ba3696b5eef6c86226f9a89deb",
-        "revision": "bc7c1588210690ba3696b5eef6c86226f9a89deb",
+        "ref": "63c2f89244ab721b8008483e7313b6a80232e25f",
+        "revision": "63c2f89244ab721b8008483e7313b6a80232e25f",
         "path": "crates/aikit-cli",
         "note": "Current #97 source/install pin; immutable released artifacts remain separately recorded in suite/manifest.json."
       },
@@ -207,7 +207,7 @@
       "public_name": "Software Factory",
       "function": "developmental Project, Journey, Run, Candidate, evidence and authorised Factory Action semantics",
       "repository": "https://github.com/EpiLogos/agent-system-design",
-      "docs_ref": "8ba2c041bf5311ddd4eeb41d58aad40c644fcbce",
+      "docs_ref": "ea4cec6ac105aa527cda034bd3e102645b4aa8d9",
       "docs_path": "factory/README.md",
       "skill_paths": [],
       "native": {
@@ -228,7 +228,7 @@
           "verify",
           "--json"
         ],
-        "command_revision": "8ba2c041bf5311ddd4eeb41d58aad40c644fcbce",
+        "command_revision": "ea4cec6ac105aa527cda034bd3e102645b4aa8d9",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [
@@ -245,8 +245,8 @@
       "install": {
         "kind": "oi-managed-native-cli",
         "modality": "developer-source",
-        "ref": "8ba2c041bf5311ddd4eeb41d58aad40c644fcbce",
-        "revision": "8ba2c041bf5311ddd4eeb41d58aad40c644fcbce",
+        "ref": "ea4cec6ac105aa527cda034bd3e102645b4aa8d9",
+        "revision": "ea4cec6ac105aa527cda034bd3e102645b4aa8d9",
         "path": "factory",
         "note": "Current accepted owner main publishes the native Factory CLI over FactoryBuild/provider/Action owners and receives composed agent capability through typed stable refs (#188); the historical repository name remains agent-system-design pending canonical rename."
       },
@@ -271,7 +271,7 @@
       "public_name": "Workcell",
       "function": "material execution, model-serving base, process containment and secret materialisation",
       "repository": "https://github.com/EpiLogos/Workcell",
-      "docs_ref": "b9cd5e02b862b5f4c8793ec96cfd32611f068522",
+      "docs_ref": "20520fe16b76b884877df3403df5ae776cbc035f",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -292,7 +292,7 @@
           "--json",
           "doctor"
         ],
-        "command_revision": "b9cd5e02b862b5f4c8793ec96cfd32611f068522",
+        "command_revision": "20520fe16b76b884877df3403df5ae776cbc035f",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [
@@ -309,8 +309,8 @@
       "install": {
         "kind": "oi-managed-binary",
         "modality": "developer-source",
-        "ref": "b9cd5e02b862b5f4c8793ec96cfd32611f068522",
-        "revision": "b9cd5e02b862b5f4c8793ec96cfd32611f068522",
+        "ref": "20520fe16b76b884877df3403df5ae776cbc035f",
+        "revision": "20520fe16b76b884877df3403df5ae776cbc035f",
         "path": "crates/workcell-cli",
         "note": "Current #97 source/install pin including selector-independent native executable identity. Provider-specific physical resources remain physical acceptance evidence."
       },

@@ -24,10 +24,15 @@ pub struct ResolvedCatalogue {
 
 pub fn resolve() -> Result<ResolvedCatalogue, String> {
     if let Some(path) = override_path() {
-        let json = fs::read_to_string(&path)
-            .map_err(|error| format!("cannot read runtime catalogue {}: {error}", path.display()))?;
+        let json = fs::read_to_string(&path).map_err(|error| {
+            format!("cannot read runtime catalogue {}: {error}", path.display())
+        })?;
         validate(&json, &path.display().to_string())?;
-        return Ok(ResolvedCatalogue { json, origin: "runtime", path: Some(path) });
+        return Ok(ResolvedCatalogue {
+            json,
+            origin: "runtime",
+            path: Some(path),
+        });
     }
     Ok(ResolvedCatalogue {
         json: EMBEDDED_CATALOGUE_JSON.to_owned(),
@@ -51,7 +56,10 @@ pub fn state_catalogue_path() -> Result<PathBuf, String> {
         return Ok(PathBuf::from(xdg).join("oi").join("catalogue.json"));
     }
     if let Some(home) = env::var_os("HOME").filter(|value| !value.is_empty()) {
-        return Ok(PathBuf::from(home).join(".config").join("oi").join("catalogue.json"));
+        return Ok(PathBuf::from(home)
+            .join(".config")
+            .join("oi")
+            .join("catalogue.json"));
     }
     Err("cannot locate the O:I state directory: set OI_HOME or HOME".to_owned())
 }
@@ -62,8 +70,14 @@ pub fn validate(json: &str, label: &str) -> Result<(), String> {
     if value.get("schema").and_then(serde_json::Value::as_u64) != Some(1) {
         return Err(format!("runtime catalogue {label} must declare schema 1"));
     }
-    if !value.get("surfaces").map(serde_json::Value::is_array).unwrap_or(false) {
-        return Err(format!("runtime catalogue {label} must carry a surfaces array"));
+    if !value
+        .get("surfaces")
+        .map(serde_json::Value::is_array)
+        .unwrap_or(false)
+    {
+        return Err(format!(
+            "runtime catalogue {label} must carry a surfaces array"
+        ));
     }
     Ok(())
 }

@@ -415,8 +415,14 @@ fn bootstrap_hands_the_guardian_set_to_aikit_when_installed() {
         stdout.contains("aikit: adopted 3 guardian capsule(s)"),
         "{stdout}\naikit calls:\n{aikit_log}"
     );
-    assert!(stdout.contains("aikit: SkillSet oi-guardian holds 3 member(s)"), "{stdout}");
-    assert!(stdout.contains("aikit: applied generation gen-1"), "{stdout}");
+    assert!(
+        stdout.contains("aikit: SkillSet oi-guardian holds 3 member(s)"),
+        "{stdout}"
+    );
+    assert!(
+        stdout.contains("aikit: applied generation gen-1"),
+        "{stdout}"
+    );
 
     // The integrated sequence: project, survey, apply the adoption, create
     // the set, publish the generation.
@@ -897,7 +903,10 @@ fn sync_refreshes_a_stale_adopted_tree_through_aikit_procedures() {
             .join("central-session-strap")
             .join(name);
         assert!(
-            fs::symlink_metadata(&sibling).unwrap().file_type().is_symlink(),
+            fs::symlink_metadata(&sibling)
+                .unwrap()
+                .file_type()
+                .is_symlink(),
             "{name} was not relinked by the re-adopt"
         );
         assert_eq!(
@@ -930,7 +939,10 @@ fn bootstrap_projects_guardian_skillset_into_a_fresh_ground() {
         String::from_utf8_lossy(&init.stderr)
     );
     let stdout = String::from_utf8_lossy(&init.stdout);
-    assert!(stdout.contains("guardian SkillSet oi:skillset:base-guardian"), "{stdout}");
+    assert!(
+        stdout.contains("guardian SkillSet oi:skillset:base-guardian"),
+        "{stdout}"
+    );
     for name in ["oi", "oi-suite-operator", "central-session-strap"] {
         for destination in projected_paths(&ground, name) {
             assert!(destination.exists(), "missing projection {destination:?}");
