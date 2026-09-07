@@ -12,6 +12,7 @@ permissions:
   contents: read
 
 env:
+  CARGO_INCREMENTAL: "0"
   CENTRAL_SHA: 31d54eb4a6202c89c7f60ec004654916133dea94
   AIKIT_SHA: 6b2517862faccc7787b36ef45ef8d19186fe8128
   FACTORY_SHA: 0731d654eab9357323f603f306332d3b7e0e71cb
@@ -39,6 +40,12 @@ jobs:
           ref: ${{ env.FACTORY_SHA }}
           path: owners/factory
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            owners/central
+            owners/ai-kit
+          cache-on-failure: true
       - name: Prove exact native owner revisions
         shell: bash
         run: |

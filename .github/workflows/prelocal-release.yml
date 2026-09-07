@@ -24,12 +24,21 @@ on:
 permissions:
   contents: read
 
+env:
+  CARGO_INCREMENTAL: "0"
+
 jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            cli
+            desktop/cradle/src-tauri
+          cache-on-failure: true
       - run: cargo test --manifest-path cli/Cargo.toml --locked
 
   desktop-bundle:
@@ -44,6 +53,12 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            cli
+            desktop/cradle/src-tauri
+          cache-on-failure: true
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -107,6 +122,12 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            cli
+            desktop/cradle/src-tauri
+          cache-on-failure: true
       - name: Build locked O:I bootstrap
         run: cargo build --manifest-path cli/Cargo.toml --locked --release --target '${{ matrix.target }}' --bin oi
       - name: Package exact-SHA pre-local artifact

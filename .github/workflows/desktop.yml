@@ -27,12 +27,22 @@ on:
 permissions:
   contents: read
 
+env:
+  CARGO_INCREMENTAL: "0"
+
 jobs:
   core:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            cli
+            desktop/cradle/kernel
+            desktop/cradle/src-tauri
+          cache-on-failure: true
       - name: Test and lint O:I CLI library
         run: |
           cargo test --manifest-path cli/Cargo.toml --all-targets --locked
@@ -68,6 +78,13 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            cli
+            desktop/cradle/kernel
+            desktop/cradle/src-tauri
+          cache-on-failure: true
       - uses: actions/setup-node@v4
         with:
           node-version: 22

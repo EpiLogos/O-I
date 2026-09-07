@@ -21,10 +21,18 @@ on:
       - "docs/SUITE-OPERATOR-SKILLSET.md"
       - ".github/workflows/suite-skillset.yml"
 
+env:
+  CARGO_INCREMENTAL: "0"
+
 jobs:
   conformance:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            cli
+          cache-on-failure: true
       - run: cargo test --manifest-path cli/Cargo.toml --test suite_skillset

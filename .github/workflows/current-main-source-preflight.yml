@@ -16,6 +16,9 @@ on:
 permissions:
   contents: read
 
+env:
+  CARGO_INCREMENTAL: "0"
+
 jobs:
   current-source:
     name: current-source / ${{ matrix.product }}
@@ -36,6 +39,13 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            tests/project-context-handoff
+            tests/native-action-parity
+            tests/journey-routine-handoff
+          cache-on-failure: true
       - name: Test exact current in-scope native-main source
         run: >-
           python3 scripts/verify-current-main-source.py
@@ -55,6 +65,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            tests/project-context-handoff
+            tests/native-action-parity
+            tests/journey-routine-handoff
+          cache-on-failure: true
       - name: Exercise exact AIKit → Factory context/Run/Return seam
         run: cargo test --manifest-path tests/project-context-handoff/Cargo.toml
 
@@ -64,6 +81,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            tests/project-context-handoff
+            tests/native-action-parity
+            tests/journey-routine-handoff
+          cache-on-failure: true
       - name: Consume one exact-main Factory Action across projections
         run: cargo test --manifest-path tests/native-action-parity/Cargo.toml
 
@@ -73,5 +97,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            tests/project-context-handoff
+            tests/native-action-parity
+            tests/journey-routine-handoff
+          cache-on-failure: true
       - name: Exercise exact Central → AIKit → Factory W12 seam
         run: cargo test --manifest-path tests/journey-routine-handoff/Cargo.toml
