@@ -820,3 +820,5 @@ C3/C4/C5 await reviewed C2. No cradle src/kernel/native state touched by this wa
 - Receipt: `/tmp/w2-c3-oi/w2-c3-graph-kernel-input-receipt.json`; test log `/tmp/w2-c3-oi/kernel-test.log`.
 
 C4 (graph presentation, ONE dedicated worker) dispatches next against a tree carrying the reviewed C3 delta. C5 (independent acceptance) still awaits serialized native integration + executable binding.
+
+**Defect resolved on-tree (owner-directed):** Frank ruled the simple amend over a rebase-from-main. The stray modality hunk is reverted on cradle-p1 at `d705d97`; the `oi` bin target compiles green from the committed tree (verified, dev profile). The /tmp wave-2 exports' cli source is now byte-identical to committed p1 — the "export-local repair" provenance caveat is discharged. Forward-porting `modality.rs` from origin/main remains a separate landing decision, not wave-2 scope.
