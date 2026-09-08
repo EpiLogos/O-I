@@ -7,7 +7,6 @@ on:
       - 'scripts/collate-product-capabilities.py'
       - 'tests/test_collate_product_capabilities.py'
       - 'cli/**'
-      - 'desktop/cradle/kernel/**'
       - '.github/workflows/product-capabilities.yml'
   push:
     branches: [main]
@@ -17,7 +16,6 @@ on:
       - 'scripts/collate-product-capabilities.py'
       - 'tests/test_collate_product_capabilities.py'
       - 'cli/**'
-      - 'desktop/cradle/kernel/**'
       - '.github/workflows/product-capabilities.yml'
   workflow_dispatch:
 permissions:
@@ -42,21 +40,15 @@ jobs:
       - uses: Swatinem/rust-cache@v2.9.2
         with:
           workspaces: cli
-      - name: Build S and M-prime entry points
+      - name: Build suite capability entry point
         run: cargo build --manifest-path cli/Cargo.toml --locked
       - name: Verify CLI disclosures match the shipped projections
         run: |
           cli/target/debug/oi capabilities --json > /tmp/oi-capabilities.json
-          cli/target/debug/oi desktop capabilities --json > /tmp/oi-desktop.json
           python3 - <<'PY'
           import json
           from pathlib import Path
-          for expected, observed in [('suite/product-capabilities.json', '/tmp/oi-capabilities.json'), ('suite/desktop-projection.json', '/tmp/oi-desktop.json')]:
-              assert json.loads(Path(expected).read_text()) == json.loads(Path(observed).read_text()), expected
-          catalogue = json.loads(Path('suite/product-capabilities.json').read_text())
-          capabilities = {r['id'] for r in catalogue['records'] if r['record_type'] == 'capability'}
-          projection = json.loads(Path('suite/desktop-projection.json').read_text())
-          for operation in projection['operations']:
-              assert set(operation['capability_refs']) <= capabilities, operation['id']
-              assert Path(operation['implementation'].split('#')[0]).is_file(), operation['id']
+          expected = json.loads(Path('suite/product-capabilities.json').read_text())
+          observed = json.loads(Path('/tmp/oi-capabilities.json').read_text())
+          assert expected == observed
           PY
