@@ -573,3 +573,132 @@ Cradle consumer step failed only on a wiki test that shells to `aikit` on
 PATH without the `knowledge` route (binding, not Central). Untouched:
 `ctrl/src/engineering_ground.rs` (unrelated dirty work). Dev bridge and walk
 bindings now use this ctrl.
+
+PF Flow / source-return owner relation (2026-09-08): no Central defect found at
+pinned `Work/Central` revision `f3559dbf900b8409ff00b24a84b824c6cd6ec2c3`.
+Added the typed owner-Action adapter in `desktop/cradle/kernel/src/flow.rs`
+and real consumer proof in `desktop/cradle/kernel/tests/flow_return.rs`:
+the exact candidate O:I executable routes to the exact pinned Central
+executable, preserving FlowRef/SourceRef, bytes, revision history, lifecycle,
+actor/session provenance and explicit source-return outcomes. Owner evidence:
+`/tmp/pf-flow-owner-receipt-20260908.json` (isolated root
+`/tmp/pf-flow-owner.Pv1u7P`). Consumer command
+`cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --test flow_return
+-- --nocapture` passed 1/1; kernel unit tests passed 20/20. Full kernel test
+run passed all exercised non-ignored cases except the unrelated existing
+AIKit `knowledge` subcommand failure in `source_cas`; no walk was run because
+the brief keeps Flow/Return UI inputs with the UI lead. Candidate hashes:
+O:I `582c2b5ad541c09fc0890a501d035f73b6e5224e4cce5e569de9d66d191cf999`,
+Central `538e70402dff0377efd5c39843aefb03355de281b7bada9945760a6ac45ff887`.
+No Central files, UI files, bridges, binaries, branches, commits or pushes
+were changed by this unit.
+
+Accountable domain checkpoint (2026-09-08): the shell redesign did not remove
+Central ordinary-file CAS/history/recovery, recognition or base64 material
+reads. They are present on accepted Central main
+`f3559dbf900b8409ff00b24a84b824c6cd6ec2c3`; the accepted-main blobs for
+`ctrl/src/files.rs` and `ctrl/src/file_mutation.rs` are byte-identical to the
+previously tested `9a6abf4` candidate. The live bridge's release ctrl was not
+replaced. Owner/consumer evidence: `cargo test -p ctrl files::tests` 8/8;
+real temporary-ground `ordinary_files.py` 35/35; kernel material-bytes 2/2;
+explicit ignored native ordinary-CAS 1/1; source-CAS 11/11 with one intentional
+ignore. An accepted-main rebuild/hash remains owed once the shared bridge is
+free.
+
+AIKit agency reconciliation found no required implementation diff. The owner
+already uses unlimited normal signal count (`0`), bounded unattributed queue
+(64), durable ordered SQLite history and bounded page/view reads. Real ACP
+evidence produced 531 long-stream events, 528 thinking updates, same-session
+continuation `OI_CONTINUED_OK`, draft revision 7 and two concurrent native
+session refs. Receipts:
+`/private/tmp/aikit-agency-gate-20260908-retry/runner.log` and
+`/private/tmp/aikit-agency-concurrent-20260908/concurrent-acceptance.json`;
+tested `aikit-session-space` hash
+`8045de38676d6666cf244b028a1503fb8ccab49e5cd74cc9a99a2a6d227728de`.
+Permission remains open: a real provider used read/edit tools but emitted no
+native permission request/response event
+(`/private/tmp/aikit-agency-permission-20260908/runner.log`).
+
+Knowledge consumer repair: `desktop/cradle/kernel/src/knowledge.rs` now
+preserves non-zero AIKit status/stderr when stdout is empty instead of
+misreporting a JSON decode failure. Exact consumer O:I hash
+`582c2b5ad541c09fc0890a501d035f73b6e5224e4cce5e569de9d66d191cf999`;
+real provider-loss and source-CAS tests passed apart from unrelated moving
+material cases in the then-full suite.
+
+Workcell commit `70a39c1` makes the missing owner-native `material` operation
+operative. It composes the receipt WorldRef with sequential observe/expose
+outcomes and typed body/provenance descriptors; the kernel only validates and
+adapts. `cargo test --locked -p epilogos-workcell-cli --test cli` passed 4/4;
+`cargo test --locked -p epilogos-workcell-runtime --test expose_collect`
+passed 6/6; exact-bound O:I `material_native` passed 1/1. Candidate Workcell
+hash `dee625432b0373db6bfcc27319b13760af353cfc844015556ab2d75ca985e0ec`;
+evidence `/tmp/oi-workcell-material-H8fWme/`. Non-empty HTML/CSS/JavaScript
+bodies, nested owner assets and unsupported-format dispositions remain
+unproved through this route.
+
+Factory is a genuine contract mismatch, not hidden presentation. Accepted
+Factory `947ce7a` exposes only explicit-state `build.snapshot`,
+`build.refresh`, `action.list`, `action.invoke` and `verify`. It has no
+`build discover`, binding snapshot or `action intent`; accepted Actuation
+`163aef0` has no generic `authority approve`. No desktop registry/grant was
+invented and the ignored consumer test is not acceptance. Owner checks:
+`cargo fmt --check`; `cargo clippy --all-targets -- -D warnings`;
+`cargo test --all-targets` 42 passed; `validate_factory_skills.py` OK.
+Evidence `/tmp/oi-factory-gate.N8Ztg4/owner-command-probes.log`.
+
+FND-06 remains open. The former 20-cycle result contained 80 failed steps.
+The repaired 23-cycle browser run has zero step failures but heap slope about
+175,378 bytes/cycle and DOM slope about 86.526 nodes/cycle, both above the
+gate, and is not native child-window evidence.
+
+Fresh capability reconciliation at
+`/tmp/oi-programme-acceptance-20260908.otSFg6` contains all 166 unique
+obligations: 111 exact-source evidence overlaps, 55 unmatched and zero
+accepted. Dispositions: 92 not-yet-connected, 45 non-UI, 16 native-alternate,
+12 connected-unaccepted, one unavailable. Hashes: `dispositions.json`
+`ef1506547d7a8b497f3fdc230d7d6c1a41c6d17435a90871ac8e9499e36da275`;
+`dispositions.tsv`
+`6e809556924eaa162bf0f03b4d08ac3e7ab3b2c886de374524ffe4ea5916d278`;
+`blockers.json`
+`5253d8a643499fff261f3538dced982cfa52112bf35edd6b71437dcedbf07f95`.
+
+| Lane | Owner revision | State | Kernel role | Next gate |
+|---|---|---|---|---|
+| Central files | `f3559db` | real owner + consumer tests green | exact owner adapter | accepted-main rebuild/hash; UI-lead bind |
+| AIKit agency | `9e586aa` inspected | stream/thinking/continuation/concurrency real; permission open | encounter adapter | native permission/failure taxonomy |
+| Knowledge | AIKit `9e586aa`; O:I working diff | truthful provider-loss repair | no desktop index | clean full suite after moving lanes settle |
+| Flow/Return | Central `f3559db`; O:I working diff | typed owner contract green | typed adapter, no owner state | expose stable Rust `KernelOp`; then UI seam |
+| Workcell material | Workcell `70a39c1`; O:I working test | lifecycle route green | receipt/identity validator | rich body/assets/refusal proof |
+| Factory | Factory `947ce7a`; Actuation `163aef0` | incompatible contract proved | legacy adapter unusable | owner-contract reconciliation |
+| FND-06 | UI-lead working tree | harness fixed; growth observed | none | lifecycle repair + native cycles |
+
+
+## 2026-09-08 · UI lead shell/pane tranche (user-directed topbar correction)
+
+Original WIP safety checkpoint `79a446d` pushed before implementation. User
+explicitly requested three parallel subagents and moved region controls from
+footer to a window-wide, focused-pane-aware topbar. Built that strip, quiet
+workspace footer, usable narrow focused-pane selector, persistent empty splits,
+pane/tab operations and native detach/re-dock focus/draft recovery. Tab
+activation and Close are now distinct native accessibility actions.
+
+Functional: shell-recovery 36/36, surfaces 28/28, material 26/26, navigator
+23/23, spatial 42/42 passed. Real app evidence includes empty-pane reload and
+fill, width transitions, overlays and real HTML/CSS/JavaScript interaction.
+Native macOS observations include topbar integration, split/fill, narrow pane
+switching, editor focus, draft-preserving detach/re-dock, quit/relaunch and
+separate tab activation/close/reopen. Browser screenshots are identified as
+browser evidence; native screenshots remain in the task record.
+
+Resource correction to earlier failing readings: explicit retained-heap
+measurement after bounding renderer receipts to 256 produced 20,537.8 B/cycle
+(<58,890 threshold), DOM 3.729/cycle, 20/20 successful sampled cycles. Earlier
+failed/no-GC readings remain preserved. This is not native GPU/lifetime
+acceptance. FND-06 and the full FND-00–06 gate remain open; provider helper
+composition and native permission/failure coverage are unresolved.
+
+System internal design is deferred to its separate task. Point-cloud options
+are isolated proposals, not production interaction effects. Review and exact
+file/build evidence: `desktop/cradle/walk/artifacts/review/SHELL-PANES-TRANCHE-2026-09-08.md`.
+No phase advancement. Concurrent kernel, System and A2A work is preserved.

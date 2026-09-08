@@ -155,6 +155,9 @@ pub enum KernelOp {
     ProjectRead { project: String },
     WorldBrowse,
     Knowledge { #[serde(default)] project: Option<String>, request: knowledge::Request },
+    /// Forward one retained Flow/source-return Action to Central. The request
+    /// and response remain owner-shaped; the kernel is only the typed seam.
+    Flow { request: flow::Request },
     AgencyRead { project: String },
     Encounter {project:String,request:agency::EncounterRequest},
     MaterialRead {target:material::Target},
@@ -228,6 +231,7 @@ pub enum KernelOpResult {
     State { snapshot: KernelSnapshot },
     WorldRead { snapshot: KernelSnapshot },
     Knowledge { data: serde_json::Value },
+    Flow { response: flow::Response },
     AgencyReading { project_ref: String, spaces: serde_json::Value, observed_at_unix_ms: u64 },
     EncounterReading {data:serde_json::Value},
     FileOperation {data:serde_json::Value},
@@ -409,6 +413,17 @@ impl Kernel {
                     });
                 }
                 Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::Knowledge { data } })
+            }
+            KernelOp::Flow { request } => {
+                let action = request.owner_action().to_owned();
+                let response = self
+                    .client
+                    .apply_request(request)
+                    .unwrap_or_else(|error| flow::Response::Failure { action, error });
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::Flow { response },
+                })
             }
             KernelOp::WorldRead => self.navigate(None, false),
             KernelOp::ProjectRead { project } => self.navigate(Some(&project), false),

@@ -32,7 +32,8 @@ use serde_json::{json, Value};
 /// Why an owner Action call did not serve. Structured so the kernel can
 /// tell an unavailable owner (honest absence, degraded locally) from an
 /// owner that answered "no" (returned as it stands).
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
 pub enum OwnerCallError {
     /// The owner executable could not be launched. Absence, not an error.
     Unavailable { detail: String },
@@ -63,6 +64,155 @@ impl std::fmt::Display for OwnerCallError {
 
 impl std::error::Error for OwnerCallError {}
 
+/// The stable request vocabulary the cradle kernel exposes for Central's
+/// retained Flow and explicit source-return Actions. Inputs stay owner-shaped:
+/// the kernel does not invent refs, revisions, actors, sessions or acceptance.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(tag = "action", rename_all = "snake_case")]
+pub enum Request {
+    FlowInspect {
+        project: String,
+        flow_ref: String,
+    },
+    FlowList {
+        project: String,
+    },
+    FlowRead {
+        project: String,
+        flow_ref: String,
+        #[serde(default)]
+        expected_revision: Option<String>,
+    },
+    FlowCreate {
+        project: String,
+        actor: String,
+        actor_kind: String,
+        #[serde(default)]
+        local_stamp: Option<String>,
+        #[serde(default)]
+        path: Option<String>,
+        #[serde(default)]
+        title: Option<String>,
+        #[serde(default)]
+        agent_session_ref: Option<String>,
+    },
+    FlowAdopt {
+        project: String,
+        path: String,
+        actor: String,
+        actor_kind: String,
+        #[serde(default)]
+        title: Option<String>,
+        #[serde(default)]
+        agent_session_ref: Option<String>,
+    },
+    FlowWrite {
+        project: String,
+        flow_ref: String,
+        expected_revision: String,
+        content: String,
+        actor: String,
+        actor_kind: String,
+        #[serde(default)]
+        agent_session_ref: Option<String>,
+    },
+    FlowRename {
+        project: String,
+        flow_ref: String,
+        expected_revision: String,
+        new_path: String,
+    },
+    FlowLifecycle {
+        project: String,
+        flow_ref: String,
+        expected_revision: String,
+        lifecycle: String,
+    },
+    FlowHistory {
+        project: String,
+        flow_ref: String,
+    },
+    SourceReturn {
+        project: String,
+        source_ref: String,
+        expected_revision: String,
+        proposed_content: String,
+        reason: String,
+        #[serde(default)]
+        evidence_refs: Vec<String>,
+        agent_session_ref: String,
+    },
+    SourceReturns {
+        project: String,
+        #[serde(default)]
+        limit: Option<u64>,
+        #[serde(default)]
+        before: Option<String>,
+    },
+    SourceReturnRead {
+        project: String,
+        return_ref: String,
+    },
+    SourceReturnAccept {
+        project: String,
+        return_ref: String,
+        expected_revision: String,
+        acceptance: String,
+        accepted_by_ref: String,
+    },
+    SourceReturnReject {
+        project: String,
+        return_ref: String,
+    },
+}
+
+impl Request {
+    pub fn owner_action(&self) -> &'static str {
+        match self {
+            Self::FlowInspect { .. } => "projectcentral.flow.inspect",
+            Self::FlowList { .. } => "projectcentral.flow.list",
+            Self::FlowRead { .. } => "projectcentral.flow.read",
+            Self::FlowCreate { .. } => "projectcentral.flow.create",
+            Self::FlowAdopt { .. } => "projectcentral.flow.adopt",
+            Self::FlowWrite { .. } => "projectcentral.flow.write",
+            Self::FlowRename { .. } => "projectcentral.flow.rename",
+            Self::FlowLifecycle { .. } => "projectcentral.flow.lifecycle",
+            Self::FlowHistory { .. } => "projectcentral.flow.history",
+            Self::SourceReturn { .. } => "projectcentral.source.return",
+            Self::SourceReturns { .. } => "projectcentral.source.returns",
+            Self::SourceReturnRead { .. } => "projectcentral.source.return_read",
+            Self::SourceReturnAccept { .. } => "projectcentral.source.return_accept",
+            Self::SourceReturnReject { .. } => "projectcentral.source.return_reject",
+        }
+    }
+}
+
+/// Typed owner readings carried by the kernel result. The response variants
+/// intentionally retain the owner envelope's distinction between a Flow
+/// record, a source-return reading, a mutation receipt and a refusal.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum Response {
+    FlowInspection { inspection: FlowInspection },
+    FlowList { listing: FlowList },
+    FlowRead { reading: FlowReading },
+    FlowCreated { reading: FlowMutationReading },
+    FlowAdopted { reading: FlowMutationReading },
+    FlowWritten { reading: FlowMutationReading },
+    FlowRenamed { reading: FlowMutationReading },
+    FlowLifecycleChanged { reading: FlowMutationReading },
+    FlowHistory { history: FlowHistory },
+    SourceReturnCreated { reading: SourceReturnReading },
+    SourceReturns { listing: SourceReturns },
+    SourceReturnRead { reading: SourceReturnReading },
+    SourceReturnAccepted { mutation: SourceReturnMutation },
+    SourceReturnRejected { reading: SourceReturnReading },
+    Failure {
+        action: String,
+        error: OwnerCallError,
+    },
+}
+
 /// Client for the Central owner Actions the kernel reads and writes
 /// through `oi central`. OI_BIN selects the suite executable; the suite resolves
 /// OI_CENTRAL_CTRL_BIN or the registered owner. Root/project context is preserved.
@@ -72,6 +222,7 @@ pub struct CentralClient {
     central_root: Option<PathBuf>,
     project_query: String,
     suite_route: bool,
+    central_executable: Option<PathBuf>,
 }
 
 impl CentralClient {
@@ -97,7 +248,35 @@ impl CentralClient {
             central_root,
             project_query,
             suite_route: false,
+            central_executable: None,
         }
+    }
+
+    /// Explicit suite-level configuration for parity tests and embedded
+    /// hosts. The executable is the exact O:I command; its `central` route
+    /// forwards to the registered Central owner.
+    pub fn with_suite(
+        executable: PathBuf,
+        central_root: Option<PathBuf>,
+        project_query: String,
+    ) -> Self {
+        let mut client = Self::with(executable, central_root, project_query);
+        client.suite_route = true;
+        client
+    }
+
+    /// Explicit suite-level configuration with a pinned Central owner. This
+    /// keeps consumer tests and embedded hosts off PATH and does not replace
+    /// any installed or running bridge executable.
+    pub fn with_suite_owner(
+        executable: PathBuf,
+        central_executable: PathBuf,
+        central_root: Option<PathBuf>,
+        project_query: String,
+    ) -> Self {
+        let mut client = Self::with_suite(executable, central_root, project_query);
+        client.central_executable = Some(central_executable);
+        client
     }
 
     /// The project query this host configured — the co-reference fallback
@@ -123,6 +302,9 @@ impl CentralClient {
         let mut command = Command::new(&self.executable);
         if self.suite_route {
             command.arg("central");
+            if let Some(owner) = &self.central_executable {
+                command.env("OI_CENTRAL_CTRL_BIN", owner);
+            }
         }
         command.arg("--json");
         if let Some(root) = &self.central_root {
@@ -261,6 +443,596 @@ impl CentralClient {
     ) -> Result<SourceReading, OwnerCallError> {
         self.source_read(project, source_ref)
     }
+
+    // -----------------------------------------------------------------------
+    // Retained Flow and explicit source-return owner Actions
+    // -----------------------------------------------------------------------
+
+    /// Inspect one retained Flow without reading its body. Central remains
+    /// the authority for capability availability and the last revision.
+    pub fn flow_inspect(
+        &self,
+        project: &str,
+        flow_ref: &str,
+    ) -> Result<FlowInspection, OwnerCallError> {
+        let data = self.run(
+            "projectcentral.flow.inspect",
+            json!({ "project": project, "flow_ref": flow_ref }),
+        )?;
+        let result: FlowInspection = decode_owner("projectcentral.flow.inspect", data)?;
+        ensure_schema(
+            "projectcentral.flow.inspect",
+            &result.schema,
+            FLOW_INSPECTION_SCHEMA,
+        )?;
+        Ok(result)
+    }
+
+    /// List retained Flows. The returned records, including source refs and
+    /// revision provenance, are carried verbatim from Central.
+    pub fn flow_list(&self, project: &str) -> Result<FlowList, OwnerCallError> {
+        let data = self.run(
+            "projectcentral.flow.list",
+            json!({ "project": project }),
+        )?;
+        let result: FlowList = decode_owner("projectcentral.flow.list", data)?;
+        ensure_schema("projectcentral.flow.list", &result.schema, FLOW_LIST_SCHEMA)?;
+        Ok(result)
+    }
+
+    /// Read one Flow body by its stable FlowRef. An optional expected revision
+    /// is forwarded to Central for its own read-time compare.
+    pub fn flow_read(
+        &self,
+        project: &str,
+        flow_ref: &str,
+        expected_revision: Option<&str>,
+    ) -> Result<FlowReading, OwnerCallError> {
+        let data = self.run(
+            "projectcentral.flow.read",
+            json!({
+                "project": project,
+                "flow_ref": flow_ref,
+                "expected_revision": expected_revision,
+            }),
+        )?;
+        let result: FlowReading = decode_owner("projectcentral.flow.read", data)?;
+        ensure_schema("projectcentral.flow.read", &result.schema, FLOW_READING_SCHEMA)?;
+        Ok(result)
+    }
+
+    /// Create a blank retained Flow. Path, title and local stamp remain
+    /// owner-defined optional inputs; the kernel does not derive placement.
+    pub fn flow_create(
+        &self,
+        project: &str,
+        actor: &str,
+        actor_kind: &str,
+        local_stamp: Option<&str>,
+        path: Option<&str>,
+        title: Option<&str>,
+        agent_session_ref: Option<&str>,
+    ) -> Result<FlowRecord, OwnerCallError> {
+        self.flow_create_reading(
+            project,
+            actor,
+            actor_kind,
+            local_stamp,
+            path,
+            title,
+            agent_session_ref,
+        )
+        .map(|reading| reading.flow)
+    }
+
+    /// Adopt a retained ordinary source as a Flow without moving it.
+    pub fn flow_adopt(
+        &self,
+        project: &str,
+        path: &str,
+        actor: &str,
+        actor_kind: &str,
+        title: Option<&str>,
+        agent_session_ref: Option<&str>,
+    ) -> Result<FlowRecord, OwnerCallError> {
+        self.flow_adopt_reading(project, path, actor, actor_kind, title, agent_session_ref)
+            .map(|reading| reading.flow)
+    }
+
+    /// Write a Flow revision through Central's compare-and-swap and preserve
+    /// the owner result. The kernel never writes the ordinary source itself.
+    pub fn flow_write(
+        &self,
+        project: &str,
+        flow_ref: &str,
+        expected_revision: &str,
+        content: &str,
+        actor: &str,
+        actor_kind: &str,
+        agent_session_ref: Option<&str>,
+    ) -> Result<FlowRecord, OwnerCallError> {
+        self.flow_write_reading(
+            project,
+            flow_ref,
+            expected_revision,
+            content,
+            actor,
+            actor_kind,
+            agent_session_ref,
+        )
+        .map(|reading| reading.flow)
+    }
+
+    /// Rename a retained Flow while preserving its stable FlowRef.
+    pub fn flow_rename(
+        &self,
+        project: &str,
+        flow_ref: &str,
+        expected_revision: &str,
+        new_path: &str,
+    ) -> Result<FlowRecord, OwnerCallError> {
+        self.flow_rename_reading(project, flow_ref, expected_revision, new_path)
+            .map(|reading| reading.flow)
+    }
+
+    /// Change only the owner-held Flow lifecycle.
+    pub fn flow_lifecycle(
+        &self,
+        project: &str,
+        flow_ref: &str,
+        expected_revision: &str,
+        lifecycle: &str,
+    ) -> Result<FlowRecord, OwnerCallError> {
+        self.flow_lifecycle_reading(project, flow_ref, expected_revision, lifecycle)
+            .map(|reading| reading.flow)
+    }
+
+    /// Read exact owner-stored Flow revision receipts.
+    pub fn flow_history(
+        &self,
+        project: &str,
+        flow_ref: &str,
+    ) -> Result<FlowHistory, OwnerCallError> {
+        let data = self.run(
+            "projectcentral.flow.history",
+            json!({ "project": project, "flow_ref": flow_ref }),
+        )?;
+        let result: FlowHistory = decode_owner("projectcentral.flow.history", data)?;
+        Ok(result)
+    }
+
+    /// Store an explicit returned-work proposal. This never mutates the
+    /// authored source; acceptance is a separate owner Action.
+    pub fn source_return(
+        &self,
+        project: &str,
+        source_ref: &str,
+        expected_revision: &str,
+        proposed_content: &str,
+        reason: &str,
+        evidence_refs: &[String],
+        agent_session_ref: &str,
+    ) -> Result<SourceReturnReading, OwnerCallError> {
+        let data = self.run(
+            "projectcentral.source.return",
+            json!({
+                "project": project,
+                "source_ref": source_ref,
+                "expected_revision": expected_revision,
+                "proposed_content": proposed_content,
+                "reason": reason,
+                "evidence_refs": evidence_refs,
+                "agent_session_ref": agent_session_ref,
+            }),
+        )?;
+        let result: SourceReturnReading = decode_owner("projectcentral.source.return", data)?;
+        ensure_schema(
+            "projectcentral.source.return",
+            &result.schema,
+            FLOW_RETURN_READING_SCHEMA,
+        )?;
+        ensure_schema(
+            "projectcentral.source.return",
+            &result.proposal.schema,
+            FLOW_RETURN_SCHEMA,
+        )?;
+        Ok(result)
+    }
+
+    /// List returned-work proposals through Central's source-return owner.
+    pub fn source_returns(
+        &self,
+        project: &str,
+        limit: Option<u64>,
+        before: Option<&str>,
+    ) -> Result<SourceReturns, OwnerCallError> {
+        let data = self.run(
+            "projectcentral.source.returns",
+            json!({ "project": project, "limit": limit, "before": before }),
+        )?;
+        let result: SourceReturns = decode_owner("projectcentral.source.returns", data)?;
+        ensure_schema(
+            "projectcentral.source.returns",
+            &result.schema,
+            FLOW_RETURNS_SCHEMA,
+        )?;
+        Ok(result)
+    }
+
+    /// Re-read one proposal and its current source basis.
+    pub fn source_return_read(
+        &self,
+        project: &str,
+        return_ref: &str,
+    ) -> Result<SourceReturnReading, OwnerCallError> {
+        let data = self.run(
+            "projectcentral.source.return_read",
+            json!({ "project": project, "return_ref": return_ref }),
+        )?;
+        let result: SourceReturnReading = decode_owner("projectcentral.source.return_read", data)?;
+        ensure_schema(
+            "projectcentral.source.return_read",
+            &result.schema,
+            FLOW_RETURN_READING_SCHEMA,
+        )?;
+        ensure_schema(
+            "projectcentral.source.return_read",
+            &result.proposal.schema,
+            FLOW_RETURN_SCHEMA,
+        )?;
+        Ok(result)
+    }
+
+    /// Explicitly accept a proposal. Central decides whether the basis still
+    /// matches and which native owner write receipt resulted.
+    pub fn source_return_accept(
+        &self,
+        project: &str,
+        return_ref: &str,
+        expected_revision: &str,
+        acceptance: &str,
+        accepted_by_ref: &str,
+    ) -> Result<SourceReturnMutation, OwnerCallError> {
+        let data = self.run(
+            "projectcentral.source.return_accept",
+            json!({
+                "project": project,
+                "return_ref": return_ref,
+                "expected_revision": expected_revision,
+                "acceptance": acceptance,
+                "accepted_by_ref": accepted_by_ref,
+            }),
+        )?;
+        let result: SourceReturnMutation = decode_owner("projectcentral.source.return_accept", data)?;
+        ensure_schema(
+            "projectcentral.source.return_accept",
+            &result.proposal.schema,
+            FLOW_RETURN_SCHEMA,
+        )?;
+        Ok(result)
+    }
+
+    /// Reject a proposal without touching its source.
+    pub fn source_return_reject(
+        &self,
+        project: &str,
+        return_ref: &str,
+    ) -> Result<SourceReturnReading, OwnerCallError> {
+        let data = self.run(
+            "projectcentral.source.return_reject",
+            json!({ "project": project, "return_ref": return_ref }),
+        )?;
+        let result: SourceReturnReading = decode_owner("projectcentral.source.return_reject", data)?;
+        ensure_schema(
+            "projectcentral.source.return_reject",
+            &result.schema,
+            FLOW_RETURN_READING_SCHEMA,
+        )?;
+        ensure_schema(
+            "projectcentral.source.return_reject",
+            &result.proposal.schema,
+            FLOW_RETURN_SCHEMA,
+        )?;
+        Ok(result)
+    }
+
+    /// Apply one typed Flow/Return request. Owner failures are returned to the
+    /// kernel so it can preserve them as a serializable refusal/availability
+    /// result; no retry or local mutation is introduced here.
+    pub fn apply_request(&self, request: Request) -> Result<Response, OwnerCallError> {
+        match request {
+            Request::FlowInspect { project, flow_ref } => self
+                .flow_inspect(&project, &flow_ref)
+                .map(|inspection| Response::FlowInspection { inspection }),
+            Request::FlowList { project } => self
+                .flow_list(&project)
+                .map(|listing| Response::FlowList { listing }),
+            Request::FlowRead {
+                project,
+                flow_ref,
+                expected_revision,
+            } => self
+                .flow_read(&project, &flow_ref, expected_revision.as_deref())
+                .map(|reading| Response::FlowRead { reading }),
+            Request::FlowCreate {
+                project,
+                actor,
+                actor_kind,
+                local_stamp,
+                path,
+                title,
+                agent_session_ref,
+            } => self
+                .flow_create_reading(
+                    &project,
+                    &actor,
+                    &actor_kind,
+                    local_stamp.as_deref(),
+                    path.as_deref(),
+                    title.as_deref(),
+                    agent_session_ref.as_deref(),
+                )
+                .map(|reading| Response::FlowCreated { reading }),
+            Request::FlowAdopt {
+                project,
+                path,
+                actor,
+                actor_kind,
+                title,
+                agent_session_ref,
+            } => self
+                .flow_adopt_reading(
+                    &project,
+                    &path,
+                    &actor,
+                    &actor_kind,
+                    title.as_deref(),
+                    agent_session_ref.as_deref(),
+                )
+                .map(|reading| Response::FlowAdopted { reading }),
+            Request::FlowWrite {
+                project,
+                flow_ref,
+                expected_revision,
+                content,
+                actor,
+                actor_kind,
+                agent_session_ref,
+            } => self
+                .flow_write_reading(
+                    &project,
+                    &flow_ref,
+                    &expected_revision,
+                    &content,
+                    &actor,
+                    &actor_kind,
+                    agent_session_ref.as_deref(),
+                )
+                .map(|reading| Response::FlowWritten { reading }),
+            Request::FlowRename {
+                project,
+                flow_ref,
+                expected_revision,
+                new_path,
+            } => self
+                .flow_rename_reading(&project, &flow_ref, &expected_revision, &new_path)
+                .map(|reading| Response::FlowRenamed { reading }),
+            Request::FlowLifecycle {
+                project,
+                flow_ref,
+                expected_revision,
+                lifecycle,
+            } => self
+                .flow_lifecycle_reading(&project, &flow_ref, &expected_revision, &lifecycle)
+                .map(|reading| Response::FlowLifecycleChanged { reading }),
+            Request::FlowHistory { project, flow_ref } => self
+                .flow_history(&project, &flow_ref)
+                .map(|history| Response::FlowHistory { history }),
+            Request::SourceReturn {
+                project,
+                source_ref,
+                expected_revision,
+                proposed_content,
+                reason,
+                evidence_refs,
+                agent_session_ref,
+            } => self
+                .source_return(
+                    &project,
+                    &source_ref,
+                    &expected_revision,
+                    &proposed_content,
+                    &reason,
+                    &evidence_refs,
+                    &agent_session_ref,
+                )
+                .map(|reading| Response::SourceReturnCreated { reading }),
+            Request::SourceReturns {
+                project,
+                limit,
+                before,
+            } => self
+                .source_returns(&project, limit, before.as_deref())
+                .map(|listing| Response::SourceReturns { listing }),
+            Request::SourceReturnRead { project, return_ref } => self
+                .source_return_read(&project, &return_ref)
+                .map(|reading| Response::SourceReturnRead { reading }),
+            Request::SourceReturnAccept {
+                project,
+                return_ref,
+                expected_revision,
+                acceptance,
+                accepted_by_ref,
+            } => self
+                .source_return_accept(
+                    &project,
+                    &return_ref,
+                    &expected_revision,
+                    &acceptance,
+                    &accepted_by_ref,
+                )
+                .map(|mutation| Response::SourceReturnAccepted { mutation }),
+            Request::SourceReturnReject { project, return_ref } => self
+                .source_return_reject(&project, &return_ref)
+                .map(|reading| Response::SourceReturnRejected { reading }),
+        }
+    }
+
+    fn flow_create_reading(
+        &self,
+        project: &str,
+        actor: &str,
+        actor_kind: &str,
+        local_stamp: Option<&str>,
+        path: Option<&str>,
+        title: Option<&str>,
+        agent_session_ref: Option<&str>,
+    ) -> Result<FlowMutationReading, OwnerCallError> {
+        let data = self.run(
+            "projectcentral.flow.create",
+            json!({
+                "project": project,
+                "actor": actor,
+                "actor_kind": actor_kind,
+                "local_stamp": local_stamp,
+                "path": path,
+                "title": title,
+                "agent_session_ref": agent_session_ref,
+            }),
+        )?;
+        decode_flow_reading("projectcentral.flow.create", data)
+    }
+
+    fn flow_adopt_reading(
+        &self,
+        project: &str,
+        path: &str,
+        actor: &str,
+        actor_kind: &str,
+        title: Option<&str>,
+        agent_session_ref: Option<&str>,
+    ) -> Result<FlowMutationReading, OwnerCallError> {
+        let data = self.run(
+            "projectcentral.flow.adopt",
+            json!({
+                "project": project,
+                "path": path,
+                "actor": actor,
+                "actor_kind": actor_kind,
+                "title": title,
+                "agent_session_ref": agent_session_ref,
+            }),
+        )?;
+        decode_flow_reading("projectcentral.flow.adopt", data)
+    }
+
+    fn flow_write_reading(
+        &self,
+        project: &str,
+        flow_ref: &str,
+        expected_revision: &str,
+        content: &str,
+        actor: &str,
+        actor_kind: &str,
+        agent_session_ref: Option<&str>,
+    ) -> Result<FlowMutationReading, OwnerCallError> {
+        let data = self.run(
+            "projectcentral.flow.write",
+            json!({
+                "project": project,
+                "flow_ref": flow_ref,
+                "expected_revision": expected_revision,
+                "content": content,
+                "actor": actor,
+                "actor_kind": actor_kind,
+                "agent_session_ref": agent_session_ref,
+            }),
+        )?;
+        decode_flow_reading("projectcentral.flow.write", data)
+    }
+
+    fn flow_rename_reading(
+        &self,
+        project: &str,
+        flow_ref: &str,
+        expected_revision: &str,
+        new_path: &str,
+    ) -> Result<FlowMutationReading, OwnerCallError> {
+        let data = self.run(
+            "projectcentral.flow.rename",
+            json!({
+                "project": project,
+                "flow_ref": flow_ref,
+                "expected_revision": expected_revision,
+                "new_path": new_path,
+            }),
+        )?;
+        decode_flow_reading("projectcentral.flow.rename", data)
+    }
+
+    fn flow_lifecycle_reading(
+        &self,
+        project: &str,
+        flow_ref: &str,
+        expected_revision: &str,
+        lifecycle: &str,
+    ) -> Result<FlowMutationReading, OwnerCallError> {
+        let data = self.run(
+            "projectcentral.flow.lifecycle",
+            json!({
+                "project": project,
+                "flow_ref": flow_ref,
+                "expected_revision": expected_revision,
+                "lifecycle": lifecycle,
+            }),
+        )?;
+        decode_flow_reading("projectcentral.flow.lifecycle", data)
+    }
+}
+
+fn ensure_schema(action: &str, actual: &str, expected: &str) -> Result<(), OwnerCallError> {
+    if actual == expected {
+        Ok(())
+    } else {
+        Err(OwnerCallError::Malformed {
+            detail: format!("{action} returned unsupported schema `{actual}` (expected `{expected}`)"),
+        })
+    }
+}
+
+fn ensure_no_background(action: &str, data: &Value) -> Result<(), OwnerCallError> {
+    if data
+        .get("automatic_agent_or_model_invocation")
+        .and_then(Value::as_bool)
+        == Some(true)
+    {
+        return Err(OwnerCallError::Malformed {
+            detail: format!("{action} violated zero-background-Agent law"),
+        });
+    }
+    Ok(())
+}
+
+fn decode_value<T: for<'de> Deserialize<'de>>(
+    action: &str,
+    data: Value,
+) -> Result<T, OwnerCallError> {
+    serde_json::from_value(data).map_err(|error| OwnerCallError::Malformed {
+        detail: format!("decode {action} owner result: {error}"),
+    })
+}
+
+fn decode_owner<T: for<'de> Deserialize<'de>>(
+    action: &str,
+    data: Value,
+) -> Result<T, OwnerCallError> {
+    ensure_no_background(action, &data)?;
+    decode_value(action, data)
+}
+
+fn decode_flow_reading(action: &str, data: Value) -> Result<FlowMutationReading, OwnerCallError> {
+    ensure_no_background(action, &data)?;
+    decode_value(action, data)
 }
 
 // ---------------------------------------------------------------------------
@@ -326,6 +1098,170 @@ pub struct SourceWriteReceipt {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub agent_session_ref: Option<String>,
     pub automatic_agent_or_model_invocation: bool,
+}
+
+pub const FLOW_INSPECTION_SCHEMA: &str = "central.project-flow-inspection/v1";
+pub const FLOW_LIST_SCHEMA: &str = "central.project-flow-list/v1";
+pub const FLOW_READING_SCHEMA: &str = "central.project-flow-reading/v1";
+pub const FLOW_RETURN_SCHEMA: &str = "central.source-return/v1";
+pub const FLOW_RETURN_READING_SCHEMA: &str = "central.source-return-reading/v1";
+pub const FLOW_RETURNS_SCHEMA: &str = "central.source-returns/v1";
+
+/// Central's retained Flow identity and owner-held revision provenance.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct FlowRecord {
+    pub flow_ref: String,
+    pub source_ref: String,
+    pub path: String,
+    pub created_at_unix_seconds: u64,
+    pub current_revision: String,
+    pub lifecycle: String,
+    #[serde(default)]
+    pub title: Option<String>,
+    pub scope_ref: String,
+    pub privacy: String,
+    #[serde(default)]
+    pub revisions: Vec<FlowRevisionReceipt>,
+}
+
+/// The owner envelope returned by Flow mutations. Keeping the envelope here
+/// prevents the kernel seam from dropping the owner's explicit no-background
+/// disclosure while retaining the stable Flow record.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct FlowMutationReading {
+    pub flow: FlowRecord,
+    pub automatic_agent_or_model_invocation: bool,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct FlowRevisionReceipt {
+    pub revision: String,
+    #[serde(default)]
+    pub parent_revision: Option<String>,
+    pub actor: String,
+    pub actor_kind: String,
+    #[serde(default)]
+    pub agent_session_ref: Option<String>,
+    pub recorded_at_unix_seconds: u64,
+    pub source_path: String,
+    pub history_source: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct FlowList {
+    pub schema: String,
+    pub project_id: String,
+    pub flows: Vec<FlowRecord>,
+    pub automatic_agent_or_model_invocation: bool,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct FlowReading {
+    pub schema: String,
+    pub flow: FlowRecord,
+    pub content: String,
+    pub dirty_external_revision_reconciled: bool,
+    pub automatic_agent_or_model_invocation: bool,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct FlowCapability {
+    pub available: bool,
+    #[serde(default)]
+    pub reason: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct FlowCapabilities {
+    pub read: FlowCapability,
+    pub write: FlowCapability,
+    pub history: FlowCapability,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct FlowInspection {
+    pub schema: String,
+    pub flow: FlowRecord,
+    pub revision_observation: String,
+    pub capabilities: FlowCapabilities,
+    pub automatic_agent_or_model_invocation: bool,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct FlowHistory {
+    pub flow_ref: String,
+    pub current_revision: String,
+    pub revisions: Vec<FlowRevisionReceipt>,
+    pub automatic_agent_or_model_invocation: bool,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct SourceReturnProposal {
+    pub schema: String,
+    pub return_ref: String,
+    pub source_ref: String,
+    pub basis_revision: String,
+    pub basis_content: String,
+    pub proposed_content: String,
+    pub reason: String,
+    pub evidence_refs: Vec<String>,
+    pub agent_session_ref: String,
+    pub status: String,
+    #[serde(default)]
+    pub accepted_by_ref: Option<String>,
+    #[serde(default)]
+    pub result_revision: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct SourceReturnAcceptance {
+    pub available: bool,
+    #[serde(default)]
+    pub reason: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct SourceReturnMutation {
+    pub outcome: String,
+    pub proposal: SourceReturnProposal,
+    #[serde(default)]
+    pub current: Option<SourceReading>,
+    #[serde(default)]
+    pub receipt: Option<Value>,
+    pub authored_source_mutated: bool,
+    #[serde(default)]
+    pub automatic_agent_or_model_invocation: bool,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct SourceReturnReading {
+    pub schema: String,
+    pub proposal: SourceReturnProposal,
+    pub current: SourceReading,
+    pub basis_current: bool,
+    pub acceptance: SourceReturnAcceptance,
+    pub authored_source_mutated: bool,
+    pub automatic_agent_or_model_invocation: bool,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct SourceReturnEntry {
+    pub return_ref: String,
+    pub source_ref: String,
+    pub basis_revision: String,
+    pub status: String,
+    pub agent_session_ref: String,
+    pub current_revision: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct SourceReturns {
+    pub schema: String,
+    pub entries: Vec<SourceReturnEntry>,
+    pub more: bool,
+    #[serde(default)]
+    pub next_before: Option<String>,
+    pub authored_source_mutated: bool,
 }
 
 // ---------------------------------------------------------------------------

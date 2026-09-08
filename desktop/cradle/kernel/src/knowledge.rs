@@ -36,6 +36,14 @@ pub fn call(cwd: &Path, request: &Request) -> Result<Value, String> {
         }
     }
     let output = command.output().map_err(|e| format!("AIKit is unavailable: {e}"))?;
+    if !output.status.success() && output.stdout.iter().all(u8::is_ascii_whitespace) {
+        let detail = String::from_utf8_lossy(&output.stderr).trim().to_owned();
+        return Err(if detail.is_empty() {
+            format!("AIKit knowledge operation failed ({})", output.status)
+        } else {
+            format!("AIKit knowledge operation failed ({}): {detail}", output.status)
+        });
+    }
     let envelope: Value = serde_json::from_slice(&output.stdout).map_err(|e| format!("AIKit returned an unreadable response ({e}): {}", String::from_utf8_lossy(&output.stderr)))?;
     if !output.status.success() || envelope["ok"] != true {
         return Err(envelope["error"]["message"].as_str().unwrap_or("AIKit refused this knowledge operation").to_owned());
