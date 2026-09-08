@@ -30,7 +30,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 const cradleRoot = resolve(here, "..");
 const artifactsDir = join(here, "artifacts");
 const PREVIEW_PORT = 4173;
-const BRIDGE_PORT = 4179;
+const BRIDGE_PORT = Number(process.env.WALK_BRIDGE_PORT ?? 4179);
+if (!Number.isInteger(BRIDGE_PORT) || BRIDGE_PORT < 1024 || BRIDGE_PORT > 65535) throw new Error("WALK_BRIDGE_PORT must be a port from 1024 to 65535");
 const BRIDGE_URL = `http://127.0.0.1:${BRIDGE_PORT}`;
 
 const SCENARIOS = {
@@ -47,6 +48,7 @@ const SCENARIOS = {
   encounter: {module:"scenarios/encounter.mjs",kernel:true,aliases:[]},
   "file-edit": {module:"scenarios/file-edit.mjs",kernel:true,aliases:[]},
   files: { module: "scenarios/files.mjs", kernel: true, aliases: [] },
+  "rendering-quality": {module:"scenarios/rendering-quality.mjs",kernel:true,aliases:[]},
   material: { module: "scenarios/material.mjs", kernel: true, aliases: ["fnd-04"] },
   bootstrap: { module: "scenarios/bootstrap.mjs", kernel: true, aliases: ["fnd-05"] },
   resources: { module: "scenarios/resources.mjs", kernel: true, aliases: ["fnd-06"] },

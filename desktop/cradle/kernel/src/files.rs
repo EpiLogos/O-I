@@ -242,3 +242,32 @@ pub fn operate(client:&CentralClient,location:&Location,request:&Request)->Resul
  if matches!(request,Request::Write{..}|Request::Restore{..}) && !["written","unchanged","conflict"].contains(&result["outcome"].as_str().unwrap_or("")){return Err("Central returned an unsupported mutation outcome".into());}
  Ok(result)
 }
+
+/// HTTP representation for owner-read material bytes. Specific owner hints win;
+/// extension fallback covers browser assets only when the owner has no hint.
+pub fn material_content_type(mime_hint: Option<&str>, path: &str) -> String {
+    if let Some(hint) = mime_hint { return hint.to_owned(); }
+    let extension = path.rsplit_once('.').map(|(_, ext)| ext.to_ascii_lowercase());
+    match extension.as_deref() {
+        Some("html" | "htm") => "text/html; charset=utf-8",
+        Some("md" | "markdown") => "text/markdown; charset=utf-8",
+        Some("css") => "text/css; charset=utf-8",
+        Some("js" | "mjs") => "text/javascript; charset=utf-8",
+        Some("json" | "map") => "application/json",
+        Some("svg") => "image/svg+xml",
+        Some("png") => "image/png",
+        Some("jpg" | "jpeg") => "image/jpeg",
+        Some("gif") => "image/gif",
+        Some("webp") => "image/webp",
+        Some("avif") => "image/avif",
+        Some("ico") => "image/x-icon",
+        Some("woff") => "font/woff",
+        Some("woff2") => "font/woff2",
+        Some("ttf") => "font/ttf",
+        Some("otf") => "font/otf",
+        Some("wasm") => "application/wasm",
+        Some("pdf") => "application/pdf",
+        Some("txt") => "text/plain; charset=utf-8",
+        _ => "application/octet-stream",
+    }.to_owned()
+}

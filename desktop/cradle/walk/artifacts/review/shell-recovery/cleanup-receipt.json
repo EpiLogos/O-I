@@ -1,0 +1,127 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "shell-recovery",
+  "generated_at": "2026-09-08T13:22:08.596Z",
+  "environment": {
+    "base_url": "http://localhost:1423",
+    "bridge_url": "http://127.0.0.1:4197",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 3996,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Sidebar names the personal field My O:I"
+    },
+    {
+      "ok": true,
+      "label": "Project index uses Work label"
+    },
+    {
+      "ok": true,
+      "label": "Search row has no duplicate agent or wiki controls"
+    },
+    {
+      "ok": true,
+      "label": "User space returns a real native Central directory"
+    },
+    {
+      "ok": true,
+      "label": "Agent space returns a real native Central directory"
+    },
+    {
+      "ok": true,
+      "label": "Ten real source tabs are open"
+    },
+    {
+      "ok": true,
+      "label": "Tab lane overflows independently"
+    },
+    {
+      "ok": true,
+      "label": "Pane controls remain fixed while tab lane scrolls"
+    },
+    {
+      "ok": true,
+      "label": "Global strip has no duplicate pane actions or document title"
+    },
+    {
+      "ok": true,
+      "label": "Window strip is30px high"
+    },
+    {
+      "ok": true,
+      "label": "Sidebar is flush with window left edge"
+    },
+    {
+      "ok": true,
+      "label": "Active signal occupies nested pane footer"
+    },
+    {
+      "ok": true,
+      "label": "Pane ellipsis dismisses outside"
+    },
+    {
+      "ok": true,
+      "label": "Pane ellipsis dismisses Escape"
+    },
+    {
+      "ok": true,
+      "label": "Workspace menu dismisses outside"
+    },
+    {
+      "ok": true,
+      "label": "Workspace menu dismisses Escape"
+    },
+    {
+      "ok": true,
+      "label": "Narrow pane selector retains one usable pane"
+    },
+    {
+      "ok": true,
+      "label": "Narrow cleanup has no page overflow"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-08T13:22:08.848Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4197"
+        },
+        "url": "http://localhost:1423/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 79,
+      "data": {
+        "file": "shell-recovery-cleanup-wide.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 44,
+      "data": {
+        "file": "shell-recovery-cleanup-narrow.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "shell-recovery-cleanup-wide.png",
+    "shell-recovery-cleanup-narrow.png"
+  ]
+}

@@ -167,8 +167,6 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
     >
       <div
         className="tab-strip"
-        role="tablist"
-        aria-label="Open surfaces"
         onContextMenu={(e) => {
           if ((e.target as HTMLElement).closest(".tab")) return;
           e.preventDefault();
@@ -186,6 +184,7 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
           if (id) execute("surface.drop", { surfaceId: id, groupId: group.id });
         }}
       >
+        <div className="tab-scroll" role="tablist" aria-label="Open surfaces">
         {tabs.map((id) => (
           <Tab
             key={id}
@@ -200,6 +199,7 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
             openBindingMenu={openBindingMenu}
           />
         ))}
+        </div>
         <div className="pane-tools">
           {group.emptySlot && <button type="button" className="pane-tool-menu" aria-label="Close empty pane" title="Close empty pane (⌘W)" onClick={() => execute("surface.close-empty-pane", { groupId: group.id })}><Glyph name="close" size={13} /></button>}
           <button type="button" className="pane-tool-menu"
@@ -254,6 +254,7 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
       >
         {activeBinding ? <SurfaceBody key={activeBinding.id} binding={activeBinding} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} /> : <p className="source-note">{state.detached?.some(d=>d.groupId===group.id)?"This view is open in a native window. Close that window to re-dock it here.":"Move a tab here, or open a source or wiki with +."}</p>}
       </div>
+      <footer className="pane-status" aria-label={focused ? "Active pane" : "Pane status"}><span>{activeBinding?.title ?? "Empty pane"}</span></footer>
     </section>
   );
 }

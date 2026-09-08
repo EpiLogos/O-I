@@ -172,3 +172,11 @@ aside.world-navigator[aria-label="World navigator"] { padding: 19px 10px 9px; }
   transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out);
 }
 .world-system button:hover { background: var(--oi-wash); color: var(--oi-accent-ink); }
+
+/* Root operating ground is separate from the Work project index. */
+.central-operating-region { padding-bottom: 12px; margin-bottom: 8px; border-bottom: 1px solid var(--oi-hairline-soft); }
+.central-root-space > button { display: flex; align-items: center; gap: 7px; width: 100%; min-height: var(--oi-shell-row-lg); color: var(--oi-muted); }
+.central-root-space > .native-file-tree { margin-left: 12px; max-height: 35vh; overflow: auto; }
+.world-projects > li .project-modes { opacity: .32; transition: opacity var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.world-projects > li:hover > .project-modes, .world-projects > li:focus-within > .project-modes,
+.world-projects > li:has(> button[aria-current="true"]) > .project-modes { opacity: 1; }

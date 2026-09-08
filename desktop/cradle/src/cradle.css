@@ -843,3 +843,18 @@
 .writing-mode-bar button { font: inherit; font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); background: transparent; border: 0; padding: 0; cursor: pointer; transition: color var(--oi-motion-ui) var(--oi-motion-ease-out); }
 .writing-mode-bar button:hover, .writing-mode-bar button:focus-visible { color: var(--oi-accent-ink); outline: none; }
 .writing-mode .canvas { flex: 1; min-height: 0; }
+
+/* Owner cleanup: tabs scroll independently; pane actions stay within reach. */
+.tab-strip { overflow: hidden; }
+.tab-scroll { display: flex; flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.tab-scroll::-webkit-scrollbar { display: none; }
+.pane-tools { margin-left: 0; }
+.pane.group.focused > .tab-strip { box-shadow: none; }
+.tab.active::after { display: none; }
+.pane-status { flex: none; min-height: 18px; display: flex; align-items: center; padding: 0 10px; color: var(--oi-muted-2); background: var(--oi-pane-bar-ground); font-size: var(--oi-shell-type-eyebrow); }
+.pane-status span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pane.group.focused > .pane-status { background: color-mix(in srgb, var(--oi-pane-bar-ground) 88%, var(--oi-accent-soft)); }
+
+/* Writing surfaces already own a footer: keep one bottom status band. */
+.pane.group:has(.source-editor-foot) > .pane-status { display: none; }
+.pane.group.focused .source-editor-foot { background: color-mix(in srgb, var(--oi-pane-bar-ground) 88%, var(--oi-accent-soft)); }

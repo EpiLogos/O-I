@@ -81,6 +81,13 @@ export function ContextMenu({ menu, onInvoke, onClose }: Props) {
       el.style.top = `${Math.max(0, window.innerHeight - r.height - 4)}px`;
   }, []);
 
+  useEffect(() => {
+    // Opaque rendered documents do not bubble pointer events to this host.
+    // Entering their focus context (or another native window) ends a menu.
+    window.addEventListener('blur', onClose);
+    return () => window.removeEventListener('blur', onClose);
+  }, [onClose]);
+
   const onKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
     const items = Array.from(
       ref.current?.querySelectorAll<HTMLButtonElement>(".ctx-item:not([disabled])") ?? [],

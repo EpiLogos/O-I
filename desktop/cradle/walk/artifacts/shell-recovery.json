@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "shell-recovery",
-  "generated_at": "2026-09-08T12:47:30.170Z",
+  "generated_at": "2026-09-08T13:35:00.691Z",
   "environment": {
     "base_url": "http://localhost:1423",
     "bridge_url": "http://127.0.0.1:4197",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 6199,
+  "duration_ms": 3717,
   "checks": [
     {
       "ok": true,
@@ -166,7 +166,7 @@
       "duration_ms": 0.1,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-08T12:47:30.487Z",
+        "mounted_at": "2026-09-08T13:35:00.988Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4197"
@@ -180,7 +180,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-08T12:47:32.650Z",
+        "mounted_at": "2026-09-08T13:35:01.496Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4197"
@@ -191,7 +191,7 @@
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 0.6,
+      "duration_ms": 0.3,
       "data": {
         "layout": {
           "subjectPlanes": {},
@@ -206,32 +206,32 @@
                 "type": "group",
                 "id": "g1",
                 "tabs": [
-                  "8d21779d-8062-440b-be6f-ee402d3ae70c"
+                  "475e973f-f01b-4196-bd50-d718a84dfcb5"
                 ],
                 "pinned": [],
-                "active": "8d21779d-8062-440b-be6f-ee402d3ae70c"
+                "active": "475e973f-f01b-4196-bd50-d718a84dfcb5"
               },
               {
                 "type": "group",
                 "id": "g2",
                 "tabs": [
-                  "5f1f4781-1991-49b0-a1e7-366c53e08d3a"
+                  "40ab828e-cb3b-42f5-bc70-8deb517332f1"
                 ],
                 "pinned": [],
-                "active": "5f1f4781-1991-49b0-a1e7-366c53e08d3a"
+                "active": "40ab828e-cb3b-42f5-bc70-8deb517332f1"
               }
             ]
           },
           "surfaces": {
-            "8d21779d-8062-440b-be6f-ee402d3ae70c": {
+            "475e973f-f01b-4196-bd50-d718a84dfcb5": {
               "project": "Editor",
-              "id": "8d21779d-8062-440b-be6f-ee402d3ae70c",
+              "id": "475e973f-f01b-4196-bd50-d718a84dfcb5",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "title": "00 01-DESIGN.md"
             },
-            "5f1f4781-1991-49b0-a1e7-366c53e08d3a": {
-              "id": "5f1f4781-1991-49b0-a1e7-366c53e08d3a",
+            "40ab828e-cb3b-42f5-bc70-8deb517332f1": {
+              "id": "40ab828e-cb3b-42f5-bc70-8deb517332f1",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
               "project": "Editor",
@@ -250,7 +250,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 61,
+      "duration_ms": 46,
       "data": {
         "file": "shell-recovery-1280.png"
       }
@@ -258,7 +258,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 52,
+      "duration_ms": 24,
       "data": {
         "file": "shell-recovery-900.png"
       }
@@ -266,7 +266,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 41,
+      "duration_ms": 24,
       "data": {
         "file": "shell-recovery-760.png"
       }
@@ -274,7 +274,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 36,
+      "duration_ms": 20,
       "data": {
         "file": "shell-recovery-639.png"
       }
@@ -282,7 +282,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 37,
+      "duration_ms": 28,
       "data": {
         "file": "shell-recovery-390.png"
       }
@@ -305,32 +305,32 @@
                 "type": "group",
                 "id": "g1",
                 "tabs": [
-                  "8d21779d-8062-440b-be6f-ee402d3ae70c"
+                  "475e973f-f01b-4196-bd50-d718a84dfcb5"
                 ],
                 "pinned": [],
-                "active": "8d21779d-8062-440b-be6f-ee402d3ae70c"
+                "active": "475e973f-f01b-4196-bd50-d718a84dfcb5"
               },
               {
                 "type": "group",
                 "id": "g2",
                 "tabs": [
-                  "5f1f4781-1991-49b0-a1e7-366c53e08d3a"
+                  "40ab828e-cb3b-42f5-bc70-8deb517332f1"
                 ],
                 "pinned": [],
-                "active": "5f1f4781-1991-49b0-a1e7-366c53e08d3a"
+                "active": "40ab828e-cb3b-42f5-bc70-8deb517332f1"
               }
             ]
           },
           "surfaces": {
-            "8d21779d-8062-440b-be6f-ee402d3ae70c": {
+            "475e973f-f01b-4196-bd50-d718a84dfcb5": {
               "project": "Editor",
-              "id": "8d21779d-8062-440b-be6f-ee402d3ae70c",
+              "id": "475e973f-f01b-4196-bd50-d718a84dfcb5",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "title": "00 01-DESIGN.md"
             },
-            "5f1f4781-1991-49b0-a1e7-366c53e08d3a": {
-              "id": "5f1f4781-1991-49b0-a1e7-366c53e08d3a",
+            "40ab828e-cb3b-42f5-bc70-8deb517332f1": {
+              "id": "40ab828e-cb3b-42f5-bc70-8deb517332f1",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
               "project": "Editor",
@@ -349,7 +349,7 @@
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "layout": {
           "subjectPlanes": {},
@@ -364,32 +364,32 @@
                 "type": "group",
                 "id": "g1",
                 "tabs": [
-                  "8d21779d-8062-440b-be6f-ee402d3ae70c"
+                  "475e973f-f01b-4196-bd50-d718a84dfcb5"
                 ],
                 "pinned": [],
-                "active": "8d21779d-8062-440b-be6f-ee402d3ae70c"
+                "active": "475e973f-f01b-4196-bd50-d718a84dfcb5"
               },
               {
                 "type": "group",
                 "id": "g2",
                 "tabs": [
-                  "5f1f4781-1991-49b0-a1e7-366c53e08d3a"
+                  "40ab828e-cb3b-42f5-bc70-8deb517332f1"
                 ],
                 "pinned": [],
-                "active": "5f1f4781-1991-49b0-a1e7-366c53e08d3a"
+                "active": "40ab828e-cb3b-42f5-bc70-8deb517332f1"
               }
             ]
           },
           "surfaces": {
-            "8d21779d-8062-440b-be6f-ee402d3ae70c": {
+            "475e973f-f01b-4196-bd50-d718a84dfcb5": {
               "project": "Editor",
-              "id": "8d21779d-8062-440b-be6f-ee402d3ae70c",
+              "id": "475e973f-f01b-4196-bd50-d718a84dfcb5",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "title": "00 01-DESIGN.md"
             },
-            "5f1f4781-1991-49b0-a1e7-366c53e08d3a": {
-              "id": "5f1f4781-1991-49b0-a1e7-366c53e08d3a",
+            "40ab828e-cb3b-42f5-bc70-8deb517332f1": {
+              "id": "40ab828e-cb3b-42f5-bc70-8deb517332f1",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
               "project": "Editor",
@@ -408,7 +408,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 58,
+      "duration_ms": 37,
       "data": {
         "file": "shell-recovery-system-1280.png"
       }
@@ -416,7 +416,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 121,
+      "duration_ms": 45,
       "data": {
         "file": "shell-recovery-system-900.png"
       }

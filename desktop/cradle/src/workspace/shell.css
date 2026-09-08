@@ -326,3 +326,11 @@
 .material-surface { position: relative; }
 .system-panel .ground-chooser form { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
 .system-panel .ground-chooser form button { min-height: 30px; }
+
+/* Owner cleanup: a continuous left ground and a quieter window strip. */
+.shell-topbar { height: 30px; border-bottom: 0; background: linear-gradient(to right, var(--oi-sidebar-ground) 0 var(--desktop-left-width), var(--oi-shell-ground) var(--desktop-left-width) 100%); }
+.shell-topbar button { width: 26px; height: 26px; }
+.desktop-side.left.depth-panel, .desktop-side.left.depth-full { margin: 0; border: 0; border-radius: 0; }
+.region-resizer.left { width: 4px; right: 0; background: transparent; border: 0; }
+.region-resizer.left:hover, .region-resizer.left:focus-visible { background: var(--oi-accent-soft); }
+@media (pointer: coarse) { .shell-topbar { height: 38px; } .shell-topbar button { width: 34px; height: 34px; } }

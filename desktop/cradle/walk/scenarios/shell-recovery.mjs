@@ -6,7 +6,7 @@ export default async function run({page,baseUrl,channel,check,shot,provision:p})
   await page.locator(`[data-file-path="Work/Editor/${p.sources[0].binding.path}"]`).click();
   await page.locator('.source-textarea').waitFor();
   await page.locator('.source-textarea').focus();
-  await page.getByRole('button',{name:'Split active surface right',exact:true}).click();
+  await page.keyboard.press('Meta+d');
   await page.getByRole('button',{name:'Close empty pane',exact:true}).waitFor();
   check(await page.locator('.pane.group').count()===2,'One-tab Split creates a usable empty sibling');
   await page.reload();await channel('info');
@@ -33,10 +33,14 @@ export default async function run({page,baseUrl,channel,check,shot,provision:p})
       await selector.selectOption(previous);
 
       await page.getByRole('button',{name:'Toggle left region',exact:true}).click();
+      // Wait for the overlay's real geometry after the width transition;
+      // isVisible alone samples synchronously before the first paint.
+      await page.locator('[data-region="left"][data-overlay="true"]').waitFor({state:'visible'});
       check(await page.locator('[data-region="left"][data-overlay="true"]').isVisible(),`Central is summonable at ${width}`);
       await page.keyboard.press('Escape');
       check(await page.getByRole('button',{name:'Toggle left region',exact:true}).evaluate(el=>el===document.activeElement),`Overlay returns focus at ${width}`);
       await page.keyboard.press('Meta+b');
+      await page.locator('[data-region="left"][data-overlay="true"]').waitFor({state:'visible'});
       check(await page.locator('[data-region="left"][data-overlay="true"]').isVisible(),`Keyboard summons Central at ${width}`);
       await page.keyboard.press('Escape');
     }

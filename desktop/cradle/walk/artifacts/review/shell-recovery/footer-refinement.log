@@ -1,0 +1,14 @@
+serving the cradle at http://localhost:1423 (external)
+
+=== scenario: shell-recovery ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4197 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4197 (fresh kernel, seq from 1)
+PASS  Root label Overview retains explicit Central operation accessibility name
+PASS  Source pane keeps only its existing footer
+PASS  Focus shading belongs to existing bottom source footer
+  screenshot: artifacts/shell-recovery-one-footer-overview.png
+  stopped walk-bridge
+  receipt: artifacts/shell-recovery.json — 3/3 checks, PASS
+
+=== walk summary ===
+PASS  shell-recovery — 3/3 checks

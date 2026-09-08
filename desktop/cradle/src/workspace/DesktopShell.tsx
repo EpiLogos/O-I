@@ -46,6 +46,25 @@ export function DesktopShell(p: Props) {
     p.onNamingHandled();
   }, [p.namingRequest]);
   useEffect(() => { const o = new ResizeObserver(e => setWidth(e[0].contentRect.width)); if (host.current) o.observe(host.current); return () => o.disconnect(); }, []);
+  useEffect(() => {
+    const closeMenus = (event: Event) => {
+      const open = Array.from(host.current?.querySelectorAll<HTMLDetailsElement>('details.desktop-menu[open]') ?? []);
+      if (!open.length) return;
+      if (event instanceof KeyboardEvent && event.key !== 'Escape') return;
+      let closed = false;
+      for (const menu of open) {
+        if (event.type === 'blur' || event instanceof KeyboardEvent || !menu.contains(event.target as Node)) {
+          menu.open = false; closed = true;
+          if (event instanceof KeyboardEvent) menu.querySelector<HTMLElement>('summary')?.focus();
+        }
+      }
+      if (closed && event instanceof KeyboardEvent) { event.preventDefault(); event.stopImmediatePropagation(); }
+    };
+    window.addEventListener('pointerdown', closeMenus, true);
+    window.addEventListener('keydown', closeMenus, true);
+    window.addEventListener('blur', closeMenus);
+    return () => { window.removeEventListener('pointerdown', closeMenus, true); window.removeEventListener('keydown', closeMenus, true); window.removeEventListener('blur', closeMenus); };
+  }, []);
   const l = p.layout;
   const intended = (side: Side) => side === "left" ? l.agencyDepth : l.rightDepth ?? "strip";
   // Responsive tiers (brief FND-01 A4): ≤1000px snaps the sidebar/agent to
@@ -157,8 +176,7 @@ export function DesktopShell(p: Props) {
   return <div ref={host} className="desktop-shell" data-native={p.native} data-workspace-id={p.workspace.id} style={{"--desktop-left-width": `${left === "panel" || left === "full" ? leftWidth : 0}px`} as React.CSSProperties}>
     <header className="shell-topbar" aria-label="Window and focused pane" data-tauri-drag-region>
       <button className="shell-region-toggle" aria-label="Toggle left region" aria-expanded={left === "panel" || left === "full"} onClick={summonNavigator} title="Show / hide Central (⌘B)"><Glyph name="sidebar"/></button>
-      <div className="shell-focus" data-tauri-drag-region>{width < 640 && groupCount > 1 ? <select aria-label="Focused pane" value={l.focusedGroupId ?? ""} onChange={event => { const id=event.target.value; p.setLayout(state => focusGroup(state,id)); }}>{groupsOf(l.root).map((group,index) => <option key={group.id} value={group.id}>{index+1}/{groupCount} · {group.active ? l.surfaces[group.active]?.title : "Empty pane"}</option>)}</select> : <span data-tauri-drag-region>{focusedTitle}</span>}</div>
-      {groupCount > 0 && <nav className="shell-pane-actions" aria-label="Focused pane actions">{p.arrangementActions}</nav>}
+      <div className="shell-focus" data-tauri-drag-region>{width < 640 && groupCount > 1 ? <select aria-label="Focused pane" value={l.focusedGroupId ?? ""} onChange={event => { const id=event.target.value; p.setLayout(state => focusGroup(state,id)); }}>{groupsOf(l.root).map((group,index) => <option key={group.id} value={group.id}>{index+1}/{groupCount} · {group.active ? l.surfaces[group.active]?.title : "Empty pane"}</option>)}</select> : null}</div>
       <button className="shell-region-toggle shell-agent-toggle" aria-label="Toggle right region" aria-expanded={right === "panel" || right === "full"} onClick={() => toggle("right")} title="Show / hide accompanying agent (⌘⇧B)"><Glyph name="sidebar"/></button>
     </header>
     {naming && <form className="workspace-name" onSubmit={e => { e.preventDefault(); if (!name.trim()) return; if (naming === "create") p.create(name); else p.rename(name); setNaming(null); }}>
@@ -170,7 +188,7 @@ export function DesktopShell(p: Props) {
       {overlayLeft && <button className="region-scrim" aria-label="Close Central overlay" onClick={closeNavigator}/> }
       <aside className={`desktop-side left depth-${left}`} data-region="left" data-depth={left} data-overlay={overlayLeft} style={{ width: left === "panel" || left === "full" ? leftWidth : undefined }} aria-label="World region">
         {(left === "panel" || left === "full") && <>
-          <div className="central-heading"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" strokeWidth="1.2" aria-hidden="true"><path d="M3 6h7l2 2h9v12H3z"/></svg><div><strong>Central</strong><small>Personal ground</small></div></div>
+          <div className="central-heading"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" strokeWidth="1.2" aria-hidden="true"><path d="M3 6h7l2 2h9v12H3z"/></svg><div><strong>My O:I</strong><small>Personal ground</small></div></div>
           {p.navigator(null)}{left === "panel" && separator("left")}
         </>}
       </aside>

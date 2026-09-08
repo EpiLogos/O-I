@@ -16,12 +16,11 @@ import "./navigator.css";
 function SidebarGlyph({path,size=15}:{path:string;size?:number}) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={path}/></svg>;
 }
-const AGENT_GLYPH = "M5 7h14v12H5zM12 3v4M8 12h1m6 0h1M9 16h6";
 const SETTINGS_GLYPH = "M4 7h16M4 17h16M8 4v6m8 4v6";
 
 /** Summoned reading over Central's owner operations; selection lives in the
  * kernel. Local state is only filter text and in-flight presentation. */
-export function WorldNavigator({ onSystem,onOpenEncounter, centralFiles, onCentralFilesChange, workspaceSelector, searchShortcut, projectNavigation, onNavigationChange, onOpenFile, onProjectChange, onOpenWiki, onSearch, onAgent, activeEncounterRef }: { onSystem:()=>void;onOpenEncounter:(row:EncounterRow)=>Promise<void>; centralFiles: boolean; onCentralFilesChange:(files:boolean)=>void; workspaceSelector: ReactNode; searchShortcut: string; projectNavigation: Record<string, ProjectNavigation>; onNavigationChange: (ref: string, change: Partial<ProjectNavigation>) => void; onSearch: () => void; onOpenWiki: (ref:string,title:string,project?:string)=>Promise<void>; onOpenFile: (location:CentralLocation)=>Promise<void>; onProjectChange?: (project?: string) => void; onAgent?: () => void; activeEncounterRef?: string }) {
+export function WorldNavigator({ onSystem,onOpenEncounter, centralFiles, onCentralFilesChange, workspaceSelector, searchShortcut, projectNavigation, onNavigationChange, onOpenFile, onProjectChange, onOpenWiki, onSearch, activeEncounterRef }: { onSystem:()=>void;onOpenEncounter:(row:EncounterRow)=>Promise<void>; centralFiles: boolean; onCentralFilesChange:(files:boolean)=>void; workspaceSelector: ReactNode; searchShortcut: string; projectNavigation: Record<string, ProjectNavigation>; onNavigationChange: (ref: string, change: Partial<ProjectNavigation>) => void; onSearch: () => void; onOpenWiki: (ref:string,title:string,project?:string)=>Promise<void>; onOpenFile: (location:CentralLocation)=>Promise<void>; onProjectChange?: (project?: string) => void; onAgent?: () => void; activeEncounterRef?: string }) {
   const kernel = useKernel();
   const reading = kernel.snapshot.navigator;
   const [error,setError] = useState<string>();
@@ -84,18 +83,24 @@ export function WorldNavigator({ onSystem,onOpenEncounter, centralFiles, onCentr
   return <aside className="world-navigator" aria-label="World navigator" aria-busy={pending}>
     <div className="central-actions">
       <button className="summon-search" onClick={onSearch}>Search <kbd>{searchShortcut}</kbd></button>
-      {onAgent && <button className="central-agent-entry" aria-label="Open accompanying agent" title="Open accompanying agent" onClick={onAgent}><SidebarGlyph path={AGENT_GLYPH}/></button>}
-      {root?.control.agent_wiki.wiki.space_ref && <button className="central-wiki-entry" aria-label="Central wiki" title="Central wiki" onClick={()=>openWiki(root.control.agent_wiki.wiki.space_ref!,"Central wiki")}><Glyph name="wiki"/></button>}
     </div>
     {workspaceSelector}
-    <div className="central-mode-row"><button className="world-root" aria-current={!selected ? "true" : undefined} onClick={() => void load()}>Central</button>{modes("","Central")}</div>
+    <section className="central-operating-region" aria-label="Central operating spaces">
+    <div className="central-mode-row"><button className="world-root" aria-label="Browse Central root" aria-current={!selected ? "true" : undefined} onClick={() => void load()}>Overview</button>{modes("","Central")}</div>
+      {root && <>
+        <RootSpace name="User" path="Control/user" refresh={fileRefresh} onOpen={onOpenFile}/>
+        <RootSpace name="Agent" path="Control/agents" refresh={fileRefresh} onOpen={onOpenFile}/>
+      </>}
+      {root && <>
+      {rootFiles && <FileTree path="" onOpen={onOpenFile} refresh={fileRefresh} onRootRef={ref=>setDirectoryRefs(held=>({...held,"":ref}))} expanded={projectNavigation[centralKey]?.directories??[]} onExpansion={directories=>{if(centralKey)onNavigationChange(centralKey,{directories,locationPath:""});}}/>}
+      {centralMode === "wiki" && <div className="project-reading"><button disabled={!root.control.agent_wiki.wiki.space_ref} onClick={()=>openWiki(root.control.agent_wiki.wiki.space_ref!,"Central wiki")}>Central neighbourhood</button></div>}
+      </>}
+    </section>
     {error && <p role="alert">{error}</p>}
-    <header><h1>Work projects</h1><button onClick={() => void load(selected?.name, false)} disabled={pending} aria-label="Refresh Central">↻</button></header>
+    <header><h1>Work</h1><button onClick={() => void load(selected?.name, false)} disabled={pending} aria-label="Refresh Central">↻</button></header>
     {pending && <Loading label="Reading Central…"/>}
     {(reading?.error || kernel.opError) && <p role="status">{reading?.error || kernel.opError}</p>}
     {root && <>
-      {rootFiles && <FileTree path="" onOpen={onOpenFile} refresh={fileRefresh} onRootRef={ref=>setDirectoryRefs(held=>({...held,"":ref}))} expanded={projectNavigation[centralKey]?.directories??[]} onExpansion={directories=>{if(centralKey)onNavigationChange(centralKey,{directories,locationPath:""});}}/>}
-      {centralMode === "wiki" && <div className="project-reading"><button disabled={!root.control.agent_wiki.wiki.space_ref} onClick={()=>openWiki(root.control.agent_wiki.wiki.space_ref!,"Central wiki")}>Central neighbourhood</button></div>}
       {/* Finding 26: this hint used to render as a standalone paragraph
           between the "PROJECTS" label and the list itself, breaking the
           row rhythm — the project list right below it already answers the
@@ -125,4 +130,14 @@ export function WorldNavigator({ onSystem,onOpenEncounter, centralFiles, onCentr
     </>}
     <div className="world-system"><button onClick={onSystem}><SidebarGlyph path={SETTINGS_GLYPH} size={13}/>System</button></div>
   </aside>;
+}
+
+/** A root-space affordance reads its real directory through Central on demand. */
+function RootSpace({name,path,refresh,onOpen}:{name:string;path:string;refresh:number;onOpen:(location:CentralLocation)=>Promise<void>}) {
+  const [open,setOpen]=useState(false);
+  const [expanded,setExpanded]=useState<string[]>([]);
+  return <div className="central-root-space">
+    <button aria-label={`${open ? 'Collapse' : 'Expand'} Central ${name} space`} aria-expanded={open} onClick={()=>setOpen(value=>!value)}><span aria-hidden="true">{open ? '⌄' : '›'}</span><Glyph name="folder" size={12}/><span>{name}</span></button>
+    {open && <FileTree path={path} refresh={refresh} onOpen={onOpen} expanded={expanded} onExpansion={setExpanded} onRootRef={()=>{}}/>}
+  </div>;
 }

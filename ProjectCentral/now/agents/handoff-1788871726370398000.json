@@ -7,5 +7,8 @@
   "recorded_at_unix_seconds": 1788871726,
   "subject": "Shell and pane tranche ready for review; System and point-cloud scope separated",
   "result": "Safety checkpoint 79a446d pushed first. Topbar region controls, focused-pane actions, narrow pane selector, persistent empty splits, native tab/close separation and detach/re-dock draft/focus repaired. Focused shell walk36/36; native interaction observations recorded. Three subagents returned. Review: desktop/cradle/walk/artifacts/review/SHELL-PANES-TRANCHE-2026-09-08.md. Full foundation gate remains open for provider composition, permission and native resources. Concurrent tasks remain active; no day close or phase advancement.",
-  "status": "waiting"
+  "status": "resolved",
+  "preserve_refs": [
+    "desktop/cradle/walk/artifacts/review/browser-canvas/REVIEW.md"
+  ]
 }

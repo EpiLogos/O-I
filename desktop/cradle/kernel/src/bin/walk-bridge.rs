@@ -268,26 +268,7 @@ fn base64_decode(input: &str) -> Option<Vec<u8>> {
 }
 
 fn content_type_for(mime_hint: Option<&str>, path: &str) -> String {
-    if let Some(hint) = mime_hint {
-        return hint.to_owned();
-    }
-    let extension = path.rsplit_once('.').map(|(_, ext)| ext.to_lowercase());
-    match extension.as_deref() {
-        Some("html") | Some("htm") => "text/html",
-        Some("md") => "text/markdown",
-        Some("svg") => "image/svg+xml",
-        Some("css") => "text/css",
-        Some("js") => "text/javascript",
-        Some("json") => "application/json",
-        Some("txt") => "text/plain",
-        Some("png") => "image/png",
-        Some("jpg") | Some("jpeg") => "image/jpeg",
-        Some("gif") => "image/gif",
-        Some("webp") => "image/webp",
-        Some("pdf") => "application/pdf",
-        _ => "application/octet-stream",
-    }
-    .to_owned()
+    oi_cradle_kernel::files::material_content_type(mime_hint, path)
 }
 
 fn respond(stream: &mut TcpStream, response: BridgeResponse) {

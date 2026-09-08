@@ -41,7 +41,7 @@ function materialUrl(transport: KernelTransportStatus, location: CentralLocation
  * `Workbench.tsx`'s `GroupPane` does exactly this). A tab switch instead
  * fully unmounts this component (`Workbench.tsx`'s `SurfaceBody` only
  * renders the active tab), which already releases everything on its own. */
-function useSuspend(): { containerRef: React.RefObject<HTMLDivElement>; suspended: boolean } {
+function useSuspend(view: string): { containerRef: React.RefObject<HTMLDivElement>; suspended: boolean } {
   const containerRef = useRef<HTMLDivElement>(null);
   const [intersecting, setIntersecting] = useState(true);
   const [documentVisible, setDocumentVisible] = useState(() => typeof document === "undefined" || document.visibilityState === "visible");
@@ -54,7 +54,7 @@ function useSuspend(): { containerRef: React.RefObject<HTMLDivElement>; suspende
     }, { threshold: 0 });
     observer.observe(node);
     return () => observer.disconnect();
-  }, []);
+  }, [view]);
   useEffect(() => {
     const onVisibility = () => setDocumentVisible(document.visibilityState === "visible");
     document.addEventListener("visibilitychange", onVisibility);
@@ -86,8 +86,13 @@ function imageMimeFor(path: string, mimeHint: string | null): string {
  * same CAS/history/read-only path — never a second, divergent reader). */
 export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; format: MaterialFormat }) {
   const { transport } = useKernel();
-  const { containerRef, suspended } = useSuspend();
-  const [view, setView] = useState<"rendered" | "source">("rendered");
+  const viewKey = `oi-cradle.material-view:${binding.id}`;
+  const [savedView] = useState(() => { try { return JSON.parse(localStorage.getItem(viewKey) ?? "null"); } catch { return null; } });
+  const [view, setView] = useState<"rendered" | "source">(savedView?.view === "source" && (format === "html" || format === "markdown") ? "source" : "rendered");
+  const { containerRef, suspended } = useSuspend(view);
+  const [zoom, setZoom] = useState<number>([.5,.75,1,1.25,1.5,2].includes(savedView?.zoom) ? savedView.zoom : 1);
+  const [generation, setGeneration] = useState(0);
+  useEffect(() => { try { localStorage.setItem(viewKey, JSON.stringify({view,zoom})); } catch { /* Optional presentation state; never source authority. */ } }, [viewKey,view,zoom]);
   const [textContent, setTextContent] = useState<string>();
   const [disposition, setDisposition] = useState<Disposition>();
   const [imageDataUrl, setImageDataUrl] = useState<string>();
@@ -100,6 +105,7 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
     let live = true;
     setPending(true);
     setError(undefined);
+    setPdfFailed(false);
     if (!location) {
       setError("The saved file location is unavailable");
       setPending(false);
@@ -123,13 +129,18 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
     };
     void run().catch(error => { if (live) setError(String(error)); }).finally(() => { if (live) setPending(false); });
     return () => { live = false; };
-  }, [transport, location, format]);
+  }, [transport, location, format, generation]);
 
   const showToggle = format === "html" || format === "markdown";
+  const zoomable = ["html","markdown"].includes(format);
+  const tools = view === "rendered" ? <div className="material-tools">
+    {zoomable && <select aria-label="Preview zoom" value={zoom} onChange={e=>setZoom(Number(e.target.value))}>{[.5,.75,1,1.25,1.5,2].map(value=><option key={value} value={value}>{Math.round(value*100)}%</option>)}</select>}
+    <button type="button" aria-label="Reload preview" title="Reload from the file owner" disabled={pending} onClick={()=>setGeneration(value=>value+1)}>↻</button>
+  </div> : null;
   if (!location) return <p role="alert" className="source-note">The saved file location is unavailable</p>;
   if (view === "source") {
     return <section className="material-surface" aria-label={`Material ${binding.title}`}>
-      <MaterialChrome title={binding.title} format={format} view={view} onChange={setView} showToggle={showToggle} />
+      <MaterialChrome title={binding.title} format={format} view={view} onChange={setView} showToggle={showToggle} tools={tools} />
       <div className="material-body"><FileSurface binding={binding} forceSource /></div>
     </section>;
   }
@@ -139,28 +150,28 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
   const imageSrc = transport.kind === "bridge" ? imageDataUrl : baseUrl;
 
   return <section className="material-surface" aria-label={`Material ${binding.title}`} aria-busy={pending} ref={containerRef}>
-    <MaterialChrome title={binding.title} format={format} view={view} onChange={setView} showToggle={showToggle} />
-    {error && <p role="alert" className="source-note">{error}</p>}
+    <MaterialChrome title={binding.title} format={format} view={view} onChange={setView} showToggle={showToggle} tools={tools} />
+    {error && <p role="alert" className="source-note">{error} <button type="button" onClick={()=>setGeneration(value=>value+1)}>Retry</button></p>}
     {!error && pending && <Loading label="Reading material…" scope="surface"/>}
-    {!error && !pending && format === "html" && (
+    {!error && !pending && format === "html" && <div className="material-viewport" data-preview-zoom={zoom}><div className="material-scaled" style={{width:`${100/zoom}%`,height:`${100/zoom}%`,transform:`scale(${zoom})`}}>{(
       transport.kind === "tauri"
-        ? <iframe className="material-frame" title={binding.title} sandbox="allow-scripts allow-forms" referrerPolicy="no-referrer" src={suspended ? "about:blank" : baseUrl} />
-        : <iframe className="material-frame" title={binding.title} sandbox="allow-scripts allow-forms" referrerPolicy="no-referrer" srcDoc={suspended ? undefined : injectBase(textContent ?? "", resolveAsset(""))} />
-    )}
-    {!error && !pending && format === "markdown" && (
-      <iframe className="material-frame" title={binding.title} sandbox="" srcDoc={suspended ? undefined : markdownDocument(textContent ?? "", resolveAsset)} />
-    )}
+        ? <iframe className="material-frame" title={binding.title} sandbox="allow-scripts allow-forms" referrerPolicy="no-referrer" key={generation} src={suspended ? "about:blank" : baseUrl} />
+        : <iframe className="material-frame" title={binding.title} sandbox="allow-scripts allow-forms" referrerPolicy="no-referrer" key={generation} srcDoc={suspended ? undefined : injectBase(textContent ?? "", resolveAsset(""))} />
+    )}</div></div>}
+    {!error && !pending && format === "markdown" && <div className="material-viewport" data-preview-zoom={zoom}><div className="material-scaled" style={{width:`${100/zoom}%`,height:`${100/zoom}%`,transform:`scale(${zoom})`}}>
+      <iframe key={generation} className="material-frame" title={binding.title} sandbox="" srcDoc={suspended ? undefined : markdownDocument(textContent ?? "", resolveAsset)} />
+    </div></div>}
     {!error && !pending && format === "image" && (
       <div className="material-image-frame">
         {imageSrc
-          ? <img className="material-image" alt={binding.title} src={suspended ? undefined : imageSrc} />
+          ? <img key={generation} className="material-image" alt={binding.title} src={suspended ? undefined : imageSrc} />
           : <p className="source-note">No transport can serve this image.</p>}
       </div>
     )}
     {!error && !pending && format === "pdf" && (
       pdfFailed || !baseUrl
         ? <p className="material-unavailable" role="alert">This PDF could not be displayed. Central still holds it read-only; no platform viewer was reachable here.</p>
-        : <iframe className="material-frame" title={binding.title} src={suspended ? "about:blank" : baseUrl} onError={() => setPdfFailed(true)} />
+        : <iframe key={generation} className="material-frame" title={binding.title} src={suspended ? "about:blank" : baseUrl} onError={() => setPdfFailed(true)} />
     )}
     {!error && !pending && format === "unsupported" && disposition && (
       <div className="material-disposition" role="note">
@@ -183,12 +194,13 @@ const FORMAT_LABEL: Record<MaterialFormat, string> = {
   html: "HTML", markdown: "Markdown", image: "Image", pdf: "PDF", text: "Text", unsupported: "Unsupported",
 };
 
-function MaterialChrome({ title, format, view, onChange, showToggle }: {
-  title: string; format: MaterialFormat; view: "rendered" | "source"; onChange: (view: "rendered" | "source") => void; showToggle: boolean;
+function MaterialChrome({ title, format, view, onChange, showToggle, tools }: {
+  title: string; format: MaterialFormat; view: "rendered" | "source"; onChange: (view: "rendered" | "source") => void; showToggle: boolean; tools: React.ReactNode;
 }) {
   return <header className="material-chrome">
     <span className="material-path" title={title}>{title}</span>
     <span className="material-format">{FORMAT_LABEL[format]}</span>
+    {tools}
     {showToggle && <MaterialToggle view={view} onChange={onChange} />}
   </header>;
 }

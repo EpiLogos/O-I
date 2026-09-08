@@ -1,0 +1,61 @@
+{
+  "errors": [],
+  "running": {
+    "raf": true,
+    "visible": [
+      "fire",
+      "water",
+      "air",
+      "earth",
+      "arrival",
+      "presence",
+      "relation"
+    ],
+    "paused": false,
+    "reduced": false
+  },
+  "paused": {
+    "raf": false,
+    "visible": [
+      "fire",
+      "water",
+      "air",
+      "earth",
+      "arrival",
+      "presence",
+      "relation"
+    ],
+    "paused": true,
+    "reduced": false
+  },
+  "reduced": {
+    "raf": false,
+    "visible": [
+      "fire",
+      "water",
+      "air",
+      "earth",
+      "arrival",
+      "presence",
+      "relation"
+    ],
+    "paused": false,
+    "reduced": true
+  },
+  "fullscreen": {
+    "mainInert": true,
+    "raf": false
+  },
+  "narrow": {
+    "overflow": false,
+    "state": {
+      "raf": true,
+      "visible": [
+        "fire",
+        "water"
+      ],
+      "paused": false,
+      "reduced": false
+    }
+  }
+}
