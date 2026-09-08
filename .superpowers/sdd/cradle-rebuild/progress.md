@@ -780,3 +780,17 @@ FND-07 remains open: a successful native sidebar keyboard resize produced no obs
 The native keyboard expression defect and browser redock race are repaired. Expression browser36, pagination regression, real React resize18, type checking and coherent native production-asset build passed. Exact-owner kernel35 passed/4ignored. Revision4 source freeze145 files reverified; executable `d6c26aeb7e8a295b69579cc0509103399bc0632dae52581629b0b26a2c771420`. Three warm-ups plus17 measured native small-dataset cycles verified browser state retention, maximize/restore and terminal surface presence.
 
 User explicitly stopped prolonged repeated testing and requested wave-2 handoff. Sampler and owned test app/server stopped; live user app/resident preserved. No full FND resource or phase acceptance claim. Missing native obligations and five disjoint wave-2 cells are carried in `WAVE-2-HANDOFF-2026-09-08.md`; evidence in `desktop/cradle/walk/artifacts/review/p1-integration-2026-09-08/FINAL-BOUNDED-RECEIPT.json`. P1 remains the checkpoint branch pending acceptance; no downstream implementation performed.
+
+### 2026-09-08 — wave-2 preparation: five bounded worker briefs dispatched to documents
+
+Orchestrator (Hermes-Nara) prepared wave 2 from the handoff's dispatch ground; no implementation, walk, soak or native run restarted. Five BRIEFs, each ≤60 lines, one disjoint cell each, grounded against live source (Central `f3559db`, ai-kit `7d29dbb`, O-I `cc4f401`):
+
+| Brief | Cell | Depends on |
+|---|---|---|
+| `BRIEF-W2-C1-CENTRAL-WIKI-READINGS-2026-09-08.md` | Central canonical wiki read-model Action (gap verified: none exists; world_map discloses refs only) | — |
+| `BRIEF-W2-C2-AIKIT-RESOLUTION-FAMILIARITY-2026-09-08.md` | AIKit owner resolution rows (file/Flow/skill + Actions) and successful-use familiarity | — |
+| `BRIEF-W2-C3-GRAPH-KERNEL-INPUT-2026-09-08.md` | Typed GraphReading kernel adapter; shared-field projection named deferred input | reviewed C1+C2 |
+| `BRIEF-W2-C4-GRAPH-PRESENTATION-2026-09-08.md` | UI lead only; graph/search presentation incl. overlay arrow-navigation gap | reviewed C3 |
+| `BRIEF-W2-C5-GRAPH-ACCEPTANCE-2026-09-08.md` | Independent read-only U3.1/U3.4 acceptance walk | serialized integration + binding, C1–C4 |
+
+Serialization per handoff: coherent native integration → executable binding → U3.1/U3.4 walk → review → receipt. No worker has been spawned; briefs are dispatch-ready documents. Residual P1 acceptance (FND-00–06 full journey, 21 structural rows, two-session continuity, themes/reduced motion, FND-06 large-dataset/200-resize coverage) remains open and is not advanced by this entry.
