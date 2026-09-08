@@ -1,0 +1,57 @@
+/* FND-02 — the accompanying agent plane. Tokens only: colour, type scale
+ * and motion come from packages/oi-design-system/tokens.css; structural
+ * measurements follow the shell brief's companion-density numbers.
+ * Finding 33: metas here used to read `--oi-muted` (#68715f) where the
+ * sidebar's own metas read `--oi-muted-2` (#8f9a83) — two secondary greys
+ * in adjacent planes. This file consumes `--oi-muted-2` throughout. */
+.agent-layer{height:100%;min-height:0;display:flex;flex-direction:column;background:var(--oi-agent-ground);color:var(--oi-foreground);container-type:inline-size}
+.agent-head{flex:none;height:65px;box-sizing:border-box;display:flex;align-items:center;gap:9px;padding:0 14px}
+.agent-head-row{display:flex;align-items:center;gap:9px;flex:1;min-width:0}
+.agent-head-glyph{width:var(--oi-shell-control);height:28px;flex:none;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:7px;display:grid;place-items:center;background:var(--oi-canvas-ground);color:var(--oi-accent-ink)}
+.agent-head-row>div{flex:1;min-width:0}
+.agent-head strong{display:block;font-size:var(--oi-shell-type-body);font-weight:550}
+.agent-head small{display:block;margin-top:3px;font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2)}
+.agent-tool{width:21px;height:21px;flex:none;display:inline-flex;align-items:center;justify-content:center;border:0;background:none;border-radius:4px;color:var(--oi-muted-2);cursor:pointer;transition:color var(--oi-motion-ui) var(--oi-motion-ease-out),background var(--oi-motion-ui) var(--oi-motion-ease-out)}
+.agent-tool:hover,.agent-tool:focus-visible{background:var(--oi-wash);color:var(--oi-accent-ink);outline:none}
+/* Finding 5: `justify-content:space-between` + `overflow:hidden` clipped
+ * "Inspect" to "Inspec" once the plane got narrow — the four labels were
+ * stretched apart rather than packed, so the last one ran out of room
+ * first. Item (d): flex-start + a fixed 10px gap packs the four labels
+ * (Conversation/Activity/Context/Inspect, ~190px at --oi-shell-type-ui)
+ * inside the 260px agent minimum with room to spare; overflow stays
+ * visible rather than clipping or scrolling. */
+.agent-layer .agent-planes{flex:none;height:38px;box-sizing:border-box;display:flex;align-items:stretch;justify-content:flex-start;gap:10px;padding:0 16px;min-width:0;overflow:visible;border-bottom:var(--oi-shell-edge) solid var(--oi-hairline)}
+.agent-layer .agent-planes button{border:0;background:none;padding:0;min-width:0;white-space:nowrap;flex:none;font:inherit;font-size:var(--oi-shell-type-ui);color:var(--oi-muted-2);border-bottom:2px solid transparent;border-radius:0;cursor:pointer;transition:color var(--oi-motion-ui) var(--oi-motion-ease-out)}
+.agent-planes button:hover{color:var(--oi-accent-ink)}
+.agent-planes button[aria-pressed=true]{border-bottom-color:var(--oi-accent);color:var(--oi-accent-ink)}
+.agent-body{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.agent-body>.encounter{flex:1;min-height:0}
+.agent-empty{flex:1;overflow:auto;padding:23px 20px;display:flex;flex-direction:column;gap:12px;font-size:var(--oi-shell-type-ui);color:var(--oi-muted-2)}
+.agent-context{flex:1;overflow:auto;padding:23px 20px;font-size:var(--oi-shell-type-body)}
+/* Finding 32: one label, not two pushed to opposite ends of the row. */
+.agent-eyebrow{margin:0 0 22px;font-size:var(--oi-shell-type-eyebrow);letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted-2)}
+.agent-subject{display:flex;align-items:center;gap:12px;margin-bottom:17px}
+.agent-subject-icon{width:36px;height:36px;flex:none;border-radius:8px;border:var(--oi-shell-edge) solid var(--oi-hairline);display:grid;place-items:center;background:var(--oi-canvas-ground)}
+.agent-subject strong{display:block;font-size:var(--oi-shell-type-nav);font-weight:550}
+.agent-subject span:not(.agent-subject-icon){display:block;margin-top:3px;font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2);text-transform:none;letter-spacing:0}
+.agent-context dl{display:grid;grid-template-columns:1fr 1.2fr;gap:10px 14px;margin:15px 0;font-size:var(--oi-shell-type-ui)}
+.agent-context dt{color:var(--oi-muted-2)}
+.agent-context dd{margin:0;text-align:right;overflow-wrap:anywhere}
+.agent-note{font-size:var(--oi-shell-type-ui);color:var(--oi-muted-2)}
+.agent-section{margin-top:24px;padding-top:19px;border-top:var(--oi-shell-edge) solid var(--oi-hairline-soft)}
+.agent-section summary{cursor:pointer;font-size:var(--oi-shell-type-ui);color:var(--oi-muted-2)}
+.agent-section h3{margin:0 0 8px;font-size:var(--oi-shell-type-body);font-weight:550}
+.agent-empty .project-encounters{display:flex;flex-direction:column;gap:2px}
+/* Item (e): full agent keeps one horizontal axis for head, nav and body.
+ * The nav and body already centre at min(720px,90%); the head row gets the
+ * same treatment instead of its old fixed 25px left pad, so the tile and
+ * the tools sit on the same column as the content below them. */
+[data-full=true].agent-layer .agent-planes{justify-content:center}
+[data-full=true].agent-layer .agent-head{padding:0 20px}
+[data-full=true].agent-layer .agent-head-row{max-width:720px;width:100%;margin:0 auto}
+[data-full=true].agent-layer .agent-context,[data-full=true].agent-layer .agent-empty{width:min(720px,90%);align-self:center;margin:0 auto}
+/* Finding 7: this used to fire at any container ≤600px — which is every
+ * side-plane rendering (agent-min is 260px), so the compact 45px head only
+ * ever existed in `full`. One head geometry (65px) always; the compact
+ * head is reserved for a plane narrower than the agent minimum itself. */
+@container (max-width:259px){.agent-head{height:45px}.agent-planes{height:27px;gap:12px}.agent-context,.agent-empty{padding:16px}}

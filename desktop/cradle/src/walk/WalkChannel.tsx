@@ -16,12 +16,12 @@ import { useEffect } from "react";
 import { useKernel } from "../kernel/KernelProvider";
 import { bindWalkChannel } from "../../walk/client";
 
-export function WalkChannel() {
+export function WalkChannel({layout}:{layout:import("../surface/types").LayoutState}) {
   const kernel = useKernel();
   useEffect(() => {
     // Re-bind as the provider's memoised API is recreated; the channel
     // always speaks to the one live kernel.
-    bindWalkChannel(kernel);
-  }, [kernel]);
+    bindWalkChannel(kernel,()=>layout);
+  }, [kernel,layout]);
   return null;
 }

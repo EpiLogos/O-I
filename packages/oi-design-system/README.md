@@ -2,8 +2,9 @@
 
 The O:I house visual vocabulary, extracted from the live production
 language in `site/src` (issue #25 extraction list; cradle-rebuild wayfinder
-D9 + law 11). No value here is invented — every token is a value the site
-already ships.
+D9 + law 11). The original tokens preserve that extraction. The dated desktop
+extension adds the owner-approved paper/point-cloud language; it is explicitly
+opt-in through `.oi-desktop`. See [DESKTOP-LANGUAGE.md](DESKTOP-LANGUAGE.md).
 
 ## The law
 
@@ -102,3 +103,18 @@ The public site keeps its own `site/src/tokens.css` today and does not yet
 import this package — by design: extraction means the vocabulary now
 exists here and is faithful to the site's values; the site migrates
 incrementally with regression evidence, never in the same stroke.
+
+### Desktop clouds and loading
+
+Import `tokens.css` and `point-cloud.css`; opt into the desktop palette with
+`.oi-desktop`. `./loading` exports `createLoadingIndicator` and
+`createPointClusters`. Both are DOM primitives; native operation state, focus,
+permissions and lifecycle remain host responsibilities. See
+[DESKTOP-LANGUAGE.md](DESKTOP-LANGUAGE.md) for the visual contract and
+[examples/loading.html](examples/loading.html) for the interactive reference.
+
+Run `npm run verify:browser` after installing the cradle's Playwright dependency
+and Chromium. It starts an isolated ephemeral HTTP server and tests real package
+DOM/CSS, motion preferences, overlay focus and narrow rendering; no app build or
+backend simulation is involved. `npm run verify` additionally scans cradle token
+usage. Existing study raw colours remain migration debt, not an allowed exception.

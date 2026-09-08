@@ -1,0 +1,120 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "ground",
+  "generated_at": "2026-09-08T10:35:02.766Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 1130,
+  "checks": [
+    {
+      "ok": true,
+      "label": "An ordinary project cannot be selected as a recognized Central"
+    },
+    {
+      "ok": true,
+      "label": "Actual native recognition enables explicit binding"
+    },
+    {
+      "ok": true,
+      "label": "Explicit UI selection updates the isolated native suite binding"
+    },
+    {
+      "ok": true,
+      "label": "Binding a default preserves the existing open arrangement and writing"
+    },
+    {
+      "ok": true,
+      "label": "Recognition and binding preserve actual source ProjectCentral/user/00 01-DESIGN.md"
+    },
+    {
+      "ok": true,
+      "label": "Recognition and binding preserve actual source ProjectCentral/user/01 02-ARCHITECTURE.md"
+    },
+    {
+      "ok": true,
+      "label": "Recognition and binding preserve actual source ProjectCentral/user/02 03-UX-STATES.md"
+    },
+    {
+      "ok": true,
+      "label": "Recognition and binding preserve actual source ProjectCentral/user/03 04-VERIFICATION.md"
+    },
+    {
+      "ok": true,
+      "label": "Recognition and binding preserve actual source ProjectCentral/user/04 05-EXECUTION.md"
+    },
+    {
+      "ok": true,
+      "label": "Recognition and binding preserve actual source ProjectCentral/user/05 FLOW.md"
+    },
+    {
+      "ok": true,
+      "label": "Recognition and binding preserve actual source ProjectCentral/user/06 CANONICAL-PRODUCT-FIELD.md"
+    },
+    {
+      "ok": true,
+      "label": "Recognition and binding preserve actual source ProjectCentral/user/07 OI-DESKTOP-APPLICATION-SPEC.md"
+    },
+    {
+      "ok": true,
+      "label": "Recognition and binding preserve actual source ProjectCentral/user/08 OI-CENTRAL-FOUNDATION-2026-09-04.md"
+    },
+    {
+      "ok": true,
+      "label": "Recognition and binding preserve actual source ProjectCentral/user/09 FOUNDING-POSITIONS.md"
+    },
+    {
+      "ok": true,
+      "label": "Reload discloses the actual saved default"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-08T10:35:02.922Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-08T10:35:03.761Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 50,
+      "data": {
+        "file": "ground-native-recognition-default-binding.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "ground-native-recognition-default-binding.png"
+  ]
+}

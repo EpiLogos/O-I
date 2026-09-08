@@ -36,5 +36,540 @@ walked, what remains. Rulings are ledgered, never re-asked.
 
 - 2026-09-06 (owner, in-session): repeated three-panel desktop/harness foundation is the priority. “Quiet writing first” must not steer implementation into a notes app. Build deep spatial and workspace setup and semantics before filling regions. Existing test workbench is not an acceptable product shell. This supersedes sequential feature expansion until the shell foundation is structurally complete; preserve native product business logic and do not alter design documents.
 
+| Spatial UI study | S · D9/D16–D21 | interactive mock, 2026-09-06; not a business-unit completion | Owner explicitly deferred business logic for UI mocking. Separate `?study` entry: grey-green paper wiki, root/project/shared scopes, hierarchical navigator, contextual agency, split source, full panel return, freeform named local workspaces, selected-Flow handoff preview, search, provenance and six-product System. Sample world/agency explicitly labelled; no product writes or execution | Study walk **19/19** browser interaction checks; production TypeScript/Vite build passes. Visible computer-use: three-region graph; pointer selection and source beside graph; full agency/Escape; selected-text handoff into conversation; shared projection Inspect. Fixed the graph hit target from that walk. `ui-study-2026-09-06.md` maps actual details and limits; `walk/artifacts/study*` contains receipts | The live-shell experiment remains unfinished with red regressions; no whole-suite green claim. Study does not yet restore all D19 session/split/depth state or connect real wiki/agent/SpaceTimeDB logic. Another session advanced the branch to 5e6f79b during this work; no commit/push/merge attempted over concurrent work. Design documents and product pins untouched |
+
+| Companion UI studies + integration recovery | S · D16–D21 | review-ready interactive mocks, 2026-09-06 | Owner-directed Central naming; one sidebar with per-project chats/tasks, files and wiki controls; canvas chat access; thin contextual tab bars; single/columns/rows/studio/grid arrangements, pointer tab move, menu move/split/pin/close, keyboard divider resize, reversible full chat and per-workspace/project sidebar modes. Distinct Shared Field glyph and admitted subset. Original study retained. No owner execution or writes | Companion browser walk **29/29** plus original **19/19**. Visible computer-use: project files while chat remains; full chat from tiled group with draft; Escape restore; same encounter moved between groups with retained draft; contextual menu and screenshots captured. Two requested agents produced an integration map covering all 166 capability IDs and a subsequent independent harmonization audit. Audit findings corrected workspace/pane reveal, Research encounter reuse and System owner labels. NEXT-SESSION-HANDOFF.md consolidates exact state contract and limits | Review resting/default shape, project/workspace trigger, canonical side/full/tab binding, local/shared boundaries and focus restoration before final programme handoff. Native detach, owner menus, complete per-Surface/per-workspace geometry, integration of all owner capabilities remain work. Current suite pin drift discovered and exact f66794a ctrl built from archive for final full-suite check; no active product checkout touched. No design edits or git publication |
+
+- Companion round final complete suite, current pinned Central f66794a from archive: **companions 29/29 + original study 19/19 + native packaging 4/4 pass**. Seven existing live-shell scenarios remain red (rest, surfaces, kernel-cas, navigator, editor, history, spatial). Final log `/tmp/oi-companions-final.log`; no concurrent build during final verification. This is review-ready UI evidence, not product acceptance. All companion changes and reports left local; active-session git work preserved.
+
+| Shared point-cloud language + bootstrap execution refinement | Owner follow-up · 2026-09-06 | Shared package implemented; native bootstrap integration pending | Opt-in desktop tokens, exact braced mark mask at 480px responsive width, dense 0.45px dot cores / 2px pitch with antialias edge for 1×; reusable three-population cluster motion beyond the logo; truthful loading DOM primitive, reduced-motion and forced-colour fallbacks. Bootstrap contract covers BOOT-00–14 with owners/exits and acceptance slices. Programme fixes early bootstrap/contribution plumbing, knowledge before generated knowledge, session identity before stream, and local graph before optional Field infrastructure. Older prompts visibly superseded | Real Chromium package checks **10/10**; visible in-app browser loading reference and overlay inspected, including narrow display. Desktop screenshot exposed invisible subpixel dots at 1×; corrected edge and visually rechecked. Package token verification retains its one pre-existing failure: raw colours in UI study styles. No claim of native bootstrap completion or full app green | BUILD-O-I-NEXT.md links current language/bootstrap contracts. Implementing session must wire package primitives to actual native states and execute the BOOT acceptance cases. Active app source/build/git left to concurrent developer; no commit/push performed |
+
 
 | Rolling development — Central consumer gate | S→S0 | bounded gate passed 2026-09-06; slice 0 remains open for other consumer seams | `oi dev gate central [--candidate SHA]` fetches named origin/main or exports an exact committed candidate without changing the owner checkout. Native descriptor builds into a unique artifact directory; native tests and a captured actual Cradle kernel consumer run against its explicit ctrl path. Cargo/JS locks and consumer source hashes, executable SHA-256, success/failure logs and Suite Snapshot are recorded automatically. Descriptor pins no longer cap current-main install readiness; dev status distinguishes observed origin/main from historical descriptor evidence | Current Central 616749373a60f55e9fd99e4f2b0bebf2c73a674b: native build/test and Cradle kernel pass. Artifact `8bab929aa46d8ecf935a8bee50597eaf8304e0aa8af05247484c78534b09dd01`; receipt `/Users/admin/Library/Application Support/OI/receipts/dev/central-616749373a60-1788689489188-75287/receipt.json`. CLI suite green; four real Git/filesystem/process tests cover dirty checkout preservation, exact candidate export, pin-ceiling removal, captured consumer bytes and failed command evidence. Pre-change full app walk reproduces seven red live scenarios; study 19/19, companions 29/29, packaging 4/4 pass. Native existing O-I.app inspected by computer use | Gate is deliberately bounded to Central→Cradle kernel; full spatial/native-window/wiki/search acceptance and other affected-consumer gates remain open. Installed providers were not replaced. Known-good artifact directories and release snapshots retained. Native desktop baseline still needs its first spatial slice gate |
+
+### 2026-09-06 — source baseline repaired; companion frame replacement underway (not spatial acceptance)
+
+Owner direction reaffirmed: the `?study=chat` / `?study=tiled` companion shape is the implementation target. The earlier live shell is not an accepted visual foundation. This increment replaces its permanent inspector rail, moves workspace selection into the compact Central sidebar, nests real participating source rows under their project, puts ground/identity disclosure behind an explicit details control, and uses thin pane-local strips plus an operative split/tile/window-action bar. Preserved saved arrangements remain user presentation requests; new workspaces begin with the inspector closed. No sample task, transcript, graph or search state is admitted as native behaviour.
+
+Source safety repair retained: browsing Central/project readings does not replace semantic focus or dirty source buffers; CAS still uses the source's original owner route; layout focus reanchors an orphaned/other-pane caret while external controls keep focus. Editor/CAS/conflict/history tests use isolated real Central ground. Obsolete six-node rest and synthetic surface expectations were replaced with real source and desktop behaviour. Ground evidence is still reachable and verified after moving it out of the primary navigation.
+
+Verification: `node walk/run.mjs all` passed **228/228** (rest 12, surfaces 28, kernel CAS 40, navigator 22, editor 32, history 17, spatial 25, companions 29, original study 19, native packaging 4). Current log `/tmp/oi-implementation-20260906/companion-pane-verified.log`. Kernel tests separately passed 27/27 against Central `616749373a60f55e9fd99e4f2b0bebf2c73a674b`. Native bundle `desktop/cradle/src-tauri/target/debug/bundle/macos/O-I.app` reopened through its executable with explicit `OI_CENTRAL_CTRL_BIN` from the rolling-dev receipt `central-616749373a60-1788689489188-75287`; no installed owner replaced. Native CUA inspection confirmed actual O-I README and learning source panes, restored two-pane layout, collapsed inspector persisting across relaunch, and the real tiling control. Source content was not edited during native visual inspection. Native screenshots are in this execution transcript; walk captures are under `desktop/cradle/walk/artifacts/`.
+
+This is **not** the first spatial milestone complete: project task/files/wiki modes with workspace + ProjectRef presentation state, wiki-centred canvas, summoned owner search, canonical encounter surfaces, native detach/re-dock, and full pane maximize/restore remain. The seven-red live-shell baseline is repaired, but passing those checks does not make these missing features implemented. Continue replacing the presentation with the companion structure; do not reopen U0.1 or settle for the repaired interim shell. The integrated app edits remain on the shared phase checkout with the pre-existing source/workspace changes; they have not been swept into the separate rolling-dev commit.
+
+Native seam discovery for continuation: installed `oi aikit knowledge relations` requires typed addresses (`wiki=REF`, `source=REF`, `project=REF`), not paths. `knowledge search O-I --limit 3 --json` returned no hits with explicit SemanticWiki/ProjectMap provider absences and degraded wiki materialisation; these require owner/composition repair, not a desktop index. `aikit session list` lists terminal/mux topology (two real sessions), so it must not be misrepresented as canonical chat encounters. Inspect the actual encounter owner operation next while continuing independent shell work. AIKit's occupied dirty checkout remains untouched.
+
+### 2026-09-06 — native wiki/search and real window lifecycle; desktop entry replaces automatic writing
+
+Real behaviour: AIKit knowledge Search/Read/Relations/Explain/History/Use now crosses a typed kernel operation, resolved against currently disclosed Central project ground. Successful explicit openings alone record native use; query, display, refresh, failed routes and restore do not. Wiki references are validated by the owner before surface/focus binding. Closing a knowledge view preserves its AIKit attribution. Normal wiki tabs split beside dirty Central sources. The summoned configurable Cmd/Ctrl-K aperture restores focus on Escape; no desktop index/ranking/frecency store was added. The graph renders native relations, with surface-owned camera state; fixed pixel-scale geometry avoids illegible text in narrow panes.
+
+Native detach is an actual Tauri/WebKit window with the existing kernel subject and buffer. Re-dock returns it to the recorded pane/tab position; the macOS close button re-docks without a provider interrupt. Existing detached subjects are focused rather than duplicated. Detached arrangements and dirty drafts survive process relaunch. Maximize masks other panes while preserving mounted views, split widths and left access; pointer and Cmd/Ctrl-Alt-Enter restore the arrangement. Empty workspaces now offer wiki/search entry and explicit writing mode, retaining existing local drafts. The non-operative To/address draft simulation was removed. Historical austere-rest design consequences are handled as this reversible presentation default; canonical documents were not rewritten.
+
+Owner contribution: AIKit's native SemanticWikiProvider now discloses authored WikiSpace membership and child-space edges through its bounded relations operation with revision/authority. Explicit candidate `9bc4aa16e74aa6e9f6f7160604c4d935c8548263` passed full owner workspace/all-target tests and Cradle kernel consumer against real temporary Central ground. Receipt: `/Users/admin/Library/Application Support/OI/receipts/dev/ai-kit-9bc4aa16e74a-1788692850706-14275/receipt.json`. Owner file landed and pushed on AIKit main as `5cbb1e59b4a2acc1060728e376449e5fd3199d8f`; only this session's owner file was committed, preserving concurrent adopt work. A fresh landed build/owner/consumer gate is running at `ai-kit-5cbb1e59b4a2-1788694302514-1431`; its built executable is explicitly bound for the current desktop verification. Installed live providers were not overwritten. Central remains explicitly bound to verified `616749373a60f55e9fd99e4f2b0bebf2c73a674b` artifact. Normal dependency lockfiles retained. Native verification now automatically writes `walk/artifacts/native-composition.json` with executable, frontend and lock hashes plus owner receipt/revision bindings.
+
+Verified preceding camera refinement: full walk **251/251** (`desktop-entry-verified.log`: rest14, surfaces28, kernel-CAS40, navigator22, editor32, knowledge15, history17, spatial31, companions29, study19, native4). Kernel **28/28** additionally verifies wiki close attribution (`wiki-close-owner-tests.log`). Native CUA visual acceptance used Central-initialized isolated ground `oi-cradle-editor-23fVry`, explicit owner artifacts, and a separate WebKit store `947c423843f14fdcb3db2f6a94ddb386`: edit in detached window, re-dock exact unsaved text, save through Central and independently verify bytes on disk, detach/new dirty draft, quit/relaunch/restored detached draft, native red close re-dock, real wiki open/split, maximize and keyboard restore. Screenshots and AX evidence are in the execution transcript. The explicit native data-store builder was necessary because this Tauri version did not forward that config field to WebKit; no real user source was edited during that discovery. Current graph-camera/landed-owner full walk log: `/tmp/oi-implementation-20260906/native-landed-graph-walk.log` (pending at this entry).
+
+Remaining scope is not silently accepted: per-workspace/ProjectRef task/files/wiki navigation and canonical encounters remain; terminal mux sessions are not encounters. AIKit root-wide discovery currently degrades on dangling wiki topology/incidental schema mentions, and its knowledge CLI does not yet admit ordinary Central source files through the native filesystem provider. Both require owner increments, not renderer inference/indexing. Native geometry persistence, complete session/composer movement, Flow/Return, System contribution composition, Factory/material and Shared Field plus the full 166-capability map remain programme work. This is a passing incremental slice, not complete spatial or whole-product acceptance. Shared pre-existing app/study/design-system changes remain unswept; only the independent rolling-dev change and owner contribution have landed so far.
+
+Follow-on evidence in the same implementation session: landed AIKit `5cbb1e59b4a2acc1060728e376449e5fd3199d8f` now has a **passed** complete owner/build/Cradle gate at `/Users/admin/Library/Application Support/OI/receipts/dev/ai-kit-5cbb1e59b4a2-1788694762435-36135/receipt.json`. The first landed gate failed when debug compilation exhausted disk; that failed receipt was retained. Removing only this session's rebuildable debug caches recovered space; history and native checks then passed. O-I CLI gate extension/cache retention landed and pushed as `0b6ecea` with 95/95 CLI tests. No installed provider was replaced. The running native app explicitly uses the new passed-gate AIKit executable.
+
+Graph refinement and window geometry: full walk **254/254** passed in `/tmp/oi-implementation-20260906/window-geometry-walk.log`; subsequent spatial/native checks passed **31/31 + 4/4** after preserving bounds through closed-pane/legacy state and passing them on explicit re-detach. Native CUA confirmed Central's real root-to-project child-space relation, readable graph labels in a narrow split, new empty workspace → real Central wiki, and a single Escape dismissing search after typing (disabled macOS text correction for search). The detached Central wiki was resized with macOS Window → Move & Resize → Left, then the process quit and relaunched: the same native wiki returned at its resized dimensions. Its normal-window bounds are workspace presentation requests, validated and rejected as a position if their title area is outside actual monitors; maximized/fullscreen dimensions do not replace normal bounds. Screenshots/AX are in this execution transcript. Automatic native composition is regenerated at the native gate; compiler caches may be discarded while source/artifact/receipt remain.
+
+Current continuation work: cross-project surface focus now reveals that surface's native project without replacing open work. Root graph project wiki opens match Central's declared wiki space refs rather than parsing opaque refs or labels. The first all-walk run passed all existing checks and both focus-reveal checks; a new browse assertion sampled before the asynchronous owner read completed. It now waits for that owner-backed browse and asserts the wiki is still visible. Native visual acceptance and final targeted knowledge/kernel/native checks for this reveal increment remain pending. Project tasks/files/wiki mode/expansion/filter/scroll ownership and canonical agency are still open programme obligations; do not treat the source-only sidebar as their completion.
+
+Project-reveal increment verified: kernel **28/28** (`project-reveal-kernel.log`), knowledge **21/21** and native **4/4** (`project-reveal-final-walk.log`). All other current scenarios passed in the preceding all-run, giving **257 current passing checks across that run and the targeted completion**, not a falsely relabelled single all-run. Native CUA reopened the built app with both explicit owner artifacts, re-docked the Central wiki and clicked its actual project graph node: the same workspace retained Central's tab, opened the owner-validated project wiki and revealed Editor's native source neighbourhood in the sidebar. Native composition now records the passed landed AIKit receipt. The task/session CLI reconnaissance found `aikit task` manages filesystem isolation, while `aikit session` manages mux topology; neither may be presented as canonical conversations. The next native agency entry should expose the existing AIKit SessionSpaceApplicationStore/AgentSession attachment/connection contracts, preserving Actuation ownership and runtime vs authored-intent distinction.
+
+## 2026-09-06 — native session contribution and project navigation persistence
+
+AIKit's existing standalone `aikit-session-space` is the canonical SessionSpace application front door. The explored main-CLI alias candidate `45b8d1463479e36c72477ce69d1f4fccfea8529d` was NOT landed; those changes were removed and its evidence retained in `/tmp/oi-implementation-20260906/session-space-alias-not-landed.patch`. O-I now binds and hashes the existing companion explicitly alongside `aikit` (CLI commit `ea60212`, 95/95 native CLI checks). Kernel `AgencyRead` obtains the exact Central manifest ProjectRef, invokes native scoped discovery, rejects unbound/outside-ground queries, and leaves focus and dirty source buffers unchanged. This is a reading seam, not completed live encounter UI.
+
+Concurrent first opening of a real AIKit SQLite database exposed a reproducible owner defect. AIKit now uses its existing bounded ContextLock only across open/WAL/schema setup and applies migrations with an immediate SQLite transaction. Eight concurrent connections across eight fresh databases reproduce the former failure and pass after the fix. Explicit candidate `44d2b9ca236da6a693d7a270b2b02f93cacdcb52` passed the full native owner build/test and captured Cradle consumer gate (`ai-kit-44d2b9ca236d-1788697488800-11799/receipt.json`). Owner commit `70cfaed9c15207ec18afeb27bf9127c3ca3cc579` landed and pushed on AIKit main; fresh landed gate is running (`index-landed-gate.log`). Unrelated native skill edits were preserved.
+
+Workspace now owns project disclosure and file-list scroll keyed by owner ProjectRef. The separate keyboard-accessible disclosure control collapses navigation without replacing panes, changing semantic focus, or losing drafts. Each workspace retains independent project state; restored references are still read through Central. Full current walk: **263/263**, including spatial 37/37 and native packaging 4/4 (`/tmp/oi-implementation-20260906/project-navigation-acceptance-walk.log`). An earlier all-run had one history-refresh timeout; isolated history 17/17 and the subsequent full run passed. Added native history response diagnostics to preserve evidence if it recurs; no weakened assertion or claimed fix.
+
+Native macOS visual acceptance: restarted the real bundle in the existing isolated WK store and real temporary Central ground; collapsed Editor in Native desktop acceptance, switched through the native workspace selector to Central, and verified independent expanded Editor, the original two-pane source/wiki arrangement, and exact unsaved source text preserved. CUA screenshot recorded in this task. Native artifact SHA: 80968f913cecbb56f55df693ff5e06e4da63fe6ab5f8aa7a5cccce137426bd32. App currently binds the proved candidate contribution while the landed rebuild completes.
+
+Remaining before complete spatial/canonical agency acceptance: three operative project modes and their state, real provider encounter connection/stream/permission/interrupt/composer continuity, full SessionSpace native mutation/history/reconstruction UI, and remaining programme/audit capabilities. The source-only navigation is not marked complete. App modifications continue to depend on pre-existing shared uncommitted shell/study work; no unrelated files were swept into a phase commit.
+
+### Continuation — canonical Project context integration
+
+Landed initialization owner `70cfaed9c15207ec18afeb27bf9127c3ca3cc579` completed a fresh full owner + captured Cradle kernel gate: `/Users/admin/Library/Application Support/OI/receipts/dev/ai-kit-70cfaed9c152-1788698046926-65750/receipt.json`, passed. The running native app was refreshed to that exact mainline's `aikit` and `aikit-session-space` executables and visually rechecked with the source/wiki split and original unsaved draft retained.
+
+Next slice exposed two native context prerequisites through a real positive test: an ordinary Central project needs the native AIKit Project Specification binding to become a resolver input; and the shared legacy context path was deriving `project:Editor` instead of keeping Central's declared `editor-integration`. No desktop alias or invented context evidence was used. Candidate `cf981bc76ef8c8da2aed8a03bb5e758d9bc377e8` adds the standalone `project-context` read and threads an optional native ProjectBinding through AIKit's shared application context. The existing ProjectCentral filesystem adapter supplies exact native identity and manifest/provider provenance. Invalid present ProjectCentral metadata refuses resolution rather than falling back to a directory-derived identity. Legacy non-Central context behaviour stays available through the existing path.
+
+The Cradle positive integration now uses real ctrl temporary ground, native `aikit project bind`, native SessionSpace create/stage/apply/discover, and its own AIKit home. Unbound membership is excluded; exact applied membership returns; native state survives new CLI processes; browsing does not move source focus or dirty buffers. Current kernel **29/29** passed against candidate cf981 (`session-context-positive-kernel.log`). Candidate full owner gate is still running (`session-context-v3-candidate-gate.log`); full app walk is running (`session-context-app-walk.log`). Earlier candidate ee95 failed because the test did not bind an AIKit Project Specification; b914 failed compilation due to module-qualified type paths. Those receipts remain failed and the corrected cf981 is a separate candidate.
+
+Provider reconnaissance for the next bounded streaming unit: installed Pi at `/Users/admin/.local/bin/pi` uses the native JSONL RPC protocol (`@earendil-works/pi-coding-agent/docs/rpc.md`). An isolated no-session process answered `get_state` successfully, idle and with zero messages (`pi-native-state.json`). This is real provider discovery only, not a proved live chat/permission/interrupt integration. Existing AIKit AgentSessionHost is protocol-neutral and concurrent, but currently exposes ACP/classic adapters; no Pi adapter or desktop transcript has been fabricated. Actuation checkout contains another session's CLI/detection changes, preserved.
+
+### Context connection gate and concurrent mainline integration
+
+Candidate `cf981bc76ef8c8da2aed8a03bb5e758d9bc377e8` passed full AIKit owner build/tests and captured Cradle kernel **29/29**, receipt `ai-kit-cf981bc76ef8-1788699361567-80808/receipt.json`. The coherent current app walk also passed **263/263**, including native packaging (`session-context-app-walk.log`). The nine exact candidate files were committed locally as `54ed782` after blob equality checks. Its main push was rejected because another session advanced remote main to `aa4abc3` (native Control adoption/generation-root work in separate files).
+
+The live AIKit checkout and its unrelated dirty skills were preserved: no pull, reset, worktree or checkout merge. `git merge-tree` composed the disjoint committed trees; explicit integration candidate **9a7402ec401471c9701e5efaecd619297659c489** has parents origin/main aa4abc3 and local context commit 54ed782. Candidate branch `oi-cradle-context-integrated`; metadata `/tmp/oi-implementation-20260906/context-integrated-candidate.json`. Full owner + current captured Cradle gate is running (`context-integrated-candidate-gate.log`). On pass, push the exact candidate fast-forward to remote main; if remote advanced again, repeat isolated tree integration rather than altering the occupied checkout. Local AIKit main remains 54ed782 intentionally until its checkout can be reconciled safely. Refresh O-I's private native contribution to the proved landed artifact, preserving any separately running provider.
+
+## 2026-09-06 — current context contribution landed; detached search parity
+
+Combined AIKit candidate **9a7402ec401471c9701e5efaecd619297659c489** passed full owner build/tests and captured Cradle 29/29, then fast-forwarded remote main from aa4abc3. Exact candidate became the landed commit; no force push or live-checkout merge. Gate artifact `/Users/admin/Library/Application Support/OI/receipts/dev/ai-kit-9a7402ec4014-1788699959371-38909/receipt.json` remains immutable candidate proof for that same landed revision. Native contribution refresh uses its exact `aikit` and `aikit-session-space` release executables. Local AIKit main intentionally remains 54ed782 with unrelated dirty skill edits intact; do not pull/reset it.
+
+Search keyboard matching now uses Command on macOS and Control elsewhere, respects the configured shift modifier, and does not steal macOS Control-K editing. Sidebar/selector labels follow the actual configured shortcut; storage changes synchronize across native windows. Native detached source/wiki windows now host the same summoned aperture. Result routing waits for a main-workspace acknowledgement of the owner-resolved open and focuses the window actually carrying that subject. Refusal remains visible in the aperture; source drafts and owner-use recording remain on their existing native seams.
+
+Full current walk **267/267** (`detached-search-app-walk.log`), including knowledge25 and native4. Fresh native packaging with the landed combined contribution passed4/4 (`context-landed-native-refresh.log`) and automatically updated native-composition.json. Native artifact SHA 572801efaec7a1c85c5c2b510e219090b4fdbc4e895e7cf03ceda8eb9f3eae40. Physical macOS acceptance: detach existing dirty source; Control-K did not summon; Command-K opened the overlay inside that native window; querying editor-walk returned the real native wiki; selecting it focused the existing main-window wiki tab; reopening the source focused the same detached window with exact original draft; Escape restored its editor; CmdShiftD re-docked the unchanged source into its prior split. CUA screenshot in task shows the native detached aperture. Finally relaunched with exact landed 9a7402 executable bindings and confirmed restored source/wiki split and draft.
+
+Next independent bounded unit: actual Pi connection through AIKit's native protocol/SessionSpace host seam, then canonical encounter UI and operative project conversations mode. Pi0.84.4 exposes JSONL RPC and `agent_settled` (not every `agent_end`) marks final settlement. Read the installed source-owned RPC contract before implementing adapter semantics; no ACP masquerade, provider-native id promoted to canonical identity, sample transcript, or inferred permission parity.
+
+## 2026-09-06 — owner correction: ACP, actual Central data, companion fidelity
+
+AIKit native Pi RPC candidate `9b8f4797faaa8a4ce648196d3c13b2acbcbcf6ff` passed full owner build/tests + captured Cradle kernel29 and the explicit live Pi0.84.4 streaming/cancellation/resident-continuation acceptance (`pi-native-acceptance.json`, log). The exact candidate fast-forwarded main. It uses the existing AgentSessionHost, but **is not ACP** and is not a completed desktop agency route. The owner subsequently reaffirmed the generic ACP harness path. The proposed Pi-specific JSONL encounter endpoint and unused desktop transport were parked at `/tmp/oi-implementation-20260906/parked-pi-endpoint`, removed from the live working tree, and never connected/landed. Candidate9332 failed compilation (Ulid v3 uses generate); corrected6d6 built but its owner test compilation and final gate receipt write exhausted disk. Original logs and failure-note.json remain. Its stopped debug cache was removed; no native acceptance/landing is claimed. Do not resume this endpoint direction without reconciling the generic ACP owner operation. Upstream `pi-acp@0.0.33` package was fetched for inspection; no global install or active provider replacement.
+
+Owner UX correction is an execution requirement: workspace = app-wide saved tab/pane arrangement; Central parent and actual Work projects each need compact Conversations/Tasks, Files, Wiki controls. No persistent diagnostic Ground/identity/provenance footer. No project/workspace conflation. Complete filesystem browsing is still missing: current Files list is Central's participating-source horizon, not the full tree; extend Central, do not add renderer filesystem business logic. Existing workspace.project helper still warrants removal/audit although current browsing uses workspace.browse without arrangement activation. Three-mode sidebar, normal canonical chat surfaces, and native filesystem operations remain incomplete.
+
+Visible correction implemented: removed Ground & identity and wiki Source & provenance footer; preserved native owner identity/federation assertions in navigator walk through actual readings. Added functioning Window titlebar menu, companion line glyphs, actual selected binding title in contextual inspection; removed the empty Agent inspector plane. Responsive sizing now reserves only requested panels, so an already collapsed inspector no longer evicts Central at700px. Current pre-change all-walk267/267; correction all-run passed every other scenario but navigator stopped on one obsolete footer locator. Corrected navigator23/23 and spatial39/39 passed (`design-correction-targeted.log`), giving270 current passing checks across the all-run and targeted completion; not yet a single whole-run270 result.
+
+Native development ground is now **/Users/admin/Central**, default installed AIKit home, explicit proved ctrl616749 and aikit/session-space9b8 contributions. Dedicated real-data WK store `b89d6c197c3e4f0a9182578b41e9a603`; native process exec24631. Previous isolated test store947c423843f14fdcb3db2f6a94ddb386 and its exact dirty drafts are preserved, not migrated into user data. Native AX confirms the actual13 Work projects and absence of the removed footer. Opening actual Central wiki refused. Native `aikit knowledge status -C /Users/admin/Central` identifies the reason: generic JSON discovery reaches4096 files, treats a ProjectCentral manifest as wiki material, then fails SemanticWiki rebuild on an unresolved child. This defect was masked by small temporary ground. Next owner fix: load Central-declared canonical wiki sources through the native contract, retain scoped/provenance/partial-failure truth, and verify against actual Central plus isolated adversarial ground. No generated graph or successful-use receipt may cover that refusal.
+
+
+### 2026-09-06 — real Central wiki and workspace identity correction (continuing)
+
+The companion correction passed one complete **270/270** run (`/tmp/oi-implementation-20260906/design-correction-full-walk.log`). Subsequent workspace identity cleanup passed spatial40, editor32, history17, kernel40 and native4 (`workspace-identity-walk.log`); this is affected coverage after that whole run, not a new whole-suite claim. Browsing projects no longer has an unused helper that mints/activates project-named workspaces. Canvas heading uses the saved arrangement name. Human source breadcrumbs retain revision bindings for real CAS checks while removing the persistent hash display. Native packaging/build passed.
+
+Native O-I was visually inspected through CUA against **/Users/admin/Central**, in a distinct WK data store preserving the earlier isolated test drafts. Central's actual thirteen Work directories are disclosed. The actual O-I ProjectCentral learning README is open and clean; no real authored source was edited. The Central workspace remains Central while O-I is browsed. Ground/identity and provenance footers are absent. This still does not provide the complete filesystem or the three project modes.
+
+The actual root exposed AIKit's generic wiki scan selecting copied fixtures and exhausting its 4096 file bound. Owner candidate `beac7b1e9c2bff321ce660832b961a8bb77c1304` reads wiki declarations from native `central.world`, validates their root-bound canonical paths, then uses the existing SemanticWikiIndex. Candidate predecessor9384's release executable visibly opened the actual Central wiki in the native app (four native spaces and four nodes), alongside the unchanged README tab. It is **candidate visual evidence**, not landed/fully verified evidence. Predecessor9384's gate failed compiling a native test assertion (WikiObject is not Serialize), fixed by testing actual object refs. First beac gate hit disk exhaustion and could not write its normal snapshot; failure-note and logs retained. Only that failed gate's compiler intermediates were removed. Retrying the same explicit candidate with debug symbols/incremental caches disabled preserves tests and lockfiles while bounding disk consumption; active gate `ai-kit-beac7b1e9c2b-1788705277933-57633`.
+
+Pi-specific endpoint remains parked. A real configured Pi ACP acceptance now targets the **existing AcpStableConnectionAdapter and AgentSessionHost** via isolated pi-acp0.0.33 installation and existing native Pi0.84.4. No replacement ACP implementation or desktop transcript store has been added. Live proof is pending; the earlier RPC adapter test must not be called ACP acceptance.
+
+
+### 2026-09-06 — native ACP proof and companion toolbar correction
+
+**Two complete current runs passed 271/271**: `current-real-data-baseline-walk.log`, then `central-toolbar-full-walk.log` under `/tmp/oi-implementation-20260906/`. The second includes the actual toolbar correction: search and Central wiki share the compact action row above the app-wide workspace selector; the duplicate World close button is removed. The remaining heading/titlebar navigation controls call the same summon/dismiss functions as the keyboard so the original writing caret is restored. This preserves the existing strong navigator focus assertions rather than removing them. Native bundle rebuilt successfully (11.457s on the second run).
+
+**Real ACP acceptance passed** using the existing AIKit `AcpStableConnectionAdapter` + `AgentSessionHost` at owner9b8f479, actual pi-acp0.0.33 and installed Pi0.84.4. Receipt `acp-native-acceptance.json` records binary/test/launcher hashes. The test observed native startup messages before prompting, then verified exact streamed output after dropping the view handle, mid-stream explicit `session/cancel`, observed cancellation, and another exact response on the same canonical/native binding. The first two attempts failed exact-output assertions because the bridge emits startup/upgrade text after session/new; failed receipts/logs remain. The corrected test separates pre-turn native messages from a prompted answer, rather than accepting arbitrary response substrings. Temporary launcher settings and no-tools/no-extensions/no-session flags do not replace the provider. **This is native ACP connectivity proof, not completed desktop chat, Actuation authority, transcript persistence or cross-view acceptance.**
+
+Central wiki candidatebeac full owner build, all-target tests and actual consuming kernel tests passed (`ai-kit-beac7b1e9c2b-1788705277933-57633/receipt.json`). Its explicit actual Central acceptance also passed. The app was relaunched against that verified candidate's exact two executable bindings and actual user Central; the saved Central wiki and clean real README restored through owners. AIKit remote advanced independently tobc7c158; candidate0deb integrated that mainline and also passed its full gate. A final343bd4cd574e03855bb9a4740933e988520859c4 candidate additionally retains native-root detection when root wiki is absent, with a real missing-root declaration regression and bounded ACP startup observation. Its full gate and final native recheck are running; no unverified candidate is marked landed.
+
+The filesystem gap is now precise: `projectcentral.change.horizon` and `projectcentral.source.read/write` only accept participating World sources. They are not a general Central filesystem API. The current Files display must not be claimed as complete `/Work` filesystem passthrough. Extending that owner operation contract (including ordinary/unbound projects, root files, retrieval treatment, identity, CAS/history) remains required before the complete tree and project Files mode can be accepted. No renderer directory scanner or invented source authority was added to mask that gap.
+
+
+### 2026-09-06 — configured ACP limit and bounded rolling gate
+
+The final native acceptance for candidate **8a1d20097cb2453d86ffc1beab91767f3fd3e70b** passed all three explicit checks: actual Central declaration loading (including missing/corrupt canonical sources and copied fixture contamination), actual Pi ACP streaming/cancellation/resident identity, and the actual AIKit CLI refusing to substitute a copied wiki after the native root wiki is removed. `/tmp/oi-implementation-20260906/final-native-acceptance.json` records exact executable and bridge lock hashes. The full owner/all-target/kernel gate is still running at `ai-kit-8a1d20097cb2-1788706601538-48238`.
+
+The repeated live provider run exposed a real configuration requirement: legitimate reasoning updates can exceed the SDK's default512-signal turn bound before answer text. The native acceptance now uses the **existing configurable HostLimits with 16,384 signals**, interrupts on native content or thinking progress, and still requires observed cancellation plus continued same-session output. This does not remove the bound or weaken exact prompted response checks. First failed native recheck343 and runner-shape failure (absent wiki is null, not an object with availablefalse) are retained in `final-native-first-failure.json` and failed logs. Desktop integration must configure/disclose an adequate bound, preserve the distinction between host failure and provider cancellation, and complete thinking-update presentation; these obligations are not fulfilled by the passing connection test.
+
+O-I bounded rolling-gate repair committed and pushed as **1565e59** on cradle-p1, changing only `cli/src/rolling_dev.rs`. Native candidate builds now default to disabled debug symbols and incremental caches, preserve explicit overrides, and record those non-secret compiler settings in the receipt. Failed compiler caches are discarded before snapshot/receipt writing, while source, lockfiles, owner executable and diagnostic logs remain. The full CLI suite passed95/95 before extracting the cleanup helper; the final six rolling-dev tests passed, including two new real-filesystem retention tests, and the CLI rebuilt. Failed intermediate compile output remains (`rolling-cache-retention-tests.log`, corrected missing qualified serde type). Final results: `rolling-cache-policy-final-tests.log`, `rolling-cache-retention-final-tests.log`, `rolling-cache-policy-build.log`.
+
+Native toolbar was visually inspected after the271/271 run. The running app remains on verified beac artifacts over actual user Central; its current tab arrangement has been left available. The broader spatial/agency phase is still incomplete and has not been merged or represented as complete.
+
+### 2026-09-06 — actual Central filesystem reading, owner gate and native window proof
+
+AIKit **8a1d20097cb2453d86ffc1beab91767f3fd3e70b** completed its owner/all-target/kernel gate, was pushed to native main and registered through `oi register`; the configured real Pi proof uses AIKit's existing generic ACP adapter, not the parked Pi-specific endpoint. Desktop encounter integration remains outstanding.
+
+Central **4106b28b6fee29a489f92848d3023653d46d4828** now exposes `central.files.list/read`. Directory traversal, opaque root-bound path references, retrieval exclusion, bounded UTF-8 reading and native project/source membership belong to Central. No renderer filesystem scanner, adoption or parallel index was added. Owner tests include real unadopted project files, existing authored-source bindings, valid whitespace/Unicode paths, root mismatch, symlink replacement, binary and size refusal. Earlier candidate gates caught exact registry-count and public-documentation omissions; those checks were preserved and corrected. Final gate `central-4106b28b6fee-1788709485128-28202/receipt.json` passed release workspace build, complete native workspace tests and captured Cradle kernel tests. Candidate pushed to native main and registered with its exact exported release executable; live Central checkout and unrelated changes were preserved.
+
+Desktop FileTree now browses actual root/project directories through those operations. Existing authored files open their canonical editable SourceSurface with existing CAS/history; ordinary files have an explicitly read-only native surface, owner-validated restore, refresh, close/reopen and native detach/re-dock. Kernel holds only transient owner-validated file refs; missing locations do not redirect dirty sources. Folder expansion and scroll remain workspace/project presentation. Async loading exposed scroll-restoration and keyboard-return defects; repaired with content-size-aware restoration and canvas-only return-focus capture.
+
+Verification: `full-filesystem-restoration-walk.log` passed the full existing **271/271**, including native packaging. The added actual-owner `files` walk passed **13/13** separately (`native-files-walk.log`, `walk/artifacts/files.json`); it covers actual root bytes, unadopted ordinary project bytes, no implicit adoption/writes, symlink refusal, dirty-source preservation, unchanged pane arrangement on browsing, owner restore, external update and deleted-file last-reading disclosure. No single combined284-check run is claimed yet.
+
+Native CUA visual verification used the rebuilt O-I.app over **/Users/admin/Central**, WK store **b89d6c197c3e4f0a9182578b41e9a603**, with explicit Central4106 and AIKit8a executables from their verified gate directories. Actual O-I directories (cli, desktop, docs, packages, etc.) appeared in the sidebar; opening Work/O-I/README.md displayed the actual repository text, then detached into README.md — O-I and re-docked into the same main arrangement. CUA screenshots in the implementation conversation show both native states. Process session24791 holds this current app; no provider was active or replaced. Existing tabs and authored drafts were retained.
+
+Remaining acceptance is explicit: ordinary-file write/CAS/history, all three compact project modes (Chats/tasks default, Files, Wiki), full companion-shape fidelity, generic ACP encounter/session integration, full owner capability coverage and subsequent programme phases. The read-only filesystem slice is not claimed as complete editing, complete project UX or a completed spatial phase. O-I shared app WIP remains uncommitted pending its complete phase gate; native owner increment is landed.
+
+Combined verification subsequently completed: **284/284** in one `node walk/run.mjs all` run with explicit Central4106 + AIKit8a bindings, including all13 ordinary-files checks and native packaging. Receipt log: `/tmp/oi-implementation-20260906/full-filesystem-combined-walk.log`. This supersedes the separate271+13 qualification above. Native re-dock returned the file to the existing main window; keyboard caret parity after re-dock still warrants a targeted check (immediate AX observation reported the previous wiki tab focused while the file tab was selected).
+
+Next concrete owner integration seam: existing `aikit-session-space` CLI provides durable discovery/stage/apply/reconstruction; it has no resident generic ACP host endpoint yet. The existing `AgentSessionHost` + `AcpStableConnectionAdapter` must supply that owner endpoint rather than desktop-owned provider/process/business state. AIKit live `agent_session_host.rs`, `agent_connection.rs`, `actuation_stream_projection.rs`, and `session_space_connection.rs` now have other dirty work; preserve it and base any explicit candidate on current remote owner revisions without resetting that checkout. Project three-mode rendering must bind actual SessionSpace/encounter rows and retain Central owner ProjectRefs; native labels alone do not fulfil chat/tasks acceptance.
+
+
+### 2026-09-06 — owner-requested review pause and execution correction
+
+Implementation paused at the owner's request. Added REORIENTATION-HANDOFF-2026-09-06.md and linked it from the current programme and launch brief; canonical design documents were not rewritten. The review explicitly rejects current shell fidelity as accepted, prioritises the production visual structure and native app-menu placement, ties workspaces to whole tab/pane arrangements, separates presentation contracts from owner business operations, and bounds computer-use checkpoints. The512 default and16,384 test override are not a runtime solution: AIKit must support normal streams without a total-event ceiling while bounding retention, and preserve provider-exposed thinking content through to the canonical encounter view. The284/284 result remains functional evidence only. No app code changed or tests rerun for this documentation-only pause; context chain passed and only the primary cradle-p1 checkout exists. Shared WIP and active app state preserved.
+
+### 2026-09-06 — owner-review shell correction checkpoint
+
+Continued on primary cradle-p1, now HEAD3a93aae (advanced independently from the handoff's1565e59). Context chain passed; one worktree. Shared uncommitted shell/design work was reviewed and preserved; no reset, worktree, bulk stage, commit or phase merge. Before-images for this session's principal shared files: /tmp/oi-shell-20260906/*.before.*.
+
+Implementation: removed the web app-menu/topbar row. Actual macOS O-I/Edit/Workspace/Window menus now dispatch through the main arrangement executor; native workspace entries and main-window title follow saved arrangement names. A single contextual arrangement selector remains above the panes; the sidebar selector and repeated workspace labels are removed. The left-panel toggle appears once, in Central when open and in the canvas strip when closed. Compact Chats/tasks, Files and Wiki controls are workspace-scoped; new project modes default to Chats/tasks, old saved Files navigation is retained. Actual Central files and declared wiki operations remain attached. Unadopted directories retain native location identity without invented ProjectRefs. Chats/tasks currently names the missing encounter connection rather than manufacturing sessions; it is not accepted canonical agency.
+
+DesktopShell now receives subject identity, context/history content and arrangement actions as explicit inputs. History is scoped to the selected subject, unavailable History never renders Context, and pending history reloads clear stale readings. Pane strips, source canvas and inspector use compact companion geometry; native WebKit's white inset ordinary-file textarea was removed. Re-dock waits for the actual remounted source/file reader and foreground document before transferring focus, rather than consuming the request on an interim Refresh control.
+
+Functional receipt (separate from visual): /tmp/oi-shell-20260906/final-walk.log passed one complete291/291 run with Central4106 + AIKit8a1 explicit artifacts (the former284 plus7 real-owner mode/chrome/History assertions). After the final native-focus repair, /tmp/oi-shell-20260906/focus-fix-walk.log passed affected files20 + spatial40 + native4 =64/64. Earlier affected127/127 and checkpoint115/115 logs are retained. Native cargo check and frontend TypeScript/build passed. Existing real source CAS/conflict, authority, history, owner restore, symlink refusal, keyboard and search-use assertions remain. Presentation assertions were updated to explicitly select Files and locate the one arrangement selector in its new canvas position.
+
+Visual receipt: the three running studies were inspected once in the in-app browser at its1280x720 viewport. Existing companion tests additionally exercise900x760; native restored window is narrower than that reference. At the coherent native checkpoint, actual /Users/admin/Central restored the existing README and wiki tabs in WK store b89d6c197c3e4f0a9182578b41e9a603. CUA screenshots in this task show the single command strip, compact project modes, inset-free canvas and contextual right panel. Native Workspace→Rename opened the actual arrangement editor and was cancelled. Native detach/re-dock first reproduced the old mismatch (selected README, focused O-I wiki); that failure is not counted as a pass. After the focused repair, a second actual detach and Re-dock returned README and AX explicitly reported `text entry area Reading README.md` focused. Actual unsupported History displayed only its unavailable operation message. Right panel restored collapsed. No actual source edit was performed. Final native process53394 uses the same actual root, WK store and exact registered Central4106/AIKit8a gate executables. Native-composition.json identifies the final built artifact.
+
+Visual discrepancies closed: redundant app-menu row, repeated sidebar workspace selector, duplicate left toggle, missing compact modes, source reader's white control bezel, coarse inspector chrome, History→Context fallback, and native re-dock reader focus. Remaining design/integration acceptance: canonical encounter transcript/composer and full/side/detached continuity, complete multi-project expansion semantics and presentation-only navigator extraction, richer active-subject planes as native owners disclose operations, and whole-shell owner visual acceptance at agreed viewport sizes. This is a correction checkpoint, not full spatial-phase or complete companion fidelity acceptance.
+
+AIKit remains unresolved: read-only mainline check (`git ls-remote origin refs/heads/main`) still returns8a1d20097cb2453d86ffc1beab91767f3fd3e70b. Live checkout remains54ed782 with occupied host/connection/projection and other dirty work untouched. The current source still has max_signals_per_turn/default512 and exposed ACP thinking represented as status; the native proof's16,384 override remains connectivity evidence only. No resident generic ACP encounter service or streaming/thinking fix is claimed, and the parked Pi endpoint was not revived. The next owner candidate must preserve that occupied checkout and provide bounded retention/durable events without a normal total-event ceiling before canonical chat binding can be accepted.
+
+
+## 2026-09-06 — S CLI / M′ desktop routing and capability collation
+
+Owner clarification is recorded in CANONICAL-PRODUCT-FIELD, APP-SPEC and the
+reorientation handoff: S = oi CLI whole; M′ = desktop 0/1 whole, left 0 / canvas
+/ / right 1. M/S′ remain QL-MEF-owned. Scoped Terra passes collated the six source
+matrices and repaired Central file/AIKit companion command accounting.
+
+Implemented: discovered kernel clients route through oi; native candidate
+bindings remain owner-selected. oi desktop shares the kernel's file, knowledge
+and SessionSpace readers. oi capabilities carries 121 native capabilities and
+322 relations, including 219 main-CLI identities plus the companion disclosure.
+The desktop projection records 10 native/application bindings and 10 resident
+arrangement commands. New dev gates capture/hash their exact suite executable
+as OI_BIN. Source skills and standalone snapshot CI updated.
+
+Evidence: scripts/test-desktop-suite-routing.py passed 5 real-owner checks using
+Central gate central-4106b28b6fee-1788709485128-28202 and AIKit gate
+ai-kit-8a1d20097cb2-1788706601538-48238 (six CLI help routes, native refusal,
+actual file list/read, knowledge history, SessionSpace discovery). Collation
+8/8; existing CLI catalogue/dispatch/dev-gate regressions 13/13. Locked CLI build,
+CLI snapshot equality, all M′ capability refs, source collation and standalone
+snapshot validation passed. Both changed child matrices passed structural checks.
+
+Remaining: this receipt does not assert a new running-app walk or remote CI
+activation. Resident arrangement IPC and the wider encounter programme remain.
+Central debug CLI is stale against the gated file Actions; existing action.rs
+basis drift and AIKit knowledge.rs basis drift were preserved, not re-attested.
+Use cli/target/debug/oi as the candidate OI_BIN for the next coordinated app walk.
+No bulk stage, commit, push or installed-suite replacement was performed.
+
+
+### 2026-09-06 — full-programme orchestration authority transferred
+
+Owner requested a stronger full-session handover and a short steering message for the currently working agent. Added ORCHESTRATION-CONTINUATION.md and linked it first from the programme, launch brief and reorientation handoff. It explicitly authorises bounded subagent delegation, assigns the lead overall programme/UI/integration accountability, preserves occupied lanes and later routing changes, and defines evidence, coordination and continuation responsibilities. No agents spawned or messages sent to other tasks by this documentation update; the owner will steer the current agent. No app or owner code changed.
+
+### 2026-09-06 — active programme continuation: resident encounter candidate
+
+Work remains active; no slice/phase completion claim. Lead owns shell and consumer integration in the existing shared checkout; occupied AIKit checkout remains untouched. AIKit work is an explicit source archive candidate at `/tmp/oi-acp-streaming-20260906/source` from main `8a1d20097cb2453d86ffc1beab91767f3fd3e70b`, not a git worktree and not yet landed/registered.
+
+- Shell continuation: independent project expansion and workspace-scoped modes now render through ProjectBranch; spatial/files/navigator real walk passed85/85 (`/tmp/oi-shell-20260906/multi-project-walk.log`). Existing native visual checkpoint and re-dock caret repair remain dated evidence; new encounter changes await native comparison.
+- AIKit candidate: default host event ceiling removed (0 means no operational event limit); disk-backed ordered lane, bounded interruption retention, owner durable SQLite journal/draft CAS and bounded presentation blocks. Exposed thinking retains native text/raw content. Explicit configured limit has distinct OperationalLimit termination; resource failures remain errors.
+- Generic resident service extends existing aikit-session-space: explicit provider configuration/start, one owner/home via native advisory lock, private IPC, stale socket recovery, native SessionSpace attachment and local Project-context validation. UI clients do not own provider lifetime. No Pi-specific endpoint.
+- Actual published pi-acp acceptance passed long streaming beyond512 events, thinking content/order, explicit cancellation and same-native-session continuation across fresh CLI clients; restart retains transcript/draft and reports missing resident connection truthfully. Latest owner read-model proof also compares every displayed thinking byte with durable raw history. Receipts `/tmp/oi-acp-streaming-20260906/resident-view-proof.log` and `view-resident/resident-acceptance.json`; exact candidate binary hash recorded there. Lifecycle proof `/tmp/oi-acp-streaming-20260906/lifecycle-acceptance.log` passed same-process reuse, duplicate refusal and stale recovery. Adapter tests passed; store and CLI checks passed.
+- Consumer in progress: typed encounter operation routes through current `OI_BIN` and validates Central project/AIKit attachment. Normal encounter surface, real attachment list, owner thinking presentation, shared composer CAS, and detached body added. TypeScript/native compilation passed before latest flow tests. Running native app PID53394 still uses prior registered owner artifacts and original WK store; not replaced.
+- Current gate: real browser ACP encounter walk; first attempt found a test assumption about Pi's genuine startup message preceding the reply, while native transcript already held the exact expected response. Assertion corrected to match actual reply. Next: rerun browser, native detach/re-dock/restore, permission/tool authority and concurrent sessions, candidate owner/consumer gate and promotion, then continue remaining programme slices. No broad staging or reset performed.
+
+Native encounter continuation receipt: real browser walk passed7/7 (`/tmp/oi-acp-streaming-20260906/encounter-walk2.log`). Actual native app on `/Users/admin/Central` produced `OI_NATIVE_ENCOUNTER_OK`; detach and re-dock preserved the canonical transcript and draft. Re-dock initially focused before the composer became enabled; repaired by waiting for enabled state and confirming DOM focus, then native AX showed the Message textarea focused. App relaunch preserved the same resident native session `01a077c4-d218-7129-aca8-55de1e36949a`. Current app PID85353; owner PID79665, explicitly frozen proof artifact `/tmp/oi-acp-streaming-20260906/native-proof-aikit-session-space` sha256 `c5af51dd5fe4be9beb99773de9555f33634ab9f177e58feb19b9bc01e01f0259`. Owner remains resident; do not replace it during an active turn. Full receipt `native-continuity-receipt.json` in that directory.
+
+Visual discrepancy closed: encounter follows latest output instead of remaining atop Pi startup disclosure. Startup output projection into a collapsible Provider notice is implemented in the owner candidate source, not yet in the frozen active service. Explicit operational-limit real ACP acceptance passed separately (`operational-limit-proof2.log`); it is policy distinct from normal default unlimited turn count. No full programme/phase acceptance asserted; permission/tool authority and concurrent sessions remain active next work.
+
+
+### Live programme lanes — 2026-09-06
+
+| Lane | Owner | Deliverable / state | Dependency and next gate | Evidence |
+|---|---|---|---|---|
+| Shell and integration | Lead | Companion geometry, native chrome, canonical encounter integration; active | Coherent native comparison after owner read-model integration; retain resident PID79665 | Recovery5/5 + spatial42/42, `/tmp/oi-shell-20260906/recovery-spatial-walk.log`; visual receipt remains separate |
+| AIKit | aikit_owner | Generic resident encounter, bounded durable streaming, thinking, consent and tool results; candidate hardening | Exact candidate review and consumer gate; no active-provider replacement | Concurrent sessions, actual Codex ACP permission/refusal and authorized tool proofs under `/tmp/oi-acp-streaming-20260906/` |
+| Central | central_owner | Ordinary file write/CAS/history/restore in isolated archive; hardening | Final native contract and consumer edit/history gate | 27 real filesystem checks reported; review final receipt before binding |
+| Composition | acceptance_review | Native S aggregate reader complete; source aggregate disclosures active | Wire reviewed kernel reader; close genuine native availability/contribution gaps | Actual CLI composition1/1; no invented runtime readiness |
+
+Whole slices0–8 remain the execution scope. No phase completion is inferred from these local receipts. Legacy arrangement storage is now retained rather than overwritten by each workspace render. Recovery and subject-plane persistence are functional changes awaiting the next coherent native visual comparison.
+
+
+### 2026-09-06 — coherent shell and native owner consumer checkpoint
+
+Functional evidence: ordinary-file edit/reload/CAS/both-sides/preview/restore browser walk10/10 (`/tmp/oi-shell-20260906/file-permission-walk3.log`); canonical ACP transcript/thinking/cancel/reload8/8 (`owner-integration-walk2.log`); actual Codex ACP consent/options/tool write/Activity6/6 (`permission-walk-final.log`). Consumer failures were retained and corrected: saved-file dirty marker, optional history cursor encoded as null, meaningful recovery control labels, composer operation race and stale draft-revision polling, historical permission selector collision. Native tests are not replaced by browser counts.
+
+Visual evidence separately: coherent native build `/tmp/oi-shell-20260906/coherent-native-build.log`; main PID64514, preserved WK store b89d6c197c3e4f0a9182578b41e9a603 and actual `/Users/admin/Central`. Native CUA observed compact pane tabs, companion encounter header/planes/composer, three deliberately distinct regional grounds, real Workspace menu including recovery, existing wiki/source tabs, shared draft and reply restored. Native width resize changed wrapping/centred composer without dropping tabs; captures were1013×768 then1225×768, not an asserted exact1280×720 receipt. The original service PID79665/native session01a077c4-d218-7129-aca8-55de1e36949a remains Resident and unchanged. Its old startup disclosure remains uncollapsed because its frozen owner projection predates Provider notice; not presented as upgraded. New Central native proof path `/tmp/oi-central-files-20260906/native-proof-ctrl`, sha2561555a8ef7f4466977b9bb4c40e0099ada309e96036dc7b2c55c32e04759674e0.
+
+Gate standing: ordinary candidate e451cca build passed but full workspace gate failed obsolete macOS registry counts; amendment0141c91b passed294 native workspace tests and awaits gate rerun. AIKit d9c52d63 exact source imported under refs/oi-candidates without touching live working tree/index, gate still pending. Subsequent owner candidates Flow803b71e6, Central Return03460e5f, Factoryb346c5cc and Actuationcb77d787 have independent native receipts; none is claimed landed or integrated by this entry. Programme remains active through slices0–8.
+
+
+### 2026-09-06 — programme integration and full AIKit gate
+
+AIKit d9c52d63da1c19fd11b7bb2da2505b454cabb7e5 now has a **passed standard isolated gate**, including release build, full workspace/all-targets tests and captured Cradle kernel consumer. Exact receipt: `/Users/admin/Library/Application Support/OI/receipts/dev/ai-kit-d9c52d63da1c-1788720375668-10919/receipt.json`. Release contributions are aikit sha256a7bd76344aa7c7083f25243b091e868cac01e7008639087cfa65ffb1bb643b91 and aikit-session-space sha2564db82a9359b03560de59f3a10f2fe14453ee7ca003b398d1ad0c3c53edcd2e3a. This does not replace the running frozen resident provider or establish later Flow/Living/Contemplate acceptance. The gate captured the kernel before subsequent ground-picker/material integration.
+
+Shared Field lifecycle candidate9815d7f reviewed and applied to the clean owned eight paths; integrated183 native/provider regressions passed (`/tmp/oi-shared-lifecycle-20260906/integrated-regression.log`). No live user ground published; Explore body still needs attachment. Central recognitionab7b3929 follows Return03460e5:295 full workspace +17 actual filesystem checks; explicit root identity/access/no-mutation, not binding or initialization. Workcell materialf53ad162 has12 actual native CLI tests including a real HTTP body and service loss; no default browser exposure invented.
+
+Lead changes after native checkpoint: System6-owner reading; native folder-dialog and typed recognition/binding consumer; ordinary History assertions updated to actual native availability; encounter plane carried as workspace/surface view state through main/detached views; recovery preserves valid project navigation and namespaces recovered bindings. These latest changes await their targeted walks/native changed-flow checkpoint. Existing app PID64514/provider79665 were not replaced. Settled native re-dock at prior checkpoint did confirm enabled Message focus; immediate prior-wiki AX alone was not treated as a pass.
+
+Current live lanes (supersedes earlier allocation table):
+
+| Lane | Owner | Deliverable/state | Next integration gate |
+| --- | --- | --- | --- |
+| Programme/UI | lead | Shell, System, ground chooser, view-state recovery; Shared Field lifecycle integrated | Targeted real files/recovery/System walk; native chooser and latest consumer comparison |
+| AIKit | aikit_owner | Flow/Living candidates frozen; real ACP runtime identity/composition and Contemplate/Return staging implementing | Actual source-backed model binding and same-session Contemplate through ACP |
+| Central/S | central_owner | Recognition frozen; binding-only S and shared composition CAS implementing | Real isolated S/recognition tests, no live ground change |
+| Material/Factory | acceptance_review |166 evidence map and Workcell candidate complete; typed consumer seams and production BuildSurface packaging | Actual S receipt/body/grant consumer tests then root mounts |
+
+166 evidence/disposition reconciliation is `/tmp/oi-programme-acceptance-20260906/`:166 canonical obligations are distinct from443 native catalogue rows. Exact-source joins do not imply equivalence;55 unmatched mappings remain explicit. Dispositions are proposals, not waived work or owner acceptance. All slices0–8 remain active. Completed compiler cache cleanup receipts preserve exact native executable hashes, source/locks/logs; no occupied source or running provider was removed.
+
+
+### 2026-09-06 — owner direction correction; implementation paused
+
+Owner rejects current right-panel shape: agent details and full Conversation /
+Activity / Context / Inspect section belong in the dynamic right layer, not the
+canvas header/plane block. Persistent panel-management button bar to be removed
+in favour of standard keyboard/native-menu/contextual operation. Broad material
+format support, especially actual HTML rendering, is an explicit canvas obligation.
+Recorded in wayfinder and ORCHESTRATION-CONTINUATION; not yet implemented. Earlier
+visual checkpoint is partial evidence, not design acceptance. Paused at owner's
+request to reflect; no new owner work or builds commissioned during pause.
+
+Latest completed browser walk `/tmp/oi-shell-20260906/live-layout-ground-walk2.log`:
+files21/21, recovery5/5, spatial42/42, System4/4. Walk layout read now observes
+actual mounted workspace, fixing legacy-storage evidence defect. Ground13/14
+checks then reload visibility timeout: retain failed receipt, do not call complete.
+Fresh Central ab7 standard gate passed per actual receipt in
+`central-ab7b39292a14-1788721281763-94397`; supplemental consumer result still needs
+inspection. AIKit Contemplate source compiles and runtime identity/native adapter
+checks passed, but actual ACP completion/Return acceptance was unfinished when
+agent rate limit hit. Do not promote this work from its summary. Factory/material
+kernel clients have2/2 actual native consumer checks; Factory35d758 contribution
+captured as9 exact reviewed Git blobs under src/contributions/factory with manifest.
+These bodies are not mounted yet. Native confirmation ingress is only a proposed
+contract (bounded owner CLI PTY), no module implemented. All agent lanes hit usage
+limits; no automatic retry or credit reset authorized.
+
+
+### 2026-09-06 — foundation/Gateway specification and minimal dispatch
+
+Owner requested desktop-side specification/execution mapping while the product
+team develops Agency Gateway. Read the supplied awareness brief and canonical
+O-I#154 via authenticated issue read; existing gateway-awareness document retained
+as dated session evidence. Runtime/connector and Workcell hosting source paths
+were checked for existence/contract location; no new runtime acceptance inferred.
+
+Added explicit desktop consumer contract in architecture§14, application-spec
+clarification, E.G continuity/right-panel UX states, BOOT-15, programme GW-01–06
+and foundation FND-00–06. Wayfinder no longer leaves Gateway continuity as fog.
+Machine capability publication/regeneration is a named native-owner handoff;
+no unsupported gateway commands or capability rows added to generated catalogues.
+The full three-route HTML reference set has a mandatory real-inspection matrix;
+source/capture/viewport/interaction and separate visual/functional/owner evidence
+are required. Old inspection does not excuse the missed right panel. Native top
+bar exception and explicit owner chrome corrections are bounded. Actual HTML
+rendering and format availability/fallback are part of material foundation.
+
+BUILD-O-I-NEXT is now the minimal dispatch, pointing to detailed map/programme;
+ORCHESTRATION and canonical execution protocol carry current precedence. Current
+turn changes documentation only. No reference UI inspection, app build, native
+provider replacement, implementation resumption, commit or acceptance promotion
+is claimed by this entry.
+
+
+### 2026-09-08 — FND-00 reference contract closed; FND-01–04 build wave dispatched
+
+Lead session (Claude Fable) on `cradle-p1` HEAD `c1ce2db` with the shared dirty
+WIP preserved; context chain intact, one worktree, no commit/push/reset.
+
+FND-00: the complete indexed HTML set was inspected live in the in-app browser
+(REF-01 `?study`, REF-02 `?study=chat`, REF-03 `?study=tiled`) at 1280×720 and
+900×760, exercising planes, ⌘⌥J full agent and Escape, the Window arrange menu,
+project mode changes, node context menu and the lower drawer. The production
+shell was baselined in the browser transport against the real kernel bridge
+(`127.0.0.1:4179`, vite `:1423`) over `/Users/admin/Central`: rest, project
+modes, Files tree, README.md read-only, writing mode, right inspector. Receipt:
+`FND-00-REFERENCE-MATRIX-2026-09-08.md` (rows A–F; required structural rows
+A1 A2 A4 A6 A9 B1 B2 B4 C2 D1–D6 D9 D11 E2–E5). Functional finding F-01: opening
+the O-I wiki neighbourhood through the bridge failed with a JSON control-character
+parse error from the AIKit knowledge route; investigation open.
+
+Design ruling: shell vocabulary tokens appended to
+`packages/oi-design-system/tokens.css` (grounds, gutter, hairline, accent,
+type scale, elevation, motion) and the build brief
+`FND-01-02-SHELL-BRIEF-2026-09-08.md`, including the owner steer that the
+running app's writing canvas, source editor, file surface and encounter are
+ahead of the studies and keep every function (polish only).
+
+Research receipts (read-only agents): walk selector/aria anchors to preserve;
+material-host owner seam (Central `files.read` is UTF-8/4 MiB/NUL-refusing with
+no base64; Tauri CSP `frame-src 'none'`, no custom protocol, detached windows
+inherit IPC → sandboxed iframe over an `oi-material://` scheme); BOOT-00–15 gap
+table (window-scope loading never used; no Gateway/ecology op exists; ground
+chooser only inside System).
+
+Live lanes:
+
+| Lane | Agent | Deliverable / state | Next gate |
+|---|---|---|---|
+| S1 shell chrome (FND-01) | sonnet implementer | ground/gutter/card planes, workbench bar without the button cluster, pane/tab grammar, menus, empty/writing polish; building | build + rest/surfaces/spatial/files/companions/study walks; lead review with screenshots |
+| S2 sidebar (FND-01) | sonnet implementer | REF-02 sidebar grammar over real Central/encounter reads; building | navigator/files walks; lead review |
+| S3 accompanying agent layer (FND-02) | sonnet implementer | `src/agent/AgentLayer`, EncounterView presentations, subject-following Context, System as canvas surface, Cradle wiring; building | encounter/permission/system walks (need resident owner); lead review |
+| S4 material host (FND-04) | sonnet implementer | Central `files.read` base64 candidate, kernel `FileBytes`, `oi-material://` protocol + CSP, renderer registry, material walk; building | ctrl tests + candidate hash, cargo check, material walk |
+| FND-05 bootstrap | queued (touches Cradle/Rest after S1/S3) | window-scope loading, boot phases, ground chooser at start, honest Gateway absence | after S1/S3 land |
+| FND-03 / FND-06 | lead | keyboard/menu parity check, native comparison, repeated-cycle resource receipt | after the wave integrates |
+
+No visual acceptance is claimed by this entry; functional walks were not rerun
+against the shell edits yet.
+
+Inventory note (law 13): `git worktree list` shows a second worktree
+`/Users/admin/Central/Work/oi-m3-bootstrap` on branch `oi-m3-bootstrap`
+(HEAD 2d36ba2, 1 dirty file, touched 2026-09-08 04:15). It is another
+session's active lane in its own directory and branch; ruled inert for the
+foundation round, not removed, not used.
+
+F-01 root cause: the kernel knowledge route runs `oi aikit --json -C <project>
+knowledge …`. The installed `~/.local/bin/oi` (built 2026-09-06) does not
+honour `OI_AIKIT_BIN` and forwards to an AIKit without the `knowledge` route;
+the verified gate `ai-kit-d9c52d63` binary has the route but refuses the live
+knowledge store ("schema 6 but this build only knows 5" — another session
+advanced AIKit main to fa002bb and the store with it). Working binding for this
+round's browser/bridge walks: `OI_BIN=cli/target/debug/oi`,
+`OI_AIKIT_BIN=~/.cargo/bin/aikit` (current main, 2026-09-08 03:42),
+`OI_CENTRAL_CTRL_BIN=` the installed ctrl. Secondary defect: the dev walk bridge
+embedded owner stderr in its error envelope without JSON escaping; S4 owns the
+fix. No installed binary was replaced.
+
+### 2026-09-08 — build wave returns (S1 shell, S2 sidebar, S3 agent layer); integration seams
+
+S1 (shell chrome): shell ground + 4 px gutter + card planes, workbench bar
+without the panel-management cluster (Return-to-arrangement pill when
+maximized; native Window menu `region.right` → "Show / Hide Agent"), pane/tab
+grammar with kind glyphs and `⋯` pane tool opening the same disclosures,
+focused-pane highlight, context menu with `kbd` shortcuts, search overlay,
+empty-state and writing-canvas polish, source/file surface gutter + footer,
+responsive tiers (≤1000 compact, ≤760 agent drawer). `npm run build` and
+`cargo check` green; rest 14/14, companions 29/29, study 19/19. Matrix rows
+closed by S1's own screenshots: A1 A2 A4 A6 A9 A10 B1 B2 B4 E1 (visual
+receipts `walk/artifacts/fnd/s1-*.png`).
+
+S2 (sidebar): REF-02 sidebar geometry over the real Central/encounter reads,
+"Open accompanying agent" entry (real `region.right` dispatch), shared Loading
+indicator in EncounterList/FileTree; found the design-system defect that
+`--oi-loading-ground/ink` resolved at `:root` (lead fixed it in tokens.css).
+Rows C2 C4 C5 C6 closed; C1/C9 in S1's files.
+
+S3 (accompanying agent, FND-02): `src/agent/AgentLayer` bound to
+`layout.accompanying`, EncounterView `tab|side|full` presentations, Context
+plane follows the active subject (real read model; History only when the
+operation exists), Inspect as owner rows + raw `details`, honest no-encounter
+state from real attached rows/providers, polling paused when hidden, `system`
+surface kind, DetachedFrame tab presentation. Evidence `s3-*.png` including a
+real already-connected pi-acp encounter presented in the side plane (D1–D7,
+D9, D10). Known gap: file subjects report revision Unknown (read model has no
+draft state for ordinary files yet).
+
+Lead integration after the wave: legacy Context/History/System chrome no
+longer renders when the agent layer is present; `system` surface body mounted
+in Workbench (closes D11); agent plane nav fits 300 px; project rows flex
+with the 6 px mark; writing surface shows no focus ring. Walk runs collided
+on port 4179 (orphan bridge from a concurrent lane, and the shared dev bridge)
+— the shared dev bridge now lives on 4189, the orphan was stopped, and the
+full functional suite is being rerun against the freed port; results pending.
+
+Resource smoke (S6, `walk/scenarios/resources.mjs`, standalone against the
+bridge-bound dev server during the shell rebuild): 4 cycles (3 warm-up, 1
+sampled) with `--expose-gc`; sampled heap 6.86 MB used / 9.31 MB total, 135
+DOM nodes, 176 listeners, 1 document; 0 B and 0 nodes growth over the single
+sampled cycle — a smoke of the harness, not the FND-06 receipt (the 20-cycle
+run with real open/close/split/maximize/wiki/agent cycles is still owed, and
+its step log recorded a split step that timed out; a synthetic ⌘D in the live
+app splits correctly, so the miss is a scenario timing issue to fix, not an
+app regression). Receipt: `walk/artifacts/resources-smoke.json`,
+`resources-smoke-summary.md`.
+
+Second rate-limit interruption (all lanes, 2026-09-08 ~04:20–08:50): S4, S5,
+the walk repair and the design review were relaunched at 10:40 to continue
+from their on-disk partial work. The bridge-bound dev server was rebound to
+the 4189 bridge (it had still pointed at 4179).
+
+Design review (opus, read-only, `walk/artifacts/review/FND-01-02-REVIEW.md`
++ 53 screenshots incl. study frames): blockers — descendant
+`.desktop-shell button`/`:focus-visible` rules crushing agent-plane controls
+to 0 width and drawing a bezel on the writing canvas; legacy `.inspector-body`
+padding around the agent layer; Return pill wrapping in the workbench bar;
+plane nav clipping "Inspect" at 900 px; wiki entry silently no-op on the
+owner refusal "SemanticWiki provider is absent from this Project world";
+shoulds — full agent loses its card, centre not a card at rest/writing/single
+pane, encounter.css off-token with no motion/hover, material markdown srcdoc
+carries a duplicate palette. Row verdicts: closed A4 A5 A7 A8 A10 B1 B5 B7
+C1–C4 C7 D5 D6 D9 D11; partial A1 A2 A3 A6 A9 B2 B3 B4 C5 C6 C8 D1–D4 D7 D10;
+open C9. S7 (polish) dispatched on the shell/agent/encounter findings; the
+material palette goes to S4, the "Observed NaNd ago" stamp to S5. Owner note:
+the SemanticWiki absence is AIKit's real state for this project under the
+current-main aikit; the desktop must show it, not repair it.
+
+S5 (FND-05 bootstrap, browser transport): `boot` phases in KernelProvider
+(starting/ready/transport-unavailable/ground-unrecognised/ground-inaccessible)
+derived from the transport probe, first `state` and the ground status op;
+BOOT-00 window-scope indicator (design-system component, `inert` root, focus
+return) lifted the instant `state` settles; chooser-first at unrecognised or
+inaccessible ground with writing still reachable; discovered-not-ready
+labelling and `observed_at_unix_ms` on composition/agency readings; Gateway
+aperture as a static truthful System section (absence, named obligations,
+three real facts); per-binding open failure with Retry; freshness with the
+shared indicator in EncounterList/KnowledgeSurface/FileTree/SourceHistory.
+Evidence: `bootstrap.mjs` standalone 13/13 (`walk/artifacts/fnd/s5-*.png`),
+system 4/4, recovery 5/5, rest 14/14, kernel `cargo test --test source_cas`
+11 passed. Open: the native cold-start pair and the missing-`OI_BIN` case
+(no native build in this round yet); BOOT-15 text not yet in the agent
+layer's no-encounter state (file ownership).
+
+Walk repair after the shell wave: spatial 42/42, files 21/21, ground 15/15,
+surfaces 28/28 (full WALK build, verified candidate owner bindings). Causes:
+the split-width check compared an unsettled paint after a keyboard resize
+with a settled one after restore (weights were identical; the scenario now
+waits for two identical reads); ordinary files now open through the material
+surface with a Rendered/Source toggle (scenario selects Source before the
+editor assertion); ground compared a raw temp path with the owner's
+canonicalised `/private/var` path and expected the old boot-phase System
+auto-surface (System is now a canvas surface). Residual app defect found, not
+yet fixed: `WorldNavigator.keyFor()` resolves a project's disclosure key from
+the kernel's global selection before the per-workspace lookup, so a workspace
+switch can override saved expansion state intermittently (~30–50 % of runs).
+
+Lead fix: `WorldNavigator.keyFor()` now prefers the workspace's persisted key
+for a path over the kernel's lagging global selection. Three consecutive
+runs: navigator 23/23 ×3, spatial 42/42 ×2; the first spatial run of the
+sequence timed out before its first check while the fresh bridge's initial
+Central read was still pending after the cold WALK build (0/0, no assertion
+failed) — recorded as a cold-start timing flake, not a pass.
+
+S4 (FND-04 material host): Central `central.files.read` gains
+`encoding: base64` (32 MiB ceiling, `mime_hint` sniff, retrieval rules
+unchanged; `cargo test -p ctrl --lib files` 9/9) as candidate
+`Work/Central/target/release/ctrl` sha256
+`071b9ea4a10cf15ade5cc8c32c7d9cd8163c298c1b6357519e5904a134a4ad1a`, not
+installed and not yet landed; kernel `FileBytes` op + `read_bytes` +
+`resolve_material` (tests 2/2); Tauri `oi-material://` async scheme with
+directory-bound resolution, CSP `frame-src oi-material:` and dead `asset:`
+entries removed; renderer `src/material/` (detect, dependency-free markdown,
+sandboxed iframes, image, PDF via the platform viewer, disposition card
+without invented open-with, Rendered/Source toggle, suspend/resume on inactive
+tab, maximize and document-hidden); bridge `/material` route and serde_json
+envelopes. `node walk/run.mjs material` 24/24 including HTML with relative
+img/css/link, traversal refused, PDF actually rendered on this machine,
+`.bin` disposition. Rows E2–E5 closed in the browser transport; the native
+`oi-material://` path still needs the coherent native walk (FND-06).
+Integration fact: the recognition-capable ctrl (`ab7b3929` gate) and the
+base64-capable candidate are built from different Central sources; one ctrl
+carrying both is required before the native comparison.
+
+S7 (polish, from the opus review): scoped the leaking `.desktop-shell button`
+and `:focus-visible` rules (agent-plane controls at their true size, no bezel
+on the writing surface or ⌘K input); agent layer mounts directly in the right
+plane; workbench bar never wraps and the Return pill is one line; plane nav
+fits at 260 px; wiki/search/knowledge owner refusals render as visible alert
+cards; full agent keeps its card and one horizontal axis; rest/writing/single
+pane draw the same card as split panes; encounter.css on the shell tokens
+with hover/pressed/focus and motion, Send as a 26 px accent control; sticky
+System row; drawer scrim; first-paint sidebar width guard; context-menu
+glyphs; raw values tokenised. Findings 1–11, 20–25, 28–30, 32, 33, 36
+closed; 16–19, 26, 27 and the material toggle, SystemPanel stamp and
+navigator rows handed to S8. `npm run build` green; 14/14 anchor checks;
+evidence `walk/artifacts/fnd/s7-*.png`. Full functional suite rerun in
+progress; the Central lane is producing one ctrl with recognition + base64.
+
+Full functional suite after S7: rest 14, surfaces 28, kernel-cas 40,
+navigator 23, editor 32, history 17, files 21, knowledge 25, companions 29,
+study 19, recovery 5, ground 15, system 4, bootstrap 10, file-edit 10 — all
+PASS; spatial failed once on the first `keyFor` change (a path could carry
+two presentation keys), material 12/16 because the bound ctrl (recognition
+candidate) lacks the base64 read the assets need. `keyFor` rewritten to one
+key per path (ProjectRef when the workspace holds it, else the persisted
+entry, else ProjectRef/directory ref): spatial 42/42 and navigator 23/23 three
+times in a row.
+
+Central lane: the four not-yet-landed candidate commits (e451cca, 0141c91,
+03460e5, ab7b392 — ordinary-file CAS/history/recovery/restore, bounded Flow
+disclosure + Source Return, `central.recognize`) merged `--no-ff` onto
+Central main as d2fd616; the base64/`mime_hint` material read landed as
+7f3a85f and the `file_mutation.rs` encoding thread-through as 9a6abf4
+(Central main HEAD, not pushed). `cargo test --workspace` 318/318;
+`cargo build --release` clean; functional checks: recognize → recognized,
+base64 PNG byte-exact with `image/png`, CAS write/history/list. Candidate
+`Work/Central/target/release/ctrl` sha256
+`fd17999b677505d362fa3ea1ff8244a509a9401997006a77924fe20355505e70`; dev gate
+`central-9a6abf41285a-1788864017019-79731` passed owner build/test, the
+Cradle consumer step failed only on a wiki test that shells to `aikit` on
+PATH without the `knowledge` route (binding, not Central). Untouched:
+`ctrl/src/engineering_ground.rs` (unrelated dirty work). Dev bridge and walk
+bindings now use this ctrl.

@@ -1,0 +1,76 @@
+/* FND-02 polish round: this file now consumes the --oi-shell-type-* scale
+ * and shell tokens throughout (finding 13) instead of raw 9/10/11/12/13/23
+ * px values and the legacy --oi-rule/--oi-foreground roles. The selected
+ * plane marks with --oi-accent (matching agent.css's own plane nav) rather
+ * than --oi-foreground, real hover/pressed/focus states replace the old
+ * opacity dimming, and --oi-motion-ui drives every transition. */
+.encounter{height:100%;min-height:0;display:flex;flex-direction:column;background:transparent;color:var(--oi-foreground)}
+.encounter-transcript{flex:1;min-height:0;overflow:auto;padding:24px max(24px,calc((100% - 690px)/2));scrollbar-gutter:stable}
+.encounter-turn{display:flex;gap:13px;margin:0 0 22px}
+.encounter-turn>div{flex:1;min-width:0}
+.encounter-turn strong{display:block;font-size:var(--oi-shell-type-ui);font-weight:550}
+.encounter-turn p{margin:10px 0 0;line-height:1.9;white-space:pre-wrap;overflow-wrap:anywhere;font-size:var(--oi-shell-type-prose);color:var(--oi-accent-ink)}
+.encounter-avatar{flex:none;width:25px;height:25px;border-radius:50%;display:grid;place-items:center;font-size:var(--oi-shell-type-meta);background:var(--oi-message-ground);color:var(--oi-accent-ink)}
+.encounter-assistant .encounter-avatar,.encounter-permission .encounter-avatar,.encounter-cancelled .encounter-avatar{border-radius:7px;border:var(--oi-shell-edge) solid var(--oi-hairline);background:var(--oi-canvas-ground)}
+/* Quiet details, not opacity dimming: a lighter secondary colour reads as
+ * "supporting detail" without fading text below body contrast. */
+.encounter-thinking{font-size:var(--oi-shell-type-body);line-height:1.6;color:var(--oi-muted-2);margin:10px 0 20px;white-space:pre-wrap;overflow-wrap:anywhere}
+.encounter-thinking summary{cursor:pointer;margin-bottom:8px;font-size:var(--oi-shell-type-eyebrow);letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;transition:color var(--oi-motion-ui) var(--oi-motion-ease-out)}
+.encounter-thinking summary:hover,.encounter-thinking summary:focus-visible{color:var(--oi-accent-ink);outline:none}
+.encounter-composer{flex:none;margin:12px max(20px,calc((100% - 800px)/2)) 20px;border:var(--oi-shell-edge) solid var(--oi-composer-rule);border-radius:9px;padding:12px;background:var(--oi-composer-ground)}
+.encounter-composer textarea{appearance:none;display:block;box-sizing:border-box;width:100%;border:0;background:transparent;color:inherit;resize:none;font:inherit;font-size:var(--oi-shell-type-prose);min-height:60px;max-height:240px;overflow-y:auto;outline:2px solid transparent;outline-offset:4px;transition:outline-color var(--oi-motion-ui) var(--oi-motion-ease-out)}
+.encounter-composer textarea:focus-visible{outline-color:var(--oi-accent-soft)}
+.encounter-composer-actions{display:flex;gap:8px;align-items:center;justify-content:flex-end;font-size:var(--oi-shell-type-nav)}
+.encounter-composer-actions>span{flex:1;color:var(--oi-muted-2)}
+.encounter-connect{font-size:var(--oi-shell-type-body);display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.encounter{container-type:inline-size}
+.encounter-heading{flex:none;height:62px;box-sizing:border-box;display:flex;align-items:center;gap:10px;padding:0 25px}
+.encounter-heading h2{font-size:var(--oi-shell-type-body);font-weight:550;margin:0 0 3px;line-height:1.25}
+.encounter-heading small{font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2)}
+.encounter-mark{font-size:calc(var(--oi-shell-type-title) * 1.28)}
+.encounter-state{margin-left:auto;font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2)}
+.encounter-planes{flex:none;display:flex;height:31px;gap:20px;padding:0 25px;border-bottom:var(--oi-shell-edge) solid var(--oi-hairline)}
+.encounter-planes button{border:0;border-radius:0;background:none;padding:0;font:inherit;font-size:var(--oi-shell-type-ui);color:var(--oi-muted-2);border-bottom:2px solid transparent;cursor:pointer;transition:color var(--oi-motion-ui) var(--oi-motion-ease-out)}
+.encounter-planes button:hover,.encounter-planes button:focus-visible{color:var(--oi-accent-ink);outline:none}
+.encounter-planes button[aria-pressed=true]{border-bottom-color:var(--oi-accent);color:var(--oi-accent-ink)}
+.encounter-composer{box-sizing:border-box;width:min(710px,calc(100% - 52px));margin:0 auto 21px;padding:11px 13px}
+.encounter-context{font-size:var(--oi-shell-type-body);overflow-wrap:anywhere}
+.encounter-context dt{font-size:var(--oi-shell-type-ui);color:var(--oi-muted-2);margin-top:16px}
+.encounter-context dd{margin:5px 0}
+.encounter-inspect{font-size:var(--oi-shell-type-nav)}
+.encounter-inspect dl{display:grid;grid-template-columns:1fr 1.2fr;gap:8px 12px;margin:0 0 16px}
+.encounter-inspect dt{color:var(--oi-muted-2)}
+.encounter-inspect dd{margin:0;overflow-wrap:anywhere}
+.encounter-actions{list-style:none;margin:0 0 16px;padding:0;display:flex;flex-direction:column;gap:6px}
+.encounter-actions li{display:flex;justify-content:space-between;gap:10px;font-size:var(--oi-shell-type-ui);color:var(--oi-muted-2)}
+.encounter-inspect details pre,.encounter-permission pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:var(--oi-shell-type-nav)}
+.encounter-inspect details summary{cursor:pointer;font-size:var(--oi-shell-type-eyebrow);letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted-2);transition:color var(--oi-motion-ui) var(--oi-motion-ease-out)}
+.encounter-inspect details summary:hover{color:var(--oi-accent-ink)}
+.encounter-permission{font-size:var(--oi-shell-type-nav);border-bottom:var(--oi-shell-edge) solid var(--oi-composer-rule);padding-bottom:10px;margin-bottom:10px;max-height:240px;overflow:auto}
+.encounter-permission>div{display:flex;flex-wrap:wrap;gap:6px}
+
+/* Send / Latest / Stop as proper controls (item g). Send is the accent's
+ * one send-button role: 26×26, --oi-accent ground, the `arrow` glyph in
+ * --oi-composer-ground ink, disabled at .35. Latest and Stop are quiet
+ * text buttons with a wash hover, same grammar as the rest of the shell. */
+.encounter-send{flex:none;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:5px;background:var(--oi-accent);color:var(--oi-composer-ground);cursor:pointer;transition:background var(--oi-motion-ui) var(--oi-motion-ease-out),opacity var(--oi-motion-ui) var(--oi-motion-ease-out)}
+/* The walk harness reads the Send control by its accessible name AND its
+ * literal textContent ('Send') — the icon-only button keeps that exact text
+ * present but visually clipped, rather than swapping in an aria-label that
+ * a plain textContent check can't see. */
+.encounter-send .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.encounter-send:hover,.encounter-send:focus-visible{background:var(--oi-accent-ink);outline:none}
+.encounter-send:disabled{opacity:.35;cursor:default;background:var(--oi-accent)}
+.encounter-latest,.encounter-stop{flex:none;height:26px;padding:0 10px;border:0;border-radius:5px;background:transparent;color:var(--oi-muted-2);font:inherit;font-size:var(--oi-shell-type-nav);cursor:pointer;transition:color var(--oi-motion-ui) var(--oi-motion-ease-out),background var(--oi-motion-ui) var(--oi-motion-ease-out)}
+.encounter-latest:hover,.encounter-latest:focus-visible,.encounter-stop:hover,.encounter-stop:focus-visible{color:var(--oi-accent-ink);background:var(--oi-wash);outline:none}
+.encounter-stop:disabled{opacity:.4;cursor:default}
+
+/* side/full — the accompanying-agent-layer shape (FND-02): own heading/nav
+ * are suppressed in JSX; the transcript runs more compact and the composer
+ * takes the study's quiet card look instead of the tab's centred slab. */
+.encounter[data-presentation="side"] .encounter-transcript,.encounter[data-presentation="full"] .encounter-transcript{padding:16px 20px}
+.encounter[data-presentation="side"] .encounter-turn p,.encounter[data-presentation="full"] .encounter-turn p{font-size:var(--oi-shell-type-body)}
+.encounter[data-presentation="side"] .encounter-composer-actions,.encounter[data-presentation="full"] .encounter-composer-actions{font-size:var(--oi-shell-type-meta)}
+.encounter[data-presentation="side"] .encounter-composer,.encounter[data-presentation="full"] .encounter-composer{margin:10px 13px 13px;padding:10px;border-radius:9px;border-color:var(--oi-composer-rule);background:var(--oi-composer-ground);box-shadow:var(--oi-shadow-plane);width:auto}
+.encounter[data-presentation="full"] .encounter-transcript,.encounter[data-presentation="full"] .encounter-composer{width:min(720px,90%);margin-left:auto;margin-right:auto}
+@container (max-width:600px){.encounter-heading{height:45px;padding:0 16px}.encounter-heading h2{font-size:var(--oi-shell-type-ui)}.encounter-heading small{font-size:var(--oi-shell-type-eyebrow)}.encounter-planes{height:27px;padding:0 16px;gap:18px}.encounter-composer{width:calc(100% - 26px);margin-bottom:12px;padding:8px 10px}.encounter-composer textarea{min-height:38px;height:38px}.encounter-transcript{padding:16px}.encounter-turn p{font-size:var(--oi-shell-type-body)}}

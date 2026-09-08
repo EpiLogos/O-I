@@ -30,6 +30,8 @@ export interface SourceConflictState {
 export interface SourceBufferState {
   source_ref: SourceRef;
   project: string;
+  world_ref: string;
+  project_ref?: string | null;
   content: string;
   saved_content: string;
   base_revision: string;
@@ -84,12 +86,32 @@ export interface KernelReceipt {
 }
 
 /** The operation payloads (the Rust `KernelOp`, tagged snake_case). */
+export interface CentralLocation { schema: "central.path-ref/v1"; ref: string; root: string; path: string }
+export interface NativeFileEntry { name: string; location: CentralLocation; kind: "file" | "directory" | "symlink" | "other"; byte_len: number; retrieval_allowed: boolean }
+export interface NativeDirectory { schema: "central.directory-reading/v1"; location: CentralLocation; entries: NativeFileEntry[]; automatic_agent_or_model_invocation: false }
+export interface NativeFileReading { schema: "central.file-reading/v1"; location: CentralLocation; revision: string; byte_len: number; content_encoding: "utf-8"; content: string; project: {name:string;path:string;project_ref:string|null} | null; source: ListedSource | null; operations?:Record<"write"|"history"|"restore",{available:boolean;reason:string|null}>; automatic_agent_or_model_invocation: false }
+/** A binary-safe material reading (FND-04): `central.files.read` with
+ * `encoding: "base64"`, distinct from the UTF-8 `NativeFileReading` above. */
+export interface NativeFileBytes { location: CentralLocation; revision: string; byte_len: number; mime_hint: string | null; content_base64: string }
+
 export type KernelOp =
+  | {op:"ground";request:import("../workspace/GroundChooser").GroundRequest}
+  | {op:"composition_read";owners?:boolean}
+  | { op: "files_list"; path: string }
+  | { op: "file_read"; location: CentralLocation }
+  | { op: "file_bytes"; location: CentralLocation }
+  | { op: "agency_read"; project: string }
+  | {op:"file_operation";location:CentralLocation;request:import("../files/client").FileRequest}
+  | { op:"encounter";project:string;request:import("../encounter/client").EncounterRequest }
+  | { op: "knowledge"; project?: string; request: KnowledgeRequest }
   | { op: "state" }
   | { op: "world_read" }
+  | { op: "world_browse" }
+  | { op: "project_browse"; project: string }
   | { op: "project_read"; project: string }
   | { op: "sources_list"; project?: string }
   | { op: "source_open"; source_ref: SourceRef; project?: string }
+  | { op: "source_restore"; source_ref: SourceRef; content: string; base_revision: string; saved_content: string }
   | { op: "source_history"; source_ref: SourceRef }
   | { op: "source_edit"; source_ref: SourceRef; content: string }
   | { op: "source_save"; source_ref: SourceRef; project?: string }
@@ -108,8 +130,17 @@ export type KernelOp =
  * The Rust seam serialises `{ receipts, #[serde(flatten)] result }`, so on
  * the wire the tag and the payload sit flat beside `receipts`. */
 export type KernelOpResult =
+  | {result:"ground_reading";reading:Record<string,unknown>}
+  | {result:"composition_reading";reading:import("../workspace/SystemPanel").CompositionReading}
+  | {result:"file_operation";data:unknown}
+  | { result:"encounter_reading";data:unknown }
+  | { result: "agency_reading"; project_ref: string; spaces: unknown[]; observed_at_unix_ms: number }
+  | { result: "knowledge"; data: unknown }
   | { result: "state"; snapshot: KernelSnapshotState }
   | { result: "world_read"; snapshot: KernelSnapshotState }
+  | { result: "directory_read"; directory: NativeDirectory }
+  | { result: "file_read"; reading: NativeFileReading }
+  | { result: "file_bytes"; location: CentralLocation; revision: string; byte_len: number; mime_hint: string | null; content_base64: string }
   | { result: "sources_listed"; listing: SourceListingState }
   | { result: "source_opened"; buffer: SourceBufferState }
   | { result: "source_history"; history: SourceHistoryReading }
@@ -191,3 +222,9 @@ export interface SourceHistoryReading {
   source_ref: string; world_ref: string; provider: string; cursor: number;
   changes: SourceChangeReading[];
 }
+
+export interface KnowledgeAddress { kind: "wiki" | "source" | "project-map"; value: string }
+export type KnowledgeRequest = { action: "search"; query: string } | { action: "history" } | { action: "read" | "relations" | "explain" | "use"; address: KnowledgeAddress };
+export interface KnowledgeReading { resource: string; provider: string; revision?: string; authority: string; content?: string; evidence: string[]; why_selected: string }
+export interface KnowledgeHit { address: KnowledgeAddress; resource: string; label: string; kind: string; snippet: string; provider: string; authority: string }
+export interface KnowledgeRelations { nodes: {resource: string; label: string; kind: string}[]; edges: {from: string; to: string; relation: string}[]; truncated: boolean; warnings: string[] }

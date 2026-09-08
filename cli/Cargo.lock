@@ -322,10 +322,19 @@ name = "oi-cli"
 version = "0.1.0"
 dependencies = [
  "aikit-core",
+ "oi-cradle-kernel",
  "serde",
  "serde_json",
  "tempfile",
  "toml",
+]
+
+[[package]]
+name = "oi-cradle-kernel"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

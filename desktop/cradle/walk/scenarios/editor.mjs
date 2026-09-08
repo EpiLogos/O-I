@@ -40,18 +40,20 @@ export default async function run({ page, baseUrl, check, metric, shot, channel,
     } catch { /* Teardown may close a completed response's browser handle. */ }
   });
   await page.goto(baseUrl); await channel('info');
+  await page.getByRole('button',{name:'Start writing',exact:true}).click();
   await page.locator('.canvas-surface').fill('This thought survives opening documents.');
   const nav = page.getByRole('complementary', { name: 'World navigator' });
   const selectProject = async name => {
-    await page.keyboard.press('Meta+b');
+    if (!await page.getByRole('complementary', {name:'World navigator'}).isVisible()) await page.keyboard.press('Meta+b');
     await nav.locator(`[data-project-path="Work/${name}"]`).click();
-    await nav.getByRole('heading', { name, exact: true }).waitFor();
+    await nav.getByRole("button",{name:`${name}: files`,exact:true}).click();
+    await page.waitForFunction(name => document.querySelector(`[data-project-path="Work/${name}"]`)?.getAttribute('aria-current') === 'true', name);
     await page.waitForFunction(() => document.querySelector('.world-navigator')?.getAttribute('aria-busy') === 'false', null, { timeout: 10000 });
   };
   const open = async (source, select = false) => {
-    if (select) await selectProject('Editor'); else await page.keyboard.press('Meta+b');
+    if (select) await selectProject('Editor'); else if (!await page.getByRole('complementary', {name:'World navigator'}).isVisible()) await page.keyboard.press('Meta+b');
     const start = Date.now();
-    await nav.locator(`[data-source-ref="${source.binding.ref}"]`).click();
+    await nav.locator(`[data-file-path="Work/Editor/${source.binding.path}"]`).click();
     await page.waitForFunction(ref => document.querySelector('.source-textarea')?.getAttribute('data-source-ref') === ref, source.binding.ref, { timeout: 10000 });
     await page.waitForFunction(content => document.querySelector('.source-textarea')?.value === content, p.originals.get(source.binding.path), { timeout: 10000 });
     return Date.now() - start;

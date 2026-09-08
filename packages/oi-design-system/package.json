@@ -2,14 +2,23 @@
   "name": "@epilogos/oi-design-system",
   "version": "0.1.0",
   "private": true,
-  "files": ["tokens.css", "assets"],
+  "files": [
+    "tokens.css",
+    "assets",
+    "point-cloud.css",
+    "loading.mjs",
+    "DESKTOP-LANGUAGE.md"
+  ],
   "exports": {
     "./tokens.css": "./tokens.css",
     "./assets/oi-mark.svg": "./assets/oi-mark.svg",
     "./assets/oi-glyph.svg": "./assets/oi-glyph.svg",
-    "./assets/oi-cube.svg": "./assets/oi-cube.svg"
+    "./assets/oi-cube.svg": "./assets/oi-cube.svg",
+    "./point-cloud.css": "./point-cloud.css",
+    "./loading": "./loading.mjs"
   },
   "scripts": {
-    "verify": "node checks/verify.mjs"
+    "verify": "node checks/verify.mjs",
+    "verify:browser": "node checks/browser.mjs"
   }
 }

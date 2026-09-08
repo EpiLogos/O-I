@@ -2,6 +2,6 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "main-window",
   "description": "Cradle shell window. No shell, filesystem, process, network or secret plugins are granted.",
-  "windows": ["main"],
+  "windows": ["main", "surface-*"],
   "permissions": ["core:default"]
 }

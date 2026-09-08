@@ -10,5 +10,4 @@ site/*.config.js
 site/*.config.d.ts
 *.log
 .DS_Store
-/target/
-/cli/target/
+target/

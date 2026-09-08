@@ -45,6 +45,10 @@ export interface SurfaceBinding {
   ref?: string;
   project?: string;
   title: string;
+  address?: import("../kernel/types").KnowledgeAddress;
+  encounter?: {space:string};
+  view?: {encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect"};
+  location?: import("../kernel/types").CentralLocation;
 }
 
 /** A tab group: one tab strip + the surface it presents. */
@@ -64,9 +68,12 @@ export interface SplitPane {
   id: string;
   dir: PaneDir;
   children: Pane[];
+  weights?: number[];
 }
 
 export type Pane = TabGroupPane | SplitPane;
+
+export interface NativeWindowBounds { x: number; y: number; width: number; height: number }
 
 export interface LayoutState {
   /** null = austere rest (law 12: rest is *what is on screen*). */
@@ -77,7 +84,19 @@ export interface LayoutState {
   /** Most recently closed last. Reopen pops. */
   closedStack: SurfaceId[];
   focusedGroupId: string | null;
+  /** A presentation mask; the full pane tree and mounted views remain intact. */
+  maximizedGroupId?: string;
   agencyDepth: AgencyDepth;
+  windowBounds?: Record<SurfaceId, NativeWindowBounds>;
+  detached?: {surfaceId: string; groupId: string; index: number; pinned: boolean}[];
+  subjectPlanes?: Record<string,"context"|"history"|"system">;
+  rightDepth?: AgencyDepth;
+  leftWidth?: number;
+  rightWidth?: number;
+  /** FND-02: the person's own accompanying encounter bound into the right
+   * agent plane — a ref into AIKit's real agent_session grammar, never a
+   * desktop-owned session record (map §2 law 7). */
+  accompanying?: {ref: string; project: string; space: string};
 }
 
 /**
@@ -100,6 +119,8 @@ export interface ActionArg {
   dir?: Dir;
   /** 1-based tab position for ⌘1…⌘9 jumps (visual order). */
   n?: number;
+  splitId?: string;
+  weights?: number[];
 }
 
 /** The layout as it was at load — the restore point for `restore-layout`. */

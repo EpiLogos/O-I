@@ -1,0 +1,98 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "recovery",
+  "generated_at": "2026-09-08T10:35:00.330Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": null,
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 559,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Corrupt/unsupported presentation is retained byte for byte before recovery"
+    },
+    {
+      "ok": true,
+      "label": "Explicit fresh arrangement restores normally"
+    },
+    {
+      "ok": true,
+      "label": "Fresh arrangement and relaunch cannot overwrite retained original bytes"
+    },
+    {
+      "ok": true,
+      "label": "Explicit recovery restores actual held writing"
+    },
+    {
+      "ok": true,
+      "label": "Recovered writing remains durable after another relaunch"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-08T10:35:00.411Z",
+        "transport": {
+          "kind": "unavailable",
+          "reason": "no kernel transport: neither the Tauri host nor a dev walk bridge is reachable"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-08T10:35:00.473Z",
+        "transport": {
+          "kind": "unavailable",
+          "reason": "no kernel transport: neither the Tauri host nor a dev walk bridge is reachable"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-08T10:35:00.621Z",
+        "transport": {
+          "kind": "unavailable",
+          "reason": "no kernel transport: neither the Tauri host nor a dev walk bridge is reachable"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-08T10:35:00.823Z",
+        "transport": {
+          "kind": "unavailable",
+          "reason": "no kernel transport: neither the Tauri host nor a dev walk bridge is reachable"
+        },
+        "url": "http://localhost:4173/"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": []
+}

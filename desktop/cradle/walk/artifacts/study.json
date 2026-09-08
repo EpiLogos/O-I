@@ -1,0 +1,108 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "study",
+  "generated_at": "2026-09-08T10:34:58.512Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": null,
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 1396,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Persistent global rail is available"
+    },
+    {
+      "ok": true,
+      "label": "Three spatial regions are visible together"
+    },
+    {
+      "ok": true,
+      "label": "Pointer selection binds the adjacent subject context"
+    },
+    {
+      "ok": true,
+      "label": "Open beside retains the selected source and wiki together"
+    },
+    {
+      "ok": true,
+      "label": "Full agency masks canvas while keeping the global rail"
+    },
+    {
+      "ok": true,
+      "label": "Escape restores the canvas without losing subject"
+    },
+    {
+      "ok": true,
+      "label": "Panel resize works from keyboard"
+    },
+    {
+      "ok": true,
+      "label": "Search filters actual study subjects"
+    },
+    {
+      "ok": true,
+      "label": "Search opens the same subject context as the graph"
+    },
+    {
+      "ok": true,
+      "label": "Handoff preview carries the selected Flow text"
+    },
+    {
+      "ok": true,
+      "label": "Routing leaves original writing intact"
+    },
+    {
+      "ok": true,
+      "label": "Workspaces keep independent writing"
+    },
+    {
+      "ok": true,
+      "label": "Returning restores the original workspace surface and writing"
+    },
+    {
+      "ok": true,
+      "label": "Reload restores locally saved Flow writing"
+    },
+    {
+      "ok": true,
+      "label": "A freeform workspace can be created and named"
+    },
+    {
+      "ok": true,
+      "label": "Shared projection discloses its transport seam honestly"
+    },
+    {
+      "ok": true,
+      "label": "System exposes the six product boundaries"
+    },
+    {
+      "ok": true,
+      "label": "Desktop fits a smaller laptop viewport without page overflow"
+    },
+    {
+      "ok": true,
+      "label": "No renderer errors ()"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 67,
+      "data": {
+        "file": "study-wiki.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "study-wiki.png"
+  ]
+}

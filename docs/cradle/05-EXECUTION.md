@@ -5,6 +5,33 @@ building the Cradle. **Authority:** `docs/cradle/01–04` and
 `docs/positions/FOUNDING-POSITIONS.md`. Where any instruction — here, or from
 any subagent — conflicts with the design, the design wins.
 
+## Current foundation execution protocol — owner direction,2026-09-06
+
+Use the [wayfinder](../OI-DESKTOP-CRADLE-REBUILD-WAYFINDER.md#foundation-and-gateway-execution-map--current-binding-direction)
+and [programme FND-00–06/GW-01–06](../../.superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md#foundation-execution-gate--owner-direction-2026-09-06)
+as the current file/state/gate map. They supersede historical specimen-first,
+old desktop-path and selected-reference instructions below. Build production
+`desktop/cradle`; do not create another specimen. The lead owns form/fidelity and
+integration. Independent product work must have explicit file/contract ownership;
+the concurrently developed Gateway product lane is consumed, not redispatched.
+
+A fresh real inspection of every indexed HTML reference is mandatory because the
+previous pass missed the right panel. Reference top-bar rendering is exempt;
+its functions are native. The owner's right-panel relocation and management-bar
+removal are additional explicit corrections, not a general design exemption.
+Before implementation, record the reference-to-region/state/interaction mapping.
+At the coherent checkpoint compare native production against all reference modes,
+including subject changes and keyboard/full/restore behaviour. Mark functional
+and visual/interaction evidence separately. Inspect code, real owner operations
+and actual mounted view state between these bounded visual checkpoints.
+
+Preserve occupied work and active providers. Recheck process/artifact identity;
+no simultaneous build into a preview under test. Newly landed native capabilities
+attach to stable presentation inputs, never dictate a convenient redesign.
+An integration absence stays named with its owner; it cannot become fake data,
+another registry or grounds for omitting specified panel structure.
+
+
 ## 1. The mission
 
 Build the Cradle for real. Not specimens of the Cradle, not a system browser

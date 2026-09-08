@@ -12,6 +12,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { readDraft, writeDraft } from "../workspace/drafts";
 import { SourceHistory } from "./SourceHistory";
 import { useKernel } from "../kernel/KernelProvider";
 import type { SurfaceBinding } from "./types";
@@ -32,7 +33,9 @@ export function SourceSurface(props: SourceSurfaceProps) {
   const buffer = kernel.snapshot.buffers[binding.ref ?? ""];
   const error = kernel.sourceErrors[binding.ref ?? ""];
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [text, setText] = useState(buffer?.content ?? "");
+  const initialDraft = useRef(binding.ref ? readDraft(binding.ref) : null);
+  const [draftError, setDraftError] = useState<string | null>(null);
+  const [text, setText] = useState(initialDraft.current?.content ?? buffer?.content ?? "");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Mirror the kernel buffer into the textarea only when the buffer's
@@ -46,7 +49,8 @@ export function SourceSurface(props: SourceSurfaceProps) {
   useEffect(() => {
     if (!buffer) return;
     if (pendingEdits.current > 0) return;
-    if (buffer.dirty) return; // the person's layer is never clobbered
+    if (lastSynced.current === null && initialDraft.current && buffer.content !== initialDraft.current.content) return;
+    if (buffer.dirty && lastSynced.current !== null) return;
     if (lastSynced.current === buffer.content) return;
     lastSynced.current = buffer.content;
     setText(buffer.content);
@@ -68,6 +72,10 @@ export function SourceSurface(props: SourceSurfaceProps) {
 
   const onEdit = (value: string) => {
     setText(value);
+    if (binding.ref && buffer) {
+      try { writeDraft(binding.ref, { content: value, base_revision: buffer.base_revision, saved_content: buffer.saved_content }); setDraftError(null); }
+      catch { setDraftError("This draft could not be saved on this device. Keep this window open until the source is saved."); }
+    }
     lastSynced.current = value; // this surface authored it — no mirror-back
     pendingEdits.current += 1;
     void kernel.editBuffer(binding.ref ?? "", value).finally(() => {
@@ -118,33 +126,41 @@ export function SourceSurface(props: SourceSurfaceProps) {
       data-conflicted={saveFailed}
       onKeyDown={onKeyDown}
     >
+      {draftError && <p role="alert">{draftError}</p>}
       {error && <p className="source-note" role="alert">{error}</p>}
       <div className="source-status" role="status">
-        <span>{buffer.project}</span>
-        <span className="source-revision" data-revision={buffer.base_revision}>
-          canonical {shortRevision(buffer.base_revision)}
+        <span className="source-revision source-location" data-revision={buffer.base_revision} title={`Central / Work / ${buffer.project} / ${buffer.path}`}>
+          Central / Work / {buffer.project} / {buffer.path}
         </span>
         {buffer.dirty ? (
-          <span className="source-dirty-marker" title="The buffer differs from the canonical layer">
-            edited — unsaved
+          <span className="source-dirty-marker" title="This source has unsaved changes">
+            Unsaved changes
           </span>
         ) : (
-          <span className="source-clean-marker">clean</span>
+          <span className="source-clean-marker">Saved</span>
         )}
         <button type="button" className="source-history-toggle" aria-expanded={historyOpen} onClick={() => setHistoryOpen(open => !open)}>History</button>
         <button type="button" className="source-save" onClick={onSave} disabled={!buffer.dirty}>Save · ⌘S</button>
       </div>
-      <textarea
-        ref={textareaRef}
-        className="source-textarea"
-        aria-label={`Editing ${binding.title}`}
-        data-source-ref={binding.ref}
-        spellCheck={false}
-        value={text}
-        onChange={(event) => onEdit(event.target.value)}
-      />
-      {historyOpen && <SourceHistory sourceRef={binding.ref} revision={buffer.conflict?.current_revision ?? buffer.base_revision} />}
-      {conflict ? (
+      <div className="source-editor-scroll">
+        <div className="source-editor-body">
+          <div className="source-gutter" aria-hidden="true">
+            {Array.from({ length: Math.max(1, text.split("\n").length) }, (_, i) => (
+              <span key={i}>{i + 1}</span>
+            ))}
+          </div>
+          <textarea
+            ref={textareaRef}
+            className="source-textarea"
+            aria-label={`Editing ${binding.title}`}
+            data-source-ref={binding.ref}
+            spellCheck={false}
+            value={text}
+            onChange={(event) => onEdit(event.target.value)}
+          />
+        </div>
+        {historyOpen && <SourceHistory sourceRef={binding.ref} revision={buffer.conflict?.current_revision ?? buffer.base_revision} />}
+        {conflict ? (
         <div className="source-conflict" role="alert" data-conflict-kind="revision-conflict">
           <p className="source-conflict-title">
             revision conflict — the canonical layer moved while this buffer was open
@@ -191,7 +207,15 @@ export function SourceSurface(props: SourceSurfaceProps) {
             after the re-read, ⌘S saves your buffer on the new revision
           </p>
         </div>
-      ) : null}
+        ) : null}
+      </div>
+      {/* Finding 28: a bare truncated hash with no label read as unexplained
+          filler; "Rev" gives it the same reading the study's footer line
+          has, at this row's 8px tracked-eyebrow scale. */}
+      <div className="source-editor-foot">
+        <span className="source-foot-revision" title={buffer.base_revision}>Rev {shortRevision(buffer.base_revision)}</span>
+        <span>UTF-8 · LF</span>
+      </div>
     </div>
   );
 }

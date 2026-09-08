@@ -1,0 +1,53 @@
+.knowledge-surface { height:100%; display:flex; flex-direction:column; min-height:0; position:relative; }
+.knowledge-breadcrumb { height:35px; flex:none; padding:0 18px; display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:10px; color:var(--oi-muted); }
+.knowledge-breadcrumb button { background:transparent; font-size:10px; }
+.knowledge-graph { position:relative; flex:1; min-height:200px; }
+.knowledge-graph svg { width:100%; height:100%; position:absolute; inset:0; }
+.knowledge-graph line { stroke:var(--oi-relation); stroke-width:.9; opacity:.6; }
+.knowledge-graph circle { fill:var(--oi-foreground); stroke:var(--oi-paper); stroke-width:2; }
+.knowledge-graph g[role=button] { cursor:pointer; outline:none; }
+.knowledge-graph g[role=button]:focus-visible circle { stroke:var(--oi-focus); stroke-width:5; }
+.knowledge-graph text { fill:var(--oi-foreground); font:13px var(--oi-font-sans); }
+.knowledge-graph .kind { fill:var(--oi-muted); font-size:9px; }
+.knowledge-scope { position:absolute; bottom:18px; left:20px; font-size:9px; color:var(--oi-muted); }
+.knowledge-zoom { position:absolute; bottom:12px; right:16px; display:flex; border:1px solid var(--oi-rule); }
+.knowledge-zoom button { min-width:28px; height:28px; padding:0 4px; font-size:10px; }
+.knowledge-members { display:flex; flex-wrap:wrap; gap:6px; padding:8px 18px; border-top:1px solid var(--oi-rule); }
+.knowledge-members button { font-size:10px; overflow-wrap:anywhere; }
+.knowledge-evidence { padding:10px 18px; font-size:10px; border-top:1px solid var(--oi-rule); max-height:35%; overflow:auto; }
+.knowledge-evidence summary { cursor:pointer; }
+.knowledge-evidence pre { white-space:pre-wrap; overflow-wrap:anywhere; margin-top:12px; }
+.knowledge-surface > p { padding:8px 18px; font-size:11px; }
+/* Search overlay (brief FND-01: 570px card, radius 12, hairline,
+ * shadow-overlay, blurred backdrop, eyebrow header, glyph-style result
+ * rows). The DOM here belongs to SearchOverlay.tsx (no owner this round) —
+ * this is a CSS-only restyle of its existing markup. */
+.search-aperture { width:570px; max-width:calc(100vw - 48px); max-height:calc(100vh - 80px); margin:60px auto auto; padding:0; border:var(--oi-shell-edge) solid var(--oi-hairline); border-radius:12px; background:var(--oi-sidebar-ground); color:var(--oi-accent-ink); box-shadow:var(--oi-shadow-overlay); font:var(--oi-shell-type-ui) var(--oi-font-sans); animation: ctx-menu-in var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.search-aperture::backdrop { background:rgba(48,55,47,.19); backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); }
+.search-aperture form { display:flex; align-items:center; border-bottom:1px solid var(--oi-hairline-soft); padding:18px 20px; gap:12px; }
+.search-aperture input { flex:1; min-width:0; border:0; background:transparent; outline:none; color:inherit; font-size:13px; font-family:var(--oi-font-sans); height:auto; }
+.search-aperture button { font:inherit; color:var(--oi-muted-2); background:transparent; border:0; cursor:pointer; padding:8px; border-radius:5px; transition:color var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.search-aperture button:hover, .search-aperture button:focus-visible { background:var(--oi-wash); color:var(--oi-accent-ink); outline:none; }
+/* Item (a): the shared shell focus ring is scoped to buttons/links/tabs/
+ * menu items and never reaches an input body (the shell.css rule). The
+ * search field still needs its own quiet signal — a thin inset outline,
+ * not the heavy 2px accent bezel a generic ring would draw around a
+ * borderless full-width field. */
+.search-aperture input:focus-visible { outline: 1px solid var(--oi-accent-soft); outline-offset: -3px; border-radius: 4px; }
+/* Item (h): the search overlay renders outside `.desktop-shell` (a sibling
+ * dialog in Cradle.tsx), so the shared shell alert styling never reaches it.
+ * An owner refusal here (a shortcut conflict, or a provider-absence line
+ * inside "Unavailable sources") gets the same visible treatment. */
+.search-aperture [role="alert"] { margin: 4px 20px 12px; padding: 8px 10px; border-left: 2px solid var(--oi-accent); background: var(--oi-wash); border-radius: 4px; color: var(--oi-accent-ink); }
+.knowledge-surface > [role="alert"] { margin: 8px 18px; padding: 8px 10px; border-left: 2px solid var(--oi-accent); background: var(--oi-wash); border-radius: 4px; }
+.search-aperture header { display:flex; align-items:center; justify-content:space-between; padding:4px 20px 12px; font-size:var(--oi-shell-type-eyebrow); letter-spacing:var(--oi-shell-tracking); text-transform:uppercase; color:var(--oi-muted-2); }
+.search-aperture ul { padding:0 8px 8px; margin:0; list-style:none; }
+.search-aperture li { display:flex; align-items:center; border-radius:6px; }
+.search-aperture li > button:first-child { text-align:left; flex:1; padding:10px 12px; border-radius:6px; }
+.search-aperture li:hover, .search-aperture li:focus-within { background:var(--oi-wash); }
+.search-aperture strong { display:block; font-weight:500; font-size:var(--oi-shell-type-ui); }
+.search-aperture small { display:block; margin-top:4px; color:var(--oi-muted-2); font-size:var(--oi-shell-type-meta); }
+.search-aperture p,.search-aperture details { margin:12px 20px; overflow-wrap:anywhere; font-size:var(--oi-shell-type-ui); color:var(--oi-muted-2); }
+.search-aperture pre { white-space:pre-wrap; font-size:var(--oi-shell-type-eyebrow); }
+.search-shortcut { display:flex; align-items:center; gap:8px; padding:4px 20px 12px; color:var(--oi-muted-2); font-size:var(--oi-shell-type-eyebrow); }
+.search-shortcut select { color:inherit; border:var(--oi-shell-edge) solid var(--oi-hairline); border-radius:5px; background:var(--oi-canvas-ground); font:inherit; padding:2px 4px; }

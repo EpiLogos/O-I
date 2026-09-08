@@ -1,0 +1,61 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "bootstrap",
+  "generated_at": "2026-09-08T10:35:53.463Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 2333,
+  "checks": [
+    {
+      "ok": true,
+      "label": "BOOT-00/transport-unavailable: an honest state still leaves a usable local writing canvas"
+    },
+    {
+      "ok": true,
+      "label": "BOOT-02: an unrecognised ground shows the chooser first in the empty-workspace region, with the honest reason line"
+    },
+    {
+      "ok": true,
+      "label": "BOOT-02: the writing canvas stays reachable while ground is unrecognised"
+    },
+    {
+      "ok": true,
+      "label": "BOOT-03: an existing candidate can be recognised and bound as the default from the empty-workspace chooser"
+    },
+    {
+      "ok": true,
+      "label": "The scratch file opens ordinarily once, before it is ever deleted"
+    },
+    {
+      "ok": true,
+      "label": "BOOT-12/ready: the chooser is gone once the bound ground is recognised on relaunch"
+    },
+    {
+      "ok": true,
+      "label": "BOOT-06/12: the composition reading carries an observed-<relative time> freshness stamp"
+    },
+    {
+      "ok": true,
+      "label": "BOOT-06/12: an installed/registered product is labelled discovered, not verified ready — never asserted runtime-ready"
+    },
+    {
+      "ok": true,
+      "label": "BOOT-15: the Gateway absence section names the missing obligations honestly (no invented ecology row, no probe, no auto start)"
+    },
+    {
+      "ok": true,
+      "label": "BOOT-15: the three real facts (AIKit executable bound, SessionSpace discovery, provider list) are all present"
+    }
+  ],
+  "ops": [],
+  "metrics": {},
+  "screenshots": []
+}

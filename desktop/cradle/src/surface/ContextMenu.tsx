@@ -6,8 +6,9 @@
  * ⏥ close (pointer: right-click opens, click invokes — parity).
  */
 
-import { useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { Fragment, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import type { ActionDisclosure, SurfaceId } from "./types";
+import { Glyph } from "../workspace/Glyph";
 
 export interface MenuState {
   x: number;
@@ -23,8 +24,48 @@ interface Props {
   onClose: () => void;
 }
 
+/** The frame's own keyboard path for each disclosed action (keys.ts) —
+ * shown as a right-aligned <kbd> hint so the menu teaches its own
+ * shortcuts. An action absent here has no frame keybinding (or already
+ * states one in its own title, e.g. "World (⌘B)"). */
+const SHORTCUT: Record<string, string> = {
+  "surface.close": "⌘W",
+  "surface.split-right": "⌘D",
+  "surface.split-down": "⌘⇧D",
+  "surface.maximize": "⌘⌥⏎",
+  "surface.pin": "⌥P",
+  "surface.unpin": "⌥P",
+  "surface.restore-layout": "⌘⌥R",
+  "surface.tile": "⌘⌥T",
+  "surface.reopen": "⌘⇧T",
+};
+
+/** Finding 10 — a glyph before the label, from the study's own icon set.
+ * Only the actions with an obvious visual match get one; an unmapped
+ * disclosure keeps its glyph slot empty rather than wearing a fabricated
+ * icon. */
+const ICON: Partial<Record<string, "close" | "columns" | "rows" | "expand" | "restore" | "grid" | "history" | "detach">> = {
+  "surface.close": "close",
+  "surface.split-right": "columns",
+  "surface.split-down": "rows",
+  "surface.maximize": "expand",
+  "surface.tile": "grid",
+  "surface.restore-layout": "history",
+  "surface.reopen": "history",
+  "surface.detach": "detach",
+};
+
 export function ContextMenu({ menu, onInvoke, onClose }: Props) {
   const ref = useRef<HTMLDivElement>(null);
+  // The eyebrow names the subject the disclosures belong to (brief FND-01):
+  // the binding's own tab title for a binding menu, "Window" for the frame
+  // menu — read from the DOM rather than plumbed through Cradle.tsx, since
+  // this component owns only its own disclosure surface.
+  const [subject] = useState(() => {
+    if (!menu.surfaceId) return "Window";
+    const el = document.querySelector<HTMLElement>(`[data-surface-id="${menu.surfaceId}"] .tab-title`);
+    return el?.textContent?.trim() || "Window";
+  });
 
   useEffect(() => {
     const el = ref.current;
@@ -59,6 +100,11 @@ export function ContextMenu({ menu, onInvoke, onClose }: Props) {
     }
   };
 
+  // "hr separators before Close" (brief FND-01): a divider sets the closing
+  // action apart. The owner's disclosure ORDER is never reordered for
+  // presentation (the walk reads `.ctx-item` in that exact sequence) — the
+  // separator is inserted immediately before whichever row is the close
+  // action, wherever the disclosure places it.
   return (
     <div
       ref={ref}
@@ -69,19 +115,24 @@ export function ContextMenu({ menu, onInvoke, onClose }: Props) {
       style={{ left: menu.x, top: menu.y }}
       onKeyDown={onKeyDown}
     >
+      <small className="ctx-menu-subject">{subject}</small>
       {menu.items.map((item) => (
-        <button
-          key={item.action_ref}
-          type="button"
-          role="menuitem"
-          className="ctx-item"
-          data-action-ref={item.action_ref}
-          disabled={!item.enabled}
-          aria-disabled={!item.enabled}
-          onClick={() => onInvoke(item, menu.surfaceId)}
-        >
-          {item.title}
-        </button>
+        <Fragment key={item.action_ref}>
+          {item.action_ref === "surface.close" && <hr />}
+          <button
+            type="button"
+            role="menuitem"
+            className="ctx-item"
+            data-action-ref={item.action_ref}
+            disabled={!item.enabled}
+            aria-disabled={!item.enabled}
+            onClick={() => onInvoke(item, menu.surfaceId)}
+          >
+            <span className="ctx-item-glyph" aria-hidden="true">{ICON[item.action_ref] && <Glyph name={ICON[item.action_ref]!} size={13} />}</span>
+            <span className="ctx-item-title">{item.title}</span>
+            {SHORTCUT[item.action_ref] && <kbd aria-hidden="true">{SHORTCUT[item.action_ref]}</kbd>}
+          </button>
+        </Fragment>
       ))}
     </div>
   );

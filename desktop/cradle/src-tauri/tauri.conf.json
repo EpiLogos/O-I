@@ -16,7 +16,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "O:I",
+        "title": "O-I",
         "width": 1280,
         "height": 820,
         "minWidth": 760,
@@ -27,13 +27,13 @@
     "security": {
       "capabilities": ["main-window"],
       "csp": {
-        "default-src": "'self' customprotocol: asset:",
+        "default-src": "'self' customprotocol: oi-material:",
         "connect-src": "ipc: http://ipc.localhost",
-        "img-src": "'self' asset: http://asset.localhost data: blob:",
+        "img-src": "'self' oi-material: data: blob:",
         "style-src": "'self' 'unsafe-inline'",
         "script-src": "'self'",
         "object-src": "'none'",
-        "frame-src": "'none'",
+        "frame-src": "oi-material:",
         "base-uri": "'none'"
       }
     }

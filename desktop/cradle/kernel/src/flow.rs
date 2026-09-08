@@ -64,14 +64,14 @@ impl std::fmt::Display for OwnerCallError {
 impl std::error::Error for OwnerCallError {}
 
 /// Client for the Central owner Actions the kernel reads and writes
-/// through — the same env-configurable `ctrl` adapter pattern the ported
-/// kernel used (`OI_CENTRAL_CTRL_BIN`, `OI_CENTRAL_ROOT`,
-/// `OI_CENTRAL_PROJECT_QUERY`).
+/// through `oi central`. OI_BIN selects the suite executable; the suite resolves
+/// OI_CENTRAL_CTRL_BIN or the registered owner. Root/project context is preserved.
 #[derive(Clone, Debug)]
 pub struct CentralClient {
     executable: PathBuf,
     central_root: Option<PathBuf>,
     project_query: String,
+    suite_route: bool,
 }
 
 impl CentralClient {
@@ -79,21 +79,24 @@ impl CentralClient {
     /// project query is the O-I ground the cradle opens over (`project:o-i`
     /// is Central's id; the owner Actions accept `o-i`).
     pub fn discover() -> Self {
-        let executable = env::var_os("OI_CENTRAL_CTRL_BIN")
+        let executable = env::var_os("OI_BIN")
             .map(PathBuf::from)
-            .unwrap_or_else(|| PathBuf::from("ctrl"));
+            .unwrap_or_else(|| PathBuf::from("oi"));
         let central_root = env::var_os("OI_CENTRAL_ROOT").map(PathBuf::from);
         let project_query =
             env::var("OI_CENTRAL_PROJECT_QUERY").unwrap_or_else(|_| "o-i".to_owned());
-        Self::with(executable, central_root, project_query)
+        let mut client = Self::with(executable, central_root, project_query);
+        client.suite_route = true;
+        client
     }
 
-    /// Explicit configuration, for tests injecting a fixture executable.
+    /// Explicit owner-level configuration for embedding and native parity tests.
     pub fn with(executable: PathBuf, central_root: Option<PathBuf>, project_query: String) -> Self {
         Self {
             executable,
             central_root,
             project_query,
+            suite_route: false,
         }
     }
 
@@ -118,6 +121,9 @@ impl CentralClient {
                 .or_insert_with(|| Value::String(self.project_query.clone()));
         }
         let mut command = Command::new(&self.executable);
+        if self.suite_route {
+            command.arg("central");
+        }
         command.arg("--json");
         if let Some(root) = &self.central_root {
             command.arg("--root").arg(root);

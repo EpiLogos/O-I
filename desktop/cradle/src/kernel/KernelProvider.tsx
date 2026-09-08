@@ -5,6 +5,7 @@
  * seqs, deduped by seq — the observable log as the renderer sees it.
  */
 
+import { clearSavedDraft, writeDraft } from "../workspace/drafts";
 import {
   createContext,
   useCallback,
@@ -15,6 +16,9 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
+import { createLoadingIndicator } from "@epilogos/oi-design-system/loading";
+import "@epilogos/oi-design-system/point-cloud.css";
 import {
   detectTransport,
   eventsSince,
@@ -31,8 +35,25 @@ import type {
   SourceRef,
 } from "./types";
 
+/** BOOT-00/02/03/04: the boot phase, derived only from `detectTransport()`,
+ * the first `KernelOp::State` read and the ground status op — never a
+ * second source of truth beside the pulled read models above. */
+export interface KernelBootState {
+  phase:
+    | "starting"
+    | "ready"
+    | "transport-unavailable"
+    | "ground-unrecognised"
+    | "ground-inaccessible";
+  detail?: string;
+}
+
+const STARTING_BOOT: KernelBootState = { phase: "starting", detail: "Reading local runtime…" };
+
 export interface KernelApi {
   transport: KernelTransportStatus;
+  /** BOOT-00/02/03/04 (additive; no existing read model changes). */
+  boot: KernelBootState;
   snapshot: KernelSnapshotState;
   receipts: KernelReceipt[];
   listing: SourceListingState | null;
@@ -63,6 +84,12 @@ export function useKernel(): KernelApi {
 
 export function KernelProvider(props: { children: ReactNode }) {
   const transport = useMemo(detectTransport, []);
+  const [boot, setBoot] = useState<KernelBootState>(transport.kind === "unavailable" ? { phase: "transport-unavailable", detail: transport.reason } : STARTING_BOOT);
+  // BOOT-00: the window overlay's own gate. It settles the moment the
+  // first `KernelOp::State` resolves (success or error) — independent of
+  // `boot`'s ground-status resolution, which continues after the overlay
+  // is gone (BOOT-02/03/04 render inside the usable shell, not behind it).
+  const [stateSettled, setStateSettled] = useState(transport.kind === "unavailable");
   const [snapshot, setSnapshot] = useState<KernelSnapshotState>(EMPTY_SNAPSHOT);
   const [receipts, setReceipts] = useState<KernelReceipt[]>([]);
   const [listing, setListing] = useState<SourceListingState | null>(null);
@@ -138,7 +165,14 @@ export function KernelProvider(props: { children: ReactNode }) {
             return next;
           });
         }
-        if (call.outcome) merge(call.outcome);
+        if (call.outcome) {
+          const result = call.outcome;
+          try {
+            if (result.result === "source_saved") clearSavedDraft(result.buffer.source_ref, result.buffer.content);
+            if (result.result === "source_reread" && result.buffer.dirty) writeDraft(result.buffer.source_ref, result.buffer);
+          } catch { setOpError("Working draft could not be persisted on this device."); }
+          merge(result);
+        }
         return call.outcome;
       });
       applySerial.current = run.then(() => undefined, () => undefined);
@@ -223,9 +257,48 @@ export function KernelProvider(props: { children: ReactNode }) {
       if (initial.outcome && initial.outcome.result === "state") {
         merge(initial.outcome);
       }
+      setStateSettled(true);
+      // BOOT-00/02/03/04: the boot phase, derived only from the transport,
+      // this first state read and the ground status op — never a probe of
+      // sockets, never an invented readiness signal.
+      if (transport.kind === "unavailable") {
+        // Already set from the initial useState above.
+      } else if (!initial.outcome || initial.outcome.result !== "state") {
+        setBoot({ phase: "transport-unavailable", detail: initial.error ?? "The kernel state could not be read" });
+      } else {
+        setBoot({ phase: "starting", detail: "Checking Central ground…" });
+        const groundCall = await kernelOp(transport, { op: "ground", request: { action: "status" } });
+        if (alive) {
+          if (groundCall.error || groundCall.outcome?.result !== "ground_reading") {
+            setBoot({ phase: "ground-inaccessible", detail: groundCall.error ?? "Central's ground status could not be read" });
+          } else {
+            const personalGround = (groundCall.outcome.reading as Record<string, unknown>).personal_ground;
+            if (typeof personalGround !== "string") {
+              setBoot({ phase: "ground-unrecognised", detail: "No default Central selected" });
+            } else {
+              const recognizeCall = await kernelOp(transport, { op: "ground", request: { action: "recognize", path: personalGround } });
+              if (alive) {
+                const recognized = recognizeCall.outcome?.result === "ground_reading" ? (recognizeCall.outcome.reading as Record<string, unknown>) : undefined;
+                const access = recognized?.access as { readable?: boolean; searchable?: boolean } | undefined;
+                if (recognizeCall.error || !recognized || recognized.outcome !== "recognized" || !access?.readable || !access?.searchable) {
+                  const reason = recognizeCall.error ?? (typeof recognized?.outcome === "string" ? `Central reports this ground as "${recognized.outcome}"` : "The default Central ground is not accessible");
+                  setBoot({ phase: "ground-inaccessible", detail: reason });
+                } else {
+                  setBoot({ phase: "ready" });
+                }
+              }
+            }
+          }
+        }
+      }
       const backlog = await eventsSince(transport, 1);
       if (alive) admitReceipts(backlog);
-      subscription = await subscribeTopic(transport, (receipt) => admitReceipts([receipt]));
+      subscription = await subscribeTopic(transport, (receipt) => {
+        admitReceipts([receipt]);
+        // Other native windows share this kernel. Pull after their changes;
+        // receipt payloads never become a parallel state store.
+        if(transport.kind==="tauri") void kernelOp(transport,{op:"state"}).then(call=>{if(alive&&call.outcome)merge(call.outcome);});
+      });
     })();
     return () => {
       alive = false;
@@ -236,6 +309,7 @@ export function KernelProvider(props: { children: ReactNode }) {
   const api: KernelApi = useMemo(
     () => ({
       transport,
+      boot,
       snapshot,
       receipts,
       listing,
@@ -254,6 +328,7 @@ export function KernelProvider(props: { children: ReactNode }) {
     }),
     [
       transport,
+      boot,
       snapshot,
       receipts,
       listing,
@@ -272,5 +347,42 @@ export function KernelProvider(props: { children: ReactNode }) {
     ],
   );
 
-  return <KernelContext.Provider value={api}>{props.children}</KernelContext.Provider>;
+  // BOOT-00: window-scope indicator until the first `KernelOp::State`
+  // settles, then removed immediately (no minimum dwell). Obscured shell
+  // content is `inert`; focus returns to the shell once the overlay lifts.
+  useEffect(() => {
+    const root = document.getElementById("root");
+    if (!root) return;
+    if (!stateSettled) {
+      root.setAttribute("inert", "");
+    } else {
+      root.removeAttribute("inert");
+      if (!root.hasAttribute("tabindex")) root.setAttribute("tabindex", "-1");
+      root.focus();
+    }
+    return () => root.removeAttribute("inert");
+  }, [stateSettled]);
+
+  return <KernelContext.Provider value={api}>
+    {!stateSettled && <BootOverlay detail={boot.detail} />}
+    {props.children}
+  </KernelContext.Provider>;
+}
+
+/** The design-system window-scope loading body (BOOT-00), portalled above
+ * the shell so it is never clipped by a local stacking context. The host
+ * (here) owns lifecycle, inertness and focus; the component itself does no
+ * I/O, timing or minimum display duration — only `update()` on change. */
+function BootOverlay({ detail }: { detail?: string }) {
+  const host = useRef<HTMLDivElement>(null);
+  const indicator = useRef<ReturnType<typeof createLoadingIndicator>>();
+  useEffect(() => {
+    const body = createLoadingIndicator({ label: "Opening your world", detail, scope: "window" });
+    indicator.current = body;
+    host.current?.append(body.element);
+    return () => { body.remove(); indicator.current = undefined; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => { indicator.current?.update({ detail }); }, [detail]);
+  return createPortal(<div className="oi-boot-overlay" ref={host} />, document.body);
 }

@@ -1,0 +1,183 @@
+/* FND-04 general canvas material host. Tokens only (`var(--oi-*)`, see
+ * `packages/oi-design-system/tokens.css`'s shell vocabulary) — no
+ * hard-coded colour. */
+
+.material-surface {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+  background: var(--oi-canvas-ground);
+}
+
+/* Finding 17: the material chrome row now matches `.source-status`'s own
+ * 35px grammar (`cradle.css`) — path left (ellipsis), format meta right —
+ * for every format, not only the two with a Rendered/Source choice. */
+.material-chrome {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 35px;
+  flex: none;
+  padding: 0 15px;
+  background: var(--oi-pane-bar-ground);
+  border-bottom: 1px solid var(--oi-hairline-soft);
+  font-size: var(--oi-shell-type-ui);
+  color: var(--oi-muted-2);
+}
+
+.material-path {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--oi-accent-ink);
+}
+
+.material-format {
+  flex: none;
+  font-size: var(--oi-shell-type-eyebrow);
+  letter-spacing: var(--oi-shell-tracking);
+  text-transform: uppercase;
+  color: var(--oi-muted-2);
+}
+
+/* Finding 16: a proper segmented control — pane-bar ground, hairline,
+ * radius 5, the selected segment on `--oi-sidebar-ground` with
+ * `--oi-shadow-plane` — instead of a filled-block selection sitting as a
+ * second, unrelated grammar below the tab strip's own olive underline. */
+.material-toggle {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 26px;
+  flex: none;
+  padding: 2px;
+  background: var(--oi-pane-bar-ground);
+  border: 1px solid var(--oi-hairline);
+  border-radius: 5px;
+}
+
+/* `.material-chrome` scoping (two classes) is needed to beat
+ * `.desktop-shell button, select, input { color: var(--oi-accent-ink) }`
+ * (shell.css) — a bare `.material-toggle button` ties with it on
+ * specificity and loses on source order, so the unselected segment read
+ * as accent-ink instead of muted. */
+.material-chrome .material-toggle button {
+  appearance: none;
+  border: none;
+  height: 100%;
+  background: none;
+  padding: 0 10px;
+  font-size: var(--oi-shell-type-ui);
+  color: var(--oi-muted-2);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out), box-shadow var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+
+.material-chrome .material-toggle button:hover { color: var(--oi-accent-ink); }
+
+.material-chrome .material-toggle button[aria-selected="true"] {
+  background: var(--oi-sidebar-ground);
+  color: var(--oi-accent-ink);
+  box-shadow: var(--oi-shadow-plane);
+}
+
+.material-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.material-loading {
+  padding: 15px;
+  font-size: var(--oi-shell-type-body);
+  color: var(--oi-muted-2);
+}
+
+.material-frame {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  /* Finding 17: `--oi-surface` is a :root-level token that resolves to
+   * white even under `.oi-desktop` (the same design-system-wide var()
+   * capture gap `navigator.css` documents) — every iframe flashed white
+   * before its document loaded. `--oi-canvas-ground` matches the pane it
+   * sits in. */
+  background: var(--oi-canvas-ground);
+}
+
+.material-image-frame {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  padding: 20px;
+}
+
+.material-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.material-unavailable {
+  margin: 15px;
+  padding: 12px 15px;
+  border: 1px solid var(--oi-hairline);
+  border-radius: var(--oi-shell-radius);
+  background: var(--oi-wash);
+  color: var(--oi-foreground);
+  font-size: var(--oi-shell-type-body);
+}
+
+.material-disposition {
+  margin: 20px;
+  padding: 18px 20px;
+  border: 1px solid var(--oi-hairline);
+  border-radius: var(--oi-shell-radius);
+  background: var(--oi-sidebar-ground);
+  max-width: 420px;
+}
+
+.material-disposition-name {
+  font-size: var(--oi-shell-type-heading);
+  color: var(--oi-accent-ink);
+  margin: 0 0 12px;
+  word-break: break-word;
+}
+
+.material-disposition dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 0 0 14px;
+  font-size: var(--oi-shell-type-body);
+}
+
+.material-disposition dt {
+  color: var(--oi-muted-2);
+  text-transform: uppercase;
+  font-size: var(--oi-shell-type-eyebrow);
+  letter-spacing: var(--oi-shell-tracking);
+  align-self: center;
+}
+
+.material-disposition dd {
+  margin: 0;
+  color: var(--oi-foreground);
+  word-break: break-word;
+}
+
+.material-disposition-note {
+  margin: 0;
+  color: var(--oi-muted-2);
+  font-size: var(--oi-shell-type-body);
+  line-height: 1.5;
+}

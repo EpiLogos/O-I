@@ -12,6 +12,7 @@
  */
 
 import {
+  groupsOf,
   activateSurface,
   activeBindingId,
   closeSurface,
@@ -20,15 +21,14 @@ import {
   isPinned,
   jumpToTab,
   layoutSignature,
-  makeTestBinding,
   moveDirectional,
   moveTab,
   neighbourGroup,
-  openBinding,
   openSourcesIndex,
   openSurfaceCount,
   reopenClosed,
   restoreLayout,
+  resizeSplit,
   shiftDepth,
   splitOff,
   tileSurfaces,
@@ -55,7 +55,7 @@ export interface MenuContext {
  * own canonical Actions arrive with the owner-seam units — none are
  * fabricated here (law 4).
  */
-const FRAME_DISCLOSED_KINDS = new Set(["test", "source", "sources"]);
+const FRAME_DISCLOSED_KINDS = new Set(["source", "sources", "knowledge", "file", "encounter", "system"]);
 
 /** Actions disclosed for one binding (its tab / its content right-click). */
 export function bindingDisclosures(
@@ -72,6 +72,7 @@ export function bindingDisclosures(
       title: pinned ? "Close (pinned — unpin first)" : "Close",
       enabled: !pinned,
     },
+    { action_ref: "surface.maximize", title: ctx.state.maximizedGroupId ? "Restore panes" : "Maximize pane", enabled: true },
     { action_ref: "surface.split-right", title: "Split right", enabled: true },
     { action_ref: "surface.split-down", title: "Split down", enabled: true },
     {
@@ -105,7 +106,18 @@ export function frameDisclosures(ctx: MenuContext): ActionDisclosure[] {
  * invocations all share (keyboard + pointer parity by construction).
  * Unknown action refs change nothing: no fabricated behaviour.
  */
-export function executeFrameAction(
+export function executeFrameAction(state: LayoutState, ref: string, arg?: ActionArg, snapshot?: RestorePoint): LayoutState {
+  if (ref === "surface.maximize") {
+    const group = arg?.surfaceId ? groupsOf(state.root).find(g => g.tabs.includes(arg.surfaceId!)) : groupsOf(state.root).find(g => g.id === state.focusedGroupId);
+    return group ? { ...state, focusedGroupId: group.id, maximizedGroupId: state.maximizedGroupId === group.id ? undefined : group.id } : state;
+  }
+  const next = executeBaseAction(state, ref, arg, snapshot);
+  if (!next.maximizedGroupId) return next;
+  const group = groupsOf(next.root).find(g => g.id === next.focusedGroupId);
+  return { ...next, maximizedGroupId: group?.id };
+}
+
+function executeBaseAction(
   state: LayoutState,
   ref: string,
   arg?: ActionArg,
@@ -113,10 +125,8 @@ export function executeFrameAction(
 ): LayoutState {
   const active = () => arg?.surfaceId ?? activeBindingId(state) ?? "";
   switch (ref) {
-    case "surface.open":
-      return openBinding(state, makeTestBinding(state, "test"));
-    case "surface.open-silent":
-      return openBinding(state, makeTestBinding(state, "test:silent"));
+    case "surface.resize-split": return arg?.splitId && arg.weights ? resizeSplit(state, arg.splitId, arg.weights) : state;
+
     case "surface.open-sources":
       return openSourcesIndex(state);
     case "surface.close":

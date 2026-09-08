@@ -64,6 +64,8 @@ pub struct CurrentMachineRelation {
 pub struct CurrentWorldReading {
     pub schema: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub owner_disclosures: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub personal_ground: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub current_machine: Option<CurrentMachineRelation>,
@@ -92,6 +94,7 @@ impl CurrentWorldReading {
         let context_frame = context_frame_status(&positions);
         Self {
             schema: CURRENT_WORLD_SCHEMA.to_owned(),
+            owner_disclosures: None,
             personal_ground: disclosure.personal_ground.clone(),
             current_machine: None,
             positions,

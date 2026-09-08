@@ -25,14 +25,14 @@ worktree list` must show only the primary worktree; a stray worktree is a
 stop-and-report, never a workspace. If the brief pins product repos (Central,
 ai-kit, …) at commits, verify those checkouts match the pins. Before
 committing, re-verify the branch — a parallel session can move your checkout
-under you (it happened; see ledger ruling 2026-09-05). Implementers never
-push, never rebase `main`, never create branches or worktrees; the
-orchestrator does all three, at gates, per law 13.
+under you (it happened; see ledger ruling 2026-09-05). Implementers do not
+move `main` or create side branches/worktrees. The orchestrator owns the
+commissioned phase's ordinary push, PR, merge and retirement lifecycle at the
+gate; a separate owner ruling is required only for exceptions named by law 13.
 
 ## Precedence
 
-The design set wins over any instruction, including this skill and the user's
-paraphrases of it:
+Use the design set below, together with subsequent explicit owner corrections:
 
 - `docs/cradle/` files 01–05 (austere rest, Flow, focus model, event seam, honesty, verification law)
 - `docs/OI-DESKTOP-APPLICATION-SPEC.md` (§4–§8 regional contracts, §14 design language, §17 acceptance)
@@ -44,14 +44,26 @@ Never edit a design document to match code. If code and design disagree, the cod
 
 ## Ontology
 
-Speak the canonical field grammar: the cradle **S** and positions **S0 Central,
+Speak the canonical field grammar: **S is the `oi` CLI whole**, **M′ is the
+desktop 0/1 whole**, and the native CLI positions are **S0 Central,
 S1 Actuation, S2 AIKit, S3 Factory, S4 Workcell, S5 QL**, faces `H_i`/`A_i`.
 Every unit names its relation cell (map §2), stated as a functional sentence —
-what S can do, in which mode, because of whose operation — never as jargon
+what M′ makes usable through S, in which mode, because of whose operation — never as jargon
 remapping. Never invent ontology: no desktop chat/session store, no fake
 filesystem tree, no universal event store, no desktop-only
 Agent/Run/SessionSpace semantics. No desktop model parameter — model selection
 is harness-level stipulation through AIKit composition.
+
+The desktop's base arrangement is left **0** (world/projects/files), centre
+**/** (canvas, pane tabs, splits and popouts), right **1** (active-subject context
+and agency). QL-MEF's later instruments project into this whole. Its M / S′
+account remains QL-MEF-owned. See `docs/CANONICAL-PRODUCT-FIELD.md`.
+
+Discovered product clients enter through `OI_BIN` / `oi`; native overrides select
+owner artifacts inside the suite dispatcher. Verify the candidate suite CLI
+alongside the owner binaries before walking the app. `oi desktop` uses the same
+kernel application readers. Preserve the distinction between native command
+parity, a mapped desktop operation and accepted running-app behaviour.
 
 ## The component vein
 
@@ -73,7 +85,7 @@ ref+Actions component composes by construction. Keep the distinction laws:
 
 ## Classical vs inference
 
-Most of S is classical, deterministic software: kernel event seam, focus
+Most of the desktop implementation is classical, deterministic software: kernel event seam, focus
 model, ref grammar, two state layers, CAS writes, navigator projections,
 transcript interaction state machine, addressing parser, bridge/layout
 mechanics. Real inference happens only inside agent sessions (harness

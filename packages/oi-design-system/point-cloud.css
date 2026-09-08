@@ -1,0 +1,126 @@
+/* Shared desktop accent grammar. Import tokens.css first. */
+.oi-point-cloud {
+  display: inline-block;
+  flex: none;
+  inline-size: var(--oi-cloud-width);
+  block-size: var(--oi-cloud-height);
+  background: radial-gradient(circle, var(--oi-accent-ink) var(--oi-cloud-dot), transparent calc(var(--oi-cloud-dot) + var(--oi-cloud-edge)));
+  background-size: var(--oi-cloud-pitch) var(--oi-cloud-pitch);
+  -webkit-mask-image: radial-gradient(ellipse, black 15%, transparent 72%);
+  mask-image: radial-gradient(ellipse, black 15%, transparent 72%);
+  opacity: var(--oi-cloud-opacity-rest);
+  pointer-events: none;
+}
+.oi-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--oi-loading-content-gap);
+  min-block-size: var(--oi-loading-stage-min-height);
+  padding: var(--oi-desktop-gap-lg);
+  color: var(--oi-loading-ink);
+  background: var(--oi-loading-ground);
+  font-family: var(--oi-font-sans);
+  text-align: center;
+}
+.oi-loading[data-scope="window"] {
+  position: fixed;
+  inset: var(--oi-loading-overlay-inset);
+  z-index: var(--oi-z-popover);
+}
+.oi-loading[data-scope="surface"] {
+  position: absolute;
+  inset: var(--oi-loading-overlay-inset);
+  z-index: 1;
+}
+.oi-loading[hidden] { display: none; }
+.oi-loading-mark {
+  inline-size: min(100%, var(--oi-loading-mark-width));
+  aspect-ratio: var(--oi-loading-mark-ratio);
+  background: radial-gradient(circle, var(--oi-loading-ink) var(--oi-cloud-dot), transparent calc(var(--oi-cloud-dot) + var(--oi-cloud-edge)));
+  background-size: var(--oi-cloud-pitch) var(--oi-cloud-pitch);
+  -webkit-mask: url('./assets/oi-mark.svg') center / contain no-repeat;
+  mask: url('./assets/oi-mark.svg') center / contain no-repeat;
+  opacity: var(--oi-cloud-opacity-active);
+  position: relative;
+}
+/* Density traverses the mark very gently; silhouette never disappears. */
+.oi-loading-mark::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: inherit;
+  -webkit-mask-image: linear-gradient(100deg, transparent 20%, black 48%, transparent 76%);
+  mask-image: linear-gradient(100deg, transparent 20%, black 48%, transparent 76%);
+  -webkit-mask-size: 250% 100%;
+  mask-size: 250% 100%;
+}
+.oi-loading[data-active="true"] .oi-loading-mark::after {
+  animation: oi-cloud-resolve var(--oi-cloud-period) var(--oi-cloud-ease) infinite alternate;
+}
+.oi-point-cloud[data-active="true"] {
+  animation: oi-cloud-attention var(--oi-cloud-period) var(--oi-cloud-ease) infinite alternate;
+}
+.oi-loading-label { margin: 0; font-size: var(--oi-desktop-type-body); font-weight: 500; }
+.oi-loading-detail { margin: 0; font-size: var(--oi-desktop-type-caption); color: var(--oi-muted); }
+.oi-loading-copy { display: grid; gap: var(--oi-desktop-gap-sm); }
+.oi-loading-fallback { display: none; font-size: var(--oi-loading-fallback-type); }
+@keyframes oi-cloud-resolve {
+  from { -webkit-mask-position: 100% 0; mask-position: 100% 0; opacity: var(--oi-cloud-opacity-rest); }
+  to { -webkit-mask-position: 0% 0; mask-position: 0% 0; opacity: var(--oi-cloud-opacity-active); }
+}
+@keyframes oi-cloud-attention {
+  from { opacity: var(--oi-cloud-opacity-rest); }
+  to { opacity: var(--oi-cloud-opacity-active); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .oi-loading-mark::after, .oi-point-cloud { animation: none !important; }
+  .oi-loading-mark::after { display: none; }
+}
+@media (forced-colors: active) {
+  .oi-loading-mark, .oi-point-cloud { display: none; }
+  .oi-loading-fallback { display: inline; }
+}
+@supports not (mask-image: url('')) {
+  .oi-loading-mark { display: none; }
+  .oi-loading-fallback { display: inline; }
+}
+
+/* General clustered activity field: use with a separate semantic status label.
+ * Three overlapping populations keep dots separate while density moves locally. */
+.oi-point-clusters {
+  display: inline-block; position: relative; overflow: hidden; flex: none;
+  inline-size: var(--oi-cloud-field-width); block-size: var(--oi-cloud-field-height);
+  pointer-events: none;
+}
+.oi-point-clusters > span {
+  position: absolute; inset: 0;
+  background: radial-gradient(circle, var(--oi-accent-ink) var(--oi-cloud-dot), transparent calc(var(--oi-cloud-dot) + var(--oi-cloud-edge)));
+  background-size: var(--oi-cloud-pitch) var(--oi-cloud-pitch);
+  -webkit-mask-image: radial-gradient(ellipse at 30% 60%, black 6%, transparent 47%);
+  mask-image: radial-gradient(ellipse at 30% 60%, black 6%, transparent 47%);
+  opacity: var(--oi-cloud-opacity-rest);
+}
+.oi-point-clusters > span:nth-child(2) {
+  -webkit-mask-image: radial-gradient(ellipse at 62% 38%, black 4%, transparent 40%);
+  mask-image: radial-gradient(ellipse at 62% 38%, black 4%, transparent 40%);
+  background-position: 1px 1px;
+}
+.oi-point-clusters > span:nth-child(3) {
+  -webkit-mask-image: radial-gradient(ellipse at 77% 70%, black 2%, transparent 32%);
+  mask-image: radial-gradient(ellipse at 77% 70%, black 2%, transparent 32%);
+}
+.oi-point-clusters[data-active="true"] > span {
+  animation: oi-cluster-gather var(--oi-cloud-period) var(--oi-cloud-ease) infinite alternate;
+}
+.oi-point-clusters[data-active="true"] > span:nth-child(2) { animation-delay: calc(var(--oi-cloud-period) / -3); }
+.oi-point-clusters[data-active="true"] > span:nth-child(3) { animation-delay: calc(var(--oi-cloud-period) / -1.5); }
+@keyframes oi-cluster-gather {
+  from { opacity: var(--oi-cloud-opacity-rest); transform: translateX(calc(var(--oi-cloud-travel) * -1)); }
+  to { opacity: var(--oi-cloud-opacity-active); transform: translateX(var(--oi-cloud-travel)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .oi-point-clusters > span { animation: none !important; transform: none; }
+}
+@media (forced-colors: active) { .oi-point-clusters { display: none; } }

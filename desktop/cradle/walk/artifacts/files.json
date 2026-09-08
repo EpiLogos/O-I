@@ -1,0 +1,225 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "files",
+  "generated_at": "2026-09-08T10:34:43.141Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 3849,
+  "checks": [
+    {
+      "ok": true,
+      "label": "An unvisited project defaults to chats and tasks"
+    },
+    {
+      "ok": true,
+      "label": "No web-rendered app menu or extra topbar row"
+    },
+    {
+      "ok": true,
+      "label": "Visible chrome offers exactly one left-panel control"
+    },
+    {
+      "ok": true,
+      "label": "Arrangement evidence reads the actual mounted authored surface"
+    },
+    {
+      "ok": true,
+      "label": "Project browsing preserves the app-wide pane arrangement"
+    },
+    {
+      "ok": true,
+      "label": "Ordinary project file displays exact native owner bytes"
+    },
+    {
+      "ok": true,
+      "label": "Ordinary-file History renders its actual empty native history, never source context"
+    },
+    {
+      "ok": true,
+      "label": "Previous subject history is absent for an ordinary file"
+    },
+    {
+      "ok": true,
+      "label": "Project mode changes retain the active surface"
+    },
+    {
+      "ok": true,
+      "label": "Ordinary-file editing follows the available native write operation"
+    },
+    {
+      "ok": true,
+      "label": "Browsing and opening an ordinary project never adopts it"
+    },
+    {
+      "ok": true,
+      "label": "Symlink is visible but cannot escape the owner root"
+    },
+    {
+      "ok": true,
+      "label": "Owner file focus clears stale project authority without inventing adoption"
+    },
+    {
+      "ok": true,
+      "label": "Native ordinary-file browsing retains the dirty authored source"
+    },
+    {
+      "ok": true,
+      "label": "Close and reopen revalidate the same native location"
+    },
+    {
+      "ok": true,
+      "label": "Saved file bindings restore through Central"
+    },
+    {
+      "ok": true,
+      "label": "Workspace restore retains the directory Files mode without minting a ProjectRef"
+    },
+    {
+      "ok": true,
+      "label": "Refresh reads the actual changed file, without a desktop index"
+    },
+    {
+      "ok": true,
+      "label": "Unavailable file retains a labelled last reading without redirecting"
+    },
+    {
+      "ok": true,
+      "label": "Browsing never writes the dirty authored draft to disk"
+    },
+    {
+      "ok": true,
+      "label": "Central parent browses actual root files as well as Work projects"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-08T10:34:43.232Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.layout",
+      "duration_ms": 0.4,
+      "data": {
+        "layout": {
+          "root": {
+            "type": "group",
+            "id": "g1",
+            "tabs": [
+              "0637fac0-b140-4141-8366-97460c4ba4d1"
+            ],
+            "pinned": [],
+            "active": "0637fac0-b140-4141-8366-97460c4ba4d1"
+          },
+          "surfaces": {
+            "0637fac0-b140-4141-8366-97460c4ba4d1": {
+              "id": "0637fac0-b140-4141-8366-97460c4ba4d1",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+              "project": "Editor",
+              "title": "00 01-DESIGN.md"
+            }
+          },
+          "closedStack": [],
+          "focusedGroupId": "g1",
+          "agencyDepth": "panel",
+          "rightDepth": "collapsed",
+          "leftWidth": 240,
+          "rightWidth": 320
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.layout",
+      "duration_ms": 0.1,
+      "data": {
+        "layout": {
+          "root": {
+            "type": "group",
+            "id": "g1",
+            "tabs": [
+              "0637fac0-b140-4141-8366-97460c4ba4d1"
+            ],
+            "pinned": [],
+            "active": "0637fac0-b140-4141-8366-97460c4ba4d1"
+          },
+          "surfaces": {
+            "0637fac0-b140-4141-8366-97460c4ba4d1": {
+              "id": "0637fac0-b140-4141-8366-97460c4ba4d1",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+              "project": "Editor",
+              "title": "00 01-DESIGN.md"
+            }
+          },
+          "closedStack": [],
+          "focusedGroupId": "g1",
+          "agencyDepth": "panel",
+          "rightDepth": "collapsed",
+          "leftWidth": 240,
+          "rightWidth": 320
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.focus",
+      "duration_ms": 4,
+      "data": {
+        "subject": {
+          "kind": "file",
+          "native_owner": "central",
+          "provenance": {
+            "source": "central.files.read"
+          },
+          "ref": "central:path:/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-f85AEU:Work/Other/src/ordinary.ts"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-08T10:34:46.030Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 140,
+      "data": {
+        "file": "files-native-root-and-project-files.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "files-native-root-and-project-files.png"
+  ]
+}

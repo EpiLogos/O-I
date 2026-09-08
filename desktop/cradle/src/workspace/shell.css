@@ -1,0 +1,269 @@
+/*
+ * The desktop shell (FND-01, lead ruling 2026-09-08) — one shell ground
+ * behind three floating planes (sidebar / centre / accompanying-agent),
+ * a thin offsetting gutter, hairline card edges. Every colour, size and
+ * duration below is an --oi-* token; the --oi-shell-* vocabulary at the
+ * end of packages/oi-design-system/tokens.css exists for exactly this.
+ */
+
+.desktop-shell { height: 100%; display: flex; flex-direction: column; font: var(--oi-shell-type-ui) var(--oi-font-sans); background: var(--oi-shell-ground); color: var(--oi-accent-ink); }
+.desktop-shell button, .desktop-shell select, .desktop-shell input { font: inherit; color: var(--oi-accent-ink); background: transparent; border: 0; }
+/* Finding 1: this used to be `padding: var(--oi-space-2)` — a descendant
+ * rule that ties on specificity with every single-class control rule
+ * elsewhere (agent.css, cradle.css…) and, depending on stylesheet order,
+ * silently wins and crushes icon-only controls (e.g. `.agent-tool` computed
+ * 24×24 instead of 21×21, its svg crushed to width 0). Controls own their
+ * sizes; this rule contributes nothing but cursor + a safety net so an
+ * icon's svg never shrinks inside a tight control body. */
+.desktop-shell button { padding: 0; cursor: pointer; }
+.desktop-shell button svg { flex: none; }
+/* Finding 2: a blanket `:focus-visible` on every descendant tied on
+ * specificity with rest.css's `.canvas-surface:focus-visible` and won by
+ * source order, drawing a heavy accent bezel around the writing canvas and
+ * the ⌘K input — exactly the box the brief removes. Scope the shell ring to
+ * actual controls (buttons, links, tabs, menu items, selects); textarea/
+ * input bodies keep their own quiet signal (the caret, or a component's own
+ * inset outline) instead of an outline that reads as a drawn box. */
+.desktop-shell button:focus-visible,
+.desktop-shell select:focus-visible,
+.desktop-shell a:focus-visible,
+.desktop-shell [role="tab"]:focus-visible,
+.desktop-shell [role="menuitem"]:focus-visible {
+  outline: var(--oi-focus-ring-width) solid var(--oi-accent);
+  outline-offset: var(--oi-focus-ring-offset);
+}
+
+/* ---------------------------------------------------------------------------
+ * Regions — sidebar / centre / agent, each a plane on the shell ground.
+ * Nothing sits flush against the window edge (brief: "the gutter is what
+ * makes the sidebar and each pane read as a card").
+ */
+
+.desktop-regions { position: relative; display: flex; flex: 1; min-height: 0; }
+.desktop-side { flex: none; position: relative; display: flex; flex-direction: column; min-height: 0; transition: width var(--oi-motion-plane) var(--oi-motion-ease-out), margin var(--oi-motion-plane) var(--oi-motion-ease-out); }
+/* Finding (i): the sidebar's persisted width only settles once the host is
+ * measured and boot state resolves; until then any depth/width flip would
+ * otherwise animate through the plane-width transition, reading as a narrow
+ * sidebar that "grows" into place. Suppress the transition for the first
+ * paint only (DesktopShell clears data-boot after the first animation
+ * frame) so the plane commits straight to its persisted width. */
+.desktop-regions[data-boot="true"] .desktop-side,
+.desktop-regions[data-boot="true"] .desktop-centre { transition: none !important; }
+.desktop-side.depth-strip, .desktop-side.depth-collapsed { width: 0; margin: 0; border: 0; overflow: hidden; }
+
+.desktop-side.left.depth-panel, .desktop-side.left.depth-full {
+  margin: var(--oi-shell-gutter) 0 var(--oi-shell-gutter) var(--oi-shell-gutter);
+  background: var(--oi-sidebar-ground);
+  border: var(--oi-shell-edge) solid var(--oi-hairline);
+  border-radius: var(--oi-shell-radius);
+  overflow: hidden;
+}
+.desktop-side.right.depth-panel, .desktop-side.right.depth-full {
+  margin: var(--oi-shell-gutter) var(--oi-shell-gutter) var(--oi-shell-gutter) 0;
+  background: var(--oi-agent-ground);
+  border: var(--oi-shell-edge) solid var(--oi-hairline);
+  border-radius: var(--oi-shell-radius);
+  overflow: hidden;
+}
+
+/* The agent plane at ≤760px width becomes an overlay drawer over the
+ * centre instead of stealing its layout room (brief A4). Finding 21: the
+ * drawer shadow alone (0.07 alpha) barely separates it from the centre
+ * behind it, and the heading it covers reads mid-word. A scrim over the
+ * region behind the drawer gives it the same separation the search overlay
+ * gets, derived from the ink token rather than a raw colour. */
+.desktop-regions:has(.desktop-side.right[data-overlay="true"])::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: calc(var(--oi-z-drawer) - 1);
+  background: color-mix(in srgb, var(--oi-ink) 19%, transparent);
+}
+.desktop-side.right[data-overlay="true"] {
+  position: absolute;
+  inset: var(--oi-shell-gutter) var(--oi-shell-gutter) var(--oi-shell-gutter) auto;
+  height: auto;
+  z-index: var(--oi-z-drawer);
+  box-shadow: var(--oi-shadow-drawer);
+}
+
+.desktop-centre { flex: 1; min-width: min(440px, 100%); min-height: 0; overflow: hidden; display: flex; flex-direction: column; margin: var(--oi-shell-gutter); transition: margin var(--oi-motion-plane) var(--oi-motion-ease-out); }
+.desktop-centre > .workbench { flex: 1; min-height: 0; }
+.desktop-centre .workbench { flex-direction: column; }
+.desktop-centre .surface-body { padding: 0; }
+
+/* Finding 8: full agent used to fill the window edge-to-edge (inset:0 +
+ * width:100%, with the depth-panel/depth-full margin+border+radius rule
+ * getting compounded rather than replacing it), losing the plane's gutter,
+ * hairline and radius. Full keeps the same card as panel — only its extent
+ * changes (overlay over the centre, sidebar excluded) — so the gutter comes
+ * from `inset` alone and the panel margin is cleared here to avoid adding a
+ * second gutter on top of it. */
+.desktop-side.depth-full { position: absolute; inset: var(--oi-shell-gutter); width: auto !important; z-index: var(--oi-z-drawer); }
+/* `.desktop-side.right.depth-panel, .desktop-side.right.depth-full` above
+ * also matches depth-full at three classes' specificity — the same as the
+ * generic `.desktop-side.depth-full` above is not enough to clear its
+ * margin (it loses the specificity tie). These two three-class selectors
+ * carry the actual override, each at matching specificity and after the
+ * panel/full rule in source order. */
+.desktop-side.left.depth-full { margin: 0; }
+.desktop-side.right.depth-full { left: calc(var(--desktop-left-width) + var(--oi-shell-gutter)); width: auto !important; margin: 0; }
+.desktop-regions[data-right-full="true"] > .left { z-index: calc(var(--oi-z-drawer) + 1); width: var(--desktop-left-width) !important; }
+.desktop-side.left { max-width: calc(100% - 440px); }
+
+.desktop-side .world-navigator { position: relative; inset: auto; width: 100%; flex: 1; min-height: 0; border: 0; z-index: auto; padding: 0 10px 12px; }
+/* Finding 6 / item (h): an owner refusal (e.g. wiki-open failing with
+ * "SemanticWiki provider is absent…") already lands in the DOM as a
+ * `role="alert"` — it was just unstyled plain text that read like any other
+ * label, easy to miss right where the person clicked. A left-accent card
+ * makes it read as a refusal, not filler copy. */
+.desktop-shell [role="alert"] { padding: 8px 10px; margin: 6px 0; border-left: 2px solid var(--oi-accent); background: var(--oi-wash); border-radius: 4px; font-size: var(--oi-shell-type-ui); color: var(--oi-accent-ink); }
+.desktop-centre .agency-column, .desktop-centre .agency-field { display: none; }
+
+/* ---------------------------------------------------------------------------
+ * The right region's legacy Context/History/System fallback body — the
+ * agent layer (FND-02) replaces this via DesktopShell's `right` prop; this
+ * stays as the honest fallback until that layer lands.
+ */
+
+.region-tools { display: flex; align-items: center; gap: 4px; height: var(--oi-shell-bar); padding: 0 10px 0 16px; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline-soft); flex: none; }
+.region-tools > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--oi-shell-type-ui); }
+.region-tools button { display: flex; align-items: center; justify-content: center; width: var(--oi-shell-control); height: var(--oi-shell-control); padding: 0; border-radius: 5px; color: var(--oi-muted-2); transition: color var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.region-tools button:hover, .region-tools button:focus-visible { color: var(--oi-accent-ink); background: var(--oi-wash); outline: none; }
+
+.inspector-planes { display: flex; gap: 20px; height: 38px; padding: 0 18px; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline-soft); flex: none; }
+.inspector-planes button { flex: none; padding: 0; font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); border-radius: 0; transition: color var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.inspector-planes button[aria-pressed="true"] { color: var(--oi-accent-ink); box-shadow: inset 0 -2px var(--oi-accent); }
+.inspector-planes button:hover { color: var(--oi-accent-ink); }
+
+.inspector-body { padding: 25px 20px; overflow: auto; min-height: 0; flex: 1; line-height: 1.6; font-size: var(--oi-shell-type-prose); }
+.inspector-body h2 { font-size: var(--oi-shell-type-title); font-weight: 500; margin: 0 0 18px; }
+.inspector-body p { overflow-wrap: anywhere; }
+.inspector-body details { margin-top: var(--oi-space-4); color: var(--oi-muted-2); }
+.inspector-body .source-history { padding: 0; max-height: none; border: 0; }
+
+.region-resizer { position: absolute; top: 0; bottom: 0; width: 6px; cursor: col-resize; z-index: 2; touch-action: none; }
+/* C9 (sidebar resize handle, brief "Sidebar" section): a 3px hairline at
+ * rest instead of a fully transparent 6px hit area — the hover/focus tint
+ * below still fires on the wider `.region-resizer` hit box, only `.left`'s
+ * own rest-state visibility changes here. */
+.region-resizer.left { right: -3px; width: 3px; background: var(--oi-hairline); } .region-resizer.right { left: -3px; }
+.region-resizer:hover, .region-resizer:focus-visible { background: var(--oi-accent-soft); transition: background var(--oi-motion-ui) var(--oi-motion-ease-out); }
+
+.workspace-name { display: flex; gap: var(--oi-space-2); border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); padding: var(--oi-space-2); background: var(--oi-sidebar-ground); }
+.workspace-name input { flex: 1; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); }
+
+/* Splits: the resizer itself is the shell-ground gutter between two pane
+ * cards (brief FND-01 "Pane and tab grammar"). */
+.split-resizer { flex-basis: var(--oi-shell-gutter); touch-action: none; background: var(--oi-shell-ground); cursor: col-resize; transition: background var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.split-resizer[aria-orientation="horizontal"] { cursor: row-resize; }
+.split-resizer:hover, .split-resizer:focus-visible { background: var(--oi-accent-soft); }
+
+/* ---------------------------------------------------------------------------
+ * Sidebar head — folder glyph, "Central" / "Personal ground", collapse.
+ */
+
+.central-heading { display: flex; align-items: center; gap: 10px; padding: 19px 10px 20px; }
+.central-heading > svg { color: var(--oi-muted-2); flex: none; width: 19px; height: 19px; }
+.central-heading strong { font-size: var(--oi-shell-type-heading); font-weight: 550; letter-spacing: -.3px; }
+.central-heading small { display: block; color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); margin-top: 2px; }
+.central-heading button { margin-left: auto; width: var(--oi-shell-control); height: var(--oi-shell-control); padding: 0; display: flex; align-items: center; justify-content: center; color: var(--oi-muted-2); border-radius: 5px; transition: color var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.central-heading button:hover, .central-heading button:focus-visible { color: var(--oi-accent-ink); background: var(--oi-wash); outline: none; }
+
+/* ---------------------------------------------------------------------------
+ * Workbench bar — the one canvas command strip (brief A6). The old
+ * split/tile/detach/maximize/more button cluster is gone from here; those
+ * operations stay on keyboard, the native Window menu, and the pane/tab
+ * disclosures. The one right-region toggle remains.
+ */
+
+/* Finding 29 (brief): the bar lives on the centre plane's own tab-bar
+ * ground, not the sidebar's. Item (c): the bar never wraps — nowrap plus
+ * min-width:0 on the shrinking members so the workspace name and the
+ * Return pill each get exactly the room they need instead of collapsing to
+ * two lines. */
+.canvas-arrangement { height: var(--oi-shell-bar); min-height: var(--oi-shell-bar); flex: none; display: flex; flex-wrap: nowrap; align-items: center; gap: 10px; padding: 0 12px; background: var(--oi-pane-bar-ground); border-bottom: var(--oi-shell-edge) solid var(--oi-hairline-soft); font-size: var(--oi-shell-type-ui); }
+.canvas-arrangement > button { flex: none; display: inline-flex; align-items: center; justify-content: center; width: var(--oi-shell-control); height: var(--oi-shell-control); padding: 0; color: var(--oi-muted-2); border-radius: 5px; transition: color var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.canvas-arrangement > button:hover, .canvas-arrangement > button:focus-visible { color: var(--oi-accent-ink); background: var(--oi-wash); outline: none; }
+.canvas-arrangement > button:disabled { opacity: .4; cursor: default; }
+.canvas-arrangement .workspace-select { display: flex; align-items: center; gap: 4px; min-width: 0; flex: 0 1 auto; }
+.canvas-arrangement .workspace-select svg { flex: none; width: 9px; height: 9px; color: var(--oi-muted-2); }
+.canvas-arrangement .workspace-select select { width: auto; max-width: 220px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--oi-shell-type-ui); font-weight: 500; color: var(--oi-accent-ink); }
+.canvas-arrangement .arrangement-state { flex: none; font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); white-space: nowrap; }
+/* `.canvas-arrangement > button` above forces every direct-child button to
+ * a fixed 26×26 icon body — `.w-return` is a direct-child button too, so it
+ * was being squashed into that box with its "Return to arrangement ⎋" text
+ * overflowing outside it, uncontained, over `.arrangement-state` next to it
+ * (finding 4's actual mechanism). Explicit auto sizing here (specificity
+ * (0,2,0), beats the (0,1,1) generic rule) restores its own content box. */
+.canvas-arrangement .w-return { width: auto; height: auto; flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; white-space: nowrap; font-size: var(--oi-shell-type-meta); color: var(--oi-accent-ink); background: var(--oi-wash); border-radius: 5px; }
+.canvas-arrangement .w-return kbd { flex: none; font-size: var(--oi-shell-type-eyebrow); color: var(--oi-muted-2); }
+.canvas-arrangement-spacer { flex: 1; }
+.canvas-arrangement > nav { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+
+.desktop-menu { position: relative; color: var(--oi-muted-2); }
+.desktop-menu summary { display: flex; padding: 4px; cursor: pointer; list-style: none; border-radius: 5px; }
+.desktop-menu summary::-webkit-details-marker { display: none; }
+.desktop-menu summary:hover { color: var(--oi-accent-ink); background: var(--oi-wash); }
+.desktop-menu > div { position: absolute; top: 100%; left: 0; z-index: var(--oi-z-popover); display: grid; min-width: 200px; padding: 7px; border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: 7px; background: var(--oi-sidebar-ground); box-shadow: var(--oi-shadow-menu); }
+.desktop-menu button { width: auto; height: auto; padding: 9px; justify-content: flex-start; text-align: left; border-radius: 5px; font-size: var(--oi-shell-type-ui); color: var(--oi-accent-ink); }
+.desktop-menu button:hover { background: var(--oi-wash); }
+
+@media (max-width: 640px) { .canvas-arrangement { gap: 5px; padding: 0 6px; } .canvas-arrangement .workspace-select select { max-width: 120px; } .canvas-arrangement .arrangement-state { display: none; } }
+
+/* ---------------------------------------------------------------------------
+ * The detached (native re-docked) window's own minimal top bar
+ * (DetachedFrame.tsx) — never rendered by the main DesktopShell (files.mjs:
+ * "No web-rendered app menu or extra topbar row" checks zero `.desktop-bar`
+ * in the primary window).
+ */
+
+.desktop-bar { height: var(--oi-shell-bar); min-height: var(--oi-shell-bar); display: flex; align-items: center; gap: 14px; padding: 0 15px; background: var(--oi-sidebar-ground); border-bottom: var(--oi-shell-edge) solid var(--oi-hairline-soft); font-size: var(--oi-shell-type-ui); }
+.desktop-brand { font-size: var(--oi-shell-type-body); font-weight: 650; letter-spacing: 1.5px; padding-right: 14px; border-right: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.desktop-bar > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--oi-muted-2); }
+.desktop-bar > button { color: var(--oi-muted-2); }
+.desktop-bar > button:hover, .desktop-bar > button:focus-visible { color: var(--oi-accent-ink); }
+.desktop-context { flex: 1; color: var(--oi-muted-2); padding-left: var(--oi-space-3); }
+
+/* ---------------------------------------------------------------------------
+ * Source / file surface chrome shared bits not already in cradle.css.
+ */
+
+.knowledge-content { padding: 16px 22px; overflow: auto; min-height: 0; }
+.knowledge-content pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.native-file-surface { display: flex; flex: 1; flex-direction: column; min-width: 0; min-height: 0; height: 100%; background: var(--oi-canvas-ground); }
+
+.workspace-recovery { flex: none; padding: 12px 20px; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); background: var(--oi-sidebar-ground); font-size: var(--oi-shell-type-prose); }
+.workspace-recovery p { margin: 0 0 8px; }
+.workspace-recovery button { margin-right: 12px; min-height: 28px; }
+.desktop-side .region-tools button, .canvas-arrangement button, .central-heading button { min-width: var(--oi-shell-control); min-height: var(--oi-shell-control); }
+
+.file-history, .file-conflict, .file-recovery { flex: none; max-height: 40%; overflow: auto; padding: 12px 20px; font-size: var(--oi-shell-type-prose); border-bottom: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.file-history > div { display: flex; align-items: center; gap: 8px; margin: 5px 0; }
+.file-history > div > span { flex: 1; }
+.file-conflict textarea, .file-recovery textarea { display: block; box-sizing: border-box; width: 100%; min-height: 80px; background: var(--oi-composer-ground); color: var(--oi-foreground); border: var(--oi-shell-edge) solid var(--oi-hairline); font: inherit; }
+.file-recovery { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.file-history-content { white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--oi-shell-type-prose); }
+
+.system-panel > details { border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); padding: 12px 0; }
+.system-panel summary { cursor: pointer; }
+.system-panel summary > span { float: right; color: var(--oi-muted-2); }
+.system-panel pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--oi-shell-type-ui); }
+.system-panel dl { display: grid; grid-template-columns: 1fr 1fr; font-size: var(--oi-shell-type-ui); }
+.system-panel dd { margin: 0; }
+.system-actions { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+
+/* Finding 20: `margin-top:auto` alone only pins System to the bottom when
+ * the navigator's content is shorter than the plane; once it overflows,
+ * System scrolls away with everything else and sits below the fold. Pin it
+ * as a sticky sidebar-plane footer instead, on the sidebar's own ground so
+ * it reads as chrome, not scrolled content. */
+.desktop-side .world-navigator .world-system { position: sticky; bottom: 0; margin-top: auto; padding: 14px 0 4px; background: var(--oi-sidebar-ground); border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+
+.ground-chooser { margin: 16px 0; padding: 12px 0; border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-bottom: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.ground-chooser h3 { font-size: var(--oi-shell-type-body); margin: 0 0 8px; }
+.ground-chooser p { overflow-wrap: anywhere; }
+.ground-chooser form { display: grid; gap: 8px; }
+.ground-chooser label { display: grid; gap: 5px; }
+.ground-chooser input { min-width: 0; width: 100%; padding: 6px; border: var(--oi-shell-edge) solid var(--oi-hairline); color: inherit; background: var(--oi-sidebar-ground); }

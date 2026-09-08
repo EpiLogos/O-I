@@ -2,16 +2,21 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 export { setup } from './editor.mjs';
 
-export default async function run({ page, baseUrl, check, shot, channel, provision: p }) {
+export default async function run({ page, baseUrl, check, shot, channel, provision: p, log }) {
+  page.on("response", async response => {
+    if (!response.url().endsWith("/op")) return;
+    try { const request=response.request().postDataJSON(); if (request.op === "source_history") log(`Native history response: ${await response.text()}`); } catch { /* the completed walk may close a response */ }
+  });
   await page.goto(baseUrl); await channel('info');
   const source = p.sources[0];
   const ref = source.binding.ref;
-  await page.keyboard.press('Meta+b');
+  if (!await page.getByRole('complementary', {name:'World navigator'}).isVisible()) await page.keyboard.press('Meta+b');
   await page.locator('[data-project-path="Work/Editor"]').click();
-  await page.locator(`[data-source-ref="${ref}"]`).click();
+  if(await page.getByRole('button',{name:'Editor: files',exact:true}).getAttribute('aria-pressed') !== 'true') await page.getByRole('button',{name:'Editor: files',exact:true}).click();
+  await page.locator(`[data-file-path="Work/Editor/${p.sources[0].binding.path}"]`).click();
   const text = page.locator('.source-textarea');
   await text.waitFor();
-  await page.getByRole('button', { name: 'History', exact: true }).click();
+  await page.locator('.source-editor').getByRole('button', { name: 'History', exact: true }).click();
   const history = page.getByRole('region', { name: 'Source history' });
   const rows = history.locator('li');
   const settled = () => page.waitForFunction(() => document.querySelector('.source-history')?.getAttribute('aria-busy') === 'false');
@@ -58,7 +63,7 @@ export default async function run({ page, baseUrl, check, shot, channel, provisi
   await shot('resolved-history');
   await page.keyboard.press('Meta+w'); await page.keyboard.press('Meta+Shift+t');
   await text.waitFor();
-  await page.getByRole('button', { name: 'History', exact: true }).click(); await settled();
+  await page.locator('.source-editor').getByRole('button', { name: 'History', exact: true }).click(); await settled();
   check(await rows.count() === initialCount + 2, 'Reopened source reads the durable owner history');
   check(await text.inputValue() === merged, 'Reopening preserves the saved reconciliation');
 }

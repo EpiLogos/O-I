@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "surfaces",
-  "generated_at": "2026-09-05T23:26:23.804Z",
+  "generated_at": "2026-09-08T10:33:49.075Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,215 +12,129 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 2507,
+  "duration_ms": 2213,
   "checks": [
     {
       "ok": true,
-      "label": "cold start < 3000 ms (FCP 24.0 ms)"
+      "label": "Four owner sources open as four unique bindings"
     },
     {
       "ok": true,
-      "label": "the kernel transport is the dev walk bridge (same KernelOp seam)",
-      "data": {
-        "transport": {
-          "kind": "bridge",
-          "url": "http://127.0.0.1:4179"
-        }
-      }
+      "label": "Last opened source is the single kernel focus"
     },
     {
       "ok": true,
-      "label": "rest opens as the exact U0.3 shape (census 6 nodes)"
+      "label": "Opening an existing ref reuses its binding"
     },
     {
       "ok": true,
-      "label": "keyboard ⌘T x4 -> one group, 4 tabs, focus follows the last binding"
+      "label": "Keyboard closes the focused source view"
     },
     {
       "ok": true,
-      "label": "the 4 bindings produced exactly 4 kernel surface_changed receipts (found 4)"
+      "label": "Keyboard reopens the same source binding"
     },
     {
       "ok": true,
-      "label": "pointer strip + opens a 5th surface"
+      "label": "Pointer close operates on the requested tab"
     },
     {
       "ok": true,
-      "label": "keyboard ⌘W closes it again"
+      "label": "Keyboard splits the active source to the right"
     },
     {
       "ok": true,
-      "label": "keyboard ⌘D splits right; ⌥← moves focus to the left split"
+      "label": "Keyboard split keeps the DOM caret in the semantically active pane"
     },
     {
       "ok": true,
-      "label": "keyboard ⌘⌥→ moves the active surface into the neighbouring split"
+      "label": "Keyboard focus moves to the neighbouring pane"
     },
     {
       "ok": true,
-      "label": "keyboard ⌘⇧D splits down (nested vertical under the right split)"
+      "label": "Keyboard moves the active binding into the neighbouring pane"
     },
     {
       "ok": true,
-      "label": "keyboard ⌘⌥T tiles 4 surfaces into a balanced 2x2"
+      "label": "Keyboard creates a vertical split"
     },
     {
       "ok": true,
-      "label": "pointer click on a tab focuses its split (focus follows binding)"
+      "label": "Keyboard tiles the four real sources"
     },
     {
       "ok": true,
-      "label": "right-click a tab -> exactly the disclosed frame actions (D15)"
+      "label": "Each tiled source has one editor"
     },
     {
       "ok": true,
-      "label": "menu keyboard invoke (⏎ on Close) performs the real frame operation"
+      "label": "Tiling and movement retain dirty source writing"
     },
     {
       "ok": true,
-      "label": "keyboard ⌘⇧T reopens the closed surface into the focused group"
+      "label": "Source frame menu discloses exactly its operative frame actions"
     },
     {
       "ok": true,
-      "label": "menu pointer invoke (Split right) performs the real frame operation"
+      "label": "Pointer menu pins the requested source"
     },
     {
       "ok": true,
-      "label": "pointer drag moves a surface between splits (dropped before its target)"
+      "label": "Pinned source refuses keyboard close"
     },
     {
       "ok": true,
-      "label": "keyboard ⌥P pins the active surface (marker + pinned first)"
+      "label": "Pinned close is disclosed as disabled"
     },
     {
       "ok": true,
-      "label": "pinned binding discloses Close as disabled — an honest no, nothing hidden"
+      "label": "Keyboard unpins the same binding"
     },
     {
       "ok": true,
-      "label": "⌘W on a pinned surface refuses (frame holds the pin)"
+      "label": "Pointer drag moves a source and removes its empty pane"
     },
     {
       "ok": true,
-      "label": "menu pointer invoke unpins"
+      "label": "Pointer menu splits the same real binding"
     },
     {
       "ok": true,
-      "label": "pointer tab x closes the surface"
+      "label": "Keyboard menu activation closes the selected view"
     },
     {
       "ok": true,
-      "label": "keyboard ⌘⇧T reopens it into the focused group"
+      "label": "Closed binding reopens without a new source identity"
     },
     {
       "ok": true,
-      "label": "⌘⌥N opens the silent test binding (clearly named)"
+      "label": "Reload restores pane tree, active tabs, pins and weights exactly"
     },
     {
       "ok": true,
-      "label": "no disclosed Actions -> no menu, nothing fabricated (D15)"
+      "label": "Reload restores dirty writing through owner validation"
     },
     {
       "ok": true,
-      "label": "silent binding closes via ⌘W"
+      "label": "Browsing another project never replaces open work"
     },
     {
       "ok": true,
-      "label": "strip right-click -> exactly the frame-level disclosures, all enabled here"
+      "label": "Browsing preserves the canonical focused source"
     },
     {
       "ok": true,
-      "label": "menu pointer invoke tiles all surfaces (pointer tile parity)"
-    },
-    {
-      "ok": true,
-      "label": "⌥] raises the agency column to panel depth"
-    },
-    {
-      "ok": true,
-      "label": "⌥] again -> full depth (true overlay)"
-    },
-    {
-      "ok": true,
-      "label": "full masks the canvas dimensionally — its layout width is untouched"
-    },
-    {
-      "ok": true,
-      "label": "the full layer covers the frame and states its honest absence"
-    },
-    {
-      "ok": true,
-      "label": "Escape steps the full overlay back to panel"
-    },
-    {
-      "ok": true,
-      "label": "⌥[ lowers through strip to collapsed (width 0)"
-    },
-    {
-      "ok": true,
-      "label": "depth settles at panel for the persistence check"
-    },
-    {
-      "ok": true,
-      "label": "reload restores the layout, open tabs, active bindings, and depth exactly"
-    },
-    {
-      "ok": true,
-      "label": "the persisted layout read model (read.layout) is identical across the reload"
-    },
-    {
-      "ok": true,
-      "label": "⌘D mangles the restored layout (control)"
-    },
-    {
-      "ok": true,
-      "label": "keyboard ⌘⌥R restores the presentation layout to the load snapshot"
-    },
-    {
-      "ok": true,
-      "label": "Restore layout discloses disabled when already at the restore point"
-    },
-    {
-      "ok": true,
-      "label": "close all -> exact U0.3 rest shape returns (census 6 nodes)"
-    },
-    {
-      "ok": true,
-      "label": "the caret is back in the canvas at rest"
-    },
-    {
-      "ok": true,
-      "label": "the agency field is honest absence again at rest"
-    },
-    {
-      "ok": true,
-      "label": "the kernel event log is strictly monotonic 1..35 with no gaps and no duplicate emission",
-      "data": {
-        "histogram": {
-          "surface_changed": 16,
-          "focus_changed": 19
-        }
-      }
+      "label": "Kernel receipts stay contiguous across frame operations"
     }
   ],
   "ops": [
     {
       "ok": true,
-      "op": "capture.timing",
-      "duration_ms": 0.2,
-      "data": {
-        "fcp_ms": 24,
-        "dom_content_loaded_ms": 4.6,
-        "load_ms": 4.7
-      }
-    },
-    {
-      "ok": true,
       "op": "info",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-05T23:26:23.846Z",
+        "mounted_at": "2026-09-08T10:33:49.150Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -230,329 +144,64 @@
     },
     {
       "ok": true,
-      "op": "read.events",
-      "duration_ms": 0,
+      "op": "read.focus",
+      "duration_ms": 5.6,
       "data": {
-        "receipts": [
-          {
-            "seq": 1,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "surface_changed",
-            "surface_id": "s1",
-            "surface_ref": {
-              "ref": "test:1",
-              "kind": "source",
-              "native_owner": "central",
-              "provenance": {
-                "source": "central.projectcentral"
-              }
-            },
-            "summary": "Surface opened: Test surface 1."
+        "project": {
+          "kind": "project",
+          "native_owner": "central",
+          "provenance": {
+            "source": "projectcentral.inspect"
           },
-          {
-            "seq": 2,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "surface_changed",
-            "surface_id": "s2",
-            "surface_ref": {
-              "ref": "test:2",
-              "kind": "source",
-              "native_owner": "central",
-              "provenance": {
-                "source": "central.projectcentral"
-              }
-            },
-            "summary": "Surface opened: Test surface 2."
+          "ref": "editor-walk"
+        },
+        "subject": {
+          "kind": "source",
+          "native_owner": "central",
+          "provenance": {
+            "source": "central.projectcentral"
           },
-          {
-            "seq": 3,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "surface_changed",
-            "surface_id": "s3",
-            "surface_ref": {
-              "ref": "test:3",
-              "kind": "source",
-              "native_owner": "central",
-              "provenance": {
-                "source": "central.projectcentral"
-              }
-            },
-            "summary": "Surface opened: Test surface 3."
+          "ref": "central:source:project:editor-walk:ProjectCentral/user/03%2004-VERIFICATION.md"
+        },
+        "world": {
+          "kind": "world",
+          "native_owner": "central",
+          "provenance": {
+            "source": "projectcentral.source.read"
           },
-          {
-            "seq": 4,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "surface_changed",
-            "surface_id": "s4",
-            "surface_ref": {
-              "ref": "test:4",
-              "kind": "source",
-              "native_owner": "central",
-              "provenance": {
-                "source": "central.projectcentral"
-              }
-            },
-            "summary": "Surface opened: Test surface 4."
-          },
-          {
-            "seq": 5,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "focus_changed",
-            "focus": {
-              "subject": {
-                "ref": "test:1",
-                "kind": "source",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "central.projectcentral"
-                }
-              }
-            }
-          },
-          {
-            "seq": 6,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "focus_changed",
-            "focus": {
-              "subject": {
-                "ref": "test:2",
-                "kind": "source",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "central.projectcentral"
-                }
-              }
-            }
-          },
-          {
-            "seq": 7,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "focus_changed",
-            "focus": {
-              "subject": {
-                "ref": "test:3",
-                "kind": "source",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "central.projectcentral"
-                }
-              }
-            }
-          },
-          {
-            "seq": 8,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "focus_changed",
-            "focus": {
-              "subject": {
-                "ref": "test:4",
-                "kind": "source",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "central.projectcentral"
-                }
-              }
-            }
-          }
-        ],
-        "count": 8,
-        "first_seq": 1,
-        "last_seq": 8
-      }
-    },
-    {
-      "ok": true,
-      "op": "ui.open_4_tabs",
-      "duration_ms": 31,
-      "data": {
-        "tabs": 4
-      }
-    },
-    {
-      "ok": true,
-      "op": "read.events",
-      "duration_ms": 0,
-      "data": {
-        "receipts": [
-          {
-            "seq": 1,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "surface_changed",
-            "surface_id": "s1",
-            "surface_ref": {
-              "ref": "test:1",
-              "kind": "source",
-              "native_owner": "central",
-              "provenance": {
-                "source": "central.projectcentral"
-              }
-            },
-            "summary": "Surface opened: Test surface 1."
-          },
-          {
-            "seq": 2,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "surface_changed",
-            "surface_id": "s2",
-            "surface_ref": {
-              "ref": "test:2",
-              "kind": "source",
-              "native_owner": "central",
-              "provenance": {
-                "source": "central.projectcentral"
-              }
-            },
-            "summary": "Surface opened: Test surface 2."
-          },
-          {
-            "seq": 3,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "surface_changed",
-            "surface_id": "s3",
-            "surface_ref": {
-              "ref": "test:3",
-              "kind": "source",
-              "native_owner": "central",
-              "provenance": {
-                "source": "central.projectcentral"
-              }
-            },
-            "summary": "Surface opened: Test surface 3."
-          },
-          {
-            "seq": 4,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "surface_changed",
-            "surface_id": "s4",
-            "surface_ref": {
-              "ref": "test:4",
-              "kind": "source",
-              "native_owner": "central",
-              "provenance": {
-                "source": "central.projectcentral"
-              }
-            },
-            "summary": "Surface opened: Test surface 4."
-          },
-          {
-            "seq": 5,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "focus_changed",
-            "focus": {
-              "subject": {
-                "ref": "test:1",
-                "kind": "source",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "central.projectcentral"
-                }
-              }
-            }
-          },
-          {
-            "seq": 6,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "focus_changed",
-            "focus": {
-              "subject": {
-                "ref": "test:2",
-                "kind": "source",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "central.projectcentral"
-                }
-              }
-            }
-          },
-          {
-            "seq": 7,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "focus_changed",
-            "focus": {
-              "subject": {
-                "ref": "test:3",
-                "kind": "source",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "central.projectcentral"
-                }
-              }
-            }
-          },
-          {
-            "seq": 8,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "focus_changed",
-            "focus": {
-              "subject": {
-                "ref": "test:4",
-                "kind": "source",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "central.projectcentral"
-                }
-              }
-            }
-          }
-        ],
-        "count": 8,
-        "first_seq": 1,
-        "last_seq": 8
-      }
-    },
-    {
-      "ok": true,
-      "op": "ui.tile",
-      "duration_ms": 72
-    },
-    {
-      "ok": true,
-      "op": "capture.screenshot",
-      "duration_ms": 41,
-      "data": {
-        "file": "surfaces-tiled.png"
+          "ref": "project:editor-walk"
+        }
       }
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 44,
+      "duration_ms": 36,
       "data": {
-        "file": "surfaces-menu.png"
+        "file": "surfaces-native-sources-tiled.png"
       }
-    },
-    {
-      "ok": true,
-      "op": "ui.drag_between_splits",
-      "duration_ms": 104
     },
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 0.3,
+      "duration_ms": 0.4,
       "data": {
         "layout": {
           "root": {
             "type": "split",
-            "id": "sp4",
+            "id": "sp3",
             "dir": "h",
             "children": [
+              {
+                "type": "group",
+                "id": "g4",
+                "tabs": [
+                  "c51b8840-0f76-4bee-b41d-5eedc509b3ed",
+                  "bd154a09-b40e-4092-bf9f-c614e22fe24a"
+                ],
+                "pinned": [],
+                "active": "bd154a09-b40e-4092-bf9f-c614e22fe24a"
+              },
               {
                 "type": "split",
                 "id": "sp5",
@@ -560,102 +209,87 @@
                 "children": [
                   {
                     "type": "group",
-                    "id": "g9",
+                    "id": "g6",
                     "tabs": [
-                      "s1"
+                      "877ce4df-1ac7-43ff-93d9-e32023c38274"
                     ],
                     "pinned": [],
-                    "active": "s1"
+                    "active": "877ce4df-1ac7-43ff-93d9-e32023c38274"
                   },
                   {
                     "type": "group",
-                    "id": "g10",
+                    "id": "g7",
                     "tabs": [
-                      "s4"
+                      "7434c2fc-9cb4-45e2-86a5-865e339420d2"
                     ],
                     "pinned": [],
-                    "active": "s4"
-                  }
-                ]
-              },
-              {
-                "type": "split",
-                "id": "sp6",
-                "dir": "v",
-                "children": [
-                  {
-                    "type": "group",
-                    "id": "g11",
-                    "tabs": [
-                      "s2"
-                    ],
-                    "pinned": [],
-                    "active": "s2"
-                  },
-                  {
-                    "type": "group",
-                    "id": "g12",
-                    "tabs": [
-                      "s3"
-                    ],
-                    "pinned": [],
-                    "active": "s3"
+                    "active": "7434c2fc-9cb4-45e2-86a5-865e339420d2"
                   }
                 ]
               }
             ]
           },
           "surfaces": {
-            "s1": {
-              "id": "s1",
-              "kind": "test",
-              "ref": "test:1",
-              "title": "Test surface 1"
+            "c51b8840-0f76-4bee-b41d-5eedc509b3ed": {
+              "id": "c51b8840-0f76-4bee-b41d-5eedc509b3ed",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+              "project": "Editor",
+              "title": "00 01-DESIGN.md"
             },
-            "s2": {
-              "id": "s2",
-              "kind": "test",
-              "ref": "test:2",
-              "title": "Test surface 2"
+            "bd154a09-b40e-4092-bf9f-c614e22fe24a": {
+              "id": "bd154a09-b40e-4092-bf9f-c614e22fe24a",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
+              "project": "Editor",
+              "title": "01 02-ARCHITECTURE.md"
             },
-            "s3": {
-              "id": "s3",
-              "kind": "test",
-              "ref": "test:3",
-              "title": "Test surface 3"
+            "7434c2fc-9cb4-45e2-86a5-865e339420d2": {
+              "id": "7434c2fc-9cb4-45e2-86a5-865e339420d2",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
+              "project": "Editor",
+              "title": "02 03-UX-STATES.md"
             },
-            "s4": {
-              "id": "s4",
-              "kind": "test",
-              "ref": "test:4",
-              "title": "Test surface 4"
+            "877ce4df-1ac7-43ff-93d9-e32023c38274": {
+              "id": "877ce4df-1ac7-43ff-93d9-e32023c38274",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/03%2004-VERIFICATION.md",
+              "project": "Editor",
+              "title": "03 04-VERIFICATION.md"
             },
-            "s5": {
-              "id": "s5",
-              "kind": "test",
-              "ref": "test:5",
-              "title": "Test surface 5"
-            },
-            "s6": {
-              "id": "s6",
-              "kind": "test:silent",
-              "ref": "test:silent:6",
-              "title": "Test surface (silent) 6"
+            "576c67eb-6ac1-4b6c-9a49-a34d31242239": {
+              "id": "576c67eb-6ac1-4b6c-9a49-a34d31242239",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/04%2005-EXECUTION.md",
+              "project": "Editor",
+              "title": "04 05-EXECUTION.md"
             }
           },
           "closedStack": [
-            "s5",
-            "s6"
+            "576c67eb-6ac1-4b6c-9a49-a34d31242239"
           ],
-          "focusedGroupId": "g9",
-          "agencyDepth": "panel"
+          "focusedGroupId": "g4",
+          "agencyDepth": "panel",
+          "rightDepth": "collapsed",
+          "leftWidth": 240,
+          "rightWidth": 320
         }
       }
     },
     {
       "ok": true,
-      "op": "ui.reload_restore",
-      "duration_ms": 40
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-08T10:33:50.955Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
     },
     {
       "ok": true,
@@ -663,11 +297,24 @@
       "duration_ms": 0.1,
       "data": {
         "layout": {
+          "subjectPlanes": {},
+          "windowBounds": {},
+          "detached": [],
           "root": {
             "type": "split",
-            "id": "sp4",
+            "id": "sp3",
             "dir": "h",
             "children": [
+              {
+                "type": "group",
+                "id": "g4",
+                "tabs": [
+                  "c51b8840-0f76-4bee-b41d-5eedc509b3ed",
+                  "bd154a09-b40e-4092-bf9f-c614e22fe24a"
+                ],
+                "pinned": [],
+                "active": "bd154a09-b40e-4092-bf9f-c614e22fe24a"
+              },
               {
                 "type": "split",
                 "id": "sp5",
@@ -675,670 +322,1137 @@
                 "children": [
                   {
                     "type": "group",
-                    "id": "g9",
+                    "id": "g6",
                     "tabs": [
-                      "s1"
+                      "877ce4df-1ac7-43ff-93d9-e32023c38274"
                     ],
                     "pinned": [],
-                    "active": "s1"
+                    "active": "877ce4df-1ac7-43ff-93d9-e32023c38274"
                   },
                   {
                     "type": "group",
-                    "id": "g10",
+                    "id": "g7",
                     "tabs": [
-                      "s4"
+                      "7434c2fc-9cb4-45e2-86a5-865e339420d2"
                     ],
                     "pinned": [],
-                    "active": "s4"
-                  }
-                ]
-              },
-              {
-                "type": "split",
-                "id": "sp6",
-                "dir": "v",
-                "children": [
-                  {
-                    "type": "group",
-                    "id": "g11",
-                    "tabs": [
-                      "s2"
-                    ],
-                    "pinned": [],
-                    "active": "s2"
-                  },
-                  {
-                    "type": "group",
-                    "id": "g12",
-                    "tabs": [
-                      "s3"
-                    ],
-                    "pinned": [],
-                    "active": "s3"
+                    "active": "7434c2fc-9cb4-45e2-86a5-865e339420d2"
                   }
                 ]
               }
             ]
           },
           "surfaces": {
-            "s1": {
-              "id": "s1",
-              "kind": "test",
-              "ref": "test:1",
-              "title": "Test surface 1"
+            "c51b8840-0f76-4bee-b41d-5eedc509b3ed": {
+              "project": "Editor",
+              "id": "c51b8840-0f76-4bee-b41d-5eedc509b3ed",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+              "title": "00 01-DESIGN.md"
             },
-            "s2": {
-              "id": "s2",
-              "kind": "test",
-              "ref": "test:2",
-              "title": "Test surface 2"
+            "bd154a09-b40e-4092-bf9f-c614e22fe24a": {
+              "project": "Editor",
+              "id": "bd154a09-b40e-4092-bf9f-c614e22fe24a",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
+              "title": "01 02-ARCHITECTURE.md"
             },
-            "s3": {
-              "id": "s3",
-              "kind": "test",
-              "ref": "test:3",
-              "title": "Test surface 3"
+            "7434c2fc-9cb4-45e2-86a5-865e339420d2": {
+              "project": "Editor",
+              "id": "7434c2fc-9cb4-45e2-86a5-865e339420d2",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
+              "title": "02 03-UX-STATES.md"
             },
-            "s4": {
-              "id": "s4",
-              "kind": "test",
-              "ref": "test:4",
-              "title": "Test surface 4"
+            "877ce4df-1ac7-43ff-93d9-e32023c38274": {
+              "project": "Editor",
+              "id": "877ce4df-1ac7-43ff-93d9-e32023c38274",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/03%2004-VERIFICATION.md",
+              "title": "03 04-VERIFICATION.md"
             },
-            "s5": {
-              "id": "s5",
-              "kind": "test",
-              "ref": "test:5",
-              "title": "Test surface 5"
-            },
-            "s6": {
-              "id": "s6",
-              "kind": "test:silent",
-              "ref": "test:silent:6",
-              "title": "Test surface (silent) 6"
+            "576c67eb-6ac1-4b6c-9a49-a34d31242239": {
+              "project": "Editor",
+              "id": "576c67eb-6ac1-4b6c-9a49-a34d31242239",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/04%2005-EXECUTION.md",
+              "title": "04 05-EXECUTION.md"
             }
           },
           "closedStack": [
-            "s5",
-            "s6"
+            "576c67eb-6ac1-4b6c-9a49-a34d31242239"
           ],
-          "focusedGroupId": "g9",
-          "agencyDepth": "panel"
+          "focusedGroupId": "g4",
+          "agencyDepth": "panel",
+          "rightDepth": "collapsed",
+          "leftWidth": 240,
+          "rightWidth": 320
         }
       }
     },
     {
       "ok": true,
-      "op": "ui.close_all_to_rest",
-      "duration_ms": 6
+      "op": "read.focus",
+      "duration_ms": 67.4,
+      "data": {
+        "project": {
+          "kind": "project",
+          "native_owner": "central",
+          "provenance": {
+            "source": "projectcentral.inspect"
+          },
+          "ref": "editor-walk"
+        },
+        "subject": {
+          "kind": "source",
+          "native_owner": "central",
+          "provenance": {
+            "source": "central.projectcentral"
+          },
+          "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+        },
+        "world": {
+          "kind": "world",
+          "native_owner": "central",
+          "provenance": {
+            "source": "projectcentral.source.read"
+          },
+          "ref": "project:editor-walk"
+        }
+      }
     },
     {
       "ok": true,
-      "op": "capture.events",
+      "op": "read.layout",
       "duration_ms": 0.1,
+      "data": {
+        "layout": {
+          "subjectPlanes": {},
+          "windowBounds": {},
+          "detached": [],
+          "root": {
+            "type": "split",
+            "id": "sp3",
+            "dir": "h",
+            "children": [
+              {
+                "type": "group",
+                "id": "g4",
+                "tabs": [
+                  "c51b8840-0f76-4bee-b41d-5eedc509b3ed",
+                  "bd154a09-b40e-4092-bf9f-c614e22fe24a"
+                ],
+                "pinned": [],
+                "active": "c51b8840-0f76-4bee-b41d-5eedc509b3ed"
+              },
+              {
+                "type": "split",
+                "id": "sp5",
+                "dir": "v",
+                "children": [
+                  {
+                    "type": "group",
+                    "id": "g6",
+                    "tabs": [
+                      "877ce4df-1ac7-43ff-93d9-e32023c38274"
+                    ],
+                    "pinned": [],
+                    "active": "877ce4df-1ac7-43ff-93d9-e32023c38274"
+                  },
+                  {
+                    "type": "group",
+                    "id": "g7",
+                    "tabs": [
+                      "7434c2fc-9cb4-45e2-86a5-865e339420d2"
+                    ],
+                    "pinned": [],
+                    "active": "7434c2fc-9cb4-45e2-86a5-865e339420d2"
+                  }
+                ]
+              }
+            ]
+          },
+          "surfaces": {
+            "c51b8840-0f76-4bee-b41d-5eedc509b3ed": {
+              "project": "Editor",
+              "id": "c51b8840-0f76-4bee-b41d-5eedc509b3ed",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+              "title": "00 01-DESIGN.md"
+            },
+            "bd154a09-b40e-4092-bf9f-c614e22fe24a": {
+              "project": "Editor",
+              "id": "bd154a09-b40e-4092-bf9f-c614e22fe24a",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
+              "title": "01 02-ARCHITECTURE.md"
+            },
+            "7434c2fc-9cb4-45e2-86a5-865e339420d2": {
+              "project": "Editor",
+              "id": "7434c2fc-9cb4-45e2-86a5-865e339420d2",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
+              "title": "02 03-UX-STATES.md"
+            },
+            "877ce4df-1ac7-43ff-93d9-e32023c38274": {
+              "project": "Editor",
+              "id": "877ce4df-1ac7-43ff-93d9-e32023c38274",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/03%2004-VERIFICATION.md",
+              "title": "03 04-VERIFICATION.md"
+            },
+            "576c67eb-6ac1-4b6c-9a49-a34d31242239": {
+              "project": "Editor",
+              "id": "576c67eb-6ac1-4b6c-9a49-a34d31242239",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/04%2005-EXECUTION.md",
+              "title": "04 05-EXECUTION.md"
+            }
+          },
+          "closedStack": [
+            "576c67eb-6ac1-4b6c-9a49-a34d31242239"
+          ],
+          "focusedGroupId": "g4",
+          "agencyDepth": "panel",
+          "rightDepth": "collapsed",
+          "leftWidth": 240,
+          "rightWidth": 320
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.layout",
+      "duration_ms": 0.1,
+      "data": {
+        "layout": {
+          "subjectPlanes": {},
+          "windowBounds": {},
+          "detached": [],
+          "root": {
+            "type": "split",
+            "id": "sp3",
+            "dir": "h",
+            "children": [
+              {
+                "type": "group",
+                "id": "g4",
+                "tabs": [
+                  "c51b8840-0f76-4bee-b41d-5eedc509b3ed",
+                  "bd154a09-b40e-4092-bf9f-c614e22fe24a"
+                ],
+                "pinned": [],
+                "active": "c51b8840-0f76-4bee-b41d-5eedc509b3ed"
+              },
+              {
+                "type": "split",
+                "id": "sp5",
+                "dir": "v",
+                "children": [
+                  {
+                    "type": "group",
+                    "id": "g6",
+                    "tabs": [
+                      "877ce4df-1ac7-43ff-93d9-e32023c38274"
+                    ],
+                    "pinned": [],
+                    "active": "877ce4df-1ac7-43ff-93d9-e32023c38274"
+                  },
+                  {
+                    "type": "group",
+                    "id": "g7",
+                    "tabs": [
+                      "7434c2fc-9cb4-45e2-86a5-865e339420d2"
+                    ],
+                    "pinned": [],
+                    "active": "7434c2fc-9cb4-45e2-86a5-865e339420d2"
+                  }
+                ]
+              }
+            ]
+          },
+          "surfaces": {
+            "c51b8840-0f76-4bee-b41d-5eedc509b3ed": {
+              "project": "Editor",
+              "id": "c51b8840-0f76-4bee-b41d-5eedc509b3ed",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+              "title": "00 01-DESIGN.md"
+            },
+            "bd154a09-b40e-4092-bf9f-c614e22fe24a": {
+              "project": "Editor",
+              "id": "bd154a09-b40e-4092-bf9f-c614e22fe24a",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
+              "title": "01 02-ARCHITECTURE.md"
+            },
+            "7434c2fc-9cb4-45e2-86a5-865e339420d2": {
+              "project": "Editor",
+              "id": "7434c2fc-9cb4-45e2-86a5-865e339420d2",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
+              "title": "02 03-UX-STATES.md"
+            },
+            "877ce4df-1ac7-43ff-93d9-e32023c38274": {
+              "project": "Editor",
+              "id": "877ce4df-1ac7-43ff-93d9-e32023c38274",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/03%2004-VERIFICATION.md",
+              "title": "03 04-VERIFICATION.md"
+            },
+            "576c67eb-6ac1-4b6c-9a49-a34d31242239": {
+              "project": "Editor",
+              "id": "576c67eb-6ac1-4b6c-9a49-a34d31242239",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/04%2005-EXECUTION.md",
+              "title": "04 05-EXECUTION.md"
+            }
+          },
+          "closedStack": [
+            "576c67eb-6ac1-4b6c-9a49-a34d31242239"
+          ],
+          "focusedGroupId": "g4",
+          "agencyDepth": "panel",
+          "rightDepth": "collapsed",
+          "leftWidth": 240,
+          "rightWidth": 320
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.focus",
+      "duration_ms": 23.9,
+      "data": {
+        "project": {
+          "kind": "project",
+          "native_owner": "central",
+          "provenance": {
+            "source": "projectcentral.inspect"
+          },
+          "ref": "editor-walk"
+        },
+        "subject": {
+          "kind": "source",
+          "native_owner": "central",
+          "provenance": {
+            "source": "central.projectcentral"
+          },
+          "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+        },
+        "world": {
+          "kind": "world",
+          "native_owner": "central",
+          "provenance": {
+            "source": "projectcentral.source.read"
+          },
+          "ref": "project:editor-walk"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.events",
+      "duration_ms": 0,
       "data": {
         "receipts": [
           {
+            "event": "world_changed",
+            "schema": "oi.kernel-event/v1",
             "seq": 1,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "surface_changed",
-            "surface_id": "s1",
-            "surface_ref": {
-              "ref": "test:1",
-              "kind": "source",
-              "native_owner": "central",
-              "provenance": {
-                "source": "central.projectcentral"
-              }
-            },
-            "summary": "Surface opened: Test surface 1."
+            "summary": "Central navigator reading changed",
+            "version": 1
           },
           {
+            "event": "world_changed",
+            "schema": "oi.kernel-event/v1",
             "seq": 2,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "surface_changed",
-            "surface_id": "s2",
-            "surface_ref": {
-              "ref": "test:2",
-              "kind": "source",
-              "native_owner": "central",
-              "provenance": {
-                "source": "central.projectcentral"
-              }
-            },
-            "summary": "Surface opened: Test surface 2."
+            "summary": "Central navigator reading changed",
+            "version": 1
           },
           {
+            "event": "surface_changed",
+            "schema": "oi.kernel-event/v1",
             "seq": 3,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "surface_changed",
-            "surface_id": "s3",
+            "summary": "Surface opened: 00 01-DESIGN.md.",
+            "surface_id": "c51b8840-0f76-4bee-b41d-5eedc509b3ed",
             "surface_ref": {
-              "ref": "test:3",
               "kind": "source",
               "native_owner": "central",
               "provenance": {
                 "source": "central.projectcentral"
-              }
+              },
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
             },
-            "summary": "Surface opened: Test surface 3."
+            "version": 1
           },
           {
+            "event": "source_opened",
+            "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
+            "schema": "oi.kernel-event/v1",
             "seq": 4,
+            "source": {
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
+                "source": "central.projectcentral"
+              },
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+            },
+            "summary": "Opened from the owner's reading at revision c2f0d7be954a87dd (19624 bytes).",
+            "version": 1
+          },
+          {
+            "event": "focus_changed",
+            "focus": {
+              "project": {
+                "kind": "project",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.inspect"
+                },
+                "ref": "editor-walk"
+              },
+              "subject": {
+                "kind": "source",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "central.projectcentral"
+                },
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+              },
+              "world": {
+                "kind": "world",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.source.read"
+                },
+                "ref": "project:editor-walk"
+              }
+            },
             "schema": "oi.kernel-event/v1",
-            "version": 1,
+            "seq": 5,
+            "version": 1
+          },
+          {
             "event": "surface_changed",
-            "surface_id": "s4",
+            "schema": "oi.kernel-event/v1",
+            "seq": 6,
+            "summary": "Surface opened: 01 02-ARCHITECTURE.md.",
+            "surface_id": "bd154a09-b40e-4092-bf9f-c614e22fe24a",
             "surface_ref": {
-              "ref": "test:4",
               "kind": "source",
               "native_owner": "central",
               "provenance": {
                 "source": "central.projectcentral"
+              },
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md"
+            },
+            "version": 1
+          },
+          {
+            "event": "source_opened",
+            "revision": "central.content-fnv1a64/v1:16545:68439910925b9055",
+            "schema": "oi.kernel-event/v1",
+            "seq": 7,
+            "source": {
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "revision": "central.content-fnv1a64/v1:16545:68439910925b9055",
+                "source": "central.projectcentral"
+              },
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md"
+            },
+            "summary": "Opened from the owner's reading at revision 68439910925b9055 (16545 bytes).",
+            "version": 1
+          },
+          {
+            "event": "focus_changed",
+            "focus": {
+              "project": {
+                "kind": "project",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.inspect"
+                },
+                "ref": "editor-walk"
+              },
+              "subject": {
+                "kind": "source",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "central.projectcentral"
+                },
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md"
+              },
+              "world": {
+                "kind": "world",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.source.read"
+                },
+                "ref": "project:editor-walk"
               }
             },
-            "summary": "Surface opened: Test surface 4."
-          },
-          {
-            "seq": 5,
             "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "focus_changed",
-            "focus": {
-              "subject": {
-                "ref": "test:1",
-                "kind": "source",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "central.projectcentral"
-                }
-              }
-            }
-          },
-          {
-            "seq": 6,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "focus_changed",
-            "focus": {
-              "subject": {
-                "ref": "test:2",
-                "kind": "source",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "central.projectcentral"
-                }
-              }
-            }
-          },
-          {
-            "seq": 7,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "focus_changed",
-            "focus": {
-              "subject": {
-                "ref": "test:3",
-                "kind": "source",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "central.projectcentral"
-                }
-              }
-            }
-          },
-          {
             "seq": 8,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "focus_changed",
-            "focus": {
-              "subject": {
-                "ref": "test:4",
-                "kind": "source",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "central.projectcentral"
-                }
-              }
-            }
+            "version": 1
           },
           {
+            "event": "surface_changed",
+            "schema": "oi.kernel-event/v1",
             "seq": 9,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "surface_changed",
-            "surface_id": "s5",
+            "summary": "Surface opened: 02 03-UX-STATES.md.",
+            "surface_id": "7434c2fc-9cb4-45e2-86a5-865e339420d2",
             "surface_ref": {
-              "ref": "test:5",
               "kind": "source",
               "native_owner": "central",
               "provenance": {
                 "source": "central.projectcentral"
-              }
+              },
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md"
             },
-            "summary": "Surface opened: Test surface 5."
+            "version": 1
           },
           {
+            "event": "source_opened",
+            "revision": "central.content-fnv1a64/v1:16196:f64ed1160615a241",
+            "schema": "oi.kernel-event/v1",
             "seq": 10,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
+            "source": {
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "revision": "central.content-fnv1a64/v1:16196:f64ed1160615a241",
+                "source": "central.projectcentral"
+              },
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md"
+            },
+            "summary": "Opened from the owner's reading at revision f64ed1160615a241 (16196 bytes).",
+            "version": 1
+          },
+          {
             "event": "focus_changed",
             "focus": {
+              "project": {
+                "kind": "project",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.inspect"
+                },
+                "ref": "editor-walk"
+              },
               "subject": {
-                "ref": "test:3",
                 "kind": "source",
                 "native_owner": "central",
                 "provenance": {
                   "source": "central.projectcentral"
-                }
+                },
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md"
+              },
+              "world": {
+                "kind": "world",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.source.read"
+                },
+                "ref": "project:editor-walk"
               }
-            }
-          },
-          {
+            },
+            "schema": "oi.kernel-event/v1",
             "seq": 11,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "focus_changed",
-            "focus": {
-              "subject": {
-                "ref": "test:1",
-                "kind": "source",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "central.projectcentral"
-                }
-              }
-            }
+            "version": 1
           },
           {
+            "event": "surface_changed",
+            "schema": "oi.kernel-event/v1",
             "seq": 12,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "focus_changed",
-            "focus": {
-              "subject": {
-                "ref": "test:5",
-                "kind": "source",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "central.projectcentral"
-                }
-              }
-            }
+            "summary": "Surface opened: 03 04-VERIFICATION.md.",
+            "surface_id": "877ce4df-1ac7-43ff-93d9-e32023c38274",
+            "surface_ref": {
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral"
+              },
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/03%2004-VERIFICATION.md"
+            },
+            "version": 1
           },
           {
+            "event": "source_opened",
+            "revision": "central.content-fnv1a64/v1:8319:71e8d7f4566d7794",
+            "schema": "oi.kernel-event/v1",
             "seq": 13,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "surface_changed",
-            "surface_id": "s5",
-            "surface_ref": {
-              "ref": "test:5",
+            "source": {
               "kind": "source",
               "native_owner": "central",
               "provenance": {
+                "revision": "central.content-fnv1a64/v1:8319:71e8d7f4566d7794",
                 "source": "central.projectcentral"
-              }
+              },
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/03%2004-VERIFICATION.md"
             },
-            "summary": "Surface closed: Test surface 5."
+            "summary": "Opened from the owner's reading at revision 71e8d7f4566d7794 (8319 bytes).",
+            "version": 1
           },
           {
+            "event": "focus_changed",
+            "focus": {
+              "project": {
+                "kind": "project",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.inspect"
+                },
+                "ref": "editor-walk"
+              },
+              "subject": {
+                "kind": "source",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "central.projectcentral"
+                },
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/03%2004-VERIFICATION.md"
+              },
+              "world": {
+                "kind": "world",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.source.read"
+                },
+                "ref": "project:editor-walk"
+              }
+            },
+            "schema": "oi.kernel-event/v1",
             "seq": 14,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "focus_changed",
-            "focus": {}
+            "version": 1
           },
           {
+            "event": "focus_changed",
+            "focus": {
+              "project": {
+                "kind": "project",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.inspect"
+                },
+                "ref": "editor-walk"
+              },
+              "subject": {
+                "kind": "source",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "central.projectcentral"
+                },
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+              },
+              "world": {
+                "kind": "world",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.source.read"
+                },
+                "ref": "project:editor-walk"
+              }
+            },
+            "schema": "oi.kernel-event/v1",
             "seq": 15,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "focus_changed",
-            "focus": {
-              "subject": {
-                "ref": "test:4",
-                "kind": "source",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "central.projectcentral"
-                }
-              }
-            }
+            "version": 1
           },
           {
+            "dirty": true,
+            "event": "buffer_dirty",
+            "schema": "oi.kernel-event/v1",
             "seq": 16,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "surface_changed",
-            "surface_id": "s4",
-            "surface_ref": {
-              "ref": "test:4",
+            "source": {
               "kind": "source",
               "native_owner": "central",
               "provenance": {
+                "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
                 "source": "central.projectcentral"
-              }
+              },
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
             },
-            "summary": "Surface closed: Test surface 4."
+            "summary": "The cradle buffer crossed the clean/dirty line: it now differs from the canonical layer.",
+            "version": 1
           },
           {
+            "event": "surface_changed",
+            "schema": "oi.kernel-event/v1",
             "seq": 17,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "focus_changed",
-            "focus": {}
+            "summary": "Surface opened: 04 05-EXECUTION.md.",
+            "surface_id": "576c67eb-6ac1-4b6c-9a49-a34d31242239",
+            "surface_ref": {
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral"
+              },
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/04%2005-EXECUTION.md"
+            },
+            "version": 1
           },
           {
+            "event": "source_opened",
+            "revision": "central.content-fnv1a64/v1:8240:484f33e4bc2d0338",
+            "schema": "oi.kernel-event/v1",
             "seq": 18,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
+            "source": {
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "revision": "central.content-fnv1a64/v1:8240:484f33e4bc2d0338",
+                "source": "central.projectcentral"
+              },
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/04%2005-EXECUTION.md"
+            },
+            "summary": "Opened from the owner's reading at revision 484f33e4bc2d0338 (8240 bytes).",
+            "version": 1
+          },
+          {
             "event": "focus_changed",
             "focus": {
+              "project": {
+                "kind": "project",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.inspect"
+                },
+                "ref": "editor-walk"
+              },
               "subject": {
-                "ref": "test:1",
                 "kind": "source",
                 "native_owner": "central",
                 "provenance": {
                   "source": "central.projectcentral"
-                }
+                },
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/04%2005-EXECUTION.md"
+              },
+              "world": {
+                "kind": "world",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.source.read"
+                },
+                "ref": "project:editor-walk"
               }
-            }
-          },
-          {
+            },
+            "schema": "oi.kernel-event/v1",
             "seq": 19,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "surface_changed",
-            "surface_id": "s4",
-            "surface_ref": {
-              "ref": "test:4",
-              "kind": "source",
-              "native_owner": "central",
-              "provenance": {
-                "source": "central.projectcentral"
-              }
-            },
-            "summary": "Surface opened: Test surface 4."
+            "version": 1
           },
           {
+            "event": "surface_changed",
+            "schema": "oi.kernel-event/v1",
             "seq": 20,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "focus_changed",
-            "focus": {
-              "subject": {
-                "ref": "test:4",
-                "kind": "source",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "central.projectcentral"
-                }
-              }
-            }
+            "summary": "Surface closed: 04 05-EXECUTION.md.",
+            "surface_id": "576c67eb-6ac1-4b6c-9a49-a34d31242239",
+            "surface_ref": {
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral"
+              },
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/04%2005-EXECUTION.md"
+            },
+            "version": 1
           },
           {
+            "event": "focus_changed",
+            "focus": {
+              "project": {
+                "kind": "project",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.inspect"
+                },
+                "ref": "editor-walk"
+              },
+              "world": {
+                "kind": "world",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.source.read"
+                },
+                "ref": "project:editor-walk"
+              }
+            },
+            "schema": "oi.kernel-event/v1",
             "seq": 21,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
+            "version": 1
+          },
+          {
             "event": "focus_changed",
             "focus": {
+              "project": {
+                "kind": "project",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.inspect"
+                },
+                "ref": "editor-walk"
+              },
               "subject": {
-                "ref": "test:2",
                 "kind": "source",
                 "native_owner": "central",
                 "provenance": {
                   "source": "central.projectcentral"
-                }
+                },
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/03%2004-VERIFICATION.md"
+              },
+              "world": {
+                "kind": "world",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.source.read"
+                },
+                "ref": "project:editor-walk"
               }
-            }
-          },
-          {
+            },
+            "schema": "oi.kernel-event/v1",
             "seq": 22,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "surface_changed",
-            "surface_id": "s3",
-            "surface_ref": {
-              "ref": "test:3",
-              "kind": "source",
-              "native_owner": "central",
-              "provenance": {
-                "source": "central.projectcentral"
-              }
-            },
-            "summary": "Surface closed: Test surface 3."
+            "version": 1
           },
           {
+            "event": "surface_changed",
+            "schema": "oi.kernel-event/v1",
             "seq": 23,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "surface_changed",
-            "surface_id": "s6",
+            "summary": "Surface opened: 04 05-EXECUTION.md.",
+            "surface_id": "576c67eb-6ac1-4b6c-9a49-a34d31242239",
             "surface_ref": {
-              "ref": "test:silent:6",
               "kind": "source",
               "native_owner": "central",
               "provenance": {
                 "source": "central.projectcentral"
-              }
+              },
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/04%2005-EXECUTION.md"
             },
-            "summary": "Surface opened: Test surface (silent) 6."
+            "version": 1
           },
           {
+            "event": "surface_changed",
+            "schema": "oi.kernel-event/v1",
             "seq": 24,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "surface_changed",
-            "surface_id": "s3",
+            "summary": "Surface closed: 04 05-EXECUTION.md.",
+            "surface_id": "576c67eb-6ac1-4b6c-9a49-a34d31242239",
             "surface_ref": {
-              "ref": "test:3",
               "kind": "source",
               "native_owner": "central",
               "provenance": {
                 "source": "central.projectcentral"
-              }
+              },
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/04%2005-EXECUTION.md"
             },
-            "summary": "Surface opened: Test surface 3."
+            "version": 1
           },
           {
+            "event": "focus_changed",
+            "focus": {
+              "project": {
+                "kind": "project",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.inspect"
+                },
+                "ref": "editor-walk"
+              },
+              "subject": {
+                "kind": "source",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "central.projectcentral"
+                },
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md"
+              },
+              "world": {
+                "kind": "world",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.source.read"
+                },
+                "ref": "project:editor-walk"
+              }
+            },
+            "schema": "oi.kernel-event/v1",
             "seq": 25,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
+            "version": 1
+          },
+          {
             "event": "focus_changed",
             "focus": {
+              "project": {
+                "kind": "project",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.inspect"
+                },
+                "ref": "editor-walk"
+              },
               "subject": {
-                "ref": "test:silent:6",
                 "kind": "source",
                 "native_owner": "central",
                 "provenance": {
                   "source": "central.projectcentral"
-                }
+                },
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+              },
+              "world": {
+                "kind": "world",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.source.read"
+                },
+                "ref": "project:editor-walk"
               }
-            }
-          },
-          {
+            },
+            "schema": "oi.kernel-event/v1",
             "seq": 26,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
+            "version": 1
+          },
+          {
             "event": "focus_changed",
             "focus": {
+              "project": {
+                "kind": "project",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.inspect"
+                },
+                "ref": "editor-walk"
+              },
               "subject": {
-                "ref": "test:3",
                 "kind": "source",
                 "native_owner": "central",
                 "provenance": {
                   "source": "central.projectcentral"
-                }
+                },
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md"
+              },
+              "world": {
+                "kind": "world",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.source.read"
+                },
+                "ref": "project:editor-walk"
               }
-            }
-          },
-          {
+            },
+            "schema": "oi.kernel-event/v1",
             "seq": 27,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "surface_changed",
-            "surface_id": "s6",
-            "surface_ref": {
-              "ref": "test:silent:6",
-              "kind": "source",
-              "native_owner": "central",
-              "provenance": {
-                "source": "central.projectcentral"
-              }
-            },
-            "summary": "Surface closed: Test surface (silent) 6."
+            "version": 1
           },
           {
+            "event": "surface_changed",
+            "schema": "oi.kernel-event/v1",
             "seq": 28,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "focus_changed",
-            "focus": {
-              "subject": {
-                "ref": "test:1",
-                "kind": "source",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "central.projectcentral"
-                }
-              }
-            }
+            "summary": "Surface closed: 01 02-ARCHITECTURE.md.",
+            "surface_id": "bd154a09-b40e-4092-bf9f-c614e22fe24a",
+            "surface_ref": {
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral"
+              },
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md"
+            },
+            "version": 1
           },
           {
+            "event": "focus_changed",
+            "focus": {
+              "project": {
+                "kind": "project",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.inspect"
+                },
+                "ref": "editor-walk"
+              },
+              "world": {
+                "kind": "world",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.source.read"
+                },
+                "ref": "project:editor-walk"
+              }
+            },
+            "schema": "oi.kernel-event/v1",
             "seq": 29,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "surface_changed",
-            "surface_id": "s1",
-            "surface_ref": {
-              "ref": "test:1",
-              "kind": "source",
-              "native_owner": "central",
-              "provenance": {
-                "source": "central.projectcentral"
-              }
-            },
-            "summary": "Surface opened: Test surface 1."
+            "version": 1
           },
           {
+            "event": "world_changed",
+            "schema": "oi.kernel-event/v1",
             "seq": 30,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "surface_changed",
-            "surface_id": "s4",
-            "surface_ref": {
-              "ref": "test:4",
-              "kind": "source",
-              "native_owner": "central",
-              "provenance": {
-                "source": "central.projectcentral"
-              }
-            },
-            "summary": "Surface opened: Test surface 4."
+            "summary": "Central navigator reading changed",
+            "version": 1
           },
           {
+            "event": "world_changed",
+            "schema": "oi.kernel-event/v1",
             "seq": 31,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "surface_changed",
-            "surface_id": "s2",
-            "surface_ref": {
-              "ref": "test:2",
-              "kind": "source",
-              "native_owner": "central",
-              "provenance": {
-                "source": "central.projectcentral"
-              }
-            },
-            "summary": "Surface opened: Test surface 2."
+            "summary": "Central navigator reading changed",
+            "version": 1
           },
           {
+            "event": "surface_changed",
+            "schema": "oi.kernel-event/v1",
             "seq": 32,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "surface_changed",
-            "surface_id": "s3",
+            "summary": "Surface opened: 00 01-DESIGN.md.",
+            "surface_id": "c51b8840-0f76-4bee-b41d-5eedc509b3ed",
             "surface_ref": {
-              "ref": "test:3",
               "kind": "source",
               "native_owner": "central",
               "provenance": {
                 "source": "central.projectcentral"
+              },
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+            },
+            "version": 1
+          },
+          {
+            "event": "surface_changed",
+            "schema": "oi.kernel-event/v1",
+            "seq": 33,
+            "summary": "Surface opened: 01 02-ARCHITECTURE.md.",
+            "surface_id": "bd154a09-b40e-4092-bf9f-c614e22fe24a",
+            "surface_ref": {
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral"
+              },
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md"
+            },
+            "version": 1
+          },
+          {
+            "event": "surface_changed",
+            "schema": "oi.kernel-event/v1",
+            "seq": 34,
+            "summary": "Surface opened: 03 04-VERIFICATION.md.",
+            "surface_id": "877ce4df-1ac7-43ff-93d9-e32023c38274",
+            "surface_ref": {
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral"
+              },
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/03%2004-VERIFICATION.md"
+            },
+            "version": 1
+          },
+          {
+            "event": "surface_changed",
+            "schema": "oi.kernel-event/v1",
+            "seq": 35,
+            "summary": "Surface opened: 02 03-UX-STATES.md.",
+            "surface_id": "7434c2fc-9cb4-45e2-86a5-865e339420d2",
+            "surface_ref": {
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "source": "central.projectcentral"
+              },
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md"
+            },
+            "version": 1
+          },
+          {
+            "event": "focus_changed",
+            "focus": {
+              "project": {
+                "kind": "project",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.inspect"
+                },
+                "ref": "editor-walk"
+              },
+              "subject": {
+                "kind": "source",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "central.projectcentral"
+                },
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md"
+              },
+              "world": {
+                "kind": "world",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.source.read"
+                },
+                "ref": "project:editor-walk"
               }
             },
-            "summary": "Surface opened: Test surface 3."
+            "schema": "oi.kernel-event/v1",
+            "seq": 36,
+            "version": 1
           },
           {
-            "seq": 33,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
             "event": "focus_changed",
             "focus": {
+              "project": {
+                "kind": "project",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.inspect"
+                },
+                "ref": "editor-walk"
+              },
               "subject": {
-                "ref": "test:4",
                 "kind": "source",
                 "native_owner": "central",
                 "provenance": {
                   "source": "central.projectcentral"
-                }
-              }
-            }
-          },
-          {
-            "seq": 34,
-            "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "focus_changed",
-            "focus": {
-              "subject": {
-                "ref": "test:2",
-                "kind": "source",
+                },
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+              },
+              "world": {
+                "kind": "world",
                 "native_owner": "central",
                 "provenance": {
-                  "source": "central.projectcentral"
-                }
+                  "source": "projectcentral.source.read"
+                },
+                "ref": "project:editor-walk"
               }
-            }
+            },
+            "schema": "oi.kernel-event/v1",
+            "seq": 37,
+            "version": 1
           },
           {
-            "seq": 35,
+            "event": "world_changed",
             "schema": "oi.kernel-event/v1",
-            "version": 1,
-            "event": "focus_changed",
-            "focus": {
-              "subject": {
-                "ref": "test:3",
-                "kind": "source",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "central.projectcentral"
-                }
-              }
-            }
+            "seq": 38,
+            "summary": "Central navigator reading changed",
+            "version": 1
           }
         ],
-        "count": 35,
+        "count": 38,
         "first_seq": 1,
-        "last_seq": 35,
-        "captured_at": "2026-09-05T23:26:26.306Z"
+        "last_seq": 38
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 36,
+      "data": {
+        "file": "surfaces-source-frame-menu.png"
       }
     }
   ],
   "metrics": {
-    "cold_start_fcp_ms": 24,
-    "open_4_tabs_ms": 31,
-    "tile_ms": 72,
-    "drag_between_splits_ms": 104,
-    "reload_restore_ms": 40,
-    "close_all_to_rest_ms": 6,
-    "kernel_events_total": 35
+    "open_4_tabs_ms": 510
   },
   "screenshots": [
-    "surfaces-tiled.png",
-    "surfaces-menu.png"
+    "surfaces-native-sources-tiled.png",
+    "surfaces-source-frame-menu.png"
   ]
 }

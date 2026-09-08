@@ -34,12 +34,26 @@ const BRIDGE_PORT = 4179;
 const BRIDGE_URL = `http://127.0.0.1:${BRIDGE_PORT}`;
 
 const SCENARIOS = {
+  ground:{module:"scenarios/ground.mjs",kernel:true,aliases:[]},
+  recovery:{module:"scenarios/recovery.mjs",kernel:false,aliases:[]},
   rest: { module: "scenarios/rest.mjs", kernel: false, aliases: ["u0.3"] },
   surfaces: { module: "scenarios/surfaces.mjs", kernel: true, aliases: ["u0.3b"] },
   "kernel-cas": { module: "scenarios/kernel-cas.mjs", kernel: true, aliases: ["u0.4"] },
+  system: {module:"scenarios/system.mjs",kernel:true,aliases:[]},
+  permission: {module:"scenarios/permission.mjs",kernel:true,aliases:[]},
+  encounter: {module:"scenarios/encounter.mjs",kernel:true,aliases:[]},
+  "file-edit": {module:"scenarios/file-edit.mjs",kernel:true,aliases:[]},
+  files: { module: "scenarios/files.mjs", kernel: true, aliases: [] },
+  material: { module: "scenarios/material.mjs", kernel: true, aliases: ["fnd-04"] },
+  bootstrap: { module: "scenarios/bootstrap.mjs", kernel: true, aliases: ["fnd-05"] },
+  resources: { module: "scenarios/resources.mjs", kernel: true, aliases: ["fnd-06"] },
   navigator: { module: "scenarios/navigator.mjs", kernel: true, aliases: ["u1.1"] },
   editor: { module: "scenarios/editor.mjs", kernel: true, aliases: ["u1.2"] },
+  knowledge: { module: "scenarios/knowledge.mjs", kernel: true, aliases: ["u3.1", "u3.4"] },
   history: { module: "scenarios/history.mjs", kernel: true, aliases: ["u1.3"] },
+  spatial: { module: "scenarios/spatial.mjs", kernel: true, aliases: ["shell"] },
+  companions: { module: "scenarios/companions.mjs", kernel: false, aliases: ["round2"] },
+  study: { module: "scenarios/study.mjs", kernel: false, aliases: ["ui-study"] },
   native: { module: "scenarios/native.mjs", kernel: false, aliases: ["package"] },
 };
 
@@ -325,6 +339,7 @@ async function runScenario(name, { baseUrl }) {
     receipt = ctx.finish();
     receipt.passed = false;
     receipt.error = String(error?.stack ?? error);
+    await page.screenshot({path:join(here,"artifacts",`${name}-failure.png`)}).catch(()=>{});
     console.error(`  SCENARIO ERROR: ${receipt.error}`);
   } finally {
     await browser.close();
