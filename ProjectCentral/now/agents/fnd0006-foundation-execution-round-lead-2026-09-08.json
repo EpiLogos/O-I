@@ -1,0 +1,14 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "fnd0006-foundation-execution-round-lead-2026-09-08",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "claude-fable-lead-20260908",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1788836431,
+  "subject": "FND-00–06 foundation execution round (lead orchestrator)",
+  "result": "Session opened on cradle-p1 at HEAD c1ce2db with the existing dirty shared WIP preserved. Executing FND-00 (running-study inspection + discrepancy matrix), then FND-01–06 shell fidelity, dynamic agent right layer, workspace/keyboard grammar, material host, bootstrap aperture and coherent acceptance. Subagent-led execution with lead review; UI polish is the first emphasis. Evidence goes to .superpowers/sdd/cradle-rebuild/progress.md and walk/artifacts.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-09-08"
+  ]
+}

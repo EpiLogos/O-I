@@ -1,5 +1,37 @@
 {
   "errors": [],
+  "canvases": 11,
+  "forms": [
+    "fire",
+    "water",
+    "air",
+    "earth",
+    "presence",
+    "arrival",
+    "listening",
+    "searching",
+    "waiting"
+  ],
+  "gestures": [
+    "vapour",
+    "confirm",
+    "dismiss",
+    "release",
+    "open",
+    "close",
+    "edge",
+    "wake",
+    "drop",
+    "save",
+    "raw",
+    "breath"
+  ],
+  "holdSustains": true,
+  "holdDrains": 0,
+  "chainLive": 4,
+  "chainDrained": 0,
+  "resizeHoldKeepsEmitter": true,
+  "darkInk": "#f7f7f4",
   "running": {
     "raf": true,
     "visible": [
@@ -9,43 +41,49 @@
       "earth",
       "arrival",
       "presence",
-      "relation"
+      "waiting"
     ],
     "paused": false,
-    "reduced": false
+    "reduced": false,
+    "emitters": 0,
+    "agent": "listening",
+    "theme": "oi-desktop"
   },
   "paused": {
     "raf": false,
     "visible": [
-      "fire",
-      "water",
-      "air",
-      "earth",
-      "arrival",
-      "presence",
-      "relation"
+      "agent"
     ],
     "paused": true,
-    "reduced": false
+    "reduced": false,
+    "emitters": 0,
+    "agent": "listening",
+    "theme": "oi-desktop"
   },
   "reduced": {
     "raf": false,
     "visible": [
-      "fire",
-      "water",
-      "air",
-      "earth",
-      "arrival",
-      "presence",
-      "relation"
+      "agent"
     ],
     "paused": false,
-    "reduced": true
+    "reduced": true,
+    "emitters": 0,
+    "agent": "listening",
+    "theme": "oi-desktop"
   },
+  "reducedGestureIgnored": 0,
   "fullscreen": {
     "mainInert": true,
-    "raf": false
+    "raf": false,
+    "closeFocused": true
   },
+  "afterEscape": {
+    "mainInert": false,
+    "raf": true
+  },
+  "emittersDrained": 0,
+  "overlayClearWhenIdle": true,
+  "darkestPixel": 0.6666666666666666,
   "narrow": {
     "overflow": false,
     "state": {
@@ -55,7 +93,10 @@
         "water"
       ],
       "paused": false,
-      "reduced": false
+      "reduced": false,
+      "emitters": 0,
+      "agent": "listening",
+      "theme": "oi-desktop"
     }
   }
 }

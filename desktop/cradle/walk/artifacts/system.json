@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "system",
-  "generated_at": "2026-09-08T10:35:06.006Z",
+  "generated_at": "2026-09-08T12:55:07.836Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,11 +12,11 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 11160,
+  "duration_ms": 2424,
   "checks": [
     {
       "ok": true,
-      "label": "System reads all six native product positions"
+      "label": "System projects all seven positions (O:I + six native products)"
     },
     {
       "ok": true,
@@ -35,10 +35,10 @@
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-08T10:35:06.101Z",
+        "mounted_at": "2026-09-08T12:55:07.963Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -55,13 +55,13 @@
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 13.8,
+      "duration_ms": 2.8,
       "data": {}
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 84,
+      "duration_ms": 44,
       "data": {
         "file": "system-native-six-owner-composition.png"
       }

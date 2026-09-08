@@ -1,0 +1,14 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "oi-multimatrix-product-capability-collation-2026-09-08",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "codex-oi-collation-20260908",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1788864915,
+  "subject": "O:I multi-matrix product capability collation ready",
+  "result": "Clean worktree /private/tmp/o-i-collation.GUJMwP branch agent/product-collation-multimatrix commit f6d06a402571091d2e6196365ea07d1cbdbb01b7 from origin/main cdf435f. Collator now reads .oi/product.json capability_matrices, requires exactly one suite_catalogue profile, preserves and hashes every declared family/carrier/member/partition, and uses bounded legacy fallback. Generated 451 records against QL 5f430c6 and Workcell f55046c overrides; QL six families remain distinct. Added standalone snapshot CI, CLI catalogue disclosures, real fixture tests, docs. Verified exact-root --check, snapshot check, Python 10 tests, Rust 31 tests, executable JSON equality, diff check. Not pushed or merged.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-09-08"
+  ]
+}

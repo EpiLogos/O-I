@@ -394,6 +394,7 @@ output, it is not built (law 10).
 | D19 | Workspaces are freeform autosaved app state | A workspace = app-state bundle {focused surface, open tabs, project context, bound session, layer depths}, freeform (user-makeable, nameable). Opening a project naturally focuses its workspace (the likely default); the **root workspace** is the open Central ground or a saved entity attributable to the root. **Autosave is crucial**: app state saves continuously, sensitive to cross-tab work within the same project. | owner ruling 2026-09-05 |
 | D20 | Inline routing from Flow | From a Flow selection, an @-operator route addresses agent + destination in one act — highlight, then e.g. `@agent + to @project:… = @forms:"flow-1.md"`. Routes **harden through History/familiarity**: AIKit records successful use, canonical refs stay authoritative. AIKit search/resolution operates in the UX for human and agent alike; plain search unchanged; canvas↔agent integration clean and open at base. Exact grammar designed in context (W1.7). | owner ruling 2026-09-05; O:I skill familiarity law; #155 D4 |
 | D21 | The wiki leads the vision | The wiki system is a first-class feature of the app whole: project wiki (ProjectCentral) + root wiki + the shared-field wiki projection, rendered as the design-vision centrepiece — dark grey nodes, slender connecting lines, sparse sleek dots, on a soft writing-paper ground (drab off grey-yellow-green), clean render distances and transitions, data loaded from real wiki content. The wiki is **operative**: nodes are authored ground — skills, guidance, intent files — where the user crafts the agentic world through owner authoring operations (human-acceptance law holds). Wiki + search together are the app's primary navigation grammar. | owner ruling 2026-09-05; `docs/SHARED-FIELD.md`; O:I skill Control-authoring law |
+| D22 | Expression is a notify modality | The house motion language has two classes. **Forms** are continuous readings of an owner-reported state (the elemental loading directions; the quiet forms; the agent-state forms). **Gestures** are bounded wisps that answer a canonical Action at the point of contact, after the component has landed by its own token transition, around its edges and never of it. One full-window **expression overlay** per host window draws both in page coordinates; components never draw points, they post intent through one seam (`express`) with the component rect, a direction (from→to or an explicit vector) and a time (delay, hold, chain). Agent state is an enum owned by the agency seam; the design system owns only its mapping to forms. Reduced motion holds a still form and refuses gestures. Less is more. Study of record: `desktop/cradle/walk/artifacts/review/point-cloud-elements/` (rev 5) and `EXPRESSION-OVERLAY-SPEC-2026-09-08.md`. | owner ruling 2026-09-08; D18; D9; D15; D4; laws 7, 11 |
 
 ---
 
@@ -607,6 +608,7 @@ arrive uncharted.
 | **W1.5 Flow knowledge affordances** | U4.2 lands | "what changed relative to this thought": changed sources, affected knowledge, unresolved — from Central/AIKit seams (#138 §6); + #138 acceptance 13 (non-Central Flow generality) |
 | **W1.6 Lower region law** | first phase gate that needs it | material unfolding below the canvas per APP-SPEC §7 — never a universal event store; summon-only at rest |
 | **W1.7 Inline route syntax** | U2.3 lands (addressing working) | the @-operator route grammar over Flow selections — agent + destination in one act (D20); hardened routes via AIKit History/familiarity; designed against real flows with the owner |
+| **W1.8 Expression vocabulary** | FND-07 lands (overlay live on real surfaces) | which gestures and forms enter the vocabulary, which agent states map to which forms, per-modality on/off (D18) — designed in the running app with the owner; the study is a candidate set, not the vocabulary. Owner steer 2026-09-08: keep idle/waiting, listening, presence, arrival, searching and the four elements; the rest are reserve |
 
 ---
 
@@ -691,3 +693,15 @@ and retires the merged branch and clean worktree using merged-PR identity plus
 current-tip verification rather than ancestry alone; the ledger records the
 terminal state. P0 closed this way 2026-09-05
 (merge `08f6ea9`); P1 opens `cradle-p1` the same way.
+
+---
+
+## Brief: P1 integration (FND-07 expression & shell implementation)
+
+**For implementation before P1 shell + business-logic integration**
+
+- **Expression overlay ready:** [`BRIEF-FND-07-EXPRESSION-2026-09-08.md`](../../../Work/O-I/.superpowers/sdd/cradle-rebuild/BRIEF-FND-07-EXPRESSION-2026-09-08.md) supplied to shell agent, with corrected agent-form derivation and "resize only" steering direction applied.
+- **Specification updated:** spec and study README at revision 6; D22, W1.8, FND-07 remain in wayfinder and programme from prior turn.
+- **Handoff logged:** closing handoff recorded in O-I NOW field; O-I day 2026-09-08 rolled over to 2026-09-09 with 26 live records carried forward.
+- **Root-register note:** README drafts and two dated folders at the Work root predate this session and remain in place; proposed placement decision deferred to the owner.
+- **Next move:** shell agent briefs on `cradle-p1` branch; W1.8 settles final expression vocabulary with the owner in the running app.

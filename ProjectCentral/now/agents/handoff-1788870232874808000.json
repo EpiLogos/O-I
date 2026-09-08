@@ -7,5 +7,8 @@
   "recorded_at_unix_seconds": 1788870232,
   "subject": "PF Workcell material contract executed",
   "result": "Pinned Workcell 81fd5e1 lacked the exact receipt-bound material operation: isolated prepare/observe/expose worked, while `material` returned invalid-demand. Added only direct Workcell material composition plus real CLI coverage; owner CLI 4/4 and runtime exposure/collection 6/6 pass. Exact O:I consumer material_native ignored test passes with absolute OI_BIN and OI_WORKCELL_BIN, including receipt/world identity refusal and released-provider observation. Evidence: /tmp/oi-workcell-material-H8fWme/consumer-test-final.log, owner-cli-all.log, owner-expose-collect.log; Workcell release binary SHA dee625432b0373db6bfcc27319b13760af353cfc844015556ab2d75ca985e0ec; O:I binary SHA 582c2b5ad541c09fc0890a501d035f73b6e5224e4cce5e569de9d66d191cf999. O:I source rebuild remains blocked by pre-existing current_main_install.rs references to missing oi_cli::modality/registration_in_modality; no unrelated files changed.",
-  "status": "active"
+  "status": "carried",
+  "carried_from_days": [
+    "2026-09-08"
+  ]
 }

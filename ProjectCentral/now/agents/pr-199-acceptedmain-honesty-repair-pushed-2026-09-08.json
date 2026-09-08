@@ -1,0 +1,14 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "pr-199-acceptedmain-honesty-repair-pushed-2026-09-08",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "codex-oi-collation-20260908",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1788865270,
+  "subject": "PR 199 accepted-main honesty repair pushed",
+  "result": "Pushed commit 5c3795d2f9eb5703e55aa9f8d6cb4e9a6c19737b to agent/product-collation-multimatrix. Removed branch-only desktop projection, routing test, desktop CLI disclosure and workflow checks after auditing every implementation ref: agency/files/knowledge/menus absent from accepted main; flow/history/world present. Product collation remains. Snapshot and Python checks pass; full cargo all-targets 121 tests pass; CLI catalogue JSON matches shipped output. Hosted checks pending.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-09-08"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "handoff-1788878358501871000",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "claude-fable",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1788878358,
+  "subject": "Point-cloud elements revision 4 + expression overlay integration spec",
+  "result": "Study at desktop/cradle/walk/artifacts/review/point-cloud-elements: density thinned ~40%, gestures moved to one full-window expression overlay anchored to component rects, drawn around edges after the component lands (transitionend), subtler wisps, breath on agent state change; Playwright checks pass incl. overlay pixel-clear when idle. Spec written: desktop/cradle/walk/artifacts/review/EXPRESSION-OVERLAY-SPEC-2026-09-08.md proposing D22 (expression as notify modality, two classes), unit FND-07 Expression overlay (files, operation, walk), waypoint W1.8, design-system motion tokens + two hardening themes, AIKit session state enum, test plan. Nothing written to the wayfinder or production; owner adopts.",
+  "status": "active"
+}
