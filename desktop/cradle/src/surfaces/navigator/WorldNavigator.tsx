@@ -81,6 +81,7 @@ export function WorldNavigator({ onSystem,onOpenEncounter, centralFiles, onCentr
   };
   const projects = root?.work.projects ?? [];
   return <aside className="world-navigator" aria-label="World navigator" aria-busy={pending}>
+    <div className="world-scroll">
     <div className="central-actions">
       <button className="summon-search" onClick={onSearch}>Search <kbd>{searchShortcut}</kbd></button>
     </div>
@@ -128,6 +129,7 @@ export function WorldNavigator({ onSystem,onOpenEncounter, centralFiles, onCentr
       {!rootFiles&&!projects.length && <p>{root.work.projects.length ? "No matching projects" : "Central disclosed no Work projects"}</p>}
 
     </>}
+    </div>
     <div className="world-system"><button onClick={onSystem}><SidebarGlyph path={SETTINGS_GLYPH} size={13}/>System</button></div>
   </aside>;
 }
@@ -137,7 +139,7 @@ function RootSpace({name,path,refresh,onOpen}:{name:string;path:string;refresh:n
   const [open,setOpen]=useState(false);
   const [expanded,setExpanded]=useState<string[]>([]);
   return <div className="central-root-space">
-    <button aria-label={`${open ? 'Collapse' : 'Expand'} Central ${name} space`} aria-expanded={open} onClick={()=>setOpen(value=>!value)}><span aria-hidden="true">{open ? '⌄' : '›'}</span><Glyph name="folder" size={12}/><span>{name}</span></button>
+    <button aria-label={`${open ? 'Collapse' : 'Expand'} Central ${name} space`} aria-expanded={open} onClick={()=>setOpen(value=>!value)}><Glyph name="folder" size={12}/><span>{name}</span></button>
     {open && <FileTree path={path} refresh={refresh} onOpen={onOpen} expanded={expanded} onExpansion={setExpanded} onRootRef={()=>{}}/>}
   </div>;
 }

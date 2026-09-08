@@ -131,7 +131,7 @@
 .desktop-regions[data-right-full="true"] > .left { z-index: calc(var(--oi-z-drawer) + 1); width: var(--desktop-left-width) !important; }
 .desktop-side.left { max-width: calc(100% - 440px); }
 
-.desktop-side .world-navigator { position: relative; inset: auto; width: 100%; flex: 1; min-height: 0; border: 0; z-index: auto; padding: 0 10px 12px; }
+.desktop-side .world-navigator { position: relative; inset: auto; width: 100%; flex: 1; min-height: 0; border: 0; z-index: auto; padding: 0 10px 0; }
 /* Finding 6 / item (h): an owner refusal (e.g. wiki-open failing with
  * "SemanticWiki provider is absent…") already lands in the DOM as a
  * `role="alert"` — it was just unstyled plain text that read like any other
@@ -278,7 +278,7 @@
  * System scrolls away with everything else and sits below the fold. Pin it
  * as a sticky sidebar-plane footer instead, on the sidebar's own ground so
  * it reads as chrome, not scrolled content. */
-.desktop-side .world-navigator .world-system { position: sticky; bottom: 0; margin-top: auto; padding: 14px 0 4px; background: var(--oi-sidebar-ground); border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.desktop-side .world-navigator .world-system { position: relative; flex:none; margin-top: 0; padding: 10px 0; background: var(--oi-sidebar-ground); border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
 
 .ground-chooser { margin: 16px 0; padding: 12px 0; border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-bottom: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
 .ground-chooser h3 { font-size: var(--oi-shell-type-body); margin: 0 0 8px; }
@@ -391,3 +391,13 @@
   clip-path:polygon(var(--window-cutout) 0,100% 0,100% 100%,0 100%,0 var(--oi-shell-tabbar),var(--window-cutout) var(--oi-shell-tabbar));
  }
 }
+
+/* Navigator content scrolls above a structural bottom row; no sticky overlay. */
+.desktop-side .world-navigator{display:flex;flex-direction:column;overflow:hidden;padding-bottom:0}
+.world-scroll{flex:1;min-height:0;overflow:auto}
+.shell-topbar .shell-region-toggle{transform:translateY(2px)}
+.desktop-regions[data-right-full="true"] .desktop-centre{visibility:hidden;pointer-events:none}
+@media(min-width:760px) and (pointer:fine){
+ .desktop-shell .desktop-side.right.depth-full{top:-24px;padding-top:24px;box-sizing:border-box}
+}
+.desktop-shell:has(.desktop-regions[data-right-full="true"]) .shell-topbar{z-index:calc(var(--oi-z-drawer) + 2)}

@@ -67,11 +67,9 @@ export function ProjectBranch({name,path,selected,navigation,onBrowse,onDisclosu
     return()=>{resized.disconnect();mutated.disconnect();};
   },[path,navigation.expanded,navigation.mode]);
   return <li data-navigation-path={path}>
-    <button data-project-path={path} aria-current={selected ? "true" : undefined} onClick={onBrowse} title={name}>
+    <button data-project-path={path} aria-current={selected ? "true" : undefined} aria-expanded={navigation.expanded} onClick={()=>{if(selected&&navigation.expanded)onDisclosure(false);else onBrowse();}} title={name}>
       <span className="project-mark" aria-hidden="true"/><span className="project-name">{name}</span>
     </button>
-    <button className="project-disclosure" aria-label={`${navigation.expanded ? "Collapse" : "Expand"} ${name}`}
-      aria-expanded={navigation.expanded} onClick={()=>onDisclosure(!navigation.expanded)}>›</button>
     <ProjectModes name={name} mode={navigation.mode??"chats"} onMode={onMode}/>
     {navigation.expanded && <section ref={body} className="project-files" aria-label={`${name} navigation`}
       onWheel={gesture} onKeyDown={gesture} onTouchStart={gesture} onTouchMove={gesture} onFocus={gesture} onPointerDown={holdPointer}

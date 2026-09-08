@@ -55,3 +55,12 @@
  * ever existed in `full`. One head geometry (65px) always; the compact
  * head is reserved for a plane narrower than the agent minimum itself. */
 @container (max-width:259px){.agent-head{height:45px}.agent-planes{height:27px;gap:12px}.agent-context,.agent-empty{padding:16px}}
+
+/* Expanded agency uses a shared, responsive reading column. */
+.agent-layer[data-full="true"]{--agent-reading-width:960px}
+.agent-layer[data-full="true"] .agent-head{height:72px;padding-inline:clamp(20px,4cqi,56px)}
+.agent-layer[data-full="true"] .agent-head-row{max-width:var(--agent-reading-width)}
+.agent-layer[data-full="true"] .agent-planes{padding-inline:max(24px,calc((100% - var(--agent-reading-width))/2));justify-content:flex-start;gap:22px}
+.agent-layer[data-full="true"] :is(.agent-context,.agent-empty){box-sizing:border-box;width:min(var(--agent-reading-width),calc(100% - 48px));padding:32px 0}
+.agent-layer[data-full="true"] .agent-empty{justify-content:center;gap:20px;max-width:760px}
+.agent-layer[data-full="true"] .encounter[data-presentation="full"] :is(.encounter-transcript,.encounter-composer){box-sizing:border-box;width:min(var(--agent-reading-width),calc(100% - 48px))}

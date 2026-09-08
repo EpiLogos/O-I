@@ -46,7 +46,7 @@ function Directory({path,onOpen,refresh,expanded,toggle,onReading}:{onReading?:(
               the disclosure glyph's width (8px) plus the row's own gap
               (6px). Rendering the spacer for every row, empty for files,
               keeps both kinds in one aligned column. */}
-          <span className="file-disclosure" aria-hidden="true">{folder?(open?"⌄":"›"):""}</span><Glyph name={folder?"folder":"file"}/><span>{entry.name}</span>
+          <Glyph name={folder?"folder":"file"}/><span>{entry.name}</span>
         </button>
         {folder&&open&&<Directory path={entry.location.path} onOpen={onOpen} refresh={refresh} expanded={expanded} toggle={toggle}/>}
       </li>;

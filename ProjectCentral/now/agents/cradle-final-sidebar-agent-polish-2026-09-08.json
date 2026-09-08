@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "cradle-final-sidebar-agent-polish-2026-09-08",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "codex-shell-lead",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1788890929,
+  "subject": "Cradle final sidebar and agent polish",
+  "result": "Lowered both global sidebar icons by 2 CSS pixels. Removed folder disclosure arrows while retaining clickable folder/project rows and expanded accessibility state. Replaced sticky System overlay with a structural bottom row and separate scrolling navigator content, eliminating projects visible below it. Full agency conceals the entire canvas, covers the former tab-row space, preserves global toggle hit targets and uses a responsive expanded content layout. Refinement walk passes 37/37 real functional and layout checks; native actual-Central view observed without canvas peeking or project leakage beneath System. Evidence: desktop/cradle/walk/artifacts/refinement.json and MODE-CONTEXT-CORNER-REFINEMENT-2026-09-08.md. Concurrent System, governance, expression and NOW/DAY changes preserved; no shared day rollover repeated.",
+  "status": "active"
+}

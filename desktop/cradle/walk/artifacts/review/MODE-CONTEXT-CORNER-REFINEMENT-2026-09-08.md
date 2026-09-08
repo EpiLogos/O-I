@@ -22,3 +22,9 @@ Text editors, rendered HTML/Markdown, and native browser pages now have context 
 DOM observations are untrusted observed page content, not canonical source revisions. PDF internals, inaccessible cross-origin nested frame contents and arbitrary non-DOM drawing primitives are not claimed as semantic pickable elements. Local highlight decorations retain the previous matching-document persistence contract; no new synced annotation owner or Git owner workflow is claimed. Legacy textarea-based walks have not been represented as new editor acceptance.
 
 Concurrent System, expression study, governance and shared NOW/DAY work remains with its existing owners. This session adds one named project NOW return; the shared day was already closed by its active owner and is not rolled again here.
+
+## Final sidebar and full-agent polish
+
+Both window sidebar controls move down 2 CSS pixels. Folder arrows are removed; folder/project rows remain operable and disclose expanded state to accessibility. Navigator scrolling is isolated above a structural System row, with no bottom padding exposing projects beneath it. Full agency hides the whole underlying canvas, extends through the previous tab-row area and retains reachable global controls. Its heading, navigation, transcript/composer and empty/context views use responsive full-view sizing; the empty state is centered.
+
+The updated refinement receipt passes 37/37 checks, including System alignment after scrolling, absence of arrow controls, full-view canvas concealment, responsive body width and the global toggle hit target. Native actual-Central full view was inspected for the top edge and System bottom edge. Production app rebuilt. This is observed implementation evidence, not a claim of owner visual acceptance.

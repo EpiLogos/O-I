@@ -20,7 +20,7 @@
   --oi-loading-ground: var(--oi-sidebar-ground);
   --oi-loading-ink: var(--oi-foreground);
 }
-aside.world-navigator[aria-label="World navigator"] { padding: 19px 10px 9px; }
+aside.world-navigator[aria-label="World navigator"] { padding: 19px 10px 0; }
 .world-navigator header { display: flex; align-items: center; gap: var(--oi-space-2); }
 .world-navigator h1 { flex: 1; font-size: var(--oi-shell-type-eyebrow); font-weight: 500; }
 .world-navigator h2 { font-size: var(--oi-shell-type-body); font-weight: 500; }
@@ -180,3 +180,7 @@ aside.world-navigator[aria-label="World navigator"] { padding: 19px 10px 9px; }
 .world-projects > li .project-modes { opacity: .32; transition: opacity var(--oi-motion-ui) var(--oi-motion-ease-out); }
 .world-projects > li:hover > .project-modes, .world-projects > li:focus-within > .project-modes,
 .world-projects > li:has(> button[aria-current="true"]) > .project-modes { opacity: 1; }
+
+.world-navigator{display:flex;flex-direction:column;overflow:hidden}
+.world-system{flex:none;background:var(--oi-sidebar-ground)}
+.world-projects > li > button:first-child{padding-left:10px}

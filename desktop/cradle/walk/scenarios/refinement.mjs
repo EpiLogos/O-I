@@ -44,6 +44,11 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
  await editor.click({button:'right'});check(await page.getByRole('menu',{name:'Writing commands'}).isVisible()&&await page.getByRole('menuitem',{name:'Focus this tab',exact:true}).count()===0,'Document right-click uses shared menu styling with writing-specific actions');await page.keyboard.press('Escape');
  const left=page.locator('[data-region="left"]');await page.getByRole('button',{name:'Toggle left region',exact:true}).click();await page.waitForTimeout(300);
  check((await left.boundingBox()).width<1,'Sidebar closes fully');await page.getByRole('button',{name:'Toggle left region',exact:true}).click();await page.waitForTimeout(300);
+ const system=nav.locator('.world-system'),navigatorBox=await nav.boundingBox(),systemBox=await system.boundingBox();
+ check(Math.abs(systemBox.y+systemBox.height-navigatorBox.y-navigatorBox.height)<2,'System row ends at the navigator bottom without exposing projects beneath');
+ await nav.locator('.world-scroll').evaluate(el=>el.scrollTop=el.scrollHeight);
+ check((await nav.locator('.world-scroll').boundingBox()).y+(await nav.locator('.world-scroll').boundingBox()).height<=(await system.boundingBox()).y+1,'Project scrolling stays structurally above System');
+ check(await nav.locator('.project-disclosure,.file-disclosure').count()===0,'Folder and project rows have no separate arrow controls');
  const resize=page.getByRole('separator',{name:'Resize left region',exact:true});
  check(await resize.evaluate(el=>getComputedStyle(el,'::after').content)==='none','Resize affordance has no visible line');
  const rb=await resize.boundingBox(),old=(await left.boundingBox()).width;await page.mouse.move(rb.x+rb.width/2,rb.y+100);await page.mouse.down();await page.mouse.move(rb.x+rb.width/2+40,rb.y+100,{steps:8});await page.mouse.up();await page.waitForTimeout(250);
@@ -71,6 +76,9 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
  check(rightWidth>200,'Right sidebar opens with usable width');
  await page.getByRole('button',{name:'Full right region',exact:true}).click();await page.waitForTimeout(300);
  check((await right.boundingBox()).width>rightWidth+100,'Right sidebar expands across the central canvas');
+ check(await page.getByRole('button',{name:'Toggle right region',exact:true}).evaluate(el=>{const r=el.getBoundingClientRect();return document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.closest('button')===el;}),'Global right toggle stays clickable above the full agent view');
+ check(!await page.locator('[data-region="centre"]').isVisible(),'Full agent mode conceals the entire canvas including its tab border');
+ check((await right.locator('.agent-empty').boundingBox()).width>rightWidth-30,'Full agent content expands into a wider reading layout');
  await page.getByRole('button',{name:'Restore right region',exact:true}).click();await page.waitForTimeout(300);
  check(Math.abs((await right.boundingBox()).width-rightWidth)<2,'Right sidebar restores its previous width');
  check(await page.getByRole('separator',{name:'Resize right region',exact:true}).evaluate(el=>getComputedStyle(el,'::after').content)==='none','Right resize affordance is cursor-only too');
