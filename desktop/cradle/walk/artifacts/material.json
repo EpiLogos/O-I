@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "material",
-  "generated_at": "2026-09-08T12:18:19.110Z",
+  "generated_at": "2026-09-08T15:35:45.271Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 4113,
+  "duration_ms": 3468,
   "checks": [
     {
       "ok": true,
@@ -145,7 +145,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-08T12:18:19.733Z",
+        "mounted_at": "2026-09-08T15:35:45.378Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -156,7 +156,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 80,
+      "duration_ms": 31,
       "data": {
         "file": "material-html-rendered.png"
       }
@@ -164,7 +164,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 28,
+      "duration_ms": 40,
       "data": {
         "file": "material-markdown-rendered.png"
       }
@@ -172,7 +172,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 46,
+      "duration_ms": 27,
       "data": {
         "file": "material-image-rendered.png"
       }
@@ -180,7 +180,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 73,
+      "duration_ms": 17,
       "data": {
         "file": "material-pdf-state.png"
       }
@@ -188,7 +188,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 45,
+      "duration_ms": 15,
       "data": {
         "file": "material-unsupported-disposition.png"
       }

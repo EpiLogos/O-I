@@ -1,5 +1,5 @@
 import {Loading} from "../shared/Loading";
-import {useEffect,useRef,useState} from "react";
+import {useEffect,useRef,useState,type ReactNode} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import type {NativeFileReading} from "../kernel/types";
 import type {SurfaceBinding} from "../surface/types";
@@ -7,6 +7,7 @@ import {readDraft,writeDraft,clearSavedDraft,type HeldDraft} from "../workspace/
 import {readFile,fileOperation,type FileMutation,type FileHistory,type FilePreview} from "./client";
 import {detectFormat} from "../material/detect";
 import {MaterialSurface} from "../material/MaterialSurface";
+import {dispatchTextCandidate,EditorButton,EditorFrame,replaceSelection,useTextContextMenu} from "../editor/EditorChrome";
 
 /** All writes/history belong to Central. Local storage retains unsaved typing.
  * FND-04: every non-plain-text format delegates entirely to the material
@@ -16,7 +17,7 @@ import {MaterialSurface} from "../material/MaterialSurface";
  * `MaterialSurface`'s own toggle mounts it without recursing back into
  * the material renderer); image/pdf/unsupported binary have no source
  * text to show at all. */
-export function FileSurface({binding,forceSource}:{binding:SurfaceBinding;forceSource?:boolean}) {
+export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceBinding;forceSource?:boolean;leadingTools?:ReactNode}) {
   const format=detectFormat({path:binding.location?.path});
   if(!forceSource&&format!=="text"){
     return <MaterialSurface binding={binding} format={format}/>;
@@ -28,6 +29,7 @@ export function FileSurface({binding,forceSource}:{binding:SurfaceBinding;forceS
   const [history,setHistory]=useState<FileHistory>();const [preview,setPreview]=useState<FilePreview>();
   const body=useRef<HTMLTextAreaElement>(null);const scroll=useRef<HTMLDivElement>(null);const scrollKey=`oi-cradle.file-scroll:${binding.id}`;
   const caretKey=`oi-cradle.file-caret:${binding.id}`;
+  const [caret,setCaret]=useState({line:1,column:1,selected:false});
   const dirty=!!draft&&draft.content!==draft.saved_content;
   const conflict=!!reading&&!!draft&&reading.revision!==draft.base_revision&&dirty;
   const writable=reading?.operations?.write.available===true;
@@ -65,14 +67,21 @@ export function FileSurface({binding,forceSource}:{binding:SurfaceBinding;forceS
     if(result.outcome==="conflict"){setReading(result.current);setError("The file changed after this preview. Read and compare it again.");return;}
     held.current=undefined;await read(false);setPreview(undefined);setHistory(undefined);
   });
-  return <section className="native-file-surface" aria-label={`File ${binding.title}`} aria-busy={pending}>
-    <header className="source-status"><span className="source-location">Central / {binding.location?.path}</span><span className="source-clean-marker">{error&&reading?"Last reading · Read only":dirty?"Unsaved":writable?"Saved":"Read only"}</span><button onClick={()=>void perform(async()=>{await read();})} disabled={pending}>Refresh</button>{reading?.operations?.history.available&&<button onClick={()=>void loadHistory()} disabled={pending}>History</button>}{writable&&<button onClick={()=>void save()} disabled={pending||!dirty||conflict}>Save</button>}</header>
+  const updateCaret=()=>{const el=body.current;if(!el)return;const before=el.value.slice(0,el.selectionStart),lines=before.split("\n");setCaret({line:lines.length,column:(lines[lines.length-1]?.length??0)+1,selected:el.selectionStart!==el.selectionEnd});try{localStorage.setItem(caretKey,JSON.stringify({start:el.selectionStart,end:el.selectionEnd,direction:el.selectionDirection}));}catch{}};
+  const selectionMenu=useTextContextMenu(binding,body,writable,change);
+  const extension=binding.location?.path.split(".").pop()?.toLowerCase();const markdown=extension==="md"||extension==="markdown";const json=extension==="json";
+  const wrap=(left:string,right=left)=>{const el=body.current;if(!el)return;const selected=el.value.slice(el.selectionStart,el.selectionEnd);replaceSelection(el,`${left}${selected}${right}`,change,right.length);};
+  const formatJson=()=>{if(!draft)return;try{change(`${JSON.stringify(JSON.parse(draft.content),null,2)}\n`);setError(undefined);}catch{setError("JSON could not be formatted because it is not valid.");}};
+  return <EditorFrame className="native-file-surface" label={`File ${binding.title}`}
+    toolbar={<>{leadingTools}<EditorButton onClick={()=>void perform(async()=>{await read();})} disabled={pending}>Refresh</EditorButton>{markdown&&<><EditorButton onClick={()=>wrap("**")}>Bold</EditorButton><EditorButton onClick={()=>wrap("_")}>Italic</EditorButton><EditorButton onClick={()=>wrap("[","]()")}>Link</EditorButton></>}{json&&<EditorButton onClick={formatJson} disabled={!writable}>Format JSON</EditorButton>}<EditorButton disabled={!caret.selected} onClick={()=>{const el=body.current;if(el)dispatchTextCandidate(binding,el);}}>Add context</EditorButton></>}
+    footer={<><span className="editor-path" title={`Central / ${binding.location?.path}`}>Central / {binding.location?.path}</span>{reading&&<span>Ln {caret.line}, Col {caret.column}</span>}<span>{error&&reading?"Last reading":dirty?"Unsaved":writable?"Saved":"Read only"}</span>{reading?.operations?.history.available&&<button onClick={()=>void loadHistory()} disabled={pending}>History</button>}{writable&&<button onClick={()=>void save()} disabled={pending||!dirty||conflict}>Save ⌘S</button>}</>}
+  >
     {error&&<p role="alert" className="source-note">{error}</p>}
     {pending&&!reading&&<Loading label="Reading file…" scope="surface"/>}
     {conflict&&<section className="file-conflict" aria-label="File conflict"><p>Current file differs from your draft’s basis.</p><textarea readOnly aria-label="Current file" value={reading!.content}/><button disabled={pending} onClick={()=>{const next={...draft!,base_revision:reading!.revision,saved_content:reading!.content};setDraft(next);try{writeDraft(binding.ref!,next);}catch{setError("Could not retain the updated draft basis.");}}}>Use current revision as draft basis</button></section>}
     {history&&<section className="file-history" aria-label="File history"><button onClick={()=>{setHistory(undefined);setPreview(undefined);}}>Close history</button>{history.entries.length===0&&<p>No changes recorded by Central.</p>}{history.entries.map(entry=><div key={entry.cursor}><span>{entry.actor} · {entry.actor_kind}</span><button onClick={()=>void compare(entry.previous_revision)} disabled={pending}>Compare before change {entry.cursor}</button><button onClick={()=>void compare(entry.revision)} disabled={pending}>Compare change {entry.cursor}</button></div>)}{history.more&&<button disabled={pending} onClick={()=>void loadHistory(history.next_before??undefined)}>Earlier changes</button>}</section>}
     {preview&&<section className="file-recovery" aria-label="File recovery preview"><label>Current<textarea aria-label="Current recovery basis" readOnly value={preview.current_content}/></label><label>Recovery<textarea aria-label="Recovery content" readOnly value={preview.content}/></label><button disabled={pending||dirty||!reading?.operations?.restore.available} onClick={()=>void restore()}>Restore this revision</button>{dirty&&<p>Save or resolve the open draft before restoring a revision.</p>}<button onClick={()=>setPreview(undefined)}>Close preview</button></section>}
-    {reading&&draft&&<div className="source-editor-scroll" ref={scroll} onScroll={event=>{try{localStorage.setItem(scrollKey,String(event.currentTarget.scrollTop));}catch{}}}><div className="source-editor-body"><div className="source-gutter" aria-hidden="true">{Array.from({length:Math.max(1,draft.content.split("\n").length)},(_,i)=><span key={i}>{i+1}</span>)}</div><textarea ref={body} className="source-textarea" aria-label={`${writable?"Editing":"Reading"} ${binding.title}`} readOnly={!writable||pending} value={draft.content} onChange={event=>change(event.target.value)} spellCheck={false} onSelect={event=>{const el=event.currentTarget;try{localStorage.setItem(caretKey,JSON.stringify({start:el.selectionStart,end:el.selectionEnd,direction:el.selectionDirection}));}catch{}}}/></div></div>}
-    {reading&&draft&&<div className="source-editor-foot"><span className="source-foot-revision" title={reading.revision}>{reading.revision?`Rev …${reading.revision.slice(-12)}`:"Rev —"}</span><span>UTF-8 · LF</span></div>}
-  </section>;
+    {reading&&draft&&<div className="source-editor-scroll" ref={scroll} onScroll={event=>{try{localStorage.setItem(scrollKey,String(event.currentTarget.scrollTop));}catch{}}} onKeyDown={event=>{if((event.metaKey||event.ctrlKey)&&event.code==="KeyS"){event.preventDefault();void save();}}}><div className="source-editor-body"><div className="source-gutter" aria-hidden="true">{Array.from({length:Math.max(1,draft.content.split("\n").length)},(_,i)=><span key={i}>{i+1}</span>)}</div><textarea ref={body} className="source-textarea" data-source-ref={binding.ref} aria-label={`${writable?"Editing":"Reading"} ${binding.title}`} readOnly={!writable||pending} value={draft.content} onChange={event=>change(event.target.value)} spellCheck={false} onSelect={updateCaret} onContextMenu={selectionMenu.onContextMenu}/></div></div>}
+    {selectionMenu.menuNode}
+  </EditorFrame>;
 }

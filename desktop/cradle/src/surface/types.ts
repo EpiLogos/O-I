@@ -48,6 +48,8 @@ export interface SurfaceBinding {
   address?: import("../kernel/types").KnowledgeAddress;
   encounter?: {space:string};
   browser?: {url:string};
+  terminal?: {cwd?:string};
+  flow?: {flowRef:string;path:string};
   view?: {encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect"};
   location?: import("../kernel/types").CentralLocation;
 }

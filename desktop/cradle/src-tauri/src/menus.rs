@@ -16,8 +16,10 @@ pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> t
     let edit = SubmenuBuilder::new(app, "Edit").undo().redo().separator().cut().copy().paste().select_all().build()?;
     let browser = MenuItemBuilder::with_id("workspace.browser", "New Browser Pane").accelerator("CmdOrCtrl+Shift+L").build(app)?;
     let address = MenuItemBuilder::with_id("workspace.browser-address", "Go to Web Address…").accelerator("CmdOrCtrl+L").build(app)?;
+    let fresh=MenuItemBuilder::with_id("workspace.new-tab", "New Tab").accelerator("CmdOrCtrl+T").build(app)?;
+    let terminal=MenuItemBuilder::with_id("workspace.terminal", "New Terminal").accelerator("CmdOrCtrl+Shift+J").build(app)?;
     let mut workspace = SubmenuBuilder::new(app, "Workspace")
-        .item(&browser).item(&address)
+        .item(&fresh).item(&terminal).item(&browser).item(&address)
         .text("workspace.create", "New Workspace…")
         .text("workspace.rename", "Rename Workspace…")
         .text("workspace.recover", "Recover Saved Arrangement…").separator();

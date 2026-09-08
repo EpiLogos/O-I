@@ -15,7 +15,7 @@ import {SystemPanel} from "../workspace/SystemPanel";
  */
 
 import { Glyph } from "../workspace/Glyph";
-import { Fragment, useLayoutEffect } from "react";
+import { Fragment, useEffect, useLayoutEffect } from "react";
 import { useKernel } from "../kernel/KernelProvider";
 import type { ListedSource } from "../kernel/types";
 import { KnowledgeSurface } from "../knowledge/KnowledgeSurface";
@@ -24,6 +24,9 @@ import { FileSurface } from "../files/FileSurface";
 import { SourceSurface } from "./SourceSurface";
 import { SourcesIndex } from "./SourcesIndex";
 import { BrowserSurface } from "../browser/BrowserSurface";
+import { TerminalSurface } from "../terminal/TerminalSurface";
+import { FlowSurface } from "../flow/FlowSurface";
+import { FreshSurface } from "../flow/FreshSurface";
 import { contains, groupsOf, renderOrder } from "./engine";
 import type { ActionArg, LayoutState, Pane, SurfaceId } from "./types";
 
@@ -46,6 +49,27 @@ export function Workbench(props: WorkbenchProps) {
   const kernel = useKernel();
   if (!state.root) return null;
 
+  // A pointer entering a rendered material iframe crosses the document
+  // boundary before React can observe it. The browser focuses the owning
+  // iframe element as the outer window blurs; resolve that element on the
+  // next task and move only semantic pane focus. The iframe keeps DOM and
+  // keyboard focus, and native browser child views retain their own event
+  // path (`oi:browser-pane-focus`).
+  useEffect(() => {
+    let timer: number | undefined;
+    const frameFocused = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        const frame = document.activeElement;
+        if (!(frame instanceof HTMLIFrameElement) || !frame.matches(".material-frame")) return;
+        const groupId = frame.closest<HTMLElement>(".pane.group")?.dataset.groupId;
+        if (groupId && groupId !== state.focusedGroupId) props.execute("surface.focus-group", { groupId });
+      });
+    };
+    window.addEventListener("blur", frameFocused);
+    return () => { window.removeEventListener("blur", frameFocused); window.clearTimeout(timer); };
+  }, [props.execute, state.focusedGroupId]);
+
   // D16: focus follows the active binding — keep DOM focus on the active
   // tab of the focused group after keyboard/menu/layout operations. The
   // frame never steals the caret from a surface body (U0.4: editors own
@@ -66,7 +90,7 @@ export function Workbench(props: WorkbenchProps) {
     const frame = requestAnimationFrame(() => {
       // The scrolling tab list is isolated from `.pane-tools`, so bringing
       // the active binding into view never moves the pinned pane controls.
-      el.scrollIntoView({ block: "nearest", inline: "nearest" });
+      (el.closest(".tab-entry") ?? el).scrollIntoView({ block: "nearest", inline: "nearest" });
       const active = document.activeElement as HTMLElement | null;
       const activePane = active?.closest<HTMLElement>(".pane.group");
       // Structural frame operations may remount the old editor. Its caret
@@ -81,7 +105,7 @@ export function Workbench(props: WorkbenchProps) {
       (editor ?? el).focus();
     });
     return () => cancelAnimationFrame(frame);
-  }, [state.focusedGroupId, groupsOf(state.root).find(g => g.id === state.focusedGroupId)?.active, menuOpen]);
+  }, [state.focusedGroupId, groupsOf(state.root).find(g => g.id === state.focusedGroupId)?.active, state.surfaces[groupsOf(state.root).find(g => g.id === state.focusedGroupId)?.active ?? ""]?.title, state.maximizedGroupId, menuOpen]);
 
   return (
     <div className="workbench">
@@ -152,6 +176,7 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
   const tabs = renderOrder(group);
   const active = group.active ?? group.tabs[0];
   const activeBinding = active ? state.surfaces[active] : undefined;
+  const toggleMaximized = () => execute("surface.maximize", { surfaceId: active });
 
   return (
     <section
@@ -159,12 +184,13 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
       data-pane="group"
       data-group-id={group.id}
       data-focused={focused}
+      data-maximized={state.maximizedGroupId === group.id}
       aria-label="Surface group"
       style={{ flexGrow: props.weight ?? 1, display: state.maximizedGroupId && state.maximizedGroupId !== group.id ? "none" : undefined }}
       onFocusCapture={() => {
         if (!focused) execute("surface.focus-group", { groupId: group.id });
       }}
-      onPointerDown={() => {
+      onPointerDownCapture={() => {
         if (!focused) execute("surface.focus-group", { groupId: group.id });
       }}
     >
@@ -208,15 +234,18 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
           <button type="button" className="pane-tool-menu"
             aria-label={state.maximizedGroupId === group.id ? "Restore pane arrangement" : "Maximize this pane"}
             title="Maximize / restore this pane (⌘⌥Enter)"
-            onClick={() => execute("surface.maximize", { surfaceId: active })}>
+            onClick={toggleMaximized}>
             <Glyph name={state.maximizedGroupId === group.id ? "restore" : "expand"} size={13} />
           </button>
           <button
             type="button"
             className="strip-open"
-            aria-label="Open source"
-            title="Open source (⌘T)"
-            onClick={() => { execute("surface.focus-group", { groupId: group.id }); execute("surface.open"); }}
+            aria-label="New tab"
+            title="New tab (⌘T)"
+            onClick={() => {
+              execute("surface.focus-group", { groupId: group.id });
+              window.dispatchEvent(new CustomEvent("oi:new-tab", { detail: { groupId: group.id } }));
+            }}
           >
             <Glyph name="plus" size={13} />
           </button>
@@ -257,7 +286,7 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
       >
         {activeBinding ? <SurfaceBody key={activeBinding.id} binding={activeBinding} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} /> : <p className="source-note">{state.detached?.some(d=>d.groupId===group.id)?"This view is open in a native window. Close that window to re-dock it here.":"Move a tab here, or open a source or wiki with +."}</p>}
       </div>
-      <footer className="pane-status" aria-label={focused ? "Active pane" : "Pane status"} />
+      <footer className="pane-status pane-footer" aria-label={focused ? "Active pane" : "Pane status"} />
     </section>
   );
 }
@@ -274,6 +303,9 @@ function SurfaceBody({
   openSource: (source: ListedSource) => void;
 }) {
   if(binding.kind==="encounter")return <EncounterSurface key={binding.id} binding={binding} onView={view=>onView(binding.id,view)}/>;
+  if (binding.kind === "terminal") return <TerminalSurface binding={binding} />;
+  if (binding.kind === "flow") return <FlowSurface binding={binding} />;
+  if (binding.kind === "blank") return <FreshSurface binding={binding} />;
   if (binding.kind === "browser") return <BrowserSurface binding={binding} />;
   if (binding.kind === "file") return <FileSurface key={binding.id} binding={binding}/>;
   if (binding.kind === "system") return <SystemPanel binding={binding}/>;

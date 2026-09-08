@@ -87,6 +87,7 @@ export function useWorkspaces() {
     } : w)
   }));
   const windowBounds = (workspaceId:string,surfaceId:string,bounds:import("../surface/types").NativeWindowBounds) => setBook(b=>({...b,workspaces:b.workspaces.map(w=>w.id===workspaceId&&w.layout.surfaces[surfaceId]?{...w,layout:{...w.layout,windowBounds:{...w.layout.windowBounds,[surfaceId]:bounds}}}:w)}));
+  const replaceSurface=(workspaceId:string,binding:import("../surface/types").SurfaceBinding)=>setBook(book=>({...book,workspaces:book.workspaces.map(w=>w.id===workspaceId&&w.layout.surfaces[binding.id]?{...w,layout:{...w.layout,surfaces:{...w.layout.surfaces,[binding.id]:binding}}}:w)}));
   const surfaceView=(workspaceId:string,id:string,view:NonNullable<import("../surface/types").SurfaceBinding["view"]>)=>setBook(book=>({...book,workspaces:book.workspaces.map(w=>w.id===workspaceId&&w.layout.surfaces[id]?{...w,layout:{...w.layout,surfaces:{...w.layout.surfaces,[id]:{...w.layout.surfaces[id],view}}}}:w)}));
   const redock = (workspaceId:string,surfaceId:string) => setBook(b=>({...b,workspaces:b.workspaces.map(w=>w.id===workspaceId?{...w,layout:redockBinding(w.layout,surfaceId)}:w)}));
   const startFresh=()=>{if(recovery&&!recovery.key)return;setBook({version:1,active:"root",workspaces:[{id:"root",name:"Central",writing:"",layout:initialLayout()}]});setRecovery(null);};
@@ -104,5 +105,5 @@ export function useWorkspaces() {
     }catch{setError("The retained data is not readable as workspace records. It remains preserved for recovery.");}
   };
   const showRecovery=()=>{const saved=latestRecovery();if(saved)setRecovery({reason:saved.reason,key:saved.key});else setError("There is no retained workspace recovery record on this device.");};
-  return { surfaceView, showRecovery,recovery,startFresh,recoverAvailable, setCentralFiles, setProjectNavigation, windowBounds, redock, current, setWritingMode, workspaces: book.workspaces, setLayout, setWriting, activate, browse, create, rename, error };
+  return { replaceSurface, surfaceView, showRecovery,recovery,startFresh,recoverAvailable, setCentralFiles, setProjectNavigation, windowBounds, redock, current, setWritingMode, workspaces: book.workspaces, setLayout, setWriting, activate, browse, create, rename, error };
 }

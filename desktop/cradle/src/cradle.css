@@ -111,11 +111,25 @@
 }
 
 .pane.group {
+  position: relative;
   flex-direction: column;
   background: var(--oi-canvas-ground);
   border: var(--oi-shell-edge) solid var(--oi-hairline);
   border-radius: var(--oi-shell-radius);
   overflow: hidden;
+  transition: border-color var(--oi-motion-ui) var(--oi-motion-ease-out),
+              border-radius var(--oi-motion-plane) var(--oi-motion-ease-out),
+              opacity var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+
+/* A maximised group leaves the split's old weight and edge behind. This is
+ * especially visible when maximising the final child of a horizontal split. */
+.surface-host:has(.pane.group[data-maximized="true"]) { position: relative; }
+.surface-host:has(.pane.group[data-maximized="true"]) .pane.split { display: contents; }
+.pane.group[data-maximized="true"] { position: absolute; inset: var(--oi-shell-gutter); z-index: 1; }
+::view-transition-old(root), ::view-transition-new(root) {
+  animation-duration: var(--oi-motion-plane);
+  animation-timing-function: var(--oi-motion-ease-out);
 }
 
 /* The focused group carries a top inset highlight on its tab bar; the
@@ -853,5 +867,41 @@
 .tab.active::after { display: none; }
 .pane-status { flex: none; min-height: 18px; display: flex; align-items: center; padding: 0 10px; background: var(--oi-canvas-ground); border-top: 1px solid var(--oi-hairline-soft); }
 
+/* Focus lives in the content, expressed by the footer yielding. Moving back
+ * to the pane edge or tab controls reveals the status/actions without a jump. */
+.pane.group.focused > .pane-footer,
+.pane.group.focused .editor-footer,
+.pane.group.focused .terminal-footer,
+.pane.group.focused .flow-footer,
+.pane.group.focused .browser-status {
+  min-height: 0;
+  height: 0;
+  opacity: 0;
+  overflow: hidden;
+  border-top-width: 0;
+  pointer-events: none;
+  transition: height var(--oi-motion-ui) var(--oi-motion-ease-out),
+              min-height var(--oi-motion-ui) var(--oi-motion-ease-out),
+              opacity var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+.pane.group.focused:hover > .pane-footer,
+.pane.group.focused:hover .editor-footer,
+.pane.group.focused:hover .terminal-footer,
+.pane.group.focused:hover .flow-footer,
+.pane.group.focused .editor-footer:focus-within,
+.pane.group.focused .terminal-footer:focus-within,
+.pane.group.focused .flow-footer:focus-within,
+.pane.group.focused:hover .browser-status {
+  min-height: 18px;
+  height: auto;
+  opacity: 1;
+  border-top-width: 1px;
+  pointer-events: auto;
+}
+
 /* Writing surfaces already own a footer: keep one bottom status band. */
-.pane.group:has(.source-editor-foot, .browser-status) > .pane-status { display: none; }
+.pane.group:has(.editor-footer, .browser-status, .terminal-footer, .flow-footer) > .pane-status { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pane.group, .pane-footer, .editor-footer, .browser-status, .terminal-footer, .flow-footer { transition-duration: 0.01ms !important; }
+}

@@ -8,7 +8,7 @@ use std::{
         Mutex,
     },
 };
-use tauri::webview::{NewWindowResponse, PageLoadEvent, WebviewBuilder};
+use tauri::webview::{DownloadEvent, NewWindowResponse, PageLoadEvent, WebviewBuilder};
 use tauri::{AppHandle, Emitter, LogicalPosition, LogicalSize, Manager, Rect, Webview, WebviewUrl};
 
 #[derive(Clone, Serialize)]
@@ -20,6 +20,14 @@ pub struct Reading {
     pub zoom: f64,
     pub notice: Option<String>,
     pub requested_window: Option<String>,
+    pub profile: String,
+    pub download: Option<DownloadReading>,
+}
+#[derive(Clone, Serialize)]
+pub struct DownloadReading {
+    pub url: String,
+    pub path: String,
+    pub state: String,
 }
 struct Session {
     label: String,
@@ -96,6 +104,7 @@ pub async fn browser_attach(
     webview: Webview,
     id: String,
     address: String,
+    profile: Option<String>,
     bounds: Bounds,
 ) -> Result<Reading, String> {
     trusted(&webview)?;
@@ -121,6 +130,10 @@ pub async fn browser_attach(
         return Err("Open the browser surface before attaching its view".into());
     }
     let initial = url(&address)?;
+    let profile = profile.unwrap_or_else(|| "temporary".into());
+    if !matches!(profile.as_str(), "temporary" | "personal") {
+        return Err("Browser profile must be Temporary or Personal".into());
+    }
     let (label, fresh) = {
         let state = app.state::<Browsers>();
         let mut rows = state.0.lock().map_err(|_| "Browser state unavailable")?;
@@ -149,6 +162,8 @@ pub async fn browser_attach(
                         zoom: 1.0,
                         notice: None,
                         requested_window: None,
+                        profile: profile.clone(),
+                        download: None,
                     },
                 },
             );
@@ -171,8 +186,8 @@ pub async fn browser_attach(
         let download_app = app.clone();
         let download_id = id.clone();
         let download_label = label.clone();
-        let builder = WebviewBuilder::new(&label, WebviewUrl::External(initial))
-            .incognito(true)
+        let mut builder = WebviewBuilder::new(&label, WebviewUrl::External(initial))
+            .incognito(profile == "temporary")
             .focused(false)
             .on_navigation(move |target| {
                 if url(target.as_str()).is_err() {
@@ -209,12 +224,55 @@ pub async fn browser_attach(
                 });
                 NewWindowResponse::Deny
             })
-            .on_download(move |_, _| {
-                update(&download_app, &download_id, &download_label, |r| {
-                    r.notice = Some("Downloads are not enabled in this browser yet".into())
-                });
-                false
+            .on_download(move |_, event| {
+                match event {
+                    DownloadEvent::Requested { url, destination } => {
+                        let path = destination.display().to_string();
+                        update(&download_app, &download_id, &download_label, |r| {
+                            r.notice = Some(format!("Downloading to {path}"));
+                            r.download = Some(DownloadReading {
+                                url: url.to_string(),
+                                path,
+                                state: "downloading".into(),
+                            });
+                        });
+                    }
+                    DownloadEvent::Finished { url, path, success } => {
+                        update(&download_app, &download_id, &download_label, |r| {
+                            let known_path = path
+                                .as_ref()
+                                .map(|p| p.display().to_string())
+                                .or_else(|| {
+                                    r.download
+                                        .as_ref()
+                                        .filter(|d| d.url == url.as_str())
+                                        .map(|d| d.path.clone())
+                                })
+                                .unwrap_or_default();
+                            let state = if success { "saved" } else { "failed" };
+                            r.notice = Some(if success {
+                                format!("Saved to {known_path}")
+                            } else {
+                                "Download failed".into()
+                            });
+                            r.download = Some(DownloadReading {
+                                url: url.to_string(),
+                                path: known_path,
+                                state: state.into(),
+                            });
+                        });
+                    }
+                    _ => {}
+                }
+                true
             });
+        // A stable WebKit data-store identifier keeps Personal cookies and
+        // site storage across panes and launches. Wry falls back to WebKit's
+        // default persistent store before macOS 14; Temporary always uses the
+        // non-persistent store.
+        if profile == "personal" {
+            builder = builder.data_store_identifier(*b"OI-browser-user1");
+        }
         match webview.window().add_child(
             builder,
             LogicalPosition::new(bounds.x, bounds.y),
@@ -298,6 +356,15 @@ pub async fn browser_control(
     };
     let child = app.get_webview(&label).ok_or("Browser is unavailable")?;
     match action.as_str() {
+        "close" => {
+            child.close().map_err(|e| e.to_string())?;
+            let state = app.state::<Browsers>();
+            let mut rows = state.0.lock().map_err(|_| "Browser state unavailable")?;
+            if rows.get(&id).is_some_and(|s| s.label == label) {
+                rows.remove(&id);
+            }
+            Ok(())
+        }
         "navigate" => child.navigate(url(address.as_deref().ok_or("Address is missing")?)?),
         "back" => child.eval("history.back()"),
         "forward" => child.eval("history.forward()"),

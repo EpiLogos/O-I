@@ -276,6 +276,35 @@ fn kernel_apply_exposes_typed_owner_flow_return_seam() {
     let revision0 = flow.current_revision.clone();
     assert_eq!(flow.scope_ref, "project:kernel-flow-return");
 
+    // An unversioned read omits the optional CAS field on the owner wire.
+    // Central distinguishes absence from a present JSON null.
+    let unversioned_wire = serde_json::to_value(KernelOp::Flow {
+        request: Request::FlowRead {
+            project: "KernelEditor".into(),
+            flow_ref: flow_ref.clone(),
+            expected_revision: None,
+        },
+    })
+    .unwrap();
+    assert!(unversioned_wire["request"].get("expected_revision").is_none());
+    let unversioned = kernel
+        .apply(KernelOp::Flow {
+            request: Request::FlowRead {
+                project: "KernelEditor".into(),
+                flow_ref: flow_ref.clone(),
+                expected_revision: None,
+            },
+        })
+        .unwrap();
+    let KernelOpResult::Flow {
+        response: Response::FlowRead { reading },
+    } = unversioned.result
+    else {
+        panic!("unversioned FlowRead must succeed through the real owner")
+    };
+    assert_eq!(reading.flow.current_revision, revision0);
+    assert_eq!(reading.content, "");
+
     let read_wire = serde_json::to_value(KernelOp::Flow {
         request: Request::FlowRead {
             project: "KernelEditor".into(),

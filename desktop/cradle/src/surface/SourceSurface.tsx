@@ -16,6 +16,7 @@ import { readDraft, writeDraft } from "../workspace/drafts";
 import { SourceHistory } from "./SourceHistory";
 import { useKernel } from "../kernel/KernelProvider";
 import type { SurfaceBinding } from "./types";
+import {dispatchTextCandidate,EditorButton,EditorFrame,replaceSelection,useTextContextMenu} from "../editor/EditorChrome";
 
 export interface SourceSurfaceProps {
   binding: SurfaceBinding;
@@ -36,6 +37,7 @@ export function SourceSurface(props: SourceSurfaceProps) {
   const initialDraft = useRef(binding.ref ? readDraft(binding.ref) : null);
   const [draftError, setDraftError] = useState<string | null>(null);
   const [text, setText] = useState(initialDraft.current?.content ?? buffer?.content ?? "");
+  const [caret,setCaret]=useState({line:1,column:1,selected:false});
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const viewKey = `oi-cradle.source-view:${binding.ref}`;
@@ -116,6 +118,11 @@ export function SourceSurface(props: SourceSurfaceProps) {
     // dirty flag can still be one response behind a fast Cmd+S.
     if (binding.ref) void kernel.saveSource(binding.ref);
   };
+  const updateCaret=()=>{const el=textareaRef.current;if(!el)return;const before=el.value.slice(0,el.selectionStart);const lines=before.split("\n");setCaret({line:lines.length,column:(lines[lines.length-1]?.length??0)+1,selected:el.selectionStart!==el.selectionEnd});retainView();};
+  const selectionMenu=useTextContextMenu(binding,textareaRef,true,onEdit);
+  const wrap=(left:string,right=left)=>{const el=textareaRef.current;if(!el)return;const selected=el.value.slice(el.selectionStart,el.selectionEnd);replaceSelection(el,`${left}${selected}${right}`,onEdit,right.length);};
+  const extension=buffer?.path?.split(".").pop()?.toLowerCase();const markdown=extension==="md"||extension==="markdown";const code=!!extension&&!markdown&&!new Set(["txt","log","csv","tsv"]).has(extension);
+  const indent=()=>{const el=textareaRef.current;if(!el)return;const start=el.value.lastIndexOf("\n",Math.max(0,el.selectionStart-1))+1;const endLine=el.value.indexOf("\n",el.selectionEnd);const end=endLine<0?el.value.length:endLine;const block=el.value.slice(start,end).split("\n").map(line=>`  ${line}`).join("\n");el.setSelectionRange(start,end);replaceSelection(el,block,onEdit);};
 
   // ⌘S saves from anywhere in this surface (textarea, conflict panel) —
   // the save is the surface's act, wherever the caret idles. Every other
@@ -146,31 +153,16 @@ export function SourceSurface(props: SourceSurfaceProps) {
   const conflict = buffer.conflict;
   const saveFailed = conflict !== undefined;
   return (
-    <div
+    <EditorFrame
       className={`source-editor${buffer.dirty ? " dirty" : ""}${saveFailed ? " conflicted" : ""}`}
-      data-kind="source"
-      data-ref={binding.ref}
-      data-dirty={buffer.dirty}
-      data-conflicted={saveFailed}
-      onKeyDown={onKeyDown}
+      label={`Editor ${binding.title}`}
+      toolbar={<>{markdown&&<><EditorButton title="Wrap selection in bold Markdown" onClick={()=>wrap("**")}>Bold</EditorButton><EditorButton title="Wrap selection in italic Markdown" onClick={()=>wrap("_")}>Italic</EditorButton></>}{code&&<EditorButton title="Indent selected lines" onClick={indent}>Indent</EditorButton>}<EditorButton disabled={!caret.selected} onClick={()=>{const el=textareaRef.current;if(el)dispatchTextCandidate(binding,el);}}>Add context</EditorButton></>}
+      footer={<><span className="editor-path source-revision" data-revision={buffer.base_revision} title={`Central / Work / ${buffer.project} / ${buffer.path}`}>Central / Work / {buffer.project} / {buffer.path}</span><span>Ln {caret.line}, Col {caret.column}</span><span className={buffer.dirty?"source-dirty-marker":"source-clean-marker"}>{buffer.dirty?"Unsaved":"Saved"}</span><button type="button" aria-expanded={historyOpen} onClick={()=>setHistoryOpen(open=>!open)}>History</button><button type="button" onClick={onSave} disabled={!buffer.dirty}>Save · ⌘S</button></>}
+      data={{kind:"source",ref:binding.ref,dirty:buffer.dirty,conflicted:saveFailed}}
     >
       {draftError && <p role="alert">{draftError}</p>}
       {error && <p className="source-note" role="alert">{error}</p>}
-      <div className="source-status" role="status">
-        <span className="source-revision source-location" data-revision={buffer.base_revision} title={`Central / Work / ${buffer.project} / ${buffer.path}`}>
-          Central / Work / {buffer.project} / {buffer.path}
-        </span>
-        {buffer.dirty ? (
-          <span className="source-dirty-marker" title="This source has unsaved changes">
-            Unsaved changes
-          </span>
-        ) : (
-          <span className="source-clean-marker">Saved</span>
-        )}
-        <button type="button" className="source-history-toggle" aria-expanded={historyOpen} onClick={() => setHistoryOpen(open => !open)}>History</button>
-        <button type="button" className="source-save" onClick={onSave} disabled={!buffer.dirty}>Save · ⌘S</button>
-      </div>
-      <div className="source-editor-scroll" ref={scrollRef} onScroll={retainView}>
+      <div className="source-editor-scroll" ref={scrollRef} onScroll={retainView} onKeyDown={onKeyDown}>
         <div className="source-editor-body">
           <div className="source-gutter" aria-hidden="true">
             {Array.from({ length: Math.max(1, text.split("\n").length) }, (_, i) => (
@@ -185,7 +177,8 @@ export function SourceSurface(props: SourceSurfaceProps) {
             spellCheck={false}
             value={text}
             onChange={(event) => onEdit(event.target.value)}
-            onSelect={retainView}
+            onSelect={updateCaret}
+            onContextMenu={selectionMenu.onContextMenu}
           />
         </div>
         {historyOpen && <SourceHistory sourceRef={binding.ref} revision={buffer.conflict?.current_revision ?? buffer.base_revision} />}
@@ -238,13 +231,7 @@ export function SourceSurface(props: SourceSurfaceProps) {
         </div>
         ) : null}
       </div>
-      {/* Finding 28: a bare truncated hash with no label read as unexplained
-          filler; "Rev" gives it the same reading the study's footer line
-          has, at this row's 8px tracked-eyebrow scale. */}
-      <div className="source-editor-foot">
-        <span className="source-foot-revision" title={buffer.base_revision}>Rev {shortRevision(buffer.base_revision)}</span>
-        <span>UTF-8 · LF</span>
-      </div>
-    </div>
+      {selectionMenu.menuNode}
+    </EditorFrame>
   );
 }

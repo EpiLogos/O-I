@@ -1,0 +1,74 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "context-draft",
+  "generated_at": "2026-09-08T15:53:13.097Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4237",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 4747,
+  "checks": [
+    {
+      "ok": true,
+      "label": "An existing real conversation is an explicit context destination"
+    },
+    {
+      "ok": true,
+      "label": "The tray presents the exact selected source text"
+    },
+    {
+      "ok": true,
+      "label": "Context append preserves the existing AIKit-owned draft"
+    },
+    {
+      "ok": true,
+      "label": "The owner draft receives the exact quote, source ref and selection-time revision"
+    },
+    {
+      "ok": true,
+      "label": "Adding context does not send a provider prompt or create transcript blocks"
+    },
+    {
+      "ok": true,
+      "label": "A source changed after selection is visibly refused"
+    },
+    {
+      "ok": true,
+      "label": "Stale refusal leaves the owner draft revision and text unchanged"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-08T15:53:13.213Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4237"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 50,
+      "data": {
+        "file": "context-draft-real-owner-cas-and-stale-refusal.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "context-draft-real-owner-cas-and-stale-refusal.png"
+  ]
+}

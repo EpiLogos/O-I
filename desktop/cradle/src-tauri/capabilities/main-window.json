@@ -16,7 +16,13 @@
     "allow-window-focus-main",
     "allow-browser-attach",
     "allow-browser-control",
-    "allow-browser-reconcile"
+    "allow-browser-reconcile",
+    "allow-terminal-attach",
+    "allow-terminal-poll",
+    "allow-terminal-input",
+    "allow-terminal-resize",
+    "allow-terminal-checkpoint",
+    "allow-terminal-reconcile"
   ],
   "webviews": [
     "main",

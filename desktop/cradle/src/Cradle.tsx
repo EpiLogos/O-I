@@ -1,3 +1,5 @@
+import {flow} from "./flow/client";
+import {ContextTray} from "./context/ContextTray";
 import {FileHistory} from "./files/FileHistory";
 import {encounter} from "./encounter/client";
 import type {EncounterRow} from "./encounter/EncounterList";
@@ -66,7 +68,7 @@ import type {
   SurfaceBinding,
   SurfaceId,
 } from "./surface/types";
-import { createPortal } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 
 function snapshotOf(state: LayoutState): RestorePoint {
   return {
@@ -242,16 +244,15 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
   const activeId = activeBindingId(state);
   const revealedSurface = useRef<string | null>(null);
   useEffect(() => {
-    const key=activeId ? `${workspace.current.id}:${activeId}` : null;
-    if (!key) {revealedSurface.current=null;return;}
-    if (revealedSurface.current===key) return;
-    const binding=state.surfaces[activeId!];
+    const binding=activeId ? state.surfaces[activeId] : undefined;
     const project=binding?.project ?? (binding?.ref ? kernel.snapshot.buffers[binding.ref]?.project : undefined);
-    if (!project) return;
+    const key=activeId && project ? `${workspace.current.id}:${activeId}:${project}` : null;
+    if (!key) {revealedSurface.current=null;return;}
+    if (revealedSurface.current===key || !project) return;
     revealedSurface.current=key;
     workspace.browse(project);
     if(kernel.snapshot.navigator?.project?.project.name!==project) void kernel.apply({op:"project_browse",project});
-  },[activeId,workspace.current.id,kernel.snapshot.buffers]);
+  },[activeId,activeId ? state.surfaces[activeId]?.project : undefined,workspace.current.id,kernel.snapshot.buffers]);
   useEffect(() => {
     if (!activeId) return;
     if (lastFocusedSurface.current === activeId) return;
@@ -274,8 +275,12 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
   };
   const execute = (ref: string, arg?: ActionArg) => {
     if(ref === "surface.detach") {void detach(arg?.surfaceId??activeBindingId(stateRef.current)??"");return;}
-    if (ref === "surface.open" || ref === "surface.open-sources") { summonWorld(); return; }
-    setState((s) => executeFrameAction(s, ref, arg, restorePoint.current));
+    if(ref==="surface.open"){openFresh(arg?.groupId);return;}
+    if(ref==="surface.open-sources"){summonWorld();return;}
+    const change=()=>setState((s) => executeFrameAction(s, ref, arg, restorePoint.current));
+    const transition=(document as Document & {startViewTransition?:(update:()=>void)=>unknown}).startViewTransition;
+    if(ref==="surface.maximize"&&transition&&!window.matchMedia("(prefers-reduced-motion: reduce)").matches)transition.call(document,()=>flushSync(change));
+    else change();
   };
 
   /** Open a real source from the index listing: one layout binding carrying
@@ -374,6 +379,43 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
     setState(s=>groupsOf(s.root).some(g=>g.tabs.includes(binding.id)) ? executeFrameAction(s,"surface.activate",{surfaceId:binding.id}) : openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
   };
 
+  const openFresh=(groupId?:string)=>{
+    const binding:SurfaceBinding={id:crypto.randomUUID(),kind:"blank",title:"New tab",project:workspaceRef.current.current.project??undefined};
+    setState(s=>openBinding(groupId?{...s,focusedGroupId:groupId}:s,binding));
+  };
+  const terminalCwd=(project?:string)=>{
+    const root=kernel.snapshot.navigator?.root?.root;
+    const path=kernel.snapshot.navigator?.root?.work.projects.find(candidate=>candidate.name===project)?.path
+      ?? kernel.snapshot.navigator?.project?.project.path;
+    if(path?.startsWith("/"))return path;
+    if(root&&path)return `${root.replace(/\/$/,"")}/${path.replace(/^\//,"")}`;
+    return root;
+  };
+  const freshChoice=async(id:string,kind:string,project?:string)=>{
+    const workspaceId=workspaceRef.current.current.id;
+    const current=stateRef.current.surfaces[id];if(!current)return;
+    project=project??current.project??workspaceRef.current.current.project??undefined;
+    if(kind==="search"){setSearchOpen(true);return;}
+    let binding:SurfaceBinding={...current,project,kind,title:kind==="terminal"?"Terminal":"Browser"};
+    if(kind==="flow"){
+      if(!project)throw new Error("Choose a project for this Flow first");
+      const created=await flow(kernel.transport,{action:"flow_create",project,actor:"desktop-user",actor_kind:"human",title:"Flow.md",path:`ProjectCentral/now/flows/${crypto.randomUUID()}/flow.md`});
+      binding={...binding,title:"Flow.md",ref:created.flow.source_ref,flow:{flowRef:created.flow.flow_ref,path:created.flow.path}};
+    }else if(kind==="terminal"){
+      binding.terminal={cwd:terminalCwd(project)};
+    }else if(kind==="browser"){binding.browser={url:""};}else{return;}
+    const opened=await kernel.apply({op:"surface_open",surface_id:id,kind:binding.kind,title:binding.title,source_ref:binding.ref});
+    if(opened?.result!=="surface_opened")throw new Error("The new surface could not be opened");
+    workspaceRef.current.replaceSurface(workspaceId,binding);
+  };
+  const freshRef=useRef(freshChoice);freshRef.current=freshChoice;
+  useEffect(()=>{
+    const create=(event:Event)=>openFresh((event as CustomEvent<{groupId?:string}>).detail?.groupId);
+    const choose=(event:Event)=>{const d=(event as CustomEvent<{id:string;kind:string;project?:string}>).detail;void freshRef.current(d.id,d.kind,d.project).then(()=>window.dispatchEvent(new CustomEvent("oi:fresh-result",{detail:{id:d.id}}))).catch(reason=>window.dispatchEvent(new CustomEvent("oi:fresh-result",{detail:{id:d.id,error:String(reason)}})));};
+    window.addEventListener("oi:new-tab",create);window.addEventListener("oi:fresh-choice",choose);
+    return()=>{window.removeEventListener("oi:new-tab",create);window.removeEventListener("oi:fresh-choice",choose);};
+  },[]);
+
   const openBrowser = async () => {
     const binding={id:crypto.randomUUID(),kind:"browser",title:"Browser",browser:{url:""}};
     const opened=await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"browser",title:binding.title});
@@ -385,15 +427,15 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
     const reconcile=()=>{
       const layouts=[stateRef.current,...workspaceRef.current.workspaces.filter(w=>w.id!==workspaceRef.current.current.id).map(w=>w.layout)];
       const live=layouts.flatMap(layout=>[...groupsOf(layout.root).flatMap(g=>g.tabs),...(layout.detached??[]).map(d=>d.surfaceId)]);
-      void import("@tauri-apps/api/core").then(({invoke})=>invoke("browser_reconcile",{live})).catch(reason=>setWindowError(String(reason)));
+      void import("@tauri-apps/api/core").then(({invoke})=>Promise.all([invoke("browser_reconcile",{live}),invoke("terminal_reconcile",{live})])).catch(reason=>setWindowError(String(reason)));
     };
     const title=(event:Event)=>{const reading=(event as CustomEvent<{id:string;title:string;url:string}>).detail;
       setState(s=>s.surfaces[reading.id]?.kind==="browser"?{...s,surfaces:{...s.surfaces,[reading.id]:{...s.surfaces[reading.id],title:reading.title||"Browser",browser:{url:reading.url}}}}:s);
     };
     const focus=(event:Event)=>setState(s=>executeFrameAction(s,"surface.activate",{surfaceId:(event as CustomEvent<string>).detail}));
     window.addEventListener("oi:browser-pane-focus",focus);
-    reconcile();window.addEventListener("oi:browser-attached",reconcile);window.addEventListener("oi:browser-title",title);
-    return()=>{window.removeEventListener("oi:browser-pane-focus",focus);window.removeEventListener("oi:browser-attached",reconcile);window.removeEventListener("oi:browser-title",title);};
+    reconcile();window.addEventListener("oi:terminal-attached",reconcile);window.addEventListener("oi:browser-attached",reconcile);window.addEventListener("oi:browser-title",title);
+    return()=>{window.removeEventListener("oi:browser-pane-focus",focus);window.removeEventListener("oi:terminal-attached",reconcile);window.removeEventListener("oi:browser-attached",reconcile);window.removeEventListener("oi:browser-title",title);};
   },[state.root,state.detached,workspace.workspaces,kernel.transport.kind]);
 
   // The frame keyboard map (keys.ts) + Escape. Attached always, so ⌘T/⌘O
@@ -435,8 +477,9 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
       const act = frameActionForKey(e, !!menuRef.current);
       if (!act) return;
       e.preventDefault();
-      if (act.ref === "surface.open" || act.ref === "surface.open-sources") { summonWorld(); return; }
-      setState((s) => executeFrameAction(s, act.ref, act.arg, restorePoint.current));
+      if(act.ref==="surface.open"){openFresh();return;}
+      if(act.ref==="surface.open-sources"){summonWorld();return;}
+      execute(act.ref,act.arg);
     };
     const onContext = (e: MouseEvent) => {
       if (!(e.target as HTMLElement).closest(".agency-field,.agency-column")) return;
@@ -543,6 +586,8 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
 
   const arrangementDispatch = useRef<(action:string)=>void>(()=>{});
   arrangementDispatch.current = action => {
+    if(action==="workspace.new-tab"){openFresh();return;}
+    if(action==="workspace.terminal"){const id=crypto.randomUUID();const project=workspaceRef.current.current.project??undefined;const binding:SurfaceBinding={id,kind:"terminal",title:"Terminal",project,terminal:{cwd:terminalCwd(project)}};setState(s=>openBinding(s,binding));return;}
     if(action==="workspace.browser-address"){const address=document.querySelector<HTMLInputElement>('.pane[data-focused="true"] .browser-address');if(address){address.focus();address.select();}else void openBrowser().catch(reason=>setWindowError(String(reason)));return;}
     if(action==="workspace.browser"){void openBrowser().catch(reason=>setWindowError(String(reason)));return;}
     if(action==="workspace.recover"){workspace.showRecovery();return;}
@@ -557,6 +602,18 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
     let disposed=false;let cleanup:(()=>void)|undefined;
     void import("@tauri-apps/api/event").then(async({listen})=>{
       const unlisten=await listen<string>("oi:arrangement-action",e=>arrangementDispatch.current(e.payload));
+      if(disposed)unlisten();else cleanup=unlisten;
+    });
+    return()=>{disposed=true;cleanup?.();};
+  },[kernel.transport.kind]);
+  useEffect(()=>{
+    if(kernel.transport.kind!=="tauri")return;
+    let disposed=false;let cleanup:(()=>void)|undefined;
+    void import("@tauri-apps/api/event").then(async({listen})=>{
+      const unlisten=await listen<{bindingId:string}>("oi:detached-context",event=>{
+        const known=workspaceRef.current.workspaces.some(w=>(w.layout.detached??[]).some(d=>d.surfaceId===event.payload.bindingId));
+        if(known){window.dispatchEvent(new CustomEvent("oi:context-candidate",{detail:event.payload}));void import("@tauri-apps/api/core").then(({invoke})=>invoke("window_focus_main")).catch(reason=>setWindowError(String(reason)));}
+      });
       if(disposed)unlisten();else cleanup=unlisten;
     });
     return()=>{disposed=true;cleanup?.();};
@@ -621,6 +678,7 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
       )}
       </DesktopShell>
       {WalkChannel&&<WalkChannel layout={state}/>}
+      <ContextTray bindings={{...Object.assign({},...workspace.workspaces.map(w=>w.layout.surfaces)),...state.surfaces}} accompanying={state.accompanying}/>
       {searchOpen && <SearchOverlay leader={leader.shift} onLeaderChange={leader.change} shortcutError={leader.error} project={workspace.current.project} onClose={()=>setSearchOpen(false)} onOpen={openKnowledge} />}
       {Object.entries(surfaceErrors).map(([id, error]) => (
         <SurfaceErrorOverlay key={id} surfaceId={id} error={error} onRetry={() => retrySurfaceOpen(id)} />

@@ -9,6 +9,7 @@
   min-width: 0;
   background: var(--oi-canvas-ground);
 }
+.material-rendered-content{display:flex;flex-direction:column;flex:1;min-height:0}
 
 /* Finding 17: the material chrome row now matches `.source-status`'s own
  * 35px grammar (`cradle.css`) — path left (ellipsis), format meta right —
@@ -64,7 +65,7 @@
  * (shell.css) — a bare `.material-toggle button` ties with it on
  * specificity and loses on source order, so the unselected segment read
  * as accent-ink instead of muted. */
-.material-chrome .material-toggle button {
+.editor-command-line .material-toggle button {
   appearance: none;
   border: none;
   height: 100%;
@@ -77,9 +78,9 @@
   transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out), box-shadow var(--oi-motion-ui) var(--oi-motion-ease-out);
 }
 
-.material-chrome .material-toggle button:hover { color: var(--oi-accent-ink); }
+.editor-command-line .material-toggle button:hover { color: var(--oi-accent-ink); }
 
-.material-chrome .material-toggle button[aria-selected="true"] {
+.editor-command-line .material-toggle button[aria-selected="true"] {
   background: var(--oi-sidebar-ground);
   color: var(--oi-accent-ink);
   box-shadow: var(--oi-shadow-plane);
@@ -125,6 +126,8 @@
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+  transform-origin:center;
+  transition:transform var(--oi-motion-ui) var(--oi-motion-ease-out);
 }
 
 .material-unavailable {

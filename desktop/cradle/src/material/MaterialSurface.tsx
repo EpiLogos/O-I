@@ -8,6 +8,7 @@ import {FileSurface} from "../files/FileSurface";
 import type {MaterialFormat} from "./detect";
 import {renderMarkdown} from "./markdown";
 import "./material.css";
+import {EditorButton,EditorFrame} from "../editor/EditorChrome";
 
 /** One material path segment, percent-encoded whole (mirrors
  * `ctrl/src/files.rs::escape` closely enough for URL transport — the
@@ -88,11 +89,13 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
   const { transport } = useKernel();
   const viewKey = `oi-cradle.material-view:${binding.id}`;
   const [savedView] = useState(() => { try { return JSON.parse(localStorage.getItem(viewKey) ?? "null"); } catch { return null; } });
-  const [view, setView] = useState<"rendered" | "source">(savedView?.view === "source" && (format === "html" || format === "markdown") ? "source" : "rendered");
+  // Source is a transient editing choice. A newly mounted document opens in
+  // its faithful rendered form; only neutral preview zoom persists.
+  const [view, setView] = useState<"rendered" | "source">("rendered");
   const { containerRef, suspended } = useSuspend(view);
   const [zoom, setZoom] = useState<number>([.5,.75,1,1.25,1.5,2].includes(savedView?.zoom) ? savedView.zoom : 1);
   const [generation, setGeneration] = useState(0);
-  useEffect(() => { try { localStorage.setItem(viewKey, JSON.stringify({view,zoom})); } catch { /* Optional presentation state; never source authority. */ } }, [viewKey,view,zoom]);
+  useEffect(() => { try { localStorage.setItem(viewKey, JSON.stringify({zoom})); } catch { /* Optional presentation state; never source authority. */ } }, [viewKey,zoom]);
   const [textContent, setTextContent] = useState<string>();
   const [disposition, setDisposition] = useState<Disposition>();
   const [imageDataUrl, setImageDataUrl] = useState<string>();
@@ -132,25 +135,25 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
   }, [transport, location, format, generation]);
 
   const showToggle = format === "html" || format === "markdown";
-  const zoomable = ["html","markdown"].includes(format);
+  const zoomable = ["html","markdown","image"].includes(format);
   const tools = view === "rendered" ? <div className="material-tools">
     {zoomable && <select aria-label="Preview zoom" value={zoom} onChange={e=>setZoom(Number(e.target.value))}>{[.5,.75,1,1.25,1.5,2].map(value=><option key={value} value={value}>{Math.round(value*100)}%</option>)}</select>}
     <button type="button" aria-label="Reload preview" title="Reload from the file owner" disabled={pending} onClick={()=>setGeneration(value=>value+1)}>↻</button>
   </div> : null;
   if (!location) return <p role="alert" className="source-note">The saved file location is unavailable</p>;
   if (view === "source") {
-    return <section className="material-surface" aria-label={`Material ${binding.title}`}>
-      <MaterialChrome format={format} view={view} onChange={setView} showToggle={showToggle} tools={tools} />
-      <div className="material-body"><FileSurface binding={binding} forceSource /></div>
-    </section>;
+    return <FileSurface binding={binding} forceSource leadingTools={<MaterialToggle view={view} onChange={setView}/>}/>;
   }
 
   const resolveAsset = (relative: string) => materialUrl(transport, location, relative) ?? "";
   const baseUrl = materialUrl(transport, location);
   const imageSrc = transport.kind === "bridge" ? imageDataUrl : baseUrl;
 
-  return <section className="material-surface" aria-label={`Material ${binding.title}`} aria-busy={pending} ref={containerRef}>
-    <MaterialChrome format={format} view={view} onChange={setView} showToggle={showToggle} tools={tools} />
+  return <EditorFrame className="material-surface" label={`Material ${binding.title}`}
+    toolbar={<>{showToggle&&<MaterialToggle view={view} onChange={setView}/>} {tools}</>}
+    footer={<><span className="editor-path" title={`Central / ${location.path}`}>Central / {location.path}</span><span>{FORMAT_LABEL[format]}</span>{zoomable&&<span>{Math.round(zoom*100)}%</span>}<EditorButton disabled={pending} onClick={()=>setGeneration(value=>value+1)}>Reload</EditorButton></>}
+  >
+    <div ref={containerRef} className="material-rendered-content" aria-busy={pending}>
     {error && <p role="alert" className="source-note">{error} <button type="button" onClick={()=>setGeneration(value=>value+1)}>Retry</button></p>}
     {!error && pending && <Loading label="Reading material…" scope="surface"/>}
     {!error && !pending && format === "html" && <div className="material-viewport" data-preview-zoom={zoom}><div className="material-scaled" style={{width:`${100/zoom}%`,height:`${100/zoom}%`,transform:`scale(${zoom})`}}>{(
@@ -164,7 +167,7 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
     {!error && !pending && format === "image" && (
       <div className="material-image-frame">
         {imageSrc
-          ? <img key={generation} className="material-image" alt={binding.title} src={suspended ? undefined : imageSrc} />
+          ? <img key={generation} className="material-image" alt={binding.title} src={suspended ? undefined : imageSrc} style={{transform:`scale(${zoom})`}} />
           : <p className="source-note">No transport can serve this image.</p>}
       </div>
     )}
@@ -184,7 +187,8 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
         <p className="material-disposition-note">Central serves this file read-only; no renderer is available in the desktop.</p>
       </div>
     )}
-  </section>;
+    </div>
+  </EditorFrame>;
 }
 
 // Finding 17 (chrome grammar): one 35px row per material surface, matching
@@ -193,17 +197,6 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
 const FORMAT_LABEL: Record<MaterialFormat, string> = {
   html: "HTML", markdown: "Markdown", image: "Image", pdf: "PDF", text: "Text", unsupported: "Unsupported",
 };
-
-function MaterialChrome({ format, view, onChange, showToggle, tools }: {
-  format: MaterialFormat; view: "rendered" | "source"; onChange: (view: "rendered" | "source") => void; showToggle: boolean; tools: React.ReactNode;
-}) {
-  return <header className="material-chrome">
-    <span className="material-path" aria-hidden="true"/>
-    <span className="material-format">{FORMAT_LABEL[format]}</span>
-    {tools}
-    {showToggle && <MaterialToggle view={view} onChange={onChange} />}
-  </header>;
-}
 
 // Finding 16: a proper segmented control — the filled-block selection this
 // used to draw sat 35px below the tab strip's own olive underline as a

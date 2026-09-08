@@ -5,18 +5,22 @@ import {useKernel} from "../kernel/KernelProvider";
 import type {SurfaceBinding} from "../surface/types";
 import "./browser.css";
 
-type Reading={id:string;url:string;title:string;loading:boolean;zoom:number;notice?:string;requested_window?:string};
+type Profile="temporary"|"personal";
+type DownloadReading={url:string;path:string;state:"downloading"|"saved"|"failed"};
+type Reading={id:string;url:string;title:string;loading:boolean;zoom:number;notice?:string;requested_window?:string;profile:Profile;download?:DownloadReading};
 const queues=new Map<string,Promise<unknown>>();
 function serial<T>(id:string, work:()=>Promise<T>):Promise<T>{
   const next=(queues.get(id)??Promise.resolve()).catch(()=>{}).then(work);
   queues.set(id,next);void next.finally(()=>{if(queues.get(id)===next)queues.delete(id);}).catch(()=>{});return next;
 }
 function saved(id:string,fallback:string){try{return localStorage.getItem(`oi-browser-url:${id}`)??fallback;}catch{return fallback;}}
+function savedProfile(id:string):Profile{try{return localStorage.getItem(`oi-browser-profile:${id}`)==="personal"?"personal":"temporary";}catch{return "temporary";}}
 export function BrowserSurface({binding}:{binding:SurfaceBinding}) {
   const kernel=useKernel();const native=kernel.transport.kind==="tauri";
   const [address,setAddress]=useState(()=>saved(binding.id,binding.browser?.url??""));
   const [target,setTarget]=useState(address);const [reading,setReading]=useState<Reading>();const [error,setError]=useState<string>();
   const [zoom,setZoom]=useState(1);const [retry,setRetry]=useState(0);
+  const [profile,setProfile]=useState<Profile>(()=>savedProfile(binding.id));
   const editing=useRef(false);
   const viewport=useRef<HTMLDivElement>(null);const input=useRef<HTMLInputElement>(null);const attached=useRef(false);
   const control=(action:string,args:Record<string,unknown>={})=>serial(binding.id,()=>invoke("browser_control",{id:binding.id,action,...args}));
@@ -51,7 +55,7 @@ export function BrowserSurface({binding}:{binding:SurfaceBinding}) {
       const stamp=JSON.stringify(bounds);
       if(attached.current&&!hidden&&last===stamp)return;
       busy=true;last=stamp;
-      const work=attached.current?control("bounds",{bounds}):serial(binding.id,()=>invoke<Reading>("browser_attach",{id:binding.id,address:target,bounds})).then(value=>{
+      const work=attached.current?control("bounds",{bounds}):serial(binding.id,()=>invoke<Reading>("browser_attach",{id:binding.id,address:target,profile,bounds})).then(value=>{
         attached.current=true;setReading(value);setZoom(value.zoom);setAddress(value.url);setError(undefined);
         try{localStorage.setItem(`oi-browser-url:${binding.id}`,value.url);}catch{/* Live native state remains authoritative. */}
         window.dispatchEvent(new CustomEvent("oi:browser-title",{detail:value}));
@@ -63,7 +67,7 @@ export function BrowserSurface({binding}:{binding:SurfaceBinding}) {
   // Changing tabs hides this same native instance. A layout-level reconcile
   // closes it only when its binding really leaves all workspace arrangements.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[binding.id,native,!!kernel.snapshot.surfaces[binding.id],target,retry]);
+  },[binding.id,native,!!kernel.snapshot.surfaces[binding.id],target,profile,retry]);
   const navigate=async(e:React.FormEvent)=>{
     e.preventDefault();setError(undefined);editing.current=false;
     let value=address.trim();if(!/^\w+:/.test(value))value=`https://${value}`;
@@ -73,18 +77,37 @@ export function BrowserSurface({binding}:{binding:SurfaceBinding}) {
     }catch(reason){setError(String(reason));}
   };
   const act=(action:string)=>void control(action).catch(reason=>setError(String(reason)));
+  const switchProfile=async(next:Profile)=>{
+    if(next===profile)return;
+    setError(undefined);
+    try{
+      if(attached.current)await control("close");
+      attached.current=false;
+      try{localStorage.setItem(`oi-browser-profile:${binding.id}`,next);}catch{/* Native profile choice remains authoritative for this pane. */}
+      setProfile(next);setReading(undefined);setRetry(value=>value+1);
+    }catch(reason){setError(String(reason));}
+  };
   return <section className="browser-surface" aria-label="Browser surface">
     <form className="browser-toolbar" onSubmit={e=>void navigate(e)}>
-      <button type="button" aria-label="Back" disabled={!reading} onClick={()=>act("back")}>←</button>
-      <button type="button" aria-label="Forward" disabled={!reading} onClick={()=>act("forward")}>→</button>
-      <button type="button" aria-label={reading?.loading?"Stop loading":"Reload page"} disabled={!reading} onClick={()=>act(reading?.loading?"stop":"reload")}>{reading?.loading?"×":"↻"}</button>
+      <span className="browser-tools">
+        <button type="button" aria-label="Back" disabled={!reading} onClick={()=>act("back")}>←</button>
+        <button type="button" aria-label="Forward" disabled={!reading} onClick={()=>act("forward")}>→</button>
+        <button type="button" aria-label={reading?.loading?"Stop loading":"Reload page"} disabled={!reading} onClick={()=>act(reading?.loading?"stop":"reload")}>{reading?.loading?"×":"↻"}</button>
+      </span>
       <input ref={input} className="browser-address" aria-label="Web address" placeholder="Enter a web address" value={address} onChange={e=>setAddress(e.target.value)} onFocus={e=>{editing.current=true;e.target.select();}} onBlur={()=>{editing.current=false;requestAnimationFrame(()=>{if(reading&&!(document.activeElement as HTMLElement)?.closest(".browser-toolbar"))setAddress(reading.url);});}} autoFocus={!target} spellCheck={false}/>
-      <button type="submit" disabled={!native||!address.trim()}>Go</button>
-      <select aria-label="Browser zoom" value={zoom} onChange={e=>{const value=Number(e.target.value);setZoom(value);void control("zoom",{zoom:value}).catch(reason=>setError(String(reason)));}}>{[.5,.75,1,1.25,1.5,2].map(v=><option key={v} value={v}>{v*100}%</option>)}</select>
+      <span className="browser-tools">
+        <button type="submit" disabled={!native||!address.trim()}>Go</button>
+        <select aria-label="Browser profile" value={profile} onChange={e=>void switchProfile(e.target.value as Profile)}><option value="temporary">Temporary</option><option value="personal">Personal</option></select>
+        <select aria-label="Browser zoom" value={zoom} onChange={e=>{const value=Number(e.target.value);setZoom(value);void control("zoom",{zoom:value}).catch(reason=>setError(String(reason)));}}>{[.5,.75,1,1.25,1.5,2].map(v=><option key={v} value={v}>{v*100}%</option>)}</select>
+      </span>
     </form>
     {error&&<div role="alert" className="browser-notice">{error} <button onClick={()=>{setError(undefined);setRetry(v=>v+1);}}>Retry</button></div>}
     {reading?.notice&&<div role="status" className="browser-notice">{reading.notice}{reading.requested_window&&<><span className="browser-requested-url">{reading.requested_window}</span><button onClick={()=>void control("navigate",{address:reading.requested_window}).catch(reason=>setError(String(reason)))}>Open link in this pane</button></>}</div>}
     <div ref={viewport} className="browser-viewport">{!native?<p>Web browsing is available in the desktop app.</p>:!target?<p>Open a web page in this pane.</p>:!reading?<p>Opening browser…</p>:null}</div>
-    <footer className="browser-status"><span>{reading?.loading?"Loading…":""}</span><span title="Cookies and website storage last for this browser pane’s lifetime. Closing it ends that session; reopening restores only its address.">Temporary session</span></footer>
+    <footer className="browser-status">
+      <span>{reading?.download?.state==="downloading"?"Downloading…":reading?.download?.state==="saved"?"Download saved":reading?.download?.state==="failed"?"Download failed":reading?.loading?"Loading…":"Ready"}</span>
+      <span className="browser-status-path" title={reading?.download?.path||reading?.url}>{reading?.download?.path||reading?.url||"No page open"}</span>
+      <span title={profile==="temporary"?"Cookies and website storage end when this pane closes.":"Cookies and website storage persist across browser panes and app launches."}>{profile==="temporary"?"Temporary":"Personal"}</span>
+    </footer>
   </section>;
 }

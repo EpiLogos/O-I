@@ -38,6 +38,8 @@ pub struct Binding {
     pub address: Option<serde_json::Value>,
     pub encounter: Option<serde_json::Value>,
     pub browser: Option<serde_json::Value>,
+    pub terminal: Option<serde_json::Value>,
+    pub flow: Option<serde_json::Value>,
     /// Presentation metadata travels with the binding rather than relying
     /// on another renderer's potentially stale localStorage snapshot.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -75,7 +77,7 @@ pub fn window_detach(
         if surface.kind != binding.kind || surface.source_ref != binding.reference {
             return Err("Detached binding differs from the kernel subject".into());
         }
-        if !matches!(binding.kind.as_str(), "source" | "knowledge" | "file" | "encounter" | "browser") {
+        if !matches!(binding.kind.as_str(), "source" | "knowledge" | "file" | "encounter" | "browser" | "terminal" | "flow") {
             return Err("This surface has no native detached body".into());
         }
         if binding.kind == "file" {

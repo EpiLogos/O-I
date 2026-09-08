@@ -6,7 +6,7 @@
  * end of packages/oi-design-system/tokens.css exists for exactly this.
  */
 
-.desktop-shell { height: 100%; display: flex; flex-direction: column; font: var(--oi-shell-type-ui) var(--oi-font-sans); background: var(--oi-shell-ground); color: var(--oi-accent-ink); }
+.desktop-shell { height: 100%; display: flex; flex-direction: column; font: var(--oi-shell-type-ui) var(--oi-font-sans); background: linear-gradient(to right, var(--oi-sidebar-ground) 0 var(--desktop-left-width), var(--oi-shell-ground) var(--desktop-left-width) 100%); color: var(--oi-accent-ink); }
 .shell-topbar { flex: none; display: flex; align-items: center; gap: var(--oi-space-2); height: 40px; padding: 0 var(--oi-space-2); border-bottom: var(--oi-shell-edge) solid var(--oi-hairline-soft); background: var(--oi-shell-ground); user-select: none; }
 .desktop-shell[data-native="true"] .shell-topbar { padding-left: 84px; }
 .shell-topbar button { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; flex: none; border-radius: var(--oi-radius-sm); color: var(--oi-muted); }
@@ -288,7 +288,7 @@
 .ground-chooser input { min-width: 0; width: 100%; padding: 6px; border: var(--oi-shell-edge) solid var(--oi-hairline); color: inherit; background: var(--oi-sidebar-ground); }
 
 /* Workspace identity is a quiet whole-window footer; pane operations remain local. */
-.canvas-arrangement { height: 24px; min-height: 24px; gap: var(--oi-space-2); padding: 0 var(--oi-space-2); border-bottom: 0; border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); background: var(--oi-shell-ground); }
+.canvas-arrangement { height: 24px; min-height: 24px; gap: var(--oi-space-2); padding: 0 var(--oi-space-2); border-bottom: 0; border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); background: transparent; }
 .canvas-arrangement button, .canvas-arrangement > button, .canvas-arrangement .w-return { min-height: 22px; height: 22px; }
 .canvas-arrangement .workspace-select { max-width: 24%; }
 .canvas-arrangement .focused-surface-context { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); }
@@ -329,7 +329,7 @@
 .system-panel .ground-chooser form button { min-height: 30px; }
 
 /* Owner cleanup: a continuous left ground and a quieter window strip. */
-.shell-topbar { height: 28px; border-bottom: 0; background: var(--oi-shell-ground); }
+.shell-topbar { height: 28px; border-bottom: 0; background: transparent; }
 .shell-topbar button { width: 26px; height: 26px; }
 .desktop-side.left.depth-panel, .desktop-side.left.depth-full { margin: 0; border: 0; border-radius: 0; }
 @media (pointer: coarse) { .shell-topbar { height: 38px; } .shell-topbar button { width: 34px; height: 34px; } }

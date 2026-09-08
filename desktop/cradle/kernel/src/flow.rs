@@ -80,7 +80,7 @@ pub enum Request {
     FlowRead {
         project: String,
         flow_ref: String,
-        #[serde(default)]
+        #[serde(default, skip_serializing_if = "Option::is_none")]
         expected_revision: Option<String>,
     },
     FlowCreate {
@@ -488,14 +488,11 @@ impl CentralClient {
         flow_ref: &str,
         expected_revision: Option<&str>,
     ) -> Result<FlowReading, OwnerCallError> {
-        let data = self.run(
-            "projectcentral.flow.read",
-            json!({
-                "project": project,
-                "flow_ref": flow_ref,
-                "expected_revision": expected_revision,
-            }),
-        )?;
+        let mut input = json!({ "project": project, "flow_ref": flow_ref });
+        if let Some(expected_revision) = expected_revision {
+            input["expected_revision"] = Value::String(expected_revision.to_owned());
+        }
+        let data = self.run("projectcentral.flow.read", input)?;
         let result: FlowReading = decode_owner("projectcentral.flow.read", data)?;
         ensure_schema("projectcentral.flow.read", &result.schema, FLOW_READING_SCHEMA)?;
         Ok(result)
