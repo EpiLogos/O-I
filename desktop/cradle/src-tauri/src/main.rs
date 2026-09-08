@@ -6,6 +6,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod windows;
+mod browser;
 mod menus;
 mod ground_dialog;
 mod material_protocol;
@@ -64,6 +65,7 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             app.manage(windows::Windows::default());
+            app.manage(browser::Browsers::default());
             app.manage(KernelHost(Mutex::new(Kernel::discover())));
             #[cfg(target_os="macos")]
             for config in &app.config().app.windows {
@@ -77,7 +79,7 @@ fn main() {
             Ok(())
         })
         .on_menu_event(|app, event| menus::dispatch(app, event.id().as_ref()))
-        .invoke_handler(tauri::generate_handler![ground_dialog::choose_central_folder, menus::arrangement_menu, kernel_op, kernel_event_log, windows::window_detach, windows::window_binding, windows::window_redock, windows::window_focus_subject, windows::window_focus_main])
+        .invoke_handler(tauri::generate_handler![browser::browser_attach, browser::browser_control, browser::browser_reconcile, ground_dialog::choose_central_folder, menus::arrangement_menu, kernel_op, kernel_event_log, windows::window_detach, windows::window_binding, windows::window_redock, windows::window_focus_subject, windows::window_focus_main])
         .run(context)
         .expect("error while running the cradle");
 }

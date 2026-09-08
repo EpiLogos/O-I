@@ -757,3 +757,8 @@ The showcase is an isolated visual proposal; SharedField/browser/computer
 owner gaps remain explicit, with no new semantic store or foundation promotion.
 Review: desktop/cradle/walk/artifacts/review/browser-canvas/REVIEW.md.
 Effects: desktop/cradle/walk/artifacts/review/point-cloud-elements/index.html.
+
+
+## 2026-09-08 — native browser and shell refinement tranche
+
+User-commissioned lower-tier shell motion and editor-context planning returned to the UI lead. Implemented native browser views inside existing surface bindings, real navigation/history/zoom, isolated temporary stores, hide/show and detach/reparent/redock continuity, native page focus, URL/capability boundaries and explicit popup handling. Native observations cover retained forms/counters/cookies, separate stores, split geometry, full-right overlay, actual close/reopen disposal, direct shell IPC denial and external HTTPS. Hairline resize affordances, synchronized region motion, zero canvas top gap and duplicate-title/footer cleanup are in place. Editor/context attachment remains an attributed proposal with Central/AIKit owner gaps, not a new shell semantic store. Bounded receipt: `desktop/cradle/walk/artifacts/review/browser-native/REVIEW.md`; linked shell measurements and editor plan there. This does not mark complete browser-product acceptance or the wider cradle phase. Downloads and persistent profiles are not shipped.

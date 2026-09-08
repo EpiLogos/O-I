@@ -47,6 +47,7 @@ export interface SurfaceBinding {
   title: string;
   address?: import("../kernel/types").KnowledgeAddress;
   encounter?: {space:string};
+  browser?: {url:string};
   view?: {encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect"};
   location?: import("../kernel/types").CentralLocation;
 }

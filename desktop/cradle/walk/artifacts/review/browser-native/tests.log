@@ -1,0 +1,10 @@
+    Blocking waiting for file lock on build directory
+   Compiling oi-cradle v0.1.0 (/Users/admin/Central/Work/O-I/desktop/cradle/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 24.54s
+     Running unittests src/main.rs (src-tauri/target/debug/deps/oi_cradle-180ddf68f8686710)
+
+running 2 tests
+test browser::tests::native_geometry_rejects_nonfinite_and_offscreen_bounds ... ok
+test browser::tests::navigation_rejects_native_and_credential_bearing_addresses ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

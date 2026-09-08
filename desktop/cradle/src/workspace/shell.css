@@ -56,7 +56,11 @@
  */
 
 .desktop-regions { position: relative; display: flex; flex: 1; min-height: 0; }
-.desktop-side { flex: none; position: relative; display: flex; flex-direction: column; min-height: 0; transition: width var(--oi-motion-plane) var(--oi-motion-ease-out), margin var(--oi-motion-plane) var(--oi-motion-ease-out); }
+.desktop-side { flex: none; position: relative; display: flex; flex-direction: column; min-height: 0; transition: width var(--oi-motion-plane) var(--oi-motion-ease-out), inset var(--oi-motion-plane) var(--oi-motion-ease-out), margin var(--oi-motion-plane) var(--oi-motion-ease-out), opacity var(--oi-motion-ui) var(--oi-motion-ease-out); will-change: width; }
+.desktop-side-content { width: 100%; min-width: 0; min-height: 0; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.desktop-side.left > .desktop-side-content { width: var(--desktop-left-target); min-width: var(--desktop-left-target); }
+.desktop-side.right.depth-panel > .desktop-side-content { width: var(--desktop-right-width); min-width: var(--desktop-right-width); }
+.desktop-side.right.depth-full > .desktop-side-content { width: 100%; }
 /* Finding (i): the sidebar's persisted width only settles once the host is
  * measured and boot state resolves; until then any depth/width flip would
  * otherwise animate through the plane-width transition, reading as a narrow
@@ -103,7 +107,7 @@
   box-shadow: var(--oi-shadow-drawer);
 }
 
-.desktop-centre { flex: 1; min-width: min(440px, 100%); min-height: 0; overflow: hidden; display: flex; flex-direction: column; margin: var(--oi-shell-gutter); transition: margin var(--oi-motion-plane) var(--oi-motion-ease-out); }
+.desktop-centre { flex: 1; min-width: min(440px, 100%); min-height: 0; overflow: hidden; display: flex; flex-direction: column; margin: 0 var(--oi-shell-gutter) var(--oi-shell-gutter); transition: margin var(--oi-motion-plane) var(--oi-motion-ease-out); }
 .desktop-centre > .workbench { flex: 1; min-height: 0; }
 .desktop-centre .workbench { flex-direction: column; }
 .desktop-centre .surface-body { padding: 0; }
@@ -158,13 +162,12 @@
 .inspector-body details { margin-top: var(--oi-space-4); color: var(--oi-muted-2); }
 .inspector-body .source-history { padding: 0; max-height: none; border: 0; }
 
-.region-resizer { position: absolute; top: 0; bottom: 0; width: 6px; cursor: col-resize; z-index: 2; touch-action: none; }
-/* C9 (sidebar resize handle, brief "Sidebar" section): a 3px hairline at
- * rest instead of a fully transparent 6px hit area — the hover/focus tint
- * below still fires on the wider `.region-resizer` hit box, only `.left`'s
- * own rest-state visibility changes here. */
-.region-resizer.left { right: -3px; width: 3px; background: var(--oi-hairline); } .region-resizer.right { left: -3px; }
-.region-resizer:hover, .region-resizer:focus-visible { background: var(--oi-accent-soft); transition: background var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.region-resizer { position: absolute; top: 0; bottom: 0; width: 9px; cursor: col-resize; z-index: 2; touch-action: none; background: transparent; }
+.region-resizer::after { content: ""; position: absolute; top: 0; bottom: 0; width: 1px; background: var(--oi-hairline); transition: background var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.region-resizer.left { right: -4px; } .region-resizer.left::after { left: 4px; }
+.region-resizer.right { left: -4px; } .region-resizer.right::after { right: 4px; }
+.region-resizer:hover::after, .region-resizer:focus-visible::after, .region-resizer[data-dragging="true"]::after { background: var(--oi-ink); }
+.region-resizer:focus-visible { outline: none; }
 
 .workspace-name { display: flex; gap: var(--oi-space-2); border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); padding: var(--oi-space-2); background: var(--oi-sidebar-ground); }
 .workspace-name input { flex: 1; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); }
@@ -293,8 +296,6 @@
 .desktop-centre { min-width: 0; }
 .desktop-side.left[data-overlay="true"] { position: absolute; inset: var(--oi-shell-gutter) auto var(--oi-shell-gutter) var(--oi-shell-gutter); width: min(300px, calc(100% - 32px)) !important; max-width: none; margin: 0; z-index: var(--oi-z-drawer); box-shadow: var(--oi-shadow-drawer); }
 .desktop-shell .region-scrim { position: absolute; inset: 0; width: 100%; height: 100%; background: color-mix(in srgb, var(--oi-ink) 19%, transparent); z-index: calc(var(--oi-z-drawer) - 1); }
-.region-resizer.left { right: 0; width: 6px; }
-.region-resizer.right { left: 0; }
 @media (max-width: 640px) {
   .canvas-arrangement .focused-surface-context { display: none; }
   .canvas-arrangement .workspace-select { max-width: 40%; }
@@ -328,9 +329,11 @@
 .system-panel .ground-chooser form button { min-height: 30px; }
 
 /* Owner cleanup: a continuous left ground and a quieter window strip. */
-.shell-topbar { height: 30px; border-bottom: 0; background: linear-gradient(to right, var(--oi-sidebar-ground) 0 var(--desktop-left-width), var(--oi-shell-ground) var(--desktop-left-width) 100%); }
+.shell-topbar { height: 28px; border-bottom: 0; background: var(--oi-shell-ground); }
 .shell-topbar button { width: 26px; height: 26px; }
 .desktop-side.left.depth-panel, .desktop-side.left.depth-full { margin: 0; border: 0; border-radius: 0; }
-.region-resizer.left { width: 4px; right: 0; background: transparent; border: 0; }
-.region-resizer.left:hover, .region-resizer.left:focus-visible { background: var(--oi-accent-soft); }
 @media (pointer: coarse) { .shell-topbar { height: 38px; } .shell-topbar button { width: 34px; height: 34px; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .desktop-side, .desktop-centre, .region-resizer::after { transition-duration: 0.01ms; }
+}

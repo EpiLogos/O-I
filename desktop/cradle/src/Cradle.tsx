@@ -374,11 +374,34 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
     setState(s=>groupsOf(s.root).some(g=>g.tabs.includes(binding.id)) ? executeFrameAction(s,"surface.activate",{surfaceId:binding.id}) : openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
   };
 
+  const openBrowser = async () => {
+    const binding={id:crypto.randomUUID(),kind:"browser",title:"Browser",browser:{url:""}};
+    const opened=await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"browser",title:binding.title});
+    if(opened?.result!=="surface_opened")throw new Error("Browser surface could not be opened");
+    setState(s=>openBinding(s,binding));
+  };
+  useEffect(()=>{
+    if(kernel.transport.kind!=="tauri")return;
+    const reconcile=()=>{
+      const layouts=[stateRef.current,...workspaceRef.current.workspaces.filter(w=>w.id!==workspaceRef.current.current.id).map(w=>w.layout)];
+      const live=layouts.flatMap(layout=>[...groupsOf(layout.root).flatMap(g=>g.tabs),...(layout.detached??[]).map(d=>d.surfaceId)]);
+      void import("@tauri-apps/api/core").then(({invoke})=>invoke("browser_reconcile",{live})).catch(reason=>setWindowError(String(reason)));
+    };
+    const title=(event:Event)=>{const reading=(event as CustomEvent<{id:string;title:string;url:string}>).detail;
+      setState(s=>s.surfaces[reading.id]?.kind==="browser"?{...s,surfaces:{...s.surfaces,[reading.id]:{...s.surfaces[reading.id],title:reading.title||"Browser",browser:{url:reading.url}}}}:s);
+    };
+    const focus=(event:Event)=>setState(s=>executeFrameAction(s,"surface.activate",{surfaceId:(event as CustomEvent<string>).detail}));
+    window.addEventListener("oi:browser-pane-focus",focus);
+    reconcile();window.addEventListener("oi:browser-attached",reconcile);window.addEventListener("oi:browser-title",title);
+    return()=>{window.removeEventListener("oi:browser-pane-focus",focus);window.removeEventListener("oi:browser-attached",reconcile);window.removeEventListener("oi:browser-title",title);};
+  },[state.root,state.detached,workspace.workspaces,kernel.transport.kind]);
+
   // The frame keyboard map (keys.ts) + Escape. Attached always, so ⌘T/⌘O
   // open from rest and every operation has its keyboard path.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.defaultPrevented) return;
+      if ((e.metaKey||e.ctrlKey)&&e.code==="KeyL") {e.preventDefault();const address=document.querySelector<HTMLInputElement>('.pane[data-focused="true"] .browser-address');if(address){address.focus();address.select();}else void openBrowser().catch(reason=>setWindowError(String(reason)));return;}
       if (matchesSearchLeader(e, leader.current.current)) { e.preventDefault(); setSearchOpen(true); return; }
       if ((e.target as HTMLElement)?.closest(".search-aperture")) return;
       if ((e.metaKey||e.ctrlKey) && e.altKey && !e.shiftKey && e.code==="KeyD" && kernel.transport.kind==="tauri") {e.preventDefault();void detach(activeBindingId(stateRef.current)??"");return;}
@@ -520,6 +543,8 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
 
   const arrangementDispatch = useRef<(action:string)=>void>(()=>{});
   arrangementDispatch.current = action => {
+    if(action==="workspace.browser-address"){const address=document.querySelector<HTMLInputElement>('.pane[data-focused="true"] .browser-address');if(address){address.focus();address.select();}else void openBrowser().catch(reason=>setWindowError(String(reason)));return;}
+    if(action==="workspace.browser"){void openBrowser().catch(reason=>setWindowError(String(reason)));return;}
     if(action==="workspace.recover"){workspace.showRecovery();return;}
     if (action === "workspace.create" || action === "workspace.rename") { setNamingRequest(action === "workspace.create" ? "create" : "rename"); return; }
     if (action.startsWith("workspace.activate:")) { workspace.activate(action.slice("workspace.activate:".length)); return; }

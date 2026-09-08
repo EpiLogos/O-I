@@ -2105,6 +2105,7 @@ dependencies = [
 name = "oi-cradle"
 version = "0.1.0"
 dependencies = [
+ "objc2",
  "oi-cradle-kernel",
  "serde",
  "serde_json",

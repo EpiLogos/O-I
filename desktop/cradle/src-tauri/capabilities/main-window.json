@@ -13,7 +13,10 @@
     "allow-window-binding",
     "allow-window-redock",
     "allow-window-focus-subject",
-    "allow-window-focus-main"
+    "allow-window-focus-main",
+    "allow-browser-attach",
+    "allow-browser-control",
+    "allow-browser-reconcile"
   ],
   "webviews": [
     "main",

@@ -23,7 +23,7 @@ function validBinding(raw: unknown): SurfaceBinding | null {
   const o = raw as Record<string, unknown>;
   if (typeof o.id !== "string" || typeof o.kind !== "string" || typeof o.title !== "string")
     return null;
-  if (o.kind !== "source" && o.kind !== "sources" && o.kind !== "knowledge" && o.kind !== "file" && o.kind !== "encounter" && o.kind !== "system") return null;
+  if (o.kind !== "source" && o.kind !== "sources" && o.kind !== "knowledge" && o.kind !== "file" && o.kind !== "encounter" && o.kind !== "system" && o.kind !== "browser") return null;
   if (o.ref !== undefined && typeof o.ref !== "string") return null;
   if (o.project !== undefined && typeof o.project !== "string") return null;
   const address = o.address as SurfaceBinding["address"];
@@ -34,7 +34,7 @@ function validBinding(raw: unknown): SurfaceBinding | null {
   if(o.kind==="encounter" && (!encounter || typeof encounter.space!=="string" || typeof o.ref!=="string" || !o.ref.startsWith("agent-session/") || typeof o.project!=="string"))return null;
   const view=o.view as SurfaceBinding["view"];
   const encounterPlane=view?.encounterPlane;
-  return { view:encounterPlane&&["Conversation","Activity","Context","Inspect"].includes(encounterPlane)?{encounterPlane}:undefined, encounter, location, address, project: o.project as string | undefined, id: o.id, kind: o.kind, ref: o.ref as string | undefined, title: o.title };
+  return { browser:o.kind==="browser"?{url:typeof (o.browser as {url?:unknown})?.url==="string"?(o.browser as {url:string}).url:""}:undefined, view:encounterPlane&&["Conversation","Activity","Context","Inspect"].includes(encounterPlane)?{encounterPlane}:undefined, encounter, location, address, project: o.project as string | undefined, id: o.id, kind: o.kind, ref: o.ref as string | undefined, title: o.title };
 }
 
 function validPane(raw: unknown, surfaces: Record<SurfaceId, SurfaceBinding>): Pane | null {

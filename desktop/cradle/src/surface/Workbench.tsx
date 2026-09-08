@@ -23,6 +23,7 @@ import type { KnowledgeAddress } from "../kernel/types";
 import { FileSurface } from "../files/FileSurface";
 import { SourceSurface } from "./SourceSurface";
 import { SourcesIndex } from "./SourcesIndex";
+import { BrowserSurface } from "../browser/BrowserSurface";
 import { contains, groupsOf, renderOrder } from "./engine";
 import type { ActionArg, LayoutState, Pane, SurfaceId } from "./types";
 
@@ -63,6 +64,9 @@ export function Workbench(props: WorkbenchProps) {
     const el = document.querySelector<HTMLElement>(`[data-surface-id="${g.active}"]`);
     if (!el) return;
     const frame = requestAnimationFrame(() => {
+      // The scrolling tab list is isolated from `.pane-tools`, so bringing
+      // the active binding into view never moves the pinned pane controls.
+      el.scrollIntoView({ block: "nearest", inline: "nearest" });
       const active = document.activeElement as HTMLElement | null;
       const activePane = active?.closest<HTMLElement>(".pane.group");
       // Structural frame operations may remount the old editor. Its caret
@@ -70,7 +74,6 @@ export function Workbench(props: WorkbenchProps) {
       // Navigation, menus and other external controls retain their own focus.
       if (active?.matches('[role="tab"]') && activePane?.dataset.groupId === g.id) {
         el.focus();
-        el.scrollIntoView({ block: "nearest", inline: "nearest" });
         return;
       }
       if (active && active !== document.body && active.isConnected && (!activePane || activePane.dataset.groupId === g.id)) return;
@@ -254,7 +257,7 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
       >
         {activeBinding ? <SurfaceBody key={activeBinding.id} binding={activeBinding} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} /> : <p className="source-note">{state.detached?.some(d=>d.groupId===group.id)?"This view is open in a native window. Close that window to re-dock it here.":"Move a tab here, or open a source or wiki with +."}</p>}
       </div>
-      <footer className="pane-status" aria-label={focused ? "Active pane" : "Pane status"}><span>{activeBinding?.title ?? "Empty pane"}</span></footer>
+      <footer className="pane-status" aria-label={focused ? "Active pane" : "Pane status"} />
     </section>
   );
 }
@@ -271,6 +274,7 @@ function SurfaceBody({
   openSource: (source: ListedSource) => void;
 }) {
   if(binding.kind==="encounter")return <EncounterSurface key={binding.id} binding={binding} onView={view=>onView(binding.id,view)}/>;
+  if (binding.kind === "browser") return <BrowserSurface binding={binding} />;
   if (binding.kind === "file") return <FileSurface key={binding.id} binding={binding}/>;
   if (binding.kind === "system") return <SystemPanel binding={binding}/>;
   if (binding.kind === "knowledge") return <KnowledgeSurface binding={binding} onOpen={openKnowledge} />;

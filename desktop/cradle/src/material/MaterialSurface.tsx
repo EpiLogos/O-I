@@ -140,7 +140,7 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
   if (!location) return <p role="alert" className="source-note">The saved file location is unavailable</p>;
   if (view === "source") {
     return <section className="material-surface" aria-label={`Material ${binding.title}`}>
-      <MaterialChrome title={binding.title} format={format} view={view} onChange={setView} showToggle={showToggle} tools={tools} />
+      <MaterialChrome format={format} view={view} onChange={setView} showToggle={showToggle} tools={tools} />
       <div className="material-body"><FileSurface binding={binding} forceSource /></div>
     </section>;
   }
@@ -150,7 +150,7 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
   const imageSrc = transport.kind === "bridge" ? imageDataUrl : baseUrl;
 
   return <section className="material-surface" aria-label={`Material ${binding.title}`} aria-busy={pending} ref={containerRef}>
-    <MaterialChrome title={binding.title} format={format} view={view} onChange={setView} showToggle={showToggle} tools={tools} />
+    <MaterialChrome format={format} view={view} onChange={setView} showToggle={showToggle} tools={tools} />
     {error && <p role="alert" className="source-note">{error} <button type="button" onClick={()=>setGeneration(value=>value+1)}>Retry</button></p>}
     {!error && pending && <Loading label="Reading material…" scope="surface"/>}
     {!error && !pending && format === "html" && <div className="material-viewport" data-preview-zoom={zoom}><div className="material-scaled" style={{width:`${100/zoom}%`,height:`${100/zoom}%`,transform:`scale(${zoom})`}}>{(
@@ -194,11 +194,11 @@ const FORMAT_LABEL: Record<MaterialFormat, string> = {
   html: "HTML", markdown: "Markdown", image: "Image", pdf: "PDF", text: "Text", unsupported: "Unsupported",
 };
 
-function MaterialChrome({ title, format, view, onChange, showToggle, tools }: {
-  title: string; format: MaterialFormat; view: "rendered" | "source"; onChange: (view: "rendered" | "source") => void; showToggle: boolean; tools: React.ReactNode;
+function MaterialChrome({ format, view, onChange, showToggle, tools }: {
+  format: MaterialFormat; view: "rendered" | "source"; onChange: (view: "rendered" | "source") => void; showToggle: boolean; tools: React.ReactNode;
 }) {
   return <header className="material-chrome">
-    <span className="material-path" title={title}>{title}</span>
+    <span className="material-path" aria-hidden="true"/>
     <span className="material-format">{FORMAT_LABEL[format]}</span>
     {tools}
     {showToggle && <MaterialToggle view={view} onChange={onChange} />}

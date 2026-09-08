@@ -27,6 +27,10 @@ const SCHEME: &str = "oi-material";
 
 pub fn register<R: Runtime>(builder: tauri::Builder<R>) -> tauri::Builder<R> {
     builder.register_asynchronous_uri_scheme_protocol(SCHEME, |context, request, responder| {
+        if context.webview_label().starts_with("browser-") {
+            responder.respond(refuse(StatusCode::FORBIDDEN, "Browser pages cannot read Central material"));
+            return;
+        }
         let app_handle = context.app_handle().clone();
         std::thread::spawn(move || {
             responder.respond(handle(&app_handle, &request));

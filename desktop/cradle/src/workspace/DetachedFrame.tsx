@@ -1,3 +1,4 @@
+import {BrowserSurface} from "../browser/BrowserSurface";
 import {EncounterSurface} from "../encounter/EncounterSurface";
 import {useCallback,useEffect,useRef,useState} from "react";
 import {invoke} from "@tauri-apps/api/core";
@@ -121,7 +122,7 @@ export function DetachedFrame() {
     }finally{if(timer)clearTimeout(timer);cleanup();}
   };
   return <div className="desktop-shell detached-shell"><header className="desktop-bar"><strong className="desktop-brand">O-I</strong><span>{record?.binding.title}</span><button onClick={redock} disabled={redocking}>{redocking?"Re-docking…":"Re-dock"}</button></header>{error&&<p role="alert">{error} {!record&&<button onClick={()=>setLoadAttempt(n=>n+1)} disabled={loading}>Retry opening surface</button>}</p>}
-    <main ref={bodyRef} className="desktop-centre">{record?.binding.kind==="encounter"?<EncounterSurface key={record.binding.id} binding={record.binding} onView={view=>void updateView(view)} presentation="tab"/>:record?.binding.kind==="file"?<FileSurface key={record.binding.id} binding={record.binding}/>:record?.binding.kind==="source"?<SourceSurface binding={record.binding}/>:record?.binding.kind==="system"?<SystemPanel key={record.binding.id} binding={record.binding}/>:record&&<KnowledgeSurface binding={record.binding} onOpen={navigate}/>}</main>
+    <main ref={bodyRef} className="desktop-centre">{record?.binding.kind==="browser"?<BrowserSurface key={record.binding.id} binding={record.binding}/>:record?.binding.kind==="encounter"?<EncounterSurface key={record.binding.id} binding={record.binding} onView={view=>void updateView(view)} presentation="tab"/>:record?.binding.kind==="file"?<FileSurface key={record.binding.id} binding={record.binding}/>:record?.binding.kind==="source"?<SourceSurface binding={record.binding}/>:record?.binding.kind==="system"?<SystemPanel key={record.binding.id} binding={record.binding}/>:record&&<KnowledgeSurface binding={record.binding} onOpen={navigate}/>}</main>
     {searchOpen&&<SearchOverlay leader={leader.shift} onLeaderChange={leader.change} shortcutError={leader.error} project={record?.binding.project} onClose={()=>setSearchOpen(false)} onOpen={navigate}/>}
   </div>;
 }

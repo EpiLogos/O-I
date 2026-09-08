@@ -10,7 +10,7 @@ use std::{
     },
 };
 use tauri::{
-    AppHandle, Emitter, Manager, WebviewUrl, WebviewWindow, WebviewWindowBuilder, WindowEvent,
+    AppHandle, Emitter, Manager, WebviewUrl, Window, WebviewWindowBuilder, WindowEvent,
 };
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -37,6 +37,7 @@ pub struct Binding {
     pub project: Option<String>,
     pub address: Option<serde_json::Value>,
     pub encounter: Option<serde_json::Value>,
+    pub browser: Option<serde_json::Value>,
     /// Presentation metadata travels with the binding rather than relying
     /// on another renderer's potentially stale localStorage snapshot.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -55,7 +56,7 @@ static NEXT: AtomicU64 = AtomicU64::new(1);
 #[tauri::command]
 pub fn window_detach(
     app: AppHandle,
-    window: WebviewWindow,
+    window: Window,
     workspace_id: String,
     binding: Binding,
     bounds: Option<Bounds>,
@@ -74,7 +75,7 @@ pub fn window_detach(
         if surface.kind != binding.kind || surface.source_ref != binding.reference {
             return Err("Detached binding differs from the kernel subject".into());
         }
-        if !matches!(binding.kind.as_str(), "source" | "knowledge" | "file" | "encounter") {
+        if !matches!(binding.kind.as_str(), "source" | "knowledge" | "file" | "encounter" | "browser") {
             return Err("This surface has no native detached body".into());
         }
         if binding.kind == "file" {
@@ -100,7 +101,7 @@ pub fn window_detach(
         .find(|(_, r)| r.binding.id == binding.id || (binding.reference.is_some() && r.binding.reference == binding.reference))
         .map(|(label, _)| label.clone());
     if let Some(label) = existing {
-        if let Some(existing) = app.get_webview_window(&label) {
+        if let Some(existing) = app.get_window(&label) {
             return existing.set_focus().map_err(|e| e.to_string());
         }
         // An externally destroyed webview must not permanently prevent this
@@ -196,14 +197,14 @@ pub fn window_detach(
             }
         }
         if matches!(event, WindowEvent::Moved(_) | WindowEvent::Resized(_)) {
-            if let Some(w) = handle.get_webview_window(&label) {
+            if let Some(w) = handle.get_window(&label) {
                 if !w.is_maximized().unwrap_or(true) && !w.is_fullscreen().unwrap_or(true) {
                     if let (Ok(position), Ok(size), Ok(scale)) =
                         (w.outer_position(), w.inner_size(), w.scale_factor())
                     {
                         let p = position.to_logical::<f64>(scale);
                         let size = size.to_logical::<f64>(scale);
-                        if let Some(main) = handle.get_webview_window("main") {
+                        if let Some(main) = handle.get_window("main") {
                             let _ = main.emit(
                                 "oi:window-bounds",
                                 BoundsChange {
@@ -222,11 +223,14 @@ pub fn window_detach(
                 }
             }
         }
+        if let WindowEvent::CloseRequested { api, .. } = event {
+            if record.binding.kind == "browser" && crate::browser::return_to_main(&handle, &record.binding.id).is_err() { api.prevent_close(); }
+        }
         if matches!(event, WindowEvent::Destroyed) {
             if let Ok(mut rows) = handle.state::<Windows>().0.lock() {
                 rows.remove(&label);
             }
-            if let Some(main) = handle.get_webview_window("main") {
+            if let Some(main) = handle.get_window("main") {
                 let _ = main.emit("oi:window-redock", &record);
             }
         }
@@ -234,7 +238,7 @@ pub fn window_detach(
     Ok(())
 }
 #[tauri::command]
-pub fn window_binding(app: AppHandle, window: WebviewWindow) -> Result<Detached, String> {
+pub fn window_binding(app: AppHandle, window: Window) -> Result<Detached, String> {
     app.state::<Windows>()
         .0
         .lock()
@@ -244,7 +248,7 @@ pub fn window_binding(app: AppHandle, window: WebviewWindow) -> Result<Detached,
         .ok_or_else(|| "This window has no detached binding".into())
 }
 #[tauri::command]
-pub fn window_redock(window: WebviewWindow) -> Result<(), String> {
+pub fn window_redock(window: Window) -> Result<(), String> {
     if window.label() == "main" {
         return Err("The workspace window cannot re-dock itself".into());
     }
@@ -260,7 +264,7 @@ pub fn window_focus_subject(app: AppHandle, reference: String) -> Result<bool, S
         .iter()
         .find(|(_, r)| r.binding.reference.as_deref() == Some(&reference))
         .map(|(k, _)| k.clone());
-    if let Some(window) = label.and_then(|l| app.get_webview_window(&l)) {
+    if let Some(window) = label.and_then(|l| app.get_window(&l)) {
         window.set_focus().map_err(|e| e.to_string())?;
         Ok(true)
     } else {
@@ -269,8 +273,8 @@ pub fn window_focus_subject(app: AppHandle, reference: String) -> Result<bool, S
 }
 
 #[tauri::command]
-pub fn window_focus_main(app: AppHandle, window: WebviewWindow) -> Result<(), String> {
+pub fn window_focus_main(app: AppHandle, window: Window) -> Result<(), String> {
     if window.label() != "main" { return Err("Workspace navigation focus belongs to the main window".into()); }
-    app.get_webview_window("main").ok_or("Workspace window is unavailable")?
+    app.get_window("main").ok_or("Workspace window is unavailable")?
         .set_focus().map_err(|error|error.to_string())
 }

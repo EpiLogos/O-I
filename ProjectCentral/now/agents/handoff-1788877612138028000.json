@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "handoff-1788877612138028000",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "codex-editor-context-plan-20260908",
+  "kind": "note",
+  "recorded_at_unix_seconds": 1788877612,
+  "subject": "Final browser correction review",
+  "result": "Final bounded read-only review of corrected browser implementation found three remaining concrete issues: address bar retains/emits old committed URL during PageLoad Started while new content may already render; reconcile close/reopen race can close a newly reattached same-label view without a generation token/native lifecycle serialization; denied-popup action does not display its destination for user review. Verified native focus observation remains command/host bounded and no browser-* IPC capability was granted. Findings sent to parent; no edits or builds in this subpass.",
+  "status": "resolved"
+}

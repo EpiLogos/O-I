@@ -1,5 +1,5 @@
 import {SystemPanel} from "./SystemPanel";
-import { useEffect, useRef, useState, type ReactNode, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type Dispatch, type SetStateAction } from "react";
 import type { AgencyDepth, LayoutState } from "../surface/types";
 import type { Workspace } from "./store";
 import "./shell.css";
@@ -28,6 +28,7 @@ export function DesktopShell(p: Props) {
   const [name, setName] = useState("");
   const [navigatorOverlay, setNavigatorOverlay] = useState(false);
   const overlayReturn = useRef<HTMLElement | null>(null);
+  const rightTransitionFrom = useRef<DOMRect | null>(null);
   // Finding (i): the persisted plane width is already known synchronously
   // (workspace/store.ts reads it before first render) — what produced the
   // transient narrow sidebar was the plane-width transition itself running
@@ -124,7 +125,10 @@ export function DesktopShell(p: Props) {
   }, [width < 640]);
   const setDepth = (side: Side, value: AgencyDepth) => p.setLayout(s => ({ ...s, [side === "left" ? "agencyDepth" : "rightDepth"]: value }));
   const toggle = (side: Side) => setDepth(side, intended(side) === "panel" ? "collapsed" : "panel");
-  const toggleFull = (side: Side) => setDepth(side, intended(side) === "full" ? "panel" : "full");
+  const toggleFull = (side: Side) => {
+    if (side === "right") rightTransitionFrom.current = host.current?.querySelector<HTMLElement>('[data-region="right"]')?.getBoundingClientRect() ?? null;
+    setDepth(side, intended(side) === "full" ? "panel" : "full");
+  };
   const focusRegion = (side: Side | "centre") => {
     const region = host.current?.querySelector<HTMLElement>(`[data-region="${side}"]`);
     region?.querySelector<HTMLElement>('textarea,input,button,[tabindex="0"]')?.focus();
@@ -143,16 +147,69 @@ export function DesktopShell(p: Props) {
     };
     window.addEventListener("keydown", onKey); return () => window.removeEventListener("keydown", onKey);
   });
-  const resize = (side: Side, value: number) => p.setLayout(s => ({ ...s, [side === "left" ? "leftWidth" : "rightWidth"]: Math.max(side === "left" ? 200 : 240, Math.min(side === "left" ? 600 : 720, value)) }));
+  const clampWidth = (side: Side, value: number) => Math.max(side === "left" ? 200 : 240, Math.min(side === "left" ? 600 : 720, value));
+  const resize = (side: Side, value: number) => p.setLayout(s => ({ ...s, [side === "left" ? "leftWidth" : "rightWidth"]: clampWidth(side, value) }));
   const separator = (side: Side) => <div className={`region-resizer ${side}`} role="separator" aria-label={`Resize ${side} region`} aria-orientation="vertical"
     aria-valuenow={side === "left" ? l.leftWidth ?? 240 : l.rightWidth ?? 320}
     aria-valuemin={side === "left" ? 200 : 240} aria-valuemax={side === "left" ? 600 : 720} tabIndex={0}
     onKeyDown={e => { if (e.key === "ArrowLeft" || e.key === "ArrowRight") { e.preventDefault(); resize(side, (side === "left" ? l.leftWidth ?? 240 : l.rightWidth ?? 320) + (e.key === "ArrowRight" ? 16 : -16) * (side === "left" ? 1 : -1)); } }}
-    onPointerDown={e => { e.currentTarget.setPointerCapture(e.pointerId); }}
-    onPointerMove={e => { if (!e.currentTarget.hasPointerCapture(e.pointerId)) return; const box = host.current!.getBoundingClientRect(); resize(side, side === "left" ? e.clientX - box.left : box.right - e.clientX); }}
-    onPointerUp={e => e.currentTarget.releasePointerCapture(e.pointerId)} />;
+    onPointerDown={e => { e.currentTarget.setPointerCapture(e.pointerId); e.currentTarget.dataset.dragging = "true"; }}
+    onPointerMove={e => {
+      if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
+      const box = host.current!.getBoundingClientRect();
+      const value = clampWidth(side, side === "left" ? e.clientX - box.left : box.right - e.clientX);
+      const region = e.currentTarget.closest<HTMLElement>(".desktop-side");
+      if (region) region.style.width = `${value}px`;
+      host.current?.style.setProperty(side === "left" ? "--desktop-left-width" : "--desktop-right-width", `${value}px`);
+      e.currentTarget.setAttribute("aria-valuenow", String(Math.round(value)));
+    }}
+    onPointerUp={e => {
+      const box = host.current!.getBoundingClientRect();
+      const value = clampWidth(side, side === "left" ? e.clientX - box.left : box.right - e.clientX);
+      e.currentTarget.releasePointerCapture(e.pointerId);
+      delete e.currentTarget.dataset.dragging;
+      resize(side, value);
+    }}
+    onLostPointerCapture={e=>{
+      if(!e.currentTarget.dataset.dragging)return;
+      delete e.currentTarget.dataset.dragging;
+      const region=e.currentTarget.closest<HTMLElement>(".desktop-side");
+      if(region)resize(side,region.getBoundingClientRect().width);
+    }} />;
   const ref = p.subject.ref;
   const left = depth("left"), right = depth("right");
+  useEffect(()=>{
+    const capture=(event:KeyboardEvent)=>{if(event.key==="Escape"&&right==="full")rightTransitionFrom.current=host.current?.querySelector<HTMLElement>('[data-region="right"]')?.getBoundingClientRect()??null;};
+    window.addEventListener("keydown",capture,true);
+    return()=>window.removeEventListener("keydown",capture,true);
+  },[right]);
+  useLayoutEffect(() => {
+    const region = host.current?.querySelector<HTMLElement>('[data-region="right"]');
+    const from = rightTransitionFrom.current;
+    rightTransitionFrom.current = null;
+    if (from && region && ["panel", "full"].includes(right)) {
+      const to = region.getBoundingClientRect();
+      if (from.width && to.width && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        const style = getComputedStyle(region);
+        const motion = style.getPropertyValue("--oi-motion-plane").trim();
+        const easing = style.getPropertyValue("--oi-motion-ease-out").trim();
+        region.style.transition = "none";
+        region.style.transformOrigin = "right center";
+        region.style.transform = `scaleX(${from.width / to.width})`;
+        region.getBoundingClientRect();
+        requestAnimationFrame(() => {
+          region.style.transition = `transform ${motion} ${easing}`;
+          region.style.transform = "scaleX(1)";
+          region.addEventListener("transitionend", event => {
+            if (event.propertyName !== "transform") return;
+            region.style.removeProperty("transition");
+            region.style.removeProperty("transform");
+            region.style.removeProperty("transform-origin");
+          }, { once: true });
+        });
+      }
+    }
+  }, [right]);
   useEffect(() => {
     const centre=host.current?.querySelector<HTMLElement>('[data-region="centre"]');
     if (!centre) return;
@@ -171,9 +228,7 @@ export function DesktopShell(p: Props) {
   // as a broken counter, not a state. Name it, matching the reference
   // vocabulary's "1 group" / "Focused view" register.
   const groupCount = groupsOf(l.root).length;
-  const focusedGroup = groupsOf(l.root).find(group => group.id === l.focusedGroupId);
-  const focusedTitle = focusedGroup?.active ? l.surfaces[focusedGroup.active]?.title ?? p.subject.title : focusedGroup ? "Empty pane" : p.workspace.name;
-  return <div ref={host} className="desktop-shell" data-native={p.native} data-workspace-id={p.workspace.id} style={{"--desktop-left-width": `${left === "panel" || left === "full" ? leftWidth : 0}px`} as React.CSSProperties}>
+  return <div ref={host} className="desktop-shell" data-native={p.native} data-workspace-id={p.workspace.id} style={{"--desktop-left-width": `${left === "panel" || left === "full" ? leftWidth : 0}px`, "--desktop-left-target": `${leftWidth}px`, "--desktop-right-width": `${rightWidth}px`} as React.CSSProperties}>
     <header className="shell-topbar" aria-label="Window and focused pane" data-tauri-drag-region>
       <button className="shell-region-toggle" aria-label="Toggle left region" aria-expanded={left === "panel" || left === "full"} onClick={summonNavigator} title="Show / hide Central (⌘B)"><Glyph name="sidebar"/></button>
       <div className="shell-focus" data-tauri-drag-region>{width < 640 && groupCount > 1 ? <select aria-label="Focused pane" value={l.focusedGroupId ?? ""} onChange={event => { const id=event.target.value; p.setLayout(state => focusGroup(state,id)); }}>{groupsOf(l.root).map((group,index) => <option key={group.id} value={group.id}>{index+1}/{groupCount} · {group.active ? l.surfaces[group.active]?.title : "Empty pane"}</option>)}</select> : null}</div>
@@ -188,17 +243,23 @@ export function DesktopShell(p: Props) {
       {overlayLeft && <button className="region-scrim" aria-label="Close Central overlay" onClick={closeNavigator}/> }
       <aside className={`desktop-side left depth-${left}`} data-region="left" data-depth={left} data-overlay={overlayLeft} style={{ width: left === "panel" || left === "full" ? leftWidth : undefined }} aria-label="World region">
         {(left === "panel" || left === "full") && <>
+          <div className="desktop-side-content">
           <div className="central-heading"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" strokeWidth="1.2" aria-hidden="true"><path d="M3 6h7l2 2h9v12H3z"/></svg><div><strong>My O:I</strong><small>Personal ground</small></div></div>
-          {p.navigator(null)}{left === "panel" && separator("left")}
+          {p.navigator(null)}</div>{left === "panel" && separator("left")}
         </>}
       </aside>
       <main className="desktop-centre" data-region="centre" aria-label="Workspace canvas">
 
         {p.children}
       </main>
-      <aside className={`desktop-side right depth-${right}`} data-region="right" data-depth={right} data-overlay={overlayRight && right === "panel"} data-focus-ref={ref} style={{ width: right === "panel" || right === "full" ? rightWidth : undefined }} aria-label="Agent and inspector region">
+      <aside className={`desktop-side right depth-${right}`} data-region="right" data-depth={right} data-overlay={overlayRight && right === "panel"} data-focus-ref={ref} style={{ width: right === "panel" || right === "full" ? rightWidth : undefined }} aria-label="Agent and inspector region"
+        onClickCapture={event => {
+          const control = (event.target as HTMLElement).closest<HTMLElement>('button[aria-label="Full right region"], button[aria-label="Restore right region"]');
+          if (control) rightTransitionFrom.current = event.currentTarget.getBoundingClientRect();
+        }}>
         {(right === "panel" || right === "full") && <>
           {right === "panel" && separator("right")}
+          <div className="desktop-side-content">
           {/* Finding 3: the agent layer (FND-02) owns its own head, plane
            * nav and body edge-to-edge — it must mount as a direct child of
            * this aside, never inside the legacy `.inspector-body` wrapper
@@ -211,7 +272,7 @@ export function DesktopShell(p: Props) {
             <div className="inspector-body">
               {plane === "system" ? <SystemPanel/> : plane === "history" ? p.subject.history ?? <p>No history operation is available for this subject.</p> : p.subject.context}
             </div>
-          </>}
+          </>}</div>
         </>}
       </aside>
     </div>
@@ -221,7 +282,6 @@ export function DesktopShell(p: Props) {
             <Glyph name="down" size={9}/>
           </div>
           <small className="arrangement-state">{l.maximizedGroupId ? "Focused view" : groupCount === 0 ? "Empty workspace" : `${groupCount} group${groupCount === 1 ? "" : "s"}`}</small>
-          <span className="focused-surface-context" title={focusedTitle}>{focusedGroup ? focusedTitle : ""}</span>
           <span className="canvas-arrangement-spacer"/>
           <details className="desktop-menu"><summary aria-label="Workspace actions"><Glyph name="more"/></summary><div>
             <button aria-label="New workspace" onClick={() => { setName(""); setNaming("create"); }}>New workspace</button>
