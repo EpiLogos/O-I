@@ -452,9 +452,9 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
         if (navigatorRef.current) dismissWorld(); else summonWorld();
         return;
       }
-      if (e.key === "Escape" && !menuRef.current && (stateRef.current.rightDepth === "full" || stateRef.current.maximizedGroupId)) {
+      if (e.key === "Escape" && !menuRef.current && (stateRef.current.rightDepth === "full" || stateRef.current.maximizedGroupId || stateRef.current.focusedTabId)) {
         e.preventDefault();
-        setState(s => s.rightDepth === "full" ? {...s, rightDepth:"panel"} : {...s, maximizedGroupId:undefined});
+        setState(s => s.focusedTabId ? {...s,focusedTabId:undefined} : s.rightDepth === "full" ? {...s, rightDepth:"panel"} : {...s, maximizedGroupId:undefined});
         return;
       }
       if (e.key === "Escape" && navigatorRef.current && (e.target as HTMLElement)?.closest(".world-navigator")) {

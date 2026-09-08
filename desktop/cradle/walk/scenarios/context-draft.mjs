@@ -28,7 +28,10 @@ export async function setup(args) {
 }
 
 async function selectRange(editor,start,end) {
-  await editor.evaluate((element,[from,to])=>{element.focus();element.setSelectionRange(from,to);element.dispatchEvent(new MouseEvent("contextmenu",{bubbles:true,cancelable:true,clientX:320,clientY:220,button:2}));},[start,end]);
+  await editor.focus();await editor.press("Meta+ArrowUp");
+  for(let i=0;i<start;i++)await editor.press("ArrowRight");
+  for(let i=start;i<end;i++)await editor.press("Shift+ArrowRight");
+  await editor.dispatchEvent("contextmenu",{bubbles:true,cancelable:true,clientX:320,clientY:220,button:2});
 }
 
 export default async function run({page,baseUrl,check,shot,channel,provision:p}) {
@@ -44,7 +47,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   if(!await nav.isVisible())await page.keyboard.press("Meta+b");
   await nav.getByRole("button",{name:"Editor: files",exact:true}).click();
   await nav.locator(`[data-file-path="Work/Editor/${source.binding.path}"]`).click();
-  const editor=page.locator('.source-textarea[data-source-ref="'+source.binding.ref+'"]');await editor.waitFor();
+  const editor=page.locator('.cm-content[data-source-ref="'+source.binding.ref+'"]');await editor.waitFor();
 
   const excerpt=content.slice(0,Math.min(48,content.indexOf("\n")>0?content.indexOf("\n"):48));
   await selectRange(editor,0,excerpt.length);
@@ -61,7 +64,8 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
 
   await selectRange(editor,0,excerpt.length);
   await page.getByRole("menuitem",{name:"Add selection to context",exact:true}).click();await dialog.waitFor();
-  await editor.evaluate((element)=>{const value=`Changed after selection.\n${element.value}`;const setter=Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value").set;setter.call(element,value);element.dispatchEvent(new Event("input",{bubbles:true}));});
+  await editor.fill(`Changed after selection.
+${content}`);
   await page.waitForFunction(()=>document.querySelector('.source-editor')?.getAttribute('data-dirty')==='true');
   await dialog.getByRole("button",{name:"Add to draft",exact:true}).click();
   const refusal=dialog.getByRole("alert");await refusal.waitFor();

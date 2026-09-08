@@ -6,7 +6,7 @@
  * ⏥ close (pointer: right-click opens, click invokes — parity).
  */
 
-import { Fragment, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { Fragment, useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import type { ActionDisclosure, SurfaceId } from "./types";
 import { Glyph } from "../workspace/Glyph";
 
@@ -61,11 +61,11 @@ export function ContextMenu({ menu, onInvoke, onClose }: Props) {
   // the binding's own tab title for a binding menu, "Window" for the frame
   // menu — read from the DOM rather than plumbed through Cradle.tsx, since
   // this component owns only its own disclosure surface.
-  const [subject] = useState(() => {
+  const subject = (() => {
     if (!menu.surfaceId) return "Window";
     const el = document.querySelector<HTMLElement>(`[data-surface-id="${menu.surfaceId}"] .tab-title`);
     return el?.textContent?.trim() || "Window";
-  });
+  })();
 
   useEffect(() => {
     const el = ref.current;
@@ -79,7 +79,7 @@ export function ContextMenu({ menu, onInvoke, onClose }: Props) {
       el.style.left = `${Math.max(0, window.innerWidth - r.width - 4)}px`;
     if (r.bottom > window.innerHeight)
       el.style.top = `${Math.max(0, window.innerHeight - r.height - 4)}px`;
-  }, []);
+  }, [menu.surfaceId,menu.x,menu.y]);
 
   useEffect(() => {
     // Opaque rendered documents do not bubble pointer events to this host.

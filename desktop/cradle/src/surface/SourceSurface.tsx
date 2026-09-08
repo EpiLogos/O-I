@@ -1,3 +1,4 @@
+import {TextEditor,EditorCommands,type EditorHandle} from "../editor/TextEditor";
 /**
  * The source editor surface (U0.4, kind 'source') — the minimal editor the
  * kernel seam re-proof walks: a real file opened from the horizon
@@ -16,7 +17,7 @@ import { readDraft, writeDraft } from "../workspace/drafts";
 import { SourceHistory } from "./SourceHistory";
 import { useKernel } from "../kernel/KernelProvider";
 import type { SurfaceBinding } from "./types";
-import {dispatchTextCandidate,EditorButton,EditorFrame,replaceSelection,useTextContextMenu} from "../editor/EditorChrome";
+import {EditorFrame,useTextContextMenu} from "../editor/EditorChrome";
 
 export interface SourceSurfaceProps {
   binding: SurfaceBinding;
@@ -38,7 +39,7 @@ export function SourceSurface(props: SourceSurfaceProps) {
   const [draftError, setDraftError] = useState<string | null>(null);
   const [text, setText] = useState(initialDraft.current?.content ?? buffer?.content ?? "");
   const [caret,setCaret]=useState({line:1,column:1,selected:false});
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const textareaRef = useRef<EditorHandle>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const viewKey = `oi-cradle.source-view:${binding.ref}`;
   const restoredView = useRef(false);
@@ -120,9 +121,7 @@ export function SourceSurface(props: SourceSurfaceProps) {
   };
   const updateCaret=()=>{const el=textareaRef.current;if(!el)return;const before=el.value.slice(0,el.selectionStart);const lines=before.split("\n");setCaret({line:lines.length,column:(lines[lines.length-1]?.length??0)+1,selected:el.selectionStart!==el.selectionEnd});retainView();};
   const selectionMenu=useTextContextMenu(binding,textareaRef,true,onEdit);
-  const wrap=(left:string,right=left)=>{const el=textareaRef.current;if(!el)return;const selected=el.value.slice(el.selectionStart,el.selectionEnd);replaceSelection(el,`${left}${selected}${right}`,onEdit,right.length);};
-  const extension=buffer?.path?.split(".").pop()?.toLowerCase();const markdown=extension==="md"||extension==="markdown";const code=!!extension&&!markdown&&!new Set(["txt","log","csv","tsv"]).has(extension);
-  const indent=()=>{const el=textareaRef.current;if(!el)return;const start=el.value.lastIndexOf("\n",Math.max(0,el.selectionStart-1))+1;const endLine=el.value.indexOf("\n",el.selectionEnd);const end=endLine<0?el.value.length:endLine;const block=el.value.slice(start,end).split("\n").map(line=>`  ${line}`).join("\n");el.setSelectionRange(start,end);replaceSelection(el,block,onEdit);};
+  const extension=buffer?.path?.split(".").pop()?.toLowerCase();const markdown=extension==="md"||extension==="markdown";
 
   // ⌘S saves from anywhere in this surface (textarea, conflict panel) —
   // the save is the surface's act, wherever the caret idles. Every other
@@ -156,7 +155,7 @@ export function SourceSurface(props: SourceSurfaceProps) {
     <EditorFrame
       className={`source-editor${buffer.dirty ? " dirty" : ""}${saveFailed ? " conflicted" : ""}`}
       label={`Editor ${binding.title}`}
-      toolbar={<>{markdown&&<><EditorButton title="Wrap selection in bold Markdown" onClick={()=>wrap("**")}>Bold</EditorButton><EditorButton title="Wrap selection in italic Markdown" onClick={()=>wrap("_")}>Italic</EditorButton></>}{code&&<EditorButton title="Indent selected lines" onClick={indent}>Indent</EditorButton>}<EditorButton disabled={!caret.selected} onClick={()=>{const el=textareaRef.current;if(el)dispatchTextCandidate(binding,el);}}>Add context</EditorButton></>}
+      toolbar={<EditorCommands editor={textareaRef} markdown={markdown}/>}
       footer={<><span className="editor-path source-revision" data-revision={buffer.base_revision} title={`Central / Work / ${buffer.project} / ${buffer.path}`}>Central / Work / {buffer.project} / {buffer.path}</span><span>Ln {caret.line}, Col {caret.column}</span><span className={buffer.dirty?"source-dirty-marker":"source-clean-marker"}>{buffer.dirty?"Unsaved":"Saved"}</span><button type="button" aria-expanded={historyOpen} onClick={()=>setHistoryOpen(open=>!open)}>History</button><button type="button" onClick={onSave} disabled={!buffer.dirty}>Save · ⌘S</button></>}
       data={{kind:"source",ref:binding.ref,dirty:buffer.dirty,conflicted:saveFailed}}
     >
@@ -164,22 +163,7 @@ export function SourceSurface(props: SourceSurfaceProps) {
       {error && <p className="source-note" role="alert">{error}</p>}
       <div className="source-editor-scroll" ref={scrollRef} onScroll={retainView} onKeyDown={onKeyDown}>
         <div className="source-editor-body">
-          <div className="source-gutter" aria-hidden="true">
-            {Array.from({ length: Math.max(1, text.split("\n").length) }, (_, i) => (
-              <span key={i}>{i + 1}</span>
-            ))}
-          </div>
-          <textarea
-            ref={textareaRef}
-            className="source-textarea"
-            aria-label={`Editing ${binding.title}`}
-            data-source-ref={binding.ref}
-            spellCheck={false}
-            value={text}
-            onChange={(event) => onEdit(event.target.value)}
-            onSelect={updateCaret}
-            onContextMenu={selectionMenu.onContextMenu}
-          />
+          <TextEditor ref={textareaRef} binding={binding} filename={buffer.path} aria-label={`Editing ${binding.title}`} value={text} onChange={onEdit} onSelect={updateCaret} onSave={onSave} onContextMenu={selectionMenu.onContextMenu}/>
         </div>
         {historyOpen && <SourceHistory sourceRef={binding.ref} revision={buffer.conflict?.current_revision ?? buffer.base_revision} />}
         {conflict ? (

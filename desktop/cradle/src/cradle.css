@@ -867,37 +867,12 @@
 .tab.active::after { display: none; }
 .pane-status { flex: none; min-height: 18px; display: flex; align-items: center; padding: 0 10px; background: var(--oi-canvas-ground); border-top: 1px solid var(--oi-hairline-soft); }
 
-/* Focus lives in the content, expressed by the footer yielding. Moving back
- * to the pane edge or tab controls reveals the status/actions without a jump. */
-.pane.group.focused > .pane-footer,
-.pane.group.focused .editor-footer,
-.pane.group.focused .terminal-footer,
-.pane.group.focused .flow-footer,
-.pane.group.focused .browser-status {
-  min-height: 0;
-  height: 0;
-  opacity: 0;
-  overflow: hidden;
-  border-top-width: 0;
-  pointer-events: none;
-  transition: height var(--oi-motion-ui) var(--oi-motion-ease-out),
-              min-height var(--oi-motion-ui) var(--oi-motion-ease-out),
-              opacity var(--oi-motion-ui) var(--oi-motion-ease-out);
-}
-.pane.group.focused:hover > .pane-footer,
-.pane.group.focused:hover .editor-footer,
-.pane.group.focused:hover .terminal-footer,
-.pane.group.focused:hover .flow-footer,
-.pane.group.focused .editor-footer:focus-within,
-.pane.group.focused .terminal-footer:focus-within,
-.pane.group.focused .flow-footer:focus-within,
-.pane.group.focused:hover .browser-status {
-  min-height: 18px;
-  height: auto;
-  opacity: 1;
-  border-top-width: 1px;
-  pointer-events: auto;
-}
+/* Only the bottom edge reveals the focused pane's status strip. */
+.pane.group {position:relative;overflow:hidden}
+.pane.group.focused :is(.editor-footer,.terminal-footer,.flow-footer,.browser-status),
+.pane.group.focused > .pane-footer {position:absolute;bottom:0;left:0;right:0;z-index:15;height:24px;min-height:24px;opacity:1;transform:translateY(21px);background:var(--oi-canvas-ground);border-top:1px solid var(--oi-hairline-soft);transition:transform var(--oi-motion-ui) var(--oi-motion-ease-out)}
+.pane.group.focused :is(.editor-footer,.terminal-footer,.flow-footer,.browser-status):is(:hover,:focus-within),
+.pane.group.focused > .pane-footer:hover {transform:translateY(0)}
 
 /* Writing surfaces already own a footer: keep one bottom status band. */
 .pane.group:has(.editor-footer, .browser-status, .terminal-footer, .flow-footer) > .pane-status { display: none; }
@@ -905,3 +880,8 @@
 @media (prefers-reduced-motion: reduce) {
   .pane.group, .pane-footer, .editor-footer, .browser-status, .terminal-footer, .flow-footer { transition-duration: 0.01ms !important; }
 }
+
+.tab-strip{transition:height var(--oi-motion-ui) var(--oi-motion-ease-out),min-height var(--oi-motion-ui) var(--oi-motion-ease-out)}
+.pane[data-tab-focus="true"] > .tab-strip{height:0;min-height:0;overflow:hidden;border:0;padding-top:0;padding-bottom:0}
+.pane .tab-focus-reveal{position:absolute;right:35px;top:0;width:24px;height:5px;opacity:0;z-index:25;border:0;background:var(--oi-canvas-ground);color:var(--oi-muted-2);cursor:pointer;transition:height var(--oi-motion-ui),opacity var(--oi-motion-ui)}
+.pane .tab-focus-reveal:is(:hover,:focus-visible){height:24px;opacity:1}

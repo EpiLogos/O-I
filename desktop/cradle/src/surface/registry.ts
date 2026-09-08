@@ -68,6 +68,8 @@ export function bindingDisclosures(
   if (!FRAME_DISCLOSED_KINDS.has(binding.kind)) return [];
   const pinned = isPinned(ctx.state, surfaceId);
   return [
+    {action_ref:"surface.focus-tab",title:ctx.state.focusedTabId===surfaceId?"Show tab bar":"Focus this tab",enabled:true},
+    ...groupsOf(ctx.state.root).filter(g=>!g.tabs.includes(surfaceId)).map((g,i)=>({action_ref:`surface.move-to:${g.id}`,title:`Move to pane ${i+1} · ${ctx.state.surfaces[g.active??g.tabs[0]]?.title??"Empty"}`,enabled:true})),
     {
       action_ref: "surface.close",
       title: pinned ? "Close (pinned — unpin first)" : "Close",
@@ -108,6 +110,8 @@ export function frameDisclosures(ctx: MenuContext): ActionDisclosure[] {
  * Unknown action refs change nothing: no fabricated behaviour.
  */
 export function executeFrameAction(state: LayoutState, ref: string, arg?: ActionArg, snapshot?: RestorePoint): LayoutState {
+  if(ref==="surface.focus-tab") {const id=arg?.surfaceId??activeBindingId(state);return id?{...activateSurface(state,id),focusedTabId:state.focusedTabId===id?undefined:id}:state;}
+  if(ref.startsWith("surface.move-to:")&&arg?.surfaceId)return moveTab(state,arg.surfaceId,ref.slice("surface.move-to:".length));
   if (ref === "surface.maximize") {
     const group = arg?.surfaceId ? groupsOf(state.root).find(g => g.tabs.includes(arg.surfaceId!)) : groupsOf(state.root).find(g => g.id === state.focusedGroupId);
     return group ? { ...state, focusedGroupId: group.id, maximizedGroupId: state.maximizedGroupId === group.id ? undefined : group.id } : state;

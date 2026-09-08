@@ -769,3 +769,10 @@ User-commissioned lower-tier shell motion and editor-context planning returned t
 Implemented real PTY terminal surfaces with lease-preserving detach/re-dock, Central NOW Flow creation and revision saves, contextual editor/footer tools and selected-text context insertion, browser downloads and persistent profiles, full-height sidebar ground, pane-content focus, right-pane maximize and actual fresh tabs. Native review exercised shell I/O/resize/interrupt/detach, file download, persistent cookie restart, Flow saving and provenance-bearing selection review. Real checks: PTY 5/5, Flow 2/2, editor 33/33, material 26/26, context draft 7/7. Build excludes development walk tooling.
 
 Evidence and explicit limits: `desktop/cradle/walk/artifacts/review/FINAL-LAYERS-2026-09-08.md`. Git owner operations and semantic web-element attachments remain follow-on contracts; suite/owner promotion must keep binary schemas matched. Concurrent System, point-cloud and governance work remains separately owned.
+
+
+### 2026-09-08 — owner-led editor and chrome refinement
+
+CodeMirror now backs Central source, ordinary text-file and Flow editing. Standard selections carry local highlights and explicit @context attachment; the owner save/conflict paths remain in place. The window and tab row share space, sidebar resize affordances are cursor-only, synchronized geometry settles even when WebKit suspends animation frames, focused footers reveal from their bottom edge, and the workspace footer has a retained pin toggle. Tab menus now expose tab focus and destination-pane moves. Fresh canvas keeps Write/Search/Terminal with configurable rotating phrases.
+
+Evidence: refinement 27/27, real context-owner 7/7, native Flow save/highlight and full-right geometry. Receipt and bounded limitations: `desktop/cradle/walk/artifacts/review/EDITOR-CHROME-REFINEMENT-2026-09-08.md`. Production app rebuilt. Concurrent System, point-cloud and shared-day changes are preserved separately.

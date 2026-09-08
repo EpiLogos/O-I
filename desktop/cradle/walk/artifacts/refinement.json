@@ -1,0 +1,179 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "refinement",
+  "generated_at": "2026-09-08T16:39:53.802Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4247",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 9065,
+  "checks": [
+    {
+      "ok": true,
+      "label": "CodeMirror saves exact text through the real Central source owner"
+    },
+    {
+      "ok": true,
+      "label": "Standard selection accepts a visual highlight"
+    },
+    {
+      "ok": true,
+      "label": "Highlighting does not modify the authored document"
+    },
+    {
+      "ok": true,
+      "label": "Markdown toolbar applies formatting to the actual selected range"
+    },
+    {
+      "ok": true,
+      "label": "Undo restores real document content"
+    },
+    {
+      "ok": true,
+      "label": "Editor search and replace panel is available"
+    },
+    {
+      "ok": true,
+      "label": "Folding the toolbar yields its height to document content"
+    },
+    {
+      "ok": true,
+      "label": "Hovering pane content does not reveal its footer"
+    },
+    {
+      "ok": true,
+      "label": "Only the bottom edge reveals the pane footer",
+      "data": {
+        "hover": true,
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "pointer": "auto",
+        "parent": {
+          "x": 249,
+          "y": 33,
+          "width": 1022,
+          "height": 778,
+          "top": 33,
+          "right": 1271,
+          "bottom": 811,
+          "left": 249
+        },
+        "hit": "<footer class=\"editor-footer\"><span class=\"editor-path source-revision\" data-revision=\"central.content-fnv1a64/v1:37:7c6ec75f579c9fbf\" title=\"Central / Work / Editor / ProjectCentral/user/00 01-DESIGN.md\">Central / Work / Editor / ProjectCentral/user/00 01-DESIGN.md</span><span>Ln 1, Col 24</span><s"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Per-tab focus folds away the tab strip"
+    },
+    {
+      "ok": true,
+      "label": "Document right-click does not open tab-management actions"
+    },
+    {
+      "ok": true,
+      "label": "Sidebar closes fully"
+    },
+    {
+      "ok": true,
+      "label": "Resize affordance has no visible line"
+    },
+    {
+      "ok": true,
+      "label": "Dragging changes live sidebar geometry and retains final width"
+    },
+    {
+      "ok": true,
+      "label": "Workspace footer can be pinned"
+    },
+    {
+      "ok": true,
+      "label": "Fresh canvas retains focused actions without Browse the web"
+    },
+    {
+      "ok": true,
+      "label": "Welcome phrase component is integrated"
+    },
+    {
+      "ok": true,
+      "label": "Fresh Flow uses the same editor and saves to its real Central provenance"
+    },
+    {
+      "ok": true,
+      "label": "Tab split creates a second real pane"
+    },
+    {
+      "ok": true,
+      "label": "Per-tab move returns the selected tab and removes its emptied pane"
+    },
+    {
+      "ok": true,
+      "label": "Right sidebar opens with usable width"
+    },
+    {
+      "ok": true,
+      "label": "Right sidebar expands across the central canvas"
+    },
+    {
+      "ok": true,
+      "label": "Right sidebar restores its previous width"
+    },
+    {
+      "ok": true,
+      "label": "Right resize affordance is cursor-only too"
+    },
+    {
+      "ok": true,
+      "label": "Compact-width sidebar dragging retains the chosen width"
+    },
+    {
+      "ok": true,
+      "label": "Narrow overlay drawer resizes without snapping back"
+    },
+    {
+      "ok": true,
+      "label": "Narrow shell has no horizontal overflow"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-08T16:39:54.207Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4247"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 78,
+      "data": {
+        "file": "refinement-fresh-canvas-refined.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 26,
+      "data": {
+        "file": "refinement-editor-and-chrome-refined.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "refinement-fresh-canvas-refined.png",
+    "refinement-editor-and-chrome-refined.png"
+  ]
+}

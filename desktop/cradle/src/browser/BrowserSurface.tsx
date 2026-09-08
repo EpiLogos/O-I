@@ -51,7 +51,12 @@ export function BrowserSurface({binding}:{binding:SurfaceBinding}) {
       const blocked=document.querySelector('.desktop-side.right[style*="transform"],.desktop-regions[data-right-full="true"],.ctx-menu,.search-aperture,[role="dialog"],.region-scrim,details[open],.desktop-side[data-overlay="true"]');
       const visible=rect.width>1&&rect.height>1&&rect.left>=0&&rect.top>=0&&element.getClientRects().length>0&&!element.closest('[inert],[hidden],[aria-hidden="true"]')&&!blocked;
       if(!visible){if(attached.current&&!hidden){hidden=true;void control("hide").catch(reason=>setError(String(reason)));}return;}
-      const bounds={x:rect.left,y:rect.top,width:rect.width,height:rect.height};
+      // Leave the DOM footer edge reachable above the native child view.
+      // Revealing status trims its viewport instead of hiding the whole page.
+      const footer=element.closest('.browser-surface')?.querySelector('.browser-status')?.getBoundingClientRect();
+      const workspaceFooter=document.querySelector('.workspace-footer-edge .canvas-arrangement')?.getBoundingClientRect();
+      const bottom=Math.min(rect.bottom,footer?.top??rect.bottom,workspaceFooter?.top??rect.bottom);
+      const bounds={x:rect.left,y:rect.top,width:rect.width,height:Math.max(1,bottom-rect.top)};
       const stamp=JSON.stringify(bounds);
       if(attached.current&&!hidden&&last===stamp)return;
       busy=true;last=stamp;

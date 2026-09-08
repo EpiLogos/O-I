@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "handoff-1788886147467833000",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "codex-shell-lead",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1788886147,
+  "subject": "Owner-led editor and chrome refinement",
+  "result": "Implemented CodeMirror source/file/Flow editing, standard selection highlights and @context seam, shared top row, cursor-only synchronized sidebar sizing with occluded-WebKit completion, bottom-edge pane/global footers and pinning, per-tab focus/movement, and configurable rotating welcome. Refinement walk 27/27 and real context-owner walk 7/7; native Flow save/highlight and settled full-right geometry observed. Receipt: desktop/cradle/walk/artifacts/review/EDITOR-CHROME-REFINEMENT-2026-09-08.md. Local highlights and legacy textarea walk migration are bounded limits; Git and semantic browser-element context remain earlier owner contracts. Preserve concurrent System/point-cloud/NOW changes; shared day already closed by its owner.",
+  "status": "active"
+}

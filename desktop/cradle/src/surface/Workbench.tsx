@@ -184,6 +184,7 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
       data-pane="group"
       data-group-id={group.id}
       data-focused={focused}
+      data-tab-focus={!!active&&state.focusedTabId===active}
       data-maximized={state.maximizedGroupId === group.id}
       aria-label="Surface group"
       style={{ flexGrow: props.weight ?? 1, display: state.maximizedGroupId && state.maximizedGroupId !== group.id ? "none" : undefined }}
@@ -194,6 +195,7 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
         if (!focused) execute("surface.focus-group", { groupId: group.id });
       }}
     >
+      {active&&state.focusedTabId===active&&<button className="tab-focus-reveal" aria-label="Show tab bar" onClick={()=>execute("surface.focus-tab",{surfaceId:active})}>⌄</button>}
       <div
         className="tab-strip"
         onContextMenu={(e) => {
@@ -278,11 +280,7 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
           e.preventDefault(); e.stopPropagation();
           execute("surface.drop", { surfaceId: id, groupId: group.id });
         }}
-        onContextMenu={(e) => {
-          if (!active) return;
-          e.preventDefault();
-          openBindingMenu(active, e.clientX, e.clientY);
-        }}
+
       >
         {activeBinding ? <SurfaceBody key={activeBinding.id} binding={activeBinding} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} /> : <p className="source-note">{state.detached?.some(d=>d.groupId===group.id)?"This view is open in a native window. Close that window to re-dock it here.":"Move a tab here, or open a source or wiki with +."}</p>}
       </div>

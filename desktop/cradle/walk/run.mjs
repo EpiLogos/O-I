@@ -35,6 +35,7 @@ if (!Number.isInteger(BRIDGE_PORT) || BRIDGE_PORT < 1024 || BRIDGE_PORT > 65535)
 const BRIDGE_URL = `http://127.0.0.1:${BRIDGE_PORT}`;
 
 const SCENARIOS = {
+  refinement:{module:"scenarios/refinement.mjs",kernel:true,aliases:[]},
   "shell-recovery": {module:"scenarios/shell-recovery.mjs",kernel:true,aliases:[]},
   ground:{module:"scenarios/ground.mjs",kernel:true,aliases:[]},
   recovery:{module:"scenarios/recovery.mjs",kernel:false,aliases:[]},

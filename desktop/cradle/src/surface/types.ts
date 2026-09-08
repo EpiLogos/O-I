@@ -81,6 +81,7 @@ export type Pane = TabGroupPane | SplitPane;
 export interface NativeWindowBounds { x: number; y: number; width: number; height: number }
 
 export interface LayoutState {
+  focusedTabId?: SurfaceId;
   /** null = austere rest (law 12: rest is *what is on screen*). */
   root: Pane | null;
   /** All bindings ever opened this workspace, including closed ones

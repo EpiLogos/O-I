@@ -8,6 +8,7 @@
  * needed.
  */
 const paths = {
+  pin: 'M9 3h6l-1 7 4 4H6l4-4zM12 14v7',
   folder: 'M3 6h7l2 2h9v12H3zM3 6V4h7l2 2',
   chat: 'M3 4h18v13H9l-5 4v-4H3zM7 8h10m-10 4h7',
   file: 'M6 2h8l4 4v16H6zM14 2v5h4M9 12h6m-6 4h6',

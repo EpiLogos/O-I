@@ -337,3 +337,36 @@
 @media (prefers-reduced-motion: reduce) {
   .desktop-side, .desktop-centre, .region-resizer::after { transition-duration: 0.01ms; }
 }
+
+/* The geometry hook drives both chrome masks and panel bounds per frame. */
+.desktop-shell .desktop-side {transition:none;overflow:hidden;will-change:auto}
+.desktop-shell .desktop-side.left {position:relative;inset:auto;width:var(--desktop-left-width)!important;max-width:none;margin:0;border:0;border-radius:0}
+.desktop-shell .desktop-side.right {position:absolute;inset:0 0 0 auto;width:var(--desktop-right-width)!important;margin:0;border:0;border-radius:0;z-index:var(--oi-z-drawer)}
+.desktop-shell .desktop-side.right > .desktop-side-content {width:100%;min-width:0}
+.desktop-shell .desktop-regions::after {content:"";width:var(--desktop-right-space);flex:none;pointer-events:none}
+.desktop-shell .region-resizer::after {content:none}
+.desktop-shell .desktop-side.left[data-overlay="true"] {position:absolute;inset:0 auto 0 0;z-index:var(--oi-z-drawer)}
+.desktop-shell[data-resizing] iframe {pointer-events:none}
+.workspace-footer-edge {position:relative;height:0;flex:none;z-index:50;transition:height var(--oi-motion-ui) var(--oi-motion-ease-out)}
+.workspace-footer-edge::before {content:"";position:absolute;bottom:0;left:0;right:0;height:4px}
+.workspace-footer-edge .canvas-arrangement {position:absolute;bottom:0;left:0;right:0;transform:translateY(100%);pointer-events:none;background:linear-gradient(to right,var(--oi-sidebar-ground) 0,var(--oi-sidebar-ground) var(--desktop-left-width),var(--oi-shell-ground) var(--desktop-left-width));transition:transform var(--oi-motion-ui) var(--oi-motion-ease-out)}
+.workspace-footer-edge:hover .canvas-arrangement,.workspace-footer-edge:focus-within .canvas-arrangement,.workspace-footer-edge[data-pinned="true"] .canvas-arrangement {transform:translateY(0);pointer-events:auto}
+.workspace-footer-edge[data-pinned="true"] {height:24px}
+.canvas-arrangement .footer-pin {margin-left:auto}
+@media(prefers-reduced-motion:reduce){.workspace-footer-edge,.workspace-footer-edge .canvas-arrangement{transition:none}}
+
+.desktop-shell{overflow:hidden}
+
+/* Share the window row with the first tab row. Window controls remain on
+   the sidebar grounds; the canvas uses the previously empty middle. */
+@media(min-width:760px) and (pointer:fine){
+ .desktop-shell .desktop-centre:has(.tab-strip){margin-top:-28px;position:relative;z-index:1}
+ .desktop-shell .desktop-centre .surface-host{padding-top:0}
+ .desktop-shell .shell-topbar{position:relative;z-index:2;pointer-events:none}
+ .desktop-shell .shell-topbar button{pointer-events:auto}
+ .desktop-shell:has(.desktop-side.left.depth-collapsed) .desktop-centre .tab-strip:first-child{padding-left:112px}
+ .desktop-shell:has(.desktop-side.right.depth-collapsed,.desktop-side.right.depth-strip) .desktop-centre .tab-strip{padding-right:32px}
+}
+.desktop-shell{background:linear-gradient(to right,var(--oi-sidebar-ground) 0,var(--oi-sidebar-ground) var(--desktop-left-width),var(--oi-shell-ground) var(--desktop-left-width),var(--oi-shell-ground) calc(100% - var(--desktop-right-width)),var(--oi-agent-ground) calc(100% - var(--desktop-right-width)))}
+.desktop-centre .tab-strip{transition:height var(--oi-motion-ui) var(--oi-motion-ease-out),min-height var(--oi-motion-ui) var(--oi-motion-ease-out),opacity var(--oi-motion-ui) var(--oi-motion-ease-out)}
+.desktop-regions[data-right-full="true"] .desktop-centre .tab-strip{opacity:0;pointer-events:none}
