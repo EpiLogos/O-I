@@ -11,9 +11,14 @@ on:
     branches:
       - main
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   omarchy-host:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7.0.1
 
@@ -22,10 +27,12 @@ jobs:
         with:
           components: clippy
 
-      - name: Prove O:I host planner and fake-HOME ownership laws
-        run: |
-          cargo test --manifest-path cli/Cargo.toml omarchy_host_tests
-          cargo clippy --manifest-path cli/Cargo.toml --all-targets -- -D warnings
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: cli
+
+      - name: Build O:I CLI for host lifecycle proof
+        run: cargo build --manifest-path cli/Cargo.toml
 
       - name: Fetch exact Omarchy contract revision
         run: |

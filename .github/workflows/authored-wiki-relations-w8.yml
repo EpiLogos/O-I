@@ -11,6 +11,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CENTRAL_SHA: 31d54eb4a6202c89c7f60ec004654916133dea94
   AIKIT_SHA: 6b2517862faccc7787b36ef45ef8d19186fe8128
@@ -39,6 +43,12 @@ jobs:
           ref: ${{ env.FACTORY_SHA }}
           path: owners/factory
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: |
+            owners/central
+            owners/ai-kit
+            owners/factory
       - name: Prove exact native owner revisions
         shell: bash
         run: |

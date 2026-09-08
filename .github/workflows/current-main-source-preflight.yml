@@ -16,10 +16,15 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   current-source:
     name: current-source / ${{ matrix.product }}
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -52,26 +57,38 @@ jobs:
   project-context-handoff:
     name: current-source / Project Context P3→P4→P5
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: tests/project-context-handoff
       - name: Exercise exact AIKit → Factory context/Run/Return seam
         run: cargo test --manifest-path tests/project-context-handoff/Cargo.toml
 
   native-action-parity:
     name: current-source / Factory Action human→Agent→headless
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: tests/native-action-parity
       - name: Consume one exact-main Factory Action across projections
         run: cargo test --manifest-path tests/native-action-parity/Cargo.toml
 
   journey-routine-handoff:
     name: current-source / AgentProfile→Method proof→Routine→Journey
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: tests/journey-routine-handoff
       - name: Exercise exact Central → AIKit → Factory W12 seam
         run: cargo test --manifest-path tests/journey-routine-handoff/Cargo.toml
