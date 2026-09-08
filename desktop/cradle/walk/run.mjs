@@ -34,12 +34,15 @@ const BRIDGE_PORT = 4179;
 const BRIDGE_URL = `http://127.0.0.1:${BRIDGE_PORT}`;
 
 const SCENARIOS = {
+  "shell-recovery": {module:"scenarios/shell-recovery.mjs",kernel:true,aliases:[]},
   ground:{module:"scenarios/ground.mjs",kernel:true,aliases:[]},
   recovery:{module:"scenarios/recovery.mjs",kernel:false,aliases:[]},
   rest: { module: "scenarios/rest.mjs", kernel: false, aliases: ["u0.3"] },
   surfaces: { module: "scenarios/surfaces.mjs", kernel: true, aliases: ["u0.3b"] },
   "kernel-cas": { module: "scenarios/kernel-cas.mjs", kernel: true, aliases: ["u0.4"] },
   system: {module:"scenarios/system.mjs",kernel:true,aliases:[]},
+  "system-settings": {module:"scenarios/system-settings.mjs",kernel:true,aliases:[]},
+  "system-debug": {module:"scenarios/system-debug.mjs",kernel:true,aliases:[]},
   permission: {module:"scenarios/permission.mjs",kernel:true,aliases:[]},
   encounter: {module:"scenarios/encounter.mjs",kernel:true,aliases:[]},
   "file-edit": {module:"scenarios/file-edit.mjs",kernel:true,aliases:[]},

@@ -55,8 +55,9 @@ export async function setup() {
       join(projectRoot, 'study.html'),
       '<!doctype html>\n<html><head><link rel="stylesheet" href="assets/style.css"></head>\n'
         + '<body><h1>Material study</h1><img src="assets/logo.png" alt="logo" id="logo">'
-        + '<a href="notes.txt" id="sibling-link">notes</a></body></html>\n',
+        + '<a href="notes.txt" id="sibling-link">notes</a><button id="increment">Increment</button><output id="count">0</output><script src="assets/interaction.js"></script></body></html>\n',
     );
+    writeFileSync(join(projectRoot, 'assets', 'interaction.js'), 'document.querySelector("#increment").onclick=()=>{document.querySelector("#count").textContent=String(Number(document.querySelector("#count").textContent)+1)}');
     writeFileSync(join(projectRoot, 'assets', 'style.css'), 'body{background-color:rgb(17,34,51);}\n');
     writeFileSync(join(projectRoot, 'assets', 'logo.png'), PNG_BYTES);
     writeFileSync(
@@ -111,6 +112,9 @@ export default async function run({ page, baseUrl, bridgeUrl, check, metric, sho
   const bodyBackground = await htmlFrame.locator('body').evaluate((el) => getComputedStyle(el).backgroundColor);
   check(bodyBackground === 'rgb(17, 34, 51)', 'HTML relative <link rel=stylesheet> is loaded and applied', { bodyBackground });
   check(await htmlFrame.locator('#sibling-link').getAttribute('href') === 'notes.txt', 'HTML relative <a> keeps its literal reference (never rewritten)');
+  await htmlFrame.locator('#increment').click();
+  check(await htmlFrame.locator('#count').innerText()==='1','Owner-resolved relative JavaScript executes the actual HTML interaction');
+  check(await page.locator('iframe.material-frame').getAttribute('sandbox')==='allow-scripts allow-forms','HTML retains opaque-origin sandbox without native bridge authority');
   await shot('html-rendered');
 
   // --- traversal outside the material directory is refused (direct bridge check) ---
@@ -153,6 +157,7 @@ export default async function run({ page, baseUrl, bridgeUrl, check, metric, sho
   // omits the `srcdoc` attribute entirely), never by setting `src`, which
   // this transport's iframe never has at all — `src="about:blank"` is the
   // Tauri-only suspension path.
+  await page.waitForFunction(() => document.querySelector('iframe.material-frame')?.getAttribute('srcdoc') === null);
   const blankedSrcdoc = await htmlFrameLocator.getAttribute('srcdoc');
   check(blankedSrcdoc === null, 'A hidden pane (maximize) suspends its iframe (srcdoc cleared)', { blankedSrcdoc });
   await page.keyboard.press('Meta+Alt+Enter');

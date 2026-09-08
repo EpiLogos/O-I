@@ -16,6 +16,7 @@ import {
   activateSurface,
   activeBindingId,
   closeSurface,
+  closeEmptyPane,
   cycleTab,
   focusGroup,
   isPinned,
@@ -129,8 +130,10 @@ function executeBaseAction(
 
     case "surface.open-sources":
       return openSourcesIndex(state);
+    case "surface.close-empty-pane":
+      return closeEmptyPane(state, arg?.groupId ?? state.focusedGroupId);
     case "surface.close":
-      return closeSurface(state, active());
+      return active() ? closeSurface(state, active()) : closeEmptyPane(state, state.focusedGroupId);
     case "surface.reopen":
       return reopenClosed(state);
     case "surface.split-right":

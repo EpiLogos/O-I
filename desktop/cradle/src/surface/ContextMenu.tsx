@@ -83,7 +83,7 @@ export function ContextMenu({ menu, onInvoke, onClose }: Props) {
 
   const onKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
     const items = Array.from(
-      ref.current?.querySelectorAll<HTMLButtonElement>(".ctx-item") ?? [],
+      ref.current?.querySelectorAll<HTMLButtonElement>(".ctx-item:not([disabled])") ?? [],
     );
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
       e.preventDefault();
@@ -91,6 +91,9 @@ export function ContextMenu({ menu, onInvoke, onClose }: Props) {
       const i = items.indexOf(document.activeElement as HTMLButtonElement);
       const d = e.key === "ArrowDown" ? 1 : -1;
       items[(i + d + items.length) % items.length].focus();
+    } else if (e.key === "Home" || e.key === "End") {
+      e.preventDefault();
+      items[e.key === "Home" ? 0 : items.length - 1]?.focus();
     } else if (e.key === "Escape") {
       e.preventDefault();
       e.stopPropagation();

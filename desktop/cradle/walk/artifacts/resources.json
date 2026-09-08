@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "resources",
-  "generated_at": "2026-09-08T10:41:43.615Z",
+  "generated_at": "2026-09-08T12:04:14.730Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -10,23 +10,23 @@
     "node": "v24.16.0",
     "platform": "darwin"
   },
-  "passed": false,
+  "passed": true,
   "error": null,
-  "duration_ms": 1214299,
+  "duration_ms": 45922,
   "checks": [
     {
-      "ok": false,
+      "ok": true,
       "label": "All five per-cycle steps completed on every cycle without a caught error",
       "data": {
-        "issue_count": 80
+        "issue_count": 0
       }
     },
     {
       "ok": true,
-      "label": "bounded — heap grows 15684.1 B/cycle (< 1% of first-stable 7119720 B) and DOM nodes grow -3.11/cycle (< 5/cycle)",
+      "label": "bounded — heap grows 20537.8 B/cycle (< 1% of first-stable 5889064 B) and DOM nodes grow 3.73/cycle (< 5/cycle)",
       "data": {
-        "heap_slope": 15684.137254901958,
-        "node_slope": -3.107843137254902
+        "heap_slope": 20537.831578947367,
+        "node_slope": 3.7293233082706774
       }
     }
   ],
@@ -34,17 +34,17 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 16,
+      "duration_ms": 68,
       "data": {
         "file": "resources-final.png"
       }
     }
   ],
   "metrics": {
-    "heap_used_bytes_per_cycle": 15684.1,
-    "nodes_per_cycle": -3.1,
-    "sampled_cycles": 17,
-    "step_issue_count": 80
+    "heap_used_bytes_per_cycle": 20537.8,
+    "nodes_per_cycle": 3.7,
+    "sampled_cycles": 20,
+    "step_issue_count": 0
   },
   "screenshots": [
     "resources-final.png"

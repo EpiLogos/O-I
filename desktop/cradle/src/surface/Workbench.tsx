@@ -15,7 +15,7 @@ import {SystemPanel} from "../workspace/SystemPanel";
  */
 
 import { Glyph } from "../workspace/Glyph";
-import { Fragment, useEffect } from "react";
+import { Fragment, useLayoutEffect } from "react";
 import { useKernel } from "../kernel/KernelProvider";
 import type { ListedSource } from "../kernel/types";
 import { KnowledgeSurface } from "../knowledge/KnowledgeSurface";
@@ -50,9 +50,15 @@ export function Workbench(props: WorkbenchProps) {
   // frame never steals the caret from a surface body (U0.4: editors own
   // their focus while the person is in them); it only re-anchors focus
   // that is loose on the page.
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (menuOpen) return;
     const g = groupsOf(state.root).find((g) => g.id === state.focusedGroupId);
+    if (g && !g.active && g.emptySlot) {
+      // Claim an intentionally empty destination before mounted source
+      // effects can restore the previous kernel subject's editor focus.
+      document.querySelector<HTMLElement>(`[data-group-id="${g.id}"] .strip-open`)?.focus();
+      return;
+    }
     if (!g?.active) return;
     const el = document.querySelector<HTMLElement>(`[data-surface-id="${g.active}"]`);
     if (!el) return;
@@ -62,6 +68,11 @@ export function Workbench(props: WorkbenchProps) {
       // Structural frame operations may remount the old editor. Its caret
       // must not remain in a different pane from the semantic active binding.
       // Navigation, menus and other external controls retain their own focus.
+      if (active?.matches('[role="tab"]') && activePane?.dataset.groupId === g.id) {
+        el.focus();
+        el.scrollIntoView({ block: "nearest", inline: "nearest" });
+        return;
+      }
       if (active && active !== document.body && active.isConnected && (!activePane || activePane.dataset.groupId === g.id)) return;
       const editor = el.closest(".pane.group")?.querySelector<HTMLElement>(".source-textarea");
       (editor ?? el).focus();
@@ -95,7 +106,15 @@ function PaneNode(props: PaneProps) {
         {pane.children.map((child, index) => <Fragment key={child.id}>
           <PaneNode {...props} pane={child} weight={pane.weights?.[index] ?? 1} />
           {!props.state.maximizedGroupId && index < pane.children.length - 1 && <div className="split-resizer" role="separator" aria-label="Resize canvas split" aria-orientation={pane.dir === "h" ? "vertical" : "horizontal"} tabIndex={0}
-            onPointerDown={e => e.currentTarget.setPointerCapture(e.pointerId)}
+            aria-valuemin={15} aria-valuemax={85}
+            aria-valuenow={Math.round(100 * (pane.weights?.[index] ?? 1) / ((pane.weights?.[index] ?? 1) + (pane.weights?.[index + 1] ?? 1)))}
+            title="Drag to resize; arrow keys adjust; double-click or Enter balances panes"
+            onDoubleClick={() => {
+              const weights = pane.children.map((_, i) => pane.weights?.[i] ?? 1);
+              weights[index] = weights[index + 1] = (weights[index] + weights[index + 1]) / 2;
+              props.execute("surface.resize-split", { splitId: pane.id, weights });
+            }}
+            onPointerDown={e => { e.preventDefault(); e.currentTarget.focus(); e.currentTarget.setPointerCapture(e.pointerId); }}
             onPointerMove={e => {
               if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
               const box = e.currentTarget.parentElement!.getBoundingClientRect();
@@ -108,11 +127,14 @@ function PaneNode(props: PaneProps) {
               weights[index+1] = pair-weights[index];
               props.execute("surface.resize-split", { splitId: pane.id, weights });
             }}
-            onPointerUp={e => e.currentTarget.releasePointerCapture(e.pointerId)}
+            onPointerUp={e => { if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId); }}
             onKeyDown={e => {
-              if (!["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)) return;
-              e.preventDefault(); const weights = pane.children.map((_,i) => pane.weights?.[i] ?? 1); const pair = weights[index]+weights[index+1];
-              weights[index] = Math.max(pair*0.15,Math.min(pair*0.85,weights[index]+pair*(["ArrowRight","ArrowDown"].includes(e.key)?0.05:-0.05))); weights[index+1]=pair-weights[index];
+              const arrows = pane.dir === "h" ? ["ArrowLeft", "ArrowRight"] : ["ArrowUp", "ArrowDown"];
+              if (![...arrows, "Home", "End", "Enter"].includes(e.key) || e.altKey || e.metaKey || e.ctrlKey) return;
+              e.preventDefault(); e.stopPropagation();
+              const weights = pane.children.map((_,i) => pane.weights?.[i] ?? 1); const pair = weights[index]+weights[index+1];
+              const desired = e.key === "Home" ? pair * .15 : e.key === "End" ? pair * .85 : e.key === "Enter" ? pair / 2 : weights[index] + pair * (e.shiftKey ? .1 : .05) * (e.key === arrows[1] ? 1 : -1);
+              weights[index] = Math.max(pair*.15, Math.min(pair*.85, desired)); weights[index+1]=pair-weights[index];
               props.execute("surface.resize-split", { splitId: pane.id, weights });
             }} />}
         </Fragment>)}
@@ -136,6 +158,9 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
       data-focused={focused}
       aria-label="Surface group"
       style={{ flexGrow: props.weight ?? 1, display: state.maximizedGroupId && state.maximizedGroupId !== group.id ? "none" : undefined }}
+      onFocusCapture={() => {
+        if (!focused) execute("surface.focus-group", { groupId: group.id });
+      }}
       onPointerDown={() => {
         if (!focused) execute("surface.focus-group", { groupId: group.id });
       }}
@@ -176,12 +201,19 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
           />
         ))}
         <div className="pane-tools">
+          {group.emptySlot && <button type="button" className="pane-tool-menu" aria-label="Close empty pane" title="Close empty pane (⌘W)" onClick={() => execute("surface.close-empty-pane", { groupId: group.id })}><Glyph name="close" size={13} /></button>}
+          <button type="button" className="pane-tool-menu"
+            aria-label={state.maximizedGroupId === group.id ? "Restore pane arrangement" : "Maximize this pane"}
+            title="Maximize / restore this pane (⌘⌥Enter)"
+            onClick={() => execute("surface.maximize", { surfaceId: active })}>
+            <Glyph name={state.maximizedGroupId === group.id ? "restore" : "expand"} size={13} />
+          </button>
           <button
             type="button"
             className="strip-open"
             aria-label="Open source"
             title="Open source (⌘T)"
-            onClick={() => execute("surface.open")}
+            onClick={() => { execute("surface.focus-group", { groupId: group.id }); execute("surface.open"); }}
           >
             <Glyph name="plus" size={13} />
           </button>
@@ -203,13 +235,24 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
       <div
         className="surface-body"
         role="tabpanel"
+        id={`surface-panel-${group.id}`}
+        aria-labelledby={active ? `surface-tab-${active}` : undefined}
+        onDragOver={e => {
+          if (e.dataTransfer.types.includes("application/x-oi-surface")) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }
+        }}
+        onDrop={e => {
+          const id = e.dataTransfer.getData("application/x-oi-surface");
+          if (!id) return;
+          e.preventDefault(); e.stopPropagation();
+          execute("surface.drop", { surfaceId: id, groupId: group.id });
+        }}
         onContextMenu={(e) => {
           if (!active) return;
           e.preventDefault();
           openBindingMenu(active, e.clientX, e.clientY);
         }}
       >
-        {activeBinding ? <SurfaceBody key={activeBinding.id} binding={activeBinding} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} /> : <p className="source-note">{state.detached?.some(d=>d.groupId===group.id)?"This view is open in a native window. Close that window to re-dock it here.":"Open a source or wiki in this pane."}</p>}
+        {activeBinding ? <SurfaceBody key={activeBinding.id} binding={activeBinding} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} /> : <p className="source-note">{state.detached?.some(d=>d.groupId===group.id)?"This view is open in a native window. Close that window to re-dock it here.":"Move a tab here, or open a source or wiki with +."}</p>}
       </div>
     </section>
   );
@@ -267,8 +310,12 @@ const KIND_GLYPH: Record<string, "chat" | "wiki" | "file" | "settings"> = {
 
 function Tab({ id, title, kind, active, pinned, dirty, groupId, execute, openBindingMenu }: TabProps) {
   return (
-    <div
+    <div className="tab-entry" role="presentation">
+    <button
+      type="button"
       role="tab"
+      id={`surface-tab-${id}`}
+      aria-controls={`surface-panel-${groupId}`}
       aria-selected={active}
       tabIndex={active ? 0 : -1}
       className={`tab${active ? " active" : ""}`}
@@ -298,7 +345,15 @@ function Tab({ id, title, kind, active, pinned, dirty, groupId, execute, openBin
         // to the frame keymap (⌥ arrows move focus, ⌘⌥ arrows move the
         // surface) and must not race it.
         if (e.altKey || e.metaKey || e.ctrlKey) return;
-        if (e.key === "ArrowLeft") {
+        if (e.key === "Home" || e.key === "End") {
+          e.preventDefault();
+          const siblings = e.currentTarget.closest('[role="tablist"]')?.querySelectorAll<HTMLElement>('[role="tab"]');
+          const target = siblings?.[e.key === "Home" ? 0 : siblings.length - 1]?.dataset.surfaceId;
+          if (target) execute("surface.activate", { surfaceId: target });
+        } else if (e.key === "Delete" || e.key === "Backspace") {
+          e.preventDefault();
+          execute("surface.close", { surfaceId: id });
+        } else if (e.key === "ArrowLeft") {
           e.preventDefault();
           execute("surface.tab-prev");
         } else if (e.key === "ArrowRight") {
@@ -308,6 +363,7 @@ function Tab({ id, title, kind, active, pinned, dirty, groupId, execute, openBin
       }}
       onDragStart={(e) => {
         e.dataTransfer.setData("text/plain", id);
+        e.dataTransfer.setData("application/x-oi-surface", id);
         e.dataTransfer.effectAllowed = "move";
       }}
       onDragOver={(e) => {
@@ -341,13 +397,16 @@ function Tab({ id, title, kind, active, pinned, dirty, groupId, execute, openBin
           ◈
         </span>
       ) : null}
+    </button>
       <button
         type="button"
         className="tab-close"
         aria-label={`Close ${title}`}
         tabIndex={-1}
         onPointerDown={(e) => e.stopPropagation()}
-        onClick={() => execute("surface.close", { surfaceId: id })}
+        disabled={pinned}
+        title={pinned ? "Unpin before closing" : `Close ${title}`}
+        onClick={(e) => { e.stopPropagation(); execute("surface.close", { surfaceId: id }); }}
       >
         <Glyph name="close" size={11} />
       </button>
@@ -357,12 +416,15 @@ function Tab({ id, title, kind, active, pinned, dirty, groupId, execute, openBin
 
 export function ArrangementActions({state, execute, openFrameMenu, nativeWindows}: Pick<WorkbenchProps, "state" | "execute" | "openFrameMenu" | "nativeWindows">) {
   const props = {state, execute, openFrameMenu, nativeWindows};
+  const group = groupsOf(state.root).find(g => g.id === state.focusedGroupId);
+  const active = group?.active ? state.surfaces[group.active] : undefined;
+  const detachable = !!active && ["source", "knowledge", "file", "encounter"].includes(active.kind);
   return <>
-        <button aria-label="Split active surface right" title="Split right (⌘D)" onClick={() => props.execute("surface.split-right")}><Glyph name="columns"/></button>
-        <button aria-label="Split active surface down" title="Split down (⌘⇧D)" onClick={() => props.execute("surface.split-down")}><Glyph name="rows"/></button>
+        <button aria-label="Split active surface right" title="Split right (⌘D)" disabled={!active} onClick={() => props.execute("surface.split-right")}><Glyph name="columns"/></button>
+        <button aria-label="Split active surface down" title="Split down (⌘⇧D)" disabled={!active} onClick={() => props.execute("surface.split-down")}><Glyph name="rows"/></button>
         <button aria-label="Tile all surfaces" title="Tile all surfaces" disabled={groupsOf(state.root).flatMap(g => g.tabs).length < 2} onClick={() => props.execute("surface.tile")}><Glyph name="grid"/></button>
-        {props.nativeWindows && <button aria-label="Detach active surface" disabled={!groupsOf(state.root).some(g=>g.id===state.focusedGroupId&&g.active)} title="Detach into native window" onClick={()=>props.execute("surface.detach")}><Glyph name="detach"/></button>}
-        <button aria-label={state.maximizedGroupId ? "Restore panes" : "Maximize active pane"} title="Maximize / restore (⌘⌥Enter)" onClick={() => props.execute("surface.maximize")}><Glyph name={state.maximizedGroupId ? "restore" : "expand"}/></button>
+        {props.nativeWindows && <button aria-label="Detach active surface" disabled={!detachable} title="Detach into native window" onClick={()=>props.execute("surface.detach")}><Glyph name="detach"/></button>}
+        <button aria-label={state.maximizedGroupId ? "Restore panes" : "Maximize active pane"} title="Maximize / restore (⌘⌥Enter)" disabled={!active} onClick={() => props.execute("surface.maximize")}><Glyph name={state.maximizedGroupId ? "restore" : "expand"}/></button>
         <button aria-label="Window actions" title="Window actions" onClick={e => { const r = e.currentTarget.getBoundingClientRect(); props.openFrameMenu(r.left, r.bottom); }}><Glyph name="more"/></button>
   </>;
 }

@@ -63,7 +63,7 @@ export default async function run({ page, baseUrl, check, metric, shot, channel 
     const unboundState = current.snapshot ?? current;
     check(!unboundState.focus.project && !unboundState.focus.world && !unboundState.navigator.project_ref, 'Unbound project clears stale focus and fabricates no identity');
   }
-  await page.getByRole('button', { name: 'Collapse left region' }).click();
+  await page.getByRole('button', { name: 'Toggle left region' }).click();
   check(await nav.count() === 0, 'Pointer close returns to rest');
   await page.waitForFunction(() => document.activeElement === document.querySelector('.canvas-surface'), null, { timeout: 5000 });
   check(true, 'Pointer summon and close restore the original caret rather than the removed menu item');

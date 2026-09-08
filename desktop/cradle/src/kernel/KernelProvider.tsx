@@ -73,6 +73,9 @@ export interface KernelApi {
 }
 
 const EMPTY_SNAPSHOT: KernelSnapshotState = { focus: {}, surfaces: {}, buffers: {} };
+// Recent renderer observations only. The kernel owns the complete event log;
+// view changes must not retain another session-long copy in every window.
+const VIEW_RECEIPT_LIMIT = 256;
 
 const KernelContext = createContext<KernelApi | null>(null);
 
@@ -106,7 +109,7 @@ export function KernelProvider(props: { children: ReactNode }) {
       const known = new Set(held.map((receipt) => receipt.seq));
       const fresh = incoming.filter((receipt) => receipt.seq > seenSeq.current || !known.has(receipt.seq));
       for (const receipt of fresh) seenSeq.current = Math.max(seenSeq.current, receipt.seq);
-      return fresh.length ? [...held, ...fresh].sort((a, b) => a.seq - b.seq) : held;
+      return fresh.length ? [...held, ...fresh].sort((a, b) => a.seq - b.seq).slice(-VIEW_RECEIPT_LIMIT) : held;
     });
   }, []);
 
@@ -294,11 +297,13 @@ export function KernelProvider(props: { children: ReactNode }) {
       const backlog = await eventsSince(transport, 1);
       if (alive) admitReceipts(backlog);
       subscription = await subscribeTopic(transport, (receipt) => {
+        if (!alive) return;
         admitReceipts([receipt]);
         // Other native windows share this kernel. Pull after their changes;
         // receipt payloads never become a parallel state store.
         if(transport.kind==="tauri") void kernelOp(transport,{op:"state"}).then(call=>{if(alive&&call.outcome)merge(call.outcome);});
       });
+      if (!alive) subscription?.unsubscribe();
     })();
     return () => {
       alive = false;

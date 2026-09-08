@@ -5,42 +5,16 @@
  * (.superpowers/sdd/cradle-rebuild/SELF-OTHER-FIELD-UX-2026-09-08.md,
  * "Foundation engineering — first execution rounds").
  *
- * Drives real repeated cycles against a RUNNING app (dev server + kernel
- * bridge, not a fresh walk build) and records numbers, never prose:
- *   1. open a file tab from the sidebar Files mode -> close it (Meta+W)
- *   2. open two files, split right (Meta+D), maximize (Meta+Alt+Enter),
- *      restore (Escape), close both
- *   3. open the project wiki (<Project>: wiki -> neighbourhood), pan the
- *      graph via keyboard arrows 10x, zoom in/out, close
- *   4. toggle the right region (Meta+Shift+B) open/closed and full
- *      (Meta+Alt+J)/Escape
- *   5. switch between two open tabs 20x
+ * Runs real open/close, split/maximize/restore, graph pan/zoom, region and
+ * tab-switch cycles. The harness provisions disposable Central and AIKit
+ * ground using native owner operations and real documents; standalone mode
+ * reads the existing O-I ground without editing files.
  *
- * The ground is the REAL Central world the already-running walk bridge
- * serves (Kernel::discover() from the cradle cwd) — this scenario never
- * provisions a fixture project. It only ever opens real, existing,
- * read-only files (README.md, docs/*.md) under Work/O-I. It never types
- * into an editable surface and never saves.
- *
- * Two ways to run it:
- *
- *   standalone (this round — while walk/run.mjs registration is owned by
- *   another agent this round):
- *     node walk/scenarios/resources.mjs \
- *       --url http://localhost:1423 --bridge http://127.0.0.1:4179 \
- *       --cycles 20 --out walk/artifacts/resources.json
- *
- *   once registered in walk/run.mjs's SCENARIOS map, the same
- *   `export default async function run(ctx)` is invoked with the standard
- *   harness ctx ({page, baseUrl, bridgeUrl, check, shot, metric,
- *   artifactsDir, log, ...}) — cycles/outPath then fall back to their
- *   defaults (20 cycles, <artifactsDir>/resources.json).
- *
- * Warm-up: the first 3 cycles run the same steps but are not sampled — the
- * CDP session (Performance.getMetrics) is attached only after warm-up, so
- * per_cycle[] holds cycles 4..N. growth_per_cycle is a linear fit over
- * those sampled cycles for JS heap and DOM node count. The verdict is
- * reported honestly from the fit — never masked by reloading mid-run.
+ * Defaults to 23 cycles: 3 warm-up and 20 measured. Each measured sample
+ * records raw allocation metrics, then retained heap/DOM after explicit CDP
+ * garbage collection. No page reload occurs. Failed interaction steps make
+ * the memory verdict invalid. CPU task/script/layout durations are cumulative
+ * browser measurements; native GPU/process memory requires separate evidence.
  */
 
 import { chromium } from "playwright";
@@ -48,9 +22,10 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve, basename } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const PROJECT = "O-I";
-const FILE_A = { path: "README.md", name: "README.md" };
-const FILE_B = { path: "docs/ARCHITECTURE.md", name: "ARCHITECTURE.md" };
+export {setup} from "./knowledge.mjs";
+let PROJECT = "O-I";
+let FILE_A = { path: "README.md", name: "README.md" };
+let FILE_B = { path: "docs/ARCHITECTURE.md", name: "ARCHITECTURE.md" };
 const WARMUP_CYCLES = 3;
 const TAB_SWITCH_REPEATS = 20;
 const GRAPH_PAN_REPEATS = 10;
@@ -116,9 +91,12 @@ async function ensureFolderExpanded(container, folderName) {
 
 async function openFile(page, nav, file) {
   await nav.locator(`[data-file-path="Work/${escapeAttr(PROJECT)}/${escapeAttr(file.path)}"]`).click();
+  const source = page.getByRole("tab", {name:"Source", exact:true});
+  if (await source.count()) await source.click();
   await page
     .getByRole("textbox", { name: new RegExp(`^(Reading|Editing) ${escapeRegExp(file.name)}$`) })
     .waitFor({ timeout: 10_000 });
+  await page.getByRole("textbox", {name:new RegExp(`^(Reading|Editing) ${escapeRegExp(file.name)}$`)}).focus();
 }
 
 async function closeAllTabs(page) {
@@ -146,6 +124,7 @@ async function rightRegionDepth(page) {
  * abort the whole cycle; failures are collected and returned honestly. */
 async function runCycle(page, nav, issues, cycleIndex, artifactsDir) {
   const note = (step, error) => {
+    console.error(`Cycle ${cycleIndex} ${step}: ${String(error?.message ?? error)}`);
     issues.push({ cycle: cycleIndex, step, error: String(error?.message ?? error) });
     if (artifactsDir) {
       page
@@ -172,6 +151,7 @@ async function runCycle(page, nav, issues, cycleIndex, artifactsDir) {
     await page.waitForFunction(() => document.querySelectorAll(".pane.group").length === 2, null, { timeout: 10_000 });
     await page.keyboard.press("Meta+Alt+Enter");
     await waitForLocatorCount(page.locator(".pane.group:visible"), 1);
+    await page.locator(".pane.focused .source-textarea").focus();
     await page.keyboard.press("Escape");
     await waitForLocatorCount(page.locator(".pane.group:visible"), 2);
   } catch (error) {
@@ -215,6 +195,7 @@ async function runCycle(page, nav, issues, cycleIndex, artifactsDir) {
     note("3-wiki-open-pan-zoom", error);
   } finally {
     await page.keyboard.press("Meta+w");
+    await closeAllTabs(page);
     await ensureProjectMode(page, PROJECT, "files").catch((error) => note("3-restore-files-mode", error));
   }
 
@@ -264,9 +245,9 @@ async function runCycle(page, nav, issues, cycleIndex, artifactsDir) {
 }
 
 async function sampleCdp(cdp, page) {
-  await page.evaluate(() => {
-    if (typeof window.gc === "function") window.gc();
-  }).catch(() => {});
+  const beforeCollection = await cdp.send("Performance.getMetrics");
+  const raw = Object.fromEntries(beforeCollection.metrics.map(m => [m.name,m.value]));
+  await cdp.send("HeapProfiler.collectGarbage");
   const { metrics } = await cdp.send("Performance.getMetrics");
   const byName = Object.fromEntries(metrics.map((m) => [m.name, m.value]));
   const dom = await page.evaluate(() => ({
@@ -277,7 +258,7 @@ async function sampleCdp(cdp, page) {
     surface_count: document.querySelectorAll("[data-surface-id]").length,
     tab_count: document.querySelectorAll(".tab").length,
   }));
-  return { cdp: byName, dom };
+  return { cdp: byName, dom, raw };
 }
 
 function linearFitSlope(values) {
@@ -301,8 +282,13 @@ function round(value, digits = 2) {
 
 export default async function run(ctx) {
   const { page, baseUrl, bridgeUrl, check, shot, metric, artifactsDir, log } = ctx;
-  const cycles = ctx.cycles ?? 20;
-  const outPath = ctx.outPath ?? join(artifactsDir, "resources.json");
+  const cycles = ctx.cycles ?? 23;
+  if (ctx.provision) {
+    PROJECT = "Editor";
+    const files = ctx.provision.sources.slice(0, 2).map(s => ({path:s.binding.path, name:basename(s.binding.path)}));
+    [FILE_A, FILE_B] = files;
+  }
+  const outPath = ctx.outPath ?? join(artifactsDir, "resources-measurements.json");
   const summaryPath = outPath.replace(/\.json$/, "-summary.md");
   const logLine = (message) => (log ? log(message) : console.log(`  ${message}`));
 
@@ -327,7 +313,7 @@ export default async function run(ctx) {
   await ensureProjectMode(page, PROJECT, "files");
   const projectFiles = nav.locator(`[data-navigation-path="Work/${escapeAttr(PROJECT)}"] .project-files`);
   await projectFiles.waitFor({ timeout: 10_000 });
-  await ensureFolderExpanded(projectFiles, basename(dirname(FILE_B.path)));
+  if (dirname(FILE_B.path) !== ".") await ensureFolderExpanded(projectFiles, basename(dirname(FILE_B.path)));
   await nav.locator(`[data-file-path="Work/${escapeAttr(PROJECT)}/${escapeAttr(FILE_B.path)}"]`).waitFor({ timeout: 10_000 });
 
   const issues = [];
@@ -348,11 +334,15 @@ export default async function run(ctx) {
     logLine(`cycle ${cycle}/${cycles} ${sampled ? "(sampled)" : "(warm-up)"} — ${wallTimeMs}ms`);
 
     if (sampled) {
-      const { cdp, dom } = await sampleCdp(cdpSession, page);
+      const { cdp, dom, raw } = await sampleCdp(cdpSession, page);
       perCycle.push({
         cycle,
         wall_time_ms: wallTimeMs,
         bridge_requests: bridgeRequestsSinceReset,
+        pre_collection_heap_bytes: raw.JSHeapUsedSize ?? null,
+        renderer_task_seconds: cdp.TaskDuration ?? null,
+        renderer_script_seconds: cdp.ScriptDuration ?? null,
+        renderer_layout_seconds: cdp.LayoutDuration ?? null,
         heap_used_bytes: cdp.JSHeapUsedSize ?? null,
         heap_total_bytes: cdp.JSHeapTotalSize ?? null,
         nodes: cdp.Nodes ?? null,
@@ -384,7 +374,7 @@ export default async function run(ctx) {
   const heapThreshold = firstStable ? 0.01 * firstStable.heap_used_bytes : Infinity;
   const boundedHeap = firstStable ? heapSlope < heapThreshold : false;
   const boundedNodes = nodeSlope < 5;
-  const verdict = firstStable && last
+  const verdict = issues.length ? "INVALID — interaction steps failed; no memory acceptance is possible" : perCycle.length < 20 ? "INSUFFICIENT — fewer than 20 post-warm-up cycles" : firstStable && last
     ? boundedHeap && boundedNodes
       ? `bounded — heap grows ${round(heapSlope, 1)} B/cycle (< 1% of first-stable ${firstStable.heap_used_bytes} B) and DOM nodes grow ${round(nodeSlope, 2)}/cycle (< 5/cycle)`
       : `growth observed — heap grows ${round(heapSlope, 1)} B/cycle (threshold ${round(heapThreshold, 1)} B/cycle) and/or DOM nodes grow ${round(nodeSlope, 2)}/cycle (threshold 5/cycle); not bounded within the stated envelope`
@@ -392,7 +382,7 @@ export default async function run(ctx) {
 
   const result = {
     schema: "oi.cradle.walk.resources/v1",
-    label: "baseline-during-shell-rebuild",
+    label: "shell-recovery-retained-resources",
     generated_at: new Date().toISOString(),
     environment: {
       base_url: baseUrl,
@@ -401,7 +391,8 @@ export default async function run(ctx) {
       viewport: "1280x820",
       node: process.version,
       platform: process.platform,
-      chromium_flags: ["--js-flags=--expose-gc"],
+      chromium_flags: [],
+      measurement: "Pre-collection heap plus retained heap/DOM after CDP full GC; no reload between cycles",
       gc_exposed: await page.evaluate(() => typeof window.gc === "function").catch(() => false),
     },
     cycles,
@@ -426,7 +417,7 @@ export default async function run(ctx) {
   const md = [
     "# Resources walk — summary",
     "",
-    `label: \`baseline-during-shell-rebuild\` · generated ${result.generated_at}`,
+    `label: \`shell-recovery-retained-resources\` · generated ${result.generated_at}`,
     "",
     `- base URL: ${baseUrl}`,
     `- bridge URL: ${bridgeUrl}`,
@@ -471,7 +462,7 @@ export default async function run(ctx) {
     check(issues.length === 0, "All five per-cycle steps completed on every cycle without a caught error", {
       issue_count: issues.length,
     });
-    check(boundedHeap && boundedNodes, verdict, {
+    check(issues.length === 0 && perCycle.length >= 20 && boundedHeap && boundedNodes, verdict, {
       heap_slope: heapSlope,
       node_slope: nodeSlope,
     });
@@ -497,7 +488,7 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   const baseUrl = args.url ?? "http://localhost:1423";
   const bridgeUrl = args.bridge ?? "http://127.0.0.1:4179";
-  const cycles = Number(args.cycles ?? 20);
+  const cycles = Number(args.cycles ?? 23);
   const outPath = resolve(process.cwd(), args.out ?? "walk/artifacts/resources.json");
   const artifactsDir = dirname(outPath);
   mkdirSync(artifactsDir, { recursive: true });
@@ -536,7 +527,8 @@ async function main() {
 
   let exitCode = 0;
   try {
-    await run(ctx);
+    const result = await run(ctx);
+    if (result.step_issues.length || result.per_cycle.length < 20 || !result.summary.verdict.startsWith("bounded")) exitCode = 1;
   } catch (error) {
     console.error(`RESOURCES WALK FAILED: ${error?.stack ?? error}`);
     await page.screenshot({ path: join(artifactsDir, "resources-failure.png") }).catch(() => {});

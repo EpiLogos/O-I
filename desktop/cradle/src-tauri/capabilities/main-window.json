@@ -3,5 +3,5 @@
   "identifier": "main-window",
   "description": "Cradle shell window. No shell, filesystem, process, network or secret plugins are granted.",
   "windows": ["main", "surface-*"],
-  "permissions": ["core:default"]
+  "permissions": ["core:default", "core:window:allow-start-dragging"]
 }

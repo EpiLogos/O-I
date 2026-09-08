@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "kernel-cas",
-  "generated_at": "2026-09-08T10:33:52.472Z",
+  "generated_at": "2026-09-08T12:06:01.365Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 3194,
+  "duration_ms": 4178,
   "checks": [
     {
       "ok": true,
@@ -202,7 +202,7 @@
     {
       "ok": true,
       "op": "read.sources",
-      "duration_ms": 7.4,
+      "duration_ms": 17.4,
       "data": {
         "availability": "horizon",
         "project": "Editor",
@@ -292,7 +292,7 @@
     {
       "ok": true,
       "op": "read.sources",
-      "duration_ms": 7.8,
+      "duration_ms": 17.4,
       "data": {
         "availability": "horizon",
         "project": "Editor",
@@ -382,7 +382,7 @@
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "receipts": [
           {
@@ -408,7 +408,7 @@
     {
       "ok": true,
       "op": "ui.open_real_file",
-      "duration_ms": 111
+      "duration_ms": 125
     },
     {
       "ok": true,
@@ -421,7 +421,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 3,
             "summary": "Surface opened: 00 01-DESIGN.md.",
-            "surface_id": "b362ea88-fcde-4d23-9bca-03c94922a066",
+            "surface_id": "f0d66fb4-5a0b-4fb6-805a-b673dfa5ff2e",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -513,7 +513,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 3,
             "summary": "Surface opened: 00 01-DESIGN.md.",
-            "surface_id": "b362ea88-fcde-4d23-9bca-03c94922a066",
+            "surface_id": "f0d66fb4-5a0b-4fb6-805a-b673dfa5ff2e",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -633,7 +633,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 3,
             "summary": "Surface opened: 00 01-DESIGN.md.",
-            "surface_id": "b362ea88-fcde-4d23-9bca-03c94922a066",
+            "surface_id": "f0d66fb4-5a0b-4fb6-805a-b673dfa5ff2e",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -761,7 +761,7 @@
     {
       "ok": true,
       "op": "ui.save",
-      "duration_ms": 106
+      "duration_ms": 109
     },
     {
       "ok": true,
@@ -796,7 +796,7 @@
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "receipts": [
           {
@@ -818,7 +818,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 3,
             "summary": "Surface opened: 00 01-DESIGN.md.",
-            "surface_id": "b362ea88-fcde-4d23-9bca-03c94922a066",
+            "surface_id": "f0d66fb4-5a0b-4fb6-805a-b673dfa5ff2e",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -938,7 +938,7 @@
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "receipts": [],
         "count": 0,
@@ -1012,7 +1012,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 35,
+      "duration_ms": 57,
       "data": {
         "file": "kernel-cas-conflict.png"
       }
@@ -1020,7 +1020,7 @@
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "receipts": [
           {
@@ -1042,7 +1042,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 3,
             "summary": "Surface opened: 00 01-DESIGN.md.",
-            "surface_id": "b362ea88-fcde-4d23-9bca-03c94922a066",
+            "surface_id": "f0d66fb4-5a0b-4fb6-805a-b673dfa5ff2e",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -1180,7 +1180,7 @@
     {
       "ok": true,
       "op": "invoke.source_reread",
-      "duration_ms": 15,
+      "duration_ms": 29.1,
       "seq_range": {
         "from": 10,
         "to": 10
@@ -1235,7 +1235,7 @@
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "receipts": [
           {
@@ -1257,7 +1257,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 3,
             "summary": "Surface opened: 00 01-DESIGN.md.",
-            "surface_id": "b362ea88-fcde-4d23-9bca-03c94922a066",
+            "surface_id": "f0d66fb4-5a0b-4fb6-805a-b673dfa5ff2e",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -1412,7 +1412,7 @@
     {
       "ok": true,
       "op": "invoke.source_save",
-      "duration_ms": 21.3,
+      "duration_ms": 30.3,
       "seq_range": {
         "from": 11,
         "to": 11
@@ -1440,7 +1440,7 @@
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "receipts": [
           {
@@ -1470,7 +1470,7 @@
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 3.7,
+      "duration_ms": 5.6,
       "data": {
         "buffers": {
           "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md": {
@@ -1597,7 +1597,7 @@
               "source_files": 0
             },
             "projection": "project",
-            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-c0OtTX",
+            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-tTulIg",
             "schema": "central.world-map/v1",
             "sources": {
               "bindings": 11,
@@ -1636,6 +1636,12 @@
                   "space_ref": "central:wiki:root"
                 }
               },
+              "identity": {
+                "error": "identity manifest cannot be read: manifest file is absent",
+                "manifest_path": "Control/user/identity/manifest.json",
+                "present": false,
+                "sourced_files": []
+              },
               "machines": {
                 "exists": true,
                 "path": "Control/machines",
@@ -1660,7 +1666,7 @@
               "detected": false,
               "signals": []
             },
-            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-c0OtTX",
+            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-tTulIg",
             "root_state": "directory",
             "schema": "central.world-map/v1",
             "valid": true,
@@ -1876,16 +1882,16 @@
           }
         },
         "surfaces": {
-          "3b7dbfb5-7c2f-4477-a3ac-b8901e5c5d6e": {
+          "1b055246-dd34-4d39-bdff-d3d117b38116": {
             "kind": "source",
             "source_ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
-            "surface_id": "3b7dbfb5-7c2f-4477-a3ac-b8901e5c5d6e",
+            "surface_id": "1b055246-dd34-4d39-bdff-d3d117b38116",
             "title": "01 02-ARCHITECTURE.md"
           },
-          "b362ea88-fcde-4d23-9bca-03c94922a066": {
+          "f0d66fb4-5a0b-4fb6-805a-b673dfa5ff2e": {
             "kind": "source",
             "source_ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
-            "surface_id": "b362ea88-fcde-4d23-9bca-03c94922a066",
+            "surface_id": "f0d66fb4-5a0b-4fb6-805a-b673dfa5ff2e",
             "title": "00 01-DESIGN.md"
           }
         }
@@ -1916,7 +1922,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 3,
             "summary": "Surface opened: 00 01-DESIGN.md.",
-            "surface_id": "b362ea88-fcde-4d23-9bca-03c94922a066",
+            "surface_id": "f0d66fb4-5a0b-4fb6-805a-b673dfa5ff2e",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -2084,7 +2090,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 12,
             "summary": "Surface opened: 01 02-ARCHITECTURE.md.",
-            "surface_id": "3b7dbfb5-7c2f-4477-a3ac-b8901e5c5d6e",
+            "surface_id": "1b055246-dd34-4d39-bdff-d3d117b38116",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -2153,7 +2159,7 @@
     {
       "ok": true,
       "op": "invoke.surface_focus",
-      "duration_ms": 4,
+      "duration_ms": 5.2,
       "seq_range": {
         "from": 15,
         "to": 15
@@ -2287,7 +2293,7 @@
                   "source_files": 0
                 },
                 "projection": "project",
-                "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-c0OtTX",
+                "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-tTulIg",
                 "schema": "central.world-map/v1",
                 "sources": {
                   "bindings": 11,
@@ -2326,6 +2332,12 @@
                       "space_ref": "central:wiki:root"
                     }
                   },
+                  "identity": {
+                    "error": "identity manifest cannot be read: manifest file is absent",
+                    "manifest_path": "Control/user/identity/manifest.json",
+                    "present": false,
+                    "sourced_files": []
+                  },
                   "machines": {
                     "exists": true,
                     "path": "Control/machines",
@@ -2350,7 +2362,7 @@
                   "detected": false,
                   "signals": []
                 },
-                "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-c0OtTX",
+                "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-tTulIg",
                 "root_state": "directory",
                 "schema": "central.world-map/v1",
                 "valid": true,
@@ -2566,16 +2578,16 @@
               }
             },
             "surfaces": {
-              "3b7dbfb5-7c2f-4477-a3ac-b8901e5c5d6e": {
+              "1b055246-dd34-4d39-bdff-d3d117b38116": {
                 "kind": "source",
                 "source_ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
-                "surface_id": "3b7dbfb5-7c2f-4477-a3ac-b8901e5c5d6e",
+                "surface_id": "1b055246-dd34-4d39-bdff-d3d117b38116",
                 "title": "01 02-ARCHITECTURE.md"
               },
-              "b362ea88-fcde-4d23-9bca-03c94922a066": {
+              "f0d66fb4-5a0b-4fb6-805a-b673dfa5ff2e": {
                 "kind": "source",
                 "source_ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
-                "surface_id": "b362ea88-fcde-4d23-9bca-03c94922a066",
+                "surface_id": "f0d66fb4-5a0b-4fb6-805a-b673dfa5ff2e",
                 "title": "00 01-DESIGN.md"
               }
             }
@@ -2631,7 +2643,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 30,
+      "duration_ms": 43,
       "data": {
         "file": "kernel-cas-focus.png"
       }
@@ -2661,7 +2673,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 3,
             "summary": "Surface opened: 00 01-DESIGN.md.",
-            "surface_id": "b362ea88-fcde-4d23-9bca-03c94922a066",
+            "surface_id": "f0d66fb4-5a0b-4fb6-805a-b673dfa5ff2e",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -2829,7 +2841,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 12,
             "summary": "Surface opened: 01 02-ARCHITECTURE.md.",
-            "surface_id": "3b7dbfb5-7c2f-4477-a3ac-b8901e5c5d6e",
+            "surface_id": "1b055246-dd34-4d39-bdff-d3d117b38116",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -3041,7 +3053,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 3,
             "summary": "Surface opened: 00 01-DESIGN.md.",
-            "surface_id": "b362ea88-fcde-4d23-9bca-03c94922a066",
+            "surface_id": "f0d66fb4-5a0b-4fb6-805a-b673dfa5ff2e",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -3209,7 +3221,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 12,
             "summary": "Surface opened: 01 02-ARCHITECTURE.md.",
-            "surface_id": "3b7dbfb5-7c2f-4477-a3ac-b8901e5c5d6e",
+            "surface_id": "1b055246-dd34-4d39-bdff-d3d117b38116",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -3339,13 +3351,13 @@
         "count": 17,
         "first_seq": 1,
         "last_seq": 17,
-        "captured_at": "2026-09-08T10:33:55.664Z"
+        "captured_at": "2026-09-08T12:06:05.541Z"
       }
     }
   ],
   "metrics": {
-    "open_file_ms": 111,
-    "save_ms": 106,
+    "open_file_ms": 125,
+    "save_ms": 109,
     "kernel_events_total": 17
   },
   "screenshots": [

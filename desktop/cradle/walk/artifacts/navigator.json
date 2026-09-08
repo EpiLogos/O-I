@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "navigator",
-  "generated_at": "2026-09-08T10:40:59.749Z",
+  "generated_at": "2026-09-08T12:18:26.818Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 8398,
+  "duration_ms": 9257,
   "checks": [
     {
       "ok": true,
@@ -161,7 +161,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-08T10:41:01.710Z",
+        "mounted_at": "2026-09-08T12:18:30.130Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -172,7 +172,7 @@
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 1211.7,
+      "duration_ms": 1198.3,
       "data": {
         "buffers": {},
         "focus": {},
@@ -217,7 +217,7 @@
                 },
                 "manifest_errors": [],
                 "now": {
-                  "active_items": 12,
+                  "active_items": 15,
                   "day_records": 1,
                   "human_scratch": 0,
                   "inactive_items": 0,
@@ -248,7 +248,7 @@
                   }
                 ]
               },
-              "source_files": 3142
+              "source_files": 4127
             },
             "projection": "project",
             "root": "/Users/admin/Central",
@@ -281,6 +281,7 @@
                 "sources": 1,
                 "wiki": {
                   "child_space_refs": [
+                    "central:wiki:project:case14-clause3-scratch",
                     "central:wiki:project:orientation-acceptance-scratch-a",
                     "central:wiki:project:orientation-acceptance-scratch-b",
                     "central:wiki:project:project:ai-kit",
@@ -289,14 +290,67 @@
                     "central:wiki:project:project:quaternal-logic"
                   ],
                   "dangling_child_space_refs": [
+                    "central:wiki:project:case14-clause3-scratch",
                     "central:wiki:project:orientation-acceptance-scratch-a",
                     "central:wiki:project:orientation-acceptance-scratch-b"
                   ],
                   "path": "Control/agents/wiki/wiki.json",
                   "present": true,
-                  "revision": 24,
+                  "revision": 25,
                   "space_ref": "central:wiki:root"
                 }
+              },
+              "identity": {
+                "form": "nara",
+                "ground_relations_subject_ref": "central:pasu:nara:local",
+                "identity_source_path": "Control/user/identity",
+                "manifest_path": "Control/user/identity/manifest.json",
+                "manifest_revision": "1",
+                "present": true,
+                "sourced_files": [
+                  {
+                    "content_revision": "bef7cd02e7d0808b",
+                    "path": "Control/user/identity/formation.md",
+                    "present": true
+                  },
+                  {
+                    "content_revision": "ca9087bee8fb0f02",
+                    "path": "Control/user/identity/present.md",
+                    "present": true
+                  },
+                  {
+                    "content_revision": "ef5a165a056dc2d9",
+                    "path": "Control/user/identity/practice.md",
+                    "present": true
+                  },
+                  {
+                    "content_revision": "6bb6646fc5475d48",
+                    "path": "Control/user/identity/relations.md",
+                    "present": true
+                  },
+                  {
+                    "content_revision": "4bf6d71bd39684e7",
+                    "path": "Control/user/identity/place-and-time.md",
+                    "present": true
+                  },
+                  {
+                    "content_revision": "8ec6f775d8a8432f",
+                    "path": "Control/user/identity/vocation.md",
+                    "present": true
+                  },
+                  {
+                    "content_revision": "a4c49644dca2a8ff",
+                    "path": "Control/user/identity/sources/natal-chart.md",
+                    "present": true
+                  },
+                  {
+                    "content_revision": "b06d66796fb4f855",
+                    "path": "Control/user/identity/sources/saturn-return.md",
+                    "present": true
+                  }
+                ],
+                "subject_ref": "central:pasu:nara:local",
+                "subject_ref_consistent": true
               },
               "machines": {
                 "exists": true,
@@ -474,7 +528,7 @@
                       }
                     ]
                   },
-                  "source_files": 216
+                  "source_files": 218
                 },
                 {
                   "name": "O-I",
@@ -507,7 +561,7 @@
                     },
                     "manifest_errors": [],
                     "now": {
-                      "active_items": 12,
+                      "active_items": 15,
                       "day_records": 1,
                       "human_scratch": 0,
                       "inactive_items": 0,
@@ -538,7 +592,7 @@
                       }
                     ]
                   },
-                  "source_files": 3142
+                  "source_files": 4127
                 },
                 {
                   "name": "Quaternal-Logic",
@@ -571,7 +625,7 @@
                     },
                     "manifest_errors": [],
                     "now": {
-                      "active_items": 8,
+                      "active_items": 9,
                       "day_records": 3,
                       "human_scratch": 0,
                       "inactive_items": 0,
@@ -602,7 +656,7 @@
                       }
                     ]
                   },
-                  "source_files": 344
+                  "source_files": 345
                 },
                 {
                   "name": "Software-Factory",
@@ -742,7 +796,7 @@
                     },
                     "wiki_candidates": []
                   },
-                  "source_files": 171
+                  "source_files": 173
                 },
                 {
                   "name": "ai-kit",
@@ -816,7 +870,7 @@
                       }
                     ]
                   },
-                  "source_files": 674
+                  "source_files": 675
                 },
                 {
                   "name": "documentation-audit-2026-09-06",
@@ -1302,7 +1356,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 40,
+      "duration_ms": 45,
       "data": {
         "file": "navigator-project-ground.png"
       }
@@ -1310,7 +1364,7 @@
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 32.8,
+      "duration_ms": 26.9,
       "data": {
         "buffers": {},
         "focus": {},
@@ -1336,6 +1390,7 @@
                 "sources": 1,
                 "wiki": {
                   "child_space_refs": [
+                    "central:wiki:project:case14-clause3-scratch",
                     "central:wiki:project:orientation-acceptance-scratch-a",
                     "central:wiki:project:orientation-acceptance-scratch-b",
                     "central:wiki:project:project:ai-kit",
@@ -1344,14 +1399,67 @@
                     "central:wiki:project:project:quaternal-logic"
                   ],
                   "dangling_child_space_refs": [
+                    "central:wiki:project:case14-clause3-scratch",
                     "central:wiki:project:orientation-acceptance-scratch-a",
                     "central:wiki:project:orientation-acceptance-scratch-b"
                   ],
                   "path": "Control/agents/wiki/wiki.json",
                   "present": true,
-                  "revision": 24,
+                  "revision": 25,
                   "space_ref": "central:wiki:root"
                 }
+              },
+              "identity": {
+                "form": "nara",
+                "ground_relations_subject_ref": "central:pasu:nara:local",
+                "identity_source_path": "Control/user/identity",
+                "manifest_path": "Control/user/identity/manifest.json",
+                "manifest_revision": "1",
+                "present": true,
+                "sourced_files": [
+                  {
+                    "content_revision": "bef7cd02e7d0808b",
+                    "path": "Control/user/identity/formation.md",
+                    "present": true
+                  },
+                  {
+                    "content_revision": "ca9087bee8fb0f02",
+                    "path": "Control/user/identity/present.md",
+                    "present": true
+                  },
+                  {
+                    "content_revision": "ef5a165a056dc2d9",
+                    "path": "Control/user/identity/practice.md",
+                    "present": true
+                  },
+                  {
+                    "content_revision": "6bb6646fc5475d48",
+                    "path": "Control/user/identity/relations.md",
+                    "present": true
+                  },
+                  {
+                    "content_revision": "4bf6d71bd39684e7",
+                    "path": "Control/user/identity/place-and-time.md",
+                    "present": true
+                  },
+                  {
+                    "content_revision": "8ec6f775d8a8432f",
+                    "path": "Control/user/identity/vocation.md",
+                    "present": true
+                  },
+                  {
+                    "content_revision": "a4c49644dca2a8ff",
+                    "path": "Control/user/identity/sources/natal-chart.md",
+                    "present": true
+                  },
+                  {
+                    "content_revision": "b06d66796fb4f855",
+                    "path": "Control/user/identity/sources/saturn-return.md",
+                    "present": true
+                  }
+                ],
+                "subject_ref": "central:pasu:nara:local",
+                "subject_ref_consistent": true
               },
               "machines": {
                 "exists": true,
@@ -1529,7 +1637,7 @@
                       }
                     ]
                   },
-                  "source_files": 216
+                  "source_files": 218
                 },
                 {
                   "name": "O-I",
@@ -1562,7 +1670,7 @@
                     },
                     "manifest_errors": [],
                     "now": {
-                      "active_items": 12,
+                      "active_items": 15,
                       "day_records": 1,
                       "human_scratch": 0,
                       "inactive_items": 0,
@@ -1593,7 +1701,7 @@
                       }
                     ]
                   },
-                  "source_files": 3142
+                  "source_files": 4127
                 },
                 {
                   "name": "Quaternal-Logic",
@@ -1626,7 +1734,7 @@
                     },
                     "manifest_errors": [],
                     "now": {
-                      "active_items": 8,
+                      "active_items": 9,
                       "day_records": 3,
                       "human_scratch": 0,
                       "inactive_items": 0,
@@ -1657,7 +1765,7 @@
                       }
                     ]
                   },
-                  "source_files": 344
+                  "source_files": 345
                 },
                 {
                   "name": "Software-Factory",
@@ -1797,7 +1905,7 @@
                     },
                     "wiki_candidates": []
                   },
-                  "source_files": 171
+                  "source_files": 173
                 },
                 {
                   "name": "ai-kit",
@@ -1871,7 +1979,7 @@
                       }
                     ]
                   },
-                  "source_files": 674
+                  "source_files": 675
                 },
                 {
                   "name": "documentation-audit-2026-09-06",
@@ -2308,7 +2416,7 @@
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 1269,
+      "duration_ms": 1052.6,
       "data": {
         "buffers": {},
         "focus": {},
@@ -2404,6 +2512,7 @@
                 "sources": 1,
                 "wiki": {
                   "child_space_refs": [
+                    "central:wiki:project:case14-clause3-scratch",
                     "central:wiki:project:orientation-acceptance-scratch-a",
                     "central:wiki:project:orientation-acceptance-scratch-b",
                     "central:wiki:project:project:ai-kit",
@@ -2412,14 +2521,67 @@
                     "central:wiki:project:project:quaternal-logic"
                   ],
                   "dangling_child_space_refs": [
+                    "central:wiki:project:case14-clause3-scratch",
                     "central:wiki:project:orientation-acceptance-scratch-a",
                     "central:wiki:project:orientation-acceptance-scratch-b"
                   ],
                   "path": "Control/agents/wiki/wiki.json",
                   "present": true,
-                  "revision": 24,
+                  "revision": 25,
                   "space_ref": "central:wiki:root"
                 }
+              },
+              "identity": {
+                "form": "nara",
+                "ground_relations_subject_ref": "central:pasu:nara:local",
+                "identity_source_path": "Control/user/identity",
+                "manifest_path": "Control/user/identity/manifest.json",
+                "manifest_revision": "1",
+                "present": true,
+                "sourced_files": [
+                  {
+                    "content_revision": "bef7cd02e7d0808b",
+                    "path": "Control/user/identity/formation.md",
+                    "present": true
+                  },
+                  {
+                    "content_revision": "ca9087bee8fb0f02",
+                    "path": "Control/user/identity/present.md",
+                    "present": true
+                  },
+                  {
+                    "content_revision": "ef5a165a056dc2d9",
+                    "path": "Control/user/identity/practice.md",
+                    "present": true
+                  },
+                  {
+                    "content_revision": "6bb6646fc5475d48",
+                    "path": "Control/user/identity/relations.md",
+                    "present": true
+                  },
+                  {
+                    "content_revision": "4bf6d71bd39684e7",
+                    "path": "Control/user/identity/place-and-time.md",
+                    "present": true
+                  },
+                  {
+                    "content_revision": "8ec6f775d8a8432f",
+                    "path": "Control/user/identity/vocation.md",
+                    "present": true
+                  },
+                  {
+                    "content_revision": "a4c49644dca2a8ff",
+                    "path": "Control/user/identity/sources/natal-chart.md",
+                    "present": true
+                  },
+                  {
+                    "content_revision": "b06d66796fb4f855",
+                    "path": "Control/user/identity/sources/saturn-return.md",
+                    "present": true
+                  }
+                ],
+                "subject_ref": "central:pasu:nara:local",
+                "subject_ref_consistent": true
               },
               "machines": {
                 "exists": true,
@@ -2597,7 +2759,7 @@
                       }
                     ]
                   },
-                  "source_files": 216
+                  "source_files": 218
                 },
                 {
                   "name": "O-I",
@@ -2630,7 +2792,7 @@
                     },
                     "manifest_errors": [],
                     "now": {
-                      "active_items": 12,
+                      "active_items": 15,
                       "day_records": 1,
                       "human_scratch": 0,
                       "inactive_items": 0,
@@ -2661,7 +2823,7 @@
                       }
                     ]
                   },
-                  "source_files": 3142
+                  "source_files": 4127
                 },
                 {
                   "name": "Quaternal-Logic",
@@ -2694,7 +2856,7 @@
                     },
                     "manifest_errors": [],
                     "now": {
-                      "active_items": 8,
+                      "active_items": 9,
                       "day_records": 3,
                       "human_scratch": 0,
                       "inactive_items": 0,
@@ -2725,7 +2887,7 @@
                       }
                     ]
                   },
-                  "source_files": 344
+                  "source_files": 345
                 },
                 {
                   "name": "Software-Factory",
@@ -2865,7 +3027,7 @@
                     },
                     "wiki_candidates": []
                   },
-                  "source_files": 171
+                  "source_files": 173
                 },
                 {
                   "name": "ai-kit",
@@ -2939,7 +3101,7 @@
                       }
                     ]
                   },
-                  "source_files": 674
+                  "source_files": 675
                 },
                 {
                   "name": "documentation-audit-2026-09-06",
@@ -3376,7 +3538,7 @@
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0.2,
+      "duration_ms": 0.1,
       "data": {
         "receipts": [
           {
@@ -3416,7 +3578,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 32,
+      "duration_ms": 50,
       "data": {
         "file": "navigator-restored-writing.png"
       }
@@ -3424,10 +3586,10 @@
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-08T10:41:08.033Z",
+        "mounted_at": "2026-09-08T12:18:35.955Z",
         "transport": {
           "kind": "unavailable",
           "reason": "no kernel transport: neither the Tauri host nor a dev walk bridge is reachable"
@@ -3437,7 +3599,7 @@
     }
   ],
   "metrics": {
-    "world_summon_ms": 1307
+    "world_summon_ms": 21
   },
   "screenshots": [
     "navigator-project-ground.png",

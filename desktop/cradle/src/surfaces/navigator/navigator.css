@@ -114,7 +114,7 @@ aside.world-navigator[aria-label="World navigator"] { padding: 19px 10px 9px; }
 /* Finding 19: `top:3px` pinned the modes to the row's top edge, which only
  * read right while the name stayed on one line; centring within the full
  * row height keeps them aligned regardless of how tall the name grows. */
-.world-projects > li > .project-modes { position: absolute; right: 2px; top: 0; bottom: 0; margin: auto 0; }
+.world-projects > li > .project-modes { position: absolute; right: 2px; top: 0; height: var(--oi-shell-row-lg); }
 .world-navigator .project-modes button {
   display: flex; justify-content: center; align-items: center; width: 23px; height: 25px; padding: 0; border-radius: 4px;
   color: var(--oi-muted-2); transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), box-shadow var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out);

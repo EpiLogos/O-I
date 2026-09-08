@@ -109,7 +109,7 @@ function NoAccompanying({project, onOpen}: {project?: string; onOpen: (row: Enco
   // The same truthful Agency Gateway absence line SystemPanel shows
   // (`.gateway-aperture`, workspace/SystemPanel.tsx) — no new operation,
   // just the same honest sentence wherever the person can land on it.
-  const gatewayNote = <p className="agent-note">No owner operation is exposed to the desktop yet. See System.</p>;
+  const gatewayNote = <p className="agent-note">Agency Gateway attach and stream operations are not exposed here. Existing local conversations remain available; see System.</p>;
   if (!project) return <div className="agent-empty"><p>Select a project to bring its conversations here.</p>{gatewayNote}</div>;
   return <div className="agent-empty">
     <p>No accompanying agent yet. Choose a conversation attached to this project.</p>

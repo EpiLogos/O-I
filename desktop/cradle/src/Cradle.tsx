@@ -186,7 +186,7 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
   const mountSurface = useCallback(async (binding: SurfaceBinding) => {
     try {
       if(binding.kind==="encounter" && binding.ref && binding.project){await encounter(kernel.transport,binding.project,{action:"start"});await encounter(kernel.transport,binding.project,{action:"read",agent_session:binding.ref,after:0,limit:1});}
-      if (binding.kind === "file" && binding.location) await readFile(kernel.transport,binding.location);
+      if (binding.kind === "file" && binding.location) await readFileBytes(kernel.transport,binding.location);
       if (binding.kind === "knowledge" && binding.address) await knowledge(kernel.transport,binding.project,{action:"read",address:binding.address});
       const opened = await kernel.apply({ op: "surface_open", surface_id: binding.id, kind: binding.kind, ...(binding.ref ? { source_ref: binding.ref } : {}), title: binding.title });
       if (opened?.result !== "surface_opened") throw new Error("This surface could not be opened");
@@ -387,6 +387,11 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
         if (navigatorRef.current) dismissWorld(); else summonWorld();
         return;
       }
+      if (e.key === "Escape" && !menuRef.current && (stateRef.current.rightDepth === "full" || stateRef.current.maximizedGroupId)) {
+        e.preventDefault();
+        setState(s => s.rightDepth === "full" ? {...s, rightDepth:"panel"} : {...s, maximizedGroupId:undefined});
+        return;
+      }
       if (e.key === "Escape" && navigatorRef.current && (e.target as HTMLElement)?.closest(".world-navigator")) {
         e.preventDefault(); dismissWorld(); return;
       }
@@ -457,12 +462,13 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
     void import("@tauri-apps/api/event").then(async({listen})=>{
       const a=await listen<{workspace_id:string;binding:{id:string}}>("oi:window-redock",async e=>{
         detachedRequests.current.delete(`${e.payload.workspace_id}:${e.payload.binding.id}`);
-        await kernel.apply({op:"state"});
+        try { await kernel.apply({op:"state"}); }
+        catch (reason) { setWindowError(`The view returned; its latest owner state could not be read: ${String(reason)}`); }
         workspaceRef.current.activate(e.payload.workspace_id);
         workspaceRef.current.redock(e.payload.workspace_id,e.payload.binding.id);
         setRedockFocus(e.payload.binding.id);
-        const {invoke}=await import("@tauri-apps/api/core");
-        await invoke("window_focus_main");
+        try { const {invoke}=await import("@tauri-apps/api/core"); await invoke("window_focus_main"); }
+        catch (reason) { setWindowError(`The view returned; focus the main window to continue: ${String(reason)}`); }
       });
       const b=await listen<{workspace_id:string;address:KnowledgeAddress;title:string;project?:string;request_id?:string;origin?:string}>("oi:window-navigate",async e=>{
         workspaceRef.current.activate(e.payload.workspace_id);
@@ -517,7 +523,7 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
     if(action==="workspace.recover"){workspace.showRecovery();return;}
     if (action === "workspace.create" || action === "workspace.rename") { setNamingRequest(action === "workspace.create" ? "create" : "rename"); return; }
     if (action.startsWith("workspace.activate:")) { workspace.activate(action.slice("workspace.activate:".length)); return; }
-    if (action === "region.left") { navigatorRef.current ? dismissWorld() : summonWorld(); return; }
+    if (action === "region.left") { window.dispatchEvent(new Event("oi:toggle-central")); return; }
     if (action === "region.right") { setState(s=>({...s,rightDepth:s.rightDepth === "panel" ? "collapsed" : "panel"})); return; }
     execute(action);
   };

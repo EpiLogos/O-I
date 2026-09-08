@@ -37,6 +37,29 @@ export function SourceSurface(props: SourceSurfaceProps) {
   const [draftError, setDraftError] = useState<string | null>(null);
   const [text, setText] = useState(initialDraft.current?.content ?? buffer?.content ?? "");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const viewKey = `oi-cradle.source-view:${binding.ref}`;
+  const restoredView = useRef(false);
+  const savedView = useRef((() => {
+    try { return JSON.parse(localStorage.getItem(viewKey) ?? "null"); } catch { return null; }
+  })());
+  const retainView = () => {
+    if (!restoredView.current || !textareaRef.current) return;
+    const el = textareaRef.current;
+    try { localStorage.setItem(viewKey, JSON.stringify({ start: el.selectionStart, end: el.selectionEnd, direction: el.selectionDirection, top: scrollRef.current?.scrollTop ?? 0, left: scrollRef.current?.scrollLeft ?? 0 })); } catch { /* View coordinates are optional; drafts retain their separate error path. */ }
+  };
+  useEffect(() => {
+    if (!buffer || restoredView.current) return;
+    const frame = requestAnimationFrame(() => {
+      const view = savedView.current;
+      if (view && Number.isInteger(view.start) && Number.isInteger(view.end)) {
+        textareaRef.current?.setSelectionRange(view.start, view.end, view.direction);
+        if (scrollRef.current) { scrollRef.current.scrollTop = Number(view.top) || 0; scrollRef.current.scrollLeft = Number(view.left) || 0; }
+      }
+      restoredView.current = true;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [!!buffer]);
 
   // Mirror the kernel buffer into the textarea only when the buffer's
   // content changed from OUTSIDE this surface (open, re-read, save) —
@@ -58,6 +81,11 @@ export function SourceSurface(props: SourceSurfaceProps) {
 
   // Focus the editor when its surface becomes the active one.
   useEffect(() => {
+    // The restored pane arrangement owns interaction focus. A kernel
+    // subject retained from before reload must not take an empty slot's
+    // focus while its source is mounting in another pane.
+    const pane = textareaRef.current?.closest<HTMLElement>('.pane.group');
+    if (pane && pane.dataset.focused !== 'true') return;
     if (kernel.snapshot.focus.subject?.ref === binding.ref) {
       // Only when the browser focus is not already inside this surface.
       if (!textareaRef.current?.contains(document.activeElement)) {
@@ -142,7 +170,7 @@ export function SourceSurface(props: SourceSurfaceProps) {
         <button type="button" className="source-history-toggle" aria-expanded={historyOpen} onClick={() => setHistoryOpen(open => !open)}>History</button>
         <button type="button" className="source-save" onClick={onSave} disabled={!buffer.dirty}>Save · ⌘S</button>
       </div>
-      <div className="source-editor-scroll">
+      <div className="source-editor-scroll" ref={scrollRef} onScroll={retainView}>
         <div className="source-editor-body">
           <div className="source-gutter" aria-hidden="true">
             {Array.from({ length: Math.max(1, text.split("\n").length) }, (_, i) => (
@@ -157,6 +185,7 @@ export function SourceSurface(props: SourceSurfaceProps) {
             spellCheck={false}
             value={text}
             onChange={(event) => onEdit(event.target.value)}
+            onSelect={retainView}
           />
         </div>
         {historyOpen && <SourceHistory sourceRef={binding.ref} revision={buffer.conflict?.current_revision ?? buffer.base_revision} />}

@@ -117,9 +117,29 @@ export default async function run({ page, baseUrl, check, shot, channel, provisi
   // (a native round trip); wait for that disclosure to actually mount
   // before hovering it, rather than racing the fetch.
   await files.waitFor();
+  const settledProjectListing = async () => {
+    for (const source of p.sources) await nav.locator(`[data-file-path="Work/Editor/${source.binding.path}"]`).waitFor();
+    await page.waitForFunction(() => !document.querySelector('[data-navigation-path="Work/Editor"] .project-files [aria-busy="true"]'));
+  };
+  // A positive scroll during staged directory loading can be a transient
+  // clamp (observed 90 → 78 → 90). Establish the loaded listing before the
+  // gesture, then sample settled paint rather than accepting that clamp.
+  await settledProjectListing();
   await files.hover(); await page.mouse.wheel(0,90);
   await page.waitForFunction(()=>document.querySelector('[data-navigation-path="Work/Editor"] .project-files')?.scrollTop>0);
-  const projectScroll = await files.evaluate(el=>el.scrollTop);
+  await settledProjectListing();
+  const projectScroll = await files.evaluate(async el => {
+    let previous = el.scrollTop;
+    let stableFrames = 0;
+    for (let frame = 0; frame < 60; frame++) {
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      const current = el.scrollTop;
+      stableFrames = current === previous && !el.querySelector('[aria-busy="true"]') ? stableFrames + 1 : 0;
+      if (stableFrames >= 2) return current;
+      previous = current;
+    }
+    throw new Error('Project file-list scroll did not settle after the wheel gesture');
+  });
   await nav.locator('[data-project-path="Work/Other"]').click();
   if(await page.getByRole('button',{name:'Other: files',exact:true}).getAttribute('aria-pressed') !== 'true') await page.getByRole('button',{name:'Other: files',exact:true}).click();
   await page.waitForFunction(()=>document.querySelector('[data-project-path="Work/Other"]')?.getAttribute('aria-current')==='true');
@@ -136,8 +156,7 @@ export default async function run({ page, baseUrl, check, shot, channel, provisi
   // source row is mounted and no directory is still refreshing: the same
   // settled-paint discipline as stablePaneWidths above.
   const settledProjectScroll = async () => {
-    for (const source of p.sources) await nav.locator(`[data-file-path="Work/Editor/${source.binding.path}"]`).waitFor();
-    await page.waitForFunction(() => !document.querySelector('[data-navigation-path="Work/Editor"] .project-files [aria-busy="true"]'));
+    await settledProjectListing();
     await page.waitForFunction(value => document.querySelector('[data-navigation-path="Work/Editor"] .project-files')?.scrollTop === value, projectScroll);
     return files.evaluate(el => el.scrollTop);
   };

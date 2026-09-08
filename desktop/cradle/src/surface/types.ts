@@ -55,6 +55,8 @@ export interface SurfaceBinding {
 export interface TabGroupPane {
   type: "group";
   id: string;
+  /** An intentionally empty split destination, retained until filled or dismissed. */
+  emptySlot?: boolean;
   /** Ordered tab surface ids (pinned tabs render first). */
   tabs: SurfaceId[];
   /** Subset of tabs — pinned surfaces refuse close until unpinned. */

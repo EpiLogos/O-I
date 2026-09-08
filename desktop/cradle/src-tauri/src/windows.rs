@@ -37,6 +37,10 @@ pub struct Binding {
     pub project: Option<String>,
     pub address: Option<serde_json::Value>,
     pub encounter: Option<serde_json::Value>,
+    /// Presentation metadata travels with the binding rather than relying
+    /// on another renderer's potentially stale localStorage snapshot.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub view: Option<serde_json::Value>,
     pub location: Option<oi_cradle_kernel::files::Location>,
 }
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -76,7 +80,7 @@ pub fn window_detach(
         if binding.kind == "file" {
             let location = binding.location.clone().ok_or("File location is missing")?;
             if binding.reference.as_deref() != Some(&location.ref_id) {return Err("File location differs from the bound subject".into());}
-            kernel.apply(oi_cradle_kernel::KernelOp::FileRead {location})?;
+            kernel.apply(oi_cradle_kernel::KernelOp::FileBytes {location})?;
         }
         if binding.kind == "source"
             && !binding
@@ -93,25 +97,21 @@ pub fn window_detach(
         .lock()
         .map_err(|_| "Window state unavailable")?
         .iter()
-        .find(|(_, r)| r.binding.reference == binding.reference)
+        .find(|(_, r)| r.binding.id == binding.id || (binding.reference.is_some() && r.binding.reference == binding.reference))
         .map(|(label, _)| label.clone());
     if let Some(label) = existing {
-        return app
-            .get_webview_window(&label)
-            .ok_or("Detached window unavailable")?
-            .set_focus()
-            .map_err(|e| e.to_string());
+        if let Some(existing) = app.get_webview_window(&label) {
+            return existing.set_focus().map_err(|e| e.to_string());
+        }
+        // An externally destroyed webview must not permanently prevent this
+        // subject from being detached again.
+        windows.0.lock().map_err(|_| "Window state unavailable")?.remove(&label);
     }
     let label = format!("surface-{}", NEXT.fetch_add(1, Ordering::Relaxed));
     let record = Detached {
         workspace_id,
         binding,
     };
-    windows
-        .0
-        .lock()
-        .map_err(|_| "Window state unavailable")?
-        .insert(label.clone(), record.clone());
     let builder = WebviewWindowBuilder::new(&app, &label, WebviewUrl::App("index.html".into()))
         .title(format!("{} — O-I", record.binding.title))
         .inner_size(800.0, 650.0)
@@ -158,6 +158,10 @@ pub fn window_detach(
     } else {
         builder
     };
+    // Publish only after fallible preparation (including monitor discovery)
+    // succeeds, otherwise a failed attempt leaves a phantom detached record.
+    windows.0.lock().map_err(|_| "Window state unavailable")?
+        .insert(label.clone(), record.clone());
     let built = builder.build();
     let detached = match built {
         Ok(w) => w,

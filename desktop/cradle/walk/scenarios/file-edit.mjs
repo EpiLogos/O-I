@@ -13,6 +13,11 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
  const editor=file.getByRole('textbox',{name:'Editing ordinary.ts',exact:true});await editor.waitFor();
  check(await editor.inputValue()===p.content,'Editable ordinary file begins with exact owner bytes');
  const first='First native ordinary edit.\n';await editor.fill(first);
+ await editor.press('Home');await editor.press('ArrowRight');await editor.press('Shift+ArrowRight');
+ const selection=await editor.evaluate(el=>[el.selectionStart,el.selectionEnd]);
+ await page.keyboard.press('Meta+w');await page.keyboard.press('Meta+Shift+t');await editor.waitFor();
+ await page.waitForFunction(expected=>{const el=document.querySelector('.source-textarea');return el?.selectionStart===expected[0]&&el?.selectionEnd===expected[1]},selection);
+ check(true,'Close and reopen retains ordinary-file caret and selection');
  await page.reload();await editor.waitFor();
  check(await editor.inputValue()===first,'Unsaved ordinary draft survives reload');
  check(readFileSync(join(p.root,p.path),'utf8')===p.content,'Retaining a draft does not write the source');

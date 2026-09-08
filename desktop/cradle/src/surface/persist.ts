@@ -50,7 +50,7 @@ function validPane(raw: unknown, surfaces: Record<SurfaceId, SurfaceBinding>): P
     );
     const active =
       typeof o.active === "string" && tabs.includes(o.active) ? o.active : null;
-    const g: TabGroupPane = { type: "group", id: o.id, tabs, pinned, active };
+    const g: TabGroupPane = { type: "group", id: o.id, tabs, pinned, active, emptySlot: o.emptySlot === true && tabs.length === 0 ? true : undefined };
     return g;
   }
   if (o.type === "split" && (o.dir === "h" || o.dir === "v") && Array.isArray(o.children)) {

@@ -7,6 +7,22 @@
  */
 
 .desktop-shell { height: 100%; display: flex; flex-direction: column; font: var(--oi-shell-type-ui) var(--oi-font-sans); background: var(--oi-shell-ground); color: var(--oi-accent-ink); }
+.shell-topbar { flex: none; display: flex; align-items: center; gap: var(--oi-space-2); height: 40px; padding: 0 var(--oi-space-2); border-bottom: var(--oi-shell-edge) solid var(--oi-hairline-soft); background: var(--oi-shell-ground); user-select: none; }
+.desktop-shell[data-native="true"] .shell-topbar { padding-left: 84px; }
+.shell-topbar button { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; flex: none; border-radius: var(--oi-radius-sm); color: var(--oi-muted); }
+.shell-topbar button:hover, .shell-topbar button[aria-expanded="true"] { color: var(--oi-accent-ink); background: var(--oi-wash); }
+.shell-topbar button:disabled { opacity: .3; cursor: default; background: transparent; }
+.shell-focus { min-width: 0; flex: 1; align-self: stretch; display: flex; align-items: center; padding: 0 var(--oi-space-2); }
+.shell-focus span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--oi-shell-type-ui); color: var(--oi-muted); }
+.shell-focus select { min-width: 0; max-width: 100%; text-overflow: ellipsis; font-size: var(--oi-shell-type-ui); }
+.shell-pane-actions { display: flex; align-items: center; gap: var(--oi-space-1); }
+.shell-agent-toggle svg { transform: scaleX(-1); }
+@media (max-width: 760px) { .shell-pane-actions button:not(:last-child) { display: none; } }
+@media (max-width: 639px) {
+  .desktop-centre .pane.split { display: contents; }
+  .desktop-centre .pane.group:not(.focused), .desktop-centre .split-resizer { display: none !important; }
+}
+@media (pointer: coarse) { .shell-topbar { height: 44px; } .shell-topbar button { width: 40px; height: 40px; } }
 .desktop-shell button, .desktop-shell select, .desktop-shell input { font: inherit; color: var(--oi-accent-ink); background: transparent; border: 0; }
 /* Finding 1: this used to be `padding: var(--oi-space-2)` — a descendant
  * rule that ties on specificity with every single-class control rule
@@ -267,3 +283,46 @@
 .ground-chooser form { display: grid; gap: 8px; }
 .ground-chooser label { display: grid; gap: 5px; }
 .ground-chooser input { min-width: 0; width: 100%; padding: 6px; border: var(--oi-shell-edge) solid var(--oi-hairline); color: inherit; background: var(--oi-sidebar-ground); }
+
+/* Workspace identity is a quiet whole-window footer; pane operations remain local. */
+.canvas-arrangement { height: 24px; min-height: 24px; gap: var(--oi-space-2); padding: 0 var(--oi-space-2); border-bottom: 0; border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); background: var(--oi-shell-ground); }
+.canvas-arrangement button, .canvas-arrangement > button, .canvas-arrangement .w-return { min-height: 22px; height: 22px; }
+.canvas-arrangement .workspace-select { max-width: 24%; }
+.canvas-arrangement .focused-surface-context { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); }
+.canvas-arrangement .desktop-menu > div { top: auto; bottom: calc(100% + var(--oi-space-1)); left: auto; right: 0; max-width: calc(100vw - 16px); }
+.desktop-centre { min-width: 0; }
+.desktop-side.left[data-overlay="true"] { position: absolute; inset: var(--oi-shell-gutter) auto var(--oi-shell-gutter) var(--oi-shell-gutter); width: min(300px, calc(100% - 32px)) !important; max-width: none; margin: 0; z-index: var(--oi-z-drawer); box-shadow: var(--oi-shadow-drawer); }
+.desktop-shell .region-scrim { position: absolute; inset: 0; width: 100%; height: 100%; background: color-mix(in srgb, var(--oi-ink) 19%, transparent); z-index: calc(var(--oi-z-drawer) - 1); }
+.region-resizer.left { right: 0; width: 6px; }
+.region-resizer.right { left: 0; }
+@media (max-width: 640px) {
+  .canvas-arrangement .focused-surface-context { display: none; }
+  .canvas-arrangement .workspace-select { max-width: 40%; }
+  .canvas-arrangement .w-return span { display: none; }
+}
+@media (pointer: coarse) {
+  .canvas-arrangement { height: 36px; min-height: 36px; }
+  .canvas-arrangement button, .canvas-arrangement > button, .canvas-arrangement .desktop-menu summary { min-width: 36px; min-height: 36px; }
+  .world-navigator .project-modes button { height: 32px; width: 28px; }
+}
+@media (min-width: 640px) { .desktop-centre { min-width: 440px; } .desktop-side.left { max-width: calc(100% - 452px); } }
+/* Page-standard specimen: bounded content with one scroll owner. */
+.system-panel { box-sizing: border-box; width: 100%; max-width: 920px; margin: 0 auto; padding: clamp(16px, 4vw, 40px); min-height: 0; overflow: auto; color: var(--oi-accent-ink); font-size: var(--oi-shell-type-body); line-height: 1.65; }
+.system-panel h2 { font-size: 24px; font-weight: 500; margin: 0; letter-spacing: -.5px; }
+.system-panel > p { color: var(--oi-muted-2); margin: 4px 0 16px; }
+.system-panel h3 { font-size: var(--oi-shell-type-heading); font-weight: 500; }
+.system-panel > details { padding: 14px 0; }
+.system-panel summary { min-height: 28px; overflow-wrap: anywhere; }
+.system-panel summary > span { font-size: var(--oi-shell-type-meta); }
+.system-panel dl { grid-template-columns: minmax(100px, 1fr) minmax(0, 2fr); gap: 8px 20px; }
+.system-panel dt { color: var(--oi-muted-2); }
+.system-panel dd { overflow-wrap: anywhere; }
+.system-panel .system-actions button, .system-panel .ground-chooser button { padding: 5px 10px; border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: var(--oi-shell-radius); }
+.system-panel button:hover:not(:disabled) { background: var(--oi-wash); }
+.system-panel .gateway-aperture { border-top: var(--oi-shell-edge) solid var(--oi-hairline); margin-top: 24px; padding-top: 12px; }
+.system-panel .ground-chooser { border-bottom: 0; }
+.system-panel .system-observed { font-size: var(--oi-shell-type-meta); }
+.ctx-menu { max-width: calc(100vw - 8px); max-height: calc(100vh - 8px); overflow-y: auto; }
+.material-surface { position: relative; }
+.system-panel .ground-chooser form { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
+.system-panel .ground-chooser form button { min-height: 30px; }

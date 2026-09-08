@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "study",
-  "generated_at": "2026-09-08T10:34:58.512Z",
+  "generated_at": "2026-09-08T12:06:52.253Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": null,
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 1396,
+  "duration_ms": 1483,
   "checks": [
     {
       "ok": true,
@@ -95,7 +95,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 67,
+      "duration_ms": 85,
       "data": {
         "file": "study-wiki.png"
       }

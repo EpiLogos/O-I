@@ -1,4 +1,5 @@
 import {useEffect,useRef,useState} from "react";
+import {Loading} from "../shared/Loading";
 import {useKernel} from "../kernel/KernelProvider";
 import type {CentralLocation, KernelTransportStatus} from "../kernel/types";
 import type {SurfaceBinding} from "../surface/types";
@@ -140,7 +141,7 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
   return <section className="material-surface" aria-label={`Material ${binding.title}`} aria-busy={pending} ref={containerRef}>
     <MaterialChrome title={binding.title} format={format} view={view} onChange={setView} showToggle={showToggle} />
     {error && <p role="alert" className="source-note">{error}</p>}
-    {!error && pending && <p className="material-loading">Reading material…</p>}
+    {!error && pending && <Loading label="Reading material…" scope="surface"/>}
     {!error && !pending && format === "html" && (
       transport.kind === "tauri"
         ? <iframe className="material-frame" title={binding.title} sandbox="allow-scripts allow-forms" referrerPolicy="no-referrer" src={suspended ? "about:blank" : baseUrl} />

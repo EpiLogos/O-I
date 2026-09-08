@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "material",
-  "generated_at": "2026-09-08T10:35:19.169Z",
+  "generated_at": "2026-09-08T12:18:19.110Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -10,19 +10,19 @@
     "node": "v24.16.0",
     "platform": "darwin"
   },
-  "passed": false,
-  "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('.tab[data-title=\"logo.png\"][data-active=\"true\"]') to be visible\n\n    at openFile (/Users/admin/Central/Work/O-I/desktop/cradle/walk/scenarios/material.mjs:101:75)\n    at async Module.run (/Users/admin/Central/Work/O-I/desktop/cradle/walk/scenarios/material.mjs:211:3)\n    at async runScenario (/Users/admin/Central/Work/O-I/desktop/cradle/walk/run.mjs:336:5)\n    at async file:///Users/admin/Central/Work/O-I/desktop/cradle/walk/run.mjs:409:18",
-  "duration_ms": 32092,
+  "passed": true,
+  "error": null,
+  "duration_ms": 4113,
   "checks": [
     {
-      "ok": false,
+      "ok": true,
       "label": "HTML relative <img> resolves through the material route and actually decodes"
     },
     {
-      "ok": false,
+      "ok": true,
       "label": "HTML relative <link rel=stylesheet> is loaded and applied",
       "data": {
-        "bodyBackground": "rgba(0, 0, 0, 0)"
+        "bodyBackground": "rgb(17, 34, 51)"
       }
     },
     {
@@ -31,10 +31,18 @@
     },
     {
       "ok": true,
+      "label": "Owner-resolved relative JavaScript executes the actual HTML interaction"
+    },
+    {
+      "ok": true,
+      "label": "HTML retains opaque-origin sandbox without native bridge authority"
+    },
+    {
+      "ok": true,
       "label": "Traversal outside the material directory is refused (status 404)"
     },
     {
-      "ok": false,
+      "ok": true,
       "label": "A real sibling asset resolves with the owner mime hint as Content-Type"
     },
     {
@@ -52,7 +60,7 @@
       "ok": true,
       "label": "Restoring the pane resumes the real material content (srcdoc restored)",
       "data": {
-        "resumedSrcdocLength": 649
+        "resumedSrcdocLength": 764
       }
     },
     {
@@ -76,7 +84,7 @@
       "label": "Markdown bold emphasis renders"
     },
     {
-      "ok": false,
+      "ok": true,
       "label": "Markdown image resolves through the material route and decodes"
     },
     {
@@ -86,16 +94,58 @@
     {
       "ok": true,
       "label": "Toggling back to Rendered re-renders Markdown"
+    },
+    {
+      "ok": true,
+      "label": "A standalone image file renders as a real decoded <img>, not a textarea"
+    },
+    {
+      "ok": true,
+      "label": "PDF either renders in the platform viewer or discloses an honest unavailable state",
+      "data": {
+        "pdfRendered": true,
+        "pdfUnavailable": false
+      }
+    },
+    {
+      "ok": true,
+      "label": "Unsupported binary discloses the exact honest disposition sentence"
+    },
+    {
+      "ok": true,
+      "label": "Disposition card shows the real byte length",
+      "data": {
+        "bytes": "6 bytes"
+      }
+    },
+    {
+      "ok": true,
+      "label": "No open-with control is offered — work.open has no generic file-path form (verified by research; not wired)"
+    },
+    {
+      "ok": true,
+      "label": "A plain text file still opens the native FileSurface editor directly"
+    },
+    {
+      "ok": true,
+      "label": "Close and reopen restores the Markdown rendered view (fresh mount, not stuck on Source)"
+    },
+    {
+      "ok": true,
+      "label": "No uncaught page errors during the material walk",
+      "data": {
+        "errors": []
+      }
     }
   ],
   "ops": [
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-08T10:35:19.309Z",
+        "mounted_at": "2026-09-08T12:18:19.733Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -106,7 +156,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 45,
+      "duration_ms": 80,
       "data": {
         "file": "material-html-rendered.png"
       }
@@ -114,15 +164,44 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 39,
+      "duration_ms": 28,
       "data": {
         "file": "material-markdown-rendered.png"
       }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 46,
+      "data": {
+        "file": "material-image-rendered.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 73,
+      "data": {
+        "file": "material-pdf-state.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 45,
+      "data": {
+        "file": "material-unsupported-disposition.png"
+      }
     }
   ],
-  "metrics": {},
+  "metrics": {
+    "material_checks": 1
+  },
   "screenshots": [
     "material-html-rendered.png",
-    "material-markdown-rendered.png"
+    "material-markdown-rendered.png",
+    "material-image-rendered.png",
+    "material-pdf-state.png",
+    "material-unsupported-disposition.png"
   ]
 }

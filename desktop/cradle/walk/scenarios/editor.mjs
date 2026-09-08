@@ -78,10 +78,17 @@ export default async function run({ page, baseUrl, check, metric, shot, channel,
   const secondText = `${p.originals.get(second.binding.path)}\nEditor walk: second document change.\n`;
   await activate(first); await page.locator('.source-textarea').fill(firstText);
   await page.waitForFunction(() => document.querySelector('.source-editor')?.getAttribute('data-dirty') === 'true');
+  await page.locator('.source-textarea').press('Control+Home');
+  await page.locator('.source-textarea').press('ArrowRight');
+  await page.locator('.source-textarea').press('Shift+ArrowRight');
+  const caret = await page.locator('.source-textarea').evaluate(el => [el.selectionStart, el.selectionEnd]);
   await activate(second); await page.locator('.source-textarea').fill(secondText);
   await page.waitForFunction(() => document.querySelector('.source-editor')?.getAttribute('data-dirty') === 'true');
   await activate(first);
   check(await page.locator('.source-textarea').inputValue() === firstText, 'Switching dirty documents preserves the first buffer');
+  await page.waitForFunction(expected => { const el=document.querySelector('.source-textarea'); return el?.selectionStart===expected[0] && el?.selectionEnd===expected[1]; }, caret);
+  check(true, 'Switching source tabs restores caret and selected range');
+
   await activate(second);
   check(await page.locator('.source-textarea').inputValue() === secondText, 'Switching back preserves the distinct second buffer');
   await activate(first);
