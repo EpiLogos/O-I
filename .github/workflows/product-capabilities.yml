@@ -1,0 +1,62 @@
+name: Product capability collation
+on:
+  pull_request:
+    paths:
+      - 'suite/**'
+      - 'surfaces.json'
+      - 'scripts/collate-product-capabilities.py'
+      - 'tests/test_collate_product_capabilities.py'
+      - 'cli/**'
+      - 'desktop/cradle/kernel/**'
+      - '.github/workflows/product-capabilities.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'suite/**'
+      - 'surfaces.json'
+      - 'scripts/collate-product-capabilities.py'
+      - 'tests/test_collate_product_capabilities.py'
+      - 'cli/**'
+      - 'desktop/cradle/kernel/**'
+      - '.github/workflows/product-capabilities.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate carried sources and derived companions
+        run: python3 scripts/collate-product-capabilities.py --check-snapshot
+      - name: Exercise collation, relocation and drift detection
+        run: python3 -m unittest -v tests/test_collate_product_capabilities.py
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: cli
+      - name: Build S and M-prime entry points
+        run: cargo build --manifest-path cli/Cargo.toml --locked
+      - name: Verify CLI disclosures match the shipped projections
+        run: |
+          cli/target/debug/oi capabilities --json > /tmp/oi-capabilities.json
+          cli/target/debug/oi desktop capabilities --json > /tmp/oi-desktop.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for expected, observed in [('suite/product-capabilities.json', '/tmp/oi-capabilities.json'), ('suite/desktop-projection.json', '/tmp/oi-desktop.json')]:
+              assert json.loads(Path(expected).read_text()) == json.loads(Path(observed).read_text()), expected
+          catalogue = json.loads(Path('suite/product-capabilities.json').read_text())
+          capabilities = {r['id'] for r in catalogue['records'] if r['record_type'] == 'capability'}
+          projection = json.loads(Path('suite/desktop-projection.json').read_text())
+          for operation in projection['operations']:
+              assert set(operation['capability_refs']) <= capabilities, operation['id']
+              assert Path(operation['implementation'].split('#')[0]).is_file(), operation['id']
+          PY

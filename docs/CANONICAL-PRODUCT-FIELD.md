@@ -4,6 +4,25 @@
 **Scope:** the six-product field, its human/agent conjugate faces, and the relations used to compose the whole  
 **Date:** 2026-08-16
 
+## Capability collation contract
+
+O:I's product catalogue reads each product's `.oi/product.json`
+`capability_matrices` registry. Exactly one declared matrix has
+`suite_catalogue: true`; only that suite profile contributes records to the
+common catalogue. Every declared native matrix family, carrier, member and
+partition remains separately identified and receives a source hash in product
+provenance. QL and other products may therefore own several matrices without
+flattening them into the uniform suite view.
+
+During rollout, a product without the registry uses its historical
+`ProjectCentral/user/capability-matrix.{json,csv}` pair. This fallback is a
+compatibility boundary, not a second discovery system. Run
+`python3 scripts/collate-product-capabilities.py` after child reconciliation;
+repeat `--product-root PRODUCT_ID=PATH` when an accepted candidate lives in a
+clean product worktree rather than the default checkout. `--check-snapshot`
+verifies the shipped JSON/CSV and descriptor consistency without sibling
+checkouts; it cannot establish freshness against absent product repositories.
+
 ## 1. Purpose
 
 {O:I} is a field of six product centres which together provision and potentiate technological agency around available model capacity.

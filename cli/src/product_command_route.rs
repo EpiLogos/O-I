@@ -1,5 +1,31 @@
 fn product_command_route(args: &[OsString]) -> Option<Result<i32, String>> {
     let command = args.first().and_then(|value| value.to_str())?;
+    if command == "capabilities" {
+        return Some(match args.get(1..).unwrap_or_default() {
+            [] => {
+                println!("{}", include_str!("../../suite/product-capabilities.json"));
+                Ok(0)
+            }
+            [one] if one == "--json" => {
+                println!("{}", include_str!("../../suite/product-capabilities.json"));
+                Ok(0)
+            }
+            _ => Err("usage: oi capabilities [--json]".into()),
+        });
+    }
+    if command == "desktop" {
+        return Some(match args.get(1..).unwrap_or_default() {
+            [one] if one == "capabilities" => {
+                println!("{}", include_str!("../../suite/desktop-projection.json"));
+                Ok(0)
+            }
+            [one, two] if one == "capabilities" && two == "--json" => {
+                println!("{}", include_str!("../../suite/desktop-projection.json"));
+                Ok(0)
+            }
+            _ => Err("usage: oi desktop capabilities [--json]".into()),
+        });
+    }
     if command == "products" {
         return Some(command_products(args.get(1..).unwrap_or_default()));
     }
@@ -54,6 +80,8 @@ fn print_product_command_help() -> Result<(), String> {
     let catalogue = oi_cli::product_command::product_command_catalogue()?;
     println!();
     println!("Six-product command field:");
+    println!("  oi capabilities [--json]       disclose the source-receipted product capability catalogue");
+    println!("  oi desktop capabilities [--json] disclose the M-prime desktop projection");
     println!("  oi products [--json]            disclose executable/namespace/probe/revision facts for all six products");
     for product in &catalogue.products {
         let alias = product
