@@ -364,9 +364,30 @@
  .desktop-shell .desktop-centre .surface-host{padding-top:0}
  .desktop-shell .shell-topbar{position:relative;z-index:2;pointer-events:none}
  .desktop-shell .shell-topbar button{pointer-events:auto}
- .desktop-shell:has(.desktop-side.left.depth-collapsed) .desktop-centre .tab-strip:first-child{padding-left:112px}
+ .desktop-shell [data-window-corner="true"] > .tab-strip{padding-left:max(4px,calc(var(--shell-window-reserve) - var(--desktop-left-width)))}
  .desktop-shell:has(.desktop-side.right.depth-collapsed,.desktop-side.right.depth-strip) .desktop-centre .tab-strip{padding-right:32px}
 }
 .desktop-shell{background:linear-gradient(to right,var(--oi-sidebar-ground) 0,var(--oi-sidebar-ground) var(--desktop-left-width),var(--oi-shell-ground) var(--desktop-left-width),var(--oi-shell-ground) calc(100% - var(--desktop-right-width)),var(--oi-agent-ground) calc(100% - var(--desktop-right-width)))}
 .desktop-centre .tab-strip{transition:height var(--oi-motion-ui) var(--oi-motion-ease-out),min-height var(--oi-motion-ui) var(--oi-motion-ease-out),opacity var(--oi-motion-ui) var(--oi-motion-ease-out)}
 .desktop-regions[data-right-full="true"] .desktop-centre .tab-strip{opacity:0;pointer-events:none}
+
+.desktop-shell{--shell-window-reserve:42px}.desktop-shell[data-native="true"]{--shell-window-reserve:116px}
+.desktop-centre{margin-left:3px;margin-right:3px;margin-bottom:2px}
+.desktop-centre .surface-host{padding-left:3px;padding-right:3px;padding-bottom:2px}
+.central-heading{gap:12px;align-items:center}.central-heading>svg{align-self:center}.central-heading>div{min-width:0}
+.shell-topbar{padding-right:3px}.shell-agent-toggle{margin-left:5px}
+@media(min-width:760px) and (pointer:fine){.desktop-shell .desktop-centre:has(.tab-strip){margin-top:-24px}.desktop-shell:has(.desktop-side.right.depth-collapsed,.desktop-side.right.depth-strip) .desktop-centre .tab-strip{padding-right:38px}}
+.workspace-footer-edge{height:3px;overflow:visible;transition:height 420ms cubic-bezier(.22,.7,.25,1)}
+.workspace-footer-edge .canvas-arrangement{position:relative;inset:auto;transform:none;height:24px;opacity:0;pointer-events:none;transition:opacity 300ms ease}
+.workspace-footer-edge:is(:hover,:focus-within),.workspace-footer-edge[data-pinned="true"]{height:24px}
+.workspace-footer-edge:is(:hover,:focus-within) .canvas-arrangement,.workspace-footer-edge[data-pinned="true"] .canvas-arrangement{opacity:1;transform:none;pointer-events:auto}
+
+@media(prefers-reduced-motion:reduce){.workspace-footer-edge,.workspace-footer-edge .canvas-arrangement{transition:none}}
+/* The window controls occupy an actual open corner, not an inset tab cell.
+   Both the mask and tab reservation follow the live sidebar width. */
+@media(min-width:760px) and (pointer:fine){
+ .desktop-shell[data-native="true"] [data-window-corner="true"]{
+  --window-cutout:max(0px,calc(var(--shell-window-reserve) - var(--desktop-left-width)));
+  clip-path:polygon(var(--window-cutout) 0,100% 0,100% 100%,0 100%,0 var(--oi-shell-tabbar),var(--window-cutout) var(--oi-shell-tabbar));
+ }
+}

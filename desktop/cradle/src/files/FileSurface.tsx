@@ -8,7 +8,7 @@ import {readDraft,writeDraft,clearSavedDraft,type HeldDraft} from "../workspace/
 import {readFile,fileOperation,type FileMutation,type FileHistory,type FilePreview} from "./client";
 import {detectFormat} from "../material/detect";
 import {MaterialSurface} from "../material/MaterialSurface";
-import {EditorButton,EditorFrame,useTextContextMenu} from "../editor/EditorChrome";
+import {EditorButton,EditorFrame} from "../editor/EditorChrome";
 
 /** All writes/history belong to Central. Local storage retains unsaved typing.
  * FND-04: every non-plain-text format delegates entirely to the material
@@ -69,7 +69,6 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
     held.current=undefined;await read(false);setPreview(undefined);setHistory(undefined);
   });
   const updateCaret=()=>{const el=body.current;if(!el)return;const before=el.value.slice(0,el.selectionStart),lines=before.split("\n");setCaret({line:lines.length,column:(lines[lines.length-1]?.length??0)+1,selected:el.selectionStart!==el.selectionEnd});try{localStorage.setItem(caretKey,JSON.stringify({start:el.selectionStart,end:el.selectionEnd,direction:el.selectionDirection}));}catch{}};
-  const selectionMenu=useTextContextMenu(binding,body,writable,change);
   const extension=binding.location?.path.split(".").pop()?.toLowerCase();const markdown=extension==="md"||extension==="markdown";const json=extension==="json";
   const formatJson=()=>{if(!draft)return;try{change(`${JSON.stringify(JSON.parse(draft.content),null,2)}\n`);setError(undefined);}catch{setError("JSON could not be formatted because it is not valid.");}};
   return <EditorFrame className="native-file-surface" label={`File ${binding.title}`}
@@ -81,7 +80,7 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
     {conflict&&<section className="file-conflict" aria-label="File conflict"><p>Current file differs from your draft’s basis.</p><textarea readOnly aria-label="Current file" value={reading!.content}/><button disabled={pending} onClick={()=>{const next={...draft!,base_revision:reading!.revision,saved_content:reading!.content};setDraft(next);try{writeDraft(binding.ref!,next);}catch{setError("Could not retain the updated draft basis.");}}}>Use current revision as draft basis</button></section>}
     {history&&<section className="file-history" aria-label="File history"><button onClick={()=>{setHistory(undefined);setPreview(undefined);}}>Close history</button>{history.entries.length===0&&<p>No changes recorded by Central.</p>}{history.entries.map(entry=><div key={entry.cursor}><span>{entry.actor} · {entry.actor_kind}</span><button onClick={()=>void compare(entry.previous_revision)} disabled={pending}>Compare before change {entry.cursor}</button><button onClick={()=>void compare(entry.revision)} disabled={pending}>Compare change {entry.cursor}</button></div>)}{history.more&&<button disabled={pending} onClick={()=>void loadHistory(history.next_before??undefined)}>Earlier changes</button>}</section>}
     {preview&&<section className="file-recovery" aria-label="File recovery preview"><label>Current<textarea aria-label="Current recovery basis" readOnly value={preview.current_content}/></label><label>Recovery<textarea aria-label="Recovery content" readOnly value={preview.content}/></label><button disabled={pending||dirty||!reading?.operations?.restore.available} onClick={()=>void restore()}>Restore this revision</button>{dirty&&<p>Save or resolve the open draft before restoring a revision.</p>}<button onClick={()=>setPreview(undefined)}>Close preview</button></section>}
-    {reading&&draft&&<div className="source-editor-scroll" ref={scroll} onScroll={event=>{try{localStorage.setItem(scrollKey,String(event.currentTarget.scrollTop));}catch{}}} onKeyDown={event=>{if((event.metaKey||event.ctrlKey)&&event.code==="KeyS"){event.preventDefault();void save();}}}><div className="source-editor-body"><TextEditor ref={body} binding={binding} aria-label={`${writable?"Editing":"Reading"} ${binding.title}`} readOnly={!writable||pending} value={draft.content} onChange={change} onSelect={updateCaret} onSave={()=>void save()} onContextMenu={selectionMenu.onContextMenu}/></div></div>}
-    {selectionMenu.menuNode}
+    {reading&&draft&&<div className="source-editor-scroll" ref={scroll} onScroll={event=>{try{localStorage.setItem(scrollKey,String(event.currentTarget.scrollTop));}catch{}}} onKeyDown={event=>{if((event.metaKey||event.ctrlKey)&&event.code==="KeyS"){event.preventDefault();void save();}}}><div className="source-editor-body"><TextEditor ref={body} binding={binding} aria-label={`${writable?"Editing":"Reading"} ${binding.title}`} readOnly={!writable||pending} value={draft.content} onChange={change} onSelect={updateCaret} onSave={()=>void save()}/></div></div>}
+
   </EditorFrame>;
 }

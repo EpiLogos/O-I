@@ -183,6 +183,7 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
       className={`pane group${focused ? " focused" : ""}`}
       data-pane="group"
       data-group-id={group.id}
+      data-window-corner={groupsOf(state.root).filter(g=>!state.maximizedGroupId||g.id===state.maximizedGroupId)[0]?.id===group.id}
       data-focused={focused}
       data-tab-focus={!!active&&state.focusedTabId===active}
       data-maximized={state.maximizedGroupId === group.id}
@@ -268,6 +269,7 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
       </div>
       <div
         className="surface-body"
+        data-binding-id={active}
         role="tabpanel"
         id={`surface-panel-${group.id}`}
         aria-labelledby={active ? `surface-tab-${active}` : undefined}

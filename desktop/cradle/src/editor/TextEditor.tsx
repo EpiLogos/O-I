@@ -37,6 +37,7 @@ import { python } from "@codemirror/lang-python";
 import { xml } from "@codemirror/lang-xml";
 import type { SurfaceBinding } from "../surface/types";
 import "./text-editor.css";
+import {useEditorMode} from "./EditorChrome";
 export interface EditorHandle {
   readonly value: string;
   readonly selectionStart: number;
@@ -121,6 +122,7 @@ interface Props {
 }
 export const TextEditor = forwardRef<EditorHandle, Props>(
   function TextEditor(props, ref) {
+    const mode=useEditorMode();
     const host = useRef<HTMLDivElement>(null),
       view = useRef<EditorView>();
     const callbacks = useRef(props);
@@ -129,7 +131,7 @@ export const TextEditor = forwardRef<EditorHandle, Props>(
     const editable = useRef(new Compartment()),
       language = useRef(new Compartment()),
       wrap = useRef(new Compartment());
-    const [selection, setSelection] = useState(false),
+    const [, setSelection] = useState(false),
       [notice, setNotice] = useState("");
     const api = useRef<EditorHandle>({
       get value() {
@@ -181,6 +183,10 @@ export const TextEditor = forwardRef<EditorHandle, Props>(
       command(name) {
         const v = view.current;
         if (!v) return;
+        if(name==='copy'||name==='cut'){
+          const {from,to}=v.state.selection.main;const basis=v.state.doc;const text=basis.sliceString(from,to);if(!text)return;
+          void navigator.clipboard.writeText(text).then(()=>{if(name==='cut'&&!v.state.readOnly&&v.state.doc===basis){v.dispatch({changes:{from,to,insert:''},selection:{anchor:from},userEvent:'delete.cut'});v.focus();}}).catch(()=>{v.focus();if(!document.execCommand(name))setNotice('Clipboard access was unavailable. Use the keyboard shortcut.');});return;
+        }
         if (name.startsWith("highlight-")) {
           const { from, to } = v.state.selection.main;
           v.dispatch({
@@ -245,6 +251,7 @@ export const TextEditor = forwardRef<EditorHandle, Props>(
             callbacks.current.onChange(update.state.doc.toString());
           if (update.selectionSet || update.docChanged) {
             setSelection(!update.state.selection.main.empty);
+              host.current?.dispatchEvent(new CustomEvent("oi:editor-selection",{bubbles:true,detail:{selected:!update.state.selection.main.empty}}));
             callbacks.current.onSelect?.();
           }
         }),
@@ -327,14 +334,15 @@ export const TextEditor = forwardRef<EditorHandle, Props>(
       view.current?.dispatch({
         effects: [
           editable.current.reconfigure(
-            EditorState.readOnly.of(!!props.readOnly),
+            EditorState.readOnly.of(!!props.readOnly||mode==="context"),
           ),
           language.current.reconfigure(
             languages(props.filename ?? props.binding.title),
           ),
         ],
       });
-    }, [props.readOnly, props.filename, props.binding.title]);
+    }, [props.readOnly, props.filename, props.binding.title,mode]);
+    useEffect(()=>{const node=host.current?.parentElement;if(!node)return;const add=()=>attach();const command=(event:Event)=>api.current.command((event as CustomEvent<string>).detail);node.addEventListener('oi:attach-selection',add);node.addEventListener('oi:editor-command',command);return()=>{node.removeEventListener('oi:attach-selection',add);node.removeEventListener('oi:editor-command',command);};},[]);
     function attach() {
       const p = callbacks.current,
         a = api.current;
@@ -357,36 +365,10 @@ export const TextEditor = forwardRef<EditorHandle, Props>(
         }),
       );
     }
-    function highlight(color: string) {
-      const v = view.current;
-      if (!v) return;
-      const { from, to } = v.state.selection.main;
-      if (from !== to) v.dispatch({ effects: mark.of({ from, to, color }) });
-      v.focus();
-    }
     return (
       <div className="text-editor" onContextMenu={props.onContextMenu}>
         <div ref={host} className="text-editor-host" />
-        {selection && (
-          <div
-            className="selection-tools"
-            role="toolbar"
-            aria-label="Selected text"
-            onMouseDown={(e) => e.preventDefault()}
-          >
-            <span>Highlight</span>
-            {["yellow", "green", "blue", "rose"].map((color) => (
-              <button
-                key={color}
-                className={`highlight-swatch highlight-${color}`}
-                aria-label={`Highlight ${color}`}
-                onClick={() => highlight(color)}
-              />
-            ))}
-            <button onClick={() => highlight("")}>Clear</button>
-            <button onClick={attach}>@ Context</button>
-          </div>
-        )}
+
         {notice && (
           <p role="status">
             {notice}

@@ -10,7 +10,9 @@
     "frontendDist": "../dist"
   },
   "bundle": {
-    "icon": ["icons/icon.png"]
+    "icon": [
+      "icons/icon.png"
+    ]
   },
   "app": {
     "windows": [
@@ -27,13 +29,15 @@
       }
     ],
     "security": {
-      "capabilities": ["main-window"],
+      "capabilities": [
+        "main-window"
+      ],
       "csp": {
         "default-src": "'self' customprotocol: oi-material:",
         "connect-src": "ipc: http://ipc.localhost",
         "img-src": "'self' oi-material: data: blob:",
         "style-src": "'self' 'unsafe-inline'",
-        "script-src": "'self'",
+        "script-src": "'self' 'sha256-syyPNs0/yFjpLCxoa4UTLxpN++24s/47qbcZFtFJo9U='",
         "object-src": "'none'",
         "frame-src": "oi-material:",
         "base-uri": "'none'"

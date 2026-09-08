@@ -5,6 +5,7 @@ import {setup as sourceSetup} from "./editor.mjs";
 
 export async function setup(args) {
   const source = await sourceSetup(args);
+  writeFileSync(join(source.projectRoot,"context-check.html"),'<html><body><h1>Context acceptance</h1><button>Observed control</button></body></html>');
   const aikit = process.env.OI_AIKIT_BIN ?? "aikit";
   const sessionSpace = process.env.OI_AIKIT_SESSION_SPACE_BIN ?? "aikit-session-space";
   const suite=process.env.OI_BIN??"oi",router=join(source.root,"oi-owner-router.mjs");
@@ -31,7 +32,7 @@ async function selectRange(editor,start,end) {
   await editor.focus();await editor.press("Meta+ArrowUp");
   for(let i=0;i<start;i++)await editor.press("ArrowRight");
   for(let i=start;i<end;i++)await editor.press("Shift+ArrowRight");
-  await editor.dispatchEvent("contextmenu",{bubbles:true,cancelable:true,clientX:320,clientY:220,button:2});
+
 }
 
 export default async function run({page,baseUrl,check,shot,channel,provision:p}) {
@@ -49,27 +50,53 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await nav.locator(`[data-file-path="Work/Editor/${source.binding.path}"]`).click();
   const editor=page.locator('.cm-content[data-source-ref="'+source.binding.ref+'"]');await editor.waitFor();
 
-  const excerpt=content.slice(0,Math.min(48,content.indexOf("\n")>0?content.indexOf("\n"):48));
-  await selectRange(editor,0,excerpt.length);
-  await page.getByRole("menuitem",{name:"Add selection to context",exact:true}).click();
+  const excerpt=content.slice(5,12);
+  await selectRange(editor,5,12);
+  await page.getByRole("button",{name:"Context mode",exact:true}).click();
+  await page.getByRole("button",{name:"Attach selection",exact:true}).click();
   const dialog=page.getByRole("dialog",{name:"Include selected context"});await dialog.waitFor();
   check(await dialog.getByRole("combobox",{name:"Context destination"}).locator("option").filter({hasText:"Context draft acceptance"}).count()===1,"An existing real conversation is an explicit context destination");
   check(await dialog.locator("pre").innerText()===excerpt,"The tray presents the exact selected source text");
   await dialog.getByRole("button",{name:"Add to draft",exact:true}).click();
   await dialog.waitFor({state:"detached"});
-  const appended=p.request("view").draft;
+  let appended=p.request("view").draft;
   check(appended.text.startsWith("Existing owner draft.\n\n@context — "),"Context append preserves the existing AIKit-owned draft");
   check(appended.text.includes(source.binding.ref)&&appended.text.includes(`revision ${source.revision.revision}`)&&appended.text.endsWith(excerpt.split("\n").map(line=>`> ${line}`).join("\n")),"The owner draft receives the exact quote, source ref and selection-time revision");
   check(p.request("view").blocks.length===0,"Adding context does not send a provider prompt or create transcript blocks");
 
-  await selectRange(editor,0,excerpt.length);
-  await page.getByRole("menuitem",{name:"Add selection to context",exact:true}).click();await dialog.waitFor();
-  await editor.fill(`Changed after selection.
-${content}`);
+  await editor.locator('.cm-line').first().hover();
+  await page.locator('.component-pick-bounds').waitFor();
+  await editor.locator('.cm-line').first().click();await dialog.waitFor();
+  check((await dialog.locator('.context-origin').first().innerText()).includes('×'),"Component mode presents the picked element bounds and selector");
+  await dialog.getByRole("button",{name:"Add to draft",exact:true}).click();await dialog.waitFor({state:'detached'});
+  appended=p.request('view').draft;
+  check(appended.text.includes('observed component')&&appended.text.includes('.cm-line')===false,"A real component observation reaches the owner draft with structural provenance");
+  await page.getByRole("button",{name:"Writing mode",exact:true}).click();
+
+  await selectRange(editor,5,12);
+  await page.getByRole("button",{name:"Context mode",exact:true}).click();
+  await page.getByRole("button",{name:"Attach selection",exact:true}).click();await dialog.waitFor();
+  await channel("invoke.source_edit",[source.binding.ref,`Changed after selection.\n${content}`]);
   await page.waitForFunction(()=>document.querySelector('.source-editor')?.getAttribute('data-dirty')==='true');
   await dialog.getByRole("button",{name:"Add to draft",exact:true}).click();
   const refusal=dialog.getByRole("alert");await refusal.waitFor();
   check((await refusal.innerText()).includes("selected material changed"),"A source changed after selection is visibly refused");
   check(p.request("view").draft.revision===appended.revision&&p.request("view").draft.text===appended.text,"Stale refusal leaves the owner draft revision and text unchanged");
   await shot("real-owner-cas-and-stale-refusal");
+  await dialog.getByRole('button',{name:'Close context selection'}).click();
+  await nav.locator('[data-file-path="Work/Editor/context-check.html"]').click();
+  const frame=page.frameLocator('iframe.material-frame');await frame.locator('button').waitFor();
+  await page.getByRole('button',{name:'Context mode',exact:true}).click();
+  await page.waitForTimeout(400);
+  await frame.locator('button').click();await dialog.waitFor();
+  await dialog.getByRole('button',{name:'Add to draft',exact:true}).click();await dialog.waitFor({state:'detached'});
+  const pageDraft=p.request('view').draft;
+  check(pageDraft.text.includes('observed component')&&pageDraft.text.includes('viewport bounds x=')&&pageDraft.text.endsWith('> Observed control'),'A sandboxed page observation is validated and appended through the real draft owner');
+  await frame.locator('button').click();await dialog.waitFor();
+  await frame.locator('button').evaluate(el=>el.textContent='Changed by the page');
+  await dialog.getByRole('button',{name:'Add to draft',exact:true}).click();await dialog.getByRole('alert').waitFor();
+  check((await dialog.getByRole('alert').innerText()).includes('component changed'),'Page mutation after picking is refused by live DOM validation');
+  check(p.request('view').draft.revision===pageDraft.revision,'A stale page observation does not mutate the owner draft');
+  await shot('rendered-component-stale-refusal');
+
 }

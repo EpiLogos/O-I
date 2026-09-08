@@ -1,6 +1,6 @@
 import {TextEditor,EditorCommands,type EditorHandle} from "../editor/TextEditor";
 import {useEffect,useRef,useState} from "react";
-import {EditorFrame,useTextContextMenu} from "../editor/EditorChrome";
+import {EditorFrame} from "../editor/EditorChrome";
 import {useKernel} from "../kernel/KernelProvider";
 import type {SurfaceBinding} from "../surface/types";
 import {flow} from "./client";
@@ -13,14 +13,13 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
  const change=(value:string)=>{textRef.current=value;setText(value);try{localStorage.setItem(key,JSON.stringify({text:value,revision}));}catch{setError("Draft recovery storage is unavailable; save your writing to Central.");}};
  const save=async()=>{if(!loaded||!revision||busy)return;const content=text;setBusy(true);setError(undefined);try{const read=await flow(kernel.transport,{action:"flow_write",project:binding.project!,flow_ref:binding.flow!.flowRef,expected_revision:revision,content,actor:"desktop-user",actor_kind:"human"});const nextRevision=read.flow.current_revision;setSaved(content);setRevision(nextRevision);try{if(textRef.current===content)localStorage.removeItem(key);else localStorage.setItem(key,JSON.stringify({text:textRef.current,revision:nextRevision}));}catch{setError("Your Flow was saved, but newer writing could not be kept in local recovery storage.");}}catch(reason){setError(String(reason));}finally{setBusy(false);}};
  const attach=()=>{const el=input.current;if(!el)return;const start=el.selectionStart,end=el.selectionEnd;const selected=end>start?text.slice(start,end):text;if(!selected.trim())return;window.dispatchEvent(new CustomEvent("oi:context-candidate",{detail:{bindingId:binding.id,kind:"text",text:selected,start:end>start?start:0,end:end>start?end:text.length,sourceRef:binding.ref,revision,workingCopy:text!==saved}}));};
- const selectionMenu=useTextContextMenu(binding,input,loaded&&!busy,change,attach);
  const status=!loaded?(error?"Unavailable":"Loading…"):busy?"Saving…":error?"Needs attention":text===saved?"Saved":"Unsaved";
  return <EditorFrame className="flow-surface" label="Flow editor"
   toolbar={<EditorCommands editor={input} markdown readOnly={!loaded}/>}
   footer={<><span className="editor-path" title={`${binding.ref}\n${binding.flow?.flowRef}`}>{binding.project} / {binding.flow?.path}</span><span role="status">{status}</span><button disabled={!loaded||busy||!revision||text===saved} onClick={()=>void save()}>Save · ⌘S</button></>}
  >
   {error&&<p role="alert" className="flow-error">{error}</p>}
-  {loaded?<TextEditor ref={input} binding={binding} filename="Flow.md" readOnly={!loaded} aria-label="Writing in Flow.md" value={text} onChange={change} onSave={()=>void save()} onAttach={attach} onContextMenu={selectionMenu.onContextMenu}/>:<p className="flow-error" role="status">Opening Flow…</p>}
-  {selectionMenu.menuNode}
+  {loaded?<TextEditor ref={input} binding={binding} filename="Flow.md" readOnly={!loaded} aria-label="Writing in Flow.md" value={text} onChange={change} onSave={()=>void save()} onAttach={attach}/>:<p className="flow-error" role="status">Opening Flow…</p>}
+
  </EditorFrame>;
 }

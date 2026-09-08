@@ -187,9 +187,29 @@ pub async fn browser_attach(
         let download_id = id.clone();
         let download_label = label.clone();
         let mut builder = WebviewBuilder::new(&label, WebviewUrl::External(initial))
+            .initialization_script(include_str!("../../src/context/page-context.js"))
             .incognito(profile == "temporary")
             .focused(false)
             .on_navigation(move |target| {
+                if target.as_str() == "oi-context://selection" {
+                    // A notification only: read the pending observation ourselves.
+                    // This route grants no owner command or general page-to-shell IPC.
+                    if let Some(view) = nav_app.get_webview(&nav_label) {
+                        let origin = view.url().ok().map(|url|url.to_string());
+                        let handle = nav_app.clone();let surface = nav_id.clone();let label = nav_label.clone();
+                        let _ = view.eval_with_callback("window.__OI_PAGE_CONTEXT__?.take() ?? null",move |result| {
+                            if result.len() > 100_000 { return; }
+                            let current = handle.get_webview(&label).and_then(|view|view.url().ok()).map(|url|url.to_string());
+                            if current != origin { return; }
+                            let host = handle.state::<Browsers>().0.lock().ok().and_then(|rows|rows.get(&surface).map(|s|s.host.clone()));
+                            if let Some(shell) = host.and_then(|host|handle.get_webview(&host)) {
+                                let value = serde_json::from_str::<serde_json::Value>(&result).unwrap_or(serde_json::Value::Null);
+                                let _ = shell.emit("oi:browser-picked",serde_json::json!({"id":surface,"result":value,"url":origin}));
+                            }
+                        });
+                    }
+                    return false;
+                }
                 if url(target.as_str()).is_err() {
                     update(&nav_app, &nav_id, &nav_label, |r| {
                         r.notice = Some("Navigation outside HTTP/HTTPS was blocked".into())
@@ -364,6 +384,27 @@ pub async fn browser_control(
                 rows.remove(&id);
             }
             Ok(())
+        }
+        "context" => {
+            let request: serde_json::Value = serde_json::from_str(address.as_deref().ok_or("Context request is missing")?).map_err(|e|e.to_string())?;
+            let key = serde_json::to_string(request.get("value").unwrap_or(&serde_json::Value::Null)).map_err(|e|e.to_string())?;
+            let expression = match request["op"].as_str() {
+                Some("mode") => format!("(() => {{ const api=window.__OI_PAGE_CONTEXT__; if(!api)return false; api.setSignal(()=>{{location.href='oi-context://selection'}}); return api.mode({key}); }})()"),
+                Some("take") => "window.__OI_PAGE_CONTEXT__?.take() ?? null".into(),
+                Some("selection") => "window.__OI_PAGE_CONTEXT__?.selection() ?? null".into(),
+                Some("validate") => format!("window.__OI_PAGE_CONTEXT__?.validate({key}) ?? false"),
+                _ => return Err("Unknown context reading".into()),
+            };
+            let request_id = request["request"].as_str().ok_or("Context request id is missing")?.to_owned();
+            let origin = child.url().map_err(|e|e.to_string())?.to_string();
+            let handle = app.clone(); let host = webview.label().to_owned(); let child_label = label.clone();
+            child.eval_with_callback(expression,move |result| {
+                // Result is untrusted page data. Only this originating shell receives it;
+                // no page obtains shell IPC and navigation invalidates the reading.
+                let same_page = handle.get_webview(&child_label).and_then(|view|view.url().ok()).is_some_and(|url|url.as_str()==origin);
+                let result = if same_page && result.len() <= 100_000 { serde_json::from_str::<serde_json::Value>(&result).unwrap_or(serde_json::Value::Null) } else { serde_json::Value::Null };
+                if let Some(shell) = handle.get_webview(&host) { let _ = shell.emit("oi:browser-context", serde_json::json!({"id":id,"request":request_id,"result":result,"url":origin})); }
+            })
         }
         "navigate" => child.navigate(url(address.as_deref().ok_or("Address is missing")?)?),
         "back" => child.eval("history.back()"),

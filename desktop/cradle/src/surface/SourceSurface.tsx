@@ -17,7 +17,7 @@ import { readDraft, writeDraft } from "../workspace/drafts";
 import { SourceHistory } from "./SourceHistory";
 import { useKernel } from "../kernel/KernelProvider";
 import type { SurfaceBinding } from "./types";
-import {EditorFrame,useTextContextMenu} from "../editor/EditorChrome";
+import {EditorFrame} from "../editor/EditorChrome";
 
 export interface SourceSurfaceProps {
   binding: SurfaceBinding;
@@ -120,7 +120,6 @@ export function SourceSurface(props: SourceSurfaceProps) {
     if (binding.ref) void kernel.saveSource(binding.ref);
   };
   const updateCaret=()=>{const el=textareaRef.current;if(!el)return;const before=el.value.slice(0,el.selectionStart);const lines=before.split("\n");setCaret({line:lines.length,column:(lines[lines.length-1]?.length??0)+1,selected:el.selectionStart!==el.selectionEnd});retainView();};
-  const selectionMenu=useTextContextMenu(binding,textareaRef,true,onEdit);
   const extension=buffer?.path?.split(".").pop()?.toLowerCase();const markdown=extension==="md"||extension==="markdown";
 
   // ⌘S saves from anywhere in this surface (textarea, conflict panel) —
@@ -163,7 +162,7 @@ export function SourceSurface(props: SourceSurfaceProps) {
       {error && <p className="source-note" role="alert">{error}</p>}
       <div className="source-editor-scroll" ref={scrollRef} onScroll={retainView} onKeyDown={onKeyDown}>
         <div className="source-editor-body">
-          <TextEditor ref={textareaRef} binding={binding} filename={buffer.path} aria-label={`Editing ${binding.title}`} value={text} onChange={onEdit} onSelect={updateCaret} onSave={onSave} onContextMenu={selectionMenu.onContextMenu}/>
+          <TextEditor ref={textareaRef} binding={binding} filename={buffer.path} aria-label={`Editing ${binding.title}`} value={text} onChange={onEdit} onSelect={updateCaret} onSave={onSave}/>
         </div>
         {historyOpen && <SourceHistory sourceRef={binding.ref} revision={buffer.conflict?.current_revision ?? buffer.base_revision} />}
         {conflict ? (
@@ -215,7 +214,7 @@ export function SourceSurface(props: SourceSurfaceProps) {
         </div>
         ) : null}
       </div>
-      {selectionMenu.menuNode}
+
     </EditorFrame>
   );
 }

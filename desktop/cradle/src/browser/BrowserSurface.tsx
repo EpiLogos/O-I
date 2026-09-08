@@ -4,6 +4,7 @@ import {listen} from "@tauri-apps/api/event";
 import {useKernel} from "../kernel/KernelProvider";
 import type {SurfaceBinding} from "../surface/types";
 import "./browser.css";
+import {useBrowserContext} from "../context/useBrowserContext";
 
 type Profile="temporary"|"personal";
 type DownloadReading={url:string;path:string;state:"downloading"|"saved"|"failed"};
@@ -22,8 +23,10 @@ export function BrowserSurface({binding}:{binding:SurfaceBinding}) {
   const [zoom,setZoom]=useState(1);const [retry,setRetry]=useState(0);
   const [profile,setProfile]=useState<Profile>(()=>savedProfile(binding.id));
   const editing=useRef(false);
+  const [contextMode,setContextMode]=useState("off");
   const viewport=useRef<HTMLDivElement>(null);const input=useRef<HTMLInputElement>(null);const attached=useRef(false);
   const control=(action:string,args:Record<string,unknown>={})=>serial(binding.id,()=>invoke("browser_control",{id:binding.id,action,...args}));
+  const attachContext=useBrowserContext(binding,native,contextMode,reading?.loading,control);
   useEffect(()=>{
     if(!native)return;
     let disposed=false;let unlisten:(()=>void)|undefined;let unfocus:(()=>void)|undefined;
@@ -102,6 +105,9 @@ export function BrowserSurface({binding}:{binding:SurfaceBinding}) {
       <input ref={input} className="browser-address" aria-label="Web address" placeholder="Enter a web address" value={address} onChange={e=>setAddress(e.target.value)} onFocus={e=>{editing.current=true;e.target.select();}} onBlur={()=>{editing.current=false;requestAnimationFrame(()=>{if(reading&&!(document.activeElement as HTMLElement)?.closest(".browser-toolbar"))setAddress(reading.url);});}} autoFocus={!target} spellCheck={false}/>
       <span className="browser-tools">
         <button type="submit" disabled={!native||!address.trim()}>Go</button>
+        <button type="button" aria-label="Text mode" aria-pressed={contextMode==="off"} onClick={()=>setContextMode("off")}>✎</button>
+        <button type="button" aria-label="Context mode" aria-pressed={contextMode!=="off"} disabled={!reading} onClick={()=>setContextMode('components')}>@</button>
+        {contextMode!=="off"&&<button type="button" onMouseDown={e=>e.preventDefault()} onClick={attachContext}>Attach selection</button>}
         <select aria-label="Browser profile" value={profile} onChange={e=>void switchProfile(e.target.value as Profile)}><option value="temporary">Temporary</option><option value="personal">Personal</option></select>
         <select aria-label="Browser zoom" value={zoom} onChange={e=>{const value=Number(e.target.value);setZoom(value);void control("zoom",{zoom:value}).catch(reason=>setError(String(reason)));}}>{[.5,.75,1,1.25,1.5,2].map(v=><option key={v} value={v}>{v*100}%</option>)}</select>
       </span>
@@ -109,7 +115,7 @@ export function BrowserSurface({binding}:{binding:SurfaceBinding}) {
     {error&&<div role="alert" className="browser-notice">{error} <button onClick={()=>{setError(undefined);setRetry(v=>v+1);}}>Retry</button></div>}
     {reading?.notice&&<div role="status" className="browser-notice">{reading.notice}{reading.requested_window&&<><span className="browser-requested-url">{reading.requested_window}</span><button onClick={()=>void control("navigate",{address:reading.requested_window}).catch(reason=>setError(String(reason)))}>Open link in this pane</button></>}</div>}
     <div ref={viewport} className="browser-viewport">{!native?<p>Web browsing is available in the desktop app.</p>:!target?<p>Open a web page in this pane.</p>:!reading?<p>Opening browser…</p>:null}</div>
-    <footer className="browser-status">
+    <footer className="browser-status" tabIndex={0} aria-label="Browser status">
       <span>{reading?.download?.state==="downloading"?"Downloading…":reading?.download?.state==="saved"?"Download saved":reading?.download?.state==="failed"?"Download failed":reading?.loading?"Loading…":"Ready"}</span>
       <span className="browser-status-path" title={reading?.download?.path||reading?.url}>{reading?.download?.path||reading?.url||"No page open"}</span>
       <span title={profile==="temporary"?"Cookies and website storage end when this pane closes.":"Cookies and website storage persist across browser panes and app launches."}>{profile==="temporary"?"Temporary":"Personal"}</span>

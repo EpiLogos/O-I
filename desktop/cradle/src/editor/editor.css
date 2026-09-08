@@ -5,14 +5,26 @@
 .editor-frame .editor-command-line button:hover,.editor-frame .editor-command-line button:focus-visible,.editor-frame .editor-command-line select:hover,.editor-frame .editor-command-line select:focus-visible{background:var(--oi-wash);color:var(--oi-accent-ink);outline:none}.editor-frame .editor-command-line button:disabled{opacity:.38;cursor:default}
 .editor-collapse{margin-left:auto}.editor-frame[data-editor-focused="false"] .editor-command-line{height:1px;padding:0;border-bottom-color:var(--oi-hairline-soft)}.editor-frame[data-editor-focused="false"] .editor-command-tools,.editor-frame[data-editor-focused="false"] .editor-collapse,.editor-frame[data-toolbar-collapsed="true"] .editor-command-tools{visibility:hidden;opacity:0;pointer-events:none;transform:translateY(-4px)}
 .editor-frame[data-toolbar-collapsed="true"] .editor-command-line{height:24px}.editor-content{flex:1;min-height:0;display:flex;flex-direction:column}.editor-footer{height:24px;flex:none;display:flex;align-items:center;gap:12px;padding:0 12px;border-top:1px solid var(--oi-hairline-soft);background:var(--oi-canvas-ground);font-size:var(--oi-shell-type-eyebrow);color:var(--oi-muted-2);white-space:nowrap;overflow:hidden}.editor-footer .editor-path{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;color:var(--oi-accent-ink)}.editor-frame .editor-footer button{border:0;background:transparent;color:inherit;font:inherit;padding:2px 4px;cursor:pointer}.editor-frame .editor-footer button:hover,.editor-frame .editor-footer button:focus-visible{color:var(--oi-accent-ink);outline:none}.editor-frame .editor-footer button:disabled{opacity:.4;cursor:default}
-.editor-text-menu{position:fixed;z-index:120;display:flex;flex-direction:column;width:190px;padding:5px;background:var(--oi-sidebar-ground);border:1px solid var(--oi-hairline);border-radius:6px;box-shadow:var(--oi-shadow-plane)}.editor-text-menu button{border:0;background:transparent;color:var(--oi-foreground);font:inherit;font-size:var(--oi-shell-type-ui);padding:7px 9px;text-align:left;border-radius:4px;cursor:pointer}.editor-text-menu button:hover,.editor-text-menu button:focus-visible{background:var(--oi-wash);color:var(--oi-accent-ink);outline:none}
 @media(prefers-reduced-motion:reduce){.editor-command-tools{transition:none}}
 
 .editor-frame{position:relative;overflow:hidden}
 .editor-command-line{height:34px;padding-right:34px;transition:height var(--oi-motion-ui) var(--oi-motion-ease-out);background:var(--oi-canvas-ground)}
 .editor-frame[data-toolbar-collapsed="true"] .editor-command-line,.editor-frame[data-editor-focused="false"] .editor-command-line{height:1px;padding-top:0;padding-bottom:0}
 .editor-frame .editor-collapse{position:absolute;right:5px;top:4px;z-index:12;width:24px;height:24px;border:0;border-radius:4px;background:var(--oi-canvas-ground);color:var(--oi-muted-2);cursor:pointer;font:14px var(--oi-font-sans)}
-.editor-frame[data-toolbar-collapsed="true"] .editor-collapse{top:0;height:6px;overflow:hidden;opacity:0;transition:height var(--oi-motion-ui),opacity var(--oi-motion-ui)}
-.editor-frame[data-toolbar-collapsed="true"] .editor-collapse:is(:hover,:focus-visible){height:24px;opacity:1}
+
+
 .editor-command-tools{height:32px;flex:none;width:100%;visibility:visible;transition:opacity var(--oi-motion-ui)}
 @media(prefers-reduced-motion:reduce){.editor-command-line,.editor-collapse{transition:none!important}}
+
+/* The header owns modes; selection commands use the shared contextual menu. */
+.editor-frame .editor-collapse,.editor-frame[data-toolbar-collapsed="true"] .editor-collapse{width:36px;height:26px;top:0;right:4px;opacity:.55;overflow:visible;background:var(--oi-canvas-ground);transition:opacity 180ms}
+.editor-frame .editor-collapse:hover,.editor-frame .editor-collapse:focus-visible{height:26px;opacity:1}
+.editor-frame .editor-command-tools button[aria-pressed="true"]{background:var(--oi-wash);color:var(--oi-accent-ink)}
+.editor-writing-menu{display:flex;flex-direction:column;min-width:210px;max-height:calc(100vh - 12px);overflow:auto}
+.desktop-shell .editor-writing-menu button,.editor-writing-menu button,.editor-writing-menu select{display:block;width:100%;flex:none;min-height:29px;text-align:left;padding:6px 10px;border:0;border-radius:4px;background:transparent;color:var(--oi-accent-ink);font:var(--oi-shell-type-ui) var(--oi-font-sans);cursor:pointer}
+.editor-writing-menu button:hover,.editor-writing-menu button:focus-visible,.editor-writing-menu select:hover{background:var(--oi-wash);outline:none}.editor-writing-menu button:disabled{opacity:.35}
+.component-pick-bounds{position:fixed;pointer-events:none;z-index:115;border:1px solid var(--oi-accent-ink);background:color-mix(in srgb,var(--oi-accent-ink) 6%,transparent);border-radius:2px}
+.component-pick-bounds span{position:absolute;left:0;top:-22px;height:20px;padding:2px 6px;background:var(--oi-sidebar-ground);color:var(--oi-accent-ink);font:11px var(--oi-font-sans);white-space:nowrap}
+.editor-frame[data-editor-mode="context"] .editor-content{cursor:crosshair}
+.editor-mode-toolkit{display:flex;align-items:center;gap:3px;min-width:0;overflow-x:auto;scrollbar-width:none;border-left:1px solid var(--oi-hairline-soft);margin-left:4px;padding-left:6px}
+.editor-command-tools>button{flex:none}

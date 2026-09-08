@@ -8,6 +8,8 @@ import {FileSurface} from "../files/FileSurface";
 import type {MaterialFormat} from "./detect";
 import {renderMarkdown} from "./markdown";
 import "./material.css";
+import pageContextScript from "../context/page-context.js?raw";
+import {useMaterialContext} from "../context/PageContext";
 import {EditorButton,EditorFrame} from "../editor/EditorChrome";
 
 /** One material path segment, percent-encoded whole (mirrors
@@ -93,6 +95,7 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
   // its faithful rendered form; only neutral preview zoom persists.
   const [view, setView] = useState<"rendered" | "source">("rendered");
   const { containerRef, suspended } = useSuspend(view);
+  useMaterialContext(containerRef,binding,view);
   const [zoom, setZoom] = useState<number>([.5,.75,1,1.25,1.5,2].includes(savedView?.zoom) ? savedView.zoom : 1);
   const [generation, setGeneration] = useState(0);
   useEffect(() => { try { localStorage.setItem(viewKey, JSON.stringify({zoom})); } catch { /* Optional presentation state; never source authority. */ } }, [viewKey,zoom]);
@@ -150,7 +153,7 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
   const imageSrc = transport.kind === "bridge" ? imageDataUrl : baseUrl;
 
   return <EditorFrame className="material-surface" label={`Material ${binding.title}`}
-    toolbar={<>{showToggle&&<MaterialToggle view={view} onChange={setView}/>} {tools}</>}
+    toolbar={null} presentationTools={<>{showToggle&&<MaterialToggle view={view} onChange={setView}/>} {tools}</>}
     footer={<><span className="editor-path" title={`Central / ${location.path}`}>Central / {location.path}</span><span>{FORMAT_LABEL[format]}</span>{zoomable&&<span>{Math.round(zoom*100)}%</span>}<EditorButton disabled={pending} onClick={()=>setGeneration(value=>value+1)}>Reload</EditorButton></>}
   >
     <div ref={containerRef} className="material-rendered-content" aria-busy={pending}>
@@ -158,11 +161,11 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
     {!error && pending && <Loading label="Reading material…" scope="surface"/>}
     {!error && !pending && format === "html" && <div className="material-viewport" data-preview-zoom={zoom}><div className="material-scaled" style={{width:`${100/zoom}%`,height:`${100/zoom}%`,transform:`scale(${zoom})`}}>{(
       transport.kind === "tauri"
-        ? <iframe className="material-frame" title={binding.title} sandbox="allow-scripts allow-forms" referrerPolicy="no-referrer" key={generation} src={suspended ? "about:blank" : baseUrl} />
-        : <iframe className="material-frame" title={binding.title} sandbox="allow-scripts allow-forms" referrerPolicy="no-referrer" key={generation} srcDoc={suspended ? undefined : injectBase(textContent ?? "", resolveAsset(""))} />
+        ? <iframe data-page-context className="material-frame" title={binding.title} sandbox="allow-scripts allow-forms" referrerPolicy="no-referrer" key={generation} src={suspended ? "about:blank" : baseUrl} />
+        : <iframe data-page-context className="material-frame" title={binding.title} sandbox="allow-scripts allow-forms" referrerPolicy="no-referrer" key={generation} srcDoc={suspended ? undefined : injectBase(textContent ?? "", resolveAsset(""))} />
     )}</div></div>}
     {!error && !pending && format === "markdown" && <div className="material-viewport" data-preview-zoom={zoom}><div className="material-scaled" style={{width:`${100/zoom}%`,height:`${100/zoom}%`,transform:`scale(${zoom})`}}>
-      <iframe key={generation} className="material-frame" title={binding.title} sandbox="" srcDoc={suspended ? undefined : markdownDocument(textContent ?? "", resolveAsset)} />
+      <iframe data-page-context key={generation} className="material-frame" title={binding.title} sandbox="allow-scripts" srcDoc={suspended ? undefined : markdownDocument(textContent ?? "", resolveAsset)} />
     </div></div>}
     {!error && !pending && format === "image" && (
       <div className="material-image-frame">
@@ -216,15 +219,14 @@ function MaterialToggle({ view, onChange }: { view: "rendered" | "source"; onCha
  * the `oi-material://` URL directly — the document never passes through
  * this function there. */
 function injectBase(html: string, baseHref: string | undefined): string {
-  if (!baseHref) return html;
-  const base = `<base href="${baseHref.replace(/"/g, "&quot;")}">`;
+  const base = `${baseHref?`<base href="${baseHref.replace(/"/g, "&quot;")}">`:""}<script>${pageContextScript}</script>`;
   if (/<head[^>]*>/i.test(html)) return html.replace(/<head[^>]*>/i, match => `${match}${base}`);
   return `${base}${html}`;
 }
 
 function markdownDocument(source: string, resolveAsset: (path: string) => string): string {
   const body = renderMarkdown(source, { resolveAsset });
-  return `<!doctype html><meta charset="utf-8"><style>${buildMarkdownStyle()}</style><body>${body}</body>`;
+  return `<!doctype html><meta charset="utf-8"><style>${buildMarkdownStyle()}</style><body>${body}<script>${pageContextScript}</script></body>`;
 }
 
 /** Finding 17: this used to be a literal palette duplicating

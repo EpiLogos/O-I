@@ -78,6 +78,13 @@ fn handle<R: Runtime>(app_handle: &AppHandle<R>, request: &Request<Vec<u8>>) -> 
                 match base64_decode(&content_base64) {
                     Some(bytes) => {
                         let content_type = content_type_for(mime_hint.as_deref(), &target.path);
+                        // Presentation-only observation bridge; owner bytes remain untouched.
+                        let bytes = if content_type.starts_with("text/html") {
+                            match String::from_utf8(bytes.clone()) {
+                                Ok(mut html) => { html.push_str("<script>"); html.push_str(include_str!("../../src/context/page-context.js")); html.push_str("</script>"); html.into_bytes() },
+                                Err(_) => bytes,
+                            }
+                        } else { bytes };
                         Response::builder()
                             .status(StatusCode::OK)
                             .header("Content-Type", content_type)

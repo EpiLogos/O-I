@@ -867,12 +867,12 @@
 .tab.active::after { display: none; }
 .pane-status { flex: none; min-height: 18px; display: flex; align-items: center; padding: 0 10px; background: var(--oi-canvas-ground); border-top: 1px solid var(--oi-hairline-soft); }
 
-/* Only the bottom edge reveals the focused pane's status strip. */
-.pane.group {position:relative;overflow:hidden}
-.pane.group.focused :is(.editor-footer,.terminal-footer,.flow-footer,.browser-status),
-.pane.group.focused > .pane-footer {position:absolute;bottom:0;left:0;right:0;z-index:15;height:24px;min-height:24px;opacity:1;transform:translateY(21px);background:var(--oi-canvas-ground);border-top:1px solid var(--oi-hairline-soft);transition:transform var(--oi-motion-ui) var(--oi-motion-ease-out)}
-.pane.group.focused :is(.editor-footer,.terminal-footer,.flow-footer,.browser-status):is(:hover,:focus-within),
-.pane.group.focused > .pane-footer:hover {transform:translateY(0)}
+/* A status edge expands in flow, gently making room for its content. */
+.pane.group{position:relative;overflow:hidden}
+.pane.group.focused :is(.editor-footer,.terminal-footer,.flow-footer,.browser-status),.pane.group.focused > .pane-footer{position:relative;inset:auto;flex:none;z-index:15;height:3px;min-height:3px;padding-top:0;padding-bottom:0;overflow:hidden;transform:none;background:var(--oi-canvas-ground);border-top:1px solid var(--oi-hairline-soft);transition:height 420ms cubic-bezier(.22,.7,.25,1),min-height 420ms cubic-bezier(.22,.7,.25,1)}
+.pane.group.focused :is(.editor-footer,.terminal-footer,.flow-footer,.browser-status):not(:hover):not(:focus-within)>*{visibility:hidden}
+.pane.group.focused :is(.editor-footer,.terminal-footer,.flow-footer,.browser-status):is(:hover,:focus-within),.pane.group.focused > .pane-footer:hover{height:24px;min-height:24px}
+.surface-body,.surface-body *{scrollbar-width:none}.surface-body::-webkit-scrollbar,.surface-body *::-webkit-scrollbar{display:none;width:0;height:0}
 
 /* Writing surfaces already own a footer: keep one bottom status band. */
 .pane.group:has(.editor-footer, .browser-status, .terminal-footer, .flow-footer) > .pane-status { display: none; }

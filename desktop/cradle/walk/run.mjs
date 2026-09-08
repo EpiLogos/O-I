@@ -51,6 +51,7 @@ const SCENARIOS = {
   "file-edit": {module:"scenarios/file-edit.mjs",kernel:true,aliases:[]},
   files: { module: "scenarios/files.mjs", kernel: true, aliases: [] },
   "rendering-quality": {module:"scenarios/rendering-quality.mjs",kernel:true,aliases:[]},
+  "page-context": { module: "scenarios/page-context.mjs", kernel: true },
   material: { module: "scenarios/material.mjs", kernel: true, aliases: ["fnd-04"] },
   bootstrap: { module: "scenarios/bootstrap.mjs", kernel: true, aliases: ["fnd-05"] },
   resources: { module: "scenarios/resources.mjs", kernel: true, aliases: ["fnd-06"] },
