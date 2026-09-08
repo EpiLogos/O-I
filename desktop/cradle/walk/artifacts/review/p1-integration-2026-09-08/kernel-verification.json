@@ -1,0 +1,25 @@
+{
+  "standing": "orchestrator-ran verification; native gate open",
+  "head": "3a4f69d65c15bf0b3caf069f0152ec14c8986107",
+  "command": "cargo test --locked --manifest-path desktop/cradle/kernel/Cargo.toml; exact OI_BIN, OI_CENTRAL_CTRL_BIN, OI_AIKIT_BIN, OI_AIKIT_SESSION_SPACE_BIN supplied; isolated CARGO_TARGET_DIR",
+  "results": {
+    "kernel_units": 20,
+    "flow_return": 2,
+    "material_bytes": 2,
+    "source_cas_including_real_aikit": 11,
+    "failed": 0,
+    "ignored": 4
+  },
+  "ignored": [
+    "composition_native (explicit full composition not yet run)",
+    "factory_native (downstream owner gate)",
+    "material_native (downstream Workcell binding/rich-body evidence)",
+    "ordinary_file_owner_cas_history_and_restore_through_consumer (separately passed worker gate)"
+  ],
+  "files": {
+    "desktop/cradle/kernel/src/lib.rs": "f16b819fd6e388978d99696fb83469b1435a4a52cf093781ee45d1fbd4f511f3",
+    "desktop/cradle/kernel/tests/flow_return.rs": "c8bb1c3bb1950ce06416a444458e2dce52ee2b31295aedd2e07add58acea8c1c",
+    "desktop/cradle/kernel/tests/source_cas.rs": "003d9b15a7de718d2dc65ea70d2640678d7bd02151fc117af5b0653f94692157",
+    "desktop/cradle/kernel/Cargo.lock": "75e30a356225c1bea21c0506e52669b004c99a193f43e770414982557cde492c"
+  }
+}

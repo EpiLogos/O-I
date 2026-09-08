@@ -1,0 +1,19 @@
+{
+  "standing": "Native repair source reviewed; repeated actual acceptance required",
+  "defect_evidence": "native-rev3-browser-redock-failure.json",
+  "native_changes": [
+    "Complete attach/control/reconcile check and OS mutation queued on main thread; close transfer already on main",
+    "Per-attachment generation, invalidated on transfer",
+    "Stale controls return false without mutation",
+    "Delayed context/focus callbacks reject changed attachment",
+    "Opt-in native lifecycle observations contain identifiers/generations only"
+  ],
+  "presentation_changes": [
+    "Per-effect lease reset; lease captured before queueing",
+    "Disposed completion cannot update visibility or adopt successor attachment",
+    "Only current own attach response grants lease; reading events do not",
+    "Stale lifecycle result invalidates cached visibility; no interval-show workaround",
+    "Semantic stale controls reject; no automatic replay; zoom comes from owner reading"
+  ],
+  "tests": "UI strict TypeScript passed; native compile preflight passed; coherent source-frozen build in progress. No mock lifecycle result asserted."
+}

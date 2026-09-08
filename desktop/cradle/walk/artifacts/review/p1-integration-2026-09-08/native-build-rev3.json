@@ -1,0 +1,7 @@
+{
+  "source_manifest": "source-inputs.json",
+  "sha256": "4a5ca098f2c6d2ecdc85c67c5fc54dbb506e3d64117a8121470586d8bef30f6a",
+  "executable": "/tmp/oi-p1-native-target-final-20260908/debug/bundle/macos/O-I P1 Acceptance.app/Contents/MacOS/oi-cradle",
+  "native_acceptance": "pending",
+  "packaging": "Unique acceptance bundle identity and ad-hoc signature; source unchanged"
+}

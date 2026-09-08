@@ -20,6 +20,24 @@ import {
   type TabGroupPane,
 } from "./types";
 
+/** D22: describe committed layout differences without drawing or side effects.
+ * Rev6 reserves these intents: the presentation host records their inactive
+ * disposition. Resize comes from actual drag/keyboard geometry, not every render. */
+export function surfaceExpressionChanges(before:LayoutState, after:LayoutState):Array<{intent:"open"|"close"|"split"|"move";groupId:string}> {
+  if(before.root===after.root)return [];
+  const oldGroups=groupsOf(before.root),newGroups=groupsOf(after.root);
+  const oldTabs=new Map(oldGroups.flatMap(g=>g.tabs.map(id=>[id,g.id] as const)));
+  const newTabs=new Map(newGroups.flatMap(g=>g.tabs.map(id=>[id,g.id] as const)));
+  const changes:Array<{intent:"open"|"close"|"split"|"move";groupId:string}>=[];
+  for(const [id,groupId]of newTabs) {
+    if(!oldTabs.has(id))changes.push({intent:"open",groupId});
+    else if(oldTabs.get(id)!==groupId)changes.push({intent:"move",groupId});
+  }
+  for(const [id,groupId]of oldTabs)if(!newTabs.has(id))changes.push({intent:"close",groupId});
+  if(newGroups.length>oldGroups.length)changes.push({intent:"split",groupId:after.focusedGroupId??newGroups[0].id});
+  return changes;
+}
+
 // ---------------------------------------------------------------------------
 // tree helpers
 

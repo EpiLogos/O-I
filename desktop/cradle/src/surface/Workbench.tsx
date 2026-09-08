@@ -1,4 +1,5 @@
 import {EncounterSurface} from "../encounter/EncounterSurface";
+import {requestResizeExpression} from "../shared/Expression";
 import {SystemPanel} from "../workspace/SystemPanel";
 /**
  * The Workbench (U0.3b) — the OS frame that exists ONLY while ≥1 surface is
@@ -159,10 +160,12 @@ function PaneNode(props: PaneProps) {
               const arrows = pane.dir === "h" ? ["ArrowLeft", "ArrowRight"] : ["ArrowUp", "ArrowDown"];
               if (![...arrows, "Home", "End", "Enter"].includes(e.key) || e.altKey || e.metaKey || e.ctrlKey) return;
               e.preventDefault(); e.stopPropagation();
+              const priorRect=e.currentTarget.getBoundingClientRect();
               const weights = pane.children.map((_,i) => pane.weights?.[i] ?? 1); const pair = weights[index]+weights[index+1];
               const desired = e.key === "Home" ? pair * .15 : e.key === "End" ? pair * .85 : e.key === "Enter" ? pair / 2 : weights[index] + pair * (e.shiftKey ? .1 : .05) * (e.key === arrows[1] ? 1 : -1);
               weights[index] = Math.max(pair*.15, Math.min(pair*.85, desired)); weights[index+1]=pair-weights[index];
               props.execute("surface.resize-split", { splitId: pane.id, weights });
+              requestResizeExpression(e.currentTarget,priorRect);
             }} />}
         </Fragment>)}
       </div>

@@ -1,0 +1,6 @@
+{
+  "os": "ProductName:\t\tmacOS\nProductVersion:\t\t26.5.2\nBuildVersion:\t\t25F84",
+  "hardware": "hw.model: Mac16,12\nhw.memsize: 17179869184\nhw.ncpu: 10",
+  "disk": "Filesystem   1024-blocks      Used Available Capacity iused     ifree %iused  Mounted on\n/dev/disk3s5   482797652 415120384  14186728    97% 4582832 141867280    3%   /System/Volumes/Data",
+  "display_scale": "Not yet observed from native renderer; no inferred scale from CUA resized image."
+}

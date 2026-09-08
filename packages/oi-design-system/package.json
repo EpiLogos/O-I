@@ -7,7 +7,9 @@
     "assets",
     "point-cloud.css",
     "loading.mjs",
-    "DESKTOP-LANGUAGE.md"
+    "DESKTOP-LANGUAGE.md",
+    "expression.mjs",
+    "expression.css"
   ],
   "exports": {
     "./tokens.css": "./tokens.css",
@@ -15,7 +17,9 @@
     "./assets/oi-glyph.svg": "./assets/oi-glyph.svg",
     "./assets/oi-cube.svg": "./assets/oi-cube.svg",
     "./point-cloud.css": "./point-cloud.css",
-    "./loading": "./loading.mjs"
+    "./loading": "./loading.mjs",
+    "./expression": "./expression.mjs",
+    "./expression.css": "./expression.css"
   },
   "scripts": {
     "verify": "node checks/verify.mjs",

@@ -1,0 +1,44 @@
+{
+  "OI_BIN": {
+    "path": "/tmp/oi-p1-exact-bindings-20260908/oi",
+    "source": "/Users/admin/Central/Work/O-I/cli/target/debug/oi",
+    "sha256": "582c2b5ad541c09fc0890a501d035f73b6e5224e4cce5e569de9d66d191cf999"
+  },
+  "OI_CENTRAL_CTRL_BIN": {
+    "path": "/tmp/oi-p1-exact-bindings-20260908/ctrl",
+    "source": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/central-binding-20260908-903v6fyq/owner-target/debug/ctrl",
+    "sha256": "5d8c0deaa26dd5e67d97ead611ebc012b201506fa3289de7ed8104c4a23725dd"
+  },
+  "OI_AIKIT_BIN": {
+    "path": "/tmp/oi-p1-exact-bindings-20260908/aikit",
+    "source": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/aikit-1e82703-binding-91vqc5vp/target/debug/aikit",
+    "sha256": "c8f18087fc9695a423c63d9b330b0eee3bbdfccec5d1dac8eee443e2820bb16a"
+  },
+  "OI_AIKIT_SESSION_SPACE_BIN": {
+    "path": "/tmp/oi-p1-exact-bindings-20260908/aikit-session-space",
+    "source": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/aikit-1e82703-binding-91vqc5vp/target/debug/aikit-session-space",
+    "sha256": "af2940b6e1376dc4278262a821b216c65545864f374999fe9bbabb82fe481c43"
+  },
+  "OI_FACTORY_BIN": {
+    "path": "/tmp/oi-p1-exact-bindings-20260908/factory",
+    "source": "/Users/admin/Central/Work/Software-Factory/target/debug/factory",
+    "sha256": "428036b90bce4775d55923a4183f6d17c4149b1fb37caf48e565c31b2a2eb366"
+  },
+  "OI_WORKCELL_BIN": {
+    "path": "/tmp/oi-p1-exact-bindings-20260908/workcell",
+    "source": "/Users/admin/Central/Work/Workcell/target/debug/workcell",
+    "sha256": "48f725ed2c368c8d52fc60adefe681e93a117a1dc20f88bf82b28b2deef0a74a"
+  },
+  "OI_QL_BIN": {
+    "path": "/tmp/oi-p1-exact-bindings-20260908/ql",
+    "source": "/Users/admin/.local/share/oi/cargo/bin/ql",
+    "sha256": "0ac22d48a995798c0bda21bc6ce70acc6db36bcc8930dde2f95f1df761198148"
+  },
+  "OI_ACTUATION_BIN": {
+    "path": "/tmp/oi-p1-exact-bindings-20260908/actuation",
+    "sha256": "d9df8b97258ea8cb70eb12eb2bd9043090688f0efb7916168933cc4a7d119b3c",
+    "archive_sha256": "a86629b622cd966c7cda60b8a5e2bd4688abbee998fa7e731e12b72bcf62bb91",
+    "commit": "163aef0bde344389869ba5194cd92979b8b66e21",
+    "node_sha256": "dbd06835a04a78ea89dc4f72694a68241cf3659d452fbcae666733d684fcf1ef"
+  }
+}

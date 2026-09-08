@@ -750,3 +750,33 @@ Evidence: refinement 27/27, real context-owner 7/7, native Flow save/highlight a
 | Editor modes, context and open corner | S→S0/S2 | implemented and walked 2026-09-08 | Pen/@ alone select and reveal toolkits; writing menu parity, larger fold target, layout-expanding footers, hidden canvas scrollbars, live Mac-control corner cutout; real DOM/native-page observations with stale validation and owner-draft CAS | 31 refinement + 12 real-owner context + 11 page-context checks; native browser granular text/component picks, Markdown element pick, final two-mode header and cutout observed; production app build | Human visual acceptance; PDF/internal cross-origin semantic picking and synced annotation ownership remain outside this receipt. See `desktop/cradle/walk/artifacts/review/MODE-CONTEXT-CORNER-REFINEMENT-2026-09-08.md` |
 
 | Final sidebar / full agency polish | S→S0/S2 | implemented and walked 2026-09-08 | Sidebar icons down 2px; arrow-free folder rows; System outside navigator scroll; full agent covers canvas header and reflows content with live global controls | 37/37 refinement checks; actual-Central native full view inspected; production app build | Owner visual review; concurrent work preserved |
+
+
+### 2026-09-08 — P1 integration orchestrator checkpoint
+
+User-directed current-state checkpoint `3a4f69d` pushed to `origin/cradle-p1` before new implementation. Context chain passed again with explicit absolute Central/AIKit function bindings; single O-I worktree. Existing UI, System, owner changes and resident PID 79665 preserved. Final native build/walk remains serialized after UI lead publishes FND-07. No phase acceptance or downstream implementation begins here.
+
+| Cell | Owner | Current evidence | Next condition |
+|---|---|---|---|
+| FND-07 expression | existing UI lead | production module and wiring in progress; latest resize-only gesture steer preserved, other intents reserved | stable candidate, module/browser receipt, then orchestrator native integration |
+| Central binding | verification worker, reviewed | exact ctrl `4389437f…` and oi `582c2b5a…`; 35 real filesystem, 8 owner unit, 2 material-byte and 10 source-CAS tests passed; two AIKit-dependent cases excluded | frozen source provenance and native walk |
+| Flow/Return kernel contract | domain worker, reviewed | 2 real tests passed with exact copied executables; test candidate resolution repaired to require explicit absolute bindings | integrate test diff; Flow disclosure UI correction separately owned |
+| Agent-native component audit | read-only worker, reviewed | absent encounter Actions incorrectly enable legacy controls; Flow Save omits existing capability disclosure; corrections returned to UI lead | re-audit frozen candidate; static findings are not native acceptance |
+| Capability reconciliation | read-only worker | exact affected IDs being mapped conservatively | append exact dispositions after native gate |
+| Native resource gate | read-only preparation / orchestrator | prior browser 20 sampled cycles had zero step failures and bounded retained heap; earlier 80-failure run rejected | warm baseline, repeated native windows/webviews, state parity and attributed process measurements |
+
+Binding caveats: the accepted ctrl executable hash is verified, but its dependency file names the live Central source tree; no whole-binary source-purity claim. The resident AIKit process remains running although its old `/tmp/oi-acp-streaming-20260906/` executable path is absent. Do not restart it. Coherent isolated AIKit pair is being resolved before native binding. Workcell current clean `70a39c1` differs from one stale `81fd5e1` brief; rich body/asset evidence is still open, not inferred from the empty-body contract test.
+
+### P1 serialized native review — revision 2 held, 2026-09-08
+
+The coherent native bundle built successfully from 145 unchanged frozen source inputs. Exact owner bindings and accepted Central/AIKit archive-build provenance are retained in `desktop/cradle/walk/artifacts/review/p1-integration-2026-09-08/`. Isolated native source save reached the Central file (7003 bytes); a real native terminal produced `P1_NATIVE_PTY_OK`. These are bounded observations, not gate closure.
+
+Native review stopped at a harness binding error: Central root and AIKit home were isolated but suite `OI_HOME` was omitted. System correctly disclosed the existing suite binding. A private suite home was subsequently bound through Central recognition and `oi ground bind`; no user composition was changed. The isolated candidate was closed through its native Quit action.
+
+FND-07 remains open: a successful native sidebar keyboard resize produced no observed expression increment; static review also proves the split keyboard handler stops propagation before the document expression listener. UI lead owns the narrow integration repair and real React regression. All 21 structural comparison rows remain individually bounded/open in its native receipt. FND-06 repeated native cycles, real two-session continuity, themes/reduced motion and final native acceptance are still required. No P1 landing or P2 work is authorized by these partial results.
+
+### 2026-09-08 — bounded integration checkpoint and wave-2 handoff
+
+The native keyboard expression defect and browser redock race are repaired. Expression browser36, pagination regression, real React resize18, type checking and coherent native production-asset build passed. Exact-owner kernel35 passed/4ignored. Revision4 source freeze145 files reverified; executable `d6c26aeb7e8a295b69579cc0509103399bc0632dae52581629b0b26a2c771420`. Three warm-ups plus17 measured native small-dataset cycles verified browser state retention, maximize/restore and terminal surface presence.
+
+User explicitly stopped prolonged repeated testing and requested wave-2 handoff. Sampler and owned test app/server stopped; live user app/resident preserved. No full FND resource or phase acceptance claim. Missing native obligations and five disjoint wave-2 cells are carried in `WAVE-2-HANDOFF-2026-09-08.md`; evidence in `desktop/cradle/walk/artifacts/review/p1-integration-2026-09-08/FINAL-BOUNDED-RECEIPT.json`. P1 remains the checkpoint branch pending acceptance; no downstream implementation performed.

@@ -91,3 +91,51 @@ or copied into production. Leave the running developer's app files alone during
 this package pass; consume these exports in the implementation slice.
 
 The 0.45px dot core has a 0.4px antialias edge so clusters survive standard-density displays; do not remove it when rendering the same tokens on canvas. Verify both 1× and Retina output.
+
+
+## Expression overlay (D22 / FND-07)
+
+`expression.mjs` owns the presentation mapping, point generation and one window
+scheduler; `expression.css` consumes the shared motion and surface tokens. Mount
+`createExpressionOverlay(document.body)` once per window and dispose
+it with the host. Components supply viewport bounds (prefer a function reading
+current bounds), never draw points or own particle state. `formPoints` is the
+renderer-neutral point source. Soft circular sprites have at least four device
+pixels of diameter; ink mixes the foreground toward its surface and alpha and
+density remain theme tokens. Warm-dark and contrast classes are walk references,
+not new product theme choices.
+
+`express(name, {rect, from, dir, lean, delay, hold, then})` returns a handle;
+`update(handle, {name, rect, dir})` refreshes or crossfades a held form, and
+`release(handle)` ends a held emitter. Delay is seconds. A caller refreshes a
+held handle before the token lease expires; the React host does this while the
+anchor exists and immediately on intersection/size/visibility changes. Handles
+are bounded at 64 and gesture chains at eight successors. Gestures drain after
+release; forms release on unmount. Pause or hidden documents clear gestures and
+pixels and stop the scheduler. Reduced motion refuses gestures and paints still
+forms without scheduling animation. Empty overlays are pixel-clear. A separate bounded deadline timer expires offscreen handles without scheduling drawing frames. Scroll and
+theme updates share the same capped drawing scheduler.
+
+Owner revision 6 keeps **resize only** as the active interaction gesture.
+`gestureFor` explicitly returns null for open, close, split, move and save;
+these reserved intents are not a claim that their gesture walk passed. The pure
+surface engine describes committed layout changes; the host posts them after
+finite geometry animations finish. Actual pointer-captured resize changes feed
+one held edge emitter and release on pointer up/cancel/lost capture or blur.
+Canonical SourceChanged receipts and successful Flow writes carry reserved save
+intents. No effect is emitted from a dirty-buffer inference.
+
+Agent forms are derived from existing encounter readings and component input:
+TurnInFlight/InterruptRequested → searching; a newly observed completed block →
+arrival; composer focus or a newly observed draft revision → listening; an actual pending local operation → presence;
+otherwise idle. Old transcript completion on first mount is not a new arrival.
+The same encounter observer remains mounted while its body is concealed by the Context plane. Completion IDs keep a monotonic cursor so Earlier/Latest cannot replay arrival. One anchor crossfades; no desktop session store or operation authority is added.
+The four elements are available in the package reference, not automatically
+assigned to an invented loading state. Initial-load identity remains separate.
+
+`inspect()` is an observation method on an overlay instance, used by the package
+browser checks. The production shell does not expose it as a global debug channel. In native builds only, the shell probes the expression_walk_observation receiver. Only an explicitly enabled receiver gets unchanged instance observations each second and at visibility/reduced/disposal transitions; disabled receivers and browser hosts start no observation timer.
+The reference page deliberately exposes its own instance for module checks; those
+checks are not native lifecycle or two-encounter acceptance. Native child-webview
+z-order, real session round trips, hidden-window transitions and owner visual
+acceptance remain the native walk's responsibility.

@@ -22,7 +22,8 @@
     "allow-terminal-input",
     "allow-terminal-resize",
     "allow-terminal-checkpoint",
-    "allow-terminal-reconcile"
+    "allow-terminal-reconcile",
+    "allow-expression-walk-observation"
   ],
   "webviews": [
     "main",

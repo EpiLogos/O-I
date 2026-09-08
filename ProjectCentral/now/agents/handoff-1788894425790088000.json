@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "handoff-1788894425790088000",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "codex-p1-integration-orchestrator",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1788894425,
+  "subject": "P1 expression and native foundation integration",
+  "result": "First requested current-state checkpoint committed and pushed as 3a4f69d. Accepted Central f3559db and AIKit 1e82703 rebuilt from isolated archives; exact bindings recorded. Kernel real tests35 pass4ignored; revised expression module36 browser checks and cursor regression pass. Coherent native rev2 build succeeded with145 source hashes unchanged. Native source save and PTY output observed in isolated ground. Candidate held: native keyboard resize lacked expression; UI lead owns narrow repair and real React test. Initial native System discrepancy traced to omitted test OI_HOME, corrected through isolated suite recognition/bind and six exact registrations, no live composition modified. Old candidate quit natively; its app/WebKit helper PIDs exited while live user app5700/resident79665 preserved. FND06 repeated native/resource gate and structural comparison remain open. Evidence: desktop/cradle/walk/artifacts/review/p1-integration-2026-09-08/ and expression-production-2026-09-08/NATIVE-REF-REVIEW-2026-09-08.md. No phase landing/P2 work until gate passes. Existing September8 day boundary already closed by concurrent owner; not repeated.",
+  "status": "resolved"
+}

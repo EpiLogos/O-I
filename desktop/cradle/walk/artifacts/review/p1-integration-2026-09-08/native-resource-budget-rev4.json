@@ -1,0 +1,33 @@
+{
+  "utc": "2026-09-08T19:38:57.073307+00:00",
+  "revision": 4,
+  "standing": "Predeclared before sampled cycles; not acceptance",
+  "baseline_median_kib": 120008.0,
+  "settled_noise_kib": 34032,
+  "allowed_settled_growth_kib": 66800,
+  "allowed_slope_upper_kib_per_cycle": 1024,
+  "basis": "Same fixed32MiB finite presentation-cache allowance plus observed settled baseline range; process/surface/state leak independently fails. Last5 vs first5 settled bands and slope uncertainty. No restart/reload/forcedGC between cycles.",
+  "dataset": "Real7003byte adopted Central source, native terminal, actual browser lifecycle page and native System, two pane groups",
+  "helpers": [
+    {
+      "pid": 17592,
+      "started": "Tue Sep 8 20:32:33 2026",
+      "attribution": "LaunchServices exact unique application name; not an explicit responsibility chain"
+    },
+    {
+      "pid": 17662,
+      "started": "Tue Sep 8 20:32:33 2026",
+      "attribution": "LaunchServices exact unique application name; not an explicit responsibility chain"
+    },
+    {
+      "pid": 17687,
+      "started": "Tue Sep 8 20:32:33 2026",
+      "attribution": "LaunchServices exact unique application name; not an explicit responsibility chain"
+    },
+    {
+      "pid": 20844,
+      "started": "Tue Sep 8 20:32:37 2026",
+      "attribution": "LaunchServices exact unique application name; not an explicit responsibility chain"
+    }
+  ]
+}

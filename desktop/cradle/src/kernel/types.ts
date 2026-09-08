@@ -131,7 +131,7 @@ export type KernelOp =
  * The Rust seam serialises `{ receipts, #[serde(flatten)] result }`, so on
  * the wire the tag and the payload sit flat beside `receipts`. */
 export type KernelOpResult =
-  | {result:"flow";response:{kind:"flow_created"|"flow_read"|"flow_written";reading:{flow:import("../flow/client").FlowRecord;content?:string}}|{kind:"failure";error:{kind:string;message?:string;detail?:string}}}
+  | {result:"flow";response:{kind:"flow_created"|"flow_read"|"flow_written";reading:{flow:import("../flow/client").FlowRecord;content?:string}}|{kind:"flow_inspection";inspection:import("../flow/client").FlowInspection}|{kind:"failure";error:{kind:string;message?:string;detail?:string}}}
   | {result:"ground_reading";reading:Record<string,unknown>}
   | {result:"composition_reading";reading:import("../workspace/SystemPanel").CompositionReading}
   | {result:"file_operation";data:unknown}

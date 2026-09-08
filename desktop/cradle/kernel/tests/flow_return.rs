@@ -10,12 +10,20 @@ use std::{
 };
 
 fn candidate(name: &str) -> PathBuf {
-    let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let path = match name {
-        "oi" => manifest.join("../../../cli/target/debug/oi"),
-        "ctrl" => manifest.join("../../../../Central/target/debug/ctrl"),
+    let variable = match name {
+        "oi" => "OI_BIN",
+        "ctrl" => "OI_CENTRAL_CTRL_BIN",
         _ => unreachable!(),
     };
+    let path = PathBuf::from(
+        std::env::var_os(variable)
+            .unwrap_or_else(|| panic!("{variable} must name the frozen candidate executable")),
+    );
+    assert!(
+        path.is_absolute(),
+        "{variable} must be an absolute executable path: {}",
+        path.display()
+    );
     assert!(
         path.is_file(),
         "missing exact candidate executable: {}",

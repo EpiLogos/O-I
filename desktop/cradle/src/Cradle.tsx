@@ -1,3 +1,4 @@
+import {ExpressionProvider,ExpressionLayout} from "./shared/Expression";
 import {flow} from "./flow/client";
 import {ContextTray} from "./context/ContextTray";
 import {FileHistory} from "./files/FileHistory";
@@ -96,7 +97,9 @@ export function Cradle() {
   }, []);
   return (
     <KernelProvider>
+      <ExpressionProvider>
       {window.__OI_DETACHED__ ? <DetachedFrame /> : <CradleFrame WalkChannel={WalkChannel} />}
+    </ExpressionProvider>
     </KernelProvider>
   );
 }
@@ -647,6 +650,7 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
 
   return (
     <>
+      <ExpressionLayout layout={state}/>
       {windowError && <p role="alert">{windowError}</p>}
       {workspace.recovery&&<section className="workspace-recovery" aria-label="Workspace recovery"><p>The saved arrangement could not be restored. Its original data is retained.</p><button disabled={!workspace.recovery.key} onClick={workspace.recoverAvailable}>Recover available workspaces</button><button disabled={!workspace.recovery.key} onClick={workspace.startFresh}>Start a fresh arrangement</button></section>}
       <DesktopShell onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}

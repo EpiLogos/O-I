@@ -1,0 +1,1027 @@
+{
+  "schema": "oi-p1-readonly-capability-reconciliation/v1",
+  "standing": "agent-inference; no canonical mutation or native acceptance",
+  "inspected_head": "3a4f69d65c15bf0b3caf069f0152ec14c8986107",
+  "scope": "Affected foundation/P1 presentation and directly implicated owner capability records; downstream boundaries included, unrelated native product records not re-audited.",
+  "source_hashes": {
+    "docs/CAPABILITY-MATRIX.md": "e5c282e58ec9eecb9036e1759430f47d851d2c60dcd9fb2e5cbe8585e868b01a",
+    "suite/capability-matrix.json": "992e7818f87c50d060863f5509f78d3d12e1741b849ce5fb5ec8179b3e693eac",
+    ".superpowers/sdd/cradle-rebuild/progress.md": "274a52989cf898da2e023ff146d6b2913ea9fe2a7e17bbf9c943764369421c19",
+    ".superpowers/sdd/cradle-rebuild/FND-00-REFERENCE-MATRIX-2026-09-08.md": "5633db1d83a6563397c4a6716ef14b77b4ae9441336141d1e78a96eb90e3dd69",
+    ".superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md": "3bd1f8e1f8f82b0335cf2789c90e2ea73e55b920ead22ee1be437aed1c202b1a",
+    ".superpowers/sdd/cradle-rebuild/SELF-OTHER-FIELD-UX-2026-09-08.md": "13433a8e3aaf7372b3a79d1b67ad399ce64b9063cfb5874b2895dae8c5f63554",
+    "desktop/cradle/walk/artifacts/review/SHELL-PANES-TRANCHE-2026-09-08.md": "366e661bb2fbd7896b3f3c1f41f3fc22d7eb0eaf94be2e388cd518debdd8e0fa",
+    "desktop/cradle/walk/artifacts/review/FINAL-LAYERS-2026-09-08.md": "e7c1fdac23b06ce019fa9e54f52bb2915ee5f8e4b68c499aa7b226d23e15990b",
+    "desktop/cradle/walk/artifacts/review/browser-native/REVIEW.md": "4c739afb7699d0798942b804748dd0194d808174811544db47a017904997eca1",
+    "desktop/cradle/walk/artifacts/review/browser-canvas/REVIEW.md": "5354d2126e159c5163e7d575c31b0c624d5ad3b2a08cdafe099f3ff1736be159"
+  },
+  "records": [
+    {
+      "id": "cap.o-i.desktop-surface-host",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "FND-00",
+        "FND-01",
+        "FND-03",
+        "FND-06",
+        "FND-07",
+        "U0.3",
+        "U0.3b",
+        "U0.5",
+        "U1.5"
+      ],
+      "evidence": [
+        ".superpowers/sdd/cradle-rebuild/FND-00-REFERENCE-MATRIX-2026-09-08.md",
+        "desktop/cradle/walk/artifacts/review/SHELL-PANES-TRANCHE-2026-09-08.md",
+        "desktop/cradle/src/surface/registry.ts:70-142",
+        "desktop/cradle/src/Cradle.tsx:515-521"
+      ],
+      "desktop_disposition": "native_tranche_observed_candidate_gate_open",
+      "remaining": "Close each required reference row on frozen native candidate; owner visual comparison and D22 expression walk. Frame Actions do not establish semantic owner disclosure."
+    },
+    {
+      "id": "cap.o-i.desktop-embodiment",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "FND-00",
+        "FND-01",
+        "FND-03",
+        "FND-06",
+        "FND-07",
+        "U0.3",
+        "U0.3b",
+        "U0.5",
+        "U1.5"
+      ],
+      "evidence": [
+        ".superpowers/sdd/cradle-rebuild/FND-00-REFERENCE-MATRIX-2026-09-08.md",
+        "desktop/cradle/walk/artifacts/review/SHELL-PANES-TRANCHE-2026-09-08.md",
+        "desktop/cradle/src/surface/registry.ts:70-142",
+        "desktop/cradle/src/Cradle.tsx:515-521"
+      ],
+      "desktop_disposition": "native_tranche_observed_candidate_gate_open",
+      "remaining": "Close each required reference row on frozen native candidate; owner visual comparison and D22 expression walk. Frame Actions do not establish semantic owner disclosure."
+    },
+    {
+      "id": "cap.o-i.cradle-frame-grammar",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "FND-00",
+        "FND-01",
+        "FND-03",
+        "FND-06",
+        "FND-07",
+        "U0.3",
+        "U0.3b",
+        "U0.5",
+        "U1.5"
+      ],
+      "evidence": [
+        ".superpowers/sdd/cradle-rebuild/FND-00-REFERENCE-MATRIX-2026-09-08.md",
+        "desktop/cradle/walk/artifacts/review/SHELL-PANES-TRANCHE-2026-09-08.md",
+        "desktop/cradle/src/surface/registry.ts:70-142",
+        "desktop/cradle/src/Cradle.tsx:515-521"
+      ],
+      "desktop_disposition": "native_tranche_observed_candidate_gate_open",
+      "remaining": "Close each required reference row on frozen native candidate; owner visual comparison and D22 expression walk. Frame Actions do not establish semantic owner disclosure."
+    },
+    {
+      "id": "cap.o-i.cradle-kernel",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "U0.4",
+        "U1.4",
+        "FND-03",
+        "FND-06"
+      ],
+      "evidence": [
+        "desktop/cradle/src/kernel/bridge.ts:78-103",
+        "desktop/cradle/kernel/src/agency.rs:108-133",
+        "desktop/cradle/walk/artifacts/review/SHELL-PANES-TRANCHE-2026-09-08.md"
+      ],
+      "desktop_disposition": "static_adapter_and_prior_native_tranche",
+      "remaining": "Exact coherent executable binding; native focus/ref continuity, detach and refusal results; no promotion from adapter evidence."
+    },
+    {
+      "id": "cap.suite.semantic-identity-precedence",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "U0.4",
+        "U1.4",
+        "FND-03",
+        "FND-06"
+      ],
+      "evidence": [
+        "desktop/cradle/src/kernel/bridge.ts:78-103",
+        "desktop/cradle/kernel/src/agency.rs:108-133",
+        "desktop/cradle/walk/artifacts/review/SHELL-PANES-TRANCHE-2026-09-08.md"
+      ],
+      "desktop_disposition": "static_adapter_and_prior_native_tranche",
+      "remaining": "Exact coherent executable binding; native focus/ref continuity, detach and refusal results; no promotion from adapter evidence."
+    },
+    {
+      "id": "cap.central.source-ref-canonicalisation",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "U0.2",
+        "U1.1",
+        "FND-05",
+        "FND-06"
+      ],
+      "evidence": [
+        "desktop/cradle/src/surfaces/navigator/WorldNavigator.tsx:26-79",
+        "desktop/cradle/src/files/FileTree.tsx:25-51",
+        "desktop/cradle/walk/artifacts/review/SHELL-PANES-TRANCHE-2026-09-08.md"
+      ],
+      "desktop_disposition": "owner_read_models_and_prior_native_tranche",
+      "remaining": "Verify accepted Central f3559db exact isolated executable and native actual root/project/files; existing broader native standings unchanged."
+    },
+    {
+      "id": "cap.central.desktop-ground-projection",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "U0.2",
+        "U1.1",
+        "FND-05",
+        "FND-06"
+      ],
+      "evidence": [
+        "desktop/cradle/src/surfaces/navigator/WorldNavigator.tsx:26-79",
+        "desktop/cradle/src/files/FileTree.tsx:25-51",
+        "desktop/cradle/walk/artifacts/review/SHELL-PANES-TRANCHE-2026-09-08.md"
+      ],
+      "desktop_disposition": "owner_read_models_and_prior_native_tranche",
+      "remaining": "Verify accepted Central f3559db exact isolated executable and native actual root/project/files; existing broader native standings unchanged."
+    },
+    {
+      "id": "cap.central.projectcentral-convention",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "U0.2",
+        "U1.1",
+        "FND-05",
+        "FND-06"
+      ],
+      "evidence": [
+        "desktop/cradle/src/surfaces/navigator/WorldNavigator.tsx:26-79",
+        "desktop/cradle/src/files/FileTree.tsx:25-51",
+        "desktop/cradle/walk/artifacts/review/SHELL-PANES-TRANCHE-2026-09-08.md"
+      ],
+      "desktop_disposition": "owner_read_models_and_prior_native_tranche",
+      "remaining": "Verify accepted Central f3559db exact isolated executable and native actual root/project/files; existing broader native standings unchanged."
+    },
+    {
+      "id": "cap.o-i.rooted-world-navigator",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "U0.2",
+        "U1.1",
+        "FND-05",
+        "FND-06"
+      ],
+      "evidence": [
+        "desktop/cradle/src/surfaces/navigator/WorldNavigator.tsx:26-79",
+        "desktop/cradle/src/files/FileTree.tsx:25-51",
+        "desktop/cradle/walk/artifacts/review/SHELL-PANES-TRANCHE-2026-09-08.md"
+      ],
+      "desktop_disposition": "owner_read_models_and_prior_native_tranche",
+      "remaining": "Verify accepted Central f3559db exact isolated executable and native actual root/project/files; existing broader native standings unchanged."
+    },
+    {
+      "id": "cap.o-i.cas-source-editing",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "U1.2",
+        "U1.3",
+        "FND-04",
+        "FND-06"
+      ],
+      "evidence": [
+        "desktop/cradle/src/files/FileSurface.tsx:36-82",
+        "desktop/cradle/src/surface/SourceSurface.tsx:127-174",
+        "desktop/cradle/kernel/src/files.rs:229-239",
+        "desktop/cradle/walk/artifacts/review/FINAL-LAYERS-2026-09-08.md"
+      ],
+      "desktop_disposition": "owner_CAS_and_partial_native_observation",
+      "remaining": "Rewalk conflict/history/restore with frozen binaries. Source editor static Save/History needs owner-disclosure reconciliation. Proposal acceptance and provenance remain Central-owned; Git operations are not shipped editor controls."
+    },
+    {
+      "id": "cap.suite.versioned-world-faculty",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "U1.2",
+        "U1.3",
+        "FND-04",
+        "FND-06"
+      ],
+      "evidence": [
+        "desktop/cradle/src/files/FileSurface.tsx:36-82",
+        "desktop/cradle/src/surface/SourceSurface.tsx:127-174",
+        "desktop/cradle/kernel/src/files.rs:229-239",
+        "desktop/cradle/walk/artifacts/review/FINAL-LAYERS-2026-09-08.md"
+      ],
+      "desktop_disposition": "owner_CAS_and_partial_native_observation",
+      "remaining": "Rewalk conflict/history/restore with frozen binaries. Source editor static Save/History needs owner-disclosure reconciliation. Proposal acceptance and provenance remain Central-owned; Git operations are not shipped editor controls."
+    },
+    {
+      "id": "cap.central.authorship-provenance-separation",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "U1.2",
+        "U1.3",
+        "FND-04",
+        "FND-06"
+      ],
+      "evidence": [
+        "desktop/cradle/src/files/FileSurface.tsx:36-82",
+        "desktop/cradle/src/surface/SourceSurface.tsx:127-174",
+        "desktop/cradle/kernel/src/files.rs:229-239",
+        "desktop/cradle/walk/artifacts/review/FINAL-LAYERS-2026-09-08.md"
+      ],
+      "desktop_disposition": "owner_CAS_and_partial_native_observation",
+      "remaining": "Rewalk conflict/history/restore with frozen binaries. Source editor static Save/History needs owner-disclosure reconciliation. Proposal acceptance and provenance remain Central-owned; Git operations are not shipped editor controls."
+    },
+    {
+      "id": "cap.central.durable-edit-proposals",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "U1.2",
+        "U1.3",
+        "FND-04",
+        "FND-06"
+      ],
+      "evidence": [
+        "desktop/cradle/src/files/FileSurface.tsx:36-82",
+        "desktop/cradle/src/surface/SourceSurface.tsx:127-174",
+        "desktop/cradle/kernel/src/files.rs:229-239",
+        "desktop/cradle/walk/artifacts/review/FINAL-LAYERS-2026-09-08.md"
+      ],
+      "desktop_disposition": "owner_CAS_and_partial_native_observation",
+      "remaining": "Rewalk conflict/history/restore with frozen binaries. Source editor static Save/History needs owner-disclosure reconciliation. Proposal acceptance and provenance remain Central-owned; Git operations are not shipped editor controls."
+    },
+    {
+      "id": "cap.o-i.flow-loop",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "U4.1",
+        "U4.2",
+        "U4.3",
+        "FND-04"
+      ],
+      "evidence": [
+        "desktop/cradle/src/flow/FlowSurface.tsx:12-18",
+        "desktop/cradle/src/flow/client.ts:3-9",
+        "desktop/cradle/kernel/src/flow.rs:451-469",
+        "desktop/cradle/walk/artifacts/review/FINAL-LAYERS-2026-09-08.md"
+      ],
+      "desktop_disposition": "native_flow_create_save_tranche_with_disclosure_gap",
+      "remaining": "Flow UI omits owner capabilities and enables Save from loaded/revision/dirty. Commission/Return/journey gate remains downstream; no broad Flow completion."
+    },
+    {
+      "id": "cap.o-i.desktop-agency-encounter",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "FND-02",
+        "FND-05",
+        "U2.1",
+        "U2.2",
+        "GW-01",
+        "GW-03"
+      ],
+      "evidence": [
+        "desktop/cradle/src/encounter/EncounterView.tsx:22-23",
+        "desktop/cradle/src/encounter/EncounterView.tsx:54-62",
+        "desktop/cradle/kernel/src/agency.rs:108-133",
+        "desktop/cradle/src/agent/AgentLayer.tsx:112",
+        "desktop/cradle/walk/artifacts/review/SHELL-PANES-TRANCHE-2026-09-08.md"
+      ],
+      "desktop_disposition": "local_encounter_adapter_active_gateway_unavailable",
+      "remaining": "Legacy fallback fabricates Action availability when owner actions absent. Match AIKit/helper schema; native two-session continuity and permission/failure taxonomy remain open. No Gateway proof from local ACP."
+    },
+    {
+      "id": "cap.ai-kit.sessionspace-framing",
+      "canonical_standing": "landed",
+      "proposed_standing_change": null,
+      "units": [
+        "FND-02",
+        "FND-05",
+        "U2.1",
+        "U2.2",
+        "GW-01",
+        "GW-03"
+      ],
+      "evidence": [
+        "desktop/cradle/src/encounter/EncounterView.tsx:22-23",
+        "desktop/cradle/src/encounter/EncounterView.tsx:54-62",
+        "desktop/cradle/kernel/src/agency.rs:108-133",
+        "desktop/cradle/src/agent/AgentLayer.tsx:112",
+        "desktop/cradle/walk/artifacts/review/SHELL-PANES-TRANCHE-2026-09-08.md"
+      ],
+      "desktop_disposition": "local_encounter_adapter_active_gateway_unavailable",
+      "remaining": "Legacy fallback fabricates Action availability when owner actions absent. Match AIKit/helper schema; native two-session continuity and permission/failure taxonomy remain open. No Gateway proof from local ACP."
+    },
+    {
+      "id": "cap.ai-kit.sessionspace-providers",
+      "canonical_standing": "landed",
+      "proposed_standing_change": null,
+      "units": [
+        "FND-02",
+        "FND-05",
+        "U2.1",
+        "U2.2",
+        "GW-01",
+        "GW-03"
+      ],
+      "evidence": [
+        "desktop/cradle/src/encounter/EncounterView.tsx:22-23",
+        "desktop/cradle/src/encounter/EncounterView.tsx:54-62",
+        "desktop/cradle/kernel/src/agency.rs:108-133",
+        "desktop/cradle/src/agent/AgentLayer.tsx:112",
+        "desktop/cradle/walk/artifacts/review/SHELL-PANES-TRANCHE-2026-09-08.md"
+      ],
+      "desktop_disposition": "local_encounter_adapter_active_gateway_unavailable",
+      "remaining": "Legacy fallback fabricates Action availability when owner actions absent. Match AIKit/helper schema; native two-session continuity and permission/failure taxonomy remain open. No Gateway proof from local ACP."
+    },
+    {
+      "id": "cap.ai-kit.runtime-identity-stability",
+      "canonical_standing": "landed",
+      "proposed_standing_change": null,
+      "units": [
+        "FND-02",
+        "FND-05",
+        "U2.1",
+        "U2.2",
+        "GW-01",
+        "GW-03"
+      ],
+      "evidence": [
+        "desktop/cradle/src/encounter/EncounterView.tsx:22-23",
+        "desktop/cradle/src/encounter/EncounterView.tsx:54-62",
+        "desktop/cradle/kernel/src/agency.rs:108-133",
+        "desktop/cradle/src/agent/AgentLayer.tsx:112",
+        "desktop/cradle/walk/artifacts/review/SHELL-PANES-TRANCHE-2026-09-08.md"
+      ],
+      "desktop_disposition": "local_encounter_adapter_active_gateway_unavailable",
+      "remaining": "Legacy fallback fabricates Action availability when owner actions absent. Match AIKit/helper schema; native two-session continuity and permission/failure taxonomy remain open. No Gateway proof from local ACP."
+    },
+    {
+      "id": "cap.ai-kit.harness-composition-adapters",
+      "canonical_standing": "landed",
+      "proposed_standing_change": null,
+      "units": [
+        "FND-02",
+        "FND-05",
+        "U2.1",
+        "U2.2",
+        "GW-01",
+        "GW-03"
+      ],
+      "evidence": [
+        "desktop/cradle/src/encounter/EncounterView.tsx:22-23",
+        "desktop/cradle/src/encounter/EncounterView.tsx:54-62",
+        "desktop/cradle/kernel/src/agency.rs:108-133",
+        "desktop/cradle/src/agent/AgentLayer.tsx:112",
+        "desktop/cradle/walk/artifacts/review/SHELL-PANES-TRANCHE-2026-09-08.md"
+      ],
+      "desktop_disposition": "local_encounter_adapter_active_gateway_unavailable",
+      "remaining": "Legacy fallback fabricates Action availability when owner actions absent. Match AIKit/helper schema; native two-session continuity and permission/failure taxonomy remain open. No Gateway proof from local ACP."
+    },
+    {
+      "id": "cap.ai-kit.composition-identity-separation",
+      "canonical_standing": "landed",
+      "proposed_standing_change": null,
+      "units": [
+        "FND-02",
+        "FND-05",
+        "U2.1",
+        "U2.2",
+        "GW-01",
+        "GW-03"
+      ],
+      "evidence": [
+        "desktop/cradle/src/encounter/EncounterView.tsx:22-23",
+        "desktop/cradle/src/encounter/EncounterView.tsx:54-62",
+        "desktop/cradle/kernel/src/agency.rs:108-133",
+        "desktop/cradle/src/agent/AgentLayer.tsx:112",
+        "desktop/cradle/walk/artifacts/review/SHELL-PANES-TRANCHE-2026-09-08.md"
+      ],
+      "desktop_disposition": "local_encounter_adapter_active_gateway_unavailable",
+      "remaining": "Legacy fallback fabricates Action availability when owner actions absent. Match AIKit/helper schema; native two-session continuity and permission/failure taxonomy remain open. No Gateway proof from local ACP."
+    },
+    {
+      "id": "cap.actuation.actuation-stream",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "U2.5",
+        "U2.6",
+        "GW-02",
+        "GW-03"
+      ],
+      "evidence": [
+        "desktop/cradle/src/encounter/EncounterView.tsx:24-45",
+        ".superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md"
+      ],
+      "desktop_disposition": "provider_transcript_activity_projection_partial",
+      "remaining": "Canonical attributable ActuationStream, permission correlation, replay/gap and observatory native gate remain downstream; transcript activity is not full stream acceptance."
+    },
+    {
+      "id": "cap.suite.activity-and-attention",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "U2.5",
+        "U2.6",
+        "GW-02",
+        "GW-03"
+      ],
+      "evidence": [
+        "desktop/cradle/src/encounter/EncounterView.tsx:24-45",
+        ".superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md"
+      ],
+      "desktop_disposition": "provider_transcript_activity_projection_partial",
+      "remaining": "Canonical attributable ActuationStream, permission correlation, replay/gap and observatory native gate remain downstream; transcript activity is not full stream acceptance."
+    },
+    {
+      "id": "cap.o-i.session-observatory",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "U2.5",
+        "U2.6",
+        "GW-02",
+        "GW-03"
+      ],
+      "evidence": [
+        "desktop/cradle/src/encounter/EncounterView.tsx:24-45",
+        ".superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md"
+      ],
+      "desktop_disposition": "provider_transcript_activity_projection_partial",
+      "remaining": "Canonical attributable ActuationStream, permission correlation, replay/gap and observatory native gate remain downstream; transcript activity is not full stream acceptance."
+    },
+    {
+      "id": "cap.actuation.agency-read-model",
+      "canonical_standing": "landed",
+      "proposed_standing_change": null,
+      "units": [
+        "U2.5",
+        "U2.6",
+        "GW-02",
+        "GW-03"
+      ],
+      "evidence": [
+        "desktop/cradle/src/encounter/EncounterView.tsx:24-45",
+        ".superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md"
+      ],
+      "desktop_disposition": "provider_transcript_activity_projection_partial",
+      "remaining": "Canonical attributable ActuationStream, permission correlation, replay/gap and observatory native gate remain downstream; transcript activity is not full stream acceptance."
+    },
+    {
+      "id": "cap.o-i.currentworld-reading",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "U1.6",
+        "FND-05",
+        "GW-04",
+        "GW-05"
+      ],
+      "evidence": [
+        "desktop/cradle/src/workspace/settings/SettingsPage.tsx:38-59",
+        "desktop/cradle/src/workspace/settings/ProductSection.tsx:12-31",
+        ".superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md"
+      ],
+      "desktop_disposition": "read_only_composition_native_only_operations",
+      "remaining": "System native-only/missing/unavailable dispositions remain explicit. Six-owner display does not prove every owner contribution, configuration mutation or effective authorisation; common mounting and full System gate downstream."
+    },
+    {
+      "id": "cap.o-i.inhabitation-reading",
+      "canonical_standing": "landed",
+      "proposed_standing_change": null,
+      "units": [
+        "U1.6",
+        "FND-05",
+        "GW-04",
+        "GW-05"
+      ],
+      "evidence": [
+        "desktop/cradle/src/workspace/settings/SettingsPage.tsx:38-59",
+        "desktop/cradle/src/workspace/settings/ProductSection.tsx:12-31",
+        ".superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md"
+      ],
+      "desktop_disposition": "read_only_composition_native_only_operations",
+      "remaining": "System native-only/missing/unavailable dispositions remain explicit. Six-owner display does not prove every owner contribution, configuration mutation or effective authorisation; common mounting and full System gate downstream."
+    },
+    {
+      "id": "cap.suite.explain-chain",
+      "canonical_standing": "landed",
+      "proposed_standing_change": null,
+      "units": [
+        "U1.6",
+        "FND-05",
+        "GW-04",
+        "GW-05"
+      ],
+      "evidence": [
+        "desktop/cradle/src/workspace/settings/SettingsPage.tsx:38-59",
+        "desktop/cradle/src/workspace/settings/ProductSection.tsx:12-31",
+        ".superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md"
+      ],
+      "desktop_disposition": "read_only_composition_native_only_operations",
+      "remaining": "System native-only/missing/unavailable dispositions remain explicit. Six-owner display does not prove every owner contribution, configuration mutation or effective authorisation; common mounting and full System gate downstream."
+    },
+    {
+      "id": "cap.ai-kit.agent-world-disclosure",
+      "canonical_standing": "landed",
+      "proposed_standing_change": null,
+      "units": [
+        "U1.6",
+        "FND-05",
+        "GW-04",
+        "GW-05"
+      ],
+      "evidence": [
+        "desktop/cradle/src/workspace/settings/SettingsPage.tsx:38-59",
+        "desktop/cradle/src/workspace/settings/ProductSection.tsx:12-31",
+        ".superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md"
+      ],
+      "desktop_disposition": "read_only_composition_native_only_operations",
+      "remaining": "System native-only/missing/unavailable dispositions remain explicit. Six-owner display does not prove every owner contribution, configuration mutation or effective authorisation; common mounting and full System gate downstream."
+    },
+    {
+      "id": "cap.ai-kit.action-semantic-profile",
+      "canonical_standing": "landed",
+      "proposed_standing_change": null,
+      "units": [
+        "U1.6",
+        "FND-05",
+        "GW-04",
+        "GW-05"
+      ],
+      "evidence": [
+        "desktop/cradle/src/workspace/settings/SettingsPage.tsx:38-59",
+        "desktop/cradle/src/workspace/settings/ProductSection.tsx:12-31",
+        ".superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md"
+      ],
+      "desktop_disposition": "read_only_composition_native_only_operations",
+      "remaining": "System native-only/missing/unavailable dispositions remain explicit. Six-owner display does not prove every owner contribution, configuration mutation or effective authorisation; common mounting and full System gate downstream."
+    },
+    {
+      "id": "cap.suite.composable-agentic-freedom",
+      "canonical_standing": "landed",
+      "proposed_standing_change": null,
+      "units": [
+        "U1.6",
+        "FND-05",
+        "GW-04",
+        "GW-05"
+      ],
+      "evidence": [
+        "desktop/cradle/src/workspace/settings/SettingsPage.tsx:38-59",
+        "desktop/cradle/src/workspace/settings/ProductSection.tsx:12-31",
+        ".superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md"
+      ],
+      "desktop_disposition": "read_only_composition_native_only_operations",
+      "remaining": "System native-only/missing/unavailable dispositions remain explicit. Six-owner display does not prove every owner contribution, configuration mutation or effective authorisation; common mounting and full System gate downstream."
+    },
+    {
+      "id": "cap.o-i.search-aperture",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "U3.1",
+        "FND-05"
+      ],
+      "evidence": [
+        "desktop/cradle/src/knowledge/SearchOverlay.tsx:14-22",
+        "desktop/cradle/src/knowledge/client.ts:4-8",
+        ".superpowers/sdd/cradle-rebuild/FND-00-REFERENCE-MATRIX-2026-09-08.md"
+      ],
+      "desktop_disposition": "owner_search_route_present_p2_acceptance_open",
+      "remaining": "Exact file/Flow/skill result identities, provenance and owner Actions; provider loss explicitly observed. Generic Open/Explain does not establish complete canonical Action disclosure."
+    },
+    {
+      "id": "cap.ai-kit.search-route-grammar",
+      "canonical_standing": "landed",
+      "proposed_standing_change": null,
+      "units": [
+        "U3.1",
+        "FND-05"
+      ],
+      "evidence": [
+        "desktop/cradle/src/knowledge/SearchOverlay.tsx:14-22",
+        "desktop/cradle/src/knowledge/client.ts:4-8",
+        ".superpowers/sdd/cradle-rebuild/FND-00-REFERENCE-MATRIX-2026-09-08.md"
+      ],
+      "desktop_disposition": "owner_search_route_present_p2_acceptance_open",
+      "remaining": "Exact file/Flow/skill result identities, provenance and owner Actions; provider loss explicitly observed. Generic Open/Explain does not establish complete canonical Action disclosure."
+    },
+    {
+      "id": "cap.ai-kit.tui-environment-composition",
+      "canonical_standing": "landed",
+      "proposed_standing_change": null,
+      "units": [
+        "U3.1",
+        "FND-05"
+      ],
+      "evidence": [
+        "desktop/cradle/src/knowledge/SearchOverlay.tsx:14-22",
+        "desktop/cradle/src/knowledge/client.ts:4-8",
+        ".superpowers/sdd/cradle-rebuild/FND-00-REFERENCE-MATRIX-2026-09-08.md"
+      ],
+      "desktop_disposition": "owner_search_route_present_p2_acceptance_open",
+      "remaining": "Exact file/Flow/skill result identities, provenance and owner Actions; provider loss explicitly observed. Generic Open/Explain does not establish complete canonical Action disclosure."
+    },
+    {
+      "id": "cap.ai-kit.context-cognitive-control-plane",
+      "canonical_standing": "landed",
+      "proposed_standing_change": null,
+      "units": [
+        "U3.1",
+        "FND-05"
+      ],
+      "evidence": [
+        "desktop/cradle/src/knowledge/SearchOverlay.tsx:14-22",
+        "desktop/cradle/src/knowledge/client.ts:4-8",
+        ".superpowers/sdd/cradle-rebuild/FND-00-REFERENCE-MATRIX-2026-09-08.md"
+      ],
+      "desktop_disposition": "owner_search_route_present_p2_acceptance_open",
+      "remaining": "Exact file/Flow/skill result identities, provenance and owner Actions; provider loss explicitly observed. Generic Open/Explain does not establish complete canonical Action disclosure."
+    },
+    {
+      "id": "cap.o-i.living-wiki-desktop",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "U3.2",
+        "U3.4",
+        "U3.5"
+      ],
+      "evidence": [
+        "desktop/cradle/src/knowledge/KnowledgeSurface.tsx:40-61",
+        ".superpowers/sdd/cradle-rebuild/FND-00-REFERENCE-MATRIX-2026-09-08.md",
+        ".superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md"
+      ],
+      "desktop_disposition": "owner_knowledge_readings_partial_p2_work",
+      "remaining": "Typed bounded graph input, owner wiki reading/search/resolution/familiarity and independent U3.1/U3.4 native walk remain P2. No foundation graph expansion or new desktop index."
+    },
+    {
+      "id": "cap.ai-kit.semantic-wiki",
+      "canonical_standing": "landed",
+      "proposed_standing_change": null,
+      "units": [
+        "U3.2",
+        "U3.4",
+        "U3.5"
+      ],
+      "evidence": [
+        "desktop/cradle/src/knowledge/KnowledgeSurface.tsx:40-61",
+        ".superpowers/sdd/cradle-rebuild/FND-00-REFERENCE-MATRIX-2026-09-08.md",
+        ".superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md"
+      ],
+      "desktop_disposition": "owner_knowledge_readings_partial_p2_work",
+      "remaining": "Typed bounded graph input, owner wiki reading/search/resolution/familiarity and independent U3.1/U3.4 native walk remain P2. No foundation graph expansion or new desktop index."
+    },
+    {
+      "id": "cap.ai-kit.living-knowledge-operations",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "U3.2",
+        "U3.4",
+        "U3.5"
+      ],
+      "evidence": [
+        "desktop/cradle/src/knowledge/KnowledgeSurface.tsx:40-61",
+        ".superpowers/sdd/cradle-rebuild/FND-00-REFERENCE-MATRIX-2026-09-08.md",
+        ".superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md"
+      ],
+      "desktop_disposition": "owner_knowledge_readings_partial_p2_work",
+      "remaining": "Typed bounded graph input, owner wiki reading/search/resolution/familiarity and independent U3.1/U3.4 native walk remain P2. No foundation graph expansion or new desktop index."
+    },
+    {
+      "id": "cap.suite.local-wiki-world",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "U3.2",
+        "U3.4",
+        "U3.5"
+      ],
+      "evidence": [
+        "desktop/cradle/src/knowledge/KnowledgeSurface.tsx:40-61",
+        ".superpowers/sdd/cradle-rebuild/FND-00-REFERENCE-MATRIX-2026-09-08.md",
+        ".superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md"
+      ],
+      "desktop_disposition": "owner_knowledge_readings_partial_p2_work",
+      "remaining": "Typed bounded graph input, owner wiki reading/search/resolution/familiarity and independent U3.1/U3.4 native walk remain P2. No foundation graph expansion or new desktop index."
+    },
+    {
+      "id": "cap.central.root-wiki-federation",
+      "canonical_standing": "landed",
+      "proposed_standing_change": null,
+      "units": [
+        "U3.2",
+        "U3.4",
+        "U3.5"
+      ],
+      "evidence": [
+        "desktop/cradle/src/knowledge/KnowledgeSurface.tsx:40-61",
+        ".superpowers/sdd/cradle-rebuild/FND-00-REFERENCE-MATRIX-2026-09-08.md",
+        ".superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md"
+      ],
+      "desktop_disposition": "owner_knowledge_readings_partial_p2_work",
+      "remaining": "Typed bounded graph input, owner wiki reading/search/resolution/familiarity and independent U3.1/U3.4 native walk remain P2. No foundation graph expansion or new desktop index."
+    },
+    {
+      "id": "cap.suite.authored-relation-surface",
+      "canonical_standing": "landed",
+      "proposed_standing_change": null,
+      "units": [
+        "U3.2",
+        "U3.4",
+        "U3.5"
+      ],
+      "evidence": [
+        "desktop/cradle/src/knowledge/KnowledgeSurface.tsx:40-61",
+        ".superpowers/sdd/cradle-rebuild/FND-00-REFERENCE-MATRIX-2026-09-08.md",
+        ".superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md"
+      ],
+      "desktop_disposition": "owner_knowledge_readings_partial_p2_work",
+      "remaining": "Typed bounded graph input, owner wiki reading/search/resolution/familiarity and independent U3.1/U3.4 native walk remain P2. No foundation graph expansion or new desktop index."
+    },
+    {
+      "id": "cap.ai-kit.authored-relation-extraction",
+      "canonical_standing": "landed",
+      "proposed_standing_change": null,
+      "units": [
+        "U3.2",
+        "U3.4",
+        "U3.5"
+      ],
+      "evidence": [
+        "desktop/cradle/src/knowledge/KnowledgeSurface.tsx:40-61",
+        ".superpowers/sdd/cradle-rebuild/FND-00-REFERENCE-MATRIX-2026-09-08.md",
+        ".superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md"
+      ],
+      "desktop_disposition": "owner_knowledge_readings_partial_p2_work",
+      "remaining": "Typed bounded graph input, owner wiki reading/search/resolution/familiarity and independent U3.1/U3.4 native walk remain P2. No foundation graph expansion or new desktop index."
+    },
+    {
+      "id": "cap.suite.participant-addressing",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "U2.3",
+        "U3.2",
+        "U3.3"
+      ],
+      "evidence": [
+        "desktop/cradle/walk/artifacts/review/MODE-CONTEXT-CORNER-REFINEMENT-2026-09-08.md",
+        "desktop/cradle/walk/artifacts/review/FINAL-LAYERS-2026-09-08.md"
+      ],
+      "desktop_disposition": "explicit_quote_into_owner_draft_observed",
+      "remaining": "Quote/context draft CAS does not establish semantic attachments, arbitrary web/PDF picking, authorised relation retrieval, Remember recognition or shared-field authority."
+    },
+    {
+      "id": "cap.suite.explicit-co-internality",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "U2.3",
+        "U3.2",
+        "U3.3"
+      ],
+      "evidence": [
+        "desktop/cradle/walk/artifacts/review/MODE-CONTEXT-CORNER-REFINEMENT-2026-09-08.md",
+        "desktop/cradle/walk/artifacts/review/FINAL-LAYERS-2026-09-08.md"
+      ],
+      "desktop_disposition": "explicit_quote_into_owner_draft_observed",
+      "remaining": "Quote/context draft CAS does not establish semantic attachments, arbitrary web/PDF picking, authorised relation retrieval, Remember recognition or shared-field authority."
+    },
+    {
+      "id": "cap.suite.world-relative-agent-knowledge",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "U2.3",
+        "U3.2",
+        "U3.3"
+      ],
+      "evidence": [
+        "desktop/cradle/walk/artifacts/review/MODE-CONTEXT-CORNER-REFINEMENT-2026-09-08.md",
+        "desktop/cradle/walk/artifacts/review/FINAL-LAYERS-2026-09-08.md"
+      ],
+      "desktop_disposition": "explicit_quote_into_owner_draft_observed",
+      "remaining": "Quote/context draft CAS does not establish semantic attachments, arbitrary web/PDF picking, authorised relation retrieval, Remember recognition or shared-field authority."
+    },
+    {
+      "id": "cap.workcell.external-contract",
+      "canonical_standing": "landed",
+      "proposed_standing_change": null,
+      "units": [
+        "FND-04",
+        "GW-03",
+        "GW-06"
+      ],
+      "evidence": [
+        "desktop/cradle/kernel/src/material.rs",
+        "desktop/cradle/kernel/tests/material_native.rs",
+        ".superpowers/sdd/cradle-rebuild/progress.md",
+        ".superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md"
+      ],
+      "desktop_disposition": "native_owner_lifecycle_adapter_only",
+      "remaining": "Workcell 70a39c1 lifecycle route evidence is narrower than rich material body/assets/refusal or remote materialisation. Central HTML/PDF render acceptance is not Workcell provider acceptance."
+    },
+    {
+      "id": "cap.workcell.binding-graph",
+      "canonical_standing": "landed",
+      "proposed_standing_change": null,
+      "units": [
+        "FND-04",
+        "GW-03",
+        "GW-06"
+      ],
+      "evidence": [
+        "desktop/cradle/kernel/src/material.rs",
+        "desktop/cradle/kernel/tests/material_native.rs",
+        ".superpowers/sdd/cradle-rebuild/progress.md",
+        ".superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md"
+      ],
+      "desktop_disposition": "native_owner_lifecycle_adapter_only",
+      "remaining": "Workcell 70a39c1 lifecycle route evidence is narrower than rich material body/assets/refusal or remote materialisation. Central HTML/PDF render acceptance is not Workcell provider acceptance."
+    },
+    {
+      "id": "cap.workcell.reconciliation-lifecycle-recovery",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "FND-04",
+        "GW-03",
+        "GW-06"
+      ],
+      "evidence": [
+        "desktop/cradle/kernel/src/material.rs",
+        "desktop/cradle/kernel/tests/material_native.rs",
+        ".superpowers/sdd/cradle-rebuild/progress.md",
+        ".superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md"
+      ],
+      "desktop_disposition": "native_owner_lifecycle_adapter_only",
+      "remaining": "Workcell 70a39c1 lifecycle route evidence is narrower than rich material body/assets/refusal or remote materialisation. Central HTML/PDF render acceptance is not Workcell provider acceptance."
+    },
+    {
+      "id": "cap.workcell.candidate-materialisation",
+      "canonical_standing": "landed",
+      "proposed_standing_change": null,
+      "units": [
+        "FND-04",
+        "GW-03",
+        "GW-06"
+      ],
+      "evidence": [
+        "desktop/cradle/kernel/src/material.rs",
+        "desktop/cradle/kernel/tests/material_native.rs",
+        ".superpowers/sdd/cradle-rebuild/progress.md",
+        ".superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md"
+      ],
+      "desktop_disposition": "native_owner_lifecycle_adapter_only",
+      "remaining": "Workcell 70a39c1 lifecycle route evidence is narrower than rich material body/assets/refusal or remote materialisation. Central HTML/PDF render acceptance is not Workcell provider acceptance."
+    },
+    {
+      "id": "cap.software-factory.build-surface",
+      "canonical_standing": "landed",
+      "proposed_standing_change": null,
+      "units": [
+        "GW-06"
+      ],
+      "evidence": [
+        "desktop/cradle/src/contributions/factory/BuildSurface.tsx:20-24",
+        ".superpowers/sdd/cradle-rebuild/progress.md"
+      ],
+      "desktop_disposition": "downstream_owner_contract_unavailable",
+      "remaining": "Factory 947ce7a / Actuation 163aef0 incompatibility remains explicit; reconcile shared authority contract before implementation. Do not mount Factory to pass P1."
+    },
+    {
+      "id": "cap.software-factory.agent-agency-contract",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "GW-06"
+      ],
+      "evidence": [
+        "desktop/cradle/src/contributions/factory/BuildSurface.tsx:20-24",
+        ".superpowers/sdd/cradle-rebuild/progress.md"
+      ],
+      "desktop_disposition": "downstream_owner_contract_unavailable",
+      "remaining": "Factory 947ce7a / Actuation 163aef0 incompatibility remains explicit; reconcile shared authority contract before implementation. Do not mount Factory to pass P1."
+    },
+    {
+      "id": "cap.actuation.suite-integration",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "GW-06"
+      ],
+      "evidence": [
+        "desktop/cradle/src/contributions/factory/BuildSurface.tsx:20-24",
+        ".superpowers/sdd/cradle-rebuild/progress.md"
+      ],
+      "desktop_disposition": "downstream_owner_contract_unavailable",
+      "remaining": "Factory 947ce7a / Actuation 163aef0 incompatibility remains explicit; reconcile shared authority contract before implementation. Do not mount Factory to pass P1."
+    },
+    {
+      "id": "cap.suite.git-provider",
+      "canonical_standing": "landed",
+      "proposed_standing_change": null,
+      "units": [
+        "U1.3"
+      ],
+      "evidence": [
+        "desktop/cradle/walk/artifacts/review/FINAL-LAYERS-2026-09-08.md"
+      ],
+      "desktop_disposition": "alternate_native",
+      "remaining": "Native Git capability keeps its existing standing. Desktop branch/staging/history operations require owner increment and must not be invented from browser/terminal access."
+    },
+    {
+      "id": "cap.o-i.cradle-verification",
+      "canonical_standing": "partial",
+      "proposed_standing_change": null,
+      "units": [
+        "FND-00",
+        "FND-06",
+        "FND-07",
+        "U0.6"
+      ],
+      "evidence": [
+        ".superpowers/sdd/cradle-rebuild/FND-00-REFERENCE-MATRIX-2026-09-08.md",
+        "desktop/cradle/walk/artifacts/review/SHELL-PANES-TRANCHE-2026-09-08.md",
+        "desktop/cradle/walk/artifacts/review/FINAL-LAYERS-2026-09-08.md"
+      ],
+      "desktop_disposition": "not_accepted",
+      "remaining": "Chromium 20537.8 B/cycle and DOM 3.729/cycle after CDP GC are browser-only. Native tranche observations are bounded. Full native FND-00\u201306, baseline/resource budgets, repeated child-window cycles and expression measurements remain open."
+    }
+  ],
+  "expression": {
+    "units": [
+      "D22",
+      "FND-07",
+      "W1.8"
+    ],
+    "capability_id": null,
+    "disposition": "Active UI lead work; no invented capability ID and no acceptance from showcase."
+  },
+  "alternate_native_surfaces": {
+    "browser": {
+      "evidence": [
+        "desktop/cradle/walk/artifacts/review/browser-native/REVIEW.md",
+        "desktop/cradle/walk/artifacts/review/FINAL-LAYERS-2026-09-08.md"
+      ],
+      "disposition": "macOS native browser tranche; downloads/personal profiles were added by later receipt, superseding earlier tranche absence; no generic browser provider acceptance"
+    },
+    "terminal": {
+      "evidence": [
+        "desktop/cradle/walk/artifacts/review/FINAL-LAYERS-2026-09-08.md"
+      ],
+      "disposition": "native app-session PTY with lease continuity; restart is not process restoration; retain wayfinder lower-terminal obligation"
+    }
+  },
+  "reference_rows_requiring_exact_native_closure": [
+    "A1",
+    "A2",
+    "A4",
+    "A6",
+    "A9",
+    "B1",
+    "B2",
+    "B4",
+    "C2",
+    "D1",
+    "D2",
+    "D3",
+    "D4",
+    "D5",
+    "D6",
+    "D9",
+    "D11",
+    "E2",
+    "E3",
+    "E4",
+    "E5"
+  ],
+  "native_gate_accepted": false
+}

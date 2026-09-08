@@ -8,7 +8,7 @@ import {useBrowserContext} from "../context/useBrowserContext";
 
 type Profile="temporary"|"personal";
 type DownloadReading={url:string;path:string;state:"downloading"|"saved"|"failed"};
-type Reading={id:string;url:string;title:string;loading:boolean;zoom:number;notice?:string;requested_window?:string;profile:Profile;download?:DownloadReading};
+type Reading={attachment:number;id:string;url:string;title:string;loading:boolean;zoom:number;notice?:string;requested_window?:string;profile:Profile;download?:DownloadReading};
 const queues=new Map<string,Promise<unknown>>();
 function serial<T>(id:string, work:()=>Promise<T>):Promise<T>{
   const next=(queues.get(id)??Promise.resolve()).catch(()=>{}).then(work);
@@ -24,15 +24,27 @@ export function BrowserSurface({binding}:{binding:SurfaceBinding}) {
   const [profile,setProfile]=useState<Profile>(()=>savedProfile(binding.id));
   const editing=useRef(false);
   const [contextMode,setContextMode]=useState("off");
-  const viewport=useRef<HTMLDivElement>(null);const input=useRef<HTMLInputElement>(null);const attached=useRef(false);
-  const control=(action:string,args:Record<string,unknown>={})=>serial(binding.id,()=>invoke("browser_control",{id:binding.id,action,...args}));
+  const viewport=useRef<HTMLDivElement>(null);const input=useRef<HTMLInputElement>(null);const attachment=useRef<number>();
+  // Capture the lease before queueing: a retiring effect must never borrow
+  // the attachment installed by its successor.
+  const control=(action:string,args:Record<string,unknown>={},lease=attachment.current):Promise<boolean>=>{
+    if(lease===undefined)return ["hide","bounds","poll-focus"].includes(action)
+      ?Promise.resolve(false):Promise.reject(new Error("Browser attachment changed. Try the action again."));
+    return serial(binding.id,()=>invoke<boolean>("browser_control",{id:binding.id,action,...args,attachment:lease})).then(applied=>{
+      if(!applied){
+        if(attachment.current===lease)attachment.current=undefined;
+        if(!["hide","bounds","poll-focus"].includes(action))throw new Error("Browser attachment changed. Try the action again.");
+      }
+      return applied;
+    });
+  };
   const attachContext=useBrowserContext(binding,native,contextMode,reading?.loading,control);
   useEffect(()=>{
     if(!native)return;
     let disposed=false;let unlisten:(()=>void)|undefined;let unfocus:(()=>void)|undefined;
     void listen<string>("oi:browser-focus",e=>{if(!disposed&&e.payload===binding.id)window.dispatchEvent(new CustomEvent("oi:browser-pane-focus",{detail:binding.id}));}).then(fn=>disposed?fn():unfocus=fn);
     void listen<Reading>("oi:browser-reading",e=>{
-      if(disposed||e.payload.id!==binding.id)return;
+      if(disposed||e.payload.id!==binding.id||e.payload.attachment!==attachment.current)return;
       setReading(e.payload);setZoom(e.payload.zoom);if(!editing.current)setAddress(e.payload.url);
       try{localStorage.setItem(`oi-browser-url:${binding.id}`,e.payload.url);}catch{/* URL restore is best effort; the live view is authoritative. */}
       window.dispatchEvent(new CustomEvent("oi:browser-title",{detail:e.payload}));
@@ -42,8 +54,10 @@ export function BrowserSurface({binding}:{binding:SurfaceBinding}) {
   useEffect(()=>{
     if(!native||!target||!kernel.snapshot.surfaces[binding.id])return;
     let disposed=false,frame=0,last="",busy=false,hidden=true;
+    let lease:number|undefined;
+    attachment.current=undefined;
     const element=viewport.current!;
-    const focusTimer=setInterval(()=>{if(attached.current&&!hidden)void control("poll-focus").catch(()=>{});},200);
+    const focusTimer=setInterval(()=>{if(lease!==undefined&&!hidden)void control("poll-focus",{},lease).catch(()=>{});},200);
     const tick=()=>{
       if(disposed)return;
       frame=requestAnimationFrame(tick);
@@ -53,7 +67,11 @@ export function BrowserSurface({binding}:{binding:SurfaceBinding}) {
       // overlays own input, and whenever their pane is not actually visible.
       const blocked=document.querySelector('.desktop-side.right[style*="transform"],.desktop-regions[data-right-full="true"],.ctx-menu,.search-aperture,[role="dialog"],.region-scrim,details[open],.desktop-side[data-overlay="true"]');
       const visible=rect.width>1&&rect.height>1&&rect.left>=0&&rect.top>=0&&element.getClientRects().length>0&&!element.closest('[inert],[hidden],[aria-hidden="true"]')&&!blocked;
-      if(!visible){if(attached.current&&!hidden){hidden=true;void control("hide").catch(reason=>setError(String(reason)));}return;}
+      if(lease!==undefined&&attachment.current!==lease){lease=undefined;hidden=true;last="";}
+      if(!visible){if(lease!==undefined&&!hidden){
+        busy=true;
+        void control("hide",{},lease).then(applied=>{if(disposed)return;hidden=true;if(!applied){lease=undefined;last="";}}).catch(reason=>{if(!disposed)setError(String(reason));}).finally(()=>{busy=false;});
+      }return;}
       // Leave the DOM footer edge reachable above the native child view.
       // Revealing status trims its viewport instead of hiding the whole page.
       const footer=element.closest('.browser-surface')?.querySelector('.browser-status')?.getBoundingClientRect();
@@ -61,17 +79,35 @@ export function BrowserSurface({binding}:{binding:SurfaceBinding}) {
       const bottom=Math.min(rect.bottom,footer?.top??rect.bottom,workspaceFooter?.top??rect.bottom);
       const bounds={x:rect.left,y:rect.top,width:rect.width,height:Math.max(1,bottom-rect.top)};
       const stamp=JSON.stringify(bounds);
-      if(attached.current&&!hidden&&last===stamp)return;
-      busy=true;last=stamp;
-      const work=attached.current?control("bounds",{bounds}):serial(binding.id,()=>invoke<Reading>("browser_attach",{id:binding.id,address:target,profile,bounds})).then(value=>{
-        attached.current=true;setReading(value);setZoom(value.zoom);setAddress(value.url);setError(undefined);
+      if(lease!==undefined&&!hidden&&last===stamp)return;
+      busy=true;
+      const work=lease!==undefined?control("bounds",{bounds},lease):serial(binding.id,async()=>{
+        // An attach still waiting in this realm's queue has no work to do
+        // after unmount. A native attach already in flight is retired below.
+        if(disposed)return false;
+        const value=await invoke<Reading>("browser_attach",{id:binding.id,address:target,profile,bounds});
+        if(disposed){void control("hide",{},value.attachment).catch(()=>{});return false;}
+        lease=value.attachment;attachment.current=lease;
+        setReading(value);setZoom(value.zoom);setAddress(value.url);setError(undefined);
         try{localStorage.setItem(`oi-browser-url:${binding.id}`,value.url);}catch{/* Live native state remains authoritative. */}
         window.dispatchEvent(new CustomEvent("oi:browser-title",{detail:value}));
         window.dispatchEvent(new Event("oi:browser-attached"));
+        return true;
       });
-      void work.then(()=>{hidden=false;}).catch(reason=>{attached.current=false;setError(String(reason));last="";disposed=true;cancelAnimationFrame(frame);}).finally(()=>busy=false);
+      void work.then(applied=>{
+        if(disposed)return;
+        if(applied){hidden=false;last=stamp;}else{lease=undefined;hidden=true;last="";}
+      }).catch(reason=>{
+        if(disposed)return;
+        if(attachment.current===lease)attachment.current=undefined;
+        lease=undefined;setError(String(reason));last="";disposed=true;cancelAnimationFrame(frame);
+      }).finally(()=>busy=false);
     };tick();
-    return()=>{disposed=true;clearInterval(focusTimer);cancelAnimationFrame(frame);void control("hide").catch(()=>{});};
+    return()=>{
+      disposed=true;clearInterval(focusTimer);cancelAnimationFrame(frame);
+      if(attachment.current===lease)attachment.current=undefined;
+      if(lease!==undefined)void control("hide",{},lease).catch(()=>{});
+    };
   // Changing tabs hides this same native instance. A layout-level reconcile
   // closes it only when its binding really leaves all workspace arrangements.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -80,17 +116,21 @@ export function BrowserSurface({binding}:{binding:SurfaceBinding}) {
     e.preventDefault();setError(undefined);editing.current=false;
     let value=address.trim();if(!/^\w+:/.test(value))value=`https://${value}`;
     try{const parsed=new URL(value);if(!["https:","http:"].includes(parsed.protocol)||parsed.username||parsed.password)throw new Error("Enter an HTTP or HTTPS address without embedded credentials");
-      if(attached.current){setAddress(reading?.url??"");await control("navigate",{address:value});await control("focus");}else setTarget(value);
-      if(!attached.current)setAddress(value);
+      if(attachment.current!==undefined){
+        const lease=attachment.current;
+        setAddress(reading?.url??"");
+        if(!await control("navigate",{address:value},lease))throw new Error("Browser attachment changed. Try navigating again.");
+        await control("focus",{},lease);
+      }else{setTarget(value);setAddress(value);}
     }catch(reason){setError(String(reason));}
   };
-  const act=(action:string)=>void control(action).catch(reason=>setError(String(reason)));
+  const act=(action:string)=>void control(action).then(applied=>{if(!applied)setError("Browser attachment changed. Try the action again.");}).catch(reason=>setError(String(reason)));
   const switchProfile=async(next:Profile)=>{
     if(next===profile)return;
     setError(undefined);
     try{
-      if(attached.current)await control("close");
-      attached.current=false;
+      if(attachment.current!==undefined&&!await control("close"))throw new Error("Browser attachment changed. Choose the profile again.");
+      attachment.current=undefined;
       try{localStorage.setItem(`oi-browser-profile:${binding.id}`,next);}catch{/* Native profile choice remains authoritative for this pane. */}
       setProfile(next);setReading(undefined);setRetry(value=>value+1);
     }catch(reason){setError(String(reason));}
@@ -109,7 +149,7 @@ export function BrowserSurface({binding}:{binding:SurfaceBinding}) {
         <button type="button" aria-label="Context mode" aria-pressed={contextMode!=="off"} disabled={!reading} onClick={()=>setContextMode('components')}>@</button>
         {contextMode!=="off"&&<button type="button" onMouseDown={e=>e.preventDefault()} onClick={attachContext}>Attach selection</button>}
         <select aria-label="Browser profile" value={profile} onChange={e=>void switchProfile(e.target.value as Profile)}><option value="temporary">Temporary</option><option value="personal">Personal</option></select>
-        <select aria-label="Browser zoom" value={zoom} onChange={e=>{const value=Number(e.target.value);setZoom(value);void control("zoom",{zoom:value}).catch(reason=>setError(String(reason)));}}>{[.5,.75,1,1.25,1.5,2].map(v=><option key={v} value={v}>{v*100}%</option>)}</select>
+        <select aria-label="Browser zoom" value={zoom} onChange={e=>{const value=Number(e.target.value);void control("zoom",{zoom:value}).catch(reason=>setError(String(reason)));}}>{[.5,.75,1,1.25,1.5,2].map(v=><option key={v} value={v}>{v*100}%</option>)}</select>
       </span>
     </form>
     {error&&<div role="alert" className="browser-notice">{error} <button onClick={()=>{setError(undefined);setRetry(v=>v+1);}}>Retry</button></div>}

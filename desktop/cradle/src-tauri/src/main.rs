@@ -11,6 +11,7 @@ mod terminal;
 mod menus;
 mod ground_dialog;
 mod material_protocol;
+mod walk_diagnostics;
 use std::sync::Mutex;
 
 use oi_cradle_kernel::events::{KernelEventReceipt, KERNEL_EVENT_TOPIC};
@@ -81,7 +82,7 @@ fn main() {
             Ok(())
         })
         .on_menu_event(|app, event| menus::dispatch(app, event.id().as_ref()))
-        .invoke_handler(tauri::generate_handler![terminal::terminal_attach,terminal::terminal_poll,terminal::terminal_input,terminal::terminal_resize,terminal::terminal_checkpoint,terminal::terminal_reconcile,browser::browser_attach, browser::browser_control, browser::browser_reconcile, ground_dialog::choose_central_folder, menus::arrangement_menu, kernel_op, kernel_event_log, windows::window_detach, windows::window_binding, windows::window_redock, windows::window_focus_subject, windows::window_focus_main])
+        .invoke_handler(tauri::generate_handler![walk_diagnostics::expression_walk_observation,terminal::terminal_attach,terminal::terminal_poll,terminal::terminal_input,terminal::terminal_resize,terminal::terminal_checkpoint,terminal::terminal_reconcile,browser::browser_attach, browser::browser_control, browser::browser_reconcile, ground_dialog::choose_central_folder, menus::arrangement_menu, kernel_op, kernel_event_log, windows::window_detach, windows::window_binding, windows::window_redock, windows::window_focus_subject, windows::window_focus_main])
         .run(context)
         .expect("error while running the cradle");
 }

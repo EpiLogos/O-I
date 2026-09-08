@@ -7,7 +7,7 @@ import "./encounter.css";
  * "side"/"full" are the accompanying-agent-layer shapes, where the layer
  * renders its own header and plane nav (FND-02) and this view supplies only
  * the transcript + composer. */
-export function EncounterView({title,plane,onPlane,reading,status,draft,pending,error,providers,onProvider,onDraft,onSend,onCancel,onEarlier,onLatest,onPermission,presentation}:{title:string;plane:string;onPlane:(plane:"Conversation"|"Activity"|"Context"|"Inspect")=>void;reading?:EncounterReading;status?:EncounterStatus;draft:string;pending:boolean;error?:string;providers:{id:string;label:string}[];onProvider:(id:string)=>void;onDraft:(text:string)=>void;onSend:()=>void;onCancel:()=>void;onEarlier:()=>void;onLatest:()=>void;onPermission:(id:string,decision:PermissionDecision)=>void;presentation:"tab"|"side"|"full"}) {
+export function EncounterView({title,plane,onPlane,reading,status,draft,pending,error,providers,onProvider,onDraft,onSend,onCancel,onEarlier,onLatest,onPermission,presentation,concealed=false}:{title:string;plane:string;onPlane:(plane:"Conversation"|"Activity"|"Context"|"Inspect")=>void;reading?:EncounterReading;status?:EncounterStatus;draft:string;pending:boolean;error?:string;providers:{id:string;label:string}[];onProvider:(id:string)=>void;onDraft:(text:string)=>void;onSend:()=>void;onCancel:()=>void;onEarlier:()=>void;onLatest:()=>void;onPermission:(id:string,decision:PermissionDecision)=>void;presentation:"tab"|"side"|"full";concealed?:boolean}) {
   const transcript=useRef<HTMLDivElement>(null);const following=useRef(true);
   const composerInput=useRef<HTMLTextAreaElement>(null);
   useLayoutEffect(()=>{const element=transcript.current;if(element&&following.current)element.scrollTop=element.scrollHeight;},[reading,plane]);
@@ -19,11 +19,11 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
   const running=status?.state==="TurnInFlight"||status?.state==="InterruptRequested";
   const connected=!!status&&status.state!=="Disconnected";
   const action=(name:string)=>reading?.actions?.find(action=>action.ref===`aikit.encounter.${name}`);
-  // Retain compatibility with the resident from before the rolling upgrade.
-  const allowed=(name:string,legacy:boolean)=>action(name)?.enabled??legacy;
+  // Missing owner Actions are unknown authority, never permission to act.
+  const allowed=(name:string,_legacy:boolean)=>action(name)?.enabled===true;
   const blocks=reading?.blocks.filter(block=>plane!=="Activity"||!["user","assistant","thinking"].includes(block.kind));
   const tab=presentation==="tab";
-  return <section className="encounter" data-presentation={presentation} aria-label="Encounter">
+  return <section hidden={concealed} style={concealed?{display:"none"}:undefined} className="encounter" data-presentation={presentation} aria-label="Encounter">
     {tab && <header className="encounter-heading"><span className="encounter-mark" aria-hidden="true">◌</span><div><h2>{title}</h2><small>{status?.provider?.label??(connected?"Native encounter":"Choose a provider")}</small></div><span className="encounter-state" role="status">{running?status?.state==="InterruptRequested"?"Stopping…":"Responding…":connected?"Connected":"Disconnected"}</span></header>}
     {tab && <nav className="encounter-planes" aria-label="Encounter planes">{(["Conversation","Activity","Context","Inspect"] as const).map(name=><button key={name} aria-pressed={plane===name} onClick={()=>onPlane(name)}>{name}</button>)}</nav>}
     <div ref={transcript} className="encounter-transcript" aria-label={plane==="Conversation"?"Transcript":`Encounter ${plane}`} onScroll={()=>{const element=transcript.current;if(element)following.current=element.scrollHeight-element.clientHeight-element.scrollTop<48;}}>

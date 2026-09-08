@@ -14,6 +14,8 @@ use tauri::{AppHandle, Emitter, LogicalPosition, LogicalSize, Manager, Rect, Web
 #[derive(Clone, Serialize)]
 pub struct Reading {
     pub id: String,
+    /// Ephemeral native-view consumer generation, not an owner capability.
+    pub attachment: u64,
     pub url: String,
     pub title: String,
     pub loading: bool,
@@ -37,8 +39,32 @@ struct Session {
     reading: Reading,
 }
 #[derive(Default)]
-pub struct Browsers(Mutex<BTreeMap<String, Session>>, Mutex<()>);
+pub struct Browsers(Mutex<BTreeMap<String, Session>>);
 static NEXT: AtomicU64 = AtomicU64::new(1);
+static NEXT_ATTACHMENT: AtomicU64 = AtomicU64::new(1);
+
+fn trace(action: &str, id: &str, host: &str, attachment: u64) {
+    if cfg!(debug_assertions) && std::env::var("OI_CRADLE_NATIVE_WALK").as_deref() == Ok("1") {
+        eprintln!("{}", serde_json::json!({
+            "schema": "oi.native-browser-lifecycle/v1", "action": action,
+            "id": id, "host": host, "attachment": attachment,
+            "unix_ms": std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|v|v.as_millis()).unwrap_or(0),
+        }));
+    }
+}
+
+// Window close callbacks already execute on this thread. Queue the complete
+// check-and-mutation operation here too: holding a background mutex while Wry
+// waits for a UI-thread reparent can deadlock a concurrent window close.
+async fn on_main<T: Send + 'static>(
+    app: AppHandle,
+    work: impl FnOnce() -> Result<T, String> + Send + 'static,
+) -> Result<T, String> {
+    let (send, mut receive) = tauri::async_runtime::channel(1);
+    app.run_on_main_thread(move || { let _ = send.try_send(work()); })
+        .map_err(|error| error.to_string())?;
+    receive.recv().await.ok_or_else(|| "Browser operation was interrupted".to_string())?
+}
 #[derive(Deserialize)]
 pub struct Bounds {
     x: f64,
@@ -107,12 +133,18 @@ pub async fn browser_attach(
     profile: Option<String>,
     bounds: Bounds,
 ) -> Result<Reading, String> {
+    on_main(app.clone(), move || attach_on_main(app, webview, id, address, profile, bounds)).await
+}
+
+fn attach_on_main(
+    app: AppHandle,
+    webview: Webview,
+    id: String,
+    address: String,
+    profile: Option<String>,
+    bounds: Bounds,
+) -> Result<Reading, String> {
     trusted(&webview)?;
-    let state = app.state::<Browsers>();
-    let _lifecycle = state
-        .1
-        .lock()
-        .map_err(|_| "Browser lifecycle unavailable")?;
     if !bounds.valid() {
         return Err("Browser bounds are invalid".into());
     }
@@ -156,6 +188,7 @@ pub async fn browser_attach(
                     host: webview.label().into(),
                     reading: Reading {
                         id: id.clone(),
+                        attachment: 0,
                         url: initial.to_string(),
                         title: "Browser".into(),
                         loading: true,
@@ -343,6 +376,8 @@ pub async fn browser_attach(
     {
         s.host = webview.label().into();
         s.creating = false;
+        s.reading.attachment = NEXT_ATTACHMENT.fetch_add(1, Ordering::Relaxed);
+        trace("attached", &id, &s.host, s.reading.attachment);
     }
     app.state::<Browsers>()
         .0
@@ -357,24 +392,42 @@ pub async fn browser_control(
     app: AppHandle,
     webview: Webview,
     id: String,
+    attachment: u64,
     action: String,
     address: Option<String>,
     bounds: Option<Bounds>,
     zoom: Option<f64>,
-) -> Result<(), String> {
+) -> Result<bool, String> {
+    on_main(app.clone(), move || control_on_main(app, webview, id, attachment, action, address, bounds, zoom)).await
+}
+
+fn control_on_main(
+    app: AppHandle,
+    webview: Webview,
+    id: String,
+    attachment: u64,
+    action: String,
+    address: Option<String>,
+    bounds: Option<Bounds>,
+    zoom: Option<f64>,
+) -> Result<bool, String> {
     trusted(&webview)?;
     let label = {
         let state = app.state::<Browsers>();
         let rows = state.0.lock().map_err(|_| "Browser state unavailable")?;
         let Some(s) = rows.get(&id) else {
-            return Ok(());
+            return Ok(false);
         };
-        if s.host != webview.label() {
-            return Ok(());
+        if s.host != webview.label() || attachment == 0 || s.reading.attachment != attachment {
+            trace("stale-control-rejected", &id, webview.label(), attachment);
+            return Ok(false);
         }
         s.label.clone()
     };
     let child = app.get_webview(&label).ok_or("Browser is unavailable")?;
+    if matches!(action.as_str(), "hide" | "bounds" | "close") {
+        trace(&action, &id, webview.label(), attachment);
+    }
     match action.as_str() {
         "close" => {
             child.close().map_err(|e| e.to_string())?;
@@ -401,6 +454,8 @@ pub async fn browser_control(
             child.eval_with_callback(expression,move |result| {
                 // Result is untrusted page data. Only this originating shell receives it;
                 // no page obtains shell IPC and navigation invalidates the reading.
+                let current_consumer = handle.state::<Browsers>().0.lock().ok().is_some_and(|rows| rows.get(&id).is_some_and(|s|s.host==host && s.reading.attachment==attachment));
+                if !current_consumer { return; }
                 let same_page = handle.get_webview(&child_label).and_then(|view|view.url().ok()).is_some_and(|url|url.as_str()==origin);
                 let result = if same_page && result.len() <= 100_000 { serde_json::from_str::<serde_json::Value>(&result).unwrap_or(serde_json::Value::Null) } else { serde_json::Value::Null };
                 if let Some(shell) = handle.get_webview(&host) { let _ = shell.emit("oi:browser-context", serde_json::json!({"id":id,"request":request_id,"result":result,"url":origin})); }
@@ -450,7 +505,7 @@ pub async fn browser_control(
                             .lock()
                             .ok()
                             .and_then(|mut rows| {
-                                rows.get_mut(&surface).and_then(|s| {
+                                rows.get_mut(&surface).filter(|s|s.reading.attachment==attachment).and_then(|s| {
                                     let changed = focused && !s.focused;
                                     s.focused = focused;
                                     changed.then(|| s.host.clone())
@@ -483,6 +538,7 @@ pub async fn browser_control(
         }
         _ => return Err("Unknown browser operation".into()),
     }
+    .map(|_| true)
     .map_err(|e| e.to_string())
 }
 /// Main-window layout owns actual closure. Inactive tabs keep their view alive.
@@ -492,15 +548,14 @@ pub async fn browser_reconcile(
     webview: Webview,
     live: Vec<String>,
 ) -> Result<(), String> {
+    on_main(app.clone(), move || reconcile_on_main(app, webview, live)).await
+}
+
+fn reconcile_on_main(app: AppHandle, webview: Webview, live: Vec<String>) -> Result<(), String> {
     trusted(&webview)?;
     if webview.label() != "main" {
         return Err("Browser lifecycle belongs to the workspace".into());
     }
-    let state = app.state::<Browsers>();
-    let _lifecycle = state
-        .1
-        .lock()
-        .map_err(|_| "Browser lifecycle unavailable")?;
     let dead = {
         let state = app.state::<Browsers>();
         let rows = state.0.lock().map_err(|_| "Browser state unavailable")?;
@@ -551,6 +606,8 @@ pub fn return_to_main(app: &AppHandle, id: &str) -> Result<(), String> {
             .get_mut(id)
         {
             s.host = "main".into();
+            s.reading.attachment = 0;
+            trace("returned-awaiting-attachment", id, &s.host, 0);
         }
     }
     Ok(())

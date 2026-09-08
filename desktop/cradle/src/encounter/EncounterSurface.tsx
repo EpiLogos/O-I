@@ -3,16 +3,20 @@ import {useKernel} from "../kernel/KernelProvider";
 import type {SurfaceBinding} from "../surface/types";
 import {encounter,type Draft,type EncounterReading,type EncounterStatus,type PermissionDecision} from "./client";
 import {EncounterView} from "./EncounterView";
+export interface EncounterExpressionReading {state?:string;pending:boolean;completed?:number;inputRevision?:number}
 /** Ephemeral input buffering only. Every accepted edit and message is AIKit-owned. */
-export function EncounterSurface({binding,onView,presentation="tab"}:{binding:SurfaceBinding;onView:(view:NonNullable<SurfaceBinding["view"]>)=>void;presentation?:"tab"|"side"|"full"}) {
+export function EncounterSurface({binding,onView,presentation="tab",onExpression,concealed=false}:{binding:SurfaceBinding;onView:(view:NonNullable<SurfaceBinding["view"]>)=>void;presentation?:"tab"|"side"|"full";onExpression?:(reading:EncounterExpressionReading)=>void;concealed?:boolean}) {
  const kernel=useKernel();
  const [reading,setReading]=useState<EncounterReading>();const [status,setStatus]=useState<EncounterStatus>();
  const [providers,setProviders]=useState<{id:string;label:string}[]>([]);const [draft,setDraft]=useState("");
  const [error,setError]=useState<string>();const [pending,setPending]=useState(false);
  const canonical=useRef<Draft>({revision:0,text:""});const input=useRef("");const dirty=useRef(false);const saving=useRef(false);const sending=useRef(false);const failed=useRef(false);
  const [before,setBefore]=useState<number>();
+ const expression=useRef(onExpression);expression.current=onExpression;
+ useEffect(()=>{expression.current?.({state:status?.state,pending,inputRevision:reading?.draft.revision,completed:reading?reading.blocks.filter(block=>block.kind==="completed").slice(-1)[0]?.id??-1:undefined});},[status,reading,pending]);
  const call=<T,>(request:Parameters<typeof encounter>[2])=>encounter<T>(kernel.transport,binding.project!,request);
  const read=()=>call<EncounterReading>({action:"view",agent_session:binding.ref!,before});
+ const allowed=(name:string)=>reading?.actions?.some(action=>action.ref===`aikit.encounter.${name}`&&action.enabled===true)===true;
  useEffect(()=>{
   let live=true;let timer:ReturnType<typeof setTimeout>;
   // Honesty law + SELF-OTHER-FIELD-UX "view disposal": a hidden document
@@ -37,7 +41,7 @@ export function EncounterSurface({binding,onView,presentation="tab"}:{binding:Su
   return()=>{live=false;clearTimeout(timer);document.removeEventListener("visibilitychange",onVisible);};
  },[binding.ref,binding.project,before]);
  async function save() {
-  if(sending.current||saving.current||failed.current||!dirty.current)return;
+  if(!allowed("draft")||sending.current||saving.current||failed.current||!dirty.current)return;
   saving.current=true;setPending(true);
   try {
    while(dirty.current) {
@@ -48,19 +52,20 @@ export function EncounterSurface({binding,onView,presentation="tab"}:{binding:Su
   }catch(error){failed.current=true;setError(`${String(error)} Your unsaved typing is still here.`);}
   finally{saving.current=false;setPending(false);}
  }
- const change=(text:string)=>{input.current=text;dirty.current=true;setDraft(text);void save();};
+ const change=(text:string)=>{if(!allowed("draft"))return;input.current=text;dirty.current=true;setDraft(text);void save();};
  const connect=async(provider:string)=>{
+  if(!allowed("open"))return;
   setPending(true);setError(undefined);
   try{await call({action:"open",space:binding.encounter!.space,agent_session:binding.ref!,provider});setStatus(await call<EncounterStatus>({action:"status",agent_session:binding.ref!}));}
   catch(error){setError(String(error));}finally{setPending(false);}
  };
  const send=async()=>{
-  if(dirty.current||saving.current||sending.current||failed.current)return;
+  if(!allowed("prompt")||dirty.current||saving.current||sending.current||failed.current)return;
   sending.current=true;const submitted=input.current;setPending(true);setError(undefined);
   try{const response=await call<{draft:Draft}>({action:"prompt",agent_session:binding.ref!,draft_revision:canonical.current.revision});canonical.current=response.draft;if(input.current===submitted){input.current=response.draft.text;setDraft(response.draft.text);}else{dirty.current=true;}setStatus(await call<EncounterStatus>({action:"status",agent_session:binding.ref!}));}
   catch(error){setError(String(error));}finally{sending.current=false;setPending(false);void save();}
  };
  const recover=async()=>{try{const next=await read();canonical.current=next.draft;failed.current=false;dirty.current=input.current!==next.draft.text;setError(undefined);await save();}catch(error){setError(String(error));}};
- const permission=async(request_id:string,decision:PermissionDecision)=>{setPending(true);setError(undefined);try{await call({action:"permission",agent_session:binding.ref!,request_id,decision});const next=await read();setReading(next);setStatus(next.connection);}catch(error){setError(String(error));}finally{setPending(false);}};
- return <><EncounterView presentation={presentation} plane={binding.view?.encounterPlane??"Conversation"} onPlane={encounterPlane=>onView({encounterPlane})} title={binding.title} onPermission={(id,decision)=>void permission(id,decision)} reading={reading} status={status} draft={draft} pending={pending||dirty.current||saving.current||sending.current||failed.current} error={error} providers={providers} onProvider={provider=>void connect(provider)} onDraft={change} onSend={()=>void send()} onCancel={()=>void call({action:"cancel",agent_session:binding.ref!,reason:"User stopped the encounter"}).catch(error=>setError(String(error)))} onEarlier={()=>setBefore(reading?.blocks[0]?.id)} onLatest={()=>setBefore(undefined)}/>{failed.current&&<button onClick={()=>void recover()}>Apply my typing to the current shared draft</button>}</>;
+ const permission=async(request_id:string,decision:PermissionDecision)=>{if(!allowed("permission"))return;setPending(true);setError(undefined);try{await call({action:"permission",agent_session:binding.ref!,request_id,decision});const next=await read();setReading(next);setStatus(next.connection);}catch(error){setError(String(error));}finally{setPending(false);}};
+ return <><EncounterView concealed={concealed} presentation={presentation} plane={binding.view?.encounterPlane??"Conversation"} onPlane={encounterPlane=>onView({encounterPlane})} title={binding.title} onPermission={(id,decision)=>void permission(id,decision)} reading={reading} status={status} draft={draft} pending={pending||dirty.current||saving.current||sending.current||failed.current} error={error} providers={providers} onProvider={provider=>void connect(provider)} onDraft={change} onSend={()=>void send()} onCancel={()=>{if(!allowed("cancel"))return;void call({action:"cancel",agent_session:binding.ref!,reason:"User stopped the encounter"}).catch(error=>setError(String(error)));}} onEarlier={()=>setBefore(reading?.blocks[0]?.id)} onLatest={()=>setBefore(undefined)}/>{failed.current&&!concealed&&<button onClick={()=>void recover()}>Apply my typing to the current shared draft</button>}</>;
 }

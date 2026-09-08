@@ -1,8 +1,11 @@
-import {useState, type ReactNode} from "react";
+import {advanceCompletion} from "./expressionReading";
+import {useEffect,useRef,useState, type ReactNode} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {Glyph} from "../workspace/Glyph";
 import {EncounterList, type EncounterRow} from "../encounter/EncounterList";
-import {EncounterSurface} from "../encounter/EncounterSurface";
+import {ExpressionAnchor} from "../shared/Expression";
+import type {FormName} from "@epilogos/oi-design-system/expression";
+import {EncounterSurface,type EncounterExpressionReading} from "../encounter/EncounterSurface";
 import {encounter} from "../encounter/client";
 import type {SurfaceBinding} from "../surface/types";
 import type {CentralLocation} from "../kernel/types";
@@ -55,9 +58,34 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
   const kernel = useKernel();
   const [plane, setPlane] = useState<EncounterPlane>("Conversation");
   const [error, setError] = useState<string>();
+  const [expression,setExpression]=useState<EncounterExpressionReading>({pending:false});
+  const [listening,setListening]=useState(false);
+  const [arrived,setArrived]=useState(false);
+  const [choosing,setChoosing]=useState(false);
+  const [inputArrived,setInputArrived]=useState(false);
+  const inputRevision=useRef<number>();
+  const completion=useRef<number>();
+  const arrivalTimer=useRef<ReturnType<typeof setTimeout>>();
+  useEffect(()=>()=>clearTimeout(arrivalTimer.current),[]);
+  useEffect(()=>{clearTimeout(arrivalTimer.current);completion.current=undefined;inputRevision.current=undefined;setInputArrived(false);setExpression({pending:false});setArrived(false);setListening(false);},[accompanying?.ref]);
+  useEffect(()=>{
+    const next=advanceCompletion(completion.current,expression.completed);
+    completion.current=next.highWater;
+    if(!next.arrived)return;
+    clearTimeout(arrivalTimer.current);setArrived(true);
+    arrivalTimer.current=setTimeout(()=>setArrived(false),1200);
+  },[expression.completed]);
+  useEffect(()=>{
+    const prior=inputRevision.current;inputRevision.current=expression.inputRevision;
+    if(prior===undefined||expression.inputRevision===undefined||expression.inputRevision===prior)return;
+    setInputArrived(true);const timer=setTimeout(()=>setInputArrived(false),1200);return()=>clearTimeout(timer);
+  },[expression.inputRevision]);
+  useEffect(()=>{if(plane!=="Conversation")setListening(false);},[plane]);
+  const form:FormName=expression.state==="TurnInFlight"||expression.state==="InterruptRequested"?"searching":arrived?"arrival":listening||inputArrived?"listening":expression.pending||choosing?"presence":"idle";
+
 
   const choose = async (row: EncounterRow) => {
-    setError(undefined);
+    setError(undefined);setChoosing(true);
     try {
       // The same start/read pair every encounter open uses (Cradle.openEncounter) —
       // no new desktop-owned launch path.
@@ -65,7 +93,7 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
       await encounter(kernel.transport, row.project, {action: "read", agent_session: row.ref, after: 0, limit: 1});
       onAccompanying({ref: row.ref, project: row.project, space: row.space});
       setPlane("Conversation");
-    } catch (e) { setError(String(e)); }
+    } catch (e) { setError(String(e)); } finally {setChoosing(false);}
   };
 
   const binding: SurfaceBinding | undefined = accompanying ? {
@@ -78,10 +106,10 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
   } : undefined;
   const encounterPlane: "Conversation" | "Activity" | "Inspect" = plane === "Context" ? "Conversation" : plane;
 
-  return <section className="agent-layer" aria-label="Accompanying agent" data-full={full}>
+  return <section className="agent-layer" aria-label="Accompanying agent" data-full={full} onFocusCapture={event=>{if((event.target as Element).matches(".encounter-composer textarea"))setListening(true);}} onBlurCapture={event=>{if((event.target as Element).matches(".encounter-composer textarea"))setListening(false);}}>
     <header className="agent-head">
       <div className="agent-head-row">
-        <span className="agent-head-glyph" aria-hidden="true"><Glyph name="chat" size={14}/></span>
+        <ExpressionAnchor form={form}/>
         <div><strong>Agent</strong><small>{project ? `Situated in ${project}` : "Situated in Central"}</small></div>
         <button className="agent-tool" aria-label={full ? "Restore right region" : "Full right region"} onClick={onFull}><Glyph name={full ? "restore" : "expand"}/></button>
         <button className="agent-tool" aria-label="Collapse right region" onClick={onClose}><Glyph name="close"/></button>
@@ -93,11 +121,12 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
     </nav>
     <div className="agent-body">
       {error && <p role="alert">{error}</p>}
-      {plane === "Context"
-        ? <ContextPlane subject={subject} history={history} historyAvailable={historyAvailable} accompanying={accompanying}/>
-        : binding
-          ? <EncounterSurface key={binding.id} binding={{...binding, view: {encounterPlane}}} onView={view => setPlane(view.encounterPlane ?? "Conversation")} presentation={full ? "full" : "side"}/>
-          : <NoAccompanying project={project} onOpen={choose}/>}
+      {/* The visible head still reads this same encounter while Context is open.
+          Keep its one observer mounted; hide only its body, never duplicate it. */}
+      {binding
+        ? <EncounterSurface key={binding.id} binding={{...binding, view: {encounterPlane}}} onView={view => setPlane(view.encounterPlane ?? "Conversation")} presentation={full ? "full" : "side"} onExpression={setExpression} concealed={plane==="Context"}/>
+        : plane!=="Context" ? <NoAccompanying project={project} onOpen={choose}/> : null}
+      {plane==="Context"&&<ContextPlane subject={subject} history={history} historyAvailable={historyAvailable} accompanying={accompanying}/>}
     </div>
   </section>;
 }

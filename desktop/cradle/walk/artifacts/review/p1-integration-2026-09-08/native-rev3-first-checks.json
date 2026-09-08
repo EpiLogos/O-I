@@ -1,0 +1,28 @@
+{
+  "standing": "bounded native observations; complete gate pending",
+  "system_ground": "Isolated canonical root visibly disclosed after corrected OI_HOME launch",
+  "suite": "/tmp/oi-p1-exact-bindings-20260908/oi",
+  "keyboard_resize": {
+    "width_before": 247,
+    "width_after": 263,
+    "native_peak_emitters": 1,
+    "drained": true
+  },
+  "browser": {
+    "actual_url": "http://127.0.0.1:62387/browser-lifecycle.html",
+    "retained_input": "P1 browser continuity",
+    "incremented_count": 1,
+    "actual_webkit_page_loaded": true
+  },
+  "native_window": {
+    "inner_position_physical": {
+      "x": 0,
+      "y": 58
+    },
+    "inner_size_physical": {
+      "height": 1606,
+      "width": 2118
+    },
+    "scale_factor": 2.0
+  }
+}

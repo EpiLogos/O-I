@@ -1,4 +1,5 @@
 import {useShellGeometry} from "./geometry";
+import {requestResizeExpression} from "../shared/Expression";
 import {SystemPanel} from "./SystemPanel";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type Dispatch, type SetStateAction } from "react";
 import type { AgencyDepth, LayoutState } from "../surface/types";
@@ -152,7 +153,7 @@ export function DesktopShell(p: Props) {
   const separator = (side: Side) => <div className={`region-resizer ${side}`} role="separator" aria-label={`Resize ${side} region`} aria-orientation="vertical"
     aria-valuenow={side === "left" ? l.leftWidth ?? 240 : l.rightWidth ?? 320}
     aria-valuemin={side === "left" ? 200 : 240} aria-valuemax={side === "left" ? 600 : 720} tabIndex={0}
-    onKeyDown={e => { if (e.key === "ArrowLeft" || e.key === "ArrowRight") { e.preventDefault(); resize(side, (side === "left" ? l.leftWidth ?? 240 : l.rightWidth ?? 320) + (e.key === "ArrowRight" ? 16 : -16) * (side === "left" ? 1 : -1)); } }}
+    onKeyDown={e => { if (e.key === "ArrowLeft" || e.key === "ArrowRight") { e.preventDefault(); const before=e.currentTarget.getBoundingClientRect(); resize(side, (side === "left" ? l.leftWidth ?? 240 : l.rightWidth ?? 320) + (e.key === "ArrowRight" ? 16 : -16) * (side === "left" ? 1 : -1)); requestResizeExpression(e.currentTarget,before); } }}
     onPointerDown={e => { e.preventDefault(); stopGeometry(); e.currentTarget.setPointerCapture(e.pointerId); e.currentTarget.dataset.dragging = "true"; if(host.current)host.current.dataset.resizing=side; document.documentElement.style.cursor="col-resize"; document.documentElement.style.userSelect="none"; }}
     onPointerMove={e => {
       if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
