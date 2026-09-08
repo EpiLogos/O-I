@@ -85,13 +85,11 @@ fn command_descriptor_current_dev_install(args: &[OsString]) -> Result<i32, Stri
         }
 
         let surface = find_surface(&catalog, &id)?;
-        let registration = registration_in_modality(
+        let registration = registration_for(
             surface,
             Some(executable.clone()),
             Some(root.clone()),
             Some(surface.docs_ref.clone()),
-            oi_cli::modality::InstallModality::DeveloperSource,
-            Some("developer-source-build".to_owned()),
         )?;
         ensure_alias_available(&composition, &registration)?;
         composition.modules.insert(id.clone(), registration);
