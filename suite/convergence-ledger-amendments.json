@@ -1,7 +1,7 @@
 {
   "schema": "oi.convergence-ledger-amendments/v1",
-  "observed_at": "2026-09-09T13:39:47Z",
-  "reason": "Exact live GitHub reconciliation after Factory Commission acceptance. Closed/deleted refs leave the moving set; current refs retain owner and re-entry truth. This is coverage evidence, not #97 closure.",
+  "observed_at": "2026-09-09T13:45:51Z",
+  "reason": "Exact live GitHub reconciliation after AIKit PR #255 merged. Only its merged branch and pull request leave the moving set; current refs retain owner and re-entry truth. This is coverage evidence, not #97 closure.",
   "repositories": [
     {
       "repository": "EpiLogos/O-I",
@@ -34,12 +34,10 @@
       "remove_branches": ["agent/aikit-v2-ql-mef", "agent/harness-admission-sdk", "agent/native-credential-provider", "agent/praxis-project-reflection", "agent/tui-v2-application-domain-parity", "agent/v2-explain-history-evidence-convergence", "feat/current-world-composition-readiness", "feat/flow-context-122", "feat/human-authority-collaboration", "feat/instruction-architecture-craft", "feat/living-wiki-bounded-preflight", "feat/living-wiki-complete-118", "feat/living-wiki-knowledge-application", "praxis/meta-harness-context-craft"],
       "remove_open_pull_requests": [74, 86, 87, 106, 107, 123],
       "branches": [
-        {"name":"feat/factory-developmental-consumer","disposition":"RECONCILE_BEFORE_CLOSURE","owner":"AIKit #211 / PR #255","reason":"Active AIKit consumer of Factory developmental reads and accepted Commission; execution and full TUI acceptance remain open.","reentry_condition":"PR #255 receives owner review and exact-main disposition; AIKit #211 retains its remaining acceptance frontier.","closure_blocking":true},
         {"name":"feat/wiki-inhabitation-domain","disposition":"RECONCILE_BEFORE_CLOSURE","owner":"AIKit wiki continuity / PR #254","reason":"Active minimal CASE 06 authoring-convention tranche; entity dirty-marking and reconcile work remain outside this branch.","reentry_condition":"PR #254 receives owner review and remaining CASE 06 work is separately dispositioned.","closure_blocking":true}
       ],
       "open_pull_requests": [
-        {"number":254,"disposition":"RECONCILE_BEFORE_CLOSURE","owner":"AIKit wiki continuity","reason":"Open PR for bounded CASE 06 authoring conventions, not full wiki continuity closure.","reentry_condition":"Owner review resolves PR #254 and records the remaining CASE 06 frontier.","closure_blocking":true},
-        {"number":255,"disposition":"RECONCILE_BEFORE_CLOSURE","owner":"AIKit #211 / Factory consumer","reason":"Open PR consuming Factory owner reads and Commission without claiming execution or full TUI completion.","reentry_condition":"Owner review resolves PR #255; exact-main consumer evidence is then re-observed.","closure_blocking":true}
+        {"number":254,"disposition":"RECONCILE_BEFORE_CLOSURE","owner":"AIKit wiki continuity","reason":"Open PR for bounded CASE 06 authoring conventions, not full wiki continuity closure.","reentry_condition":"Owner review resolves PR #254 and records the remaining CASE 06 frontier.","closure_blocking":true}
       ]
     },
     {

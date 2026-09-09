@@ -1,13 +1,13 @@
 {
   "schema": 1,
-  "verified_at": "2026-09-06",
+  "verified_at": "2026-09-09",
   "surfaces": [
     {
       "id": "central",
       "public_name": "Central",
       "function": "persistent personal ground",
       "repository": "https://github.com/EpiLogos/Central",
-      "docs_ref": "daec44cc5fdde2a9785855e05f3bf55e87623b04",
+      "docs_ref": "f3559dbf900b8409ff00b24a84b824c6cd6ec2c3",
       "docs_path": "README.md",
       "skill_paths": [
         "skills/control-maintenance/SKILL.md",
@@ -37,7 +37,7 @@
           "doctor",
           "--json"
         ],
-        "command_revision": "daec44cc5fdde2a9785855e05f3bf55e87623b04",
+        "command_revision": "f3559dbf900b8409ff00b24a84b824c6cd6ec2c3",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [
@@ -54,8 +54,8 @@
       "install": {
         "kind": "oi-managed-binary",
         "modality": "fresh-ground",
-        "ref": "daec44cc5fdde2a9785855e05f3bf55e87623b04",
-        "revision": "daec44cc5fdde2a9785855e05f3bf55e87623b04",
+        "ref": "f3559dbf900b8409ff00b24a84b824c6cd6ec2c3",
+        "revision": "f3559dbf900b8409ff00b24a84b824c6cd6ec2c3",
         "path": "ctrl",
         "note": "Current #97 source/install pin. Central owns Control, Work, ProjectCentral, source authority, AgentProfile persistence/Actions and authored Skill/SkillSet/Method/Routine assignments. Routine enable/proof/trigger/authority remains AIKit-owned."
       },
@@ -82,7 +82,7 @@
       "public_name": "Actuation",
       "function": "Agency, WorldBinding, RootScope, Metagency, Determination and Return authority",
       "repository": "https://github.com/EpiLogos/Actuation",
-      "docs_ref": "bdfdb987a6a4b29a41959b9fa84b38db65af0012",
+      "docs_ref": "5eec4639f1c8727865373b27fdcde09fdcca2d53",
       "docs_path": "docs/WORLD-BOUND-ROOT-AGENCY.md",
       "skill_paths": [],
       "native": {
@@ -103,7 +103,7 @@
           "verify",
           "--json"
         ],
-        "command_revision": "bdfdb987a6a4b29a41959b9fa84b38db65af0012",
+        "command_revision": "5eec4639f1c8727865373b27fdcde09fdcca2d53",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [],
@@ -114,8 +114,8 @@
       "install": {
         "kind": "oi-managed-native-cli",
         "modality": "developer-source",
-        "ref": "bdfdb987a6a4b29a41959b9fa84b38db65af0012",
-        "revision": "bdfdb987a6a4b29a41959b9fa84b38db65af0012",
+        "ref": "5eec4639f1c8727865373b27fdcde09fdcca2d53",
+        "revision": "5eec4639f1c8727865373b27fdcde09fdcca2d53",
         "path": "bin/actuation",
         "note": "Current accepted owner main publishes the dependency-free native Actuation command and declares native CLI installation."
       },
@@ -140,7 +140,7 @@
       "public_name": "AIKit",
       "function": "context, capability, model, credential, SessionSpace and provider-process resolution",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "docs_ref": "e8684f81750c684527ce06757ecc2fdff0871690",
+      "docs_ref": "3a37348199677c9de73eef330084c814467cfdcd",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -164,7 +164,7 @@
           "doctor",
           "--json"
         ],
-        "command_revision": "e8684f81750c684527ce06757ecc2fdff0871690",
+        "command_revision": "3a37348199677c9de73eef330084c814467cfdcd",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [
@@ -181,8 +181,8 @@
       "install": {
         "kind": "oi-managed-binary",
         "modality": "developer-source",
-        "ref": "e8684f81750c684527ce06757ecc2fdff0871690",
-        "revision": "e8684f81750c684527ce06757ecc2fdff0871690",
+        "ref": "3a37348199677c9de73eef330084c814467cfdcd",
+        "revision": "3a37348199677c9de73eef330084c814467cfdcd",
         "path": "crates/aikit-cli",
         "note": "Current #97 source/install pin; immutable released artifacts remain separately recorded in suite/manifest.json."
       },
@@ -207,7 +207,7 @@
       "public_name": "Software Factory",
       "function": "developmental Project, Journey, Run, Candidate, evidence and authorised Factory Action semantics",
       "repository": "https://github.com/EpiLogos/agent-system-design",
-      "docs_ref": "ea4cec6ac105aa527cda034bd3e102645b4aa8d9",
+      "docs_ref": "12a721dbbb51e3c70d52ef00220efa859ef930fd",
       "docs_path": "factory/README.md",
       "skill_paths": [],
       "native": {
@@ -228,7 +228,7 @@
           "verify",
           "--json"
         ],
-        "command_revision": "ea4cec6ac105aa527cda034bd3e102645b4aa8d9",
+        "command_revision": "12a721dbbb51e3c70d52ef00220efa859ef930fd",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [
@@ -245,8 +245,8 @@
       "install": {
         "kind": "oi-managed-native-cli",
         "modality": "developer-source",
-        "ref": "ea4cec6ac105aa527cda034bd3e102645b4aa8d9",
-        "revision": "ea4cec6ac105aa527cda034bd3e102645b4aa8d9",
+        "ref": "12a721dbbb51e3c70d52ef00220efa859ef930fd",
+        "revision": "12a721dbbb51e3c70d52ef00220efa859ef930fd",
         "path": "factory",
         "note": "Current accepted owner main publishes the native Factory CLI over FactoryBuild/provider/Action owners and receives composed agent capability through typed stable refs (#188); the historical repository name remains agent-system-design pending canonical rename."
       },
@@ -271,7 +271,7 @@
       "public_name": "Workcell",
       "function": "material execution, model-serving base, process containment and secret materialisation",
       "repository": "https://github.com/EpiLogos/Workcell",
-      "docs_ref": "8eb521eefcfde0f88386d7782438a925d48e66d7",
+      "docs_ref": "fa47a29fa49a6636675d21309b00c269ac824abb",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -292,7 +292,7 @@
           "--json",
           "doctor"
         ],
-        "command_revision": "8eb521eefcfde0f88386d7782438a925d48e66d7",
+        "command_revision": "fa47a29fa49a6636675d21309b00c269ac824abb",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [
@@ -309,8 +309,8 @@
       "install": {
         "kind": "oi-managed-binary",
         "modality": "developer-source",
-        "ref": "8eb521eefcfde0f88386d7782438a925d48e66d7",
-        "revision": "8eb521eefcfde0f88386d7782438a925d48e66d7",
+        "ref": "fa47a29fa49a6636675d21309b00c269ac824abb",
+        "revision": "fa47a29fa49a6636675d21309b00c269ac824abb",
         "path": "crates/workcell-cli",
         "note": "Current #97 source/install pin including selector-independent native executable identity. Provider-specific physical resources remain physical acceptance evidence."
       },
@@ -346,7 +346,7 @@
       "public_name": "Quaternal Logic",
       "function": "deterministic QL kernel, complete MEF registry, service boundary and Vāk/formal operation surfaces",
       "repository": "https://github.com/EpiLogos/QL-MEF",
-      "docs_ref": "781981374eaa1f02952249dcdbca1af671d1ece4",
+      "docs_ref": "44ed3cd0e7a8bc25508a4e18ad3bb4c730013913",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -367,7 +367,7 @@
           "verify",
           "--json"
         ],
-        "command_revision": "781981374eaa1f02952249dcdbca1af671d1ece4",
+        "command_revision": "44ed3cd0e7a8bc25508a4e18ad3bb4c730013913",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [
@@ -384,8 +384,8 @@
       "install": {
         "kind": "oi-managed-native-cli",
         "modality": "developer-source",
-        "ref": "781981374eaa1f02952249dcdbca1af671d1ece4",
-        "revision": "781981374eaa1f02952249dcdbca1af671d1ece4",
+        "ref": "44ed3cd0e7a8bc25508a4e18ad3bb4c730013913",
+        "revision": "44ed3cd0e7a8bc25508a4e18ad3bb4c730013913",
         "path": "crates/ql-cli",
         "note": "Accepted native CLI owner cut for O:I #172. The wider moving QL/Epi research programme remains separately owned and does not become a #97 live-main gate."
       },
