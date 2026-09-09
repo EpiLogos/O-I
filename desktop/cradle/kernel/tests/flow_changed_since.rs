@@ -207,6 +207,7 @@ impl Fixture {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
 fn compose_returns_one_reading_with_both_sides_available() {
     let fixture = Fixture::new("compose-empty");
 
@@ -285,6 +286,7 @@ fn compose_returns_one_reading_with_both_sides_available() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
 fn compose_reports_owner_changes_above_the_thought_cursor() {
     let fixture = Fixture::new("compose-changed");
 
@@ -374,6 +376,7 @@ fn compose_reports_owner_changes_above_the_thought_cursor() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
 fn an_unavailable_side_is_named_never_faked_empty() {
     let fixture = Fixture::new("compose-unavailable");
 
@@ -432,6 +435,7 @@ fn an_unavailable_side_is_named_never_faked_empty() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
 fn a_malformed_thought_is_a_structural_error_naming_the_owner_shape() {
     let fixture = Fixture::new("compose-malformed");
 

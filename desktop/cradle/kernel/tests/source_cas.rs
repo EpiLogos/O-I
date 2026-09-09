@@ -34,6 +34,7 @@ impl Ground {
 impl Drop for Ground { fn drop(&mut self) { fs::remove_dir_all(&self.root).unwrap(); } }
 
 #[test]
+#[ignore = "requires actual OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn actual_owner_refs_content_and_wire_round_trip() {
     let ground = Ground::new();
     let mut kernel = Kernel::new(ground.client.clone());
@@ -48,6 +49,7 @@ fn actual_owner_refs_content_and_wire_round_trip() {
 }
 
 #[test]
+#[ignore = "requires actual OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn real_cas_refuses_external_revision_and_preserves_both_sides() {
     let ground = Ground::new();
     let mut kernel = Kernel::new(ground.client.clone());
@@ -68,6 +70,7 @@ fn real_cas_refuses_external_revision_and_preserves_both_sides() {
 }
 
 #[test]
+#[ignore = "requires actual OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn changed_project_selection_cannot_reroute_an_open_buffers_save() {
     let ground = Ground::new();
     let mut kernel = Kernel::new(ground.client.clone());
@@ -80,6 +83,7 @@ fn changed_project_selection_cannot_reroute_an_open_buffers_save() {
 }
 
 #[test]
+#[ignore = "requires actual OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn real_operations_emit_one_ordered_receipt_per_state_change() {
     let ground = Ground::new();
     let mut kernel = Kernel::new(ground.client.clone());
@@ -94,6 +98,7 @@ fn real_operations_emit_one_ordered_receipt_per_state_change() {
 }
 
 #[test]
+#[ignore = "requires actual OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn genuinely_missing_owner_is_unavailable_without_fabricated_sources() {
     let root = std::env::temp_dir().join(format!("absent-ctrl-{}", std::process::id()));
     assert!(!root.exists());
@@ -106,6 +111,7 @@ fn genuinely_missing_owner_is_unavailable_without_fabricated_sources() {
 }
 
 #[test]
+#[ignore = "requires actual OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn history_is_durable_owner_state_and_rechecks_current_retrieval_gate() {
     let ground = Ground::new();
     let mut kernel = Kernel::new(ground.client.clone());
@@ -131,6 +137,7 @@ fn history_is_durable_owner_state_and_rechecks_current_retrieval_gate() {
 }
 
 #[test]
+#[ignore = "requires actual OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn browsing_other_projects_preserves_open_source_focus_and_dirty_buffer() {
     let ground = Ground::new();
     let mut kernel = Kernel::new(ground.client.clone());
@@ -151,6 +158,7 @@ fn browsing_other_projects_preserves_open_source_focus_and_dirty_buffer() {
 }
 
 #[test]
+#[ignore = "requires actual OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn real_aikit_wiki_read_search_focus_and_failed_use_do_not_forge_authority() {
     use oi_cradle_kernel::knowledge::{Address, Request};
     let ground = Ground::new();
@@ -190,6 +198,7 @@ fn real_aikit_wiki_read_search_focus_and_failed_use_do_not_forge_authority() {
 }
 
 #[test]
+#[ignore = "requires actual OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn native_session_space_discovery_is_project_scoped_and_never_moves_work() {
     let ground=Ground::new();
     let executable=oi_cradle_kernel::agency::executable();
@@ -230,6 +239,7 @@ fn native_session_space_discovery_is_project_scoped_and_never_moves_work() {
 }
 
 #[test]
+#[ignore = "requires actual OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn native_files_are_read_without_adoption_and_focus_never_reowns_source_drafts() {
     let ground = Ground::new();
     let native = ground.root.join("Work/Other/native.txt");
@@ -264,6 +274,7 @@ fn native_files_are_read_without_adoption_and_focus_never_reowns_source_drafts()
 }
 
 #[test]
+#[ignore = "requires actual OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn native_file_context_comes_from_central_manifest_and_cannot_be_rebound_to_another_root() {
     let ground=Ground::new();
     fs::write(ground.root.join("Work/Editor/ordinary.rs"),"fn main() {}\n").unwrap();

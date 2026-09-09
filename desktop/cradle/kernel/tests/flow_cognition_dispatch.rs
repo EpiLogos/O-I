@@ -252,6 +252,7 @@ impl Fixture {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
 fn bare_row_dispatch_surfaces_the_owner_preflight_and_never_executes() {
     let fixture = Fixture::new("preflight-bare");
 
@@ -281,6 +282,7 @@ fn bare_row_dispatch_surfaces_the_owner_preflight_and_never_executes() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
 fn owner_seams_travel_verbatim_and_the_deterministic_record_is_surfaced() {
     let fixture = Fixture::new("preflight-seams");
     let horizon = horizon_seam();
@@ -325,6 +327,7 @@ fn owner_seams_travel_verbatim_and_the_deterministic_record_is_surfaced() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
 fn explicit_record_executes_and_carries_the_typed_cognition_reading() {
     let fixture = Fixture::new("contemplate-execute");
 
@@ -371,6 +374,7 @@ fn explicit_record_executes_and_carries_the_typed_cognition_reading() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
 fn structural_impossibility_a_boolean_or_auto_invocation_cannot_execute() {
     let fixture = Fixture::new("contemplate-gate");
 
@@ -409,6 +413,7 @@ fn structural_impossibility_a_boolean_or_auto_invocation_cannot_execute() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
 fn owner_refusal_and_unavailable_pass_through_verbatim() {
     let fixture = Fixture::new("contemplate-owner-failures");
 

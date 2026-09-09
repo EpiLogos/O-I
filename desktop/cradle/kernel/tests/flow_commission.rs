@@ -151,6 +151,7 @@ fn client(root: &Path) -> CentralClient {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
 fn commission_lands_as_owner_revision_carrying_the_selection_verbatim() {
     let fixture = Fixture::new("commission-verbatim");
 
@@ -198,6 +199,7 @@ fn commission_lands_as_owner_revision_carrying_the_selection_verbatim() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
 fn agent_session_binds_without_owning_the_flow_identity() {
     let fixture = Fixture::new("commission-session");
 
@@ -246,6 +248,7 @@ fn agent_session_binds_without_owning_the_flow_identity() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
 fn stale_expected_revision_is_a_structured_conflict_never_a_silent_overwrite() {
     let fixture = Fixture::new("commission-conflict");
 
@@ -290,6 +293,7 @@ fn stale_expected_revision_is_a_structured_conflict_never_a_silent_overwrite() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
 fn owner_refusal_and_unavailable_pass_through_verbatim() {
     let fixture = Fixture::new("commission-owner-failures");
 
@@ -353,6 +357,7 @@ fn owner_refusal_and_unavailable_pass_through_verbatim() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
 fn owner_unavailable_is_explicit_absence_not_an_error() {
     let fixture = Fixture::new("commission-unavailable");
 

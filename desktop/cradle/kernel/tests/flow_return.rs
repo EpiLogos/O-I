@@ -53,6 +53,7 @@ fn temporary_root() -> PathBuf {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
 fn retained_flow_and_explicit_return_preserve_owner_identity_and_refusal() {
     let root = temporary_root();
     let client = CentralClient::with_suite_owner(
@@ -250,6 +251,7 @@ fn retained_flow_and_explicit_return_preserve_owner_identity_and_refusal() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
 fn kernel_apply_exposes_typed_owner_flow_return_seam() {
     let root = temporary_root();
     let client = CentralClient::with_suite_owner(
