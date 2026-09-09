@@ -9,6 +9,10 @@ pub struct PackageManifest {
     pub schema: String,
     pub package_ref: String,
     pub version: String,
+    #[serde(default = "default_protocol_version")]
+    pub protocol_min: String,
+    #[serde(default = "default_protocol_version")]
+    pub protocol_max: String,
     pub source: PackageSource,
     #[serde(default)]
     pub compatibility: Vec<SuiteRequirement>,
@@ -117,6 +121,7 @@ pub enum NativeRegistrationStatus {
 #[derive(Clone, Debug, Serialize, PartialEq, Eq)]
 pub struct PackageLifecycleReceipt {
     pub schema: &'static str,
+    pub protocol: &'static str,
     pub action: PackageLifecycleAction,
     pub package_ref: String,
     pub package_version: String,
@@ -147,6 +152,11 @@ pub fn validate_manifest(manifest: &PackageManifest) -> Result<(), String> {
     }
     nonempty("package_ref", &manifest.package_ref)?;
     validate_numeric_version("package version", &manifest.version)?;
+    crate::development_field::validate_protocol_envelope(
+        &manifest.protocol_min,
+        &manifest.protocol_max,
+    )
+    .map_err(|error| format!("package protocol envelope is incompatible: {error}"))?;
     nonempty("source.kind", &manifest.source.kind)?;
     nonempty("source.locator", &manifest.source.locator)?;
     nonempty("source.revision", &manifest.source.revision)?;
@@ -338,12 +348,17 @@ pub fn record_lifecycle_receipt(
 
     Ok(PackageLifecycleReceipt {
         schema: PACKAGE_RECEIPT_SCHEMA,
+        protocol: crate::development_field::DEVELOPMENT_PROTOCOL,
         action,
         package_ref: manifest.package_ref.clone(),
         package_version: manifest.version.clone(),
         source_revision: manifest.source.revision.clone(),
         native_outcomes,
     })
+}
+
+fn default_protocol_version() -> String {
+    crate::development_field::DEVELOPMENT_PROTOCOL.to_owned()
 }
 
 fn validate_disclosures(label: &str, values: &[String]) -> Result<(), String> {
