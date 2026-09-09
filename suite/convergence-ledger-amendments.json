@@ -1,7 +1,7 @@
 {
   "schema": "oi.convergence-ledger-amendments/v1",
-  "observed_at": "2026-09-09T14:15:44Z",
-  "reason": "Exact live GitHub reconciliation after AIKit PR #255 merged and PR #256 opened. Merged refs leave the moving set; current refs retain owner and re-entry truth. This is coverage evidence, not #97 closure.",
+  "observed_at": "2026-09-09T16:00:00Z",
+  "reason": "Exact live GitHub reconciliation after O:I Factory proving landed. Concurrent AIKit work has since landed too: the wiki-inhabitation domain (PR #254), the root domain register (PR #256) and the Cradle owner seams (PR #259) merged and their branches were deleted, so they leave the moving set. AIKit PR #257 remains the one open AIKit ref and keeps its owner and re-entry truth. Factory PR #213 (composed Agent capability intake repin, Factory #188) merged and its branch fix/profile-intake-current-pins was deleted, so it leaves the moving set as well. This is coverage evidence, not #97 or Factory programme closure.",
   "repositories": [
     {
       "repository": "EpiLogos/O-I",
@@ -34,18 +34,20 @@
       "remove_branches": ["agent/aikit-v2-ql-mef", "agent/harness-admission-sdk", "agent/native-credential-provider", "agent/praxis-project-reflection", "agent/tui-v2-application-domain-parity", "agent/v2-explain-history-evidence-convergence", "feat/current-world-composition-readiness", "feat/flow-context-122", "feat/human-authority-collaboration", "feat/instruction-architecture-craft", "feat/living-wiki-bounded-preflight", "feat/living-wiki-complete-118", "feat/living-wiki-knowledge-application", "praxis/meta-harness-context-craft"],
       "remove_open_pull_requests": [74, 86, 87, 106, 107, 123],
       "branches": [
-        {"name":"feat/wiki-inhabitation-domain","disposition":"RECONCILE_BEFORE_CLOSURE","owner":"AIKit wiki continuity / PR #254","reason":"Active minimal CASE 06 authoring-convention tranche; entity dirty-marking and reconcile work remain outside this branch.","reentry_condition":"PR #254 receives owner review and remaining CASE 06 work is separately dispositioned.","closure_blocking":true},
-        {"name":"fix/root-domain-register","disposition":"RECONCILE_BEFORE_CLOSURE","owner":"AIKit domain register / PR #256","reason":"Active owner correction makes root-register KnowledgeDomain declarations visible outside project scope; it remains under open review and does not establish Factory programme closure.","reentry_condition":"PR #256 receives owner review and its accepted-main disposition is recorded.","closure_blocking":true}
+        {"name":"feat/work-field-factory-presentation","disposition":"RECONCILE_BEFORE_CLOSURE","owner":"AIKit Factory work presentation / PR #257","reason":"Active bounded TUI human vertical over Factory's accepted public contract; it advances AIKit #211 and does not close the Factory programme.","reentry_condition":"PR #257 receives owner review and its accepted-main result is recorded in the Wayfinder.","closure_blocking":true}
       ],
       "open_pull_requests": [
-        {"number":254,"disposition":"RECONCILE_BEFORE_CLOSURE","owner":"AIKit wiki continuity","reason":"Open PR for bounded CASE 06 authoring conventions, not full wiki continuity closure.","reentry_condition":"Owner review resolves PR #254 and records the remaining CASE 06 frontier.","closure_blocking":true},
-        {"number":256,"disposition":"RECONCILE_BEFORE_CLOSURE","owner":"AIKit domain register","reason":"Open PR for root-register KnowledgeDomain scope correction, not Factory programme closure.","reentry_condition":"Owner review resolves PR #256 and records the accepted-main result.","closure_blocking":true}
+        {"number":257,"disposition":"RECONCILE_BEFORE_CLOSURE","owner":"AIKit Factory work presentation","reason":"Open PR for Direct/Factory/Attention TUI composition and native Factory start action, not full AIKit #211 closure.","reentry_condition":"Owner review resolves PR #257 and records the remaining AIKit #211 frontier.","closure_blocking":true}
       ]
     },
     {
       "repository": "EpiLogos/agent-system-design",
       "remove_branches": ["agent/factory-q4-client-adapter", "agent/factory-rust-foundation", "agent/ql-deep-runtime", "agent/ql-mef-module-vision-spec", "build/factory-root-contracts-2026-08-13", "design/persistent-agency-material-hosting", "feat/current-world-composition-readiness", "harmonize/actuation-runtime-boundary", "program/coordinated-build-2026-08-13", "repair/oi97-actuation-boundary-provenance", "repair/oi97-delete-duplicate-refs", "research/deepseek-harness-maximal-host"],
-      "remove_open_pull_requests": [132, 141, 142], "branches": [], "open_pull_requests": []
+      "remove_open_pull_requests": [132, 141, 142],
+      "branches": [
+      ],
+      "open_pull_requests": [
+      ]
     },
     {
       "repository": "EpiLogos/Workcell",
