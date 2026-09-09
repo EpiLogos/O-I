@@ -259,6 +259,7 @@ const FLOW_ROW_REF: &str = "wiki:node:action-flow";
 const SUBJECT_ROW_REF: &str = "wiki:node:action-subject";
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn open_dispatches_through_the_real_owner_and_records_exactly_one_familiarity_observation() {
     let fixture = Fixture::new("open");
 
@@ -320,6 +321,7 @@ fn open_dispatches_through_the_real_owner_and_records_exactly_one_familiarity_ob
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn every_seeded_resolution_hit_invokes_its_open_action() {
     let fixture = Fixture::new("walk");
 
@@ -357,6 +359,7 @@ fn every_seeded_resolution_hit_invokes_its_open_action() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn central_wiki_read_action_returns_the_owner_payload_unchanged() {
     let fixture = Fixture::new("central");
 
@@ -409,6 +412,7 @@ fn central_wiki_read_action_returns_the_owner_payload_unchanged() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn unsupported_spellings_are_explicit_states_naming_the_ref() {
     let fixture = Fixture::new("unsupported");
     let reasons = [
@@ -439,6 +443,7 @@ fn unsupported_spellings_are_explicit_states_naming_the_ref() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn unknown_owner_and_malformed_refs_are_explicit_states() {
     let fixture = Fixture::new("malformed");
 
@@ -465,6 +470,7 @@ fn unknown_owner_and_malformed_refs_are_explicit_states() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn owner_refusal_and_unavailable_are_explicit_verbatim_states() {
     let fixture = Fixture::new("owner-states");
 
@@ -530,6 +536,7 @@ fn owner_refusal_and_unavailable_are_explicit_verbatim_states() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn wire_shape_is_stable_for_the_typed_consumer() {
     let fixture = Fixture::new("wire");
 

@@ -3,8 +3,8 @@ use oi_cli::guardian::{
     GUARDIAN_HARNESS_SKILL_ROOTS, GUARDIAN_PROFILE_REF,
 };
 use oi_cli::skillset::{
-    resolve_profile, AgentScope, AuthorityObservation, DirectProjectionState,
-    Requiredness, SkillAvailability, SkillObservation, SkillResolutionMode,
+    resolve_profile, AgentScope, AuthorityObservation, DirectProjectionState, Requiredness,
+    SkillAvailability, SkillObservation, SkillResolutionMode,
 };
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -32,7 +32,10 @@ fn guardian_profile_resolves_to_the_shipped_oi_skills_only() {
     // O:I ships exactly one profile — its guardian set. Cross-product skill
     // composition belongs to AIKit's sets, not to this manifest.
     assert_eq!(manifest.profiles.len(), 1);
-    assert_eq!(manifest.profiles[0].profile_ref, "oi:skillset:base-guardian");
+    assert_eq!(
+        manifest.profiles[0].profile_ref,
+        "oi:skillset:base-guardian"
+    );
     for skill in &manifest.skills {
         assert!(
             skill.skill_ref.starts_with("oi:skill:"),
@@ -72,7 +75,10 @@ fn guardian_profile_resolves_to_the_shipped_oi_skills_only() {
     )
     .unwrap();
     assert!(!effective.degraded);
-    assert_eq!(effective.resolution_mode, SkillResolutionMode::OiDirectProjection);
+    assert_eq!(
+        effective.resolution_mode,
+        SkillResolutionMode::OiDirectProjection
+    );
     assert!(effective
         .skills
         .iter()
@@ -198,7 +204,10 @@ fn pickup_projects_guardian_set_into_harness_trees_with_receipts() {
             );
             // The receipt sits beside the projection file, named after it.
             let receipt = destination.with_file_name("SKILL.md.oi-projection.json");
-            assert!(receipt.exists(), "missing projection receipt beside {destination:?}");
+            assert!(
+                receipt.exists(),
+                "missing projection receipt beside {destination:?}"
+            );
             let receipt: serde_json::Value =
                 serde_json::from_slice(&fs::read(&receipt).unwrap()).unwrap();
             assert_eq!(receipt["schema"], "oi.skill-projection-receipt/v1");
@@ -255,13 +264,10 @@ fn pickup_projects_guardian_set_into_harness_trees_with_receipts() {
 
     // A repeated pickup is stable: unchanged destinations, no conflicts.
     let second = project_guardian_skillset(&ground, &oi_source_revision()).unwrap();
-    assert!(second
-        .outcomes
+    assert!(second.outcomes.iter().all(|outcome| outcome
+        .destinations
         .iter()
-        .all(|outcome| outcome
-            .destinations
-            .iter()
-            .all(|landing| landing.state == DirectProjectionState::Unchanged)));
+        .all(|landing| landing.state == DirectProjectionState::Unchanged)));
 }
 
 #[test]
@@ -281,7 +287,10 @@ fn pickup_preserves_local_edits_instead_of_clobbering() {
         .iter()
         .find(|landing| landing.harness_root == ".claude/skills")
         .unwrap();
-    assert_eq!(router_conflict.state, DirectProjectionState::ConflictPreserved);
+    assert_eq!(
+        router_conflict.state,
+        DirectProjectionState::ConflictPreserved
+    );
     assert_eq!(
         fs::read_to_string(&router).unwrap(),
         "locally edited guardian copy\n"
@@ -406,8 +415,14 @@ fn bootstrap_hands_the_guardian_set_to_aikit_when_installed() {
         stdout.contains("aikit: adopted 3 guardian capsule(s)"),
         "{stdout}\naikit calls:\n{aikit_log}"
     );
-    assert!(stdout.contains("aikit: SkillSet oi-guardian holds 3 member(s)"), "{stdout}");
-    assert!(stdout.contains("aikit: applied generation gen-1"), "{stdout}");
+    assert!(
+        stdout.contains("aikit: SkillSet oi-guardian holds 3 member(s)"),
+        "{stdout}"
+    );
+    assert!(
+        stdout.contains("aikit: applied generation gen-1"),
+        "{stdout}"
+    );
 
     // The integrated sequence: project, survey, apply the adoption, create
     // the set, publish the generation.
@@ -430,7 +445,13 @@ fn bootstrap_hands_the_guardian_set_to_aikit_when_installed() {
         .collect();
     assert_eq!(
         order,
-        vec!["adopt-preview", "adopt-apply", "other", "set-create", "apply"]
+        vec![
+            "adopt-preview",
+            "adopt-apply",
+            "other",
+            "set-create",
+            "apply"
+        ]
     );
 
     // The direct harness projection still lands beside the AIKit collection.
@@ -716,13 +737,7 @@ fn sync_refreshes_a_stale_adopted_tree_through_aikit_procedures() {
     let store = home.path().join("aikit-store/payload");
     let originals = home.path().join("aikit-store/originals");
     fake_central(bin.path());
-    fake_aikit_with_ownership(
-        bin.path(),
-        &log,
-        &ground,
-        &store,
-        &originals,
-    );
+    fake_aikit_with_ownership(bin.path(), &log, &ground, &store, &originals);
 
     let init = Command::new(env!("CARGO_BIN_EXE_oi"))
         .env("OI_HOME", home.path())
@@ -742,7 +757,10 @@ fn sync_refreshes_a_stale_adopted_tree_through_aikit_procedures() {
     for name in ["oi", "oi-suite-operator", "central-session-strap"] {
         let projected = projected_paths(&ground, name).remove(0);
         assert!(
-            fs::symlink_metadata(&projected).unwrap().file_type().is_symlink(),
+            fs::symlink_metadata(&projected)
+                .unwrap()
+                .file_type()
+                .is_symlink(),
             "{name} was not relinked after init\ninit stdout:\n{}\naikit log:\n{}",
             String::from_utf8_lossy(&init.stdout),
             fs::read_to_string(&log).unwrap_or_default()
@@ -839,9 +857,14 @@ fn sync_refreshes_a_stale_adopted_tree_through_aikit_procedures() {
     // bytes, and the payload store was refreshed from them.
     for name in ["oi", "oi-suite-operator", "central-session-strap"] {
         let projected = projected_paths(&ground, name).remove(0);
-        assert!(fs::symlink_metadata(&projected).unwrap().file_type().is_symlink());
+        assert!(fs::symlink_metadata(&projected)
+            .unwrap()
+            .file_type()
+            .is_symlink());
         assert!(
-            !fs::read_to_string(&projected).unwrap().contains("stale drift marker"),
+            !fs::read_to_string(&projected)
+                .unwrap()
+                .contains("stale drift marker"),
             "{projected:?} still carries stale bytes"
         );
         assert!(
@@ -880,7 +903,10 @@ fn sync_refreshes_a_stale_adopted_tree_through_aikit_procedures() {
             .join("central-session-strap")
             .join(name);
         assert!(
-            fs::symlink_metadata(&sibling).unwrap().file_type().is_symlink(),
+            fs::symlink_metadata(&sibling)
+                .unwrap()
+                .file_type()
+                .is_symlink(),
             "{name} was not relinked by the re-adopt"
         );
         assert_eq!(
@@ -913,7 +939,10 @@ fn bootstrap_projects_guardian_skillset_into_a_fresh_ground() {
         String::from_utf8_lossy(&init.stderr)
     );
     let stdout = String::from_utf8_lossy(&init.stdout);
-    assert!(stdout.contains("guardian SkillSet oi:skillset:base-guardian"), "{stdout}");
+    assert!(
+        stdout.contains("guardian SkillSet oi:skillset:base-guardian"),
+        "{stdout}"
+    );
     for name in ["oi", "oi-suite-operator", "central-session-strap"] {
         for destination in projected_paths(&ground, name) {
             assert!(destination.exists(), "missing projection {destination:?}");

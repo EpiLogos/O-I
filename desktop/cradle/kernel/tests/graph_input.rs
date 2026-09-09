@@ -205,6 +205,7 @@ fn assert_shared_field_named_deferred(reading: &oi_cradle_kernel::graph::GraphRe
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn graph_reading_counts_equal_owner_fixture_counts_and_refs_round_trip() {
     let fixture = Fixture::new("counts", true);
 
@@ -297,6 +298,7 @@ fn graph_reading_counts_equal_owner_fixture_counts_and_refs_round_trip() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn absent_wiki_is_an_explicit_unavailable_input_not_an_empty_graph() {
     let fixture = Fixture::new("absent", false);
 
@@ -338,6 +340,7 @@ fn absent_wiki_is_an_explicit_unavailable_input_not_an_empty_graph() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn graph_reading_wire_shape_is_stable_and_inputs_are_named() {
     let fixture = Fixture::new("wire", true);
     let wire = serde_json::to_value(KernelOp::Graph {

@@ -90,8 +90,12 @@ impl ProductCommandCatalogue {
 
 pub fn product_command_catalogue() -> Result<ProductCommandCatalogue, String> {
     let resolved = crate::catalog_source::resolve()?;
-    let source: SurfaceCatalogSource = serde_json::from_str(&resolved.json)
-        .map_err(|error| format!("O:I surface catalogue ({}) is invalid: {error}", resolved.origin))?;
+    let source: SurfaceCatalogSource = serde_json::from_str(&resolved.json).map_err(|error| {
+        format!(
+            "O:I surface catalogue ({}) is invalid: {error}",
+            resolved.origin
+        )
+    })?;
     if source.schema != 1 {
         return Err(format!(
             "unsupported O:I surface catalogue schema {}",

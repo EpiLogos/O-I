@@ -1136,6 +1136,18 @@ fn fallback_source_ref(source_ref: &str) -> SemanticRef {
     }
 }
 
+fn owner_relation(reference: &str, kind: &str, source: &str) -> SemanticRef {
+    SemanticRef { ref_id: reference.into(), kind: kind.into(), native_owner: "central".into(), provenance: refs::RefProvenance { source: source.into(), revision: None } }
+}
+
+fn native_owner_reading<T:Serialize>(owner:&str,result:Result<T,material::Error>)->Result<KernelOpOutcome,String>{
+    let (data,failure)=match result {
+        Ok(value)=>(Some(serde_json::to_value(value).map_err(|e|e.to_string())?),None),
+        Err(error)=>(None,Some(serde_json::to_value(error).map_err(|e|e.to_string())?)),
+    };
+    Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::NativeOwnerReading{owner:owner.into(),data,failure}})
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1179,16 +1191,4 @@ mod tests {
             })
             .is_err());
     }
-}
-
-fn owner_relation(reference: &str, kind: &str, source: &str) -> SemanticRef {
-    SemanticRef { ref_id: reference.into(), kind: kind.into(), native_owner: "central".into(), provenance: refs::RefProvenance { source: source.into(), revision: None } }
-}
-
-fn native_owner_reading<T:Serialize>(owner:&str,result:Result<T,material::Error>)->Result<KernelOpOutcome,String>{
-    let (data,failure)=match result {
-        Ok(value)=>(Some(serde_json::to_value(value).map_err(|e|e.to_string())?),None),
-        Err(error)=>(None,Some(serde_json::to_value(error).map_err(|e|e.to_string())?)),
-    };
-    Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::NativeOwnerReading{owner:owner.into(),data,failure}})
 }

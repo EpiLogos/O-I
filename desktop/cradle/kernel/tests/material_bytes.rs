@@ -57,6 +57,7 @@ fn locate(ground: &Ground, name: &str) -> oi_cradle_kernel::files::Location {
 }
 
 #[test]
+#[ignore = "requires actual OI_CENTRAL_CTRL_BIN, or a real ctrl on PATH"]
 fn binary_material_reads_base64_with_mime_hint_and_matches_bytes() {
     let ground = Ground::new();
     fs::write(ground.root.join("asset.png"), PNG_BYTES).unwrap();
@@ -77,6 +78,7 @@ fn binary_material_reads_base64_with_mime_hint_and_matches_bytes() {
 }
 
 #[test]
+#[ignore = "requires actual OI_CENTRAL_CTRL_BIN, or a real ctrl on PATH"]
 fn nul_containing_file_refuses_text_read_but_succeeds_as_material() {
     let ground = Ground::new();
     let bytes: &[u8] = &[0, 1, 2, 255, 0];

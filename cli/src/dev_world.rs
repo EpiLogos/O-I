@@ -123,8 +123,12 @@ pub fn resolve_dev_world_setup(ground: &Path) -> Result<DevWorldSetup, String> {
             machine_path.display()
         )
     })?;
-    let machine: MachineConfig = toml::from_str(&machine_text)
-        .map_err(|error| format!("cannot parse machine config {}: {error}", machine_path.display()))?;
+    let machine: MachineConfig = toml::from_str(&machine_text).map_err(|error| {
+        format!(
+            "cannot parse machine config {}: {error}",
+            machine_path.display()
+        )
+    })?;
     if machine.schema != 1 {
         return Err(format!(
             "unsupported machine config schema {} in {}",

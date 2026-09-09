@@ -71,20 +71,36 @@ impl std::error::Error for OwnerCallError {}
 #[serde(tag = "action", rename_all = "snake_case")]
 pub enum Request {
     FlowInspect {
-        project: String,
+        /// The Work project whose NOW field holds the Flow. Absent names the
+        /// Central root register — the meta-project every ProjectCentral
+        /// specifies over, which keeps a NOW field of its own.
+        #[serde(default)]
+        project: Option<String>,
         flow_ref: String,
     },
     FlowList {
-        project: String,
+        /// The Work project whose NOW field holds the Flow. Absent names the
+        /// Central root register — the meta-project every ProjectCentral
+        /// specifies over, which keeps a NOW field of its own.
+        #[serde(default)]
+        project: Option<String>,
     },
     FlowRead {
-        project: String,
+        /// The Work project whose NOW field holds the Flow. Absent names the
+        /// Central root register — the meta-project every ProjectCentral
+        /// specifies over, which keeps a NOW field of its own.
+        #[serde(default)]
+        project: Option<String>,
         flow_ref: String,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         expected_revision: Option<String>,
     },
     FlowCreate {
-        project: String,
+        /// The Work project whose NOW field holds the Flow. Absent names the
+        /// Central root register — the meta-project every ProjectCentral
+        /// specifies over, which keeps a NOW field of its own.
+        #[serde(default)]
+        project: Option<String>,
         actor: String,
         actor_kind: String,
         #[serde(default)]
@@ -97,7 +113,11 @@ pub enum Request {
         agent_session_ref: Option<String>,
     },
     FlowAdopt {
-        project: String,
+        /// The Work project whose NOW field holds the Flow. Absent names the
+        /// Central root register — the meta-project every ProjectCentral
+        /// specifies over, which keeps a NOW field of its own.
+        #[serde(default)]
+        project: Option<String>,
         path: String,
         actor: String,
         actor_kind: String,
@@ -107,7 +127,11 @@ pub enum Request {
         agent_session_ref: Option<String>,
     },
     FlowWrite {
-        project: String,
+        /// The Work project whose NOW field holds the Flow. Absent names the
+        /// Central root register — the meta-project every ProjectCentral
+        /// specifies over, which keeps a NOW field of its own.
+        #[serde(default)]
+        project: Option<String>,
         flow_ref: String,
         expected_revision: String,
         content: String,
@@ -117,19 +141,31 @@ pub enum Request {
         agent_session_ref: Option<String>,
     },
     FlowRename {
-        project: String,
+        /// The Work project whose NOW field holds the Flow. Absent names the
+        /// Central root register — the meta-project every ProjectCentral
+        /// specifies over, which keeps a NOW field of its own.
+        #[serde(default)]
+        project: Option<String>,
         flow_ref: String,
         expected_revision: String,
         new_path: String,
     },
     FlowLifecycle {
-        project: String,
+        /// The Work project whose NOW field holds the Flow. Absent names the
+        /// Central root register — the meta-project every ProjectCentral
+        /// specifies over, which keeps a NOW field of its own.
+        #[serde(default)]
+        project: Option<String>,
         flow_ref: String,
         expected_revision: String,
         lifecycle: String,
     },
     FlowHistory {
-        project: String,
+        /// The Work project whose NOW field holds the Flow. Absent names the
+        /// Central root register — the meta-project every ProjectCentral
+        /// specifies over, which keeps a NOW field of its own.
+        #[serde(default)]
+        project: Option<String>,
         flow_ref: String,
     },
     SourceReturn {
@@ -295,9 +331,21 @@ impl CentralClient {
     /// `Unavailable`; `ok:false` is `Refused` with the owner's message.
     pub fn run(&self, action: &str, mut input: Value) -> Result<Value, OwnerCallError> {
         if let Some(object) = input.as_object_mut() {
-            object
-                .entry("project".to_owned())
-                .or_insert_with(|| Value::String(self.project_query.clone()));
+            // An absent project takes the configured co-reference; an explicit
+            // null names the Central root register and is carried as absence,
+            // never back-filled into a project the caller did not choose.
+            match object.get("project") {
+                Some(Value::Null) => {
+                    object.remove("project");
+                }
+                None => {
+                    object.insert(
+                        "project".to_owned(),
+                        Value::String(self.project_query.clone()),
+                    );
+                }
+                Some(_) => {}
+            }
         }
         let mut command = Command::new(&self.executable);
         if self.suite_route {
@@ -452,7 +500,7 @@ impl CentralClient {
     /// the authority for capability availability and the last revision.
     pub fn flow_inspect(
         &self,
-        project: &str,
+        project: Option<&str>,
         flow_ref: &str,
     ) -> Result<FlowInspection, OwnerCallError> {
         let data = self.run(
@@ -470,7 +518,7 @@ impl CentralClient {
 
     /// List retained Flows. The returned records, including source refs and
     /// revision provenance, are carried verbatim from Central.
-    pub fn flow_list(&self, project: &str) -> Result<FlowList, OwnerCallError> {
+    pub fn flow_list(&self, project: Option<&str>) -> Result<FlowList, OwnerCallError> {
         let data = self.run(
             "projectcentral.flow.list",
             json!({ "project": project }),
@@ -484,7 +532,7 @@ impl CentralClient {
     /// is forwarded to Central for its own read-time compare.
     pub fn flow_read(
         &self,
-        project: &str,
+        project: Option<&str>,
         flow_ref: &str,
         expected_revision: Option<&str>,
     ) -> Result<FlowReading, OwnerCallError> {
@@ -500,9 +548,12 @@ impl CentralClient {
 
     /// Create a blank retained Flow. Path, title and local stamp remain
     /// owner-defined optional inputs; the kernel does not derive placement.
+    // The owner Action's inputs, one parameter each: this signature mirrors
+    // Central's own contract rather than hiding it behind a struct of ours.
+    #[allow(clippy::too_many_arguments)]
     pub fn flow_create(
         &self,
-        project: &str,
+        project: Option<&str>,
         actor: &str,
         actor_kind: &str,
         local_stamp: Option<&str>,
@@ -523,9 +574,12 @@ impl CentralClient {
     }
 
     /// Adopt a retained ordinary source as a Flow without moving it.
+    // The owner Action's inputs, one parameter each: this signature mirrors
+    // Central's own contract rather than hiding it behind a struct of ours.
+    #[allow(clippy::too_many_arguments)]
     pub fn flow_adopt(
         &self,
-        project: &str,
+        project: Option<&str>,
         path: &str,
         actor: &str,
         actor_kind: &str,
@@ -538,9 +592,12 @@ impl CentralClient {
 
     /// Write a Flow revision through Central's compare-and-swap and preserve
     /// the owner result. The kernel never writes the ordinary source itself.
+    // The owner Action's inputs, one parameter each: this signature mirrors
+    // Central's own contract rather than hiding it behind a struct of ours.
+    #[allow(clippy::too_many_arguments)]
     pub fn flow_write(
         &self,
-        project: &str,
+        project: Option<&str>,
         flow_ref: &str,
         expected_revision: &str,
         content: &str,
@@ -561,9 +618,12 @@ impl CentralClient {
     }
 
     /// Rename a retained Flow while preserving its stable FlowRef.
+    // The owner Action's inputs, one parameter each: this signature mirrors
+    // Central's own contract rather than hiding it behind a struct of ours.
+    #[allow(clippy::too_many_arguments)]
     pub fn flow_rename(
         &self,
-        project: &str,
+        project: Option<&str>,
         flow_ref: &str,
         expected_revision: &str,
         new_path: &str,
@@ -575,7 +635,7 @@ impl CentralClient {
     /// Change only the owner-held Flow lifecycle.
     pub fn flow_lifecycle(
         &self,
-        project: &str,
+        project: Option<&str>,
         flow_ref: &str,
         expected_revision: &str,
         lifecycle: &str,
@@ -587,7 +647,7 @@ impl CentralClient {
     /// Read exact owner-stored Flow revision receipts.
     pub fn flow_history(
         &self,
-        project: &str,
+        project: Option<&str>,
         flow_ref: &str,
     ) -> Result<FlowHistory, OwnerCallError> {
         let data = self.run(
@@ -600,6 +660,9 @@ impl CentralClient {
 
     /// Store an explicit returned-work proposal. This never mutates the
     /// authored source; acceptance is a separate owner Action.
+    // The owner Action's inputs, one parameter each: this signature mirrors
+    // Central's own contract rather than hiding it behind a struct of ours.
+    #[allow(clippy::too_many_arguments)]
     pub fn source_return(
         &self,
         project: &str,
@@ -739,17 +802,17 @@ impl CentralClient {
     pub fn apply_request(&self, request: Request) -> Result<Response, OwnerCallError> {
         match request {
             Request::FlowInspect { project, flow_ref } => self
-                .flow_inspect(&project, &flow_ref)
+                .flow_inspect(project.as_deref(), &flow_ref)
                 .map(|inspection| Response::FlowInspection { inspection }),
             Request::FlowList { project } => self
-                .flow_list(&project)
+                .flow_list(project.as_deref())
                 .map(|listing| Response::FlowList { listing }),
             Request::FlowRead {
                 project,
                 flow_ref,
                 expected_revision,
             } => self
-                .flow_read(&project, &flow_ref, expected_revision.as_deref())
+                .flow_read(project.as_deref(), &flow_ref, expected_revision.as_deref())
                 .map(|reading| Response::FlowRead { reading }),
             Request::FlowCreate {
                 project,
@@ -761,7 +824,7 @@ impl CentralClient {
                 agent_session_ref,
             } => self
                 .flow_create_reading(
-                    &project,
+                    project.as_deref(),
                     &actor,
                     &actor_kind,
                     local_stamp.as_deref(),
@@ -779,7 +842,7 @@ impl CentralClient {
                 agent_session_ref,
             } => self
                 .flow_adopt_reading(
-                    &project,
+                    project.as_deref(),
                     &path,
                     &actor,
                     &actor_kind,
@@ -797,7 +860,7 @@ impl CentralClient {
                 agent_session_ref,
             } => self
                 .flow_write_reading(
-                    &project,
+                    project.as_deref(),
                     &flow_ref,
                     &expected_revision,
                     &content,
@@ -812,7 +875,7 @@ impl CentralClient {
                 expected_revision,
                 new_path,
             } => self
-                .flow_rename_reading(&project, &flow_ref, &expected_revision, &new_path)
+                .flow_rename_reading(project.as_deref(), &flow_ref, &expected_revision, &new_path)
                 .map(|reading| Response::FlowRenamed { reading }),
             Request::FlowLifecycle {
                 project,
@@ -820,10 +883,10 @@ impl CentralClient {
                 expected_revision,
                 lifecycle,
             } => self
-                .flow_lifecycle_reading(&project, &flow_ref, &expected_revision, &lifecycle)
+                .flow_lifecycle_reading(project.as_deref(), &flow_ref, &expected_revision, &lifecycle)
                 .map(|reading| Response::FlowLifecycleChanged { reading }),
             Request::FlowHistory { project, flow_ref } => self
-                .flow_history(&project, &flow_ref)
+                .flow_history(project.as_deref(), &flow_ref)
                 .map(|history| Response::FlowHistory { history }),
             Request::SourceReturn {
                 project,
@@ -875,9 +938,12 @@ impl CentralClient {
         }
     }
 
+    // The owner Action's inputs, one parameter each: this signature mirrors
+    // Central's own contract rather than hiding it behind a struct of ours.
+    #[allow(clippy::too_many_arguments)]
     fn flow_create_reading(
         &self,
-        project: &str,
+        project: Option<&str>,
         actor: &str,
         actor_kind: &str,
         local_stamp: Option<&str>,
@@ -900,9 +966,12 @@ impl CentralClient {
         decode_flow_reading("projectcentral.flow.create", data)
     }
 
+    // The owner Action's inputs, one parameter each: this signature mirrors
+    // Central's own contract rather than hiding it behind a struct of ours.
+    #[allow(clippy::too_many_arguments)]
     fn flow_adopt_reading(
         &self,
-        project: &str,
+        project: Option<&str>,
         path: &str,
         actor: &str,
         actor_kind: &str,
@@ -923,9 +992,12 @@ impl CentralClient {
         decode_flow_reading("projectcentral.flow.adopt", data)
     }
 
+    // The owner Action's inputs, one parameter each: this signature mirrors
+    // Central's own contract rather than hiding it behind a struct of ours.
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn flow_write_reading(
         &self,
-        project: &str,
+        project: Option<&str>,
         flow_ref: &str,
         expected_revision: &str,
         content: &str,
@@ -950,7 +1022,7 @@ impl CentralClient {
 
     fn flow_rename_reading(
         &self,
-        project: &str,
+        project: Option<&str>,
         flow_ref: &str,
         expected_revision: &str,
         new_path: &str,
@@ -969,7 +1041,7 @@ impl CentralClient {
 
     fn flow_lifecycle_reading(
         &self,
-        project: &str,
+        project: Option<&str>,
         flow_ref: &str,
         expected_revision: &str,
         lifecycle: &str,

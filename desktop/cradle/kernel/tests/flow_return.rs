@@ -53,6 +53,7 @@ fn temporary_root() -> PathBuf {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
 fn retained_flow_and_explicit_return_preserve_owner_identity_and_refusal() {
     let root = temporary_root();
     let client = CentralClient::with_suite_owner(
@@ -75,7 +76,7 @@ fn retained_flow_and_explicit_return_preserve_owner_identity_and_refusal() {
     fs::write(&retained_path, "retained source\n").unwrap();
     let adopted = client
         .flow_adopt(
-            "Editor",
+            Some("Editor"),
             "ProjectCentral/now/flows/retained.md",
             "human:test",
             "human",
@@ -88,7 +89,7 @@ fn retained_flow_and_explicit_return_preserve_owner_identity_and_refusal() {
 
     let created = client
         .flow_create(
-            "Editor",
+            Some("Editor"),
             "human:test",
             "human",
             Some("2026-09-08-1200"),
@@ -106,7 +107,7 @@ fn retained_flow_and_explicit_return_preserve_owner_identity_and_refusal() {
     assert_eq!(created.revisions[0].actor_kind, "human");
 
     let read = client
-        .flow_read("Editor", &flow_ref, Some(&revision0))
+        .flow_read(Some("Editor"), &flow_ref, Some(&revision0))
         .unwrap();
     assert_eq!(read.flow.flow_ref, flow_ref);
     assert_eq!(read.flow.source_ref, source_ref);
@@ -115,7 +116,7 @@ fn retained_flow_and_explicit_return_preserve_owner_identity_and_refusal() {
 
     let written = client
         .flow_write(
-            "Editor",
+            Some("Editor"),
             &flow_ref,
             &revision0,
             "first owner revision\n",
@@ -127,7 +128,7 @@ fn retained_flow_and_explicit_return_preserve_owner_identity_and_refusal() {
     let revision1 = written.current_revision.clone();
     assert_ne!(revision1, revision0);
     let stale = client.flow_write(
-        "Editor",
+        Some("Editor"),
         &flow_ref,
         &revision0,
         "stale revision\n",
@@ -138,13 +139,13 @@ fn retained_flow_and_explicit_return_preserve_owner_identity_and_refusal() {
     assert!(matches!(stale, Err(OwnerCallError::Refused { .. })));
 
     let dormant = client
-        .flow_lifecycle("Editor", &flow_ref, &revision1, "dormant")
+        .flow_lifecycle(Some("Editor"), &flow_ref, &revision1, "dormant")
         .unwrap();
     assert_eq!(dormant.flow_ref, flow_ref);
     assert_eq!(dormant.lifecycle, "dormant");
     let renamed = client
         .flow_rename(
-            "Editor",
+            Some("Editor"),
             &flow_ref,
             &revision1,
             "ProjectCentral/now/flows/renamed.md",
@@ -156,16 +157,16 @@ fn retained_flow_and_explicit_return_preserve_owner_identity_and_refusal() {
         "central:source:project:editor-flow-return:ProjectCentral/now/flows/renamed.md"
     );
 
-    let inspected = client.flow_inspect("Editor", &flow_ref).unwrap();
+    let inspected = client.flow_inspect(Some("Editor"), &flow_ref).unwrap();
     assert_eq!(inspected.flow.flow_ref, flow_ref);
     assert_eq!(inspected.flow.source_ref, renamed.source_ref);
     assert_eq!(inspected.schema, "central.project-flow-inspection/v1");
-    let history = client.flow_history("Editor", &flow_ref).unwrap();
+    let history = client.flow_history(Some("Editor"), &flow_ref).unwrap();
     assert_eq!(history.flow_ref, flow_ref);
     assert_eq!(history.current_revision, revision1);
     assert_eq!(history.revisions.len(), 2);
     assert!(history.revisions.iter().any(|r| r.actor == "human:test"));
-    let listed = client.flow_list("Editor").unwrap();
+    let listed = client.flow_list(Some("Editor")).unwrap();
     assert!(listed.flows.iter().any(|flow| flow.flow_ref == flow_ref));
 
     let evidence = vec!["evidence:flow-return-test".to_owned()];
@@ -250,6 +251,7 @@ fn retained_flow_and_explicit_return_preserve_owner_identity_and_refusal() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
 fn kernel_apply_exposes_typed_owner_flow_return_seam() {
     let root = temporary_root();
     let client = CentralClient::with_suite_owner(
@@ -271,7 +273,7 @@ fn kernel_apply_exposes_typed_owner_flow_return_seam() {
     let create = kernel
         .apply(KernelOp::Flow {
             request: Request::FlowCreate {
-                project: "KernelEditor".into(),
+                project: Some("KernelEditor".into()),
                 actor: "human:test".into(),
                 actor_kind: "human".into(),
                 local_stamp: Some("2026-09-08-1300".into()),
@@ -298,7 +300,7 @@ fn kernel_apply_exposes_typed_owner_flow_return_seam() {
     // Central distinguishes absence from a present JSON null.
     let unversioned_wire = serde_json::to_value(KernelOp::Flow {
         request: Request::FlowRead {
-            project: "KernelEditor".into(),
+            project: Some("KernelEditor".into()),
             flow_ref: flow_ref.clone(),
             expected_revision: None,
         },
@@ -308,7 +310,7 @@ fn kernel_apply_exposes_typed_owner_flow_return_seam() {
     let unversioned = kernel
         .apply(KernelOp::Flow {
             request: Request::FlowRead {
-                project: "KernelEditor".into(),
+                project: Some("KernelEditor".into()),
                 flow_ref: flow_ref.clone(),
                 expected_revision: None,
             },
@@ -325,7 +327,7 @@ fn kernel_apply_exposes_typed_owner_flow_return_seam() {
 
     let read_wire = serde_json::to_value(KernelOp::Flow {
         request: Request::FlowRead {
-            project: "KernelEditor".into(),
+            project: Some("KernelEditor".into()),
             flow_ref: flow_ref.clone(),
             expected_revision: Some(revision0.clone()),
         },
@@ -339,7 +341,7 @@ fn kernel_apply_exposes_typed_owner_flow_return_seam() {
     let read = kernel
         .apply(KernelOp::Flow {
             request: Request::FlowRead {
-                project: "KernelEditor".into(),
+                project: Some("KernelEditor".into()),
                 flow_ref: flow_ref.clone(),
                 expected_revision: Some(revision0.clone()),
             },
@@ -358,7 +360,7 @@ fn kernel_apply_exposes_typed_owner_flow_return_seam() {
     let write = kernel
         .apply(KernelOp::Flow {
             request: Request::FlowWrite {
-                project: "KernelEditor".into(),
+                project: Some("KernelEditor".into()),
                 flow_ref: flow_ref.clone(),
                 expected_revision: reading.flow.current_revision.clone(),
                 content: "kernel owner revision\n".into(),
@@ -381,7 +383,7 @@ fn kernel_apply_exposes_typed_owner_flow_return_seam() {
     let conflict = kernel
         .apply(KernelOp::Flow {
             request: Request::FlowWrite {
-                project: "KernelEditor".into(),
+                project: Some("KernelEditor".into()),
                 flow_ref: flow_ref.clone(),
                 expected_revision: revision0.clone(),
                 content: "must not overwrite\n".into(),

@@ -132,6 +132,16 @@ export default async function run({ page, baseUrl, check, metric, shot, channel,
   check((await docText(page,'.cm-content')).endsWith('Refused change.\n'), 'Refusal preserves the dirty buffer');
   rmSync(join(p.projectRoot, 'ProjectCentral/user/.no-agent-retrieval'));
   await shot('owner-refusal');
-  while (await page.locator('.tab').count()) await page.keyboard.press('Meta+w');
-  check(await docText(page, '.flow-surface .cm-content') === thought, 'Closing sources restores the original Flow');
+  // Writing is a Flow with a tab of its own, so "closing sources" means the
+  // source tabs: the Flow stays open, holding what was written into it.
+  for (let i = 0; i < 24; i++) {
+    if (!(await page.locator('.tab').count())) break;
+    if (await page.locator('.pane.focused .flow-surface').count()) {
+      await page.keyboard.press('Alt+Shift+ArrowRight');
+      if (await page.locator('.pane.focused .flow-surface').count()) break;
+    }
+    await page.keyboard.press('Meta+w');
+  }
+  await page.locator('.flow-surface .cm-content').first().waitFor({timeout:20000});
+  check(await docText(page, '.flow-surface .cm-content') === thought, 'Closing every source leaves the Flow and its writing open');
 }

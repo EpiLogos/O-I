@@ -264,6 +264,7 @@ fn stream_permission_event(event_ref: &str, request_ref: &str, outcome: &str) ->
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn joined_read_carries_request_and_activity_identities_verbatim_across_all_sides() {
     let fixture = Fixture::new("ident");
     let (session, request_ref, activity, grant_event_id) =
@@ -341,6 +342,7 @@ fn joined_read_carries_request_and_activity_identities_verbatim_across_all_sides
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn grant_record_disagreement_is_an_explicit_state_naming_both_owner_views() {
     let fixture = Fixture::new("disagree");
     let (session, request_ref, _activity, grant_event_id) =
@@ -377,6 +379,7 @@ fn grant_record_disagreement_is_an_explicit_state_naming_both_owner_views() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn grant_record_absence_names_the_owner_view_that_lacks_the_record() {
     let fixture = Fixture::new("absent");
 
@@ -431,6 +434,7 @@ fn grant_record_absence_names_the_owner_view_that_lacks_the_record() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn provider_loss_is_an_explicit_unavailable_state_with_owner_detail() {
     let fixture = Fixture::new("loss");
     let (session, request_ref, _activity, _grant) = fixture.seed_permission_lifecycle("loss", true);
@@ -483,6 +487,7 @@ fn provider_loss_is_an_explicit_unavailable_state_with_owner_detail() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn cancellation_is_terminal_and_supersedes_every_later_answer() {
     let fixture = Fixture::new("cancel");
     let (session, request_ref, _activity, _grant) =
@@ -531,6 +536,7 @@ fn cancellation_is_terminal_and_supersedes_every_later_answer() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn stale_reply_is_explicit_when_a_later_disposition_already_exists() {
     let fixture = Fixture::new("stale");
 
@@ -592,6 +598,7 @@ fn stale_reply_is_explicit_when_a_later_disposition_already_exists() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn unknown_identity_is_explicit_when_no_queried_side_references_it() {
     let fixture = Fixture::new("unknown");
     let (session, _request, _activity, _grant) =
@@ -614,6 +621,7 @@ fn unknown_identity_is_explicit_when_no_queried_side_references_it() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn malformed_identity_refuses_before_any_owner_call() {
     let fixture = Fixture::new("malformed");
     let (session, _request, _activity, _grant) =
@@ -644,6 +652,7 @@ fn malformed_identity_refuses_before_any_owner_call() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn owner_refusal_carries_the_owner_message_verbatim() {
     let fixture = Fixture::new("refused");
     fixture.seed_permission_lifecycle("refused", false);
@@ -685,6 +694,7 @@ fn owner_refusal_carries_the_owner_message_verbatim() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
 fn reading_wire_shape_is_stable_and_carries_no_persistence_surface() {
     let fixture = Fixture::new("wire");
     let (session, request_ref, _activity, _grant) =

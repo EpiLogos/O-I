@@ -15,7 +15,7 @@ use oi_cradle_kernel::commission::CommissionOutcome;
 use oi_cradle_kernel::{CentralClient, Kernel, KernelOp, KernelOpResult};
 use serde_json::json;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Mutex, MutexGuard};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -90,7 +90,7 @@ impl Fixture {
             .unwrap();
         let created = client
             .flow_create(
-                "W4DCommission",
+                Some("W4DCommission"),
                 "human:w4d-test",
                 "human",
                 Some("2026-09-09-1200"),
@@ -141,16 +141,17 @@ impl Fixture {
     }
 }
 
-fn client(root: &PathBuf) -> CentralClient {
+fn client(root: &Path) -> CentralClient {
     CentralClient::with_suite_owner(
         candidate("oi"),
         candidate("ctrl"),
-        Some(root.clone()),
+        Some(root.to_path_buf()),
         "W4DCommissionGround".into(),
     )
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
 fn commission_lands_as_owner_revision_carrying_the_selection_verbatim() {
     let fixture = Fixture::new("commission-verbatim");
 
@@ -176,7 +177,7 @@ fn commission_lands_as_owner_revision_carrying_the_selection_verbatim() {
     // read proves it — the kernel composed nothing and wrapped no prose.
     let read = fixture
         .client()
-        .flow_read("W4DCommission", &fixture.flow_ref, Some(revision))
+        .flow_read(Some("W4DCommission"), &fixture.flow_ref, Some(revision))
         .unwrap();
     assert_eq!(read.content, SELECTION);
     assert_eq!(read.flow.current_revision, *revision);
@@ -198,6 +199,7 @@ fn commission_lands_as_owner_revision_carrying_the_selection_verbatim() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
 fn agent_session_binds_without_owning_the_flow_identity() {
     let fixture = Fixture::new("commission-session");
 
@@ -224,7 +226,7 @@ fn agent_session_binds_without_owning_the_flow_identity() {
     // owner's and is untouched by the binding.
     let inspected = fixture
         .client()
-        .flow_inspect("W4DCommission", &fixture.flow_ref)
+        .flow_inspect(Some("W4DCommission"), &fixture.flow_ref)
         .unwrap();
     assert_eq!(inspected.flow.flow_ref, flow.flow_ref);
     assert_eq!(inspected.flow.source_ref, flow.source_ref);
@@ -235,7 +237,7 @@ fn agent_session_binds_without_owning_the_flow_identity() {
     // (`agent`) — the owner revision receipt records it verbatim.
     let history = fixture
         .client()
-        .flow_history("W4DCommission", &fixture.flow_ref)
+        .flow_history(Some("W4DCommission"), &fixture.flow_ref)
         .unwrap();
     let last = history.revisions.last().unwrap();
     assert_eq!(last.actor, "session:w4d-commission-1");
@@ -246,6 +248,7 @@ fn agent_session_binds_without_owning_the_flow_identity() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
 fn stale_expected_revision_is_a_structured_conflict_never_a_silent_overwrite() {
     let fixture = Fixture::new("commission-conflict");
 
@@ -278,7 +281,7 @@ fn stale_expected_revision_is_a_structured_conflict_never_a_silent_overwrite() {
     // The owner layer is untouched by the refused commission.
     let read = fixture
         .client()
-        .flow_read("W4DCommission", &fixture.flow_ref, None)
+        .flow_read(Some("W4DCommission"), &fixture.flow_ref, None)
         .unwrap();
     assert_eq!(read.flow.current_revision, *revision1);
     assert_eq!(read.content, "first selection\n");
@@ -290,6 +293,7 @@ fn stale_expected_revision_is_a_structured_conflict_never_a_silent_overwrite() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
 fn owner_refusal_and_unavailable_pass_through_verbatim() {
     let fixture = Fixture::new("commission-owner-failures");
 
@@ -353,6 +357,7 @@ fn owner_refusal_and_unavailable_pass_through_verbatim() {
 }
 
 #[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
 fn owner_unavailable_is_explicit_absence_not_an_error() {
     let fixture = Fixture::new("commission-unavailable");
 

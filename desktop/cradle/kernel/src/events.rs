@@ -45,6 +45,9 @@ pub const KERNEL_EVENT_TOPIC: &str = "oi:kernel-event";
 /// is a disclosure trigger, never a second source of truth.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(tag = "event", rename_all = "snake_case")]
+// The event payloads are the owner's own shapes and differ in size by
+// nature; boxing one arm would change how every emitter constructs it.
+#[allow(clippy::large_enum_variant)]
 pub enum KernelEvent {
     WorldChanged { summary: String },
     /// The one global focus relation moved (02 §7, 03 §B).

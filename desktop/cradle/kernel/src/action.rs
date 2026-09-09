@@ -107,10 +107,10 @@ const RUN_ACTION_REASON: &str = "the owner exposes `aikit run` only as a bare ex
 
 const OVERLAY_SET_REASON: &str = "the owner operation (`aikit skill overlay set`) requires an owner-shaped overlay patch and scope beyond a bare row ref; the kernel invents no input";
 
+/// Dispatch one owner-disclosed Action to its native owner operation.
+///
 /// W4-D binds `action:contemplate-flow` for real: the W1.4 preflight-first,
 /// record-gated Contemplate dispatch lives in `flow_cognition.rs`.
-
-/// Dispatch one owner-disclosed Action to its native owner operation.
 /// Pure routing + owner call: no kernel state is touched. `default_project`
 /// is the disclosed scope for Central Actions whose input names no project;
 /// the Central runner falls back to its configured query when both are
