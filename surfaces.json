@@ -7,7 +7,7 @@
       "public_name": "Central",
       "function": "persistent personal ground",
       "repository": "https://github.com/EpiLogos/Central",
-      "docs_ref": "f3559dbf900b8409ff00b24a84b824c6cd6ec2c3",
+      "docs_ref": "5b61b82835f4efbf57ab896b8efff72f9f8f3906",
       "docs_path": "README.md",
       "skill_paths": [
         "skills/control-maintenance/SKILL.md",
@@ -37,7 +37,7 @@
           "doctor",
           "--json"
         ],
-        "command_revision": "f3559dbf900b8409ff00b24a84b824c6cd6ec2c3",
+        "command_revision": "5b61b82835f4efbf57ab896b8efff72f9f8f3906",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [
@@ -54,8 +54,8 @@
       "install": {
         "kind": "oi-managed-binary",
         "modality": "fresh-ground",
-        "ref": "f3559dbf900b8409ff00b24a84b824c6cd6ec2c3",
-        "revision": "f3559dbf900b8409ff00b24a84b824c6cd6ec2c3",
+        "ref": "5b61b82835f4efbf57ab896b8efff72f9f8f3906",
+        "revision": "5b61b82835f4efbf57ab896b8efff72f9f8f3906",
         "path": "ctrl",
         "note": "Current #97 source/install pin. Central owns Control, Work, ProjectCentral, source authority, AgentProfile persistence/Actions and authored Skill/SkillSet/Method/Routine assignments. Routine enable/proof/trigger/authority remains AIKit-owned."
       },
@@ -82,7 +82,7 @@
       "public_name": "Actuation",
       "function": "Agency, WorldBinding, RootScope, Metagency, Determination and Return authority",
       "repository": "https://github.com/EpiLogos/Actuation",
-      "docs_ref": "5eec4639f1c8727865373b27fdcde09fdcca2d53",
+      "docs_ref": "ecac9ddd5009d03e6d38043341672b0409090c8d",
       "docs_path": "docs/WORLD-BOUND-ROOT-AGENCY.md",
       "skill_paths": [],
       "native": {
@@ -103,7 +103,7 @@
           "verify",
           "--json"
         ],
-        "command_revision": "5eec4639f1c8727865373b27fdcde09fdcca2d53",
+        "command_revision": "ecac9ddd5009d03e6d38043341672b0409090c8d",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [],
@@ -114,8 +114,8 @@
       "install": {
         "kind": "oi-managed-native-cli",
         "modality": "developer-source",
-        "ref": "5eec4639f1c8727865373b27fdcde09fdcca2d53",
-        "revision": "5eec4639f1c8727865373b27fdcde09fdcca2d53",
+        "ref": "ecac9ddd5009d03e6d38043341672b0409090c8d",
+        "revision": "ecac9ddd5009d03e6d38043341672b0409090c8d",
         "path": "bin/actuation",
         "note": "Current accepted owner main publishes the dependency-free native Actuation command and declares native CLI installation."
       },
@@ -140,7 +140,7 @@
       "public_name": "AIKit",
       "function": "context, capability, model, credential, SessionSpace and provider-process resolution",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "docs_ref": "3a37348199677c9de73eef330084c814467cfdcd",
+      "docs_ref": "95e35ac6569a85239a4689aeb440929f5d07888b",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -164,7 +164,7 @@
           "doctor",
           "--json"
         ],
-        "command_revision": "3a37348199677c9de73eef330084c814467cfdcd",
+        "command_revision": "95e35ac6569a85239a4689aeb440929f5d07888b",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [
@@ -181,8 +181,8 @@
       "install": {
         "kind": "oi-managed-binary",
         "modality": "developer-source",
-        "ref": "3a37348199677c9de73eef330084c814467cfdcd",
-        "revision": "3a37348199677c9de73eef330084c814467cfdcd",
+        "ref": "95e35ac6569a85239a4689aeb440929f5d07888b",
+        "revision": "95e35ac6569a85239a4689aeb440929f5d07888b",
         "path": "crates/aikit-cli",
         "note": "Current #97 source/install pin; immutable released artifacts remain separately recorded in suite/manifest.json."
       },
@@ -207,7 +207,7 @@
       "public_name": "Software Factory",
       "function": "developmental Project, Journey, Run, Candidate, evidence and authorised Factory Action semantics",
       "repository": "https://github.com/EpiLogos/agent-system-design",
-      "docs_ref": "12a721dbbb51e3c70d52ef00220efa859ef930fd",
+      "docs_ref": "885f3c29726dc6cb9397eca246abdfb1c65eff86",
       "docs_path": "factory/README.md",
       "skill_paths": [],
       "native": {
@@ -228,7 +228,7 @@
           "verify",
           "--json"
         ],
-        "command_revision": "12a721dbbb51e3c70d52ef00220efa859ef930fd",
+        "command_revision": "885f3c29726dc6cb9397eca246abdfb1c65eff86",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [
@@ -245,8 +245,8 @@
       "install": {
         "kind": "oi-managed-native-cli",
         "modality": "developer-source",
-        "ref": "12a721dbbb51e3c70d52ef00220efa859ef930fd",
-        "revision": "12a721dbbb51e3c70d52ef00220efa859ef930fd",
+        "ref": "885f3c29726dc6cb9397eca246abdfb1c65eff86",
+        "revision": "885f3c29726dc6cb9397eca246abdfb1c65eff86",
         "path": "factory",
         "note": "Current accepted owner main publishes the native Factory CLI over FactoryBuild/provider/Action owners and receives composed agent capability through typed stable refs (#188); the historical repository name remains agent-system-design pending canonical rename."
       },
