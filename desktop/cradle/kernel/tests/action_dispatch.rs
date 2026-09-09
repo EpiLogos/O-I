@@ -63,40 +63,13 @@ fn write(path: &Path, contents: &str) {
     fs::write(path, contents).unwrap();
 }
 
-/// Seed the reviewed C2 fixture ground shape: one SourcePool file and two
-/// SemanticWiki nodes (one flow, one knowledge subject), every row
-/// disclosing `knowledge/open` through the owner resolution.
+/// Seed the C2 fixture ground: one SourcePool file. The SourcePool file is
+/// what the merged ai-kit resolve (Vāk surface, #258) surfaces for a
+/// Central-bound project — the central wiki (seeded separately) supplies the
+/// node hits, and an aikit-side semantic-wiki.json is not consulted once a
+/// ProjectCentral ground exists, so none is seeded here.
 fn seed_aikit_project(project: &Path) {
     write(&project.join(".aikit/profile.toml"), "schema = 1\n");
-    write(
-        &project.join("semantic-wiki.json"),
-        r#"{
-          "objects": [
-            {
-              "profile": "okf-wiki/v1",
-              "object": "node",
-              "ref": "wiki:node:action/test-flow",
-              "revision": 3,
-              "provenance": [{"source_ref":"source:file:action-flow-note","source_revision":"rev-2"}],
-              "type": "flow",
-              "title": "action test flow",
-              "space_refs": [],
-              "source_refs": ["source:file:action-flow-note"]
-            },
-            {
-              "profile": "okf-wiki/v1",
-              "object": "node",
-              "ref": "wiki:node:action-subject",
-              "revision": 5,
-              "provenance": [{"source_ref":"source:file:action-subject-paper","source_revision":"rev-9"}],
-              "type": "Concept",
-              "title": "action test subject",
-              "space_refs": [],
-              "source_refs": ["source:file:action-subject-paper"]
-            }
-          ]
-        }"#,
-    );
     write(
         &project.join("source-material.json"),
         r#"{
@@ -279,9 +252,8 @@ impl Fixture {
 }
 
 // Central-bound project: the merged ai-kit resolve (Vāk surface, #258)
-// federates the ProjectCentral wiki, so the seeded flow surfaces under the
-// C1 central-wiki ref (the aikit-side semantic-wiki.json is not consulted
-// once a project carries a ProjectCentral ground).
+// federates the ProjectCentral wiki, so the seeded flow surfaces under its
+// C1 central-wiki ref.
 const FILE_ROW_REF: &str = "source:file:action-onboarding";
 const FLOW_ROW_REF: &str = "wiki:node:action-flow";
 const SUBJECT_ROW_REF: &str = "wiki:node:action-subject";

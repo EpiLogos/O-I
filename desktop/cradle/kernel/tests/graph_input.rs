@@ -54,39 +54,12 @@ fn write(path: &Path, contents: &str) {
     fs::write(path, contents).unwrap();
 }
 
-/// Seed the reviewed C2 fixture ground: one SourcePool file and two
-/// SemanticWiki nodes (one flow, one knowledge subject), hand-countable.
+/// Seed the C2 fixture ground: one SourcePool file. In a Central-bound
+/// project the merged ai-kit resolve federates the ProjectCentral wiki (the
+/// node hits come from there); an aikit-side semantic-wiki.json is not
+/// consulted, so none is seeded.
 fn seed_aikit_project(project: &Path) {
     write(&project.join(".aikit/profile.toml"), "schema = 1\n");
-    write(
-        &project.join("semantic-wiki.json"),
-        r#"{
-          "objects": [
-            {
-              "profile": "okf-wiki/v1",
-              "object": "node",
-              "ref": "wiki:node:graph/test-flow",
-              "revision": 3,
-              "provenance": [{"source_ref":"source:file:graph-flow-note","source_revision":"rev-2"}],
-              "type": "flow",
-              "title": "Graph test flow",
-              "space_refs": [],
-              "source_refs": ["source:file:graph-flow-note"]
-            },
-            {
-              "profile": "okf-wiki/v1",
-              "object": "node",
-              "ref": "wiki:node:graph-subject",
-              "revision": 5,
-              "provenance": [{"source_ref":"source:file:graph-subject-paper","source_revision":"rev-9"}],
-              "type": "Concept",
-              "title": "Graph test subject",
-              "space_refs": [],
-              "source_refs": ["source:file:graph-subject-paper"]
-            }
-          ]
-        }"#,
-    );
     write(
         &project.join("source-material.json"),
         r#"{
