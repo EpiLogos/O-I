@@ -26,7 +26,12 @@
             "attestation": "https://github.com/EpiLogos/Central/attestations/41163516"
           }
         ],
-        "installed_verify": []
+        "installed_verify": [
+          "--version"
+        ],
+        "native_command": {
+          "available": true
+        }
       },
       "dev": {
         "build": [
@@ -63,7 +68,12 @@
             "attestation": "https://github.com/EpiLogos/Actuation/attestations/41163540"
           }
         ],
-        "installed_verify": []
+        "installed_verify": [],
+        "native_command": {
+          "available": false,
+          "reason": "the actuation-v0.1.0-prelocal.2 release publishes a component archive with no bin/actuation; the accepted owner main declares oi-managed-native-cli but has not been released",
+          "install_from_source": "oi dev install actuation"
+        }
       },
       "dev": {
         "build": [],
@@ -100,7 +110,10 @@
         ],
         "installed_verify": [
           "--version"
-        ]
+        ],
+        "native_command": {
+          "available": true
+        }
       },
       "dev": {
         "build": [
@@ -138,7 +151,12 @@
             "attestation": "https://github.com/EpiLogos/agent-system-design/attestations/41163579"
           }
         ],
-        "installed_verify": []
+        "installed_verify": [],
+        "native_command": {
+          "available": false,
+          "reason": "the software-factory-v0.1.0-prelocal.2 release publishes a component archive with no factory executable; the accepted owner main declares oi-managed-native-cli but has not been released",
+          "install_from_source": "oi dev install software-factory"
+        }
       },
       "dev": {
         "build": [
@@ -184,7 +202,10 @@
         "installed_verify": [
           "--json",
           "doctor"
-        ]
+        ],
+        "native_command": {
+          "available": true
+        }
       },
       "dev": {
         "build": [
@@ -222,7 +243,12 @@
             "attestation": "https://github.com/EpiLogos/QL-MEF/attestations/41163591"
           }
         ],
-        "installed_verify": []
+        "installed_verify": [],
+        "native_command": {
+          "available": false,
+          "reason": "the quaternal-logic-v0.1.0-prelocal.2 release publishes a component archive with no ql executable; the accepted owner main declares oi-managed-native-cli but has not been released",
+          "install_from_source": "oi dev install quaternal-logic"
+        }
       },
       "dev": {
         "build": [
@@ -259,5 +285,11 @@
   ],
   "recorded_at": "2026-08-17",
   "standing": "historical-unratified-prelocal-build-record",
-  "purpose": "Historical checksummed and attested pre-local build evidence retained for reproducibility and deterministic installation tests; not release ratification, product acceptance, or current-main authority."
+  "purpose": "Historical checksummed and attested pre-local build evidence retained for reproducibility and deterministic installation tests; not release ratification, product acceptance, or current-main authority.",
+  "packaging_contract": {
+    "schema": "oi.packaging-contract/v1",
+    "identity": "Every registration in composition state records the 40-character git revision the installed executable was built from. A --version banner, a release name or a tag is never recorded as identity.",
+    "native_command": "Every product is a native command. A product whose recorded artifact ships no executable must say so explicitly here; oi install then fails for that product and names the reason instead of registering a source root and letting PATH answer.",
+    "distribution": "@epi-logos/oi is the only npm package in the suite. The six products are not published to npm; they are installed by oi from recorded release artifacts or from clean current-main source."
+  }
 }

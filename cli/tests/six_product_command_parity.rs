@@ -21,6 +21,26 @@ mod unix {
         fs::set_permissions(path, permissions).expect("chmod fake native executable");
     }
 
+    /// A registration records the revision its executable was built from;
+    /// these tests stand in for a real install, so they supply one.
+    const FIXTURE_REVISION: &str = "3f6d2b1c9a4e5d7081b2c3d4e5f60718293a4b5c";
+
+    fn register(home: &TempDir, bin: &TempDir, product: &str, executable: &str) {
+        let result = Command::new(env!("CARGO_BIN_EXE_oi"))
+            .args(["register", product, "--executable"])
+            .arg(bin.path().join(executable))
+            .args(["--version", FIXTURE_REVISION])
+            .env("OI_HOME", home.path())
+            .env("PATH", bin.path())
+            .output()
+            .expect("register product command");
+        assert!(
+            result.status.success(),
+            "register {product}: {}",
+            String::from_utf8_lossy(&result.stderr)
+        );
+    }
+
     fn run_oi(home: &TempDir, bin: &TempDir, selector: &str) -> Output {
         Command::new(env!("CARGO_BIN_EXE_oi"))
             .args([selector, "probe", "--json"])
@@ -46,6 +66,16 @@ mod unix {
         for (_, executable, exit) in cases {
             fake_executable(bin.path(), executable, exit);
         }
+        for (product, executable) in [
+            ("central", "ctrl"),
+            ("actuation", "actuation"),
+            ("ai-kit", "aikit"),
+            ("software-factory", "factory"),
+            ("workcell", "workcell"),
+            ("quaternal-logic", "ql"),
+        ] {
+            register(&home, &bin, product, executable);
+        }
 
         for (namespace, executable, exit) in cases {
             let output = run_oi(&home, &bin, namespace);
@@ -65,6 +95,8 @@ mod unix {
         let bin = TempDir::new().expect("bin");
         fake_executable(bin.path(), "ctrl", 0);
         fake_executable(bin.path(), "aikit", 0);
+        register(&home, &bin, "central", "ctrl");
+        register(&home, &bin, "ai-kit", "aikit");
 
         for (canonical, compatibility) in [("central", "ctrl"), ("aikit", "kit")] {
             let canonical_output = run_oi(&home, &bin, canonical);
@@ -81,6 +113,7 @@ mod unix {
         let home = TempDir::new().expect("home");
         let bin = TempDir::new().expect("bin");
         fake_executable(bin.path(), "ctrl", 0);
+        register(&home, &bin, "central", "ctrl");
 
         let direct = Command::new(bin.path().join("ctrl"))
             .arg("__signal__")
@@ -97,5 +130,44 @@ mod unix {
         assert_eq!(through_oi.status.signal(), direct.status.signal());
         assert_eq!(through_oi.stdout, direct.stdout);
         assert_eq!(through_oi.stderr, direct.stderr);
+    }
+
+    #[test]
+    fn an_unregistered_product_is_refused_rather_than_resolved_through_path() {
+        // The whole complaint: `oi aikit ...` used to run whatever PATH had.
+        // With nothing registered it must now say so, not substitute a build
+        // whose revision O:I cannot name.
+        let home = TempDir::new().expect("home");
+        let bin = TempDir::new().expect("bin");
+        fake_executable(bin.path(), "aikit", 0);
+
+        let output = run_oi(&home, &bin, "aikit");
+        assert_eq!(output.status.code(), Some(2));
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("is not registered with O:I"),
+            "unregistered dispatch must be refused: {stderr}"
+        );
+        assert!(output.stdout.is_empty());
+    }
+
+    #[test]
+    fn an_explicit_operator_override_still_runs() {
+        let home = TempDir::new().expect("home");
+        let bin = TempDir::new().expect("bin");
+        fake_executable(bin.path(), "aikit", 13);
+
+        let output = Command::new(env!("CARGO_BIN_EXE_oi"))
+            .args(["aikit", "probe", "--json"])
+            .env("OI_HOME", home.path())
+            .env("PATH", bin.path())
+            .env("OI_AIKIT_BIN", bin.path().join("aikit"))
+            .output()
+            .expect("run O:I CLI");
+        assert_eq!(output.status.code(), Some(13));
+        assert_eq!(
+            String::from_utf8_lossy(&output.stdout),
+            "native:aikit:probe:--json\n"
+        );
     }
 }

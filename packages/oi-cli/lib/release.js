@@ -4,9 +4,25 @@ const https = require('node:https');
 const { createHash } = require('node:crypto');
 const { spawnSync } = require('node:child_process');
 
+const pkg = require('../package.json');
+
 const REPOSITORY = 'EpiLogos/O-I';
-const NATIVE_VERSION = '0.1.0';
 const MAX_REDIRECTS = 8;
+
+// One source of truth: this package's own version. The release tag and the
+// native archive version are derived from it, so they cannot drift apart the
+// way a hand-typed second copy did.
+const PACKAGE_VERSION = pkg.version;
+const NATIVE_VERSION = PACKAGE_VERSION.split('-')[0];
+const DEFAULT_RELEASE_TAG = (pkg.oi && pkg.oi.release_tag_pattern
+  ? pkg.oi.release_tag_pattern
+  : 'oi-v{version}'
+).replace('{version}', PACKAGE_VERSION);
+
+// The suite build set the native binary carries. Declared here and checked
+// against the installed binary, so "the npm version" and "the suite version it
+// installs" are a stated, verified relation rather than two loose numbers.
+const SUITE_BUILD_RECORD = (pkg.oi && pkg.oi.suite_build_record) || null;
 
 function resolveTarget(platform = process.platform, arch = process.arch) {
   if (platform === 'darwin' && arch === 'arm64') return 'aarch64-apple-darwin';
@@ -18,13 +34,43 @@ function resolveTarget(platform = process.platform, arch = process.arch) {
 }
 
 function selectedReleaseTag(env = process.env) {
-  const tag = String(env.OI_NPM_RELEASE_TAG || '').trim();
-  if (!tag) {
+  const override = String(env.OI_NPM_RELEASE_TAG || '').trim();
+  if (override) return override;
+  if (!DEFAULT_RELEASE_TAG) {
     throw new Error(
       'no O:I GitHub release is selected; set OI_NPM_RELEASE_TAG explicitly when exercising the GitHub Release download channel'
     );
   }
-  return tag;
+  return DEFAULT_RELEASE_TAG;
+}
+
+/// The suite build record an installed `oi` reports. Returns null when the
+/// binary predates the version contract and reports no suite build record at
+/// all, which is a fact about the release, not something to guess around.
+function parseNativeSuiteVersion(versionOutput) {
+  const match = String(versionOutput).match(/^\s*oi\s+(\S+)\s+\(build\s+(\S+)\)/m);
+  if (!match) return null;
+  return { suiteVersion: match[1], buildRevision: match[2] };
+}
+
+/// Fail loudly when the binary that was installed is not the one this package
+/// says it installs. A mismatch here is exactly the class of drift that let a
+/// stale build answer for a fresh one.
+function verifyNativeSuiteVersion(versionOutput, expected = SUITE_BUILD_RECORD) {
+  const reported = parseNativeSuiteVersion(versionOutput);
+  if (!reported) {
+    throw new Error(
+      `the installed oi binary reports no suite build record (it printed ${JSON.stringify(
+        String(versionOutput).trim()
+      )}). That release predates the O:I packaging contract; cut ${DEFAULT_RELEASE_TAG} from a source tree that carries it, or select a release that does with OI_NPM_RELEASE_TAG.`
+    );
+  }
+  if (expected && reported.suiteVersion !== expected) {
+    throw new Error(
+      `installed oi reports suite build ${reported.suiteVersion}, but @epi-logos/oi ${PACKAGE_VERSION} declares ${expected}`
+    );
+  }
+  return reported;
 }
 
 function assetName(target, nativeVersion = NATIVE_VERSION) {
@@ -131,8 +177,13 @@ function archiveBinaryPath(root, target, nativeVersion = NATIVE_VERSION) {
 }
 
 module.exports = {
+  DEFAULT_RELEASE_TAG,
   NATIVE_VERSION,
+  PACKAGE_VERSION,
   REPOSITORY,
+  SUITE_BUILD_RECORD,
+  parseNativeSuiteVersion,
+  verifyNativeSuiteVersion,
   archiveBinaryPath,
   assetName,
   checksumAssetUrl,

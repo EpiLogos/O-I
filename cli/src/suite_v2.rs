@@ -34,6 +34,20 @@ struct SuiteArtifact {
     assets: Vec<SuiteAsset>,
     #[serde(default)]
     installed_verify: Vec<String>,
+    /// Required. A build record that stays silent about whether its artifact
+    /// carries a runnable command is how three products came to be
+    /// "installed" with nothing to run.
+    #[serde(default)]
+    native_command: Option<SuiteNativeCommand>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct SuiteNativeCommand {
+    available: bool,
+    #[serde(default)]
+    reason: Option<String>,
+    #[serde(default)]
+    install_from_source: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -173,6 +187,27 @@ fn suite_manifest() -> Result<SuiteManifest, String> {
                 return Err(format!("suite product {} has invalid SHA-256 for {}", product.id, asset.name));
             }
         }
+        let Some(native) = &product.artifact.native_command else {
+            return Err(format!(
+                "suite product {} does not declare artifact.native_command; a build record must say whether the artifact ships a runnable command",
+                product.id
+            ));
+        };
+        if native.available {
+            if product.artifact.entry.as_deref().map(str::trim).unwrap_or("").is_empty() {
+                return Err(format!("suite product {} declares a native command but names no artifact.entry", product.id));
+            }
+            if product.artifact.installed_verify.is_empty() {
+                return Err(format!("suite product {} declares a native command but no installed_verify probe", product.id));
+            }
+        } else {
+            if product.artifact.entry.is_some() {
+                return Err(format!("suite product {} declares no native command yet names artifact.entry", product.id));
+            }
+            if native.reason.as_deref().map(str::trim).unwrap_or("").is_empty() {
+                return Err(format!("suite product {} declares no native command without saying why", product.id));
+            }
+        }
     }
     if ids.len() != 6 {
         return Err(format!("suite manifest must contain exactly six semantic products; found {}", ids.len()));
@@ -265,9 +300,30 @@ fn command_suite_v2_install(args: &[OsString]) -> Result<i32, String> {
     }
 
     let mut receipt = load_installed_receipt(&data_root, &manifest.suite_version)?;
+    let mut failures: Vec<String> = Vec::new();
     for id in requested {
         let product = manifest.products.iter().find(|p| p.id == id).expect("validated product id");
-        install_manifest_product(&catalog, &mut composition, &mut receipt, &data_root, product)?;
+        if let Err(error) =
+            install_manifest_product(&catalog, &mut composition, &mut receipt, &data_root, product)
+        {
+            // A registration with no executable is the silent failure this
+            // contract exists to stop, so it is removed rather than left
+            // behind for PATH to answer for.
+            let incomplete = composition
+                .modules
+                .get(&product.id)
+                .map(|registration| registration.native_executable.is_none())
+                .unwrap_or(false);
+            if incomplete {
+                composition.modules.remove(&product.id);
+                receipt.products.remove(&product.id);
+                println!(
+                    "{}: removed a registration that named no executable; `oi {}` now fails loudly instead of running whatever PATH resolves.",
+                    product.id, product.id
+                );
+            }
+            failures.push(format!("{}: {error}", product.id));
+        }
     }
     save_composition(&composition)?;
     save_installed_receipt(&data_root, &receipt)?;
@@ -288,6 +344,18 @@ fn command_suite_v2_install(args: &[OsString]) -> Result<i32, String> {
     println!("Installed recorded pre-local build set {}.", manifest.suite_version);
     println!("Managed root: {}", data_root.display());
     println!("Control/ and Work/ were not used as artifact storage.");
+    if !failures.is_empty() {
+        eprintln!();
+        eprintln!(
+            "oi install did not register {} of the requested products:",
+            failures.len()
+        );
+        for failure in &failures {
+            eprintln!("  {failure}");
+        }
+        eprintln!("Nothing was registered for these; `oi doctor` will keep failing until they are.");
+        return Ok(3);
+    }
     println!("Next: oi verify");
     Ok(0)
 }
@@ -334,6 +402,20 @@ fn install_manifest_product(
     data_root: &Path,
     product: &SuiteProduct,
 ) -> Result<(), String> {
+    let native = product.artifact.native_command.as_ref().ok_or_else(|| {
+        format!("{} does not declare artifact.native_command", product.id)
+    })?;
+    if !native.available {
+        return Err(format!(
+            "the recorded build set {} ships no native command for this product — {}. Build and register it from clean current-main source with `{}`.",
+            receipt.suite_version,
+            native.reason.as_deref().unwrap_or("the build record does not say why"),
+            native
+                .install_from_source
+                .as_deref()
+                .unwrap_or("oi dev install")
+        ));
+    }
     let asset = selected_asset(product)?;
     let cache_dir = data_root.join("cache").join(&product.id).join(&product.revision);
     fs::create_dir_all(&cache_dir).map_err(|error| format!("cannot create {}: {error}", cache_dir.display()))?;
@@ -410,7 +492,10 @@ fn install_manifest_product(
         root
     };
 
-    let executable = if let Some(entry) = product.artifact.entry.as_deref() {
+    let entry = product.artifact.entry.as_deref().ok_or_else(|| {
+        format!("{} declares a native command but names no artifact.entry", product.id)
+    })?;
+    let executable = {
         let source = find_named_file(&product_root, entry, 3)
             .ok_or_else(|| format!("{} artifact does not contain expected executable {}", product.id, entry))?;
         let target = data_root.join("bin").join(entry);
@@ -425,13 +510,28 @@ fn install_manifest_product(
         }
         fs::rename(&temp, &target).map_err(|error| format!("cannot promote {}: {error}", entry))?;
         Some(target)
-    } else {
-        None
     };
 
     let surface = find_surface(catalog, &product.id)?;
     let registration = registration_for(surface, executable.clone(), Some(material_root.clone()), Some(product.revision.clone()))?;
     ensure_alias_available(composition, &registration)?;
+    // Replacing a working registration with the recorded build set is a real
+    // change of which binary runs. Say it out loud rather than letting the
+    // owner discover it through a broken command.
+    if let Some(previous) = composition.modules.get(&product.id) {
+        let same = previous.native_executable == registration.native_executable
+            && previous.version == registration.version;
+        if !same {
+            println!(
+                "{}: registration replaced — was {} @ {}, now {} @ {}",
+                product.id,
+                previous.native_executable.as_deref().unwrap_or("(no executable)"),
+                previous.version.as_deref().unwrap_or("(no revision)"),
+                registration.native_executable.as_deref().unwrap_or("(no executable)"),
+                registration.version.as_deref().unwrap_or("(no revision)")
+            );
+        }
+    }
     composition.modules.insert(product.id.clone(), registration);
 
     verify_installed_product(product, executable.as_deref(), composition.personal_ground.as_deref())?;
@@ -510,14 +610,16 @@ fn find_named_file(root: &Path, name: &str, depth: usize) -> Option<PathBuf> {
 }
 
 fn verify_installed_product(product: &SuiteProduct, executable: Option<&Path>, personal_ground: Option<&str>) -> Result<(), String> {
-    let Some(executable) = executable else { return Ok(()); };
+    let _ = personal_ground;
+    let Some(executable) = executable else {
+        return Err(format!(
+            "{} has no installed executable to verify; O:I does not accept an unverifiable registration",
+            product.id
+        ));
+    };
+    // Same shape for every product: run the probe the build record declares.
     let mut command = Command::new(executable);
-    if product.id == "central" {
-        let _ = personal_ground;
-        command.arg("--version");
-    } else {
-        command.args(&product.artifact.installed_verify);
-    }
+    command.args(&product.artifact.installed_verify);
     let status = command.stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null()).status()
         .map_err(|error| format!("failed to verify installed {}: {error}", product.id))?;
     if status.success() { Ok(()) } else { Err(format!("installed verification failed for {}", product.id)) }
@@ -559,11 +661,33 @@ fn command_suite_v2_status(args: &[OsString]) -> Result<i32, String> {
     }
     println!("O:I suite {}", manifest.suite_version);
     println!("Managed root: {}", data_root.display());
+    println!("Artifact record (what was unpacked) and command registration (what actually runs):");
     for product in &manifest.products {
         match receipt.products.get(&product.id) {
             Some(installed) if installed.revision == product.revision => println!("  {:<18} recorded  {}", product.public_name, product.revision),
             Some(installed) => println!("  {:<18} drift     {} (recorded {})", product.public_name, installed.revision, product.revision),
             None => println!("  {:<18} missing   recorded {}", product.public_name, product.revision),
+        }
+        match composition.modules.get(&product.id) {
+            Some(registration) => match (
+                registration.native_executable.as_deref(),
+                registration.version.as_deref(),
+            ) {
+                (Some(executable), Some(version)) => {
+                    println!("  {:<18}   command {} @ {}", "", executable, version)
+                }
+                (Some(executable), None) => {
+                    println!("  {:<18}   command {} @ NO RECORDED REVISION", "", executable)
+                }
+                (None, _) => println!(
+                    "  {:<18}   command NOT REGISTERED — `oi {}` will not run a PATH copy",
+                    "", product.id
+                ),
+            },
+            None => println!(
+                "  {:<18}   command NOT REGISTERED — `oi {}` will not run a PATH copy",
+                "", product.id
+            ),
         }
     }
     println!("Physical acceptance: NOT RUN (separate gate)");

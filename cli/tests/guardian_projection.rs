@@ -301,6 +301,28 @@ fn pickup_preserves_local_edits_instead_of_clobbering() {
         .any(|line| line.contains("warning:")));
 }
 
+/// A registration records the revision its executable was built from; these
+/// tests stand in for a real install, so they supply one explicitly.
+#[cfg(unix)]
+const FIXTURE_REVISION: &str = "3f6d2b1c9a4e5d7081b2c3d4e5f60718293a4b5c";
+
+#[cfg(unix)]
+fn register_central(home: &Path, bin: &Path, ctrl: &Path) {
+    let result = Command::new(env!("CARGO_BIN_EXE_oi"))
+        .env("OI_HOME", home)
+        .env("PATH", bin)
+        .args(["register", "central", "--executable"])
+        .arg(ctrl)
+        .args(["--version", FIXTURE_REVISION])
+        .output()
+        .unwrap();
+    assert!(
+        result.status.success(),
+        "register central failed: {}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+}
+
 #[cfg(unix)]
 fn fake_executable(dir: &Path, name: &str, body: &str) -> PathBuf {
     use std::os::unix::fs::PermissionsExt;
@@ -394,7 +416,8 @@ fn bootstrap_hands_the_guardian_set_to_aikit_when_installed() {
     let ground_temp = TempDir::new().unwrap();
     let ground = ground_temp.path().join("Central");
     let log = home.path().join("aikit-calls.log");
-    fake_central(bin.path());
+    let ctrl = fake_central(bin.path());
+    register_central(home.path(), bin.path(), &ctrl);
     fake_aikit(bin.path(), &log);
 
     let init = Command::new(env!("CARGO_BIN_EXE_oi"))
@@ -475,7 +498,8 @@ fn sync_respects_a_adopted_aikit_managed_tree_instead_of_deadlocking() {
     let ground_temp = TempDir::new().unwrap();
     let ground = ground_temp.path().join("Central");
     let log = home.path().join("aikit-managed-calls.log");
-    fake_central(bin.path());
+    let ctrl = fake_central(bin.path());
+    register_central(home.path(), bin.path(), &ctrl);
     fake_aikit(bin.path(), &home.path().join("aikit-managed-init.log"));
 
     let init = Command::new(env!("CARGO_BIN_EXE_oi"))
@@ -736,7 +760,8 @@ fn sync_refreshes_a_stale_adopted_tree_through_aikit_procedures() {
     let log = home.path().join("aikit-refresh-calls.log");
     let store = home.path().join("aikit-store/payload");
     let originals = home.path().join("aikit-store/originals");
-    fake_central(bin.path());
+    let ctrl = fake_central(bin.path());
+    register_central(home.path(), bin.path(), &ctrl);
     fake_aikit_with_ownership(bin.path(), &log, &ground, &store, &originals);
 
     let init = Command::new(env!("CARGO_BIN_EXE_oi"))
@@ -924,7 +949,8 @@ fn bootstrap_projects_guardian_skillset_into_a_fresh_ground() {
     let bin = TempDir::new().unwrap();
     let ground_temp = TempDir::new().unwrap();
     let ground = ground_temp.path().join("Central");
-    fake_central(bin.path());
+    let ctrl = fake_central(bin.path());
+    register_central(home.path(), bin.path(), &ctrl);
 
     let init = Command::new(env!("CARGO_BIN_EXE_oi"))
         .env("OI_HOME", home.path())
@@ -985,7 +1011,8 @@ fn sync_refuses_to_clear_capsule_residue_that_holds_content() {
     let log = home.path().join("aikit-residue-calls.log");
     let store = home.path().join("aikit-store/payload");
     let originals = home.path().join("aikit-store/originals");
-    fake_central(bin.path());
+    let ctrl = fake_central(bin.path());
+    register_central(home.path(), bin.path(), &ctrl);
     fake_aikit_with_ownership(bin.path(), &log, &ground, &store, &originals);
 
     let init = Command::new(env!("CARGO_BIN_EXE_oi"))

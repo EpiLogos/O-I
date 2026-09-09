@@ -5,6 +5,10 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Output, Stdio};
 use tempfile::TempDir;
 
+/// A registration records the revision its executable was built from. These
+/// tests stand in for a real install, so they supply one explicitly.
+const FIXTURE_REVISION: &str = "3f6d2b1c9a4e5d7081b2c3d4e5f60718293a4b5c";
+
 fn oi(home: &Path, path: &Path) -> Command {
     let mut command = Command::new(env!("CARGO_BIN_EXE_oi"));
     command.env("OI_HOME", home).env("PATH", path);
@@ -63,6 +67,17 @@ exit 0
     fake_executable(dir, "ctrl", &body)
 }
 
+#[cfg(unix)]
+fn register_central(home: &TempDir, bin: &TempDir, ctrl: &Path) {
+    let result = output(
+        oi(home.path(), bin.path())
+            .args(["register", "central", "--executable"])
+            .arg(ctrl)
+            .args(["--version", FIXTURE_REVISION]),
+    );
+    assert!(result.status.success(), "{}", text(&result.stderr));
+}
+
 fn output(command: &mut Command) -> Output {
     command.output().expect("command runs")
 }
@@ -111,7 +126,8 @@ fn register_creates_only_composition_metadata() {
     let result = output(
         oi(home.path(), bin.path())
             .args(["register", "central", "--executable"])
-            .arg(&ctrl),
+            .arg(&ctrl)
+            .args(["--version", FIXTURE_REVISION]),
     );
     assert!(result.status.success(), "{}", text(&result.stderr));
     let state: Value =
@@ -119,8 +135,52 @@ fn register_creates_only_composition_metadata() {
     let central = &state["modules"]["central"];
     assert_eq!(central["id"], "central");
     assert_eq!(central["alias"], "ctrl");
-    assert_eq!(central["version"], "ctrl 0.1.0");
+    assert_eq!(central["version"], FIXTURE_REVISION);
     assert!(central.get("product_config").is_none());
+}
+
+#[cfg(unix)]
+#[test]
+fn register_refuses_a_version_banner_where_a_revision_belongs() {
+    // `ctrl 0.1.0` is what the executable prints, not what it was built from.
+    // Recording it is how a registration came to claim an identity nothing
+    // could check.
+    let home = TempDir::new().unwrap();
+    let bin = TempDir::new().unwrap();
+    let ctrl = fake_central(bin.path(), 0);
+    let result = output(
+        oi(home.path(), bin.path())
+            .args(["register", "central", "--executable"])
+            .arg(&ctrl)
+            .args(["--version", "ctrl 0.1.0"]),
+    );
+    assert_eq!(result.status.code(), Some(2));
+    assert!(
+        text(&result.stderr).contains("refusing to record `ctrl 0.1.0` as the installed version"),
+        "{}",
+        text(&result.stderr)
+    );
+    assert!(!home.path().join("composition.json").exists());
+}
+
+#[cfg(unix)]
+#[test]
+fn register_refuses_a_registration_with_no_revision_at_all() {
+    let home = TempDir::new().unwrap();
+    let bin = TempDir::new().unwrap();
+    let ctrl = fake_central(bin.path(), 0);
+    let result = output(
+        oi(home.path(), bin.path())
+            .args(["register", "central", "--executable"])
+            .arg(&ctrl),
+    );
+    assert_eq!(result.status.code(), Some(2));
+    assert!(
+        text(&result.stderr).contains("without the git revision"),
+        "{}",
+        text(&result.stderr)
+    );
+    assert!(!home.path().join("composition.json").exists());
 }
 
 #[cfg(unix)]
@@ -132,9 +192,10 @@ fn status_marks_deleted_registered_executable_broken() {
     let registered = output(
         oi(home.path(), bin.path())
             .args(["register", "central", "--executable"])
-            .arg(&ctrl),
+            .arg(&ctrl)
+            .args(["--version", FIXTURE_REVISION]),
     );
-    assert!(registered.status.success());
+    assert!(registered.status.success(), "{}", text(&registered.stderr));
     fs::remove_file(ctrl).unwrap();
     let result = output(oi(home.path(), bin.path()).args(["status", "--json"]));
     let value: Value = serde_json::from_slice(&result.stdout).unwrap();
@@ -189,7 +250,8 @@ fn full_registered_composition_is_reported_without_invented_aliases() {
         let result = output(
             oi(home.path(), bin.path())
                 .args(["register", module, "--executable"])
-                .arg(executable),
+                .arg(executable)
+                .args(["--version", FIXTURE_REVISION]),
         );
         assert!(result.status.success(), "{}", text(&result.stderr));
     }
@@ -218,9 +280,10 @@ fn alias_exec_preserves_arguments_stdio_and_exit_status() {
     let registered = output(
         oi(home.path(), bin.path())
             .args(["register", "central", "--executable"])
-            .arg(&ctrl),
+            .arg(&ctrl)
+            .args(["--version", FIXTURE_REVISION]),
     );
-    assert!(registered.status.success());
+    assert!(registered.status.success(), "{}", text(&registered.stderr));
 
     let mut child = oi(home.path(), bin.path())
         .args(["ctrl", "alpha", "two words"])
@@ -264,7 +327,8 @@ fn init_without_central_refuses_to_synthesize_a_personal_ground() {
 fn init_delegates_to_real_central_shape_and_is_idempotent() {
     let home = TempDir::new().unwrap();
     let bin = TempDir::new().unwrap();
-    fake_central(bin.path(), 0);
+    let ctrl = fake_central(bin.path(), 0);
+    register_central(&home, &bin, &ctrl);
     let ground = home.path().join("Central");
     for _ in 0..2 {
         let result = output(
@@ -308,9 +372,10 @@ fn central_init_failure_does_not_record_false_personal_ground() {
     let registered = output(
         oi(home.path(), bin.path())
             .args(["register", "central", "--executable"])
-            .arg(ctrl),
+            .arg(ctrl)
+            .args(["--version", FIXTURE_REVISION]),
     );
-    assert!(registered.status.success());
+    assert!(registered.status.success(), "{}", text(&registered.stderr));
     let before = fs::read(home.path().join("composition.json")).unwrap();
     let ground = home.path().join("Central");
     let result = output(
@@ -327,16 +392,21 @@ fn central_init_failure_does_not_record_false_personal_ground() {
 
 #[cfg(unix)]
 #[test]
-fn register_central_discovers_an_existing_compatible_ctrl() {
+fn register_refuses_a_path_discovered_ctrl_whose_revision_is_unknown() {
+    // Detection is not registration: O:I cannot name the revision of a command
+    // it did not install, and a registration without a revision is the silent
+    // substitution this contract exists to stop.
     let home = TempDir::new().unwrap();
     let bin = TempDir::new().unwrap();
     fake_central(bin.path(), 0);
     let result = output(oi(home.path(), bin.path()).args(["register", "central"]));
-    assert!(result.status.success(), "{}", text(&result.stderr));
-    assert!(text(&result.stdout).contains("Registered: Central"));
-    let state: Value =
-        serde_json::from_slice(&fs::read(home.path().join("composition.json")).unwrap()).unwrap();
-    assert_eq!(state["modules"]["central"]["version"], "ctrl 0.1.0");
+    assert_eq!(result.status.code(), Some(2));
+    assert!(
+        text(&result.stderr).contains("without the git revision"),
+        "{}",
+        text(&result.stderr)
+    );
+    assert!(!home.path().join("composition.json").exists());
 }
 
 #[cfg(unix)]
@@ -348,9 +418,10 @@ fn central_install_failure_leaves_prior_composition_recoverable() {
     let registered = output(
         oi(home.path(), bin.path())
             .args(["register", "ai-kit", "--executable"])
-            .arg(aikit),
+            .arg(aikit)
+            .args(["--version", FIXTURE_REVISION]),
     );
-    assert!(registered.status.success());
+    assert!(registered.status.success(), "{}", text(&registered.stderr));
     let before = fs::read(home.path().join("composition.json")).unwrap();
     fake_executable(bin.path(), "git", "exit 9");
     fake_executable(bin.path(), "cargo", "exit 9");
@@ -367,7 +438,8 @@ fn central_install_failure_leaves_prior_composition_recoverable() {
 fn migration_places_existing_work_tree_without_changing_its_contents() {
     let home = TempDir::new().unwrap();
     let bin = TempDir::new().unwrap();
-    fake_central(bin.path(), 0);
+    let ctrl = fake_central(bin.path(), 0);
+    register_central(&home, &bin, &ctrl);
     let ground = home.path().join("Central");
     let init = output(
         oi(home.path(), bin.path())
@@ -402,7 +474,8 @@ fn migration_places_existing_work_tree_without_changing_its_contents() {
 fn migration_refuses_target_collision_without_changing_source() {
     let home = TempDir::new().unwrap();
     let bin = TempDir::new().unwrap();
-    fake_central(bin.path(), 0);
+    let ctrl = fake_central(bin.path(), 0);
+    register_central(&home, &bin, &ctrl);
     let ground = home.path().join("Central");
     assert!(output(
         oi(home.path(), bin.path())
@@ -442,7 +515,8 @@ fn alias_collision_is_explicit() {
     let result = output(
         oi(home.path(), bin.path())
             .args(["register", "ai-kit", "--executable"])
-            .arg(aikit),
+            .arg(aikit)
+            .args(["--version", FIXTURE_REVISION]),
     );
     assert_eq!(result.status.code(), Some(2));
     assert!(text(&result.stderr).contains("alias 'oi kit' is already registered"));

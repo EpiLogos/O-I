@@ -84,19 +84,24 @@ fn command_descriptor_current_dev_install(args: &[OsString]) -> Result<i32, Stri
             ));
         }
 
+        // Record the revision that was actually built, never the catalogue
+        // pin. Recording the pin is what made a registration claim an identity
+        // its binary did not have.
+        let built = checkout_revision(&root).ok_or_else(|| {
+            format!("{id}: cannot read the revision of {} to record it", root.display())
+        })?;
         let surface = find_surface(&catalog, &id)?;
         let registration = registration_for(
             surface,
             Some(executable.clone()),
             Some(root.clone()),
-            Some(surface.docs_ref.clone()),
+            Some(built.clone()),
         )?;
         ensure_alias_available(&composition, &registration)?;
         composition.modules.insert(id.clone(), registration);
         println!(
-            "{id}: registered current-main native executable {} @ {}",
-            executable.display(),
-            surface.docs_ref
+            "{id}: registered current-main native executable {} @ {built}",
+            executable.display()
         );
     }
     save_composition(&composition)?;

@@ -103,13 +103,28 @@ fn dispatch_product_command(
         _ => return Err("unknown product namespace".into()),
     };
     let selected = env::var_os(override_key).filter(|v| !v.is_empty());
-    let registered = composition
-        .modules
-        .get(&product.id)
-        .and_then(|registration| registration.native_executable.as_deref())
-        .unwrap_or(product.executable.as_str());
-
-    let executable = selected.unwrap_or_else(|| registered.into());
+    // No PATH fallback. Running whatever PATH resolves is how `oi aikit ...`
+    // reached a three-week-old build with no `knowledge` subcommand while
+    // every recorded check still said PASS. If O:I cannot name the build, it
+    // refuses to run one; OI_*_BIN remains the explicit operator override.
+    let executable = match selected {
+        Some(explicit) => explicit,
+        None => {
+            let registration = composition.modules.get(&product.id).ok_or_else(|| {
+                format!(
+                    "{} is not registered with O:I, so `oi {}` has no build to run. Install the recorded build with `oi install {}`, or build clean current-main source with `oi dev install {}`. To run a specific binary anyway, set {}=<path>.",
+                    product.public_name, product.namespace, product.id, product.id, override_key
+                )
+            })?;
+            let recorded = registration.native_executable.as_deref().ok_or_else(|| {
+                format!(
+                    "{} is registered without a native executable, so `oi {}` has no build to run — it will not fall back to whatever PATH resolves for `{}`. Run `oi install {}` or `oi dev install {}`. To run a specific binary anyway, set {}=<path>.",
+                    product.public_name, product.namespace, product.executable, product.id, product.id, override_key
+                )
+            })?;
+            OsString::from(recorded)
+        }
+    };
     let mut command = std::process::Command::new(&executable);
     command.args(args);
 

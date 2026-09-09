@@ -2,8 +2,11 @@
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const { spawnSync } = require('node:child_process');
 const {
   NATIVE_VERSION,
+  SUITE_BUILD_RECORD,
+  verifyNativeSuiteVersion,
   archiveBinaryPath,
   checksumAssetUrl,
   downloadText,
@@ -53,7 +56,24 @@ async function main() {
     fs.copyFileSync(sourceBinary, stagedBinary);
     fs.chmodSync(stagedBinary, 0o755);
     fs.renameSync(stagedBinary, finalBinary);
-    console.log(`@epi-logos/oi: native oi installed (${observed.slice(0, 12)}…)`);
+
+    // The package says which suite build it installs; the binary is asked to
+    // agree. An install that cannot prove that is a failed install, not a
+    // warning.
+    const probe = spawnSync(finalBinary, ['--version'], { encoding: 'utf8' });
+    if (probe.error) {
+      throw new Error(`installed oi could not be run: ${probe.error.message}`);
+    }
+    if (probe.status !== 0) {
+      throw new Error(`installed oi --version exited with status ${probe.status}`);
+    }
+    const reported = verifyNativeSuiteVersion(`${probe.stdout || ''}${probe.stderr || ''}`);
+    console.log(
+      `@epi-logos/oi: native oi installed (${observed.slice(0, 12)}) — suite build ${reported.suiteVersion}, built from ${reported.buildRevision}`
+    );
+    console.log(
+      `@epi-logos/oi: the six O:I products are not npm packages; run \`oi install\` to install and register them. Declared suite build: ${SUITE_BUILD_RECORD}.`
+    );
   } finally {
     try { fs.rmSync(stagedBinary, { force: true }); } catch {}
     try { fs.rmSync(temp, { recursive: true, force: true }); } catch {}

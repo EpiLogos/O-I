@@ -39,6 +39,8 @@ struct NativeSurface {
     entry: String,
     executable: Option<String>,
     alias: Option<String>,
+    // Kept for catalogue fidelity; O:I records revisions, never probe output.
+    #[allow(dead_code)]
     version_command: Option<Vec<String>>,
     version_manifest: Option<String>,
 }
@@ -147,7 +149,16 @@ fn run(args: &[OsString]) -> Result<i32, String> {
         "migrate" => command_migrate(&catalog, &args[1..]),
         "catalogue" => command_catalogue(&args[1..]),
         "version" | "--version" | "-V" => {
-            println!("oi {}", env!("CARGO_PKG_VERSION"));
+            let manifest = suite_manifest()?;
+            println!(
+                "oi {} (build {})",
+                manifest.suite_version,
+                env!("OI_BUILD_REVISION")
+            );
+            println!(
+                "suite build record {} recorded {} ({})",
+                manifest.suite_version, manifest.recorded_at, manifest.standing
+            );
             Ok(0)
         }
         unknown => Err(format!(
@@ -406,6 +417,9 @@ fn command_init(catalog: &Catalog, args: &[OsString]) -> Result<i32, String> {
     }
 
     let mut composition = load_composition()?;
+    // Detection is not registration. A command found on PATH has no revision
+    // O:I can name, so it is reported and left alone; `oi install <product>`
+    // and `oi dev install <product>` are the only ways into composition state.
     for surface in &catalog.surfaces {
         if surface.native.kind != "cli" || composition.modules.contains_key(&surface.id) {
             continue;
@@ -414,9 +428,12 @@ fn command_init(catalog: &Catalog, args: &[OsString]) -> Result<i32, String> {
             continue;
         };
         if let Some(path) = resolve_executable(executable) {
-            let registration = registration_for(surface, Some(path), None, None)?;
-            ensure_alias_available(&composition, &registration)?;
-            composition.modules.insert(surface.id.clone(), registration);
+            println!(
+                "{}: detected {} on PATH but not registered — its revision is unknown. Run 'oi install {}'.",
+                surface.public_name,
+                path.display(),
+                surface.id
+            );
         }
     }
 
@@ -541,6 +558,7 @@ fn command_register(catalog: &Catalog, args: &[OsString]) -> Result<i32, String>
         }
     }
 
+    let version = version.or_else(|| root.as_deref().and_then(checkout_revision));
     let registration = registration_for(surface, executable, root, version)?;
     let mut composition = load_composition()?;
     ensure_alias_available(&composition, &registration)?;
@@ -580,11 +598,15 @@ fn command_install(catalog: &Catalog, args: &[OsString]) -> Result<i32, String> 
             .as_deref()
             .and_then(resolve_executable)
         {
+            // Detected, deliberately not registered: O:I cannot name the
+            // revision of a command it did not install, and a registration
+            // without a revision is the silent failure this contract exists
+            // to stop.
             println!(
-                "Found existing {} installation; registering it instead of reinstalling.",
-                surface.public_name
+                "Found {} at {} on PATH; O:I cannot name the revision it was built from, so it installs its own.",
+                surface.public_name,
+                executable.display()
             );
-            return register_existing(catalog, surface, executable);
         }
     }
 
@@ -618,6 +640,10 @@ fn install_aikit(catalog: &Catalog, surface: &Surface) -> Result<i32, String> {
         return Err("AIKit source clone failed; composition state was not changed".to_owned());
     }
 
+    let revision = checkout_revision(&scratch).ok_or_else(|| {
+        let _ = fs::remove_dir_all(&scratch);
+        "AIKit source clone did not resolve to a revision; composition state was not changed".to_owned()
+    })?;
     let install_status = Command::new(cargo)
         .args(["install", "--locked", "--path"])
         .arg(scratch.join("crates/aikit-cli"))
@@ -633,15 +659,16 @@ fn install_aikit(catalog: &Catalog, surface: &Surface) -> Result<i32, String> {
         .ok_or_else(|| {
             "AIKit installed but aikit could not be found. Add Cargo's bin directory to PATH and run 'oi register ai-kit'.".to_owned()
         })?;
-    register_existing(catalog, surface, executable)
+    register_existing(catalog, surface, executable, revision)
 }
 
 fn register_existing(
     _catalog: &Catalog,
     surface: &Surface,
     executable: PathBuf,
+    revision: String,
 ) -> Result<i32, String> {
-    let registration = registration_for(surface, Some(executable), None, None)?;
+    let registration = registration_for(surface, Some(executable), None, Some(revision))?;
     let mut composition = load_composition()?;
     ensure_alias_available(&composition, &registration)?;
     composition
@@ -738,6 +765,59 @@ fn find_surface<'a>(catalog: &'a Catalog, query: &str) -> Result<&'a Surface, St
         .ok_or_else(|| format!("unknown module '{query}'"))
 }
 
+/// The single gate every registration in this binary passes through.
+///
+/// A registration that cannot name the executable it installed, or the git
+/// revision that executable was built from, is not a registration — it is a
+/// PATH fallback wearing a registration's clothes, and that is exactly what let
+/// a three-week-old `aikit` answer `oi aikit` while `oi doctor` said PASS.
+/// Refusing it here is what makes every install path unable to succeed
+/// quietly: there is no way to reach `composition.json` except through this
+/// function.
+fn enforce_registration_contract(surface: &Surface, registration: &Registration) -> Result<(), String> {
+    let id = &surface.id;
+    // The route the owner actually types, so the refusal names a command that
+    // exists rather than an internal id.
+    let namespace = oi_cli::product_command::product_command_catalogue()
+        .ok()
+        .and_then(|catalogue| {
+            catalogue
+                .products
+                .iter()
+                .find(|product| &product.id == id)
+                .map(|product| product.namespace.clone())
+        })
+        .unwrap_or_else(|| id.clone());
+    if surface.native.kind == "cli" {
+        let Some(executable) = registration.native_executable.as_deref() else {
+            return Err(format!(
+                "{id}: refusing to register a native command with no executable — `oi {namespace}` would silently run whatever PATH resolves for `{}`. Install the recorded build with `oi install {id}`, or build clean current-main source with `oi dev install {id}`.",
+                surface.native.executable.as_deref().unwrap_or(&namespace)
+            ));
+        };
+        let path = Path::new(executable);
+        if !path.is_absolute() {
+            return Err(format!(
+                "{id}: refusing to register `{executable}` — a registration records an absolute path to the installed build, never a name PATH has to resolve"
+            ));
+        }
+        if !is_executable(path) {
+            return Err(format!(
+                "{id}: refusing to register {executable} — it is not an executable file on this machine"
+            ));
+        }
+    }
+    match registration.version.as_deref() {
+        Some(version) if oi_cli::status::is_revision(version) => Ok(()),
+        Some(version) => Err(format!(
+            "{id}: refusing to record `{version}` as the installed version — O:I records the git revision the executable was built from, not a --version banner or a release name"
+        )),
+        None => Err(format!(
+            "{id}: refusing to register without the git revision the executable was built from"
+        )),
+    }
+}
+
 fn registration_for(
     surface: &Surface,
     executable: Option<PathBuf>,
@@ -745,13 +825,7 @@ fn registration_for(
     explicit_version: Option<String>,
 ) -> Result<Registration, String> {
     let resolved_executable = executable.map(|path| path.display().to_string());
-    let version = explicit_version.or_else(|| {
-        surface.native.version_command.as_ref().and_then(|args| {
-            resolved_executable
-                .as_deref()
-                .and_then(|executable| probe_version(executable, args))
-        })
-    });
+    let version = explicit_version;
     let docs = if let Some(root) = root.as_ref() {
         let local = root.join(&surface.docs_path);
         if local.exists() {
@@ -781,7 +855,7 @@ fn registration_for(
             )
         })
     };
-    Ok(Registration {
+    let registration = Registration {
         id: surface.id.clone(),
         public_name: surface.public_name.clone(),
         native_executable: resolved_executable,
@@ -790,7 +864,24 @@ fn registration_for(
         docs,
         skill,
         root: root.map(|path| path.display().to_string()),
-    })
+    };
+    enforce_registration_contract(surface, &registration)?;
+    Ok(registration)
+}
+
+/// The git revision a checkout is currently at, when it is a checkout at all.
+fn checkout_revision(root: &Path) -> Option<String> {
+    let output = Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args(["rev-parse", "HEAD"])
+        .output()
+        .ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    let head = String::from_utf8_lossy(&output.stdout).trim().to_owned();
+    oi_cli::status::is_revision(&head).then_some(head)
 }
 
 fn ensure_alias_available(
@@ -841,19 +932,15 @@ fn dispatch_alias(surface: &Surface, args: &[OsString]) -> Result<i32, String> {
     }
 }
 
+/// Only a registered build is dispatched. There is deliberately no PATH
+/// fallback here: an unregistered command has no revision O:I can name, and
+/// running it anyway is the silent substitution this contract forbids.
 fn native_for_dispatch(surface: &Surface, composition: &Composition) -> Option<PathBuf> {
     composition
         .modules
         .get(&surface.id)
         .and_then(|registration| registration.native_executable.as_deref())
         .and_then(resolve_executable)
-        .or_else(|| {
-            surface
-                .native
-                .executable
-                .as_deref()
-                .and_then(resolve_executable)
-        })
 }
 
 fn documentation_target(surface: &Surface, registration: Option<&Registration>) -> String {
@@ -969,19 +1056,6 @@ fn is_executable(path: &Path) -> bool {
     }
 }
 
-fn probe_version(executable: &str, args: &[String]) -> Option<String> {
-    let output = Command::new(executable)
-        .args(args)
-        .stdin(Stdio::null())
-        .stderr(Stdio::null())
-        .output()
-        .ok()?;
-    if !output.status.success() {
-        return None;
-    }
-    let value = String::from_utf8(output.stdout).ok()?.trim().to_owned();
-    (!value.is_empty()).then_some(value)
-}
 
 fn unique_temp_dir(prefix: &str) -> Result<PathBuf, String> {
     let stamp = SystemTime::now()

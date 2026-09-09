@@ -4,6 +4,21 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use tempfile::TempDir;
 
+/// A registration records the revision its executable was built from; these
+/// tests stand in for a real install, so they supply one explicitly.
+const FIXTURE_REVISION: &str = "3f6d2b1c9a4e5d7081b2c3d4e5f60718293a4b5c";
+
+#[cfg(unix)]
+fn register_central(home: &TempDir, bin: &TempDir, ctrl: &Path) {
+    let result = output(
+        oi(home.path(), bin.path())
+            .args(["register", "central", "--executable"])
+            .arg(ctrl)
+            .args(["--version", FIXTURE_REVISION]),
+    );
+    assert!(result.status.success(), "{}", text(&result.stderr));
+}
+
 fn oi(home: &Path, path: &Path) -> Command {
     let mut command = Command::new(env!("CARGO_BIN_EXE_oi"));
     command.env("OI_HOME", home).env("PATH", path);
@@ -110,7 +125,8 @@ fn stale_three_action_central_is_not_accepted_for_current_personal_ground() {
 fn current_projectcentral_central_initializes_the_real_root_shape() {
     let home = TempDir::new().unwrap();
     let bin = TempDir::new().unwrap();
-    fake_central(bin.path(), true);
+    let ctrl = fake_central(bin.path(), true);
+    register_central(&home, &bin, &ctrl);
     let ground = home.path().join("Central");
 
     let result = output(
@@ -138,7 +154,8 @@ fn current_projectcentral_central_initializes_the_real_root_shape() {
 fn dev_status_reports_current_main_pins_not_release_snapshot() {
     let home = TempDir::new().unwrap();
     let bin = TempDir::new().unwrap();
-    fake_central(bin.path(), true);
+    let ctrl = fake_central(bin.path(), true);
+    register_central(&home, &bin, &ctrl);
     let ground = home.path().join("Central");
     let init = output(
         oi(home.path(), bin.path())

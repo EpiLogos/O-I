@@ -110,8 +110,10 @@ fn command_install_central() -> Result<i32, String> {
         .and_then(resolve_executable)
     {
         if central_compatible(&executable) {
-            println!("Found existing compatible Central installation; registering it instead of reinstalling.");
-            return register_existing(&catalog, surface, executable);
+            println!(
+                "Found a compatible ctrl at {}; O:I cannot name the revision it was built from, so it installs its own.",
+                executable.display()
+            );
         }
         println!("Detected ctrl is not compatible with the required Central bootstrap contract; installing the pinned native source instead.");
     }
@@ -125,7 +127,7 @@ fn command_install_central() -> Result<i32, String> {
     let managed = install_root.join("bin/ctrl");
     if is_executable(&managed) && central_compatible(&managed) {
         println!("Found existing compatible managed Central installation; registering it.");
-        return register_existing(&catalog, surface, managed);
+        return register_existing(&catalog, surface, managed, revision);
     }
 
     let git = resolve_executable("git")
@@ -209,7 +211,7 @@ fn command_install_central() -> Result<i32, String> {
         return Err("Central installed but the resulting ctrl does not satisfy the required bootstrap contract; prior composition state remains unchanged".to_owned());
     }
 
-    register_existing(&catalog, surface, managed)
+    register_existing(&catalog, surface, managed, revision)
 }
 
 fn parse_personal_ground(args: &[OsString]) -> Result<PathBuf, String> {
@@ -296,9 +298,12 @@ fn command_init_personal(args: &[OsString]) -> Result<i32, String> {
             if surface.id == "central" && !central_compatible(&candidate) {
                 continue;
             }
-            let registration = registration_for(surface, Some(candidate), None, None)?;
-            ensure_alias_available(&composition, &registration)?;
-            composition.modules.insert(surface.id.clone(), registration);
+            println!(
+                "{}: detected {} on PATH but not registered — its revision is unknown. Run 'oi install {}'.",
+                surface.public_name,
+                candidate.display(),
+                surface.id
+            );
         }
     }
 
@@ -308,9 +313,10 @@ fn command_init_personal(args: &[OsString]) -> Result<i32, String> {
     })?;
 
     if !composition.modules.contains_key("central") {
-        let registration = registration_for(central_surface, Some(executable.clone()), None, None)?;
-        ensure_alias_available(&composition, &registration)?;
-        composition.modules.insert("central".to_owned(), registration);
+        return Err(
+            "Central is not registered. Run 'oi install central' first: O:I will not register a ctrl it found on PATH, because it cannot name the revision that ctrl was built from."
+                .to_owned(),
+        );
     }
 
     let init = Command::new(&executable)

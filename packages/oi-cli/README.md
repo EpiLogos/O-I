@@ -4,13 +4,33 @@ This package is the **distribution surface for the native Rust `oi` command**.
 
 It is deliberately distinct from O:I's `oi.package/v1` extension envelope. The extension envelope describes contributions that target independently owned native product SDKs. `@epi-logos/oi` does not implement that ontology and does not reimplement the CLI in JavaScript; it only installs and launches the native O:I binary.
 
+## This is the only npm package in the suite
+
+Central, Actuation, AIKit, Software Factory, Workcell and Quaternal Logic are **not** npm packages and are not published to any registry as npm modules. They are native commands. This package installs `oi`; `oi install` then installs and registers those six from recorded release artifacts, and `oi dev install <product>` builds and registers them from clean current-main source.
+
+The boundary is declared in `package.json` under `oi.products_are_not_npm_packages`, and asserted by `npm test`, so it cannot quietly become untrue.
+
+## One version, derived
+
+`package.json`'s `version` is the single source of truth for this package:
+
+| derived value | rule | current |
+| --- | --- | --- |
+| GitHub release tag | `oi-v{version}` | `oi-v0.1.0-prelocal.5` |
+| native archive version | version with the pre-release suffix stripped | `0.1.0` |
+| suite build record the binary carries | declared in `oi.suite_build_record` | `0.1.0-prelocal.2` |
+
+Nothing is typed twice. After the native binary is extracted, `scripts/install.js` runs `oi --version` and requires the binary to report the declared suite build record. A binary that reports a different build set, or none at all, fails the install and says which; it is never assumed compatible.
+
+Because that check is real, a release cut before the O:I packaging contract landed (its `oi --version` prints only a crate version) will fail it. `oi-v0.1.0-prelocal.5` must be cut from a source tree carrying the contract before this package version is published.
+
 ## Current standing
 
 The npm and GitHub Release paths are developed **distribution channels**, not evidence that O:I currently has a stable, verified or known-good release.
 
 Ordinary `main` development produces exact-commit build artifacts and attestations through the pre-local build workflow. It does not mint or select a GitHub Release. A known-good suite state remains downstream of the convergence and physical-acceptance protocol.
 
-Until a release is deliberately selected, the npm installer has no default GitHub release tag. To exercise the GitHub Release download channel explicitly, set:
+The installer selects the GitHub release that matches this package's own version (`oi-v{version}`). To exercise a different release explicitly, set:
 
 ```sh
 OI_NPM_RELEASE_TAG=<tag> npm install -g <package-or-tarball>

@@ -1,7 +1,24 @@
 {
   "name": "@epi-logos/oi",
-  "version": "0.1.0-prelocal.4",
-  "description": "Native O:I composition CLI distribution",
+  "version": "0.1.0-prelocal.5",
+  "oi": {
+    "packaging_contract": "oi.packaging-contract/v1",
+    "release_tag_pattern": "oi-v{version}",
+    "suite_build_record": "0.1.0-prelocal.2",
+    "products_are_not_npm_packages": {
+      "statement": "Central, Actuation, AIKit, Software Factory, Workcell and Quaternal Logic are not published to npm. This package installs the native `oi` command; `oi` then installs and registers those six from recorded release artifacts or from clean current-main source.",
+      "ids": [
+        "central",
+        "actuation",
+        "ai-kit",
+        "software-factory",
+        "workcell",
+        "quaternal-logic"
+      ],
+      "install_command": "oi install"
+    }
+  },
+  "description": "Native O:I composition CLI distribution; the only npm package in the O:I suite",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/EpiLogos/O-I.git",

@@ -118,6 +118,24 @@ pub struct SurfaceDisclosure {
     /// Human-readable drift finding; None when the surface is in step.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub drift: Option<String>,
+    /// True when composition state carries a registration for this surface at
+    /// all. A surface can be `Registered` in state and still have been
+    /// resolved through PATH; this says whether O:I recorded anything.
+    #[serde(default)]
+    pub registered: bool,
+    /// The `native_executable` recorded in composition state, before any PATH
+    /// fallback. `None` on a registered surface means `oi <namespace>` runs
+    /// whatever PATH happens to resolve, which is not a recorded build.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub registered_executable: Option<String>,
+}
+
+/// A recorded version is only usable as identity when it is a git revision.
+/// Seven characters is the shortest abbreviation git itself will print; forty
+/// is a full object name. Anything else — a `--version` banner, a semantic
+/// version, a tag — records a claim that cannot be compared with a checkout.
+pub fn is_revision(value: &str) -> bool {
+    (7..=40).contains(&value.len()) && value.chars().all(|c| c.is_ascii_hexdigit())
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -238,10 +256,48 @@ pub fn annotate_live_drift<GitProbe, PathProbe, HashProbe>(
     HashProbe: Fn(&Path) -> Option<String>,
 {
     for surface in &mut disclosure.surfaces {
+        let mut findings: Vec<String> = Vec::new();
+
+        // Recorded facts first: these are drift even when nothing resolves,
+        // and they are exactly the cases that used to pass silently.
+        if surface.registered {
+            surface.registered_version = surface.version.clone();
+            let namespace = if surface.canonical_namespace.is_empty() {
+                surface.id.clone()
+            } else {
+                surface.canonical_namespace.clone()
+            };
+            if surface.native_kind == "cli" && surface.registered_executable.is_none() {
+                findings.push(format!(
+                    "no native executable is registered — `oi {namespace}` falls back to whatever PATH resolves for `{}`, which is not a recorded build",
+                    surface.native_entry
+                ));
+            }
+            match surface.version.as_deref() {
+                None => findings.push(
+                    "no revision is recorded — nothing ties this registration to a build".to_owned(),
+                ),
+                Some(recorded) if !is_revision(recorded) => findings.push(format!(
+                    "recorded version `{recorded}` is not a revision — nothing ties this registration to a build"
+                )),
+                Some(_) => {}
+            }
+            if surface.state == NativeSurfaceState::Broken {
+                findings.push(
+                    surface
+                        .detail
+                        .clone()
+                        .unwrap_or_else(|| "registration is broken".to_owned()),
+                );
+            }
+        }
+
         let Some(resolved) = surface.resolved.clone() else {
+            if !findings.is_empty() {
+                surface.drift = Some(findings.join("; "));
+            }
             continue;
         };
-        let mut findings: Vec<String> = Vec::new();
         let resolved_path = Path::new(&resolved);
         // The checkout is wherever git says it is, walked up from the resolved
         // path: the executable's directory for CLI surfaces, the root itself
@@ -295,7 +351,6 @@ pub fn annotate_live_drift<GitProbe, PathProbe, HashProbe>(
         }
 
         if let Some(checkout) = &checkout {
-            surface.registered_version = surface.version.clone();
             match &surface.version {
                 Some(recorded)
                     if !recorded.is_empty() && !recorded.starts_with(&checkout.head[..7]) =>
@@ -407,9 +462,13 @@ where
                 live_revision: None,
                 path_executable: None,
                 drift: None,
+                registered: false,
+                registered_executable: None,
             };
 
             if let Some(registration) = composition.modules.get(&surface.id) {
+                disclosure.registered = true;
+                disclosure.registered_executable = registration.native_executable.clone();
                 disclosure.version = registration.version.clone();
                 if surface.native.kind == "cli" {
                     let candidate = registration
@@ -536,6 +595,8 @@ mod tests {
                 live_revision: None,
                 path_executable: None,
                 drift: None,
+                registered: true,
+                registered_executable: Some(resolved.into()),
             }],
             warnings: Vec::new(),
         }
@@ -626,6 +687,182 @@ mod tests {
             "drift must name the binary this machine actually runs: {drift}"
         );
         fs::remove_file(&executable).ok();
+    }
+
+    // A one-surface catalogue, so the registration tests below do not depend on
+    // whatever surfaces.json happens to say today.
+    const ONE_SURFACE_CATALOG: &str = r#"{
+      "schema": 1,
+      "verified_at": "2026-09-09",
+      "surfaces": [
+        {
+          "id": "ai-kit",
+          "public_name": "AIKit",
+          "function": "resolution",
+          "repository": "https://github.com/EpiLogos/ai-kit",
+          "native": {
+            "kind": "cli",
+            "entry": "aikit",
+            "executable": "aikit",
+            "namespace": "aikit",
+            "version_command": ["--version"]
+          }
+        }
+      ]
+    }"#;
+
+    fn annotated(composition_json: &str, path_resolution: &'static str) -> SurfaceDisclosure {
+        let mut disclosure = disclosure_from_json(
+            ONE_SURFACE_CATALOG,
+            Some(composition_json),
+            move |candidate| {
+                // Only a real absolute path resolves; a bare name resolves the
+                // way PATH would.
+                if candidate == "aikit" {
+                    Some(path_resolution.to_owned())
+                } else if Path::new(candidate).is_file() {
+                    Some(candidate.to_owned())
+                } else {
+                    None
+                }
+            },
+            |candidate| Path::new(candidate).is_dir(),
+        )
+        .unwrap();
+        annotate_live_drift(
+            &mut disclosure,
+            |_inside| None,
+            move |_entry| Some(path_resolution.to_owned()),
+            |_path| None,
+        );
+        disclosure.surfaces.remove(0)
+    }
+
+    #[test]
+    fn registration_without_a_native_executable_is_drift_not_a_pass() {
+        // This is the shape actuation/software-factory/quaternal-logic were in:
+        // a registration with a root and a revision, no executable, and `oi
+        // <product>` quietly running whatever PATH had.
+        let surface = annotated(
+            r#"{"schema":1,"modules":{"ai-kit":{"version":"aaaa1111bbbb2222cccc3333dddd4444eeee5555"}}}"#,
+            "/usr/local/bin/aikit",
+        );
+        let drift = surface.drift.as_deref().unwrap_or_default();
+        assert!(
+            drift.contains("no native executable is registered"),
+            "an executable-less registration must not pass: {drift}"
+        );
+        assert!(surface.registered);
+        assert!(surface.registered_executable.is_none());
+    }
+
+    #[test]
+    fn absent_registered_executable_is_drift_not_a_pass() {
+        let surface = annotated(
+            r#"{"schema":1,"modules":{"ai-kit":{"native_executable":"/nonexistent/aikit","version":"aaaa1111bbbb2222cccc3333dddd4444eeee5555"}}}"#,
+            "/usr/local/bin/aikit",
+        );
+        assert_eq!(surface.state, NativeSurfaceState::Broken);
+        let drift = surface.drift.as_deref().unwrap_or_default();
+        assert!(
+            drift.contains("cannot be resolved"),
+            "a registered executable that is gone must not pass: {drift}"
+        );
+    }
+
+    #[test]
+    fn recorded_version_that_is_not_a_revision_is_drift_not_a_pass() {
+        // This is the shape central was in: `ctrl 0.1.0`, a --version banner
+        // recorded where a revision belongs, comparable with nothing.
+        let executable =
+            std::env::temp_dir().join(format!("oi-version-test-{}", std::process::id()));
+        fs::write(&executable, b"registered").unwrap();
+        let composition = format!(
+            r#"{{"schema":1,"modules":{{"ai-kit":{{"native_executable":"{}","version":"ctrl 0.1.0"}}}}}}"#,
+            executable.display()
+        );
+        let surface = annotated(&composition, "/usr/local/bin/aikit");
+        let drift = surface.drift.as_deref().unwrap_or_default();
+        assert!(
+            drift.contains("is not a revision"),
+            "a version banner recorded as identity must not pass: {drift}"
+        );
+        fs::remove_file(&executable).ok();
+    }
+
+    #[test]
+    fn missing_recorded_revision_is_drift_not_a_pass() {
+        let executable =
+            std::env::temp_dir().join(format!("oi-norev-test-{}", std::process::id()));
+        fs::write(&executable, b"registered").unwrap();
+        let composition = format!(
+            r#"{{"schema":1,"modules":{{"ai-kit":{{"native_executable":"{}"}}}}}}"#,
+            executable.display()
+        );
+        let surface = annotated(&composition, "/usr/local/bin/aikit");
+        let drift = surface.drift.as_deref().unwrap_or_default();
+        assert!(
+            drift.contains("no revision is recorded"),
+            "a registration with no revision must not pass: {drift}"
+        );
+        fs::remove_file(&executable).ok();
+    }
+
+    #[test]
+    fn is_revision_accepts_object_names_and_rejects_banners() {
+        assert!(is_revision("aaaa1111bbbb2222cccc3333dddd4444eeee5555"));
+        assert!(is_revision("aaaa111"));
+        assert!(!is_revision("aaaa11"));
+        assert!(!is_revision("ctrl 0.1.0"));
+        assert!(!is_revision("0.1.0-prelocal.4"));
+        assert!(!is_revision(""));
+    }
+
+    /// The differing-content branch, exercised with the real SHA-256 probe over
+    /// two real files. The companion assertion below shows the same test
+    /// passing when the bytes agree, so this one can actually fail.
+    #[test]
+    fn a_differing_path_copy_is_drift_under_the_real_hash_probe() {
+        let dir = std::env::temp_dir().join(format!("oi-real-hash-{}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let registered = dir.join("registered-aikit");
+        let shadow = dir.join("shadow-aikit");
+        fs::write(&registered, b"the build O:I recorded").unwrap();
+        fs::write(&shadow, b"a three-week-old build with no knowledge subcommand").unwrap();
+
+        let mut disclosure = disclosure_with_resolved(&registered.display().to_string());
+        disclosure.surfaces[0].version = Some("aaaa1111".into());
+        let shadow_path = shadow.display().to_string();
+        annotate_live_drift(
+            &mut disclosure,
+            |_inside| None,
+            move |_entry| Some(shadow_path.clone()),
+            live_sha256,
+        );
+        let drift = disclosure.surfaces[0].drift.as_deref().unwrap_or_default();
+        assert!(
+            drift.contains("differs from the registered executable"),
+            "differing bytes on PATH must be named as drift: {drift}"
+        );
+
+        // Same bytes: the identical probe must report no drift, which is what
+        // makes the assertion above meaningful rather than always-true.
+        fs::write(&shadow, b"the build O:I recorded").unwrap();
+        let mut agreeing = disclosure_with_resolved(&registered.display().to_string());
+        agreeing.surfaces[0].version = Some("aaaa1111".into());
+        let shadow_path = shadow.display().to_string();
+        annotate_live_drift(
+            &mut agreeing,
+            |_inside| None,
+            move |_entry| Some(shadow_path.clone()),
+            live_sha256,
+        );
+        assert!(
+            agreeing.surfaces[0].drift.is_none(),
+            "identical bytes must not drift: {:?}",
+            agreeing.surfaces[0].drift
+        );
+        fs::remove_dir_all(&dir).ok();
     }
 
     #[test]

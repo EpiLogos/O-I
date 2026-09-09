@@ -302,6 +302,8 @@ mod tests {
             live_revision: None,
             path_executable: None,
             drift: None,
+            registered: true,
+            registered_executable: Some(format!("/native/{id}")),
         }
     }
 
