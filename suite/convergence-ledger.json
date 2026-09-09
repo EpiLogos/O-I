@@ -127,7 +127,7 @@
           "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "Flow workbench over projectcentral.flow.* for the deleted desktop/{ui,core}; function record quarry/notes/feat-flow-desktop-138.md (U4.1/U4.2, authority-seam tests)",
-          "reentry_condition": "none — re-derive per cradle wayfinder units when built",
+          "reentry_condition": "none \u2014 re-derive per cradle wayfinder units when built",
           "closure_blocking": false
         },
         {
@@ -135,7 +135,7 @@
           "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "Project field composition + source-class UI law for the deleted app; record quarry/notes/agent-oi-desktop-p2-project-field-106.md (U1.1/U1.4)",
-          "reentry_condition": "none — re-derive per cradle wayfinder units",
+          "reentry_condition": "none \u2014 re-derive per cradle wayfinder units",
           "closure_blocking": false
         },
         {
@@ -143,7 +143,7 @@
           "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "Source Change Horizon + privacy-preserving impact for the deleted app; record quarry/notes/feat-living-wiki-desktop-135.md (U3.2/U3.4)",
-          "reentry_condition": "none — re-derive per cradle wayfinder units",
+          "reentry_condition": "none \u2014 re-derive per cradle wayfinder units",
           "closure_blocking": false
         },
         {
@@ -151,7 +151,7 @@
           "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "opaque Cosmic host + corrected-C binding semantics; record quarry/notes/agent-oi-d-current-situated-cosmic.md (fog Nara/Epi, U3.3)",
-          "reentry_condition": "none — fog-row record",
+          "reentry_condition": "none \u2014 fog-row record",
           "closure_blocking": false
         },
         {
@@ -159,7 +159,7 @@
           "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "one integrated instrument / six deep workspaces; record quarry/notes/agent-oi-epi-cosmic-123-instrument.md (fog Nara/Epi)",
-          "reentry_condition": "none — fog-row record",
+          "reentry_condition": "none \u2014 fog-row record",
           "closure_blocking": false
         },
         {
@@ -167,7 +167,7 @@
           "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "personal 4/5/0 packets Map lineage; record quarry/notes/agent-oi-pre-d-personal-map-lineage.md (U3.3)",
-          "reentry_condition": "none — re-derive per cradle wayfinder units",
+          "reentry_condition": "none \u2014 re-derive per cradle wayfinder units",
           "closure_blocking": false
         },
         {
@@ -175,7 +175,7 @@
           "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "Central NOW host inspect/return/reject/promote; record quarry/notes/agent-oi-epi-personal-450-return.md (U3.3)",
-          "reentry_condition": "none — re-derive per cradle wayfinder units",
+          "reentry_condition": "none \u2014 re-derive per cradle wayfinder units",
           "closure_blocking": false
         },
         {
@@ -183,7 +183,7 @@
           "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "one shared Explore Surface model Read/Author/Preview; record quarry/notes/agent-oi-desktop-p6-explore-parity-110.md (U3.4/U3.5)",
-          "reentry_condition": "none — re-derive per cradle wayfinder units",
+          "reentry_condition": "none \u2014 re-derive per cradle wayfinder units",
           "closure_blocking": false
         },
         {
@@ -191,14 +191,14 @@
           "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "parent-bounded Action authority for protected child subjects; record quarry/notes/agent-oi-epi-personal-450-composed.md (U0.3b/U2.5 pattern)",
-          "reentry_condition": "none — fog-row record",
+          "reentry_condition": "none \u2014 fog-row record",
           "closure_blocking": false
         },
         {
           "name": "agent/oi-desktop-p5-system-109",
           "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
-          "reason": "six owners x seven axes System workbench, CurrentWorld partial constitution; record quarry/notes/agent-oi-desktop-p5-system-109.md; System region has NO cradle unit — OWNER-TO-DECIDE",
+          "reason": "six owners x seven axes System workbench, CurrentWorld partial constitution; record quarry/notes/agent-oi-desktop-p5-system-109.md; System region has NO cradle unit \u2014 OWNER-TO-DECIDE",
           "reentry_condition": "owner decision: charter a System-region unit or fold into fog",
           "closure_blocking": false
         },
@@ -207,7 +207,7 @@
           "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "region-generic Surface placement + canonical Action emission + authority-seam tests; record quarry/notes/agent-oi-desktop-p1-host-105.md (U0.3b)",
-          "reentry_condition": "none — re-derive per cradle wayfinder units",
+          "reentry_condition": "none \u2014 re-derive per cradle wayfinder units",
           "closure_blocking": false
         },
         {
@@ -215,7 +215,7 @@
           "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "W7 multi-world conformance suite definition; record quarry/notes/converge-living-wiki-w7-main.md (U3.4 walk inputs)",
-          "reentry_condition": "none — scenario shape recorded",
+          "reentry_condition": "none \u2014 scenario shape recorded",
           "closure_blocking": false
         },
         {
@@ -223,7 +223,7 @@
           "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "source-authored wiki relations via AIKit compiler; record quarry/notes/feat-wiki-authored-relations.md (U3.4/U3.5, W1.5)",
-          "reentry_condition": "none — re-derive per cradle wayfinder units",
+          "reentry_condition": "none \u2014 re-derive per cradle wayfinder units",
           "closure_blocking": false
         },
         {
@@ -238,7 +238,7 @@
           "name": "agent/oi-epi-personal-return",
           "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
-          "reason": "M4 prime Nara first lived Epi canvas; record quarry/notes/agent-oi-epi-personal-return.md; tip f9f1a53 identical to agent/oi-epi-nara-lived-vertical — one record, two deletions",
+          "reason": "M4 prime Nara first lived Epi canvas; record quarry/notes/agent-oi-epi-personal-return.md; tip f9f1a53 identical to agent/oi-epi-nara-lived-vertical \u2014 one record, two deletions",
           "reentry_condition": "none",
           "closure_blocking": false
         },
@@ -246,7 +246,7 @@
           "name": "agent/oi-epi-nara-lived-vertical",
           "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
-          "reason": "tip f9f1a53 identical to agent/oi-epi-personal-return — same content, two names; single quarry record covers both",
+          "reason": "tip f9f1a53 identical to agent/oi-epi-personal-return \u2014 same content, two names; single quarry record covers both",
           "reentry_condition": "none",
           "closure_blocking": false
         },
@@ -255,14 +255,14 @@
           "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "Epi mounting pattern over the native contribution contract; record quarry/notes/agent-oi-epi-mode-kernel-bridge.md (U0.3b pattern, mounting law)",
-          "reentry_condition": "none — fog-row record",
+          "reentry_condition": "none \u2014 fog-row record",
           "closure_blocking": false
         },
         {
           "name": "agent/ql-relational-field",
           "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
-          "reason": "docs+CSV+skill (not desktop): 144-relation machine-readable reference sheet + oi-relational-development skill; record quarry/notes/agent-ql-relational-field.md; CSV is branch-only and homeless — OWNER-TO-DECIDE",
+          "reason": "docs+CSV+skill (not desktop): 144-relation machine-readable reference sheet + oi-relational-development skill; record quarry/notes/agent-ql-relational-field.md; CSV is branch-only and homeless \u2014 OWNER-TO-DECIDE",
           "reentry_condition": "owner decision: home the 144-relation CSV or let it rest in the note",
           "closure_blocking": false
         },
@@ -281,14 +281,6 @@
           "reason": "live SpaceTimeDB/Encounter-security probe and Explore projection revision algebra; record quarry/notes/agent-explore-projection-space.md (U3.4 + fog Gateway/SpaceTimeDB)",
           "reentry_condition": "hosted deployment + independently authored/federated world acceptance",
           "closure_blocking": false
-        },
-        {
-          "name": "merge/cradle-p1-into-main",
-          "disposition": "KEEP_ACTIVE_EXCEPTION",
-          "owner": "O:I main / PR #210 (open)",
-          "reason": "the resolved cradle-p1 -> main reconciliation; main is protected so the merge commit lands through a branch. Carries the doctor drift fix, the ETXTBSY wait in recognition artifact verification, the site npm cache-key removal, and the re-cut Actuation/ai-kit/central/software-factory mainline pins",
-          "reentry_condition": "deleted when PR #210 merges; ledger entry moves to RETIRE_MERGED on the next pass",
-          "closure_blocking": false
         }
       ],
       "open_pull_requests": [
@@ -296,16 +288,8 @@
           "number": 72,
           "disposition": "KEEP_ACTIVE_EXCEPTION",
           "owner": "O:I #18",
-          "reason": "projection-native SharedField/Explore programme — the one kept live branch",
+          "reason": "projection-native SharedField/Explore programme \u2014 the one kept live branch",
           "reentry_condition": "real hosted/federated authored-world acceptance",
-          "closure_blocking": false
-        },
-        {
-          "number": 210,
-          "disposition": "KEEP_ACTIVE_EXCEPTION",
-          "owner": "O:I main (cradle rebuild landing)",
-          "reason": "lands cradle-p1 on main: the cradle kernel, surfaces and walks, plus the oi doctor drift fix that had been discarding the finding naming the binary this machine actually runs",
-          "reentry_condition": "merged; entry retires on the next ledger pass",
           "closure_blocking": false
         }
       ]
@@ -405,7 +389,7 @@
           "name": "feat/current-machine-workcell-binding",
           "disposition": "RETIRE_MERGED",
           "owner": "Central current main",
-          "reason": "current-machine↔Workcell owner seam merged to main",
+          "reason": "current-machine\u2194Workcell owner seam merged to main",
           "reentry_condition": "delete merged remote branch after history receipt is retained",
           "closure_blocking": true
         },
@@ -422,7 +406,7 @@
           "disposition": "RETIRE_SUPERSEDED",
           "owner": "Central #93 / superseded PR #95",
           "reason": "original pre-#94 Flow branch was explicitly superseded by current-main reconstruction PR #96",
-          "reentry_condition": "delete superseded remote branch after #95→#96 provenance is retained",
+          "reentry_condition": "delete superseded remote branch after #95\u2192#96 provenance is retained",
           "closure_blocking": true
         },
         {
@@ -698,7 +682,7 @@
           "name": "harmonize/actuation-runtime-boundary",
           "disposition": "RETIRE_MERGED",
           "owner": "Factory current main",
-          "reason": "Factory↔Actuation ownership correction is on current main",
+          "reason": "Factory\u2194Actuation ownership correction is on current main",
           "reentry_condition": "delete merged remote branch",
           "closure_blocking": true
         },
