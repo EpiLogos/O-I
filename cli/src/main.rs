@@ -21,6 +21,7 @@ mod composition {
     include!("rolling_dev.rs");
     include!("existing_world.rs");
     include!("omarchy_host.rs");
+    include!("development_field_command.rs");
     include!("product_command_route.rs");
     include!("desktop_command.rs");
     include!("dev_world_command.rs");
