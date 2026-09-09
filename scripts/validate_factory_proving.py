@@ -17,6 +17,9 @@ from jsonschema import Draft202012Validator
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = json.loads((ROOT / "schemas/oi.factory-proving-snapshot-v1.schema.json").read_text())
 FACTORY_REVISION = "12a721dbbb51e3c70d52ef00220efa859ef930fd"
+ACTUATION_REVISION = "5eec4639f1c8727865373b27fdcde09fdcca2d53"
+ACTUATION_USAGE_SHA256 = "04c94149fa5b9b666473e40bd312f50d10fd2d3fd6d10272bfc2503e51344551"
+ACTUATION_USAGE_REPLAY_SHA256 = "0f968d47d8f49b2a3dd042c261c573f0d424c93673e8b3f0ac573d3e79ad6624"
 
 
 def run(command: list[str], *, expect_success: bool = True) -> subprocess.CompletedProcess[str]:
@@ -32,6 +35,9 @@ def main() -> None:
     parser.add_argument("--workcell-baseline", type=Path)
     parser.add_argument("--workcell-source", type=Path)
     parser.add_argument("--workcell-usage", type=Path)
+    parser.add_argument("--actuation-source", type=Path)
+    parser.add_argument("--actuation-usage", type=Path)
+    parser.add_argument("--actuation-usage-replay", type=Path)
     args = parser.parse_args()
     checked_in = json.loads((ROOT / "suite/factory-proving-floor.json").read_text())
     Draft202012Validator(SCHEMA).validate(checked_in)
@@ -156,6 +162,118 @@ def main() -> None:
             assert receipt["schema"] == "workcell.resource-usage/v1"
             assert usage_snapshot["factoryRefs"]["runRef"] in receipt["external_correlation_refs"]
             assert receipt["provider"]["privacy"] == {"argv_collected": False, "environment_collected": False}
+
+        actuation_values = [args.actuation_source, args.actuation_usage, args.actuation_usage_replay]
+        if any(actuation_values) and not all(actuation_values):
+            raise AssertionError("Actuation source, observation and replay are a required triple")
+        if args.actuation_source:
+            actuation_source = args.actuation_source.resolve()
+            assert run(["git", "-C", str(actuation_source), "rev-parse", "HEAD"]).stdout.strip() == ACTUATION_REVISION
+            assert not run(["git", "-C", str(actuation_source), "status", "--porcelain"]).stdout.strip()
+            owner_schema = json.loads((actuation_source / "contracts/model-usage-v1.schema.json").read_text())
+            observed_bytes = args.actuation_usage.resolve().read_bytes()
+            replay_bytes = args.actuation_usage_replay.resolve().read_bytes()
+            assert hashlib.sha256(observed_bytes).hexdigest() == ACTUATION_USAGE_SHA256
+            assert hashlib.sha256(replay_bytes).hexdigest() == ACTUATION_USAGE_REPLAY_SHA256
+            observed_input = json.loads(observed_bytes)
+            replay_input = json.loads(replay_bytes)
+            Draft202012Validator(owner_schema).validate(observed_input["event"]["model_usage"])
+            Draft202012Validator(owner_schema).validate(replay_input["event"]["model_usage"])
+
+            def actuation_command(label: str, observed_path: Path, replay_path: Path) -> list[str]:
+                material_args = []
+                if args.workcell_source:
+                    material_args = [
+                        "--workcell-source", str(args.workcell_source.resolve()),
+                        "--workcell-usage", str(args.workcell_usage.resolve()),
+                    ]
+                return command[:-4] + [
+                    "--state", str(temp / f"actuation-{label}-state.json"),
+                    "--output", str(temp / f"actuation-{label}-snapshot.json"),
+                    *material_args,
+                    "--actuation-source", str(actuation_source),
+                    "--actuation-usage", str(observed_path),
+                    "--actuation-usage-replay", str(replay_path),
+                ]
+
+            incomplete = run(command[:-4] + [
+                "--state", str(temp / "actuation-incomplete-state.json"),
+                "--output", str(temp / "actuation-incomplete-snapshot.json"),
+                "--actuation-source", str(actuation_source),
+                "--actuation-usage", str(args.actuation_usage.resolve()),
+            ], expect_success=False)
+            assert incomplete.returncode == 2
+            assert not (temp / "actuation-incomplete-state.json").exists()
+            assert not (temp / "actuation-incomplete-snapshot.json").exists()
+
+            actuation = run(actuation_command("valid", args.actuation_usage.resolve(), args.actuation_usage_replay.resolve()))
+            actuation_snapshot = json.loads(actuation.stdout)
+            Draft202012Validator(SCHEMA).validate(actuation_snapshot)
+            actuation_grades = {item["grade"]: item["standing"] for item in actuation_snapshot["claims"]}
+            assert actuation_grades["P"] == "observed"
+            assert actuation_grades["M"] == ("observed" if args.workcell_source else "unavailable")
+            assert actuation_snapshot["actuationPin"] == {
+                "revision": ACTUATION_REVISION,
+                "modelUsageSchemaPath": "contracts/model-usage-v1.schema.json",
+                "modelUsageSchemaSha256": "42215b3f06dffe5bfba53b0f51db6400d5b8739098c4fb1275f7a006579615cb",
+            }
+            actuation_evidence = [item for item in actuation_snapshot["evidence"] if item["owner"] == "actuation"]
+            assert [item["operation"] for item in actuation_evidence] == ["activity.model-usage", "activity.model-usage.replay"]
+            assert actuation_evidence[0]["output"] == observed_input
+            assert actuation_evidence[1]["output"] == replay_input
+            for item in actuation_evidence:
+                canonical = json.dumps(item["output"], separators=(",", ":"), sort_keys=True).encode()
+                assert item["outputSha256"] == hashlib.sha256(canonical).hexdigest()
+            assert observed_input["deduplicated"] is False and replay_input["deduplicated"] is True
+            assert observed_input["event"] == replay_input["event"]
+            usage = observed_input["event"]["model_usage"]
+            assert actuation_snapshot["factoryRefs"]["runRef"] in usage["correlation"]["external_refs"]
+            assert usage["tokens"] == {"standing": "normalized-from-native", "input": 20236, "output": 10}
+            assert usage["cache"] == {"standing": "normalized-from-native", "read_input": 12288, "creation_input": 0}
+            assert usage["provider"] == {"standing": "not-reported"}
+            assert usage["model"] == {"standing": "not-reported"}
+            assert usage["timing"]["latency"] == {"standing": "not-reported"}
+            assert usage["cost"] == {"standing": "not-reported"}
+            serialized = json.dumps(actuation_snapshot).lower()
+            for forbidden in ['"prompt"', '"content"', '"messages"', '"argv"', '"environment"']:
+                assert forbidden not in serialized
+
+            adversarial = []
+            missing_correlation = copy.deepcopy(observed_input)
+            missing_correlation["event"]["model_usage"]["correlation"]["external_refs"] = ["external:unrelated"]
+            adversarial.append(("foreign-correlation", missing_correlation, replay_input))
+            content_bearing = copy.deepcopy(observed_input)
+            content_bearing["event"]["model_usage"]["provider_facts"] = {"prompt": "must-not-be-retained"}
+            adversarial.append(("content-bearing", content_bearing, replay_input))
+            conflicting_replay = copy.deepcopy(replay_input)
+            conflicting_replay["event"]["model_usage"]["tokens"]["output"] += 1
+            adversarial.append(("conflicting-replay", observed_input, conflicting_replay))
+            false_replay = copy.deepcopy(replay_input)
+            false_replay["deduplicated"] = False
+            adversarial.append(("false-replay", observed_input, false_replay))
+            contradictory_unavailable = copy.deepcopy(observed_input)
+            contradictory_unavailable["event"]["model_usage"]["provider"] = {
+                "standing": "not-reported", "name": "invented-provider"
+            }
+            contradictory_unavailable["event"]["model_usage"]["timing"]["latency"] = {
+                "standing": "not-reported", "milliseconds": 1
+            }
+            contradictory_unavailable["event"]["model_usage"]["cost"] = {
+                "standing": "not-reported", "amount": 0, "currency": "USD"
+            }
+            adversarial.append(("contradictory-unavailable", contradictory_unavailable, replay_input))
+            for label, bad_observed, bad_replay in adversarial:
+                observed_path = temp / f"{label}-observed.json"
+                replay_path = temp / f"{label}-replay.json"
+                observed_path.write_text(json.dumps(bad_observed))
+                replay_path.write_text(json.dumps(bad_replay))
+                rejected = run(actuation_command(label, observed_path, replay_path), expect_success=False)
+                assert rejected.returncode == 2
+                state_path = temp / f"actuation-{label}-state.json"
+                output_path = temp / f"actuation-{label}-snapshot.json"
+                assert not state_path.exists()
+                assert not state_path.with_name(f".{state_path.name}.lock").exists()
+                assert not output_path.exists()
 
     print("O:I Factory proving floor: PASS")
 

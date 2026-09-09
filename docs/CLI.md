@@ -16,7 +16,8 @@ oi migrate <path>
 oi products [--json]
 oi prove factory --factory PATH --factory-source PATH --request PATH \
   --workflow-mutation PATH --state PATH --output PATH [--workcell-baseline PATH] \
-  [--workcell-source PATH --workcell-usage PATH]
+  [--workcell-source PATH --workcell-usage PATH] \
+  [--actuation-source PATH --actuation-usage PATH --actuation-usage-replay PATH]
 
 oi central ...          -> ctrl ...
 oi actuation ...        -> actuation ...
@@ -32,7 +33,7 @@ oi ql ...               -> ql ...
 
 ## `oi prove factory`
 
-This bounded proving command drives the exact accepted Factory Commission CLI and retains Factory's own developmental readings. It verifies the accepted Factory revision and schema bytes before mutation, refuses existing state/output paths, proves exact replay, and rolls back its newly created state if a later proving step fails. An optional Workcell registry remains an uncorrelated provisional baseline; an exact-main Workcell resource-usage receipt may be observed with an opaque Run correlation that grants no Factory ancestry. See [`FACTORY-PROVING-FLOOR.md`](FACTORY-PROVING-FLOOR.md).
+This bounded proving command drives the exact accepted Factory Commission CLI and retains Factory's own developmental readings. It verifies the accepted Factory revision and schema bytes before mutation, refuses existing state/output paths, proves exact replay, and rolls back its newly created state if a later proving step fails. Optional exact-main Workcell resource usage and Actuation model usage may be retained with opaque Run correlations that grant no Factory ancestry. The Actuation lane requires the original observation and its exact deduplicated replay; it rejects content-bearing fields. See [`FACTORY-PROVING-FLOOR.md`](FACTORY-PROVING-FLOOR.md).
 
 ## Product commands
 

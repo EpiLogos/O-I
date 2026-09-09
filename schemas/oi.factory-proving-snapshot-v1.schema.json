@@ -32,9 +32,17 @@
         "resourceUsageSchemaSha256": { "const": "4e0e1cf8848ed1faf74bcc362976b47f81aad99b33eea458a789cb688f1b3d5f" }
       }
     },
+    "actuationPin": {
+      "type": "object", "additionalProperties": false, "required": ["revision", "modelUsageSchemaPath", "modelUsageSchemaSha256"],
+      "properties": {
+        "revision": { "const": "5eec4639f1c8727865373b27fdcde09fdcca2d53" },
+        "modelUsageSchemaPath": { "const": "contracts/model-usage-v1.schema.json" },
+        "modelUsageSchemaSha256": { "const": "42215b3f06dffe5bfba53b0f51db6400d5b8739098c4fb1275f7a006579615cb" }
+      }
+    },
     "evidence": {
-      "type": "array", "minItems": 9, "maxItems": 11,
-      "items": { "type": "object", "additionalProperties": false, "required": ["operation", "owner", "outputSha256", "output"], "properties": { "operation": { "type": "string", "minLength": 1 }, "owner": { "enum": ["factory", "workcell"] }, "outputSha256": { "$ref": "#/$defs/sha256" }, "output": { "type": "object" } } }
+      "type": "array", "minItems": 9, "maxItems": 13,
+      "items": { "type": "object", "additionalProperties": false, "required": ["operation", "owner", "outputSha256", "output"], "properties": { "operation": { "type": "string", "minLength": 1 }, "owner": { "enum": ["factory", "workcell", "actuation"] }, "outputSha256": { "$ref": "#/$defs/sha256" }, "output": { "type": "object" } } }
     },
     "claims": {
       "type": "array", "minItems": 5, "maxItems": 5,
@@ -42,7 +50,7 @@
       "allOf": [
         { "contains": { "required": ["grade", "standing"], "properties": { "grade": { "const": "D" }, "standing": { "const": "observed" } } }, "minContains": 1 },
         { "contains": { "required": ["grade", "standing"], "properties": { "grade": { "const": "C" }, "standing": { "const": "observed" } } }, "minContains": 1 },
-        { "contains": { "required": ["grade", "standing"], "properties": { "grade": { "const": "P" }, "standing": { "const": "unavailable" } } }, "minContains": 1 },
+        { "contains": { "required": ["grade", "standing"], "properties": { "grade": { "const": "P" }, "standing": { "enum": ["observed", "unavailable"] } } }, "minContains": 1 },
         { "contains": { "required": ["grade"], "properties": { "grade": { "const": "M" } } }, "minContains": 1 },
         { "contains": { "required": ["grade", "standing"], "properties": { "grade": { "const": "H" }, "standing": { "const": "unavailable" } } }, "minContains": 1 }
       ]
@@ -52,5 +60,22 @@
       "items": { "type": "object", "additionalProperties": false, "required": ["case", "standing", "factoryAncestry", "basis"], "properties": { "case": { "enum": ["factory-single-agent", "direct-session", "external-harness", "simultaneous-field", "plural-guardian"] }, "standing": { "enum": ["commissioned-unexecuted", "planned-unexecuted", "not-observed"] }, "factoryAncestry": { "enum": ["owner-established", "not-claimed"] }, "basis": { "type": "string", "minLength": 1 } } }
     }
   },
+  "allOf": [
+    {
+      "if": { "required": ["actuationPin"] },
+      "then": {
+        "properties": {
+          "claims": { "contains": { "required": ["grade", "standing"], "properties": { "grade": { "const": "P" }, "standing": { "const": "observed" } } } },
+          "evidence": { "contains": { "required": ["owner"], "properties": { "owner": { "const": "actuation" } } }, "minContains": 2, "maxContains": 2 }
+        }
+      },
+      "else": {
+        "properties": {
+          "claims": { "contains": { "required": ["grade", "standing"], "properties": { "grade": { "const": "P" }, "standing": { "const": "unavailable" } } } },
+          "evidence": { "not": { "contains": { "required": ["owner"], "properties": { "owner": { "const": "actuation" } } } } }
+        }
+      }
+    }
+  ],
   "$defs": { "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" } }
 }
