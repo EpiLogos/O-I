@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "rest",
-  "generated_at": "2026-09-08T12:05:55.075Z",
+  "generated_at": "2026-09-09T17:07:22.754Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": null,
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 535,
+  "duration_ms": 601,
   "checks": [
     {
       "ok": true,
@@ -24,7 +24,7 @@
     },
     {
       "ok": true,
-      "label": "One spatial desktop hosts the writing mode"
+      "label": "One spatial desktop hosts the empty workspace"
     },
     {
       "ok": true,
@@ -40,7 +40,7 @@
     },
     {
       "ok": true,
-      "label": "An empty workspace opens as a desktop, with writing as an explicit mode"
+      "label": "An empty workspace opens as the one fresh-surface composition"
     },
     {
       "ok": true,
@@ -48,38 +48,55 @@
     },
     {
       "ok": true,
-      "label": "Ordinary writing keystrokes remain available"
+      "label": "The fresh page offers only its real entries",
+      "data": {
+        "entries": [
+          "Search ⌘K",
+          "Start writing"
+        ]
+      }
     },
     {
       "ok": true,
-      "label": "Writing can return to the desktop without closing a source"
+      "label": "The rolling welcome prompt is the page heading"
     },
     {
       "ok": true,
-      "label": "Returning to writing retains the complete draft"
+      "label": "No \"back to workspace\" control that only returns to this same page"
     },
     {
       "ok": true,
-      "label": "The search aperture opens over focused writing"
+      "label": "Writing opens with no register reachable at all"
     },
     {
       "ok": true,
-      "label": "Escape from search restores the prior writing caret"
+      "label": "Unsaved writing carries a register picker beside the ordinary Save, in the ordinary saving chrome",
+      "data": {
+        "footer": "Choose where to saveUnsavedSave · ⌘S"
+      }
     },
     {
       "ok": true,
-      "label": "Relaunch restores unsent workspace writing"
+      "label": "The surface says the writing is unsaved rather than claiming owner ground"
+    },
+    {
+      "ok": true,
+      "label": "Unsaved writing survives a relaunch"
+    },
+    {
+      "ok": true,
+      "label": "The search aperture opens from the fresh page"
     }
   ],
   "ops": [
     {
       "ok": true,
       "op": "capture.timing",
-      "duration_ms": 0.7,
+      "duration_ms": 0.2,
       "data": {
-        "fcp_ms": 96,
-        "dom_content_loaded_ms": 48.4,
-        "load_ms": 48.4
+        "fcp_ms": 80,
+        "dom_content_loaded_ms": 50.9,
+        "load_ms": 50.9
       }
     },
     {
@@ -88,7 +105,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-08T12:05:55.181Z",
+        "mounted_at": "2026-09-09T17:07:22.832Z",
         "transport": {
           "kind": "unavailable",
           "reason": "no kernel transport: neither the Tauri host nor a dev walk bridge is reachable"
@@ -102,7 +119,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-08T12:05:55.504Z",
+        "mounted_at": "2026-09-09T17:07:23.252Z",
         "transport": {
           "kind": "unavailable",
           "reason": "no kernel transport: neither the Tauri host nor a dev walk bridge is reachable"
@@ -115,14 +132,14 @@
       "op": "capture.screenshot",
       "duration_ms": 33,
       "data": {
-        "file": "rest-desktop-writing.png"
+        "file": "rest-desktop-rest.png"
       }
     }
   ],
   "metrics": {
-    "cold_start_fcp_ms": 96
+    "cold_start_fcp_ms": 80
   },
   "screenshots": [
-    "rest-desktop-writing.png"
+    "rest-desktop-rest.png"
   ]
 }

@@ -90,7 +90,7 @@ impl Fixture {
             .unwrap();
         let created = client
             .flow_create(
-                "W4DCommission",
+                Some("W4DCommission"),
                 "human:w4d-test",
                 "human",
                 Some("2026-09-09-1200"),
@@ -176,7 +176,7 @@ fn commission_lands_as_owner_revision_carrying_the_selection_verbatim() {
     // read proves it — the kernel composed nothing and wrapped no prose.
     let read = fixture
         .client()
-        .flow_read("W4DCommission", &fixture.flow_ref, Some(revision))
+        .flow_read(Some("W4DCommission"), &fixture.flow_ref, Some(revision))
         .unwrap();
     assert_eq!(read.content, SELECTION);
     assert_eq!(read.flow.current_revision, *revision);
@@ -224,7 +224,7 @@ fn agent_session_binds_without_owning_the_flow_identity() {
     // owner's and is untouched by the binding.
     let inspected = fixture
         .client()
-        .flow_inspect("W4DCommission", &fixture.flow_ref)
+        .flow_inspect(Some("W4DCommission"), &fixture.flow_ref)
         .unwrap();
     assert_eq!(inspected.flow.flow_ref, flow.flow_ref);
     assert_eq!(inspected.flow.source_ref, flow.source_ref);
@@ -235,7 +235,7 @@ fn agent_session_binds_without_owning_the_flow_identity() {
     // (`agent`) — the owner revision receipt records it verbatim.
     let history = fixture
         .client()
-        .flow_history("W4DCommission", &fixture.flow_ref)
+        .flow_history(Some("W4DCommission"), &fixture.flow_ref)
         .unwrap();
     let last = history.revisions.last().unwrap();
     assert_eq!(last.actor, "session:w4d-commission-1");
@@ -278,7 +278,7 @@ fn stale_expected_revision_is_a_structured_conflict_never_a_silent_overwrite() {
     // The owner layer is untouched by the refused commission.
     let read = fixture
         .client()
-        .flow_read("W4DCommission", &fixture.flow_ref, None)
+        .flow_read(Some("W4DCommission"), &fixture.flow_ref, None)
         .unwrap();
     assert_eq!(read.flow.current_revision, *revision1);
     assert_eq!(read.content, "first selection\n");

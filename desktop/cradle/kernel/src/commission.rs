@@ -111,7 +111,7 @@ pub fn commission(
         None => (CRADLE_ACTOR.to_owned(), CRADLE_ACTOR_KIND.to_owned()),
     };
     match client.flow_write_reading(
-        project,
+        Some(project),
         flow_ref,
         expected_revision,
         selection,
@@ -138,7 +138,7 @@ pub fn commission(
             refusal => {
                 let message = refusal.detail();
                 let moved = client
-                    .flow_inspect(project, flow_ref)
+                    .flow_inspect(Some(project), flow_ref)
                     .map(|inspection| inspection.flow.current_revision)
                     .ok()
                     .filter(|current| current != expected_revision);

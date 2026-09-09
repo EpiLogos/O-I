@@ -68,14 +68,21 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // it again, which is the path this step is about.
   await page.keyboard.press('ControlOrMeta+w');
   await nav.locator(`[data-file-path="${p.path}"]`).click();
-  await page.waitForFunction(()=>(document.querySelector('.native-file-surface .text-editor-host')?.__oiDocument?.() ?? '')==='External native update.\n');
-  check(true,'Reopening reads the actual changed file, without a desktop index');
+  // No refresh control: the surface re-reads when the window comes back to the
+  // person, which is what this step is about.
+  await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+  await page.waitForFunction(()=>(document.querySelector('.native-file-surface .text-editor-host')?.__oiDocument?.() ?? '')==='External native update.\n',null,{timeout:20000});
+  check(true,'The surface re-reads the actual changed file on its own, without a desktop index');
   unlinkSync(join(p.root,p.path));
-  // Same again for the deleted file: reopening is the re-read path.
-  await page.keyboard.press('ControlOrMeta+w');
-  await nav.locator(`[data-file-path="${p.path}"]`).click().catch(()=>{});
-  await page.getByText('Last reading',{exact:false}).first().waitFor();
+  // The file has gone away under the open surface. What the reader keeps is the
+  // last reading that actually came from Central, labelled and read-only —
+  // never a blank surface, and never an offer to write over what is not there.
+  await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+  await openChrome(page,'.native-file-surface');
+  await page.getByText('Last reading',{exact:false}).first().waitFor({timeout:20000});
   check(await readingText()==='External native update.\n','Unavailable file retains a labelled last reading without redirecting');
+  check(await page.locator('.native-file-surface').getByRole('button',{name:/^Save/}).count()===0,
+    'The retained last reading offers no way to write over a file that is not there');
   check(readFileSync(join(p.projectRoot,authored.binding.path),'utf8')===p.originals.get(authored.binding.path),'Browsing never writes the dirty authored draft to disk');
   await nav.getByRole('button',{name:'Central: files',exact:true}).click();
   await nav.locator('[data-file-path="root-note.md"]').click();
@@ -83,6 +90,10 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // view by default, with the real FileSurface editor mounted under the
   // "Source" tab of its Rendered/Source toggle.
   await page.getByRole('tab',{name:'Source'}).click();
-  check(await docText(page,'.cm-content[aria-label="Editing root-note.md"]')==='An actual root file.\n','Central parent browses actual root files as well as Work projects');
+  // The label says Editing or Reading depending on the owner's write
+  // disclosure; the check is about the bytes, not which of the two it is.
+  await page.locator('.cm-content[aria-label$="root-note.md"]').waitFor({timeout:20000});
+  await waitForDoc(page,'An actual root file.\n','.cm-content[aria-label$="root-note.md"]',20000);
+  check(await docText(page,'.cm-content[aria-label$="root-note.md"]')==='An actual root file.\n','Central parent browses actual root files as well as Work projects');
   await shot('native-root-and-project-files');
 }

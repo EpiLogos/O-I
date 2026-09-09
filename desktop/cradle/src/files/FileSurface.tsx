@@ -18,6 +18,38 @@ import {EditorButton,EditorFrame} from "../editor/EditorChrome";
  * `MaterialSurface`'s own toggle mounts it without recursing back into
  * the material renderer); image/pdf/unsupported binary have no source
  * text to show at all. */
+/** The last reading Central served for a file, retained on this device.
+ *
+ * A file can go away, or the ground behind it can, between one look and the
+ * next. When that happens the surface still shows what was last actually read,
+ * labelled as a last reading and read-only — it never redirects, never blanks,
+ * and never offers to write over something it cannot see. The retained copy is
+ * presentation only: it carries no write operation, so nothing can be saved
+ * through it.
+ */
+const LAST_READING_KEY=(ref:string)=>`oi-cradle.file-last-reading.v1:${ref}`;
+
+function retainReading(ref:string|undefined,reading:NativeFileReading){
+  if(!ref)return;
+  try{localStorage.setItem(LAST_READING_KEY(ref),JSON.stringify(reading));}catch{/* Retention is a convenience, never a requirement. */}
+}
+
+function lastReading(ref:string|undefined):NativeFileReading|undefined{
+  if(!ref)return undefined;
+  try{
+    const raw=localStorage.getItem(LAST_READING_KEY(ref));
+    if(!raw)return undefined;
+    const parsed=JSON.parse(raw) as NativeFileReading;
+    if(typeof parsed?.content!=="string"||typeof parsed?.revision!=="string")return undefined;
+    // A retained reading is never writable: the file it came from is not there.
+    return {...parsed,operations:{
+      write:{available:false,reason:"This is the last reading retained on this device; the file itself is not readable now."},
+      history:{available:false,reason:"The file is not readable now."},
+      restore:{available:false,reason:"The file is not readable now."},
+    }};
+  }catch{return undefined;}
+}
+
 export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceBinding;forceSource?:boolean;leadingTools?:ReactNode}) {
   const format=detectFormat({path:binding.location?.path});
   if(!forceSource&&format!=="text"){
@@ -36,7 +68,7 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
   const writable=reading?.operations?.write.available===true;
   const read=async(preserve=true)=>{
     if(!binding.location)throw new Error("The saved file location is unavailable");
-    const value=await readFile(transport,binding.location);setReading(value);
+    const value=await readFile(transport,binding.location);setReading(value);retainReading(binding.ref,value);
     const local=preserve?(held.current??readDraft(binding.ref!)):undefined;
     if(!local||local.content===local.saved_content){setDraft({content:value.content,saved_content:value.content,base_revision:value.revision});}
     else setDraft(local);
@@ -46,11 +78,31 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
     let live=true;setPending(true);setError(undefined);
     if(!binding.location){setError("The saved file location is unavailable");setPending(false);return;}
     void readFile(transport,binding.location).then(value=>{
-      if(!live)return;setReading(value);setDraft(readDraft(binding.ref!)??{content:value.content,saved_content:value.content,base_revision:value.revision});
+      if(!live)return;setReading(value);retainReading(binding.ref,value);setDraft(readDraft(binding.ref!)??{content:value.content,saved_content:value.content,base_revision:value.revision});
       requestAnimationFrame(()=>{try{if(body.current){if(scroll.current)scroll.current.scrollTop=Number(localStorage.getItem(scrollKey)??0); const caret=JSON.parse(localStorage.getItem(caretKey)??"null"); if(caret && Number.isInteger(caret.start) && Number.isInteger(caret.end)) body.current.setSelectionRange(caret.start,caret.end,caret.direction);}}catch{}});
-    }).catch(error=>{if(live)setError(String(error));}).finally(()=>{if(live)setPending(false);});
+    }).catch(error=>{
+      if(!live)return;
+      setError(String(error));
+      // The file is not readable. Show what was last actually read, labelled
+      // and read-only, rather than an empty surface — the reader keeps what
+      // they had, and cannot write over what is not there.
+      const retained=lastReading(binding.ref);
+      if(retained){setReading(retained);setDraft(readDraft(binding.ref!)??{content:retained.content,saved_content:retained.content,base_revision:retained.revision});}
+    }).finally(()=>{if(live)setPending(false);});
     const sync=(event:StorageEvent)=>{if(event.key===`oi-cradle.draft.v1:${binding.ref}`){const saved=readDraft(binding.ref!);if(saved)setDraft(saved);}};
-    window.addEventListener('storage',sync);return()=>{live=false;window.removeEventListener('storage',sync);};
+    // A file changed outside the app is picked up when the window comes back to
+    // the person, so re-reading is not a control they have to find. The held
+    // draft is preserved; only the canonical layer is refreshed.
+    const reread=()=>{if(!live||!document.hasFocus())return;void read(true).catch(reason=>{
+      if(!live)return;
+      setError(String(reason));
+      const retained=lastReading(binding.ref);
+      if(retained)setReading(retained);
+    });};
+    window.addEventListener('focus',reread);
+    document.addEventListener('visibilitychange',reread);
+    window.addEventListener('storage',sync);
+    return()=>{live=false;window.removeEventListener('focus',reread);document.removeEventListener('visibilitychange',reread);window.removeEventListener('storage',sync);};
   },[binding.ref]);
   const perform=async(run:()=>Promise<void>)=>{setPending(true);setError(undefined);try{await run();}catch(error){setError(String(error));}finally{setPending(false);}};
   const change=(content:string)=>{if(!draft)return;const next={...draft,content};setDraft(next);try{writeDraft(binding.ref!,next);}catch{setError("Typing remains open, but this device could not retain the draft. Keep this view open.");}};
