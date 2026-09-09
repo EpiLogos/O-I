@@ -294,7 +294,6 @@ pub fn annotate_live_drift<GitProbe, PathProbe, HashProbe>(
             }
         }
 
-        let mut findings: Vec<String> = Vec::new();
         if let Some(checkout) = &checkout {
             surface.registered_version = surface.version.clone();
             match &surface.version {
@@ -587,6 +586,45 @@ mod tests {
             .as_deref()
             .unwrap_or_default()
             .contains("PATH resolves aikit"));
+        fs::remove_file(&executable).ok();
+    }
+
+    #[test]
+    fn drift_names_the_shadow_binary_this_machine_actually_runs() {
+        // The registered executable is in step with HEAD; only the PATH copy
+        // differs in content. That copy is what actually runs, so it is drift.
+        // This finding was computed and then dropped by a shadowed `findings`
+        // binding, which is how a three-week-old registered aikit — missing
+        // the whole knowledge subcommand — kept reporting a clean bill.
+        let executable =
+            std::env::temp_dir().join(format!("oi-shadow-test-{}", std::process::id()));
+        fs::write(&executable, b"registered").unwrap();
+        let mut disclosure = disclosure_with_resolved(&executable.display().to_string());
+        disclosure.surfaces[0].version = Some("aaaa1111".into());
+
+        annotate_live_drift(
+            &mut disclosure,
+            |_inside| {
+                Some(LiveCheckout {
+                    head: "aaaa1111bbbb2222cccc3333dddd4444eeee5555".into(),
+                    committed_at: Some(0), // old commit: the fresh file is newer
+                })
+            },
+            |_entry| Some("/usr/local/bin/aikit".into()),
+            |path| {
+                Some(if path == Path::new("/usr/local/bin/aikit") {
+                    "shadow-content".to_owned()
+                } else {
+                    "registered-content".to_owned()
+                })
+            },
+        );
+
+        let drift = disclosure.surfaces[0].drift.as_deref().unwrap_or_default();
+        assert!(
+            drift.contains("differs from the registered executable"),
+            "drift must name the binary this machine actually runs: {drift}"
+        );
         fs::remove_file(&executable).ok();
     }
 
