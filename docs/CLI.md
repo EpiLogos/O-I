@@ -14,6 +14,8 @@ oi docs [topic|module]
 oi migrate <path>
 
 oi products [--json]
+oi prove factory --factory PATH --factory-source PATH --request PATH \
+  --workflow-mutation PATH --state PATH --output PATH [--workcell-baseline PATH]
 
 oi central ...          -> ctrl ...
 oi actuation ...        -> actuation ...
@@ -26,6 +28,10 @@ oi ql ...               -> ql ...
 ## `oi products`
 
 `oi products` discloses the six-product command field: executable, namespace, probe commands, revision and standing for every product. `oi products --json` emits the same facts as structured JSON.
+
+## `oi prove factory`
+
+This bounded proving command drives the exact accepted Factory Commission CLI and retains Factory's own developmental readings. It verifies the accepted Factory revision and schema bytes before mutation, refuses existing state/output paths, proves exact replay, and rolls back its newly created state if a later proving step fails. An optional Workcell registry may be retained only as an uncorrelated external material baseline. See [`FACTORY-PROVING-FLOOR.md`](FACTORY-PROVING-FLOOR.md).
 
 ## Product commands
 
