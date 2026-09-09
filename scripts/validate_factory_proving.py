@@ -30,6 +30,8 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--factory-source", type=Path, required=True)
     parser.add_argument("--workcell-baseline", type=Path)
+    parser.add_argument("--workcell-source", type=Path)
+    parser.add_argument("--workcell-usage", type=Path)
     args = parser.parse_args()
     checked_in = json.loads((ROOT / "suite/factory-proving-floor.json").read_text())
     Draft202012Validator(SCHEMA).validate(checked_in)
@@ -131,6 +133,29 @@ def main() -> None:
             workcell = [item for item in material_snapshot["evidence"] if item["owner"] == "workcell"]
             assert len(workcell) == 1
             assert workcell[0]["output"]["schema"] == "workcell.registry/v1"
+
+        if bool(args.workcell_source) != bool(args.workcell_usage):
+            raise AssertionError("--workcell-source and --workcell-usage are a pair")
+        if args.workcell_source:
+            usage_state = temp / "usage-state.json"
+            usage_snapshot_path = temp / "usage-snapshot.json"
+            usage = run(command[:-4] + [
+                "--state", str(usage_state),
+                "--output", str(usage_snapshot_path),
+                "--workcell-source", str(args.workcell_source.resolve()),
+                "--workcell-usage", str(args.workcell_usage.resolve()),
+            ])
+            usage_snapshot = json.loads(usage.stdout)
+            Draft202012Validator(SCHEMA).validate(usage_snapshot)
+            usage_grades = {item["grade"]: item["standing"] for item in usage_snapshot["claims"]}
+            assert usage_grades["M"] == "observed"
+            assert usage_snapshot["workcellPin"]["revision"] == "fa47a29fa49a6636675d21309b00c269ac824abb"
+            workcell = [item for item in usage_snapshot["evidence"] if item["operation"] == "instances.usage"]
+            assert len(workcell) == 1
+            receipt = workcell[0]["output"]
+            assert receipt["schema"] == "workcell.resource-usage/v1"
+            assert usage_snapshot["factoryRefs"]["runRef"] in receipt["external_correlation_refs"]
+            assert receipt["provider"]["privacy"] == {"argv_collected": False, "environment_collected": False}
 
     print("O:I Factory proving floor: PASS")
 

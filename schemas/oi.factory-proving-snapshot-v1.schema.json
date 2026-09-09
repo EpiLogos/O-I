@@ -24,8 +24,16 @@
         "runRef": { "type": "string", "pattern": "^run:[0-9A-HJKMNP-TV-Z]{26}$" }
       }
     },
+    "workcellPin": {
+      "type": "object", "additionalProperties": false, "required": ["revision", "resourceUsageSchemaPath", "resourceUsageSchemaSha256"],
+      "properties": {
+        "revision": { "const": "fa47a29fa49a6636675d21309b00c269ac824abb" },
+        "resourceUsageSchemaPath": { "const": "crates/workcell-runtime/schemas/resource-usage-v1.schema.json" },
+        "resourceUsageSchemaSha256": { "const": "4e0e1cf8848ed1faf74bcc362976b47f81aad99b33eea458a789cb688f1b3d5f" }
+      }
+    },
     "evidence": {
-      "type": "array", "minItems": 9, "maxItems": 10,
+      "type": "array", "minItems": 9, "maxItems": 11,
       "items": { "type": "object", "additionalProperties": false, "required": ["operation", "owner", "outputSha256", "output"], "properties": { "operation": { "type": "string", "minLength": 1 }, "owner": { "enum": ["factory", "workcell"] }, "outputSha256": { "$ref": "#/$defs/sha256" }, "output": { "type": "object" } } }
     },
     "claims": {

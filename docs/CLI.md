@@ -15,7 +15,8 @@ oi migrate <path>
 
 oi products [--json]
 oi prove factory --factory PATH --factory-source PATH --request PATH \
-  --workflow-mutation PATH --state PATH --output PATH [--workcell-baseline PATH]
+  --workflow-mutation PATH --state PATH --output PATH [--workcell-baseline PATH] \
+  [--workcell-source PATH --workcell-usage PATH]
 
 oi central ...          -> ctrl ...
 oi actuation ...        -> actuation ...
@@ -31,7 +32,7 @@ oi ql ...               -> ql ...
 
 ## `oi prove factory`
 
-This bounded proving command drives the exact accepted Factory Commission CLI and retains Factory's own developmental readings. It verifies the accepted Factory revision and schema bytes before mutation, refuses existing state/output paths, proves exact replay, and rolls back its newly created state if a later proving step fails. An optional Workcell registry may be retained only as an uncorrelated external material baseline. See [`FACTORY-PROVING-FLOOR.md`](FACTORY-PROVING-FLOOR.md).
+This bounded proving command drives the exact accepted Factory Commission CLI and retains Factory's own developmental readings. It verifies the accepted Factory revision and schema bytes before mutation, refuses existing state/output paths, proves exact replay, and rolls back its newly created state if a later proving step fails. An optional Workcell registry remains an uncorrelated provisional baseline; an exact-main Workcell resource-usage receipt may be observed with an opaque Run correlation that grants no Factory ancestry. See [`FACTORY-PROVING-FLOOR.md`](FACTORY-PROVING-FLOOR.md).
 
 ## Product commands
 

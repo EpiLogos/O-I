@@ -16,6 +16,8 @@ The checked-in snapshot establishes only `D` and `C`. `P`, `M`, and `H` remain u
 
 An optional `--workcell-baseline` may retain an exact `workcell.registry/v1` owner reading as `M: provisional-unaccepted`. The command rejects Factory-shaped refs in that input and labels it an uncorrelated external baseline. It therefore creates a truthful comparison point for a later owner-established correlation without claiming that any observed Harness belongs to this Factory Run or that its executable identity has passed the current Workcell acceptance floor.
 
+After Workcell `fa47a29fa49a6636675d21309b00c269ac824abb`, `--workcell-source` plus `--workcell-usage` may retain a real `workcell.resource-usage/v1` receipt. The command verifies that exact clean owner revision and schema digest, requires the accepted Factory Run among Workcell's opaque external correlations, preserves unsupported metrics, and checks that argv/environment collection stayed false. This permits `M: observed`; it still does not turn correlation into Factory ancestry or provider authority.
+
 The snapshot is therefore the bounded start of O:I #202/#203, not their completion. Later runs may add provider/material/human evidence only through a versioned contract that validates the owning product's receipts; this v1 command cannot upgrade those grades.
 
 The checked-in deterministic/conformance reading is `suite/factory-proving-floor.json`. A real owner-machine run that additionally retained the uncorrelated Workcell census is intentionally kept outside the fixture tree; its standing and digest belong to the run receipt, not to a timeless test input.

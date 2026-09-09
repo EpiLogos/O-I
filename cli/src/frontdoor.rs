@@ -18,7 +18,7 @@ pub fn cli_main() -> ExitCode {
                 println!("  oi dev install [PRODUCT]       install/register native commands only from clean exact current-main source");
                 println!("  oi dev acceptance [--json]     prove the local software world is the current clean mainline world before physical provider tests");
                 println!("  oi dev gate central|ai-kit [--candidate SHA]  build an isolated current-main/candidate artifact; test owner + Cradle consumer; record exact evidence");
-                println!("  oi prove factory --factory PATH --factory-source PATH --request PATH --workflow-mutation PATH --state PATH --output PATH [--workcell-baseline PATH]");
+                println!("  oi prove factory --factory PATH --factory-source PATH --request PATH --workflow-mutation PATH --state PATH --output PATH [--workcell-baseline PATH] [--workcell-source PATH --workcell-usage PATH]");
                 println!("                                exercise Factory's accepted Commission path and retain evidence grades without claiming provider/material execution");
                 println!();
                 println!("Existing-world recognition / adoption:");

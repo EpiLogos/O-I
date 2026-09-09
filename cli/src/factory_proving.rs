@@ -3,6 +3,9 @@ use sha2::{Digest, Sha256};
 
 const SNAPSHOT_CONTRACT: &str = "oi.factory-proving-snapshot/v1";
 const FACTORY_REVISION: &str = "12a721dbbb51e3c70d52ef00220efa859ef930fd";
+const WORKCELL_REVISION: &str = "fa47a29fa49a6636675d21309b00c269ac824abb";
+const WORKCELL_USAGE_SCHEMA: &str = "crates/workcell-runtime/schemas/resource-usage-v1.schema.json";
+const WORKCELL_USAGE_SCHEMA_SHA256: &str = "4e0e1cf8848ed1faf74bcc362976b47f81aad99b33eea458a789cb688f1b3d5f";
 const SCHEMA_DIGESTS: &[(&str, &str)] = &[
     ("contracts/factory/commission-request.schema.json", "78dd34ae441ab585c82fcc1f30614ca4d116b347af896ba4ab2404566a530c69"),
     ("contracts/factory/commission.schema.json", "51c45a601685dbf24ebb766d9cc059f9b81a7258f27819f61b69c450cb7aa214"),
@@ -19,6 +22,8 @@ struct FactoryProvingOptions {
     state: PathBuf,
     output: PathBuf,
     workcell_baseline: Option<PathBuf>,
+    workcell_source: Option<PathBuf>,
+    workcell_usage: Option<PathBuf>,
 }
 
 #[derive(Serialize)]
@@ -31,6 +36,8 @@ struct FactoryProvingSnapshot {
     factory_executable_sha256: String,
     schema_pins: Vec<SchemaPin>,
     factory_refs: FactoryRefs,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    workcell_pin: Option<WorkcellPin>,
     evidence: Vec<OwnerEvidence>,
     claims: Vec<GradedClaim>,
     case_standing: Vec<CaseStanding>,
@@ -59,6 +66,14 @@ struct FactoryRefs {
     project_ref: String,
     journey_ref: String,
     run_ref: String,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct WorkcellPin {
+    revision: &'static str,
+    resource_usage_schema_path: &'static str,
+    resource_usage_schema_sha256: &'static str,
 }
 
 #[derive(Serialize)]
@@ -93,6 +108,14 @@ fn command_factory_proving(args: &[OsString]) -> Result<i32, String> {
         .as_deref()
         .map(read_workcell_baseline)
         .transpose()?;
+    let workcell_usage = match (&options.workcell_source, &options.workcell_usage) {
+        (Some(source), Some(path)) => {
+            verify_workcell_source(source)?;
+            Some(read_json(path, "Workcell usage")?)
+        }
+        (None, None) => None,
+        _ => return Err("--workcell-source and --workcell-usage must be supplied together".to_owned()),
+    };
     let mut state_guard = NewStateGuard::new(&options.state);
 
     let commission = run_factory_json(&options.factory, &["development", "commission"], &[&options.state, &options.request])?;
@@ -102,6 +125,9 @@ fn command_factory_proving(args: &[OsString]) -> Result<i32, String> {
     let project_ref = required_string(&commission, "/commission/projectRef")?;
     let journey_ref = required_string(&commission, "/commission/journeyRef")?;
     let run_ref = required_string(&commission, "/commission/runRef")?;
+    if let Some(usage) = &workcell_usage {
+        validate_workcell_usage(usage, &run_ref)?;
+    }
 
     let replay = run_factory_json(&options.factory, &["development", "commission"], &[&options.state, &options.request])?;
     expect(&replay, "/status", "already-applied", "commission replay")?;
@@ -137,6 +163,10 @@ fn command_factory_proving(args: &[OsString]) -> Result<i32, String> {
     } else {
         false
     };
+    if let Some(usage) = workcell_usage {
+        evidence.push(owner_evidence("instances.usage", "workcell", usage));
+    }
+    let usage_observed = options.workcell_usage.is_some();
     let snapshot = FactoryProvingSnapshot {
         contract: SNAPSHOT_CONTRACT,
         created_at_unix_ms: now_ms()?,
@@ -145,12 +175,19 @@ fn command_factory_proving(args: &[OsString]) -> Result<i32, String> {
         factory_executable_sha256: executable_sha256,
         schema_pins: SCHEMA_DIGESTS.iter().map(|(path, sha256)| SchemaPin { path, sha256 }).collect(),
         factory_refs: FactoryRefs { request_ref, project_ref, journey_ref, run_ref },
+        workcell_pin: usage_observed.then_some(WorkcellPin {
+            revision: WORKCELL_REVISION,
+            resource_usage_schema_path: WORKCELL_USAGE_SCHEMA,
+            resource_usage_schema_sha256: WORKCELL_USAGE_SCHEMA_SHA256,
+        }),
         evidence,
         claims: vec![
             GradedClaim { id: "accepted-factory-contract", grade: "C", standing: "observed", basis: "exact accepted Factory revision and schema bytes verified" },
             GradedClaim { id: "commission-owner-read-path", grade: "D", standing: "observed", basis: "real Factory CLI admission, replay, mutation and public readings succeeded" },
             GradedClaim { id: "provider-execution", grade: "P", standing: "unavailable", basis: "no provider execution evidence was supplied to this bounded proving run" },
-            if material_observed {
+            if usage_observed {
+                GradedClaim { id: "material-execution", grade: "M", standing: "observed", basis: "exact Workcell main resource-usage receipt correlates the Factory Run opaquely; correlation is not Factory ancestry" }
+            } else if material_observed {
                 GradedClaim { id: "material-execution", grade: "M", standing: "provisional-unaccepted", basis: "exact Workcell owner registry supplied as an uncorrelated external baseline; executable identity and Factory ancestry require later owner acceptance" }
             } else {
                 GradedClaim { id: "material-execution", grade: "M", standing: "unavailable", basis: "no Workcell/process/material evidence was supplied to this bounded proving run" }
@@ -208,7 +245,7 @@ fn parse_factory_proving_options(args: &[OsString]) -> Result<FactoryProvingOpti
     let mut index = 0;
     while index < args.len() {
         let key = args[index].to_str().ok_or_else(|| "proving arguments must be UTF-8".to_owned())?;
-        if !matches!(key, "--factory" | "--factory-source" | "--request" | "--workflow-mutation" | "--state" | "--output" | "--workcell-baseline") {
+        if !matches!(key, "--factory" | "--factory-source" | "--request" | "--workflow-mutation" | "--state" | "--output" | "--workcell-baseline" | "--workcell-source" | "--workcell-usage") {
             return Err(format!("unknown Factory proving option '{key}'"));
         }
         let value = args.get(index + 1).ok_or_else(|| format!("{key} requires a path"))?;
@@ -218,7 +255,7 @@ fn parse_factory_proving_options(args: &[OsString]) -> Result<FactoryProvingOpti
         index += 2;
     }
     let take = |key: &str| values.get(key).cloned().ok_or_else(|| format!("missing required option {key}"));
-    Ok(FactoryProvingOptions { factory: take("--factory")?, factory_source: take("--factory-source")?, request: take("--request")?, workflow_mutation: take("--workflow-mutation")?, state: take("--state")?, output: take("--output")?, workcell_baseline: values.get("--workcell-baseline").cloned() })
+    Ok(FactoryProvingOptions { factory: take("--factory")?, factory_source: take("--factory-source")?, request: take("--request")?, workflow_mutation: take("--workflow-mutation")?, state: take("--state")?, output: take("--output")?, workcell_baseline: values.get("--workcell-baseline").cloned(), workcell_source: values.get("--workcell-source").cloned(), workcell_usage: values.get("--workcell-usage").cloned() })
 }
 
 fn verify_factory_source(source: &Path) -> Result<(), String> {
@@ -236,6 +273,16 @@ fn verify_factory_source(source: &Path) -> Result<(), String> {
             return Err(format!("Factory schema drift at {relative}: expected {expected}, observed {actual}"));
         }
     }
+    Ok(())
+}
+
+fn verify_workcell_source(source: &Path) -> Result<(), String> {
+    let head = command_text(Command::new("git").arg("-C").arg(source).args(["rev-parse", "HEAD"]), "read Workcell source revision")?;
+    if head.trim() != WORKCELL_REVISION { return Err(format!("Workcell source revision mismatch: expected {WORKCELL_REVISION}, observed {}", head.trim())); }
+    let status = command_text(Command::new("git").arg("-C").arg(source).args(["status", "--porcelain"]), "inspect Workcell source")?;
+    if !status.trim().is_empty() { return Err("Workcell source must be clean exact accepted main".to_owned()); }
+    let actual = sha256_file(&source.join(WORKCELL_USAGE_SCHEMA))?;
+    if actual != WORKCELL_USAGE_SCHEMA_SHA256 { return Err(format!("Workcell resource-usage schema drift: expected {WORKCELL_USAGE_SCHEMA_SHA256}, observed {actual}")); }
     Ok(())
 }
 
@@ -277,8 +324,7 @@ fn owner_evidence(operation: &'static str, owner: &'static str, output: Value) -
 }
 
 fn read_workcell_baseline(path: &Path) -> Result<Value, String> {
-    let bytes = fs::read(path).map_err(|error| format!("cannot read Workcell baseline {}: {error}", path.display()))?;
-    let value: Value = serde_json::from_slice(&bytes).map_err(|error| format!("Workcell baseline is not JSON: {error}"))?;
+    let value = read_json(path, "Workcell baseline")?;
     expect(&value, "/schema", "workcell.registry/v1", "Workcell baseline contract")?;
     let instances = value.pointer("/instances").and_then(Value::as_object).ok_or_else(|| "Workcell baseline lacks instances".to_owned())?;
     if instances.is_empty() { return Err("Workcell baseline contains no observed instances".to_owned()); }
@@ -291,6 +337,25 @@ fn read_workcell_baseline(path: &Path) -> Result<Value, String> {
         if instance.pointer("/workcell_ref") != value.pointer("/workcell_ref") { return Err(format!("Workcell instance {instance_ref} has foreign Workcell identity")); }
     }
     Ok(value)
+}
+
+fn read_json(path: &Path, label: &str) -> Result<Value, String> {
+    let bytes = fs::read(path).map_err(|error| format!("cannot read {label} {}: {error}", path.display()))?;
+    serde_json::from_slice(&bytes).map_err(|error| format!("{label} is not JSON: {error}"))
+}
+
+fn validate_workcell_usage(value: &Value, run_ref: &str) -> Result<(), String> {
+    expect(value, "/schema", "workcell.resource-usage/v1", "Workcell usage contract")?;
+    if value.pointer("/ok").and_then(Value::as_bool) != Some(true) { return Err("Workcell usage is not successful".to_owned()); }
+    let correlations = value.pointer("/external_correlation_refs").and_then(Value::as_array).ok_or_else(|| "Workcell usage lacks external correlations".to_owned())?;
+    if !correlations.iter().any(|item| item.as_str() == Some(run_ref)) { return Err("Workcell usage is not correlated to the admitted Factory Run".to_owned()); }
+    if value.pointer("/provider/privacy/argv_collected").and_then(Value::as_bool) != Some(false)
+        || value.pointer("/provider/privacy/environment_collected").and_then(Value::as_bool) != Some(false)
+    { return Err("Workcell usage does not prove argv/environment privacy".to_owned()); }
+    for metric in ["gpu_utilisation", "memory_peak_rss", "network_bytes", "storage_io_bytes", "vram"] {
+        if value.pointer(&format!("/metrics/{metric}/standing")).and_then(Value::as_str) != Some("unsupported") { return Err(format!("Workcell usage unexpectedly claims {metric}")); }
+    }
+    Ok(())
 }
 
 fn expect(value: &Value, pointer: &str, expected: &str, label: &str) -> Result<(), String> {
