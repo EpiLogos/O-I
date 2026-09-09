@@ -1,3 +1,7 @@
+---
+Register: episteme
+---
+
 # O:I Desktop Cradle — Rebuild Wayfinder (the grilled map)
 
 > **Final foundation placement correction (September 8):** Read [the pane and resource contract](../.superpowers/sdd/cradle-rebuild/SELF-OTHER-FIELD-UX-2026-09-08.md#one-pane-system-an-optional-accompanying-agent). The right sidebar stays the optional accompanying agent; Shared Field details use ordinary canvas panes/full views/popouts, returning as tabs. A NOW starts from intention + one or more worlds/projections; selected outputs may survive closure. First rounds establish UI fidelity, window/focus/restore correctness and measured bounded resource use. This overrides earlier generic right-inspector wording for shared subjects.

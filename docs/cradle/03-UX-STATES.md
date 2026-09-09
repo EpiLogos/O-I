@@ -1,3 +1,8 @@
+---
+Register: episteme
+Standing: design-commitment
+---
+
 # 03 — Cradle UX states
 
 **Status:** design commitment. Every state below is derived from intent

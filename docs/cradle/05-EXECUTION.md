@@ -1,3 +1,7 @@
+---
+Register: episteme
+---
+
 # 05 — Execution: orchestrated development
 
 **Status:** the standing injunction for the orchestrator and its subagents
