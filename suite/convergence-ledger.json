@@ -12,7 +12,7 @@
       "branches": [
         {
           "name": "cursor/docs-six-product-command-field-db87",
-          "disposition": "MERGED_TO_MAIN_2026-09-05",
+          "disposition": "RETIRE_MERGED",
           "owner": "O:I main (S-DESKTOP, OI-GIT-NORM)",
           "reason": "docs pair: nine docs corrected to the six-product native command field main's cli/product_command_route + surfaces.json already implement; merged --no-ff as deb3863 after README conflict resolution",
           "reentry_condition": "branch deleted after merge",
@@ -20,7 +20,7 @@
         },
         {
           "name": "agent/oi97-local-prep",
-          "disposition": "MERGED_TO_MAIN_2026-09-05",
+          "disposition": "RETIRE_MERGED",
           "owner": "O:I main (S-DESKTOP, OI-GIT-NORM)",
           "reason": "all 19 files new on main: packages/oi-pi (O:I-for-Pi surface half) + docs/PI-PACKAGE-SPEC.md + docs/PI-ORCHESTRATION-HANDOVER.md; 18/18 package tests green; merged --no-ff as 7c4bf5c (+ test-glob fix f127232)",
           "reentry_condition": "branch deleted after merge",
@@ -28,7 +28,7 @@
         },
         {
           "name": "converge/oi97-w12-routine-profile-current-mains",
-          "disposition": "MERGED_TO_MAIN_2026-09-05",
+          "disposition": "RETIRE_MERGED",
           "owner": "O:I main (S-DESKTOP, OI-GIT-NORM)",
           "reason": "branch's newer exact-owner W12 witness landed (tests/journey-routine-handoff proves Central RoutineRef assignment; main's copy was the pre-recut Sep 2 version); main's newer post-#188 suite/mainline.json + surfaces.json kept; 3 witness crates compile, tests pass; merged --no-ff as b5c410c",
           "reentry_condition": "branch deleted after merge",
@@ -52,7 +52,7 @@
         },
         {
           "name": "feat/oi155-inhabitation",
-          "disposition": "CLOSED_SUPERSEDED_BY_CURRENT_MAIN",
+          "disposition": "RETIRE_SUPERSEDED",
           "owner": "O:I main (#167 admit)",
           "reason": "every non-desktop file byte-identical to main (shared-field/*, site/explore-read-model.mjs) after the #167 admit; desktop/ui parts target the removed pre-rebuild app",
           "reentry_condition": "deleted 2026-09-05 after per-file blob identity proof",
@@ -60,7 +60,7 @@
         },
         {
           "name": "feat/oi157-versioned-world-integration",
-          "disposition": "CLOSED_SUPERSEDED_BY_CURRENT_MAIN",
+          "disposition": "RETIRE_SUPERSEDED",
           "owner": "O:I main (#167 admit)",
           "reason": "subset of oi155 (oi155 tip merges this line); shared-field versioned-world files identical to main",
           "reentry_condition": "deleted 2026-09-05",
@@ -68,7 +68,7 @@
         },
         {
           "name": "feat/oi158-omarchy-reference-world",
-          "disposition": "CLOSED_SUPERSEDED_BY_CURRENT_MAIN",
+          "disposition": "RETIRE_SUPERSEDED",
           "owner": "O:I main (#159 landing)",
           "reason": "oi.reference-world plugin + bridge fixtures superseded by main's org.epilogos.oi plugin, source-pinned cli/omarchy_host.rs and oi159-omarchy-host.yml deterministic CI proof; [OI155]-base content identical to main",
           "reentry_condition": "deleted 2026-09-05",
@@ -76,7 +76,7 @@
         },
         {
           "name": "feat/oi172-six-product-native-command-field",
-          "disposition": "CLOSED_SUPERSEDED_BY_CURRENT_MAIN",
+          "disposition": "RETIRE_SUPERSEDED",
           "owner": "O:I main (#175 + later evolution)",
           "reason": "six-product command field landed and evolved beyond the branch (cli/product_command_route.rs with oi products + catalogue resolution, install descriptors, six_product_command_parity test); branch's frontdoor/dispatch is the earlier iteration",
           "reentry_condition": "deleted 2026-09-05 after per-file direction proof",
@@ -84,7 +84,7 @@
         },
         {
           "name": "feat/oi173-adapter-driven-world-recognition",
-          "disposition": "CLOSED_SUPERSEDED_BY_CURRENT_MAIN",
+          "disposition": "RETIRE_SUPERSEDED",
           "owner": "O:I main (#185 landing)",
           "reason": "world-recognition contract artifacts (schema, herdr example, docs, packages README) byte-identical on main; cli recognition surface evolved further (recognition register/unregister)",
           "reentry_condition": "deleted 2026-09-05",
@@ -92,7 +92,7 @@
         },
         {
           "name": "converge/pre97-six-product-command-current-main",
-          "disposition": "CLOSED_SUPERSEDED_BY_CURRENT_MAIN",
+          "disposition": "RETIRE_SUPERSEDED",
           "owner": "O:I main",
           "reason": "earlier iteration of the [OI97-CLI] shared command catalogue commits that are on main (main's product_command.rs carries newer install/source-install structs); desktop/core half targets the removed app",
           "reentry_condition": "deleted 2026-09-05",
@@ -100,7 +100,7 @@
         },
         {
           "name": "converge/oi97-exact-main-w12",
-          "disposition": "CLOSED_SUPERSEDED_BY_CURRENT_MAIN",
+          "disposition": "RETIRE_SUPERSEDED",
           "owner": "O:I main (#171)",
           "reason": "witness tests byte-identical to main; remaining delta was stale suite/surfaces pins older than main's",
           "reentry_condition": "deleted 2026-09-05",
@@ -108,7 +108,7 @@
         },
         {
           "name": "converge/oi97-exact-main-context-reload",
-          "disposition": "CLOSED_SUPERSEDED_BY_CURRENT_MAIN",
+          "disposition": "RETIRE_SUPERSEDED",
           "owner": "O:I main (#168)",
           "reason": "project-context witness lib.rs byte-identical to main; remaining delta was stale pins",
           "reentry_condition": "deleted 2026-09-05",
@@ -116,7 +116,7 @@
         },
         {
           "name": "fix/pre97-prelocal-build-channel",
-          "disposition": "CLOSED_SUPERSEDED_BY_CURRENT_MAIN",
+          "disposition": "RETIRE_SUPERSEDED",
           "owner": "O:I main (#187 + rebuild)",
           "reason": "release-selection semantics (packages/oi-cli release/install/test, npm-publish.yml) byte-identical on main; prelocal workflow superseded by #187 restore and the rebuild's cradle-path adaptation",
           "reentry_condition": "deleted 2026-09-05",
@@ -124,7 +124,7 @@
         },
         {
           "name": "feat/flow-desktop-138",
-          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "Flow workbench over projectcentral.flow.* for the deleted desktop/{ui,core}; function record quarry/notes/feat-flow-desktop-138.md (U4.1/U4.2, authority-seam tests)",
           "reentry_condition": "none \u2014 re-derive per cradle wayfinder units when built",
@@ -132,7 +132,7 @@
         },
         {
           "name": "agent/oi-desktop-p2-project-field-106",
-          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "Project field composition + source-class UI law for the deleted app; record quarry/notes/agent-oi-desktop-p2-project-field-106.md (U1.1/U1.4)",
           "reentry_condition": "none \u2014 re-derive per cradle wayfinder units",
@@ -140,7 +140,7 @@
         },
         {
           "name": "feat/living-wiki-desktop-135",
-          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "Source Change Horizon + privacy-preserving impact for the deleted app; record quarry/notes/feat-living-wiki-desktop-135.md (U3.2/U3.4)",
           "reentry_condition": "none \u2014 re-derive per cradle wayfinder units",
@@ -148,7 +148,7 @@
         },
         {
           "name": "agent/oi-d-current-situated-cosmic",
-          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "opaque Cosmic host + corrected-C binding semantics; record quarry/notes/agent-oi-d-current-situated-cosmic.md (fog Nara/Epi, U3.3)",
           "reentry_condition": "none \u2014 fog-row record",
@@ -156,7 +156,7 @@
         },
         {
           "name": "agent/oi-epi-cosmic-123-instrument",
-          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "one integrated instrument / six deep workspaces; record quarry/notes/agent-oi-epi-cosmic-123-instrument.md (fog Nara/Epi)",
           "reentry_condition": "none \u2014 fog-row record",
@@ -164,7 +164,7 @@
         },
         {
           "name": "agent/oi-pre-d-personal-map-lineage",
-          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "personal 4/5/0 packets Map lineage; record quarry/notes/agent-oi-pre-d-personal-map-lineage.md (U3.3)",
           "reentry_condition": "none \u2014 re-derive per cradle wayfinder units",
@@ -172,7 +172,7 @@
         },
         {
           "name": "agent/oi-epi-personal-450-return",
-          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "Central NOW host inspect/return/reject/promote; record quarry/notes/agent-oi-epi-personal-450-return.md (U3.3)",
           "reentry_condition": "none \u2014 re-derive per cradle wayfinder units",
@@ -180,7 +180,7 @@
         },
         {
           "name": "agent/oi-desktop-p6-explore-parity-110",
-          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "one shared Explore Surface model Read/Author/Preview; record quarry/notes/agent-oi-desktop-p6-explore-parity-110.md (U3.4/U3.5)",
           "reentry_condition": "none \u2014 re-derive per cradle wayfinder units",
@@ -188,7 +188,7 @@
         },
         {
           "name": "agent/oi-epi-personal-450-composed",
-          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "parent-bounded Action authority for protected child subjects; record quarry/notes/agent-oi-epi-personal-450-composed.md (U0.3b/U2.5 pattern)",
           "reentry_condition": "none \u2014 fog-row record",
@@ -196,7 +196,7 @@
         },
         {
           "name": "agent/oi-desktop-p5-system-109",
-          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "six owners x seven axes System workbench, CurrentWorld partial constitution; record quarry/notes/agent-oi-desktop-p5-system-109.md; System region has NO cradle unit \u2014 OWNER-TO-DECIDE",
           "reentry_condition": "owner decision: charter a System-region unit or fold into fog",
@@ -204,7 +204,7 @@
         },
         {
           "name": "agent/oi-desktop-p1-host-105",
-          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "region-generic Surface placement + canonical Action emission + authority-seam tests; record quarry/notes/agent-oi-desktop-p1-host-105.md (U0.3b)",
           "reentry_condition": "none \u2014 re-derive per cradle wayfinder units",
@@ -212,7 +212,7 @@
         },
         {
           "name": "converge/living-wiki-w7-main",
-          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "W7 multi-world conformance suite definition; record quarry/notes/converge-living-wiki-w7-main.md (U3.4 walk inputs)",
           "reentry_condition": "none \u2014 scenario shape recorded",
@@ -220,7 +220,7 @@
         },
         {
           "name": "feat/wiki-authored-relations",
-          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "source-authored wiki relations via AIKit compiler; record quarry/notes/feat-wiki-authored-relations.md (U3.4/U3.5, W1.5)",
           "reentry_condition": "none \u2014 re-derive per cradle wayfinder units",
@@ -228,7 +228,7 @@
         },
         {
           "name": "agent/oi-epi-nara-coordinate-parity",
-          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "Nara coordinate lineage + protected privacy classes + write-first canvas; record quarry/notes/agent-oi-epi-nara-coordinate-parity.md (fog Nara/Epi; Nara daily-canvas UX law flagged OWNER-TO-DECIDE)",
           "reentry_condition": "owner decision when Nara/Epi fog lifts",
@@ -236,7 +236,7 @@
         },
         {
           "name": "agent/oi-epi-personal-return",
-          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "M4 prime Nara first lived Epi canvas; record quarry/notes/agent-oi-epi-personal-return.md; tip f9f1a53 identical to agent/oi-epi-nara-lived-vertical \u2014 one record, two deletions",
           "reentry_condition": "none",
@@ -244,7 +244,7 @@
         },
         {
           "name": "agent/oi-epi-nara-lived-vertical",
-          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "tip f9f1a53 identical to agent/oi-epi-personal-return \u2014 same content, two names; single quarry record covers both",
           "reentry_condition": "none",
@@ -252,7 +252,7 @@
         },
         {
           "name": "agent/oi-epi-mode-kernel-bridge",
-          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "Epi mounting pattern over the native contribution contract; record quarry/notes/agent-oi-epi-mode-kernel-bridge.md (U0.3b pattern, mounting law)",
           "reentry_condition": "none \u2014 fog-row record",
@@ -260,7 +260,7 @@
         },
         {
           "name": "agent/ql-relational-field",
-          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "docs+CSV+skill (not desktop): 144-relation machine-readable reference sheet + oi-relational-development skill; record quarry/notes/agent-ql-relational-field.md; CSV is branch-only and homeless \u2014 OWNER-TO-DECIDE",
           "reentry_condition": "owner decision: home the 144-relation CSV or let it rest in the note",
@@ -268,7 +268,7 @@
         },
         {
           "name": "converge/oi97-post-w7-desktop",
-          "disposition": "CLOSED_SUPERSEDED_BY_REBUILD",
+          "disposition": "RETIRE_SUPERSEDED",
           "owner": "cradle rebuild U0.7 (08f6ea9)",
           "reason": "retired materializer (pinned snapshot + surfaces catalog), retired itself in final commit; record quarry/notes/converge-oi97-post-w7-desktop.md (NOTHING-NEW verdict)",
           "reentry_condition": "none",
