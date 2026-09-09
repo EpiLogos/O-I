@@ -1535,11 +1535,34 @@ fn verify_artifact(artifact: &str) -> Result<(), String> {
     if artifact == "builtin:herdr" {
         return Ok(());
     }
-    let output = Command::new(artifact)
-        .args(["verify", "--json"])
-        .stdin(Stdio::null())
-        .output()
-        .map_err(|error| format!("failed to verify recognition artifact {artifact}: {error}"))?;
+    // A recognizer verified moments after it was written can still be held
+    // open for writing elsewhere in this process: a sibling thread that spawns
+    // a child between our open and its exec briefly carries the descriptor, and
+    // Linux answers the exec with ETXTBSY. The artifact is sound — only the
+    // instant is wrong, and syncing the writer cannot close that window because
+    // the descriptor is not ours. Wait the window out rather than refusing a
+    // registration for a transient kernel state.
+    let mut attempt = 0;
+    let output = loop {
+        match Command::new(artifact)
+            .args(["verify", "--json"])
+            .stdin(Stdio::null())
+            .output()
+        {
+            Ok(output) => break output,
+            Err(error)
+                if error.kind() == std::io::ErrorKind::ExecutableFileBusy && attempt < 20 =>
+            {
+                attempt += 1;
+                std::thread::sleep(std::time::Duration::from_millis(25));
+            }
+            Err(error) => {
+                return Err(format!(
+                    "failed to verify recognition artifact {artifact}: {error}"
+                ))
+            }
+        }
+    };
     if !output.status.success() {
         return Err(format!(
             "recognition artifact verification failed for {artifact}: {}",
