@@ -923,7 +923,7 @@ impl CentralClient {
         decode_flow_reading("projectcentral.flow.adopt", data)
     }
 
-    fn flow_write_reading(
+    pub(crate) fn flow_write_reading(
         &self,
         project: &str,
         flow_ref: &str,

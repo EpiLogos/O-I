@@ -1,3 +1,4 @@
+import {docText, waitForDoc} from '../editor-doc.mjs';
 /**
  * FND-05 bootstrap walk (BOOT-00–15). Exercises the boot phases the
  * KernelProvider derives (`starting`/`ready`/`transport-unavailable`/
@@ -65,11 +66,13 @@ export default async function run(ctx) {
     const start = bare.getByRole("button", { name: "Start writing", exact: true });
     await start.waitFor({ timeout: 15_000 });
     await start.click();
-    const canvas = bare.getByRole("textbox", { name: "Writing surface", exact: true });
+    const canvas = bare.locator(".draft-surface .cm-content");
+    await canvas.waitFor({ timeout: 15_000 });
     await canvas.fill("Local writing works with no kernel transport.");
+    await waitForDoc(bare, "Local writing works with no kernel transport.", ".draft-surface .cm-content", 15_000);
     check(
-      (await canvas.inputValue()) === "Local writing works with no kernel transport.",
-      "BOOT-00/transport-unavailable: an honest state still leaves a usable local writing canvas",
+      (await docText(bare, ".draft-surface .cm-content")) === "Local writing works with no kernel transport.",
+      "BOOT-00/transport-unavailable: an honest state still leaves usable writing, kept on this device",
     );
     await shotTo(bare, artifactsDir, "transport-unavailable");
     await bareContext.close();
@@ -85,9 +88,12 @@ export default async function run(ctx) {
 
   // Local writing is still reachable beside the chooser (no fake gate).
   await page.getByRole("button", { name: /Start writing|Resume writing/ }).click();
-  await page.getByRole("textbox", { name: "Writing surface", exact: true }).fill("Writing survives an unrecognised ground.");
-  await page.getByRole("button", { name: "Back to workspace" }).click();
-  check(true, "BOOT-02: the writing canvas stays reachable while ground is unrecognised");
+  const unrecognised = page.locator(".draft-surface .cm-content");
+  await unrecognised.waitFor({ timeout: 15_000 });
+  await unrecognised.fill("Writing survives an unrecognised ground.");
+  await waitForDoc(page, "Writing survives an unrecognised ground.", ".draft-surface .cm-content", 15_000);
+  check(true, "BOOT-02: writing stays reachable while ground is unrecognised");
+  await page.keyboard.press("Meta+w");
 
   // Recognise + bind the real root (same owner operations GroundChooser
   // always used — this walk changes nothing about that flow).

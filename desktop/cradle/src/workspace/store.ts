@@ -2,6 +2,7 @@ import {preservePresentation,latestRecovery} from "./recovery";
 import { useEffect, useRef, useState, type SetStateAction } from "react";
 import { redockBinding } from "../surface/engine";
 import { decodeLayout } from "../surface/persist";
+import { openBinding } from "../surface/engine";
 import { freshLayout, type LayoutState } from "../surface/types";
 
 export type ProjectMode = "chats" | "files" | "wiki";
@@ -22,6 +23,25 @@ function scopeLegacyIds(layout:LayoutState,workspaceId:string,all=false):LayoutS
   const pane=(p:import("../surface/types").Pane):import("../surface/types").Pane=>p.type==="split"?{...p,children:p.children.map(pane)}:{...p,tabs:p.tabs.map(id),pinned:p.pinned.map(id),active:p.active?id(p.active):null};
   return {...layout,windowBounds:Object.fromEntries(Object.entries(layout.windowBounds??{}).map(([key,bounds])=>[id(key),bounds])),root:layout.root?pane(layout.root):null,surfaces:Object.fromEntries(Object.values(layout.surfaces).map(b=>[id(b.id),{...b,id:id(b.id)}])),closedStack:layout.closedStack.map(id),detached:layout.detached?.map(d=>({...d,surfaceId:id(d.surfaceId)}))};
 }
+/**
+ * Writing used to live on the workspace record itself (`writing`), rendered by
+ * a canvas that no longer exists. Any record still carrying that text — an old
+ * saved arrangement, or one coming back through recovery — has its writing
+ * carried into an unsaved-writing surface so it is actually restored and
+ * visible, rather than surviving as a field nothing renders.
+ */
+function carryLegacyWriting(workspace: Workspace): Workspace {
+  const text = typeof workspace.writing === "string" ? workspace.writing : "";
+  if (!text.trim()) return workspace;
+  const held = Object.values(workspace.layout.surfaces).some(binding => binding.kind === "draft");
+  if (held) return workspace;
+  const id = `${workspace.id}:carried-writing`;
+  try { localStorage.setItem(`oi-cradle.unplaced-draft.v1:${id}`, JSON.stringify({ text, at: Date.now() })); }
+  catch { return workspace; }
+  const binding = { id, kind: "draft", title: "Draft", project: workspace.project };
+  const layout = openBinding(workspace.layout, binding);
+  return { ...workspace, writing: "", writingMode: false, layout };
+}
 const initialLayout = (): LayoutState => ({ ...freshLayout(), agencyDepth: "panel", rightDepth: "collapsed", leftWidth: 240, rightWidth: 320 });
 function load(): WorkspaceBook {
   const raw = localStorage.getItem(KEY);
@@ -38,7 +58,7 @@ function load(): WorkspaceBook {
         if (state.mode !== undefined && !["chats", "files", "wiki"].includes(state.mode)) throw new Error("Invalid project mode");
         return [ref, { expanded: state.expanded, scroll: state.scroll, directories: state.directories, mode: state.mode ?? "files", locationPath: state.locationPath }];
       }));
-      return { projectNavigation, centralFiles: w.centralFiles === true, id: w.id, name: w.name, project: w.project, writing: w.writing, writingMode: typeof w.writingMode === "boolean" ? w.writingMode : !!w.writing, layout: scopeLegacyIds(layout,w.id) };
+      return carryLegacyWriting({ projectNavigation, centralFiles: w.centralFiles === true, id: w.id, name: w.name, project: w.project, writing: w.writing, writingMode: false, layout: scopeLegacyIds(layout,w.id) });
     });
     if (!workspaces.length || new Set(workspaces.map((w: Workspace) => w.id)).size !== workspaces.length || !workspaces.some((w: Workspace) => w.id === parsed.active)) throw new Error("Invalid workspace selection");
     return { version: 1, active: parsed.active, workspaces };
@@ -98,7 +118,7 @@ export function useWorkspaces() {
       const restored:Workspace[]=candidates.filter((w:unknown)=>w&&typeof w==="object").map((w:Workspace,index:number)=>{
         const id=crypto.randomUUID();
         const projectNavigation=Object.fromEntries(Object.entries(w.projectNavigation??{}).filter(([,state])=>state&&typeof state.expanded==="boolean"&&Number.isFinite(state.scroll)&&state.scroll>=0).map(([ref,state])=>[ref,{expanded:state.expanded,scroll:state.scroll,mode:state.mode&&["chats","files","wiki"].includes(state.mode)?state.mode:"chats",directories:Array.isArray(state.directories)?state.directories.filter(path=>typeof path==="string"):undefined,locationPath:typeof state.locationPath==="string"?state.locationPath:undefined}]));
-        return {id,name:typeof w.name==="string"?w.name:`Recovered ${index+1}`,project:typeof w.project==="string"?w.project:undefined,centralFiles:w.centralFiles===true,projectNavigation,writing:typeof w.writing==="string"?w.writing:"",writingMode:typeof w.writingMode==="boolean"?w.writingMode:!!w.writing,layout:scopeLegacyIds(decodeLayout(w.layout),id,true)};
+        return carryLegacyWriting({id,name:typeof w.name==="string"?w.name:`Recovered ${index+1}`,project:typeof w.project==="string"?w.project:undefined,centralFiles:w.centralFiles===true,projectNavigation,writing:typeof w.writing==="string"?w.writing:"",writingMode:false,layout:scopeLegacyIds(decodeLayout(w.layout),id,true)});
       });
       if(!restored.length){setError("No complete workspace records could be recovered. The original bytes remain retained.");return;}
       setBook(book=>({version:1,active:restored[0].id,workspaces:[...book.workspaces.filter(workspace=>workspace.id!=="recovery"||!!workspace.writing),...restored]}));setRecovery(null);

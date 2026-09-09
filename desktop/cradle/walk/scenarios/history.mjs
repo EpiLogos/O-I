@@ -1,3 +1,4 @@
+import {docText, waitForDoc, openChrome} from '../editor-doc.mjs';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 export { setup } from './editor.mjs';
@@ -14,8 +15,9 @@ export default async function run({ page, baseUrl, check, shot, channel, provisi
   await page.locator('[data-project-path="Work/Editor"]').click();
   if(await page.getByRole('button',{name:'Editor: files',exact:true}).getAttribute('aria-pressed') !== 'true') await page.getByRole('button',{name:'Editor: files',exact:true}).click();
   await page.locator(`[data-file-path="Work/Editor/${p.sources[0].binding.path}"]`).click();
-  const text = page.locator('.source-textarea');
+  const text = page.locator('.cm-content');
   await text.waitFor();
+  await openChrome(page, '.source-editor');
   await page.locator('.source-editor').getByRole('button', { name: 'History', exact: true }).click();
   const history = page.getByRole('region', { name: 'Source history' });
   const rows = history.locator('li');
@@ -32,7 +34,7 @@ export default async function run({ page, baseUrl, check, shot, channel, provisi
   await page.keyboard.press('Meta+s');
   const conflict = page.locator('.source-conflict');
   await conflict.waitFor();
-  check(await text.inputValue() === human, 'Conflict preserves the exact local writing');
+  check(await docText(page,'.cm-content') === human, 'Conflict preserves the exact local writing');
   check(await conflict.locator('[data-canonical]').textContent() === external, 'Conflict displays the exact concurrently saved canonical side');
   check(readFileSync(join(p.projectRoot, source.binding.path), 'utf8') === external, 'Failed CAS never overwrites the concurrent source');
   const current = externalWrite.receipt.revision.revision;
@@ -45,7 +47,7 @@ export default async function run({ page, baseUrl, check, shot, channel, provisi
   await text.fill(merged);
   await conflict.getByRole('button').click();
   await conflict.waitFor({ state: 'detached' });
-  check(await text.inputValue() === merged, 'Explicit re-read preserves the reconciled writing');
+  check(await docText(page,'.cm-content') === merged, 'Explicit re-read preserves the reconciled writing');
   check(await page.locator('.source-revision').getAttribute('data-revision') === current, 'Re-read uses the resulting canonical revision as the CAS base');
   await text.focus(); await page.keyboard.press('Meta+s');
   await page.waitForFunction(() => document.querySelector('.source-editor')?.getAttribute('data-dirty') === 'false');
@@ -63,7 +65,8 @@ export default async function run({ page, baseUrl, check, shot, channel, provisi
   await shot('resolved-history');
   await page.keyboard.press('Meta+w'); await page.keyboard.press('Meta+Shift+t');
   await text.waitFor();
+  await openChrome(page, '.source-editor');
   await page.locator('.source-editor').getByRole('button', { name: 'History', exact: true }).click(); await settled();
   check(await rows.count() === initialCount + 2, 'Reopened source reads the durable owner history');
-  check(await text.inputValue() === merged, 'Reopening preserves the saved reconciliation');
+  check(await docText(page,'.cm-content') === merged, 'Reopening preserves the saved reconciliation');
 }

@@ -1,3 +1,4 @@
+import {docText, waitForDoc} from '../editor-doc.mjs';
 /**
  * resources — S6 resource/lifecycle measurement (feeding FND-06), against
  * the "Memory acceptance", "View disposal", "State and cache lifetime" and
@@ -151,7 +152,7 @@ async function runCycle(page, nav, issues, cycleIndex, artifactsDir) {
     await page.waitForFunction(() => document.querySelectorAll(".pane.group").length === 2, null, { timeout: 10_000 });
     await page.keyboard.press("Meta+Alt+Enter");
     await waitForLocatorCount(page.locator(".pane.group:visible"), 1);
-    await page.locator(".pane.focused .source-textarea").focus();
+    await page.locator(".pane.focused .cm-content").focus();
     await page.keyboard.press("Escape");
     await waitForLocatorCount(page.locator(".pane.group:visible"), 2);
   } catch (error) {

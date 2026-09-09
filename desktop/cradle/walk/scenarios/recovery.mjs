@@ -1,3 +1,4 @@
+import {docText, waitForDoc, openWorkspaceStrip} from '../editor-doc.mjs';
 export default async function run({page,baseUrl,check,channel}) {
  await page.goto(baseUrl);await channel('info');
  const raw=JSON.stringify({version:99,active:'held',workspaces:[{id:'held',name:'Held arrangement',writing:'Original writing survives recovery',layout:{root:null,surfaces:{},closedStack:[],focusedGroupId:null,agencyDepth:'panel'}}]});
@@ -10,10 +11,12 @@ export default async function run({page,baseUrl,check,channel}) {
  await page.reload();await channel('info');
  check(await page.getByRole('region',{name:'Workspace recovery'}).count()===0,'Explicit fresh arrangement restores normally');
  check(await page.evaluate(key=>JSON.parse(localStorage.getItem(key)).raw,backup.key)===raw,'Fresh arrangement and relaunch cannot overwrite retained original bytes');
- await page.getByLabel('Workspace actions',{exact:true}).click();await page.getByRole('button',{name:'Recover saved arrangement',exact:true}).click();
+ await openWorkspaceStrip(page);
+  await page.getByLabel('Workspace actions',{exact:true}).click();await page.getByRole('button',{name:'Recover saved arrangement',exact:true}).click();
  await page.getByRole('button',{name:'Recover available workspaces',exact:true}).click();
- await page.getByRole('textbox',{name:'Writing surface',exact:true}).waitFor();
- check(await page.getByRole('textbox',{name:'Writing surface',exact:true}).inputValue()==='Original writing survives recovery','Explicit recovery restores actual held writing');
+ await page.locator('.draft-surface .cm-content').waitFor({timeout:15000});
+ check(await docText(page,'.draft-surface .cm-content')==='Original writing survives recovery','Explicit recovery restores actual held writing');
  await page.reload();await channel('info');
- check(await page.getByRole('textbox',{name:'Writing surface',exact:true}).inputValue()==='Original writing survives recovery','Recovered writing remains durable after another relaunch');
+ await page.locator('.draft-surface .cm-content').waitFor({timeout:15000});
+ check(await docText(page,'.draft-surface .cm-content')==='Original writing survives recovery','Recovered writing remains durable after another relaunch');
 }

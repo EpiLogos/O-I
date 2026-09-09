@@ -363,7 +363,7 @@
  .desktop-shell .desktop-centre:has(.tab-strip){margin-top:-28px;position:relative;z-index:1}
  .desktop-shell .desktop-centre .surface-host{padding-top:0}
  .desktop-shell .shell-topbar{position:relative;z-index:2;pointer-events:none}
- .desktop-shell .shell-topbar button{pointer-events:auto}
+ .desktop-shell .shell-topbar button,.desktop-shell .shell-topbar select{pointer-events:auto}
  .desktop-shell [data-window-corner="true"] > .tab-strip{padding-left:max(4px,calc(var(--shell-window-reserve) - var(--desktop-left-width)))}
  .desktop-shell:has(.desktop-side.right.depth-collapsed,.desktop-side.right.depth-strip) .desktop-centre .tab-strip{padding-right:32px}
 }
@@ -383,13 +383,19 @@
 .workspace-footer-edge:is(:hover,:focus-within) .canvas-arrangement,.workspace-footer-edge[data-pinned="true"] .canvas-arrangement{opacity:1;transform:none;pointer-events:auto}
 
 @media(prefers-reduced-motion:reduce){.workspace-footer-edge,.workspace-footer-edge .canvas-arrangement{transition:none}}
-/* The window controls occupy an actual open corner, not an inset tab cell.
-   Both the mask and tab reservation follow the live sidebar width. */
+/* The window controls and region toggles occupy actual open corners, not an
+   inset tab cell. Both corners are cut — left follows the window-control
+   reserve (traffic lights when native, the navigator toggle otherwise),
+   right follows the icon reserve so the agent toggle sits in open corner
+   space whether or not the 3 dots are rendered. Masks and tab reservations
+   follow the live sidebar widths. */
 @media(min-width:760px) and (pointer:fine){
- .desktop-shell[data-native="true"] [data-window-corner="true"]{
+ .desktop-shell [data-window-corner="true"]{
   --window-cutout:max(0px,calc(var(--shell-window-reserve) - var(--desktop-left-width)));
-  clip-path:polygon(var(--window-cutout) 0,100% 0,100% 100%,0 100%,0 var(--oi-shell-tabbar),var(--window-cutout) var(--oi-shell-tabbar));
+  --window-cutout-right:max(0px,calc(42px - var(--desktop-right-width,0px)));
+  clip-path:polygon(var(--window-cutout) 0,calc(100% - var(--window-cutout-right)) 0,100% var(--oi-shell-tabbar),100% 100%,0 100%,0 var(--oi-shell-tabbar),var(--window-cutout) var(--oi-shell-tabbar));
  }
+ .desktop-shell [data-window-corner="true"] > .tab-strip{padding-right:max(4px,var(--window-cutout-right))}
 }
 
 /* Navigator content scrolls above a structural bottom row; no sticky overlay. */

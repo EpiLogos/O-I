@@ -1,3 +1,4 @@
+import {docText, waitForDoc} from '../editor-doc.mjs';
 /** Frame operations over actual owner-backed sources, never synthetic tabs. */
 export { setup } from './editor.mjs';
 export default async function run({page,baseUrl,check,metric,shot,channel,provision:p}) {
@@ -8,7 +9,7 @@ export default async function run({page,baseUrl,check,metric,shot,channel,provis
   const sources=p.sources.slice(0,5);
   const title=s=>s.binding.path.split('/').pop();
   const tab=s=>page.locator('.tab').filter({hasText:title(s)});
-  const open=async s=>{await nav.locator(`[data-file-path="Work/Editor/${s.binding.path}"]`).click();await page.waitForFunction(ref=>document.querySelector('.pane.focused .source-textarea')?.dataset.sourceRef===ref,s.binding.ref);};
+  const open=async s=>{await nav.locator(`[data-file-path="Work/Editor/${s.binding.path}"]`).click();await page.waitForFunction(ref=>document.querySelector('.pane.focused .cm-content')?.dataset.sourceRef===ref,s.binding.ref);};
   const layout=async()=> (await channel('read.layout')).data.layout;
   const start=Date.now();
   for(const s of sources.slice(0,4)) await open(s);
@@ -17,12 +18,13 @@ export default async function run({page,baseUrl,check,metric,shot,channel,provis
   check((await channel('read.focus')).data.subject.ref===sources[3].binding.ref,'Last opened source is the single kernel focus');
   await open(sources[0]);
   check(await page.locator('.tab').count()===4,'Opening an existing ref reuses its binding');
-  await page.locator('.source-textarea').fill('Retained through all frame operations.\n');
+  await page.locator('.cm-content').fill('Retained through all frame operations.\n');
   await open(sources[4]); await page.keyboard.press('Meta+w');
   check(await page.locator('.tab').count()===4,'Keyboard closes the focused source view');
   await page.keyboard.press('Meta+Shift+t');
   check(await page.locator('.tab').count()===5,'Keyboard reopens the same source binding');
-  await tab(sources[4]).getByRole('button').click();
+  await tab(sources[4]).first().hover();
+  await tab(sources[4]).first().locator('.tab-close').click();
   check(await page.locator('.tab').count()===4,'Pointer close operates on the requested tab');
   await tab(sources[3]).click(); await page.keyboard.press('Meta+d');
   check(await page.locator('.pane.group').count()===2,'Keyboard splits the active source to the right');
@@ -36,10 +38,10 @@ export default async function run({page,baseUrl,check,metric,shot,channel,provis
   check(await page.locator('.pane.group').count()===3,'Keyboard creates a vertical split');
   await page.keyboard.press('Meta+Alt+t');
   check(await page.locator('.pane.group').count()===4,'Keyboard tiles the four real sources');
-  check(await page.locator('.source-textarea').count()===4,'Each tiled source has one editor');
+  check(await page.locator('.cm-content').count()===4,'Each tiled source has one editor');
   await shot('native-sources-tiled');
   await tab(sources[0]).click();
-  check(await page.locator('.pane.focused .source-textarea').inputValue()==='Retained through all frame operations.\n','Tiling and movement retain dirty source writing');
+  check(await docText(page,'.pane.focused .cm-content')==='Retained through all frame operations.\n','Tiling and movement retain dirty source writing');
   await tab(sources[0]).click({button:'right'});
   const actions=await page.locator('.ctx-item').evaluateAll(es=>es.map(e=>e.dataset.actionRef));
   check(JSON.stringify(actions)===JSON.stringify(['surface.close','surface.maximize','surface.split-right','surface.split-down','surface.pin']),'Source frame menu discloses exactly its operative frame actions');
@@ -65,7 +67,7 @@ export default async function run({page,baseUrl,check,metric,shot,channel,provis
   await page.waitForFunction(()=>document.querySelectorAll('.tab').length===4);
   check(JSON.stringify((await layout()).root)===JSON.stringify(saved.root),'Reload restores pane tree, active tabs, pins and weights exactly');
   await tab(sources[0]).click();
-  await page.waitForFunction(()=>document.querySelector('.pane.focused .source-textarea')?.value==='Retained through all frame operations.\n');
+  await page.waitForFunction(()=>(document.querySelector('.pane.focused .text-editor-host')?.__oiDocument?.() ?? [...document.querySelectorAll('.pane.focused .cm-content .cm-line')].map(l=>l.textContent.replace(/\u00a0/g,' ')).join('\n'))==='Retained through all frame operations.\n');
   check(true,'Reload restores dirty writing through owner validation');
   const focusBefore=(await channel('read.focus')).data;
   const arrangement=JSON.stringify((await layout()).root);

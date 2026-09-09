@@ -20,12 +20,12 @@ import { Fragment, useEffect, useLayoutEffect } from "react";
 import { useKernel } from "../kernel/KernelProvider";
 import type { ListedSource } from "../kernel/types";
 import { KnowledgeSurface } from "../knowledge/KnowledgeSurface";
-import type { KnowledgeAddress } from "../kernel/types";
 import { FileSurface } from "../files/FileSurface";
 import { SourceSurface } from "./SourceSurface";
 import { SourcesIndex } from "./SourcesIndex";
 import { BrowserSurface } from "../browser/BrowserSurface";
 import { TerminalSurface } from "../terminal/TerminalSurface";
+import { DraftSurface } from "../flow/DraftSurface";
 import { FlowSurface } from "../flow/FlowSurface";
 import { FreshSurface } from "../flow/FreshSurface";
 import { contains, groupsOf, renderOrder } from "./engine";
@@ -42,7 +42,7 @@ export interface WorkbenchProps {
   openFrameMenu: (x: number, y: number) => void;
   /** Open a real source surface from the index listing (U0.4). */
   openSource: (source: ListedSource) => void;
-  openKnowledge: (address: KnowledgeAddress, title: string, project?: string) => Promise<void>;
+  openKnowledge: import("../knowledge/NodeDetails").OpenKnowledge;
 }
 
 export function Workbench(props: WorkbenchProps) {
@@ -102,7 +102,7 @@ export function Workbench(props: WorkbenchProps) {
         return;
       }
       if (active && active !== document.body && active.isConnected && (!activePane || activePane.dataset.groupId === g.id)) return;
-      const editor = el.closest(".pane.group")?.querySelector<HTMLElement>(".source-textarea");
+      const editor = el.closest(".pane.group")?.querySelector<HTMLElement>(".cm-content");
       (editor ?? el).focus();
     });
     return () => cancelAnimationFrame(frame);
@@ -308,6 +308,7 @@ function SurfaceBody({
   if(binding.kind==="encounter")return <EncounterSurface key={binding.id} binding={binding} onView={view=>onView(binding.id,view)}/>;
   if (binding.kind === "terminal") return <TerminalSurface binding={binding} />;
   if (binding.kind === "flow") return <FlowSurface binding={binding} />;
+  if (binding.kind === "draft") return <DraftSurface binding={binding} />;
   if (binding.kind === "blank") return <FreshSurface binding={binding} />;
   if (binding.kind === "browser") return <BrowserSurface binding={binding} />;
   if (binding.kind === "file") return <FileSurface key={binding.id} binding={binding}/>;

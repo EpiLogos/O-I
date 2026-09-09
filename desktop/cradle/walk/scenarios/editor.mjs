@@ -1,3 +1,4 @@
+import {docText, waitForDoc, openChrome} from '../editor-doc.mjs';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -40,8 +41,16 @@ export default async function run({ page, baseUrl, check, metric, shot, channel,
     } catch { /* Teardown may close a completed response's browser handle. */ }
   });
   await page.goto(baseUrl); await channel('info');
+  // The thought that must survive opening documents now lives in a real Flow,
+  // so its register has to be named before it can be opened.
+  const thought='This thought survives opening documents.';
+  await page.locator('[data-project-path="Work/Editor"]').click();
   await page.getByRole('button',{name:'Start writing',exact:true}).click();
-  await page.locator('.canvas-surface').fill('This thought survives opening documents.');
+  const thoughtEditor=page.locator('.flow-surface .cm-content');
+  await thoughtEditor.waitFor({timeout:20000});
+  await thoughtEditor.click();
+  await page.keyboard.type(thought);
+  await waitForDoc(page, thought, '.flow-surface .cm-content', 20000);
   const nav = page.getByRole('complementary', { name: 'World navigator' });
   const selectProject = async name => {
     if (!await page.getByRole('complementary', {name:'World navigator'}).isVisible()) await page.keyboard.press('Meta+b');
@@ -54,8 +63,8 @@ export default async function run({ page, baseUrl, check, metric, shot, channel,
     if (select) await selectProject('Editor'); else if (!await page.getByRole('complementary', {name:'World navigator'}).isVisible()) await page.keyboard.press('Meta+b');
     const start = Date.now();
     await nav.locator(`[data-file-path="Work/Editor/${source.binding.path}"]`).click();
-    await page.waitForFunction(ref => document.querySelector('.source-textarea')?.getAttribute('data-source-ref') === ref, source.binding.ref, { timeout: 10000 });
-    await page.waitForFunction(content => document.querySelector('.source-textarea')?.value === content, p.originals.get(source.binding.path), { timeout: 10000 });
+    await page.waitForFunction(ref => document.querySelector('.cm-content')?.getAttribute('data-source-ref') === ref, source.binding.ref, { timeout: 10000 });
+    await waitForDoc(page, p.originals.get(source.binding.path));
     return Date.now() - start;
   };
   check(p.sources.length === 10, 'Ten distinct existing documents are copied into real Central-owned test ground');
@@ -66,33 +75,34 @@ export default async function run({ page, baseUrl, check, metric, shot, channel,
     timings.push(duration);
     metric(`open_file_${i + 1}_ms`, duration);
     check(duration < 1000, `Document ${i + 1} opens through real Central in <1s (${duration}ms)`, { ref: source.binding.ref, path: source.binding.path });
-    check(await page.locator('.source-textarea').inputValue() === p.originals.get(source.binding.path), `Document ${i + 1} renders the exact original content`);
+    check(await docText(page,'.cm-content') === p.originals.get(source.binding.path), `Document ${i + 1} renders the exact original content`);
   }
   metric('open_file_max_ms', Math.max(...timings));
   const activate = async source => {
     await page.locator('.tab').filter({ hasText: source.binding.path.split('/').pop() }).click();
-    await page.waitForFunction(ref => document.querySelector('.source-textarea')?.getAttribute('data-source-ref') === ref, source.binding.ref, { timeout: 10000 });
+    await page.waitForFunction(ref => document.querySelector('.cm-content')?.getAttribute('data-source-ref') === ref, source.binding.ref, { timeout: 10000 });
   };
   const first = p.sources[0], second = p.sources[1];
   const firstText = `${p.originals.get(first.binding.path)}\nEditor walk: first document change.\n`;
   const secondText = `${p.originals.get(second.binding.path)}\nEditor walk: second document change.\n`;
-  await activate(first); await page.locator('.source-textarea').fill(firstText);
+  await activate(first); await page.locator('.cm-content').fill(firstText);
   await page.waitForFunction(() => document.querySelector('.source-editor')?.getAttribute('data-dirty') === 'true');
-  await page.locator('.source-textarea').press('Control+Home');
-  await page.locator('.source-textarea').press('ArrowRight');
-  await page.locator('.source-textarea').press('Shift+ArrowRight');
-  const caret = await page.locator('.source-textarea').evaluate(el => [el.selectionStart, el.selectionEnd]);
-  await activate(second); await page.locator('.source-textarea').fill(secondText);
+  await page.locator('.cm-content').press('Control+Home');
+  await page.locator('.cm-content').press('ArrowRight');
+  await page.locator('.cm-content').press('Shift+ArrowRight');
+  const caret = await page.locator('.cm-content').evaluate(el => [el.selectionStart, el.selectionEnd]);
+  await activate(second); await page.locator('.cm-content').fill(secondText);
   await page.waitForFunction(() => document.querySelector('.source-editor')?.getAttribute('data-dirty') === 'true');
   await activate(first);
-  check(await page.locator('.source-textarea').inputValue() === firstText, 'Switching dirty documents preserves the first buffer');
-  await page.waitForFunction(expected => { const el=document.querySelector('.source-textarea'); return el?.selectionStart===expected[0] && el?.selectionEnd===expected[1]; }, caret);
+  check(await docText(page,'.cm-content') === firstText, 'Switching dirty documents preserves the first buffer');
+  await page.waitForFunction(expected => { const el=document.querySelector('.cm-content'); return el?.selectionStart===expected[0] && el?.selectionEnd===expected[1]; }, caret);
   check(true, 'Switching source tabs restores caret and selected range');
 
   await activate(second);
-  check(await page.locator('.source-textarea').inputValue() === secondText, 'Switching back preserves the distinct second buffer');
+  check(await docText(page,'.cm-content') === secondText, 'Switching back preserves the distinct second buffer');
   await activate(first);
   await selectProject('Other'); await page.keyboard.press('Escape');
+  await openChrome(page, '.source-editor');
   await page.getByRole('button', { name: 'Save · ⌘S' }).click();
   await page.waitForFunction(() => document.querySelector('.source-editor')?.getAttribute('data-dirty') === 'false', null, { timeout: 10000 });
   check(readFileSync(join(p.projectRoot, first.binding.path), 'utf8') === firstText, 'After selecting another project, Save writes only to the source’s original project');
@@ -108,7 +118,7 @@ export default async function run({ page, baseUrl, check, metric, shot, channel,
   // A real owner disclosure refusal: the file remains on disk; the actual
   // Central exclusion marker prevents this Action from revising it.
   writeFileSync(join(p.projectRoot, 'ProjectCentral/user/.no-agent-retrieval'), '');
-  await page.locator('.source-textarea').fill(`${firstText}Refused change.\n`);
+  await page.locator('.cm-content').fill(`${firstText}Refused change.\n`);
   await page.keyboard.press('Meta+s');
   try { await page.getByRole('alert').waitFor({ timeout: 5000 }); }
   catch (error) {
@@ -119,9 +129,9 @@ export default async function run({ page, baseUrl, check, metric, shot, channel,
   }
   check((await page.getByRole('alert').innerText()).includes('excluded'), 'Actual owner exclusion is visible as a source-scoped refusal');
   check(readFileSync(join(p.projectRoot, first.binding.path), 'utf8') === firstText, 'Refused save changes no source bytes');
-  check((await page.locator('.source-textarea').inputValue()).endsWith('Refused change.\n'), 'Refusal preserves the dirty buffer');
+  check((await docText(page,'.cm-content')).endsWith('Refused change.\n'), 'Refusal preserves the dirty buffer');
   rmSync(join(p.projectRoot, 'ProjectCentral/user/.no-agent-retrieval'));
   await shot('owner-refusal');
   while (await page.locator('.tab').count()) await page.keyboard.press('Meta+w');
-  check(await page.locator('.canvas-surface').inputValue() === 'This thought survives opening documents.', 'Closing sources restores the original writing canvas');
+  check(await docText(page, '.flow-surface .cm-content') === thought, 'Closing sources restores the original Flow');
 }

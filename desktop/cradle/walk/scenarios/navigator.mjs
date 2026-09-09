@@ -1,3 +1,4 @@
+import {docText, waitForDoc} from '../editor-doc.mjs';
 import { execFileSync } from 'node:child_process';
 export default async function run({ page, baseUrl, check, metric, shot, channel }) {
   const owner = (action, input = {}) => {
@@ -11,8 +12,24 @@ export default async function run({ page, baseUrl, check, metric, shot, channel 
   const expected = owner('central.world');
   await page.goto(baseUrl);
   await channel('info');
+  // Writing is a real Flow in its register's NOW field, so the anchor this
+  // scenario explores around is that Flow's editor, not a local canvas.
+  const writingText='Keep this writing while I explore my world.';
+  const writingProject=expected.work.projects.find(p=>p.projectcentral.state!=='absent')?.name;
+  if(!writingProject)throw new Error('A ProjectCentral-bound project is required to open a Flow');
+  await page.locator(`[data-project-path="${expected.work.projects.find(p=>p.name===writingProject).path}"]`).click();
   await page.getByRole('button',{name:'Start writing',exact:true}).click();
-  await page.getByRole('textbox', { name: 'Writing surface' }).fill('Keep this writing while I explore my world.');
+  const writing=page.locator('.flow-surface .cm-content');
+  await writing.waitFor({timeout:20000});
+  await writing.click();
+  await page.keyboard.type(writingText);
+  await page.waitForFunction(t=>(document.querySelector('.flow-surface .text-editor-host')?.__oiDocument?.() ?? [...document.querySelectorAll('.flow-surface .cm-content .cm-line')].map(l=>l.textContent.replace(/\u00a0/g,' ')).join('\n'))===t,writingText);
+  const flowSubjectRef=(await channel('read.focus')).data.subject?.ref;
+  // Opening the Flow is itself a focus movement (a Flow is a real Central
+  // subject); browsing after it must publish World readings and nothing else.
+  const browseCursor=(await channel('read.events',[0])).data.receipts.length;
+  check(typeof flowSubjectRef==='string'&&flowSubjectRef.startsWith('central:source:project:'),
+    'Writing opens as a real Central subject in the register, not a buffer with no identity',{flowSubjectRef});
   const started = Date.now();
   if (!await page.getByRole('complementary',{name:'World navigator'}).isVisible()) await page.keyboard.press('Meta+b');
   const nav = page.getByRole('complementary', { name: 'World navigator' });
@@ -21,7 +38,7 @@ export default async function run({ page, baseUrl, check, metric, shot, channel 
   metric('world_summon_ms', Date.now() - started);
   const paths = await nav.locator('[data-project-path]').evaluateAll(rows => rows.map(r => r.dataset.projectPath));
   check(JSON.stringify(paths) === JSON.stringify(expected.work.projects.map(p => p.path)), 'Every project row matches the real Central World map in owner order', paths);
-  check(await page.locator('.canvas-surface').inputValue() === 'Keep this writing while I explore my world.', 'Summoning retains the original writing buffer');
+  check(await docText(page,'.flow-surface .cm-content') === writingText, 'Summoning retains the open Flow buffer');
   check(await nav.getByRole('searchbox').count() === 0, 'Search is not a persistent sidebar input');
   const project = expected.work.projects.find(p => p.name === 'O-I');
   if (!project) throw new Error('Real O-I project required');
@@ -34,7 +51,7 @@ export default async function run({ page, baseUrl, check, metric, shot, channel 
   const ground = owner('projectcentral.inspect', { project: 'O-I' });
   check(snapshot.navigator.project.project.path === project.path, 'Kernel holds the selected owner project reading');
   check(snapshot.navigator.project_ref === ground.manifest.project_id, 'Project ref is the owner manifest identity verbatim');
-  check(!snapshot.focus.subject, 'Browsing a project leaves the current writing focus unchanged');
+  check(snapshot.focus.subject?.ref===flowSubjectRef, 'Browsing a project leaves the open Flow as the focused subject');
   check(snapshot.navigator.project.project.projectcentral.relations.path === project.projectcentral.relations.path, 'Native ground relations remain available without a permanent diagnostic footer');
   const rootWiki = expected.control.agent_wiki.wiki;
   check(snapshot.navigator.root.control.agent_wiki.wiki.space_ref === rootWiki.space_ref, 'Root wiki identity remains the exact owner reference');
@@ -44,10 +61,11 @@ export default async function run({ page, baseUrl, check, metric, shot, channel 
   await shot('project-ground');
   await nav.locator('.world-root').click(); await settled();
   const rootState = (await channel('read.state')).data;
-  check(!rootState.navigator.project && !rootState.focus.project && !rootState.focus.subject, 'Selecting the root clears the old project selection and focus');
+  check(!rootState.navigator.project && !rootState.focus.project, 'Selecting the root clears the old project selection');
+  check(rootState.focus.subject?.ref===flowSubjectRef, 'Selecting the root does not close or unfocus the writing the reader had open');
   await page.keyboard.press('Escape');
-  check(await nav.count() === 0 && await page.locator('.canvas-surface').inputValue() === 'Keep this writing while I explore my world.', 'Escape dismisses to the same writing');
-  await page.waitForFunction(() => document.activeElement === document.querySelector('.canvas-surface'), null, { timeout: 5000 });
+  check(await nav.count() === 0 && await docText(page,'.flow-surface .cm-content') === writingText, 'Escape dismisses to the same Flow');
+  await page.waitForFunction(() => !!document.activeElement?.closest('.flow-surface .cm-editor'), null, { timeout: 5000 });
   check(true, 'Dismiss restores writing caret');
   await page.getByRole('button',{name:'Toggle left region',exact:true}).click();
   await nav.waitFor();
@@ -65,11 +83,12 @@ export default async function run({ page, baseUrl, check, metric, shot, channel 
   }
   await page.getByRole('button', { name: 'Toggle left region' }).click();
   check(await nav.count() === 0, 'Pointer close returns to rest');
-  await page.waitForFunction(() => document.activeElement === document.querySelector('.canvas-surface'), null, { timeout: 5000 });
+  await page.waitForFunction(() => !!document.activeElement?.closest('.flow-surface .cm-editor'), null, { timeout: 5000 });
   check(true, 'Pointer summon and close restore the original caret rather than the removed menu item');
   const events = (await channel('read.events', [0])).data.receipts;
   check(events.every((e, i) => e.seq === i + 1), 'World event log is contiguous and ordered', events);
-  check(events.some(e => e.event === 'world_changed') && !events.some(e => e.event === 'focus_changed'), 'Browsing publishes World readings without semantic focus movement');
+  const browsed=events.slice(browseCursor);
+  check(browsed.some(e => e.event === 'world_changed') && !browsed.some(e => e.event === 'focus_changed'), 'Browsing publishes World readings without semantic focus movement', browsed.map(e=>e.event));
   await shot('restored-writing');
   await page.addInitScript(() => { delete window.__OI_KERNEL_BRIDGE__; });
   await page.reload(); await channel('info');

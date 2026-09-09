@@ -1,5 +1,6 @@
 import {ExpressionProvider,ExpressionLayout} from "./shared/Expression";
 import {flow} from "./flow/client";
+import {DRAFT_KEY} from "./flow/DraftSurface";
 import {ContextTray} from "./context/ContextTray";
 import {FileHistory} from "./files/FileHistory";
 import {encounter} from "./encounter/client";
@@ -117,8 +118,9 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
   const [surfaceErrors,setSurfaceErrors]=useState<Record<string,string>>({});
   const detachedRequests=useRef(new Set<string>());
   const [redockFocus,setRedockFocus]=useState<string>();
-  const { writing } = workspace.current;
-  const setWriting = workspace.setWriting;
+  // The workspace record still carries its legacy `writing`/`writingMode`
+  // fields so no persisted workspace is destroyed on restore, but nothing
+  // renders them any more: writing is a real Flow in a NOW register now.
   const state = workspace.current.layout;
   const setState = workspace.setLayout;
   const navigatorOpen = state.agencyDepth === "panel" || state.agencyDepth === "full";
@@ -128,10 +130,10 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
   const returnFocus = useRef<HTMLElement | null>(null);
   const rememberWorkFocus = () => {
     const active = document.activeElement as HTMLElement | null;
-    if (active && active !== document.body && active.closest(".workspace-canvas,.canvas-surface,.pane") && !active.closest(".ctx-menu,.world-navigator")) {
+    if (active && active !== document.body && active.closest(".workspace-canvas,.pane") && !active.closest(".ctx-menu,.world-navigator")) {
       returnFocus.current = active;
     } else if (!returnFocus.current?.isConnected) {
-      returnFocus.current = document.querySelector<HTMLElement>(".pane.focused .source-textarea,.canvas-surface");
+      returnFocus.current = document.querySelector<HTMLElement>(".pane.focused .cm-content");
     }
   };
   const summonWorld = () => {
@@ -141,7 +143,7 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
   const dismissWorld = () => {
     setNavigatorOpen(false);
     requestAnimationFrame(() => {
-      const target = returnFocus.current?.isConnected ? returnFocus.current : document.querySelector<HTMLElement>(".pane.focused .source-textarea,.canvas-surface");
+      const target = returnFocus.current?.isConnected ? returnFocus.current : document.querySelector<HTMLElement>(".pane.focused .cm-content");
       target?.focus();
     });
   };
@@ -188,7 +190,14 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
   // recorded failure for this surface; a real owner failure (encounter
   // start/read, file/knowledge read, or the surface/source open itself)
   // is recorded instead of silently retaining a blank tab.
+  // Surfaces that hold no owner identity are not reconciled against the
+  // kernel: a fresh tab has not chosen anything yet, and an unplaced draft is
+  // writing that deliberately has no owner ground. Registering either would
+  // be claiming an owner that does not exist, and would fail loudly against
+  // a kernel that is simply absent.
+  const UNOWNED_SURFACE_KINDS = new Set(["draft", "blank"]);
   const mountSurface = useCallback(async (binding: SurfaceBinding) => {
+    if (UNOWNED_SURFACE_KINDS.has(binding.kind)) { pendingMount.current.delete(binding.id); return; }
     try {
       if(binding.kind==="encounter" && binding.ref && binding.project){await encounter(kernel.transport,binding.project,{action:"start"});await encounter(kernel.transport,binding.project,{action:"read",agent_session:binding.ref,after:0,limit:1});}
       if (binding.kind === "file" && binding.location) await readFileBytes(kernel.transport,binding.location);
@@ -350,22 +359,31 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
     setState(state=>groupsOf(state.root).some(group=>group.tabs.includes(binding.id))?executeFrameAction(state,"surface.activate",{surfaceId:binding.id}):openBinding({...state,closedStack:state.closedStack.filter(id=>id!==binding.id)},binding));
   };
 
-  const openKnowledge = async (address: KnowledgeAddress, title: string, project?: string) => {
+  const openKnowledge = async (address: KnowledgeAddress, title: string, project?: string, placement: "tab"|"page"|"window" = "tab", graphOrigin?:string) => {
+    if(placement==="window"&&kernel.transport.kind!=="tauri")throw new Error("Native popout is available in the desktop app");
     // Project wiki ownership is an exact Central disclosure, never inferred
     // from a label or parsed out of an opaque wiki reference.
     project = kernel.snapshot.navigator?.root?.work.projects.find(p=>p.projectcentral.agent_wiki.wiki.space_ref===address.value)?.name ?? project;
     if (!["wiki", "source", "project-map"].includes(address.kind)) throw new Error("This native knowledge body is not yet supported by the desktop");
-    if(kernel.transport.kind==="tauri") {
+    if(kernel.transport.kind==="tauri"&&placement==="tab") {
       const {invoke}=await import("@tauri-apps/api/core");
       if(await invoke<boolean>("window_focus_subject",{reference:address.value})) return;
     }
     const read = await knowledge<KnowledgeReading>(kernel.transport,project,{action:"read",address});
     const current = stateRef.current;
-    const existing = Object.values(current.surfaces).find(b=>b.kind==="knowledge"&&b.ref===read.resource);
-    const binding = existing ?? {id:crypto.randomUUID(),kind:"knowledge",ref:read.resource,title,project,address};
+    const existing = Object.values(current.surfaces).find(b=>b.kind==="knowledge"&&b.ref===read.resource&&(!graphOrigin||b.view?.graphOrigin===graphOrigin)&&(b.view?.knowledgePlane==="page")===(placement!=="tab"));
+    const binding:SurfaceBinding = existing ?? {id:crypto.randomUUID(),kind:"knowledge",ref:read.resource,title,project,address,...(placement!=="tab"?{view:{knowledgePlane:"page" as const,graphOrigin}}:{})};
     const opened = await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"knowledge",source_ref:binding.ref,title:binding.title});
     if (opened?.result !== "surface_opened") throw new Error("The native knowledge surface could not be opened");
     setState(s=>groupsOf(s.root).some(g=>g.tabs.includes(binding.id)) ? executeFrameAction(s,"surface.activate",{surfaceId:binding.id}) : openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
+    if(placement==="window") {
+      try {
+        const {invoke}=await import("@tauri-apps/api/core");
+        await invoke("window_detach",{workspaceId:workspaceRef.current.current.id,binding,bounds:stateRef.current.windowBounds?.[binding.id]??null});
+        detachedRequests.current.add(`${workspaceRef.current.current.id}:${binding.id}`);
+        setState(s=>detachBinding(s,binding.id));
+      }catch(error){setWindowError(String(error));throw error;}
+    }
     // Explicit successful navigation only. Refresh, restore and display do
     // not execute AIKit's route-use operation.
     await knowledge(kernel.transport,project,{action:"use",address});
@@ -394,6 +412,79 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
     if(root&&path)return `${root.replace(/\/$/,"")}/${path.replace(/^\//,"")}`;
     return root;
   };
+  /** Local civil time only (Central names the Flow from it, per its own
+   *  ProjectCentral/now/flows convention); never a UTC or scheduler stamp. */
+  const localStamp=()=>{const d=new Date(),p=(n:number)=>String(n).padStart(2,"0");
+    return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`;};
+  /** Central names the Flow from the local civil stamp
+   *  (ProjectCentral/now/flows/YYYY-MM-DD-HHMM.md). That stamp has minute
+   *  resolution, so writing twice inside one minute collides and Central
+   *  refuses the second — correctly, since a Flow may not take a path another
+   *  Flow owns. Writing is never lost to a clock: the same convention is
+   *  extended with a suffix until the owner accepts one. */
+  const createFlow=async(project:string|null)=>{
+    const stamp=localStamp();
+    const attempt=(path?:string)=>flow(kernel.transport,{action:"flow_create",project,actor:"desktop-user",actor_kind:"human",
+      ...(path?{path}:{local_stamp:stamp})});
+    for(let n=0;n<8;n++){
+      try{ return await attempt(n===0?undefined:`${flowDir(project)}/${stamp}-${n+1}.md`); }
+      catch(reason){ if(!/already owns that path/i.test(String(reason))||n===7) throw reason; }
+    }
+    throw new Error("Central would not accept a new Flow in this minute");
+  };
+  const flowDir=(project:string|null)=>project?"ProjectCentral/now/flows":"Control/agents/now/flows";
+  const flowTitle=(created:{flow:{path:string;title?:string}})=>created.flow.title||created.flow.path.split("/").pop()||"Flow.md";
+  /** Writing opens a real Flow in its register's NOW field. Writing never
+   *  waits for a register: when the scope names a project, the Flow is
+   *  created through Central's own operation and lands in that project's
+   *  ProjectCentral NOW. When nothing can be named yet — no project chosen,
+   *  or no Central reachable at all — the writing still opens, as an
+   *  unplaced draft that keeps itself on this device and offers to place
+   *  itself the moment a register appears. Nothing is refused, and nothing
+   *  is lost. */
+  const startWriting=async(project?:string)=>{
+    const scope=project??workspaceRef.current.current.project??kernel.snapshot.navigator?.project?.project.name??null;
+    const id=crypto.randomUUID();
+    // No Central at all is the only case with nowhere to write yet: the
+    // writing opens anyway and keeps itself until a ground appears. With
+    // Central reachable and no project named, the Flow belongs to the root
+    // register — Central is the meta-project.
+    if(kernel.transport.kind==="unavailable"){
+      setState(s=>openBinding(s,{id,kind:"draft",title:"Draft"}));
+      return;
+    }
+    const created=await createFlow(scope);
+    const title=flowTitle(created);
+    const binding:SurfaceBinding={id,kind:"flow",title,project:scope??undefined,ref:created.flow.source_ref,flow:{flowRef:created.flow.flow_ref,path:created.flow.path}};
+    const opened=await kernel.apply({op:"surface_open",surface_id:id,kind:"flow",title,source_ref:binding.ref});
+    if(opened?.result!=="surface_opened")throw new Error("The new Flow surface could not be opened");
+    setState(s=>openBinding(s,binding));
+  };
+  /** Save unsaved writing into a register: one real Flow, created and written
+   *  through Central's own operations, replacing the surface in place. The
+   *  local copy is released only once the owner holds it. */
+  const placeDraft=async(bindingId:string,project:string,content:string)=>{
+    const created=await createFlow(project);
+    const title=flowTitle(created);
+    if(content.length){
+      await flow(kernel.transport,{action:"flow_write",project,flow_ref:created.flow.flow_ref,
+        expected_revision:created.flow.current_revision,content,actor:"desktop-user",actor_kind:"human"});
+    }
+    const binding:SurfaceBinding={id:bindingId,kind:"flow",title,project,ref:created.flow.source_ref,flow:{flowRef:created.flow.flow_ref,path:created.flow.path}};
+    const opened=await kernel.apply({op:"surface_open",surface_id:bindingId,kind:"flow",title,source_ref:binding.ref});
+    if(opened?.result!=="surface_opened")throw new Error("Central created the Flow but the surface could not be opened; your draft is still retained.");
+    setState(s=>({...s,surfaces:{...s.surfaces,[bindingId]:binding}}));
+    try{localStorage.removeItem(DRAFT_KEY(bindingId));}catch{/* The owner holds it now. */}
+  };
+  const placeDraftRef=useRef(placeDraft);placeDraftRef.current=placeDraft;
+  useEffect(()=>{
+    const place=(event:Event)=>{const d=(event as CustomEvent<{id:string;project:string;content:string}>).detail;
+      void placeDraftRef.current(d.id,d.project,d.content)
+        .then(()=>window.dispatchEvent(new CustomEvent("oi:place-draft-result",{detail:{id:d.id}})))
+        .catch(reason=>window.dispatchEvent(new CustomEvent("oi:place-draft-result",{detail:{id:d.id,error:String(reason instanceof Error?reason.message:reason)}})));};
+    window.addEventListener("oi:place-draft",place);
+    return()=>window.removeEventListener("oi:place-draft",place);
+  },[]);
   const freshChoice=async(id:string,kind:string,project?:string)=>{
     const workspaceId=workspaceRef.current.current.id;
     const current=stateRef.current.surfaces[id];if(!current)return;
@@ -402,8 +493,8 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
     let binding:SurfaceBinding={...current,project,kind,title:kind==="terminal"?"Terminal":"Browser"};
     if(kind==="flow"){
       if(!project)throw new Error("Choose a project for this Flow first");
-      const created=await flow(kernel.transport,{action:"flow_create",project,actor:"desktop-user",actor_kind:"human",title:"Flow.md",path:`ProjectCentral/now/flows/${crypto.randomUUID()}/flow.md`});
-      binding={...binding,title:"Flow.md",ref:created.flow.source_ref,flow:{flowRef:created.flow.flow_ref,path:created.flow.path}};
+      const created=await createFlow(project);
+      binding={...binding,title:flowTitle(created),ref:created.flow.source_ref,flow:{flowRef:created.flow.flow_ref,path:created.flow.path}};
     }else if(kind==="terminal"){
       binding.terminal={cwd:terminalCwd(project)};
     }else if(kind==="browser"){binding.browser={url:""};}else{return;}
@@ -447,7 +538,6 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
     const onKey = (e: KeyboardEvent) => {
       if (e.defaultPrevented) return;
       if ((e.metaKey||e.ctrlKey)&&e.code==="KeyL") {e.preventDefault();const address=document.querySelector<HTMLInputElement>('.pane[data-focused="true"] .browser-address');if(address){address.focus();address.select();}else void openBrowser().catch(reason=>setWindowError(String(reason)));return;}
-      if (matchesSearchLeader(e, leader.current.current)) { e.preventDefault(); setSearchOpen(true); return; }
       if ((e.target as HTMLElement)?.closest(".search-aperture")) return;
       if ((e.metaKey||e.ctrlKey) && e.altKey && !e.shiftKey && e.code==="KeyD" && kernel.transport.kind==="tauri") {e.preventDefault();void detach(activeBindingId(stateRef.current)??"");return;}
       if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.code === "KeyB") {
@@ -477,12 +567,7 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
         }
         return;
       }
-      const act = frameActionForKey(e, !!menuRef.current);
-      if (!act) return;
-      e.preventDefault();
-      if(act.ref==="surface.open"){openFresh();return;}
-      if(act.ref==="surface.open-sources"){summonWorld();return;}
-      execute(act.ref,act.arg);
+      // Frame window commands are matched in the capture phase above.
     };
     const onContext = (e: MouseEvent) => {
       if (!(e.target as HTMLElement).closest(".agency-field,.agency-column")) return;
@@ -490,9 +575,38 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
       rememberWorkFocus();
       setMenu({ x: e.clientX, y: e.clientY, items: [{ action_ref: "frame.world", title: "World (⌘B)", enabled: true }] });
     };
+    // The one window-wide search aperture is matched in the CAPTURE phase.
+    // A focused surface editor is a DOM handler inside the window, so on the
+    // bubble path it sees the key first: CodeMirror's default keymap binds
+    // Shift-Mod-k (deleteLine) and preventDefaults it, which both swallowed
+    // the configured shifted leader and quietly deleted a line of the open
+    // buffer. The aperture is application-level; no surface may claim it.
+    const onLeader = (e: KeyboardEvent) => {
+      if (e.defaultPrevented) return;
+      if (matchesSearchLeader(e, leader.current.current)) {
+        e.preventDefault(); e.stopPropagation();
+        setSearchOpen(true);
+        return;
+      }
+      // The frame's window commands (keys.ts: ⌘T/⌘O/⌘W/⌘D/⌘1-9, ⌘⇧T/⌘⇧D,
+      // ⌘⌥…, ⌥…) belong to the application everywhere, so they are matched
+      // here too. A focused editor is a DOM handler inside the window and
+      // sees keys first on the bubble path: CodeMirror binds Mod-d
+      // (selectNextOccurrence) and Shift-Mod-k (deleteLine) and
+      // preventDefaults them, which silently swallowed split-right and the
+      // search leader whenever the caret was in a document. The editor keeps
+      // every key the frame does not claim — ⌘Z, ⌘S, ⌘F and the rest.
+      const act = frameActionForKey(e, !!menuRef.current);
+      if (!act) return;
+      e.preventDefault(); e.stopPropagation();
+      if (act.ref === "surface.open") { openFresh(); return; }
+      if (act.ref === "surface.open-sources") { summonWorld(); return; }
+      execute(act.ref, act.arg);
+    };
+    window.addEventListener("keydown", onLeader, true);
     window.addEventListener("keydown", onKey);
     window.addEventListener("contextmenu", onContext);
-    return () => { window.removeEventListener("keydown", onKey); window.removeEventListener("contextmenu", onContext); };
+    return () => { window.removeEventListener("keydown", onLeader, true); window.removeEventListener("keydown", onKey); window.removeEventListener("contextmenu", onContext); };
   }, []);
 
   // Context-menu plumbing (D15): open exactly what is disclosed — an object
@@ -539,12 +653,12 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
         try { const {invoke}=await import("@tauri-apps/api/core"); await invoke("window_focus_main"); }
         catch (reason) { setWindowError(`The view returned; focus the main window to continue: ${String(reason)}`); }
       });
-      const b=await listen<{workspace_id:string;address:KnowledgeAddress;title:string;project?:string;request_id?:string;origin?:string}>("oi:window-navigate",async e=>{
+      const b=await listen<{workspace_id:string;address:KnowledgeAddress;title:string;project?:string;placement?:"tab"|"page"|"window";graphOrigin?:string;request_id?:string;origin?:string}>("oi:window-navigate",async e=>{
         workspaceRef.current.activate(e.payload.workspace_id);
         await new Promise<void>(resolve=>requestAnimationFrame(()=>resolve()));
         let error:string|undefined;
         try {
-          await openKnowledgeRef.current(e.payload.address,e.payload.title,e.payload.project);
+          await openKnowledgeRef.current(e.payload.address,e.payload.title,e.payload.project,e.payload.placement,e.payload.graphOrigin);
           const {invoke}=await import("@tauri-apps/api/core");
           if(!await invoke("window_focus_subject",{reference:e.payload.address.value}))await invoke("window_focus_main");
         }catch(reason){error=String(reason);setWindowError(error);}
@@ -576,7 +690,7 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
       const tab=Array.from(document.querySelectorAll<HTMLElement>(".tab")).find(el=>el.dataset.surfaceId===redockFocus);
       const pane=tab?.closest(".pane.group");
       const kind=state.surfaces[redockFocus]?.kind;
-      const target=pane?.querySelector<HTMLElement>(kind === "encounter" ? ".encounter textarea" : kind === "source" || kind === "file" ? ".source-textarea" : "[role=tabpanel] button,[role=tabpanel] [tabindex='0']");
+      const target=pane?.querySelector<HTMLElement>(kind === "encounter" ? ".encounter textarea" : kind === "source" || kind === "file" || kind === "flow" ? ".cm-content" : "[role=tabpanel] button,[role=tabpanel] [tabindex='0']");
       if(!target || target.matches(":disabled") || !document.hasFocus())return;
       target.focus();if(document.activeElement===target)setRedockFocus(undefined);
     };
@@ -673,7 +787,7 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
           nativeWindows={kernel.transport.kind==="tauri"}
         />
       ) : (
-        <Rest value={writing} onChange={setWriting} writingMode={!!workspace.current.writingMode} onWritingMode={workspace.setWritingMode} title={workspace.current.name} onSearch={()=>setSearchOpen(true)} onWiki={(() => {
+        <Rest project={workspace.current.project} onWrite={startWriting} title={workspace.current.name} onSearch={()=>setSearchOpen(true)} onWiki={(() => {
           const reading=kernel.snapshot.navigator;
           const project=reading?.project?.project;
           const ref=project ? project.projectcentral.agent_wiki.wiki.space_ref : reading?.root?.control.agent_wiki.wiki.space_ref;

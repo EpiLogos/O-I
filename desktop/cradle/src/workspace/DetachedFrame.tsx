@@ -1,4 +1,5 @@
 import {TerminalSurface} from "../terminal/TerminalSurface";
+import {DraftSurface} from "../flow/DraftSurface";
 import {FlowSurface} from "../flow/FlowSurface";
 import {BrowserSurface} from "../browser/BrowserSurface";
 import {EncounterSurface} from "../encounter/EncounterSurface";
@@ -56,7 +57,7 @@ export function DetachedFrame() {
       // any control the person has already chosen must keep its focus.
       if(active&&active!==document.body&&active!==root&&active!==body){stop();return;}
       const selector=record.binding.kind==="source"||record.binding.kind==="file"
-        ? ".source-textarea:not(:disabled), .material-surface iframe, .material-surface button:not(:disabled)"
+        ? ".cm-content, .material-surface iframe, .material-surface button:not(:disabled)"
         :record.binding.kind==="encounter"
           ?record.binding.view?.encounterPlane&&record.binding.view.encounterPlane!=="Conversation"
             ?'.encounter-planes button[aria-pressed="true"]'
@@ -111,7 +112,7 @@ export function DetachedFrame() {
     });
   },[]);
   useEffect(()=>{const key=(e:KeyboardEvent)=>{if(matchesSearchLeader(e,leader.current.current)){e.preventDefault();setSearchOpen(true);return;}if((e.metaKey||e.ctrlKey)&&e.shiftKey&&e.code==="KeyD"){e.preventDefault();redock();}};window.addEventListener("keydown",key);return()=>window.removeEventListener("keydown",key);},[redock]);
-  const navigate=async(address:KnowledgeAddress,title:string,project?:string)=>{
+  const navigate=async(address:KnowledgeAddress,title:string,project?:string,placement?:"tab"|"page"|"window",graphOrigin?:string)=>{
     if(!record)throw new Error("Detached workspace is unavailable");
     const request_id=crypto.randomUUID();
     let cleanup=()=>{};let timer:ReturnType<typeof setTimeout>|undefined;
@@ -123,14 +124,14 @@ export function DetachedFrame() {
         }).then(unlisten=>{
           cleanup=unlisten;
           timer=setTimeout(()=>reject(new Error("Workspace navigation has not been confirmed. Check the main window before retrying.")),30000);
-          void emitTo("main","oi:window-navigate",{workspace_id:record.workspace_id,address,title,project,request_id,origin:getCurrentWindow().label}).catch(reject);
+          void emitTo("main","oi:window-navigate",{workspace_id:record.workspace_id,address,title,project,placement,graphOrigin,request_id,origin:getCurrentWindow().label}).catch(reject);
         }).catch(reject);
       });
       await result;
     }finally{if(timer)clearTimeout(timer);cleanup();}
   };
   return <div className="desktop-shell detached-shell"><header className="desktop-bar"><strong className="desktop-brand">O-I</strong><span>{record?.binding.title}</span><button onClick={redock} disabled={redocking}>{redocking?"Re-docking…":"Re-dock"}</button></header>{error&&<p role="alert">{error} {!record&&<button onClick={()=>setLoadAttempt(n=>n+1)} disabled={loading}>Retry opening surface</button>}</p>}
-    <main ref={bodyRef} className="desktop-centre">{record?.binding.kind==="terminal"?<TerminalSurface binding={record.binding}/>:record?.binding.kind==="flow"?<FlowSurface binding={record.binding}/>:record?.binding.kind==="browser"?<BrowserSurface key={record.binding.id} binding={record.binding}/>:record?.binding.kind==="encounter"?<EncounterSurface key={record.binding.id} binding={record.binding} onView={view=>void updateView(view)} presentation="tab"/>:record?.binding.kind==="file"?<FileSurface key={record.binding.id} binding={record.binding}/>:record?.binding.kind==="source"?<SourceSurface binding={record.binding}/>:record?.binding.kind==="system"?<SystemPanel key={record.binding.id} binding={record.binding}/>:record&&<KnowledgeSurface binding={record.binding} onOpen={navigate}/>}</main>
+    <main ref={bodyRef} className="desktop-centre">{record?.binding.kind==="terminal"?<TerminalSurface binding={record.binding}/>:record?.binding.kind==="flow"?<FlowSurface binding={record.binding}/>:record?.binding.kind==="draft"?<DraftSurface binding={record.binding}/>:record?.binding.kind==="browser"?<BrowserSurface key={record.binding.id} binding={record.binding}/>:record?.binding.kind==="encounter"?<EncounterSurface key={record.binding.id} binding={record.binding} onView={view=>void updateView(view)} presentation="tab"/>:record?.binding.kind==="file"?<FileSurface key={record.binding.id} binding={record.binding}/>:record?.binding.kind==="source"?<SourceSurface binding={record.binding}/>:record?.binding.kind==="system"?<SystemPanel key={record.binding.id} binding={record.binding}/>:record&&<KnowledgeSurface binding={record.binding} onOpen={navigate}/>}</main>
     {searchOpen&&<SearchOverlay leader={leader.shift} onLeaderChange={leader.change} shortcutError={leader.error} project={record?.binding.project} onClose={()=>setSearchOpen(false)} onOpen={navigate}/>}
   </div>;
 }

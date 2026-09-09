@@ -1,3 +1,4 @@
+import {docText, waitForDoc} from '../editor-doc.mjs';
 import {cpSync} from 'node:fs';
 import {join} from 'node:path';
 import {setup as materialSetup} from './material.mjs';
@@ -40,8 +41,8 @@ export default async function run({page,baseUrl,check,shot,channel}) {
   check(await page.getByRole('combobox',{name:'Preview zoom'}).inputValue()==='1.25','Preview zoom survives tab close and reopen');
   await frame().getByRole('button',{name:'Add one'}).click();await page.getByRole('button',{name:'Reload preview'}).click();await ready();
   check(await frame().locator('#count').innerText()==='12','Reload preview restarts authored JavaScript from owner file');
-  await page.getByRole('tab',{name:'Source',exact:true}).click();await page.locator('.pane.focused .source-textarea').waitFor();
-  check((await page.locator('.pane.focused .source-textarea').inputValue()).includes('<title>Field Notes — rendering reference</title>'),'Source presents actual HTML bytes');
+  await page.getByRole('tab',{name:'Source',exact:true}).click();await page.locator('.pane.focused .cm-content').waitFor();
+  check((await docText(page,'.pane.focused .cm-content')).includes('<title>Field Notes — rendering reference</title>'),'Source presents actual HTML bytes');
   await page.getByRole('tab',{name:'Rendered',exact:true}).click();await ready();check(true,'Returning to Rendered runs the same authored page');
   await page.getByRole('combobox',{name:'Preview zoom'}).selectOption('1');await shot('rich-wide');
   await open('notes.md');await page.locator('.tab[data-title="notes.md"]').click();await page.keyboard.press('Meta+d');await page.waitForFunction(()=>document.querySelectorAll('.pane.group').length===2);

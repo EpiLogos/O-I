@@ -1,11 +1,12 @@
+import {docText, waitForDoc} from '../editor-doc.mjs';
 export {setup} from './editor.mjs';
 export default async function run({page,baseUrl,channel,check,shot,provision:p}) {
   await page.goto(baseUrl); await channel('info');
   await page.locator('[data-project-path="Work/Editor"]').click();
   await page.getByRole('button',{name:'Editor: files',exact:true}).click();
   await page.locator(`[data-file-path="Work/Editor/${p.sources[0].binding.path}"]`).click();
-  await page.locator('.source-textarea').waitFor();
-  await page.locator('.source-textarea').focus();
+  await page.locator('.cm-content').waitFor();
+  await page.locator('.cm-content').focus();
   await page.keyboard.press('Meta+d');
   await page.getByRole('button',{name:'Close empty pane',exact:true}).waitFor();
   check(await page.locator('.pane.group').count()===2,'One-tab Split creates a usable empty sibling');
@@ -13,7 +14,7 @@ export default async function run({page,baseUrl,channel,check,shot,provision:p})
   await page.getByRole('button',{name:'Close empty pane',exact:true}).waitFor();
   check(await page.locator('.pane.group').count()===2,'Empty split survives relaunch of the renderer');
   await page.locator(`[data-file-path="Work/Editor/${p.sources[1].binding.path}"]`).click();
-  await page.waitForFunction(()=>document.querySelectorAll('.source-textarea').length===2);
+  await page.waitForFunction(()=>document.querySelectorAll('.cm-content').length===2);
   check(await page.getByRole('button',{name:'Close empty pane',exact:true}).count()===0,'Opening another source fills the focused empty pane');
   const before = (await channel('read.layout')).data.layout;
   for (const width of [1280,900,760,639,390]) {
@@ -27,9 +28,9 @@ export default async function run({page,baseUrl,channel,check,shot,provision:p})
       check(await page.locator('.pane.group:visible').count()===1,`Narrow canvas exposes one usable focused pane at ${width}`);
       const selector=page.getByRole('combobox',{name:'Focused pane',exact:true});
       const options=await selector.locator('option').evaluateAll(nodes=>nodes.map(node=>node.value));
-      const previous=await selector.inputValue();
+      const previous=await docText(page,'.cm-content');
       await selector.selectOption(options.find(id=>id!==previous));
-      check(await selector.inputValue()!==previous,`Top strip switches the focused pane at ${width}`);
+      check(await docText(page,'.cm-content')!==previous,`Top strip switches the focused pane at ${width}`);
       await selector.selectOption(previous);
 
       await page.getByRole('button',{name:'Toggle left region',exact:true}).click();

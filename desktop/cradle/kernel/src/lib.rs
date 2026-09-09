@@ -30,6 +30,9 @@ pub mod events;
 pub mod flow;
 pub mod history;
 pub mod knowledge;
+pub mod action;
+pub mod graph;
+pub mod encounter;
 pub mod agency;
 pub mod files;
 pub mod composition;
@@ -39,6 +42,8 @@ pub mod factory;
 pub mod focus;
 pub mod refs;
 pub mod world;
+pub mod commission;
+pub mod flow_cognition;
 
 pub use flow::CentralClient;
 
@@ -155,9 +160,59 @@ pub enum KernelOp {
     ProjectRead { project: String },
     WorldBrowse,
     Knowledge { #[serde(default)] project: Option<String>, request: knowledge::Request },
+    /// Assemble the typed graph input for U3.1/U3.4 presentation: Central's
+    /// wiki read model (cell C1) composed with AIKit's owner-side resolution
+    /// rows (cell C2). Adapter only — every node/edge carries its owner ref,
+    /// owner operation and owner provenance verbatim; a failed input degrades
+    /// honestly as an explicit unavailable input; the Shared Field
+    /// projection is a named deferred input. Emits nothing (pull read).
+    Graph { #[serde(default)] project: Option<String>, #[serde(default)] query: String },
+    /// Compose the W3-A AIKit session-lifecycle read with the W3-B
+    /// Actuation request-correlation read for ONE permission request
+    /// identity (`oi.cradle.encounter/v1`). Adapter only — the identities
+    /// travel verbatim, the pull emits nothing, and the grant-record seam
+    /// is reconciled explicitly, never adjudicated. An optional `reply`
+    /// is only classified against the pulled owner state (a later
+    /// recorded disposition makes it a stale reply); the kernel records
+    /// nothing.
+    EncounterJoin {
+        session: String,
+        request_ref: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        reply: Option<encounter::ReplyAnswer>,
+    },
+    /// Dispatch one owner-disclosed Action ref to its native owner
+    /// operation (U3.1: every result row invokes its Action). The kernel
+    /// holds no authority: the ref, target and optional input travel
+    /// verbatim; owner payloads return unchanged; spellings with no real
+    /// owner operation are explicit unsupported states. Owner-side effects
+    /// happen through the owner operation and are provable through the
+    /// owner store; the kernel records nothing and emits nothing.
+    InvokeAction { #[serde(default)] project: Option<String>, invocation: action::ActionInvocation },
     /// Forward one retained Flow/source-return Action to Central. The request
     /// and response remain owner-shaped; the kernel is only the typed seam.
     Flow { request: flow::Request },
+    /// Compose the W1.5 changed-since-thought read (`flow_cognition.rs`):
+    /// the kernel supplies the KnowledgeChangeHorizon adapted from Central's
+    /// own `projectcentral.change.horizon` seam and calls the AIKit owner's
+    /// `flow changed-since`; ONE typed reading comes back with both owner
+    /// sides explicit — a side that could not be queried is named, never
+    /// faked empty. Emits nothing (pull read + owner read).
+    FlowChangedSince { #[serde(default)] project: Option<String>, thought: serde_json::Value },
+    /// Commission one verbatim selection in one retained Flow (U4.1/U4.2
+    /// loop mode, `commission.rs`): the selection travels verbatim with the
+    /// Central FlowRef and the expected revision it was made against; the
+    /// commission lands as an owner revision through Central's
+    /// `projectcentral.flow.write` CAS — a stale expected revision refuses
+    /// with both revisions observed, never a silent overwrite. An optional
+    /// AgentSession binds without owning the Flow's identity.
+    FlowCommission {
+        #[serde(default)] project: Option<String>,
+        flow_ref: String,
+        expected_revision: String,
+        selection: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")] agent_session_ref: Option<String>,
+    },
     AgencyRead { project: String },
     Encounter {project:String,request:agency::EncounterRequest},
     MaterialRead {target:material::Target},
@@ -231,7 +286,22 @@ pub enum KernelOpResult {
     State { snapshot: KernelSnapshot },
     WorldRead { snapshot: KernelSnapshot },
     Knowledge { data: serde_json::Value },
+    GraphReading { reading: graph::GraphReading },
+    /// The typed encounter join (`encounter.rs`): both owner views, the
+    /// grant-record seam and the failure-taxonomy disposition.
+    EncounterJoined {
+        reading: encounter::EncounterReading,
+    },
+    /// The typed result of one owner-Action dispatch (`action.rs`): the
+    /// owner payload verbatim, or an explicit named state.
+    ActionDispatched { dispatch: action::ActionDispatch },
     Flow { response: flow::Response },
+    /// The typed changed-since-thought compose (`flow_cognition.rs`): both
+    /// owner sides of the read, explicit.
+    FlowChangedSince { reading: flow_cognition::ChangedSinceReading },
+    /// The typed selection commission outcome (`commission.rs`): owner
+    /// revision, structured conflict, or the owner's own refusal.
+    FlowCommissioned { outcome: commission::CommissionOutcome },
     AgencyReading { project_ref: String, spaces: serde_json::Value, observed_at_unix_ms: u64 },
     EncounterReading {data:serde_json::Value},
     FileOperation {data:serde_json::Value},
@@ -414,6 +484,42 @@ impl Kernel {
                 }
                 Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::Knowledge { data } })
             }
+            KernelOp::Graph { project, query } => {
+                // Central discloses the scope; the wiki read register and the
+                // AIKit project context both come from the owner root map.
+                let root = world::read_world(&self.client).map_err(|e| e.to_string())?;
+                let base = root["root"].as_str().ok_or("Central root location unavailable")?;
+                let (wiki_action, wiki_input, cwd) = if let Some(project) = project.as_ref() {
+                    let row = root["work"]["projects"].as_array().and_then(|rows| rows.iter().find(|r| r["name"].as_str() == Some(project))).ok_or("Project is outside Central's disclosed ground")?;
+                    let cwd = std::path::Path::new(base).join(row["path"].as_str().ok_or("Project location unavailable")?);
+                    ("projectcentral.wiki.read", serde_json::json!({ "project": project }), cwd)
+                } else {
+                    ("central.wiki.read", serde_json::json!({}), std::path::PathBuf::from(base))
+                };
+                let reading = graph::assemble(&self.client, wiki_action, &wiki_input, &cwd, &query);
+                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::GraphReading { reading } })
+            }
+            KernelOp::EncounterJoin { session, request_ref, reply } => {
+                // Central discloses the context anchor, exactly as the
+                // Graph/Knowledge arms; the lifecycle store itself is the
+                // AIKit owner's (AIKIT_HOME), never renderer-supplied.
+                let root = world::read_world(&self.client).map_err(|e| e.to_string())?;
+                let cwd = std::path::PathBuf::from(root["root"].as_str().ok_or("Central root location unavailable")?);
+                let reading = encounter::assemble(&cwd, &session, &request_ref, reply.as_ref());
+                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::EncounterJoined { reading } })
+            }
+            KernelOp::InvokeAction { project, invocation } => {
+                // Central discloses the scope, exactly as the Knowledge/Graph
+                // arms: renderer-supplied paths never become invocation context.
+                let root = world::read_world(&self.client).map_err(|e| e.to_string())?;
+                let base = root["root"].as_str().ok_or("Central root location unavailable")?;
+                let cwd = if let Some(project) = project.as_ref() {
+                    let row = root["work"]["projects"].as_array().and_then(|rows| rows.iter().find(|r| r["name"].as_str() == Some(project))).ok_or("Project is outside Central's disclosed ground")?;
+                    std::path::Path::new(base).join(row["path"].as_str().ok_or("Project location unavailable")?)
+                } else { std::path::PathBuf::from(base) };
+                let dispatch = action::invoke(&self.client, &cwd, project.as_deref(), &invocation);
+                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::ActionDispatched { dispatch } })
+            }
             KernelOp::Flow { request } => {
                 let action = request.owner_action().to_owned();
                 let response = self
@@ -424,6 +530,23 @@ impl Kernel {
                     receipts: Vec::new(),
                     result: KernelOpResult::Flow { response },
                 })
+            }
+            KernelOp::FlowChangedSince { project, thought } => {
+                // The changed-since compose resolves its owner cwd exactly as
+                // the InvokeAction arm: Central discloses the scope,
+                // renderer-supplied paths never become context.
+                let root = world::read_world(&self.client).map_err(|e| e.to_string())?;
+                let base = root["root"].as_str().ok_or("Central root location unavailable")?;
+                let cwd = if let Some(project) = project.as_ref() {
+                    let row = root["work"]["projects"].as_array().and_then(|rows| rows.iter().find(|r| r["name"].as_str() == Some(project))).ok_or("Project is outside Central's disclosed ground")?;
+                    std::path::Path::new(base).join(row["path"].as_str().ok_or("Project location unavailable")?)
+                } else { std::path::PathBuf::from(base) };
+                let reading = flow_cognition::changed_since(&self.client, project.as_deref().unwrap_or_else(|| self.client.configured_project()), &cwd, &thought).map_err(|e| e.to_string())?;
+                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::FlowChangedSince { reading } })
+            }
+            KernelOp::FlowCommission { project, flow_ref, expected_revision, selection, agent_session_ref } => {
+                let outcome = commission::commission(&self.client, project.as_deref().unwrap_or_else(|| self.client.configured_project()), &flow_ref, &expected_revision, &selection, agent_session_ref.as_deref()).map_err(|e| e.to_string())?;
+                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::FlowCommissioned { outcome } })
             }
             KernelOp::WorldRead => self.navigate(None, false),
             KernelOp::ProjectRead { project } => self.navigate(Some(&project), false),

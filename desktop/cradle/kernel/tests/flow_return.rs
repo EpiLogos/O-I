@@ -6,8 +6,14 @@ use serde_json::json;
 use std::{
     fs,
     path::PathBuf,
+    sync::atomic::{AtomicU64, Ordering},
     time::{SystemTime, UNIX_EPOCH},
 };
+
+// The two flow tests run in parallel threads of one process; the wall-clock
+// stamp alone can collide within the clock tick, so each root also carries a
+// process-unique sequence number.
+static ROOT_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
 fn candidate(name: &str) -> PathBuf {
     let variable = match name {
@@ -37,7 +43,11 @@ fn temporary_root() -> PathBuf {
         .duration_since(UNIX_EPOCH)
         .unwrap()
         .as_nanos();
-    let root = std::env::temp_dir().join(format!("oi-flow-return-{stamp}-{}", std::process::id()));
+    let sequence = ROOT_SEQUENCE.fetch_add(1, Ordering::Relaxed);
+    let root = std::env::temp_dir().join(format!(
+        "oi-flow-return-{stamp}-{sequence}-{}",
+        std::process::id()
+    ));
     fs::create_dir(&root).unwrap();
     root
 }

@@ -1,15 +1,18 @@
+import {docText, waitForDoc, openWorkspaceStrip} from '../editor-doc.mjs';
 export { setup } from './editor.mjs';
 export default async function run({ page, baseUrl, check, shot, channel, provision:p }) {
   await page.goto(baseUrl); await channel('info');
   const nav = page.getByRole('complementary', {name:'World navigator'});
   await nav.locator('[data-project-path="Work/Editor"]').click();
   if(await page.getByRole('button',{name:'Editor: files',exact:true}).getAttribute('aria-pressed') !== 'true') await page.getByRole('button',{name:'Editor: files',exact:true}).click();
+  await openWorkspaceStrip(page);
   await page.locator('.desktop-menu > summary').click();
   await page.getByRole('button',{name:'Rename workspace'}).click();
+  await openWorkspaceStrip(page);
   await page.locator('.desktop-menu > summary').click();
   await page.getByRole('textbox',{name:'Workspace name'}).fill('Writing desk');
   await page.getByRole('button',{name:'Save name',exact:true}).click();
-  const open = async source => { if (!await nav.isVisible()) await page.getByRole('button',{name:'Toggle left region',exact:true}).click(); await nav.locator(`[data-file-path="Work/Editor/${source.binding.path}"]`).click(); await page.waitForFunction(ref => document.querySelector('.source-textarea')?.getAttribute('data-source-ref')===ref,source.binding.ref); };
+  const open = async source => { if (!await nav.isVisible()) await page.getByRole('button',{name:'Toggle left region',exact:true}).click(); await nav.locator(`[data-file-path="Work/Editor/${source.binding.path}"]`).click(); await page.waitForFunction(ref => document.querySelector('.cm-content')?.getAttribute('data-source-ref')===ref,source.binding.ref); };
   await open(p.sources[0]);
   check(await page.getByLabel('Workspace',{exact:true}).locator('option:checked').innerText()==='Writing desk', 'Canvas arrangement is named for the workspace, independently of the opened project');
   await page.waitForFunction(ref => document.querySelector('[data-region="right"]')?.getAttribute('data-focus-ref') === ref,p.sources[0].binding.ref);
@@ -21,7 +24,7 @@ export default async function run({ page, baseUrl, check, shot, channel, provisi
   await page.getByRole('button',{name:'Toggle right region'}).click();
   check(await page.locator('[data-region="right"]').getAttribute('data-depth')==='panel','Inspector opens explicitly over the active owner subject');
   check((await channel('read.focus')).data.subject.ref===p.sources[0].binding.ref,'Left selection, canvas and right inspector share one kernel subject');
-  await page.locator('.source-textarea').fill('Workspace draft survives restart.\n');
+  await page.locator('.cm-content').fill('Workspace draft survives restart.\n');
   await open(p.sources[1]);
   await page.keyboard.press('Meta+d');
   await page.waitForFunction(()=>document.querySelectorAll('.pane.group').length===2);
@@ -70,11 +73,14 @@ export default async function run({ page, baseUrl, check, shot, channel, provisi
   await page.keyboard.press('Escape');
   check(await page.locator('[data-region="right"]').getAttribute('data-depth')==='panel','Escape restores the right panel');
   const focusBeforeBrowse = (await channel('read.focus')).data;
-  await nav.getByRole('button',{name:'Collapse Editor',exact:true}).click();
+  await nav.locator('[data-project-path="Work/Editor"]').click();
+  await page.waitForFunction(()=>document.querySelector('[data-project-path="Work/Editor"]')?.getAttribute('aria-expanded')==='false');
   check(await nav.locator('[data-navigation-path="Work/Editor"] .project-files').count()===0,'Project disclosure collapses without closing its open sources');
   check(JSON.stringify((await channel('read.focus')).data)===JSON.stringify(focusBeforeBrowse),'Disclosure changes leave semantic focus untouched');
+  await openWorkspaceStrip(page);
   await page.locator('.desktop-menu > summary').click();
   await page.getByRole('button',{name:'New workspace'}).click();
+  await openWorkspaceStrip(page);
   await page.locator('.desktop-menu > summary').click();
   await page.getByRole('textbox',{name:'Workspace name'}).fill('Research');
   await page.getByRole('button',{name:'Create workspace',exact:true}).click();
@@ -95,10 +101,10 @@ export default async function run({ page, baseUrl, check, shot, channel, provisi
   check(await page.locator('[data-region="right"]').getAttribute('data-depth')==='panel','Workspace restores its own region depths');
   check(await page.getByRole('separator',{name:'Resize left region'}).getAttribute('aria-valuenow')==='256','Workspace restores its region width');
   await page.locator('.tab').filter({hasText:p.sources[0].binding.path.split('/').pop()}).click();
-  await page.waitForFunction(()=>document.querySelector('.pane.focused .source-textarea')?.value==='Workspace draft survives restart.\n');
+  await page.waitForFunction(()=>(document.querySelector('.pane.focused .text-editor-host')?.__oiDocument?.() ?? [...document.querySelectorAll('.pane.focused .cm-content .cm-line')].map(l=>l.textContent.replace(/\u00a0/g,' ')).join('\n'))==='Workspace draft survives restart.\n');
   check(true,'Switching workspace preserves unsaved source writing');
   await page.reload(); await channel('info');
-  await page.waitForFunction(()=>document.querySelector('.pane.focused .source-textarea')?.value==='Workspace draft survives restart.\n');
+  await page.waitForFunction(()=>(document.querySelector('.pane.focused .text-editor-host')?.__oiDocument?.() ?? [...document.querySelectorAll('.pane.focused .cm-content .cm-line')].map(l=>l.textContent.replace(/\u00a0/g,' ')).join('\n'))==='Workspace draft survives restart.\n');
   check(true,'Reload restores the unsaved draft through the native source seam');
   check(await page.locator('.pane.group').count()===2,'Reload restores the complete split arrangement');
   await page.getByLabel('Workspace',{exact:true}).selectOption({label:'Research'});

@@ -94,8 +94,43 @@ export interface NativeFileReading { schema: "central.file-reading/v1"; location
  * `encoding: "base64"`, distinct from the UTF-8 `NativeFileReading` above. */
 export interface NativeFileBytes { location: CentralLocation; revision: string; byte_len: number; mime_hint: string | null; content_base64: string }
 
+/** W1.5 changed-since-thought compose (`flow_cognition.rs`): ONE typed
+ * reading with both owner sides explicit — a side that could not be queried
+ * is named, never faked empty. */
+export interface ChangedSinceReading {
+  flow_ref: string;
+  thought_ref: string;
+  horizon:
+    | { state: "available"; owner_operation: string; provider: string; cursor: number; adapted: Record<string, unknown> }
+    | { state: "owner_refused"; owner_operation: string; message: string }
+    | { state: "owner_unavailable"; owner_operation: string; detail: string };
+  aikit:
+    | { state: "invoked"; owner_operation: string; receipt: Record<string, unknown> }
+    | { state: "owner_refused"; owner_operation: string; message: string }
+    | { state: "owner_unavailable"; owner_operation: string; detail: string };
+}
+/** U4.1/U4.2 selection commission outcome (`commission.rs`): an owner
+ * revision, a structured CAS conflict (both revisions observed), or the
+ * owner's own refusal/unavailability, verbatim. */
+export type CommissionOutcome =
+  | { state: "commissioned"; flow: import("../flow/client").FlowRecord; previous_revision: string; revision: string; agent_session_ref: string | null }
+  | { state: "conflict"; flow_ref: string; expected: string; current: string }
+  | { state: "owner_refused"; flow_ref: string; message: string }
+  | { state: "owner_unavailable"; flow_ref: string; detail: string };
+
 export type KernelOp =
+  | {op:"graph";project?:string;query:string}
+  | { op: "invoke_action"; project?: string; invocation: ActionInvocation }
   | {op:"flow";request:import("../flow/client").FlowRequest}
+  | { op: "flow_changed_since"; project?: string; thought: Record<string, unknown> }
+  | {
+      op: "flow_commission";
+      project?: string;
+      flow_ref: string;
+      expected_revision: string;
+      selection: string;
+      agent_session_ref?: string;
+    }
   | {op:"ground";request:import("../workspace/GroundChooser").GroundRequest}
   | {op:"composition_read";owners?:boolean}
   | { op: "files_list"; path: string }
@@ -131,7 +166,11 @@ export type KernelOp =
  * The Rust seam serialises `{ receipts, #[serde(flatten)] result }`, so on
  * the wire the tag and the payload sit flat beside `receipts`. */
 export type KernelOpResult =
+  | {result:"graph_reading";reading:import("../knowledge/graph").GraphReading}
+  | {result:"action_dispatched";dispatch:ActionDispatch}
   | {result:"flow";response:{kind:"flow_created"|"flow_read"|"flow_written";reading:{flow:import("../flow/client").FlowRecord;content?:string}}|{kind:"flow_inspection";inspection:import("../flow/client").FlowInspection}|{kind:"failure";error:{kind:string;message?:string;detail?:string}}}
+  | { result: "flow_changed_since"; reading: ChangedSinceReading }
+  | { result: "flow_commissioned"; outcome: CommissionOutcome }
   | {result:"ground_reading";reading:Record<string,unknown>}
   | {result:"composition_reading";reading:import("../workspace/SystemPanel").CompositionReading}
   | {result:"file_operation";data:unknown}
@@ -225,8 +264,31 @@ export interface SourceHistoryReading {
   changes: SourceChangeReading[];
 }
 
+/** One invocation of an owner-disclosed Action on one row/node ref — the
+ * owner spellings carried verbatim (kernel `action.rs`,
+ * `oi.cradle.action-dispatch/v1`). */
+export interface ActionInvocation {
+  /** The owner-disclosed Action spelling, verbatim (e.g. `knowledge/open`,
+   * `projectcentral.wiki.read`). */
+  action: string;
+  /** The row/node ref the Action applies to, in the owner's own spelling. */
+  target_ref: string;
+  /** Optional owner-shaped input for Central Actions, merged verbatim. */
+  input?: Record<string, unknown>;
+}
+/** The typed outcome of one Action dispatch. `invoked` carries the owner
+ * payload unchanged; every other state is explicit, and owner answers are
+ * carried in the owner's own words. */
+export type ActionDispatch =
+  | { state: "invoked"; owner_operation: string; data: unknown }
+  | { state: "unsupported_action"; owner: string; detail: string }
+  | { state: "malformed_ref"; detail: string }
+  | { state: "unknown_owner"; action: string }
+  | { state: "owner_refused"; owner_operation: string; message: string }
+  | { state: "owner_unavailable"; owner_operation: string; detail: string };
+
 export interface KnowledgeAddress { kind: "wiki" | "source" | "project-map"; value: string }
-export type KnowledgeRequest = { action: "search"; query: string } | { action: "history" } | { action: "read" | "relations" | "explain" | "use"; address: KnowledgeAddress };
+export type KnowledgeRequest = {action:"resolve";query:string} | { action: "search"; query: string } | { action: "history" } | { action: "read" | "relations" | "explain" | "use"; address: KnowledgeAddress };
 export interface KnowledgeReading { resource: string; provider: string; revision?: string; authority: string; content?: string; evidence: string[]; why_selected: string }
 export interface KnowledgeHit { address: KnowledgeAddress; resource: string; label: string; kind: string; snippet: string; provider: string; authority: string }
 export interface KnowledgeRelations { nodes: {resource: string; label: string; kind: string}[]; edges: {from: string; to: string; relation: string}[]; truncated: boolean; warnings: string[] }

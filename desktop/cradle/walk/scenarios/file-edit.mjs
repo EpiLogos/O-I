@@ -1,3 +1,4 @@
+import {docText, waitForDoc} from '../editor-doc.mjs';
 import {setup} from './files.mjs';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {join} from 'node:path';
@@ -11,15 +12,16 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
  await nav.locator(`[data-file-path="${p.path}"]`).click();
  const file=page.getByRole('region',{name:'File ordinary.ts',exact:true});
  const editor=file.getByRole('textbox',{name:'Editing ordinary.ts',exact:true});await editor.waitFor();
- check(await editor.inputValue()===p.content,'Editable ordinary file begins with exact owner bytes');
+ check(await docText(page,'.cm-content')===p.content,'Editable ordinary file begins with exact owner bytes');
  const first='First native ordinary edit.\n';await editor.fill(first);
  await editor.press('Home');await editor.press('ArrowRight');await editor.press('Shift+ArrowRight');
- const selection=await editor.evaluate(el=>[el.selectionStart,el.selectionEnd]);
+ const caret=async()=>(await page.locator('.editor-footer').allTextContents()).join(' ').match(/Ln \d+, Col \d+/)?.[0];
+ const selection=await caret();
  await page.keyboard.press('Meta+w');await page.keyboard.press('Meta+Shift+t');await editor.waitFor();
- await page.waitForFunction(expected=>{const el=document.querySelector('.source-textarea');return el?.selectionStart===expected[0]&&el?.selectionEnd===expected[1]},selection);
+ await page.waitForFunction(expected=>[...document.querySelectorAll('.editor-footer')].map(f=>f.textContent).join(' ').includes(expected),selection);
  check(true,'Close and reopen retains ordinary-file caret and selection');
  await page.reload();await editor.waitFor();
- check(await editor.inputValue()===first,'Unsaved ordinary draft survives reload');
+ check(await docText(page,'.cm-content')===first,'Unsaved ordinary draft survives reload');
  check(readFileSync(join(p.root,p.path),'utf8')===p.content,'Retaining a draft does not write the source');
  await file.getByRole('button',{name:'Save',exact:true}).click();
  await page.waitForFunction(()=>document.querySelector('.source-clean-marker')?.textContent==='Saved');
@@ -27,7 +29,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
  const mine='My conflicting draft.\n',theirs='External writer.\n';await editor.fill(mine);writeFileSync(join(p.root,p.path),theirs);
  await file.getByRole('button',{name:'Save',exact:true}).click();
  await file.getByRole('region',{name:'File conflict'}).waitFor();
- check(await editor.inputValue()===mine&&readFileSync(join(p.root,p.path),'utf8')===theirs,'CAS conflict preserves both actual source and held typing');
+ check(await docText(page,'.cm-content')===mine&&readFileSync(join(p.root,p.path),'utf8')===theirs,'CAS conflict preserves both actual source and held typing');
  check(await file.getByRole('textbox',{name:'Current file',exact:true}).inputValue()===theirs,'Conflict comparison reads the actual current owner revision');
  await file.getByRole('button',{name:'Use current revision as draft basis'}).click();
  await file.getByRole('button',{name:'Save',exact:true}).click();
@@ -40,6 +42,6 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
  check(await preview.getByRole('textbox',{name:'Recovery content',exact:true}).inputValue()===p.content,'Recovery preview contains exact retained original bytes');
  await preview.getByRole('button',{name:'Restore this revision'}).click();
  await page.waitForFunction(()=>!document.querySelector('.file-recovery'));
- check(readFileSync(join(p.root,p.path),'utf8')===p.content&&await editor.inputValue()===p.content,'Explicit Restore updates native source and visible reading together');
+ check(readFileSync(join(p.root,p.path),'utf8')===p.content&&await docText(page,'.cm-content')===p.content,'Explicit Restore updates native source and visible reading together');
  await shot('ordinary-native-cas-history-restore');
 }

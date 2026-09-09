@@ -1,3 +1,4 @@
+import {docText, waitForDoc} from '../editor-doc.mjs';
 /**
  * Scenario: kernel-cas (ported from the u0.4 walk) — the kernel seam
  * re-proof, verified by operation in the running app (map §5 U0.4;
@@ -125,16 +126,16 @@ export default async function run(ctx) {
     const seqBeforeOpen = await lastSeq();
     const openFile = await op("ui.open_real_file", async () => {
       await nav.locator(`[data-file-path="Work/Editor/${readmeRow.path}"]`).click();
-      await page.waitForSelector(".source-textarea", { timeout: 10_000 });
+      await page.waitForSelector(".cm-content", { timeout: 10_000 });
       await page.waitForFunction(
-        () => document.querySelector(".source-textarea")?.value.length > 0,
+        () => document.querySelectorAll(".cm-content .cm-line").length > 0,
         null,
         { timeout: 10_000 },
       );
     });
     metric("open_file_ms", openFile.duration_ms);
     const rendered = await page.evaluate(() => ({
-      value: document.querySelector(".source-textarea").value,
+      value: (document.querySelector('.text-editor-host')?.__oiDocument?.() ?? [...document.querySelectorAll('.cm-content .cm-line')].map(l=>l.textContent.replace(/\u00a0/g,' ')).join('\n')),
       revision: document.querySelector(".source-revision").dataset.revision,
       ref: document.querySelector(".source-editor").dataset.ref,
     }));
@@ -164,7 +165,7 @@ export default async function run(ctx) {
     // -------------------------------------------------------------------------
     // 2. Edit -> dirty marker + exactly ONE buffer-dirty event.
     const edit1 = `${originalContent}\n<!-- u0.4 kernel seam walk: edit one -->\n`;
-    await page.fill(".source-textarea", edit1);
+    await page.fill(".cm-content", edit1);
     await page.waitForSelector(".source-editor[data-dirty='true']", { timeout: 10_000 });
     check(!!(await page.$(".source-dirty-marker")), "the dirty marker renders (buffer ≠ canonical)");
     check(
@@ -172,7 +173,7 @@ export default async function run(ctx) {
       "the tab carries the dirty state too",
     );
     let seqBeforeEdit = await lastSeq();
-    await page.fill(".source-textarea", `${edit1}more typing that is not a new state change\n`);
+    await page.fill(".cm-content", `${edit1}more typing that is not a new state change\n`);
     await page.waitForTimeout(600); // give any spurious emission time to appear
     const edit2Events = await eventsAfter(seqBeforeEdit);
     check(
@@ -223,9 +224,9 @@ export default async function run(ctx) {
 
     // -------------------------------------------------------------------------
     // 4. Concurrent external edit -> ⌘S -> structured conflict, both sides kept.
-    const dirtyContent = await page.evaluate(() => document.querySelector(".source-textarea").value);
+    const dirtyContent = await page.evaluate(() => (document.querySelector('.text-editor-host')?.__oiDocument?.() ?? [...document.querySelectorAll('.cm-content .cm-line')].map(l=>l.textContent.replace(/\u00a0/g,' ')).join('\n')));
     const edit2 = `${dirtyContent}\n<!-- u0.4 kernel seam walk: edit two (the cradle side) -->\n`;
-    await page.fill(".source-textarea", edit2);
+    await page.fill(".cm-content", edit2);
     await page.waitForSelector(".source-editor[data-dirty='true']", { timeout: 10_000 });
     // The external edit lands on disk under the buffer — echo via shell.
     const externalLine = "external edit from outside the cradle (u0.4 conflict probe)";
@@ -256,7 +257,7 @@ export default async function run(ctx) {
     );
     // BOTH sides preserved.
     const conflictDom = await page.evaluate(() => ({
-      buffer: document.querySelector(".source-textarea").value,
+      buffer: (document.querySelector('.text-editor-host')?.__oiDocument?.() ?? [...document.querySelectorAll('.cm-content .cm-line')].map(l=>l.textContent.replace(/\u00a0/g,' ')).join('\n')),
       expected: document.querySelector("[data-expected]").dataset.expected,
       current: document.querySelector("[data-current]").dataset.current,
       canonical: document.querySelector(".source-conflict-canonical-body").textContent,
@@ -291,7 +292,7 @@ export default async function run(ctx) {
     );
     const rebased = await page.evaluate(() => ({
       base: document.querySelector(".source-revision").dataset.revision,
-      buffer: document.querySelector(".source-textarea").value,
+      buffer: (document.querySelector('.text-editor-host')?.__oiDocument?.() ?? [...document.querySelectorAll('.cm-content .cm-line')].map(l=>l.textContent.replace(/\u00a0/g,' ')).join('\n')),
       dirty: document.querySelector(".source-editor").dataset.dirty,
     }));
     check(
@@ -303,7 +304,7 @@ export default async function run(ctx) {
       "the cradle edit survived the re-read (still dirty — the layers stay distinct)",
     );
 
-    await page.click(".source-textarea"); // the caret returns to the writing layer
+    await page.click(".cm-content"); // the caret returns to the writing layer
     seqBefore = await lastSeq();
     const save2 = await channel("invoke.source_save", [readmeRow.ref]);
     check(save2.ok, "invoke.source_save crosses the seam (typed call, not a UI shortcut)");
@@ -327,7 +328,7 @@ export default async function run(ctx) {
     //    tab does not move: the channel has no presentation authority.
     const second = p.sources[1];
     await nav.locator(`[data-file-path="Work/Editor/${second.binding.path}"]`).click();
-    await page.waitForFunction(ref => document.querySelector('.source-textarea')?.dataset.sourceRef === ref, second.binding.ref);
+    await page.waitForFunction(ref => document.querySelector('.cm-content')?.dataset.sourceRef === ref, second.binding.ref);
     await page.waitForTimeout(400); // let any spurious focus emission surface
     const stateRead = await channel("read.state");
     const readmeSurface = Object.values(stateRead.data.surfaces).find(
@@ -363,8 +364,8 @@ export default async function run(ctx) {
     // 7. Leave the world as found: save the original content back through
     //    the owner; the revision returns to the original content hash.
     await page.locator(".tab").filter({hasText:TARGET_PATH.split("/").pop()}).click();
-    await page.waitForSelector(".source-textarea", { timeout: 10_000 });
-    await page.fill(".source-textarea", originalContent);
+    await page.waitForSelector(".cm-content", { timeout: 10_000 });
+    await page.fill(".cm-content", originalContent);
     await page.waitForSelector(".source-editor[data-dirty='true']", { timeout: 10_000 });
     seqBefore = await lastSeq();
     await page.keyboard.press("Meta+s");

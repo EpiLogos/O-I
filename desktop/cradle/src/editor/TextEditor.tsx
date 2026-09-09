@@ -267,6 +267,11 @@ export const TextEditor = forwardRef<EditorHandle, Props>(
           : EditorState.create({ doc: callbacks.current.value, extensions });
       const v = new EditorView({ parent: host.current!, state });
       view.current = v;
+      // The rendered line elements are virtualised, so the DOM is not the
+      // document. A read-only accessor on the host lets a walk read what
+      // CodeMirror actually holds. It exposes nothing but text.
+      (host.current as HTMLElement & { __oiDocument?: () => string }).__oiDocument = () =>
+        v.state.doc.toString();
       setSelection(!v.state.selection.main.empty);
       const restoreScroll = requestAnimationFrame(() => {
         if (prior?.doc === callbacks.current.value)

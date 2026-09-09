@@ -1,3 +1,4 @@
+import {docText, waitForDoc} from '../editor-doc.mjs';
 import {setup as sourceSetup} from './editor.mjs';
 import {mkdtempSync,readFileSync,rmSync,realpathSync} from 'node:fs';
 import {tmpdir} from 'node:os';
@@ -9,7 +10,10 @@ export async function setup(args) {
 export default async function run({page,baseUrl,check,channel,provision:p,shot}) {
  await page.goto(baseUrl);await channel('info');
  await page.getByRole('button',{name:'Start writing',exact:true}).click();
- await page.getByRole('textbox',{name:'Writing surface',exact:true}).fill('Keep this arrangement while selecting the next Central.');
+ const writing=page.locator('.draft-surface .cm-content');
+ await writing.waitFor({timeout:15000});
+ await writing.fill('Keep this arrangement while selecting the next Central.');
+ await waitForDoc(page,'Keep this arrangement while selecting the next Central.','.draft-surface .cm-content',15000);
  await page.getByRole('button',{name:'System',exact:true}).click();
  const chooser=page.getByRole('region',{name:'Central location'});
  await chooser.getByText('No default Central selected',{exact:true}).waitFor();
@@ -34,7 +38,7 @@ export default async function run({page,baseUrl,check,channel,provision:p,shot})
  // underneath and reappears once the System surface is closed and the
  // canvas returns to zero surfaces.
  await page.getByRole('button',{name:'Close System'}).click();
- check(await page.getByRole('textbox',{name:'Writing surface',exact:true}).inputValue()==='Keep this arrangement while selecting the next Central.','Binding a default preserves the existing open arrangement and writing');
+ check(await docText(page,'.draft-surface .cm-content')==='Keep this arrangement while selecting the next Central.','Binding a default preserves the existing open arrangement and writing');
  for(const [path,content] of p.originals)check(readFileSync(join(p.projectRoot,path),'utf8')===content,`Recognition and binding preserve actual source ${path}`);
  await page.reload();await channel('info');
  // The default Central is now recognized and bound, so Rest's own boot-phase

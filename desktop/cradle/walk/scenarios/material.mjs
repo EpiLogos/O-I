@@ -1,3 +1,4 @@
+import {docText, waitForDoc} from '../editor-doc.mjs';
 // FND-04 general canvas material host — walked against real Central
 // ground (unadopted "Work/Material", same native-file pattern as
 // files.mjs's "Work/Other") and the real dev-only material route on the
@@ -199,8 +200,8 @@ export default async function run({ page, baseUrl, bridgeUrl, check, metric, sho
   }));
   check(mdImageLoaded, 'Markdown image resolves through the material route and decodes');
   await page.getByRole('tab', { name: 'Source' }).click();
-  await page.locator('.source-textarea').waitFor();
-  check((await page.locator('.source-textarea').inputValue()).startsWith('# Notes'), 'Source toggle returns the real FileSurface editor over the raw Markdown bytes');
+  await page.locator('.cm-content').waitFor();
+  check((await docText(page,'.cm-content')).startsWith('# Notes'), 'Source toggle returns the real FileSurface editor over the raw Markdown bytes');
   await page.getByRole('tab', { name: 'Rendered' }).click();
   await mdFrame.locator('h1').waitFor();
   check(true, 'Toggling back to Rendered re-renders Markdown');
@@ -237,13 +238,13 @@ export default async function run({ page, baseUrl, bridgeUrl, check, metric, sho
 
   // --- Text still opens the plain editor, unaffected by the delegation ---
   await openFile('notes.txt');
-  await page.locator('.source-textarea').waitFor();
-  check((await page.locator('.source-textarea').inputValue()) === 'Sibling text file.\n', 'A plain text file still opens the native FileSurface editor directly');
+  await page.locator('.cm-content').waitFor();
+  check((await docText(page,'.cm-content')) === 'Sibling text file.\n', 'A plain text file still opens the native FileSurface editor directly');
 
   // --- close and reopen restores the rendered view (not stuck on Source) ---
   await openFile('notes.md');
   await page.getByRole('tab', { name: 'Source' }).click();
-  await page.locator('.source-textarea').waitFor();
+  await page.locator('.cm-content').waitFor();
   await page.keyboard.press('Meta+w');
   await openFile('notes.md');
   await page.frameLocator('iframe.material-frame').locator('h1').waitFor();

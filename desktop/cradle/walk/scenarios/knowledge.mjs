@@ -18,7 +18,17 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await page.locator('[data-project-path="Work/Editor"]').click();
   if(await page.getByRole('button',{name:'Editor: files',exact:true}).getAttribute('aria-pressed') !== 'true') await page.getByRole('button',{name:'Editor: files',exact:true}).click();
   await page.locator(`[data-file-path="Work/Editor/${p.sources[0].binding.path}"]`).click();
-  const editor=page.locator('.source-textarea');await editor.fill('A real dirty source stays untouched while navigating knowledge.');
+  // The editor is CodeMirror (src/editor/TextEditor.tsx); its contenteditable
+  // carries the binding ref through EditorView.contentAttributes. Fill is not
+  // available on a contenteditable, so the caret is placed and the text typed
+  // exactly as a person would.
+  const editorText='A real dirty source stays untouched while navigating knowledge.';
+  const editor=page.locator(`.cm-content[data-source-ref="${p.sources[0].binding.ref}"]`);
+  await editor.waitFor();
+  await editor.click();
+  await page.keyboard.press('ControlOrMeta+a');
+  await page.keyboard.type(editorText);
+  await page.waitForFunction(text=>document.querySelector('.cm-content')?.textContent===text,editorText);
   const beforeFocus=(await channel('read.focus')).data;
   const historyBefore=native('history').length;
   await page.keyboard.press(`${primary}+k`);
@@ -34,7 +44,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   check(JSON.stringify((await channel('read.focus')).data)===JSON.stringify(beforeFocus),'Querying does not move kernel semantic focus');
   await page.keyboard.press('Escape');
   await overlay.waitFor({state:'detached'});
-  await page.waitForFunction(()=>document.activeElement===document.querySelector('.source-textarea'));
+  await page.waitForFunction(()=>!!document.activeElement?.closest('.cm-editor'));
   check(await overlay.count()===0,'Escape dismisses the entire aperture');
   check(await editor.evaluate(el=>el===document.activeElement),'Escape restores the exact original editor caret');
   if (macOS) {
@@ -60,21 +70,25 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   check(await page.locator(`[data-knowledge-ref="${p.wiki.ref}"]`).count()===1,'Graph renders the actual native wiki identity');
   check(native('history').length===historyBefore+1,'Successful opening records exactly one AIKit route use');
   const state=(await channel('read.state')).data;
-  check(state.buffers[p.sources[0].binding.ref].content==='A real dirty source stays untouched while navigating knowledge.','Wiki navigation preserves the dirty source buffer');
-  await page.getByRole('button',{name:'Refresh',exact:true}).click();
+  check(state.buffers[p.sources[0].binding.ref].content===editorText,'Wiki navigation preserves the dirty source buffer');
+  await page.getByRole('button',{name:'Refresh knowledge',exact:true}).click();
   await page.waitForFunction(()=>document.querySelector('.knowledge-surface')?.getAttribute('aria-busy')==='false');
   check(native('history').length===historyBefore+1,'Refresh is not a second successful-use observation');
   await page.keyboard.press('Meta+d');
   check(await page.locator('.pane.group').count()===2,'Wiki and real source share the production pane tree');
   await page.getByRole('button',{name:'Zoom in',exact:true}).click();
-  const graph=page.locator('.knowledge-graph svg');
+  const graph=page.locator('.knowledge-canvas');
   await graph.focus();await page.keyboard.press('ArrowRight');
-  check(await page.locator('[data-graph-camera]').getAttribute('data-graph-camera')==='-24,0,1.2','Graph zoom and keyboard pan update surface view state');
-  check(await graph.evaluate(el=>Math.abs(el.getScreenCTM().a-1)<.02),'Graph geometry retains readable pixel scale in a split pane');
+  const readCamera=()=>page.evaluate(()=>{const key=Object.keys(localStorage).find(k=>k.startsWith('oi-cradle.knowledge-view.v1:'));return key?JSON.parse(localStorage.getItem(key)):null;});
+  await page.waitForFunction(()=>{const key=Object.keys(localStorage).find(k=>k.startsWith('oi-cradle.knowledge-view.v1:'));const c=key&&JSON.parse(localStorage.getItem(key));return !!c&&Math.abs(c.zoom-1.2)<1e-6&&c.x===-40;});
+  const camera=await readCamera();
+  check(!!camera&&Math.abs(camera.zoom-1.2)<1e-6&&camera.x===-40&&camera.y===0,'Graph zoom and keyboard pan update surface view state');
+  check((await page.locator('[aria-label="Graph zoom"]').innerText()).trim()==='120%','The zoom readout commits the same camera the surface holds');
+  check(await graph.evaluate(el=>{const r=el.getBoundingClientRect();const ratio=Math.min(2,devicePixelRatio||1);return r.width>0&&el.width===Math.max(1,Math.round(r.width*ratio))&&el.height===Math.max(1,Math.round(r.height*ratio));}),'Graph geometry retains readable pixel scale in a split pane');
   await shot('native-wiki-and-source');
   await page.reload();await channel('info');await page.locator(`[data-knowledge-ref="${p.wiki.ref}"]`).waitFor();
   check(await page.locator('.pane.group').count()===2,'Relaunch revalidates the saved wiki and preserves its split');
-  check(await page.locator('[data-graph-camera]').getAttribute('data-graph-camera')==='-24,0,1.2','Relaunch restores the surface camera without changing the owner graph');
+  check((await page.locator('[aria-label="Graph zoom"]').innerText()).trim()==='120%','Relaunch restores the surface camera without changing the owner graph');
   check(native('history').length===historyBefore+1,'Restoring presentation never trains familiarity');
   await page.locator('[data-project-path="Work/Other"]').click();
   if(await page.getByRole('button',{name:'Other: files',exact:true}).getAttribute('aria-pressed') !== 'true') await page.getByRole('button',{name:'Other: files',exact:true}).click();
