@@ -49,6 +49,9 @@ pub const FLOW_REF_PREFIX: &str = "central:flow:project:";
 /// explicit; owner words ride verbatim.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(tag = "state", rename_all = "snake_case")]
+// The outcome payloads are the owner's own shapes and differ in size by
+// nature; boxing one arm would change how every caller reads it.
+#[allow(clippy::large_enum_variant)]
 pub enum CommissionOutcome {
     /// The owner CAS accepted the commission: the selection is now an owner
     /// revision of the Flow. `previous_revision` is the expected base the

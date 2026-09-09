@@ -15,7 +15,7 @@ use oi_cradle_kernel::commission::CommissionOutcome;
 use oi_cradle_kernel::{CentralClient, Kernel, KernelOp, KernelOpResult};
 use serde_json::json;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Mutex, MutexGuard};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -141,11 +141,11 @@ impl Fixture {
     }
 }
 
-fn client(root: &PathBuf) -> CentralClient {
+fn client(root: &Path) -> CentralClient {
     CentralClient::with_suite_owner(
         candidate("oi"),
         candidate("ctrl"),
-        Some(root.clone()),
+        Some(root.to_path_buf()),
         "W4DCommissionGround".into(),
     )
 }

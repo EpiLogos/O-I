@@ -548,6 +548,9 @@ impl CentralClient {
 
     /// Create a blank retained Flow. Path, title and local stamp remain
     /// owner-defined optional inputs; the kernel does not derive placement.
+    // The owner Action's inputs, one parameter each: this signature mirrors
+    // Central's own contract rather than hiding it behind a struct of ours.
+    #[allow(clippy::too_many_arguments)]
     pub fn flow_create(
         &self,
         project: Option<&str>,
@@ -571,6 +574,9 @@ impl CentralClient {
     }
 
     /// Adopt a retained ordinary source as a Flow without moving it.
+    // The owner Action's inputs, one parameter each: this signature mirrors
+    // Central's own contract rather than hiding it behind a struct of ours.
+    #[allow(clippy::too_many_arguments)]
     pub fn flow_adopt(
         &self,
         project: Option<&str>,
@@ -586,6 +592,9 @@ impl CentralClient {
 
     /// Write a Flow revision through Central's compare-and-swap and preserve
     /// the owner result. The kernel never writes the ordinary source itself.
+    // The owner Action's inputs, one parameter each: this signature mirrors
+    // Central's own contract rather than hiding it behind a struct of ours.
+    #[allow(clippy::too_many_arguments)]
     pub fn flow_write(
         &self,
         project: Option<&str>,
@@ -609,6 +618,9 @@ impl CentralClient {
     }
 
     /// Rename a retained Flow while preserving its stable FlowRef.
+    // The owner Action's inputs, one parameter each: this signature mirrors
+    // Central's own contract rather than hiding it behind a struct of ours.
+    #[allow(clippy::too_many_arguments)]
     pub fn flow_rename(
         &self,
         project: Option<&str>,
@@ -648,6 +660,9 @@ impl CentralClient {
 
     /// Store an explicit returned-work proposal. This never mutates the
     /// authored source; acceptance is a separate owner Action.
+    // The owner Action's inputs, one parameter each: this signature mirrors
+    // Central's own contract rather than hiding it behind a struct of ours.
+    #[allow(clippy::too_many_arguments)]
     pub fn source_return(
         &self,
         project: &str,
@@ -923,6 +938,9 @@ impl CentralClient {
         }
     }
 
+    // The owner Action's inputs, one parameter each: this signature mirrors
+    // Central's own contract rather than hiding it behind a struct of ours.
+    #[allow(clippy::too_many_arguments)]
     fn flow_create_reading(
         &self,
         project: Option<&str>,
@@ -948,6 +966,9 @@ impl CentralClient {
         decode_flow_reading("projectcentral.flow.create", data)
     }
 
+    // The owner Action's inputs, one parameter each: this signature mirrors
+    // Central's own contract rather than hiding it behind a struct of ours.
+    #[allow(clippy::too_many_arguments)]
     fn flow_adopt_reading(
         &self,
         project: Option<&str>,
@@ -971,6 +992,9 @@ impl CentralClient {
         decode_flow_reading("projectcentral.flow.adopt", data)
     }
 
+    // The owner Action's inputs, one parameter each: this signature mirrors
+    // Central's own contract rather than hiding it behind a struct of ours.
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn flow_write_reading(
         &self,
         project: Option<&str>,

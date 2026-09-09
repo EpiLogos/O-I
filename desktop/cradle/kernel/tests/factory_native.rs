@@ -1,5 +1,9 @@
+#[allow(dead_code)]
 #[path = "../src/factory.rs"]
 mod factory;
+// The test needs part of the material module, not all of it; the unused rest
+// is the library's, not dead code of this test's making.
+#[allow(dead_code)]
 #[path = "../src/material.rs"]
 mod material;
 use std::{

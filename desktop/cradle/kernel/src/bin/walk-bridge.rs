@@ -70,8 +70,8 @@ fn read_request(stream: &mut TcpStream) -> Option<Request> {
             let head_text = String::from_utf8_lossy(&head[..split]).to_string();
             let mut lines = head_text.split("\r\n");
             let request_line = lines.next()?.to_owned();
-            let method;
-            let path;
+            
+            
             let mut content_length = 0usize;
             let mut keep_alive = false;
             for header in lines {
@@ -86,8 +86,8 @@ fn read_request(stream: &mut TcpStream) -> Option<Request> {
                 }
             }
             let mut parts = request_line.split_whitespace();
-            method = parts.next().unwrap_or_default().to_owned();
-            path = parts.next().unwrap_or_default().to_owned();
+            let method = parts.next().unwrap_or_default().to_owned();
+            let path = parts.next().unwrap_or_default().to_owned();
             let mut body = head[split + 4..].to_vec();
             while body.len() < content_length {
                 let read = stream.read(&mut buffer).ok()?;
