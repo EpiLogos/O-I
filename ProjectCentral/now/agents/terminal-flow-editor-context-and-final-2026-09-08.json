@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "terminal-flow-editor-context-and-final-2026-09-08",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "codex-shell-lead",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1788882861,
+  "subject": "Terminal, Flow, editor context and final shell layers",
+  "result": "Implemented native PTY terminals with pane/detach continuity, real Central NOW Flow creation and revision saves, editor/footer/context-menu seam, explicit selection-to-conversation-draft CAS, persistent browser profiles and downloads, full-height sidebar ground, focus and right-pane maximize/fresh-tab fixes. Real checks: PTY 5/5, Flow owner 2/2, editor 33/33, material 26/26, context draft 7/7. Native observations and capability limits: desktop/cradle/walk/artifacts/review/FINAL-LAYERS-2026-09-08.md. Git owner API and semantic web-element context remain defined follow-on contracts; installed suite/owner binaries require matched promotion. Concurrent System/point-cloud/governance work is preserved separately.",
+  "status": "active"
+}

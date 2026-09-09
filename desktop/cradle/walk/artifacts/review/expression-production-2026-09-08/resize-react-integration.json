@@ -1,0 +1,77 @@
+{
+  "checks": [
+    {
+      "name": "Resize left region: real React handler commits geometry",
+      "pass": true
+    },
+    {
+      "name": "Resize left region: exactly one accepted resize expression",
+      "pass": true
+    },
+    {
+      "name": "Resize left region: expression waits for committed geometry",
+      "pass": true
+    },
+    {
+      "name": "Resize left region: emitter drains",
+      "pass": true
+    },
+    {
+      "name": "Resize right region: real React handler commits geometry",
+      "pass": true
+    },
+    {
+      "name": "Resize right region: exactly one accepted resize expression",
+      "pass": true
+    },
+    {
+      "name": "Resize right region: expression waits for committed geometry",
+      "pass": true
+    },
+    {
+      "name": "Resize right region: emitter drains",
+      "pass": true
+    },
+    {
+      "name": "Resize canvas split: real React handler commits geometry",
+      "pass": true
+    },
+    {
+      "name": "Resize canvas split: exactly one accepted resize expression",
+      "pass": true
+    },
+    {
+      "name": "Resize canvas split: expression waits for committed geometry",
+      "pass": true
+    },
+    {
+      "name": "split expression survives the actual handler stopPropagation",
+      "pass": true
+    },
+    {
+      "name": "Resize canvas split: emitter drains",
+      "pass": true
+    },
+    {
+      "name": "clamped split key commits no geometry and emits nothing",
+      "pass": true
+    },
+    {
+      "name": "unaccepted modifier key does not infer a resize",
+      "pass": true
+    },
+    {
+      "name": "clamped sidebar key emits nothing",
+      "pass": true
+    },
+    {
+      "name": "reduced motion keeps real keyboard resizing without expression",
+      "pass": true
+    },
+    {
+      "name": "no React/browser errors",
+      "pass": true
+    }
+  ],
+  "errors": []
+}

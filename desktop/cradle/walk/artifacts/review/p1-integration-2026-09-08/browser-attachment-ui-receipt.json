@@ -1,0 +1,23 @@
+{
+  "scope": "BrowserSurface attachment-generation lifecycle repair",
+  "candidate": {
+    "file": "desktop/cradle/src/browser/BrowserSurface.tsx",
+    "sha256": "6266774fafbd1b8d43fd3a8e85a7dc9c98b58952d798d82cbf4f0fe305ef44b0"
+  },
+  "checks": {
+    "strict_typescript": "pass",
+    "diff_whitespace": "pass"
+  },
+  "behavior": [
+    "capture attachment generation before queueing every control",
+    "invalidate visible geometry on stale acknowledgement",
+    "ignore disposed attach/bounds completions and stale reading events",
+    "retire only the generation held by cleanup",
+    "never replay semantic navigation after stale receipt",
+    "semantic controls reject immediately on absent or stale attachment; only hide/bounds/poll-focus return false",
+    "zoom display updates only from owner Reading; no optimistic unaccepted zoom value",
+    "context hook existing rejection handler clears response timer immediately"
+  ],
+  "native_acceptance": "pending lead-owned repeated native detach/redock walk",
+  "test_limit": "No mocked native-protocol test used; static validation does not establish native continuity."
+}

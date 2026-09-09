@@ -1,0 +1,15 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "guardian-skillset-extended-centralsessionstrap-2026-09-06",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "zcode-session-2026-09-06-rootnow",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1788719453,
+  "subject": "Guardian SkillSet extended: central-session-strap ships as third member (commit e0af527 + follow-up)",
+  "result": "Owner-authorized change (no-theatre directive, 2026-09-06): central-session-strap adopted into the guardian SkillSet so oi init --personal-ground straps a fresh ground. skills/central-session-strap payload added (provenance header names Central Control ground origin); membership in skills/suite-operator/skillset.toml; cli/src/guardian.rs embeds SKILL.md; tests extended incl. the hardcoded count in suite_skillset.rs; prose in skills/oi/SKILL.md + docs/SUITE-OPERATOR-SKILLSET.md. Commit e0af527 on cradle-p1, not pushed. Follow-up in flight: projection currently materialises SKILL.md only; extending to full payload dirs so now.py/render-context.py/verify.sh ship too. Tests: guardian_projection 9/9, suite_skillset 12/12, oi-cli build green. Open: follow-up commit; oi skills sync on this machine to refresh the AIKit capsule if desired.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-09-06",
+    "2026-09-08"
+  ]
+}

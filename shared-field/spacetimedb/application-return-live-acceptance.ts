@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createExploreTransportLifecycle } from '../transport-lifecycle.mjs';
 import { DbConnection } from './module_bindings/index';
 import { createParticipant } from '../index.mjs';
 import {
@@ -21,24 +22,27 @@ const DATABASE = process.env.SPACETIMEDB_DATABASE ?? 'oi-shared-field-ci';
 const TIMEOUT_MS = 10_000;
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-type Client = { name: string; conn: DbConnection; identity: any; token: string };
+type Client = { name: string; conn: DbConnection; identity: any; token: string; lifecycle: ReturnType<typeof createExploreTransportLifecycle> };
 
 async function connect(name: string): Promise<Client> {
+  const lifecycle = createExploreTransportLifecycle();
   return new Promise<Client>((resolve, reject) => {
     DbConnection.builder()
       .withUri(URI)
       .withDatabaseName(DATABASE)
-      .onConnect((conn, identity, token) => resolve({ name, conn, identity, token }))
-      .onConnectError((_ctx, error) => reject(error))
+      .onConnect((conn, identity, token) => { lifecycle.connected(identity.toHexString()); resolve({ name, conn, identity, token, lifecycle }); })
+      .onDisconnect((_ctx, error) => lifecycle.disconnected(error))
+      .onConnectError((_ctx, error) => { lifecycle.connectError(error); reject(error); })
       .build();
   });
 }
 
-async function subscribe(conn: DbConnection, queries: string[]): Promise<void> {
+async function subscribe(conn: DbConnection, queries: string[], lifecycle?: ReturnType<typeof createExploreTransportLifecycle>): Promise<void> {
+  lifecycle?.subscribing();
   await new Promise<void>((resolve, reject) => {
     conn.subscriptionBuilder()
-      .onApplied(() => resolve())
-      .onError((_ctx, error) => reject(error))
+      .onApplied(() => { lifecycle?.applied(); resolve(); })
+      .onError((_ctx, error) => { lifecycle?.subscriptionError(error); reject(error); })
       .subscribe(queries);
   });
 }
@@ -206,7 +210,7 @@ try {
       'SELECT * FROM projection',
       'SELECT * FROM explore_entry',
       'SELECT * FROM explore_relation',
-    ]);
+    ], client.lifecycle);
   }
 
   await owner.conn.reducers.putSharedField({
@@ -234,6 +238,12 @@ try {
     entryJson: JSON.stringify(entry),
   });
 
+  const privateProjection = { ...projection1, projection_ref: `${PROJECTION}:private`, audience: { visibility: 'private', refs: [PARTICIPANT] } };
+  await publisher.conn.reducers.putProjection(projectionArgs(privateProjection, FIELD));
+  await waitUntil(() => [...owner.conn.db.projection.iter()].some((row: any) => row.projectionKey === `${PROJECTION}:private@1`), 'owner receives private projection');
+  const unlistedProjection = { ...projection1, projection_ref: `${PROJECTION}:unlisted`, audience: { visibility: 'unlisted' } };
+  await expectRejected(() => publisher.conn.reducers.putProjection(projectionArgs(unlistedProjection, FIELD)), 'unsupported unlisted admission');
+  assert.equal([...browserReader.conn.db.projection.iter()].some((row: any) => row.projectionKey === `${PROJECTION}:private@1`), false);
   await publisher.conn.reducers.putProjection(projectionArgs(projection1, FIELD));
 
   await waitUntil(
@@ -245,10 +255,14 @@ try {
     'public W11 Projection revision 1',
   );
 
-  const source = createSpacetimeExploreSource(browserReader.conn.db);
+  const source = createSpacetimeExploreSource(browserReader.conn.db, browserReader.lifecycle);
   live = createLiveExploreApplication(source);
   const browserProvider = createLiveExploreBrowserProvider(live);
 
+  assert.equal(browserProvider.status().live, true);
+  assert.equal(live.status().transport.state, 'available');
+  const availabilityEvents: any[] = [];
+  browserProvider.subscribe(value => availabilityEvents.push(value));
   const initialBrowser = browserProvider.current();
   assert.equal(initialBrowser.open(WORLD)?.resource.ref, WORLD);
   assert.equal(initialBrowser.presentation(WORLD)?.title, 'W11 World — revision 1');
@@ -317,8 +331,25 @@ try {
   assert.deepEqual(returnedActivity.result_refs, [`${PROJECTION}@2`]);
   assert.equal('action_ref' in returnedActivity, false);
 
+  const lastGood = live.snapshot();
+  const observedAt = live.status().material.observed_at;
+  await expectRejected(() => subscribe(browserReader.conn, ['SELECT * FROM nonexistent_lifecycle_table'], browserReader.lifecycle), 'invalid native subscription');
+  assert.equal(live.status().transport.state, 'error');
+  assert.equal(browserProvider.status().live, false);
+  assert.equal(live.status().healthy, false);
+  assert.deepEqual(live.snapshot(), lastGood);
+  browserReader.conn.disconnect();
+  await waitUntil(() => live?.status().transport.state === 'offline', 'native disconnect availability');
+  assert.equal(browserProvider.status().live, false);
+  assert.equal(live.status().material.observed_at, observedAt);
+  assert.deepEqual(live.snapshot(), lastGood);
+  assert.equal(browserProvider.current().presentationProjection(WORLD)?.projection_revision, 2);
+  assert.ok(availabilityEvents.some(value => value.event.type === 'availability'));
+  live.dispose();
+  assert.equal(live.status().transport.state, 'disposed');
   console.log(JSON.stringify({
     acceptance: 'oi155-w11-application-return',
+    lifecycle: ['native subscription applied', 'private material hidden from public reader', 'unsupported unlisted admission refused', 'invalid subscription refused', 'actual disconnect offline', 'last-good revision identity and observed time retained', 'browser availability events', 'disposed unavailable'],
     field_ref: FIELD,
     world_ref: WORLD,
     projection_ref: PROJECTION,

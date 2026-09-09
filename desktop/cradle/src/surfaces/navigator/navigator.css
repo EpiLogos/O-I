@@ -1,38 +1,186 @@
+/* Standalone/drawer presentation (non-shell hosts). Inside the desktop shell
+ * `.desktop-side .world-navigator` in shell.css takes over position/width;
+ * the boosted selector below still lands the shell-brief padding on top of
+ * that override without touching shell.css. */
 .world-navigator {
   position: fixed; inset: 0 auto 0 var(--oi-space-7);
   width: min(calc(var(--oi-space-7) * 7), calc(100vw - var(--oi-space-7)));
   overflow: auto; z-index: var(--oi-z-drawer);
-  background: var(--oi-surface); color: var(--oi-foreground);
-  border-right: 1px solid var(--oi-rule); padding: var(--oi-space-4);
-  font-family: var(--oi-font-sans); font-size: var(--oi-type-sm);
+  background: var(--oi-sidebar-ground); color: var(--oi-foreground);
+  border-right: 1px solid var(--oi-hairline);
+  font-family: var(--oi-font-sans); font-size: var(--oi-shell-type-nav);
+  /* `--oi-loading-ground`/`--oi-loading-ink` are declared at :root against
+   * the un-themed `--oi-surface`/`--oi-foreground` defaults, so they resolve
+   * to white rather than the desktop palette even under `.oi-desktop` (the
+   * var() inside that :root declaration is captured at the root element,
+   * not re-evaluated per descendant). Re-pointing them here keeps every
+   * `Loading` mounted under this sidebar (FileTree, EncounterList, this
+   * surface's own "Reading Central…") on the sidebar's real ground instead
+   * of a white box. This is a design-system-wide gap outside this file. */
+  --oi-loading-ground: var(--oi-sidebar-ground);
+  --oi-loading-ink: var(--oi-foreground);
 }
-.world-navigator header { display: flex; align-items: center; gap: var(--oi-space-2); margin-bottom: var(--oi-space-4); }
-.world-navigator h1 { flex: 1; font-size: var(--oi-type-body); font-weight: 500; }
-.world-navigator h2 { font-size: var(--oi-type-body); font-weight: 500; }
+aside.world-navigator[aria-label="World navigator"] { padding: 19px 10px 0; }
+.world-navigator header { display: flex; align-items: center; gap: var(--oi-space-2); }
+.world-navigator h1 { flex: 1; font-size: var(--oi-shell-type-eyebrow); font-weight: 500; }
+.world-navigator h2 { font-size: var(--oi-shell-type-body); font-weight: 500; }
 .world-navigator button { font: inherit; background: transparent; color: inherit; border: 0; cursor: pointer; padding: var(--oi-space-1); text-align: left; }
 .world-navigator button:disabled { cursor: progress; color: var(--oi-muted); }
-.world-navigator :focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-focus); outline-offset: var(--oi-focus-ring-offset); }
-.world-navigator input { width: 100%; padding: var(--oi-space-2); border: 1px solid var(--oi-rule); background: var(--oi-surface); color: var(--oi-foreground); font: inherit; margin-bottom: var(--oi-space-3); }
+.world-navigator :focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: var(--oi-focus-ring-offset); }
+.world-navigator input { width: 100%; padding: var(--oi-space-2); border: 1px solid var(--oi-hairline); background: var(--oi-sidebar-ground); color: var(--oi-foreground); font: inherit; margin-bottom: var(--oi-space-3); }
 .world-navigator p, .world-navigator dd { overflow-wrap: anywhere; margin: var(--oi-space-1) 0; }
-.world-navigator span, .world-navigator small { color: var(--oi-muted); }
-.world-root { width: 100%; }
-.world-root span { display: block; font-size: var(--oi-type-xs); margin-top: var(--oi-space-1); }
-.world-projects { list-style: none; margin-left: var(--oi-space-2); border-left: 1px solid var(--oi-rule); padding-left: var(--oi-space-1); }
-.world-projects button { display: flex; justify-content: space-between; width: 100%; gap: var(--oi-space-2); }
-.world-projects button[aria-current="true"] { box-shadow: inset var(--oi-focus-ring-width) 0 var(--oi-focus); }
-.world-projects button[aria-current="true"] span { color: var(--oi-foreground); }
-.world-detail { border-top: 1px solid var(--oi-rule); margin-top: var(--oi-space-4); padding-top: var(--oi-space-4); }
-.world-ground { margin: var(--oi-space-4) 0; }
-.world-ground dt { margin-top: var(--oi-space-3); }
-.world-ground dd { color: var(--oi-muted); font-size: var(--oi-type-xs); }
-.world-ground dd span { display: block; }
-.world-wiki { border-top: 1px solid var(--oi-rule); padding: var(--oi-space-2) 0; }
-.world-wiki summary { cursor: pointer; }
-.world-wiki summary span { float: right; }
-.world-wiki p, .world-wiki li { font-size: var(--oi-type-xs); color: var(--oi-muted); overflow-wrap: anywhere; }
-.world-wiki ul { padding-left: var(--oi-space-3); }
-.world-rooted { margin-top: var(--oi-space-4) !important; }
+/* Finding 18: this used to be a blanket `.world-navigator span, small`
+ * colour rule — it wins on specificity over any row that colours itself
+ * (`.encounter-row`'s `--oi-accent-ink`, project name text inheriting the
+ * row's `--oi-foreground`), muting every label in the sidebar including
+ * chat titles. Removed; each row's own explicit colour, or plain
+ * inheritance, is the only source of truth now. */
 
-.world-source-list { list-style: none; margin: var(--oi-space-2) 0; }
-.world-source-list button { width: 100%; overflow-wrap: anywhere; font-size: var(--oi-type-xs); }
-.world-navigator h3 { font-size: var(--oi-type-sm); font-weight: 500; }
+/* ===== Central head row's own actions (search / agent / wiki) ===== */
+.central-actions { display: flex; align-items: center; gap: 3px; margin: 0 5px 20px; }
+.world-navigator .central-actions .summon-search {
+  flex: 1; width: auto; height: 28px; margin: 0; display: flex; align-items: center; justify-content: space-between;
+  background: var(--oi-canvas-ground); border: 1px solid var(--oi-hairline); border-radius: 4px;
+  padding: 0 8px; font-size: var(--oi-shell-type-ui);
+}
+.summon-search kbd { font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); }
+.world-navigator .central-actions .central-agent-entry,
+.world-navigator .central-actions .central-wiki-entry {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  width: var(--oi-shell-control); height: var(--oi-shell-control); padding: 0; border-radius: 4px;
+  color: var(--oi-muted-2); transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+.world-navigator .central-actions .central-agent-entry:hover,
+.world-navigator .central-actions .central-wiki-entry:hover { background: var(--oi-wash); color: var(--oi-accent-ink); }
+.world-navigator .workspace-selector { margin: 0 6px 19px; }
+
+/* ===== Central-as-parent row ===== */
+.central-mode-row { display: flex; align-items: center; margin: 0 0 12px; padding: 0 6px; }
+/* Finding 18: `!important` was standing in for specificity against
+ * `.desktop-shell button` / `.world-navigator button`. Scoping each
+ * selector under `.world-navigator` (two classes) beats those one-class
+ * descendant rules outright, so the cascade settles without it; the
+ * three-class `.central-mode-row` variant stays strictly more specific
+ * than the two-class base so its narrower padding always wins, in either
+ * source order. Finding 27: padding-left 24px lines this row's label up
+ * with the project rows' text start (24px disclosure gutter + 6px mark +
+ * 7px gap lands at the same edge closely enough that both read as one
+ * column; Central carries no mark of its own). */
+.world-navigator .world-root { padding: 7px 7px 7px 24px; font-size: var(--oi-shell-type-ui); color: var(--oi-muted); border-radius: 4px; transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.world-navigator .world-root:hover { background: var(--oi-wash); color: var(--oi-accent-ink); }
+.world-navigator .world-root[aria-current="true"] { color: var(--oi-accent-ink); }
+.world-navigator .central-mode-row .world-root { flex: 1; margin: 0; padding: 4px 0 4px 24px; }
+
+/* ===== "Work projects" label row + refresh ===== */
+.world-navigator header { margin: 0 6px 5px; height: 26px; }
+.world-navigator header h1 { text-transform: uppercase; font-size: var(--oi-shell-type-eyebrow); letter-spacing: var(--oi-shell-tracking); color: var(--oi-muted-2); }
+.world-navigator header button[aria-label="Refresh Central"] {
+  flex: none; width: var(--oi-shell-control); height: var(--oi-shell-control); display: inline-flex; align-items: center; justify-content: center;
+  color: var(--oi-muted-2); border-radius: 4px; transition: background var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+.world-navigator header button[aria-label="Refresh Central"]:hover { background: var(--oi-wash); }
+.project-availability { font-size: var(--oi-shell-type-ui); color: var(--oi-muted); line-height: 1.6; padding: 8px; }
+
+/* ===== Project list ===== */
+.world-projects { list-style: none; margin: 0; border: 0; padding: 0; }
+.world-projects > li { position: relative; margin-bottom: 9px; }
+.world-projects > li > button:first-child {
+  display: flex; height: var(--oi-shell-row-lg); justify-content: flex-start; align-items: center; border-radius: 5px;
+  padding: 0 6px 0 24px; font-size: var(--oi-shell-type-nav); font-weight: 500; width: 100%;
+  gap: 7px; color: var(--oi-foreground);
+  transition: background var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+.world-projects > li > button:first-child:hover { background: var(--oi-wash); }
+.world-projects button[aria-current="true"] { background: var(--oi-wash); }
+/* Finding 19: the name had no overflow handling, so a long project name
+ * wraps to 2-3 lines and pushes the absolutely-positioned mode controls
+ * (still pinned to the row's top) off past the wrapped text. `min-width:0`
+ * lets the flex child actually shrink below its content size so the
+ * ellipsis on the name span itself can take effect. */
+.world-projects > li > button:first-child { min-width: 0; }
+.world-projects > li > button:first-child > .project-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.world-projects > li > .project-disclosure {
+  position: absolute; left: 0; top: 2px; width: 22px; height: var(--oi-shell-row-lg); padding: 0; justify-content: center;
+  font-size: 15px; color: var(--oi-muted-2); text-align: center; border-radius: 4px;
+  transition: transform var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+.world-projects > li > .project-disclosure:hover { background: var(--oi-wash); color: var(--oi-accent-ink); }
+.world-projects > li > .project-disclosure[aria-expanded="true"] { transform: rotate(90deg); }
+.project-mark { display: inline-block; width: 6px; height: 6px; border: 1px solid var(--oi-accent-soft); border-radius: 2px; flex: none; }
+
+/* Mode controls (chat/file/wiki) sit at the row's right edge. */
+.world-projects > li > button:first-child { padding-right: 82px; }
+.project-modes { display: flex; align-items: center; gap: 1px; flex: none; }
+/* Finding 19: `top:3px` pinned the modes to the row's top edge, which only
+ * read right while the name stayed on one line; centring within the full
+ * row height keeps them aligned regardless of how tall the name grows. */
+.world-projects > li > .project-modes { position: absolute; right: 2px; top: 0; height: var(--oi-shell-row-lg); }
+.world-navigator .project-modes button {
+  display: flex; justify-content: center; align-items: center; width: 23px; height: 25px; padding: 0; border-radius: 4px;
+  color: var(--oi-muted-2); transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), box-shadow var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+.world-navigator .project-modes button:hover { background: var(--oi-wash); color: var(--oi-accent-ink); }
+.world-navigator .project-modes button[aria-pressed="true"] { background: var(--oi-sidebar-ground); color: var(--oi-accent-ink); box-shadow: var(--oi-shadow-plane); }
+.project-modes svg { width: 12px; height: 12px; }
+
+/* Project disclosure content (chats / files / wiki) */
+.project-files { position: relative; margin: 5px 0 0 14px; border-left: 1px solid var(--oi-hairline); padding-left: 5px; max-height: min(48vh, 420px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+/* Finding 18: scoped under `.project-files` (two classes) instead of
+ * `!important` — beats `.world-navigator button`'s one-class rule on
+ * specificity alone. */
+.project-files .project-wiki-link { font-size: var(--oi-shell-type-ui); min-height: 30px; color: var(--oi-muted); transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out); border-radius: 4px; }
+.project-files .project-wiki-link:hover:not(:disabled) { background: var(--oi-wash); color: var(--oi-accent-ink); }
+
+/* ===== Chat rows (EncounterList) ===== */
+.project-encounters { min-height: 40px; }
+.project-encounters .encounter-row {
+  display: flex; align-items: center; gap: 7px; width: 100%; height: 30px; padding: 0 8px;
+  font-size: var(--oi-shell-type-ui); color: var(--oi-accent-ink); border-radius: 4px;
+  transition: background var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+.project-encounters .encounter-row:hover { background: var(--oi-wash); }
+/* C6 / instructed: the encounter that is the active surface (the workbench's
+ * focused tab, or the accompanying agent's binding) reads as selected the
+ * same way a current project row does. */
+.project-encounters .encounter-row[aria-current="true"] { background: var(--oi-wash); }
+.encounter-dot { width: 3px; height: 3px; flex: none; border-radius: 50%; background: var(--oi-accent-soft); }
+.encounter-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ===== Directory rows (FileTree) ===== */
+.native-file-tree { position: relative; }
+.native-directory { list-style: none; margin: 0; padding: 0; }
+.native-directory .native-directory { margin-left: 11px; padding-left: 5px; border-left: 1px solid var(--oi-hairline); }
+.native-directory button {
+  width: 100%; display: flex; align-items: center; justify-content: flex-start; gap: 6px;
+  height: 27px; padding: 0 5px; font-size: var(--oi-shell-type-ui); color: var(--oi-muted);
+  border-radius: 4px; transition: background var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+.native-directory button > svg { width: 12px; height: 12px; flex: none; color: var(--oi-muted-2); }
+.native-directory button > span:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.native-directory button:hover { background: var(--oi-wash); }
+.native-directory button:disabled { cursor: default; opacity: .55; }
+.native-directory button[aria-expanded="true"] > svg { color: var(--oi-accent-ink); }
+.native-directory .native-directory button { padding-left: 17px; font-size: var(--oi-shell-type-meta); }
+.file-disclosure { width: 8px; flex: none; text-align: center; }
+.empty-directory { padding: 6px; color: var(--oi-muted); font-size: var(--oi-shell-type-ui); }
+
+/* ===== System row ===== */
+.world-system { margin-top: 6px; }
+.world-system button {
+  display: flex; align-items: center; gap: 8px; width: 100%; height: 28px; padding: 0 6px;
+  font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); border-radius: 4px;
+  transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+.world-system button:hover { background: var(--oi-wash); color: var(--oi-accent-ink); }
+
+/* Root operating ground is separate from the Work project index. */
+.central-operating-region { padding-bottom: 12px; margin-bottom: 8px; border-bottom: 1px solid var(--oi-hairline-soft); }
+.central-root-space > button { display: flex; align-items: center; gap: 7px; width: 100%; min-height: var(--oi-shell-row-lg); color: var(--oi-muted); }
+.central-root-space > .native-file-tree { margin-left: 12px; max-height: 35vh; overflow: auto; }
+.world-projects > li .project-modes { opacity: .32; transition: opacity var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.world-projects > li:hover > .project-modes, .world-projects > li:focus-within > .project-modes,
+.world-projects > li:has(> button[aria-current="true"]) > .project-modes { opacity: 1; }
+
+.world-navigator{display:flex;flex-direction:column;overflow:hidden}
+.world-system{flex:none;background:var(--oi-sidebar-ground)}
+.world-projects > li > button:first-child{padding-left:10px}

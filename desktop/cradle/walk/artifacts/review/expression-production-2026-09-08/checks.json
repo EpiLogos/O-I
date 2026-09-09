@@ -1,0 +1,68 @@
+{
+  "checks": [
+    "idle: bounded finite point generation",
+    "waiting: bounded finite point generation",
+    "listening: bounded finite point generation",
+    "searching: bounded finite point generation",
+    "presence: bounded finite point generation",
+    "arrival: bounded finite point generation",
+    "fire: bounded finite point generation",
+    "water: bounded finite point generation",
+    "air: bounded finite point generation",
+    "earth: bounded finite point generation",
+    "owner-kept resize and explicit inactive reserved intents",
+    "revision 6 study runs before integration review",
+    "exactly one pointer-transparent window canvas",
+    "second host rejected",
+    "production body supplies the theme, not a reference-only html class",
+    "body token mutation reaches the actual renderer",
+    "oi-desktop: real forms and mid-flight gesture from tokens",
+    "oi-surface-light: real forms and mid-flight gesture from tokens",
+    "oi-surface-dark: real forms and mid-flight gesture from tokens",
+    "oi-surface-warm-dark: real forms and mid-flight gesture from tokens",
+    "oi-surface-contrast: real forms and mid-flight gesture from tokens",
+    "nine live fields draw no more than 30 frames/second",
+    "one field morphs without adding canvas or handle",
+    "no forms or gestures: canvas pixel-clear and scheduler stopped",
+    "removed held target drains without stale geometry",
+    "offscreen-only emitter stops drawing",
+    "offscreen-only emitter expires without drawing cleanup frames",
+    "offscreen held form lease expires without a drawing loop",
+    "held resize remains exactly one emitter",
+    "resize release drains under two seconds",
+    "200 intents drain with bounded retained storage",
+    "delayed chain starts one successor",
+    "reduced motion refuses gestures, renders a still form without scheduling",
+    "pause clears and cancels scheduled work",
+    "dispose removes the overlay and ink probe",
+    "no browser errors"
+  ],
+  "errors": [],
+  "themes": [
+    {
+      "theme": "oi-desktop",
+      "ink": "color(srgb 0.512706 0.530275 0.502196)"
+    },
+    {
+      "theme": "oi-surface-light",
+      "ink": "color(srgb 0.442745 0.442745 0.442745)"
+    },
+    {
+      "theme": "oi-surface-dark",
+      "ink": "color(srgb 0.570039 0.570039 0.563216)"
+    },
+    {
+      "theme": "oi-surface-warm-dark",
+      "ink": "color(srgb 0.595216 0.569804 0.529098)"
+    },
+    {
+      "theme": "oi-surface-contrast",
+      "ink": "color(srgb 0.504157 0.504157 0.504157)"
+    }
+  ],
+  "standing": "module/browser evidence only; native encounters and owner visual acceptance pending",
+  "frameWindow": {
+    "milliseconds": 2100,
+    "frames": 47
+  }
+}

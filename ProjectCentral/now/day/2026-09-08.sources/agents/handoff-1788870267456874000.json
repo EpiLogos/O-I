@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "handoff-1788870267456874000",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "codex-flow-return-owner-20260908",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1788870267,
+  "subject": "PF Flow and source-return owner adapter",
+  "result": "Typed Central owner-Action adapter and real exact-binary consumer proof completed in desktop/cradle/kernel/src/flow.rs and desktop/cradle/kernel/tests/flow_return.rs. Central pinned revision f3559dbf900b8409ff00b24a84b824c6cd6ec2c3 had no proved defect. Consumer test passed 1/1; kernel unit tests passed 20/20. Evidence: /tmp/pf-flow-owner-receipt-20260908.json and /tmp/pf-flow-consumer-test-20260908.log. No walk: UI lead has not exposed stable Flow/Return inputs. Full integration retains unrelated installed-AIKit knowledge-subcommand failure.",
+  "status": "waiting"
+}

@@ -21,10 +21,20 @@ on:
       - "docs/SUITE-OPERATOR-SKILLSET.md"
       - ".github/workflows/suite-skillset.yml"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   conformance:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: cli
+      # Targeted, not the whole CLI suite (verify.yml owns that on every PR):
+      # this is the doc-to-behaviour binding for the skillset surface.
       - run: cargo test --manifest-path cli/Cargo.toml --test suite_skillset

@@ -1,0 +1,16 @@
+serving the cradle at http://localhost:1423 (external)
+
+=== scenario: shell-recovery ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4179 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4179 (fresh kernel, seq from 1)
+PASS  One-tab Split creates a usable empty sibling
+PASS  Empty split survives relaunch of the renderer
+  SCENARIO ERROR: page.waitForFunction: Timeout 30000ms exceeded.
+    at Module.run (/Users/admin/Central/Work/O-I/desktop/cradle/walk/scenarios/shell-recovery.mjs:16:14)
+    at async runScenario (/Users/admin/Central/Work/O-I/desktop/cradle/walk/run.mjs:337:5)
+    at async file:///Users/admin/Central/Work/O-I/desktop/cradle/walk/run.mjs:410:18
+  stopped walk-bridge
+  receipt: artifacts/shell-recovery.json — 2/2 checks, FAIL
+
+=== walk summary ===
+FAIL  shell-recovery — 2/2 checks

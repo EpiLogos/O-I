@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-kernel-event-log"
+description = "Enables the kernel_event_log command without any pre-configured scope."
+commands.allow = ["kernel_event_log"]
+
+[[permission]]
+identifier = "deny-kernel-event-log"
+description = "Denies the kernel_event_log command without any pre-configured scope."
+commands.deny = ["kernel_event_log"]

@@ -808,6 +808,7 @@ pub fn aikit_pickup(
     // topped up with any capsules it does not yet hold. Membership is what
     // the set projects in this context plus what it withholds.
     let set = AIKIT_GUARDIAN_SET.to_owned();
+
     let set_members = if run_aikit(aikit, ground, &["set", "show", &set]).is_ok() {
         let show = run_aikit(aikit, ground, &["set", "show", &set])?;
         let mut held = aikit_strings(&show, "projected");

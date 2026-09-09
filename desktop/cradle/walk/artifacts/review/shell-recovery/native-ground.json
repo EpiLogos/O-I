@@ -1,0 +1,121 @@
+{
+  "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-RQgvZ1",
+  "projectRoot": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-RQgvZ1/Work/Editor",
+  "env": {
+    "OI_CENTRAL_ROOT": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-RQgvZ1",
+    "OI_CENTRAL_PROJECT_QUERY": "Editor",
+    "AIKIT_HOME": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-RQgvZ1/.aikit-home"
+  },
+  "sources": [
+    {
+      "agent_retrieval_allowed": true,
+      "path": "ProjectCentral/user/00 01-DESIGN.md",
+      "provenance": "unresolved",
+      "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+      "roles": [
+        "project-human-source-aperture"
+      ],
+      "standing": "unspecified",
+      "treatment": "projectcentral-user"
+    },
+    {
+      "agent_retrieval_allowed": true,
+      "path": "ProjectCentral/user/01 02-ARCHITECTURE.md",
+      "provenance": "unresolved",
+      "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
+      "roles": [
+        "project-human-source-aperture"
+      ],
+      "standing": "unspecified",
+      "treatment": "projectcentral-user"
+    },
+    {
+      "agent_retrieval_allowed": true,
+      "path": "ProjectCentral/user/02 03-UX-STATES.md",
+      "provenance": "unresolved",
+      "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
+      "roles": [
+        "project-human-source-aperture"
+      ],
+      "standing": "unspecified",
+      "treatment": "projectcentral-user"
+    },
+    {
+      "agent_retrieval_allowed": true,
+      "path": "ProjectCentral/user/03 04-VERIFICATION.md",
+      "provenance": "unresolved",
+      "ref": "central:source:project:editor-walk:ProjectCentral/user/03%2004-VERIFICATION.md",
+      "roles": [
+        "project-human-source-aperture"
+      ],
+      "standing": "unspecified",
+      "treatment": "projectcentral-user"
+    },
+    {
+      "agent_retrieval_allowed": true,
+      "path": "ProjectCentral/user/04 05-EXECUTION.md",
+      "provenance": "unresolved",
+      "ref": "central:source:project:editor-walk:ProjectCentral/user/04%2005-EXECUTION.md",
+      "roles": [
+        "project-human-source-aperture"
+      ],
+      "standing": "unspecified",
+      "treatment": "projectcentral-user"
+    },
+    {
+      "agent_retrieval_allowed": true,
+      "path": "ProjectCentral/user/05 FLOW.md",
+      "provenance": "unresolved",
+      "ref": "central:source:project:editor-walk:ProjectCentral/user/05%20FLOW.md",
+      "roles": [
+        "project-human-source-aperture"
+      ],
+      "standing": "unspecified",
+      "treatment": "projectcentral-user"
+    },
+    {
+      "agent_retrieval_allowed": true,
+      "path": "ProjectCentral/user/06 CANONICAL-PRODUCT-FIELD.md",
+      "provenance": "unresolved",
+      "ref": "central:source:project:editor-walk:ProjectCentral/user/06%20CANONICAL-PRODUCT-FIELD.md",
+      "roles": [
+        "project-human-source-aperture"
+      ],
+      "standing": "unspecified",
+      "treatment": "projectcentral-user"
+    },
+    {
+      "agent_retrieval_allowed": true,
+      "path": "ProjectCentral/user/07 OI-DESKTOP-APPLICATION-SPEC.md",
+      "provenance": "unresolved",
+      "ref": "central:source:project:editor-walk:ProjectCentral/user/07%20OI-DESKTOP-APPLICATION-SPEC.md",
+      "roles": [
+        "project-human-source-aperture"
+      ],
+      "standing": "unspecified",
+      "treatment": "projectcentral-user"
+    },
+    {
+      "agent_retrieval_allowed": true,
+      "path": "ProjectCentral/user/08 OI-CENTRAL-FOUNDATION-2026-09-04.md",
+      "provenance": "unresolved",
+      "ref": "central:source:project:editor-walk:ProjectCentral/user/08%20OI-CENTRAL-FOUNDATION-2026-09-04.md",
+      "roles": [
+        "project-human-source-aperture"
+      ],
+      "standing": "unspecified",
+      "treatment": "projectcentral-user"
+    },
+    {
+      "agent_retrieval_allowed": true,
+      "path": "ProjectCentral/user/09 FOUNDING-POSITIONS.md",
+      "provenance": "unresolved",
+      "ref": "central:source:project:editor-walk:ProjectCentral/user/09%20FOUNDING-POSITIONS.md",
+      "roles": [
+        "project-human-source-aperture"
+      ],
+      "standing": "unspecified",
+      "treatment": "projectcentral-user"
+    }
+  ]
+}

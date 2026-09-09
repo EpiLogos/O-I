@@ -3,16 +3,25 @@ fn current_world_main() -> Option<ExitCode> {
     if args.first().and_then(|value| value.to_str()) != Some("current-world") {
         return None;
     }
-    let json = match args.as_slice() {
-        [_] => false,
-        [_, flag] if flag == "--json" => true,
+    let (json, owners) = match args.as_slice() {
+        [_] => (false,false),
+        [_, flag] if flag == "--json" => (true,false),
+        [_, flag, output] if flag == "--owners" && output == "--json" => (true,true),
         _ => {
-            eprintln!("oi: usage: oi current-world [--json]");
+            eprintln!("oi: usage: oi current-world [--owners] [--json]");
             return Some(ExitCode::from(2));
         }
     };
 
-    match oi_cli::current_world::live_current_world() {
+    let observed = oi_cli::current_world::live_current_world().and_then(|mut reading| {
+        if owners {
+            let executable=env::current_exe().map_err(|e|e.to_string())?;
+            let cwd=env::current_dir().map_err(|e|e.to_string())?;
+            reading.owner_disclosures=Some(serde_json::to_value(oi_cli::owner_disclosure::read(&executable,&cwd)?).map_err(|e|e.to_string())?);
+        }
+        Ok(reading)
+    });
+    match observed {
         Ok(reading) if json => match serde_json::to_string_pretty(&reading) {
             Ok(value) => {
                 println!("{value}");

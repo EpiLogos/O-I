@@ -1,0 +1,237 @@
+building the walk bundle (WALK=1 npm run build)
+  [building the walk bundle (WALK=1 npm run build)] > oi-cradle@0.1.0 build
+  [building the walk bundle (WALK=1 npm run build)] > tsc --noEmit && vite build
+  [building the walk bundle (WALK=1 npm run build)] vite v5.4.21 building for production...
+  [building the walk bundle (WALK=1 npm run build)] transforming...
+  [building the walk bundle (WALK=1 npm run build)] ✓ 95 modules transformed.
+  [building the walk bundle (WALK=1 npm run build)] rendering chunks...
+  [building the walk bundle (WALK=1 npm run build)] [plugin:vite:reporter] [plugin vite:reporter] 
+  [building the walk bundle (WALK=1 npm run build)] (!) /Users/admin/Central/Work/O-I/desktop/cradle/node_modules/@tauri-apps/api/core.js is dynamically imported by /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/kernel/bridge.ts, /Users/admin/Central/Work/O-I/desktop/cradle/src/workspace/GroundChooser.tsx but also statically imported by /Users/admin/Central/Work/O-I/desktop/cradle/node_modules/@tauri-apps/api/dpi.js, /Users/admin/Central/Work/O-I/desktop/cradle/node_modules/@tauri-apps/api/event.js, /Users/admin/Central/Work/O-I/desktop/cradle/node_modules/@tauri-apps/api/image.js, /Users/admin/Central/Work/O-I/desktop/cradle/node_modules/@tauri-apps/api/window.js, /Users/admin/Central/Work/O-I/desktop/cradle/src/workspace/DetachedFrame.tsx, dynamic import will not move module into another chunk.
+  [building the walk bundle (WALK=1 npm run build)] [plugin:vite:reporter] [plugin vite:reporter] 
+  [building the walk bundle (WALK=1 npm run build)] (!) /Users/admin/Central/Work/O-I/desktop/cradle/node_modules/@tauri-apps/api/event.js is dynamically imported by /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/kernel/bridge.ts but also statically imported by /Users/admin/Central/Work/O-I/desktop/cradle/node_modules/@tauri-apps/api/window.js, /Users/admin/Central/Work/O-I/desktop/cradle/src/workspace/DetachedFrame.tsx, dynamic import will not move module into another chunk.
+  [building the walk bundle (WALK=1 npm run build)] [plugin:vite:reporter] [plugin vite:reporter] 
+  [building the walk bundle (WALK=1 npm run build)] (!) /Users/admin/Central/Work/O-I/desktop/cradle/node_modules/@tauri-apps/api/window.js is dynamically imported by /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx but also statically imported by /Users/admin/Central/Work/O-I/desktop/cradle/src/workspace/DetachedFrame.tsx, dynamic import will not move module into another chunk.
+  [building the walk bundle (WALK=1 npm run build)] computing gzip size...
+  [building the walk bundle (WALK=1 npm run build)] dist/index.html                            0.41 kB │ gzip:  0.28 kB
+  [building the walk bundle (WALK=1 npm run build)] dist/assets/WorkspaceStudy-DQI19hm7.css   19.13 kB │ gzip:  4.66 kB
+  [building the walk bundle (WALK=1 npm run build)] dist/assets/seed-pbLfZuQ0.css             20.63 kB │ gzip:  4.94 kB
+  [building the walk bundle (WALK=1 npm run build)] dist/assets/index-DjOqblg0.css            73.58 kB │ gzip: 12.21 kB
+  [building the walk bundle (WALK=1 npm run build)] dist/assets/WalkChannel-0DOtkOIj.js        3.30 kB │ gzip:  1.32 kB
+  [building the walk bundle (WALK=1 npm run build)] dist/assets/Seed-BgBzp-HE.js              28.33 kB │ gzip:  8.65 kB
+  [building the walk bundle (WALK=1 npm run build)] dist/assets/WorkspaceStudy-Bu7YNBoo.js    31.41 kB │ gzip:  9.87 kB
+  [building the walk bundle (WALK=1 npm run build)] dist/assets/index-BzswDIGm.js            309.64 kB │ gzip: 95.14 kB
+  [building the walk bundle (WALK=1 npm run build)] ✓ built in 7.55s
+  [preview] > oi-cradle@0.1.0 preview
+  [preview] > vite preview --port 4173 --strictPort
+  [preview]   ➜  Local:   http://localhost:4173/
+  [preview]   ➜  Network: use --host to expose
+serving the cradle at http://localhost:4173
+
+=== scenario: shell-recovery ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4179 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4179 (fresh kernel, seq from 1)
+PASS  One-tab Split creates a usable empty sibling
+PASS  Empty split survives relaunch of the renderer
+PASS  Opening another source fills the focused empty pane
+PASS  Workspace footer visible at 1280
+PASS  Global top strip visible at 1280
+PASS  Both region toggles remain at the top at 1280
+PASS  No page overflow at 1280
+  screenshot: artifacts/shell-recovery-1280.png
+PASS  Workspace footer visible at 900
+PASS  Global top strip visible at 900
+PASS  Both region toggles remain at the top at 900
+PASS  No page overflow at 900
+  screenshot: artifacts/shell-recovery-900.png
+PASS  Workspace footer visible at 760
+PASS  Global top strip visible at 760
+PASS  Both region toggles remain at the top at 760
+PASS  No page overflow at 760
+  screenshot: artifacts/shell-recovery-760.png
+PASS  Workspace footer visible at 639
+PASS  Global top strip visible at 639
+PASS  Both region toggles remain at the top at 639
+PASS  No page overflow at 639
+PASS  Central is summonable at 639
+PASS  Overlay returns focus at 639
+PASS  Keyboard summons Central at 639
+  screenshot: artifacts/shell-recovery-639.png
+PASS  Workspace footer visible at 390
+PASS  Global top strip visible at 390
+PASS  Both region toggles remain at the top at 390
+PASS  No page overflow at 390
+PASS  Central is summonable at 390
+PASS  Overlay returns focus at 390
+PASS  Keyboard summons Central at 390
+  screenshot: artifacts/shell-recovery-390.png
+PASS  Responsive transitions preserve the pane tree
+PASS  Overlay preserves intended sidebar depth
+  screenshot: artifacts/shell-recovery-system-1280.png
+  screenshot: artifacts/shell-recovery-system-900.png
+PASS  Point-cloud proposals are not mounted in production
+  stopped walk-bridge
+  receipt: artifacts/shell-recovery.json — 32/32 checks, PASS
+
+=== scenario: surfaces ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4179 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4179 (fresh kernel, seq from 1)
+PASS  Four owner sources open as four unique bindings
+PASS  Last opened source is the single kernel focus
+PASS  Opening an existing ref reuses its binding
+PASS  Keyboard closes the focused source view
+PASS  Keyboard reopens the same source binding
+PASS  Pointer close operates on the requested tab
+PASS  Keyboard splits the active source to the right
+PASS  Keyboard split keeps the DOM caret in the semantically active pane
+PASS  Keyboard focus moves to the neighbouring pane
+PASS  Keyboard moves the active binding into the neighbouring pane
+PASS  Keyboard creates a vertical split
+PASS  Keyboard tiles the four real sources
+PASS  Each tiled source has one editor
+  screenshot: artifacts/surfaces-native-sources-tiled.png
+PASS  Tiling and movement retain dirty source writing
+PASS  Source frame menu discloses exactly its operative frame actions
+PASS  Pointer menu pins the requested source
+PASS  Pinned source refuses keyboard close
+PASS  Pinned close is disclosed as disabled
+PASS  Keyboard unpins the same binding
+PASS  Pointer drag moves a source and removes its empty pane
+PASS  Pointer menu splits the same real binding
+PASS  Keyboard menu activation closes the selected view
+PASS  Closed binding reopens without a new source identity
+PASS  Reload restores pane tree, active tabs, pins and weights exactly
+PASS  Reload restores dirty writing through owner validation
+PASS  Browsing another project never replaces open work
+PASS  Browsing preserves the canonical focused source
+PASS  Kernel receipts stay contiguous across frame operations
+  screenshot: artifacts/surfaces-source-frame-menu.png
+  stopped walk-bridge
+  receipt: artifacts/surfaces.json — 28/28 checks, PASS
+
+=== scenario: spatial ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4179 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4179 (fresh kernel, seq from 1)
+PASS  Canvas arrangement is named for the workspace, independently of the opened project
+PASS  Desktop has three explicit host regions
+PASS  World occupies a real left panel
+PASS  Inspector is absent by default, leaving one sidebar and the canvas
+PASS  No second persistent navigation rail occupies the canvas
+PASS  One arrangement selector belongs to the canvas command strip
+PASS  Inspector opens explicitly over the active owner subject
+PASS  Left selection, canvas and right inspector share one kernel subject
+PASS  Real sources split into independent canvas panes
+PASS  Keyboard resizes a canvas split
+PASS  Maximize presents the active pane alone
+PASS  Maximized pane retains Central access
+PASS  Maximize keeps other source views mounted
+PASS  Maximize retains canonical semantic focus
+PASS  Keyboard restores all panes
+PASS  Restore preserves exact prior split widths
+PASS  Keyboard resizes the left region
+PASS  Keyboard resizes the right region
+PASS  Right region promotes to full view
+PASS  Region promotion never changes semantic focus
+PASS  Escape restores the right panel
+PASS  Project disclosure collapses without closing its open sources
+PASS  Disclosure changes leave semantic focus untouched
+PASS  A freeform workspace has its own surface arrangement
+PASS  A different workspace has independent ProjectRef disclosure state
+PASS  A new workspace also starts with inspection closed
+PASS  Project workspace restores its split constellation
+PASS  Returning to a workspace restores that project disclosure
+PASS  Workspace restores its own region depths
+PASS  Workspace restores its region width
+PASS  Switching workspace preserves unsaved source writing
+PASS  Reload restores the unsaved draft through the native source seam
+PASS  Reload restores the complete split arrangement
+PASS  Freeform workspace restores its distinct writing
+PASS  Freeform workspace restores its distinct right depth
+PASS  Narrow layout preserves the canvas minimum before side panels
+PASS  A collapsed inspector does not evict the Central sidebar on a 700px desktop
+PASS  Responsive Central sidebar retains a usable width
+PASS  Expanding another project does not collapse the prior project
+PASS  Independent project content stays visible during browsing
+  SCENARIO ERROR: page.waitForFunction: Timeout 30000ms exceeded.
+    at settledProjectScroll (/Users/admin/Central/Work/O-I/desktop/cradle/walk/scenarios/spatial.mjs:141:16)
+    at async Module.run (/Users/admin/Central/Work/O-I/desktop/cradle/walk/scenarios/spatial.mjs:144:9)
+    at async runScenario (/Users/admin/Central/Work/O-I/desktop/cradle/walk/run.mjs:337:5)
+    at async file:///Users/admin/Central/Work/O-I/desktop/cradle/walk/run.mjs:410:18
+  stopped walk-bridge
+  receipt: artifacts/spatial.json — 40/40 checks, FAIL
+
+=== scenario: material ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4179 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4179 (fresh kernel, seq from 1)
+PASS  HTML relative <img> resolves through the material route and actually decodes
+PASS  HTML relative <link rel=stylesheet> is loaded and applied
+PASS  HTML relative <a> keeps its literal reference (never rewritten)
+PASS  Owner-resolved relative JavaScript executes the actual HTML interaction
+PASS  HTML retains opaque-origin sandbox without native bridge authority
+  screenshot: artifacts/material-html-rendered.png
+PASS  Traversal outside the material directory is refused (status 404)
+PASS  A real sibling asset resolves with the owner mime hint as Content-Type
+PASS  Maximizing another pane keeps the hidden HTML surface mounted
+PASS  A hidden pane (maximize) suspends its iframe (srcdoc cleared)
+PASS  Restoring the pane resumes the real material content (srcdoc restored)
+PASS  document.visibilityState hidden suspends the rendered iframe
+PASS  document visible again resumes the rendered iframe
+PASS  Markdown heading renders
+PASS  Markdown list renders as real <li> elements
+PASS  Markdown bold emphasis renders
+PASS  Markdown image resolves through the material route and decodes
+PASS  Source toggle returns the real FileSurface editor over the raw Markdown bytes
+PASS  Toggling back to Rendered re-renders Markdown
+  screenshot: artifacts/material-markdown-rendered.png
+PASS  A standalone image file renders as a real decoded <img>, not a textarea
+  screenshot: artifacts/material-image-rendered.png
+PASS  PDF either renders in the platform viewer or discloses an honest unavailable state
+  screenshot: artifacts/material-pdf-state.png
+PASS  Unsupported binary discloses the exact honest disposition sentence
+PASS  Disposition card shows the real byte length
+PASS  No open-with control is offered — work.open has no generic file-path form (verified by research; not wired)
+  screenshot: artifacts/material-unsupported-disposition.png
+PASS  A plain text file still opens the native FileSurface editor directly
+PASS  Close and reopen restores the Markdown rendered view (fresh mount, not stuck on Source)
+PASS  No uncaught page errors during the material walk
+  material walk complete
+  stopped walk-bridge
+  receipt: artifacts/material.json — 26/26 checks, PASS
+
+=== scenario: navigator ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4179 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4179 (fresh kernel, seq from 1)
+PASS  Every project row matches the real Central World map in owner order
+PASS  Summoning retains the original writing buffer
+PASS  Search is not a persistent sidebar input
+PASS  Kernel holds the selected owner project reading
+PASS  Project ref is the owner manifest identity verbatim
+PASS  Browsing a project leaves the current writing focus unchanged
+PASS  Native ground relations remain available without a permanent diagnostic footer
+PASS  Root wiki identity remains the exact owner reference
+PASS  Distinct project wiki identity is preserved
+PASS  Native federation retains real root wiki children
+PASS  Project browsing has no Ground & identity footer
+  screenshot: artifacts/navigator-project-ground.png
+PASS  Selecting the root clears the old project selection and focus
+PASS  Escape dismisses to the same writing
+PASS  Dismiss restores writing caret
+PASS  Pointer context menu summons the same World surface
+PASS  Ordinary Work project offers no fabricated wiki binding
+PASS  Unbound project clears stale focus and fabricates no identity
+PASS  Pointer close returns to rest
+PASS  Pointer summon and close restore the original caret rather than the removed menu item
+PASS  World event log is contiguous and ordered
+PASS  Browsing publishes World readings without semantic focus movement
+  screenshot: artifacts/navigator-restored-writing.png
+PASS  Unavailable owner transport fabricates no project rows
+PASS  Unavailable transport is disclosed locally in the navigator
+  stopped walk-bridge
+  receipt: artifacts/navigator.json — 23/23 checks, PASS
+
+=== walk summary ===
+PASS  shell-recovery — 32/32 checks
+PASS  surfaces — 28/28 checks · open_4_tabs_ms=1277
+FAIL  spatial — 40/40 checks
+PASS  material — 26/26 checks · material_checks=1
+PASS  navigator — 23/23 checks · world_summon_ms=21
+  stopped preview

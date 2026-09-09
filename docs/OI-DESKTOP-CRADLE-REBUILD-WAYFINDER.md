@@ -1,11 +1,18 @@
 # O:I Desktop Cradle — Rebuild Wayfinder (the grilled map)
 
+> **Final foundation placement correction (September 8):** Read [the pane and resource contract](../.superpowers/sdd/cradle-rebuild/SELF-OTHER-FIELD-UX-2026-09-08.md#one-pane-system-an-optional-accompanying-agent). The right sidebar stays the optional accompanying agent; Shared Field details use ordinary canvas panes/full views/popouts, returning as tabs. A NOW starts from intention + one or more worlds/projections; selected outputs may survive closure. First rounds establish UI fidelity, window/focus/restore correctness and measured bounded resource use. This overrides earlier generic right-inspector wording for shared subjects.
+
+> **Latest owner field direction:** [Self/Other experience specification](../.superpowers/sdd/cradle-rebuild/SELF-OTHER-FIELD-UX-2026-09-08.md) gives the concrete making, sharing, invitation and VAK-navigation journeys. Shared NOW uses Central in the shared installation; it is not a separate activity reading. This execution addendum supersedes the earlier interpretation.
+
+> **September 8 execution update:** [Product foundations and PF-01–06](../.superpowers/sdd/cradle-rebuild/PRODUCT-FOUNDATION-REFRESH-2026-09-08.md) carry current AIKit wiki/Gateway, Central filesystem, Actuation and landed Workcell detection contracts. Factory is the full-page encounter experience; default emphasis and commissioning UX remain proposals for owner review. This supersedes dated availability assumptions, not the design set or fidelity gates.
+
+
 **[OI-CRADLE-REBUILD-WF]** · charted 2026-09-04, re-grilled 2026-09-05 · destination ruled by the owner
 
 Execution form of the cradle rebuild. Produced by grilling the design artifacts
 against each other — not by inventing design. Every decision cites its artifact
 of record. The organising grammar is the canonical product field
-(`docs/CANONICAL-PRODUCT-FIELD.md`): the cradle **S** and the six positions
+(`docs/CANONICAL-PRODUCT-FIELD.md`): the desktop **M′**, related through the `oi` command whole **S** to the six positions
 **S0 Central · S1 Actuation · S2 AIKit · S3 Software Factory · S4 Workcell ·
 S5 Quaternal Logic**, each with human face `H_i` and agent face `A_i`.
 
@@ -14,6 +21,98 @@ on branch `cradle-rebuild`; status lives in its execution ledger, never in
 `docs/cradle/`.
 
 ---
+
+## Routing and coordinate correction — 2026-09-06
+
+Owner clarification in [[CANONICAL-PRODUCT-FIELD]] determines S = `oi` CLI and
+M′ = desktop whole. Existing `S→Si` unit cells name functional dependencies;
+their desktop projection is now read explicitly as `M′→S→Si`. Unit IDs and
+native acceptance obligations retain their identity. The three-region layout
+is `0 / 1`, not an assignment of the six future QL instruments to this shell.
+
+Discovered kernel clients use `OI_BIN` (default `oi`), which resolves native
+candidate overrides or registered products. Install/build the matching suite
+CLI before testing the changed desktop. Keep the exact owner contributions in
+the dev-gate receipt. `oi desktop capabilities --json` discloses the bounded
+application bindings; it does not assert that the full programme is accepted.
+
+## Owner correction and pause — 2026-09-06
+
+Standing: explicit owner review during the rate-limit pause. This corrects the
+current implementation and execution acceptance; it does not endorse the current
+shell as a foundation or waive the remaining programme.
+
+- The dynamic right-hand layer must implement the accepted agent-panel shape.
+  In encounter context it carries agent details and the complete
+  Conversation / Activity / Context / Inspect chain and its associated content.
+  Remove the duplicated encounter header/plane section currently occupying the
+  canvas; move that section to the right panel. A generic Context / History /
+  System inspector is not an adequate substitute for the subject's actual planes.
+  Preserve one native encounter/transcript/composer across side, full, tab and
+  detached presentations; do not create another chat state to repair layout.
+- Panel and window manipulation is keyboard-first using the existing professional
+  grammar. Remove the wasteful persistent panel-management control bar identified
+  by the owner. Native menus and contextual disclosure support discovery and
+  accessibility; do not replace the removed row with another cluster of buttons.
+  Preserve useful pane-local tab grammar and deliberate task controls.
+- The canvas is a general material/surface host, not a bounded-text viewer with
+  other formats treated as afterthoughts. Broad file-format handling, especially
+  actual rendered HTML, is a programme obligation. Track native format/type,
+  renderer availability, actual content, editing/read-only state, provenance and
+  failure/fallback separately. HTML needs an actual contained rendering surface;
+  showing markup in a textarea does not establish HTML support. Unsupported
+  formats require an explicit native opening/fallback disposition, never a claim
+  that every format renders. File viewing does not grant execution or source-write
+  authority.
+
+Execution correction: native-owner progress must no longer outrun validation of
+where its presentation belongs. Before integrating the next body, trace the
+accepted reference's region, active-subject relation, planes, keyboard transitions
+and full/collapsed behavior into the actual shell. Verify those relationships as
+well as pixels; passing current-layout tests does not establish the right design.
+Do not restart discovery or produce another mockup. Resume with the right-panel
+structure and removal of redundant chrome, then integrate proven owner work in
+programme dependency order. All slices0–8 remain in scope.
+
+Implementation is paused at the owner's request for reflection. Preserve all
+uncommitted work, candidate receipts and active native providers; no new builds,
+provider launches, promotion or installation during this pause. Later continuation
+must distinguish verified candidates from unfinished rate-limited agent work.
+
+## Foundation and Gateway execution map — current binding direction
+
+The owner now commissions the desktop foundation/specification track while the
+Gateway product track develops independently. Execute
+[FND-00–06 and GW-01–06](../.superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md#foundation-execution-gate--owner-direction-2026-09-06).
+This is the current detailed execution map; inherited U/W IDs remain traceability.
+The minimal entry prompt is [BUILD-O-I-NEXT](../.superpowers/sdd/cradle-rebuild/BUILD-O-I-NEXT.md).
+
+- Inspect the full REF-01/02/03 running HTML set, not only companion initial
+  screenshots. REF-01 supplies essential right-panel/layer interaction evidence.
+  Record real interaction and exact viewports; the missed structure requires a
+  fresh bounded inspection despite the previous once-only pass.
+- The right layer carries agent details and the complete four-plane encounter
+  section; the canvas does not carry its duplicate. Dynamic subject changes,
+  availability, full/return and responsive relationships are acceptance conditions.
+- Remove reference web app top-bar rendering, preserving its functions natively.
+  Also apply the owner's explicit management-bar removal. No other regional,
+  pane-tab, colour, density or interaction detail is implicitly exempted.
+- Keyboard-first professional operation and broad native material hosting,
+  including actual HTML rendering, are foundation work. Keep useful pane tabs,
+  contextual discovery and native authority; do not substitute more toolbar rows.
+- Gateway continuity is **mapped implementation**, not fog: AgencyService and
+  [architecture §14](cradle/02-ARCHITECTURE.md#14-agency-gateway-desktop-consumer-contract),
+  authorised ecology/attach/Stream, BOOT-15, composition awareness, Observatory
+  and remote/Factory correlation. Products own its protocol, registry, identities
+  and authority. The desktop consumes their declared seams without a parallel owner.
+
+A complete native owner gate does not pass FND-06. A screenshot does not pass
+GW continuity. Discrepancy receipts must identify reference/state, required
+relationship, production component, owner input, keyboard/native behaviour,
+visual evidence and remaining gap. Required structural failures prevent a
+foundation-accepted label. Preserve working native semantics while replacing
+presentation structure; no new mockup or business-state simulation.
+
 
 ## 0. Destination
 
@@ -48,7 +147,8 @@ write in the canvas
 V1 acceptance = all three verticals plus the loop, verified by app
 functionality with real metrics (§8). Fog (charted later, not now): Factory
 import (S→S2→S3), Workcell material state (S→S4), QL refraction (S→S5),
-Gateway continuity, lower terminal depth, Nara/Epi composition.
+Lower terminal depth and Nara/Epi retain their native obligations; Gateway
+continuity is now explicitly mapped as GW-01–06, not fog.
 
 ---
 
@@ -118,13 +218,15 @@ Gateway continuity, lower terminal depth, Nara/Epi composition.
     - **One phase branch.** Each phase opens one branch `cradle-<phase>` cut
       from `main`. Units execute only there. No side branches per unit, no
       stacked branches.
-    - **Implementers never touch `main`.** Only the orchestrator moves
-      `main`, only at a phase gate, only after the owner's walk: merge
-      `--no-ff`, push `main` to origin, delete the phase branch, delete
-      remote branches whose tips are now fully contained in `main`. A gate
-      never ends with `main` ahead of origin.
+    - **Implementers stay on the phase branch.** The orchestrator lands it at
+      the phase gate once the stated walk and acceptance checks pass, then
+      retires the merged branch and clean worktree. A gate never ends with
+      accepted `main` ahead of origin. A new owner ruling is needed only for
+      a consequential judgement not settled by the commissioned phase.
     - **Sync before each unit.** The orchestrator fetches all repos before
-      briefing a unit; if `main` moved, the phase branch rebases on it; the
+      briefing a unit. An unpublished, exclusively owned phase branch may be
+      rebased if `main` moved; once published, update it without rewriting
+      shared history or use the repository's merge queue. The
       brief pins each product repo (Central, ai-kit, …) at the exact commit
       the unit builds against — parallel product work stays current by
       pinning, never by guessing.
@@ -262,7 +364,8 @@ output, it is not built (law 10).
   into Projects/Runs (C3/D2 hinge). Fog until P4 gate exposes it.
 - **S→S4** — Workcell: placement/material state felt, not stared at (C2).
 - **S→S5** — QL: refraction/formal faculties where a profile permits (C1/O3).
-- **Gateway continuity, lower terminal/trace, Nara/Epi (#138 §12)** — fog.
+- **Gateway continuity (#154)** — GW-01–06 in the current programme; authorised ecology/Stream/attach, BOOT-15, System, remote/Factory joins. Product-side implementation is independently owned; desktop consumer work is explicit.
+- **Lower terminal/trace, Nara/Epi (#138 §12)** — retain their separately mapped/native investigation obligations.
 
 ---
 
@@ -291,6 +394,7 @@ output, it is not built (law 10).
 | D19 | Workspaces are freeform autosaved app state | A workspace = app-state bundle {focused surface, open tabs, project context, bound session, layer depths}, freeform (user-makeable, nameable). Opening a project naturally focuses its workspace (the likely default); the **root workspace** is the open Central ground or a saved entity attributable to the root. **Autosave is crucial**: app state saves continuously, sensitive to cross-tab work within the same project. | owner ruling 2026-09-05 |
 | D20 | Inline routing from Flow | From a Flow selection, an @-operator route addresses agent + destination in one act — highlight, then e.g. `@agent + to @project:… = @forms:"flow-1.md"`. Routes **harden through History/familiarity**: AIKit records successful use, canonical refs stay authoritative. AIKit search/resolution operates in the UX for human and agent alike; plain search unchanged; canvas↔agent integration clean and open at base. Exact grammar designed in context (W1.7). | owner ruling 2026-09-05; O:I skill familiarity law; #155 D4 |
 | D21 | The wiki leads the vision | The wiki system is a first-class feature of the app whole: project wiki (ProjectCentral) + root wiki + the shared-field wiki projection, rendered as the design-vision centrepiece — dark grey nodes, slender connecting lines, sparse sleek dots, on a soft writing-paper ground (drab off grey-yellow-green), clean render distances and transitions, data loaded from real wiki content. The wiki is **operative**: nodes are authored ground — skills, guidance, intent files — where the user crafts the agentic world through owner authoring operations (human-acceptance law holds). Wiki + search together are the app's primary navigation grammar. | owner ruling 2026-09-05; `docs/SHARED-FIELD.md`; O:I skill Control-authoring law |
+| D22 | Expression is a notify modality | The house motion language has two classes. **Forms** are continuous readings of an owner-reported state (the elemental loading directions; the quiet forms; the agent-state forms). **Gestures** are bounded wisps that answer a canonical Action at the point of contact, after the component has landed by its own token transition, around its edges and never of it. One full-window **expression overlay** per host window draws both in page coordinates; components never draw points, they post intent through one seam (`express`) with the component rect, a direction (from→to or an explicit vector) and a time (delay, hold, chain). Agent state is an enum owned by the agency seam; the design system owns only its mapping to forms. Reduced motion holds a still form and refuses gestures. Less is more. Study of record: `desktop/cradle/walk/artifacts/review/point-cloud-elements/` (rev 5) and `EXPRESSION-OVERLAY-SPEC-2026-09-08.md`. | owner ruling 2026-09-08; D18; D9; D15; D4; laws 7, 11 |
 
 ---
 
@@ -504,6 +608,7 @@ arrive uncharted.
 | **W1.5 Flow knowledge affordances** | U4.2 lands | "what changed relative to this thought": changed sources, affected knowledge, unresolved — from Central/AIKit seams (#138 §6); + #138 acceptance 13 (non-Central Flow generality) |
 | **W1.6 Lower region law** | first phase gate that needs it | material unfolding below the canvas per APP-SPEC §7 — never a universal event store; summon-only at rest |
 | **W1.7 Inline route syntax** | U2.3 lands (addressing working) | the @-operator route grammar over Flow selections — agent + destination in one act (D20); hardened routes via AIKit History/familiarity; designed against real flows with the owner |
+| **W1.8 Expression vocabulary** | FND-07 lands (overlay live on real surfaces) | which gestures and forms enter the vocabulary, which agent states map to which forms, per-modality on/off (D18) — designed in the running app with the owner; the study is a candidate set, not the vocabulary. Owner steer 2026-09-08: keep idle/waiting, listening, presence, arrival, searching and the four elements; the rest are reserve |
 
 ---
 
@@ -582,7 +687,21 @@ working agent conforms without relying on session memory:
 Each phase: **open** — cut `cradle-<phase>` from `main`, first commit carries
 the map + skill + ledger row for the phase; **execute** — units U<n>.<m> one
 session each, briefs pin product-repo commits, walks receipted in the ledger;
-**gate** — the owner walks the app; **land** — orchestrator merges `--no-ff`
-to `main`, pushes, deletes the phase branch and every remote branch now fully
-contained in `main`, ledger records the gate. P0 closed this way 2026-09-05
+**gate** — run the phase's stated owner walk or named acceptance check;
+**land** — orchestrator merges through the repository's accepted path, pushes,
+and retires the merged branch and clean worktree using merged-PR identity plus
+current-tip verification rather than ancestry alone; the ledger records the
+terminal state. P0 closed this way 2026-09-05
 (merge `08f6ea9`); P1 opens `cradle-p1` the same way.
+
+---
+
+## Brief: P1 integration (FND-07 expression & shell implementation)
+
+**For implementation before P1 shell + business-logic integration**
+
+- **Expression overlay ready:** [`BRIEF-FND-07-EXPRESSION-2026-09-08.md`](../../../Work/O-I/.superpowers/sdd/cradle-rebuild/BRIEF-FND-07-EXPRESSION-2026-09-08.md) supplied to shell agent, with corrected agent-form derivation and "resize only" steering direction applied.
+- **Specification updated:** spec and study README at revision 6; D22, W1.8, FND-07 remain in wayfinder and programme from prior turn.
+- **Handoff logged:** closing handoff recorded in O-I NOW field; O-I day 2026-09-08 rolled over to 2026-09-09 with 26 live records carried forward.
+- **Root-register note:** README drafts and two dated folders at the Work root predate this session and remain in place; proposed placement decision deferred to the owner.
+- **Next move:** shell agent briefs on `cradle-p1` branch; W1.8 settles final expression vocabulary with the owner in the running app.

@@ -5,11 +5,11 @@ import { createParticipant } from '../index.mjs';
 import { createExploreApplication } from '../explore.mjs';
 import { createWatch } from '../watch.mjs';
 import {
-  admitA2aDifference,
   createA2aBinding,
   createA2aPresence,
   encounterA2aDifference,
   performA2aExchange,
+  prepareA2aContributionIngress,
 } from '../a2a.mjs';
 import { reviseA2aBinding, withdrawA2aBinding } from '../a2a-lifecycle.mjs';
 import { searchA2aParticipation } from '../a2a-explore.mjs';
@@ -33,6 +33,10 @@ const AGENT_WORLD_REF = 'world:a2a:remote';
 const BINDING_REF = 'a2a-binding:remote';
 const BINDING_PROJECTION_REF = 'projection:a2a-binding:remote';
 const PRESENCE_REF = 'a2a-presence:remote';
+const EXCHANGE_REQUEST_REF = 'exchange-request:a2a-live:initial';
+const EXCHANGE_GRANT_REF = 'exchange-grant:a2a-live:initial';
+const REPLACEMENT_EXCHANGE_REQUEST_REF = 'exchange-request:a2a-live:replacement';
+const REPLACEMENT_EXCHANGE_GRANT_REF = 'exchange-grant:a2a-live:replacement';
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -222,6 +226,8 @@ try {
     'SELECT * FROM projection',
     'SELECT * FROM explore_entry',
     'SELECT * FROM my_field_authority',
+    'SELECT * FROM my_contribution_receipt',
+    'SELECT * FROM contribution',
     'SELECT * FROM my_watch',
   ]);
   await subscribe(agent.conn, [
@@ -315,6 +321,27 @@ try {
   assert.notEqual(firstSnapshot.implementation.bindings[0].row_id, BINDING_REF);
   assert.notEqual(firstSnapshot.implementation.presence[0].row_id, PRESENCE_REF);
 
+  await owner.conn.reducers.requestExchange({
+    requestRef: EXCHANGE_REQUEST_REF,
+    fieldRef: FIELD_REF,
+    initiatorParticipantRef: OWNER_PARTICIPANT_REF,
+    counterpartyParticipantRef: AGENT_PARTICIPANT_REF,
+    purpose: 'a2a-message-exchange',
+    scopeJson: JSON.stringify({ kind: 'message' }),
+    protocol: 'a2a',
+    bindingRef: BINDING_REF,
+    bindingRevision: 1,
+    modesJson: JSON.stringify(['message:send']),
+    maxUses: 1,
+    ttlSeconds: 300,
+  });
+  await owner.conn.reducers.grantExchange({
+    requestRef: EXCHANGE_REQUEST_REF,
+    grantRef: EXCHANGE_GRANT_REF,
+    reason: 'A2A live exchange acceptance',
+    evidenceJson: JSON.stringify({ fixture: 'a2a-live' }),
+  });
+
   const difference = await performA2aExchange({
     binding: found[0].participation.binding,
     presence: found[0].participation.presence,
@@ -323,6 +350,23 @@ try {
       exchange_ref: 'a2a-exchange:live:1',
       message_id: 'a2a-message:live:1',
       text: 'Return a bounded difference for explicit admission.',
+    },
+    authorize_exchange: async (demand: any) => {
+      assert.equal(demand.binding_revision, 1);
+      await owner.conn.reducers.consumeExchange({
+        grantRef: EXCHANGE_GRANT_REF,
+        operationId: demand.operation_id,
+        fieldRef: demand.field_ref,
+        initiatorParticipantRef: demand.initiator_participant_ref,
+        counterpartyParticipantRef: demand.counterparty_participant_ref,
+        protocol: demand.protocol,
+        bindingRef: demand.binding_ref,
+        bindingRevision: demand.binding_revision,
+        mode: demand.mode,
+        purpose: demand.purpose,
+        scopeJson: demand.scope_json,
+      });
+      return { allowed: true, grant_ref: EXCHANGE_GRANT_REF };
     },
   });
   assert.equal(difference.transport_result.kind, 'task');
@@ -342,20 +386,28 @@ try {
   assert.equal(encounter.provenance[0].ref, difference.exchange_ref);
   assert.equal('subjective_state' in encounter, false);
 
-  const admission = admitA2aDifference(difference, {
-    decision_ref: 'decision:a2a:admit:1',
-    decided_by_participant_ref: OWNER_PARTICIPANT_REF,
-    decided_at: '2026-08-16T21:00:15.000Z',
-    disposition: 'projection',
-    projection: { projection_ref: 'projection:a2a:return:1' },
+  const ingress = prepareA2aContributionIngress(difference, {
+    contribution_ref: 'contribution:a2a:live:return',
+    created_at: '2026-08-16T21:00:15.000Z',
+    target: { ref: AGENT_REF, kind: 'agent' },
   });
-  assert.ok(admission.projection);
-  assert.equal(admission.projection.representation.kind, 'a2a-return');
-  await owner.conn.reducers.putProjection(projectionArgs(FIELD_REF, admission.projection));
+  assert.equal(ingress.schema, 'oi.a2a-contribution-ingress/v1');
+  assert.equal(ingress.contributor_participant_ref, AGENT_PARTICIPANT_REF);
+  await owner.conn.reducers.ingestAuthorizedExchangeContribution({
+    grantRef: ingress.transport_provenance.exchange_grant_ref,
+    operationId: ingress.transport_provenance.exchange_operation_id,
+    fieldRef: FIELD_REF,
+    contributorParticipantRef: ingress.contributor_participant_ref,
+    sourceKind: ingress.source_kind,
+    transportProvider: ingress.transport_provider,
+    transportMessageId: ingress.transport_message_id,
+    contractJson: JSON.stringify(ingress.contribution),
+  });
   await waitUntil(
-    () => owner.conn.db.projection.projectionKey.find(projectionStorageKey(admission.projection.projection_ref, 1)),
-    'admitted returned Projection'
+    () => [...owner.conn.db.myContributionReceipt.iter()].find((row: any) => row.contributionRef === ingress.contribution.contribution_ref && row.state === 'quarantined'),
+    'A2A returned Contribution quarantine'
   );
+  assert.equal([...owner.conn.db.contribution.iter()].some((row: any) => row.contributionRef === ingress.contribution.contribution_ref), false);
 
   const watch = createWatch({
     watch_ref: 'watch:a2a:agent',
@@ -408,11 +460,48 @@ try {
   assert.equal(replacementSnapshot.bindings[0].agent_ref, AGENT_REF);
   assert.equal(replacementSnapshot.bindings[0].participant_ref, AGENT_PARTICIPANT_REF);
   assert.equal(replacementSnapshot.bindings[0].endpoint_url, fixtureServer.replacement.endpoint);
+  await owner.conn.reducers.requestExchange({
+    requestRef: REPLACEMENT_EXCHANGE_REQUEST_REF,
+    fieldRef: FIELD_REF,
+    initiatorParticipantRef: OWNER_PARTICIPANT_REF,
+    counterpartyParticipantRef: AGENT_PARTICIPANT_REF,
+    purpose: 'a2a-message-exchange',
+    scopeJson: JSON.stringify({ kind: 'message' }),
+    protocol: 'a2a',
+    bindingRef: BINDING_REF,
+    bindingRevision: 2,
+    modesJson: JSON.stringify(['message:send']),
+    maxUses: 1,
+    ttlSeconds: 300,
+  });
+  await owner.conn.reducers.grantExchange({
+    requestRef: REPLACEMENT_EXCHANGE_REQUEST_REF,
+    grantRef: REPLACEMENT_EXCHANGE_GRANT_REF,
+    reason: 'A2A replacement binding exchange acceptance',
+    evidenceJson: JSON.stringify({ fixture: 'a2a-live', binding_revision: 2 }),
+  });
   const replacementDifference = await performA2aExchange({
     binding: replacementSnapshot.bindings[0],
     presence: replacementSnapshot.presence[0],
     initiator_participant_ref: OWNER_PARTICIPANT_REF,
     message: { message_id: 'a2a-message:live:replacement', text: 'Use replacement endpoint.' },
+    authorize_exchange: async (demand: any) => {
+      assert.equal(demand.binding_revision, 2);
+      await owner.conn.reducers.consumeExchange({
+        grantRef: REPLACEMENT_EXCHANGE_GRANT_REF,
+        operationId: demand.operation_id,
+        fieldRef: demand.field_ref,
+        initiatorParticipantRef: demand.initiator_participant_ref,
+        counterpartyParticipantRef: demand.counterparty_participant_ref,
+        protocol: demand.protocol,
+        bindingRef: demand.binding_ref,
+        bindingRevision: demand.binding_revision,
+        mode: demand.mode,
+        purpose: demand.purpose,
+        scopeJson: demand.scope_json,
+      });
+      return { allowed: true, grant_ref: REPLACEMENT_EXCHANGE_GRANT_REF };
+    },
   });
   assert.equal(replacementDifference.transport_result.ref, 'a2a-task:replacement');
 
@@ -467,6 +556,7 @@ try {
     initiator_participant_ref: OWNER_PARTICIPANT_REF,
     message: { message_id: 'a2a-message:after-withdrawal', text: 'must not send' },
     fetch_impl: async () => { attemptedFetch = true; throw new Error('must not fetch'); },
+    authorize_exchange: async () => { throw new Error('currently unreachable withdrawn binding'); },
   }), /explicitly published binding|currently reachable/);
   assert.equal(attemptedFetch, false);
 
@@ -489,7 +579,8 @@ try {
     presence_state: withdrawnPresence.availability,
     initial_task: difference.transport_result.ref,
     replacement_task: replacementDifference.transport_result.ref,
-    admitted_projection_ref: admission.projection.projection_ref,
+    returned_contribution_ref: ingress.contribution.contribution_ref,
+    returned_contribution_state: 'quarantined',
     encounter_ref: encounter.encounter_ref,
     watch_ref: watch.watch_ref,
     a2a_subscription_events: a2aEvents,

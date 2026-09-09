@@ -27,12 +27,20 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   core:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: desktop/cradle/kernel
       - name: Test and lint O:I CLI library
         run: |
           cargo test --manifest-path cli/Cargo.toml --all-targets --locked
@@ -55,11 +63,16 @@ jobs:
 
   presentation:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            site/package-lock.json
+            desktop/cradle/package-lock.json
       - name: Build public front door against shared tokens
         run: |
           npm install --prefix site --no-audit --no-fund
@@ -74,14 +87,20 @@ jobs:
 
   native-shell:
     runs-on: macos-15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-apple-darwin
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: desktop/cradle/src-tauri
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/cradle/package-lock.json
       - name: Install cradle dependencies from lock
         run: npm ci --prefix desktop/cradle --no-audit --no-fund
       - name: Check Rust-owned native shell from lock

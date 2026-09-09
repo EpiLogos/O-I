@@ -66,15 +66,15 @@ export function createLiveExploreBrowserProvider(liveApplication) {
   function subscribe(listener) {
     requireFunction(listener, 'live Explore browser provider listener');
     return liveApplication.subscribe((event) => {
-      if (event?.type !== 'rebuild') return;
+      if (!['rebuild', 'rebuild-error', 'availability'].includes(event?.type)) return;
       listener({ event, model: current() });
     });
   }
 
   function status() {
     return typeof liveApplication.status === 'function'
-      ? { kind: 'live', live: true, ...liveApplication.status() }
-      : { kind: 'live', live: true };
+      ? { kind: 'live', live: liveApplication.status().transport?.state === 'available', ...liveApplication.status() }
+      : { kind: 'live', live: false, transport: { state: 'unknown' } };
   }
 
   return Object.freeze({ kind: 'live', current, subscribe, status });

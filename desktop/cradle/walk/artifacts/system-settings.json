@@ -1,0 +1,99 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "system-settings",
+  "generated_at": "2026-09-08T12:59:30.216Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 1270,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Settings projects all seven positions (O:I + six products)"
+    },
+    {
+      "ok": true,
+      "label": "BOOT-06/12 honest availability chip on every discovered position"
+    },
+    {
+      "ok": true,
+      "label": "QL renders its emptiness honestly (L3) — no fabricated controls"
+    },
+    {
+      "ok": true,
+      "label": "Missing native obligations render as obligations, never as disabled buttons (L3)"
+    },
+    {
+      "ok": true,
+      "label": "Activity view shows the honest no-project absence"
+    },
+    {
+      "ok": true,
+      "label": "Health rail restores the seven-position census"
+    },
+    {
+      "ok": true,
+      "label": "Settings inspection never reassigns semantic focus"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "read.focus",
+      "duration_ms": 2.6,
+      "data": {}
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 31,
+      "data": {
+        "file": "system-settings-settings-activity.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 28,
+      "data": {
+        "file": "system-settings-settings-config.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 31,
+      "data": {
+        "file": "system-settings-settings-bootstrap.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.focus",
+      "duration_ms": 12.6,
+      "data": {}
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 30,
+      "data": {
+        "file": "system-settings-settings-health.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "system-settings-settings-activity.png",
+    "system-settings-settings-config.png",
+    "system-settings-settings-bootstrap.png",
+    "system-settings-settings-health.png"
+  ]
+}

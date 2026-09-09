@@ -1,0 +1,14 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "selfother-ux-corrected-and-current-owners-2026-09-08",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "codex-desktop-planning-20260908",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1788834307,
+  "subject": "Self/Other UX corrected and current owners audited",
+  "result": "Added .superpowers/sdd/cradle-rebuild/SELF-OTHER-FIELD-UX-2026-09-08.md with person-first making/sharing/inviting journeys. Owner correction governs whole Self/Other framing, shared Central NOW, nested projections, potentially ephemeral task-context bubbles, native VAK and subtle point-cloud constellation travel. Linked programme/wayfinder/orchestration; marked earlier NOW-reading interpretation superseded. Luna audited current O-I c1ce2db, Central c04adc5, AIKit fa002bb. Root verified full VAK parser/horizons/operators, existing page/projection contracts and radial current graph. Shared Central SpaceTimeDB NOW materialisation and ephemeral/private lifecycle remain owner gaps. No application edits/builds/provider changes. Scoped whitespace and new doc local links passed. Open UX detail: retention/return when temporary shared work closes.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-09-08"
+  ]
+}

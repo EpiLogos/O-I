@@ -1,0 +1,15 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "gateway-bootstrap-fold-landed-in-aikit-2026-09-06",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "zcode-session-2026-09-06-gateway-awareness",
+  "kind": "note",
+  "recorded_at_unix_seconds": 1788723971,
+  "subject": "Gateway bootstrap fold landed in ai-kit — three-lane UX contract in the awareness brief",
+  "result": "For the desktop programme: ai-kit now ships the gateway as bootstrap-addressable product surface (commits f80d6fe + a2f90c9 on ai-kit main, not pushed). Desktop lane should consume, not re-implement: (1) gateway presence via the aikit doctor gateway.service probe / aikit gateway status --json — not a bespoke socket check; (2) the well-known endpoint ~/.aikit/state/gateway.sock with state in gateway.json — the desktop addresses what serve or a Workcell materialisation bound, never binds it itself; (3) aikit gateway ecology --json is the canonical agency/session/stream/surface read model for Observatory/detach states, disclosure presence-does-not-imply-authority. Updated brief with the three UX lanes (user-desktop / user-terminal / agent): .superpowers/sdd/cradle-rebuild/gateway-awareness-2026-09-06.md §Update 2026-09-06 (later). M-prime rows + command-count collation for the new aikit gateway group remain this programme's to do in O-I suite/.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-09-06",
+    "2026-09-08"
+  ]
+}

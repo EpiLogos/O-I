@@ -4,6 +4,7 @@ pub mod dev_world;
 pub mod guardian;
 pub mod modality;
 pub mod native_lifecycle;
+pub mod owner_disclosure;
 pub mod package;
 pub mod product_command;
 pub mod skillset;

@@ -1,0 +1,5 @@
+{
+  "pid": 97981,
+  "executable": "/private/tmp/oi-p1-native-target-final-20260908/debug/bundle/macos/O-I P1 Acceptance.app/Contents/MacOS/oi-cradle",
+  "reason": "CUA post-Quit state read unexpectedly relaunched app; stopped owned test bundle before any UI interaction"
+}

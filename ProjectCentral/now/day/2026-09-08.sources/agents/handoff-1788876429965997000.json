@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "handoff-1788876429965997000",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "codex-editor-context-plan-20260908",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1788876429,
+  "subject": "Editor suite and cross-pane context attachment proposal",
+  "result": "Added desktop/cradle/walk/artifacts/review/EDITOR-CONTEXT-PLAN-2026-09-08.md as an agent-authored proposal. It grounds the subtle document-type command line and footer, pane-local element/text selection, typed ContextCandidate to owner-resolved ContextSelection boundary, explicit encounter-target routing, privacy/trust, accessibility, stale revision and selector recovery, and EC-01–07 implementation/real-walk slices in current SourceSurface/FileSurface/MaterialSurface/kernel/Encounter seams and canonical docs. Current blocking owner gaps are Central selection resolution, AIKit canonical draft attachments plus send preflight/receipt, and durable trust/retention for non-Central web observations. No production code changed; links and diff whitespace verified.",
+  "status": "waiting"
+}

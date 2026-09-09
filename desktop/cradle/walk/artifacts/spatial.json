@@ -1,0 +1,397 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "spatial",
+  "generated_at": "2026-09-08T12:23:11.657Z",
+  "environment": {
+    "base_url": "http://localhost:1423",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 5820,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Canvas arrangement is named for the workspace, independently of the opened project"
+    },
+    {
+      "ok": true,
+      "label": "Desktop has three explicit host regions"
+    },
+    {
+      "ok": true,
+      "label": "World occupies a real left panel"
+    },
+    {
+      "ok": true,
+      "label": "Inspector is absent by default, leaving one sidebar and the canvas"
+    },
+    {
+      "ok": true,
+      "label": "No second persistent navigation rail occupies the canvas"
+    },
+    {
+      "ok": true,
+      "label": "One arrangement selector belongs to the canvas command strip"
+    },
+    {
+      "ok": true,
+      "label": "Inspector opens explicitly over the active owner subject"
+    },
+    {
+      "ok": true,
+      "label": "Left selection, canvas and right inspector share one kernel subject"
+    },
+    {
+      "ok": true,
+      "label": "Real sources split into independent canvas panes"
+    },
+    {
+      "ok": true,
+      "label": "Keyboard resizes a canvas split"
+    },
+    {
+      "ok": true,
+      "label": "Maximize presents the active pane alone"
+    },
+    {
+      "ok": true,
+      "label": "Maximized pane retains Central access"
+    },
+    {
+      "ok": true,
+      "label": "Maximize keeps other source views mounted"
+    },
+    {
+      "ok": true,
+      "label": "Maximize retains canonical semantic focus"
+    },
+    {
+      "ok": true,
+      "label": "Keyboard restores all panes"
+    },
+    {
+      "ok": true,
+      "label": "Restore preserves exact prior split widths"
+    },
+    {
+      "ok": true,
+      "label": "Keyboard resizes the left region"
+    },
+    {
+      "ok": true,
+      "label": "Keyboard resizes the right region"
+    },
+    {
+      "ok": true,
+      "label": "Right region promotes to full view"
+    },
+    {
+      "ok": true,
+      "label": "Region promotion never changes semantic focus"
+    },
+    {
+      "ok": true,
+      "label": "Escape restores the right panel"
+    },
+    {
+      "ok": true,
+      "label": "Project disclosure collapses without closing its open sources"
+    },
+    {
+      "ok": true,
+      "label": "Disclosure changes leave semantic focus untouched"
+    },
+    {
+      "ok": true,
+      "label": "A freeform workspace has its own surface arrangement"
+    },
+    {
+      "ok": true,
+      "label": "A different workspace has independent ProjectRef disclosure state"
+    },
+    {
+      "ok": true,
+      "label": "A new workspace also starts with inspection closed"
+    },
+    {
+      "ok": true,
+      "label": "Project workspace restores its split constellation"
+    },
+    {
+      "ok": true,
+      "label": "Returning to a workspace restores that project disclosure"
+    },
+    {
+      "ok": true,
+      "label": "Workspace restores its own region depths"
+    },
+    {
+      "ok": true,
+      "label": "Workspace restores its region width"
+    },
+    {
+      "ok": true,
+      "label": "Switching workspace preserves unsaved source writing"
+    },
+    {
+      "ok": true,
+      "label": "Reload restores the unsaved draft through the native source seam"
+    },
+    {
+      "ok": true,
+      "label": "Reload restores the complete split arrangement"
+    },
+    {
+      "ok": true,
+      "label": "Freeform workspace restores its distinct writing"
+    },
+    {
+      "ok": true,
+      "label": "Freeform workspace restores its distinct right depth"
+    },
+    {
+      "ok": true,
+      "label": "Narrow layout preserves the canvas minimum before side panels"
+    },
+    {
+      "ok": true,
+      "label": "A collapsed inspector does not evict the Central sidebar on a 700px desktop"
+    },
+    {
+      "ok": true,
+      "label": "Responsive Central sidebar retains a usable width"
+    },
+    {
+      "ok": true,
+      "label": "Expanding another project does not collapse the prior project"
+    },
+    {
+      "ok": true,
+      "label": "Independent project content stays visible during browsing"
+    },
+    {
+      "ok": true,
+      "label": "Returning to a ProjectRef restores its actual file-list scroll"
+    },
+    {
+      "ok": true,
+      "label": "Native owner revalidation on reload retains the project file-list scroll"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-08T12:23:11.968Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:1423/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.focus",
+      "duration_ms": 243.4,
+      "data": {
+        "project": {
+          "kind": "project",
+          "native_owner": "central",
+          "provenance": {
+            "source": "projectcentral.inspect"
+          },
+          "ref": "editor-walk"
+        },
+        "subject": {
+          "kind": "source",
+          "native_owner": "central",
+          "provenance": {
+            "source": "central.projectcentral"
+          },
+          "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+        },
+        "world": {
+          "kind": "world",
+          "native_owner": "central",
+          "provenance": {
+            "source": "projectcentral.source.read"
+          },
+          "ref": "project:editor-walk"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.focus",
+      "duration_ms": 5.7,
+      "data": {
+        "project": {
+          "kind": "project",
+          "native_owner": "central",
+          "provenance": {
+            "source": "projectcentral.inspect"
+          },
+          "ref": "editor-walk"
+        },
+        "subject": {
+          "kind": "source",
+          "native_owner": "central",
+          "provenance": {
+            "source": "central.projectcentral"
+          },
+          "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md"
+        },
+        "world": {
+          "kind": "world",
+          "native_owner": "central",
+          "provenance": {
+            "source": "projectcentral.source.read"
+          },
+          "ref": "project:editor-walk"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.focus",
+      "duration_ms": 6.1,
+      "data": {
+        "project": {
+          "kind": "project",
+          "native_owner": "central",
+          "provenance": {
+            "source": "projectcentral.inspect"
+          },
+          "ref": "editor-walk"
+        },
+        "subject": {
+          "kind": "source",
+          "native_owner": "central",
+          "provenance": {
+            "source": "central.projectcentral"
+          },
+          "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md"
+        },
+        "world": {
+          "kind": "world",
+          "native_owner": "central",
+          "provenance": {
+            "source": "projectcentral.source.read"
+          },
+          "ref": "project:editor-walk"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.focus",
+      "duration_ms": 7.2,
+      "data": {
+        "project": {
+          "kind": "project",
+          "native_owner": "central",
+          "provenance": {
+            "source": "projectcentral.inspect"
+          },
+          "ref": "editor-walk"
+        },
+        "subject": {
+          "kind": "source",
+          "native_owner": "central",
+          "provenance": {
+            "source": "central.projectcentral"
+          },
+          "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md"
+        },
+        "world": {
+          "kind": "world",
+          "native_owner": "central",
+          "provenance": {
+            "source": "projectcentral.source.read"
+          },
+          "ref": "project:editor-walk"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.focus",
+      "duration_ms": 7.2,
+      "data": {
+        "project": {
+          "kind": "project",
+          "native_owner": "central",
+          "provenance": {
+            "source": "projectcentral.inspect"
+          },
+          "ref": "editor-walk"
+        },
+        "subject": {
+          "kind": "source",
+          "native_owner": "central",
+          "provenance": {
+            "source": "central.projectcentral"
+          },
+          "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md"
+        },
+        "world": {
+          "kind": "world",
+          "native_owner": "central",
+          "provenance": {
+            "source": "projectcentral.source.read"
+          },
+          "ref": "project:editor-walk"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.2,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-08T12:23:15.776Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:1423/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-08T12:23:16.978Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:1423/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 76,
+      "data": {
+        "file": "spatial-three-region-workspace.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "spatial-three-region-workspace.png"
+  ]
+}

@@ -1,80 +1,60 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
+import { Glyph } from "./workspace/Glyph";
+import { useKernel } from "./kernel/KernelProvider";
+import { GroundChooser } from "./workspace/GroundChooser";
+import { WelcomePrompt } from "./flow/WelcomePrompt";
+import "./flow/flow.css";
 
 /**
- * Austere rest (cradle/01 §4): agency field left + canvas centre only.
+ * Empty workspace (brief FND-01 A9 / "Where the running app is ahead of the
+ * studies"). There is exactly ONE first-state composition — the fresh-surface
+ * page, shared with FreshSurface (same section composition, same rolling
+ * WelcomePrompt). The old study-era "A space for your work" parallel was
+ * removed; this pane keeps its three real entries — it never fabricates a
+ * fourth. `title` stays in the prop contract (Cradle.tsx still passes the
+ * workspace name) but is not shown.
  *
- * The agency field is a reserved column — an honest absence. No agents are
- * fabricated, no presence dots are simulated. When the agency vertical (U2.x)
- * mounts real encounters, they render here; until then the column renders
- * nothing but its reserved surface.
+ * Writing is not a mode this pane owns. "Start writing" opens a real Flow in
+ * its register's NOW field through the same Central operation the fresh tab
+ * uses (`projectcentral.flow.create`, named by Central's own
+ * ProjectCentral/now/flows convention) — there is no isolated local canvas
+ * and no "back to workspace" that only returns to this page. When no register
+ * is named yet the writing still opens; the surface carries a picker beside
+ * its ordinary Save, and saving creates the Flow then.
  *
- * The canvas is a quiet writing surface with a caret. One unobtrusive
- * affordance — `To:` — is reachable from the keyboard (Tab from the canvas,
- * or back-tab from anywhere). It opens a draft address line; the draft is
- * held locally and nothing is resolved, sent, or simulated — resolution is
- * the U2.3 seam, not this shell.
+ * BOOT-02/03/04: at boot phases `ground-unrecognised`/`ground-inaccessible`
+ * the empty-workspace region hosts the existing `GroundChooser` first, with
+ * the honest reason line, above the ordinary start-working composition.
  */
-export function Rest({ value, onChange }: { value: string; onChange: (value: string) => void }) {
-  const [addressing, setAddressing] = useState(false);
-  const [draft, setDraft] = useState("");
-  const canvasRef = useRef<HTMLTextAreaElement>(null);
-  const addressRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    canvasRef.current?.focus();
-  }, []);
-
-  useEffect(() => {
-    if (addressing) addressRef.current?.focus();
-  }, [addressing]);
-
-  return (
-    <div className="rest">
-      <aside className="agency-field" aria-label="Agency field" />
-      <main className="canvas" aria-label="Canvas">
-        <textarea
-          ref={canvasRef}
-          className="canvas-surface"
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          aria-label="Writing surface"
-          spellCheck={false}
-        />
-        {addressing ? (
-          <div className="address-line">
-            <span className="address-label" aria-hidden="true">To:</span>
-            <input
-              ref={addressRef}
-              className="address-input"
-              aria-label="Address draft"
-              value={draft}
-              spellCheck={false}
-              onChange={(e) => setDraft(e.target.value)}
-              onBlur={() => setAddressing(false)}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") {
-                  setAddressing(false);
-                  canvasRef.current?.focus();
-                }
-                if (e.key === "Enter") {
-                  // The draft stays a draft — a held local buffer. No
-                  // resolution exists yet and none is faked here.
-                  setAddressing(false);
-                  canvasRef.current?.focus();
-                }
-              }}
-            />
-          </div>
-        ) : (
-          <button
-            type="button"
-            className="to-affordance"
-            onClick={() => setAddressing(true)}
-          >
-            To:
-          </button>
-        )}
-      </main>
+export function Rest({ project, onWrite, onWiki, onSearch }: {
+  project?: string;
+  onWrite: (project?: string) => Promise<void>;
+  onWiki?: () => void; onSearch: () => void; title: string;
+}) {
+  const { boot } = useKernel();
+  const [pending, setPending] = useState(false);
+  const [failure, setFailure] = useState<string>();
+  const groundNeedsAttention = boot.phase === "ground-unrecognised" || boot.phase === "ground-inaccessible";
+  const write = async () => {
+    setPending(true); setFailure(undefined);
+    try { await onWrite(project); } catch (error) { setFailure(String(error instanceof Error ? error.message : error)); }
+    finally { setPending(false); }
+  };
+  return <section className="fresh-surface" aria-label={groundNeedsAttention ? "Locate your Central ground" : "Empty workspace"}>
+    <div>
+      {groundNeedsAttention ? <>
+        <h2>Locate your Central ground</h2>
+        <p role="status">{boot.phase === "ground-unrecognised" ? "No default Central selected" : (boot.detail ?? "The default Central ground is not accessible")}</p>
+        <GroundChooser />
+      </> : <WelcomePrompt paused={pending} />}
+      {/* Writing never waits for a ground either: the chooser asks for one,
+          and the entry to write stays reachable beside it. */}
+      <nav aria-label="Start working">
+        {onWiki && <button onClick={onWiki}><Glyph name="wiki" size={13} />Open project wiki</button>}
+        <button onClick={onSearch}><Glyph name="search" size={13} />Search <kbd>⌘K</kbd></button>
+        <button disabled={pending} onClick={() => void write()}><Glyph name="file" size={13} />{pending ? "Opening…" : "Start writing"}</button>
+      </nav>
+      {failure && <p className="fresh-refusal" role="alert">{failure}</p>}
     </div>
-  );
+  </section>;
 }

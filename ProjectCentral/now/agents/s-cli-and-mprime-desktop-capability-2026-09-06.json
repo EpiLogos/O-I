@@ -1,0 +1,15 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "s-cli-and-mprime-desktop-capability-2026-09-06",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "codex-documentation-s-mprime",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1788713274,
+  "subject": "S CLI and M-prime desktop capability routing",
+  "result": "S/M-prime routing and collation implemented in O-I. Candidate cli/target/debug/oi, docs/CANONICAL-PRODUCT-FIELD.md, suite/product-capabilities.csv/json and suite/desktop-projection.json. 121 capabilities, 322 relations, 219 main CLI commands plus AIKit companion. Five real-owner checks, eight collation tests, thirteen existing CLI regressions passed. Next: coordinated native app walk with candidate OI_BIN; resident arrangement IPC. Existing Central/AIKit unrelated code-basis drift remains. Exact receipt: .superpowers/sdd/cradle-rebuild/progress.md (2026-09-06 S CLI / M-prime section).",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-09-06",
+    "2026-09-08"
+  ]
+}

@@ -78,6 +78,18 @@ Use Workcell for material execution demands, workspaces, providers, project runt
 
 Use Quaternal Logic for QL/MEF formal operations, refraction, operators and related structural research machinery.
 
+## S and M′
+
+S names this `oi` CLI whole and its six native CLI centres. M′ names the desktop
+whole with its three regions: left `0`, canvas `/`, and right `1`. O:I relates them;
+QL-MEF owns the complementary M / S′ account. H/A remain encounter faces.
+
+`oi capabilities --json` discloses a derived source snapshot of child capability
+records, including provenance; it is not an installed-availability probe.
+`oi desktop capabilities --json` discloses application-to-native bindings.
+`oi desktop --help` exposes the shared application readers. Resident window and
+workspace control remains in the app until its external control seam exists.
+
 ## Product commands
 
 All six native product centres have accepted commands composed into the `oi` namespace. Use the canonical namespace or, where available, the compatibility alias:

@@ -1,0 +1,14 @@
+{
+  "native_action": "Cmd-Q in uniquely selected O-I P1 Acceptance",
+  "verified_exited_pids": [
+    19773,
+    19808,
+    19809,
+    19810
+  ],
+  "preserved_live_pids": [
+    5700,
+    79665
+  ],
+  "standing": "One native Quit cleanup observed, not repeated lifecycle acceptance"
+}

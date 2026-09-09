@@ -1,0 +1,14 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "pointcloud-elements-review-artifact-revision-3-2026-09-08",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "claude-fable",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1788877277,
+  "subject": "Point-cloud elements review artifact, revision 3: interaction dynamics + agent expression",
+  "result": "desktop/cradle/walk/artifacts/review/point-cloud-elements now has: Fire as a leaning double helix, Water as a current with eddies, six interaction dynamics on real controls (click vapour, confirm/dismiss/release, panel open/close trail, resize edge, drag wake/drop, save dash), an agent-expression strip morphing one field between six state forms, and live theme switching across oi-desktop / oi-surface-light / oi-surface-dark. Emitter model: express(field,gesture,opts) with start+duration, drained by the shared scheduler, ignored under pause/reduced motion. Playwright checks pass (no errors, 20 canvases, gestures drain, dark ink resolves, no narrow overflow); checks.json, README, screenshots regenerated. Open: owner review of gesture vocabulary and state class; design of the expression system as a validation vehicle for composability + agent-native frameworks + token themes was discussed in chat and not yet written as a design doc.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-09-08"
+  ]
+}

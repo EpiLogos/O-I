@@ -1,0 +1,19 @@
+{
+  "utc": "2026-09-08T19:23:20.145333+00:00",
+  "standing": "Native failure; FND06 open; rev3 not accepted",
+  "candidate_sha256": "4a5ca098f2c6d2ecdc85c67c5fc54dbb506e3d64117a8121470586d8bef30f6a",
+  "sequence": "Three successful warm-up cycles, sampled cycle1 succeeded, sampled cycle2 failed after browser re-dock",
+  "observed": "Native browser toolbar remained; page area blank; external page absent from accessibility tree on repeated observation and screenshot",
+  "not_performed": [
+    "reload",
+    "navigation",
+    "renderer restart",
+    "app restart"
+  ],
+  "diagnostic_recovery": "Actual pane maximize changed bounds; same live page returned with retained input P1 browser rev3 continuity",
+  "conclusion": "Retained browser content, failed visibility reconciliation; exact race not yet proven",
+  "trials_excluded": [
+    "Earlier stale AX target closed disposable test browser; not a product failure",
+    "Two early PTY checks ran before delayed accessibility output; content subsequently observed; not treated as loss"
+  ]
+}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useKernel } from "../kernel/KernelProvider";
 import type { SourceHistoryReading } from "../kernel/types";
+import { Loading } from "../shared/Loading";
 
 export function SourceHistory({ sourceRef, revision }: { sourceRef: string; revision: string }) {
   const { apply } = useKernel();
@@ -11,10 +12,14 @@ export function SourceHistory({ sourceRef, revision }: { sourceRef: string; revi
   useEffect(() => {
     let alive = true;
     setPending(true);
+    // BOOT-14: keep the last-observed history rows visible through a
+    // refresh/ref change — `reading` is replaced only once the new read
+    // actually lands, never blanked first.
+    setFailed(false);
     void apply({ op: "source_history", source_ref: sourceRef }).then(result => {
       if (!alive) return;
-      setReading(result?.result === "source_history" ? result.history : null);
-      setFailed(result?.result !== "source_history");
+      if (result?.result === "source_history") { setReading(result.history); setFailed(false); }
+      else setFailed(true);
       setPending(false);
     });
     return () => { alive = false; };
@@ -23,7 +28,7 @@ export function SourceHistory({ sourceRef, revision }: { sourceRef: string; revi
     <div className="source-history-heading"><h2>Recorded changes</h2>
       <button onClick={() => setRefresh(n => n + 1)} disabled={pending}>Refresh history</button></div>
     <p className="source-note source-note-muted">Changes retained by Central’s source horizon. Earlier records may have been compacted.</p>
-    {pending && <p role="status">Reading history…</p>}
+    {pending && <Loading label={reading ? "Refreshing history…" : "Reading history…"} scope="surface" />}
     {failed && <p role="status">History could not be read. Refresh to retry.</p>}
     {reading && <ol className="source-history-rows">
       {reading.changes.map(change => <li key={change.change_ref} data-change-ref={change.change_ref} data-source-ref={change.source_ref}>

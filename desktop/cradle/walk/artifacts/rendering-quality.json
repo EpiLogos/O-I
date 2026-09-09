@@ -1,0 +1,131 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "rendering-quality",
+  "generated_at": "2026-09-08T13:36:14.590Z",
+  "environment": {
+    "base_url": "http://localhost:1423",
+    "bridge_url": "http://127.0.0.1:4197",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 1593,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Authored rich heading renders"
+    },
+    {
+      "ok": true,
+      "label": "Authored serif typography and responsive type scale apply"
+    },
+    {
+      "ok": true,
+      "label": "Authored wide grid and live SVG lay out"
+    },
+    {
+      "ok": true,
+      "label": "Relative ES module import executes through the owner-backed material route"
+    },
+    {
+      "ok": true,
+      "label": "Relative JSON fetch returns real owner-served bytes"
+    },
+    {
+      "ok": true,
+      "label": "Rendered page has no Tauri bridge"
+    },
+    {
+      "ok": true,
+      "label": "Rendered page has opaque origin and cannot read host document"
+    },
+    {
+      "ok": true,
+      "label": "Sandbox retains only scripts and forms permissions"
+    },
+    {
+      "ok": true,
+      "label": "Real JavaScript counter responds"
+    },
+    {
+      "ok": true,
+      "label": "Pane menu dismisses when interaction enters the rendered iframe"
+    },
+    {
+      "ok": true,
+      "label": "125% preview zoom changes actual rendered viewport"
+    },
+    {
+      "ok": true,
+      "label": "Preview zoom survives tab close and reopen"
+    },
+    {
+      "ok": true,
+      "label": "Reload preview restarts authored JavaScript from owner file"
+    },
+    {
+      "ok": true,
+      "label": "Source presents actual HTML bytes"
+    },
+    {
+      "ok": true,
+      "label": "Returning to Rendered runs the same authored page"
+    },
+    {
+      "ok": true,
+      "label": "Hidden pane retains its frame slot while rendered document is suspended"
+    },
+    {
+      "ok": true,
+      "label": "Restoring hidden pane resumes authored rendering"
+    },
+    {
+      "ok": true,
+      "label": "Rich authored layout reflows to one column without horizontal overflow"
+    },
+    {
+      "ok": true,
+      "label": "No uncaught rendering errors (0)"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-08T13:36:14.762Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4197"
+        },
+        "url": "http://localhost:1423/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 32,
+      "data": {
+        "file": "rendering-quality-rich-wide.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 25,
+      "data": {
+        "file": "rendering-quality-rich-narrow.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "rendering-quality-rich-wide.png",
+    "rendering-quality-rich-narrow.png"
+  ]
+}

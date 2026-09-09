@@ -1857,6 +1857,25 @@ mod tests {
     use super::*;
     use std::time::{SystemTime, UNIX_EPOCH};
 
+    /// Write an executable fixture and make sure the kernel is done with the
+    /// file before anything execs it. `fs::write` closes its handle, but the
+    /// close is not a guarantee that the write-out has landed: exec'ing a file
+    /// the kernel still considers open for writing returns ETXTBSY, which had
+    /// this suite failing intermittently on CI. Syncing and dropping the handle
+    /// before the mode changes removes the race rather than retrying past it.
+    fn write_executable(path: &std::path::Path, contents: &str) {
+        use std::io::Write;
+        use std::os::unix::fs::PermissionsExt;
+        {
+            let mut file = fs::File::create(path).unwrap();
+            file.write_all(contents.as_bytes()).unwrap();
+            file.sync_all().unwrap();
+        }
+        let mut permissions = fs::metadata(path).unwrap().permissions();
+        permissions.set_mode(0o755);
+        fs::set_permissions(path, permissions).unwrap();
+    }
+
     fn fixture(name: &str) -> PathBuf {
         let root = env::temp_dir().join(format!(
             "oi-world-recognition-{name}-{}",
@@ -1897,8 +1916,6 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn registering_conformant_adapter_changes_the_next_world_reading() {
-        use std::os::unix::fs::PermissionsExt;
-
         let root = fixture("adapter");
         let registry = root.join("registry.json");
         let target = root.join("world");
@@ -1910,7 +1927,7 @@ mod tests {
             .any(|observation| observation.native_system.name == "FixtureTool"));
 
         let recognizer = root.join("recognizer.sh");
-        fs::write(
+        write_executable(
             &recognizer,
             r#"#!/bin/sh
 if [ "$1" = "verify" ]; then
@@ -1919,11 +1936,7 @@ if [ "$1" = "verify" ]; then
 fi
 printf '%s\n' '{"schema":"oi.world-recognition-result/v1","provider_ref":"contribution:fixture/world-recognition","observations":[{"observation_ref":"observation:fixture:local","native_system":{"system_ref":"native:fixture:local","kind":"tool","name":"FixtureTool","version":"1.0.0"},"support":"supported","faculties":["demo"],"relations":[],"facts":{},"owner_bindings":[],"evidence":[{"kind":"fixture","source":"recognizer.sh","detail":"deterministic"}]}],"extension_requests":[]}'
 "#,
-        )
-        .unwrap();
-        let mut permissions = fs::metadata(&recognizer).unwrap().permissions();
-        permissions.set_mode(0o755);
-        fs::set_permissions(&recognizer, permissions).unwrap();
+        );
         let manifest = root.join("package.json");
         fs::write(
             &manifest,
@@ -1957,14 +1970,12 @@ printf '%s\n' '{"schema":"oi.world-recognition-result/v1","provider_ref":"contri
     #[cfg(unix)]
     #[test]
     fn unsupported_target_can_return_owner_sdk_extension_path() {
-        use std::os::unix::fs::PermissionsExt;
-
         let root = fixture("extension");
         let registry = root.join("registry.json");
         let target = root.join("world");
         fs::create_dir_all(&target).unwrap();
         let recognizer = root.join("recognizer.sh");
-        fs::write(
+        write_executable(
             &recognizer,
             r#"#!/bin/sh
 if [ "$1" = "verify" ]; then
@@ -1973,11 +1984,7 @@ if [ "$1" = "verify" ]; then
 fi
 printf '%s\n' '{"schema":"oi.world-recognition-result/v1","provider_ref":"contribution:unknown/world-recognition","observations":[{"observation_ref":"observation:unknown:local","native_system":{"system_ref":"native:unknown:local","kind":"harness","name":"UnknownHarness","version":"0.1.0"},"support":"extension_required","faculties":["prompt","tool"],"relations":[],"facts":{},"owner_bindings":[],"evidence":[]}],"extension_requests":[{"request_ref":"extension:unknown:aikit","native_system_ref":"native:unknown:local","owner":"AIKit","reason":"harness adapter absent","sdk":"aikit.harness-adapter/v1","authoring_skill":"AIKit harness adapter authoring Skill","conformance":"aikit harness adapter conformance","package_target":"oi.package/v1"}]}'
 "#,
-        )
-        .unwrap();
-        let mut permissions = fs::metadata(&recognizer).unwrap().permissions();
-        permissions.set_mode(0o755);
-        fs::set_permissions(&recognizer, permissions).unwrap();
+        );
         let manifest = root.join("package.json");
         fs::write(
             &manifest,

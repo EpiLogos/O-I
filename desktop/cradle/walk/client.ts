@@ -42,7 +42,6 @@ import type {
   SourceListingState,
 } from "../src/kernel/types";
 import type { LayoutState } from "../src/surface/types";
-import { loadLayout } from "../src/surface/persist";
 
 /** Schema of the walk channel contract. */
 export const WALK_CHANNEL_SCHEMA = "oi.cradle.walk/v1";
@@ -204,7 +203,7 @@ function eventsData(receipts: KernelReceipt[], sinceSeq: number): WalkEventsData
 }
 
 /** Build the channel over the live kernel API. */
-export function createWalkChannel(kernel: KernelApi): CradleWalkChannel {
+export function createWalkChannel(kernel: KernelApi, readLayout:()=>LayoutState): CradleWalkChannel {
   const mountedAt = new Date().toISOString();
 
   /** One typed op through the provider's queue — THE seam, no other path. */
@@ -313,7 +312,7 @@ export function createWalkChannel(kernel: KernelApi): CradleWalkChannel {
           return { data: outcome.listing };
         }),
       layout: () =>
-        timed("read.layout", async () => ({ data: { layout: loadLayout() } })),
+        timed("read.layout", async () => ({ data: { layout: structuredClone(readLayout()) } })),
     },
     capture: {
       timing: () => timed("capture.timing", async () => ({ data: await timingData() })),
@@ -337,8 +336,8 @@ export function createWalkChannel(kernel: KernelApi): CradleWalkChannel {
 /** Mount the channel on `window.__cradle.walk` (dev/walk bundles only —
  * the mount itself is dynamically imported behind the build gate in
  * Cradle.tsx, so production never carries this code). */
-export function bindWalkChannel(kernel: KernelApi): CradleWalkChannel {
-  const channel = createWalkChannel(kernel);
+export function bindWalkChannel(kernel: KernelApi, readLayout:()=>LayoutState): CradleWalkChannel {
+  const channel = createWalkChannel(kernel,readLayout);
   window.__cradle = { ...(window.__cradle ?? {}), walk: channel };
   return channel;
 }

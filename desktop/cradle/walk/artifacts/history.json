@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "history",
-  "generated_at": "2026-09-05T23:26:34.731Z",
+  "generated_at": "2026-09-08T12:06:43.811Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 577,
+  "duration_ms": 1094,
   "checks": [
     {
       "ok": true,
@@ -90,7 +90,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-05T23:26:34.758Z",
+        "mounted_at": "2026-09-08T12:06:43.897Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -101,7 +101,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 13,
+      "duration_ms": 49,
       "data": {
         "file": "history-both-sides.png"
       }
@@ -109,54 +109,134 @@
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 5.3,
+      "duration_ms": 23.1,
       "data": {
+        "buffers": {
+          "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md": {
+            "base_revision": "central.content-fnv1a64/v1:81:09310540562177e3",
+            "content": "Local writing to reconcile.\nConcurrent writing from another real Central caller.\n",
+            "dirty": false,
+            "path": "ProjectCentral/user/00 01-DESIGN.md",
+            "project": "Editor",
+            "project_ref": "editor-walk",
+            "saved_content": "Local writing to reconcile.\nConcurrent writing from another real Central caller.\n",
+            "source_ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+            "world_ref": "project:editor-walk"
+          }
+        },
         "focus": {
-          "world": {
-            "ref": "project:editor-walk",
-            "kind": "world",
-            "native_owner": "central",
-            "provenance": {
-              "source": "projectcentral.change.horizon"
-            }
-          },
           "project": {
-            "ref": "editor-walk",
             "kind": "project",
             "native_owner": "central",
             "provenance": {
               "source": "projectcentral.inspect"
-            }
+            },
+            "ref": "editor-walk"
           },
           "subject": {
-            "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
             "kind": "source",
             "native_owner": "central",
             "provenance": {
               "source": "central.projectcentral"
-            }
-          }
-        },
-        "surfaces": {
-          "s1": {
-            "surface_id": "s1",
-            "kind": "source",
-            "source_ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
-            "title": "00 01-DESIGN.md"
-          }
-        },
-        "buffers": {
-          "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md": {
-            "source_ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
-            "project": "Editor",
-            "content": "Local writing to reconcile.\nConcurrent writing from another real Central caller.\n",
-            "saved_content": "Local writing to reconcile.\nConcurrent writing from another real Central caller.\n",
-            "base_revision": "central.content-fnv1a64/v1:81:09310540562177e3",
-            "dirty": false,
-            "path": "ProjectCentral/user/00 01-DESIGN.md"
+            },
+            "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+          },
+          "world": {
+            "kind": "world",
+            "native_owner": "central",
+            "provenance": {
+              "source": "projectcentral.source.read"
+            },
+            "ref": "project:editor-walk"
           }
         },
         "navigator": {
+          "error": null,
+          "project": {
+            "ground_state": "healthy",
+            "position": {
+              "exists": true,
+              "index": 1,
+              "project_count": 2,
+              "work_root": "Work"
+            },
+            "project": {
+              "name": "Editor",
+              "path": "Work/Editor",
+              "projectcentral": {
+                "agent_governance": {
+                  "exists": true,
+                  "path": "Work/Editor/ProjectCentral/agents/governance",
+                  "sources": 0
+                },
+                "agent_wiki": {
+                  "exists": true,
+                  "path": "Work/Editor/ProjectCentral/agents/wiki",
+                  "sources": 1,
+                  "wiki": {
+                    "child_space_refs": [],
+                    "dangling_child_space_refs": [],
+                    "path": "Work/Editor/ProjectCentral/agents/wiki/wiki.json",
+                    "present": true,
+                    "revision": 1,
+                    "space_ref": "central:wiki:project:editor-walk"
+                  }
+                },
+                "flows": {
+                  "active": 0,
+                  "flows": [],
+                  "history": ".central/flow-revisions",
+                  "present": false,
+                  "registry": ".central/flows.json"
+                },
+                "manifest_errors": [],
+                "now": {
+                  "active_items": 0,
+                  "day_records": 0,
+                  "human_scratch": 0,
+                  "inactive_items": 0,
+                  "invalid_items": 0,
+                  "open_questions": 0,
+                  "path": "Work/Editor/ProjectCentral/now",
+                  "present": false,
+                  "promotions": 0
+                },
+                "outcome": "already_conformant",
+                "path": "Work/Editor/ProjectCentral",
+                "reason": "ProjectCentral human-source and Agent-Wiki fractal is present and readable.",
+                "relations": {
+                  "declared_overrides": 0,
+                  "path": "Work/Editor/ProjectCentral/relations/source-relations.json",
+                  "present": false
+                },
+                "state": "healthy",
+                "user": {
+                  "exists": true,
+                  "path": "Work/Editor/ProjectCentral/user",
+                  "sources": 10
+                },
+                "wiki_candidates": [
+                  {
+                    "source": "ProjectCentral/agents/wiki/wiki.json",
+                    "space_ref": "central:wiki:project:editor-walk"
+                  }
+                ]
+              },
+              "source_files": 0
+            },
+            "projection": "project",
+            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-D6fNuf",
+            "schema": "central.world-map/v1",
+            "sources": {
+              "bindings": 11,
+              "by_provenance": {
+                "agent-maintained": 1,
+                "unresolved": 10
+              },
+              "unresolved_provenance": 10
+            }
+          },
+          "project_ref": "editor-walk",
           "root": {
             "control": {
               "agent_expressions": {
@@ -184,6 +264,12 @@
                   "space_ref": "central:wiki:root"
                 }
               },
+              "identity": {
+                "error": "identity manifest cannot be read: manifest file is absent",
+                "manifest_path": "Control/user/identity/manifest.json",
+                "present": false,
+                "sourced_files": []
+              },
               "machines": {
                 "exists": true,
                 "path": "Control/machines",
@@ -208,7 +294,7 @@
               "detected": false,
               "signals": []
             },
-            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-KwAJNu",
+            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-D6fNuf",
             "root_state": "directory",
             "schema": "central.world-map/v1",
             "valid": true,
@@ -337,184 +423,106 @@
               ]
             }
           },
-          "project": {
-            "ground_state": "healthy",
-            "position": {
-              "exists": true,
-              "index": 1,
-              "project_count": 2,
-              "work_root": "Work"
-            },
-            "project": {
-              "name": "Editor",
-              "path": "Work/Editor",
-              "projectcentral": {
-                "agent_governance": {
-                  "exists": true,
-                  "path": "Work/Editor/ProjectCentral/agents/governance",
-                  "sources": 0
-                },
-                "agent_wiki": {
-                  "exists": true,
-                  "path": "Work/Editor/ProjectCentral/agents/wiki",
-                  "sources": 1,
-                  "wiki": {
-                    "child_space_refs": [],
-                    "dangling_child_space_refs": [],
-                    "path": "Work/Editor/ProjectCentral/agents/wiki/wiki.json",
-                    "present": true,
-                    "revision": 1,
-                    "space_ref": "central:wiki:project:editor-walk"
-                  }
-                },
-                "flows": {
-                  "active": 0,
-                  "flows": [],
-                  "history": ".central/flow-revisions",
-                  "present": false,
-                  "registry": ".central/flows.json"
-                },
-                "manifest_errors": [],
-                "now": {
-                  "active_items": 0,
-                  "day_records": 0,
-                  "human_scratch": 0,
-                  "inactive_items": 0,
-                  "invalid_items": 0,
-                  "open_questions": 0,
-                  "path": "Work/Editor/ProjectCentral/now",
-                  "present": false,
-                  "promotions": 0
-                },
-                "outcome": "already_conformant",
-                "path": "Work/Editor/ProjectCentral",
-                "reason": "ProjectCentral human-source and Agent-Wiki fractal is present and readable.",
-                "relations": {
-                  "declared_overrides": 0,
-                  "path": "Work/Editor/ProjectCentral/relations/source-relations.json",
-                  "present": false
-                },
-                "state": "healthy",
-                "user": {
-                  "exists": true,
-                  "path": "Work/Editor/ProjectCentral/user",
-                  "sources": 10
-                },
-                "wiki_candidates": [
-                  {
-                    "source": "ProjectCentral/agents/wiki/wiki.json",
-                    "space_ref": "central:wiki:project:editor-walk"
-                  }
-                ]
-              },
-              "source_files": 0
-            },
-            "projection": "project",
-            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-KwAJNu",
-            "schema": "central.world-map/v1",
-            "sources": {
-              "bindings": 11,
-              "by_provenance": {
-                "agent-maintained": 1,
-                "unresolved": 10
-              },
-              "unresolved_provenance": 10
-            }
-          },
           "sources": {
-            "schema": "oi.source-listing/v1",
+            "availability": "horizon",
             "project": "Editor",
-            "world_ref": "project:editor-walk",
+            "schema": "oi.source-listing/v1",
             "sources": [
               {
-                "ref": "central:source:project:editor-walk:ProjectCentral/agents/wiki/wiki.json",
+                "agent_retrieval_allowed": true,
                 "path": "ProjectCentral/agents/wiki/wiki.json",
-                "treatment": "projectcentral-agent-wiki",
-                "agent_retrieval_allowed": true,
-                "revision": "central.content-fnv1a64/v1:334:6bb39a125a8be34e"
+                "ref": "central:source:project:editor-walk:ProjectCentral/agents/wiki/wiki.json",
+                "revision": "central.content-fnv1a64/v1:334:6bb39a125a8be34e",
+                "treatment": "projectcentral-agent-wiki"
               },
               {
-                "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+                "agent_retrieval_allowed": true,
                 "path": "ProjectCentral/user/00 01-DESIGN.md",
-                "treatment": "projectcentral-user",
-                "agent_retrieval_allowed": true,
-                "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd"
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+                "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
+                "treatment": "projectcentral-user"
               },
               {
-                "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
+                "agent_retrieval_allowed": true,
                 "path": "ProjectCentral/user/01 02-ARCHITECTURE.md",
-                "treatment": "projectcentral-user",
-                "agent_retrieval_allowed": true,
-                "revision": "central.content-fnv1a64/v1:13074:25135d9a7415c81b"
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
+                "revision": "central.content-fnv1a64/v1:16545:68439910925b9055",
+                "treatment": "projectcentral-user"
               },
               {
-                "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
+                "agent_retrieval_allowed": true,
                 "path": "ProjectCentral/user/02 03-UX-STATES.md",
-                "treatment": "projectcentral-user",
-                "agent_retrieval_allowed": true,
-                "revision": "central.content-fnv1a64/v1:14063:257354083a124031"
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
+                "revision": "central.content-fnv1a64/v1:16196:f64ed1160615a241",
+                "treatment": "projectcentral-user"
               },
               {
-                "ref": "central:source:project:editor-walk:ProjectCentral/user/03%2004-VERIFICATION.md",
+                "agent_retrieval_allowed": true,
                 "path": "ProjectCentral/user/03 04-VERIFICATION.md",
-                "treatment": "projectcentral-user",
-                "agent_retrieval_allowed": true,
-                "revision": "central.content-fnv1a64/v1:8319:71e8d7f4566d7794"
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/03%2004-VERIFICATION.md",
+                "revision": "central.content-fnv1a64/v1:8319:71e8d7f4566d7794",
+                "treatment": "projectcentral-user"
               },
               {
-                "ref": "central:source:project:editor-walk:ProjectCentral/user/04%2005-EXECUTION.md",
+                "agent_retrieval_allowed": true,
                 "path": "ProjectCentral/user/04 05-EXECUTION.md",
-                "treatment": "projectcentral-user",
-                "agent_retrieval_allowed": true,
-                "revision": "central.content-fnv1a64/v1:6374:49bf8a60d55ee354"
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/04%2005-EXECUTION.md",
+                "revision": "central.content-fnv1a64/v1:8240:484f33e4bc2d0338",
+                "treatment": "projectcentral-user"
               },
               {
-                "ref": "central:source:project:editor-walk:ProjectCentral/user/05%20FLOW.md",
+                "agent_retrieval_allowed": true,
                 "path": "ProjectCentral/user/05 FLOW.md",
-                "treatment": "projectcentral-user",
-                "agent_retrieval_allowed": true,
-                "revision": "central.content-fnv1a64/v1:13572:84d370eea6743b70"
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/05%20FLOW.md",
+                "revision": "central.content-fnv1a64/v1:13572:84d370eea6743b70",
+                "treatment": "projectcentral-user"
               },
               {
-                "ref": "central:source:project:editor-walk:ProjectCentral/user/06%20CANONICAL-PRODUCT-FIELD.md",
+                "agent_retrieval_allowed": true,
                 "path": "ProjectCentral/user/06 CANONICAL-PRODUCT-FIELD.md",
-                "treatment": "projectcentral-user",
-                "agent_retrieval_allowed": true,
-                "revision": "central.content-fnv1a64/v1:28844:9e8098f36501a372"
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/06%20CANONICAL-PRODUCT-FIELD.md",
+                "revision": "central.content-fnv1a64/v1:32660:6034469841378f21",
+                "treatment": "projectcentral-user"
               },
               {
-                "ref": "central:source:project:editor-walk:ProjectCentral/user/07%20OI-DESKTOP-APPLICATION-SPEC.md",
+                "agent_retrieval_allowed": true,
                 "path": "ProjectCentral/user/07 OI-DESKTOP-APPLICATION-SPEC.md",
-                "treatment": "projectcentral-user",
-                "agent_retrieval_allowed": true,
-                "revision": "central.content-fnv1a64/v1:33832:406c9e2db5b8f4a1"
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/07%20OI-DESKTOP-APPLICATION-SPEC.md",
+                "revision": "central.content-fnv1a64/v1:36268:1ec5a6dc86a29c7d",
+                "treatment": "projectcentral-user"
               },
               {
-                "ref": "central:source:project:editor-walk:ProjectCentral/user/08%20OI-CENTRAL-FOUNDATION-2026-09-04.md",
+                "agent_retrieval_allowed": true,
                 "path": "ProjectCentral/user/08 OI-CENTRAL-FOUNDATION-2026-09-04.md",
-                "treatment": "projectcentral-user",
-                "agent_retrieval_allowed": true,
-                "revision": "central.content-fnv1a64/v1:6954:e602979fc1a58084"
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/08%20OI-CENTRAL-FOUNDATION-2026-09-04.md",
+                "revision": "central.content-fnv1a64/v1:6954:e602979fc1a58084",
+                "treatment": "projectcentral-user"
               },
               {
-                "ref": "central:source:project:editor-walk:ProjectCentral/user/09%20FOUNDING-POSITIONS.md",
-                "path": "ProjectCentral/user/09 FOUNDING-POSITIONS.md",
-                "treatment": "projectcentral-user",
                 "agent_retrieval_allowed": true,
-                "revision": "central.content-fnv1a64/v1:48971:5b33788f76a09cc4"
+                "path": "ProjectCentral/user/09 FOUNDING-POSITIONS.md",
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/09%20FOUNDING-POSITIONS.md",
+                "revision": "central.content-fnv1a64/v1:48971:5b33788f76a09cc4",
+                "treatment": "projectcentral-user"
               }
             ],
-            "availability": "horizon"
-          },
-          "project_ref": "editor-walk",
-          "error": null
+            "world_ref": "project:editor-walk"
+          }
+        },
+        "surfaces": {
+          "c05607b3-a04f-49c1-9360-dab58f62f521": {
+            "kind": "source",
+            "source_ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+            "surface_id": "c05607b3-a04f-49c1-9360-dab58f62f521",
+            "title": "00 01-DESIGN.md"
+          }
         }
       }
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 26,
+      "duration_ms": 51,
       "data": {
         "file": "history-resolved-history.png"
       }

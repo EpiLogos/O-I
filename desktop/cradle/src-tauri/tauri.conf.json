@@ -10,30 +10,36 @@
     "frontendDist": "../dist"
   },
   "bundle": {
-    "icon": ["icons/icon.png"]
+    "icon": [
+      "icons/icon.png"
+    ]
   },
   "app": {
     "windows": [
       {
         "label": "main",
-        "title": "O:I",
+        "title": "O-I",
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
         "width": 1280,
         "height": 820,
-        "minWidth": 760,
+        "minWidth": 360,
         "minHeight": 560,
         "resizable": true
       }
     ],
     "security": {
-      "capabilities": ["main-window"],
+      "capabilities": [
+        "main-window"
+      ],
       "csp": {
-        "default-src": "'self' customprotocol: asset:",
+        "default-src": "'self' customprotocol: oi-material:",
         "connect-src": "ipc: http://ipc.localhost",
-        "img-src": "'self' asset: http://asset.localhost data: blob:",
+        "img-src": "'self' oi-material: data: blob:",
         "style-src": "'self' 'unsafe-inline'",
-        "script-src": "'self'",
+        "script-src": "'self' 'sha256-syyPNs0/yFjpLCxoa4UTLxpN++24s/47qbcZFtFJo9U='",
         "object-src": "'none'",
-        "frame-src": "'none'",
+        "frame-src": "oi-material:",
         "base-uri": "'none'"
       }
     }

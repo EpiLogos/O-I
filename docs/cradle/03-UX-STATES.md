@@ -119,6 +119,31 @@ Invariants: the stdio/session bridge never blocks the whole app; provider-native
 conversation ids never collapse into canonical session identity; observability
 of a session is never ambiently public.
 
+### E.G — Gateway continuity and the right-hand encounter
+
+Owner-directed clarification,2026-09-06; derives from #154 and architecture §14.
+Agent details and Conversation / Activity / Context / Inspect are the dynamic
+right-hand encounter section, including the appropriate actual subject content.
+Do not duplicate that section above the canvas or substitute a fixed generic
+inspector. Full/side/tab/detached are presentations of the same owner encounter;
+view changes never make another transcript or composer.
+
+| State | Required presentation and transition |
+|---|---|
+| `E.G absent` | Name Gateway/ecology absence and what cannot be reached; available local work stays usable; no perpetual loading or invented empty session list |
+| `E.G restricted` | Show only the authorised ecology; distinguish no visible sessions from an unavailable read; discovery is not permission to attach/invoke |
+| `E.G attaching` | Requested canonical session and actual owner operation remain visible; cancelled/refused/unsupported attach returns to prior usable context |
+| `E.G connected` | Agent details and all four planes co-refer to the same authorised session/Stream; indicate actual provider/material origin where appropriate |
+| `E.G reconnecting/last-observed` | Keep original identities/draft and observation age; reconcile native cursor/replay without duplicate messages, invented continuity or implicit new turn |
+| `E.G lost/rematerialised` | Surface or remote Workcell loss is local degradation; process/socket/Fabric change does not rename session; explicit lineage if native continuation changes |
+| `E.G subject-switched` | New subject gets its own relevant planes/availability; clear prior agent/history/context immediately; restore workspace-scoped view state without moving attention on incoming activity |
+
+Walk E6/E7 through actual Gateway seams, including local detach/re-dock and a
+second Surface/remote Workcell projection. Record canonical Agency/Session/Stream
+refs, serving carrier, ordered cursor and authority separately. A browser view
+reload over local ACP does not by itself prove E6 cross-context continuity.
+
+
 ## F. Context and knowledge states — *what may be known here?*
 
 Derived from: the disclosure ladder (AIKit); legibility without capture (FP

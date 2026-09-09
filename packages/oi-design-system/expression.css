@@ -1,0 +1,3 @@
+.oi-expression-overlay{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:var(--oi-z-notice)}
+.oi-expression-ink{position:fixed;visibility:hidden;pointer-events:none;color:color-mix(in srgb,var(--oi-foreground) 58%,var(--oi-surface))}
+.oi-expression-anchor{display:inline-block;width:var(--oi-expression-field-width);height:var(--oi-expression-field-height);flex:none;pointer-events:none}

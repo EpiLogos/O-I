@@ -14,7 +14,7 @@ dependencies = [
 [[package]]
 name = "aikit-core"
 version = "0.1.0"
-source = "git+https://github.com/EpiLogos/ai-kit?rev=9ff28ca31c723b314ddf62b7f85b6e2611d53d66#9ff28ca31c723b314ddf62b7f85b6e2611d53d66"
+source = "git+https://github.com/EpiLogos/ai-kit?rev=e53801d#e53801d86cf4b3eec3d1b3c28528f779180efa3a"
 dependencies = [
  "blake3",
  "jiff",
@@ -370,11 +370,20 @@ name = "oi-cli"
 version = "0.1.0"
 dependencies = [
  "aikit-core",
+ "oi-cradle-kernel",
  "serde",
  "serde_json",
  "sha2",
  "tempfile",
  "toml",
+]
+
+[[package]]
+name = "oi-cradle-kernel"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

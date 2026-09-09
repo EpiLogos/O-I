@@ -1,0 +1,31 @@
+serving the cradle at http://localhost:1423 (external)
+
+=== scenario: rendering-quality ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4197 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4197 (fresh kernel, seq from 1)
+PASS  Authored rich heading renders
+PASS  Authored serif typography and responsive type scale apply
+PASS  Authored wide grid and live SVG lay out
+PASS  Relative ES module import executes through the owner-backed material route
+PASS  Relative JSON fetch returns real owner-served bytes
+PASS  Rendered page has no Tauri bridge
+PASS  Rendered page has opaque origin and cannot read host document
+PASS  Sandbox retains only scripts and forms permissions
+PASS  Real JavaScript counter responds
+PASS  Pane menu dismisses when interaction enters the rendered iframe
+PASS  125% preview zoom changes actual rendered viewport
+PASS  Preview zoom survives tab close and reopen
+PASS  Reload preview restarts authored JavaScript from owner file
+PASS  Source presents actual HTML bytes
+PASS  Returning to Rendered runs the same authored page
+  screenshot: artifacts/rendering-quality-rich-wide.png
+PASS  Hidden pane retains its frame slot while rendered document is suspended
+PASS  Restoring hidden pane resumes authored rendering
+PASS  Rich authored layout reflows to one column without horizontal overflow
+  screenshot: artifacts/rendering-quality-rich-narrow.png
+PASS  No uncaught rendering errors (0)
+  stopped walk-bridge
+  receipt: artifacts/rendering-quality.json — 19/19 checks, PASS
+
+=== walk summary ===
+PASS  rendering-quality — 19/19 checks

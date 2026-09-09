@@ -1,100 +1,58 @@
-/**
- * Scenario: rest (ported from the u0.3 walk) — austere rest, verified in a
- * headless browser against the walk bundle served by vite preview. Asserts
- * the resting shape and nothing else: left agency column + centre canvas
- * only; zero additional chrome. Cold-start FCP is captured through the
- * `__cradle.walk` channel (capture.timing) — a metric, not prose.
+import {docText, waitForDoc} from '../editor-doc.mjs';
+/** Empty desktop remains usable without an owner transport; no sample world.
  *
- * This scenario runs WITHOUT the walk bridge on purpose: with no kernel
- * transport the app must still open to honest rest (law 7 — the channel
- * itself reports the transport as unavailable, recorded as data).
- */
+ *  Writing is no longer a mode this pane owns. The study-era isolated canvas
+ *  ("Start writing" → a local textarea, "Back to workspace" → back to this
+ *  same page) was a parallel to the real Flow work, not a route into it:
+ *  it wrote into workspace-local state instead of a Flow in a NOW register,
+ *  and its "back to workspace" named a destination it did not go to. The
+ *  entry now opens a real Flow through Central's own operation, so with no
+ *  owner transport the honest answer is the owner's absence — never a buffer
+ *  that goes nowhere. The kernel-backed half of this contract is asserted in
+ *  the `flow` scenario. */
+export default async function run({page,baseUrl,check,metric,shot,channel}) {
+  await page.goto(baseUrl);
+  const timing=(await channel('capture.timing')).data;
+  metric('cold_start_fcp_ms',timing.fcp_ms);
+  check(timing.fcp_ms!==null && timing.fcp_ms<3000,'Desktop cold start is below 3 seconds');
+  check((await channel('info')).data.transport.kind==='unavailable','Missing native transport is reported as unavailable');
+  check(await page.locator('.desktop-shell').count()===1,'One spatial desktop hosts the empty workspace');
+  check(await page.locator('[data-region="left"]').count()===1,'Exactly one contextual left region');
+  check(await page.locator('[data-project-path]').count()===0,'Unavailable owner produces no fabricated projects');
+  check(await page.locator('.world-navigator input[type="search"]').count()===0,'No persistent sidebar search input');
+  const rest=page.getByRole('region',{name:'Empty workspace'});
+  check(await rest.isVisible(),'An empty workspace opens as the one fresh-surface composition');
+  check(await page.getByRole('textbox',{name:'Writing surface'}).count()===0,'No automatic textarea or address simulation at desktop start');
 
-export default async function run(ctx) {
-  const { page, baseUrl, check, metric, shot, channel } = ctx;
+  // One composition, three real entries — never a fabricated fourth.
+  const entries=await rest.getByRole('navigation',{name:'Start working'}).getByRole('button').allTextContents();
+  check(entries.length<=3&&entries.some(t=>/Start writing/.test(t))&&entries.some(t=>/Search/.test(t)),
+    'The fresh page offers only its real entries',{entries});
+  check(await rest.locator('.welcome-prompt h2').count()===1,'The rolling welcome prompt is the page heading');
+  check(await page.getByRole('button',{name:'Back to workspace'}).count()===0,
+    'No "back to workspace" control that only returns to this same page');
 
-  await page.goto(baseUrl, { waitUntil: "load" });
+  // Writing never waits for a register. With no owner transport at all the
+  // writing still opens and keeps itself on this device, rather than being
+  // refused or dropped into a buffer that goes nowhere.
+  await page.getByRole('button',{name:'Start writing',exact:true}).click();
+  const draft=page.locator('.draft-surface .cm-content');
+  await draft.waitFor({timeout:15000});
+  check(await page.locator('.draft-surface').count()===1,'Writing opens with no register reachable at all');
+  const draftText='Writing that began before it had a register.';
+  await draft.click(); await page.keyboard.type(draftText);
+  await waitForDoc(page,draftText,'.draft-surface .cm-content');
+  const footer=await page.locator('.draft-surface .editor-footer').textContent()??'';
+  check(/Choose where to save/.test(footer)&&/Save/.test(footer),
+    'Unsaved writing carries a register picker beside the ordinary Save, in the ordinary saving chrome',{footer});
+  check(/Unsaved/.test(footer),'The surface says the writing is unsaved rather than claiming owner ground');
+  await page.reload(); await channel('info');
+  await page.locator('.draft-surface .cm-content').waitFor();
+  check(await docText(page,'.draft-surface .cm-content')===draftText,
+    'Unsaved writing survives a relaunch');
 
-  // Cold start through the channel: navigation start -> first contentful
-  // paint, measured in-page, returned as data.
-  const timing = await channel("capture.timing");
-  const fcp = timing.data.fcp_ms;
-  metric("cold_start_fcp_ms", fcp);
-  check(
-    fcp !== null && fcp < 3000,
-    `cold start < 3000 ms (FCP ${fcp === null ? "not observed" : `${fcp.toFixed(1)} ms`})`,
-  );
-
-  // The channel mounts even with no kernel behind it — and reports the
-  // transport honestly as unavailable. Absence is an observation (law 7).
-  const info = await channel("info");
-  check(
-    info.data.transport.kind === "unavailable",
-    "with no bridge injected the kernel transport is honestly unavailable",
-    { transport: info.data.transport },
-  );
-
-  // Resting shape: body > #root > .rest with exactly [agency-field, canvas].
-  const shape = await page.evaluate(() => {
-    const root = document.getElementById("root");
-    const rest = root?.firstElementChild;
-    const children = rest ? Array.from(rest.children).map((c) => c.className) : [];
-    const all = Array.from(document.querySelectorAll("body *")).map((e) =>
-      [
-        e.tagName.toLowerCase(),
-        e.className && typeof e.className === "string" ? e.className : "",
-      ]
-        .filter(Boolean)
-        .join("."),
-    );
-    return {
-      bodyChildCount: document.body.children.length,
-      restClass: rest?.className ?? null,
-      children,
-      all,
-      canvasTextarea: !!document.querySelector(".canvas textarea.canvas-surface"),
-      agencyEmpty: document.querySelector(".agency-field")?.children.length === 0,
-      focusedIs: document.activeElement?.className ?? null,
-    };
-  });
-
-  check(shape.bodyChildCount === 1, "body has exactly one child (#root)");
-  check(shape.restClass === "rest", "root renders .rest");
-  check(
-    shape.children.length === 2 &&
-      shape.children[0] === "agency-field" &&
-      shape.children[1] === "canvas",
-    "rest = agency field left + canvas centre only",
-  );
-  check(shape.canvasTextarea, "canvas contains the writing surface (textarea)");
-  check(shape.agencyEmpty, "agency field is honest absence (renders no children)");
-  check(shape.focusedIs === "canvas-surface", "caret is in the canvas at rest");
-
-  // The visible element census: exactly
-  // #root, .rest, .agency-field, .canvas, textarea, .to-affordance — nothing
-  // else (the walk channel adds no DOM of its own).
-  check(
-    shape.all.length === 6 &&
-      shape.all.join("|") ===
-        "div|div.rest|aside.agency-field|main.canvas|textarea.canvas-surface|button.to-affordance",
-    `zero elements beyond the rest shape (found ${shape.all.length} nodes)`,
-  );
-
-  // Keyboard reachability of the To: affordance: Tab from the canvas.
-  await page.keyboard.press("Tab");
-  const focusedAfterTab = await page.evaluate(() => document.activeElement?.className);
-  check(focusedAfterTab === "to-affordance", "To: affordance reachable by keyboard (Tab)");
-  await page.keyboard.press("Enter");
-  const addressing = await page.evaluate(() => document.activeElement?.getAttribute("aria-label"));
-  check(addressing === "Address draft", "To: opens the address draft line");
-  // Escape returns the caret to the canvas.
-  await page.keyboard.press("Escape");
-  const backToCanvas = await page.evaluate(() => document.activeElement?.className);
-  check(backToCanvas === "canvas-surface", "Escape returns the caret to the canvas");
-
-  // Restored resting census after the address line closed.
-  const censusAfter = await page.evaluate(() => document.querySelectorAll("body *").length);
-  check(censusAfter === 6, `rest restored after addressing closes (found ${censusAfter} nodes)`);
-
-  await shot("rest");
+  await page.keyboard.press('Meta+k');
+  check(await page.getByRole('dialog').isVisible(),'The search aperture opens from the fresh page');
+  await page.keyboard.press('Escape');
+  await shot('desktop-rest');
 }

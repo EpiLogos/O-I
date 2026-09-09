@@ -1,7 +1,32 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "main-window",
-  "description": "Cradle shell window. No shell, filesystem, process, network or secret plugins are granted.",
-  "windows": ["main"],
-  "permissions": ["core:default"]
+  "description": "Bundled shell webviews only. Other webviews receive no native capabilities; application commands are explicitly scoped.",
+  "permissions": [
+    "core:default",
+    "core:window:allow-start-dragging",
+    "allow-choose-central-folder",
+    "allow-arrangement-menu",
+    "allow-kernel-op",
+    "allow-kernel-event-log",
+    "allow-window-detach",
+    "allow-window-binding",
+    "allow-window-redock",
+    "allow-window-focus-subject",
+    "allow-window-focus-main",
+    "allow-browser-attach",
+    "allow-browser-control",
+    "allow-browser-reconcile",
+    "allow-terminal-attach",
+    "allow-terminal-poll",
+    "allow-terminal-input",
+    "allow-terminal-resize",
+    "allow-terminal-checkpoint",
+    "allow-terminal-reconcile",
+    "allow-expression-walk-observation"
+  ],
+  "webviews": [
+    "main",
+    "surface-*"
+  ]
 }

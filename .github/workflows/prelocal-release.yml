@@ -24,16 +24,25 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: cli
       - run: cargo test --manifest-path cli/Cargo.toml --locked
 
   desktop-bundle:
     runs-on: macos-15
+    timeout-minutes: 30
     permissions:
       contents: read
       id-token: write
@@ -44,6 +53,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-apple-darwin
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: desktop/cradle/src-tauri
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -102,11 +114,15 @@ jobs:
           - os: macos-15
             target: aarch64-apple-darwin
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: cli
       - name: Build locked O:I bootstrap
         run: cargo build --manifest-path cli/Cargo.toml --locked --release --target '${{ matrix.target }}' --bin oi
       - name: Package exact-SHA pre-local artifact
@@ -135,6 +151,7 @@ jobs:
   npm-package:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
       id-token: write

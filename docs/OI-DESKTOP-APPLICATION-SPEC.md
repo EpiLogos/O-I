@@ -1,5 +1,12 @@
 # O:I Desktop Application Specification
 
+**Coordinate clarification, owner instruction 2026-09-06:** this application is
+**M′**, the desktop `0/1` whole. **S** names the `oi` CLI and its S0–S5 native
+command field. The desktop's left **0**, central **/** and right **1** arrangement
+is defined in [[CANONICAL-PRODUCT-FIELD]]. Native operations route through S while
+their semantics and authority remain with their product owner. The `/` canvas
+can unfold through tiling and popouts; this does not impose six desktop panels.
+
 ## The installed workbench for a composed world of agency
 
 **Status:** application/design commitment  
@@ -32,6 +39,35 @@ inference
 The real SessionSpace / AgentSession / Knowledge work developed through the current desktop-workbench line is an **inherited application substrate** for this specification. The desktop programme must consume and refine that work; it must not make reimplementation of that already-developed floor a blocker.
 
 ---
+
+## Foundation clarification — owner direction, 2026-09-06
+
+The accepted HTML reference set and its inspection/acceptance matrix are indexed
+in [the programme foundation gate](../.superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md#foundation-execution-gate--owner-direction-2026-09-06).
+All three references govern structure and interaction. The web app top bar moves
+to native menus/titlebar; it is not a licence to simplify the remaining layout.
+The owner additionally removes the persistent panel-management button bar and
+relocates the encounter's agent details and Conversation / Activity / Context /
+Inspect section into the dynamic right layer. Context follows the actual subject;
+no prior subject's contents survive a switch. Canvas chat remains a normal owner
+Surface; presentation changes do not duplicate the encounter or its composer.
+
+Keyboard/native-menu/contextual operations implement the professional pane and
+layer grammar. The canvas hosts actual material formats, especially rendered
+HTML and its bounded resources, alongside source editing. Every format declares
+its real rendering/editing/native-fallback availability; text-only file reading
+cannot establish general canvas support. Native source authority remains intact.
+
+Agency Gateway is the existing encounter/contact dependency specified by
+[O-I #154](https://github.com/EpiLogos/O-I/issues/154). Its desktop consumer
+contract is [architecture §14](cradle/02-ARCHITECTURE.md#14-agency-gateway-desktop-consumer-contract):
+AgencyService consumes authorised ecology and canonical Stream; System and
+bootstrap disclose its availability; Observatory, Factory and remote projections
+co-refer to the same owner identities. Product implementation proceeds separately.
+These are design/execution requirements, not claims that the current app satisfies
+them. Foundation visual/interaction acceptance and owner functionality have
+independent receipt fields.
+
 
 # 1. Why the desktop exists
 

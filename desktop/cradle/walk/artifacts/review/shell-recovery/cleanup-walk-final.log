@@ -1,0 +1,30 @@
+serving the cradle at http://localhost:1423 (external)
+
+=== scenario: shell-recovery ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4197 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4197 (fresh kernel, seq from 1)
+PASS  Sidebar names the personal field My O:I
+PASS  Project index uses Work label
+PASS  Search row has no duplicate agent or wiki controls
+PASS  User space returns a real native Central directory
+PASS  Agent space returns a real native Central directory
+PASS  Ten real source tabs are open
+PASS  Tab lane overflows independently
+PASS  Pane controls remain fixed while tab lane scrolls
+PASS  Global strip has no duplicate pane actions or document title
+PASS  Window strip is30px high
+PASS  Sidebar is flush with window left edge
+PASS  Active signal occupies nested pane footer
+PASS  Pane ellipsis dismisses outside
+PASS  Pane ellipsis dismisses Escape
+PASS  Workspace menu dismisses outside
+PASS  Workspace menu dismisses Escape
+  screenshot: artifacts/shell-recovery-cleanup-wide.png
+PASS  Narrow pane selector retains one usable pane
+PASS  Narrow cleanup has no page overflow
+  screenshot: artifacts/shell-recovery-cleanup-narrow.png
+  stopped walk-bridge
+  receipt: artifacts/shell-recovery.json — 18/18 checks, PASS
+
+=== walk summary ===
+PASS  shell-recovery — 18/18 checks

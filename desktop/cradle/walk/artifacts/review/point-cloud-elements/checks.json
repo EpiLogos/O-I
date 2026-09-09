@@ -1,0 +1,102 @@
+{
+  "errors": [],
+  "canvases": 11,
+  "forms": [
+    "fire",
+    "water",
+    "air",
+    "earth",
+    "presence",
+    "arrival",
+    "listening",
+    "searching",
+    "waiting"
+  ],
+  "gestures": [
+    "vapour",
+    "confirm",
+    "dismiss",
+    "release",
+    "open",
+    "close",
+    "edge",
+    "wake",
+    "drop",
+    "save",
+    "raw",
+    "breath"
+  ],
+  "holdSustains": true,
+  "holdDrains": 0,
+  "chainLive": 4,
+  "chainDrained": 0,
+  "resizeHoldKeepsEmitter": true,
+  "darkInk": "#f7f7f4",
+  "running": {
+    "raf": true,
+    "visible": [
+      "fire",
+      "water",
+      "air",
+      "earth",
+      "arrival",
+      "presence",
+      "waiting"
+    ],
+    "paused": false,
+    "reduced": false,
+    "emitters": 0,
+    "agent": "listening",
+    "theme": "oi-desktop"
+  },
+  "paused": {
+    "raf": false,
+    "visible": [
+      "agent"
+    ],
+    "paused": true,
+    "reduced": false,
+    "emitters": 0,
+    "agent": "listening",
+    "theme": "oi-desktop"
+  },
+  "reduced": {
+    "raf": false,
+    "visible": [
+      "agent"
+    ],
+    "paused": false,
+    "reduced": true,
+    "emitters": 0,
+    "agent": "listening",
+    "theme": "oi-desktop"
+  },
+  "reducedGestureIgnored": 0,
+  "fullscreen": {
+    "mainInert": true,
+    "raf": false,
+    "closeFocused": true
+  },
+  "afterEscape": {
+    "mainInert": false,
+    "raf": true
+  },
+  "emittersDrained": 0,
+  "overlayClearWhenIdle": true,
+  "darkestPixel": 0.6666666666666666,
+  "narrow": {
+    "overflow": false,
+    "state": {
+      "raf": true,
+      "visible": [
+        "fire",
+        "water"
+      ],
+      "paused": false,
+      "reduced": false,
+      "emitters": 0,
+      "agent": "listening",
+      "theme": "oi-desktop"
+    }
+  }
+}

@@ -70,6 +70,8 @@ pub struct CurrentMachineRelation {
 pub struct CurrentWorldReading {
     pub schema: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub owner_disclosures: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub personal_ground: Option<String>,
     /// The installation modality of the current composition (#192): the
     /// modality recorded on the Central registration, because Central owns
@@ -110,6 +112,7 @@ impl CurrentWorldReading {
             .unwrap_or(InstallModality::Unknown);
         Self {
             schema: CURRENT_WORLD_SCHEMA.to_owned(),
+            owner_disclosures: None,
             personal_ground: disclosure.personal_ground.clone(),
             composition_modality,
             current_machine: None,

@@ -16,7 +16,7 @@ body,
 }
 
 body {
-  background: var(--oi-surface);
+  background: var(--oi-shell-ground);
   color: var(--oi-foreground);
   font-size: var(--oi-type-body);
   caret-color: var(--oi-foreground);
@@ -34,27 +34,43 @@ body {
   border-right: 1px solid var(--oi-rule);
 }
 
-/* Canvas — the quiet writing surface, centre of rest. */
+/* Canvas — the quiet writing surface, centre of rest. Sits on the paper
+ * card at max-width 720px centred, like the study's Flow page (brief
+ * FND-01 "Writing canvas" polish — the mode, text and labels are kept
+ * exactly; only the geometry and type change). */
 .canvas {
   flex: 1;
   min-width: 0;
+  min-height: 0;
+  overflow: auto;
   display: flex;
-  flex-direction: column;
-  padding: var(--oi-space-6) var(--oi-space-6) var(--oi-space-4)
-    var(--oi-space-6);
+  justify-content: center;
+  padding: 50px max(35px, 9%);
   position: relative;
 }
 
 .canvas-surface {
-  flex: 1;
+  flex: none;
+  width: 100%;
+  max-width: 720px;
+  min-height: 100%;
   resize: none;
   border: none;
   outline: none;
+  appearance: none;
+  box-shadow: none;
   background: transparent;
   color: var(--oi-foreground);
   caret-color: var(--oi-foreground);
-  font-size: var(--oi-type-body);
-  line-height: 1.6;
+  font-family: var(--oi-font-sans);
+  font-size: var(--oi-shell-type-prose);
+  line-height: 1.95;
+}
+
+.canvas-surface:focus,
+.canvas-surface:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 .canvas-surface::placeholder {

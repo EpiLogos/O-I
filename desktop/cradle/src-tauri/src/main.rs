@@ -5,13 +5,20 @@
 // is a receipt the kernel recorded.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod windows;
+mod browser;
+mod terminal;
+mod menus;
+mod ground_dialog;
+mod material_protocol;
+mod walk_diagnostics;
 use std::sync::Mutex;
 
 use oi_cradle_kernel::events::{KernelEventReceipt, KERNEL_EVENT_TOPIC};
 use oi_cradle_kernel::{Kernel, KernelOp, KernelOpOutcome};
 use tauri::{AppHandle, Emitter, Manager, State};
 
-struct KernelHost(Mutex<Kernel>);
+pub(crate) struct KernelHost(pub(crate) Mutex<Kernel>);
 
 /// The one typed operation seam: apply a `KernelOp` and return its
 /// outcome; every receipt the operation produced is forwarded on the
@@ -46,12 +53,36 @@ fn kernel_event_log(host: State<KernelHost>, since_seq: u64) -> Vec<KernelEventR
 }
 
 fn main() {
-    tauri::Builder::default()
+    let mut context=tauri::generate_context!();
+    // A development/native acceptance run can use an isolated persistent
+    // WebKit store while exercising the real owner ground and kernel.
+    #[cfg(debug_assertions)]
+    if let Ok(raw)=std::env::var("OI_CRADLE_DATA_STORE_ID") {
+        assert!(raw.len()==32 && raw.bytes().all(|b|b.is_ascii_hexdigit()),"OI_CRADLE_DATA_STORE_ID must be 32 hex digits");
+        let mut id=[0u8;16];for (i,byte) in id.iter_mut().enumerate(){*byte=u8::from_str_radix(&raw[i*2..i*2+2],16).expect("validated hex");}
+        for window in &mut context.config_mut().app.windows {window.data_store_identifier=Some(id);window.create=false;}
+    }
+    let builder = material_protocol::register(tauri::Builder::default());
+    builder
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
+            app.manage(windows::Windows::default());
+            app.manage(browser::Browsers::default());
+            app.manage(terminal::Terminals::default());
             app.manage(KernelHost(Mutex::new(Kernel::discover())));
+            #[cfg(target_os="macos")]
+            for config in &app.config().app.windows {
+                if !config.create {
+                    if let Some(id)=config.data_store_identifier {
+                        tauri::WebviewWindowBuilder::from_config(app,config)?.data_store_identifier(id).build()?;
+                    }
+                }
+            }
+            menus::install(app.handle(), &[], "")?;
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![kernel_op, kernel_event_log])
-        .run(tauri::generate_context!())
+        .on_menu_event(|app, event| menus::dispatch(app, event.id().as_ref()))
+        .invoke_handler(tauri::generate_handler![walk_diagnostics::expression_walk_observation,terminal::terminal_attach,terminal::terminal_poll,terminal::terminal_input,terminal::terminal_resize,terminal::terminal_checkpoint,terminal::terminal_reconcile,browser::browser_attach, browser::browser_control, browser::browser_reconcile, ground_dialog::choose_central_folder, menus::arrangement_menu, kernel_op, kernel_event_log, windows::window_detach, windows::window_binding, windows::window_redock, windows::window_focus_subject, windows::window_focus_main])
+        .run(context)
         .expect("error while running the cradle");
 }

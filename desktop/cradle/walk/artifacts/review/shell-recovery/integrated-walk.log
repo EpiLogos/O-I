@@ -1,0 +1,568 @@
+building the walk bundle (WALK=1 npm run build)
+  [building the walk bundle (WALK=1 npm run build)] > oi-cradle@0.1.0 build
+  [building the walk bundle (WALK=1 npm run build)] > tsc --noEmit && vite build
+  [building the walk bundle (WALK=1 npm run build)] vite v5.4.21 building for production...
+  [building the walk bundle (WALK=1 npm run build)] transforming...
+  [building the walk bundle (WALK=1 npm run build)] ✓ 96 modules transformed.
+  [building the walk bundle (WALK=1 npm run build)] rendering chunks...
+  [building the walk bundle (WALK=1 npm run build)] [plugin:vite:reporter] [plugin vite:reporter] 
+  [building the walk bundle (WALK=1 npm run build)] (!) /Users/admin/Central/Work/O-I/desktop/cradle/node_modules/@tauri-apps/api/core.js is dynamically imported by /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/kernel/bridge.ts, /Users/admin/Central/Work/O-I/desktop/cradle/src/workspace/GroundChooser.tsx but also statically imported by /Users/admin/Central/Work/O-I/desktop/cradle/node_modules/@tauri-apps/api/dpi.js, /Users/admin/Central/Work/O-I/desktop/cradle/node_modules/@tauri-apps/api/event.js, /Users/admin/Central/Work/O-I/desktop/cradle/node_modules/@tauri-apps/api/image.js, /Users/admin/Central/Work/O-I/desktop/cradle/node_modules/@tauri-apps/api/window.js, /Users/admin/Central/Work/O-I/desktop/cradle/src/workspace/DetachedFrame.tsx, dynamic import will not move module into another chunk.
+  [building the walk bundle (WALK=1 npm run build)] [plugin:vite:reporter] [plugin vite:reporter] 
+  [building the walk bundle (WALK=1 npm run build)] (!) /Users/admin/Central/Work/O-I/desktop/cradle/node_modules/@tauri-apps/api/event.js is dynamically imported by /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/kernel/bridge.ts but also statically imported by /Users/admin/Central/Work/O-I/desktop/cradle/node_modules/@tauri-apps/api/window.js, /Users/admin/Central/Work/O-I/desktop/cradle/src/workspace/DetachedFrame.tsx, dynamic import will not move module into another chunk.
+  [building the walk bundle (WALK=1 npm run build)] [plugin:vite:reporter] [plugin vite:reporter] 
+  [building the walk bundle (WALK=1 npm run build)] (!) /Users/admin/Central/Work/O-I/desktop/cradle/node_modules/@tauri-apps/api/window.js is dynamically imported by /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx but also statically imported by /Users/admin/Central/Work/O-I/desktop/cradle/src/workspace/DetachedFrame.tsx, dynamic import will not move module into another chunk.
+  [building the walk bundle (WALK=1 npm run build)] computing gzip size...
+  [building the walk bundle (WALK=1 npm run build)] dist/index.html                            0.41 kB │ gzip:  0.28 kB
+  [building the walk bundle (WALK=1 npm run build)] dist/assets/WorkspaceStudy-DQI19hm7.css   19.13 kB │ gzip:  4.66 kB
+  [building the walk bundle (WALK=1 npm run build)] dist/assets/seed-pbLfZuQ0.css             20.63 kB │ gzip:  4.94 kB
+  [building the walk bundle (WALK=1 npm run build)] dist/assets/index-sYJ70hwC.css            72.49 kB │ gzip: 12.05 kB
+  [building the walk bundle (WALK=1 npm run build)] dist/assets/WalkChannel-jncuaapY.js        3.30 kB │ gzip:  1.32 kB
+  [building the walk bundle (WALK=1 npm run build)] dist/assets/Seed-CoODCtxu.js              28.33 kB │ gzip:  8.65 kB
+  [building the walk bundle (WALK=1 npm run build)] dist/assets/WorkspaceStudy-ayQhfJd3.js    31.41 kB │ gzip:  9.87 kB
+  [building the walk bundle (WALK=1 npm run build)] dist/assets/index-BOYDkHHb.js            306.30 kB │ gzip: 94.24 kB
+  [building the walk bundle (WALK=1 npm run build)] ✓ built in 1.72s
+  [preview] > oi-cradle@0.1.0 preview
+  [preview] > vite preview --port 4173 --strictPort
+  [preview]   ➜  Local:   http://localhost:4173/
+  [preview]   ➜  Network: use --host to expose
+serving the cradle at http://localhost:4173
+
+=== scenario: shell-recovery ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4179 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4179 (fresh kernel, seq from 1)
+PASS  Workspace footer visible at 1280
+PASS  No workspace top bar at 1280
+PASS  No page overflow at 1280
+  screenshot: artifacts/shell-recovery-1280.png
+PASS  Workspace footer visible at 900
+PASS  No workspace top bar at 900
+PASS  No page overflow at 900
+  screenshot: artifacts/shell-recovery-900.png
+PASS  Workspace footer visible at 760
+PASS  No workspace top bar at 760
+PASS  No page overflow at 760
+  screenshot: artifacts/shell-recovery-760.png
+PASS  Workspace footer visible at 639
+PASS  No workspace top bar at 639
+PASS  No page overflow at 639
+PASS  Central is summonable at 639
+PASS  Overlay returns focus at 639
+PASS  Keyboard summons Central at 639
+  screenshot: artifacts/shell-recovery-639.png
+PASS  Workspace footer visible at 390
+PASS  No workspace top bar at 390
+PASS  No page overflow at 390
+PASS  Central is summonable at 390
+PASS  Overlay returns focus at 390
+PASS  Keyboard summons Central at 390
+  screenshot: artifacts/shell-recovery-390.png
+PASS  Responsive transitions preserve the pane tree
+PASS  Overlay preserves intended sidebar depth
+  screenshot: artifacts/shell-recovery-system-1280.png
+  screenshot: artifacts/shell-recovery-system-900.png
+PASS  Reduced motion has no point-field animation
+  stopped walk-bridge
+  receipt: artifacts/shell-recovery.json — 24/24 checks, PASS
+
+=== scenario: ground ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4179 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4179 (fresh kernel, seq from 1)
+PASS  An ordinary project cannot be selected as a recognized Central
+PASS  Actual native recognition enables explicit binding
+PASS  Explicit UI selection updates the isolated native suite binding
+PASS  Binding a default preserves the existing open arrangement and writing
+PASS  Recognition and binding preserve actual source ProjectCentral/user/00 01-DESIGN.md
+PASS  Recognition and binding preserve actual source ProjectCentral/user/01 02-ARCHITECTURE.md
+PASS  Recognition and binding preserve actual source ProjectCentral/user/02 03-UX-STATES.md
+PASS  Recognition and binding preserve actual source ProjectCentral/user/03 04-VERIFICATION.md
+PASS  Recognition and binding preserve actual source ProjectCentral/user/04 05-EXECUTION.md
+PASS  Recognition and binding preserve actual source ProjectCentral/user/05 FLOW.md
+PASS  Recognition and binding preserve actual source ProjectCentral/user/06 CANONICAL-PRODUCT-FIELD.md
+PASS  Recognition and binding preserve actual source ProjectCentral/user/07 OI-DESKTOP-APPLICATION-SPEC.md
+PASS  Recognition and binding preserve actual source ProjectCentral/user/08 OI-CENTRAL-FOUNDATION-2026-09-04.md
+PASS  Recognition and binding preserve actual source ProjectCentral/user/09 FOUNDING-POSITIONS.md
+PASS  Reload discloses the actual saved default
+  screenshot: artifacts/ground-native-recognition-default-binding.png
+  stopped walk-bridge
+  receipt: artifacts/ground.json — 15/15 checks, PASS
+
+=== scenario: recovery ===
+PASS  Corrupt/unsupported presentation is retained byte for byte before recovery
+PASS  Explicit fresh arrangement restores normally
+PASS  Fresh arrangement and relaunch cannot overwrite retained original bytes
+PASS  Explicit recovery restores actual held writing
+PASS  Recovered writing remains durable after another relaunch
+  receipt: artifacts/recovery.json — 5/5 checks, PASS
+
+=== scenario: rest ===
+PASS  Desktop cold start is below 3 seconds
+PASS  Missing native transport is reported as unavailable
+PASS  One spatial desktop hosts the writing mode
+PASS  Exactly one contextual left region
+PASS  Unavailable owner produces no fabricated projects
+PASS  No persistent sidebar search input
+PASS  An empty workspace opens as a desktop, with writing as an explicit mode
+PASS  No automatic textarea or address simulation at desktop start
+PASS  Ordinary writing keystrokes remain available
+PASS  Writing can return to the desktop without closing a source
+PASS  Returning to writing retains the complete draft
+PASS  The search aperture opens over focused writing
+PASS  Escape from search restores the prior writing caret
+PASS  Relaunch restores unsent workspace writing
+  screenshot: artifacts/rest-desktop-writing.png
+  receipt: artifacts/rest.json — 14/14 checks, PASS
+
+=== scenario: surfaces ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4179 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4179 (fresh kernel, seq from 1)
+PASS  Four owner sources open as four unique bindings
+PASS  Last opened source is the single kernel focus
+PASS  Opening an existing ref reuses its binding
+PASS  Keyboard closes the focused source view
+PASS  Keyboard reopens the same source binding
+PASS  Pointer close operates on the requested tab
+PASS  Keyboard splits the active source to the right
+PASS  Keyboard split keeps the DOM caret in the semantically active pane
+PASS  Keyboard focus moves to the neighbouring pane
+PASS  Keyboard moves the active binding into the neighbouring pane
+PASS  Keyboard creates a vertical split
+PASS  Keyboard tiles the four real sources
+PASS  Each tiled source has one editor
+  screenshot: artifacts/surfaces-native-sources-tiled.png
+PASS  Tiling and movement retain dirty source writing
+PASS  Source frame menu discloses exactly its operative frame actions
+PASS  Pointer menu pins the requested source
+PASS  Pinned source refuses keyboard close
+PASS  Pinned close is disclosed as disabled
+PASS  Keyboard unpins the same binding
+PASS  Pointer drag moves a source and removes its empty pane
+PASS  Pointer menu splits the same real binding
+PASS  Keyboard menu activation closes the selected view
+PASS  Closed binding reopens without a new source identity
+PASS  Reload restores pane tree, active tabs, pins and weights exactly
+PASS  Reload restores dirty writing through owner validation
+PASS  Browsing another project never replaces open work
+PASS  Browsing preserves the canonical focused source
+PASS  Kernel receipts stay contiguous across frame operations
+  screenshot: artifacts/surfaces-source-frame-menu.png
+  stopped walk-bridge
+  receipt: artifacts/surfaces.json — 28/28 checks, PASS
+
+=== scenario: kernel-cas ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4179 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4179 (fresh kernel, seq from 1)
+  walk bridge: http://127.0.0.1:4179 (real ctrl, project o-i)
+PASS  Spatial shell hosts the real kernel
+PASS  the real horizon lists 11 participating sources (≥3, no fixtures)
+PASS  every listed ref is Central's canonical grammar (central:source:project:project:o-i:…)
+PASS  every row carries the horizon's live revision
+PASS  the walk's real file is listed: ProjectCentral/user/00 01-DESIGN.md
+PASS  read.sources through the channel carries the same real listing the index renders
+PASS  the real file's content renders verbatim in the editor
+PASS  the canonical revision shown is the horizon's
+PASS  the surface carries the owner's ref verbatim
+PASS  exactly one source_opened event for the open
+PASS  the open focused the file's ref (one focus event, same ref)
+PASS  exactly one surface_changed event for the new surface
+PASS  the dirty marker renders (buffer ≠ canonical)
+PASS  the tab carries the dirty state too
+PASS  continued typing emits nothing (no duplicate buffer-dirty for one state)
+PASS  exactly one save-success (source_changed) event
+PASS  the revision advanced on save: …c2f0d7be954a87dd -> …7fcf9af778d7872b
+PASS  the canonical layer shown advanced to the receipt revision
+PASS  the buffer is clean again (both layers synced)
+  external edit appended on disk: ProjectCentral/user/00 01-DESIGN.md
+PASS  exactly one conflict (source_write_conflict) event
+PASS  the conflict is structured with both revisions: expected ≠ current (…9af778d7872b ≠ …21ae58d2607b)
+PASS  the cradle buffer is intact (dirty, preserved — no data loss)
+PASS  the buffer stays dirty through the conflict
+PASS  the surfaced panel carries the same expected/current pair as the event
+PASS  the canonical side is readable and shows the external edit (the other preserved side)
+  screenshot: artifacts/kernel-cas-conflict.png
+PASS  invoke.source_reread crosses the seam and returns its receipt
+PASS  the re-read is one canonical re-open event
+PASS  the buffer's base rebased onto the current canonical revision
+PASS  the cradle edit survived the re-read (still dirty — the layers stay distinct)
+PASS  invoke.source_save crosses the seam (typed call, not a UI shortcut)
+PASS  after the re-read, the second save succeeds — exactly one save-success event
+PASS  the revision advanced again on the reconciled save (…0a953a98ade6cb85)
+PASS  read.state shows the file's kernel surface binding
+PASS  invoke.surface_focus returns ok with its receipt seq range
+PASS  the harness-driven focus change emits exactly one focus event
+PASS  the focus event carries the same ref (the one global focus relation)
+PASS  the renderer's active tab is unmoved — the channel drove the kernel relation, not the UI
+  screenshot: artifacts/kernel-cas-focus.png
+PASS  the original content restored through a real save — the revision returns to the original hash
+PASS  the file on disk is byte-identical to how the walk found it
+PASS  the event log is strictly monotonic 1..17 with no gaps and no duplicate emission
+  revision pair: …c2f0d7be954a87dd -> …7fcf9af778d7872b (save 1); conflict pair: expected …7fcf9af778d7872b ≠ current …eec121ae58d2607b
+  stopped walk-bridge
+  receipt: artifacts/kernel-cas.json — 40/40 checks, PASS
+
+=== scenario: system ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4179 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4179 (fresh kernel, seq from 1)
+PASS  System reads all six native product positions
+PASS  Registered products are discovered, not invented runtime-ready
+PASS  Native owner capability aggregate reaches System
+PASS  Inspecting System never reassigns semantic focus
+  screenshot: artifacts/system-native-six-owner-composition.png
+  stopped walk-bridge
+  receipt: artifacts/system.json — 4/4 checks, PASS
+
+=== scenario: file-edit ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4179 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4179 (fresh kernel, seq from 1)
+PASS  Editable ordinary file begins with exact owner bytes
+PASS  Close and reopen retains ordinary-file caret and selection
+PASS  Unsaved ordinary draft survives reload
+PASS  Retaining a draft does not write the source
+PASS  Explicit Save writes actual bytes through Central
+PASS  CAS conflict preserves both actual source and held typing
+PASS  Conflict comparison reads the actual current owner revision
+PASS  Explicit reconciliation then Save uses the current native basis
+PASS  Recovery preview performs no source mutation
+PASS  Recovery preview contains exact retained original bytes
+PASS  Explicit Restore updates native source and visible reading together
+  screenshot: artifacts/file-edit-ordinary-native-cas-history-restore.png
+  stopped walk-bridge
+  receipt: artifacts/file-edit.json — 11/11 checks, PASS
+
+=== scenario: files ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4179 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4179 (fresh kernel, seq from 1)
+PASS  An unvisited project defaults to chats and tasks
+PASS  No web-rendered app menu or extra topbar row
+PASS  Visible chrome offers exactly one left-panel control
+PASS  Arrangement evidence reads the actual mounted authored surface
+PASS  Project browsing preserves the app-wide pane arrangement
+PASS  Ordinary project file displays exact native owner bytes
+PASS  Ordinary-file History renders its actual empty native history, never source context
+PASS  Previous subject history is absent for an ordinary file
+PASS  Project mode changes retain the active surface
+PASS  Ordinary-file editing follows the available native write operation
+PASS  Browsing and opening an ordinary project never adopts it
+PASS  Symlink is visible but cannot escape the owner root
+PASS  Owner file focus clears stale project authority without inventing adoption
+PASS  Native ordinary-file browsing retains the dirty authored source
+PASS  Close and reopen revalidate the same native location
+PASS  Saved file bindings restore through Central
+PASS  Workspace restore retains the directory Files mode without minting a ProjectRef
+PASS  Refresh reads the actual changed file, without a desktop index
+PASS  Unavailable file retains a labelled last reading without redirecting
+PASS  Browsing never writes the dirty authored draft to disk
+PASS  Central parent browses actual root files as well as Work projects
+  screenshot: artifacts/files-native-root-and-project-files.png
+  stopped walk-bridge
+  receipt: artifacts/files.json — 21/21 checks, PASS
+
+=== scenario: material ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4179 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4179 (fresh kernel, seq from 1)
+PASS  HTML relative <img> resolves through the material route and actually decodes
+PASS  HTML relative <link rel=stylesheet> is loaded and applied
+PASS  HTML relative <a> keeps its literal reference (never rewritten)
+PASS  Owner-resolved relative JavaScript executes the actual HTML interaction
+PASS  HTML retains opaque-origin sandbox without native bridge authority
+  screenshot: artifacts/material-html-rendered.png
+PASS  Traversal outside the material directory is refused (status 404)
+PASS  A real sibling asset resolves with the owner mime hint as Content-Type
+PASS  Maximizing another pane keeps the hidden HTML surface mounted
+PASS  A hidden pane (maximize) suspends its iframe (srcdoc cleared)
+PASS  Restoring the pane resumes the real material content (srcdoc restored)
+PASS  document.visibilityState hidden suspends the rendered iframe
+PASS  document visible again resumes the rendered iframe
+PASS  Markdown heading renders
+PASS  Markdown list renders as real <li> elements
+PASS  Markdown bold emphasis renders
+PASS  Markdown image resolves through the material route and decodes
+PASS  Source toggle returns the real FileSurface editor over the raw Markdown bytes
+PASS  Toggling back to Rendered re-renders Markdown
+  screenshot: artifacts/material-markdown-rendered.png
+PASS  A standalone image file renders as a real decoded <img>, not a textarea
+  screenshot: artifacts/material-image-rendered.png
+PASS  PDF either renders in the platform viewer or discloses an honest unavailable state
+  screenshot: artifacts/material-pdf-state.png
+PASS  Unsupported binary discloses the exact honest disposition sentence
+PASS  Disposition card shows the real byte length
+PASS  No open-with control is offered — work.open has no generic file-path form (verified by research; not wired)
+  screenshot: artifacts/material-unsupported-disposition.png
+PASS  A plain text file still opens the native FileSurface editor directly
+PASS  Close and reopen restores the Markdown rendered view (fresh mount, not stuck on Source)
+PASS  No uncaught page errors during the material walk
+  material walk complete
+  stopped walk-bridge
+  receipt: artifacts/material.json — 26/26 checks, PASS
+
+=== scenario: bootstrap ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4179 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4179 (fresh kernel, seq from 1)
+PASS  BOOT-00/transport-unavailable: an honest state still leaves a usable local writing canvas
+PASS  BOOT-02: an unrecognised ground shows the chooser first in the empty-workspace region, with the honest reason line
+PASS  BOOT-02: the writing canvas stays reachable while ground is unrecognised
+PASS  BOOT-03: an existing candidate can be recognised and bound as the default from the empty-workspace chooser
+PASS  The scratch file opens ordinarily once, before it is ever deleted
+PASS  BOOT-12/ready: the chooser is gone once the bound ground is recognised on relaunch
+  BOOT-09 skipped: this run provides no ctx.bridge.restart (only this file's own standalone main() does) — a real restoration failure needs a kernel that does not remember the binding.
+PASS  BOOT-06/12: the composition reading carries an observed-<relative time> freshness stamp
+PASS  BOOT-06/12: an installed/registered product is labelled discovered, not verified ready — never asserted runtime-ready
+PASS  BOOT-15: the Gateway absence section names the missing obligations honestly (no invented ecology row, no probe, no auto start)
+PASS  BOOT-15: the three real facts (AIKit executable bound, SessionSpace discovery, provider list) are all present
+  stopped walk-bridge
+  receipt: artifacts/bootstrap.json — 10/10 checks, PASS
+
+=== scenario: navigator ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4179 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4179 (fresh kernel, seq from 1)
+PASS  Every project row matches the real Central World map in owner order
+PASS  Summoning retains the original writing buffer
+PASS  Search is not a persistent sidebar input
+PASS  Kernel holds the selected owner project reading
+PASS  Project ref is the owner manifest identity verbatim
+PASS  Browsing a project leaves the current writing focus unchanged
+PASS  Native ground relations remain available without a permanent diagnostic footer
+PASS  Root wiki identity remains the exact owner reference
+PASS  Distinct project wiki identity is preserved
+PASS  Native federation retains real root wiki children
+PASS  Project browsing has no Ground & identity footer
+  screenshot: artifacts/navigator-project-ground.png
+PASS  Selecting the root clears the old project selection and focus
+PASS  Escape dismisses to the same writing
+PASS  Dismiss restores writing caret
+PASS  Pointer context menu summons the same World surface
+PASS  Ordinary Work project offers no fabricated wiki binding
+PASS  Unbound project clears stale focus and fabricates no identity
+PASS  Pointer close returns to rest
+PASS  Pointer summon and close restore the original caret rather than the removed menu item
+PASS  World event log is contiguous and ordered
+PASS  Browsing publishes World readings without semantic focus movement
+  screenshot: artifacts/navigator-restored-writing.png
+PASS  Unavailable owner transport fabricates no project rows
+PASS  Unavailable transport is disclosed locally in the navigator
+  stopped walk-bridge
+  receipt: artifacts/navigator.json — 23/23 checks, PASS
+
+=== scenario: editor ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4179 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4179 (fresh kernel, seq from 1)
+PASS  Ten distinct existing documents are copied into real Central-owned test ground
+PASS  Document 1 opens through real Central in <1s (406ms)
+PASS  Document 1 renders the exact original content
+PASS  Document 2 opens through real Central in <1s (103ms)
+PASS  Document 2 renders the exact original content
+PASS  Document 3 opens through real Central in <1s (109ms)
+PASS  Document 3 renders the exact original content
+PASS  Document 4 opens through real Central in <1s (116ms)
+PASS  Document 4 renders the exact original content
+PASS  Document 5 opens through real Central in <1s (95ms)
+PASS  Document 5 renders the exact original content
+PASS  Document 6 opens through real Central in <1s (108ms)
+PASS  Document 6 renders the exact original content
+PASS  Document 7 opens through real Central in <1s (127ms)
+PASS  Document 7 renders the exact original content
+PASS  Document 8 opens through real Central in <1s (133ms)
+PASS  Document 8 renders the exact original content
+PASS  Document 9 opens through real Central in <1s (195ms)
+PASS  Document 9 renders the exact original content
+PASS  Document 10 opens through real Central in <1s (218ms)
+PASS  Document 10 renders the exact original content
+PASS  Switching dirty documents preserves the first buffer
+PASS  Switching source tabs restores caret and selected range
+PASS  Switching back preserves the distinct second buffer
+PASS  After selecting another project, Save writes only to the source’s original project
+PASS  Saving one document never commits another dirty buffer
+PASS  Real owner revision advances on save
+PASS  Source identity remains stable across save
+  screenshot: artifacts/editor-source-saved.png
+PASS  Reopening a closed source keeps the same owner revision and ref
+PASS  Actual owner exclusion is visible as a source-scoped refusal
+PASS  Refused save changes no source bytes
+PASS  Refusal preserves the dirty buffer
+  screenshot: artifacts/editor-owner-refusal.png
+PASS  Closing sources restores the original writing canvas
+  stopped walk-bridge
+  receipt: artifacts/editor.json — 33/33 checks, PASS
+
+=== scenario: knowledge ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4179 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4179 (fresh kernel, seq from 1)
+PASS  Leader summons one window-wide native search aperture
+PASS  Search rows preserve real AIKit order and labels
+PASS  Displaying search results does not record successful use
+PASS  Querying does not move kernel semantic focus
+PASS  Escape dismisses the entire aperture
+PASS  Escape restores the exact original editor caret
+PASS  macOS Control-K remains ordinary editor input rather than summoning search
+PASS  Sidebar shortcut label follows the selected leader
+PASS  Previous shortcut no longer summons the configured aperture
+PASS  Configured shifted leader summons the same aperture
+PASS  A real wiki opens as the same canonical subject in a normal tab
+PASS  Kernel retains the native knowledge owner
+PASS  Graph renders the actual native wiki identity
+PASS  Successful opening records exactly one AIKit route use
+PASS  Wiki navigation preserves the dirty source buffer
+PASS  Refresh is not a second successful-use observation
+PASS  Wiki and real source share the production pane tree
+PASS  Graph zoom and keyboard pan update surface view state
+PASS  Graph geometry retains readable pixel scale in a split pane
+  screenshot: artifacts/knowledge-native-wiki-and-source.png
+PASS  Relaunch revalidates the saved wiki and preserves its split
+PASS  Relaunch restores the surface camera without changing the owner graph
+PASS  Restoring presentation never trains familiarity
+PASS  Browsing another project leaves the current wiki open
+PASS  Focusing a cross-project source reveals its native project
+PASS  Focusing a cross-project wiki reveals its owning project
+  stopped walk-bridge
+  receipt: artifacts/knowledge.json — 25/25 checks, PASS
+
+=== scenario: history ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4179 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4179 (fresh kernel, seq from 1)
+  Native history response: {"ok":true,"outcome":{"history":{"changes":[],"cursor":0,"provider":"central.filesystem-reconcile/v1","source_ref":"central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md","world_ref":"project:editor-walk"},"result":"source_history"}}
+PASS  Initial history matches actual retained Central records
+PASS  Conflict preserves the exact local writing
+PASS  Conflict displays the exact concurrently saved canonical side
+PASS  Failed CAS never overwrites the concurrent source
+PASS  Conflict names the actual competing owner revision
+PASS  A refused save adds no owner history record
+  Native history response: {"ok":true,"outcome":{"history":{"changes":[{"actor":"integration:concurrent-writer","actor_kind":"human","after_revision":"central.content-fnv1a64/v1:53:b040eb0867d9a0ff","agent_session_ref":null,"before_revision":"central.content-fnv1a64/v1:19624:c2f0d7be954a87dd","change_ref":"central:change:project:editor-walk:1","cursor":1,"kind":"modified","observed_at_unix_seconds":1788869204,"source_ref":"central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"}],"cursor":1,"provider":"central.filesystem-reconcile/v1","source_ref":"central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md","world_ref":"project:editor-walk"},"result":"source_history"}}
+PASS  Conflict refreshes history to include the competing owner write
+  screenshot: artifacts/history-both-sides.png
+PASS  Explicit re-read preserves the reconciled writing
+PASS  Re-read uses the resulting canonical revision as the CAS base
+  Native history response: {"ok":true,"outcome":{"history":{"changes":[{"actor":"human:desktop","actor_kind":"human","after_revision":"central.content-fnv1a64/v1:81:09310540562177e3","agent_session_ref":null,"before_revision":"central.content-fnv1a64/v1:53:b040eb0867d9a0ff","change_ref":"central:change:project:editor-walk:2","cursor":2,"kind":"modified","observed_at_unix_seconds":1788869204,"source_ref":"central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"},{"actor":"integration:concurrent-writer","actor_kind":"human","after_revision":"central.content-fnv1a64/v1:53:b040eb0867d9a0ff","agent_session_ref":null,"before_revision":"central.content-fnv1a64/v1:19624:c2f0d7be954a87dd","change_ref":"central:change:project:editor-walk:1","cursor":1,"kind":"modified","observed_at_unix_seconds":1788869204,"source_ref":"central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"}],"cursor":2,"provider":"central.filesystem-reconcile/v1","source_ref":"central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md","world_ref":"project:editor-walk"},"result":"source_history"}}
+PASS  Resolved save commits both reconciled contributions
+PASS  History increments exactly once for the resolved save
+PASS  History uses the owner change ref without inventing identity
+PASS  History preserves the native write attribution
+PASS  History excludes every other source
+PASS  A no-change save creates no fabricated history row
+  screenshot: artifacts/history-resolved-history.png
+  Native history response: {"ok":true,"outcome":{"history":{"changes":[{"actor":"human:desktop","actor_kind":"human","after_revision":"central.content-fnv1a64/v1:81:09310540562177e3","agent_session_ref":null,"before_revision":"central.content-fnv1a64/v1:53:b040eb0867d9a0ff","change_ref":"central:change:project:editor-walk:2","cursor":2,"kind":"modified","observed_at_unix_seconds":1788869204,"source_ref":"central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"},{"actor":"integration:concurrent-writer","actor_kind":"human","after_revision":"central.content-fnv1a64/v1:53:b040eb0867d9a0ff","agent_session_ref":null,"before_revision":"central.content-fnv1a64/v1:19624:c2f0d7be954a87dd","change_ref":"central:change:project:editor-walk:1","cursor":1,"kind":"modified","observed_at_unix_seconds":1788869204,"source_ref":"central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"}],"cursor":2,"provider":"central.filesystem-reconcile/v1","source_ref":"central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md","world_ref":"project:editor-walk"},"result":"source_history"}}
+PASS  Reopened source reads the durable owner history
+PASS  Reopening preserves the saved reconciliation
+  stopped walk-bridge
+  receipt: artifacts/history.json — 17/17 checks, PASS
+
+=== scenario: spatial ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4179 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4179 (fresh kernel, seq from 1)
+PASS  Canvas arrangement is named for the workspace, independently of the opened project
+PASS  Desktop has three explicit host regions
+PASS  World occupies a real left panel
+PASS  Inspector is absent by default, leaving one sidebar and the canvas
+PASS  No second persistent navigation rail occupies the canvas
+PASS  One arrangement selector belongs to the canvas command strip
+PASS  Inspector opens explicitly over the active owner subject
+PASS  Left selection, canvas and right inspector share one kernel subject
+PASS  Real sources split into independent canvas panes
+PASS  Keyboard resizes a canvas split
+PASS  Maximize presents the active pane alone
+PASS  Maximized pane retains Central access
+PASS  Maximize keeps other source views mounted
+PASS  Maximize retains canonical semantic focus
+PASS  Keyboard restores all panes
+PASS  Restore preserves exact prior split widths
+PASS  Keyboard resizes the left region
+PASS  Keyboard resizes the right region
+PASS  Right region promotes to full view
+PASS  Region promotion never changes semantic focus
+PASS  Escape restores the right panel
+PASS  Project disclosure collapses without closing its open sources
+PASS  Disclosure changes leave semantic focus untouched
+PASS  A freeform workspace has its own surface arrangement
+PASS  A different workspace has independent ProjectRef disclosure state
+PASS  A new workspace also starts with inspection closed
+PASS  Project workspace restores its split constellation
+PASS  Returning to a workspace restores that project disclosure
+PASS  Workspace restores its own region depths
+PASS  Workspace restores its region width
+PASS  Switching workspace preserves unsaved source writing
+PASS  Reload restores the unsaved draft through the native source seam
+PASS  Reload restores the complete split arrangement
+PASS  Freeform workspace restores its distinct writing
+PASS  Freeform workspace restores its distinct right depth
+PASS  Narrow layout preserves the canvas minimum before side panels
+PASS  A collapsed inspector does not evict the Central sidebar on a 700px desktop
+PASS  Responsive Central sidebar retains a usable width
+PASS  Expanding another project does not collapse the prior project
+PASS  Independent project content stays visible during browsing
+PASS  Returning to a ProjectRef restores its actual file-list scroll
+PASS  Native owner revalidation on reload retains the project file-list scroll
+  screenshot: artifacts/spatial-three-region-workspace.png
+  stopped walk-bridge
+  receipt: artifacts/spatial.json — 42/42 checks, PASS
+
+=== scenario: companions ===
+PASS  One Central sidebar replaces the duplicated left rails
+PASS  Projects expose exactly three compact view controls
+PASS  Project navigation defaults to chats and tasks
+PASS  Agent access focuses the existing encounter instead of duplicating it
+PASS  Changing the sidebar lens leaves the active chat and draft intact
+PASS  Browsing another project does not silently switch the canvas
+PASS  Project wiki opens from its contextual sidebar control
+PASS  Graph has no redundant scope tabs or graph/list controls
+PASS  Activating a chat preserves the project’s remembered sidebar lens
+PASS  Agent access reuses the Research encounter after workspace restore
+PASS  Sidebar lenses are scoped to workspace and project
+PASS  Returning to workspace restores its project lens
+PASS  Reload preserves the encounter draft and active surface
+  screenshot: artifacts/companions-chat-files.png
+PASS  Tiled preset presents three independent window groups
+PASS  Every group has its own tab bar
+PASS  Full conversation masks other groups and retains Central navigation
+PASS  Maximization retains the same session draft
+  screenshot: artifacts/companions-full-chat.png
+PASS  Escape restores exact tiled source and conversation state
+PASS  Tiling divider resizes from the keyboard
+PASS  Context menu moves one encounter binding and its draft between groups
+PASS  Split action reuses the empty group without duplicating session
+PASS  Changing arrangement consolidates tabs without losing surfaces
+PASS  Reload restores the saved pane arrangement
+  screenshot: artifacts/companions-tiled-files.png
+PASS  Pointer drag moves the tab into the targeted window group
+PASS  Field opens an admitted neighbourhood with its distinct entry
+PASS  Shared Field omits private local graph subjects
+PASS  Central wiki remains the containing local graph
+PASS  Smaller desktop has no page-level horizontal overflow
+PASS  No renderer exceptions ()
+  receipt: artifacts/companions.json — 29/29 checks, PASS
+
+=== scenario: study ===
+PASS  Persistent global rail is available
+PASS  Three spatial regions are visible together
+PASS  Pointer selection binds the adjacent subject context
+PASS  Open beside retains the selected source and wiki together
+PASS  Full agency masks canvas while keeping the global rail
+PASS  Escape restores the canvas without losing subject
+PASS  Panel resize works from keyboard
+PASS  Search filters actual study subjects
+PASS  Search opens the same subject context as the graph
+PASS  Handoff preview carries the selected Flow text
+PASS  Routing leaves original writing intact
+PASS  Workspaces keep independent writing
+PASS  Returning restores the original workspace surface and writing
+PASS  Reload restores locally saved Flow writing
+PASS  A freeform workspace can be created and named
+PASS  Shared projection discloses its transport seam honestly
+PASS  System exposes the six product boundaries
+  screenshot: artifacts/study-wiki.png
+PASS  Desktop fits a smaller laptop viewport without page overflow
+PASS  No renderer errors ()
+  receipt: artifacts/study.json — 19/19 checks, PASS
+
+=== scenario: encounter ===
+index.schema_from_the_future: this database is at schema 6 but this build only knows 5; upgrade AIKit rather than letting an older binary write to it
+
+RUN FAILED: Error: Command failed: /Users/admin/Library/Application Support/OI/receipts/dev/ai-kit-d9c52d63da1c-1788720375668-10919/source/target/release/aikit-session-space -C /var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-ZP8GJB/Work/Editor create session-space/encounter-walk --label Resident encounter acceptance
+index.schema_from_the_future: this database is at schema 6 but this build only knows 5; upgrade AIKit rather than letting an older binary write to it
+
+    at genericNodeError (node:internal/errors:985:15)
+    at wrappedFn (node:internal/errors:539:14)
+    at checkExecSyncError (node:child_process:925:11)
+    at execFileSync (node:child_process:961:15)
+    at native (file:///Users/admin/Central/Work/O-I/desktop/cradle/walk/scenarios/encounter.mjs:7:37)
+    at Module.setup (file:///Users/admin/Central/Work/O-I/desktop/cradle/walk/scenarios/encounter.mjs:10:8)
+    at async runScenario (file:///Users/admin/Central/Work/O-I/desktop/cradle/walk/run.mjs:301:21)
+    at async file:///Users/admin/Central/Work/O-I/desktop/cradle/walk/run.mjs:410:18
+  stopped preview

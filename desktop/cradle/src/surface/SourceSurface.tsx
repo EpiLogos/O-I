@@ -1,3 +1,4 @@
+import {TextEditor,EditorCommands,type EditorHandle} from "../editor/TextEditor";
 /**
  * The source editor surface (U0.4, kind 'source') — the minimal editor the
  * kernel seam re-proof walks: a real file opened from the horizon
@@ -12,9 +13,11 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { readDraft, writeDraft } from "../workspace/drafts";
 import { SourceHistory } from "./SourceHistory";
 import { useKernel } from "../kernel/KernelProvider";
 import type { SurfaceBinding } from "./types";
+import {EditorFrame} from "../editor/EditorChrome";
 
 export interface SourceSurfaceProps {
   binding: SurfaceBinding;
@@ -32,8 +35,34 @@ export function SourceSurface(props: SourceSurfaceProps) {
   const buffer = kernel.snapshot.buffers[binding.ref ?? ""];
   const error = kernel.sourceErrors[binding.ref ?? ""];
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [text, setText] = useState(buffer?.content ?? "");
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const initialDraft = useRef(binding.ref ? readDraft(binding.ref) : null);
+  const [draftError, setDraftError] = useState<string | null>(null);
+  const [text, setText] = useState(initialDraft.current?.content ?? buffer?.content ?? "");
+  const [caret,setCaret]=useState({line:1,column:1,selected:false});
+  const textareaRef = useRef<EditorHandle>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const viewKey = `oi-cradle.source-view:${binding.ref}`;
+  const restoredView = useRef(false);
+  const savedView = useRef((() => {
+    try { return JSON.parse(localStorage.getItem(viewKey) ?? "null"); } catch { return null; }
+  })());
+  const retainView = () => {
+    if (!restoredView.current || !textareaRef.current) return;
+    const el = textareaRef.current;
+    try { localStorage.setItem(viewKey, JSON.stringify({ start: el.selectionStart, end: el.selectionEnd, direction: el.selectionDirection, top: scrollRef.current?.scrollTop ?? 0, left: scrollRef.current?.scrollLeft ?? 0 })); } catch { /* View coordinates are optional; drafts retain their separate error path. */ }
+  };
+  useEffect(() => {
+    if (!buffer || restoredView.current) return;
+    const frame = requestAnimationFrame(() => {
+      const view = savedView.current;
+      if (view && Number.isInteger(view.start) && Number.isInteger(view.end)) {
+        textareaRef.current?.setSelectionRange(view.start, view.end, view.direction);
+        if (scrollRef.current) { scrollRef.current.scrollTop = Number(view.top) || 0; scrollRef.current.scrollLeft = Number(view.left) || 0; }
+      }
+      restoredView.current = true;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [!!buffer]);
 
   // Mirror the kernel buffer into the textarea only when the buffer's
   // content changed from OUTSIDE this surface (open, re-read, save) —
@@ -46,7 +75,8 @@ export function SourceSurface(props: SourceSurfaceProps) {
   useEffect(() => {
     if (!buffer) return;
     if (pendingEdits.current > 0) return;
-    if (buffer.dirty) return; // the person's layer is never clobbered
+    if (lastSynced.current === null && initialDraft.current && buffer.content !== initialDraft.current.content) return;
+    if (buffer.dirty && lastSynced.current !== null) return;
     if (lastSynced.current === buffer.content) return;
     lastSynced.current = buffer.content;
     setText(buffer.content);
@@ -54,6 +84,11 @@ export function SourceSurface(props: SourceSurfaceProps) {
 
   // Focus the editor when its surface becomes the active one.
   useEffect(() => {
+    // The restored pane arrangement owns interaction focus. A kernel
+    // subject retained from before reload must not take an empty slot's
+    // focus while its source is mounting in another pane.
+    const pane = textareaRef.current?.closest<HTMLElement>('.pane.group');
+    if (pane && pane.dataset.focused !== 'true') return;
     if (kernel.snapshot.focus.subject?.ref === binding.ref) {
       // Only when the browser focus is not already inside this surface.
       if (!textareaRef.current?.contains(document.activeElement)) {
@@ -68,6 +103,10 @@ export function SourceSurface(props: SourceSurfaceProps) {
 
   const onEdit = (value: string) => {
     setText(value);
+    if (binding.ref && buffer) {
+      try { writeDraft(binding.ref, { content: value, base_revision: buffer.base_revision, saved_content: buffer.saved_content }); setDraftError(null); }
+      catch { setDraftError("This draft could not be saved on this device. Keep this window open until the source is saved."); }
+    }
     lastSynced.current = value; // this surface authored it — no mirror-back
     pendingEdits.current += 1;
     void kernel.editBuffer(binding.ref ?? "", value).finally(() => {
@@ -80,6 +119,8 @@ export function SourceSurface(props: SourceSurfaceProps) {
     // dirty flag can still be one response behind a fast Cmd+S.
     if (binding.ref) void kernel.saveSource(binding.ref);
   };
+  const updateCaret=()=>{const el=textareaRef.current;if(!el)return;const before=el.value.slice(0,el.selectionStart);const lines=before.split("\n");setCaret({line:lines.length,column:(lines[lines.length-1]?.length??0)+1,selected:el.selectionStart!==el.selectionEnd});retainView();};
+  const extension=buffer?.path?.split(".").pop()?.toLowerCase();const markdown=extension==="md"||extension==="markdown";
 
   // ⌘S saves from anywhere in this surface (textarea, conflict panel) —
   // the save is the surface's act, wherever the caret idles. Every other
@@ -110,41 +151,21 @@ export function SourceSurface(props: SourceSurfaceProps) {
   const conflict = buffer.conflict;
   const saveFailed = conflict !== undefined;
   return (
-    <div
+    <EditorFrame
       className={`source-editor${buffer.dirty ? " dirty" : ""}${saveFailed ? " conflicted" : ""}`}
-      data-kind="source"
-      data-ref={binding.ref}
-      data-dirty={buffer.dirty}
-      data-conflicted={saveFailed}
-      onKeyDown={onKeyDown}
+      label={`Editor ${binding.title}`}
+      toolbar={<EditorCommands editor={textareaRef} markdown={markdown}/>}
+      footer={<><span className="editor-path source-revision" data-revision={buffer.base_revision} title={`Central / Work / ${buffer.project} / ${buffer.path}`}>Central / Work / {buffer.project} / {buffer.path}</span><span>Ln {caret.line}, Col {caret.column}</span><span className={buffer.dirty?"source-dirty-marker":"source-clean-marker"}>{buffer.dirty?"Unsaved":"Saved"}</span><button type="button" aria-expanded={historyOpen} onClick={()=>setHistoryOpen(open=>!open)}>History</button><button type="button" onClick={onSave} disabled={!buffer.dirty}>Save · ⌘S</button></>}
+      data={{kind:"source",ref:binding.ref,dirty:buffer.dirty,conflicted:saveFailed}}
     >
+      {draftError && <p role="alert">{draftError}</p>}
       {error && <p className="source-note" role="alert">{error}</p>}
-      <div className="source-status" role="status">
-        <span>{buffer.project}</span>
-        <span className="source-revision" data-revision={buffer.base_revision}>
-          canonical {shortRevision(buffer.base_revision)}
-        </span>
-        {buffer.dirty ? (
-          <span className="source-dirty-marker" title="The buffer differs from the canonical layer">
-            edited — unsaved
-          </span>
-        ) : (
-          <span className="source-clean-marker">clean</span>
-        )}
-        <button type="button" className="source-history-toggle" aria-expanded={historyOpen} onClick={() => setHistoryOpen(open => !open)}>History</button>
-        <button type="button" className="source-save" onClick={onSave} disabled={!buffer.dirty}>Save · ⌘S</button>
-      </div>
-      <textarea
-        ref={textareaRef}
-        className="source-textarea"
-        aria-label={`Editing ${binding.title}`}
-        data-source-ref={binding.ref}
-        spellCheck={false}
-        value={text}
-        onChange={(event) => onEdit(event.target.value)}
-      />
-      {historyOpen && <SourceHistory sourceRef={binding.ref} revision={buffer.conflict?.current_revision ?? buffer.base_revision} />}
-      {conflict ? (
+      <div className="source-editor-scroll" ref={scrollRef} onScroll={retainView} onKeyDown={onKeyDown}>
+        <div className="source-editor-body">
+          <TextEditor ref={textareaRef} binding={binding} filename={buffer.path} aria-label={`Editing ${binding.title}`} value={text} onChange={onEdit} onSelect={updateCaret} onSave={onSave}/>
+        </div>
+        {historyOpen && <SourceHistory sourceRef={binding.ref} revision={buffer.conflict?.current_revision ?? buffer.base_revision} />}
+        {conflict ? (
         <div className="source-conflict" role="alert" data-conflict-kind="revision-conflict">
           <p className="source-conflict-title">
             revision conflict — the canonical layer moved while this buffer was open
@@ -191,7 +212,9 @@ export function SourceSurface(props: SourceSurfaceProps) {
             after the re-read, ⌘S saves your buffer on the new revision
           </p>
         </div>
-      ) : null}
-    </div>
+        ) : null}
+      </div>
+
+    </EditorFrame>
   );
 }

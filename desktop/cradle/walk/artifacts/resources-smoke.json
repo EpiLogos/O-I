@@ -1,0 +1,208 @@
+{
+  "schema": "oi.cradle.walk.resources/v1",
+  "label": "baseline-during-shell-rebuild",
+  "generated_at": "2026-09-08T04:05:08.570Z",
+  "environment": {
+    "base_url": "http://localhost:1423",
+    "bridge_url": "http://127.0.0.1:4179",
+    "project": "O-I",
+    "viewport": "1280x820",
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "chromium_flags": [
+      "--js-flags=--expose-gc"
+    ],
+    "gc_exposed": true
+  },
+  "cycles": 4,
+  "warmup_cycles": 3,
+  "per_cycle": [
+    {
+      "cycle": 4,
+      "wall_time_ms": 150194,
+      "bridge_requests": 593,
+      "heap_used_bytes": 6861728,
+      "heap_total_bytes": 9306112,
+      "nodes": 135,
+      "listeners": 176,
+      "documents": 1,
+      "frames": 1,
+      "dom_query_all_count": 64,
+      "iframe_count": 0,
+      "img_count": 0,
+      "svg_count": 8,
+      "retained_hint": {
+        "surface_count": 0,
+        "tab_count": 0,
+        "surfaces_minus_tabs": 0,
+        "documents_beyond_expected": 0
+      }
+    }
+  ],
+  "step_issues": [
+    {
+      "cycle": 1,
+      "step": "2-split-maximize-restore",
+      "error": "timed out waiting for locator count === 2 (last saw 1)"
+    },
+    {
+      "cycle": 1,
+      "step": "2-close-both",
+      "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('.tab').first()\n    - locator resolved to <div role=\"tab\" tabindex=\"0\" draggable=\"true\" title=\"README.md\" class=\"tab active\" data-active=\"true\" data-dirty=\"false\" data-pinned=\"false\" aria-selected=\"true\" data-title=\"README.md\" data-surface-id=\"a49f7d24-8933-4a3f-9cda-ee6b78b0470c\">…</div>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is not visible\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is not visible\n    - retrying click action\n      - waiting 100ms\n    58 × waiting for element to be visible, enabled and stable\n       - element is not visible\n     - retrying click action\n       - waiting 500ms\n"
+    },
+    {
+      "cycle": 1,
+      "step": "3-wiki-open-pan-zoom",
+      "error": "locator.getAttribute: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'O-I: wiki', exact: true })\n"
+    },
+    {
+      "cycle": 1,
+      "step": "3-restore-files-mode",
+      "error": "locator.getAttribute: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'O-I: files', exact: true })\n"
+    },
+    {
+      "cycle": 1,
+      "step": "4-right-region-toggle",
+      "error": "page.waitForFunction: Timeout 5000ms exceeded."
+    },
+    {
+      "cycle": 1,
+      "step": "5-tab-switch",
+      "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('complementary', { name: 'World navigator' }).locator('[data-file-path=\"Work/O-I/README.md\"]')\n"
+    },
+    {
+      "cycle": 1,
+      "step": "5-close-both",
+      "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('.tab').first()\n    - locator resolved to <div role=\"tab\" tabindex=\"0\" draggable=\"true\" title=\"README.md\" class=\"tab active\" data-active=\"true\" data-dirty=\"false\" data-pinned=\"false\" aria-selected=\"true\" data-title=\"README.md\" data-surface-id=\"a49f7d24-8933-4a3f-9cda-ee6b78b0470c\">…</div>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-pressed=\"false\">History</button> from <aside data-depth=\"full\" data-region=\"right\" data-overlay=\"false\" class=\"desktop-side right depth-full\" aria-label=\"Agent and inspector region\" data-focus-ref=\"central:path:/Users/admin/Central:Work/O-I/docs/ARCHITECTURE.md\">…</aside> subtree intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-pressed=\"false\">History</button> from <aside data-depth=\"full\" data-region=\"right\" data-overlay=\"false\" class=\"desktop-side right depth-full\" aria-label=\"Agent and inspector region\" data-focus-ref=\"central:path:/Users/admin/Central:Work/O-I/docs/ARCHITECTURE.md\">…</aside> subtree intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    58 × waiting for element to be visible, enabled and stable\n       - element is visible, enabled and stable\n       - scrolling into view if needed\n       - done scrolling\n       - <button aria-pressed=\"false\">History</button> from <aside data-depth=\"full\" data-region=\"right\" data-overlay=\"false\" class=\"desktop-side right depth-full\" aria-label=\"Agent and inspector region\" data-focus-ref=\"central:path:/Users/admin/Central:Work/O-I/docs/ARCHITECTURE.md\">…</aside> subtree intercepts pointer events\n     - retrying click action\n       - waiting 500ms\n"
+    },
+    {
+      "cycle": 2,
+      "step": "1-open-close",
+      "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('complementary', { name: 'World navigator' }).locator('[data-file-path=\"Work/O-I/README.md\"]')\n"
+    },
+    {
+      "cycle": 2,
+      "step": "2-split-maximize-restore",
+      "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('complementary', { name: 'World navigator' }).locator('[data-file-path=\"Work/O-I/README.md\"]')\n"
+    },
+    {
+      "cycle": 2,
+      "step": "2-close-both",
+      "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('.tab').first()\n    - locator resolved to <div role=\"tab\" tabindex=\"0\" draggable=\"true\" title=\"README.md\" class=\"tab active\" data-active=\"true\" data-dirty=\"false\" data-pinned=\"false\" aria-selected=\"true\" data-title=\"README.md\" data-surface-id=\"a49f7d24-8933-4a3f-9cda-ee6b78b0470c\">…</div>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-pressed=\"false\">History</button> from <aside data-depth=\"full\" data-region=\"right\" data-overlay=\"false\" class=\"desktop-side right depth-full\" aria-label=\"Agent and inspector region\" data-focus-ref=\"central:path:/Users/admin/Central:Work/O-I/docs/ARCHITECTURE.md\">…</aside> subtree intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-pressed=\"false\">History</button> from <aside data-depth=\"full\" data-region=\"right\" data-overlay=\"false\" class=\"desktop-side right depth-full\" aria-label=\"Agent and inspector region\" data-focus-ref=\"central:path:/Users/admin/Central:Work/O-I/docs/ARCHITECTURE.md\">…</aside> subtree intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    58 × waiting for element to be visible, enabled and stable\n       - element is visible, enabled and stable\n       - scrolling into view if needed\n       - done scrolling\n       - <button aria-pressed=\"false\">History</button> from <aside data-depth=\"full\" data-region=\"right\" data-overlay=\"false\" class=\"desktop-side right depth-full\" aria-label=\"Agent and inspector region\" data-focus-ref=\"central:path:/Users/admin/Central:Work/O-I/docs/ARCHITECTURE.md\">…</aside> subtree intercepts pointer events\n     - retrying click action\n       - waiting 500ms\n"
+    },
+    {
+      "cycle": 2,
+      "step": "3-wiki-open-pan-zoom",
+      "error": "locator.getAttribute: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'O-I: wiki', exact: true })\n"
+    },
+    {
+      "cycle": 2,
+      "step": "3-restore-files-mode",
+      "error": "locator.getAttribute: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'O-I: files', exact: true })\n"
+    },
+    {
+      "cycle": 2,
+      "step": "5-tab-switch",
+      "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('complementary', { name: 'World navigator' }).locator('[data-file-path=\"Work/O-I/README.md\"]')\n"
+    },
+    {
+      "cycle": 3,
+      "step": "1-open-close",
+      "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('complementary', { name: 'World navigator' }).locator('[data-file-path=\"Work/O-I/README.md\"]')\n"
+    },
+    {
+      "cycle": 3,
+      "step": "2-split-maximize-restore",
+      "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('complementary', { name: 'World navigator' }).locator('[data-file-path=\"Work/O-I/README.md\"]')\n"
+    },
+    {
+      "cycle": 3,
+      "step": "3-wiki-open-pan-zoom",
+      "error": "locator.getAttribute: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'O-I: wiki', exact: true })\n"
+    },
+    {
+      "cycle": 3,
+      "step": "3-restore-files-mode",
+      "error": "locator.getAttribute: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'O-I: files', exact: true })\n"
+    },
+    {
+      "cycle": 3,
+      "step": "5-tab-switch",
+      "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('complementary', { name: 'World navigator' }).locator('[data-file-path=\"Work/O-I/README.md\"]')\n"
+    },
+    {
+      "cycle": 4,
+      "step": "1-open-close",
+      "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('complementary', { name: 'World navigator' }).locator('[data-file-path=\"Work/O-I/README.md\"]')\n"
+    },
+    {
+      "cycle": 4,
+      "step": "2-split-maximize-restore",
+      "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('complementary', { name: 'World navigator' }).locator('[data-file-path=\"Work/O-I/README.md\"]')\n"
+    },
+    {
+      "cycle": 4,
+      "step": "3-wiki-open-pan-zoom",
+      "error": "locator.getAttribute: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'O-I: wiki', exact: true })\n"
+    },
+    {
+      "cycle": 4,
+      "step": "3-restore-files-mode",
+      "error": "locator.getAttribute: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'O-I: files', exact: true })\n"
+    },
+    {
+      "cycle": 4,
+      "step": "5-tab-switch",
+      "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('complementary', { name: 'World navigator' }).locator('[data-file-path=\"Work/O-I/README.md\"]')\n"
+    }
+  ],
+  "summary": {
+    "first_stable": {
+      "cycle": 4,
+      "wall_time_ms": 150194,
+      "bridge_requests": 593,
+      "heap_used_bytes": 6861728,
+      "heap_total_bytes": 9306112,
+      "nodes": 135,
+      "listeners": 176,
+      "documents": 1,
+      "frames": 1,
+      "dom_query_all_count": 64,
+      "iframe_count": 0,
+      "img_count": 0,
+      "svg_count": 8,
+      "retained_hint": {
+        "surface_count": 0,
+        "tab_count": 0,
+        "surfaces_minus_tabs": 0,
+        "documents_beyond_expected": 0
+      }
+    },
+    "last": {
+      "cycle": 4,
+      "wall_time_ms": 150194,
+      "bridge_requests": 593,
+      "heap_used_bytes": 6861728,
+      "heap_total_bytes": 9306112,
+      "nodes": 135,
+      "listeners": 176,
+      "documents": 1,
+      "frames": 1,
+      "dom_query_all_count": 64,
+      "iframe_count": 0,
+      "img_count": 0,
+      "svg_count": 8,
+      "retained_hint": {
+        "surface_count": 0,
+        "tab_count": 0,
+        "surfaces_minus_tabs": 0,
+        "documents_beyond_expected": 0
+      }
+    },
+    "growth_per_cycle": {
+      "heap_used_bytes_per_cycle": 0,
+      "nodes_per_cycle": 0
+    },
+    "verdict": "bounded — heap grows 0 B/cycle (< 1% of first-stable 6861728 B) and DOM nodes grow 0/cycle (< 5/cycle)"
+  }
+}
