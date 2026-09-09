@@ -1,77 +1,56 @@
 {
   "schema": "oi.convergence-ledger-amendments/v1",
-  "observed_at": "2026-08-24",
-  "reason": "Explicit concurrent movements after the 2026-08-24 base census. Closed PRs and the current repair transport PR are removed from the durable post-merge open-PR set; surviving merged branches remain ledgered with retirement dispositions; new Flow convergence refs and internal dependency-harmonisation PRs are added with their actual current owners.",
+  "observed_at": "2026-09-09T14:15:44Z",
+  "reason": "Exact live GitHub reconciliation after AIKit PR #255 merged and PR #256 opened. Merged refs leave the moving set; current refs retain owner and re-entry truth. This is coverage evidence, not #97 closure.",
   "repositories": [
     {
       "repository": "EpiLogos/O-I",
-      "remove_open_pull_requests": [129, 133, 136],
+      "remove_branches": [
+        "agent/oi-d-current-situated-cosmic", "agent/oi-desktop-p1-host-105", "agent/oi-desktop-p2-project-field-106", "agent/oi-desktop-p5-system-109", "agent/oi-desktop-p6-explore-parity-110", "agent/oi-epi-cosmic-123-instrument", "agent/oi-epi-mode-kernel-bridge", "agent/oi-epi-nara-coordinate-parity", "agent/oi-epi-nara-lived-vertical", "agent/oi-epi-personal-450-composed", "agent/oi-epi-personal-450-return", "agent/oi-epi-personal-return", "agent/oi-pre-d-personal-map-lineage", "agent/oi97-local-prep", "agent/ql-relational-field", "converge/living-wiki-w7-main", "converge/oi97-exact-main-context-reload", "converge/oi97-exact-main-w12", "converge/oi97-post-w7-desktop", "converge/oi97-w12-routine-profile-current-mains", "converge/pre97-final-aikit-registry-repin", "converge/pre97-six-product-command-current-main", "cursor/docs-six-product-command-field-db87", "docs/flow-source-relation", "feat/flow-desktop-138", "feat/living-wiki-desktop-135", "feat/oi155-inhabitation", "feat/oi157-versioned-world-integration", "feat/oi158-omarchy-reference-world", "feat/oi172-six-product-native-command-field", "feat/oi173-adapter-driven-world-recognition", "feat/wiki-authored-relations", "fix/pre97-prelocal-build-channel"
+      ],
+      "remove_open_pull_requests": [],
       "branches": [
-        {
-          "name": "feat/current-world-context-frame",
-          "disposition": "RETIRE_MERGED",
-          "owner": "O:I main / merged PR #133",
-          "reason": "CurrentWorld six-product Workcell composition is accepted on O:I main as 576d7d03b99b39f4d632aec1440a25e5126d6992.",
-          "reentry_condition": "delete merged remote branch after #133/main provenance is retained",
-          "closure_blocking": true
-        },
-        {
-          "name": "feat/living-wiki-desktop-135",
-          "disposition": "KEEP_ACTIVE_EXCEPTION",
-          "owner": "O:I #134/#135 / merged stacked PR #136; parent of active Flow line",
-          "reason": "Living Wiki composition was accepted into the P2 development ancestry and remains a live parent of the Flow desktop convergence; it is not yet an O:I mainline branch.",
-          "reentry_condition": "Flow/current-main convergence absorbs the accepted Living Wiki delta, then retire the historical stacked branch",
-          "closure_blocking": false
-        },
-        {
-          "name": "converge/flow-living-137-main",
-          "disposition": "KEEP_ACTIVE_EXCEPTION",
-          "owner": "O:I #137/#138 / PR #146",
-          "reason": "current-main convergence staging branch combining P2, accepted Living Wiki and Flow over accepted Central/AIKit Flow owners",
-          "reentry_condition": "PR #146 exact-owner Flow finalizer and conformance complete, then retire convergence staging",
-          "closure_blocking": false
-        }
+        {"name":"agent/core-primitive-field-ql","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"O:I core primitive field / PR #194","reason":"Author-ratified QL-aligned primitive field remains under open owner review, distinct from #97 closure.","reentry_condition":"PR #194 receives an owner merge, revision, or closure disposition.","closure_blocking":false},
+        {"name":"ci/rust-cache","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"O:I CI maintenance / PR #193","reason":"Cargo cache and workflow-runtime maintenance remains under open owner review and does not establish suite convergence.","reentry_condition":"PR #193 receives an owner merge, revision, or closure disposition.","closure_blocking":false},
+        {"name":"cradle-p1","disposition":"KEEP_ACTIVE_EXCEPTION","owner":"O:I Cradle rebuild #190","reason":"Active Cradle P1 development and bounded native walk evidence remain on their dedicated owner branch.","reentry_condition":"The Cradle #190 Wayfinder supplies the next reviewed landing or retirement disposition.","closure_blocking":false}
       ],
       "open_pull_requests": [
-        {
-          "number": 145,
-          "disposition": "KEEP_ACTIVE_EXCEPTION",
-          "owner": "O:I #138",
-          "reason": "Flow desktop child over the accepted stacked Living Wiki/P2 ancestry",
-          "reentry_condition": "current-main convergence PR #146 absorbs the accepted Flow delta or explicitly supersedes this child",
-          "closure_blocking": false
-        },
-        {
-          "number": 146,
-          "disposition": "KEEP_ACTIVE_EXCEPTION",
-          "owner": "O:I #137/#138",
-          "reason": "current-main Flow + Living Wiki + P2 convergence candidate against accepted owner mains",
-          "reentry_condition": "exact-owner finalizer and remote conformance return an acceptance disposition",
-          "closure_blocking": false
-        },
-        {
-          "number": 147,
-          "disposition": "KEEP_ACTIVE_EXCEPTION",
-          "owner": "O:I #106/#135/#138 dependency harmonisation",
-          "reason": "internal reverse-direction PR bringing accepted O:I main into the P2/Living development branch before Flow convergence; head is native main, not a competing product candidate",
-          "reentry_condition": "P2/Living ancestry has absorbed current main and PR #146 remains the sole current-main Flow convergence surface",
-          "closure_blocking": false
-        }
+        {"number":193,"disposition":"KEEP_ACTIVE_EXCEPTION","owner":"O:I CI maintenance","reason":"Open current-main PR for Rust cache and workflow-runtime maintenance.","reentry_condition":"Owner review resolves PR #193.","closure_blocking":false},
+        {"number":194,"disposition":"KEEP_ACTIVE_EXCEPTION","owner":"O:I core primitive field","reason":"Open current-main PR carrying the author-ratified QL-aligned O:I primitive field.","reentry_condition":"Owner review resolves PR #194.","closure_blocking":false}
       ]
     },
     {
+      "repository": "EpiLogos/Central",
+      "remove_branches": ["agent/oi-watch-notification-conformance", "agent/personal-surface-notifications", "agent/projectcentral-authored-ground", "agent/projectcentral-now-day", "build/central-ticket-14", "build/central-ticket-15", "build/central-ticket-16", "converge/oi97-authored-ground-governance", "converge/oi97-native-extensions", "converge/oi97-projectcentral-now-day", "docs/central-human-altitude-framing", "feat/current-machine-workcell-binding", "feat/flow-source-93", "feat/flow-source-93-main48", "feat/layered-agent-governance-sources", "feat/living-wiki-source-horizon", "oi97-macos-native", "oi97-ubuntu", "repair/oi97-projectcentral-doc-truth"],
+      "remove_open_pull_requests": [], "branches": [], "open_pull_requests": []
+    },
+    {
+      "repository": "EpiLogos/Actuation",
+      "remove_branches": ["feat/current-world-composition-readiness", "foundation/first-class-actuation", "research/epistemic-cultivation"],
+      "remove_open_pull_requests": [3], "branches": [], "open_pull_requests": []
+    },
+    {
       "repository": "EpiLogos/ai-kit",
-      "remove_open_pull_requests": [123],
+      "remove_branches": ["agent/aikit-v2-ql-mef", "agent/harness-admission-sdk", "agent/native-credential-provider", "agent/praxis-project-reflection", "agent/tui-v2-application-domain-parity", "agent/v2-explain-history-evidence-convergence", "feat/current-world-composition-readiness", "feat/flow-context-122", "feat/human-authority-collaboration", "feat/instruction-architecture-craft", "feat/living-wiki-bounded-preflight", "feat/living-wiki-complete-118", "feat/living-wiki-knowledge-application", "praxis/meta-harness-context-craft"],
+      "remove_open_pull_requests": [74, 86, 87, 106, 107, 123],
       "branches": [
-        {
-          "name": "feat/flow-context-122",
-          "disposition": "RETIRE_MERGED",
-          "owner": "AIKit current main / merged PR #123",
-          "reason": "Flow standing context and first-class Contemplate scope are accepted on AIKit main as 4b9b404c0603532e86c5652b7fd5062d2e344acf.",
-          "reentry_condition": "delete merged remote branch after #123/main provenance is retained",
-          "closure_blocking": true
-        }
+        {"name":"feat/wiki-inhabitation-domain","disposition":"RECONCILE_BEFORE_CLOSURE","owner":"AIKit wiki continuity / PR #254","reason":"Active minimal CASE 06 authoring-convention tranche; entity dirty-marking and reconcile work remain outside this branch.","reentry_condition":"PR #254 receives owner review and remaining CASE 06 work is separately dispositioned.","closure_blocking":true},
+        {"name":"fix/root-domain-register","disposition":"RECONCILE_BEFORE_CLOSURE","owner":"AIKit domain register / PR #256","reason":"Active owner correction makes root-register KnowledgeDomain declarations visible outside project scope; it remains under open review and does not establish Factory programme closure.","reentry_condition":"PR #256 receives owner review and its accepted-main disposition is recorded.","closure_blocking":true}
+      ],
+      "open_pull_requests": [
+        {"number":254,"disposition":"RECONCILE_BEFORE_CLOSURE","owner":"AIKit wiki continuity","reason":"Open PR for bounded CASE 06 authoring conventions, not full wiki continuity closure.","reentry_condition":"Owner review resolves PR #254 and records the remaining CASE 06 frontier.","closure_blocking":true},
+        {"number":256,"disposition":"RECONCILE_BEFORE_CLOSURE","owner":"AIKit domain register","reason":"Open PR for root-register KnowledgeDomain scope correction, not Factory programme closure.","reentry_condition":"Owner review resolves PR #256 and records the accepted-main result.","closure_blocking":true}
       ]
+    },
+    {
+      "repository": "EpiLogos/agent-system-design",
+      "remove_branches": ["agent/factory-q4-client-adapter", "agent/factory-rust-foundation", "agent/ql-deep-runtime", "agent/ql-mef-module-vision-spec", "build/factory-root-contracts-2026-08-13", "design/persistent-agency-material-hosting", "feat/current-world-composition-readiness", "harmonize/actuation-runtime-boundary", "program/coordinated-build-2026-08-13", "repair/oi97-actuation-boundary-provenance", "repair/oi97-delete-duplicate-refs", "research/deepseek-harness-maximal-host"],
+      "remove_open_pull_requests": [132, 141, 142], "branches": [], "open_pull_requests": []
+    },
+    {
+      "repository": "EpiLogos/Workcell",
+      "remove_branches": ["feat/context-composition-readiness"],
+      "remove_open_pull_requests": [], "branches": [], "open_pull_requests": []
     }
   ]
 }

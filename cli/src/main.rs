@@ -23,6 +23,7 @@ mod composition {
     include!("product_command_route.rs");
     include!("dev_world_command.rs");
     include!("frontdoor.rs");
+    include!("factory_proving.rs");
 }
 
 fn main() -> std::process::ExitCode {

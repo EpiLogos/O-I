@@ -22,10 +22,11 @@ owner, reason, re-entry and closure-blocking fields and the final composed set m
 still equal live GitHub exactly.
 
 The one deliberate transition exception is the pull request currently transporting
-this ledger toward its base branch. During that PR's own CI event, its PR number is
-removed from the observed open-PR set before comparison. The checked-in ledger can
-therefore describe the surviving post-merge world, while the same verifier on a main
-push receives no exception and must equal GitHub literally.
+this ledger toward its base branch. During that PR's own CI event, its PR number and
+head branch are removed from the observed moving sets before comparison. The
+checked-in ledger can therefore describe the surviving post-merge world even when
+the repository deletes merged branches automatically, while the same verifier on a
+main push receives no exception and must equal GitHub literally.
 """
 
 from __future__ import annotations
@@ -129,7 +130,7 @@ def load() -> dict:
     return ledger
 
 
-def current_transport_pr() -> tuple[str, int] | None:
+def current_transport_pr() -> tuple[str, int, str] | None:
     """Return the current PR transport only for a real pull_request Actions event."""
     if os.environ.get("GITHUB_EVENT_NAME") != "pull_request":
         return None
@@ -148,7 +149,10 @@ def current_transport_pr() -> tuple[str, int] | None:
         die("pull_request event is missing repository.full_name")
     if not isinstance(number, int) or number <= 0 or not isinstance(pull, dict):
         die("pull_request event is missing a valid current PR number")
-    return repository, number
+    head_ref = pull.get("head", {}).get("ref")
+    if not isinstance(head_ref, str) or not head_ref or head_ref == "main":
+        die("pull_request event is missing a valid head branch")
+    return repository, number, head_ref
 
 
 def github_json(url: str):
@@ -258,6 +262,7 @@ def main() -> int:
                 if pull.get("state") == "open"
             }
             if transport is not None and transport[0] == repo:
+                live_branches.discard(transport[2])
                 live_prs.discard(transport[1])
 
             ledger_branches = set(branch_map)
@@ -283,7 +288,10 @@ def main() -> int:
     if AMENDMENTS_PATH.exists():
         print("explicit concurrent amendments: INCLUDED")
     if transport is not None:
-        print(f"current pull-request transport excluded from durable set: {transport[0]}#{transport[1]}")
+        print(
+            "current pull-request transport excluded from durable set: "
+            f"{transport[0]}#{transport[1]} ({transport[2]})"
+        )
     if args.live:
         print("live open-PR/non-main-branch set equality: PASS")
     if args.closure:

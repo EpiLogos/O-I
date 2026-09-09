@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://oi.epilogos.dev/schemas/oi.factory-proving-snapshot-v1.schema.json",
+  "title": "O:I Factory proving snapshot v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "createdAtUnixMs", "issues", "factoryRevision", "factoryExecutableSha256", "schemaPins", "factoryRefs", "evidence", "claims", "caseStanding"],
+  "properties": {
+    "contract": { "const": "oi.factory-proving-snapshot/v1" },
+    "createdAtUnixMs": { "type": "integer", "minimum": 0 },
+    "issues": { "const": ["EpiLogos/O-I#202", "EpiLogos/O-I#203"] },
+    "factoryRevision": { "const": "12a721dbbb51e3c70d52ef00220efa859ef930fd" },
+    "factoryExecutableSha256": { "$ref": "#/$defs/sha256" },
+    "schemaPins": {
+      "type": "array", "minItems": 4, "maxItems": 4,
+      "items": { "type": "object", "additionalProperties": false, "required": ["path", "sha256"], "properties": { "path": { "type": "string", "minLength": 1 }, "sha256": { "$ref": "#/$defs/sha256" } } }
+    },
+    "factoryRefs": {
+      "type": "object", "additionalProperties": false, "required": ["requestRef", "projectRef", "journeyRef", "runRef"],
+      "properties": {
+        "requestRef": { "type": "string", "pattern": "^commission-request:[^\\s]+$" },
+        "projectRef": { "type": "string", "pattern": "^project:[0-9A-HJKMNP-TV-Z]{26}$" },
+        "journeyRef": { "type": "string", "pattern": "^journey:[0-9A-HJKMNP-TV-Z]{26}$" },
+        "runRef": { "type": "string", "pattern": "^run:[0-9A-HJKMNP-TV-Z]{26}$" }
+      }
+    },
+    "workcellPin": {
+      "type": "object", "additionalProperties": false, "required": ["revision", "resourceUsageSchemaPath", "resourceUsageSchemaSha256"],
+      "properties": {
+        "revision": { "const": "fa47a29fa49a6636675d21309b00c269ac824abb" },
+        "resourceUsageSchemaPath": { "const": "crates/workcell-runtime/schemas/resource-usage-v1.schema.json" },
+        "resourceUsageSchemaSha256": { "const": "4e0e1cf8848ed1faf74bcc362976b47f81aad99b33eea458a789cb688f1b3d5f" }
+      }
+    },
+    "actuationPin": {
+      "type": "object", "additionalProperties": false, "required": ["revision", "modelUsageSchemaPath", "modelUsageSchemaSha256"],
+      "properties": {
+        "revision": { "const": "5eec4639f1c8727865373b27fdcde09fdcca2d53" },
+        "modelUsageSchemaPath": { "const": "contracts/model-usage-v1.schema.json" },
+        "modelUsageSchemaSha256": { "const": "42215b3f06dffe5bfba53b0f51db6400d5b8739098c4fb1275f7a006579615cb" }
+      }
+    },
+    "evidence": {
+      "type": "array", "minItems": 9, "maxItems": 13,
+      "items": { "type": "object", "additionalProperties": false, "required": ["operation", "owner", "outputSha256", "output"], "properties": { "operation": { "type": "string", "minLength": 1 }, "owner": { "enum": ["factory", "workcell", "actuation"] }, "outputSha256": { "$ref": "#/$defs/sha256" }, "output": { "type": "object" } } }
+    },
+    "claims": {
+      "type": "array", "minItems": 5, "maxItems": 5,
+      "items": { "type": "object", "additionalProperties": false, "required": ["id", "grade", "standing", "basis"], "properties": { "id": { "type": "string", "minLength": 1 }, "grade": { "enum": ["D", "C", "P", "M", "H"] }, "standing": { "enum": ["observed", "provisional-unaccepted", "unavailable"] }, "basis": { "type": "string", "minLength": 1 } } },
+      "allOf": [
+        { "contains": { "required": ["grade", "standing"], "properties": { "grade": { "const": "D" }, "standing": { "const": "observed" } } }, "minContains": 1 },
+        { "contains": { "required": ["grade", "standing"], "properties": { "grade": { "const": "C" }, "standing": { "const": "observed" } } }, "minContains": 1 },
+        { "contains": { "required": ["grade", "standing"], "properties": { "grade": { "const": "P" }, "standing": { "enum": ["observed", "unavailable"] } } }, "minContains": 1 },
+        { "contains": { "required": ["grade"], "properties": { "grade": { "const": "M" } } }, "minContains": 1 },
+        { "contains": { "required": ["grade", "standing"], "properties": { "grade": { "const": "H" }, "standing": { "const": "unavailable" } } }, "minContains": 1 }
+      ]
+    },
+    "caseStanding": {
+      "type": "array", "minItems": 5, "uniqueItems": true,
+      "items": { "type": "object", "additionalProperties": false, "required": ["case", "standing", "factoryAncestry", "basis"], "properties": { "case": { "enum": ["factory-single-agent", "direct-session", "external-harness", "simultaneous-field", "plural-guardian"] }, "standing": { "enum": ["commissioned-unexecuted", "planned-unexecuted", "not-observed"] }, "factoryAncestry": { "enum": ["owner-established", "not-claimed"] }, "basis": { "type": "string", "minLength": 1 } } }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "required": ["actuationPin"] },
+      "then": {
+        "properties": {
+          "claims": { "contains": { "required": ["grade", "standing"], "properties": { "grade": { "const": "P" }, "standing": { "const": "observed" } } } },
+          "evidence": { "contains": { "required": ["owner"], "properties": { "owner": { "const": "actuation" } } }, "minContains": 2, "maxContains": 2 }
+        }
+      },
+      "else": {
+        "properties": {
+          "claims": { "contains": { "required": ["grade", "standing"], "properties": { "grade": { "const": "P" }, "standing": { "const": "unavailable" } } } },
+          "evidence": { "not": { "contains": { "required": ["owner"], "properties": { "owner": { "const": "actuation" } } } } }
+        }
+      }
+    }
+  ],
+  "$defs": { "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" } }
+}

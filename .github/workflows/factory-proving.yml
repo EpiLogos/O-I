@@ -1,0 +1,55 @@
+name: Factory proving floor
+
+on:
+  pull_request:
+    paths:
+      - "cli/**"
+      - "schemas/oi.factory-proving-snapshot-v1.schema.json"
+      - "scripts/validate_factory_proving.py"
+      - "suite/factory-proving-floor.json"
+      - "suite/factory-proving-actuation-usage.json"
+      - "suite/factory-proving-actuation-usage-replay.json"
+      - ".github/workflows/factory-proving.yml"
+  push:
+    branches: [main]
+    paths:
+      - "cli/**"
+      - "schemas/oi.factory-proving-snapshot-v1.schema.json"
+      - "scripts/validate_factory_proving.py"
+      - "suite/factory-proving-floor.json"
+      - "suite/factory-proving-actuation-usage.json"
+      - "suite/factory-proving-actuation-usage-replay.json"
+      - ".github/workflows/factory-proving.yml"
+
+jobs:
+  owner-native:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/agent-system-design
+          ref: 12a721dbbb51e3c70d52ef00220efa859ef930fd
+          path: .factory-owner
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Actuation
+          ref: 5eec4639f1c8727865373b27fdcde09fdcca2d53
+          path: .actuation-owner
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy,rustfmt
+      - name: Install schema validator
+        run: python3 -m pip install --disable-pip-version-check 'jsonschema>=4.18,<5'
+      - name: Exercise exact Factory owner CLI
+        run: |
+          python3 scripts/validate_factory_proving.py \
+            --factory-source .factory-owner \
+            --actuation-source .actuation-owner \
+            --actuation-usage suite/factory-proving-actuation-usage.json \
+            --actuation-usage-replay suite/factory-proving-actuation-usage-replay.json
+      - name: Rust quality gates
+        run: |
+          cargo fmt --manifest-path cli/Cargo.toml -- --check
+          cargo clippy --locked --manifest-path cli/Cargo.toml --all-targets -- -D warnings
+          cargo test --locked --manifest-path cli/Cargo.toml --all-targets
