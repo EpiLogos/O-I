@@ -1,3 +1,7 @@
+---
+Register: episteme
+---
+
 # O:I aikit harmonisation & live operative acceptance — Astra engagement prompt
 
 **[OI-ASTRA-AIKIT-HARMONISATION]** · owner-engaged 2026-09-06 · simple and

@@ -1,3 +1,8 @@
+---
+Register: episteme
+Standing: architecture-contract
+---
+
 # 02 — Cradle architecture
 
 **Status:** architecture commitment for the O:I desktop.

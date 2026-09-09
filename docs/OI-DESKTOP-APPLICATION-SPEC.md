@@ -1,3 +1,8 @@
+---
+Register: episteme
+Standing: design-commitment
+---
+
 # O:I Desktop Application Specification
 
 **Coordinate clarification, owner instruction 2026-09-06:** this application is

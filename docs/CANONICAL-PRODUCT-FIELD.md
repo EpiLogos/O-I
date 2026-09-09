@@ -1,3 +1,8 @@
+---
+Register: episteme
+Standing: architecture-contract
+---
+
 # {O:I} Canonical Product Field
 
 **Status:** canonical architectural framing  

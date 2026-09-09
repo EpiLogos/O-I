@@ -1,3 +1,8 @@
+---
+Register: episteme
+Standing: design-commitment
+---
+
 # 06 — System Settings surface
 
 *UX design for the cradle's system surface: from census registry to the
