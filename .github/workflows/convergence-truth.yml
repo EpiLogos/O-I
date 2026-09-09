@@ -4,12 +4,14 @@ on:
   pull_request:
     paths:
       - 'suite/convergence-ledger.json'
+      - 'suite/convergence-ledger-amendments.json'
       - 'scripts/verify-convergence-ledger.py'
       - '.github/workflows/convergence-truth.yml'
   push:
     branches: [main]
     paths:
       - 'suite/convergence-ledger.json'
+      - 'suite/convergence-ledger-amendments.json'
       - 'scripts/verify-convergence-ledger.py'
       - '.github/workflows/convergence-truth.yml'
   workflow_dispatch:
