@@ -730,15 +730,28 @@ fn command_suite_v2_doctor(args: &[OsString]) -> Result<i32, String> {
     match oi_cli::status::live_disclosure() {
         Ok(disclosure) => {
             for surface in &disclosure.surfaces {
-                // Drift is the failing condition. A PATH shadow is recorded and
-                // reported; it fails only when its content actually differs
-                // (status.rs puts that finding in `drift` too).
-                let surface_ok = surface.drift.is_none();
+                // Two failing conditions. Drift is one: a PATH shadow is
+                // reported always and fails when its content actually differs
+                // (status.rs puts that finding in `drift` too). The other is
+                // simply not being registered — a six-product suite with an
+                // unregistered product is not healthy, and reporting that as
+                // PASS because a command happens to sit on PATH is the exact
+                // reassurance this doctor is supposed to stop giving.
+                let registered = surface.state == oi_cli::status::NativeSurfaceState::Registered;
+                let surface_ok = surface.drift.is_none() && registered;
                 if !surface_ok { ok = false; }
-                let detail = match (&surface.drift, &surface.detail) {
-                    (Some(drift), Some(note)) => format!("{drift}; {note}"),
-                    (Some(drift), None) => drift.clone(),
-                    (None, other) => other.clone().unwrap_or_default(),
+                let unregistered_detail = (!registered).then(|| match surface.state {
+                    oi_cli::status::NativeSurfaceState::Installed => format!(
+                        "not registered with O:I — a `{}` exists on PATH but O:I cannot name the revision it was built from, and will not run it",
+                        surface.native_entry
+                    ),
+                    _ => "not registered with O:I — nothing is installed for this product".to_owned(),
+                });
+                let detail = match (&surface.drift, &unregistered_detail, &surface.detail) {
+                    (Some(drift), _, Some(note)) => format!("{drift}; {note}"),
+                    (Some(drift), _, None) => drift.clone(),
+                    (None, Some(missing), _) => missing.clone(),
+                    (None, None, other) => other.clone().unwrap_or_default(),
                 };
                 surface_checks.push(json!({
                     "surface": surface.id,

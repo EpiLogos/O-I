@@ -176,26 +176,38 @@ Only then do the genuinely physical gates become meaningful: macOS-native/Raycas
 
 ## Add existing installations
 
-Registration is first-class because a machine can already have one or more native products.
+Registration is first-class because a machine can already have one or more native products. It is not, however, discovery: a registration records the git revision the executable was built from, so a command merely found on `PATH` is reported and left alone rather than registered.
+
+Supply the checkout the executable was built from, and O:I reads the revision from it:
 
 ```text
-oi register central --executable /path/to/ctrl
-oi register actuation --executable /path/to/actuation
-oi register ai-kit --executable /path/to/aikit
-oi register software-factory --executable /path/to/factory
-oi register workcell --executable /path/to/workcell
-oi register quaternal-logic --executable /path/to/ql
+oi register central          --executable /path/to/ctrl      --root /path/to/Central
+oi register actuation        --executable /path/to/actuation --root /path/to/Actuation
+oi register ai-kit           --executable /path/to/aikit     --root /path/to/ai-kit
+oi register software-factory --executable /path/to/factory   --root /path/to/Software-Factory
+oi register workcell         --executable /path/to/workcell  --root /path/to/Workcell
+oi register quaternal-logic  --executable /path/to/ql        --root /path/to/Quaternal-Logic
 ```
 
-All six products now have accepted native executables. A registration stores only the facts required to find and describe the native surface. It does not import or rewrite product configuration.
+`--version <revision>` may be given instead when the revision is known and the checkout is not present. A `--version` that is not a git revision — a `--version` banner such as `ctrl 0.1.0`, a release name, a tag — is refused, because it records an identity nothing can check.
 
-For Central specifically, `oi install central` is preferable when compatibility is not already known because the current-main route verifies the ProjectCentral-capable Action surface before accepting an existing executable.
+A registration stores only the facts required to find, describe and identify the native surface. It does not import or rewrite product configuration.
+
+For Central specifically, `oi install central` is preferable when compatibility is not already known because the current-main route verifies the ProjectCentral-capable Action surface, installs the recorded source revision itself, and registers that revision.
 
 ## Install other surfaces through `oi`
 
 Released-artifact installation and current-source development remain distinct. `oi install [PRODUCT ...]` on the released-suite path installs immutable accepted artifacts described by `suite/manifest.json`. `oi dev ...` operates over the current native source world and uses the current mainline source pins.
 
+Every product in `suite/manifest.json` must declare `artifact.native_command`. When it declares one, the artifact must carry the executable and an `installed_verify` probe; when it declares none, it must say why. `oi install` then fails for such a product, names the reason, removes any registration that named no executable, and exits non-zero — it never registers a source root and lets `PATH` answer for the command.
+
 Do not infer from a green released-artifact doctor that a developer checkout is current, and do not rewrite historical release metadata to make it appear current.
+
+## What `oi <product>` runs
+
+`oi <product> ...` runs the registered executable and nothing else. There is no `PATH` fallback: an unregistered product is refused by name, because a command O:I cannot identify is a command it will not silently substitute. `OI_CENTRAL_CTRL_BIN`, `OI_ACTUATION_BIN`, `OI_AIKIT_BIN`, `OI_FACTORY_BIN`, `OI_WORKCELL_BIN` and `OI_QL_BIN` remain the explicit operator overrides.
+
+`oi doctor` fails, rather than passes, when a registered executable is absent, when a registered executable differs in content from what `PATH` resolves for that command, when a recorded version is not a revision, and when a product is not registered at all.
 
 ## Composition state
 
