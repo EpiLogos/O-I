@@ -1,0 +1,28 @@
+{
+  "executable": "/tmp/oi-p1-native-target-final-20260908/debug/bundle/macos/O-I P1 Acceptance.app/Contents/MacOS/oi-cradle",
+  "env": {
+    "OI_BIN": "/tmp/oi-p1-exact-bindings-20260908/oi",
+    "OI_CENTRAL_CTRL_BIN": "/tmp/oi-p1-exact-bindings-20260908/ctrl",
+    "OI_AIKIT_BIN": "/tmp/oi-p1-exact-bindings-20260908/aikit",
+    "OI_AIKIT_SESSION_SPACE_BIN": "/tmp/oi-p1-exact-bindings-20260908/aikit-session-space",
+    "OI_FACTORY_BIN": "/tmp/oi-p1-exact-bindings-20260908/factory",
+    "OI_WORKCELL_BIN": "/tmp/oi-p1-exact-bindings-20260908/workcell",
+    "OI_QL_BIN": "/tmp/oi-p1-exact-bindings-20260908/ql",
+    "OI_ACTUATION_BIN": "/tmp/oi-p1-exact-bindings-20260908/actuation",
+    "OI_CENTRAL_ROOT": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-kumDve",
+    "OI_CENTRAL_PROJECT_QUERY": "Editor",
+    "AIKIT_HOME": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-kumDve/.aikit-home",
+    "OI_CRADLE_DATA_STORE_ID": "b906188ed2c0929678af24ce9f21c129",
+    "OI_CRADLE_NATIVE_WALK": "1",
+    "OI_HOME": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-kumDve/.oi-home"
+  },
+  "bundle_identifier": "org.epilogos.oi.cradle.p1acceptance",
+  "original_bundle_identifier": "org.epilogos.oi.cradle",
+  "packaging_disposition": "isolated native acceptance identifier; application source unchanged",
+  "executable_sha256": "d6c26aeb7e8a295b69579cc0509103399bc0632dae52581629b0b26a2c771420",
+  "status": "launched for native acceptance",
+  "prior_pid": 19773,
+  "revision": 4,
+  "prior_candidate_archive": "/tmp/oi-p1-native-target-final-20260908/debug/bundle/macos/retired-rev3/O-I P1 Acceptance.app",
+  "pid": 15132
+}

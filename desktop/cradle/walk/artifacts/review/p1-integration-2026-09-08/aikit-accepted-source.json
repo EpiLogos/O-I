@@ -1,0 +1,45 @@
+{
+  "revision": "1e82703e48034c38723800ea92bfa5da8321414e",
+  "archive_sha256": "6d9d79935e7d1adf8d3d8174c0f9debfeeb96f6e1c860cb7ececf60cb27d3df8",
+  "source": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/aikit-1e82703-binding-91vqc5vp/source",
+  "target": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/aikit-1e82703-binding-91vqc5vp/target",
+  "binaries": {
+    "aikit": {
+      "path": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/aikit-1e82703-binding-91vqc5vp/target/debug/aikit",
+      "sha256": "c8f18087fc9695a423c63d9b330b0eee3bbdfccec5d1dac8eee443e2820bb16a"
+    },
+    "aikit-session-space": {
+      "path": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/aikit-1e82703-binding-91vqc5vp/target/debug/aikit-session-space",
+      "sha256": "af2940b6e1376dc4278262a821b216c65545864f374999fe9bbabb82fe481c43"
+    }
+  },
+  "checks": [
+    {
+      "argv": [
+        "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/aikit-1e82703-binding-91vqc5vp/target/debug/aikit",
+        "--json",
+        "-C",
+        "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/aikit-1e82703-binding-91vqc5vp/isolated-project",
+        "status"
+      ],
+      "exit": 0,
+      "stdout": "{\"context\":{\"context_id\":\"ctx_01M214CVNNAV79WSHYD5HBDH8M\",\"project_root\":null,\"session_id\":null},\"data\":{\"active\":[],\"active_count\":0,\"bypasses\":[],\"generation_label\":null,\"generation_properties\":{},\"hash\":\"3804c16128d1d9a8fe379489afa508e127f6d0f538204efefb6d4f0e3978f66e\",\"isolation\":\"shared\"},\"ok\":true,\"schema\":1,\"warnings\":[]}\n",
+      "stderr": "",
+      "schema": 7
+    },
+    {
+      "argv": [
+        "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/aikit-1e82703-binding-91vqc5vp/target/debug/aikit-session-space",
+        "-C",
+        "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/aikit-1e82703-binding-91vqc5vp/isolated-project",
+        "list"
+      ],
+      "exit": 0,
+      "stdout": "[]\n",
+      "stderr": "",
+      "schema": 7
+    }
+  ],
+  "build": "CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=0 CARGO_TARGET_DIR=/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/aikit-1e82703-binding-91vqc5vp/target /Users/admin/.cargo/bin/cargo build --locked --manifest-path /var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/aikit-1e82703-binding-91vqc5vp/source/Cargo.toml -p aikit-cli --bin aikit --bin aikit-session-space",
+  "standing": "exact accepted-main pair built; isolated status/list schema compatibility only; native provider acceptance not claimed"
+}

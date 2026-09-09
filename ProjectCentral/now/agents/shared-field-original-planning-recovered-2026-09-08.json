@@ -1,0 +1,14 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "shared-field-original-planning-recovered-2026-09-08",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "codex-desktop-planning-20260908",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1788832885,
+  "subject": "Shared Field original planning recovered; discussion open",
+  "result": "Luna recovered O-I issues 9/11/12/13, later 84/110/149/150/155 and local Shared Field contracts. Added SF-01–06 to September 8 product refresh and linked foundation programme. Wiki-led shared navigation belongs in foundation; dependent live publication and return gates remain Slice 7. Shared NOW meaning and stable-map/live-layer presentation remain discussion proposals. Original docs do not imply copying private Central NOW/DAY into SpaceTimeDB. No code, builds, scans or providers changed.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-09-08"
+  ]
+}

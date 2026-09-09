@@ -8,6 +8,7 @@ mod guardian;
 mod skillset;
 mod composition {
     include!("composition.rs");
+    include!("ground_binding.rs");
     include!("bootstrap.rs");
     include!("verification.rs");
     include!("first_suite.rs");
@@ -21,6 +22,7 @@ mod composition {
     include!("existing_world.rs");
     include!("omarchy_host.rs");
     include!("product_command_route.rs");
+    include!("desktop_command.rs");
     include!("dev_world_command.rs");
     include!("frontdoor.rs");
     include!("factory_proving.rs");

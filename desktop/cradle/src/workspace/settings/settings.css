@@ -1,0 +1,42 @@
+/* System Settings surface (docs/cradle/06). Extends the .system-panel
+   base in shell.css — the census details remain direct children so the
+   system walk's :scope contract holds. */
+
+.settings-world-header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; align-items: baseline; border-bottom: var(--oi-shell-edge, 1px) solid var(--oi-hairline-soft, rgba(128,128,128,.25)); padding-bottom: 12px; }
+.settings-world-facts { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 0; font-size: var(--oi-shell-type-ui, 12px); }
+.settings-world-facts > div { display: flex; gap: 6px; }
+.settings-world-facts dt { color: var(--oi-muted-2, #888); }
+.settings-world-facts dd { margin: 0; }
+
+.settings-rail { display: flex; gap: 4px; margin: 12px 0 4px; border-bottom: var(--oi-shell-edge, 1px) solid var(--oi-hairline-soft, rgba(128,128,128,.25)); }
+.settings-rail button { background: none; border: none; border-bottom: 2px solid transparent; padding: 6px 10px; cursor: pointer; color: var(--oi-muted-2, #888); font: inherit; font-size: var(--oi-shell-type-ui, 12px); }
+.settings-rail button[aria-pressed="true"] { border-bottom-color: var(--oi-accent, #4a7dbd); color: inherit; }
+
+.product-section > summary { font-size: var(--oi-shell-type-heading, 15px); }
+.product-about { color: var(--oi-muted-2, #888); margin: 6px 0 12px; max-width: 64ch; }
+.product-block { margin: 10px 0; }
+.product-block h4 { font-size: var(--oi-shell-type-ui, 12px); text-transform: uppercase; letter-spacing: .06em; color: var(--oi-muted-2, #888); margin: 0 0 6px; font-weight: 500; }
+.product-row { display: contents; }
+.product-provenance { color: var(--oi-muted-2, #888); font-size: var(--oi-shell-type-ui, 12px); }
+.product-native-path { color: var(--oi-muted-2, #888); font-style: normal; font-size: var(--oi-shell-type-ui, 12px); }
+.product-actions { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.product-actions li { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.product-action-availability { font-size: var(--oi-shell-type-ui, 12px); border: 1px solid var(--oi-hairline-soft, rgba(128,128,128,.35)); border-radius: 999px; padding: 1px 8px; color: var(--oi-muted-2, #888); }
+.product-action-availability.is-missing_native_obligation { border-style: dashed; }
+.product-action-note { flex-basis: 100%; color: var(--oi-muted-2, #888); font-size: var(--oi-shell-type-ui, 12px); }
+.product-empty { color: var(--oi-muted-2, #888); font-style: italic; }
+.product-version { color: var(--oi-muted-2, #888); font-size: var(--oi-shell-type-ui, 12px); }
+.product-raw, .product-raw-inline { margin: 8px 0; font-size: var(--oi-shell-type-ui, 12px); }
+.product-raw pre, .product-raw-inline pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.settings-view { padding: 8px 0 16px; }
+.settings-view h3 { font-size: var(--oi-shell-type-heading, 15px); font-weight: 500; margin: 8px 0; }
+.settings-native-note { color: var(--oi-muted-2, #888); font-size: var(--oi-shell-type-ui, 12px); max-width: 72ch; }
+
+.settings-pins { border-collapse: collapse; width: 100%; max-width: 560px; font-size: var(--oi-shell-type-ui, 12px); margin: 8px 0 16px; }
+.settings-pins th, .settings-pins td { text-align: left; padding: 4px 12px 4px 0; border-bottom: 1px solid var(--oi-hairline-soft, rgba(128,128,128,.25)); }
+.settings-pins th { color: var(--oi-muted-2, #888); font-weight: 500; }
+
+.settings-bootstrap { list-style: none; margin: 8px 0 16px; padding: 0; display: grid; gap: 14px; max-width: 72ch; counter-reset: step; }
+.settings-bootstrap li strong { display: block; margin-bottom: 2px; }
+.settings-bootstrap li p { margin: 0 0 4px; color: var(--oi-muted-2, #888); }

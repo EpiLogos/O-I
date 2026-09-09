@@ -29,9 +29,21 @@
 pub mod events;
 pub mod flow;
 pub mod history;
+pub mod knowledge;
+pub mod action;
+pub mod graph;
+pub mod encounter;
+pub mod agency;
+pub mod files;
+pub mod composition;
+pub mod ground;
+pub mod material;
+pub mod factory;
 pub mod focus;
 pub mod refs;
 pub mod world;
+pub mod commission;
+pub mod flow_cognition;
 
 pub use flow::CentralClient;
 
@@ -86,6 +98,8 @@ pub struct SourceBuffer {
     /// Owner query retained at open; later selection never reroutes a save.
     #[serde(default)]
     pub project: String,
+    #[serde(default)] pub world_ref: String,
+    #[serde(default)] pub project_ref: Option<String>,
     /// The cradle-held buffer (presentation layer).
     pub content: String,
     /// The canonical content at `base_revision`.
@@ -116,12 +130,17 @@ pub struct KernelSnapshot {
 /// state change is recorded exactly once on the ordered log.
 #[derive(Debug)]
 pub struct Kernel {
+    agency: agency::Client,
     client: CentralClient,
     focus: GlobalFocus,
     log: KernelEventLog,
     surfaces: BTreeMap<String, SurfaceState>,
     buffers: BTreeMap<String, SourceBuffer>,
     navigator: world::NavigatorReading,
+    file_refs: BTreeMap<String, (SemanticRef, Option<focus::ProjectRef>)>,
+    knowledge_refs: BTreeMap<String, SemanticRef>,
+    encounter_refs: BTreeMap<String,(SemanticRef,focus::ProjectRef)>,
+    knowledge_projects: BTreeMap<String, Option<focus::ProjectRef>>,
 }
 
 // ---------------------------------------------------------------------------
@@ -139,6 +158,79 @@ pub enum KernelOp {
     State,
     WorldRead,
     ProjectRead { project: String },
+    WorldBrowse,
+    Knowledge { #[serde(default)] project: Option<String>, request: knowledge::Request },
+    /// Assemble the typed graph input for U3.1/U3.4 presentation: Central's
+    /// wiki read model (cell C1) composed with AIKit's owner-side resolution
+    /// rows (cell C2). Adapter only — every node/edge carries its owner ref,
+    /// owner operation and owner provenance verbatim; a failed input degrades
+    /// honestly as an explicit unavailable input; the Shared Field
+    /// projection is a named deferred input. Emits nothing (pull read).
+    Graph { #[serde(default)] project: Option<String>, #[serde(default)] query: String },
+    /// Compose the W3-A AIKit session-lifecycle read with the W3-B
+    /// Actuation request-correlation read for ONE permission request
+    /// identity (`oi.cradle.encounter/v1`). Adapter only — the identities
+    /// travel verbatim, the pull emits nothing, and the grant-record seam
+    /// is reconciled explicitly, never adjudicated. An optional `reply`
+    /// is only classified against the pulled owner state (a later
+    /// recorded disposition makes it a stale reply); the kernel records
+    /// nothing.
+    EncounterJoin {
+        session: String,
+        request_ref: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        reply: Option<encounter::ReplyAnswer>,
+    },
+    /// Dispatch one owner-disclosed Action ref to its native owner
+    /// operation (U3.1: every result row invokes its Action). The kernel
+    /// holds no authority: the ref, target and optional input travel
+    /// verbatim; owner payloads return unchanged; spellings with no real
+    /// owner operation are explicit unsupported states. Owner-side effects
+    /// happen through the owner operation and are provable through the
+    /// owner store; the kernel records nothing and emits nothing.
+    InvokeAction { #[serde(default)] project: Option<String>, invocation: action::ActionInvocation },
+    /// Forward one retained Flow/source-return Action to Central. The request
+    /// and response remain owner-shaped; the kernel is only the typed seam.
+    Flow { request: flow::Request },
+    /// Compose the W1.5 changed-since-thought read (`flow_cognition.rs`):
+    /// the kernel supplies the KnowledgeChangeHorizon adapted from Central's
+    /// own `projectcentral.change.horizon` seam and calls the AIKit owner's
+    /// `flow changed-since`; ONE typed reading comes back with both owner
+    /// sides explicit — a side that could not be queried is named, never
+    /// faked empty. Emits nothing (pull read + owner read).
+    FlowChangedSince { #[serde(default)] project: Option<String>, thought: serde_json::Value },
+    /// Commission one verbatim selection in one retained Flow (U4.1/U4.2
+    /// loop mode, `commission.rs`): the selection travels verbatim with the
+    /// Central FlowRef and the expected revision it was made against; the
+    /// commission lands as an owner revision through Central's
+    /// `projectcentral.flow.write` CAS — a stale expected revision refuses
+    /// with both revisions observed, never a silent overwrite. An optional
+    /// AgentSession binds without owning the Flow's identity.
+    FlowCommission {
+        #[serde(default)] project: Option<String>,
+        flow_ref: String,
+        expected_revision: String,
+        selection: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")] agent_session_ref: Option<String>,
+    },
+    AgencyRead { project: String },
+    Encounter {project:String,request:agency::EncounterRequest},
+    MaterialRead {target:material::Target},
+    FactoryDiscover {project_ref:Option<String>},
+    FactorySnapshot {binding_ref:String},
+    FactoryIntent {binding_ref:String,request:factory::Intent},
+    FactoryInvoke {binding_ref:String,request:factory::Invocation},
+    Ground {request:ground::Request},
+    CompositionRead {#[serde(default)] owners:bool},
+    FilesList { path: String },
+    FileOperation {location:files::Location,request:files::Request},
+    FileRead { location: files::Location },
+    /// Binary-safe material read (FND-04): the owner's base64 encoding,
+    /// never the UTF-8 text contract. Distinct name from the Workcell
+    /// `MaterialRead` op above — this reads a native Central file, not a
+    /// Workcell material target.
+    FileBytes { location: files::Location },
+    ProjectBrowse { project: String },
     /// List a project's participating sources from the owner's
     /// disclosures (read-only; emits nothing).
     SourcesList { #[serde(default)] project: Option<String> },
@@ -151,6 +243,7 @@ pub enum KernelOp {
     /// once per clean/dirty crossing — continued typing emits nothing.
     SourceEdit { source_ref: String, content: String },
     SourceHistory { source_ref: String },
+    SourceRestore { source_ref: String, content: String, base_revision: String, saved_content: String },
     /// CAS-save the buffer through `projectcentral.source.write`.
     SourceSave {
         #[serde(default)] project: Option<String>,
@@ -192,6 +285,38 @@ pub struct KernelOpOutcome {
 pub enum KernelOpResult {
     State { snapshot: KernelSnapshot },
     WorldRead { snapshot: KernelSnapshot },
+    Knowledge { data: serde_json::Value },
+    GraphReading { reading: graph::GraphReading },
+    /// The typed encounter join (`encounter.rs`): both owner views, the
+    /// grant-record seam and the failure-taxonomy disposition.
+    EncounterJoined {
+        reading: encounter::EncounterReading,
+    },
+    /// The typed result of one owner-Action dispatch (`action.rs`): the
+    /// owner payload verbatim, or an explicit named state.
+    ActionDispatched { dispatch: action::ActionDispatch },
+    Flow { response: flow::Response },
+    /// The typed changed-since-thought compose (`flow_cognition.rs`): both
+    /// owner sides of the read, explicit.
+    FlowChangedSince { reading: flow_cognition::ChangedSinceReading },
+    /// The typed selection commission outcome (`commission.rs`): owner
+    /// revision, structured conflict, or the owner's own refusal.
+    FlowCommissioned { outcome: commission::CommissionOutcome },
+    AgencyReading { project_ref: String, spaces: serde_json::Value, observed_at_unix_ms: u64 },
+    EncounterReading {data:serde_json::Value},
+    FileOperation {data:serde_json::Value},
+    NativeOwnerReading {owner:String,data:Option<serde_json::Value>,failure:Option<serde_json::Value>},
+    GroundReading {reading:serde_json::Value},
+    CompositionReading {reading:composition::Reading},
+    DirectoryRead { directory: files::Directory },
+    FileRead { reading: files::Reading },
+    FileBytes {
+        location: files::Location,
+        revision: String,
+        byte_len: u64,
+        mime_hint: Option<String>,
+        content_base64: String,
+    },
     SourcesListed { listing: SourceListing },
     SourceOpened { buffer: SourceBuffer },
     SourceHistory { history: history::SourceHistory },
@@ -218,13 +343,22 @@ pub enum KernelOpResult {
 
 impl Kernel {
     pub fn new(client: CentralClient) -> Self {
+        Self::with_agency(client, agency::Client::discover())
+    }
+
+    pub fn with_agency(client: CentralClient, agency: agency::Client) -> Self {
         Self {
             client,
+            agency,
             focus: GlobalFocus::unfocused(),
             log: KernelEventLog::new(),
             surfaces: BTreeMap::new(),
             buffers: BTreeMap::new(),
             navigator: world::NavigatorReading::default(),
+            file_refs: BTreeMap::new(),
+            knowledge_refs: BTreeMap::new(),
+            encounter_refs: BTreeMap::new(),
+            knowledge_projects: BTreeMap::new(),
         }
     }
 
@@ -251,8 +385,173 @@ impl Kernel {
     /// exactly one receipt per kernel state change.
     pub fn apply(&mut self, op: KernelOp) -> Result<KernelOpOutcome, String> {
         match op {
-            KernelOp::WorldRead => self.navigate(None),
-            KernelOp::ProjectRead { project } => self.navigate(Some(&project)),
+            KernelOp::MaterialRead{target} => native_owner_reading("workcell",material::Client::discover().read(&target)),
+            KernelOp::FactoryDiscover{project_ref} => native_owner_reading("software-factory",factory::Client::discover().bindings(project_ref.as_deref())),
+            KernelOp::FactorySnapshot{binding_ref} => native_owner_reading("software-factory",factory::Client::discover().snapshot(&binding_ref)),
+            KernelOp::FactoryIntent{binding_ref,request} => native_owner_reading("software-factory",factory::Client::discover().intent(&binding_ref,&request)),
+            KernelOp::FactoryInvoke{binding_ref,request} => native_owner_reading("software-factory",factory::Client::discover().invoke(&binding_ref,&request)),
+            KernelOp::Ground{request} => Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::GroundReading{reading:ground::operate(request)?}}),
+            KernelOp::CompositionRead{owners} => {
+                let root=world::read_world(&self.client).ok();
+                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::CompositionReading{reading:composition::Client::discover().read_with_owners(&cwd,owners)}})
+            },
+            KernelOp::FileOperation {location,request} => Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::FileOperation {data:files::operate(&self.client,&location,&request)?}}),
+            KernelOp::FilesList {path} => Ok(KernelOpOutcome { receipts:Vec::new(), result:KernelOpResult::DirectoryRead {directory:files::list(&self.client,&path)?} }),
+            KernelOp::FileRead {location} => {
+                let reading = match files::read(&self.client,&location) {
+                    Ok(reading) => reading,
+                    Err(error) => { self.file_refs.remove(&location.ref_id); return Err(error); }
+                };
+                let project = reading.project.as_ref().and_then(|p| p.project_ref.as_ref()).map(|id|focus::ProjectRef::try_from(owner_relation(id,"project","central.files.read"))).transpose().map_err(|e|e.to_string())?;
+                self.file_refs.insert(reading.location.ref_id.clone(),(owner_relation(&reading.location.ref_id,"file","central.files.read"),project));
+                Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::FileRead {reading}})
+            }
+            KernelOp::FileBytes {location} => {
+                let reading = match files::read_bytes(&self.client,&location) {
+                    Ok(reading) => reading,
+                    Err(error) => { self.file_refs.remove(&location.ref_id); return Err(error); }
+                };
+                // FND-04: a binary material file (image/pdf/unsupported) is
+                // opened as a surface through this op, never `FileRead` — the
+                // `SurfaceOpen` gate ("File must be read successfully
+                // through Central before opening its surface") checks
+                // `file_refs` regardless of which read resolved the ref, so
+                // this registration is required exactly as `FileRead`'s is.
+                let project = reading.project.as_ref().and_then(|p| p.project_ref.as_ref()).map(|id|focus::ProjectRef::try_from(owner_relation(id,"project","central.files.read"))).transpose().map_err(|e|e.to_string())?;
+                self.file_refs.insert(reading.location.ref_id.clone(),(owner_relation(&reading.location.ref_id,"file","central.files.read"),project));
+                Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::FileBytes {
+                    location: reading.location,
+                    revision: reading.revision,
+                    byte_len: reading.byte_len,
+                    mime_hint: reading.mime_hint,
+                    content_base64: reading.content_base64,
+                }})
+            }
+            KernelOp::Encounter {project,request} => {
+                let root=world::read_world(&self.client).map_err(|e|e.to_string())?;
+                let row=root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(&project))).ok_or("Project is outside Central's disclosed ground")?;
+                let cwd=std::path::Path::new(root["root"].as_str().ok_or("Central root location unavailable")?).join(row["path"].as_str().ok_or("Project location unavailable")?);
+                let inspection=self.client.run("projectcentral.inspect",serde_json::json!({"project":project})).map_err(|e|e.to_string())?;
+                let project_ref=inspection["manifest"]["project_id"].as_str().ok_or("Central has not bound a canonical ProjectRef")?;
+                let data=self.agency.encounter(&cwd,project_ref,&request)?;
+                if let agency::EncounterRequest::Read{agent_session,..}=&request {
+                    if data["agent_session"].as_str()!=Some(agent_session){return Err("AIKit encounter reading identity mismatch".into());}
+                    let project=focus::ProjectRef::try_from(owner_relation(project_ref,"project","projectcentral.inspect")).map_err(|e|e.to_string())?;
+                    self.encounter_refs.insert(agent_session.clone(),(SemanticRef {ref_id:agent_session.clone(),kind:"agent-session".into(),native_owner:"ai-kit".into(),provenance:refs::RefProvenance {source:"aikit.encounter.read".into(),revision:None}},project));
+                }
+                Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::EncounterReading {data}})
+            }
+            KernelOp::AgencyRead { project } => {
+                let root=world::read_world(&self.client).map_err(|e|e.to_string())?;
+                let row=root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(&project))).ok_or("Project is outside Central's disclosed ground")?;
+                let cwd=std::path::Path::new(root["root"].as_str().ok_or("Central root location unavailable")?).join(row["path"].as_str().ok_or("Project location unavailable")?);
+                let inspection=self.client.run("projectcentral.inspect",serde_json::json!({"project":project})).map_err(|e|e.to_string())?;
+                let project_ref=inspection["manifest"]["project_id"].as_str().ok_or("Central has not bound a canonical ProjectRef")?.to_owned();
+                let spaces=self.agency.read_project(&cwd,&project_ref)?;
+                let observed_at_unix_ms=std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d|d.as_millis() as u64).unwrap_or(0);
+                Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::AgencyReading {project_ref,spaces,observed_at_unix_ms}})
+            }
+            KernelOp::Knowledge { project, request } => {
+                // Central discloses the scope; renderer-supplied filesystem paths
+                // and stale persisted authority never become invocation context.
+                let root = world::read_world(&self.client).map_err(|e| e.to_string())?;
+                let project = if let knowledge::Request::Read { address } = &request {
+                    root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|row|row["projectcentral"]["agent_wiki"]["wiki"]["space_ref"].as_str()==Some(address.reference())))
+                        .and_then(|row|row["name"].as_str()).map(str::to_owned).or(project)
+                } else { project };
+                let base = root["root"].as_str().ok_or("Central root location unavailable")?;
+                let cwd = if let Some(project) = project.as_ref() {
+                    let row = root["work"]["projects"].as_array().and_then(|rows| rows.iter().find(|r| r["name"].as_str() == Some(project))).ok_or("Project is outside Central's disclosed ground")?;
+                    std::path::Path::new(base).join(row["path"].as_str().ok_or("Project location unavailable")?)
+                } else { std::path::PathBuf::from(base) };
+                if let knowledge::Request::Use { address } = &request {
+                    if !self.knowledge_refs.contains_key(address.reference()) { return Err("Read the native subject successfully before recording use".into()); }
+                }
+                let data = knowledge::call(&cwd, &request)?;
+                if let knowledge::Request::Read { address } = &request {
+                    if data["resource"].as_str() != Some(address.reference()) { return Err("AIKit reading identity does not match the requested subject".into()); }
+                    let project_ref = if let Some(project) = project.as_ref() {
+                        self.client.run("projectcentral.inspect", serde_json::json!({"project":project})).ok()
+                            .and_then(|v| v["manifest"]["project_id"].as_str().map(str::to_owned))
+                            .map(|r| focus::ProjectRef::try_from(owner_relation(&r,"project","projectcentral.inspect"))).transpose().map_err(|e| e.to_string())?
+                    } else { None };
+                    self.knowledge_projects.insert(address.reference().into(), project_ref);
+                    self.knowledge_refs.insert(address.reference().into(), SemanticRef {
+                        ref_id: address.reference().into(), kind: "knowledge".into(), native_owner: "ai-kit".into(),
+                        provenance: refs::RefProvenance { source: "aikit.knowledge.read".into(), revision: data["revision"].as_str().map(str::to_owned) },
+                    });
+                }
+                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::Knowledge { data } })
+            }
+            KernelOp::Graph { project, query } => {
+                // Central discloses the scope; the wiki read register and the
+                // AIKit project context both come from the owner root map.
+                let root = world::read_world(&self.client).map_err(|e| e.to_string())?;
+                let base = root["root"].as_str().ok_or("Central root location unavailable")?;
+                let (wiki_action, wiki_input, cwd) = if let Some(project) = project.as_ref() {
+                    let row = root["work"]["projects"].as_array().and_then(|rows| rows.iter().find(|r| r["name"].as_str() == Some(project))).ok_or("Project is outside Central's disclosed ground")?;
+                    let cwd = std::path::Path::new(base).join(row["path"].as_str().ok_or("Project location unavailable")?);
+                    ("projectcentral.wiki.read", serde_json::json!({ "project": project }), cwd)
+                } else {
+                    ("central.wiki.read", serde_json::json!({}), std::path::PathBuf::from(base))
+                };
+                let reading = graph::assemble(&self.client, wiki_action, &wiki_input, &cwd, &query);
+                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::GraphReading { reading } })
+            }
+            KernelOp::EncounterJoin { session, request_ref, reply } => {
+                // Central discloses the context anchor, exactly as the
+                // Graph/Knowledge arms; the lifecycle store itself is the
+                // AIKit owner's (AIKIT_HOME), never renderer-supplied.
+                let root = world::read_world(&self.client).map_err(|e| e.to_string())?;
+                let cwd = std::path::PathBuf::from(root["root"].as_str().ok_or("Central root location unavailable")?);
+                let reading = encounter::assemble(&cwd, &session, &request_ref, reply.as_ref());
+                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::EncounterJoined { reading } })
+            }
+            KernelOp::InvokeAction { project, invocation } => {
+                // Central discloses the scope, exactly as the Knowledge/Graph
+                // arms: renderer-supplied paths never become invocation context.
+                let root = world::read_world(&self.client).map_err(|e| e.to_string())?;
+                let base = root["root"].as_str().ok_or("Central root location unavailable")?;
+                let cwd = if let Some(project) = project.as_ref() {
+                    let row = root["work"]["projects"].as_array().and_then(|rows| rows.iter().find(|r| r["name"].as_str() == Some(project))).ok_or("Project is outside Central's disclosed ground")?;
+                    std::path::Path::new(base).join(row["path"].as_str().ok_or("Project location unavailable")?)
+                } else { std::path::PathBuf::from(base) };
+                let dispatch = action::invoke(&self.client, &cwd, project.as_deref(), &invocation);
+                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::ActionDispatched { dispatch } })
+            }
+            KernelOp::Flow { request } => {
+                let action = request.owner_action().to_owned();
+                let response = self
+                    .client
+                    .apply_request(request)
+                    .unwrap_or_else(|error| flow::Response::Failure { action, error });
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::Flow { response },
+                })
+            }
+            KernelOp::FlowChangedSince { project, thought } => {
+                // The changed-since compose resolves its owner cwd exactly as
+                // the InvokeAction arm: Central discloses the scope,
+                // renderer-supplied paths never become context.
+                let root = world::read_world(&self.client).map_err(|e| e.to_string())?;
+                let base = root["root"].as_str().ok_or("Central root location unavailable")?;
+                let cwd = if let Some(project) = project.as_ref() {
+                    let row = root["work"]["projects"].as_array().and_then(|rows| rows.iter().find(|r| r["name"].as_str() == Some(project))).ok_or("Project is outside Central's disclosed ground")?;
+                    std::path::Path::new(base).join(row["path"].as_str().ok_or("Project location unavailable")?)
+                } else { std::path::PathBuf::from(base) };
+                let reading = flow_cognition::changed_since(&self.client, project.as_deref().unwrap_or_else(|| self.client.configured_project()), &cwd, &thought).map_err(|e| e.to_string())?;
+                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::FlowChangedSince { reading } })
+            }
+            KernelOp::FlowCommission { project, flow_ref, expected_revision, selection, agent_session_ref } => {
+                let outcome = commission::commission(&self.client, project.as_deref().unwrap_or_else(|| self.client.configured_project()), &flow_ref, &expected_revision, &selection, agent_session_ref.as_deref()).map_err(|e| e.to_string())?;
+                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::FlowCommissioned { outcome } })
+            }
+            KernelOp::WorldRead => self.navigate(None, false),
+            KernelOp::ProjectRead { project } => self.navigate(Some(&project), false),
+            KernelOp::WorldBrowse => self.navigate(None, true),
+            KernelOp::ProjectBrowse { project } => self.navigate(Some(&project), true),
             KernelOp::State => Ok(KernelOpOutcome {
                 receipts: Vec::new(),
                 result: KernelOpResult::State {
@@ -265,6 +564,25 @@ impl Kernel {
                     listing: participating_sources(&self.client, project.as_deref()),
                 },
             }),
+            KernelOp::SourceRestore { source_ref, content, base_revision, saved_content } => {
+                let current = self.buffers.get(&source_ref).ok_or("open the owner source before restoring writing")?.clone();
+                if current.dirty { return Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::SourceOpened { buffer: current } }); }
+                let mut outcome = self.source_edit(&source_ref, content)?;
+                let buffer = self.buffers.get_mut(&source_ref).expect("opened source");
+                if buffer.dirty {
+                    buffer.base_revision = base_revision.clone();
+                    buffer.saved_content = saved_content;
+                    if current.base_revision != base_revision {
+                        buffer.conflict = Some(SourceConflict { expected_revision: base_revision.clone(), current_revision: current.base_revision.clone(), canonical_content: current.content });
+                        outcome.receipts.push(self.log.record(KernelEvent::SourceWriteConflict {
+                            source: source_semantic_ref(&source_ref, Some(&base_revision))?, expected_revision: base_revision,
+                            current_revision: current.base_revision, summary: "Restored writing has a different base from the current owner revision; both sides retained.".into(),
+                        }));
+                    }
+                }
+                outcome.result = KernelOpResult::SourceOpened { buffer: buffer.clone() };
+                Ok(outcome)
+            }
             KernelOp::SourceHistory { source_ref } => {
                 let buffer = self.buffers.get(&source_ref).ok_or("open the source before reading its history")?;
                 let history = history::read(&self.client, &buffer.project, &source_ref).map_err(|e| e.to_string())?;
@@ -297,7 +615,7 @@ impl Kernel {
     // Source buffers — the two state layers
     // -----------------------------------------------------------------------
 
-    fn navigate(&mut self, project: Option<&str>) -> Result<KernelOpOutcome, String> {
+    fn navigate(&mut self, project: Option<&str>, browse_only: bool) -> Result<KernelOpOutcome, String> {
         let before = self.navigator.clone();
         let old_focus = self.focus.clone();
         let result = if let Some(query) = project {
@@ -347,6 +665,9 @@ impl Kernel {
             })
         };
         self.navigator.error = result.err();
+        // Browsing changes the navigation reading, not the semantic subject
+        // currently bound to open work. Explicit focus remains a separate act.
+        if browse_only { self.focus = old_focus.clone(); }
         let mut receipts = Vec::new();
         if self.navigator != before {
             receipts.push(self.log.record(KernelEvent::WorldChanged { summary: "Central navigator reading changed".into() }));
@@ -420,6 +741,8 @@ impl Kernel {
         let buffer = SourceBuffer {
             source_ref: source_ref.clone(),
             project: project.to_owned(),
+            world_ref: reading.world_ref.clone(),
+            project_ref: self.client.run("projectcentral.inspect", serde_json::json!({"project":project})).ok().and_then(|v| v.pointer("/manifest/project_id").and_then(serde_json::Value::as_str).map(str::to_owned)),
             content,
             saved_content: reading.content.clone(),
             base_revision: reading.revision.revision.clone(),
@@ -651,6 +974,13 @@ impl Kernel {
         source_ref: Option<String>,
         title: String,
     ) -> Result<KernelOpOutcome, String> {
+        if kind == "encounter" && !source_ref.as_ref().is_some_and(|r|self.encounter_refs.contains_key(r)){return Err("Encounter surface requires a current AIKit reading".into());}
+        if kind == "file" && !source_ref.as_ref().is_some_and(|r| self.file_refs.contains_key(r)) {
+            return Err("File must be read successfully through Central before opening its surface".into());
+        }
+        if kind == "knowledge" && !source_ref.as_ref().is_some_and(|r| self.knowledge_refs.contains_key(r)) {
+            return Err("Knowledge surface requires a current owner reading".into());
+        }
         let surface = SurfaceState {
             surface_id: surface_id.clone(),
             kind,
@@ -658,10 +988,12 @@ impl Kernel {
             title,
         };
         self.surfaces.insert(surface_id.clone(), surface.clone());
-        let semantic = surface
-            .source_ref
-            .as_deref()
-            .and_then(|source_ref| source_semantic_ref(source_ref, None).ok());
+        let semantic = surface.source_ref.as_deref().and_then(|reference| {
+            if surface.kind == "knowledge" { self.knowledge_refs.get(reference).cloned() }
+            else if surface.kind == "file" { self.file_refs.get(reference).map(|r|r.0.clone()) }
+            else if surface.kind == "encounter" {self.encounter_refs.get(reference).map(|r|r.0.clone())}
+            else { source_semantic_ref(reference, None).ok() }
+        });
         let receipt = self.log.record(KernelEvent::SurfaceChanged {
             surface_id,
             surface_ref: semantic,
@@ -684,7 +1016,12 @@ impl Kernel {
             surface_ref: surface
                 .source_ref
                 .as_deref()
-                .and_then(|source_ref| source_semantic_ref(source_ref, None).ok()),
+                .and_then(|reference| {
+                    if surface.kind == "knowledge" { self.knowledge_refs.get(reference).cloned() }
+            else if surface.kind == "file" { self.file_refs.get(reference).map(|r|r.0.clone()) }
+            else if surface.kind == "encounter" {self.encounter_refs.get(reference).map(|r|r.0.clone())}
+                    else { source_semantic_ref(reference, None).ok() }
+                }),
             summary: format!("Surface closed: {}.", surface.title),
         })];
         // Closing the focused subject's surface clears the focus relation —
@@ -740,21 +1077,30 @@ impl Kernel {
                 },
             });
         };
-        let already = self
-            .focus
-            .subject_ref()
-            .is_some_and(|subject| subject.ref_id == source_ref);
-        if already {
-            return Ok(KernelOpOutcome {
-                receipts: Vec::new(),
-                result: KernelOpResult::SurfaceFocused {
-                    snapshot: self.snapshot(),
-                },
-            });
+        let old_focus = self.focus.clone();
+        if let Some(buffer) = self.buffers.get(&source_ref) {
+            if !buffer.world_ref.is_empty() {
+                self.focus.bind_world(focus::WorldRef::try_from(owner_relation(&buffer.world_ref, "world", "projectcentral.source.read")).map_err(|e| e.to_string())?);
+            }
+            self.focus.project = buffer.project_ref.as_ref().map(|r| focus::ProjectRef::try_from(owner_relation(r, "project", "projectcentral.inspect"))).transpose().map_err(|e| e.to_string())?;
         }
+        let subject = if surface.kind == "encounter" {
+            let (subject,project)=self.encounter_refs.get(&source_ref).cloned().ok_or("Encounter must be resolved through AIKit")?;
+            self.focus.project=Some(project);self.focus.world=None;subject
+        } else if surface.kind == "file" {
+            let (subject,project) = self.file_refs.get(&source_ref).cloned().ok_or("File must be resolved through Central")?;
+            self.focus.project = project;
+            self.focus.world = None;
+            subject
+        } else if surface.kind == "knowledge" {
+            self.focus.project = self.knowledge_projects.get(&source_ref).cloned().flatten();
+            self.focus.world = None;
+            self.knowledge_refs.get(&source_ref).cloned().ok_or("Knowledge subject must be resolved through AIKit")?
+        } else { source_semantic_ref(&source_ref, None)? };
         self.focus
-            .focus_subject(source_semantic_ref(&source_ref, None)?)
+            .focus_subject(subject)
             .map_err(|error| error.to_string())?;
+        if self.focus == old_focus { return Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::SurfaceFocused { snapshot: self.snapshot() } }); }
         let receipt = self.log.record(KernelEvent::FocusChanged {
             focus: self.focus.clone(),
         });
@@ -788,6 +1134,18 @@ fn fallback_source_ref(source_ref: &str) -> SemanticRef {
             revision: None,
         },
     }
+}
+
+fn owner_relation(reference: &str, kind: &str, source: &str) -> SemanticRef {
+    SemanticRef { ref_id: reference.into(), kind: kind.into(), native_owner: "central".into(), provenance: refs::RefProvenance { source: source.into(), revision: None } }
+}
+
+fn native_owner_reading<T:Serialize>(owner:&str,result:Result<T,material::Error>)->Result<KernelOpOutcome,String>{
+    let (data,failure)=match result {
+        Ok(value)=>(Some(serde_json::to_value(value).map_err(|e|e.to_string())?),None),
+        Err(error)=>(None,Some(serde_json::to_value(error).map_err(|e|e.to_string())?)),
+    };
+    Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::NativeOwnerReading{owner:owner.into(),data,failure}})
 }
 
 #[cfg(test)]

@@ -5,6 +5,10 @@ pub fn cli_main() -> ExitCode {
         return match print_suite_v2_help().and_then(|_| print_product_command_help()) {
             Ok(()) => {
                 println!();
+                println!("  oi capabilities --json        derived child capability records with source hashes; not installed availability");
+                println!("  oi desktop --help             M′ application operations over the S command whole");
+                println!("  oi aikit-session-space ...    AIKit companion protocol (native arguments preserved)");
+                println!("  oi ground status|bind          inspect or explicitly change the default ground binding");
                 println!("Current world:");
                 println!("  oi current-world [--json]      disclose the situated six-product composition and current machine/Workcell relation");
                 println!();
@@ -17,7 +21,7 @@ pub fn cli_main() -> ExitCode {
                 println!("  oi dev test [PRODUCT]          test current local source through native product test contract");
                 println!("  oi dev install [PRODUCT]       install/register native commands only from clean exact current-main source");
                 println!("  oi dev acceptance [--json]     prove the local software world is the current clean mainline world before physical provider tests");
-                println!("  oi dev gate central|ai-kit [--candidate SHA]  build an isolated current-main/candidate artifact; test owner + Cradle consumer; record exact evidence");
+                println!("  oi dev gate PRODUCT [--candidate SHA]  build an isolated current-main/candidate artifact; test owner + Cradle consumer; record exact evidence");
                 println!("  oi prove factory --factory PATH --factory-source PATH --request PATH --workflow-mutation PATH --state PATH --output PATH [--workcell-baseline PATH] [--workcell-source PATH --workcell-usage PATH] [--actuation-source PATH --actuation-usage PATH --actuation-usage-replay PATH]");
                 println!("                                exercise Factory's accepted Commission path and retain evidence grades without claiming provider/material execution");
                 println!();
@@ -44,6 +48,12 @@ pub fn cli_main() -> ExitCode {
                 eprintln!("oi: {message}");
                 ExitCode::from(2)
             }
+        };
+    }
+    if command == Some("ground") {
+        return match command_ground_binding(args.get(1..).unwrap_or_default()) {
+            Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
+            Err(message) => { eprintln!("oi: {message}"); ExitCode::from(2) }
         };
     }
     if let Some(result) = product_command_route(&args) {

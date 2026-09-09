@@ -1,0 +1,54 @@
+{
+  "schema": "oi.cradle-native-verification/v1",
+  "verified_at": "2026-09-06T16:27:05.256Z",
+  "bindings": {
+    "OI_CENTRAL_CTRL_BIN": {
+      "state": "bound",
+      "executable": "/Users/admin/Library/Application Support/OI/receipts/dev/central-4106b28b6fee-1788709485128-28202/source/target/release/ctrl",
+      "sha256": "49199ae06bb36b45d4289af758d703340d01b80305530a4dc4080f5879995d9b",
+      "gate": {
+        "receipt": "/Users/admin/Library/Application Support/OI/receipts/dev/central-4106b28b6fee-1788709485128-28202/receipt.json",
+        "revision": "4106b28b6fee29a489f92848d3023653d46d4828",
+        "result": "passed"
+      }
+    },
+    "OI_AIKIT_BIN": {
+      "state": "bound",
+      "executable": "/Users/admin/Library/Application Support/OI/receipts/dev/ai-kit-8a1d20097cb2-1788706601538-48238/source/target/release/aikit",
+      "sha256": "afc4ae76c2818aa5eeb72f7a419015cc590efed2ce12fa7c4e5bff043b9f8056",
+      "gate": {
+        "receipt": "/Users/admin/Library/Application Support/OI/receipts/dev/ai-kit-8a1d20097cb2-1788706601538-48238/receipt.json",
+        "revision": "8a1d20097cb2453d86ffc1beab91767f3fd3e70b",
+        "result": "passed"
+      }
+    },
+    "OI_AIKIT_SESSION_SPACE_BIN": {
+      "state": "bound",
+      "executable": "/Users/admin/Library/Application Support/OI/receipts/dev/ai-kit-8a1d20097cb2-1788706601538-48238/source/target/release/aikit-session-space",
+      "sha256": "9bf6643f6e7af016cb596f0e9dac6d61d0771e50bbf9b022ba8b2065326142fe",
+      "gate": {
+        "receipt": "/Users/admin/Library/Application Support/OI/receipts/dev/ai-kit-8a1d20097cb2-1788706601538-48238/receipt.json",
+        "revision": "8a1d20097cb2453d86ffc1beab91767f3fd3e70b",
+        "result": "passed"
+      }
+    }
+  },
+  "native": {
+    "executable": "/Users/admin/Central/Work/O-I/desktop/cradle/src-tauri/target/debug/bundle/macos/O-I.app/Contents/MacOS/oi-cradle",
+    "sha256": "6e57c6c0c7fc0860b18820745ec8487874d82f3aaedc60444f08ab3e4d226002"
+  },
+  "head": "3a93aaeab7636c34c8b6f09052c7b0121e81e2f0",
+  "locks": {
+    "package-lock.json": "b81828a771dc653c3b64b677f35abb8830385beb2de86e631063d11523a3f083",
+    "kernel/Cargo.lock": "75e30a356225c1bea21c0506e52669b004c99a193f43e770414982557cde492c",
+    "src-tauri/Cargo.lock": "8eaad9b38360f95772d4d80e75dd1aa0fd4d8f59f60a3ebb349ea22879a3b047"
+  },
+  "frontend": {
+    "Seed-DEL5OMvO.js": "57c136ebf56f78dcc00bec889b9e3f72df0eefedb3c4b37dd1e548bead423257",
+    "WorkspaceStudy-DDccNZs3.js": "524c84df5720c4c0868ae17b9c394d7861576aad89591d7eba77f17dd9b70df8",
+    "WorkspaceStudy-DQI19hm7.css": "8bbc73d424b7453a2b0cc9348b29107c3255cbb35374aa253b754b7b4e54ca7c",
+    "index-BpBKxQLD.js": "951a20a6c5f191ee253921a1321b2c88b3f33357809cfd85734f630de238587c",
+    "index-Vkja1S6D.css": "69fc3fef7f4e02499402fcf04ac7f22aeede0a2defd2e8d3d2c51e99301d0243",
+    "seed-pbLfZuQ0.css": "a84280bc84decc29134a3e66400aecc82e5f56359b8028f43e6686de6f482646"
+  }
+}

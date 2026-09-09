@@ -13,6 +13,12 @@ fn product_command_route(args: &[OsString]) -> Option<Result<i32, String>> {
             _ => Err("usage: oi capabilities [--json]".into()),
         });
     }
+    if command == "desktop" {
+        return Some(command_desktop(args.get(1..).unwrap_or_default()));
+    }
+    if command == "aikit-session-space" {
+        return Some(dispatch_session_space(args.get(1..).unwrap_or_default()));
+    }
     if command == "products" {
         return Some(command_products(args.get(1..).unwrap_or_default()));
     }
@@ -88,13 +94,24 @@ fn dispatch_product_command(
     args: &[OsString],
 ) -> Result<i32, String> {
     let composition = load_composition()?;
-    let executable = composition
+    let override_key = match product.namespace.as_str() {
+        "central" => "OI_CENTRAL_CTRL_BIN",
+        "actuation" => "OI_ACTUATION_BIN",
+        "aikit" => "OI_AIKIT_BIN",
+        "factory" => "OI_FACTORY_BIN",
+        "workcell" => "OI_WORKCELL_BIN",
+        "ql" => "OI_QL_BIN",
+        _ => return Err("unknown product namespace".into()),
+    };
+    let selected = env::var_os(override_key).filter(|v| !v.is_empty());
+    let registered = composition
         .modules
         .get(&product.id)
         .and_then(|registration| registration.native_executable.as_deref())
         .unwrap_or(product.executable.as_str());
 
-    let mut command = std::process::Command::new(executable);
+    let executable = selected.unwrap_or_else(|| registered.into());
+    let mut command = std::process::Command::new(&executable);
     command.args(args);
 
     #[cfg(unix)]
@@ -102,8 +119,8 @@ fn dispatch_product_command(
         use std::os::unix::process::CommandExt;
         let error = command.exec();
         Err(format!(
-            "cannot exec {} native command `{executable}` for `oi {}`: {error}. Install/register the product command or make it available on PATH",
-            product.public_name, product.namespace
+            "cannot exec {} native command `{}` for `oi {}`: {error}. Install/register the product command or make it available on PATH",
+            product.public_name, executable.to_string_lossy(), product.namespace
         ))
     }
 
@@ -111,8 +128,8 @@ fn dispatch_product_command(
     {
         let status = command.status().map_err(|error| {
             format!(
-                "cannot launch {} native command `{executable}` for `oi {}`: {error}. Install/register the product command or make it available on PATH",
-                product.public_name, product.namespace
+                "cannot launch {} native command `{}` for `oi {}`: {error}. Install/register the product command or make it available on PATH",
+                product.public_name, executable.to_string_lossy(), product.namespace
             )
         })?;
         Ok(status.code().unwrap_or(1))
@@ -121,4 +138,45 @@ fn dispatch_product_command(
 
 fn short_revision(revision: &str) -> &str {
     revision.get(..10).unwrap_or(revision)
+}
+
+// AIKit owns this companion protocol; it is not a seventh product namespace.
+fn dispatch_session_space(args: &[OsString]) -> Result<i32, String> {
+    let composition = load_composition()?;
+    let executable = env::var_os("OI_AIKIT_SESSION_SPACE_BIN")
+        .filter(|v| !v.is_empty())
+        .map(PathBuf::from)
+        .or_else(|| {
+            env::var_os("OI_AIKIT_BIN")
+                .filter(|v| !v.is_empty())
+                .map(PathBuf::from)
+                .or_else(|| {
+                    composition
+                        .modules
+                        .get("ai-kit")
+                        .and_then(|r| r.native_executable.as_ref())
+                        .map(PathBuf::from)
+                })
+                .filter(|p| p.components().count() > 1)
+                .map(|p| p.with_file_name("aikit-session-space"))
+        })
+        .unwrap_or_else(|| "aikit-session-space".into());
+    let mut command = Command::new(&executable);
+    command.args(args);
+    #[cfg(unix)]
+    {
+        use std::os::unix::process::CommandExt;
+        Err(format!(
+            "cannot exec AIKit SessionSpace {}: {}",
+            executable.display(),
+            command.exec()
+        ))
+    }
+    #[cfg(not(unix))]
+    {
+        command
+            .status()
+            .map(|s| s.code().unwrap_or(1))
+            .map_err(|e| e.to_string())
+    }
 }

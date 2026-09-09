@@ -1,0 +1,14 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "handoff-1788721460479236000",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "zcode-session-2026-09-06-gateway-awareness",
+  "kind": "note",
+  "recorded_at_unix_seconds": 1788721460,
+  "subject": "Agency Gateway awareness brief interjected for desktop programme",
+  "result": "Gateway (EpiLogos/O-I#154) is half-built and disconnected: runtime+connector SDK+Telegram exist in ai-kit aikit-adapters (~3.6k lines, aikit-gateway binary), Workcell hosts it as managed service with fabric proof, ActuationStream contract-tested — but zero presence in cradle-rebuild programme slices, BOOTSTRAP-AND-LOADING, desktop-projection.json/product-capabilities.json (M-prime blind), and wayfinder lists Gateway continuity as fog. Awareness brief with verified ground truth, hard no-duplication boundary, and five slice-mapped interjection points: .superpowers/sdd/cradle-rebuild/gateway-awareness-2026-09-06.md. Desktop programme should consume seams (AgencyService read model, composition presence dimension, bootstrap branch, M-prime rows, UX detach states), never build a second session/websocket registry. Owner decision open: reserve seams now vs commission #154 completion.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-09-06"
+  ]
+}

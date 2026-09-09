@@ -5,7 +5,7 @@
     "suite_manifest": "suite/manifest.json",
     "suite_manifest_sha256": "821ab859e504576a4ce148ef81a0b96a069f0f8742a3df89ea516985f68f8ef7",
     "surfaces": "surfaces.json",
-    "surfaces_sha256": "760abe425a4a1002488f753b7e904ff463f3154c47be57cc3de136e8c12575f8"
+    "surfaces_sha256": "2210f46675148ce1d27ec10d6c44da0805f8fe1265c83f731197f17ac141b98e"
   },
   "products": [
     {

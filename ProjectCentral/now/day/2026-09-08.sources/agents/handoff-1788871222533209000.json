@@ -1,0 +1,22 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "handoff-1788871222533209000",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "shared-field-owner-20260908",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1788871222,
+  "subject": "PF Shared Field lifecycle/admission/return owner acceptance",
+  "result": "Updated only shared-field/spacetimedb/a2a-live-acceptance.ts to use explicit real Exchange request/grant/consume for initial and replacement A2A bindings, and generic Contribution ingress/quarantine instead of the removed direct A2A Projection shortcut. Portable owner suite: 180/180 pass. TypeScript check: pass. Isolated SpaceTimeDB 2.8.1 v4-v6 acceptance: pass; application return lifecycle: pass; A2A Phase-2 ingress: pass; A2A lifecycle: pass. Evidence: /tmp/oi-shared-field-portable.eiz9cE, /tmp/oi-shared-field-tsc.GDWLgv, /tmp/oi-shared-field-live.3GwxCS, /tmp/oi-shared-field-return.fba35m, /tmp/oi-shared-field-a2a.QybtrY, /tmp/oi-shared-field-a2a-life.k1xg7T. No production semantic change, no UI walk, no live-provider data. Open live-provider obligation: none reproduced in local provider; external hosted-provider parity remains outside this run.",
+  "status": "waiting",
+  "source_refs": [
+    "shared-field/spacetimedb/a2a-live-acceptance.ts",
+    "shared-field/a2a.mjs",
+    "shared-field/spacetimedb/a2a-phase2-ingress-live-acceptance.ts"
+  ],
+  "evidence_refs": [
+    "/tmp/oi-shared-field-live.3GwxCS/acceptance.log",
+    "/tmp/oi-shared-field-return.fba35m/application-return.log",
+    "/tmp/oi-shared-field-a2a.QybtrY/a2a.log",
+    "/tmp/oi-shared-field-a2a-life.k1xg7T/a2a-lifecycle.log"
+  ]
+}

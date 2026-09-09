@@ -1,0 +1,14 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "handoff-1788874734956344000",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "codex-cradle-refinement-20260908",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1788874734,
+  "subject": "Refined shell and native material runtime ready; elemental options await review",
+  "result": "Shell cleanup and iframe-menu fix complete. Real-owner cleanup18/18, footer3/3, shell36/36, rendering19/19 pass. Native WKWebView module/data/interaction/reload verified; final debug bundle built. O:I logo restricted to fullscreen loader; element showcase live localhost4288. Source-cited Self/Other and browser-provider review at desktop/cradle/walk/artifacts/review/browser-canvas/REVIEW.md and PRODUCT-SURFACES-SELF-OTHER-2026-09-08.md. Next condition: user reviews visual options and selects next browser/shared surface tranche; general browser/computer providers and full foundation gate not claimed. Separate active tasks retained; no day close.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-09-08"
+  ]
+}

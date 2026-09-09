@@ -57,6 +57,8 @@ struct InstallSurface {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct Composition {
+    #[serde(skip)]
+    loaded_basis: std::cell::RefCell<Option<Vec<u8>>>,
     schema: u32,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     personal_ground: Option<String>,
@@ -68,6 +70,7 @@ impl Default for Composition {
     fn default() -> Self {
         Self {
             schema: STATE_SCHEMA,
+            loaded_basis: std::cell::RefCell::new(None),
             personal_ground: None,
             modules: BTreeMap::new(),
         }
@@ -962,11 +965,9 @@ fn oi_doc_topic(topic: &str) -> Option<&'static str> {
 
 fn load_composition() -> Result<Composition, String> {
     let path = state_path()?;
-    if !path.exists() {
+    let Some(bytes) = composition_read_bytes(&path)? else {
         return Ok(Composition::default());
-    }
-    let bytes = fs::read(&path)
-        .map_err(|error| format!("cannot read composition state {}: {error}", path.display()))?;
+    };
     let composition: Composition = serde_json::from_slice(&bytes)
         .map_err(|error| format!("invalid composition state {}: {error}", path.display()))?;
     if composition.schema != STATE_SCHEMA {
@@ -976,23 +977,12 @@ fn load_composition() -> Result<Composition, String> {
             path.display()
         ));
     }
+    *composition.loaded_basis.borrow_mut() = Some(bytes);
     Ok(composition)
 }
 
 fn save_composition(composition: &Composition) -> Result<(), String> {
-    let path = state_path()?;
-    let parent = path
-        .parent()
-        .ok_or_else(|| "composition state path has no parent".to_owned())?;
-    fs::create_dir_all(parent)
-        .map_err(|error| format!("cannot create {}: {error}", parent.display()))?;
-    let temporary = parent.join("composition.json.tmp");
-    let bytes = serde_json::to_vec_pretty(composition).map_err(|error| error.to_string())?;
-    fs::write(&temporary, bytes)
-        .map_err(|error| format!("cannot write {}: {error}", temporary.display()))?;
-    fs::rename(&temporary, &path)
-        .map_err(|error| format!("cannot replace {}: {error}", path.display()))?;
-    Ok(())
+    composition_save_cas(composition)
 }
 
 fn state_path() -> Result<PathBuf, String> {

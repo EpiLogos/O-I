@@ -1,0 +1,78 @@
+{
+  "method": "Read-only lsof; unique acceptance bundle/store identifiers only",
+  "results": [
+    {
+      "pid": 5715,
+      "matched_unique_acceptance_paths": []
+    },
+    {
+      "pid": 5716,
+      "matched_unique_acceptance_paths": []
+    },
+    {
+      "pid": 5717,
+      "matched_unique_acceptance_paths": []
+    },
+    {
+      "pid": 17286,
+      "matched_unique_acceptance_paths": []
+    },
+    {
+      "pid": 17291,
+      "matched_unique_acceptance_paths": []
+    },
+    {
+      "pid": 17292,
+      "matched_unique_acceptance_paths": []
+    },
+    {
+      "pid": 19808,
+      "matched_unique_acceptance_paths": []
+    },
+    {
+      "pid": 19809,
+      "matched_unique_acceptance_paths": [
+        "n/Users/admin/Library/WebKit/org.epilogos.oi.cradle.p1acceptance/WebsiteDataStore/b906188e-d2c0-9296-78af-24ce9f21c129/ResourceLoadStatistics/observations.db-shm",
+        "n/Users/admin/Library/WebKit/org.epilogos.oi.cradle.p1acceptance/WebsiteDataStore/b906188e-d2c0-9296-78af-24ce9f21c129/ResourceLoadStatistics/pcm.db-shm",
+        "n/Users/admin/Library/WebKit/org.epilogos.oi.cradle.p1acceptance/WebsiteDataStore/b906188e-d2c0-9296-78af-24ce9f21c129/Origins/kwYbgBdJHJs5gP36_d6Lzw1rwGbfJ8FOWA-CxkoIVq0/kwYbgBdJHJs5gP36_d6Lzw1rwGbfJ8FOWA-CxkoIVq0/LocalStorage/localstorage.sqlite3-shm",
+        "n/Users/admin/Library/WebKit/org.epilogos.oi.cradle.p1acceptance/WebsiteDataStore/b906188e-d2c0-9296-78af-24ce9f21c129/ResourceLoadStatistics/observations.db",
+        "n/Users/admin/Library/WebKit/org.epilogos.oi.cradle.p1acceptance/WebsiteDataStore/b906188e-d2c0-9296-78af-24ce9f21c129/ResourceLoadStatistics/observations.db-wal",
+        "n/Users/admin/Library/WebKit/org.epilogos.oi.cradle.p1acceptance/WebsiteDataStore/b906188e-d2c0-9296-78af-24ce9f21c129/ResourceLoadStatistics/observations.db-shm",
+        "n/Users/admin/Library/WebKit/org.epilogos.oi.cradle.p1acceptance/WebsiteDataStore/b906188e-d2c0-9296-78af-24ce9f21c129/Origins/kwYbgBdJHJs5gP36_d6Lzw1rwGbfJ8FOWA-CxkoIVq0/kwYbgBdJHJs5gP36_d6Lzw1rwGbfJ8FOWA-CxkoIVq0/LocalStorage/localstorage.sqlite3",
+        "n/Users/admin/Library/WebKit/org.epilogos.oi.cradle.p1acceptance/WebsiteDataStore/b906188e-d2c0-9296-78af-24ce9f21c129/Origins/kwYbgBdJHJs5gP36_d6Lzw1rwGbfJ8FOWA-CxkoIVq0/kwYbgBdJHJs5gP36_d6Lzw1rwGbfJ8FOWA-CxkoIVq0/LocalStorage/localstorage.sqlite3-wal",
+        "n/Users/admin/Library/WebKit/org.epilogos.oi.cradle.p1acceptance/WebsiteDataStore/b906188e-d2c0-9296-78af-24ce9f21c129/Origins/kwYbgBdJHJs5gP36_d6Lzw1rwGbfJ8FOWA-CxkoIVq0/kwYbgBdJHJs5gP36_d6Lzw1rwGbfJ8FOWA-CxkoIVq0/LocalStorage/localstorage.sqlite3-shm",
+        "n/Users/admin/Library/WebKit/org.epilogos.oi.cradle.p1acceptance/WebsiteDataStore/b906188e-d2c0-9296-78af-24ce9f21c129/ResourceLoadStatistics/pcm.db",
+        "n/Users/admin/Library/WebKit/org.epilogos.oi.cradle.p1acceptance/WebsiteDataStore/b906188e-d2c0-9296-78af-24ce9f21c129/ResourceLoadStatistics/pcm.db-wal",
+        "n/Users/admin/Library/WebKit/org.epilogos.oi.cradle.p1acceptance/WebsiteDataStore/b906188e-d2c0-9296-78af-24ce9f21c129/ResourceLoadStatistics/pcm.db-shm"
+      ]
+    },
+    {
+      "pid": 19810,
+      "matched_unique_acceptance_paths": []
+    },
+    {
+      "pid": 58233,
+      "matched_unique_acceptance_paths": []
+    },
+    {
+      "pid": 58234,
+      "matched_unique_acceptance_paths": []
+    },
+    {
+      "pid": 58235,
+      "matched_unique_acceptance_paths": []
+    },
+    {
+      "pid": 95784,
+      "matched_unique_acceptance_paths": []
+    },
+    {
+      "pid": 95785,
+      "matched_unique_acceptance_paths": []
+    },
+    {
+      "pid": 95786,
+      "matched_unique_acceptance_paths": []
+    }
+  ]
+}

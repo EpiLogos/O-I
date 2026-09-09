@@ -1,0 +1,14 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "pointcloud-study-rev-6-honed-fnd07-2026-09-08",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "claude-fable",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1788882676,
+  "subject": "Point-cloud study rev 6 honed; FND-07 brief corrected; session closing",
+  "result": "Study honed to the owner kept list (elements, arrival, presence, idle, listening, searching); interactions reduced to panel resize plus two raw demos of the expression system (drag-to-direct with hold; anchored edges with delay/chain); ink muted grey (foreground mixed 42% to surface, opacity ceiling .34). Playwright checks pass; checks.json/README/screenshots regenerated. Brief BRIEF-FND-07-EXPRESSION-2026-09-08.md and spec corrected: agent form is derived from live session events the encounter already has (idle/listening/searching/presence/arrival), no new state store, no AIKit prerequisite. Wayfinder carries D22 / W1.8; programme carries FND-07. Remaining open: shell agent builds FND-07 on cradle-p1; W1.8 settles the vocabulary with the owner in the running app.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-09-08"
+  ]
+}

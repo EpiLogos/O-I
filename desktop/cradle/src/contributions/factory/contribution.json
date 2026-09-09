@@ -1,0 +1,58 @@
+{
+  "schema": "oi.native-source-contribution/v1",
+  "owner": "software-factory",
+  "candidate": "35d758218dd5149c939704d0cb87b7fe555d2198",
+  "parent": "5d29ee6e05a8d0e808b54a601561cf0a178291ab",
+  "entry": "factory-ui/src/index.ts",
+  "runtime_exports": [
+    "BuildSurface"
+  ],
+  "props_type": "BuildSurfaceProps",
+  "native_view_type": "FactoryBuildView",
+  "styles": [
+    "factory-ui/src/styles.css",
+    "factory-ui/src/build-surface.css"
+  ],
+  "files_sha256": {
+    "factory-ui/src/BuildSurface.tsx": "3bc29472b82d26895150efea2d613de4e62d0464bbdcce38db13080e7296d6db",
+    "factory-ui/src/build-surface.css": "b69cfba1b7fe37cad97e312dab303477650c2eb551e60e8eb35e3dbb6c186fcf",
+    "factory-ui/src/components/SessionCards.tsx": "d5d361028668550940d0f137cb2c268b7d7f8df2090cb97f513cac45a443f0d0",
+    "factory-ui/src/components/SpanDetail.tsx": "8f886be24bf8aed2dca5d0a4498de5c364a98ab9f18b4eea11332154a7cdfe9a",
+    "factory-ui/src/components/TraceWaterfall.tsx": "e17611750a36680462598f241ebb1292131476030cca095dfcc19dc68d0e35c0",
+    "factory-ui/src/index.ts": "4f0d4b003a382675d1ba63a271199b2c767524578e5cd95cc737aae9ca48291c",
+    "factory-ui/src/read-model.ts": "4a4d04b2b3c7f70ae65a77b5eac371c017ea3ec729744a06c23ff4847be560cd",
+    "factory-ui/src/styles.css": "36f338c5a16415cd337224539d49255b0d40d255011301880faf6b3b0b67b7a2",
+    "factory-ui/src/types.ts": "ec9b40cfcecdd1e0dbfe31409767ea8bf4a9b0d1ced6579da0092bc797c015a9"
+  },
+  "peer_dependencies": {
+    "react": "^18.3.1 || ^19.0.0",
+    "react-dom": "^18.3.1 || ^19.0.0"
+  },
+  "authority": "Host onAction is a request hook, never grant evidence; actual Factory/Actuation native authority required",
+  "tests": {
+    "component_tests": 23,
+    "typecheck": true,
+    "library_and_declarations": true,
+    "isolation": {
+      "css_selectors_scoped": 238,
+      "runtime_exports": [
+        "BuildSurface"
+      ],
+      "react_external": true,
+      "types": true
+    }
+  },
+  "standing": "source-owned contribution candidate; native semantics inherited unchanged from5d29; not landed, registered or visual desktop acceptance",
+  "capture": "Exact Git blobs; update through owner candidate, never edit captured source",
+  "captured_files_sha256": {
+    "BuildSurface.tsx": "3bc29472b82d26895150efea2d613de4e62d0464bbdcce38db13080e7296d6db",
+    "build-surface.css": "b69cfba1b7fe37cad97e312dab303477650c2eb551e60e8eb35e3dbb6c186fcf",
+    "components/SessionCards.tsx": "d5d361028668550940d0f137cb2c268b7d7f8df2090cb97f513cac45a443f0d0",
+    "components/SpanDetail.tsx": "8f886be24bf8aed2dca5d0a4498de5c364a98ab9f18b4eea11332154a7cdfe9a",
+    "components/TraceWaterfall.tsx": "e17611750a36680462598f241ebb1292131476030cca095dfcc19dc68d0e35c0",
+    "index.ts": "4f0d4b003a382675d1ba63a271199b2c767524578e5cd95cc737aae9ca48291c",
+    "read-model.ts": "4a4d04b2b3c7f70ae65a77b5eac371c017ea3ec729744a06c23ff4847be560cd",
+    "styles.css": "36f338c5a16415cd337224539d49255b0d40d255011301880faf6b3b0b67b7a2",
+    "types.ts": "ec9b40cfcecdd1e0dbfe31409767ea8bf4a9b0d1ced6579da0092bc797c015a9"
+  }
+}

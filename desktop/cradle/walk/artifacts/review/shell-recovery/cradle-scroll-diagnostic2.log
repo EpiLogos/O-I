@@ -1,0 +1,55 @@
+serving the cradle at http://localhost:1423 (external)
+
+=== scenario: spatial ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4179 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4179 (fresh kernel, seq from 1)
+PASS  Canvas arrangement is named for the workspace, independently of the opened project
+PASS  Desktop has three explicit host regions
+PASS  World occupies a real left panel
+PASS  Inspector is absent by default, leaving one sidebar and the canvas
+PASS  No second persistent navigation rail occupies the canvas
+PASS  One arrangement selector belongs to the canvas command strip
+PASS  Inspector opens explicitly over the active owner subject
+PASS  Left selection, canvas and right inspector share one kernel subject
+PASS  Real sources split into independent canvas panes
+PASS  Keyboard resizes a canvas split
+PASS  Maximize presents the active pane alone
+PASS  Maximized pane retains Central access
+PASS  Maximize keeps other source views mounted
+PASS  Maximize retains canonical semantic focus
+PASS  Keyboard restores all panes
+PASS  Restore preserves exact prior split widths
+PASS  Keyboard resizes the left region
+PASS  Keyboard resizes the right region
+PASS  Right region promotes to full view
+PASS  Region promotion never changes semantic focus
+PASS  Escape restores the right panel
+PASS  Project disclosure collapses without closing its open sources
+PASS  Disclosure changes leave semantic focus untouched
+PASS  A freeform workspace has its own surface arrangement
+PASS  A different workspace has independent ProjectRef disclosure state
+PASS  A new workspace also starts with inspection closed
+PASS  Project workspace restores its split constellation
+PASS  Returning to a workspace restores that project disclosure
+PASS  Workspace restores its own region depths
+PASS  Workspace restores its region width
+PASS  Switching workspace preserves unsaved source writing
+PASS  Reload restores the unsaved draft through the native source seam
+PASS  Reload restores the complete split arrangement
+PASS  Freeform workspace restores its distinct writing
+PASS  Freeform workspace restores its distinct right depth
+PASS  Narrow layout preserves the canvas minimum before side panels
+PASS  A collapsed inspector does not evict the Central sidebar on a 700px desktop
+PASS  Responsive Central sidebar retains a usable width
+PASS  Expanding another project does not collapse the prior project
+PASS  Independent project content stays visible during browsing
+SCROLL_EXPECTED 90
+PASS  Returning to a ProjectRef restores its actual file-list scroll
+SCROLL_EXPECTED 90
+PASS  Native owner revalidation on reload retains the project file-list scroll
+  screenshot: artifacts/spatial-three-region-workspace.png
+  stopped walk-bridge
+  receipt: artifacts/spatial.json — 42/42 checks, PASS
+
+=== walk summary ===
+PASS  spatial — 42/42 checks

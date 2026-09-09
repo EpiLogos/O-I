@@ -8,14 +8,22 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   rust:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: cli
       - name: Format
         run: cargo fmt --manifest-path cli/Cargo.toml -- --check
       - name: Check
@@ -29,9 +37,13 @@ jobs:
 
   central-bootstrap:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: cli
       - name: Clean O:I to native current Central encounter
         shell: bash
         run: |

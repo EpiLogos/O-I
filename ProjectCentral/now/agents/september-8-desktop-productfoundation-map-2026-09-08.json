@@ -1,0 +1,14 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "september-8-desktop-productfoundation-map-2026-09-08",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "codex-desktop-planning-20260908",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1788830333,
+  "subject": "September 8 desktop product-foundation map refreshed",
+  "result": "Read-only AIKit/Central/Actuation/Workcell/Factory audits reconciled into .superpowers/sdd/cradle-rebuild/PRODUCT-FOUNDATION-REFRESH-2026-09-08.md; programme, wayfinder, orchestration and minimal prompt linked. Current mainlines distinguished from September 6 candidates. Factory full-page direction recorded; default emphasis and commission boundary submitted to owner, pending. Workcell scanner now landed; AIKit current 512 signal ceiling still open. No builds, providers, scans or shared application code changed. Local links and scoped whitespace checked. Independent foundation work remains nonblocking; implementation pause preserved for this review.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-09-08"
+  ]
+}

@@ -1,0 +1,207 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "material",
+  "generated_at": "2026-09-08T15:35:45.271Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 3468,
+  "checks": [
+    {
+      "ok": true,
+      "label": "HTML relative <img> resolves through the material route and actually decodes"
+    },
+    {
+      "ok": true,
+      "label": "HTML relative <link rel=stylesheet> is loaded and applied",
+      "data": {
+        "bodyBackground": "rgb(17, 34, 51)"
+      }
+    },
+    {
+      "ok": true,
+      "label": "HTML relative <a> keeps its literal reference (never rewritten)"
+    },
+    {
+      "ok": true,
+      "label": "Owner-resolved relative JavaScript executes the actual HTML interaction"
+    },
+    {
+      "ok": true,
+      "label": "HTML retains opaque-origin sandbox without native bridge authority"
+    },
+    {
+      "ok": true,
+      "label": "Traversal outside the material directory is refused (status 404)"
+    },
+    {
+      "ok": true,
+      "label": "A real sibling asset resolves with the owner mime hint as Content-Type"
+    },
+    {
+      "ok": true,
+      "label": "Maximizing another pane keeps the hidden HTML surface mounted"
+    },
+    {
+      "ok": true,
+      "label": "A hidden pane (maximize) suspends its iframe (srcdoc cleared)",
+      "data": {
+        "blankedSrcdoc": null
+      }
+    },
+    {
+      "ok": true,
+      "label": "Restoring the pane resumes the real material content (srcdoc restored)",
+      "data": {
+        "resumedSrcdocLength": 764
+      }
+    },
+    {
+      "ok": true,
+      "label": "document.visibilityState hidden suspends the rendered iframe"
+    },
+    {
+      "ok": true,
+      "label": "document visible again resumes the rendered iframe"
+    },
+    {
+      "ok": true,
+      "label": "Markdown heading renders"
+    },
+    {
+      "ok": true,
+      "label": "Markdown list renders as real <li> elements"
+    },
+    {
+      "ok": true,
+      "label": "Markdown bold emphasis renders"
+    },
+    {
+      "ok": true,
+      "label": "Markdown image resolves through the material route and decodes"
+    },
+    {
+      "ok": true,
+      "label": "Source toggle returns the real FileSurface editor over the raw Markdown bytes"
+    },
+    {
+      "ok": true,
+      "label": "Toggling back to Rendered re-renders Markdown"
+    },
+    {
+      "ok": true,
+      "label": "A standalone image file renders as a real decoded <img>, not a textarea"
+    },
+    {
+      "ok": true,
+      "label": "PDF either renders in the platform viewer or discloses an honest unavailable state",
+      "data": {
+        "pdfRendered": true,
+        "pdfUnavailable": false
+      }
+    },
+    {
+      "ok": true,
+      "label": "Unsupported binary discloses the exact honest disposition sentence"
+    },
+    {
+      "ok": true,
+      "label": "Disposition card shows the real byte length",
+      "data": {
+        "bytes": "6 bytes"
+      }
+    },
+    {
+      "ok": true,
+      "label": "No open-with control is offered — work.open has no generic file-path form (verified by research; not wired)"
+    },
+    {
+      "ok": true,
+      "label": "A plain text file still opens the native FileSurface editor directly"
+    },
+    {
+      "ok": true,
+      "label": "Close and reopen restores the Markdown rendered view (fresh mount, not stuck on Source)"
+    },
+    {
+      "ok": true,
+      "label": "No uncaught page errors during the material walk",
+      "data": {
+        "errors": []
+      }
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-08T15:35:45.378Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 31,
+      "data": {
+        "file": "material-html-rendered.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 40,
+      "data": {
+        "file": "material-markdown-rendered.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 27,
+      "data": {
+        "file": "material-image-rendered.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 17,
+      "data": {
+        "file": "material-pdf-state.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 15,
+      "data": {
+        "file": "material-unsupported-disposition.png"
+      }
+    }
+  ],
+  "metrics": {
+    "material_checks": 1
+  },
+  "screenshots": [
+    "material-html-rendered.png",
+    "material-markdown-rendered.png",
+    "material-image-rendered.png",
+    "material-pdf-state.png",
+    "material-unsupported-disposition.png"
+  ]
+}

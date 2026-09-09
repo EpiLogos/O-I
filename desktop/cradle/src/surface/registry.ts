@@ -12,23 +12,24 @@
  */
 
 import {
+  groupsOf,
   activateSurface,
   activeBindingId,
   closeSurface,
+  closeEmptyPane,
   cycleTab,
   focusGroup,
   isPinned,
   jumpToTab,
   layoutSignature,
-  makeTestBinding,
   moveDirectional,
   moveTab,
   neighbourGroup,
-  openBinding,
   openSourcesIndex,
   openSurfaceCount,
   reopenClosed,
   restoreLayout,
+  resizeSplit,
   shiftDepth,
   splitOff,
   tileSurfaces,
@@ -55,7 +56,7 @@ export interface MenuContext {
  * own canonical Actions arrive with the owner-seam units — none are
  * fabricated here (law 4).
  */
-const FRAME_DISCLOSED_KINDS = new Set(["test", "source", "sources"]);
+const FRAME_DISCLOSED_KINDS = new Set(["source", "sources", "knowledge", "file", "encounter", "system", "browser", "terminal", "flow", "blank"]);
 
 /** Actions disclosed for one binding (its tab / its content right-click). */
 export function bindingDisclosures(
@@ -67,11 +68,14 @@ export function bindingDisclosures(
   if (!FRAME_DISCLOSED_KINDS.has(binding.kind)) return [];
   const pinned = isPinned(ctx.state, surfaceId);
   return [
+    {action_ref:"surface.focus-tab",title:ctx.state.focusedTabId===surfaceId?"Show tab bar":"Focus this tab",enabled:true},
+    ...groupsOf(ctx.state.root).filter(g=>!g.tabs.includes(surfaceId)).map((g,i)=>({action_ref:`surface.move-to:${g.id}`,title:`Move to pane ${i+1} · ${ctx.state.surfaces[g.active??g.tabs[0]]?.title??"Empty"}`,enabled:true})),
     {
       action_ref: "surface.close",
       title: pinned ? "Close (pinned — unpin first)" : "Close",
       enabled: !pinned,
     },
+    { action_ref: "surface.maximize", title: ctx.state.maximizedGroupId ? "Restore panes" : "Maximize pane", enabled: true },
     { action_ref: "surface.split-right", title: "Split right", enabled: true },
     { action_ref: "surface.split-down", title: "Split down", enabled: true },
     {
@@ -105,7 +109,20 @@ export function frameDisclosures(ctx: MenuContext): ActionDisclosure[] {
  * invocations all share (keyboard + pointer parity by construction).
  * Unknown action refs change nothing: no fabricated behaviour.
  */
-export function executeFrameAction(
+export function executeFrameAction(state: LayoutState, ref: string, arg?: ActionArg, snapshot?: RestorePoint): LayoutState {
+  if(ref==="surface.focus-tab") {const id=arg?.surfaceId??activeBindingId(state);return id?{...activateSurface(state,id),focusedTabId:state.focusedTabId===id?undefined:id}:state;}
+  if(ref.startsWith("surface.move-to:")&&arg?.surfaceId)return moveTab(state,arg.surfaceId,ref.slice("surface.move-to:".length));
+  if (ref === "surface.maximize") {
+    const group = arg?.surfaceId ? groupsOf(state.root).find(g => g.tabs.includes(arg.surfaceId!)) : groupsOf(state.root).find(g => g.id === state.focusedGroupId);
+    return group ? { ...state, focusedGroupId: group.id, maximizedGroupId: state.maximizedGroupId === group.id ? undefined : group.id } : state;
+  }
+  const next = executeBaseAction(state, ref, arg, snapshot);
+  if (!next.maximizedGroupId) return next;
+  const group = groupsOf(next.root).find(g => g.id === next.focusedGroupId);
+  return { ...next, maximizedGroupId: group?.id };
+}
+
+function executeBaseAction(
   state: LayoutState,
   ref: string,
   arg?: ActionArg,
@@ -113,14 +130,14 @@ export function executeFrameAction(
 ): LayoutState {
   const active = () => arg?.surfaceId ?? activeBindingId(state) ?? "";
   switch (ref) {
-    case "surface.open":
-      return openBinding(state, makeTestBinding(state, "test"));
-    case "surface.open-silent":
-      return openBinding(state, makeTestBinding(state, "test:silent"));
+    case "surface.resize-split": return arg?.splitId && arg.weights ? resizeSplit(state, arg.splitId, arg.weights) : state;
+
     case "surface.open-sources":
       return openSourcesIndex(state);
+    case "surface.close-empty-pane":
+      return closeEmptyPane(state, arg?.groupId ?? state.focusedGroupId);
     case "surface.close":
-      return closeSurface(state, active());
+      return active() ? closeSurface(state, active()) : closeEmptyPane(state, state.focusedGroupId);
     case "surface.reopen":
       return reopenClosed(state);
     case "surface.split-right":

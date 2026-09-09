@@ -259,3 +259,49 @@ hot-reload; neither imports the other's identity (`file presence ≠ activation`
 `tmux pane ≠ SurfaceRef`; `Quickshell widget ≠ Surface`). Adaptive bootstrap
 (`oi host omarchy plan|realise|verify`) is World recognition, not installation
 of a foreign app.
+
+
+## 14. Agency Gateway desktop consumer contract
+
+Owner-directed desktop clarification,2026-09-06. Native specification remains
+[O-I #154](https://github.com/EpiLogos/O-I/issues/154); this section gives its
+existing architecture placement (§1/§3/§4) an explicit consumer boundary. The
+product team develops the Gateway/connector/Stream/hosting implementation.
+Execution units GW-01–06 live in
+[the programme](../../.superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md#agency-gateway-desktop-integration--explicit-dependency-track).
+
+`AgencyService` consumes AIKit's authorised ecology and native Gateway client
+through S's declared integration route. Use the product protocol/SDK and its
+negotiated local/network carrier; no renderer-owned websocket protocol or second
+connector/session registry. The desktop owns view binding, attention and focus,
+not Agency, AgentSession, ActuationStream or connector identity. Workcell owns
+service/Fabric materiality; Actuation owns attributable Stream and authority.
+
+| Owner input, where supplied and authorised | Desktop projection |
+|---|---|
+| SessionSpace, Agency/Agent, AgentSession, purpose and Focus | Existing-session selection and agent details in the dynamic right panel; selection attaches the actual owner session |
+| Actuation/ActuationStream, sequence/cursor, attribution/locus, native evidence and Return refs | Conversation and semantic Activity over the same encounter; ordered incremental reading/replay with native correlation intact |
+| Operative Context, resolved Harness/model condition, context revision/lineage | Context and Inspect planes; authored, effective and actually active facts remain distinct |
+| Surface, connection, reachability, material observation, compatibility and age | Side/full/tab/detached/Observatory views with exact serving seam and local degraded/last-observed state |
+| Available/granted capabilities and permitted invocation modes | Owner-disclosed operations with exact scope/refusal; presence and reachability never imply authority |
+
+One canonical encounter retains one transcript, draft/composer and native session
+across presentations. ActuationStream is the semantic event source for Gateway
+integration; native provider traces/exposed thinking retain their richer content
+and attribution. ACP connection events alone do not establish canonical Stream
+or cross-surface Gateway acceptance. Preserve bounded retention/backpressure and
+durable owner replay; a replay gap or unsupported operation is not repaired with
+fabricated events. Continue/refine/fork/recompose are explicit owner relations.
+
+A disappearing UI consumer detaches its view; it does not cancel the provider or
+Gateway. Explicit cancel is a separate owner operation. Provider conversation IDs,
+transport credentials, sockets/hosts and Fabric addresses never become canonical
+AgentSession identity. Fabric admission, Gateway scopes, AIKit capabilities,
+Actuation bounds and native Action authority remain separate.
+
+Until a compatible native ecology/attach operation is available, disclose the
+missing seam and affected reachability. Local sources/wiki/workspaces remain
+usable. Reuse the existing resident encounter only with its truthful local scope;
+never call it the Gateway, introduce another persistent desktop encounter owner,
+or replace an active provider to force an upgrade. A subsequent owner-supported
+binding/migration must prove preserved identity and history explicitly.

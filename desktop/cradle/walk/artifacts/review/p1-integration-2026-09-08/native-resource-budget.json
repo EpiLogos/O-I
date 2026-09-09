@@ -1,0 +1,17 @@
+{
+  "utc": "2026-09-08T19:13:45.745735+00:00",
+  "schema": "oi.native-resource-predeclared-budget/v1",
+  "standing": "Predeclared before sampled cycles; native acceptance pending",
+  "baseline_samples": 57,
+  "settled_samples": 30,
+  "baseline_combined_rss_median_kib": 108648.0,
+  "observed_settled_range_kib": 15248,
+  "allowed_settled_growth_kib": 48016,
+  "allowed_cycle_slope_upper_bound_kib": 1024,
+  "basis": "Observed native process plus exact application-name WebKit RSS; shared pages included. 32 MiB explained finite renderer/layout cache allowance in addition to observed baseline noise. Retained process/surface/state failures independently fail regardless of memory. No forced reload/GC. GPU bytes/renderer heap unavailable.",
+  "cycles": {
+    "warmup": 3,
+    "sampled": 20
+  },
+  "required_comparison": "Last5 vs first5 settled bands, linear slope and uncertainty, stable surfaces/process identities; repeat with large real file dataset."
+}

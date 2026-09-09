@@ -22,3 +22,5 @@ export * from './spacetimedb-a2a.mjs';
 export * from './auth-binding.mjs';
 export * from './referent.mjs';
 export * from './versioned-world-application.mjs';
+
+export { createExploreTransportLifecycle } from './transport-lifecycle.mjs';

@@ -81,9 +81,9 @@ export function frameActionForKey(
 
   // ⌘⌥… — tile, restore, move-surface, silent open
   if (mod && alt) {
+    if (code === "Enter") return { ref: "surface.maximize" };
     if (code === "KeyT") return { ref: "surface.tile" };
     if (code === "KeyR") return { ref: "surface.restore-layout" };
-    if (code === "KeyN") return { ref: "surface.open-silent" };
     if (dir) return { ref: "surface.move", arg: { dir } };
     return null;
   }

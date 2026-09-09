@@ -31,14 +31,24 @@ fi
 surface_fail=0
 for spec in "aikit compose --help" "aikit client --help" "ctrl actions --json"; do
   bin=${spec%% *}
-  if ! command -v "$bin" >/dev/null 2>&1; then
-    echo "MISSING BIN: $bin (build and install the product's release binary)"
+  case "$bin" in
+    aikit) executable=${OI_AIKIT_BIN:-aikit} ;;
+    ctrl) executable=${OI_CENTRAL_CTRL_BIN:-ctrl} ;;
+  esac
+  if ! command -v "$executable" >/dev/null 2>&1; then
+    echo "MISSING BIN: $executable (build and bind the product's executable)"
     surface_fail=1
     continue
   fi
-  # Intentional word-splitting: each spec is a fixed, known-good invocation.
-  if ! $spec >/dev/null 2>&1; then
-    echo "MISSING SURFACE: $spec — installed binary predates cited source; rebuild + reinstall"
+  # Keep the selected executable whole, including paths containing spaces.
+  result=0
+  case "$spec" in
+    "aikit compose --help") "$executable" compose --help >/dev/null 2>&1 || result=$? ;;
+    "aikit client --help") "$executable" client --help >/dev/null 2>&1 || result=$? ;;
+    "ctrl actions --json") "$executable" actions --json >/dev/null 2>&1 || result=$? ;;
+  esac
+  if [ "$result" -ne 0 ]; then
+    echo "MISSING SURFACE: $spec via $executable — verify the selected owner build"
     surface_fail=1
   fi
 done

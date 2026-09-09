@@ -20,6 +20,24 @@ import {
   type TabGroupPane,
 } from "./types";
 
+/** D22: describe committed layout differences without drawing or side effects.
+ * Rev6 reserves these intents: the presentation host records their inactive
+ * disposition. Resize comes from actual drag/keyboard geometry, not every render. */
+export function surfaceExpressionChanges(before:LayoutState, after:LayoutState):Array<{intent:"open"|"close"|"split"|"move";groupId:string}> {
+  if(before.root===after.root)return [];
+  const oldGroups=groupsOf(before.root),newGroups=groupsOf(after.root);
+  const oldTabs=new Map(oldGroups.flatMap(g=>g.tabs.map(id=>[id,g.id] as const)));
+  const newTabs=new Map(newGroups.flatMap(g=>g.tabs.map(id=>[id,g.id] as const)));
+  const changes:Array<{intent:"open"|"close"|"split"|"move";groupId:string}>=[];
+  for(const [id,groupId]of newTabs) {
+    if(!oldTabs.has(id))changes.push({intent:"open",groupId});
+    else if(oldTabs.get(id)!==groupId)changes.push({intent:"move",groupId});
+  }
+  for(const [id,groupId]of oldTabs)if(!newTabs.has(id))changes.push({intent:"close",groupId});
+  if(newGroups.length>oldGroups.length)changes.push({intent:"split",groupId:after.focusedGroupId??newGroups[0].id});
+  return changes;
+}
+
 // ---------------------------------------------------------------------------
 // tree helpers
 
@@ -46,25 +64,26 @@ function mapPane(pane: Pane, fn: (g: TabGroupPane) => TabGroupPane): Pane {
 }
 
 /** Drop empty groups; collapse splits that lost children. */
-function prune(pane: Pane | null): Pane | null {
+function prune(pane: Pane | null, reservedGroups: ReadonlySet<string> = new Set()): Pane | null {
   if (!pane) return null;
-  if (pane.type === "group") return pane.tabs.length ? pane : null;
-  const children = pane.children
-    .map((c) => prune(c))
-    .filter((c): c is Pane => c !== null);
+  if (pane.type === "group") return pane.tabs.length || pane.emptySlot || reservedGroups.has(pane.id) ? pane : null;
+  const surviving = pane.children
+    .map((child, index) => ({ child: prune(child, reservedGroups), weight: pane.weights?.[index] ?? 1 }))
+    .filter(entry => entry.child !== null);
+  const children = surviving.map(entry => entry.child!);
   if (children.length === 0) return null;
   if (children.length === 1) return children[0];
-  return { ...pane, children };
+  return { ...pane, children, weights: pane.weights ? surviving.map(entry => entry.weight) : undefined };
 }
 
 /** Finalise a state around a new root: fix focus, clamp depth at rest. */
 function withRoot(state: LayoutState, root: Pane | null): LayoutState {
-  const pruned = prune(root);
+  const pruned = prune(root, new Set(state.detached?.map(entry => entry.groupId)));
   let focusedGroupId = state.focusedGroupId;
   if (!pruned) focusedGroupId = null;
   else if (!focusedGroupId || !contains(pruned, focusedGroupId))
     focusedGroupId = groupsOf(pruned)[0].id;
-  const agencyDepth: AgencyDepth = pruned ? state.agencyDepth : "strip";
+  const agencyDepth: AgencyDepth = state.agencyDepth;
   return { ...state, root: pruned, focusedGroupId, agencyDepth };
 }
 
@@ -176,7 +195,7 @@ export function makeSourceBinding(
   );
   if (existing) return existing;
   const title = path.split("/").pop() || path;
-  return { id: nextId(state, "s"), kind: "source", ref: sourceRef, project, title };
+  return { id: crypto.randomUUID(), kind: "source", ref: sourceRef, project, title };
 }
 
 // ---------------------------------------------------------------------------
@@ -201,7 +220,7 @@ export function openBinding(
   const target = focusedGroup(base);
   if (!target) return base;
   const root = mapPane(base.root!, (g) =>
-    g.id === target.id ? { ...g, tabs: [...g.tabs, binding.id], active: binding.id } : g,
+    g.id === target.id ? { ...g, tabs: [...g.tabs, binding.id], active: binding.id, emptySlot: undefined } : g,
   );
   return { ...base, root, focusedGroupId: target.id };
 }
@@ -228,8 +247,12 @@ function insertTab(
     at >= 0
       ? [...g.tabs.slice(0, at), id, ...g.tabs.slice(at)]
       : [...g.tabs, id];
-  const pinned = carryPinned && !g.pinned.includes(id) ? [...g.pinned, id] : g.pinned;
-  return { ...g, tabs, pinned, active: id };
+  const pinned = [...g.pinned];
+  if (carryPinned && !pinned.includes(id)) {
+    const pinnedAt = beforeId ? pinned.indexOf(beforeId) : -1;
+    pinned.splice(pinnedAt >= 0 ? pinnedAt : pinned.length, 0, id);
+  }
+  return { ...g, tabs, pinned, active: id, emptySlot: undefined };
 }
 
 function reorderTab(
@@ -237,11 +260,17 @@ function reorderTab(
   id: SurfaceId,
   beforeId: SurfaceId | null | undefined,
 ): TabGroupPane {
+  if (id === beforeId) return g;
   const tabs = g.tabs.filter((t) => t !== id);
   const at = beforeId ? tabs.indexOf(beforeId) : -1;
   const next =
     at >= 0 ? [...tabs.slice(0, at), id, ...tabs.slice(at)] : [...tabs, id];
-  return { ...g, tabs: next, active: id };
+  const pinned = g.pinned.filter(p => p !== id);
+  if (g.pinned.includes(id)) {
+    const pinnedAt = beforeId ? pinned.indexOf(beforeId) : -1;
+    pinned.splice(pinnedAt >= 0 ? pinnedAt : pinned.length, 0, id);
+  }
+  return { ...g, tabs: next, pinned, active: id };
 }
 
 /** Close a surface into the closed-surfaces stack. Pinned surfaces refuse. */
@@ -251,6 +280,13 @@ export function closeSurface(state: LayoutState, id: SurfaceId): LayoutState {
   const root = mapPane(state.root!, (x) => (x.id === g.id ? removeTab(x, id) : x));
   const closedStack = [...state.closedStack, id];
   return withRoot({ ...state, closedStack }, root);
+}
+
+/** Dismiss only an intentionally empty destination, never a detached view's slot. */
+export function closeEmptyPane(state: LayoutState, groupId: string | null): LayoutState {
+  const group = groupsOf(state.root).find(g => g.id === groupId);
+  if (!state.root || !group?.emptySlot || group.tabs.length || state.detached?.some(d => d.groupId === groupId)) return state;
+  return withRoot(state, mapPane(state.root, g => g.id === groupId ? { ...g, emptySlot: undefined } : g));
 }
 
 /** Reopen the most recently closed surface into the focused group. */
@@ -282,10 +318,15 @@ function insertSibling(
   }
   const idx = pane.children.findIndex((c) => contains(c, targetGroupId));
   if (idx === -1) return pane;
-  if (pane.dir === dir) {
+  if (pane.dir === dir && pane.children[idx].type === "group") {
     const children = [...pane.children];
+    const weights = pane.children.map((_, i) => pane.weights?.[i] ?? 1);
+    // Divide only the target pane's footprint; unrelated panes retain size.
+    const share = weights[idx] / 2;
+    weights[idx] = share;
     children.splice(after ? idx + 1 : idx, 0, node);
-    return { ...pane, children };
+    weights.splice(after ? idx + 1 : idx, 0, share);
+    return { ...pane, children, weights };
   }
   const children = [...pane.children];
   children[idx] = insertSibling(children[idx], targetGroupId, dir, node, after, gen);
@@ -294,7 +335,7 @@ function insertSibling(
 
 /**
  * Split: move a surface out of its group into a new sibling group in `dir`.
- * A lone surface simply relocates (wrap + prune collapse).
+ * A lone surface stays in place while a new empty destination opens beside it.
  */
 export function splitOff(
   state: LayoutState,
@@ -305,18 +346,20 @@ export function splitOff(
   const g = groupOf(state, id);
   if (!g) return state;
   const gen = idGen(state);
-  const pinnedCarry = g.pinned.includes(id);
+  const lone = g.tabs.length === 1;
+  const pinnedCarry = !lone && g.pinned.includes(id);
   const ng: TabGroupPane = {
     type: "group",
     id: gen("g"),
-    tabs: [id],
+    tabs: lone ? [] : [id],
     pinned: pinnedCarry ? [id] : [],
-    active: id,
+    active: lone ? null : id,
+    emptySlot: lone ? true : undefined,
   };
   let root: Pane | null = insertSibling(state.root!, g.id, dir, ng, after, gen);
-  root = mapPane(root, (x) => (x.id === g.id ? removeTab(x, id) : x));
+  if (!lone) root = mapPane(root, (x) => (x.id === g.id ? removeTab(x, id) : x));
   const next = withRoot(state, root);
-  return { ...next, focusedGroupId: ng.id };
+  return { ...next, focusedGroupId: ng.id, maximizedGroupId: undefined };
 }
 
 /** Tile: every open surface in its own group, balanced alternating splits. */
@@ -343,7 +386,9 @@ export function tileSurfaces(state: LayoutState): LayoutState {
     };
   };
   const root = build(ids, 0);
-  return { ...state, root, focusedGroupId: groupsOf(root)[0].id };
+  const active = activeBindingId(state);
+  const focused = groupsOf(root).find(g => g.active === active) ?? groupsOf(root)[0];
+  return { ...state, root, focusedGroupId: focused.id, maximizedGroupId: undefined };
 }
 
 /** Move a surface between groups (drag between splits); same strip = reorder. */
@@ -508,4 +553,30 @@ export function shiftDepth(state: LayoutState, delta: number): LayoutState {
 /** Escape from the full overlay steps back to panel (one depth out). */
 export function stepDepthDown(state: LayoutState): LayoutState {
   return state.agencyDepth === "full" ? { ...state, agencyDepth: "panel" } : state;
+}
+
+/** Resize only presentation geometry; semantic refs and pane membership stay fixed. */
+export function resizeSplit(state: LayoutState, id: string, weights: number[]): LayoutState {
+  const visit = (pane: Pane): Pane => {
+    if (pane.type === "group") return pane;
+    if (pane.id === id) return weights.length === pane.children.length && weights.every(n => Number.isFinite(n) && n > 0) ? { ...pane, weights } : pane;
+    return { ...pane, children: pane.children.map(visit) };
+  };
+  return state.root ? { ...state, root: visit(state.root) } : state;
+}
+
+
+/** Keep the pane slot while its existing binding lives in a native window. */
+export function detachBinding(state: LayoutState, id: string): LayoutState {
+  const group=groupOf(state,id);
+  if (!group || !state.root) return state;
+  const entry={surfaceId:id,groupId:group.id,index:group.tabs.indexOf(id),pinned:group.pinned.includes(id)};
+  return {...state,root:mapPane(state.root,g=>g.id===group.id?removeTab(g,id):g),detached:[...state.detached??[],entry]};
+}
+export function redockBinding(state: LayoutState, id: string): LayoutState {
+  const entry=state.detached?.find(d=>d.surfaceId===id),binding=state.surfaces[id];
+  if (!entry || !binding) return state;
+  const base={...state,detached:state.detached?.filter(d=>d.surfaceId!==id)};
+  if (!base.root || !groupsOf(base.root).some(g=>g.id===entry.groupId)) return openBinding(base,binding);
+  return {...base,root:mapPane(base.root,g=>{if(g.id!==entry.groupId)return g;const tabs=g.tabs.filter(t=>t!==id);tabs.splice(Math.min(entry.index,tabs.length),0,id);return {...g,tabs,active:id,pinned:entry.pinned?[...g.pinned,id]:g.pinned};}),focusedGroupId:entry.groupId};
 }

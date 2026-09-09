@@ -1,0 +1,166 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "companions",
+  "generated_at": "2026-09-08T12:06:50.518Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": null,
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 1472,
+  "checks": [
+    {
+      "ok": true,
+      "label": "One Central sidebar replaces the duplicated left rails"
+    },
+    {
+      "ok": true,
+      "label": "Projects expose exactly three compact view controls"
+    },
+    {
+      "ok": true,
+      "label": "Project navigation defaults to chats and tasks"
+    },
+    {
+      "ok": true,
+      "label": "Agent access focuses the existing encounter instead of duplicating it"
+    },
+    {
+      "ok": true,
+      "label": "Changing the sidebar lens leaves the active chat and draft intact"
+    },
+    {
+      "ok": true,
+      "label": "Browsing another project does not silently switch the canvas"
+    },
+    {
+      "ok": true,
+      "label": "Project wiki opens from its contextual sidebar control"
+    },
+    {
+      "ok": true,
+      "label": "Graph has no redundant scope tabs or graph/list controls"
+    },
+    {
+      "ok": true,
+      "label": "Activating a chat preserves the project’s remembered sidebar lens"
+    },
+    {
+      "ok": true,
+      "label": "Agent access reuses the Research encounter after workspace restore"
+    },
+    {
+      "ok": true,
+      "label": "Sidebar lenses are scoped to workspace and project"
+    },
+    {
+      "ok": true,
+      "label": "Returning to workspace restores its project lens"
+    },
+    {
+      "ok": true,
+      "label": "Reload preserves the encounter draft and active surface"
+    },
+    {
+      "ok": true,
+      "label": "Tiled preset presents three independent window groups"
+    },
+    {
+      "ok": true,
+      "label": "Every group has its own tab bar"
+    },
+    {
+      "ok": true,
+      "label": "Full conversation masks other groups and retains Central navigation"
+    },
+    {
+      "ok": true,
+      "label": "Maximization retains the same session draft"
+    },
+    {
+      "ok": true,
+      "label": "Escape restores exact tiled source and conversation state"
+    },
+    {
+      "ok": true,
+      "label": "Tiling divider resizes from the keyboard"
+    },
+    {
+      "ok": true,
+      "label": "Context menu moves one encounter binding and its draft between groups"
+    },
+    {
+      "ok": true,
+      "label": "Split action reuses the empty group without duplicating session"
+    },
+    {
+      "ok": true,
+      "label": "Changing arrangement consolidates tabs without losing surfaces"
+    },
+    {
+      "ok": true,
+      "label": "Reload restores the saved pane arrangement"
+    },
+    {
+      "ok": true,
+      "label": "Pointer drag moves the tab into the targeted window group"
+    },
+    {
+      "ok": true,
+      "label": "Field opens an admitted neighbourhood with its distinct entry"
+    },
+    {
+      "ok": true,
+      "label": "Shared Field omits private local graph subjects"
+    },
+    {
+      "ok": true,
+      "label": "Central wiki remains the containing local graph"
+    },
+    {
+      "ok": true,
+      "label": "Smaller desktop has no page-level horizontal overflow"
+    },
+    {
+      "ok": true,
+      "label": "No renderer exceptions ()"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 35,
+      "data": {
+        "file": "companions-chat-files.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 30,
+      "data": {
+        "file": "companions-full-chat.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 54,
+      "data": {
+        "file": "companions-tiled-files.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "companions-chat-files.png",
+    "companions-full-chat.png",
+    "companions-tiled-files.png"
+  ]
+}

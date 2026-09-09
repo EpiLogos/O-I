@@ -92,11 +92,23 @@ fn rolling_cleanup_compiler_caches(exported: &Path, gate: &Path, executable: &Pa
     cleanup
 }
 
+fn rolling_product_binding(product: &str) -> Option<&'static str> {
+    match product {
+        "central" => Some("OI_CENTRAL_CTRL_BIN"),
+        "ai-kit" => Some("OI_AIKIT_BIN"),
+        "actuation" => Some("OI_ACTUATION_BIN"),
+        "software-factory" => Some("OI_FACTORY_BIN"),
+        "workcell" => Some("OI_WORKCELL_BIN"),
+        "quaternal-logic" => Some("OI_QL_BIN"),
+        _ => None,
+    }
+}
+
 fn command_rolling_dev_gate(args: &[OsString]) -> Result<i32, String> {
     let (product, candidate) = match args {
-        [id] if id == "central" || id == "ai-kit" => (id.to_str().unwrap(), None),
-        [id, flag, sha] if (id == "central" || id == "ai-kit") && flag == "--candidate" => (id.to_str().unwrap(), Some(sha.to_str().ok_or("candidate must be UTF-8")?)),
-        _ => return Err("usage: oi dev gate central|ai-kit [--candidate EXACT_SHA]".into()),
+        [id] if id.to_str().and_then(rolling_product_binding).is_some() => (id.to_str().unwrap(), None),
+        [id, flag, sha] if id.to_str().and_then(rolling_product_binding).is_some() && flag == "--candidate" => (id.to_str().unwrap(), Some(sha.to_str().ok_or("candidate must be UTF-8")?)),
+        _ => return Err("usage: oi dev gate PRODUCT [--candidate EXACT_SHA] (central, ai-kit, actuation, software-factory, workcell, quaternal-logic)".into()),
     };
     let ground = configured_ground()?;
     let source = dev_source_path(&ground, product);
@@ -136,13 +148,29 @@ fn command_rolling_dev_gate(args: &[OsString]) -> Result<i32, String> {
     let mut checks = Vec::new();
     let executable = exported.join(&descriptor.executable_path);
     let mut bindings = BTreeMap::<String,String>::new();
-    bindings.insert(if product=="central" {"OI_CENTRAL_CTRL_BIN"} else {"OI_AIKIT_BIN"}.into(),executable.to_string_lossy().into_owned());
+    // The consumer now routes through S. Capture this exact suite binary beside
+    // its owner contribution so later CLI builds cannot change the gate's route.
+    let suite_executable = gate.join(if cfg!(windows) { "oi.exe" } else { "oi" });
+    fs::copy(env::current_exe().map_err(|e| e.to_string())?, &suite_executable)
+        .map_err(|e| format!("capture suite dispatcher: {e}"))?;
+    bindings.insert("OI_BIN".into(), suite_executable.to_string_lossy().into_owned());
+    bindings.insert(rolling_product_binding(product).expect("validated product").into(),executable.to_string_lossy().into_owned());
     if product=="ai-kit" {
         bindings.insert("OI_AIKIT_SESSION_SPACE_BIN".into(),executable.with_file_name("aikit-session-space").to_string_lossy().into_owned());
     }
     println!("{product} {selection} {revision}; isolated gate {}", gate.display());
     let outcome = (|| -> Result<(), String> {
         for (name, command) in [("owner-build", &descriptor.build), ("owner-test", &test)] {
+            if name == "owner-build" && command.is_empty() {
+                checks.push(json!({"check":name,"command":command,"result":"not-required","basis":"native source-install descriptor"}));
+                continue;
+            }
+            if name == "owner-test" {
+                for (binding, path) in &bindings {
+                    if !is_executable(Path::new(path)) { return Err(format!("native build did not produce the {binding} contribution: {path}")); }
+                    envs.insert(binding.clone(), path.clone());
+                }
+            }
             println!("{name}: running (log {}/{name}.log)", gate.display());
             let result = rolling_check(&exported, command, &envs, &gate.join(format!("{name}.log")));
             checks.push(json!({"check":name,"command":command,"result":if result.is_ok(){"passed"}else{"failed"}}));

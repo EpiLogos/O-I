@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "handoff-1788878091939792000",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "codex-native-browser-shell-20260908",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1788878091,
+  "subject": "Native browser panes and refined shell motion implemented",
+  "result": "Implemented the user-commissioned native browser tranche with real HTTP(S) navigation, page title/address/history/zoom, isolated temporary WebKit views, hide/show continuity, native detach/reparent/redock, real native pane focus and explicit shell IPC/material isolation. Native checks retained forms/counters/cookies across tab switches and detach/redock; back history, split clipping, full-right overlay, separate stores, actual close/reopen disposal and external HTTPS all observed. Lower-tier agents delivered shell hairline/motion/spacing/footer fixes and the editor/context plan. Evidence: desktop/cradle/walk/artifacts/review/browser-native/REVIEW.md, review/shell-motion/README.md, review/EDITOR-CONTEXT-PLAN-2026-09-08.md. Native build and two boundary tests passed. Waiting on user review of editor/context proposal; downloads, persistent profiles/permission management and Central/AIKit attachment-owner contracts remain explicitly unshipped. Concurrent System and point-cloud edits remain with their owners.",
+  "status": "waiting"
+}
