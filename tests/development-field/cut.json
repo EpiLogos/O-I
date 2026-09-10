@@ -4,9 +4,9 @@
   "ql_scope": "stable-carrier-only; QL-MEF#123 intelligence conformance deferred",
   "owners": [
     {"id":"oi","repository":"EpiLogos/O-I","revision":"7b3a9f4a652ac4992a69666e5be29524e0aef05d","track":212},
-    {"id":"central","repository":"EpiLogos/Central","revision":"e4b5f06bbdf4c05377fe23373e28e3c6438e1ec3","track":136},
-    {"id":"actuation","repository":"EpiLogos/Actuation","revision":"1c862c6bf58478adf6842a090214906dd2337001","track":53},
-    {"id":"ai-kit","repository":"EpiLogos/ai-kit","revision":"2ac6e6facc8d02b8e3654c0c47a2247299660f5f","track":261},
+    {"id":"central","repository":"EpiLogos/Central","revision":"4cd0fe52b10fb0e09a5a9e4486ea3d40d4946c5c","track":136},
+    {"id":"actuation","repository":"EpiLogos/Actuation","revision":"6398b23e0972e85d61295ddc1cfcbb83989dc00b","track":53},
+    {"id":"ai-kit","repository":"EpiLogos/ai-kit","revision":"cdfb622b98bd67f0d030502328173583a6e84321","track":261},
     {"id":"software-factory","repository":"EpiLogos/Factory","repository_alias":"EpiLogos/agent-system-design","revision":"366a6b2bf18ba23053601f5d5eb543b79bfcfb27","track":215},
     {"id":"workcell","repository":"EpiLogos/Workcell","revision":"aa2d2ba59f0ac259158eb7d2cd1cfcab1579268a","track":67},
     {"id":"quaternal-logic","repository":"EpiLogos/QL-MEF","revision":"34e0f3c7b1ccfa739d5a77f98c2dbedc755d8de1","track":122}
