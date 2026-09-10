@@ -11,7 +11,7 @@ permissions:
   actions: read
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 env:
   CARGO_INCREMENTAL: '0'
   CARGO_TERM_COLOR: never
@@ -53,9 +53,9 @@ jobs:
       - uses: Swatinem/rust-cache@v2.9.2
         with:
           shared-key: development-field-${{ matrix.owner }}
-          workspaces: |
-            ${{ runner.temp }}/owner-source
-            ${{ runner.temp }}/owner-source/cli
+          cache-on-failure: true
+          # O:I's standalone workspace is cli/; every other owner's is root.
+          workspaces: ${{ runner.temp }}/owner-source${{ matrix.owner == 'oi' && '/cli' || '' }} -> target
       - name: Run the tested owner's native deterministic contract
         run: >-
           python3 scripts/development-field-ci.py native
