@@ -40,3 +40,54 @@
 .settings-bootstrap { list-style: none; margin: 8px 0 16px; padding: 0; display: grid; gap: 14px; max-width: 72ch; counter-reset: step; }
 .settings-bootstrap li strong { display: block; margin-bottom: 2px; }
 .settings-bootstrap li p { margin: 0 0 4px; color: var(--oi-muted-2, #888); }
+
+/* Native per-owner disclosure (docs/cradle/07-WAVE-5-SYSTEM-CONTRIBUTION.md).
+   A mounted owner replaces the P1 product-section one position at a time;
+   everything below stays inside the same .product-section shell so a
+   native position reads identically to a census-only one until you open
+   it (L6). */
+.native-owner-availability.is-available { color: var(--oi-accent-ink, #47563b); }
+.native-owner-availability.is-degraded { color: var(--oi-muted-2, #8f9a83); }
+.native-owner-availability.is-unavailable, .native-owner-availability.is-unknown { color: var(--oi-muted-3, #a1ac98); font-style: italic; }
+
+.native-owner-meta { display: inline-flex; align-items: baseline; gap: 10px; }
+.native-version { color: var(--oi-muted-2, #8f9a83); font-size: var(--oi-shell-type-ui, 10px); }
+.native-mono { font-family: var(--oi-font-mono, ui-monospace, monospace); }
+
+.native-settings { display: grid; gap: 0; }
+.native-setting, .native-setting-row { border-bottom: 1px solid var(--oi-hairline-soft, rgba(128,128,128,.2)); }
+.native-setting:last-child, .native-setting-row:last-child { border-bottom: none; }
+.native-setting > summary, .native-setting-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; padding: 5px 0; }
+.native-setting > summary { cursor: pointer; }
+.native-setting-title { font-weight: 500; }
+.native-setting-value { color: var(--oi-muted-2, #8f9a83); font-size: var(--oi-shell-type-ui, 10px); margin-left: auto; text-align: right; }
+.native-setting-detail { margin: 2px 0 6px; }
+.native-setting-path { margin: 0 0 6px; color: var(--oi-muted-2, #8f9a83); font-size: var(--oi-shell-type-ui, 10px); }
+.native-drift { border: 1px solid currentColor; border-radius: 999px; padding: 1px 7px; font-size: var(--oi-shell-type-eyebrow, 8px); text-transform: uppercase; letter-spacing: .06em; line-height: 1.5; }
+.native-drift.is-diverged { color: var(--oi-accent, #657852); }
+.native-drift.is-staged { color: var(--oi-accent-ink, #47563b); border-style: dashed; }
+.native-drift.is-unknown { color: var(--oi-muted-3, #a1ac98); border-style: dashed; }
+
+.native-axes { display: grid; grid-template-columns: minmax(70px, auto) 1fr; gap: 3px 14px; margin: 0 0 8px; padding: 8px 10px; background: var(--oi-wash, #e5e9dd); border-radius: var(--oi-radius-xs, 4px); font-size: var(--oi-shell-type-ui, 10px); }
+.native-axis-row { display: contents; }
+.native-axes dt { color: var(--oi-muted-2, #8f9a83); }
+.native-axes dd { margin: 0; overflow-wrap: anywhere; }
+.native-axes dd.is-muted { color: var(--oi-muted-3, #a1ac98); }
+.native-axis-extra { color: var(--oi-muted-2, #8f9a83); }
+
+.native-action-meta { color: var(--oi-muted-2, #8f9a83); font-size: var(--oi-shell-type-ui, 10px); }
+.native-degradations, .native-obligations { margin: 8px 0; font-size: var(--oi-shell-type-ui, 10px); }
+.native-degradation { color: var(--oi-muted-2, #8f9a83); margin: 3px 0; }
+
+.native-chip-list { display: inline-flex; flex-wrap: wrap; gap: 4px; vertical-align: -2px; }
+.native-chip { border: 1px solid var(--oi-hairline, rgba(128,128,128,.3)); border-radius: var(--oi-radius-xs, 4px); padding: 0 6px; font-size: var(--oi-shell-type-ui, 10px); line-height: 1.6; }
+
+.native-table { border-collapse: collapse; width: 100%; margin: 2px 0; font-size: var(--oi-shell-type-ui, 10px); }
+.native-table th, .native-table td { text-align: left; padding: 3px 10px 3px 0; border-bottom: 1px solid var(--oi-hairline-soft, rgba(128,128,128,.2)); vertical-align: top; overflow-wrap: anywhere; }
+.native-table th { color: var(--oi-muted-2, #8f9a83); font-weight: 500; }
+.native-table tr:last-child td { border-bottom: none; }
+
+.native-inline-fields { display: grid; grid-template-columns: minmax(60px, auto) 1fr; gap: 2px 10px; margin: 0; font-size: var(--oi-shell-type-ui, 10px); }
+.native-inline-field { display: contents; }
+.native-inline-fields dt { color: var(--oi-muted-2, #8f9a83); }
+.native-inline-fields dd { margin: 0; overflow-wrap: anywhere; }

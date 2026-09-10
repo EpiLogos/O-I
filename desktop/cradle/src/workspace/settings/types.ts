@@ -71,3 +71,173 @@ export interface ActivityExtras {
   providers?: {count: number; raw: unknown};
   providersError?: string;
 }
+
+/**
+ * Native per-owner disclosure (`oi.product-settings-disclosure/v2`,
+ * docs/cradle/07-WAVE-5-SYSTEM-CONTRIBUTION.md §3). Freezes the field
+ * names the owner tracks ship against; the UI renders exactly this shape
+ * and fabricates none of it.
+ */
+export interface DisclosureProvenance {
+  owner_ref?: string;
+  path?: string;
+  observed_at_unix_ms?: number;
+}
+
+/** declared/effective axis: a value the owner resolved, with its own
+ * provenance. Present even when it agrees with the other axes — the
+ * agreement is the information (07 §4.1). */
+export interface DisclosedAxis {
+  value?: unknown;
+  provenance?: DisclosureProvenance;
+}
+
+export interface ActiveAxis extends DisclosedAxis {
+  /** Apply receipt / generation id this axis materialised from. */
+  materialisation_ref?: string;
+}
+
+export type StageState = "none" | "prepared" | "previewed" | "discardable";
+
+export interface StagedAxis extends DisclosedAxis {
+  stage_ref?: string;
+  stage_state: StageState;
+}
+
+export interface ExpectedEffect {
+  summary?: string;
+  ref?: string;
+}
+
+export type DriftState = "none" | "diverged" | "unknown";
+
+export interface Drift {
+  state: DriftState;
+  between: [string, string];
+  remediation_action_ref?: string | null;
+}
+
+export interface DisclosedSettingAxes {
+  declared?: DisclosedAxis;
+  effective?: DisclosedAxis;
+  active?: ActiveAxis;
+  staged?: StagedAxis;
+  expected_effect?: ExpectedEffect;
+}
+
+/** One disclosed configuration row across its axes. `kind: "secret"`
+ * (07 §4.4) is presence-only — the UI never renders its `value`. */
+export interface DisclosedSetting {
+  key: string;
+  title: string;
+  kind: string;
+  axes: DisclosedSettingAxes;
+  mutable?: boolean;
+  native_path?: string;
+  bootstrap?: boolean;
+  drift?: Drift;
+}
+
+export interface DisclosedSection {
+  id: string;
+  title: string;
+  settings: DisclosedSetting[];
+}
+
+export type ActionAvailabilityV2 = "disclosed" | "missing_native_obligation" | "unavailable";
+
+export interface ActionAuthority {
+  requires?: string[];
+  granted_by?: string;
+  evidence_ref?: string | null;
+}
+
+export interface ActionExposure {
+  ui?: boolean;
+  agent?: boolean;
+  headless?: boolean;
+}
+
+export interface ActionCommandRef {
+  ref?: string;
+  command?: string[];
+}
+
+export interface DisclosedActionArg {
+  name: string;
+  kind: string;
+}
+
+export interface DisclosedAction {
+  action_ref: string;
+  title: string;
+  args?: DisclosedActionArg[];
+  availability: ActionAvailabilityV2;
+  unavailable_reason?: string | null;
+  subject_kinds?: string[];
+  authority?: ActionAuthority;
+  exposure?: ActionExposure;
+  explain?: ActionCommandRef;
+  history?: ActionCommandRef;
+}
+
+export type OwnerAvailabilityState = "available" | "degraded" | "unavailable" | "unknown";
+
+export interface DisclosureOwner {
+  owner_id: string;
+  owner_ref?: string;
+  owner_version?: string;
+  reading_command?: string[];
+  reading_digest?: string | null;
+  reading_digest_covers?: string;
+  observed_at_unix_ms?: number;
+}
+
+export interface Degradation {
+  subject_ref?: string;
+  state: string;
+  reason?: string;
+  native_error?: string;
+}
+
+/** The owner's own document, mounted unmodified (07 §5.1). */
+export interface ProductDisclosureV2 {
+  schema: "oi.product-settings-disclosure/v2";
+  product_id: string;
+  contract_revision?: string;
+  disclosed_at_unix_ms?: number;
+  owner: DisclosureOwner;
+  about?: string;
+  sections: DisclosedSection[];
+  actions: DisclosedAction[];
+  availability: {state: OwnerAvailabilityState; reason?: string | null};
+  degradations?: Degradation[];
+  obligations?: string[];
+}
+
+/** One mounted (or honestly not-mounted) owner position (Rust
+ * `system_composition::OwnerMount`). `reason`, `descriptor` and `error` are
+ * always present on the wire (`null` when absent) — absence is data. */
+export interface OwnerMount {
+  product_id: string;
+  availability: "available" | "degraded" | "unavailable" | "unknown";
+  reason: string | null;
+  reading_command: string[];
+  descriptor: ProductDisclosureV2 | null;
+  error: string | null;
+  provenance: {observed_at_unix_ms: number; digest: string | null};
+}
+
+/** The mounted composition reading (`oi.system-composition/v1`, Rust
+ * `system_composition::Reading`). Always seven positions — the composition
+ * layer (`oi`, composed from its own already-resolved census) plus the six
+ * products. A mount failure is `error` plus a degraded availability, never
+ * a dropped position or a fabricated descriptor. */
+export interface SystemCompositionReading {
+  schema: "oi.system-composition/v1";
+  contract_revision: string;
+  observed_at_unix_ms: number;
+  census: {schema: string; positions: CompositionReading["positions"]};
+  owners: OwnerMount[];
+  obligations: string[];
+}

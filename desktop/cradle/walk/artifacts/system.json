@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "system",
-  "generated_at": "2026-09-08T12:55:07.836Z",
+  "generated_at": "2026-09-10T11:00:17.478Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,19 +12,11 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 2424,
+  "duration_ms": 1013,
   "checks": [
     {
       "ok": true,
       "label": "System projects all seven positions (O:I + six native products)"
-    },
-    {
-      "ok": true,
-      "label": "Registered products are discovered, not invented runtime-ready"
-    },
-    {
-      "ok": true,
-      "label": "Native owner capability aggregate reaches System"
     },
     {
       "ok": true,
@@ -38,7 +30,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-08T12:55:07.963Z",
+        "mounted_at": "2026-09-10T11:00:17.583Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -49,19 +41,19 @@
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 2.3,
+      "duration_ms": 1,
       "data": {}
     },
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 2.8,
+      "duration_ms": 0.8,
       "data": {}
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 44,
+      "duration_ms": 15,
       "data": {
         "file": "system-native-six-owner-composition.png"
       }

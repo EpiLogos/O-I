@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "system-settings",
-  "generated_at": "2026-09-08T12:59:30.216Z",
+  "generated_at": "2026-09-10T11:00:14.853Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 1270,
+  "duration_ms": 1387,
   "checks": [
     {
       "ok": true,
@@ -24,11 +24,11 @@
     },
     {
       "ok": true,
-      "label": "QL renders its emptiness honestly (L3) — no fabricated controls"
+      "label": "QL renders its emptiness honestly — no fabricated controls"
     },
     {
       "ok": true,
-      "label": "Missing native obligations render as obligations, never as disabled buttons (L3)"
+      "label": "Missing native operations render as a plain not-yet-available note, never as disabled buttons"
     },
     {
       "ok": true,
@@ -47,13 +47,13 @@
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 2.6,
+      "duration_ms": 26.9,
       "data": {}
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 31,
+      "duration_ms": 27,
       "data": {
         "file": "system-settings-settings-activity.png"
       }
@@ -61,7 +61,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 28,
+      "duration_ms": 25,
       "data": {
         "file": "system-settings-settings-config.png"
       }
@@ -69,7 +69,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 31,
+      "duration_ms": 28,
       "data": {
         "file": "system-settings-settings-bootstrap.png"
       }
@@ -77,13 +77,13 @@
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 12.6,
+      "duration_ms": 12.5,
       "data": {}
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 30,
+      "duration_ms": 29,
       "data": {
         "file": "system-settings-settings-health.png"
       }

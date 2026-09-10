@@ -70,7 +70,7 @@ export function buildSections(reading:CompositionReading|undefined,extras:Activi
         {title:"Product pins",value:reading?`${reading.positions.length} pinned revisions`:"Not yet read",provenance:"oi.current-world/v1"},
       );
       actions.push(
-        {title:"install / verify / doctor",availability:"native_only",note:"oi CLI — in-page engagement arrives with the disclosed-op seam (P3)"},
+        {title:"install / verify / doctor",availability:"native_only",note:"oi CLI"},
         {title:"update / cleanup",availability:"native_only",note:"oi update · oi cleanup --managed"},
       );
     }
@@ -102,12 +102,12 @@ export function buildSections(reading:CompositionReading|undefined,extras:Activi
     }
     if(position.product_id==="software-factory") {
       if(version) configuration.push({title:"Version",value:version,provenance:"oi.current-world/v1"});
-      actions.push({title:"Intent / invoke",availability:"native_only",note:"factory_discover / intent / invoke kernel ops; settings engagement wires in P3"});
+      actions.push({title:"Intent / invoke",availability:"native_only",note:"via the Factory CLI"});
     }
     if(position.product_id==="workcell") {
       if(version) configuration.push({title:"Version",value:version,provenance:"oi.current-world/v1"});
       actions.push(
-        {title:"Lifecycle plan → release",availability:"native_only",note:"workcell CLI demand contract; in-page engagement P3"},
+        {title:"Lifecycle plan → release",availability:"native_only",note:"via the Workcell CLI"},
         {title:"Material read",availability:"native_only",note:"kernel material_read — projected through the owner seam"},
       );
     }
