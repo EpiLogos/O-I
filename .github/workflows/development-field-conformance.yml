@@ -53,7 +53,7 @@ jobs:
         if: ${{ !cancelled() }}
         id: probe
         run: python3 scripts/development-field-conformance.py probe --out "$RUNNER_TEMP/development-field"
-      - name: Publish bounded probe evidence before independent binary builds
+      - name: Publish bounded probe evidence before independent native builds
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
@@ -69,13 +69,16 @@ jobs:
         if: ${{ !cancelled() }}
         id: dispatch
         run: python3 scripts/development-field-conformance.py dispatch --out "$RUNNER_TEMP/development-field"
+      - name: Execute nine native integration tests normally excluded from owner unit lanes
+        if: ${{ !cancelled() && steps.dispatch.outcome == 'success' }}
+        run: python3 scripts/development-field-native-bridges.py --out "$RUNNER_TEMP/development-field"
       - name: Native S0 source activation using truthful current-cut revisions
         if: ${{ !cancelled() && steps.dispatch.outcome == 'success' }}
         run: python3 scripts/development-field-activation.py --out "$RUNNER_TEMP/development-field"
       - name: Whole Development Field completion gate
         if: ${{ !cancelled() }}
         run: python3 scripts/development-field-whole-gate.py --out "$RUNNER_TEMP/development-field"
-      - name: Preserve complete evidence and dependency lock even on failure
+      - name: Preserve complete evidence even on failure
         if: always()
         uses: actions/upload-artifact@v4
         with:

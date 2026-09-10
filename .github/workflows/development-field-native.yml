@@ -1,31 +1,20 @@
 name: Development Field exact owner-native D
-
 on:
   pull_request:
-    paths:
-      - 'scripts/development-field-ci.py'
-      - 'tests/development-field/**'
-      - '.github/workflows/development-field-native.yml'
+    paths: ['scripts/development-field-ci.py', 'tests/development-field/cut.json', '.github/workflows/development-field-native.yml']
   push:
-    branches: [main, 'ci/development-field-dc-cut']
-    paths:
-      - 'scripts/development-field-ci.py'
-      - 'tests/development-field/**'
-      - '.github/workflows/development-field-native.yml'
+    branches: [main]
+    paths: ['scripts/development-field-ci.py', 'tests/development-field/cut.json', '.github/workflows/development-field-native.yml']
   workflow_dispatch:
-
 permissions:
   contents: read
   actions: read
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
-
 env:
   CARGO_INCREMENTAL: '0'
   CARGO_TERM_COLOR: never
-
 jobs:
   native:
     name: D / ${{ matrix.owner }}
