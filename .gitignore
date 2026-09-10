@@ -8,6 +8,11 @@ site/package-lock.json
 site/tsconfig.*.tsbuildinfo
 site/*.config.js
 site/*.config.d.ts
+
+# O:I site redesign — large local design assets (re-encode before committing)
+site/redesign-materials/
+site/public/media/motion/
+
 *.log
 .DS_Store
 target/

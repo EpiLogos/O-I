@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import './index.css';
-import { ParallaxComponent } from './components/ui/parallax-scrolling';
+import { MotionHero } from './components/ui/motion-hero';
 import { OICube } from './components/ui/oi-cube';
 import { OIMark } from './components/ui/oi-mark';
 import { PossibilityField } from './components/possibility-field';
@@ -217,10 +217,7 @@ function HomePage() {
   return (
     <PageShell active="home">
       <main>
-        <section className="hero" aria-label="O:I opening statement">
-          <h1 className="visually-hidden">{heroTitle} — Operating Infrastructure</h1>
-          <ParallaxComponent title={heroTitle} />
-        </section>
+        <MotionHero title={heroTitle} />
 
         <NarrativeSection pageId="home" sectionId="what" tone="black" display />
 

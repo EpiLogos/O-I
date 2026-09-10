@@ -42,15 +42,18 @@ button:focus-visible {
 }
 
 .site-nav {
-  position: relative;
-  z-index: 50;
+  position: sticky;
+  top: 0;
+  z-index: 60;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.15rem 1.4rem;
+  padding: 0.95rem 1.5rem;
   color: var(--oi-ink);
-  background: var(--oi-paper);
-  border-bottom: 1px solid rgba(10, 10, 10, 0.1);
+  background: rgba(251, 250, 246, 0.82);
+  -webkit-backdrop-filter: saturate(1.3) blur(16px);
+  backdrop-filter: saturate(1.3) blur(16px);
+  border-bottom: 1px solid rgba(17, 17, 18, 0.08);
 }
 
 .site-nav a {
@@ -86,71 +89,110 @@ button:focus-visible {
   transform: translate(0.15rem, -0.15rem);
 }
 
-.parallax {
+/* — Hero: a point-cloud O:I field moving behind the title — */
+
+.hero-motion {
   position: relative;
-  height: 145vh;
+  height: 150vh;
   background: var(--oi-paper);
 }
 
-.parallax__header {
-  position: relative;
-  height: 100%;
-}
-
-.parallax__visuals {
+.hero-motion__sticky {
   position: sticky;
   top: 0;
   height: 100vh;
   overflow: hidden;
-  background: var(--oi-paper);
 }
 
-.parallax__dark-wipe {
+.hero-motion__frame {
   position: absolute;
   inset: 0;
-  z-index: 1;
-  background: var(--oi-black);
-  transform: scaleY(0);
-  transform-origin: bottom;
-  will-change: transform;
+  overflow: hidden;
+  will-change: transform, opacity;
 }
 
-.parallax__layers {
+.hero-motion__video {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-motion__scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg,
+      rgba(251, 250, 246, 0.92) 0%,
+      rgba(251, 250, 246, 0) 26%,
+      rgba(251, 250, 246, 0) 66%,
+      rgba(251, 250, 246, 0.96) 100%);
+}
+
+.hero-motion__inner {
+  position: relative;
   z-index: 2;
-  display: grid;
-  place-items: center;
-  color: var(--oi-white);
-  mix-blend-mode: difference;
-}
-
-.parallax__layer {
-  position: absolute;
-  width: min(50vw, 36rem);
-  will-change: transform;
-}
-
-.parallax__layer--braces {
-  opacity: 0.88;
-}
-
-.parallax__title {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
+  height: 100%;
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  padding-top: calc(50vh + min(11vw, 7.6rem));
-  color: var(--oi-white);
-  font-size: clamp(0.75rem, 1.1vw, 0.95rem);
+  gap: clamp(1.25rem, 3vw, 2.25rem);
+  padding: 0 var(--oi-section-x);
+  text-align: center;
+  will-change: transform, opacity;
+}
+
+.hero-motion__title {
+  margin: 0;
+  max-width: 16ch;
+  color: var(--oi-ink);
+  font-size: clamp(2.8rem, 7.5vw, 7.8rem);
+  font-weight: 500;
+  letter-spacing: -0.05em;
+  line-height: 0.94;
+  text-wrap: balance;
+}
+
+.hero-motion__sub {
+  margin: 0;
+  color: var(--oi-muted);
+  font-size: var(--oi-type-xs);
   font-weight: 650;
   letter-spacing: var(--oi-tracking-label);
   text-transform: uppercase;
-  text-align: center;
-  white-space: nowrap;
-  will-change: transform, opacity;
+}
+
+.hero-motion__cue {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(1.5rem, 4vw, 2.5rem);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  transform: translateX(-50%);
+  color: var(--oi-muted);
+  font-size: var(--oi-type-xs);
+  font-weight: 650;
+  letter-spacing: var(--oi-tracking-label);
+  text-transform: uppercase;
+}
+
+.hero-motion__cue-line {
+  width: 1px;
+  height: 3rem;
+  background: linear-gradient(var(--oi-ink), rgba(17, 17, 18, 0));
+  animation: hero-cue 2.6s var(--oi-motion-ease) infinite;
+}
+
+@keyframes hero-cue {
+  0% { transform: scaleY(0); transform-origin: top; }
+  45% { transform: scaleY(1); transform-origin: top; }
+  55% { transform: scaleY(1); transform-origin: bottom; }
+  100% { transform: scaleY(0); transform-origin: bottom; }
 }
 
 .section {
@@ -995,13 +1037,8 @@ button:focus-visible {
     display: none;
   }
 
-  .parallax__layer {
-    width: min(92vw, 42rem);
-  }
-
-  .parallax__title {
-    padding-top: calc(50vh + min(14vw, 6rem));
-    font-size: 0.64rem;
+  .hero-motion__title {
+    font-size: clamp(2.4rem, 11vw, 4.6rem);
   }
 
   .section__grid--intro,
@@ -1113,9 +1150,8 @@ button:focus-visible {
     font-size: 0.64rem;
   }
 
-  .parallax__title {
-    padding-top: calc(50vh + min(16vw, 5rem));
-    font-size: 0.6rem;
+  .hero-motion__title {
+    font-size: clamp(2.2rem, 13vw, 3.6rem);
   }
 
   .figure--disclosure-row {
@@ -1136,11 +1172,7 @@ button:focus-visible {
     transition-duration: 0.01ms !important;
   }
 
-  .parallax {
+  .hero-motion {
     height: 100vh;
-  }
-
-  .parallax__dark-wipe {
-    display: none;
   }
 }
