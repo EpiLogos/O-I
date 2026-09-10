@@ -116,7 +116,8 @@ fn source_suite_activation_is_atomic_incremental_dispatch_authority_and_rollback
         output(oi(config.path(), data.path(), bin.path()).args(["suite", "channel", "source"]));
     assert!(selected.status.success(), "{}", stderr(&selected));
 
-    let first = output(oi(config.path(), data.path(), bin.path()).args(["suite", "update", "--json"]));
+    let first =
+        output(oi(config.path(), data.path(), bin.path()).args(["suite", "update", "--json"]));
     assert!(first.status.success(), "{}", stderr(&first));
     let first_json: Value = serde_json::from_slice(&first.stdout).unwrap();
     assert_eq!(first_json["outcome"], "activated");
@@ -163,7 +164,8 @@ fn source_suite_activation_is_atomic_incremental_dispatch_authority_and_rollback
     // must be reused; only Central is acquired into the new receipt root.
     fake_executable(bin.path(), "workcell", "workcell");
     fake_executable(bin.path(), "ctrl", "central-v2");
-    let second = output(oi(config.path(), data.path(), bin.path()).args(["suite", "update", "--json"]));
+    let second =
+        output(oi(config.path(), data.path(), bin.path()).args(["suite", "update", "--json"]));
     assert!(second.status.success(), "{}", stderr(&second));
     let second_json: Value = serde_json::from_slice(&second.stdout).unwrap();
     assert_eq!(second_json["outcome"], "activated");
@@ -173,7 +175,10 @@ fn source_suite_activation_is_atomic_incremental_dispatch_authority_and_rollback
     let second_status =
         output(oi(config.path(), data.path(), bin.path()).args(["suite", "status", "--json"]));
     let second_status_json: Value = serde_json::from_slice(&second_status.stdout).unwrap();
-    assert_eq!(second_status_json["active"]["previous_receipt_ref"], first_receipt);
+    assert_eq!(
+        second_status_json["active"]["previous_receipt_ref"],
+        first_receipt
+    );
     for (id, _, _) in PRODUCTS {
         let before = first_products[id]["root"].as_str().unwrap();
         let after = second_status_json["active"]["products"][id]["root"]
