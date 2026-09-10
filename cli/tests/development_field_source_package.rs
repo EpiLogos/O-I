@@ -89,8 +89,7 @@ fn admit(root: &Path, source: &Path, catalogue: &mut Value, composition: &mut Va
 fn native_source_payload_is_immutable_incremental_and_verified_beyond_its_launcher() {
     let temp = tempfile::tempdir().unwrap();
     let root = temp.path();
-    let mut catalogue: Value =
-        serde_json::from_str(include_str!("../../surfaces.json")).unwrap();
+    let mut catalogue: Value = serde_json::from_str(include_str!("../../surfaces.json")).unwrap();
     let mut composition = json!({"schema":1,"modules":{}});
     fs::create_dir_all(root.join("poison")).unwrap();
     for surface in catalogue["surfaces"].as_array().unwrap() {
@@ -127,7 +126,11 @@ fn native_source_payload_is_immutable_incremental_and_verified_beyond_its_launch
     let first = value(root, &["suite", "update", "--json"]);
     assert_eq!(first["acquired"].as_array().unwrap().len(), 6);
     let first_active = first["active"].clone();
-    let first_package = PathBuf::from(first_active["products"]["actuation"]["root"].as_str().unwrap());
+    let first_package = PathBuf::from(
+        first_active["products"]["actuation"]["root"]
+            .as_str()
+            .unwrap(),
+    );
     assert_eq!(git(&first_package, &["rev-parse", "HEAD"]), first_revision);
     assert!(git(&first_package, &["remote"]).is_empty());
     assert_eq!(
@@ -145,7 +148,10 @@ fn native_source_payload_is_immutable_incremental_and_verified_beyond_its_launch
     fs::write(source.join("cli/value.sh"), "MESSAGE=second\n").unwrap();
     success(run(root, &["suite", "check", "--json"]));
     assert!(!run(root, &["suite", "update"]).status.success());
-    assert_eq!(value(root, &["suite", "status", "--json"])["active"], first_active);
+    assert_eq!(
+        value(root, &["suite", "status", "--json"])["active"],
+        first_active
+    );
     git(&source, &["add", "."]);
     git(&source, &["commit", "-qm", "second fixture payload"]);
     admit(root, &source, &mut catalogue, &mut composition);
@@ -166,7 +172,11 @@ fn native_source_payload_is_immutable_incremental_and_verified_beyond_its_launch
         first_active
     );
     let current = value(root, &["suite", "update", "--json"]);
-    let active_root = PathBuf::from(current["active"]["products"]["actuation"]["root"].as_str().unwrap());
+    let active_root = PathBuf::from(
+        current["active"]["products"]["actuation"]["root"]
+            .as_str()
+            .unwrap(),
+    );
     fs::write(active_root.join("cli/value.sh"), "MESSAGE=unreceipted\n").unwrap();
     for args in [
         vec!["suite", "check", "--json"],
@@ -181,7 +191,11 @@ fn native_source_payload_is_immutable_incremental_and_verified_beyond_its_launch
     assert_eq!(repaired["acquired"], json!(["actuation"]));
     assert_eq!(repaired["reused"].as_array().unwrap().len(), 5);
     success(run(root, &["verify", "--json"]));
-    let repaired_root = PathBuf::from(repaired["active"]["products"]["actuation"]["root"].as_str().unwrap());
+    let repaired_root = PathBuf::from(
+        repaired["active"]["products"]["actuation"]["root"]
+            .as_str()
+            .unwrap(),
+    );
     fs::write(repaired_root.join("unrecorded.js"), "// not admitted\n").unwrap();
     assert!(!run(root, &["suite", "check"]).status.success());
 }
