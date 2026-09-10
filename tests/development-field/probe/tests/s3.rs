@@ -33,10 +33,23 @@ fn accepted_s3_consumes_same_specimen_and_matches_native_cli()->Result<()>{
     let central=project.parent().unwrap().parent().unwrap();
     let binary=root.join(".development-field-owners/ai-kit/target/debug/aikit");
     let home=out.join("s3-home");fs::create_dir_all(&home)?;
-    let project_ref=ProjectRef::parse(text(&input["specimen"],"projectRef"))?;
+    // Preserve native identity encodings, rather than equating differently typed
+    // wire strings. Central's manifest owns the raw Project key; AIKit's native
+    // binding retains it; Factory's typed Ref wraps that exact key as a ULID.
+    let manifest=load(&project.join("ProjectCentral/project.json"))?;
+    let project_ref=ProjectRef::parse(text(&manifest,"project_id"))?;
+    assert_eq!(field.project_ref.as_ref().kind(),"project");
+    assert_eq!(field.project_ref.as_ref().id().to_string(),project_ref.as_str());
+    assert_eq!(field.project_ref.to_string(),text(&input["specimen"],"projectRef"));
+    assert_eq!(text(&source,"world_ref"),field.project_ref.to_string());
+    assert_eq!(text(&central_reading["reading"],"scope_ref"),field.project_ref.to_string());
+    let identity=json!({"central_manifest_project_id":project_ref.as_str(),"aikit_native_project_ref":project_ref.as_str(),
+        "factory_typed_project_ref":field.project_ref.to_string(),"factory_native_ref_id":field.project_ref.as_ref().id().to_string(),
+        "central_world_ref":source["world_ref"],"no_reference_rewritten":true});
+    write(&s.join("native-project-identity.json"),&identity)?;
     let source_ref=text(&central_reading,"source_ref");
-    let self_ref=format!("central:self:{}",project_ref.as_str());
-    let tier_ref=format!("central:tier:{}:1",project_ref.as_str());
+    let self_ref=format!("central:self:{}",field.project_ref);
+    let tier_ref=format!("central:tier:{}:1",field.project_ref);
     let subjects=vec![ResourceRef::parse(&self_ref)?,ResourceRef::parse(&tier_ref)?,ResourceRef::parse(source_ref)?,ResourceRef::parse("source:fixture:not-supplied")?];
     let mut args=vec!["development-field".into(),"--base".into(),text(&input,"baseRevision").into(),"--expect-aikit-revision".into(),revision("ai-kit").into()];
     for subject in &subjects{args.extend(["--ref".into(),subject.to_string()]);}
@@ -69,7 +82,6 @@ fn accepted_s3_consumes_same_specimen_and_matches_native_cli()->Result<()>{
     assert_eq!(core.central_self_description,native.central_self_description);assert_eq!(core.git,native.git);
     let stale=cli(&binary,&project,&home,central,&out,"stale",&["development-field".into(),"--expect-aikit-revision".into(),"not-the-built-revision".into()])?;
     assert!(!stale.status.success());assert!(String::from_utf8_lossy(&stale.stdout).contains("resource.development_field_executable_revision_mismatch"));
-    // Bind the actual returned Field over the same native QL address field.
     let member=|reference:&str,pos:u8|StructuralParticipation::new(reference,QlPosition::new(pos).unwrap(),QlFace::Direct).unwrap();
     let row=StructuralConstellation::new(&field.field_ref,vec![member(source_ref,0),member(&field.targets.plan_ref,1)],vec![])?;
     let col=StructuralConstellation::new("whole:fixture:return",vec![member(text(&input["specimen"],"activityRef"),0),member(text(&input["specimen"],"returnRef"),1)],vec![])?;
@@ -118,7 +130,7 @@ fn accepted_s3_consumes_same_specimen_and_matches_native_cli()->Result<()>{
     assert!(bounded.truncated);assert_eq!(bounded,read_development_field(&index,&DevelopmentFieldReadRequest{subjects:refs,limit:1},native.executable_basis.clone(),Ok(None)));
     write(&s.join("aikit-s3-owner-projections.json"),&records)?;write(&s.join("aikit-s3-returned-field-packet.json"),&packet)?;
     write(&s.join("aikit-development-field.json"),&json!({"status":"passed","schema":"oi.development-field-S3-conformance/v1",
-        "cut_sha256":std::env::var("DF_CUT_SHA256")?,"owners":cut["owners"],"field_ref":field.field_ref,
+        "cut_sha256":std::env::var("DF_CUT_SHA256")?,"owners":cut["owners"],"field_ref":field.field_ref,"native_project_identity":identity,
         "native_central_action":true,"native_cli_core_parity":true,"exact_executable_revision":revision("ai-kit"),"stable_ql_contract":QL_STRUCTURAL_CARRIER_CONTRACT_REF,
         "scope":"same-specimen Central S1 CLI/core parity and native Factory-return/QL/Workcell public projection seam",
         "source_projection_standing":"observed S1 output; authored provenance and standing retained in native annotations",
