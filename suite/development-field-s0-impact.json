@@ -1,0 +1,19 @@
+{
+  "schema": "oi.development-impact/v1",
+  "plan_refs": [
+    "github:EpiLogos/O-I#212"
+  ],
+  "ux_refs": [],
+  "capability_refs": [],
+  "source_refs": [
+    "repo:docs/DEVELOPMENT-FIELD-PROTOCOL-WAYFINDER.md",
+    "repo:docs/positions/FOUNDING-POSITIONS.md"
+  ],
+  "affected_owners": [
+    "oi"
+  ],
+  "expected_proof": [
+    "D",
+    "C"
+  ]
+}
