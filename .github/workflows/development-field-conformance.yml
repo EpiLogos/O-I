@@ -41,7 +41,16 @@ jobs:
             .development-field-owners/software-factory
             .development-field-owners/workcell
             .development-field-owners/quaternal-logic
+      - name: Native authored provenance and once-observed source snapshot conformance
+        id: source_snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          export DF_SNAPSHOT_EVIDENCE="$RUNNER_TEMP/development-field/source-snapshot.json"
+          export DF_CUT_SHA256="$(sha256sum tests/development-field/cut.json | cut -d' ' -f1)"
+          cargo test --manifest-path tests/development-field/probe/Cargo.toml --locked --test source_snapshot -- --nocapture 2>&1 | tee "$RUNNER_TEMP/development-field/source-snapshot.log"
       - name: Bounded Central → QL carrier → AIKit → Workcell → Actuation → Factory specimen
+        if: ${{ !cancelled() }}
         id: probe
         run: python3 scripts/development-field-conformance.py probe --out "$RUNNER_TEMP/development-field"
       - name: Publish bounded probe evidence before independent binary builds
