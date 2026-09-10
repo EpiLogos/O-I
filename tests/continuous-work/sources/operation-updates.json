@@ -1,0 +1,31 @@
+{
+  "schema": "oi.caw-operation-consolidation/v1",
+  "observed_on": "2026-09-10",
+  "source_cut": "lock.json; no automatic upgrade to a moving owner branch",
+  "verified_native_prerequisite": {
+    "owner": "EpiLogos/ai-kit",
+    "revision": "1f9ef6ab2ab45cf79732426c171e5de13273d197",
+    "operations": ["trust record CAPSULE --note TEXT", "trust show CAPSULE"],
+    "source": "crates/aikit-cli/src/cli.rs TrustCmd/TrustRecordArgs",
+    "finding": "Actual native apply correctly withholds unseen adopted Skill revisions. Profile membership and apply receipt do not establish delivered governance.",
+    "controlled_proof": "Check withheld projection before review; inspect exact controlled S4 source; record native per-revision trust; require actual committed-current Skill body; disable and reconnect through real apply.",
+    "standing": "Controlled native capsule review only; not private governance adoption, real harness uptake, human Recognition or an authority bypass.",
+    "observed_failure_run": "https://github.com/EpiLogos/O-I/actions/runs/34506286361"
+  },
+  "observed_native_factory": {
+    "revision": "366a6b2bf18ba23053601f5d5eb543b79bfcfb27",
+    "operation": "development commission -> independent commission-read",
+    "result": "Actual connected publication and removed-producer disconnection observed in run 34506286361",
+    "scope": "P13 commission-publication D only; not attempt dispatch or worker success"
+  },
+  "active_owner_work": {
+    "workcell": {
+      "issue": "EpiLogos/Workcell#72",
+      "pull_request": "EpiLogos/Workcell#73",
+      "standing": "Open implementation, not an accepted material-operation join",
+      "base_revision": "aa2d2ba59f0ac259158eb7d2cd1cfcab1579268a",
+      "reuse": "Existing Workcell#68 service-provider-registration owner line",
+      "join": "Published prepare/inspect/observe/recover/release and material-restriction operations; future current native argv recipes must cite their accepted contract and source cut"
+    }
+  }
+}

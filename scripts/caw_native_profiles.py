@@ -111,7 +111,24 @@ def prove_role(role: str, recorder: c.Recorder) -> list[dict]:
     profile.parent.mkdir(parents=True, exist_ok=True)
     # This is a controlled native PoolPatch, not a personal AgentProfile or grant.
     capsule = "skill/oi/oi-suite-operator"
-    for phase, enabled in (("enabled", True), ("disconnected", False), ("reconnected", True)):
+    for phase, enabled, expected_present in (
+        ("unreviewed", True, False), ("enabled", True, True),
+        ("disconnected", False, False), ("reconnected", True, True),
+    ):
+        if phase == "enabled":
+            # AIKit correctly withholds an unseen adopted revision. Review only
+            # this controlled source, then use its public revision-trust operation.
+            # This is not adoption of private governance or human Recognition.
+            source = ground / ".claude/skills/oi-suite-operator/SKILL.md"
+            if not source.resolve().is_relative_to(world.resolve()):
+                raise c.Failure("review source escaped the controlled World")
+            source_bytes = source.read_bytes()
+            if c.governance() not in source_bytes:
+                raise c.Failure("refuse review: adopted Skill lacks exact S4 governance")
+            run("aikit", ["--json", "trust", "record", capsule, "--note",
+                "CAW disposable-world source review; SHA256=" + c.sha(source_bytes)
+                + "; no personal adoption or human Recognition"], ground, "review-source-revision")
+            run("aikit", ["--json", "trust", "show", capsule], ground, "review-public-readback")
         profile.write_text(
             f'# Controlled {role} profile; no personal source adoption.\nschema = 1\n'
             + (f'enable = ["{capsule}"]\n' if enabled else f'disable = ["{capsule}"]\n'),
@@ -126,17 +143,17 @@ def prove_role(role: str, recorder: c.Recorder) -> list[dict]:
             "native_generation": data["data"]["generation"], "profile_sha256": c.sha(profile.read_bytes()),
             "current_bodies": [{"relative_path": p, "sha256": digest} for p, digest in bodies],
             "source_sha256": c.GOVERNANCE_SHA, "scope": "controlled-applied-profile-not-harness-loaded",
-            "expected_present": enabled, "actual_bodies": len(bodies),
+            "expected_present": expected_present, "actual_bodies": len(bodies),
             "native_context": env["AIKIT_CONTEXT_ID"],
         })
-        if enabled != bool(bodies):
+        if expected_present != bool(bodies):
             # Native diagnostic is retained privately, never exported as proof.
             # These are fresh controlled Worlds, not personal source or secrets.
             code, explanation = recorder.execute("aikit", ["--json", "explain", capsule],
                                                  ground, env, f"{role}:{phase}:diagnostic")
             diagnostic = explanation.decode("utf-8", "replace").replace(str(world), "$WORLD")[:3000]
             raise c.Failure(
-                f"{role}/{phase}: expected governance present={enabled}, actual bodies={len(bodies)}; "
+                f"{role}/{phase}: expected governance present={expected_present}, actual bodies={len(bodies)}; "
                 f"native explanation exit={code}: {diagnostic}")
     # Restart is intrinsic: every owner operation above is a fresh native process.
     return [{"id": f"native-{role}-profile", "case": "P01", "obligation": f"{role}-profile-loading",

@@ -152,7 +152,12 @@ fn missing_required_source_is_not_an_effective_role() {
 fn disconnect_materialisation_fails_despite_valid_resolution_and_receipts() {
     let ground = tempdir().unwrap();
     receive_role(ROLES[0], &manifest(), &observations(), ground.path()).unwrap();
-    fs::remove_file(ground.path().join(".agents/skills/oi-suite-operator/SKILL.md")).unwrap();
+    fs::remove_file(
+        ground
+            .path()
+            .join(".agents/skills/oi-suite-operator/SKILL.md"),
+    )
+    .unwrap();
     assert!(readback(ground.path()).is_err());
 }
 
@@ -160,7 +165,9 @@ fn disconnect_materialisation_fails_despite_valid_resolution_and_receipts() {
 fn altered_governance_payload_fails_without_overwriting_local_authorship() {
     let ground = tempdir().unwrap();
     receive_role(ROLES[1], &manifest(), &observations(), ground.path()).unwrap();
-    let path = ground.path().join(".claude/skills/oi-suite-operator/SKILL.md");
+    let path = ground
+        .path()
+        .join(".claude/skills/oi-suite-operator/SKILL.md");
     let authored = "# local edit; deliberately not adopted source\n";
     fs::write(&path, authored).unwrap();
     assert!(receive_role(ROLES[1], &manifest(), &observations(), ground.path()).is_err());
@@ -171,7 +178,9 @@ fn altered_governance_payload_fails_without_overwriting_local_authorship() {
 fn replay_preserves_the_exact_loaded_projection_bytes() {
     let ground = tempdir().unwrap();
     receive_role(ROLES[0], &manifest(), &observations(), ground.path()).unwrap();
-    let path = ground.path().join(".agents/skills/oi-suite-operator/SKILL.md");
+    let path = ground
+        .path()
+        .join(".agents/skills/oi-suite-operator/SKILL.md");
     let before = fs::read(&path).unwrap();
     receive_role(ROLES[0], &manifest(), &observations(), ground.path()).unwrap();
     assert_eq!(before, fs::read(path).unwrap());
