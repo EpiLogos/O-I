@@ -10,6 +10,7 @@ fn development_field_hardened_route(
                 .and_then(|value| value.to_str())
                 .unwrap_or("status");
             match sub {
+                "check" => Some(command_development_suite_check_s0(suite_args.get(1..).unwrap_or_default())),
                 "status" => Some(command_development_suite_status_s0(
                     suite_args.get(1..).unwrap_or_default(),
                 )),
@@ -25,6 +26,7 @@ fn development_field_hardened_route(
                 _ => None,
             }
         }
+        "verify" if args.get(1..).is_some_and(|tail| tail.is_empty() || tail == [std::ffi::OsString::from("--json")]) && active_suite_receipt_path().ok().is_some_and(|path| path.is_file()) => Some(command_development_suite_check_s0(args.get(1..).unwrap_or_default())),
         "where" => Some(command_development_where_s0(
             args.get(1..).unwrap_or_default(),
         )),
@@ -87,12 +89,12 @@ fn s0_product_is_reusable(
     if !executable.starts_with(root) || !is_executable(executable) {
         return Ok(false);
     }
-    Ok(sha256_file(executable)? == product.sha256)
+    Ok(sha256_file(executable)? == product.sha256 && s0_verify_source_package(product).is_ok())
 }
 
 fn s0_available_candidate(channel: &str) -> serde_json::Value {
     if channel == "source" {
-        return match source_suite_candidate() {
+        return match source_suite_candidate_s0() {
             Ok(candidate) => match candidate.digest() {
                 Ok(digest) => serde_json::json!({
                     "state": "ready",
@@ -147,7 +149,7 @@ fn command_development_suite_status_s0(args: &[std::ffi::OsString]) -> Result<i3
         None => None,
     };
     let (active_ok, active_error) = match active.as_ref() {
-        Some(receipt) => match check_active_suite_receipt(receipt) {
+        Some(receipt) => match s0_check_active_suite_receipt(receipt) {
             Ok(_) => (true, None),
             Err(error) => (false, Some(error)),
         },
@@ -235,7 +237,7 @@ fn command_development_suite_update_s0(args: &[std::ffi::OsString]) -> Result<i3
 fn command_development_suite_repair_s0(args: &[std::ffi::OsString]) -> Result<i32, String> {
     let json_mode = s0_json_flag(args, "usage: oi suite repair [--json]")?;
     let active = load_active_suite_receipt()?.ok_or("no active suite receipt exists to repair")?;
-    if check_active_suite_receipt(&active).is_ok() {
+    if s0_check_active_suite_receipt(&active).is_ok() {
         if json_mode {
             println!(
                 "{}",
@@ -266,7 +268,7 @@ fn command_development_suite_repair_s0(args: &[std::ffi::OsString]) -> Result<i3
 
 fn activate_source_suite_s0(force: bool, json_mode: bool) -> Result<i32, String> {
     ensure_development_layout()?;
-    let candidate = source_suite_candidate()?;
+    let candidate = source_suite_candidate_s0()?;
     let digest = candidate.digest()?;
     let active = load_active_suite_receipt()?;
 
@@ -274,7 +276,7 @@ fn activate_source_suite_s0(force: bool, json_mode: bool) -> Result<i32, String>
         if let Some(receipt) = active.as_ref() {
             if receipt.channel == "source"
                 && receipt.candidate_digest == digest
-                && check_active_suite_receipt(receipt).is_ok()
+                && s0_check_active_suite_receipt(receipt).is_ok()
             {
                 if json_mode {
                     println!(
@@ -362,21 +364,7 @@ fn activate_source_suite_s0(force: bool, json_mode: bool) -> Result<i32, String>
                     )
                 })?;
             let product_root = stage.join("products").join(&descriptor.id);
-            let bin_root = product_root.join("bin");
-            std::fs::create_dir_all(&bin_root).map_err(|error| error.to_string())?;
-            let target = bin_root.join(&descriptor.executable);
-            std::fs::copy(&source, &target)
-                .map_err(|error| format!("cannot stage {}: {error}", descriptor.id))?;
-            #[cfg(unix)]
-            {
-                use std::os::unix::fs::PermissionsExt;
-                let mut permissions = std::fs::metadata(&target)
-                    .map_err(|error| error.to_string())?
-                    .permissions();
-                permissions.set_mode(0o755);
-                std::fs::set_permissions(&target, permissions)
-                    .map_err(|error| error.to_string())?;
-            }
+            let target = s0_stage_artifact(descriptor, &source, &product_root, expected)?;
             let observed = sha256_file(&target)?;
             if observed != expected.sha256 {
                 return Err(format!(
@@ -457,7 +445,7 @@ fn activate_source_suite_s0(force: bool, json_mode: bool) -> Result<i32, String>
         products,
     };
     receipt.validate()?;
-    check_active_suite_receipt(&receipt)?;
+    s0_check_active_suite_receipt(&receipt)?;
 
     let candidate_path = state_root
         .join("receipts/candidates")
@@ -501,7 +489,7 @@ fn command_development_suite_rollback_s0(args: &[std::ffi::OsString]) -> Result<
     let active = load_active_suite_receipt()?.ok_or("no active suite receipt exists")?;
     let previous = s0_lineage_previous(&active)?
         .ok_or("active suite receipt has no previous accepted receipt to roll back to")?;
-    check_active_suite_receipt(&previous)
+    s0_check_active_suite_receipt(&previous)
         .map_err(|error| format!("previous suite is not coherent; refusing rollback: {error}"))?;
     atomic_json(&active_suite_receipt_path()?, &previous)?;
 
@@ -520,8 +508,7 @@ fn command_development_suite_rollback_s0(args: &[std::ffi::OsString]) -> Result<
     } else {
         println!("Rolled back active suite to {}.", previous.receipt_ref);
         println!(
-            "Receipt {} remains immutable history; rollback authority followed the active receipt lineage.",
-            active.receipt_ref
+            "Receipt {} remains immutable history; rollback authority followed the active receipt lineage."
         );
     }
     Ok(0)
@@ -577,7 +564,7 @@ fn command_development_where_s0(args: &[std::ffi::OsString]) -> Result<i32, Stri
                     receipt.receipt_ref, product.id
                 )
             })?;
-            let executable = active_suite_executable(&product.id)?
+            let executable = active_suite_executable_s0(&product.id)?
                 .expect("active receipt was loaded and validated");
             (
                 "active-suite-receipt",
@@ -648,3 +635,5 @@ fn command_development_where_s0(args: &[std::ffi::OsString]) -> Result<i32, Stri
     }
     Ok(0)
 }
+
+include!("development_field_source_package.rs");
