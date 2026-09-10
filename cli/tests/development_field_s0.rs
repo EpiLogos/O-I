@@ -70,7 +70,7 @@ fn fake_executable(dir: &Path, executable: &str, label: &str) -> PathBuf {
     fs::write(
         &path,
         format!(
-            "#!/bin/sh\nif [ \"${{1:-}}\" = \"--version\" ]; then echo '{executable} 1.0.0'; exit 0; fi\necho '{label}:$*'\n"
+            "#!/bin/sh\nif [ \"${{1:-}}\" = \"--version\" ]; then echo '{executable} 1.0.0'; exit 0; fi\necho \"{label}:$*\"\n"
         ),
     )
     .unwrap();
