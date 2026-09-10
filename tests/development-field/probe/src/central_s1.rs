@@ -2,7 +2,8 @@
 //! not a claim that a human accepted an actual deployment or experience.
 use std::{fs, path::Path};
 use serde_json::{json, Value};
-use central_ctrl::{action::{ActionExecutionContext, ActionRegistry}, development_field::*, root::RootOptions};
+use central_ctrl::{action::{ActionExecutionContext, ActionRegistry}, development_field::*, root::RootOptions,
+    projectcentral_ground::{apply_accepted_ground_relation, SourceProvenance, SourceStanding, SourceTreatment}};
 use central_connector_sdk::{ConnectorContext, ConnectorRegistry};
 use crate::{Result, roundtrip, write};
 
@@ -15,23 +16,29 @@ pub fn bind(root: &Path, project: &Path, out: &Path, expected_project: &str) -> 
     assert!(!project_receipt.documentation_moved && !project_receipt.matrices_moved);
     fs::write(project.join(PROJECT_SELF_DIR).join("unbound.md"), "Generated fixture; not human authority.\n")?;
     let unbound = inspect_project_development_field(project)?;
+    assert_eq!(unbound.self_aperture.unbound_sources.len(), 1);
     assert!(unbound.self_aperture.unbound_sources.iter().all(|s| !s.authority_from_location));
+    // A fixture declaration of source adoption, using Central's existing law.
+    // ProjectCentral/user is not an ordinary retained-native Project path.
+    let adoption = apply_accepted_ground_relation(project, "ProjectCentral/user/intent.md",
+        SourceProvenance::HumanAdopted, SourceStanding::AuthoredHumanPosition,
+        SourceTreatment::ProjectcentralUser, vec!["self-description-source".into()])?;
+    let source_ref = adoption.relation.source_ref.clone();
     let options = RootOptions { explicit_root: Some(root.to_owned()), ..Default::default() };
     let connectors = ConnectorRegistry::default();
     let platform = ConnectorContext::current();
     let context = ActionExecutionContext { root_options: &options, connectors: &connectors, connector_context: &platform };
     let mut actions = ActionRegistry::default();
     register_development_field_actions(&mut actions);
-    let retained = actions.execute("projectcentral.self.retain-tier", &json!({
-        "project":"specimen","source":"ProjectCentral/user/intent.md","tier":1,
-        "provenance":"human-adopted","standing":"authored-human-position","acceptance":"human-accepted"
+    let tier = actions.execute("projectcentral.self.tier.relate", &json!({
+        "project":"specimen","source_ref":source_ref,"tier":1,"acceptance":"human-accepted"
     }), &context);
-    assert!(retained.ok, "{retained:?}");
+    assert!(tier.ok, "{tier:?}");
     let initial = inspect_project_development_field(project)?;
     let native_source = initial.tier_bindings[0].sources[0].as_ref().unwrap();
-    assert!(native_source.retained_native);
     assert_eq!(native_source.path, "ProjectCentral/user/intent.md");
-    let source_ref = native_source.source_ref.clone();
+    assert_eq!(native_source.source_ref, source_ref);
+    assert_eq!(native_source.provenance, "human-adopted");
     let ux = actions.execute("projectcentral.self.ux.relate", &json!({
         "project":"specimen","source_ref":source_ref,"ux_ref":"ux:fixture:portable-cut","acceptance":"human-accepted"
     }), &context);
