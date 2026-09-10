@@ -466,11 +466,12 @@ fn activate_source_suite(force: bool) -> Result<i32, String> {
     let digest = candidate.digest()?;
     if !force {
         if let Some(active) = load_active_suite_receipt()? {
-            if active.channel == "source" && active.candidate_digest == digest {
-                if check_active_suite_receipt(&active).is_ok() {
-                    println!("Active source suite {} already matches the current candidate.", active.receipt_ref);
-                    return Ok(0);
-                }
+            if active.channel == "source"
+                && active.candidate_digest == digest
+                && check_active_suite_receipt(&active).is_ok()
+            {
+                println!("Active source suite {} already matches the current candidate.", active.receipt_ref);
+                return Ok(0);
             }
         }
     }
