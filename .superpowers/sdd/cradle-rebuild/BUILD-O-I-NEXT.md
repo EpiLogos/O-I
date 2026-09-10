@@ -1,31 +1,17 @@
-# Continue the existing O:I desktop — Waves 6–8
+# Continue the existing O:I desktop — Wave 6
 
-Work from the actual current local desktop branch and latest `progress.md`.
-The owner reports Wave 5 pushed; preserve that baseline and other active work.
-Do not restart FND/P1 or recreate a dated phase branch from an old prompt.
+Continue O:I #190 from the actual current desktop branch and latest `progress.md`.
+Preserve the existing Wave 5 return and other active work.
 
-Read the [current Waves 6–8 amendment](../../../docs/OI-DESKTOP-CONTINUOUS-WORK-WAYFINDER.md),
-[underlying Wayfinder](../../../docs/OI-DESKTOP-CRADLE-REBUILD-WAYFINDER.md),
-[Self/Other UX](SELF-OTHER-FIELD-UX-2026-09-08.md), and the relevant live
-[CAW owner-operation handoff](https://github.com/EpiLogos/O-I/issues/220).
-This amendment governs the updated Wave 6 scope and affected later gates;
-unchanged design, native ownership and earlier acceptance obligations remain.
+Read the [current desktop plan](../../../docs/OI-DESKTOP-CONTINUOUS-WORK-WAYFINDER.md)
+in full, its linked governing specifications, and [O:I #220's current owner
+handoffs](https://github.com/EpiLogos/O-I/issues/220). Execute Wave 6 completely,
+following its sequencing, native integrations and functional acceptance gates.
 
-Continue O:I #190 through its coordinated desktop thread. Begin 6A: make the
-existing blank tab offer the owner's 0/1, 4+2 and single-person Journal forms,
-opening their actual files through the existing source/Surface route. The owner
-supplies the final HTML; do not invent payloads, a template wizard or new stores.
+There are exactly two supplied HTML files: `ql-dialogue-flow_1.html` (0/1) and
+`ql-daily-die_2.html` (4+2). Both can serve as general document templates.
+Journal is already supported inside the 0/1 file; no third file is required.
 
-Join ready owner contracts on disjoint files and reach one complete operation
-early: write/select a passage → choose an actual Agent → preview scoped source
-→ explicit Send → pending Return → native revision-checked inclusion.
-Then develop 6A–6F, the existing Factory/material depth, Shared Field and the
-QL-integrated Wiki/whole-product gates defined by the amendment.
-
-One UI lead; one integrator per shared owner seam; serialized native candidate,
-exact `oi` dispatch binding and installed walks. Preserve drafts, source
-provenance, private scope, pending Returns and the existing four Agent planes.
-Run actual public operations and owner readbacks, not component tests alone.
-Record exact changed files, tests, candidate/operation evidence and remaining
-source/provider/material/human gates in the existing ledger. Human EX supplies
-H acceptance. No new shell, duplicated runtime or automatic source promotion.
+Verify the real operations in the running app and record evidence and exact
+remaining dependencies in the existing execution ledger. Follow the same plan
+for the subsequent Waves 7–8; do not replace it with this prompt's summary.

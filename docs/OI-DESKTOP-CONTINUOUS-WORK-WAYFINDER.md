@@ -27,7 +27,7 @@ Authoritative inputs:
 - [Continuous Agent Work implementation entry](https://github.com/EpiLogos/Factory/issues/195#issuecomment-5620823870) and [bounded entry/ready gates](https://github.com/EpiLogos/O-I/issues/220#issuecomment-5621164525).
 - [Desktop World-participation/placement/draft-return amendment](https://github.com/EpiLogos/O-I/issues/190#issuecomment-5621135989).
 - [CAW P01–P24 proof map](https://github.com/EpiLogos/O-I/issues/201#issuecomment-5620840562) and [P25–P28 extension](https://github.com/EpiLogos/O-I/issues/201#issuecomment-5621154293).
-- The owner's separately curated 0/1, 4+2 and raw Journal HTML files when supplied. Their final bytes, paths, metadata and exact visual treatment are not supplied by this amendment.
+- Exactly two owner-supplied HTML files: `ql-dialogue-flow_1.html` (0/1) and `ql-daily-die_2.html` (4+2). Both can serve as general document templates, not only their named uses. No third Journal file is required. The supplied 0/1 file already includes Journal functionality. See §12 for the received payload fingerprints and the recovered agency-handoff coverage.
 
 The latest blank-tab determination is explicit: **make the document forms central options in the existing blank tab, opening their real files through the existing source/Surface path.** This is a small entry refinement, not a template marketplace, creation wizard or new document-management subsystem.
 
@@ -57,13 +57,14 @@ Keep the existing workbench and optional accompanying Agent panel. Shared Field 
 
 ## 2. Blank-tab document choices — the bounded change
 
-In the existing blank/new-tab presentation, make these initial choices prominent and keyboard-accessible:
+In the existing blank/new-tab presentation, make the two supplied document forms prominent and keyboard-accessible:
 
-| Choice | Initial document form | Opening behaviour |
+| Choice | Supplied file | Opening behaviour |
 |---|---|---|
-| 0/1 | Dialogue / Flow | Resolve and open the actual supplied file through the existing owner source/open route. Flow and Dialogue are views of the same document entries. |
-| 4+2 | The supplied six-position Day form | Open the relevant actual file/current Day through Central's existing source and temporal reading. Do not create another Day because a new tab was opened. |
-| Journal | Raw, single-person journal, derived from the Dialogue form | Open the actual supplied single-author file. Do not manufacture an H interlocutor or redesign it into a task form. |
+| 0/1 | `ql-dialogue-flow_1.html` | Resolve and open through the existing owner source/open route. Flow and Dialogue are views of the same document entries; Journal is supported inside this same file. |
+| 4+2 | `ql-daily-die_2.html` | Resolve and open the actual six-position form through the existing source route. When used as a Day, consume Central's source/temporal reading; opening a tab does not create another Day. |
+
+Both forms may be used as general document templates. Their filenames do not restrict their use to conversation or daily logging, and the 4+2 form does not impose Day rollover policy on every document. Preserve the supplied payload's distinctions through the existing source/template operations; do not invent a new creation subsystem. No separate Journal file or third template is an acceptance dependency.
 
 Use the owner's supplied labels where the final files refine display wording. These choices do not constitute new semantic IDs or a new registry. Bind existing file/resource refs using the current source/contribution mechanism. Native source identity remains authoritative.
 
@@ -71,7 +72,7 @@ The files exist independently of this menu. Selecting a choice opens/focuses the
 
 Keep ordinary open/search/recent routes and ordinary file handling available. Blank writing is valid. No forced onboarding or completion checklist is added. Missing or inaccessible target files get a precise unavailable/open-location state rather than a fabricated payload or silent fallback.
 
-The owner is curating the final HTML elsewhere. Record the real supplied payload ref/revision/digest and supported native projection once available. Until then, implement generic entry wiring and other independent work; exact template-fidelity acceptance stays pending. Do not author substitute templates or invent the seventeen field keys.
+The two payloads have now been supplied in the owner's conversation. At local/repository intake, bind their actual source refs/paths and verify their recorded fingerprints. Receipt in this conversation does not assert they have already been installed or committed into the product. Independent wiring continues; only a genuinely unavailable local payload blocks its own exact-fidelity test. Do not author substitute templates or invent the seventeen field keys.
 
 ## 3. Document and human-work semantics
 
@@ -104,7 +105,7 @@ Flow opens an entry as a full writing page; Dialogue reads the same entry set co
 
 Support linked passage replies, whole-entry notes and between-entry writing. Anchors retain original text and local targets; changed targets remain stale and reviewable rather than silently relocating. Meaningful `[[path|display text]]` navigation survives. Preserve prose, emphasis, links, tables, code and supported embedded image/audio/video content.
 
-Journal reuses the supplied single-author form and document primitives. Its detailed data/visual contract comes from the owner-supplied file, not a guessed new schema. A single-person journal is not automatically a two-person conversation or CT4b Day.
+Journal is contained in the supplied 0/1 file, not another required template. Its `journal` pages and the Dialogue/Flow `entries` are distinct collections inside that document; the supplied explicit “Bring this page into the dialogue” operation preserves the originating journal relation. Do not silently equate those collections, invent an H interlocutor, or turn a single-person journal into a CT4b Day. Preserve the actual supplied data and visual contract.
 
 The optional reading profile is invoked explicitly. Only then apply its source-defined optional 3–4-sentence carryover where prior material exists and 600–900-word continuous reading without internal headings. The separate `SKILL.md` defines Beats 1–6; do not invent them. Ordinary replies, task results and receiving updates are not required to take that form.
 
@@ -134,6 +135,23 @@ Selecting/opening an Agent is not dispatch. Preparing recipients is not permissi
 Agent-origin messaging uses the native send/contribute operation, not F's draft buffer. Preserve per-recipient outcomes and unavailable participants' permitted history. A native producer identity accompanies H attribution; a declared H label in imported HTML is not authentication. `H` as a template author label is not the `H` human-acceptance evidence grade.
 
 Agent visibility follows caller-visible World participation, not mandatory profile files. Consume AIKit #274's ordinary producer/index/resolver seam. A valid profile-less participant can be addressed without Create Profile; optional Central adoption enriches the same identity. Declared participation does not itself prove live actuation. Withheld/unrelated subjects remain excluded; withdrawal removes false current presence while retaining permitted historical attribution. Do not create a desktop participant classification or adoption engine.
+
+### 4.1 Complete multi-agent continuity, not just a document-to-Agent request
+
+The same Wave 6 includes this full native route:
+
+```text
+selected Agent identity → actual resident session → authorised communication
+→ another Agent's actual session → attributable reply → continued inspectable context
+```
+
+Consume AIKit #274/#275 and the existing Gateway #154 handoff. Discover Agents, conversations/formations and related files, routines and Actions through the current owner Search/Resolve route where those native resources are exposed. A shared conversation relates participants to their situated sessions; it is not the authored AgentSet, and a human participant need not become a member of an agents-only set. Preserve reply/thread/source relations and actual producer attribution beyond an `id/kind/text` display block.
+
+Gateway admission/journalling, queued delivery, actual recipient delivery, generating, replied, failed and uncertain outcome remain distinguishable. A journal append cannot stand in for the resident host receiving work. Begin with addressed turns and bounded parallel requests. Further speaking policies reuse the same native executor, with declared turn/concurrency/cost/retry bounds and working pause/cancel. Private-to-group disclosure is explicit even when participants overlap.
+
+The Context/Inspect planes distinguish three correlated facts: recorded conversation history; each participant's permitted operative context; and the provider's actual continuation state. Transcript restoration does not establish native memory restoration. Read back native resume/load, selected-context rehydration or fork/recomposition as actually performed. For AIKit-controlled compaction, preserve identity/governance, pins, decisions, pending tools/permissions, unanswered requests and evidence. Show source-range/producer/omissions for derived summaries/checkpoints and commit a cursor across arrivals. Provider-native settings/compaction are separate negotiated capabilities; render only owner-supported controls and retain opaque/unknown state.
+
+Native cross-harness dispatch does not require public A2A endpoints or SharedField publication. A2A adds external peers to that same dispatch/Return operation, preserving provider-scoped context/task/follow-up refs, supported updates/stream/poll/cancel/reconnect, and independent native conversation history. Endpoint-binding lifecycle is not task lifecycle. Protocol version or draft-status claims in an earlier chat are dated observations; implementation must verify current negotiated contracts rather than freeze them into this plan.
 
 ## 5. Continuous work, Factory depth and material truth
 
@@ -175,7 +193,7 @@ These are sub-gates within the existing Wave 6, not new phase numbers or new CAW
 
 | Cut | Human result and implementation | Dependencies / proof |
 |---|---|---|
-| 6A — Open and write | Central blank-tab choices; native Day/Flow/Dialogue/Journal; exact fixtures, anchors and view parity; native Save/conflict/recovery; independent portable export. | Existing source/Surface opening plus Central #150/#151 where needed. Final supplied payloads gate exact fidelity, not independent host work. P02–P04 and relevant P21. |
+| 6A — Open and write | Two general-form blank-tab choices; native Day/Flow/Dialogue and the Journal mode within the 0/1 file; exact fixtures, anchors and view parity; native Save/conflict/recovery; independent portable export. | Existing source/Surface opening plus Central #150/#151 where needed. Bind the two supplied payloads; no third-file dependency. P02–P04 and relevant P21. |
 | 6B — Select and send | Root/Project participant and formation selection, including eligible profile-less actors; recipients and exact source preview; explicit Direct Send or Factory Commission; queue/delivery/errors. | AIKit #274/#275, Central source/placement contracts, Actuation accepted authority seam. P07–P10, P21, P25. |
 | 6C — Inspect and continue | Four actual panel planes, permissions, scoped Context, compaction/continuation, NOW relations and truthful alternate-Surface continuity. | AIKit/Actuation/Gateway public readings; relevant recurrence/hosting where consumed. P09–P12, P16, P21/P22. |
 | 6D — Develop materially | Source-faithful Factory depth, current Journey/Run/unit operations, Workcell placement/resources/lifecycle, lower terminal/material surfaces, enforcement and recovery. | Factory #221/#222 and existing public projection; Central #153; AIKit #277; Workcell #72; accepted Actuation migration seam. P13–P15, P17/P18, P23, P26/P28. |
@@ -206,7 +224,7 @@ Prove ordinary no-QL correctness independently and record the required QL-enable
 
 | Owner / existing track | Desktop handoff, not a new desktop-owned implementation |
 |---|---|
-| Central #150 + #153 → #151 → #152 | Human Day/source, NOW lifecycle/placement policy, exact portable document fixtures and native operations, receiving/inclusion, reversible migration and archive/re-entry. Resolve literal paths/IDs from current owner code. |
+| Central #150 + #153 → #151 → #152; existing #143 with AIKit #274 | Human Day/source, NOW lifecycle/placement policy, exact portable document fixtures and native operations, receiving/inclusion, reversible migration and archive/re-entry. Preserve root/default-formation compose work at #143; resolve literal paths/IDs from current owner code. |
 | AIKit #274 → #275 → #276; #277 after policy publication | Caller-visible World participants and effective composition; selected-context messaging/dispatch; session/continuation/recurrence; actual per-harness enforcement. Preserve current praxis semantics rather than reviving retired Method stores. |
 | Actuation #58 and its existing serial migration queue | Agent/Agency/WorldBinding actuality, authority, Activity/Stream, attribution and Return; public compatibility across implementation-language changes. No competing Actuation rewrite from desktop. |
 | Factory #195, #221 → #222 and existing #201 self-hosting | Real developmental attempt/coordinator/public projection/verification/Return/Recognition; use native read/Action contracts, not consumer-invented enums. |
@@ -256,7 +274,7 @@ Repository work can implement source, adapters, controlled filesystem fixtures a
 
 Before a native walk, use the current O:I install/update/source-modality system to bind one coherent candidate. Record the actual `oi` and every delegated owner executable's path/revision/digest, relevant contract versions, source basis and explicit overrides. Test the exact dispatch route used by the desktop, not a fresher binary found elsewhere on PATH. Do not hand-edit historical pins or replace active binaries under the walk; a newer owner revision starts a new candidate.
 
-CAW P01–P28 keep their existing meanings and owner allocation. This document's 6A–6F are implementation cuts, not replacement proof IDs. The blank-tab and Journal additions extend P03/P21 and their linked desktop unit checks; exact specimen-specific cases remain pending until the supplied files arrive. Keep P02–P04, P21–P24 and the P25–P28 deltas explicit in the desktop return; no duplicate whole-feature certificate is introduced.
+CAW P01–P28 keep their existing meanings and owner allocation. This document's 6A–6F are implementation cuts, not replacement proof IDs. The two-form blank-tab correction and Journal-in-0/1 coverage extend P03/P21 and their linked desktop unit checks. Received payload fingerprints are in §12; source intake and actual native fidelity still require their own evidence. Keep P02–P04, P21–P24 and the P25–P28 deltas explicit in the desktop return; no duplicate whole-feature certificate is introduced.
 
 Every control must complete:
 
@@ -278,8 +296,49 @@ The execution ledger records requirement/UX/capability refs, exact native/code/t
 
 ## 11. Immediate execution brief
 
-Continue O:I #190 from the actual local Wave 5 return and coordinated Wave 6 branch. Read this amendment, current `progress.md`, the affected design/source specifications and O:I #220's current owner-operation ledger. Preserve the existing desktop and other active sessions.
+Continue O:I #190 from the actual current desktop state. Read this entire plan, its linked governing specifications, O:I #220's current owner handoff and the latest `progress.md`. Execute Wave 6 completely through its sequencing, native integrations and functional acceptance gates; preserve existing work and record actual evidence in the existing ledger.
 
-Begin with the bounded 6A entry/fidelity work: blank-tab 0/1, 4+2 and Journal choices open actual source files through existing native routes. The owner supplies the final HTML; do not invent its payloads. In parallel, join ready native participant/dispatch/receiving and Factory/material contributions on disjoint files. Reach one real selected-passage → Agent → pending Return → reviewed inclusion route early, then progress through 6A–6F and the amended Waves 7–8.
+There are exactly two supplied files: `ql-dialogue-flow_1.html` (0/1) and `ql-daily-die_2.html` (4+2). Both are general document templates. No third Journal file is required. Continue the amended Waves 7–8 through their existing gates after Wave 6.
 
-Return exact changed files, owner operations/readbacks, executed tests and candidate receipts, the next native walk and remaining source/provider/human gates. Update the existing ledger and issues. Do not restart foundation, create another shell, bulk-migrate unrelated documents or claim complete acceptance from code alone.
+## 12. Preserved agency handoff and coverage — 2026-09-10
+
+The owner supplied `Pasted markdown(20260910-183132).md` to check that older chats can be retired without losing the integrated agency requirement. Its source SHA-256 is `000dca54946bb9fdf88628dd852d22a0586894be9635771eb26fc3a570a4bb29` (22,866 bytes). This section retains the actionable requirements and their existing execution/proof homes; it is not a new programme or a declaration that those features work.
+
+The handoff's inspected SHAs, code-path defects, protocol versions, proposal statuses and limitations of that earlier session's tools are dated observations, not current runtime facts. Recheck any still-relevant finding against current owner code. The normative experience and regression obligations below remain in scope even when an older child PR was narrower or is already closed.
+
+| Retained requirement / reason | Existing implementation and desktop home | Existing acceptance |
+|---|---|---|
+| Root User/Agent/Paśu/default-formation continuity; root is not a fake Project; profile is optional; source-policy/process-error distinctions and coherent filtering cannot widen disclosure. | Central #143 with AIKit #274; Wave 6B and §4. Preserve process exit/error decoding, absent-parent vs unreadable/withheld input, root policy, Project-local profile/set intake and ambiguous addressing as regressions. Adopted defaults and explicit selection are distinct. | P07/P08/P25; O:I #202/#205. |
+| Find the actual Agent and deliver its selected identity/governance/context into its real acting session, not merely the Inspector. | AIKit #274 → #275; §4/§4.1 and 6B/6C. Current Search/Resolve is the shared entrance; no hand-seeded graph substitutes. | P07/P08/P21/P22/P25. |
+| A resident/gateway route must actually prompt the recipient and carry its response back; journal append or an invocation enum is not delivery. | AIKit #275, existing O:I #154, Actuation #58/current stream work; §4.1, 6B/6C. Agent-origin send/contribute never uses F's unsent draft. | P09/P16/P21/P22 and disconnected-dispatch regression under P24. |
+| Two real harnesses, addressed turns and bounded parallel requests; causation/recipients/prepared-context basis/uncertain outcome; conversation participants are not the authored AgentSet. | AIKit #275 with Central authored relations; §4.1, 6B/6C. Preserve unavailable participants' history. Further speaking policies reuse the executor and its bounds. | P09/P10/P13 where developmental/P25; O:I #203/#205. |
+| Private-to-group material needs explicit disclosure; shared participants do not grant a summariser private-history access. | AIKit #275 and native authority/source owners; §4.1. Basic exchange is Wave 6; full SharedField publication/admission/withdrawal remains Wave 7. | P10/P21/P25. |
+| Transcript, participant operative context and provider continuation are different; native resume/load, scoped rehydration and fork/recomposition disclose different continuity. | AIKit #275, Workcell #72 and native Actuation correlation; §4.1/§5, 6C/6F. Never equate yesterday's rendered transcript with today's provider context. | P11/P14/P16/P17. |
+| Controllable compaction preserves identity/governance/pins/decisions/unresolved work/tools/permissions/evidence; summaries retain producer/source range/omissions; arriving messages survive a committed cursor. Provider settings/compaction remain negotiated, separately observable capabilities. | AIKit #275; §4.1 and Context/Inspect in 6C. No universal unsupported provider control. | P11/P18/P21; O:I #203/#204/#205. |
+| External A2A extends the same native dispatch; preserve provider-scoped context/task/follow-up and supported update/cancel/reconnect; endpoint binding, task lifecycle and durable local conversation are not one identity. | AIKit #275 plus existing O:I #154/SharedField adapter owner; §4.1, 6C, Wave 7 where publication is involved. Local messages do not require public publication. | P12/P17/P21/P22. |
+| Panel/CLI/authorised Agent use the same native operation and readback; detach does not terminate work; receiving, inclusion and Recognition remain separate. | Wave 6B–6F; Central #150/#151/#152, AIKit #275/#276, Workcell #72, Factory #221/#222 where developmental. | P04/P06/P16/P19/P21/P22/P23. |
+| Child scope cannot replace the full commission; tests must detect removed native connections and error/privacy regressions; merged, implemented, integrated and observed stay separate. | O:I #220 and #201/#202–#205; §10. Include real nonzero process errors rather than success-shaped mocks, policy-no-widening cases and required native tests actually invoked by CI. | P01/P24/P28; one parent acceptance record, not a second certificate. |
+
+The complete panel specimen from the handoff is retained: human at Central root; two existing Agents on different real harnesses; shared conversation plus a private reply; Project-context change; unavailable participant; permission wait; compaction boundary; reconnection; identical semantic actors and truthful privacy; matching panel/CLI/Agent readbacks. Integrate it with the Day/Flow/NOW/Factory/Return specimen in §10 rather than replacing either story with a single chat reply.
+
+### Supplied template intake record
+
+These hashes were computed from the actual two uploaded files. They identify received source bytes, not installed deployment or tested behaviour. The local intake attaches their real owner source paths/refs and preserves their bytes as source fixtures; it need not recreate a template elsewhere.
+
+| File | General form | Bytes | SHA-256 |
+|---|---|---:|---|
+| `ql-dialogue-flow_1.html` | 0/1, including its existing Journal mode | 44,191 | `2f251b18360d44b340f34ae5a121b0e70257ad06ee061772c709d6092d9ac1dc` |
+| `ql-daily-die_2.html` | 4+2, with supplied CT4b Day specimen | 465,620 | `8dca584a0f3a72097b552497828960122acf496577e36714da19364eb2b8638e` |
+
+The received 4+2 payload's exact `fields` keys are:
+
+```text
+p0_quick_thoughts, p0_adjacencies,
+p1_intentions, p1_must, p1_should, p1_could,
+p2_operations, p2_manual_activity,
+p3_patterns_noticed, p3_recurring_themes, p3_connections_made,
+p4_files_touched, p4_people_concepts, p4_graph_additions,
+p5_synthesis, p5_quintessence, p5_teleological_aim
+```
+
+Retain body-only fixtures and other payload collections too. The example media in the supplied Day file is a presentation fixture, not observed daily activity. Literal intake does not imply all native save, concurrency, authority or round-trip tests have passed. Template defects found during integration are recorded and repaired explicitly rather than treated as permission to weaken the functional specification.
