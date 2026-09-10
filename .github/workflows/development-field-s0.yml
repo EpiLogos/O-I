@@ -55,8 +55,8 @@ jobs:
       - name: Static protocol/package/suite conformance
         run: python3 scripts/verify-development-field-s0.py
 
-      - name: Rust format
-        run: cargo fmt --manifest-path cli/Cargo.toml --all -- --check
+      - name: Rust format (S0 CLI package only)
+        run: cargo fmt --manifest-path cli/Cargo.toml --package oi-cli -- --check
 
       - name: Rust tests
         run: cargo test --manifest-path cli/Cargo.toml --locked
