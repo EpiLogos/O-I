@@ -353,7 +353,7 @@ mod tests {
 
     fn product(revision_char: char) -> ProductIdentity {
         ProductIdentity {
-            revision: std::iter::repeat(revision_char).take(40).collect(),
+            revision: std::iter::repeat_n(revision_char, 40).collect(),
             artifact: "fixture.tar.gz".into(),
             sha256: "a".repeat(64),
             executable: Some("fixture".into()),
