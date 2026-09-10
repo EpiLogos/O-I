@@ -63,6 +63,9 @@ jobs:
       - name: Native S0 exact-source catalogue adoption and suite activation
         if: ${{ !cancelled() && steps.dispatch.outcome == 'success' }}
         run: python3 scripts/development-field-activation.py --out "$RUNNER_TEMP/development-field"
+      - name: Native S0 whole-suite lifecycle (repair and rollback)
+        if: ${{ !cancelled() && steps.dispatch.outcome == 'success' }}
+        run: python3 scripts/development-field-lifecycle.py --out "$RUNNER_TEMP/development-field"
       - name: Publish immutable specimen, executable and activation evidence
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
