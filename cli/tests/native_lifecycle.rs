@@ -11,6 +11,8 @@ use oi_cli::package::{
 fn manifest(minimum_version: &str) -> PackageManifest {
     PackageManifest {
         schema: "oi.package/v1".into(),
+        protocol_min: "1.0".into(),
+        protocol_max: "1.0".into(),
         package_ref: "package/oi-session-space-proof".into(),
         version: "1.0.0".into(),
         source: PackageSource {
