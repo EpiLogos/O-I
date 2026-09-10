@@ -1,0 +1,30 @@
+name: Development Field final read-only evidence inventory
+on:
+  push:
+    branches: ['ci/development-field-final-evidence-20260910']
+    paths: ['.github/workflows/development-field-final-inventory.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inventory:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Collect every exact-owner run and S7 attempt without rerunning tests
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          python3 scripts/development-field-evidence-inventory.py
+          --harness-branch ci/development-field-dc-cut
+          --out "$RUNNER_TEMP/development-field-final-inventory"
+      - name: Preserve byte-verified receipts and complete workflow audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: development-field-final-inventory
+          path: ${{ runner.temp }}/development-field-final-inventory
+          if-no-files-found: error
