@@ -1,0 +1,18 @@
+{
+  "standing": "retrieved-text-field-map-not-original-byte-fidelity",
+  "source_title": "daily-note-template-CT4b.md",
+  "source_coordinate": "docs/resources/TO-C-Dev-REPO/Present Template (DD-MM-YYY)/Daily Note Template.md",
+  "retrieval": "Project/Library indexed text, 2026-09-10; raw-byte materialization unavailable",
+  "original_standing": "ARCHIVED; superseded in that lineage by Idea/Bimba/World/NOW.md and FLOW.md",
+  "current_authority": "Factory#195 S1 functional specification; archival standing does not replace that commission",
+  "positions": [
+    {"position": 0, "role": "Ground / relational capture", "fields": ["p0_grounds", "p0_adjacencies"]},
+    {"position": 1, "role": "Definition / tasks and intentions", "fields": ["p1_tasks_defined", "p1_intentions"]},
+    {"position": 2, "role": "Operation / sessions and actual activity", "fields": ["p2_sessions", "p2_operations", "p2_manual_activity"]},
+    {"position": 3, "role": "Pattern / observations and connections", "fields": ["p3_patterns", "p3_observations", "p3_connections"]},
+    {"position": 4, "role": "Context / temporal and structural footprint", "fields": ["p4_temporals", "p4_files_touched", "p4_people_mentioned", "p4_concepts_engaged"]},
+    {"position": 5, "role": "Integration / synthesis and returning focus", "fields": ["p5_learnings", "p5_synthesis", "p5_tomorrow_focus"]}
+  ],
+  "identity_fields": ["uuid", "created", "name", "title", "type"],
+  "literal_headings": ["Claude Sessions", "Must Do", "Should Do", "Could Do", "Completed", "Today's Quintessence", "Teleological Aim"]
+}

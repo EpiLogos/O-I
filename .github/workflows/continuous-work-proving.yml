@@ -1,0 +1,159 @@
+name: CAW bounded proving infrastructure (parent remains pending)
+
+on:
+  pull_request:
+    paths:
+      - "skills/suite-operator/**"
+      - "cli/tests/continuous_work_governance.rs"
+      - "scripts/caw_*.py"
+      - "tests/continuous-work/**"
+      - ".github/workflows/continuous-work-proving.yml"
+  push:
+    branches: [main]
+    paths:
+      - "skills/suite-operator/**"
+      - "scripts/caw_*.py"
+      - "tests/continuous-work/**"
+      - "cli/tests/continuous_work_governance.rs"
+      - ".github/workflows/continuous-work-proving.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  runner-mechanics:
+    name: Runner mechanics, not product acceptance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Execute failure and evidence tests
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: python3 -m unittest discover -s tests/continuous-work -p 'test_*.py' -v
+      - name: Keep unavailable full acceptance visibly pending
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          set +e
+          python3 scripts/caw_campaign.py run --output "$RUNNER_TEMP/caw-missing"
+          code=$?
+          set -e
+          test "$code" -eq 2
+          python3 - "$RUNNER_TEMP/caw-missing/report.json" <<'PY'
+          import json, sys
+          report=json.load(open(sys.argv[1]))
+          assert report['acceptance']['standing']=='pending'
+          assert len(report['acceptance']['cases'])==28
+          assert report['acceptance']['whole_feature_verdict'] is None
+          assert not report['commands']
+          PY
+          echo '### Whole P01–P28 acceptance: **PENDING**, not green' >> "$GITHUB_STEP_SUMMARY"
+          echo 'This job tests fail-closed machinery, not the end-to-end feature.' >> "$GITHUB_STEP_SUMMARY"
+
+  native-operations:
+    name: Native OI/Central/AIKit profiles and Factory publication (bounded D/C)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Read the maintained owner source cut
+        id: cut
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          cut=json.load(open('tests/continuous-work/sources/lock.json'))['controlled_native_cut']
+          for owner in ('central','aikit','factory'):
+              print(f'{owner}={cut[owner]}')
+          PY
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Central
+          ref: ${{ steps.cut.outputs.central }}
+          path: _caw_central
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/ai-kit
+          ref: ${{ steps.cut.outputs.aikit }}
+          path: _caw_aikit
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Factory
+          ref: ${{ steps.cut.outputs.factory }}
+          path: _caw_factory
+      - name: Keep owner checkouts and evidence outside the candidate source
+        run: |
+          mv _caw_central "$RUNNER_TEMP/caw-central"
+          mv _caw_aikit "$RUNNER_TEMP/caw-aikit"
+          mv _caw_factory "$RUNNER_TEMP/caw-factory"
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Execute native governance tests and build exact owner binaries
+        run: |
+          cargo test --locked --manifest-path cli/Cargo.toml --test continuous_work_governance --test suite_skillset
+          cargo build --locked --manifest-path cli/Cargo.toml --bin oi
+          cargo build --locked --manifest-path "$RUNNER_TEMP/caw-central/ctrl/Cargo.toml" --bin ctrl
+          cargo build --locked --manifest-path "$RUNNER_TEMP/caw-aikit/Cargo.toml" --bin aikit
+          cargo build --locked --manifest-path "$RUNNER_TEMP/caw-factory/factory/Cargo.toml" --bin factory
+      - name: Bind the built binaries and clean actual source cuts
+        run: |
+          python3 scripts/caw_bind.py \
+            --entry oi "$GITHUB_WORKSPACE/cli/target/debug/oi" "$GITHUB_WORKSPACE" \
+            --entry central "$RUNNER_TEMP/caw-central/target/debug/ctrl" "$RUNNER_TEMP/caw-central" \
+            --entry aikit "$RUNNER_TEMP/caw-aikit/target/debug/aikit" "$RUNNER_TEMP/caw-aikit" \
+            --entry factory "$RUNNER_TEMP/caw-factory/target/debug/factory" "$RUNNER_TEMP/caw-factory" \
+            --output "$RUNNER_TEMP/caw-bindings.json"
+      - name: Actual coding/verifier apply, disconnection and reconnection
+        run: |
+          set +e
+          python3 scripts/caw_native_profiles.py --bindings "$RUNNER_TEMP/caw-bindings.json" --output "$RUNNER_TEMP/caw-profiles"
+          code=$?
+          set -e
+          test "$code" -eq 2
+          python3 - "$RUNNER_TEMP/caw-profiles/report.json" <<'PY'
+          import json, sys
+          r=json.load(open(sys.argv[1]))
+          for role in ('coding','verifier'):
+              assert any(o.get('id')==f'native-{role}-profile' and o.get('standing')=='observed' and o.get('grade')=='C' and o.get('disconnected')=='detected' and o.get('record_ids') for o in r['observations']), r['observations']
+          assert r['acceptance']['standing']=='pending'
+          assert r['acceptance']['whole_feature_verdict'] is None
+          PY
+      - name: Native Factory producer/public-readback disconnection canary
+        run: |
+          set +e
+          python3 scripts/caw_campaign.py run --bindings "$RUNNER_TEMP/caw-bindings.json" --output "$RUNNER_TEMP/caw-native"
+          code=$?
+          set -e
+          test "$code" -eq 2
+          python3 - "$RUNNER_TEMP/caw-native/report.json" <<'PY'
+          import json, sys
+          r=json.load(open(sys.argv[1]))
+          assert any(o.get('id')=='factory-commission-publication' and o.get('standing')=='observed' and o.get('disconnected')=='detected' and o.get('record_ids') for o in r['observations']), r['observations']
+          assert r['acceptance']['standing']=='pending'
+          assert r['acceptance']['whole_feature_verdict'] is None
+          PY
+      - name: Export only fingerprint evidence
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/caw-public"
+          for name in profiles native; do
+            if test -f "$RUNNER_TEMP/caw-$name/report.json"; then
+              python3 scripts/caw_campaign.py export --evidence "$RUNNER_TEMP/caw-$name" --output "$RUNNER_TEMP/caw-public/$name.json"
+            fi
+          done
+          echo '### P01–P28 whole feature: **PENDING**' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Native profile and Commission observations are bounded. No live harness, provider, personal migration, second placement or human acceptance is inferred.' >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: caw-bounded-evidence-parent-pending
+          path: ${{ runner.temp }}/caw-public
+          if-no-files-found: warn
