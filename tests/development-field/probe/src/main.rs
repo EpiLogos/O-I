@@ -21,6 +21,7 @@ use epilogos_workcell_wire::decode_world;
 use ql_core::{CallerProvenance, QlFace, QlPosition, RelationFieldComposition, ShapeBinding,
     ShapeRelationBinding, StructuralConstellation, StructuralParticipation};
 
+mod central_s1;
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
 fn text<'a>(v: &'a Value, key: &str) -> &'a str { v[key].as_str().unwrap_or_else(|| panic!("missing {key}")) }
 fn write(path: &Path, value: &impl Serialize) -> Result<()> { fs::write(path, serde_json::to_vec_pretty(value)?)?; Ok(()) }
@@ -98,20 +99,22 @@ fn main() -> Result<()> {
     let revision = |id: &str| cut["owners"].as_array().unwrap().iter().find(|o| o["id"] == id).unwrap()["revision"].as_str().unwrap();
     let central = out.join("ground/Central");
     let project = central.join("Work/specimen");
+    central_ctrl::root::initialize_central(&central)?;
     fs::create_dir_all(&project)?;
-    central_ctrl::projectcentral_ops::initialize_projectcentral(&central, &project, "fixture/specimen")?;
+    central_ctrl::projectcentral_ops::initialize_projectcentral(&central, &project, text(&spec,"projectRef").strip_prefix("project:").unwrap())?;
     fs::write(project.join("ProjectCentral/user/intent.md"), text(&spec,"authoredText"))?;
+    let self_reading = central_s1::bind(&central, &project, &out, text(&spec,"projectRef"))?;
     let horizon = central_ctrl::read_project_change_horizon(&project, None)?;
     let source_ref = horizon.sources.iter().find(|s| s.binding.path.ends_with("/intent.md")).unwrap().binding.source_ref.clone();
     let source = central_ctrl::read_world_source(&project, &source_ref)?;
     assert_eq!(source.content, text(&spec,"authoredText"));
+    assert_eq!(source.world_ref, text(&spec,"projectRef"));
     assert!(!source.automatic_agent_or_model_invocation);
     assert!(central_ctrl::read_world_source(&project,"central:source:not-participating").is_err());
     assert!(central_ctrl::write_world_source(&project, &source_ref, &source.revision.revision, "forged", "agent:fixture", "agent", Some(text(&spec,"agentSessionRef").into())).is_err());
     assert!(central_ctrl::write_world_source(&project, &source_ref, "revision:stale", "stale", "human:fixture", "human", None).is_err());
     write(&out.join("central-source.json"), &source)?;
 
-    // Stable QL carrier: sparse attributable bindings over a positive partial whole.
     let member = |reference: &str, pos: u8| StructuralParticipation::new(reference, QlPosition::new(pos).unwrap(), QlFace::Direct).unwrap();
     let row = StructuralConstellation::new(text(&spec,"fieldRef"), vec![member(&source_ref,0), member(text(&spec,"planRef"),1)], vec![])?;
     let col = StructuralConstellation::new("whole:fixture:return", vec![member(text(&spec,"activityRef"),0),member(text(&spec,"returnRef"),1)], vec![])?;
@@ -131,7 +134,6 @@ fn main() -> Result<()> {
         "source_refs":[source_ref,text(&spec,"planRef")],"address_count":shape.addresses.len(),"attributed_relation_count":carrier.relation_bindings.len(),
         "source_revision":source.revision.revision,"scope":"stable-carrier-only; no #123 intelligence acceptance"}))?;
 
-    // Native AIKit composition, not a hand-authored resolution identity.
     let context = ContextDescriptor::for_project(&project);
     let policy = ManagedPolicy::default();
     let active = BTreeMap::new();
@@ -141,7 +143,7 @@ fn main() -> Result<()> {
         skill_usage_overlays:overlays,warnings:vec![],catalog_revision:"catalog:empty-fixture".into(),properties:BTreeMap::new() };
     let project_ref = aikit_core::project::ProjectRef::parse(text(&spec,"projectRef"))?;
     let project_binding = ProjectBinding::new(project_ref.clone(),ProjectConstituentRef::parse(&source_ref)?,
-        ProjectBindingLocator::LocalDirectory {path:project.display().to_string()});
+        ProjectBindingLocator::LocalDirectory {path:project.clone()});
     let mut descriptor = ResourceDescriptor::new(ResourceRef::parse(&source_ref)?,ResourceKind::ContextSource,"Development intent","Native Central source");
     descriptor.sources.push(ResourceSource { source:SourceRef::parse(&source_ref)?,authority:Some(SourceAuthority::Authored),
         revision:Some(SourceRevision::parse(&source.revision.revision)?),locator:None,state:SourceState::Available });
@@ -159,7 +161,6 @@ fn main() -> Result<()> {
     write(&out.join("aikit-resolution.json"),&resolution)?;
     write(&out.join("aikit-resolution-evidence.json"),&resolution_evidence)?;
 
-    // Git belongs to AIKit/native Git; Workcell supplies two actual local roots.
     fs::write(project.join(".gitignore"),".central/\n")?;
     git(&project,&["init","-q","-b","main"])?;
     git(&project,&["add","."])?; git(&project,&["commit","-qm","authored fixture basis"])?;
@@ -199,8 +200,8 @@ fn main() -> Result<()> {
         material_host_ref:Some(text(&a,"workcell_ref").into()),locator:Some(wt_a.display().to_string()),clean:initial.working.is_clean(),conflicts:vec![]};
     let world=registry.begin("git-development:fixture",base_record,initial_binding)?.clone();
     let mut field=DevelopmentField::new(text(&spec,"fieldRef"),factory_project,run.clone(),journey,text(&spec,"commissionRef"),vec![unit],
-        text(&spec,"requiredDifference"),DevelopmentFieldTargets {plan_ref:text(&spec,"planRef").into(),ux_refs:vec![],capability_refs:vec![],
-            source_refs:vec![source_ref.clone()],self_description_refs:vec![]},
+        text(&spec,"requiredDifference"),DevelopmentFieldTargets {plan_ref:text(&spec,"planRef").into(),ux_refs:vec!["ux:fixture:portable-cut".into()],capability_refs:vec![],
+            source_refs:vec![source_ref.clone()],self_description_refs:vec![text(&self_reading,"source_ref").into()]},
         BTreeSet::from([DevelopmentEvidenceGrade::D,DevelopmentEvidenceGrade::C,DevelopmentEvidenceGrade::P,DevelopmentEvidenceGrade::M,DevelopmentEvidenceGrade::H]),
         DevelopmentGitBasis::from_git_world(&world))?;
     let no_ql={let mut x=field.clone();x.git_basis.structural_ground_refs.clear();x}; no_ql.validate()?;
@@ -213,8 +214,6 @@ fn main() -> Result<()> {
     assert!(field.record_material_binding(collapsed).is_err());
     write(&out.join("factory-before.json"),&field)?;
 
-    // A real deterministic local process changes the material worktree. No live
-    // model or external provider is implied by this fixture execution.
     let result=Command::new("node").arg("-e").arg("require('node:fs').writeFileSync('implementation.txt','preserved\\n')").current_dir(&wt_a).output()?;
     assert!(result.status.success());
     assert!(!git_provider.inspect(&project_ref,&wt_a.display().to_string())?.working.is_clean());
@@ -281,11 +280,11 @@ fn main() -> Result<()> {
     write(&out.join("workcell-lifecycle.json"),&json!({"placements":"two local roots; not VM/cloud isolation proof","a":{"prepared":a,"lifecycle":lifecycle_a},"b":{"prepared":b,"lifecycle":lifecycle_b}}))?;
     write(&out.join("factory-after.json"),&field.reading())?;
     write(&out.join("bounded-conformance.json"),&json!({"schema":"oi.development-field-bounded-conformance/v1","status":"passed",
-        "specimen":spec,"cut":cut,"native_relation_scope":["Central source/ref/revision → AIKit ContextResolution","AIKit exact Git → Factory DevelopmentField",
+        "specimen":spec,"cut":cut,"native_relation_scope":["Central self/tier/UX source/ref/revision → AIKit ContextResolution","AIKit exact Git → Factory DevelopmentField",
         "Factory refs → Workcell demand/material/lifecycle","Workcell material relocation → Actuation fixture Agency/Activity/Return","Actuation Return → Factory evidence/candidate persistence","QL stable partial-whole attributable carrier"],
-        "negative_cases":["non-participating source","Agent mutation of human ground","stale source CAS","source revision changes context identity","unsupported QL semantic relation","worktree/material identity collapse","wrong returned Git base","H without human EX"],
+        "negative_cases":["non-participating source","Agent mutation of human ground","stale source CAS","source revision changes context identity","unsupported QL semantic relation","worktree/material identity collapse","wrong returned Git base","H without human EX","agent-only Central EX","invalid tier"],
         "C":"bounded-native-relations-only","whole_development_field_C":"not-established","P":"not-exercised","M":"not-exercised","H":"not-exercised",
-        "remaining_current_cut_gates":["O-I#212 active-suite receipt/dispatch in joined specimen","Central#136 self aperture/tier/UX-EX binding in joined specimen","ai-kit#261 DevelopmentField-specific readings"],
+        "remaining_current_cut_gates":["O-I#212 active-suite receipt/dispatch in joined specimen","ai-kit#261 DevelopmentField-specific readings"],
         "deferred_upstream":"QL-MEF#123 final Vāk/C′/Wiki/Context-Frame semantics"}))?;
     println!("Bounded native relation specimen passed; whole Development Field C remains explicitly unestablished.");
     Ok(())

@@ -1,0 +1,51 @@
+name: Development Field dependency-lock capture
+# Temporary lock bootstrapping lane. It only stores an immutable Git blob; it
+# cannot select a runtime suite or update a branch. Remove after reviewing and
+# committing the generated Cargo.lock through the normal PR.
+on:
+  push:
+    branches: ['ci/development-field-dc-cut']
+    paths: ['tests/development-field/probe/Cargo.toml', '.github/workflows/development-field-lock-bootstrap.yml']
+permissions:
+  contents: write
+  actions: read
+jobs:
+  capture:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Prepare the same exact owner cut without executing owner code
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/development-field-conformance.py prepare --out "$RUNNER_TEMP/lock-source"
+      - name: Generate and store lock candidate without changing any branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cargo generate-lockfile --manifest-path tests/development-field/probe/Cargo.toml
+          python3 - <<'PY'
+          import hashlib,json,os,pathlib,urllib.request
+          path=pathlib.Path('tests/development-field/probe/Cargo.lock')
+          raw=path.read_bytes()
+          request=urllib.request.Request('https://api.github.com/repos/'+os.environ['GITHUB_REPOSITORY']+'/git/blobs',
+            data=json.dumps({'content':raw.decode(),'encoding':'utf-8'}).encode(),method='POST',
+            headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json'})
+          with urllib.request.urlopen(request,timeout=45) as response: result=json.load(response)
+          expected=hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest()
+          assert result['sha']==expected
+          receipt={'blob_sha':expected,'sha256':hashlib.sha256(raw).hexdigest(),'harness_revision':os.environ['GITHUB_SHA'],'standing':'candidate-needs-normal-commit','branches_modified':False}
+          pathlib.Path('dependency-lock-candidate.json').write_text(json.dumps(receipt,indent=2)+'\n')
+          print(json.dumps(receipt))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: development-field-lock-candidate
+          path: |
+            dependency-lock-candidate.json
+            tests/development-field/probe/Cargo.lock
+          if-no-files-found: error

@@ -29,14 +29,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 scripts/development-field-conformance.py prepare --out "$RUNNER_TEMP/development-field"
-      - name: Publish exact owner source context
-        uses: actions/upload-artifact@v4
-        with:
-          name: development-field-joined-source-${{ github.sha }}
-          path: ${{ runner.temp }}/development-field/source
       - uses: Swatinem/rust-cache@v2.9.2
         with:
           shared-key: development-field-conformance
+          cache-on-failure: true
           workspaces: |
             tests/development-field/probe
             .development-field-owners/oi/cli
@@ -48,6 +44,18 @@ jobs:
       - name: Bounded Central → QL carrier → AIKit → Workcell → Actuation → Factory specimen
         id: probe
         run: python3 scripts/development-field-conformance.py probe --bootstrap-lock --out "$RUNNER_TEMP/development-field"
+      - name: Publish bounded probe evidence before independent binary builds
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: development-field-probe-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/development-field/*.json
+            ${{ runner.temp }}/development-field/*.log
+            ${{ runner.temp }}/development-field/specimen/*.json
+            ${{ runner.temp }}/development-field/specimen/*.log
+            tests/development-field/probe/Cargo.lock
+          if-no-files-found: error
       - name: Exact source-built six-product O:I dispatch with poisoned PATH
         if: ${{ !cancelled() }}
         id: dispatch
@@ -59,7 +67,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: development-field-conformance-${{ github.sha }}
+          name: development-field-conformance-${{ github.run_id }}
           path: |
             ${{ runner.temp }}/development-field
             tests/development-field/probe/Cargo.lock
