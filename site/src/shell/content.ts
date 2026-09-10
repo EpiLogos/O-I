@@ -2,11 +2,17 @@ export type Media = { media: 'a' | 'b' | 'c' | 'd'; poster?: 1 | 2 | 3; zoom?: n
 
 export type Item = { name: string; detail?: string };
 
+export type Layout = 'statement' | 'split' | 'feature' | 'grid' | 'index' | 'band';
+
 export type Section = {
   eyebrow?: string;
   title: string;
   body?: string;
   items?: Item[];
+  layout: Layout;
+  tone?: 'light' | 'dark';
+  figure?: 1 | 2 | 3;
+  flip?: boolean;
   media?: Media;
 };
 
@@ -76,11 +82,15 @@ export const PAGES: Page[] = [
         eyebrow: 'What is O:I',
         title: 'O:I maps what it means for an AI agent to have a world.',
         body: 'An agent works through an inference model — and through the project it can see, the tools it can use, the knowledge it can reach, the authority it has, the history it carries and the purposes that orient it. O:I makes that surrounding field explicit: Operating Infrastructure · Objective Internality.',
+        layout: 'statement',
+        tone: 'light',
       },
       {
         eyebrow: 'Existing worlds',
         title: 'Start where you are.',
         body: 'Your editor, shell, repositories, agents, skills and machines already form a real environment. O:I starts there — no migration into one stack. Principles, preferences and ways of working can stay as durable source in your own words instead of being retyped into every session.',
+        layout: 'split',
+        tone: 'dark',
       },
       {
         eyebrow: 'One possibility space',
@@ -96,22 +106,31 @@ export const PAGES: Page[] = [
           { name: 'Material', detail: 'environments work can run in' },
           { name: 'Relation', detail: 'worlds meeting worlds' },
         ],
+        layout: 'grid',
+        tone: 'light',
       },
       {
         eyebrow: 'Products',
         title: 'Six offices, one Life.',
         body: 'The six centres are custodians of stretches of one circuit — not a product catalogue. Each is an aspect of a Life as Objective Internality.',
         items: PRODUCTS.map((product) => ({ name: product.name, detail: product.office })),
+        layout: 'index',
+        tone: 'dark',
       },
       {
         eyebrow: 'Shared field',
         title: 'From your world to a shared field.',
         body: 'A document, project result or agent can be projected outward while its source identity and provenance stay with the world that owns it. Independently grounded worlds meet without ceasing to be separately grounded.',
+        layout: 'feature',
+        tone: 'light',
+        figure: 2,
       },
       {
         eyebrow: 'Build',
         title: 'Extend the world you already use.',
         body: '`oi` is the local doorway. Public contracts and SDKs let real technologies join the field as providers, connectors and fixtures — not private patches.',
+        layout: 'statement',
+        tone: 'dark',
       },
     ],
   },
@@ -130,22 +149,39 @@ export const PAGES: Page[] = [
         eyebrow: 'Two readings of one name',
         title: 'Operating Infrastructure. Objective : Internality.',
         body: 'Operating Infrastructure names the engineering around an agent: projects, capabilities, sessions, history, material environments, relations. Objective Internality names the same field from the actor\'s side — what an agent can actually draw on while acting.',
+        layout: 'band',
         media: { media: 'c', poster: 3, zoom: 1.3 },
       },
       {
         eyebrow: 'The operational claim',
         title: 'A precise object, not a claim about consciousness.',
         body: 'Objective Internality gives us an inspectable engineering object without requiring a conclusion about artificial subjectivity. We build and compare systems, then let implementation and use return evidence about where the concept helps and where it needs revision.',
+        layout: 'statement',
+        tone: 'light',
       },
       {
         eyebrow: 'Human agency',
         title: 'More agency should create more room for authorship.',
-        body: 'The aim is not fewer buttons to press. It is to keep the human causally present where authorship matters: purpose, principles, authority, judgement, Recognition and revision — while routine setup and bookkeeping move away from continuous attention.',
+        body: 'The aim is not fewer buttons to press. It is to keep the human causally present where authorship matters — while routine setup and bookkeeping move away from continuous attention.',
+        items: [
+          { name: 'Authorship', detail: 'purpose · principles · preferences' },
+          { name: 'Authority', detail: 'what an agency may do' },
+          { name: 'Commission', detail: 'work worth undertaking' },
+          { name: 'Recognition', detail: 'judging what returned' },
+          { name: 'Revision', detail: 'changing the ground' },
+          { name: 'Refusal', detail: 'a constitutional act' },
+        ],
+        layout: 'split',
+        tone: 'dark',
       },
       {
         eyebrow: 'Research field',
         title: 'Agentic engineering is an open, collective field.',
         body: 'No single team inhabits the whole possibility space. Public SDKs, providers and fixtures widen the empirical field, so more real worlds return evidence that improves the products themselves.',
+        layout: 'feature',
+        tone: 'light',
+        figure: 1,
+        flip: true,
       },
     ],
   },
@@ -159,12 +195,78 @@ export const PAGES: Page[] = [
       title: 'Six offices, one Life.',
       body: 'Each centre owns a different technical problem and its own repository. They compose through O:I where their responsibilities meet — and remain usable independently.',
     },
-    sections: PRODUCTS.map((product) => ({
-      eyebrow: product.office,
-      title: product.name,
-      body: product.what,
-      items: [{ name: 'What changes', detail: product.change }, { name: 'Native centre', detail: product.repo }],
-    })),
+    sections: [
+      {
+        eyebrow: PRODUCTS[0].office,
+        title: PRODUCTS[0].name,
+        body: PRODUCTS[0].what,
+        items: [
+          { name: 'What changes', detail: PRODUCTS[0].change },
+          { name: 'Native centre', detail: PRODUCTS[0].repo },
+        ],
+        layout: 'feature',
+        tone: 'light',
+        figure: 1,
+      },
+      {
+        eyebrow: PRODUCTS[1].office,
+        title: PRODUCTS[1].name,
+        body: PRODUCTS[1].what,
+        items: [
+          { name: 'What changes', detail: PRODUCTS[1].change },
+          { name: 'Native centre', detail: PRODUCTS[1].repo },
+        ],
+        layout: 'split',
+        tone: 'dark',
+      },
+      {
+        eyebrow: PRODUCTS[2].office,
+        title: PRODUCTS[2].name,
+        body: PRODUCTS[2].what,
+        items: [
+          { name: 'What changes', detail: PRODUCTS[2].change },
+          { name: 'Native centre', detail: PRODUCTS[2].repo },
+        ],
+        layout: 'feature',
+        tone: 'light',
+        figure: 2,
+        flip: true,
+      },
+      {
+        eyebrow: PRODUCTS[3].office,
+        title: PRODUCTS[3].name,
+        body: PRODUCTS[3].what,
+        items: [
+          { name: 'What changes', detail: PRODUCTS[3].change },
+          { name: 'Native centre', detail: PRODUCTS[3].repo },
+        ],
+        layout: 'split',
+        tone: 'dark',
+      },
+      {
+        eyebrow: PRODUCTS[4].office,
+        title: PRODUCTS[4].name,
+        body: PRODUCTS[4].what,
+        items: [
+          { name: 'What changes', detail: PRODUCTS[4].change },
+          { name: 'Native centre', detail: PRODUCTS[4].repo },
+        ],
+        layout: 'feature',
+        tone: 'light',
+        figure: 3,
+      },
+      {
+        eyebrow: PRODUCTS[5].office,
+        title: PRODUCTS[5].name,
+        body: PRODUCTS[5].what,
+        items: [
+          { name: 'What changes', detail: PRODUCTS[5].change },
+          { name: 'Native centre', detail: PRODUCTS[5].repo },
+        ],
+        layout: 'statement',
+        tone: 'dark',
+      },
+    ],
   },
   {
     id: 'shared-field',
@@ -181,17 +283,22 @@ export const PAGES: Page[] = [
         eyebrow: 'Projection',
         title: 'Source stays with the world.',
         body: 'Projection creates an addressable representation for a particular audience. The source keeps its canonical identity; the projection carries enough provenance for another participant to understand where it came from.',
+        layout: 'band',
         media: { media: 'a', poster: 1, zoom: 1.3 },
       },
       {
         eyebrow: 'Objective Co-Internality',
         title: 'Independent worlds in relation.',
         body: 'What was projected, how it was encountered, what difference was returned, and how that difference later changed either world. Legibility without capture.',
+        layout: 'statement',
+        tone: 'light',
       },
       {
         eyebrow: 'Explore',
         title: 'Where those worlds become visible.',
         body: 'Explore is the public surface for addressable worlds, agents, projections and contributions — each carrying provenance.',
+        layout: 'split',
+        tone: 'dark',
       },
     ],
   },
@@ -210,12 +317,15 @@ export const PAGES: Page[] = [
         eyebrow: 'What we study',
         title: 'Capacity. Provisioning. Potentiation.',
         body: 'Capacity is what the model and compute can provide. Provisioning is what an act has available. Potentiation is what becomes possible because the surrounding structure has a particular form.',
+        layout: 'band',
         media: { media: 'd', poster: 2, zoom: 1.3 },
       },
       {
         eyebrow: 'Human authorship',
         title: 'Where should the human enter?',
         body: 'Not only supervision. The human can author durable parts of the operative world from which later agency proceeds — and Central gives that question a concrete technical shape.',
+        layout: 'split',
+        tone: 'light',
       },
       {
         eyebrow: 'Method',
@@ -232,16 +342,23 @@ export const PAGES: Page[] = [
           { name: 'Find / revise / reject' },
           { name: 'Return' },
         ],
+        layout: 'index',
+        tone: 'dark',
       },
       {
         eyebrow: 'Quaternal Logic',
         title: 'A deeper formal programme.',
         body: 'Operational parity is the discipline: where a formal distinction is claimed to matter, implementation should make a discriminable difference. Negative and null results are legitimate and return to the research.',
+        layout: 'statement',
+        tone: 'light',
       },
       {
         eyebrow: 'Collective',
         title: 'Community is part of the method.',
         body: 'Abstraction → SDK → local accommodation → fixture + evidence → share → reproduce → return. Reference implementations open paths; community implementations widen the field.',
+        layout: 'feature',
+        tone: 'dark',
+        figure: 3,
       },
     ],
   },
@@ -268,11 +385,14 @@ export const PAGES: Page[] = [
           { name: 'Research protocol', detail: 'docs/RESEARCH-PROTOCOL.md' },
           { name: 'Shared Field', detail: 'docs/SHARED-FIELD.md' },
         ],
+        layout: 'index',
+        tone: 'light',
       },
       {
         eyebrow: 'Distinct packages',
         title: 'Two package relations, not one.',
         body: 'The ordinary `oi` distribution and the O:I extension envelope solve different problems. Until the public distribution package lands, the install guide remains the source of truth.',
+        layout: 'band',
         media: { media: 'a', poster: 1, zoom: 1.3 },
       },
     ],
@@ -292,6 +412,7 @@ export const PAGES: Page[] = [
         eyebrow: 'Open',
         title: 'Enter the field.',
         body: 'Open the Explore application to search, filter and inspect the worlds and contributions that have chosen to be visible.',
+        layout: 'band',
         media: { media: 'b', poster: 3, zoom: 1.3 },
       },
     ],

@@ -109,10 +109,6 @@ export function HeroParallax() {
           </div>
         </div>
 
-        <div className="pl__cue" aria-hidden="true">
-          <span>Scroll</span>
-          <span className="pl__cue-line" />
-        </div>
       </div>
     </section>
   );
