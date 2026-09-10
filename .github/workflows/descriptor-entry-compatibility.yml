@@ -1,0 +1,77 @@
+name: Descriptor entry compatibility
+
+on:
+  push:
+    branches: [main, "test/actuation58-descriptor-entries"]
+    paths:
+      - "cli/**"
+      - "surfaces.json"
+      - ".github/workflows/descriptor-entry-compatibility.yml"
+  pull_request:
+    paths:
+      - "cli/**"
+      - "surfaces.json"
+      - ".github/workflows/descriptor-entry-compatibility.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  entries:
+    name: Native descriptor entries (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Record exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          git rev-parse HEAD > evidence/commit.txt
+          git rev-parse 'HEAD^{tree}' > evidence/tree.txt
+          git archive --format=tar HEAD | gzip > evidence/source.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: descriptor-source-${{ matrix.os }}-${{ github.sha }}
+          path: evidence/
+          retention-days: 14
+          if-no-files-found: error
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: cli
+      - name: Format
+        run: cargo fmt --manifest-path cli/Cargo.toml -- --check
+      - name: Check and lint
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo check --manifest-path cli/Cargo.toml --all-targets 2>&1 | tee evidence/check.log
+          cargo clippy --manifest-path cli/Cargo.toml --all-targets -- -D warnings 2>&1 | tee evidence/clippy.log
+      - name: Native CLI regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustc --version --verbose > evidence/rustc.txt
+          cargo --version > evidence/cargo.txt
+          cargo test --manifest-path cli/Cargo.toml --all-targets 2>&1 | tee evidence/tests.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: descriptor-evidence-${{ matrix.os }}-${{ github.sha }}
+          path: evidence/
+          retention-days: 14
+          if-no-files-found: error
