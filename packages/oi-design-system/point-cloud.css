@@ -1,4 +1,21 @@
 /* Shared desktop accent grammar. Import tokens.css first. */
+
+/* Point-cloud expression overlay: one transparent, aria-hidden, fully
+ * pointer-transparent canvas per window, owned by the window host
+ * (point-cloud/host.mjs). Decorative — the accessible UI is the DOM under
+ * it. Stacking stays low: it rides with content planes, never above
+ * dialogs, menus or popovers. */
+.oi-point-cloud-overlay {
+  position: fixed;
+  inset: 0;
+  inline-size: 100vw;
+  block-size: 100vh;
+  z-index: var(--oi-z-expression);
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 .oi-point-cloud {
   display: inline-block;
   flex: none;

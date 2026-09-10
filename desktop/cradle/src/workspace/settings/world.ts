@@ -133,9 +133,10 @@ export function buildSections(reading:CompositionReading|undefined,extras:Activi
   });
 }
 
-export const RAIL:{id:"health"|"activity"|"config"|"bootstrap";label:string;hint:string}[] = [
+export const RAIL:{id:"health"|"activity"|"config"|"bootstrap"|"visuals";label:string;hint:string}[] = [
   {id:"health",label:"Health",hint:"Is my world healthy? — census, readiness honesty, obligations"},
   {id:"activity",label:"Activity",hint:"What is running, and where? — SessionSpaces, providers"},
   {id:"config",label:"Config",hint:"What is configured, and by whom? — ground binding, suite pins"},
   {id:"bootstrap",label:"Bootstrap",hint:"Empty world → installed world — bind, install, verify, first-run"},
+  {id:"visuals",label:"Visuals",hint:"Appearance and expression — themes, and the particle layer's full control set"},
 ];

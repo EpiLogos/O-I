@@ -16,6 +16,7 @@ import {encounter} from "../../encounter/client";
 import {Loading} from "../../shared/Loading";
 import {formatRelativeTime} from "../../shared/relativeTime";
 import {GroundChooser} from "../GroundChooser";
+import {VisualsView} from "./VisualsView";
 import type {ActivityExtras, CompositionReading, SettingsView} from "./types";
 import {buildSections, RAIL} from "./world";
 import {ProductSection} from "./ProductSection";
@@ -127,5 +128,6 @@ export function SettingsPage() {
       <ol className="settings-bootstrap">{BOOTSTRAP_STEPS.map((step,index)=><li key={step.title}><strong>{index+1}. {step.title}</strong><p>{step.detail}</p><em className="product-native-path">{step.native}</em></li>)}</ol>
       <p className="settings-native-note">In-page engagement for each step arrives with the disclosed-op seam (P3); until then the native paths above are the honest way through.</p>
     </div>}
+    {view==="visuals"&&<VisualsView/>}
   </section>;
 }

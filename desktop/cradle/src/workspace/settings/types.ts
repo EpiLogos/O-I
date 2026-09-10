@@ -60,8 +60,9 @@ export interface ProductSectionModel {
   raw: Record<string, unknown>;
 }
 
-/** The four user needs the rail serves (design §1). */
-export type SettingsView = "health" | "activity" | "config" | "bootstrap";
+/** The four user needs the rail serves (design §1), plus Visuals — the
+ * appearance and expression layer owned by the desktop itself. */
+export type SettingsView = "health" | "activity" | "config" | "bootstrap" | "visuals";
 
 /** Project-scoped live activity extras (AIKit agency + providers). */
 export interface ActivityExtras {

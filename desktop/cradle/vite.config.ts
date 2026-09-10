@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
@@ -5,9 +6,22 @@ import react from "@vitejs/plugin-react";
 export default defineConfig(({ command }) => ({
   plugins: [react()],
   clearScreen: false,
+  // The point-cloud engine lives in the design-system package (which has no
+  // node_modules of its own); resolve the heavy dependency from the app's
+  // install so the lazy import stays one explicitly-loaded chunk.
+  resolve: {
+    alias: {
+      three: fileURLToPath(new URL("./node_modules/three", import.meta.url)),
+    },
+  },
   server: {
     port: 1421,
     strictPort: true,
+    // The design-system package lives outside the app root; its assets
+    // (the loading mark) must serve in dev.
+    fs: {
+      allow: [fileURLToPath(new URL("../..", import.meta.url))],
+    },
   },
   build: {
     target: "es2021",

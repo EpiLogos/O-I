@@ -40,6 +40,8 @@ const SCENARIOS = {
   ground:{module:"scenarios/ground.mjs",kernel:true,aliases:[]},
   recovery:{module:"scenarios/recovery.mjs",kernel:false,aliases:[]},
   rest: { module: "scenarios/rest.mjs", kernel: false, aliases: ["u0.3"] },
+  welcome: { module: "scenarios/welcome.mjs", kernel: false, aliases: [] },
+  visuals: { module: "scenarios/visuals.mjs", kernel: true, aliases: [] },
   surfaces: { module: "scenarios/surfaces.mjs", kernel: true, aliases: ["u0.3b"] },
   "kernel-cas": { module: "scenarios/kernel-cas.mjs", kernel: true, aliases: ["u0.4"] },
   system: {module:"scenarios/system.mjs",kernel:true,aliases:[]},
@@ -335,6 +337,14 @@ async function runScenario(name, { baseUrl }) {
       window.__OI_KERNEL_BRIDGE__ = url;
     }, bridgeUrl);
   }
+  // Walks exercise the continuing app, so the welcome frontstate stands
+  // down for them — except when a scenario explicitly asks for it via
+  // ?frontstate (the welcome scenario runs the real first-open path).
+  await page.addInitScript(() => {
+    if (!new URLSearchParams(location.search).has("frontstate")) {
+      sessionStorage.setItem("oi-cradle.welcome.v1", "walk-continuing-session");
+    }
+  });
 
   const ctx = makeHarness({ scenario: name, page, baseUrl, bridgeUrl, kernelScenario: spec.kernel });
   ctx.provision = provision;

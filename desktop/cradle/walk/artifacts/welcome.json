@@ -1,0 +1,91 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "welcome",
+  "generated_at": "2026-09-10T22:24:34.461Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": null,
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 6744,
+  "checks": [
+    {
+      "ok": true,
+      "label": "The welcome frontstate stands between the app and the person on first open"
+    },
+    {
+      "ok": true,
+      "label": "The frontstate field renders through the one window expression canvas"
+    },
+    {
+      "ok": true,
+      "label": "The enter control is a real labelled control, not a bare scrim"
+    },
+    {
+      "ok": true,
+      "label": "The workspace is already composed behind the frontstate"
+    },
+    {
+      "ok": true,
+      "label": "Escape dissolves the frontstate and hands the app over"
+    },
+    {
+      "ok": true,
+      "label": "A continuing session in the same window opens straight into the app"
+    },
+    {
+      "ok": true,
+      "label": "Reduced motion enters immediately without the dissolve flight"
+    },
+    {
+      "ok": true,
+      "label": "After the dissolve the empty workspace is the app"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 35,
+      "data": {
+        "file": "welcome-welcome-reduced-motion.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 235,
+      "data": {
+        "file": "welcome-welcome-frontstate-rest.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 197,
+      "data": {
+        "file": "welcome-welcome-frontstate-dissolve.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 31,
+      "data": {
+        "file": "welcome-welcome-frontstate-entered.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "welcome-welcome-reduced-motion.png",
+    "welcome-welcome-frontstate-rest.png",
+    "welcome-welcome-frontstate-dissolve.png",
+    "welcome-welcome-frontstate-entered.png"
+  ]
+}

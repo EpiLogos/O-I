@@ -1,4 +1,6 @@
 import {ExpressionProvider,ExpressionLayout} from "./shared/Expression";
+import {VisualsProvider} from "./visuals/ParticleExpression";
+import {WelcomeField} from "./visuals/WelcomeField";
 import {flow} from "./flow/client";
 import {DRAFT_KEY} from "./flow/DraftSurface";
 import {ContextTray} from "./context/ContextTray";
@@ -99,8 +101,10 @@ export function Cradle() {
   return (
     <KernelProvider>
       <ExpressionProvider>
-      {window.__OI_DETACHED__ ? <DetachedFrame /> : <CradleFrame WalkChannel={WalkChannel} />}
-    </ExpressionProvider>
+        <VisualsProvider>
+          {window.__OI_DETACHED__ ? <DetachedFrame /> : <CradleFrame WalkChannel={WalkChannel} />}
+        </VisualsProvider>
+      </ExpressionProvider>
     </KernelProvider>
   );
 }
@@ -762,9 +766,15 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
     return () => window.removeEventListener("pointerdown", onDown);
   }, [menu]);
 
+  // Whether the welcome frontstate still stands between the app and the
+  // person. It dissolves on the first click (or Escape); the workspace is
+  // interactive the moment it lifts.
+  const [welcomeUp, setWelcomeUp] = useState(true);
+
   return (
     <>
       <ExpressionLayout layout={state}/>
+      {welcomeUp && <WelcomeField onEntered={()=>setWelcomeUp(false)}/>}
       {windowError && <p role="alert">{windowError}</p>}
       {workspace.recovery&&<section className="workspace-recovery" aria-label="Workspace recovery"><p>The saved arrangement could not be restored. Its original data is retained.</p><button disabled={!workspace.recovery.key} onClick={workspace.recoverAvailable}>Recover available workspaces</button><button disabled={!workspace.recovery.key} onClick={workspace.startFresh}>Start a fresh arrangement</button></section>}
       <DesktopShell onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}

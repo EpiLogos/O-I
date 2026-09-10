@@ -1,0 +1,77 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "visuals",
+  "generated_at": "2026-09-10T22:24:42.205Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 3990,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Visuals splits into Themes and Expression"
+    },
+    {
+      "ok": true,
+      "label": "The expression layer starts on"
+    },
+    {
+      "ok": true,
+      "label": "Enabling the visuals hosts exactly one window expression canvas"
+    },
+    {
+      "ok": true,
+      "label": "The baked word reaches the running field"
+    },
+    {
+      "ok": true,
+      "label": "Off removes the renderer — nothing runs hidden"
+    },
+    {
+      "ok": true,
+      "label": "The master switch reports the off state"
+    },
+    {
+      "ok": true,
+      "label": "On recreates the renderer"
+    },
+    {
+      "ok": true,
+      "label": "Dark theme resolves onto the oi-desktop body"
+    },
+    {
+      "ok": true,
+      "label": "Light theme clears the override"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 56,
+      "data": {
+        "file": "visuals-visuals-expression.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 28,
+      "data": {
+        "file": "visuals-visuals-panel.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "visuals-visuals-expression.png",
+    "visuals-visuals-panel.png"
+  ]
+}
