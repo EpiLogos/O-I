@@ -60,7 +60,10 @@ jobs:
       - name: Accepted S3 same-specimen native Central, QL carrier, packet and CLI parity
         if: ${{ !cancelled() && steps.dispatch.outcome == 'success' && steps.probe.outcome == 'success' }}
         run: python3 scripts/development-field-s3.py --out "$RUNNER_TEMP/development-field"
-      - name: Publish specimen and S3 evidence before independent integrations
+      - name: Native S0 exact-source catalogue adoption and suite activation
+        if: ${{ !cancelled() && steps.dispatch.outcome == 'success' }}
+        run: python3 scripts/development-field-activation.py --out "$RUNNER_TEMP/development-field"
+      - name: Publish immutable specimen, executable and activation evidence
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
@@ -74,12 +77,11 @@ jobs:
             ${{ runner.temp }}/development-field/specimen/*.log
             tests/development-field/probe/Cargo.lock
           if-no-files-found: error
+      # Owner-native cargo test can rebuild executables with different features.
+      # Run it only after the checksummed-binary consumers have completed.
       - name: Execute nine native integrations normally excluded from owner unit lanes
         if: ${{ !cancelled() && steps.dispatch.outcome == 'success' }}
         run: python3 scripts/development-field-native-bridges.py --out "$RUNNER_TEMP/development-field"
-      - name: Native S0 exact-source catalogue adoption and suite activation
-        if: ${{ !cancelled() && steps.dispatch.outcome == 'success' }}
-        run: python3 scripts/development-field-activation.py --out "$RUNNER_TEMP/development-field"
       - name: Whole Development Field completion gate
         if: ${{ !cancelled() }}
         run: python3 scripts/development-field-whole-gate.py --out "$RUNNER_TEMP/development-field"

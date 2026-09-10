@@ -8,6 +8,11 @@ use central_connector_sdk::{ConnectorContext, ConnectorRegistry};
 use crate::{Result, roundtrip, write};
 
 pub fn bind(root: &Path, project: &Path, out: &Path, expected_project: &str) -> Result<Value> {
+    // Explicitly opt this fixture Project into AIKit before its Git base is
+    // committed. Mere cwd/ProjectCentral presence does not activate AIKit.
+    // This is the minimal native Project profile used in AIKit's own S3 tests.
+    fs::create_dir_all(project.join(".aikit"))?;
+    fs::write(project.join(".aikit/profile.toml"), "schema = 1\n")?;
     let before = inspect_project_development_field(project)?;
     assert_eq!(before.self_aperture.status, SelfApertureStatus::LegacyMigratableAbsence);
     let root_receipt = ensure_root_self(root)?;
@@ -18,8 +23,6 @@ pub fn bind(root: &Path, project: &Path, out: &Path, expected_project: &str) -> 
     let unbound = inspect_project_development_field(project)?;
     assert_eq!(unbound.self_aperture.unbound_sources.len(), 1);
     assert!(unbound.self_aperture.unbound_sources.iter().all(|s| !s.authority_from_location));
-    // A fixture declaration of source adoption, using Central's existing law.
-    // ProjectCentral/user is not an ordinary retained-native Project path.
     let adoption = apply_accepted_ground_relation(project, "ProjectCentral/user/intent.md",
         SourceProvenance::HumanAdopted, SourceStanding::AuthoredHumanPosition,
         SourceTreatment::ProjectcentralUser, vec!["self-description-source".into()])?;
