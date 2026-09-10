@@ -106,11 +106,20 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
   },[binding.ref]);
   const perform=async(run:()=>Promise<void>)=>{setPending(true);setError(undefined);try{await run();}catch(error){setError(String(error));}finally{setPending(false);}};
   const change=(content:string)=>{if(!draft)return;const next={...draft,content};setDraft(next);try{writeDraft(binding.ref!,next);}catch{setError("Typing remains open, but this device could not retain the draft. Keep this view open.");}};
+  // ⌘S reaches save() twice for one keystroke — TextEditor's CodeMirror
+  // `Mod-s` keymap AND the scroll pane's onKeyDown both call it. A second
+  // write launched with the same base revision would land as a conflict
+  // against the first write's own advance (visible on large files), so a
+  // save already in flight is never re-entered.
+  const savingRef=useRef(false);
   const save=()=>perform(async()=>{
-    if(!draft||!binding.location)return;
-    const result=await fileOperation<FileMutation>(transport,binding.location,{action:"write",expected_revision:draft.base_revision,content:draft.content});
-    if(result.outcome==="conflict"){setReading(result.current);setError("The file changed. Your draft is retained; compare the current file before applying it.");return;}
-    clearSavedDraft(binding.ref!,draft.content);held.current=undefined;await read(false);setHistory(undefined);setPreview(undefined);
+    if(savingRef.current||!draft||!binding.location)return;
+    savingRef.current=true;
+    try{
+      const result=await fileOperation<FileMutation>(transport,binding.location,{action:"write",expected_revision:draft.base_revision,content:draft.content});
+      if(result.outcome==="conflict"){setReading(result.current);setError("The file changed. Your draft is retained; compare the current file before applying it.");return;}
+      clearSavedDraft(binding.ref!,draft.content);held.current=undefined;await read(false);setHistory(undefined);setPreview(undefined);
+    }finally{savingRef.current=false;}
   });
   const loadHistory=(before?:number)=>perform(async()=>{const next=await fileOperation<FileHistory>(transport,binding.location!,{action:"history",limit:30,before});setHistory(previous=>before&&previous?{...next,entries:[...previous.entries,...next.entries]}:next);});
   const compare=(revision:string)=>perform(async()=>{setPreview(await fileOperation<FilePreview>(transport,binding.location!,{action:"recovery_preview",expected_revision:reading!.revision,revision}));});
