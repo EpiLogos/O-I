@@ -62,6 +62,7 @@ const SCENARIOS = {
   companions: { module: "scenarios/companions.mjs", kernel: false, aliases: ["round2"] },
   study: { module: "scenarios/study.mjs", kernel: false, aliases: ["ui-study"] },
   native: { module: "scenarios/native.mjs", kernel: false, aliases: ["package"] },
+  "document-entry": { module: "scenarios/document-entry.mjs", kernel: true, aliases: ["6a"] },
 };
 
 // ---------------------------------------------------------------------------
