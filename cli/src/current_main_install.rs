@@ -181,10 +181,16 @@ mod current_main_install_tests {
     }
 
     #[test]
-    fn actuation_uses_its_owner_native_source_entry_without_inventing_a_build() {
-        let spec = current_main_source_install("actuation").unwrap();
-        assert!(spec.build.is_empty());
-        assert_eq!(spec.executable_path, "bin/actuation");
+    fn native_source_installs_preserve_each_published_descriptor() {
+        let catalogue = oi_cli::product_command::product_command_catalogue().unwrap();
+        for product in catalogue.products {
+            assert_eq!(
+                current_main_source_install(&product.id).unwrap(),
+                product.source_install,
+                "{} must retain its owner's build and entry, regardless of language",
+                product.id
+            );
+        }
     }
 
     #[test]
