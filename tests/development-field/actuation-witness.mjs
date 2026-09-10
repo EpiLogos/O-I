@@ -1,4 +1,4 @@
-// Native Actuation witness for one explicit deterministic fixture; not live-model P.
+// Native deterministic fixture; no live-model, human Recognition or deployment claim.
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -6,7 +6,7 @@ import { pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 const [owner, inputPath, outputPath] = process.argv.slice(2);
-assert.ok(owner && inputPath && outputPath, 'owner, input and output paths are required');
+assert.ok(owner && inputPath && outputPath);
 const load = relative => import(pathToFileURL(resolve(owner, relative)).href);
 const { executeCommand } = await load('cli/actuation.mjs');
 const { AGENCY_CONTRACT_VERSION, validateReturn } = await load('contracts/agency.mjs');
@@ -59,9 +59,6 @@ assert.equal(agency.differentiated_binding.agency_ref, s.agencyRef);
 assert.equal(agency.differentiated_binding.world_ref, input.centralSource.world_ref);
 const noGrant = structuredClone(request); delete noGrant.metagency_grant;
 assert.throws(() => call(['agency', 'actualise'], noGrant));
-
-// Observe an actual deterministic child process in each prepared worktree. The
-// provider body changes; semantic Agent, Agency, WorldBinding and actuation do not.
 const processes = input.worktrees.map((cwd, index) => {
   const result = spawnSync(process.execPath, ['-e', "process.stdout.write(require('node:fs').readFileSync('implementation.txt','utf8'))"], {cwd, encoding: 'utf8'});
   assert.equal(result.status, 0, result.stderr);
@@ -125,6 +122,12 @@ const unknown = requestCorrelationReadModel('request:fixture:not-observed', {aut
 assert.equal(unknown.state, 'unknown-identity'); assert.equal(unknown.authority.resolution, 'none');
 const output = {schema: 'oi.development-field-actuation-witness/v1', standing: s.standing, agency, activity, returned,
   stream, realised, continuity, processes, unknown_request: unknown, direct_without_factory: direct};
-assert.deepEqual(JSON.parse(JSON.stringify(output)), output);
+// JSON has no undefined value. Compare the native wire form, not optional
+// JavaScript host-object properties that are intentionally omitted on the wire.
+const encoded = JSON.stringify(output);
+const decoded = JSON.parse(encoded);
+assert.equal(JSON.stringify(decoded), encoded);
+assert.deepEqual(validateReturn(decoded.returned), returned);
+assert.deepEqual(call(['activity'], decoded.activity), activity);
 writeFileSync(outputPath, JSON.stringify(output, null, 2) + '\n');
 console.log('Native Actuation fixture Agency/Activity/Return and material relocation verified; no live-model or human acceptance claim.');

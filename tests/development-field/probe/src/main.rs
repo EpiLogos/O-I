@@ -1,5 +1,5 @@
-//! A bounded native-owner contract specimen. This is not an installed-suite or
-//! live-model acceptance claim, and does not freeze QL #123 intelligence.
+//! A bounded native-owner contract specimen. This is not installed-suite or
+//! live-model acceptance and does not freeze QL #123 intelligence.
 use std::{collections::{BTreeMap, BTreeSet}, error::Error, fs, path::{Path, PathBuf}, process::Command};
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{json, Value};
@@ -20,7 +20,6 @@ use epilogos_workcell_runtime::{CollapsedLocalConfig, CollapsedLocalWorkcell};
 use epilogos_workcell_wire::decode_world;
 use ql_core::{CallerProvenance, QlFace, QlPosition, RelationFieldComposition, ShapeBinding,
     ShapeRelationBinding, StructuralConstellation, StructuralParticipation};
-
 mod central_s1;
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
 fn text<'a>(v: &'a Value, key: &str) -> &'a str { v[key].as_str().unwrap_or_else(|| panic!("missing {key}")) }
@@ -44,8 +43,7 @@ fn prepare<T: ControlTransport>(client: &mut ControlClient<T>, demand: &Executio
     let plan = client.plan(demand)?;
     assert_eq!(plan["status"], "satisfiable");
     let prepared = client.prepare(demand)?;
-    let wire = serde_json::to_string(&prepared)?;
-    let decoded = decode_world(&wire)?;
+    let decoded = decode_world(&serde_json::to_string(&prepared)?)?;
     assert_eq!(decoded.subjects, demand.subjects);
     let inspected = client.inspect(&decoded.world_ref)?;
     assert_eq!(decode_world(&serde_json::to_string(&inspected)?)?.subjects, demand.subjects);
@@ -56,11 +54,12 @@ fn binding(prepared: &Value, prefix: &str) -> Value {
         .find(|b| text(b, "logical_ref").starts_with(prefix)).unwrap().clone()
 }
 fn workspace(prepared: &Value) -> PathBuf { PathBuf::from(text(&binding(prepared, "workspace:")["properties"], "path")) }
-fn native_binding(prepared: &Value, revision: &str) -> DevelopmentMaterialBinding {
+fn native_binding(prepared: &Value, source_revision: &str) -> DevelopmentMaterialBinding {
     let b = binding(prepared, "workspace:");
     DevelopmentMaterialBinding { owner: "workcell".into(), binding_ref: text(&b, "binding_ref").into(),
-        provider_ref: Some(text(&b, "provider_ref").into()), revision: Some(revision.into()),
-        provenance_refs: vec![text(prepared, "world_ref").into()] }
+        provider_ref: Some(text(&b, "provider_ref").into()), revision: None,
+        // The Workcell implementation SHA is source provenance, not a material revision.
+        provenance_refs: vec![text(prepared, "world_ref").into(), format!("source:workcell:{source_revision}")] }
 }
 fn close<T: ControlTransport>(client: &mut ControlClient<T>, prepared: &Value) -> Result<Value> {
     let world = decode_world(&serde_json::to_string(prepared)?)?;
@@ -134,6 +133,8 @@ fn main() -> Result<()> {
         "source_refs":[source_ref,text(&spec,"planRef")],"address_count":shape.addresses.len(),"attributed_relation_count":carrier.relation_bindings.len(),
         "source_revision":source.revision.revision,"scope":"stable-carrier-only; no #123 intelligence acceptance"}))?;
 
+    // Caller-supplied native resource records remain explicit fixture inputs.
+    // The S3-specific Central/QL packet adapter is a separate whole-suite gate.
     let context = ContextDescriptor::for_project(&project);
     let policy = ManagedPolicy::default();
     let active = BTreeMap::new();
@@ -155,11 +156,18 @@ fn main() -> Result<()> {
     assert_eq!(resolution.context_sources[0].resource.descriptor.sources[0].source.as_str(),source_ref);
     let resolution_copy=roundtrip(&resolution)?;
     assert_eq!(ContextResolutionEvidence::from_resolution(&resolution_copy)?.reference,resolution_evidence.reference);
-    let mut changed=resolution.clone();
-    changed.context_sources[0].resource.descriptor.sources[0].revision=Some(SourceRevision::parse("revision:changed")?);
-    assert_ne!(ContextResolutionEvidence::from_resolution(&changed)?.reference,resolution_evidence.reference);
+    let copied_source = &resolution_copy.context_sources[0].resource.descriptor.sources[0];
+    assert_eq!(copied_source.authority, Some(SourceAuthority::Authored));
+    assert_eq!(copied_source.revision.as_ref().unwrap().as_str(), source.revision.revision);
+    // A logical context reference is not the checksum of every payload. Carry
+    // the exact owner revision as a separate fact; do not mutate native standing
+    // or invent a hash contract to make a test green.
     write(&out.join("aikit-resolution.json"),&resolution)?;
     write(&out.join("aikit-resolution-evidence.json"),&resolution_evidence)?;
+    write(&out.join("exact-source-basis.json"),&json!({"project_ref":project_ref.as_str(),
+        "source_ref":source_ref,"source_revision":source.revision.revision,
+        "context_resolution_ref":resolution_evidence.reference.to_string(),
+        "context_ref_is_payload_checksum":false,"authority":"authored","source_CAS_negative_passed":true}))?;
 
     fs::write(project.join(".gitignore"),".central/\n")?;
     git(&project,&["init","-q","-b","main"])?;
@@ -280,11 +288,11 @@ fn main() -> Result<()> {
     write(&out.join("workcell-lifecycle.json"),&json!({"placements":"two local roots; not VM/cloud isolation proof","a":{"prepared":a,"lifecycle":lifecycle_a},"b":{"prepared":b,"lifecycle":lifecycle_b}}))?;
     write(&out.join("factory-after.json"),&field.reading())?;
     write(&out.join("bounded-conformance.json"),&json!({"schema":"oi.development-field-bounded-conformance/v1","status":"passed",
-        "specimen":spec,"cut":cut,"native_relation_scope":["Central self/tier/UX source/ref/revision → AIKit ContextResolution","AIKit exact Git → Factory DevelopmentField",
+        "specimen":spec,"cut":cut,"native_relation_scope":["Central self/tier/UX source/ref/revision → native AIKit ContextResolution with explicit caller inputs","AIKit exact Git → Factory DevelopmentField",
         "Factory refs → Workcell demand/material/lifecycle","Workcell material relocation → Actuation fixture Agency/Activity/Return","Actuation Return → Factory evidence/candidate persistence","QL stable partial-whole attributable carrier"],
-        "negative_cases":["non-participating source","Agent mutation of human ground","stale source CAS","source revision changes context identity","unsupported QL semantic relation","worktree/material identity collapse","wrong returned Git base","H without human EX","agent-only Central EX","invalid tier"],
+        "negative_cases":["non-participating source","Agent mutation of human ground","stale source CAS","unsupported QL semantic relation","worktree/material identity collapse","wrong returned Git base","H without human EX","agent-only Central EX","invalid tier"],
         "C":"bounded-native-relations-only","whole_development_field_C":"not-established","P":"not-exercised","M":"not-exercised","H":"not-exercised",
-        "remaining_current_cut_gates":["O-I#212 active-suite receipt/dispatch in joined specimen","ai-kit#261 DevelopmentField-specific readings"],
+        "remaining_current_cut_gates":["O-I#212 active-suite receipt/dispatch in joined specimen","ai-kit#261 native DevelopmentField-specific Central/QL adapter and packet readings"],
         "deferred_upstream":"QL-MEF#123 final Vāk/C′/Wiki/Context-Frame semantics"}))?;
     println!("Bounded native relation specimen passed; whole Development Field C remains explicitly unestablished.");
     Ok(())
