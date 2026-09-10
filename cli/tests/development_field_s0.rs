@@ -38,11 +38,16 @@ const PRODUCTS: [(&str, &str, &str); 6] = [
 ];
 
 fn oi(config: &Path, data: &Path, path: &Path) -> Command {
+    let host_path = std::env::var_os("PATH").unwrap_or_default();
+    let fixture_path = std::env::join_paths(
+        std::iter::once(path.to_path_buf()).chain(std::env::split_paths(&host_path)),
+    )
+    .expect("fixture PATH must be representable");
     let mut command = Command::new(env!("CARGO_BIN_EXE_oi"));
     command
         .env("OI_HOME", config)
         .env("OI_DATA_HOME", data)
-        .env("PATH", path);
+        .env("PATH", fixture_path);
     command
 }
 
