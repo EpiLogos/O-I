@@ -17,6 +17,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(siteRoot, 'index.html'),
+        shell: resolve(siteRoot, 'shell.html'),
         oi: resolve(siteRoot, 'oi.html'),
         products: resolve(siteRoot, 'products.html'),
         sharedField: resolve(siteRoot, 'shared-field.html'),
