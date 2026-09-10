@@ -22,6 +22,7 @@ def main():
     central = read('specimen/central-s1.json')
     dispatch = read('source-dispatch.json')
     lock = read('dependency-lock.json')
+    bridges = read('native-bridges.json')
     activation = read('source-activation.json')
     lifecycle = read('suite-lifecycle.json')
     operative = read('specimen/aikit-development-field.json')
@@ -34,6 +35,8 @@ def main():
         remaining.append('The joined dependency lock is still a bootstrap candidate, not a committed reproducibility input.')
     if dispatch.get('status') != 'passed' or {p['owner']: p['revision'] for p in dispatch.get('products', [])} != {k:v for k,v in expected.items() if k != 'oi'}:
         remaining.append('Source-built six-product dispatch has not passed for the exact cut.')
+    if bridges.get('status') != 'passed' or bridges.get('cut_sha256') != cut_sha:
+        remaining.append('The nine explicit native deterministic integration tests have not all passed on this cut; see native-bridges.json.')
     if lifecycle.get('status') != 'passed' or lifecycle.get('cut_sha256') != cut_sha:
         remaining.append('S0 native exact-source activation, active-receipt dispatch and install/update/repair/rollback still need joined proof; source-activation.json records the actual attempt.')
     if operative.get('status') != 'passed' or operative.get('cut_sha256') != cut_sha:
@@ -41,10 +44,10 @@ def main():
     result = {'schema': 'oi.development-field-whole-conformance/v1', 'status': 'passed' if not remaining else 'incomplete',
         'cut_sha256': cut_sha, 'owners': expected,
         'bounded_specimen': probe.get('status', 'not-established'), 'S1': central.get('status', 'not-established'),
-        'source_dispatch': dispatch.get('status', 'not-established'), 'source_activation': activation.get('status', 'not-established'),
-        'deterministic_remaining': remaining,
+        'source_dispatch': dispatch.get('status', 'not-established'), 'native_bridges':bridges.get('status','not-established'),
+        'source_activation': activation.get('status', 'not-established'), 'deterministic_remaining': remaining,
         'blocked_on_QL_123': ['Final Vāk/C′/Wiki/Context-Frame conformance; not a prerequisite for the stable carrier proof above.'],
-        'physical_provider_human_only': ['Live model/provider P', 'owner-machine and supported VM/remote/cloud material M', 'real human EX and Recognition H'],
+        'physical_provider_human_only': ['Live model/provider P, including four native ACP/Pi acceptance cases', 'owner-machine and supported VM/remote/cloud material M', 'real human EX and Recognition H'],
         'P': 'not-exercised', 'M': 'not-exercised', 'H': 'not-exercised'}
     (out / 'whole-development-field.json').write_text(json.dumps(result, indent=2, sort_keys=True) + '\n')
     print(json.dumps(result, indent=2))
