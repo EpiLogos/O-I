@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""Exact-owner D evidence for the Development Field; never installed-suite or C/P/M/H proof.
-
-The cut is an evidence input, not a runtime selection catalogue. Commands come
-from the tested owner's lifecycle descriptor, never the historical suite manifest.
-"""
+"""Exact owner source-cut evidence. A test cut is not an installed-suite selector."""
 from __future__ import annotations
 import argparse
 import hashlib
@@ -13,21 +9,17 @@ from pathlib import Path
 import re
 import subprocess
 import sys
-import tarfile
 import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
 IDS = {"oi", "central", "actuation", "ai-kit", "software-factory", "workcell", "quaternal-logic"}
 
-
 def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
-
 
 def write(path: Path, value: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-
 
 def cut_owner(cut: Path, owner_id: str) -> dict:
     data = json.loads(cut.read_text())
@@ -41,19 +33,15 @@ def cut_owner(cut: Path, owner_id: str) -> dict:
             raise ValueError("invalid owner repository")
     return next(x for x in owners if x["id"] == owner_id)
 
-
 def capture(command: list[str], cwd: Path | None = None) -> str:
     return subprocess.check_output(command, cwd=cwd, text=True, stderr=subprocess.STDOUT).strip()
 
-
 def api(path: str) -> object:
     headers = {"Accept": "application/vnd.github+json", "User-Agent": "oi-development-field-ci"}
-    token = os.environ.get("GH_TOKEN")
-    if token:
-        headers["Authorization"] = f"Bearer {token}"
+    if os.environ.get("GH_TOKEN"):
+        headers["Authorization"] = "Bearer " + os.environ["GH_TOKEN"]
     with urllib.request.urlopen(urllib.request.Request("https://api.github.com/" + path, headers=headers), timeout=45) as response:
         return json.load(response)
-
 
 def prepare(args: argparse.Namespace, owner: dict) -> None:
     source, out = args.source.resolve(), args.out.resolve()
@@ -64,14 +52,13 @@ def prepare(args: argparse.Namespace, owner: dict) -> None:
         subprocess.run(command, cwd=source, check=True)
     actual = capture(["git", "rev-parse", "HEAD"], source)
     if actual != owner["revision"]:
-        raise ValueError("checkout does not match exact source cut")
+        raise ValueError("checkout differs from the exact source cut")
     remote_main = capture(["git", "ls-remote", "--exit-code", "origin", "refs/heads/main"], source).split()[0]
     out.mkdir(parents=True, exist_ok=True)
     context = {"schema": "oi.development-field-source/v1", "owner": owner, "head": actual,
                "tree": capture(["git", "rev-parse", "HEAD^{tree}"], source),
                "remote_main_at_observation": remote_main, "still_current_main": remote_main == actual,
-               "harness_revision": os.environ.get("GITHUB_SHA"), "cut_sha256": digest(args.cut),
-               "evidence_grades_claimed": []}
+               "harness_revision": os.environ.get("GITHUB_SHA"), "cut_sha256": digest(args.cut), "evidence_grades_claimed": []}
     try:
         track = api(f"repos/{owner['repository']}/issues/{owner['track']}")
         context["track"] = {key: track.get(key) for key in ("number", "title", "state", "updated_at", "html_url")}
@@ -87,63 +74,75 @@ def prepare(args: argparse.Namespace, owner: dict) -> None:
     except Exception as error:
         context["metadata_observation_error"] = str(error)
     write(out / "source.json", context)
-    paths = capture(["git", "ls-files"], source).splitlines()
-    write(out / "tracked-files.json", paths)
-    # Inspectable native source + workflow context. No .git, build output or credentials.
-    suffixes = {".rs", ".mjs", ".js", ".ts", ".py", ".toml", ".json", ".yml", ".yaml", ".sh", ".md", ".h", ".c", ".cpp", ".tsv", ".csv"}
-    with tarfile.open(out / "source-context.tar.gz", "w:gz") as archive:
-        for relative in paths:
-            path = source / relative
-            if path.is_file() and not path.is_symlink() and (path.suffix in suffixes or path.name in {"Cargo.lock", "Makefile", "verify"}):
-                archive.add(path, arcname=relative, recursive=False)
+    write(out / "tracked-files.json", capture(["git", "ls-files"], source).splitlines())
+    subprocess.run(["git", "archive", "--format=tar.gz", "--output", str(out / "source-context.tar.gz"), "HEAD"], cwd=source, check=True)
 
+def native_commands(source: Path, owner_id: str) -> tuple[list[list[str]], list[str]]:
+    if owner_id == "oi":
+        commands = [["cargo", "fmt", "--manifest-path", "cli/Cargo.toml", "--", "--check"],
+                    ["cargo", "check", "--manifest-path", "cli/Cargo.toml", "--all-targets", "--locked"],
+                    ["cargo", "clippy", "--manifest-path", "cli/Cargo.toml", "--all-targets", "--locked", "--", "-D", "warnings"],
+                    ["cargo", "test", "--manifest-path", "cli/Cargo.toml", "--all-targets", "--locked", "--no-fail-fast"],
+                    [sys.executable, "-m", "json.tool", "surfaces.json"]]
+        return commands, [".github/workflows/verify.yml"]
+    descriptor = json.loads((source / ".oi/product.json").read_text())
+    if descriptor.get("id") != owner_id:
+        raise ValueError("native descriptor identity differs from the selected owner")
+    command = descriptor.get("verify", {}).get("source_command")
+    if not isinstance(command, list) or not command or any(not isinstance(x, str) or not x for x in command):
+        raise ValueError("native descriptor has no valid source_command")
+    commands, authorities = [], [".oi/product.json"]
+    # Do not impose a new uniform lint regime. These are the owner's own gates.
+    if owner_id in {"software-factory", "workcell", "quaternal-logic"}:
+        commands.append(["cargo", "fmt", "--all", "--", "--check"])
+    if owner_id in {"ai-kit", "software-factory", "workcell", "quaternal-logic"}:
+        commands.append(["cargo", "clippy", "--workspace", "--all-targets", "--locked", "--", "-D", "warnings"])
+        authorities.append({"ai-kit": "scripts/verify", "software-factory": ".github/workflows/factory-rust.yml", "workcell": "scripts/verify.sh", "quaternal-logic": ".github/workflows/ql-mef-rust.yml"}[owner_id])
+    command = list(command)
+    if command[:2] == ["cargo", "test"] and "--no-fail-fast" not in command:
+        command.append("--no-fail-fast")
+    commands.append(command)
+    if owner_id in {"actuation", "workcell", "quaternal-logic"}:
+        commands.append(["bash", "scripts/verify-native-skills.sh"])
+        authorities.append(".github/workflows/native-skills.yml")
+    if owner_id == "actuation":
+        commands.append(["node", "--test", "ProjectCentral/tests/register.integrity.mjs"])
+        authorities.append(".github/workflows/native-cli.yml")
+    if owner_id == "software-factory":
+        for script in ["validate_agent_capability_intake.py", "validate_routine_continuation.py", "validate_self_hosting_commission.py", "validate_factory_skills.py"]:
+            commands.append([sys.executable, "scripts/" + script])
+            authorities.append("scripts/" + script)
+    return commands, authorities
 
 def native(args: argparse.Namespace, owner: dict) -> int:
     source, out = args.source.resolve(), args.out.resolve()
+    out.mkdir(parents=True, exist_ok=True)
     actual = capture(["git", "rev-parse", "HEAD"], source)
     if actual != owner["revision"]:
         raise ValueError("native gate refuses a different owner revision")
     record = {"schema": "oi.development-field-native-evidence/v1", "owner": owner, "head": actual,
               "harness_revision": os.environ.get("GITHUB_SHA"), "cut_sha256": digest(args.cut),
-              "status": "failed", "scope": "owner-lifecycle-source-command-and-rust-quality", "commands": [],
+              "status": "failed", "scope": "native-declared-source-tests-and-owner-required-quality", "commands": [],
               "D": "not-established", "C": "not-established", "P": "not-exercised", "M": "not-exercised", "H": "not-exercised"}
     try:
+        commands, authorities = native_commands(source, owner["id"])
+        record["command_authorities"] = [{"path": path, "sha256": digest(source / path)} for path in authorities]
+        if any(command[:2] in (["cargo", "fmt"], ["cargo", "clippy"]) for command in commands):
+            toolchain = capture(["rustup", "show", "active-toolchain"], source).split()[0]
+            components = ["clippy"] + (["rustfmt"] if any(c[:2] == ["cargo", "fmt"] for c in commands) else [])
+            subprocess.run(["rustup", "component", "add", "--toolchain", toolchain, *components], cwd=source, check=True)
         record["toolchain"] = {}
         for name, command in {"rust": ["rustc", "-Vv"], "cargo": ["cargo", "-V"], "node": ["node", "--version"], "python": [sys.executable, "--version"], "git": ["git", "--version"]}.items():
             try:
-                record["toolchain"][name] = capture(command)
+                record["toolchain"][name] = capture(command, source)
             except (OSError, subprocess.CalledProcessError) as error:
                 record["toolchain"][name] = str(error)
-        if owner["id"] == "oi":
-            commands = [["cargo", "fmt", "--manifest-path", "cli/Cargo.toml", "--", "--check"],
-                        ["cargo", "check", "--manifest-path", "cli/Cargo.toml", "--all-targets", "--locked"],
-                        ["cargo", "clippy", "--manifest-path", "cli/Cargo.toml", "--all-targets", "--locked", "--", "-D", "warnings"],
-                        ["cargo", "test", "--manifest-path", "cli/Cargo.toml", "--all-targets", "--locked"]]
-            record["command_authority"] = ".github/workflows/verify.yml (locked dependency resolution added)"
-            record["command_authority_sha256"] = digest(source / ".github/workflows/verify.yml")
-        else:
-            descriptor_path = source / ".oi/product.json"
-            descriptor = json.loads(descriptor_path.read_text())
-            if descriptor.get("id") != owner["id"]:
-                raise ValueError("native descriptor identity differs from selected owner")
-            command = descriptor.get("verify", {}).get("source_command")
-            if not isinstance(command, list) or not command or any(not isinstance(x, str) or not x for x in command):
-                raise ValueError("native lifecycle descriptor has no valid source_command")
-            commands = []
-            if (source / "Cargo.toml").is_file():
-                commands.extend([["cargo", "fmt", "--all", "--", "--check"],
-                                 ["cargo", "clippy", "--workspace", "--all-targets", "--locked", "--", "-D", "warnings"]])
-            commands.append(command)
-            record["command_authority"] = ".oi/product.json#verify.source_command"
-            record["command_authority_sha256"] = digest(descriptor_path)
         for index, command in enumerate(commands):
             log = out / f"native-{index:02d}.log"
             print("+ " + " ".join(command), flush=True)
             with log.open("w") as handle:
                 process = subprocess.run(command, cwd=source, stdout=handle, stderr=subprocess.STDOUT, check=False)
-            entry = {"argv": command, "exit_code": process.returncode, "log": log.name, "sha256": digest(log)}
-            record["commands"].append(entry)
-            # Keep all independent native findings; one failed command does not suppress the others.
+            record["commands"].append({"argv": command, "exit_code": process.returncode, "log": log.name, "sha256": digest(log)})
             print(log.read_text(errors="replace")[-16000:], flush=True)
         if all(x["exit_code"] == 0 for x in record["commands"]):
             record["status"], record["D"] = "passed", "passed-for-declared-scope"
@@ -154,7 +153,6 @@ def native(args: argparse.Namespace, owner: dict) -> int:
         return 1
     finally:
         write(out / "native.json", record)
-
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -169,7 +167,6 @@ def main() -> int:
         prepare(args, owner)
         return 0
     return native(args, owner)
-
 
 if __name__ == "__main__":
     sys.exit(main())

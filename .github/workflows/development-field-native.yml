@@ -43,6 +43,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Factory native validator dependency
+        if: matrix.owner == 'software-factory'
+        run: python3 -m pip install 'jsonschema==4.25.1'
       - name: Check out exact native owner and record live-main observation
         env:
           GH_TOKEN: ${{ github.token }}
