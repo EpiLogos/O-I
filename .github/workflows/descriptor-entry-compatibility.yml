@@ -2,15 +2,17 @@ name: Descriptor entry compatibility
 
 on:
   push:
-    branches: [main, "test/actuation58-descriptor-entries"]
+    branches: [main]
     paths:
       - "cli/**"
       - "surfaces.json"
+      - "scripts/test-desktop-suite-routing*.py"
       - ".github/workflows/descriptor-entry-compatibility.yml"
   pull_request:
     paths:
       - "cli/**"
       - "surfaces.json"
+      - "scripts/test-desktop-suite-routing*.py"
       - ".github/workflows/descriptor-entry-compatibility.yml"
 
 permissions:
@@ -47,6 +49,12 @@ jobs:
           path: evidence/
           retention-days: 14
           if-no-files-found: error
+      - name: Routing descriptor selection (fixtures only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 --version > evidence/python.txt
+          python3 scripts/test-desktop-suite-routing-descriptors.py -v 2>&1 | tee evidence/routing.log
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
@@ -54,7 +62,10 @@ jobs:
         with:
           workspaces: cli
       - name: Format
-        run: cargo fmt --manifest-path cli/Cargo.toml -- --check
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo fmt --manifest-path cli/Cargo.toml -- --check 2>&1 | tee evidence/format.log
       - name: Check and lint
         shell: bash
         run: |
