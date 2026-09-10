@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { ShellNav } from './ShellNav';
 import { HeroParallax } from './HeroParallax';
-import { CONTENT, PAGES } from './pages';
+import { VideoField } from './VideoField';
+import { PAGES, type Page, type Section } from './content';
 import './shell.css';
 
 function pageFromHash(): string {
@@ -11,76 +12,153 @@ function pageFromHash(): string {
   return hash && PAGES.some((page) => page.id === hash) ? hash : 'home';
 }
 
-function PageShell({ id, onNavigate }: { id: string; onNavigate: (id: string) => void }) {
-  const content = CONTENT[id];
-  const page = PAGES.find((entry) => entry.id === id)!;
-
-  return (
-    <div className="pg">
-      <ShellNav page={id} onNavigate={onNavigate} />
-      <main className="pg__body">
-        <div className="pg__eyebrow">
-          <span>{page.index}</span>
-          <span>{page.label}</span>
-        </div>
-
-        <h1 className="pg__title">{content.title}</h1>
-        <p className="pg__sub">{content.sub}</p>
-
-        {content.offices ? (
-          <ol className="pg__offices">
-            {content.offices.map(([name, office], index) => (
-              <li key={name}>
-                <span className="pg__offices-index">{String(index + 1).padStart(2, '0')}</span>
-                <span className="pg__offices-name">{name}</span>
-                <span className="pg__offices-office">{office}</span>
-              </li>
-            ))}
-          </ol>
-        ) : null}
-      </main>
-    </div>
-  );
-}
-
-function Home() {
-  return (
-    <div className="home">
-      <ShellNav page="home" onNavigate={navigateTo} />
-      <main>
-        <HeroParallax />
-        <section className="home-note">
-          <p>
-            A capable model is not yet a capable agent in a world.
-            <br />
-            O:I maps the field that makes it one.
-          </p>
-        </section>
-        <footer className="sf">
-          <span>O:I — World and Life</span>
-          <span>Objective : Internality</span>
-        </footer>
-      </main>
-    </div>
-  );
-}
-
 function navigateTo(id: string) {
   window.location.hash = id === 'home' ? '/' : `/${id}`;
 }
 
+const isUrl = (value: string) => /^https?:\/\//.test(value);
+
+function Prose({ text }: { text: string }) {
+  return (
+    <>
+      {text.split('\n\n').map((paragraph, index) => (
+        <p key={index}>{paragraph}</p>
+      ))}
+    </>
+  );
+}
+
+function SectionBody({ section }: { section: Section }) {
+  return (
+    <>
+      <div className="sec__eyebrow">{section.eyebrow}</div>
+      <h2 className="sec__title">{section.title}</h2>
+
+      {section.body ? (
+        <div className="sec__prose">
+          <Prose text={section.body} />
+        </div>
+      ) : null}
+
+      {section.items ? (
+        <ul className="sec__items">
+          {section.items.map((item, index) => (
+            <li key={index}>
+              <span className="sec__item-name">{item.name}</span>
+              {item.detail ? (
+                isUrl(item.detail) ? (
+                  <a
+                    className="sec__item-detail sec__item-detail--link"
+                    href={item.detail}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {item.detail.replace('https://github.com/', '')} ↗
+                  </a>
+                ) : (
+                  <span className="sec__item-detail">{item.detail}</span>
+                )
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </>
+  );
+}
+
+function SectionView({ section }: { section: Section }) {
+  if (section.media) {
+    return (
+      <section className="band">
+        <VideoField
+          media={section.media.media}
+          poster={section.media.poster ?? 1}
+          zoom={section.media.zoom ?? 1.3}
+          className="band__video"
+        />
+        <div className="band__shade" aria-hidden="true" />
+        <div className="band__inner">
+          <SectionBody section={section} />
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="sec">
+      <div className="sec__inner">
+        <SectionBody section={section} />
+      </div>
+    </section>
+  );
+}
+
+function Opening({ page }: { page: Page }) {
+  return (
+    <header className="opening">
+      <div className="opening__eyebrow">
+        <span>{page.index}</span>
+        <span>{page.label}</span>
+      </div>
+      <h1 className="opening__title">{page.intro.title}</h1>
+      {page.intro.body ? <p className="opening__body">{page.intro.body}</p> : null}
+    </header>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="sf">
+      <span>O:I — World and Life</span>
+      <span>Objective : Internality</span>
+    </footer>
+  );
+}
+
+function HomePage() {
+  const home = PAGES.find((page) => page.id === 'home')!;
+  return (
+    <main>
+      <HeroParallax />
+      {home.sections.map((section, index) => (
+        <SectionView key={index} section={section} />
+      ))}
+      <Footer />
+    </main>
+  );
+}
+
+function InteriorPage({ page }: { page: Page }) {
+  return (
+    <main>
+      <Opening page={page} />
+      {page.sections.map((section, index) => (
+        <SectionView key={index} section={section} />
+      ))}
+      <Footer />
+    </main>
+  );
+}
+
 export default function ShellApp() {
-  const [page, setPage] = useState<string>(pageFromHash);
+  const [pageId, setPageId] = useState<string>(pageFromHash);
 
   useEffect(() => {
     const onHash = () => {
-      setPage(pageFromHash());
+      setPageId(pageFromHash());
       window.scrollTo(0, 0);
     };
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
-  if (page === 'home') return <Home />;
-  return <PageShell id={page} onNavigate={navigateTo} />;
+  const page = PAGES.find((entry) => entry.id === pageId) ?? PAGES[0];
+
+  return (
+    <div className="shell">
+      <ShellNav page={page.id} onNavigate={navigateTo} />
+      {page.id === 'home' ? <HomePage /> : <InteriorPage page={page} />}
+    </div>
+  );
 }

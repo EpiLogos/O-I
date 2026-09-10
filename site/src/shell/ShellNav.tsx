@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { ShellMark } from './ShellMark';
-import { PAGES } from './pages';
+import { PAGES } from './content';
 
 type ShellNavProps = {
   page: string;

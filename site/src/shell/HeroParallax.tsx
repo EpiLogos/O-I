@@ -5,10 +5,12 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from '@studio-freight/lenis';
 import { ShellMark } from './ShellMark';
+import { VideoField } from './VideoField';
 
 /**
- * The original parallax hero, reworked: the point-cloud O:I field runs behind,
- * and the mark is drawn as an outline so the dots reveal through its body.
+ * The original parallax hero, rebuilt for the point-cloud field: a light video
+ * spills behind, the mark is drawn as thin black edges with a transparent body
+ * so the dots reveal through every element, and the title sits on a dark wipe.
  */
 export function HeroParallax() {
   const rootRef = useRef<HTMLElement>(null);
@@ -30,10 +32,10 @@ export function HeroParallax() {
       });
 
       const layers = [
-        { n: '1', out: 26 },
-        { n: '2', out: 17 },
-        { n: '3', out: 9 },
-        { n: '4', out: 3 },
+        { n: '1', out: 30 },
+        { n: '2', out: 20 },
+        { n: '3', out: 11 },
+        { n: '4', out: 5 },
       ];
 
       layers.forEach((layer, index) => {
@@ -51,7 +53,7 @@ export function HeroParallax() {
         root.querySelector('[data-pl-title]'),
         {
           keyframes: [
-            { yPercent: 18, opacity: 0.2 },
+            { yPercent: 24, opacity: 0.15 },
             { yPercent: 0, opacity: 1 },
           ],
           ease: 'none',
@@ -60,9 +62,9 @@ export function HeroParallax() {
       );
 
       timeline.fromTo(
-        root.querySelector('[data-pl-frame]'),
-        { scale: 1 },
-        { scale: 1.08, ease: 'none' },
+        root.querySelector('[data-pl-shade]'),
+        { scaleY: 0.4, opacity: 0.6 },
+        { scaleY: 1, opacity: 1, ease: 'none' },
         0,
       );
     }, root);
@@ -81,21 +83,9 @@ export function HeroParallax() {
   return (
     <section className="pl" ref={rootRef} aria-label="O:I opening statement">
       <div className="pl__sticky">
-        <div className="pl__frame" data-pl-frame>
-          <video
-            className="pl__video"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            poster="./media/motion/oi-pointcloud-poster-1.jpg"
-            aria-hidden="true"
-            tabIndex={-1}
-          >
-            <source src="./media/motion/oi-pointcloud-b.mp4" type="video/mp4" />
-          </video>
-        </div>
+        <VideoField media="b" poster={1} className="pl__video" zoom={1.35} />
+
+        <div className="pl__shade" data-pl-shade aria-hidden="true" />
 
         <div className="pl__inner">
           <div className="pl__mark" aria-hidden="true">
