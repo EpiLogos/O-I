@@ -1,4 +1,4 @@
-import {useLayoutEffect,useRef} from "react";
+import {useLayoutEffect,useRef,type ReactNode} from "react";
 import type {EncounterReading,EncounterStatus,PermissionDecision} from "./client";
 import {Glyph} from "../workspace/Glyph";
 import "./encounter.css";
@@ -7,7 +7,7 @@ import "./encounter.css";
  * "side"/"full" are the accompanying-agent-layer shapes, where the layer
  * renders its own header and plane nav (FND-02) and this view supplies only
  * the transcript + composer. */
-export function EncounterView({title,plane,onPlane,reading,status,draft,pending,error,providers,onProvider,onDraft,onSend,onCancel,onEarlier,onLatest,onPermission,presentation,concealed=false}:{title:string;plane:string;onPlane:(plane:"Conversation"|"Activity"|"Context"|"Inspect")=>void;reading?:EncounterReading;status?:EncounterStatus;draft:string;pending:boolean;error?:string;providers:{id:string;label:string}[];onProvider:(id:string)=>void;onDraft:(text:string)=>void;onSend:()=>void;onCancel:()=>void;onEarlier:()=>void;onLatest:()=>void;onPermission:(id:string,decision:PermissionDecision)=>void;presentation:"tab"|"side"|"full";concealed?:boolean}) {
+export function EncounterView({title,plane,onPlane,reading,status,draft,pending,error,providers,onProvider,onDraft,onSend,onCancel,onEarlier,onLatest,onPermission,presentation,concealed=false,addressed}:{title:string;plane:string;onPlane:(plane:"Conversation"|"Activity"|"Context"|"Inspect")=>void;reading?:EncounterReading;status?:EncounterStatus;draft:string;pending:boolean;error?:string;providers:{id:string;label:string}[];onProvider:(id:string)=>void;onDraft:(text:string)=>void;onSend:()=>void;onCancel:()=>void;onEarlier:()=>void;onLatest:()=>void;onPermission:(id:string,decision:PermissionDecision)=>void;presentation:"tab"|"side"|"full";concealed?:boolean;addressed?:ReactNode}) {
   const transcript=useRef<HTMLDivElement>(null);const following=useRef(true);
   const composerInput=useRef<HTMLTextAreaElement>(null);
   useLayoutEffect(()=>{const element=transcript.current;if(element&&following.current)element.scrollTop=element.scrollHeight;},[reading,plane]);
@@ -61,6 +61,7 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
           ? <button className="encounter-stop" disabled={pending||!allowed("cancel",status?.state!=="InterruptRequested")} title={action("cancel")?.reason??undefined} onClick={onCancel}>Stop</button>
           : <button className="encounter-send" disabled={!allowed("prompt",connected)||pending||!draft.trim()} title={action("prompt")?.reason??undefined} onClick={onSend}><Glyph name="arrow" size={13}/><span className="sr-only">Send</span></button>}
       </div>
+      {addressed}
     </div>}
   </section>;
 }

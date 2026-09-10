@@ -94,24 +94,39 @@ pub enum EncounterRequest {
     Cancel { agent_session:String, reason:Option<String> },
     Status { agent_session:String },
     Permission {agent_session:String,request_id:String,decision:PermissionDecision},
+    /// Explicit addressed machine turn. The payload, sender, audience and
+    /// participation basis are owner-validated at commit; a refusal carries the
+    /// owner's own code verbatim. The human draft buffer is never touched.
+    Send { agent_session:String, turn:AddressedTurn },
+    /// Read one addressed delivery's durable owner receipt.
+    Delivery { agent_session:String, delivery_ref:String },
+    /// Probe the resident owner dispatch service (never a provider effect).
+    Health,
 }
+/// Field names are the owner wire contract (`crates/aikit-cli/src/encounter_agency.rs`
+/// in the bound ai-kit revision); they are carried verbatim, never re-keyed.
+#[derive(Clone, Debug, serde::Deserialize, PartialEq, serde::Serialize)]
+pub struct AddressedPacket { pub text:String, pub source_refs:Vec<String>, pub audience:Vec<String> }
+#[derive(Clone, Debug, serde::Deserialize, PartialEq, serde::Serialize)]
+pub struct AddressedTurn { pub delivery_ref:String, pub sender:String, pub expected_binding_revision:String, pub packet:AddressedPacket }
 #[derive(Clone, Debug, serde::Deserialize, PartialEq, serde::Serialize)]
 #[serde(tag="outcome",rename_all="lowercase")]
 pub enum PermissionDecision {Selected {option_id:String},Cancelled}
 impl EncounterRequest {
-    fn session(&self)->Option<&str> {match self {
-        Self::Start|Self::Providers=>None,
-        Self::Permission{agent_session,..}|Self::View{agent_session,..}|Self::Open{agent_session,..}|Self::Read{agent_session,..}|Self::Draft{agent_session,..}|Self::Prompt{agent_session,..}|Self::Cancel{agent_session,..}|Self::Status{agent_session}=>Some(agent_session),
+    fn sessions(&self)->Vec<&str> {match self {
+        Self::Start|Self::Providers|Self::Health=>Vec::new(),
+        Self::Permission{agent_session,..}|Self::View{agent_session,..}|Self::Open{agent_session,..}|Self::Read{agent_session,..}|Self::Draft{agent_session,..}|Self::Prompt{agent_session,..}|Self::Cancel{agent_session,..}|Self::Status{agent_session}|Self::Send{agent_session,..}|Self::Delivery{agent_session,..}=>vec![agent_session],
     }}
 }
 impl Client {
     pub fn encounter(&self,cwd:&Path,project_ref:&str,request:&EncounterRequest)->Result<Value,String> {
-        if let Some(session)=request.session() {
+        let sessions=request.sessions();
+        if !sessions.is_empty() {
             let spaces=self.read_project(cwd,project_ref)?;
-            let authorized=spaces.as_array().is_some_and(|rows|rows.iter().any(|space| {
-                let attached=space["agent_sessions"].as_object().is_some_and(|sessions|sessions.contains_key(session));
+            let authorized=sessions.iter().all(|session|spaces.as_array().is_some_and(|rows|rows.iter().any(|space| {
+                let attached=space["agent_sessions"].as_object().is_some_and(|sessions|sessions.contains_key(*session));
                 attached && match request {EncounterRequest::Open{space:requested,..}=>space["definition"]["id"].as_str()==Some(requested),_=>true}
-            }));
+            })));
             if !authorized{return Err("Encounter is not attached to this native Project's SessionSpaces".into());}
         }
         let mut command=Command::new(&self.executable);
@@ -127,7 +142,16 @@ impl Client {
         let output=command.output().map_err(|error|format!("AIKit encounter owner unavailable: {error}"))?;
         if !output.status.success(){return Err(String::from_utf8_lossy(&output.stderr).trim().into());}
         let response:Value=serde_json::from_slice(&output.stdout).map_err(|error|format!("Unreadable AIKit encounter response: {error}"))?;
-        if response["ok"]!=true{return Err(response["error"]["message"].as_str().unwrap_or("Native encounter operation failed").into());}
+        if response["ok"]!=true{
+            // The owner's own code travels with its message: addressed-dispatch
+            // refusals (`encounter.disclosure_denied`, `encounter.binding_changed`,
+            // …) are distinct facts, not one grey failure.
+            let message=response["error"]["message"].as_str().unwrap_or("Native encounter operation failed");
+            return match response["error"]["code"].as_str() {
+                Some(code)=>Err(format!("{message} [{code}]")),
+                None=>Err(message.into()),
+            };
+        }
         Ok(response["data"].clone())
     }
 }

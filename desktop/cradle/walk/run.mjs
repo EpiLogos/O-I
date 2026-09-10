@@ -47,6 +47,7 @@ const SCENARIOS = {
   permission: {module:"scenarios/permission.mjs",kernel:true,aliases:[]},
   encounter: {module:"scenarios/encounter.mjs",kernel:true,aliases:[]},
   "context-draft": {module:"scenarios/context-draft.mjs",kernel:true,aliases:[]},
+  "select-send": {module:"scenarios/select-send.mjs",kernel:true,aliases:["6b"]},
   "file-edit": {module:"scenarios/file-edit.mjs",kernel:true,aliases:[]},
   files: { module: "scenarios/files.mjs", kernel: true, aliases: [] },
   "rendering-quality": {module:"scenarios/rendering-quality.mjs",kernel:true,aliases:[]},

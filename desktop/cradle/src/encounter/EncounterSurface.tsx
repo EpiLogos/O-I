@@ -1,7 +1,8 @@
 import {useEffect,useRef,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import type {SurfaceBinding} from "../surface/types";
-import {encounter,type Draft,type EncounterReading,type EncounterStatus,type PermissionDecision} from "./client";
+import {encounter,mintDeliveryRef,type AddressedTurn,type DeliveryRecord,type Draft,type EncounterReading,type EncounterStatus,type PermissionDecision,type SendReceipt} from "./client";
+import {AddressedComposer,ACTIVE_PHASES,type AddressedFields,type DispatchState,type DeliveryHistoryEntry} from "./AddressedComposer";
 import {EncounterView} from "./EncounterView";
 export interface EncounterExpressionReading {state?:string;pending:boolean;completed?:number;inputRevision?:number}
 /** Ephemeral input buffering only. Every accepted edit and message is AIKit-owned. */
@@ -67,5 +68,40 @@ export function EncounterSurface({binding,onView,presentation="tab",onExpression
  };
  const recover=async()=>{try{const next=await read();canonical.current=next.draft;failed.current=false;dirty.current=input.current!==next.draft.text;setError(undefined);await save();}catch(error){setError(String(error));}};
  const permission=async(request_id:string,decision:PermissionDecision)=>{if(!allowed("permission"))return;setPending(true);setError(undefined);try{await call({action:"permission",agent_session:binding.ref!,request_id,decision});const next=await read();setReading(next);setStatus(next.connection);}catch(error){setError(String(error));}finally{setPending(false);}};
- return <><EncounterView concealed={concealed} presentation={presentation} plane={binding.view?.encounterPlane??"Conversation"} onPlane={encounterPlane=>onView({encounterPlane})} title={binding.title} onPermission={(id,decision)=>void permission(id,decision)} reading={reading} status={status} draft={draft} pending={pending||dirty.current||saving.current||sending.current||failed.current} error={error} providers={providers} onProvider={provider=>void connect(provider)} onDraft={change} onSend={()=>void send()} onCancel={()=>{if(!allowed("cancel"))return;void call({action:"cancel",agent_session:binding.ref!,reason:"User stopped the encounter"}).catch(error=>setError(String(error)));}} onEarlier={()=>setBefore(reading?.blocks[0]?.id)} onLatest={()=>setBefore(undefined)}/>{failed.current&&!concealed&&<button onClick={()=>void recover()}>Apply my typing to the current shared draft</button>}</>;
+ // --- Addressed dispatch (6B): explicit machine turns, never the human draft. ---
+ const alive=useRef(true);useEffect(()=>()=>{alive.current=false;},[]);
+ const [dispatch,setDispatch]=useState<DispatchState>({kind:"idle"});
+ const [addressedHistory,setAddressedHistory]=useState<DeliveryHistoryEntry[]>([]);
+ const [service,setService]=useState<{running:boolean;pid?:number;detail?:string}>();
+ const probe=async()=>{try{const health=await call<{protocol:string;pid:number}>({action:"health"});if(alive.current)setService({running:true,pid:health.pid});}catch(error){if(alive.current)setService({running:false,detail:String(error)});}};
+ useEffect(()=>{void probe();},[binding.ref,binding.project]);
+ const track=async(ref:string)=>{
+  const deadline=Date.now()+20000;
+  while(alive.current&&Date.now()<deadline){
+   await new Promise(resolve=>setTimeout(resolve,900));
+   if(!alive.current||document.visibilityState!=="visible")continue;
+   let record:DeliveryRecord|undefined;
+   try{record=await call<DeliveryRecord>({action:"delivery",agent_session:binding.ref!,delivery_ref:ref});}catch{continue;}
+   if(!record||!alive.current)return;
+   setDispatch({kind:"running",ref,phase:record.phase});
+   if(!ACTIVE_PHASES.includes(record.phase)){setDispatch({kind:"settled",ref,record,duplicate:false});setAddressedHistory(history=>[{ref,record,duplicate:false},...history]);return;}
+  }
+ };
+ const sendAddressed=async(turn:AddressedTurn,_fields:AddressedFields)=>{
+  const ref=mintDeliveryRef();
+  setDispatch({kind:"running",ref,phase:"preparing"});
+  try{
+   const receipt=await call<SendReceipt>({action:"send",agent_session:binding.ref!,turn:{...turn,delivery_ref:ref}});
+   const record=receipt.delivery;
+   if(receipt.duplicate||!ACTIVE_PHASES.includes(record.phase)){
+    if(alive.current){setDispatch({kind:"settled",ref,record,duplicate:receipt.duplicate});setAddressedHistory(history=>[{ref,record,duplicate:receipt.duplicate},...history]);}
+    return;
+   }
+   setDispatch({kind:"running",ref,phase:record.phase});
+   await track(ref);
+  }catch(error){if(alive.current){setDispatch({kind:"refused",ref,error:String(error)});void probe();}}
+ };
+ return <><EncounterView concealed={concealed} presentation={presentation} plane={binding.view?.encounterPlane??"Conversation"} onPlane={encounterPlane=>onView({encounterPlane})} title={binding.title} onPermission={(id,decision)=>void permission(id,decision)} reading={reading} status={status} draft={draft} pending={pending||dirty.current||saving.current||sending.current||failed.current} error={error} providers={providers} onProvider={provider=>void connect(provider)} onDraft={change} onSend={()=>void send()} onCancel={()=>{if(!allowed("cancel"))return;void call({action:"cancel",agent_session:binding.ref!,reason:"User stopped the encounter"}).catch(error=>setError(String(error)));}} onEarlier={()=>setBefore(reading?.blocks[0]?.id)} onLatest={()=>setBefore(undefined)}
+  addressed={<AddressedComposer disabled={status?.state==="Disconnected"} dispatch={dispatch} history={addressedHistory} service={service} onSend={(turn,fields)=>void sendAddressed(turn,fields)}/>}
+ />{failed.current&&!concealed&&<button onClick={()=>void recover()}>Apply my typing to the current shared draft</button>}</>;
 }
