@@ -269,10 +269,7 @@ pub fn plan_transition(
     })
 }
 
-pub fn validate_protocol_envelope(
-    protocol_min: &str,
-    protocol_max: &str,
-) -> Result<(), String> {
+pub fn validate_protocol_envelope(protocol_min: &str, protocol_max: &str) -> Result<(), String> {
     let range = ProtocolRange {
         protocol_min: protocol_min.to_owned(),
         protocol_max: protocol_max.to_owned(),
@@ -312,7 +309,9 @@ fn validate_sha256(id: &str, digest: &str) -> Result<(), String> {
 
 fn validate_digest(label: &str, digest: &str) -> Result<(), String> {
     if digest.len() != 64 || !digest.bytes().all(|byte| byte.is_ascii_hexdigit()) {
-        return Err(format!("{label} must be a 64-character hexadecimal SHA-256"));
+        return Err(format!(
+            "{label} must be a 64-character hexadecimal SHA-256"
+        ));
     }
     Ok(())
 }
@@ -393,7 +392,10 @@ mod tests {
     fn candidate_requires_exact_native_sixfold() {
         let mut value = candidate();
         value.products.remove("workcell");
-        assert!(value.validate().unwrap_err().contains("exactly the six native owners"));
+        assert!(value
+            .validate()
+            .unwrap_err()
+            .contains("exactly the six native owners"));
     }
 
     #[test]
