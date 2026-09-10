@@ -2,16 +2,16 @@ name: Development Field native-owner conformance
 on:
   push:
     branches: [main]
-    paths: ['tests/development-field/**', 'scripts/development-field-*.py', '.github/workflows/development-field-conformance.yml']
+    paths: ['tests/development-field/**', 'scripts/development-field-*.py', '.github/workflows/development-field-conformance.yml', '.github/workflows/development-field-native.yml']
   pull_request:
-    paths: ['tests/development-field/**', 'scripts/development-field-*.py', '.github/workflows/development-field-conformance.yml']
+    paths: ['tests/development-field/**', 'scripts/development-field-*.py', '.github/workflows/development-field-conformance.yml', '.github/workflows/development-field-native.yml']
   workflow_dispatch:
 permissions:
   contents: read
   actions: read
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 env:
   CARGO_INCREMENTAL: '0'
   CARGO_TERM_COLOR: never
@@ -21,11 +21,16 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+      - name: Check CI dependencies and coverage before compiling owners
+        run: |
+          python3 -m pip install --disable-pip-version-check 'PyYAML==6.0.2'
+          python3 -m unittest discover -s tests/development-field -p test_ci_execution.py -v
       - uses: dtolnay/rust-toolchain@stable
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
       - name: One exact source cut for every participating owner
+        id: prepare
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 scripts/development-field-conformance.py prepare --out "$RUNNER_TEMP/development-field"
@@ -50,24 +55,27 @@ jobs:
           export DF_CUT_SHA256="$(sha256sum tests/development-field/cut.json | cut -d' ' -f1)"
           cargo test --manifest-path tests/development-field/probe/Cargo.toml --locked --test source_snapshot -- --nocapture 2>&1 | tee "$RUNNER_TEMP/development-field/source-snapshot.log"
       - name: Bounded Central → QL carrier → AIKit → Workcell → Actuation → Factory specimen
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
         id: probe
         run: python3 scripts/development-field-conformance.py probe --out "$RUNNER_TEMP/development-field"
       - name: Exact source-built six-product O:I dispatch with poisoned PATH
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
         id: dispatch
         run: python3 scripts/development-field-conformance.py dispatch --out "$RUNNER_TEMP/development-field"
       - name: Accepted S3 same-specimen native Central, QL carrier, packet and CLI parity
         if: ${{ !cancelled() && steps.dispatch.outcome == 'success' && steps.probe.outcome == 'success' }}
+        id: s3
         run: python3 scripts/development-field-s3.py --out "$RUNNER_TEMP/development-field"
       - name: Native S0 exact-source catalogue adoption and suite activation
         if: ${{ !cancelled() && steps.dispatch.outcome == 'success' }}
+        id: activation
         run: python3 scripts/development-field-activation.py --out "$RUNNER_TEMP/development-field"
       - name: Native S0 whole-suite lifecycle (repair and rollback)
-        if: ${{ !cancelled() && steps.dispatch.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.activation.outcome == 'success' }}
+        id: lifecycle
         run: python3 scripts/development-field-lifecycle.py --out "$RUNNER_TEMP/development-field"
       - name: Publish immutable specimen, executable and activation evidence
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
         uses: actions/upload-artifact@v4
         with:
           name: development-field-probe-${{ github.run_id }}
@@ -80,16 +88,24 @@ jobs:
             ${{ runner.temp }}/development-field/specimen/*.log
             tests/development-field/probe/Cargo.lock
           if-no-files-found: error
-      # Owner-native cargo test can rebuild executables with different features.
-      # Run it only after the checksummed-binary consumers have completed.
+      # These integrations need dispatch, not activation: retain independent
+      # diagnostics. Run after immutable consumers because Cargo can rebuild
+      # the owner executable with a different feature set.
       - name: Execute nine native integrations normally excluded from owner unit lanes
         if: ${{ !cancelled() && steps.dispatch.outcome == 'success' }}
+        id: bridges
         run: python3 scripts/development-field-native-bridges.py --out "$RUNNER_TEMP/development-field"
       - name: Whole Development Field completion gate
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
+        id: whole_gate
         run: python3 scripts/development-field-whole-gate.py --out "$RUNNER_TEMP/development-field"
+      - name: Explain actual failure versus blocked downstream proof
+        if: ${{ !cancelled() }}
+        env:
+          DF_STEPS_JSON: ${{ toJSON(steps) }}
+        run: python3 scripts/development-field-ci-status.py --out "$RUNNER_TEMP/development-field"
       - name: Preserve complete evidence even on failure
-        if: always()
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: development-field-conformance-${{ github.run_id }}
