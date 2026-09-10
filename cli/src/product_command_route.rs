@@ -1,4 +1,7 @@
 fn product_command_route(args: &[OsString]) -> Option<Result<i32, String>> {
+    if let Some(result) = development_field_hardened_route(args) {
+        return Some(result);
+    }
     if let Some(result) = development_field_route(args) {
         return Some(result);
     }
@@ -159,9 +162,7 @@ fn dispatch_session_space(args: &[OsString]) -> Result<i32, String> {
             env::var_os("OI_AIKIT_BIN")
                 .filter(|v| !v.is_empty())
                 .map(PathBuf::from)
-                .or_else(|| {
-                    active_suite_executable("ai-kit").ok().flatten()
-                })
+                .or_else(|| active_suite_executable("ai-kit").ok().flatten())
                 .or_else(|| {
                     composition
                         .modules
