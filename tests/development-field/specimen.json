@@ -1,0 +1,19 @@
+{
+  "schema": "oi.development-field-specimen/v1",
+  "standing": "deterministic-fixture-not-human-acceptance",
+  "fieldRef": "development-field:fixture:portable-cut",
+  "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FAW",
+  "journeyRef": "journey:01ARZ3NDEKTSV4RRFFQ69G5FAX",
+  "workflowUnitRef": "workflow-unit:01ARZ3NDEKTSV4RRFFQ69G5FAY",
+  "commissionRef": "commission:fixture:portable-cut",
+  "planRef": "plan:fixture:portable-cut",
+  "agentRef": "agent:fixture:developer",
+  "agencyRef": "agency:fixture:developer",
+  "agentSessionRef": "agent-session:fixture:developer",
+  "actuationRef": "actuation:fixture:implementation",
+  "activityRef": "activity:fixture:implementation",
+  "returnRef": "return:fixture:implementation",
+  "requiredDifference": "Preserve authored source, exact Git basis and returned evidence through material relocation.",
+  "authoredText": "# Fixture development intent\n\nImplement the word preserved in implementation.txt. Keep this source unchanged. Return the exact base and result revisions. A Candidate is not human Recognition.\n"
+}

@@ -3,8 +3,8 @@
   "standing": "deterministic-source-cut-not-installed-suite",
   "ql_scope": "stable-carrier-only; QL-MEF#123 intelligence conformance deferred",
   "owners": [
-    {"id":"oi","repository":"EpiLogos/O-I","revision":"19013dbe27dc410a758bede48fdfe53838410167","track":212},
-    {"id":"central","repository":"EpiLogos/Central","revision":"f23cdd4a682fecc93274d48a66339b7a8551dbdd","track":136},
+    {"id":"oi","repository":"EpiLogos/O-I","revision":"7b3a9f4a652ac4992a69666e5be29524e0aef05d","track":212},
+    {"id":"central","repository":"EpiLogos/Central","revision":"e4b5f06bbdf4c05377fe23373e28e3c6438e1ec3","track":136},
     {"id":"actuation","repository":"EpiLogos/Actuation","revision":"1c862c6bf58478adf6842a090214906dd2337001","track":53},
     {"id":"ai-kit","repository":"EpiLogos/ai-kit","revision":"897b8f4e693b52f58d28a6f58071f9edccd38f3b","track":261},
     {"id":"software-factory","repository":"EpiLogos/Factory","repository_alias":"EpiLogos/agent-system-design","revision":"366a6b2bf18ba23053601f5d5eb543b79bfcfb27","track":215},

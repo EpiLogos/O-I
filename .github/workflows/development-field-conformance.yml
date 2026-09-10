@@ -1,0 +1,66 @@
+name: Development Field native-owner conformance
+on:
+  push:
+    branches: [main, 'ci/development-field-dc-cut']
+    paths: ['tests/development-field/**', 'scripts/development-field-*.py', '.github/workflows/development-field-conformance.yml']
+  pull_request:
+    paths: ['tests/development-field/**', 'scripts/development-field-*.py', '.github/workflows/development-field-conformance.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+env:
+  CARGO_INCREMENTAL: '0'
+  CARGO_TERM_COLOR: never
+jobs:
+  conformance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: One exact source cut for every participating owner
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/development-field-conformance.py prepare --out "$RUNNER_TEMP/development-field"
+      - name: Publish exact owner source context
+        uses: actions/upload-artifact@v4
+        with:
+          name: development-field-joined-source-${{ github.sha }}
+          path: ${{ runner.temp }}/development-field/source
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          shared-key: development-field-conformance
+          workspaces: |
+            tests/development-field/probe
+            .development-field-owners/oi/cli
+            .development-field-owners/central
+            .development-field-owners/ai-kit
+            .development-field-owners/software-factory
+            .development-field-owners/workcell
+            .development-field-owners/quaternal-logic
+      - name: Bounded Central → QL carrier → AIKit → Workcell → Actuation → Factory specimen
+        id: probe
+        run: python3 scripts/development-field-conformance.py probe --bootstrap-lock --out "$RUNNER_TEMP/development-field"
+      - name: Exact source-built six-product O:I dispatch with poisoned PATH
+        if: ${{ !cancelled() }}
+        id: dispatch
+        run: python3 scripts/development-field-conformance.py dispatch --out "$RUNNER_TEMP/development-field"
+      - name: Whole Development Field completion gate
+        if: ${{ !cancelled() }}
+        run: python3 scripts/development-field-conformance.py whole-gate --out "$RUNNER_TEMP/development-field"
+      - name: Preserve complete evidence and dependency lock even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: development-field-conformance-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/development-field
+            tests/development-field/probe/Cargo.lock
+          if-no-files-found: error
