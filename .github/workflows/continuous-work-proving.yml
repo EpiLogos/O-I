@@ -41,7 +41,7 @@ jobs:
           PYTHONDONTWRITEBYTECODE: "1"
         run: |
           set +e
-          python3 scripts/caw_campaign.py run --output "$RUNNER_TEMP/caw-missing"
+          python3 scripts/caw_local.py --output "$RUNNER_TEMP/caw-missing"
           code=$?
           set -e
           test "$code" -eq 2
@@ -52,6 +52,7 @@ jobs:
           assert len(report['acceptance']['cases'])==28
           assert report['acceptance']['whole_feature_verdict'] is None
           assert not report['commands']
+          assert len(report['children'])==2
           PY
           echo '### Whole P01–P28 acceptance: **PENDING**, not green' >> "$GITHUB_STEP_SUMMARY"
           echo 'This job tests fail-closed machinery, not the end-to-end feature.' >> "$GITHUB_STEP_SUMMARY"
@@ -111,32 +112,22 @@ jobs:
             --entry aikit "$RUNNER_TEMP/caw-aikit/target/debug/aikit" "$RUNNER_TEMP/caw-aikit" \
             --entry factory "$RUNNER_TEMP/caw-factory/target/debug/factory" "$RUNNER_TEMP/caw-factory" \
             --output "$RUNNER_TEMP/caw-bindings.json"
-      - name: Actual coding/verifier apply, disconnection and reconnection
+      - name: Execute both native campaigns independently
         run: |
           set +e
-          python3 scripts/caw_native_profiles.py --bindings "$RUNNER_TEMP/caw-bindings.json" --output "$RUNNER_TEMP/caw-profiles"
+          python3 scripts/caw_local.py --bindings "$RUNNER_TEMP/caw-bindings.json" --output "$RUNNER_TEMP/caw-run"
           code=$?
           set -e
-          test "$code" -eq 2
-          python3 - "$RUNNER_TEMP/caw-profiles/report.json" <<'PY'
+          python3 - "$RUNNER_TEMP/caw-run/report.json" "$code" <<'PY'
           import json, sys
           r=json.load(open(sys.argv[1]))
+          # Controlled diagnostics only; exports below never contain raw outputs.
+          print(json.dumps(r['observations'], indent=2))
+          assert len(r['children'])==2, 'one owner failure must not suppress another campaign'
           for role in ('coding','verifier'):
-              assert any(o.get('id')==f'native-{role}-profile' and o.get('standing')=='observed' and o.get('grade')=='C' and o.get('disconnected')=='detected' and o.get('record_ids') for o in r['observations']), r['observations']
-          assert r['acceptance']['standing']=='pending'
-          assert r['acceptance']['whole_feature_verdict'] is None
-          PY
-      - name: Native Factory producer/public-readback disconnection canary
-        run: |
-          set +e
-          python3 scripts/caw_campaign.py run --bindings "$RUNNER_TEMP/caw-bindings.json" --output "$RUNNER_TEMP/caw-native"
-          code=$?
-          set -e
-          test "$code" -eq 2
-          python3 - "$RUNNER_TEMP/caw-native/report.json" <<'PY'
-          import json, sys
-          r=json.load(open(sys.argv[1]))
-          assert any(o.get('id')=='factory-commission-publication' and o.get('standing')=='observed' and o.get('disconnected')=='detected' and o.get('record_ids') for o in r['observations']), r['observations']
+              assert any(o.get('id')==f'native-{role}-profile' and o.get('standing')=='observed' and o.get('grade')=='C' and o.get('disconnected')=='detected' and o.get('record_ids') for o in r['observations']), f'{role} native profile delivery was not observed'
+          assert any(o.get('id')=='factory-commission-publication' and o.get('standing')=='observed' and o.get('disconnected')=='detected' and o.get('record_ids') for o in r['observations']), 'native Factory publication was not observed'
+          assert int(sys.argv[2])==2
           assert r['acceptance']['standing']=='pending'
           assert r['acceptance']['whole_feature_verdict'] is None
           PY
@@ -144,11 +135,9 @@ jobs:
         if: always()
         run: |
           mkdir -p "$RUNNER_TEMP/caw-public"
-          for name in profiles native; do
-            if test -f "$RUNNER_TEMP/caw-$name/report.json"; then
-              python3 scripts/caw_campaign.py export --evidence "$RUNNER_TEMP/caw-$name" --output "$RUNNER_TEMP/caw-public/$name.json"
-            fi
-          done
+          if test -f "$RUNNER_TEMP/caw-run/report.json"; then
+            python3 scripts/caw_campaign.py export --evidence "$RUNNER_TEMP/caw-run" --output "$RUNNER_TEMP/caw-public/campaign.json"
+          fi
           echo '### P01–P28 whole feature: **PENDING**' >> "$GITHUB_STEP_SUMMARY"
           echo 'Native profile and Commission observations are bounded. No live harness, provider, personal migration, second placement or human acceptance is inferred.' >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4

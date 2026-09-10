@@ -15,7 +15,7 @@ import uuid
 import caw_campaign as c
 
 
-def generated_bodies(root: Path, generation: str) -> list[tuple[str, str]]:
+def generated_bodies(root: Path, generation: str, context: str | None = None) -> list[tuple[str, str]]:
     """Follow only a real native current pointer matching apply's generation.
 
     AIKit owns this public layout: generation_format/generation_id in
@@ -33,6 +33,8 @@ def generated_bodies(root: Path, generation: str) -> list[tuple[str, str]]:
                 raise c.Failure("native current generation escaped the controlled World")
             metadata = c.load(current / "metadata.json")
             if metadata.get("generation_id") != generation:
+                continue
+            if context is not None and metadata.get("context_id") != context:
                 continue
             if metadata.get("generation_format", 0) < 1:
                 raise c.Failure("native current target is not a committed generation")
@@ -85,7 +87,10 @@ def prove_role(role: str, recorder: c.Recorder) -> list[dict]:
         (native_bin / name).symlink_to(recorder.bind(owner))
     env = {"HOME": str(home), "XDG_CONFIG_HOME": str(home / ".config"),
            "XDG_DATA_HOME": str(home / ".local/share"), "XDG_STATE_HOME": str(home / ".local/state"),
-           "PATH": f"{native_bin}:/usr/bin:/bin", "LANG": "C.UTF-8", "TZ": "UTC"}
+           "PATH": f"{native_bin}:/usr/bin:/bin", "LANG": "C.UTF-8", "TZ": "UTC",
+           # Native declared context input; each CLI otherwise generates a new
+           # context. One profile campaign must observe its own current pointer.
+           "AIKIT_CONTEXT_ID": f"ctx_caw_{uuid.uuid4().hex}"}
     ground = world / "Central"  # native Central init, not a handcrafted mock ground
 
     def run(owner: str, args: list[str], cwd: Path, label: str) -> bytes:
@@ -115,15 +120,24 @@ def prove_role(role: str, recorder: c.Recorder) -> list[dict]:
         data = json.loads(run("aikit", ["--json", "apply"], ground, phase))
         if data.get("ok") is not True or not data.get("data", {}).get("generation"):
             raise c.Failure("AIKit apply did not publish a native generation")
-        bodies = generated_bodies(world, data["data"]["generation"])
-        if enabled != bool(bodies):
-            raise c.Failure("profile-to-current-projection connection failed or disconnection still exposes governance")
+        bodies = generated_bodies(world, data["data"]["generation"], env["AIKIT_CONTEXT_ID"])
         c.store(recorder.output / f"{role}-{phase}.json", {
             "schema": "oi.caw-profile-readback/v1", "role": role, "phase": phase,
             "native_generation": data["data"]["generation"], "profile_sha256": c.sha(profile.read_bytes()),
             "current_bodies": [{"relative_path": p, "sha256": digest} for p, digest in bodies],
             "source_sha256": c.GOVERNANCE_SHA, "scope": "controlled-applied-profile-not-harness-loaded",
+            "expected_present": enabled, "actual_bodies": len(bodies),
+            "native_context": env["AIKIT_CONTEXT_ID"],
         })
+        if enabled != bool(bodies):
+            # Native diagnostic is retained privately, never exported as proof.
+            # These are fresh controlled Worlds, not personal source or secrets.
+            code, explanation = recorder.execute("aikit", ["--json", "explain", capsule],
+                                                 ground, env, f"{role}:{phase}:diagnostic")
+            diagnostic = explanation.decode("utf-8", "replace").replace(str(world), "$WORLD")[:3000]
+            raise c.Failure(
+                f"{role}/{phase}: expected governance present={enabled}, actual bodies={len(bodies)}; "
+                f"native explanation exit={code}: {diagnostic}")
     # Restart is intrinsic: every owner operation above is a fresh native process.
     return [{"id": f"native-{role}-profile", "case": "P01", "obligation": f"{role}-profile-loading",
              "standing": "observed", "grade": grade, "disconnected": "detected",
