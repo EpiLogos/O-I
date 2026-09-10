@@ -68,7 +68,11 @@ impl Fixture {
         let source = ground.join("Work/Actuation");
         fs::create_dir_all(&source).unwrap();
         fs::create_dir_all(temp.path().join("home")).unwrap();
-        write(&source.join(".gitignore"), "/material/\n/Cargo.lock\n", false);
+        write(
+            &source.join(".gitignore"),
+            "/material/\n/Cargo.lock\n",
+            false,
+        );
         write(&source.join("not-executable"), "not an entry\n", false);
         let (relative, build) = match kind {
             EntryKind::Script => {
@@ -131,7 +135,10 @@ fn main() {
         };
         git(&source, &["init", "--initial-branch=main"]);
         git(&source, &["config", "user.name", "O:I descriptor fixture"]);
-        git(&source, &["config", "user.email", "fixture@example.invalid"]);
+        git(
+            &source,
+            &["config", "user.email", "fixture@example.invalid"],
+        );
         git(&source, &["config", "commit.gpgsign", "false"]);
         git(&source, &["add", "."]);
         git(&source, &["commit", "-m", "controlled entry fixture"]);
@@ -142,15 +149,22 @@ fn main() {
                 .arg(&source)
                 .arg(&origin),
         );
-        git(&source, &["remote", "add", "origin", origin.to_str().unwrap()]);
+        git(
+            &source,
+            &["remote", "add", "origin", origin.to_str().unwrap()],
+        );
         git(&source, &["fetch", "origin"]);
-        git(&source, &["branch", "--set-upstream-to=origin/main", "main"]);
+        git(
+            &source,
+            &["branch", "--set-upstream-to=origin/main", "main"],
+        );
         let revision = String::from_utf8(git(&source, &["rev-parse", "HEAD"]).stdout)
             .unwrap()
             .trim()
             .to_owned();
 
-        let mut catalogue: Value = serde_json::from_str(include_str!("../../surfaces.json")).unwrap();
+        let mut catalogue: Value =
+            serde_json::from_str(include_str!("../../surfaces.json")).unwrap();
         let surface = catalogue["surfaces"]
             .as_array_mut()
             .unwrap()
@@ -165,7 +179,11 @@ fn main() {
         surface["native"]["source_install"] = json!({"build": build, "executable_path": relative});
 
         let existing = temp.path().join("existing/actuation");
-        write(&existing, "#!/bin/sh\nprintf 'prior-installation\\n'\n", true);
+        write(
+            &existing,
+            "#!/bin/sh\nprintf 'prior-installation\\n'\n",
+            true,
+        );
         let before = serde_json::to_vec_pretty(&json!({
             "schema": 1,
             "personal_ground": ground,
@@ -249,7 +267,9 @@ fn main() {
             fs::read(self.config.join("composition.json")).unwrap(),
             self.before
         );
-        let previous = checked(&mut Command::new(self.temp.path().join("existing/actuation")));
+        let previous = checked(&mut Command::new(
+            self.temp.path().join("existing/actuation"),
+        ));
         assert_eq!(previous.stdout, b"prior-installation\n");
     }
 }
@@ -293,7 +313,10 @@ fn descriptor_installs_and_routes_script_and_compiled_rust_with_native_process_p
         assert_eq!(registration["modality"], "developer-source");
         assert_eq!(registration["install_source"], "developer-source-build");
         assert_eq!(
-            checked(&mut Command::new(fixture.temp.path().join("existing/actuation"))).stdout,
+            checked(&mut Command::new(
+                fixture.temp.path().join("existing/actuation")
+            ))
+            .stdout,
             b"prior-installation\n"
         );
 
@@ -313,7 +336,8 @@ fn descriptor_installs_and_routes_script_and_compiled_rust_with_native_process_p
         assert_eq!(routed.status.code(), direct.status.code(), "{kind:?}");
         assert_eq!(
             direct.stdout,
-            "arg:probe\narg:two words\narg:--native-option\narg:\u{03bb}\nnative-stdin\n".as_bytes()
+            "arg:probe\narg:two words\narg:--native-option\narg:\u{03bb}\nnative-stdin\n"
+                .as_bytes()
         );
         assert_eq!(routed.stdout, direct.stdout, "{kind:?}");
         assert_eq!(routed.stderr, b"native-stderr\n", "{kind:?}");
@@ -333,7 +357,10 @@ fn descriptor_installs_and_routes_script_and_compiled_rust_with_native_process_p
         assert_eq!(routed_signal.status.signal(), direct_signal.status.signal());
 
         let before_repeat = fs::read(fixture.config.join("composition.json")).unwrap();
-        assert!(fixture.install().status.success(), "repeat install: {kind:?}");
+        assert!(
+            fixture.install().status.success(),
+            "repeat install: {kind:?}"
+        );
         assert_eq!(
             fs::read(fixture.config.join("composition.json")).unwrap(),
             before_repeat
@@ -399,6 +426,8 @@ fn invalid_descriptor_does_not_fall_back_to_embedded_install_assumptions() {
     fixture.publish_catalogue();
     let rejected = fixture.install();
     assert!(!rejected.status.success());
-    assert!(String::from_utf8_lossy(&rejected.stderr).contains("native.source_install.executable_path"));
+    assert!(
+        String::from_utf8_lossy(&rejected.stderr).contains("native.source_install.executable_path")
+    );
     fixture.assert_prior_installation_preserved();
 }
