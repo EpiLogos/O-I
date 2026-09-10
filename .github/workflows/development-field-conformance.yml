@@ -53,7 +53,14 @@ jobs:
         if: ${{ !cancelled() }}
         id: probe
         run: python3 scripts/development-field-conformance.py probe --out "$RUNNER_TEMP/development-field"
-      - name: Publish bounded probe evidence before independent native builds
+      - name: Exact source-built six-product O:I dispatch with poisoned PATH
+        if: ${{ !cancelled() }}
+        id: dispatch
+        run: python3 scripts/development-field-conformance.py dispatch --out "$RUNNER_TEMP/development-field"
+      - name: Accepted S3 same-specimen native Central, QL carrier, packet and CLI parity
+        if: ${{ !cancelled() && steps.dispatch.outcome == 'success' && steps.probe.outcome == 'success' }}
+        run: python3 scripts/development-field-s3.py --out "$RUNNER_TEMP/development-field"
+      - name: Publish specimen and S3 evidence before independent integrations
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
@@ -61,18 +68,16 @@ jobs:
           path: |
             ${{ runner.temp }}/development-field/*.json
             ${{ runner.temp }}/development-field/*.log
+            ${{ runner.temp }}/development-field/s3-*.stdout
+            ${{ runner.temp }}/development-field/s3-*.stderr
             ${{ runner.temp }}/development-field/specimen/*.json
             ${{ runner.temp }}/development-field/specimen/*.log
             tests/development-field/probe/Cargo.lock
           if-no-files-found: error
-      - name: Exact source-built six-product O:I dispatch with poisoned PATH
-        if: ${{ !cancelled() }}
-        id: dispatch
-        run: python3 scripts/development-field-conformance.py dispatch --out "$RUNNER_TEMP/development-field"
-      - name: Execute nine native integration tests normally excluded from owner unit lanes
+      - name: Execute nine native integrations normally excluded from owner unit lanes
         if: ${{ !cancelled() && steps.dispatch.outcome == 'success' }}
         run: python3 scripts/development-field-native-bridges.py --out "$RUNNER_TEMP/development-field"
-      - name: Native S0 source activation using truthful current-cut revisions
+      - name: Native S0 exact-source catalogue adoption and suite activation
         if: ${{ !cancelled() && steps.dispatch.outcome == 'success' }}
         run: python3 scripts/development-field-activation.py --out "$RUNNER_TEMP/development-field"
       - name: Whole Development Field completion gate
