@@ -42,7 +42,7 @@ export function HeroParallax() {
         timeline.to(
           root.querySelectorAll(`[data-pl-layer="${layer.n}"]`),
           {
-            keyframes: [{ yPercent: layer.out }, { yPercent: 0 }],
+            keyframes: [{ yPercent: 0 }, { yPercent: -layer.out }],
             ease: 'none',
           },
           index === 0 ? 0 : '<',
@@ -83,7 +83,7 @@ export function HeroParallax() {
   return (
     <section className="pl" ref={rootRef} aria-label="O:I opening statement">
       <div className="pl__sticky">
-        <VideoField media="b" poster={1} className="pl__video" zoom={1.35} />
+        <VideoField media="b" poster={1} className="pl__video" zoom={1.12} />
 
         <div className="pl__shade" data-pl-shade aria-hidden="true" />
 

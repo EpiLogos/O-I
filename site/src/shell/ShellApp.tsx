@@ -65,6 +65,27 @@ function ItemsList({ items }: { items: Item[] }) {
   );
 }
 
+function Meta({ items }: { items: Item[] }) {
+  return (
+    <div className="sec__meta">
+      {items.map((item, index) => (
+        <span className="sec__meta-item" key={index}>
+          <span className="sec__meta-name">{item.name}</span>
+          {item.detail ? (
+            isUrl(item.detail) ? (
+              <a className="sec__meta-value sec__link" href={item.detail} target="_blank" rel="noreferrer">
+                {item.detail.replace('https://github.com/', '')} ↗
+              </a>
+            ) : (
+              <span className="sec__meta-value">{item.detail}</span>
+            )
+          ) : null}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function Figure({ n }: { n: number }) {
   return (
     <figure className="sec__figure">
@@ -145,7 +166,7 @@ function SectionView({ section }: { section: Section }) {
                 <Prose text={section.body} />
               </div>
             ) : null}
-            {section.items ? <ItemsList items={section.items} /> : null}
+            {section.items ? <Meta items={section.items} /> : null}
           </div>
         </div>
       </section>
@@ -196,10 +217,6 @@ function SectionView({ section }: { section: Section }) {
 function Opening({ page }: { page: Page }) {
   return (
     <header className="opening">
-      <div className="opening__eyebrow">
-        <span>{page.index}</span>
-        <span>{page.label}</span>
-      </div>
       <h1 className="opening__title">{page.intro.title}</h1>
       {page.intro.body ? <p className="opening__body">{page.intro.body}</p> : null}
     </header>
