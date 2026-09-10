@@ -1,0 +1,70 @@
+name: Development Field lock preparation
+on:
+  push:
+    branches: ['ci/development-field-dc-cut']
+    paths: ['.github/workflows/development-field-lock.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: development-field-lock-preparation
+  cancel-in-progress: false
+jobs:
+  prepare:
+    if: github.ref == 'refs/heads/ci/development-field-dc-cut'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 1
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Exact source preparation, not acceptance
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/development-field-conformance.py prepare --out "$RUNNER_TEMP/development-field-lock"
+      - name: Correct the public PathBuf argument and freeze dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('tests/development-field/probe/src/main.rs')
+          old = 'ProjectBindingLocator::LocalDirectory {path:project.display().to_string()}'
+          new = 'ProjectBindingLocator::LocalDirectory {path:project.clone()}'
+          content = p.read_text()
+          if old in content:
+              assert content.count(old) == 1
+              p.write_text(content.replace(old, new))
+          else:
+              assert new in content
+          PY
+          cargo generate-lockfile --manifest-path tests/development-field/probe/Cargo.toml
+          git diff --check
+          git config user.name 'Development Field CI'
+          git config user.email 'development-field-ci@users.noreply.github.com'
+          git add tests/development-field/probe/src/main.rs tests/development-field/probe/Cargo.lock
+          if ! git diff --cached --quiet; then
+            git commit -m 'test: correct native PathBuf binding and freeze Development Field probe dependencies'
+            git push origin HEAD:ci/development-field-dc-cut
+          fi
+      - name: Retain complete exact harness source for review
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/harness-evidence"
+          git rev-parse HEAD > "$RUNNER_TEMP/harness-evidence/harness-sha.txt"
+          git archive --format=tar.gz --output="$RUNNER_TEMP/harness-evidence/harness-source.tar.gz" HEAD
+          cp tests/development-field/probe/Cargo.lock "$RUNNER_TEMP/harness-evidence/" || true
+      - name: Retain source of the active S3 producer for review only
+        run: |
+          git init -q "$RUNNER_TEMP/s3-review"
+          git -C "$RUNNER_TEMP/s3-review" fetch --depth=1 https://github.com/EpiLogos/ai-kit.git 1a6338c8620765195fc18873ced3d030fec41ff3
+          git -C "$RUNNER_TEMP/s3-review" archive --format=tar.gz --output="$RUNNER_TEMP/harness-evidence/aikit-s3-review.tar.gz" FETCH_HEAD
+          echo 1a6338c8620765195fc18873ced3d030fec41ff3 > "$RUNNER_TEMP/harness-evidence/aikit-s3-review-sha.txt"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: development-field-lock-source
+          path: ${{ runner.temp }}/harness-evidence
+          if-no-files-found: error
