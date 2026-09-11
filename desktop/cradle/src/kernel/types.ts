@@ -133,6 +133,7 @@ export type KernelOp =
     }
   | {op:"ground";request:import("../workspace/GroundChooser").GroundRequest}
   | {op:"composition_read";owners?:boolean}
+  | {op:"system_composition_read"}
   | { op: "files_list"; path: string }
   | { op: "file_read"; location: CentralLocation }
   | { op: "file_bytes"; location: CentralLocation }
@@ -173,6 +174,7 @@ export type KernelOpResult =
   | { result: "flow_commissioned"; outcome: CommissionOutcome }
   | {result:"ground_reading";reading:Record<string,unknown>}
   | {result:"composition_reading";reading:import("../workspace/SystemPanel").CompositionReading}
+  | {result:"system_composition_reading";reading:import("../workspace/settings/types").SystemCompositionReading}
   | {result:"file_operation";data:unknown}
   | { result:"encounter_reading";data:unknown }
   | { result: "agency_reading"; project_ref: string; spaces: unknown[]; observed_at_unix_ms: number }

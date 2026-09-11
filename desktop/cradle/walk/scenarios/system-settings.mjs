@@ -15,9 +15,9 @@ export default async function run({page,baseUrl,check,shot,channel}) {
   const focusBefore=JSON.stringify((await channel('read.focus')).data);
   check((await panel.locator(':scope > details.product-section').count())===7,'Settings projects all seven positions (O:I + six products)');
   check((await panel.locator(':scope > details > summary > span').filter({hasText:'— discovered, not verified ready'}).count())===6,'BOOT-06/12 honest availability chip on every discovered position');
-  check((await panel.getByText(/No operations disclosed\./).count())===1,'QL renders its emptiness honestly (L3) — no fabricated controls');
-  const obligations=(await panel.locator('.product-action-availability.is-missing_native_obligation').allTextContents()).join(' ');
-  check(obligations.includes('obligation'),'Missing native obligations render as obligations, never as disabled buttons (L3)');
+  check((await panel.getByText(/No operations here yet\./).count())===1,'QL renders its emptiness honestly — no fabricated controls');
+  const notYetAvailable=(await panel.locator('.product-action-availability.is-missing_native_obligation').allTextContents()).join(' ');
+  check(notYetAvailable.includes('not available yet'),'Missing native operations render as a plain not-yet-available note, never as disabled buttons');
   await panel.getByRole('button',{name:'Activity',exact:true}).click();
   check((await panel.getByText('No project is currently open',{exact:false}).count())===1,'Activity view shows the honest no-project absence');
   await shot('settings-activity');

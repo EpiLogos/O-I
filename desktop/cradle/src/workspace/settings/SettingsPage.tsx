@@ -16,16 +16,17 @@ import {encounter} from "../../encounter/client";
 import {Loading} from "../../shared/Loading";
 import {formatRelativeTime} from "../../shared/relativeTime";
 import {GroundChooser} from "../GroundChooser";
-import type {ActivityExtras, CompositionReading, SettingsView} from "./types";
+import type {ActivityExtras, CompositionReading, OwnerMount, SettingsView} from "./types";
 import {buildSections, RAIL} from "./world";
 import {ProductSection} from "./ProductSection";
+import {NativeProductSection} from "./NativeProductSection";
 import "./settings.css";
 
 const BOOTSTRAP_STEPS:{title:string;detail:string;native:string}[] = [
   {title:"Bind the ground",detail:"Central is the world-keeper's anchor: the suite installs into a world, not into a vacuum. Recognition is read-only until you choose to bind.",native:"Config view → Central location (recognize, then Use as default)"},
   {title:"Install the suite",detail:"oi installs the six products at the manifest's pinned revisions — sha256 and attestation verified before unpack; a stale pin refuses cleanly rather than installing a lie.",native:"oi install --personal-ground <ground>"},
   {title:"Verify the world",detail:"Six discovered positions, doctor PASS, and the Central ctrl contract — each product's discovery is a visible event, not a spinner.",native:"oi verify --json · oi doctor · oi status --json"},
-  {title:"First-run configuration",detail:"Only settings whose authored value is absent and whose owner marks them bootstrap-relevant surface here. Day-2 life is the Health and Config views.",native:"per-product native surfaces until the descriptor seam (P2/P3) discloses them here"},
+  {title:"First-run configuration",detail:"Only settings whose authored value is absent and whose owner marks them bootstrap-relevant surface here. Day-to-day life is the Health and Config views.",native:"See each product's own settings in the Health view"},
 ];
 
 export function SettingsPage() {
@@ -36,6 +37,11 @@ export function SettingsPage() {
   const [pending,setPending] = useState(false);
   const [error,setError] = useState<string>();
   const [ground,setGround] = useState<string|null|undefined>();
+  // Wave 5 (docs/cradle/07): the mounted native per-owner disclosures,
+  // read independently of the P1 census — a mount failing never blocks the
+  // honest census the page already has (L1).
+  const [nativeMounts,setNativeMounts] = useState<Record<string,OwnerMount>>();
+  const [nativePending,setNativePending] = useState(false);
   const read = async(owners=false)=>{
     setPending(true);setError(undefined);
     try{
@@ -44,7 +50,17 @@ export function SettingsPage() {
       setReading(result.outcome.reading);
     }catch(cause){setError(String(cause));}finally{setPending(false);}
   };
-  useEffect(()=>{void read();},[]); // eslint-disable-line react-hooks/exhaustive-deps
+  const readNative = async()=>{
+    setNativePending(true);
+    try{
+      const result = await kernelOp(transport,{op:"system_composition_read"});
+      if(result.error||result.outcome==null||result.outcome.result!=="system_composition_reading") return;
+      const byProduct:Record<string,OwnerMount> = {};
+      for(const mount of result.outcome.reading.owners) byProduct[mount.product_id]=mount;
+      setNativeMounts(byProduct);
+    }finally{setNativePending(false);}
+  };
+  useEffect(()=>{void read();void readNative();},[]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(()=>{
     let live = true;
     void kernelOp(transport,{op:"ground",request:{action:"status"}}).then(result=>{
@@ -77,10 +93,10 @@ export function SettingsPage() {
   },[transport,project]);
   const sections = buildSections(reading,extras);
   const ready = sections.filter(section=>section.availability==="discovered"||section.availability==="unavailable").length;
-  const ownerDisclosures = reading?.current_world.data?.owner_disclosures;
+  const refreshAll = ()=>{void read();void readNative();};
   return <section className="system-panel" aria-label="System composition" aria-busy={pending}>
     <header className="settings-world-header">
-      <div><h2>System</h2><p>Native product composition — the world read, configured, and maintained.</p></div>
+      <div><h2>System</h2><p>The world read, configured, and maintained.</p></div>
       <dl className="settings-world-facts">
         <div><dt>Ground</dt><dd>{ground===undefined?"Unavailable":ground??"No default Central bound"}</dd></div>
         <div><dt>Suite</dt><dd>{reading?String(reading.suite_executable??"oi"):"Not yet read"}</dd></div>
@@ -89,15 +105,20 @@ export function SettingsPage() {
       </dl>
     </header>
     <nav className="settings-rail" aria-label="System needs">{RAIL.map(item=><button key={item.id} aria-pressed={view===item.id} title={item.hint} onClick={()=>setView(item.id)}>{item.label}</button>)}</nav>
-    {pending&&<Loading label="Reading native composition…"/>}
+    {(pending||nativePending)&&<Loading label="Reading…"/>}
     {error&&<p role="alert">{error}</p>}
     {reading?.current_world.error&&<p role="alert">{reading.current_world.error}</p>}
     {reading?.status.error&&<p role="alert">{reading.status.error}</p>}
     {view==="health"&&<>
-      {sections.map(section=><ProductSection key={section.product_id} model={section}/>)}
-      {reading&&<details><summary>Integration availability</summary>{reading.integration_obligations.map(item=><p key={item}>{item}</p>)}</details>}
-      {ownerDisclosures!=null&&<details open><summary>Owner capabilities and effective context</summary><pre>{JSON.stringify(ownerDisclosures,null,2)}</pre></details>}
-      <div className="system-actions"><button disabled={pending} onClick={()=>void read()}>Refresh</button><button disabled={pending} onClick={()=>void read(true)}>Read owner capabilities</button></div>
+      {sections.map(section=>{
+        const mount = nativeMounts?.[section.product_id];
+        return mount?.descriptor
+          ? <NativeProductSection key={section.product_id} mount={mount} name={section.name}/>
+          : <ProductSection key={section.product_id} model={section}/>;
+      })}
+      <div className="system-actions">
+        <button disabled={pending||nativePending} onClick={refreshAll}>Refresh</button>
+      </div>
     </>}
     {view==="activity"&&<div className="settings-view">
       <h3>Activity</h3>
@@ -109,7 +130,6 @@ export function SettingsPage() {
         {extras.providers&&<p>{extras.providers.count} provider(s) disclosed for {project}.</p>}
         {(extras.spaces||extras.providers)&&<details><summary>Activity records</summary><pre>{JSON.stringify({spaces:extras.spaces?.raw,providers:extras.providers?.raw},null,2)}</pre></details>}
       </>}
-      <p className="settings-native-note">One agent-instance fact, three views — the registry dovetail (workcell instance + Actuation receipt + AIKit topology) renders here as each owner discloses its side (P2).</p>
     </div>}
     {view==="config"&&<div className="settings-view">
       <h3>Configuration</h3>
@@ -119,13 +139,12 @@ export function SettingsPage() {
       {reading&&<table className="settings-pins"><thead><tr><th>Product</th><th>State</th><th>Version</th></tr></thead><tbody>
         {reading.positions.map(position=><tr key={position.product_id}><td>{position.product_id}</td><td>{position.native_state}</td><td>{typeof position.current_world.version==="string"?position.current_world.version:"—"}</td></tr>)}
       </tbody></table>}
-      <p className="settings-native-note">Authored / effective / active axes with owner refs arrive with each product's native descriptor (P2) — until then, pins are the one configuration this page reads directly.</p>
+      <p className="settings-native-note">Each product's own configuration is shown in the Health view above.</p>
     </div>}
     {view==="bootstrap"&&<div className="settings-view">
       <h3>Bootstrap</h3>
-      <p>The empty world → installed world sequence. The same page, a different world state — bootstrap finishes here instead of leaving for a wizard.</p>
+      <p>Bind a ground, install the suite, and verify it — the same page, before anything is installed.</p>
       <ol className="settings-bootstrap">{BOOTSTRAP_STEPS.map((step,index)=><li key={step.title}><strong>{index+1}. {step.title}</strong><p>{step.detail}</p><em className="product-native-path">{step.native}</em></li>)}</ol>
-      <p className="settings-native-note">In-page engagement for each step arrives with the disclosed-op seam (P3); until then the native paths above are the honest way through.</p>
     </div>}
   </section>;
 }
