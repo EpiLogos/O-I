@@ -54,6 +54,7 @@ const SCENARIOS = {
   "first-vertical": {module:"scenarios/first-vertical.mjs",kernel:true,aliases:["vertical"]},
   "shared-field-return": {module:"scenarios/shared-field-return.mjs",kernel:true,aliases:["7"]},
   "a2a-exchange": {module:"scenarios/a2a-exchange.mjs",kernel:true,aliases:["7b"]},
+  "leave-reenter": {module:"scenarios/leave-reenter.mjs",kernel:true,aliases:["6f"]},
   "file-edit": {module:"scenarios/file-edit.mjs",kernel:true,aliases:[]},
   files: { module: "scenarios/files.mjs", kernel: true, aliases: [] },
   "rendering-quality": {module:"scenarios/rendering-quality.mjs",kernel:true,aliases:[]},
@@ -337,7 +338,11 @@ async function runScenario(name, { baseUrl }) {
   }
 
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1280, height: 820 } });
+  // An explicit context: leave/re-enter scenarios open a second page in the
+  // SAME context (shared storage = the restored frame), which the implicit
+  // browser.newPage() context refuses.
+  const context = await browser.newContext({ viewport: { width: 1280, height: 820 } });
+  const page = await context.newPage();
   if (bridgeUrl) {
     await page.addInitScript((url) => {
       window.__OI_KERNEL_BRIDGE__ = url;

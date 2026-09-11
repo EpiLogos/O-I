@@ -112,6 +112,13 @@ pub struct SourceBuffer {
     pub conflict: Option<SourceConflict>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub path: Option<String>,
+    /// Opened through the owner's Day route (a root-register source:
+    /// `projectcentral.source.read` is project-scoped by registration, so
+    /// the buffer comes from `central.day.read`'s own disclosure). A
+    /// re-open through the project source route would refuse — remounts
+    /// keep this buffer instead of re-reading.
+    #[serde(default)]
+    pub root_register: bool,
 }
 
 /// The whole kernel state, pulled by read models (events only trigger
@@ -217,7 +224,18 @@ pub enum KernelOp {
     AgencyRead { project: String },
     /// Wave 6E: pending Returns tray — list/read plus human review/include
     /// through Central's native receiving operations (owner-validated).
-    Receiving {project:String,request:flow::ReceivingRequest},
+    /// `project` names the project register's field; `None` is the ROOT
+    /// register's field (a Day document lives there) — the scope follows the
+    /// owner's own ref grammar, never the desktop's configured route.
+    Receiving { #[serde(default)] project: Option<String>, request: flow::ReceivingRequest },
+    /// The human Day route: read the current today pointer (or one exact
+    /// DayRef) through the owner. The disclosure carries the Day source's
+    /// canonical ref — the only identity the desktop opens it by.
+    DayRead { #[serde(default)] day_ref: Option<String> },
+    /// Open the Day document's source buffer through the owner's Day route.
+    /// There is no project-scoped source read for a root-register source:
+    /// the buffer is built from `central.day.read`'s own disclosure.
+    DaySourceOpen { #[serde(default)] day_ref: Option<String> },
     Encounter {project:String,request:agency::EncounterRequest},
     MaterialRead {target:material::Target},
     FactoryDiscover {project_ref:Option<String>},
@@ -314,6 +332,10 @@ pub enum KernelOpResult {
     AgencyReading { project_ref: String, spaces: serde_json::Value, observed_at_unix_ms: u64 },
     EncounterReading {data:serde_json::Value},
     ReceivingReading {data:serde_json::Value},
+    /// The owner's own `central.day.read` reading, carried verbatim — the
+    /// Day's source identity is the owner's disclosure, never a ref the
+    /// desktop derives from a path.
+    DayReading {data:serde_json::Value},
     FileOperation {data:serde_json::Value},
     NativeOwnerReading {owner:String,data:Option<serde_json::Value>,failure:Option<serde_json::Value>},
     GroundReading {reading:serde_json::Value},
@@ -469,12 +491,61 @@ impl Kernel {
                 Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::AgencyReading {project_ref,spaces,observed_at_unix_ms}})
             }
             KernelOp::Receiving {project,request} => {
-                // Same disclosure gate as every project-scoped read: the
-                // project must be inside Central's disclosed ground.
-                let root=world::read_world(&self.client).map_err(|e|e.to_string())?;
-                root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(&project))).ok_or("Project is outside Central's disclosed ground")?;
-                let data=self.client.receiving(&project,&request).map_err(|e|e.to_string())?;
+                // Same disclosure gate as every project-scoped read: a named
+                // project must be inside Central's disclosed ground. `None`
+                // is the root register's own field — a Day document lives
+                // there, and its receiving field is the root's.
+                if let Some(project)=&project {
+                    let root=world::read_world(&self.client).map_err(|e|e.to_string())?;
+                    root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(project.as_str()))).ok_or("Project is outside Central's disclosed ground")?;
+                }
+                let data=self.client.receiving(project.as_deref(),&request).map_err(|e|e.to_string())?;
                 Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::ReceivingReading {data}})
+            }
+            KernelOp::DayRead {day_ref} => {
+                // The Day is a ROOT-register carrier: an explicit null
+                // project is the kernel's own convention for naming the
+                // Central root register (absence would take the configured
+                // project co-reference, which has no today pointer).
+                let mut input=serde_json::Map::new();
+                input.insert("project".to_owned(),serde_json::Value::Null);
+                if let Some(day_ref)=day_ref { input.insert("day_ref".to_owned(),serde_json::Value::String(day_ref)); }
+                let data=self.client.run("central.day.read",serde_json::Value::Object(input)).map_err(|e|e.to_string())?;
+                Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::DayReading {data}})
+            }
+            KernelOp::DaySourceOpen {day_ref} => {
+                // The owner's Day route is the only reader of a
+                // root-register Day source: the buffer is built from
+                // `central.day.read`'s own disclosure — its canonical ref,
+                // revision and content — never a path-derived ref.
+                let mut input=serde_json::Map::new();
+                input.insert("project".to_owned(),serde_json::Value::Null);
+                if let Some(day_ref)=day_ref { input.insert("day_ref".to_owned(),serde_json::Value::String(day_ref)); }
+                let data=self.client.run("central.day.read",serde_json::Value::Object(input)).map_err(|e|e.to_string())?;
+                let source_ref=data["source"]["ref"].as_str().ok_or("Central's Day reading disclosed no source ref")?.to_owned();
+                let path=data["source"]["path"].as_str().ok_or("Central's Day reading disclosed no source path")?.to_owned();
+                let revision=data["revision"]["revision"].as_str().ok_or("Central's Day reading disclosed no source revision")?.to_owned();
+                let content=data["content"].as_str().ok_or("Central's Day reading disclosed no content")?.to_owned();
+                let buffer=SourceBuffer {
+                    source_ref: source_ref.clone(),
+                    project: String::new(),
+                    world_ref: String::new(),
+                    project_ref: None,
+                    content: content.to_owned(),
+                    saved_content: content.to_owned(),
+                    base_revision: revision.to_owned(),
+                    dirty: false,
+                    conflict: None,
+                    path: Some(path),
+                    root_register: true,
+                };
+                self.buffers.insert(source_ref.clone(),buffer.clone());
+                let receipt=self.log.record(KernelEvent::SourceOpened {
+                    source: source_semantic_ref(&source_ref,Some(&buffer.base_revision)).unwrap_or_else(|_| fallback_source_ref(&source_ref)),
+                    revision: buffer.base_revision.clone(),
+                    summary: format!("Opened from the owner's Day reading at revision {} ({} bytes).",short_revision(&buffer.base_revision),buffer.content.len()),
+                });
+                Ok(KernelOpOutcome {receipts:vec![receipt],result:KernelOpResult::SourceOpened {buffer}})
             }
             KernelOp::Knowledge { project, request } => {
                 // Central discloses the scope; renderer-supplied filesystem paths
@@ -711,7 +782,11 @@ impl Kernel {
         // the existing buffer — it never clobbers a dirty layer.
         let held = self.buffers.get(source_ref).cloned();
         if let Some(buffer) = &held {
-            if buffer.dirty {
+            // A root-register buffer (the Day, opened through the owner's Day
+            // route) is also served from its held state: its re-read route
+            // (`projectcentral.source.read`) is project-scoped by
+            // registration and cannot serve this ref.
+            if buffer.dirty || buffer.root_register {
                 return Ok(KernelOpOutcome {
                     receipts: Vec::new(),
                     result: KernelOpResult::SourceOpened {
@@ -773,6 +848,7 @@ impl Kernel {
             dirty,
             conflict: None,
             path: Some(reading.source.path.clone()),
+            root_register: false,
         };
         self.buffers.insert(source_ref, buffer.clone());
         buffer

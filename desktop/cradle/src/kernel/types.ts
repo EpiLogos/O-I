@@ -38,6 +38,7 @@ export interface SourceBufferState {
   dirty: boolean;
   conflict?: SourceConflictState;
   path?: string;
+  root_register?: boolean;
 }
 
 export interface SurfaceKernelState {
@@ -140,7 +141,9 @@ export type KernelOp =
   | { op: "agency_read"; project: string }
   | {op:"file_operation";location:CentralLocation;request:import("../files/client").FileRequest}
   | {op:"encounter";project:string;request:import("../encounter/client").EncounterRequest}
-  | {op:"receiving";project:string;request:import("../receiving/client").ReceivingRequest}
+  | {op:"receiving";project:string|null;request:import("../receiving/client").ReceivingRequest}
+  | {op:"day_read";day_ref?:string}
+  | {op:"day_source_open";day_ref?:string}
   | { op: "knowledge"; project?: string; request: KnowledgeRequest }
   | { op: "state" }
   | { op: "world_read" }
@@ -179,6 +182,7 @@ export type KernelOpResult =
   | {result:"file_operation";data:unknown}
   | { result:"encounter_reading";data:unknown }
   | { result:"receiving_reading";data:unknown }
+  | { result:"day_reading";data:unknown }
   | { result: "agency_reading"; project_ref: string; spaces: unknown[]; observed_at_unix_ms: number }
   | { result: "knowledge"; data: unknown }
   | { result: "state"; snapshot: KernelSnapshotState }

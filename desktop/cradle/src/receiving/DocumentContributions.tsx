@@ -11,7 +11,7 @@ import {receiving,type DocumentReading,type ReceivingPage} from "./client";
  * inclusion that lands while the document sits open is one refresh away;
  * quietly absent when the bound owner does not expose receiving or nothing
  * targets this source. */
-export function DocumentContributions({sourceRef,project}:{sourceRef:string;project:string}) {
+export function DocumentContributions({sourceRef,project}:{sourceRef:string;project:string|null}) {
  const kernel=useKernel();
  const [reading,setReading]=useState<DocumentReading>();
  const [known,setKnown]=useState(false);

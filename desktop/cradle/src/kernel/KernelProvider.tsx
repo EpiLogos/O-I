@@ -64,6 +64,9 @@ export interface KernelApi {
   refreshListing: () => Promise<void>;
   /** Typed conveniences the surfaces share. */
   openSource: (sourceRef: SourceRef, surfaceId: string) => Promise<void>;
+  /** Open a Day document's buffer through the owner's Day route — the only
+   * reader of a root-register Day source. Returns the opened buffer. */
+  dayOpen: (dayRef?: string) => Promise<KernelOutcome | null>;
   editBuffer: (sourceRef: SourceRef, content: string) => Promise<void>;
   saveSource: (sourceRef: SourceRef) => Promise<KernelOutcome | null>;
   rereadSource: (sourceRef: SourceRef) => Promise<void>;
@@ -203,6 +206,15 @@ export function KernelProvider(props: { children: ReactNode }) {
     [apply],
   );
 
+  const dayOpen = useCallback(
+    async (dayRef?: string) => {
+      // The buffer lands through the owner's Day route; the surface binds to
+      // the disclosed ref. No project-scoped source read ever runs for it.
+      return apply({ op: "day_source_open", ...(dayRef ? { day_ref: dayRef } : {}) });
+    },
+    [apply],
+  );
+
   const editBuffer = useCallback(
     async (sourceRef: SourceRef, content: string) => {
       await apply({ op: "source_edit", source_ref: sourceRef, content });
@@ -324,6 +336,7 @@ export function KernelProvider(props: { children: ReactNode }) {
       apply,
       refreshListing,
       openSource,
+      dayOpen,
       editBuffer,
       saveSource,
       rereadSource,
@@ -343,6 +356,7 @@ export function KernelProvider(props: { children: ReactNode }) {
       apply,
       refreshListing,
       openSource,
+      dayOpen,
       editBuffer,
       saveSource,
       rereadSource,

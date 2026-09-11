@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "receive-recover",
-  "generated_at": "2026-09-11T18:41:23.598Z",
+  "generated_at": "2026-09-11T20:41:46.903Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 1845,
+  "duration_ms": 1744,
   "checks": [
     {
       "ok": true,
@@ -81,7 +81,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-11T18:41:23.751Z",
+        "mounted_at": "2026-09-11T20:41:47.041Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -92,7 +92,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 46,
+      "duration_ms": 44,
       "data": {
         "file": "receive-recover-return-beside-open-document.png"
       }
@@ -100,7 +100,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 30,
+      "duration_ms": 37,
       "data": {
         "file": "receive-recover-rejected-beside-document.png"
       }
@@ -108,7 +108,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 41,
+      "duration_ms": 38,
       "data": {
         "file": "receive-recover-inclusion-uncertain.png"
       }
@@ -116,7 +116,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 40,
+      "duration_ms": 38,
       "data": {
         "file": "receive-recover-inclusion-recovered.png"
       }
