@@ -1,0 +1,207 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "agency-planes",
+  "generated_at": "2026-09-11T22:32:39.210Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 16289,
+  "checks": [
+    {
+      "ok": true,
+      "label": "With no turns, the Activity plane discloses exactly that — no invented activity"
+    },
+    {
+      "ok": true,
+      "label": "The provider's consent request is disclosed with its actual tool call before any answer"
+    },
+    {
+      "ok": true,
+      "label": "The consent request is also activity beside the conversation, not only a composer card"
+    },
+    {
+      "ok": true,
+      "label": "Answering the card reaches the provider over the real consent wire and the turn completes"
+    },
+    {
+      "ok": true,
+      "label": "A dispatched delivery identity is inspectable with its settled owner phase — 6B's named open, closed"
+    },
+    {
+      "ok": true,
+      "label": "The Inspect plane names the stable SessionSpace ref the encounter actually lives in"
+    },
+    {
+      "ok": true,
+      "label": "The Inspect plane names the provider's actual native session identity"
+    },
+    {
+      "ok": true,
+      "label": "Owner operations are shown with the owner's own verdicts and reasons, never the desktop's"
+    },
+    {
+      "ok": true,
+      "label": "Recorded history is pointed at, not duplicated into the Context plane"
+    },
+    {
+      "ok": true,
+      "label": "The participant's operative context is disclosed as un-inspectable on this cut — never inferred from transcript or profile"
+    },
+    {
+      "ok": true,
+      "label": "The provider's actual continuation state names the native session the provider really holds"
+    },
+    {
+      "ok": true,
+      "label": "The wait row is the owner's own connection state, not a progress invention"
+    },
+    {
+      "ok": true,
+      "label": "The tool call's real payload is the activity row"
+    },
+    {
+      "ok": true,
+      "label": "The assistant's conversational reply stays in the Conversation plane — the planes do not duplicate each other"
+    },
+    {
+      "ok": true,
+      "label": "A requested stop settles as the owner's own stop record, shown verbatim — the owner journals the interruption as an error-named-Cancelled (owner finding, frozen cut)"
+    },
+    {
+      "ok": true,
+      "label": "A provider failure is disclosed as a fault, never softened into activity-as-usual"
+    },
+    {
+      "ok": true,
+      "label": "A faulted resident's seat is disclosed as held, with recovery named as the owner's — no recovery promise the owner cannot keep"
+    },
+    {
+      "ok": true,
+      "label": "The journal's raw events include the human turns on the owner's own cursor"
+    },
+    {
+      "ok": true,
+      "label": "The journal names provider events as the owner recorded them"
+    },
+    {
+      "ok": true,
+      "label": "Journal rows carry the owner's cursors, not desktop numbering"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-11T22:32:39.305Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 24,
+      "data": {
+        "file": "agency-planes-activity-empty-honest.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 26,
+      "data": {
+        "file": "agency-planes-activity-consent-requested.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 31,
+      "data": {
+        "file": "agency-planes-activity-consent-answered.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 26,
+      "data": {
+        "file": "agency-planes-activity-inspect-deliveries.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 26,
+      "data": {
+        "file": "agency-planes-activity-context-facts.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 20,
+      "data": {
+        "file": "agency-planes-activity-thought-tool-wait.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 24,
+      "data": {
+        "file": "agency-planes-activity-stopped.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 17,
+      "data": {
+        "file": "agency-planes-activity-fault.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 30,
+      "data": {
+        "file": "agency-planes-activity-fault-held-seat.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 43,
+      "data": {
+        "file": "agency-planes-activity-journal.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "agency-planes-activity-empty-honest.png",
+    "agency-planes-activity-consent-requested.png",
+    "agency-planes-activity-consent-answered.png",
+    "agency-planes-activity-inspect-deliveries.png",
+    "agency-planes-activity-context-facts.png",
+    "agency-planes-activity-thought-tool-wait.png",
+    "agency-planes-activity-stopped.png",
+    "agency-planes-activity-fault.png",
+    "agency-planes-activity-fault-held-seat.png",
+    "agency-planes-activity-journal.png"
+  ]
+}

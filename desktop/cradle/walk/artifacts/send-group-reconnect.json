@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "send-group-reconnect",
-  "generated_at": "2026-09-11T21:44:58.903Z",
+  "generated_at": "2026-09-11T22:31:15.256Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 15986,
+  "duration_ms": 16255,
   "checks": [
     {
       "ok": true,
@@ -98,7 +98,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-11T21:44:59.005Z",
+        "mounted_at": "2026-09-11T22:31:15.357Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -109,7 +109,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 41,
+      "duration_ms": 38,
       "data": {
         "file": "send-group-reconnect-group-composed.png"
       }
