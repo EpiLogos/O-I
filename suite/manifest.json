@@ -1,6 +1,6 @@
 {
   "schema": "oi.suite-manifest/v1",
-  "suite_version": "0.1.0-prelocal.3",
+  "suite_version": "0.1.0-prelocal.2",
   "products": [
     {
       "id": "central",
@@ -8,7 +8,7 @@
       "repository": "https://github.com/EpiLogos/Central",
       "canonical_repository": "https://github.com/EpiLogos/Central",
       "checkout": "Central",
-      "revision": "5d1b8bf6692f9aca45b2fe39db54cbc378dda70e",
+      "revision": "78a545214ad70e055fae38ccae2d78443112f283",
       "artifact": {
         "kind": "cli",
         "entry": "ctrl",
@@ -51,7 +51,7 @@
       "repository": "https://github.com/EpiLogos/Actuation",
       "canonical_repository": "https://github.com/EpiLogos/Actuation",
       "checkout": "Actuation",
-      "revision": "2d73f957c287ef386b09ac2c55eeab3603b60873",
+      "revision": "03e03acb1ae47d60f26903209112258e60f83627",
       "artifact": {
         "kind": "component",
         "entry": null,
@@ -80,7 +80,7 @@
       "repository": "https://github.com/EpiLogos/ai-kit",
       "canonical_repository": "https://github.com/EpiLogos/ai-kit",
       "checkout": "ai-kit",
-      "revision": "a7ec336ac713edf4561c519fb98ac0418f495e72",
+      "revision": "9ff28ca31c723b314ddf62b7f85b6e2611d53d66",
       "artifact": {
         "kind": "cli",
         "entry": "aikit",
@@ -126,7 +126,7 @@
       "repository": "https://github.com/EpiLogos/agent-system-design",
       "canonical_repository": "https://github.com/EpiLogos/Software-Factory",
       "checkout": "Software-Factory",
-      "revision": "48e0456d485d702a7521d754599e00a165ff1626",
+      "revision": "621624c7c8a9919604ad36db451f1a30806fc0ce",
       "artifact": {
         "kind": "component",
         "entry": null,
@@ -163,7 +163,7 @@
       "repository": "https://github.com/EpiLogos/Workcell",
       "canonical_repository": "https://github.com/EpiLogos/Workcell",
       "checkout": "Workcell",
-      "revision": "0c44ee373f5a5e11ab33e885be84dd8293bc358f",
+      "revision": "9277fdc852a468f1c53f62b766a38e06705fe482",
       "artifact": {
         "kind": "cli",
         "entry": "workcell",
@@ -210,7 +210,7 @@
       "repository": "https://github.com/EpiLogos/QL-MEF",
       "canonical_repository": "https://github.com/EpiLogos/Quaternal-Logic",
       "checkout": "Quaternal-Logic",
-      "revision": "1be4d9ae1444323e1107fdfdbae1d36374ee0d86",
+      "revision": "cab0baf52f7d7726708d7fb13c6ac98f9b09b643",
       "artifact": {
         "kind": "component",
         "entry": null,
@@ -257,7 +257,7 @@
       "description": "Private credential, Tailscale, Docker/GPU and live model-provider materialisation are deferred and are not inferred from cloud CI."
     }
   ],
-  "recorded_at": "2026-09-11",
+  "recorded_at": "2026-08-17",
   "standing": "historical-unratified-prelocal-build-record",
   "purpose": "Historical checksummed and attested pre-local build evidence retained for reproducibility and deterministic installation tests; not release ratification, product acceptance, or current-main authority."
 }

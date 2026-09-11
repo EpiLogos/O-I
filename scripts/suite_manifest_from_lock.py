@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
-"""Generate the embedded suite manifest's revisions from the campaign source lock.
+"""Regenerate the suite build record from the campaign source lock.
 
-The suite manifest must name living revisions, derived the same way the CAW
-campaign derives them: from tests/continuous-work/sources/lock.json. This
-script rewrites only `suite_version` (bumping the prelocal counter),
-`recorded_at` (today, local civil), and each product's `revision` for the
-products the lock pins. Artifact asset blocks are evidence from the last
-artifact release and are preserved untouched; they do not become current
-until the release pipeline produces archives at the new revisions.
+suite/manifest.json is the RECORDED BUILD EVIDENCE of the last artifact
+release; suite/mainline.json's build_record relation must name the same
+suite_version and recorded_at (scripts/verify-mainline-snapshot.py enforces
+the agreement). This tool is the release-flow step that moves both together:
+run it only as part of producing a new artifact release, after the release
+pipeline has built archives at the locked revisions, because the manifest's
+asset blocks (archives + attestations) stay evidence of their own release.
 
-  suite_manifest_from_lock.py        rewrite suite/manifest.json from the lock
+  suite_manifest_from_lock.py          rewrite manifest + mainline build_record
   suite_manifest_from_lock.py --check  verify only; exit 1 listing stale revisions
+
+--check passes while the recorded build record is the last release; it is the
+release pipeline's gate, not a per-commit freshness gate (a dev machine's
+freshness signal is `oi doctor`, which reconciles the live surfaces).
 """
 from __future__ import annotations
 import argparse
@@ -74,7 +78,14 @@ def main() -> int:
     counter = re.fullmatch(r"(.*)-prelocal\.(\d+)", version_now)
     manifest["suite_version"] = f"{counter.group(1)}-prelocal.{int(counter.group(2)) + 1}" if counter else f"{version_now}+cut"
     manifest["recorded_at"] = datetime.date.today().isoformat()
+    mainline_path = ROOT / "suite/mainline.json"
+    mainline = json.loads(mainline_path.read_text())
+    record = mainline.get("build_record", {})
+    record["suite_version"] = manifest["suite_version"]
+    record["recorded_at"] = manifest["recorded_at"]
+    mainline["build_record"] = record
     MANIFEST.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
+    mainline_path.write_text(json.dumps(mainline, indent=2, ensure_ascii=False) + "\n")
     for line in updated:
         print(f"  {line}")
     for product_id in skipped:
