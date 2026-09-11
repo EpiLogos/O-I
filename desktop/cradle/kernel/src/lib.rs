@@ -36,6 +36,7 @@ pub mod encounter;
 pub mod agency;
 pub mod files;
 pub mod composition;
+pub mod system_composition;
 pub mod ground;
 pub mod material;
 pub mod factory;
@@ -222,6 +223,11 @@ pub enum KernelOp {
     FactoryInvoke {binding_ref:String,request:factory::Invocation},
     Ground {request:ground::Request},
     CompositionRead {#[serde(default)] owners:bool},
+    /// Wave 5 (docs/cradle/07): mount each of the six owners' own native
+    /// `<product> system --json` disclosure, unmodified, alongside its
+    /// honest availability. Distinct from `CompositionRead`, which reads
+    /// the `oi` composition layer's own census.
+    SystemCompositionRead,
     FilesList { path: String },
     FileOperation {location:files::Location,request:files::Request},
     FileRead { location: files::Location },
@@ -308,6 +314,7 @@ pub enum KernelOpResult {
     NativeOwnerReading {owner:String,data:Option<serde_json::Value>,failure:Option<serde_json::Value>},
     GroundReading {reading:serde_json::Value},
     CompositionReading {reading:composition::Reading},
+    SystemCompositionReading {reading:system_composition::Reading},
     DirectoryRead { directory: files::Directory },
     FileRead { reading: files::Reading },
     FileBytes {
@@ -395,6 +402,11 @@ impl Kernel {
                 let root=world::read_world(&self.client).ok();
                 let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::CompositionReading{reading:composition::Client::discover().read_with_owners(&cwd,owners)}})
+            },
+            KernelOp::SystemCompositionRead => {
+                let root=world::read_world(&self.client).ok();
+                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::SystemCompositionReading{reading:system_composition::Client::discover().read(&cwd)}})
             },
             KernelOp::FileOperation {location,request} => Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::FileOperation {data:files::operate(&self.client,&location,&request)?}}),
             KernelOp::FilesList {path} => Ok(KernelOpOutcome { receipts:Vec::new(), result:KernelOpResult::DirectoryRead {directory:files::list(&self.client,&path)?} }),

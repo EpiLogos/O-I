@@ -1,0 +1,14 @@
+{
+  "schema": "oi.development-field-cut/v1",
+  "standing": "deterministic-source-cut-not-installed-suite",
+  "ql_scope": "stable-carrier-only; QL-MEF#123 intelligence conformance deferred",
+  "owners": [
+    {"id":"oi","repository":"EpiLogos/O-I","revision":"0bcdcaa7f3558cd0f6bc4d1f017a7d5db6eefabf","track":212},
+    {"id":"central","repository":"EpiLogos/Central","revision":"4cd0fe52b10fb0e09a5a9e4486ea3d40d4946c5c","track":136},
+    {"id":"actuation","repository":"EpiLogos/Actuation","revision":"80432d7dba7e8c909e8871352625df524e92cfc8","track":53},
+    {"id":"ai-kit","repository":"EpiLogos/ai-kit","revision":"1f9ef6ab2ab45cf79732426c171e5de13273d197","track":261},
+    {"id":"software-factory","repository":"EpiLogos/Factory","repository_alias":"EpiLogos/agent-system-design","revision":"366a6b2bf18ba23053601f5d5eb543b79bfcfb27","track":215},
+    {"id":"workcell","repository":"EpiLogos/Workcell","revision":"aa2d2ba59f0ac259158eb7d2cd1cfcab1579268a","track":67},
+    {"id":"quaternal-logic","repository":"EpiLogos/QL-MEF","revision":"374cf8db5569401980a0f88ae38da1e2d11129b1","track":122}
+  ]
+}
