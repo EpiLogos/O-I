@@ -108,12 +108,11 @@ fn dispatch_product_command(
 ) -> Result<i32, String> {
     let executable = if let Some(explicit) = explicit_product_override(product) {
         explicit
-    } else if let Some(active) = active_suite_executable(&product.id)? {
+    } else if let Some(active) = active_suite_executable_s0(&product.id)? {
         active
     } else {
         // Compatibility only while no S0 active receipt exists. Once a receipt
-        // exists, active_suite_executable fails closed instead of silently
-        // falling through to a registered or PATH-shadowed binary.
+        // exists, verify the whole immutable artifact, not merely its launcher.
         let composition = load_composition()?;
         let registered = composition
             .modules
@@ -154,15 +153,22 @@ fn short_revision(revision: &str) -> &str {
 
 // AIKit owns this companion protocol; it is not a seventh product namespace.
 fn dispatch_session_space(args: &[OsString]) -> Result<i32, String> {
+    let companion_override = env::var_os("OI_AIKIT_SESSION_SPACE_BIN").filter(|v| !v.is_empty());
+    let product_override = env::var_os("OI_AIKIT_BIN").filter(|v| !v.is_empty());
+    // Never discard an invalid active-receipt error and fall back to a stale
+    // registered/PATH companion. Explicit developer overrides stay explicit.
+    let active = if companion_override.is_none() && product_override.is_none() {
+        active_suite_executable_s0("ai-kit")?
+    } else {
+        None
+    };
     let composition = load_composition()?;
-    let executable = env::var_os("OI_AIKIT_SESSION_SPACE_BIN")
-        .filter(|v| !v.is_empty())
+    let executable = companion_override
         .map(PathBuf::from)
         .or_else(|| {
-            env::var_os("OI_AIKIT_BIN")
-                .filter(|v| !v.is_empty())
+            product_override
                 .map(PathBuf::from)
-                .or_else(|| active_suite_executable("ai-kit").ok().flatten())
+                .or(active)
                 .or_else(|| {
                     composition
                         .modules
