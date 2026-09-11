@@ -23,7 +23,11 @@ export function DocumentReturns({sourceRef,project}:{sourceRef:string;project:st
   }).catch(()=>{setUnavailable(true);setRows(undefined);});
  };
  useEffect(()=>{setOpen(undefined);setBasis(undefined);setError(undefined);load();},[sourceRef,project,kernel.transport]);
- if(unavailable||!rows?.length)return null;
+ // Absent only when the bound owner does not expose receiving. With receiving
+ // available the strip stays as this document's arrival point — refreshable
+ // even at zero — because a Return can arrive at any moment after mount and
+ // the project tray must not be the only place that notices.
+ if(unavailable)return null;
  const act=async(request:ReceivingRequest,label:string)=>{
   setPending(true);setError(undefined);
   try{
@@ -54,9 +58,22 @@ export function DocumentReturns({sourceRef,project}:{sourceRef:string;project:st
  };
  const recover=(reading:ReturnReading)=>{void act({kind:"recover",return_ref:reading.return_ref,expected_return_revision:reading.revision},"Recovery");};
  const anchor=(proposal:{operation?:string;entry_id?:string;field_id?:string;reply_to?:string})=>[proposal.entry_id&&`entry ${proposal.entry_id}`,proposal.field_id&&`field ${proposal.field_id}`,proposal.reply_to&&`reply anchor ${proposal.reply_to}`].filter(Boolean).join(" · ");
+ /** The Shared Field lineage a returning participant carried in the proposal
+  * (owner-carried verbatim, non-reserved keys): the admitted projection this
+  * material came from. Never desktop-derived — rendered only when present. */
+ const sharedFieldLineage=(proposal:unknown):{projection_ref:string;projection_revision:number;disposition?:string;admission_ref?:string;withdrawn?:boolean}|undefined=>{
+  const field=(proposal as {shared_field?:unknown})?.shared_field;
+  if(!field||typeof field!=="object")return undefined;
+  const lineage=field as {projection_ref?:unknown;projection_revision?:unknown;disposition?:unknown;admission_ref?:unknown;withdrawn?:unknown};
+  if(typeof lineage.projection_ref!=="string"||typeof lineage.projection_revision!=="number")return undefined;
+  return {projection_ref:lineage.projection_ref,projection_revision:lineage.projection_revision,
+   disposition:typeof lineage.disposition==="string"?lineage.disposition:undefined,
+   admission_ref:typeof lineage.admission_ref==="string"?lineage.admission_ref:undefined,
+   withdrawn:lineage.withdrawn===true};
+ };
  return <section className="document-returns" aria-label="Returns for this document">
-  <header><span>Returns for this document</span>{rows.length>0&&<small>{rows.length} in the receiving field</small>}<button className="returns-refresh" aria-label="Refresh this document's returns" disabled={pending} onClick={load}>↻</button></header>
-  {rows.map(row=><button key={row.return_ref} className={`project-return document-return ${open?.return_ref===row.return_ref?"return-open":""}`} aria-expanded={open?.return_ref===row.return_ref} onClick={()=>void expand(row)}>
+  <header><span>Returns for this document</span>{rows&&<small>{rows.length} in the receiving field</small>}<button className="returns-refresh" aria-label="Refresh this document's returns" disabled={pending} onClick={load}>↻</button></header>
+  {rows?.map(row=><button key={row.return_ref} className={`project-return document-return ${open?.return_ref===row.return_ref?"return-open":""}`} aria-expanded={open?.return_ref===row.return_ref} onClick={()=>void expand(row)}>
     <span className={`return-status return-${row.status}`}>{row.status}</span>
     <span className="return-origin">{row.author.actor_kind==="human"?"H":"Agent"} · {row.document_id}</span>
   </button>)}
@@ -69,6 +86,7 @@ export function DocumentReturns({sourceRef,project}:{sourceRef:string;project:st
       <dt>Basis at arrival</dt><dd>{open.record.proposed_source_revision}{open.record.stale_at_arrival?" — already stale when it arrived":""}</dd>
       {basis&&<><dt>Current document basis</dt><dd>{basis.revision.revision}{basis.unreviewed_external_revision?" — externally edited since":""}</dd></>}
       {open.record.review&&<><dt>Review</dt><dd>{open.record.review.disposition} by {open.record.review.reviewer_ref} on {open.record.review.source_revision}</dd></>}
+      {sharedFieldLineage(open.record.proposal)&&<><dt>Shared field</dt><dd className="return-shared-field" data-shared-field="true">admitted contribution — projection <code>{sharedFieldLineage(open.record.proposal)!.projection_ref}</code> rev {sharedFieldLineage(open.record.proposal)!.projection_revision}{sharedFieldLineage(open.record.proposal)!.withdrawn?" · withdrawn by the publisher, admitted material retained":""}{sharedFieldLineage(open.record.proposal)!.admission_ref?<> · admission <code>{sharedFieldLineage(open.record.proposal)!.admission_ref}</code></>:null}</dd></>}
       {open.record.applied_source_revision&&<><dt>Applied</dt><dd>{open.record.applied_source_revision}</dd></>}
     </dl>
     {!open.included&&open.record.status!=="included"&&<div className="return-actions">

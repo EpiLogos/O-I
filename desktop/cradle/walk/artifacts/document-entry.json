@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "document-entry",
-  "generated_at": "2026-09-11T02:16:56.248Z",
+  "generated_at": "2026-09-11T03:24:35.832Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 6641,
+  "duration_ms": 6938,
   "checks": [
     {
       "ok": true,
@@ -144,7 +144,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 119,
+      "duration_ms": 130,
       "data": {
         "file": "document-entry-die-42-rendered.png"
       }
@@ -152,7 +152,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 49,
+      "duration_ms": 23,
       "data": {
         "file": "document-entry-dialogue-01-journal.png"
       }
@@ -160,7 +160,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 32,
+      "duration_ms": 31,
       "data": {
         "file": "document-entry-dialogue-01-native-save.png"
       }
@@ -168,7 +168,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 38,
+      "duration_ms": 20,
       "data": {
         "file": "document-entry-die-42-unavailable.png"
       }

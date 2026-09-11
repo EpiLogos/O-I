@@ -220,3 +220,29 @@ aside.world-navigator[aria-label="World navigator"] { padding: 19px 10px 0; }
 .document-returns .project-return.return-open,.document-returns .project-return:hover{border-color:#cbd1c3}
 .return-anchor{opacity:.75}
 .return-last-error{opacity:.8;margin:6px 0 0}
+
+/* Wave 7: the four material states live in the ordinary canvas — the shared
+ * projection strip and the accepted-revision strip sit beside the returns
+ * strip, under the same document surface (no second panel architecture). */
+.shared-field-material,.document-contributions{border-top:1px solid #d9ddd2;padding:10px 14px;font-size:12px}
+.shared-field-material header,.document-contributions header{display:flex;align-items:center;gap:8px}
+.shared-field-material header span,.document-contributions header span{font-weight:500}
+.shared-field-material header small,.document-contributions header small{opacity:.65}
+.shared-field-quote{margin:4px 0;padding:6px 8px;border-left:3px solid #cbd1c3;white-space:pre-wrap;overflow-wrap:anywhere}
+.shared-field-fields{display:flex;flex-direction:column;gap:6px;margin:8px 0}
+.shared-field-fields label{display:flex;flex-direction:column;gap:2px;color:var(--oi-muted-2)}
+.shared-field-fields input,.shared-field-fields select{font:inherit;padding:3px 6px;border:1px solid #cbd1c3;border-radius:4px;background:inherit;color:inherit}
+.shared-field-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px}
+.shared-field-actions span{opacity:.7;margin-right:auto}
+.shared-field-publish,.shared-field-withdraw-send{border:1px solid #cbd1c3;border-radius:6px;background:inherit;font:inherit;padding:3px 10px;cursor:pointer}
+.shared-field-publish:hover,.shared-field-withdraw-send:hover{border-color:var(--oi-accent-ink)}
+.shared-field-withdraw{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.shared-field-withdraw label{display:flex;flex-direction:column;gap:2px;color:var(--oi-muted-2)}
+.shared-field-withdraw input{font:inherit;padding:3px 6px;border:1px solid #cbd1c3;border-radius:4px;background:inherit;color:inherit}
+.shared-field-published p{margin:4px 0}
+.document-contributions .accepted-contribution{padding:6px 0;border-bottom:1px dashed #e3e6dc}
+.document-contributions .accepted-contribution:last-child{border-bottom:0}
+.accepted-contribution-author{font-weight:500;margin-right:8px}
+.accepted-contribution-anchor,.accepted-contribution-reviewer{opacity:.7;margin-right:8px}
+.accepted-contribution-body{margin-top:3px}
+.return-shared-field code{overflow-wrap:anywhere}

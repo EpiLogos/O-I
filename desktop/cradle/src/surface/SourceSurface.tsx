@@ -16,6 +16,8 @@ import { useEffect, useRef, useState } from "react";
 import { readDraft, writeDraft } from "../workspace/drafts";
 import { SourceHistory } from "./SourceHistory";
 import { DocumentReturns } from "../receiving/DocumentReturns";
+import { DocumentContributions } from "../receiving/DocumentContributions";
+import { SharedFieldMaterial } from "../receiving/SharedFieldMaterial";
 import { useKernel } from "../kernel/KernelProvider";
 import type { SurfaceBinding } from "./types";
 import {EditorFrame} from "../editor/EditorChrome";
@@ -216,6 +218,8 @@ export function SourceSurface(props: SourceSurfaceProps) {
         ) : null}
       </div>
       {buffer.project && <DocumentReturns sourceRef={binding.ref} project={buffer.project}/>}
+      {buffer.project && <DocumentContributions sourceRef={binding.ref} project={buffer.project}/>}
+      <SharedFieldMaterial sourceRef={binding.ref}/>
 
     </EditorFrame>
   );
