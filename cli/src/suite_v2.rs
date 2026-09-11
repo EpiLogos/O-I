@@ -584,10 +584,18 @@ fn command_suite_v2_doctor(args: &[OsString]) -> Result<i32, String> {
     let data_root = oi_data_root()?;
     let composition = load_composition()?;
     let receipt = load_installed_receipt(&data_root, &manifest.suite_version)?;
+    // The live surface disclosure is needed twice: per product (to tell a
+    // deliberate developer-path install from a genuinely unhealthy one) and
+    // as its own check block. Resolved once.
+    let live = oi_cli::status::live_disclosure();
+    let surface_in_step = |id: &str| live.as_ref().ok()
+        .and_then(|d| d.surfaces.iter().find(|s| s.id == id))
+        .map(|s| s.state == oi_cli::status::NativeSurfaceState::Registered && s.drift.is_none())
+        .unwrap_or(false);
     let mut checks = Vec::new();
     let mut ok = true;
     for product in &manifest.products {
-        let result = match receipt.products.get(&product.id) {
+        let managed = match receipt.products.get(&product.id) {
             None => Err("not installed".to_owned()),
             Some(installed) if installed.revision != product.revision => Err(format!("revision drift: {}", installed.revision)),
             Some(installed) => {
@@ -601,9 +609,18 @@ fn command_suite_v2_doctor(args: &[OsString]) -> Result<i32, String> {
                 } else { Ok(()) }
             }
         };
-        if result.is_err() { ok = false; }
-        checks.push(json!({"product": product.id, "ok": result.is_ok(), "detail": result.err()}));
+        // A managed-receipt gap on a machine whose registered source surface
+        // is present and in step is a deliberate developer-path install, not
+        // a health failure: the surface's own drift check still fails this
+        // doctor when what runs is stale. Neither managed nor surface
+        // coverage, or a drifted surface, remains a failing condition.
+        let (product_ok, detail) = doctor_managed_standing(managed.err().as_deref(), surface_in_step(&product.id));
+        if !product_ok { ok = false; }
+        checks.push(json!({"product": product.id, "ok": product_ok, "detail": detail}));
     }
+    let catalogue = catalogue_freshness();
+    if catalogue.is_err() { ok = false; }
+    checks.push(json!({"product": "surface-catalogue", "ok": catalogue.is_ok(), "detail": catalogue.err()}));
     // Registered source surfaces: the managed-release checks above see only
     // recorded receipts. What this machine actually runs also includes
     // registered checkouts and whatever PATH resolves first. Found 2026-09-05:
@@ -611,7 +628,7 @@ fn command_suite_v2_doctor(args: &[OsString]) -> Result<i32, String> {
     // ok across the board. Live drift is a failing condition, same class as a
     // drifted receipt.
     let mut surface_checks = Vec::new();
-    match oi_cli::status::live_disclosure() {
+    match live {
         Ok(disclosure) => {
             for surface in &disclosure.surfaces {
                 // Drift is the failing condition. A PATH shadow is recorded and
@@ -663,6 +680,49 @@ fn command_suite_v2_doctor(args: &[OsString]) -> Result<i32, String> {
         for gate in &manifest.physical_gates { println!("  DEFERRED {} — {}", gate.id, gate.description); }
     }
     Ok(if ok { 0 } else { 3 })
+}
+
+/// Managed-receipt standing for one product, reconciled against its live
+/// source surface. `Err` from the managed check plus an in-step registered
+/// surface is a deliberate developer-path install, not a health failure; the
+/// surface's own drift check still fails the doctor when what runs is stale.
+fn doctor_managed_standing(managed_error: Option<&str>, surface_in_step: bool) -> (bool, Option<String>) {
+    match managed_error {
+        None => (true, None),
+        Some(err) if surface_in_step => (true,
+            Some(format!("managed receipt not authoritative for this machine ({err}); live source surface is in step (developer-path install)"))),
+        Some(err) => (false, Some(err.to_owned())),
+    }
+}
+
+/// An adopted runtime surface catalogue older than the embedded snapshot is
+/// the stale-shadow failure mode: resolution prefers it over the embedded
+/// file, so a week-old adoption silently poisons every revision reading.
+/// Same-date or newer adoptions, and machines without an adoption, pass.
+fn catalogue_staleness_error(runtime_origin: &str, runtime_verified_at: Option<&str>, embedded_verified_at: &str) -> Option<String> {
+    if runtime_origin == "embedded" { return None; }
+    let runtime_verified_at = runtime_verified_at
+        .unwrap_or("0000-00-00");
+    if runtime_verified_at < embedded_verified_at {
+        Some(format!(
+            "adopted runtime surface catalogue (verified {runtime_verified_at}) is older than the embedded snapshot (verified {embedded_verified_at}); \
+             re-adopt 'oi catalogue adopt <surfaces.json>' or remove the adopted catalogue so the embedded snapshot resolves"))
+    } else { None }
+}
+
+fn catalogue_freshness() -> Result<(), String> {
+    let resolved = oi_cli::catalog_source::resolve()?;
+    let verified_at = |json: &str| -> Result<String, String> {
+        serde_json::from_str::<serde_json::Value>(json)
+            .map_err(|error| format!("surface catalogue is invalid JSON: {error}"))?
+            .get("verified_at").and_then(serde_json::Value::as_str)
+            .map(str::to_owned)
+            .ok_or_else(|| "surface catalogue carries no verified_at".to_owned())
+    };
+    let runtime_verified_at = verified_at(&resolved.json)?;
+    let embedded_verified_at = verified_at(include_str!("../../surfaces.json"))?;
+    catalogue_staleness_error(resolved.origin, Some(&runtime_verified_at), &embedded_verified_at)
+        .map_or(Ok(()), Err)
 }
 
 fn command_suite_v2_cleanup(args: &[OsString]) -> Result<i32, String> {
@@ -1009,6 +1069,37 @@ mod tests {
             ground.join("Work/agent-system-design"),
             "without a renamed checkout the legacy agent-system-design path remains the fallback"
         );
+    }
+
+    #[test]
+    fn doctor_treats_in_step_surface_as_authoritative_over_stale_receipt() {
+        let (ok, detail) = doctor_managed_standing(Some("not installed"), true);
+        assert!(ok, "a developer-path install with an in-step surface is healthy");
+        let detail = detail.expect("the downgrade is disclosed, not silent");
+        assert!(detail.contains("developer-path install"), "{detail}");
+
+        let asset_error = "cached build archive checksum mismatch".to_owned();
+        let (ok, detail) = doctor_managed_standing(Some(&asset_error), true);
+        assert!(ok, "even an asset mismatch is superseded by an in-step live surface");
+        assert!(detail.unwrap().contains("checksum mismatch"));
+
+        let (ok, detail) = doctor_managed_standing(Some("not installed"), false);
+        assert!(!ok, "no managed receipt and no in-step surface is a failing condition");
+        assert_eq!(detail.unwrap(), "not installed");
+
+        let (ok, detail) = doctor_managed_standing(None, false);
+        assert!(ok, "a satisfied managed receipt needs no surface");
+        assert!(detail.is_none());
+    }
+
+    #[test]
+    fn doctor_fails_stale_adopted_catalogue_but_not_current_or_embedded() {
+        let stale = catalogue_staleness_error("runtime", Some("2026-09-03"), "2026-09-09").expect("stale adoption must fail");
+        assert!(stale.contains("re-adopt"), "{stale}");
+        assert!(catalogue_staleness_error("runtime", Some("2026-09-09"), "2026-09-09").is_none(), "same-day adoption is current");
+        assert!(catalogue_staleness_error("runtime", Some("2026-09-10"), "2026-09-09").is_none(), "newer adoption is current");
+        assert!(catalogue_staleness_error("runtime", None, "2026-09-09").is_some(), "an adoption without a date cannot be trusted");
+        assert!(catalogue_staleness_error("embedded", None, "2026-09-09").is_none(), "the embedded snapshot is always current by construction");
     }
 
     #[test]
