@@ -26,7 +26,7 @@
     "oi_prerequisite": "e89cb8630620a9ebf758315f2ce7350b7a191a3d",
     "oi_candidate": "capture actual checkout HEAD and built executable digest; never substitute base for candidate",
     "central": "5d1b8bf6692f9aca45b2fe39db54cbc378dda70e",
-    "aikit": "62a238b68ca11abc917a189303f8c27cd055ea6a",
+    "aikit": "a7ec336ac713edf4561c519fb98ac0418f495e72",
     "workcell": "0c44ee373f5a5e11ab33e885be84dd8293bc358f",
     "actuation": "2d73f957c287ef386b09ac2c55eeab3603b60873",
     "factory": "48e0456d485d702a7521d754599e00a165ff1626"
@@ -97,5 +97,5 @@
     "standing": "bounded existing source cut; NOT CAW attempt execution or present joined feature acceptance"
   },
   "standing": "explicitly-pinned-unmerged-candidate-not-accepted-main-not-installed-or-human-proof",
-  "recut_note": "2026-09-11 suite-coordination session: owner cut re-pinned after the 22-PR convergence; supersedes the earlier unmerged candidate values (central d91dee4, aikit c1ae113, workcell dcac0a2, actuation 0ac4bbb, factory 366a6b2). ql-mef rides 59f674d."
+  "recut_note": "2026-09-11 suite-coordination session: owner cut re-pinned after the 22-PR convergence; ai-kit advanced to a7ec336 (#297 — the #294 profileless repair + persistent task-material chain folded onto accepted main). Supersedes the earlier unmerged candidate values. ql-mef rides 59f674d."
 }
