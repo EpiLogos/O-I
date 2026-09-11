@@ -73,6 +73,14 @@ def check_disconnected(code: int, data: bytes) -> None:
 
 def prove(recorder: c.Recorder) -> list[dict]:
     c.governance()
+    suite_binding = recorder.binaries.get('aikit-task-suite')
+    if not suite_binding or not Path(suite_binding.get('path', '')).is_file():
+        # The maintained seven-case suite and its encounter-task CLI surface
+        # ride the unmerged ai-kit candidate branch, not the accepted cut.
+        # A missing producer is not a disproven behaviour: P26 stays pending
+        # and the joined task/material chain awaits the suite's transfer.
+        raise c.Pending('maintained seven-case native task suite is absent from the accepted ai-kit cut; '
+                        'the joined task/material chain awaits its transfer')
     cut = c.load(c.SPEC / 'sources/lock.json')['controlled_native_cut']
     paths = {}
     for owner, key in OWNER_KEYS.items():
