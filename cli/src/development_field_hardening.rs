@@ -508,7 +508,8 @@ fn command_development_suite_rollback_s0(args: &[std::ffi::OsString]) -> Result<
     } else {
         println!("Rolled back active suite to {}.", previous.receipt_ref);
         println!(
-            "Receipt {} remains immutable history; rollback authority followed the active receipt lineage."
+            "Receipt {} remains immutable history; rollback authority followed the active receipt lineage.",
+            active.receipt_ref
         );
     }
     Ok(0)
