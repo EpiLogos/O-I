@@ -36,7 +36,7 @@
     "aikit": ["--json init", "--json adopt", "--json set create/show", "--json apply", "native current/generation metadata and projection readback", "encounter-task-configure", "encounter-task-read", "encounter-agency-configure", "encounter open/send/delivery/read", "encounter-serve", "native task protocol launch"],
     "workcell": ["native control status/prepare/inspect/observe/release", "workcell.directory-storage/v1", "workcell.service-declaration/v1", "write-boundary inspect/exec"],
     "actuation": ["agency actualise"],
-    "factory": ["development commission STATE REQUEST_REF --json", "development commission-read STATE REQUEST_REF --json"]
+    "factory": ["development commission STATE REQUEST --json", "development commission-read STATE REQUEST_REF --json"]
   },
   "preserved_existing_floor": {
     "entry": "scripts/validate_factory_proving.py / oi prove factory",
