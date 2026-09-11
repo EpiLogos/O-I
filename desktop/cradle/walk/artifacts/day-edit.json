@@ -1,0 +1,181 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "day-edit",
+  "generated_at": "2026-09-11T21:46:12.480Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 13138,
+  "checks": [
+    {
+      "ok": true,
+      "label": "The native Day document opens at the root register and its face is the supplied die"
+    },
+    {
+      "ok": true,
+      "label": "The projected island still opens exactly at the owner's payload"
+    },
+    {
+      "ok": true,
+      "label": "A mapped in-frame edit is composed for the owner's field operation (saving state disclosed)"
+    },
+    {
+      "ok": true,
+      "label": "The typed text landed in the owner's payload through `central.document.mutate` field.set — the face never wrote bytes",
+      "data": {
+        "field": "Ground captured through the die face."
+      }
+    },
+    {
+      "ok": true,
+      "label": "The owner advanced the document revision for the field operation",
+      "data": {
+        "open": "central.content-fnv1a64/v1:395713:e1b810e425f2e2ff",
+        "now": "central.content-fnv1a64/v1:396114:efc8ee794d6fa6c4"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The owner recorded exactly one field operation with its human actor"
+    },
+    {
+      "ok": true,
+      "label": "The open surface re-read the Day through the owner's route — buffer clean at the owner's new revision",
+      "data": {
+        "bufferRevision": "central.content-fnv1a64/v1:396114:efc8ee794d6fa6c4",
+        "owner": "central.content-fnv1a64/v1:396114:efc8ee794d6fa6c4",
+        "dirty": false
+      }
+    },
+    {
+      "ok": true,
+      "label": "A second mapped edit lands serialised on the owner's advanced revision — no stale crossfire between the face's own edits",
+      "data": {
+        "ops": 2
+      }
+    },
+    {
+      "ok": true,
+      "label": "An edited region with no owner field mapping is disclosed as frame-only — never persisted silently",
+      "data": {
+        "line": "1 edited region has no owner field mapping — the supplied form records them in the frame only, and they do not persist."
+      }
+    },
+    {
+      "ok": true,
+      "label": "The owner's payload still carries exactly the seventeen fields — the unmapped edit changed nothing",
+      "data": {
+        "keys": 17,
+        "ops": 2
+      }
+    },
+    {
+      "ok": true,
+      "label": "An external owner field operation advances the document behind the open face"
+    },
+    {
+      "ok": true,
+      "label": "The open face still shows its arrival-time payload — the desktop never fabricates the external change"
+    },
+    {
+      "ok": true,
+      "label": "The Re-read canonical affordance pulls the external Day change through the owner's Day route — buffer clean at the owner's revision",
+      "data": {
+        "bufferRevision": "central.content-fnv1a64/v1:396892:93daac380cb2fcdc",
+        "owner": "central.content-fnv1a64/v1:396892:93daac380cb2fcdc"
+      }
+    },
+    {
+      "ok": true,
+      "label": "A byte-level external edit advances the source behind both the owner and the face"
+    },
+    {
+      "ok": true,
+      "label": "The Re-read affordance pulls the byte-level external change too — the face re-projects it, the buffer is clean at the owner's revision",
+      "data": {
+        "bufferRevision": "central.content-fnv1a64/v1:396893:148268c3084b9c9f",
+        "owner": "central.content-fnv1a64/v1:396893:148268c3084b9c9f"
+      }
+    },
+    {
+      "ok": true,
+      "label": "With the basis current but the native relation behind, the owner refuses the field operation and the refusal surfaces verbatim",
+      "data": {
+        "refusal": "The owner refused the edit to p0_quick_thoughts: Central owner Action refused: external human/source edit is protected; reconcile its exact retained revision before further native contribution mutation"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The refused operation is absent from the owner's record — nothing was applied behind the refusal",
+      "data": {
+        "ops": 3
+      }
+    },
+    {
+      "ok": true,
+      "label": "The surface ends clean at the owner's own revision — the refusal changed nothing it should not"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-11T21:46:12.612Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 61,
+      "data": {
+        "file": "day-edit-day-edit-field-saved.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 52,
+      "data": {
+        "file": "day-edit-day-edit-unmapped-disclosed.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 70,
+      "data": {
+        "file": "day-edit-day-edit-external-reread.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 70,
+      "data": {
+        "file": "day-edit-day-edit-refusal-verbatim.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "day-edit-day-edit-field-saved.png",
+    "day-edit-day-edit-unmapped-disclosed.png",
+    "day-edit-day-edit-external-reread.png",
+    "day-edit-day-edit-refusal-verbatim.png"
+  ]
+}

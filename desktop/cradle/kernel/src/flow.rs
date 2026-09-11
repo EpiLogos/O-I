@@ -275,6 +275,18 @@ pub enum ReceivingRequest {
     /// Resume an interrupted inclusion from its recorded native intent
     /// (`central.receiving.recover`); only the owner decides what may replay.
     Recover { return_ref: String, expected_return_revision: String },
+    /// One human authored-field edit (`central.document.mutate` `field.set`):
+    /// the owner refuses non-human authors by its own law, CAS-checks
+    /// `expected_revision`, and deduplicates on `request_id` — a replayed
+    /// request returns its durable receipt, never a second application.
+    MutateField {
+        source_ref: String,
+        document_id: String,
+        expected_revision: String,
+        request_id: String,
+        field_id: String,
+        value: Value,
+    },
 }
 
 /// Client for the Central owner Actions the kernel reads and writes
@@ -475,6 +487,16 @@ impl CentralClient {
                 input.insert("return_ref".to_owned(), json!(return_ref));
                 input.insert("expected_return_revision".to_owned(), json!(expected_return_revision));
                 "central.receiving.recover"
+            }
+            ReceivingRequest::MutateField { source_ref, document_id, expected_revision, request_id, field_id, value } => {
+                input.insert("source_ref".to_owned(), json!(source_ref));
+                input.insert("document_id".to_owned(), json!(document_id));
+                input.insert("expected_revision".to_owned(), json!(expected_revision));
+                input.insert("request_id".to_owned(), json!(request_id));
+                input.insert("operation".to_owned(), json!("field.set"));
+                input.insert("field_id".to_owned(), json!(field_id));
+                input.insert("value".to_owned(), value.clone());
+                "central.document.mutate"
             }
         };
         self.run(action, Value::Object(input))
