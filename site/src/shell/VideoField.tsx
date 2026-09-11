@@ -7,13 +7,14 @@ type VideoFieldProps = {
   poster?: 1 | 2 | 3;
   className?: string;
   zoom?: number;
+  shift?: number;
 };
 
 /**
  * A remake-material video used as a moving field. Zoomed past its edges and
  * feathered with a mask in CSS so it spills over and dissolves into the page.
  */
-export function VideoField({ media, poster = 1, className, zoom = 1.3 }: VideoFieldProps) {
+export function VideoField({ media, poster = 1, className, zoom = 1.3, shift = 0 }: VideoFieldProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -46,7 +47,7 @@ export function VideoField({ media, poster = 1, className, zoom = 1.3 }: VideoFi
         playsInline
         preload="metadata"
         poster={`./media/motion/oi-pointcloud-poster-${poster}.jpg`}
-        style={{ transform: `scale(${zoom})` }}
+        style={{ transform: `scale(${zoom}) translateX(${shift}%)` }}
         tabIndex={-1}
       >
         <source src={`./media/motion/oi-pointcloud-${media}.mp4`} type="video/mp4" />

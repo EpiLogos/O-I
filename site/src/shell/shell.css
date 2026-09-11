@@ -253,7 +253,7 @@ a {
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: radial-gradient(125% 100% at 50% 45%, rgba(10, 10, 11, 0) 52%, rgba(10, 10, 11, 0.5) 100%);
+  background: radial-gradient(130% 105% at 50% 45%, rgba(10, 10, 11, 0) 58%, rgba(10, 10, 11, 0.35) 100%);
   transform-origin: bottom;
   will-change: transform, opacity;
 }

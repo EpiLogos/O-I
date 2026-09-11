@@ -71,7 +71,7 @@ export function HeroParallax() {
   return (
     <section className="pl" ref={rootRef} aria-label="O:I opening statement">
       <div className="pl__sticky">
-        <VideoField media="b" poster={1} className="pl__video" zoom={1.12} />
+        <VideoField media="b" poster={1} className="pl__video" zoom={1.12} shift={4} />
 
         <div className="pl__shade" data-pl-shade aria-hidden="true" />
 
