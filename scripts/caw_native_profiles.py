@@ -71,7 +71,10 @@ def generated_bodies(root: Path, generation: str, context: str | None = None) ->
                 body = text.split(start, 1)[1].split(end, 1)[0]
                 if c.sha(body) != c.GOVERNANCE_SHA:
                     raise c.Failure("current AIKit projection changed the authored governance bytes")
-                found.append((str(skill.relative_to(root)), c.sha(text)))
+                # the root as given may be a non-canonical macOS tempdir path
+                # (/var vs /private/var); report the skill relative to the
+                # resolved root so the projection stays inspectable off-Linux.
+                found.append((str(skill.resolve().relative_to(root.resolve())), c.sha(text)))
     if not matched:
         raise c.Failure("apply receipt has no matching native current-generation readback")
     return sorted(set(found))
