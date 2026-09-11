@@ -32,17 +32,17 @@ export function HeroParallax() {
       });
 
       const layers = [
-        { n: '1', out: 30 },
-        { n: '2', out: 20 },
-        { n: '3', out: 11 },
-        { n: '4', out: 5 },
+        { n: '1', out: 36 },
+        { n: '2', out: 24 },
+        { n: '3', out: 13 },
+        { n: '4', out: 6 },
       ];
 
       layers.forEach((layer, index) => {
         timeline.to(
           root.querySelectorAll(`[data-pl-layer="${layer.n}"]`),
           {
-            keyframes: [{ yPercent: 0 }, { yPercent: -layer.out }],
+            keyframes: [{ yPercent: layer.out }, { yPercent: 0 }],
             ease: 'none',
           },
           index === 0 ? 0 : '<',
@@ -105,7 +105,6 @@ export function HeroParallax() {
 
           <div className="pl__title-block" data-pl-title>
             <h1 className="pl__title">Objective : Internality</h1>
-            <p className="pl__sub">Operating Infrastructure · Objective Internality</p>
           </div>
         </div>
 

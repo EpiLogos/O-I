@@ -7,6 +7,7 @@ export type Layout = 'statement' | 'split' | 'feature' | 'grid' | 'index' | 'ban
 export type Section = {
   eyebrow?: string;
   title: string;
+  sub?: string;
   body?: string;
   items?: Item[];
   layout: Layout;
@@ -81,6 +82,7 @@ export const PAGES: Page[] = [
       {
         eyebrow: 'What is O:I',
         title: 'O:I maps what it means for an AI agent to have a world.',
+        sub: 'Operating Infrastructure · Objective Internality',
         body: 'An agent works through an inference model — and through the project it can see, the tools it can use, the knowledge it can reach, the authority it has, the history it carries and the purposes that orient it. O:I makes that surrounding field explicit: Operating Infrastructure · Objective Internality.',
         layout: 'statement',
         tone: 'dark',

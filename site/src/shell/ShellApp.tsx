@@ -124,6 +124,7 @@ function SectionView({ section }: { section: Section }) {
       <section className={`sec sec--statement ${tone}`}>
         <div className="sec__inner">
           <Title section={section} />
+          {section.sub ? <p className="sec__sub">{section.sub}</p> : null}
           {section.body ? (
             <div className="sec__prose sec__prose--statement">
               <Prose text={section.body} />

@@ -2,10 +2,10 @@
 
 :root {
   --bg: #0a0a0b;
-  --white: #f4f2ec;
+  --white: #e9e3d6;
   --paper: #f3f0e8;
-  --muted: rgba(244, 242, 236, 0.58);
-  --rule: rgba(244, 242, 236, 0.14);
+  --muted: rgba(233, 227, 214, 0.58);
+  --rule: rgba(233, 227, 214, 0.14);
   --gold: #b2944f;
   --ease: cubic-bezier(0.22, 0.61, 0.2, 1);
   --track: 0.16em;
@@ -57,10 +57,14 @@ a {
   background: var(--white);
 }
 
-/* — Header: transparent, auto-inverting over light/dark sections — */
+.shell {
+  position: relative;
+}
+
+/* — Header: transparent, pinned to the top of the page (scrolls away) — */
 
 .sn {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
@@ -69,14 +73,18 @@ a {
   align-items: center;
   justify-content: space-between;
   padding: 1.1rem var(--gutter);
-  color: #fff;
+  color: #e9e3d6;
+}
+
+.sn--open {
+  position: fixed;
 }
 
 .sn__brand,
 .sn__toggle {
   position: relative;
   z-index: 60;
-  mix-blend-mode: difference;
+  animation: heroShift 13s var(--ease) infinite alternate;
 }
 
 .sn__brand {
@@ -108,7 +116,7 @@ a {
   place-items: center;
   width: 2rem;
   height: 2rem;
-  border: 1px solid #fff;
+  border: 1px solid currentColor;
   border-radius: 50%;
   font-size: 1.15rem;
   line-height: 1;
@@ -117,11 +125,6 @@ a {
 
 .sn--open .sn__toggle-icon {
   transform: rotate(90deg);
-}
-
-.sn--open .sn__brand,
-.sn--open .sn__toggle {
-  mix-blend-mode: normal;
 }
 
 /* Accordion panel */
@@ -272,7 +275,8 @@ a {
   position: relative;
   width: min(60vw, 40rem);
   aspect-ratio: 720 / 280;
-  color: #b6b4ac;
+  color: #e9e3d6;
+  transform: translateY(clamp(0.75rem, 3vh, 2rem));
   animation: heroShift 12s var(--ease) infinite alternate;
 }
 
@@ -303,7 +307,7 @@ a {
 
 .pl__title {
   margin: 0;
-  color: #b9b7af;
+  color: #e9e3d6;
   font-size: clamp(1.8rem, 4.6vw, 3.8rem);
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -311,19 +315,10 @@ a {
   animation: heroShift 14s var(--ease) infinite alternate;
 }
 
-.pl__sub {
-  margin: 1rem 0 0;
-  color: rgba(244, 242, 236, 0.88);
-  font-size: clamp(0.72rem, 1.05vw, 0.95rem);
-  font-weight: 650;
-  letter-spacing: var(--track);
-  text-transform: uppercase;
-}
-
 @keyframes heroShift {
-  0% { color: #eae8e1; }
-  50% { color: #2f2f2d; }
-  100% { color: #f4f2ec; }
+  0% { color: #e9e3d6; }
+  50% { color: #2b3f63; }
+  100% { color: #f6f4ee; }
 }
 
 /* — Interior page opening — */
@@ -387,8 +382,8 @@ a {
 .sec--dark {
   --s-bg: var(--bg);
   --s-fg: var(--white);
-  --s-muted: rgba(244, 242, 236, 0.58);
-  --s-rule: rgba(244, 242, 236, 0.14);
+  --s-muted: rgba(233, 227, 214, 0.58);
+  --s-rule: rgba(233, 227, 214, 0.14);
   --s-accent: var(--gold);
 }
 
@@ -412,6 +407,15 @@ a {
   font-weight: 500;
   letter-spacing: -0.04em;
   line-height: 1.02;
+}
+
+.sec__sub {
+  margin: 1.25rem 0 0;
+  color: var(--s-muted);
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: var(--track);
+  text-transform: uppercase;
 }
 
 .sec__prose p {
@@ -708,7 +712,7 @@ a {
 
 .band .sec__prose p {
   max-width: 36rem;
-  color: rgba(244, 242, 236, 0.82);
+  color: rgba(233, 227, 214, 0.82);
 }
 
 /* — Footer — */
