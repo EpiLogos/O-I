@@ -98,7 +98,7 @@ export function AddressedComposer({disabled,dispatch,history,service,agentSessio
       <label>Group recipients — one per line: agent session + expected basis<textarea aria-label="Group recipients" disabled={disabled||running} value={recipientsLines} onChange={event=>setRecipientsLines(event.target.value)} rows={3} placeholder={"agent-session/… rev/1\nagent-session/… rev/2"} spellCheck={false}/></label>
       <label>Group audience — the agent refs the group must agree on exactly<input aria-label="Group audience" disabled={disabled||running} value={groupAudienceField} onChange={event=>setGroupAudienceField(event.target.value)} placeholder="comma-separated agent refs" autoComplete="off" spellCheck={false}/></label>
       <div className="encounter-addressed-actions">
-        <span className="encounter-addressed-preview">{parsedRecipients.length||"no"} recipient{parsedRecipients.length===1?"":"s"} · audience {groupAudienceRefs.length||"none"}</span>
+        <span className="encounter-addressed-group-preview">{parsedRecipients.length||"no"} recipient{parsedRecipients.length===1?"":"s"} · audience {groupAudienceRefs.length||"none"}</span>
         <button className="encounter-addressed-group-send" disabled={!groupReady()||!onGroupSend} onClick={submitGroup}>Dispatch to the group</button>
       </div>
       {group&&<div className="encounter-addressed-group-state" data-ref={group.ref}>

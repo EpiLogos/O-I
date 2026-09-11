@@ -119,7 +119,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await page.getByRole("textbox",{name:"Shared source refs",exact:true}).fill("source/shared");
   const packet="Return the exact token OI_DESKTOP_GROUP_OK. Do not use tools.";
   await page.getByRole("textbox",{name:"Addressed request text",exact:true}).fill(packet);
-  check((await page.locator(".encounter-addressed-group .encounter-addressed-preview").innerText()).includes("2 recipients"),"The group composer previews the explicit recipients before any dispatch");
+  check((await page.locator(".encounter-addressed-group .encounter-addressed-group-preview").innerText()).includes("2 recipients"),"The group composer previews the explicit recipients before any dispatch");
   await shot("group-composed");
 
   await page.locator(".encounter-addressed-group-send").click();

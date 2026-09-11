@@ -117,6 +117,9 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
   await page.waitForFunction(() => document.querySelector(".project-returns header small")?.textContent?.includes("2 in the receiving field"), null, {timeout: 20000});
   await tray.locator(".project-return").filter({hasText: "pending"}).first().click();
   await page.waitForFunction(() => document.querySelectorAll(".project-returns .return-detail").length === 1 && document.querySelector(".project-returns .return-detail")?.textContent?.includes("Second reviewed contribution"), null, {timeout: 20000});
+  // The detail can render before its basis read lands; accepting a stale
+  // basis only means something once the tray shows the basis it would accept.
+  await page.waitForFunction(() => document.querySelector(".project-returns .return-detail")?.textContent?.includes("Current document basis"), null, {timeout: 20000});
   const sourcePath = join(p.root, "Work/Editor", p.doc.source.path);
   writeFileSync(sourcePath, readFileSync(sourcePath, "utf8") + "\n");
   await tray.getByRole("button", {name: "Accept current basis"}).click();
