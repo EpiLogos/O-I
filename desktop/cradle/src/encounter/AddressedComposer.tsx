@@ -1,10 +1,12 @@
-import {useState} from "react";
+import {useEffect,useState} from "react";
 import type {AddressedTurn,DeliveryRecord} from "./client";
 
 /** Explicit addressed work: a machine turn the sender composes and commits,
  * carried by the owner's addressed dispatch — never the shared human draft.
  * Recipient, sender identity and participation basis are owner-validated at
- * commit; a refusal here is the owner's own structured answer, shown verbatim. */
+ * commit; a refusal here is the owner's own structured answer, shown verbatim.
+ * A selected passage can compose this request (oi:addressed-candidate); the
+ * selection supplies its exact source ref and quote, never sender/basis. */
 export interface AddressedFields {sender:string;audience:string;basis:string;sourceRefs:string;text:string}
 export type DispatchState =
   | {kind:"idle"}
@@ -13,18 +15,45 @@ export type DispatchState =
   | {kind:"refused";ref:string;error:string};
 export interface DeliveryHistoryEntry {ref:string;record:DeliveryRecord;duplicate:boolean}
 export const ACTIVE_PHASES=["dispatching","submitted","uncertain"];
+/** A selection handed to the addressed composer (context tray → addressed
+ * request). Presentation state only: it is held until the named conversation's
+ * composer next renders, then consumed — never persisted, never auto-sent. */
+export interface AddressedCandidate {agentSession:string;sourceRef:string;text:string}
+let pendingAddressed:AddressedCandidate|undefined;
+/** The context tray's addressed destination. Surfaces unmount with their tab,
+ * so the event alone is not enough — the pending slot survives until the
+ * composer consumes it. */
+export function composeAddressed(candidate:AddressedCandidate) {
+  pendingAddressed=candidate;
+  window.dispatchEvent(new CustomEvent("oi:addressed-candidate",{detail:candidate}));
+}
 const TERMINAL_NOTE:Record<string,string>={
   returned:"Provider turn completed — observed by the native host. This is not task success and no recognition is implied.",
   failed:"The provider turn failed.",
   cancelled:"The turn was cancelled.",
   "reconciled-no-replay":"Correlated with reviewed owner evidence; never replayed.",
 };
-export function AddressedComposer({disabled,dispatch,history,service,onDispatchFields,onSend}:{disabled:boolean;dispatch:DispatchState;history:DeliveryHistoryEntry[];service?:{running:boolean;pid?:number;detail?:string};onDispatchFields?:(fields:AddressedFields)=>void;onSend:(turn:AddressedTurn,fields:AddressedFields)=>void}) {
+export function AddressedComposer({disabled,dispatch,history,service,agentSession,onDispatchFields,onSend}:{disabled:boolean;dispatch:DispatchState;history:DeliveryHistoryEntry[];service?:{running:boolean;pid?:number;detail?:string};agentSession?:string;onDispatchFields?:(fields:AddressedFields)=>void;onSend:(turn:AddressedTurn,fields:AddressedFields)=>void}) {
   const [sender,setSender]=useState("");const [audience,setAudience]=useState("");
   const [basis,setBasis]=useState("");const [sourceRefs,setSourceRefs]=useState("");
-  const [text,setText]=useState("");
+  const [text,setText]=useState("");const [selection,setSelection]=useState<{sourceRef:string}|undefined>();
   const running=dispatch.kind==="running";
   const update=(patch:Partial<AddressedFields>)=>{const next={sender,audience,basis,sourceRefs,text,...patch};onDispatchFields?.(next);setSender(next.sender);setAudience(next.audience);setBasis(next.basis);setSourceRefs(next.sourceRefs);setText(next.text);};
+  const applyCandidate=(candidate:AddressedCandidate)=>{
+    const next={sender,audience,basis,sourceRefs:candidate.sourceRef,text:candidate.text??text};
+    onDispatchFields?.(next);setSender(next.sender);setAudience(next.audience);setBasis(next.basis);setSourceRefs(next.sourceRefs);setText(next.text);
+    setSelection({sourceRef:candidate.sourceRef});};
+  useEffect(()=>{if(!agentSession)return;
+    const take=(event:Event)=>{const detail=(event as CustomEvent<AddressedCandidate>).detail;
+      if(detail?.agentSession===agentSession&&detail.sourceRef)applyCandidate(detail);};
+    window.addEventListener("oi:addressed-candidate",take);
+    return()=>window.removeEventListener("oi:addressed-candidate",take);
+  },[agentSession,sender,audience,basis,sourceRefs,text]);
+  // A composition addressed to this conversation while another tab held the
+  // view: consume it the moment this composer renders.
+  useEffect(()=>{if(!agentSession)return;
+    if(pendingAddressed?.agentSession===agentSession){const candidate=pendingAddressed;pendingAddressed=undefined;applyCandidate(candidate);}
+  },[agentSession]);
   const submit=()=>{if(running||disabled||!text.trim()||!sender.trim()||!audience.trim()||!basis.trim())return;
     onSend({delivery_ref:"",sender:sender.trim(),expected_binding_revision:basis.trim(),
       packet:{text,source_refs:sourceRefs.split(/[\s,]+/).filter(Boolean),audience:[audience.trim()]}},{sender,audience,basis,sourceRefs,text});};
@@ -34,6 +63,7 @@ export function AddressedComposer({disabled,dispatch,history,service,onDispatchF
     <p className="encounter-addressed-service" role="status" data-service={service?(service.running?"running":"stopped"):"unknown"}>
       {service?(service.running?`Native dispatch service is running (pid ${service.pid}).`:"Native dispatch service is not running — the encounter owner is started by its owner, not by this window."):"Checking the native dispatch service…"}
     </p>
+    {selection&&<p className="encounter-addressed-selection">Composed from the selected passage at <code>{selection.sourceRef}</code> — edit it here freely; the shared draft above was never touched.</p>}
     <div className="encounter-addressed-fields">
       <label>Send as<input aria-label="Sender identity" value={sender} onChange={event=>update({sender:event.target.value})} placeholder="sender ref permitted by the participant" autoComplete="off" spellCheck={false}/></label>
       <label>Recipient agent<input aria-label="Recipient agent" value={audience} onChange={event=>update({audience:event.target.value})} placeholder="agent ref the packet addresses" autoComplete="off" spellCheck={false}/></label>

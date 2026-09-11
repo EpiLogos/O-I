@@ -1,0 +1,172 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "first-vertical",
+  "generated_at": "2026-09-11T01:27:56.757Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 14576,
+  "checks": [
+    {
+      "ok": true,
+      "label": "The resident agent conversation is open with the native dispatch service disclosed"
+    },
+    {
+      "ok": true,
+      "label": "The native document opens through the navigator and renders its own bytes"
+    },
+    {
+      "ok": true,
+      "label": "The tray presents the exact selected passage from the real document"
+    },
+    {
+      "ok": true,
+      "label": "The composed request carries the document's exact Central source ref"
+    },
+    {
+      "ok": true,
+      "label": "The composed request quotes the exact passage at its selection-time revision"
+    },
+    {
+      "ok": true,
+      "label": "The preview names the one shared source scope"
+    },
+    {
+      "ok": true,
+      "label": "The participant's reply reaches the canonical transcript through the ordinary read path"
+    },
+    {
+      "ok": true,
+      "label": "The controlled provider received exactly one addressed prompt"
+    },
+    {
+      "ok": true,
+      "label": "The prompt carries the native selected-Agent header, the document's source ref and the exact passage"
+    },
+    {
+      "ok": true,
+      "label": "The human draft buffer never rides the addressed machine turn"
+    },
+    {
+      "ok": true,
+      "label": "The Return's producer attribution names the addressed participant"
+    },
+    {
+      "ok": true,
+      "label": "The exact proposed operation and the verbatim reply content are shown before any decision"
+    },
+    {
+      "ok": true,
+      "label": "The Return shows the exact basis revision — the same revision the selection recorded"
+    },
+    {
+      "ok": true,
+      "label": "The human accepts the exact current basis and includes the reply through the owner's revision-checked operation"
+    },
+    {
+      "ok": true,
+      "label": "The document holds exactly the reviewed reply content"
+    },
+    {
+      "ok": true,
+      "label": "Producer attribution and human review are carried as distinct native facts"
+    },
+    {
+      "ok": true,
+      "label": "The document source revision advanced through the inclusion"
+    },
+    {
+      "ok": true,
+      "label": "The proposed entry anchor exists in the real document bytes"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-11T01:27:56.934Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 36,
+      "data": {
+        "file": "first-vertical-document-open.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 31,
+      "data": {
+        "file": "first-vertical-selection-in-tray.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 48,
+      "data": {
+        "file": "first-vertical-addressed-composed-from-selection.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 33,
+      "data": {
+        "file": "first-vertical-reply-in-transcript.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 37,
+      "data": {
+        "file": "first-vertical-return-of-the-reply-before-review.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 38,
+      "data": {
+        "file": "first-vertical-reply-included.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 25,
+      "data": {
+        "file": "first-vertical-document-holds-reviewed-reply.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "first-vertical-document-open.png",
+    "first-vertical-selection-in-tray.png",
+    "first-vertical-addressed-composed-from-selection.png",
+    "first-vertical-reply-in-transcript.png",
+    "first-vertical-return-of-the-reply-before-review.png",
+    "first-vertical-reply-included.png",
+    "first-vertical-document-holds-reviewed-reply.png"
+  ]
+}

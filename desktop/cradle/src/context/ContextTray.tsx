@@ -4,6 +4,7 @@ import {useKernel} from "../kernel/KernelProvider";
 import {readFile} from "../files/client";
 import {flow} from "../flow/client";
 import {encounter,type EncounterReading} from "../encounter/client";
+import {composeAddressed} from "../encounter/AddressedComposer";
 import {readDraft} from "../workspace/drafts";
 import "./context.css";
 import {observationIsCurrent} from "./ComponentSelection";
@@ -28,22 +29,43 @@ export function ContextTray({bindings,accompanying}:{bindings:Record<string,Surf
  if(accompanying&&!choices.some(b=>b.ref===accompanying.ref))choices.push({id:accompanying.ref,kind:"encounter",ref:accompanying.ref,project:accompanying.project,title:"Accompanying conversation",encounter:{space:accompanying.space}});
  const selected=choices.find(b=>b.id===(target||choices[0]?.id));
  const close=()=>{if(!busy)setCandidate(undefined);};
- const add=async()=>{if(!selected?.ref||!selected.project||!binding)return;setBusy(true);setError(undefined);
+ /** Currency validation + provenance composition, shared by both destinations
+  * (the AIKit draft and the addressed request). Throws when the selection went
+  * stale; on success returns the exact source ref and the quoted composition. */
+ const compose=async():Promise<{destination:{ref:string;project:string};sourceRef:string;text:string}>=>{
+  const chosen=selected;
+  if(!chosen?.ref||!chosen.project||!binding)throw new Error("Open an agent conversation to include this selection.");
+  let revision=candidate.revision;let working=!!candidate.workingCopy;let canonical:string|undefined;
+  if(candidate.kind==="element"){if(!candidate.observationKey||!await observationIsCurrent(candidate.observationKey))throw new Error("The selected component changed. Pick it again.");}
+  else if(binding.kind==="flow"&&binding.flow){const read=await flow(kernel.transport,{action:"flow_read",project:binding.project!,flow_ref:binding.flow.flowRef});if(!revision||revision!==read.flow.current_revision)throw new Error("The Flow changed since selection. Select the passage again.");if(working){let draft:{text?:string;revision?:string}|undefined;try{draft=JSON.parse(localStorage.getItem(`oi-flow-draft:${binding.flow.flowRef}`)??"null")??undefined;}catch{}if(draft?.revision!==revision||!draft.text||!matches(candidate,draft.text))throw new Error("The Flow draft changed since selection. Select the passage again.");canonical=draft.text;}else canonical=read.content;}
+  else if(binding.kind==="source"&&binding.ref){const buffer=kernel.snapshot.buffers[binding.ref];if(!buffer||!revision||buffer.base_revision!==revision)throw new Error("The source changed since selection. Select it again.");canonical=buffer.content;working=buffer.dirty;}
+  else if(binding.location){const read=await readFile(kernel.transport,binding.location);if(!revision||read.revision!==revision)throw new Error("The file changed since selection. Select the passage again.");if(working){const draft=binding.ref?readDraft(binding.ref):undefined;if(!draft||draft.base_revision!==revision)throw new Error("The file draft changed since selection. Select the passage again.");canonical=draft.content;}else canonical=read.content;}
+  if(canonical!==undefined&&!matches(candidate,canonical))throw new Error("The selected material changed. Select it again before including it.");
+  const origin=candidate.sourceRef??binding.terminal?.cwd??binding.browser?.url??binding.title;
+  const metadata=[binding.title,origin,revision?`revision ${revision}`:candidate.kind==="element"?`observed ${candidate.role==="text"?"text":"component"} · ${candidate.selector} · role ${candidate.role??"element"}${candidate.bounds?` · viewport bounds x=${candidate.bounds.x}, y=${candidate.bounds.y}, width=${candidate.bounds.width}, height=${candidate.bounds.height} CSS px`:""}`:"observed excerpt",working?"working copy — unsaved":""].filter(Boolean).join(" · ");
+  const quoted=candidate.text.split("\n").map(line=>`> ${line}`).join("\n");
+  return {destination:{ref:chosen.ref,project:chosen.project},sourceRef:origin,text:`@context — ${metadata}\n${quoted}`};
+ };
+ const add=async()=>{setBusy(true);setError(undefined);
   try{
-   let revision=candidate.revision;let working=!!candidate.workingCopy;let canonical:string|undefined;
-   if(candidate.kind==="element"){if(!candidate.observationKey||!await observationIsCurrent(candidate.observationKey))throw new Error("The selected component changed. Pick it again.");}
-   else if(binding.kind==="flow"&&binding.flow){const read=await flow(kernel.transport,{action:"flow_read",project:binding.project!,flow_ref:binding.flow.flowRef});if(!revision||revision!==read.flow.current_revision)throw new Error("The Flow changed since selection. Select the passage again.");if(working){let draft:{text?:string;revision?:string}|undefined;try{draft=JSON.parse(localStorage.getItem(`oi-flow-draft:${binding.flow.flowRef}`)??"null")??undefined;}catch{}if(draft?.revision!==revision||!draft.text||!matches(candidate,draft.text))throw new Error("The Flow draft changed since selection. Select the passage again.");canonical=draft.text;}else canonical=read.content;}
-   else if(binding.kind==="source"&&binding.ref){const buffer=kernel.snapshot.buffers[binding.ref];if(!buffer||!revision||buffer.base_revision!==revision)throw new Error("The source changed since selection. Select the passage again.");canonical=buffer.content;working=buffer.dirty;}
-   else if(binding.location){const read=await readFile(kernel.transport,binding.location);if(!revision||read.revision!==revision)throw new Error("The file changed since selection. Select the passage again.");if(working){const draft=binding.ref?readDraft(binding.ref):undefined;if(!draft||draft.base_revision!==revision)throw new Error("The file draft changed since selection. Select the passage again.");canonical=draft.content;}else canonical=read.content;}
-   if(canonical!==undefined&&!matches(candidate,canonical))throw new Error("The selected material changed. Select it again before including it.");
-   const origin=candidate.sourceRef??binding.terminal?.cwd??binding.browser?.url??binding.title;
-   const metadata=[binding.title,origin,revision?`revision ${revision}`:candidate.kind==="element"?`observed ${candidate.role==="text"?"text":"component"} · ${candidate.selector} · role ${candidate.role??"element"}${candidate.bounds?` · viewport bounds x=${candidate.bounds.x}, y=${candidate.bounds.y}, width=${candidate.bounds.width}, height=${candidate.bounds.height} CSS px`:""}`:"observed excerpt",working?"working copy — unsaved":""].filter(Boolean).join(" · ");
-   const quoted=candidate.text.split("\n").map(line=>`> ${line}`).join("\n");
-   const read=await encounter<EncounterReading>(kernel.transport,selected.project,{action:"view",agent_session:selected.ref});
-   await encounter(kernel.transport,selected.project,{action:"draft",agent_session:selected.ref,basis:read.draft.revision,text:[read.draft.text,`@context — ${metadata}\n${quoted}`].filter(Boolean).join("\n\n")});
+   const composed=await compose();
+   const read=await encounter<EncounterReading>(kernel.transport,composed.destination.project,{action:"view",agent_session:composed.destination.ref});
+   await encounter(kernel.transport,composed.destination.project,{action:"draft",agent_session:composed.destination.ref,basis:read.draft.revision,text:[read.draft.text,composed.text].filter(Boolean).join("\n\n")});
+   setCandidate(undefined);
+  }catch(reason){setError(String(reason));}finally{setBusy(false);}
+ };
+ /** The addressed destination (first complete vertical): the same validated
+  * composition routes to the conversation's addressed-request composer instead
+  * of the shared human draft. The event carries identity only — the composer's
+  * sender, audience and participation basis stay explicit owner-validated
+  * inputs, and no new store is created anywhere on this path. */
+ const address=async()=>{setBusy(true);setError(undefined);
+  try{
+   const composed=await compose();
+   composeAddressed({agentSession:composed.destination.ref,sourceRef:composed.sourceRef,text:composed.text});
    setCandidate(undefined);
   }catch(reason){setError(String(reason));}finally{setBusy(false);}
  };
  const keyboard=(e:React.KeyboardEvent)=>{if(e.key==="Escape"){e.preventDefault();close();return;}if(e.key!=="Tab"||!tray.current)return;const focusable=[...tray.current.querySelectorAll<HTMLElement>('button:not(:disabled),select:not(:disabled),[href],input:not(:disabled),textarea:not(:disabled),[tabindex]:not([tabindex="-1"])')].filter(node=>node.getClientRects().length);if(!focusable.length){e.preventDefault();tray.current.focus();return;}const first=focusable[0],last=focusable[focusable.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}};
- return <div className="context-scrim" onMouseDown={e=>{if(e.target===e.currentTarget)close();}}><section ref={tray} className="context-tray" role="dialog" aria-modal="true" aria-label="Include selected context" tabIndex={-1} onKeyDown={keyboard}><header><h2>Include selected context</h2><button aria-label="Close context selection" onClick={close} disabled={busy}>×</button></header><p>{binding?.title??"Selection"} · {candidate.text.length} characters</p><pre>{candidate.text}</pre>{candidate.kind==="element"&&<p className="context-origin">{candidate.selector}{candidate.bounds&&` · ${Math.round(candidate.bounds.width)} × ${Math.round(candidate.bounds.height)} at ${Math.round(candidate.bounds.x)}, ${Math.round(candidate.bounds.y)}`}</p>}<p className="context-origin">{candidate.sourceRef??binding?.terminal?.cwd??"Observed material"}</p><label>Conversation <select aria-label="Context destination" value={target||choices[0]?.id||""} onChange={e=>setTarget(e.target.value)}>{choices.map(b=><option key={b.id} value={b.id}>{b.title} · {b.project}</option>)}</select></label>{!choices.length&&<p>Open an agent conversation to include this selection.</p>}<p>The excerpt and its provenance will be added to the shared draft. Use Send in that conversation when ready.</p>{error&&<p role="alert">{error}</p>}<button disabled={busy||!!error||!selected||!binding} onClick={()=>void add()}>{busy?"Adding…":"Add to draft"}</button></section></div>;
+ return <div className="context-scrim" onMouseDown={e=>{if(e.target===e.currentTarget)close();}}><section ref={tray} className="context-tray" role="dialog" aria-modal="true" aria-label="Include selected context" tabIndex={-1} onKeyDown={keyboard}><header><h2>Include selected context</h2><button aria-label="Close context selection" onClick={close} disabled={busy}>×</button></header><p>{binding?.title??"Selection"} · {candidate.text.length} characters</p><pre>{candidate.text}</pre>{candidate.kind==="element"&&<p className="context-origin">{candidate.selector}{candidate.bounds&&` · ${Math.round(candidate.bounds.width)} × ${Math.round(candidate.bounds.height)} at ${Math.round(candidate.bounds.x)}, ${Math.round(candidate.bounds.y)}`}</p>}<p className="context-origin">{candidate.sourceRef??binding?.terminal?.cwd??"Observed material"}</p><label>Conversation <select aria-label="Context destination" value={target||choices[0]?.id||""} onChange={e=>setTarget(e.target.value)}>{choices.map(b=><option key={b.id} value={b.id}>{b.title} · {b.project}</option>)}</select></label>{!choices.length&&<p>Open an agent conversation to include this selection.</p>}<p>The excerpt and its provenance will be added to the shared draft. Use Send in that conversation when ready.</p>{error&&<p role="alert">{error}</p>}<div className="context-actions"><button disabled={busy||!!error||!selected||!binding} onClick={()=>void add()}>{busy?"Adding…":"Add to draft"}</button><button className="context-address" disabled={busy||!!error||!selected||!binding} title="Compose this selection into that conversation's addressed request instead of the shared draft" onClick={()=>void address()}>Address to the participant</button></div></section></div>;
 }
