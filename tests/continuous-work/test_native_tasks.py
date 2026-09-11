@@ -38,6 +38,13 @@ class NativeTaskMechanics(unittest.TestCase):
         self.assertIn('material::a_healthy_unrelated_process_cannot_satisfy_encounter_hosting', t.TESTS)
         self.assertIn('missing_task_authority_refuses_before_now_allocation', t.TESTS)
 
+    def test_absent_suite_binding_is_pending_not_a_disproof(self):
+        import tempfile as tempfile_module
+        with tempfile_module.TemporaryDirectory() as home:
+            recorder = c.Recorder(Path(home), {}, timeout=1)
+            with self.assertRaises(c.Pending):
+                t.prove(recorder)
+
     def test_named_refinements_are_binding_in_every_required_parent_case(self):
         expected = {
             'candidate-worktree-now': ['P13','P14','P18','P19','P26'],
