@@ -1,0 +1,21 @@
+[package]
+name = "oi-development-field-conformance"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[workspace]
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+central-ctrl = { package = "ctrl", path = "../../../.development-field-owners/central/ctrl" }
+central-connector-sdk = { path = "../../../.development-field-owners/central/crates/connector-sdk" }
+aikit-core = { path = "../../../.development-field-owners/ai-kit/crates/aikit-core" }
+aikit-adapters = { path = "../../../.development-field-owners/ai-kit/crates/aikit-adapters" }
+epilogos-factory = { path = "../../../.development-field-owners/software-factory/factory" }
+epilogos-workcell-core = { path = "../../../.development-field-owners/workcell/crates/workcell-core" }
+epilogos-workcell-runtime = { path = "../../../.development-field-owners/workcell/crates/workcell-runtime" }
+epilogos-workcell-control = { path = "../../../.development-field-owners/workcell/crates/workcell-control" }
+epilogos-workcell-wire = { path = "../../../.development-field-owners/workcell/crates/workcell-wire" }
+ql-core = { path = "../../../.development-field-owners/quaternal-logic/crates/ql-core" }
