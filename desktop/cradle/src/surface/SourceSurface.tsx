@@ -15,6 +15,7 @@ import {TextEditor,EditorCommands,type EditorHandle} from "../editor/TextEditor"
 import { useEffect, useRef, useState } from "react";
 import { readDraft, writeDraft } from "../workspace/drafts";
 import { SourceHistory } from "./SourceHistory";
+import { DocumentReturns } from "../receiving/DocumentReturns";
 import { useKernel } from "../kernel/KernelProvider";
 import type { SurfaceBinding } from "./types";
 import {EditorFrame} from "../editor/EditorChrome";
@@ -214,6 +215,7 @@ export function SourceSurface(props: SourceSurfaceProps) {
         </div>
         ) : null}
       </div>
+      {buffer.project && <DocumentReturns sourceRef={binding.ref} project={buffer.project}/>}
 
     </EditorFrame>
   );

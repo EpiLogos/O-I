@@ -209,3 +209,14 @@ aside.world-navigator[aria-label="World navigator"] { padding: 19px 10px 0; }
 .return-included{margin:8px 0 0;color:var(--oi-muted-2)}
 .returns-refresh{margin-left:auto;border:0;background:none;font:inherit;font-size:var(--oi-shell-type-nav);color:var(--oi-muted-2);cursor:pointer}
 .returns-refresh:hover,.returns-refresh:focus-visible{color:var(--oi-accent-ink);outline:none}
+
+/* Wave 6E cut 2: returns beside the open document (same receiving field,
+ * same owner operations as the project tray, placed at the reading site). */
+.document-returns{border-top:1px solid #d9ddd2;padding:10px 14px;font-size:12px}
+.document-returns header{display:flex;align-items:center;gap:8px}
+.document-returns header span{font-weight:500}
+.document-returns header small{opacity:.65}
+.document-returns .project-return{display:flex;gap:8px;align-items:center;width:100%;text-align:left;padding:5px 6px;border:1px solid transparent;border-radius:4px;background:transparent;font:inherit;color:inherit;cursor:pointer}
+.document-returns .project-return.return-open,.document-returns .project-return:hover{border-color:#cbd1c3}
+.return-anchor{opacity:.75}
+.return-last-error{opacity:.8;margin:6px 0 0}

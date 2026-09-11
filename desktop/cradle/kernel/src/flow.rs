@@ -272,6 +272,9 @@ pub enum ReceivingRequest {
         #[serde(default)] expected_source_revision: Option<String>,
     },
     Include { return_ref: String, expected_return_revision: String, expected_source_revision: String },
+    /// Resume an interrupted inclusion from its recorded native intent
+    /// (`central.receiving.recover`); only the owner decides what may replay.
+    Recover { return_ref: String, expected_return_revision: String },
 }
 
 /// Client for the Central owner Actions the kernel reads and writes
@@ -462,6 +465,11 @@ impl CentralClient {
                 input.insert("expected_return_revision".to_owned(), json!(expected_return_revision));
                 input.insert("expected_source_revision".to_owned(), json!(expected_source_revision));
                 "central.receiving.include"
+            }
+            ReceivingRequest::Recover { return_ref, expected_return_revision } => {
+                input.insert("return_ref".to_owned(), json!(return_ref));
+                input.insert("expected_return_revision".to_owned(), json!(expected_return_revision));
+                "central.receiving.recover"
             }
         };
         self.run(action, Value::Object(input))

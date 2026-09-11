@@ -50,6 +50,7 @@ const SCENARIOS = {
   "select-send": {module:"scenarios/select-send.mjs",kernel:true,aliases:["6b"]},
   "send-group-reconnect": {module:"scenarios/send-group-reconnect.mjs",kernel:true,aliases:["6b2"]},
   "receive-include": {module:"scenarios/receive-include.mjs",kernel:true,aliases:["6e"]},
+  "receive-recover": {module:"scenarios/receive-recover.mjs",kernel:true,aliases:["6e2"]},
   "first-vertical": {module:"scenarios/first-vertical.mjs",kernel:true,aliases:["vertical"]},
   "file-edit": {module:"scenarios/file-edit.mjs",kernel:true,aliases:[]},
   files: { module: "scenarios/files.mjs", kernel: true, aliases: [] },

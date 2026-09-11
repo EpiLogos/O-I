@@ -7,7 +7,8 @@ export type ReceivingRequest =
   | {kind:"read";return_ref:string}
   | {kind:"document";source_ref:string;document_id:string}
   | {kind:"review";return_ref:string;expected_return_revision:string;disposition:"accepted"|"rejected";expected_source_revision?:string}
-  | {kind:"include";return_ref:string;expected_return_revision:string;expected_source_revision:string};
+  | {kind:"include";return_ref:string;expected_return_revision:string;expected_source_revision:string}
+  | {kind:"recover";return_ref:string;expected_return_revision:string};
 export interface ContributionAuthor {principal_ref:string;actor_kind:string}
 export interface ReturnRow {return_ref:string;revision:string;sequence:number;status:"pending"|"needs-review"|"accepted"|"rejected"|"including"|"uncertain"|"included"|string;source_ref:string;document_id:string;author:ContributionAuthor;occurred_at_unix_seconds?:number|null;received_at_unix_seconds:number;now_ref?:string|null;day_ref?:string|null;task_ref?:string|null;run_ref?:string|null;session_ref?:string|null}
 export interface ReturnReview {reviewer_ref:string;authority_ref:string;authority_revision:string;disposition:string;source_revision:string;reviewed_at_unix_seconds:number}
