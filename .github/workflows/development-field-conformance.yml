@@ -1,0 +1,99 @@
+name: Development Field native-owner conformance
+on:
+  push:
+    branches: [main]
+    paths: ['tests/development-field/**', 'scripts/development-field-*.py', '.github/workflows/development-field-conformance.yml']
+  pull_request:
+    paths: ['tests/development-field/**', 'scripts/development-field-*.py', '.github/workflows/development-field-conformance.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+env:
+  CARGO_INCREMENTAL: '0'
+  CARGO_TERM_COLOR: never
+jobs:
+  conformance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: One exact source cut for every participating owner
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/development-field-conformance.py prepare --out "$RUNNER_TEMP/development-field"
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          shared-key: development-field-conformance
+          cache-on-failure: true
+          workspaces: |
+            tests/development-field/probe
+            .development-field-owners/oi/cli
+            .development-field-owners/central
+            .development-field-owners/ai-kit
+            .development-field-owners/software-factory
+            .development-field-owners/workcell
+            .development-field-owners/quaternal-logic
+      - name: Native authored provenance and once-observed source snapshot conformance
+        id: source_snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          export DF_SNAPSHOT_EVIDENCE="$RUNNER_TEMP/development-field/source-snapshot.json"
+          export DF_CUT_SHA256="$(sha256sum tests/development-field/cut.json | cut -d' ' -f1)"
+          cargo test --manifest-path tests/development-field/probe/Cargo.toml --locked --test source_snapshot -- --nocapture 2>&1 | tee "$RUNNER_TEMP/development-field/source-snapshot.log"
+      - name: Bounded Central → QL carrier → AIKit → Workcell → Actuation → Factory specimen
+        if: ${{ !cancelled() }}
+        id: probe
+        run: python3 scripts/development-field-conformance.py probe --out "$RUNNER_TEMP/development-field"
+      - name: Exact source-built six-product O:I dispatch with poisoned PATH
+        if: ${{ !cancelled() }}
+        id: dispatch
+        run: python3 scripts/development-field-conformance.py dispatch --out "$RUNNER_TEMP/development-field"
+      - name: Accepted S3 same-specimen native Central, QL carrier, packet and CLI parity
+        if: ${{ !cancelled() && steps.dispatch.outcome == 'success' && steps.probe.outcome == 'success' }}
+        run: python3 scripts/development-field-s3.py --out "$RUNNER_TEMP/development-field"
+      - name: Native S0 exact-source catalogue adoption and suite activation
+        if: ${{ !cancelled() && steps.dispatch.outcome == 'success' }}
+        run: python3 scripts/development-field-activation.py --out "$RUNNER_TEMP/development-field"
+      - name: Native S0 whole-suite lifecycle (repair and rollback)
+        if: ${{ !cancelled() && steps.dispatch.outcome == 'success' }}
+        run: python3 scripts/development-field-lifecycle.py --out "$RUNNER_TEMP/development-field"
+      - name: Publish immutable specimen, executable and activation evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: development-field-probe-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/development-field/*.json
+            ${{ runner.temp }}/development-field/*.log
+            ${{ runner.temp }}/development-field/s3-*.stdout
+            ${{ runner.temp }}/development-field/s3-*.stderr
+            ${{ runner.temp }}/development-field/specimen/*.json
+            ${{ runner.temp }}/development-field/specimen/*.log
+            tests/development-field/probe/Cargo.lock
+          if-no-files-found: error
+      # Owner-native cargo test can rebuild executables with different features.
+      # Run it only after the checksummed-binary consumers have completed.
+      - name: Execute nine native integrations normally excluded from owner unit lanes
+        if: ${{ !cancelled() && steps.dispatch.outcome == 'success' }}
+        run: python3 scripts/development-field-native-bridges.py --out "$RUNNER_TEMP/development-field"
+      - name: Whole Development Field completion gate
+        if: ${{ !cancelled() }}
+        run: python3 scripts/development-field-whole-gate.py --out "$RUNNER_TEMP/development-field"
+      - name: Preserve complete evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: development-field-conformance-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/development-field
+            tests/development-field/probe/Cargo.lock
+          if-no-files-found: error
