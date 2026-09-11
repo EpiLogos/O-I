@@ -704,8 +704,15 @@ fn dev_source_path(ground: &Path, id: &str) -> PathBuf {
         "actuation" => ground.join("Work/Actuation"),
         "ai-kit" => ground.join("Work/ai-kit"),
         "software-factory" => {
-            let canonical = ground.join("Work/Software-Factory");
-            if canonical.exists() { canonical } else { ground.join("Work/agent-system-design") }
+            // The repository and the personal-ground checkout are both named
+            // Factory since the 2026-09-10 rename; the older spellings remain
+            // as fallbacks for grounds not yet renamed.
+            let canonical = ground.join("Work/Factory");
+            if canonical.exists() { canonical }
+            else {
+                let prior = ground.join("Work/Software-Factory");
+                if prior.exists() { prior } else { ground.join("Work/agent-system-design") }
+            }
         }
         "workcell" => ground.join("Work/Workcell"),
         "quaternal-logic" => {
@@ -979,6 +986,29 @@ mod tests {
         );
         assert_eq!(dev_source_path(&ground, "oi"), ground.join("Work/O-I"));
         assert_eq!(dev_source_path(&ground, "actuation"), ground.join("Work/Actuation"));
+    }
+
+    #[test]
+    fn dev_source_path_resolves_renamed_software_factory_checkout() {
+        let ground = std::env::temp_dir().join(format!("oi-dev-source-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&ground);
+        std::fs::create_dir_all(ground.join("Work/Factory")).expect("create renamed factory checkout");
+        assert_eq!(
+            dev_source_path(&ground, "software-factory"),
+            ground.join("Work/Factory"),
+            "the renamed Work/Factory checkout must win over the legacy spellings"
+        );
+        std::fs::remove_dir_all(&ground).ok();
+    }
+
+    #[test]
+    fn dev_source_path_software_factory_falls_back_to_legacy_names() {
+        let ground = PathBuf::from("/tmp/central-ground");
+        assert_eq!(
+            dev_source_path(&ground, "software-factory"),
+            ground.join("Work/agent-system-design"),
+            "without a renamed checkout the legacy agent-system-design path remains the fallback"
+        );
     }
 
     #[test]
