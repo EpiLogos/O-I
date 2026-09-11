@@ -233,6 +233,16 @@ fn live_git_head(inside: &Path) -> Option<LiveCheckout> {
     Some(LiveCheckout { head, committed_at })
 }
 
+/// The suite's parenthesised build revision, from a recorded version line
+/// of the form `... (<hex-rev>)`. None for legacy versions that carry no
+/// revision.
+fn recorded_revision(recorded: &str) -> Option<&str> {
+    let inner = recorded.strip_suffix(')')?;
+    let start = inner.rfind('(')? + 1;
+    let revision = &inner[start..];
+    (!revision.is_empty() && revision.chars().all(|c| c.is_ascii_hexdigit())).then_some(revision)
+}
+
 /// Augment a catalog disclosure with machine facts the pure pass cannot know:
 /// whether the registered checkout has moved past its recorded version, whether
 /// its built executable predates the checkout HEAD, and whether a PATH copy of
@@ -242,15 +252,6 @@ fn live_git_head(inside: &Path) -> Option<LiveCheckout> {
 /// `ctrl` at all disclosed `ok: true` across the board, because every check
 /// compared recorded state against recorded state. Drift is a fact about this
 /// machine; it is observed, never derived from recordings.
-
-/// The suite's parenthesised build revision, `… (<hex-rev>)`, from a recorded
-/// version line. None for legacy versions that carry no revision.
-fn recorded_revision(recorded: &str) -> Option<&str> {
-    let inner = recorded.strip_suffix(')')?;
-    let start = inner.rfind('(')? + 1;
-    let revision = &inner[start..];
-    (!revision.is_empty() && revision.chars().all(|c| c.is_ascii_hexdigit())).then_some(revision)
-}
 
 fn annotate_live_drift<GitProbe, PathProbe, HashProbe>(
     disclosure: &mut SuiteCompositionDisclosure,
