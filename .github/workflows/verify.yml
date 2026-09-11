@@ -2,7 +2,7 @@ name: OI Verify
 
 on:
   push:
-    branches: [main, "agent/**"]
+    branches: [main]
   pull_request:
 
 permissions:
@@ -10,7 +10,7 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   rust:
@@ -18,12 +18,15 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - name: Bounded infrastructure retry regressions
+        run: python3 -m unittest discover -s scripts/tests -p test_ci_install_retry.py -v
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2.9.2
         with:
           workspaces: cli
+          cache-on-failure: true
       - name: Format
         run: cargo fmt --manifest-path cli/Cargo.toml -- --check
       - name: Check
@@ -44,6 +47,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2.9.2
         with:
           workspaces: cli
+          cache-on-failure: true
       - name: Clean O:I to native current Central encounter
         shell: bash
         run: |
