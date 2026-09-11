@@ -11,6 +11,8 @@ on:
       - "packages/**"
       - "schemas/**"
       - "skills/**"
+      - "scripts/ci_install_retry.py"
+      - "scripts/tests/test_ci_install_retry.py"
       - ".github/workflows/full-suite-preflight.yml"
   push:
     branches:
@@ -24,6 +26,8 @@ on:
       - "packages/**"
       - "schemas/**"
       - "skills/**"
+      - "scripts/ci_install_retry.py"
+      - "scripts/tests/test_ci_install_retry.py"
       - ".github/workflows/full-suite-preflight.yml"
   workflow_dispatch:
 
@@ -32,7 +36,7 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   clean-environment:
@@ -42,6 +46,10 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
+      - name: Preserve exact fixture source and check infrastructure retries
+        run: |
+          git rev-parse HEAD > "$RUNNER_TEMP/preflight-source.txt"
+          python3 -m unittest discover -s scripts/tests -p test_ci_install_retry.py -v
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -50,6 +58,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2.9.2
         with:
           workspaces: cli
+          cache-on-failure: true
 
       - uses: actions/setup-node@v4
         with:
@@ -71,11 +80,11 @@ jobs:
           printf '%s\n' 'human-control-sentinel' > "$ROOT/Control/HUMAN-SENTINEL.txt"
           printf '%s\n' 'ordinary-work-sentinel' > "$ROOT/Work/WORK-SENTINEL.txt"
 
-          "$OI" install --personal-ground "$ROOT"
+          python3 scripts/ci_install_retry.py --oi "$OI" --personal-ground "$ROOT" --out "$RUNNER_TEMP/preflight-install-first"
           cp "$OI_HOME/composition.json" "$RUNNER_TEMP/composition-first.json"
           cp "$OI_DATA_HOME/receipts/installed-suite.json" "$RUNNER_TEMP/installed-first.json"
 
-          "$OI" install
+          python3 scripts/ci_install_retry.py --oi "$OI" --out "$RUNNER_TEMP/preflight-install-second"
           cp "$OI_HOME/composition.json" "$RUNNER_TEMP/composition-second.json"
           cmp "$RUNNER_TEMP/composition-first.json" "$RUNNER_TEMP/composition-second.json"
 
@@ -219,10 +228,14 @@ jobs:
           test ! -e "$ROOT/.central/oi/managed"
 
       - name: Upload pre-local suite verification evidence
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: oi-prelocal-suite-verification-${{ github.sha }}
           path: |
+            ${{ runner.temp }}/preflight-source.txt
+            ${{ runner.temp }}/preflight-install-first
+            ${{ runner.temp }}/preflight-install-second
             ${{ runner.temp }}/manifest.json
             ${{ runner.temp }}/status.json
             ${{ runner.temp }}/doctor.json
