@@ -254,6 +254,7 @@ Claims live at different altitudes. Start where the kind of claim you need lives
 | Surfaces | [`docs/SURFACES.md`](docs/SURFACES.md) |
 | Research programme | [`docs/RESEARCH.md`](docs/RESEARCH.md) |
 | Current installation (temporal) | [`docs/INSTALL.md`](docs/INSTALL.md) |
+| CI — what gates a change, and where sibling checks run | [`docs/CI.md`](docs/CI.md) |
 
 ### Current state (temporal)
 
