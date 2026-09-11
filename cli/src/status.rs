@@ -252,7 +252,6 @@ fn recorded_revision(recorded: &str) -> Option<&str> {
 /// `ctrl` at all disclosed `ok: true` across the board, because every check
 /// compared recorded state against recorded state. Drift is a fact about this
 /// machine; it is observed, never derived from recordings.
-
 fn annotate_live_drift<GitProbe, PathProbe, HashProbe>(
     disclosure: &mut SuiteCompositionDisclosure,
     git_probe: GitProbe,
