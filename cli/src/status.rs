@@ -242,7 +242,17 @@ fn live_git_head(inside: &Path) -> Option<LiveCheckout> {
 /// `ctrl` at all disclosed `ok: true` across the board, because every check
 /// compared recorded state against recorded state. Drift is a fact about this
 /// machine; it is observed, never derived from recordings.
-pub fn annotate_live_drift<GitProbe, PathProbe, HashProbe>(
+
+/// The suite's parenthesised build revision, `… (<hex-rev>)`, from a recorded
+/// version line. None for legacy versions that carry no revision.
+fn recorded_revision(recorded: &str) -> Option<&str> {
+    let inner = recorded.strip_suffix(')')?;
+    let start = inner.rfind('(')? + 1;
+    let revision = &inner[start..];
+    (!revision.is_empty() && revision.chars().all(|c| c.is_ascii_hexdigit())).then_some(revision)
+}
+
+fn annotate_live_drift<GitProbe, PathProbe, HashProbe>(
     disclosure: &mut SuiteCompositionDisclosure,
     git_probe: GitProbe,
     path_probe: PathProbe,
@@ -312,13 +322,23 @@ pub fn annotate_live_drift<GitProbe, PathProbe, HashProbe>(
         if let Some(checkout) = &checkout {
             surface.registered_version = surface.version.clone();
             match &surface.version {
-                Some(recorded)
-                    if !recorded.is_empty() && !recorded.starts_with(&checkout.head[..7]) =>
-                {
-                    findings.push(format!(
-                        "registered {} but checkout HEAD is {}",
-                        recorded, checkout.head
-                    ));
+                Some(recorded) if !recorded.is_empty() => {
+                    // A recorded version either starts with the checkout head
+                    // (legacy) or carries the suite's parenthesised build
+                    // revision, '… (<rev>)', which must agree with the head.
+                    let mismatched = match recorded_revision(recorded) {
+                        Some(revision) => {
+                            let prefix = revision.len().min(7);
+                            !checkout.head.starts_with(&revision[..prefix])
+                        }
+                        None => !recorded.starts_with(&checkout.head[..7]),
+                    };
+                    if mismatched {
+                        findings.push(format!(
+                            "registered {} but checkout HEAD is {}",
+                            recorded, checkout.head
+                        ));
+                    }
                 }
                 _ => {}
             }
@@ -617,6 +637,16 @@ mod tests {
             .surfaces[0]
             .clone();
         assert_eq!(unregistered.modality, None);
+    }
+
+    #[test]
+    fn recorded_revision_reads_the_suite_suffix() {
+        assert_eq!(
+            recorded_revision("oi 0.1.0 (5d1b8bf6692f)"),
+            Some("5d1b8bf6692f")
+        );
+        assert_eq!(recorded_revision("oi 0.1.0"), None);
+        assert_eq!(recorded_revision("oi 0.1.0 (not-hex!)"), None);
     }
 
     #[test]
