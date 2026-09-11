@@ -579,35 +579,14 @@ M — physical/material World
 H — human experiential acceptance
 ```
 
-Evidence attaches to meaningful experience/capability relations.
+Evidence attaches to meaningful experience/capability relations. A record names what was run, on which exact revision, and what grade that earns; the shape is whatever the owner command emits (`oi prove factory`, `oi dev gate`), not a separate form.
 
-Minimum EV reading:
-
-```text
-ev_ref
-x_refs
-capability_refs
-grade
-subject_refs
-environment_ref
-suite_receipt
-base_revision
-result_revision
-provider_refs
-test_refs
-artifact_refs
-observed_result
-status
-source_ref
-```
-
-Laws:
+Laws that bite:
 
 ```text
 CI cannot claim M or H
 fixture model output cannot claim P
-running process alone does not prove Factory developmental relation
-H requires EX
+H is given by a person, in person
 ```
 
 ---
@@ -858,83 +837,9 @@ authored desired suite policy
 
 # 11. CI architecture
 
-## CI-A — PR Development Field declaration
+The realised shape is in `docs/CI.md`: `verify.yml` is the one pull-request gate, surface workflows are path-scoped, `release.yml` publishes attested artifacts from main, and every check that builds or tests a sibling repository runs weekly in `cross-product.yml`.
 
-Every relevant PR validates:
-
-```text
-declared plan refs are syntactically/structurally valid
-declared UX/capability refs have an owner/address
-proof targets are valid
-no EX is fabricated
-generated canonical matrices are not casually regenerated
-```
-
-The next intelligence tranche may strengthen this into real Wiki resolution; do not pre-empt it here.
-
-## CI-B — native owner implementation CI
-
-Normal build/test/lint/fixtures.
-
-Produces D where semantics warrant it.
-
-## CI-C — exact cross-product conformance
-
-Runs selected current owner-to-owner compatibility cases.
-
-Produces C.
-
-## CI-D — immutable product artifact publication
-
-On accepted product main/release:
-
-```text
-build
-→ native verification
-→ version + owner revision
-→ checksum
-→ attestation/provenance
-→ product artifact descriptor
-```
-
-## CI-E — O:I suite candidate resolver
-
-O:I resolves selected accepted product revisions according to channel policy and only advances a channel after the required compatibility/conformance checks.
-
-## CI-F — serialized Development Field reconciliation
-
-Runs during convergence/post-verification from accepted mains.
-
-It owns canonical matrix/account refresh for this tranche.
-
-## CI-G — installed-suite fixture
-
-Disposable environment proves:
-
-```text
-install exact suite receipt
-all owner commands resolve through oi
-active binaries match receipt
-update to a new suite candidate
-new command surface becomes available
-rollback restores prior receipt
-```
-
-## CI-H — branch/material debt report
-
-Convergence produces non-destructive reports for:
-
-```text
-orphan branch
-orphan worktree
-merged PR with surviving worktree
-closed plan with live branch
-stale stack
-proof-only branch not retired
-unaccounted material environment where visible
-```
-
-Cleanup decisions remain explicit.
+Of the lettered lanes originally planned here, CI-B (owner implementation CI) is each owner's own main gate; CI-C (cross-product conformance), CI-E (suite candidate resolver checks) and CI-G (installed-suite fixture) live in `cross-product.yml`; CI-D (artifact publication) is `release.yml`; CI-H (branch/material debt) is `branch-hygiene.yml`. CI-A (PR declaration validation) and CI-F (serialized matrix reconciliation) were not built and are not required by any current gate.
 
 ---
 

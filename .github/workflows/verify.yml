@@ -1,9 +1,35 @@
 name: OI Verify
 
+# The one pull-request gate for O:I. Every claim a change to the CLI or the
+# suite data must satisfy runs here, once, on the tree being merged:
+#   suite-data       pure-python checks of the checked-in suite records
+#   rust             format, lint, tests and the binary-backed smokes
+#   central-bootstrap O:I's own install path from a clean HOME (only when the
+#                    CLI or suite data changed)
+# Surface-specific work has its own path-scoped workflow (desktop.yml,
+# site.yml, shared-field.yml, npm-distribution.yml). Checks that build or
+# test sibling repositories run weekly in cross-product.yml, never per push.
+# Artifacts are built from main by release.yml.
+
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - 'Antykathera-Essay-Work/**'
+      - 'ProjectCentral/**'
+      - 'quarry/**'
+      - '.superpowers/**'
   pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - 'Antykathera-Essay-Work/**'
+      - 'ProjectCentral/**'
+      - 'quarry/**'
+      - '.superpowers/**'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -12,33 +38,146 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+env:
+  CARGO_TERM_COLOR: never
+
 jobs:
-  rust:
+  changes:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 5
+    outputs:
+      cli: ${{ steps.filter.outputs.cli }}
     steps:
       - uses: actions/checkout@v4
-      - name: Bounded infrastructure retry regressions
-        run: python3 -m unittest discover -s scripts/tests -p test_ci_install_retry.py -v
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            cli:
+              - 'cli/**'
+              - 'suite/**'
+              - 'surfaces.json'
+              - 'schemas/**'
+              - 'packages/**'
+              - 'scripts/**'
+              - '.github/workflows/verify.yml'
+
+  suite-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 -m pip install --disable-pip-version-check 'PyYAML==6.0.2'
+      - name: Descriptor JSON
+        run: python3 -m json.tool surfaces.json >/dev/null
+      - name: Mainline snapshot and historical build record stay distinct
+        run: python3 scripts/verify-mainline-snapshot.py
+      - name: Convergence ledger structure
+        run: python3 scripts/verify-convergence-ledger.py
+      - name: Development Field S0 protocol, package and suite conformance
+        run: python3 scripts/verify-development-field-s0.py
+      - name: Product capability collation matches carried sources
+        run: |
+          python3 scripts/collate-product-capabilities.py --check-snapshot
+          python3 -m unittest -v tests/test_collate_product_capabilities.py
+      - name: Routing descriptor selection (fixtures only)
+        run: python3 scripts/test-desktop-suite-routing-descriptors.py -v
+      - name: CI helper unit tests
+        run: |
+          python3 -m unittest discover -s scripts/tests -p test_ci_install_retry.py -v
+          python3 -m unittest discover -s tests/development-field -p test_ci_execution.py -v
+
+  rust:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2.9.2
         with:
           workspaces: cli
-          cache-on-failure: true
       - name: Format
         run: cargo fmt --manifest-path cli/Cargo.toml -- --check
-      - name: Check
-        run: cargo check --manifest-path cli/Cargo.toml --all-targets
       - name: Clippy
-        run: cargo clippy --manifest-path cli/Cargo.toml --all-targets -- -D warnings
+        run: cargo clippy --manifest-path cli/Cargo.toml --all-targets --locked -- -D warnings
       - name: Test
-        run: cargo test --manifest-path cli/Cargo.toml --all-targets
-      - name: Descriptor JSON
-        run: python -m json.tool surfaces.json >/dev/null
+        run: cargo test --manifest-path cli/Cargo.toml --all-targets --locked
+      - name: Build the binary the smokes below exercise
+        run: cargo build --manifest-path cli/Cargo.toml --locked
+      - name: CLI capability disclosure matches the shipped projection
+        run: |
+          cli/target/debug/oi capabilities --json > "$RUNNER_TEMP/oi-capabilities.json"
+          python3 - "$RUNNER_TEMP/oi-capabilities.json" <<'PY'
+          import json, sys
+          from pathlib import Path
+          expected = json.loads(Path('suite/product-capabilities.json').read_text())
+          observed = json.loads(Path(sys.argv[1]).read_text())
+          assert expected == observed, 'oi capabilities --json drifted from suite/product-capabilities.json'
+          PY
+      - name: S0 suite command surface fails closed before activation
+        shell: bash
+        run: |
+          set -euo pipefail
+          export OI_HOME="$RUNNER_TEMP/oi-config"
+          export OI_DATA_HOME="$RUNNER_TEMP/oi-data"
+          OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
+
+          "$OI" protocol --json | jq -e '.protocol == "1.0"'
+          "$OI" suite status --json | jq -e '.selected_channel == "mainline" and .active == null and .historical_manifest_authority == false'
+          "$OI" suite check --json | jq -e '.ok == true and .active_receipt == null'
+          "$OI" suite channel source
+          "$OI" suite channel --json | jq -e '.channel == "source"'
+
+          if "$OI" suite update >"$RUNNER_TEMP/source-update.log" 2>&1; then
+            echo "source update unexpectedly activated without six developer-source registrations" >&2
+            exit 1
+          fi
+          grep -F "source suite requires all six current developer registrations" "$RUNNER_TEMP/source-update.log"
+
+          "$OI" suite channel mainline
+          if "$OI" suite update >"$RUNNER_TEMP/mainline-update.log" 2>&1; then
+            echo "mainline update unexpectedly borrowed an unmaterialised or historical candidate" >&2
+            exit 1
+          fi
+          grep -F "Historical suite/manifest.json is evidence-only" "$RUNNER_TEMP/mainline-update.log"
+
+          "$OI" where central --json | jq -e '.product == "central" and .authority == "legacy-fallback-no-active-receipt"'
+      - name: Omarchy host lifecycle is deterministic against the pinned contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
+          contract="$RUNNER_TEMP/omarchy-contract"
+          git init -q "$contract"
+          git -C "$contract" remote add origin https://github.com/omacom/omarchy.git
+          git -C "$contract" fetch --depth 1 origin d3d23fdddef846ebb98b52122a6ece66211c0daf
+          git -C "$contract" checkout -q --detach FETCH_HEAD
+          test "$(git -C "$contract" rev-parse HEAD)" = "d3d23fdddef846ebb98b52122a6ece66211c0daf"
+          "$contract/bin/omarchy-plugin-validate" "$GITHUB_WORKSPACE/integrations/omarchy/org.epilogos.oi"
+          "$contract/bin/omarchy-plugin-validate" "$GITHUB_WORKSPACE/integrations/omarchy/org.epilogos.oi.switcher"
+
+          tmp_home="$(mktemp -d)"
+          mkdir -p "$tmp_home/.config/omarchy"
+          printf '%s\n' '{"version":1,"plugins":[]}' > "$tmp_home/.config/omarchy/shell.json"
+          before="$(sha256sum "$tmp_home/.config/omarchy/shell.json" | cut -d' ' -f1)"
+          "$OI" host omarchy plan --home "$tmp_home" --json > "$RUNNER_TEMP/omarchy-plan.json"
+          "$OI" host omarchy realise --home "$tmp_home" --json > "$RUNNER_TEMP/omarchy-realise.json"
+          "$OI" host omarchy verify --home "$tmp_home" --json > "$RUNNER_TEMP/omarchy-verify.json"
+          "$OI" host omarchy realise --home "$tmp_home" --json > "$RUNNER_TEMP/omarchy-realise-2.json"
+          after="$(sha256sum "$tmp_home/.config/omarchy/shell.json" | cut -d' ' -f1)"
+          test "$before" = "$after"
+          grep -q '"contract_revision": "d3d23fdddef846ebb98b52122a6ece66211c0daf"' "$RUNNER_TEMP/omarchy-verify.json"
+          grep -q '"state": "exact"' "$RUNNER_TEMP/omarchy-verify.json"
+          ! grep -q 'shell.json.*create' "$RUNNER_TEMP/omarchy-realise.json"
 
   central-bootstrap:
+    needs: changes
+    if: needs.changes.outputs.cli == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -47,7 +186,6 @@ jobs:
       - uses: Swatinem/rust-cache@v2.9.2
         with:
           workspaces: cli
-          cache-on-failure: true
       - name: Clean O:I to native current Central encounter
         shell: bash
         run: |
