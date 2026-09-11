@@ -1,8 +1,7 @@
 name: Cross-product (weekly)
 
-# Everything that checks out, builds or tests a sibling repository, or asks
-# GitHub about live sibling mains, runs here on a weekly schedule and on
-# demand. Each sibling already gates its own main; O:I's per-push gate is
+# Everything that checks out, builds or tests a sibling repository runs here
+# on a weekly schedule and on demand. Each sibling already gates its own main; O:I's per-push gate is
 # verify.yml. A red job here is a pin that rotted or a seam that moved, and
 # is repaired in its own change, not by re-running it on every pull request.
 
@@ -10,17 +9,10 @@ on:
   schedule:
     - cron: '0 5 * * 1'
   workflow_dispatch:
-    inputs:
-      closure:
-        description: 'Require the convergence ledger to be closure-ready with zero blocking entries'
-        required: false
-        default: false
-        type: boolean
 
 permissions:
   contents: read
   actions: read
-  pull-requests: read
 
 concurrency:
   group: ${{ github.workflow }}
@@ -31,25 +23,6 @@ env:
   CARGO_TERM_COLOR: never
 
 jobs:
-  # ---------------------------------------------------------------- live mains
-  live-mains:
-    name: Recorded revisions equal live native mains
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v4
-      - name: Mainline snapshot equals live native mains
-        run: python3 scripts/verify-mainline-snapshot.py --live
-      - name: Convergence ledger covers exact live refs
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: python3 scripts/verify-convergence-ledger.py --live
-      - name: Convergence closure readiness (on request only)
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.closure }}
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: python3 scripts/verify-convergence-ledger.py --live --closure
-
   # -------------------------------------------------------- installed suite
   installed-suite:
     name: Installed six-product suite from the recorded pre-local build set

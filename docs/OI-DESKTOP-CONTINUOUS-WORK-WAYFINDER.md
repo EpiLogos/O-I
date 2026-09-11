@@ -264,7 +264,7 @@ After the narrow affected-operation/source lock, parallel work is useful on:
 | Verification | Independent read-only review and disjoint tests for actual operations, failure pressure, accessibility, resource use and portable documents. |
 | Wiki/intelligence consumer integration | Begins against accepted QL/AIKit contract, with one shared bridge owner; joins the final integrated gate. |
 
-One mutable shared subject has one writer unless the native owner proves concurrency. One Central integrator, one AIKit integrator and one Factory integrator coordinate their current lanes; Actuation stays serial. Workers do not create/delete/retarget phase branches or touch the occupied native candidate. Use existing authorised isolated execution worlds; retire only work whose unique source/evidence is preserved.
+Writer discipline is the adopted agent-operations law in Central: one named writer owns a task branch; subagents work within assigned boundaries and cut no branches of their own; work is retired only once its unique source and evidence are preserved. Desktop-specific: one Central, one AIKit and one Factory integrator coordinate their lanes; Actuation stays serial; nobody touches the occupied native candidate.
 
 Shared bridge/schema joins, native candidate builds, executable binding, service replacement, installed walks, evidence promotion and phase landing are serialized. No rebuild into an app under inspection. One matrix steward reconciles generated capability/account projections from accepted merges; parallel workers return impact refs and evidence instead of conflicting matrix rewrites. Merge advances implementation standing, not UX/H acceptance.
 
