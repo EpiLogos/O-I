@@ -44,8 +44,11 @@ class DiagnosticsTests(unittest.TestCase):
 
 
 class WorkflowTests(unittest.TestCase):
+    """The cross-product lane keeps its dependency structure; the per-push gate keeps product coverage."""
+
     def test_lifecycle_requires_actual_activation(self):
-        steps = {step['id']: step for step in workflow('development-field-conformance.yml')['jobs']['conformance']['steps'] if 'id' in step}
+        job = workflow('cross-product.yml')['jobs']['development-field-conformance']
+        steps = {step['id']: step for step in job['steps'] if 'id' in step}
         self.assertIn("steps.activation.outcome == 'success'", steps['lifecycle']['if'])
         self.assertIn("steps.dispatch.outcome == 'success'", steps['bridges']['if'])
         self.assertNotIn('activation', steps['bridges']['if'])
@@ -54,32 +57,29 @@ class WorkflowTests(unittest.TestCase):
         self.assertTrue(set(status.DEPENDENCIES) <= set(steps))
         self.assertTrue(all(step.get('continue-on-error', 'false') == 'false' for step in steps.values()))
 
-    def test_superseded_pr_runs_cancel_without_interrupting_main(self):
-        for name in ('development-field-conformance.yml', 'development-field-native.yml'):
-            with self.subTest(workflow=name):
-                data = workflow(name)
-                self.assertEqual("${{ github.event_name == 'pull_request' }}", data['concurrency']['cancel-in-progress'])
-                self.assertEqual(['main'], data['on']['push']['branches'])
-                self.assertIn('workflow_dispatch', data['on'])
+    def test_cross_product_lane_is_scheduled_not_per_push(self):
+        data = workflow('cross-product.yml')
+        self.assertIn('schedule', data['on'])
+        self.assertIn('workflow_dispatch', data['on'])
+        self.assertNotIn('pull_request', data['on'])
+        self.assertNotIn('push', data['on'])
 
-    def test_all_seven_native_owners_and_cut_trigger_are_preserved(self):
-        data = workflow('development-field-native.yml')
-        self.assertEqual({'oi', 'central', 'actuation', 'ai-kit', 'software-factory', 'workcell', 'quaternal-logic'}, set(data['jobs']['native']['strategy']['matrix']['owner']))
-        self.assertIn('tests/development-field/cut.json', data['on']['pull_request']['paths'])
-        caches = [step for step in data['jobs']['native']['steps'] if step.get('uses', '').startswith('Swatinem/rust-cache@')]
+    def test_all_seven_native_owners_are_preserved(self):
+        job = workflow('cross-product.yml')['jobs']['development-field-native']
+        self.assertEqual({'oi', 'central', 'actuation', 'ai-kit', 'software-factory', 'workcell', 'quaternal-logic'}, set(job['strategy']['matrix']['owner']))
+        caches = [step for step in job['steps'] if step.get('uses', '').startswith('Swatinem/rust-cache@')]
         self.assertEqual(1, len(caches))
         self.assertIn("matrix.owner == 'oi'", caches[0]['with']['workspaces'])
         self.assertEqual('true', caches[0]['with']['cache-on-failure'])
 
-    def test_product_source_coverage_is_not_replaced_by_pinned_cut_tests(self):
-        data = workflow('development-field-s0.yml')
-        for event in ('pull_request', 'push'):
-            self.assertTrue({'cli/**', 'schemas/**', 'packages/**', 'suite/mainline.json'} <= set(data['on'][event]['paths']))
-        runs = '\n'.join(step.get('run', '') for step in data['jobs']['deterministic-conformance']['steps'])
+    def test_per_push_gate_keeps_product_source_coverage(self):
+        data = workflow('verify.yml')
+        self.assertIn('pull_request', data['on'])
+        self.assertEqual(['main'], data['on']['push']['branches'])
+        runs = '\n'.join(step.get('run', '') for job in data['jobs'].values() for step in job['steps'])
         self.assertIn('scripts/verify-development-field-s0.py', runs)
         self.assertIn('cargo test', runs)
-        self.assertIn('suite update', runs)
-
-
-if __name__ == '__main__':
-    unittest.main()
+        self.assertNotIn('repository:', runs)
+        for job in data['jobs'].values():
+            for step in job['steps']:
+                self.assertNotIn('repository', step.get('with', {}), 'the per-push gate never checks out a sibling repository')
