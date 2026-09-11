@@ -83,12 +83,12 @@ class ProfileEvidenceTests(unittest.TestCase):
                 self.assertTrue(joins[name]['owner'])
                 self.assertTrue(joins[name]['needed'])
 
-    def test_unbound_local_campaign_runs_both_lanes_and_keeps_parent_pending(self):
+    def test_unbound_local_campaign_runs_all_lanes_and_keeps_parent_pending(self):
         out = self.root / 'campaign'
         result = subprocess.run([sys.executable, str(ROOT / 'scripts/caw_local.py'), '--output', str(out)], capture_output=True, text=True)
         self.assertEqual(result.returncode, 2, result.stderr)
         report = c.load(out / 'report.json')
-        self.assertEqual({child['stage'] for child in report['children']}, {'profiles', 'native'})
+        self.assertEqual({child['stage'] for child in report['children']}, {'profiles', 'native', 'tasks'})
         self.assertEqual(len(report['acceptance']['cases']), 28)
         self.assertEqual(report['acceptance']['standing'], 'pending')
         self.assertEqual(report['commands'], [])

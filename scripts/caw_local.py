@@ -39,6 +39,8 @@ def main() -> int:
     for case in args.case:
         options.extend(['--case', case])
     invocations.append(('native', 'caw_campaign.py', ['run', *options]))
+    if not args.case or 'P26' in args.case:
+        invocations.append(('tasks', 'caw_native_tasks.py', []))
     commands, observations, children = [], [], []
     for stage, script, options in invocations:
         argv = [sys.executable, str(c.ROOT / 'scripts' / script), *options,

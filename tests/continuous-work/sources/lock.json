@@ -1,8 +1,9 @@
 {
   "schema": "oi.caw-source-basis/v1",
-  "observed_on": "2026-09-10",
-  "dispatch": "https://github.com/EpiLogos/O-I/issues/220",
+  "observed_on": "2026-09-11",
+  "dispatch": "https://github.com/EpiLogos/O-I/issues/220#issuecomment-5625950828",
   "source_specification": "https://github.com/EpiLogos/Factory/issues/195#issuecomment-5620703383",
+  "required_refinements": "https://github.com/EpiLogos/Factory/issues/195#issuecomment-5625273795",
   "governance": "https://github.com/EpiLogos/Factory/issues/195#issuecomment-5620708509",
   "implementation_map": "https://github.com/EpiLogos/Factory/issues/195#issuecomment-5621186165",
   "published_source_hashes": {
@@ -14,15 +15,27 @@
   "pending_original_payloads": ["exact original Day HTML", "exact original Flow/Dialogue HTML", "supplied archive protocol", "original CT4b raw bytes"],
   "controlled_native_cut": {
     "oi_base": "2d67a3f6dea7d68c5e865722e88e9f3abc44385f",
+    "oi_prerequisite": "570f9134aed094524d9e379eee00b3e070c0b633",
     "oi_candidate": "capture actual checkout HEAD and built executable digest; never substitute base for candidate",
-    "central": "4cd0fe52b10fb0e09a5a9e4486ea3d40d4946c5c",
-    "aikit": "1f9ef6ab2ab45cf79732426c171e5de13273d197",
+    "central": "d91dee416a71b95f280c691c2d17e756bd8db10c",
+    "aikit": "c1ae1139a45433f5cc0de7d65f09c2b3c8419ade",
+    "workcell": "dcac0a26f9c0f01d6b6b4dd2486566161ab9bf6f",
+    "actuation": "0ac4bbb47cc37a7ac3c1db42b88a39ffd6bb5b30",
     "factory": "366a6b2bf18ba23053601f5d5eb543b79bfcfb27"
+  },
+  "candidate_dependencies": {
+    "central": ["EpiLogos/Central#155", "EpiLogos/Central#157"],
+    "aikit": ["EpiLogos/ai-kit#278", "EpiLogos/ai-kit#286", "EpiLogos/ai-kit#291"],
+    "workcell": ["EpiLogos/Workcell#73", "EpiLogos/Workcell#75"],
+    "oi": ["EpiLogos/O-I#223"],
+    "factory": "Retained Commission-publication cut only. Concurrent Factory#223 attempt work is not replaced or claimed tested by this pin."
   },
   "consumed_public_operations": {
     "oi": ["init --personal-ground PATH", "native guardian projection/adopt/set/apply adapter"],
-    "central": ["--root PATH init --json", "--root PATH doctor --json", "--json action.list"],
-    "aikit": ["--json init", "--json adopt", "--json set create/show", "--json apply", "native current/generation metadata and projection readback"],
+    "central": ["--root PATH init --json", "--root PATH doctor --json", "--json action.list", "central.work.policy", "central.now.allocate", "central.now.read", "central.work.validate"],
+    "aikit": ["--json init", "--json adopt", "--json set create/show", "--json apply", "native current/generation metadata and projection readback", "encounter-task-configure", "encounter-task-read", "encounter-agency-configure", "encounter open/send/delivery/read", "encounter-serve", "native task protocol launch"],
+    "workcell": ["native control status/prepare/inspect/observe/release", "workcell.directory-storage/v1", "workcell.service-declaration/v1", "write-boundary inspect/exec"],
+    "actuation": ["agency actualise"],
     "factory": ["development commission STATE REQUEST --json", "development commission-read STATE REQUEST_REF --json"]
   },
   "preserved_existing_floor": {
@@ -30,5 +43,5 @@
     "factory_revision": "12a721dbbb51e3c70d52ef00220efa859ef930fd",
     "standing": "bounded existing source cut; NOT CAW attempt execution or present joined feature acceptance"
   },
-  "standing": "controlled-code-cut-not-installed-or-human-proof"
+  "standing": "explicitly-pinned-unmerged-candidate-not-accepted-main-not-installed-or-human-proof"
 }

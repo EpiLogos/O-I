@@ -21,6 +21,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: caw-joined-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   runner-mechanics:
     name: Runner mechanics, not product acceptance
@@ -29,6 +33,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
@@ -52,14 +57,14 @@ jobs:
           assert len(report['acceptance']['cases'])==28
           assert report['acceptance']['whole_feature_verdict'] is None
           assert not report['commands']
-          assert len(report['children'])==2
+          assert {c['stage'] for c in report['children']} == {'profiles','native','tasks'}
           PY
           echo '### Whole P01–P28 acceptance: **PENDING**, not green' >> "$GITHUB_STEP_SUMMARY"
           echo 'This job tests fail-closed machinery, not the end-to-end feature.' >> "$GITHUB_STEP_SUMMARY"
 
   native-operations:
-    name: Native OI/Central/AIKit profiles and Factory publication (bounded D/C)
-    runs-on: ubuntu-latest
+    name: Native profiles, Factory publication and joined protected-task material (bounded D/C)
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
       PYTHONDONTWRITEBYTECODE: "1"
@@ -67,13 +72,14 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
       - name: Read the maintained owner source cut
         id: cut
         run: |
           python3 - <<'PY' >> "$GITHUB_OUTPUT"
           import json
           cut=json.load(open('tests/continuous-work/sources/lock.json'))['controlled_native_cut']
-          for owner in ('central','aikit','factory'):
+          for owner in ('central','aikit','factory','workcell','actuation'):
               print(f'{owner}={cut[owner]}')
           PY
       - uses: actions/checkout@v4
@@ -81,38 +87,74 @@ jobs:
           repository: EpiLogos/Central
           ref: ${{ steps.cut.outputs.central }}
           path: _caw_central
+          persist-credentials: false
       - uses: actions/checkout@v4
         with:
           repository: EpiLogos/ai-kit
           ref: ${{ steps.cut.outputs.aikit }}
           path: _caw_aikit
+          persist-credentials: false
       - uses: actions/checkout@v4
         with:
           repository: EpiLogos/Factory
           ref: ${{ steps.cut.outputs.factory }}
           path: _caw_factory
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Workcell
+          ref: ${{ steps.cut.outputs.workcell }}
+          path: _caw_workcell
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Actuation
+          ref: ${{ steps.cut.outputs.actuation }}
+          path: _caw_actuation
+          persist-credentials: false
       - name: Keep owner checkouts and evidence outside the candidate source
         run: |
           mv _caw_central "$RUNNER_TEMP/caw-central"
           mv _caw_aikit "$RUNNER_TEMP/caw-aikit"
           mv _caw_factory "$RUNNER_TEMP/caw-factory"
-      - uses: dtolnay/rust-toolchain@stable
+          mv _caw_workcell "$RUNNER_TEMP/caw-workcell"
+          mv _caw_actuation "$RUNNER_TEMP/caw-actuation"
+      - uses: dtolnay/rust-toolchain@1.98.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - name: Execute native governance tests and build exact owner binaries
         run: |
+          set -euo pipefail
           cargo test --locked --manifest-path cli/Cargo.toml --test continuous_work_governance --test suite_skillset
           cargo build --locked --manifest-path cli/Cargo.toml --bin oi
           cargo build --locked --manifest-path "$RUNNER_TEMP/caw-central/ctrl/Cargo.toml" --bin ctrl
-          cargo build --locked --manifest-path "$RUNNER_TEMP/caw-aikit/Cargo.toml" --bin aikit
+          cargo build --locked --manifest-path "$RUNNER_TEMP/caw-aikit/Cargo.toml" -p aikit-cli --bins
           cargo build --locked --manifest-path "$RUNNER_TEMP/caw-factory/factory/Cargo.toml" --bin factory
+          cargo build --locked --manifest-path "$RUNNER_TEMP/caw-workcell/Cargo.toml" -p epilogos-workcell-cli --bins
+          cargo test --locked --manifest-path "$RUNNER_TEMP/caw-aikit/Cargo.toml" -p aikit-cli --test caw_task_dispatch --no-run --message-format=json > "$RUNNER_TEMP/caw-task-build.jsonl"
+          python3 - "$RUNNER_TEMP/caw-task-build.jsonl" <<'PY' >> "$GITHUB_ENV"
+          import json, sys
+          artifacts=[json.loads(line) for line in open(sys.argv[1])]
+          executables=[a['executable'] for a in artifacts if a.get('reason')=='compiler-artifact' and a.get('target',{}).get('name')=='caw_task_dispatch' and a.get('executable')]
+          assert len(executables)==1, 'the native test executable must come from this actual compiler invocation'
+          print('CAW_TASK_SUITE='+executables[0])
+          PY
       - name: Bind the built binaries and clean actual source cuts
         run: |
           python3 scripts/caw_bind.py \
             --entry oi "$GITHUB_WORKSPACE/cli/target/debug/oi" "$GITHUB_WORKSPACE" \
             --entry central "$RUNNER_TEMP/caw-central/target/debug/ctrl" "$RUNNER_TEMP/caw-central" \
             --entry aikit "$RUNNER_TEMP/caw-aikit/target/debug/aikit" "$RUNNER_TEMP/caw-aikit" \
+            --entry aikit-session-space "$RUNNER_TEMP/caw-aikit/target/debug/aikit-session-space" "$RUNNER_TEMP/caw-aikit" \
+            --entry aikit-task-suite "$CAW_TASK_SUITE" "$RUNNER_TEMP/caw-aikit" \
+            --entry workcell "$RUNNER_TEMP/caw-workcell/target/debug/workcell" "$RUNNER_TEMP/caw-workcell" \
+            --entry workcell-control-service "$RUNNER_TEMP/caw-workcell/target/debug/workcell-control-service" "$RUNNER_TEMP/caw-workcell" \
+            --entry workcell-write-boundary "$RUNNER_TEMP/caw-workcell/target/debug/workcell-write-boundary" "$RUNNER_TEMP/caw-workcell" \
+            --entry actuation "$RUNNER_TEMP/caw-actuation/bin/actuation" "$RUNNER_TEMP/caw-actuation" \
             --entry factory "$RUNNER_TEMP/caw-factory/target/debug/factory" "$RUNNER_TEMP/caw-factory" \
             --output "$RUNNER_TEMP/caw-bindings.json"
-      - name: Execute both native campaigns independently
+      - name: Execute the three native campaigns independently
         run: |
           set +e
           python3 scripts/caw_local.py --bindings "$RUNNER_TEMP/caw-bindings.json" --output "$RUNNER_TEMP/caw-run"
@@ -121,13 +163,14 @@ jobs:
           python3 - "$RUNNER_TEMP/caw-run/report.json" "$code" <<'PY'
           import json, sys
           r=json.load(open(sys.argv[1]))
-          # Controlled diagnostics only; exports below never contain raw outputs.
           print(json.dumps(r['observations'], indent=2))
-          assert len(r['children'])==2, 'one owner failure must not suppress another campaign'
+          assert {c['stage'] for c in r['children']}=={'profiles','native','tasks'}, 'one owner failure must not suppress another campaign'
           for role in ('coding','verifier'):
               assert any(o.get('id')==f'native-{role}-profile' and o.get('standing')=='observed' and o.get('grade')=='C' and o.get('disconnected')=='detected' and o.get('record_ids') for o in r['observations']), f'{role} native profile delivery was not observed'
           assert any(o.get('id')=='factory-commission-publication' and o.get('standing')=='observed' and o.get('disconnected')=='detected' and o.get('record_ids') for o in r['observations']), 'native Factory publication was not observed'
+          assert any(o.get('id')=='native-task-material' and o.get('standing')=='observed' and o.get('grade')=='C' and o.get('disconnected')=='detected' and o.get('executed_tests')==7 and o.get('record_ids') for o in r['observations']), 'joined task/material production path or removed-producer failure was not observed'
           assert int(sys.argv[2])==2
+          assert len(r['acceptance']['cases'])==28
           assert r['acceptance']['standing']=='pending'
           assert r['acceptance']['whole_feature_verdict'] is None
           PY
@@ -138,11 +181,33 @@ jobs:
           if test -f "$RUNNER_TEMP/caw-run/report.json"; then
             python3 scripts/caw_campaign.py export --evidence "$RUNNER_TEMP/caw-run" --output "$RUNNER_TEMP/caw-public/campaign.json"
           fi
+          if test -f "$RUNNER_TEMP/caw-bindings.json"; then
+            python3 - "$RUNNER_TEMP/caw-bindings.json" "$RUNNER_TEMP/caw-public/native-basis.json" <<'PY'
+          import json, sys
+          bindings=json.load(open(sys.argv[1]))
+          with open(sys.argv[2],'x') as stream:
+              json.dump({k:{'revision':v['revision'],'sha256':v['sha256']} for k,v in bindings.items()},stream,indent=2)
+          PY
+          fi
+          cp tests/continuous-work/sources/lock.json "$RUNNER_TEMP/caw-public/source-cut.json"
           echo '### P01–P28 whole feature: **PENDING**' >> "$GITHUB_STEP_SUMMARY"
-          echo 'Native profile and Commission observations are bounded. No live harness, provider, personal migration, second placement or human acceptance is inferred.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Native profile, Commission and task/material observations are bounded. No commercial model, personal migration, second physical placement or human acceptance is inferred.' >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: caw-bounded-evidence-parent-pending
           path: ${{ runner.temp }}/caw-public
           if-no-files-found: warn
+      - name: Retain exact campaign source for reproducibility
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/caw-source"
+          git rev-parse HEAD > "$RUNNER_TEMP/caw-source/revision.txt"
+          git archive --format=tar.gz HEAD > "$RUNNER_TEMP/caw-source/source.tar.gz"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: caw-campaign-source-${{ github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/caw-source
+          if-no-files-found: error
+          retention-days: 7
