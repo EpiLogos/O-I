@@ -149,3 +149,26 @@
 .encounter-inspect h3 { margin: 14px 0 4px; font-size: var(--oi-shell-type-ui); }
 .encounter-deliveries { list-style: none; margin: 4px 0; padding: 0; }
 .encounter-deliveries li { display: flex; gap: 10px; align-items: baseline; padding: 2px 0; }
+
+/* The agency panel's A2A exchange: the seeded passage is the resident's own
+ * reply; the difference renders pending admission, never applied. */
+.encounter-a2a-seed { align-self: flex-start; margin-top: 6px; appearance: none; border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: 6px; padding: 3px 9px; background: transparent; color: var(--oi-muted-2); font: inherit; font-size: var(--oi-shell-type-meta); cursor: pointer; transition: outline-color var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.encounter-a2a-seed:hover { color: inherit; }
+.encounter-a2a-seed:focus-visible { outline: 2px solid var(--oi-accent-soft); outline-offset: 2px; }
+.encounter-a2a { border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: 9px; padding: 11px 13px; margin: 13px 0 0; background: var(--oi-canvas-ground); }
+.encounter-a2a header { display: flex; flex-direction: column; gap: 3px; margin-bottom: 9px; }
+.encounter-a2a header strong { font-size: var(--oi-shell-type-ui); font-weight: 550; }
+.encounter-a2a header small { font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); }
+.encounter-a2a-quote { margin: 0 0 9px; padding: 7px 9px; border-left: 2px solid var(--oi-hairline); color: var(--oi-muted-2); font-size: var(--oi-shell-type-prose); white-space: pre-wrap; }
+.encounter-a2a-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 9px; margin-bottom: 9px; }
+.encounter-a2a-fields label { display: flex; flex-direction: column; gap: 4px; font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); }
+.encounter-a2a-fields input, .encounter-a2a-fields select { appearance: none; box-sizing: border-box; width: 100%; border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: 6px; padding: 6px 8px; background: var(--oi-composer-ground); color: inherit; font: inherit; font-size: var(--oi-shell-type-nav); outline: 2px solid transparent; outline-offset: 2px; transition: outline-color var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.encounter-a2a-fields input:focus-visible, .encounter-a2a-fields select:focus-visible { outline-color: var(--oi-accent-soft); }
+.encounter-a2a-actions { display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+.encounter-a2a-actions span { font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); }
+.encounter-a2a-send { appearance: none; border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: 7px; padding: 6px 12px; background: var(--oi-composer-ground); color: inherit; font: inherit; font-size: var(--oi-shell-type-nav); cursor: pointer; outline: 2px solid transparent; outline-offset: 2px; transition: outline-color var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.encounter-a2a-send:focus-visible { outline-color: var(--oi-accent-soft); }
+.encounter-a2a-send:disabled { opacity: 0.55; cursor: default; }
+.encounter-a2a-difference dt { margin-top: 8px; font-weight: 600; }
+.encounter-a2a-difference dd { margin: 3px 0 0; color: var(--oi-muted-2); }
+.encounter-a2a-difference p { margin: 9px 0 0; font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); }

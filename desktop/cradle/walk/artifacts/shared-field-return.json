@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "shared-field-return",
-  "generated_at": "2026-09-11T22:57:54.706Z",
+  "generated_at": "2026-09-11T23:37:10.360Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 3372,
+  "duration_ms": 3190,
   "checks": [
     {
       "ok": true,
@@ -126,7 +126,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-11T22:57:54.822Z",
+        "mounted_at": "2026-09-11T23:37:10.479Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -137,7 +137,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 34,
+      "duration_ms": 35,
       "data": {
         "file": "shared-field-return-projection-published.png"
       }
@@ -145,7 +145,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 33,
+      "duration_ms": 35,
       "data": {
         "file": "shared-field-return-projection-withdrawn.png"
       }
@@ -153,7 +153,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 36,
+      "duration_ms": 32,
       "data": {
         "file": "shared-field-return-return-with-shared-field-lineage.png"
       }
@@ -161,7 +161,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 46,
+      "duration_ms": 28,
       "data": {
         "file": "shared-field-return-four-states-one-canvas.png"
       }

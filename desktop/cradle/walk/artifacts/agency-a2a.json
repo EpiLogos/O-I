@@ -1,0 +1,112 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "agency-a2a",
+  "generated_at": "2026-09-11T23:36:19.172Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 6168,
+  "checks": [
+    {
+      "ok": true,
+      "label": "No exchange affordance exists before a resident reply exists"
+    },
+    {
+      "ok": true,
+      "label": "The resident's reply carries the exchange affordance in the Conversation plane"
+    },
+    {
+      "ok": true,
+      "label": "The exchange is seeded with the resident's exact reply text"
+    },
+    {
+      "ok": true,
+      "label": "No A2A request exists before the human's explicit send"
+    },
+    {
+      "ok": true,
+      "label": "The refused exchange fetched only the peer's Agent Card — zero message sends"
+    },
+    {
+      "ok": true,
+      "label": "The returned difference is a real oi.a2a-difference/v1, pending admission"
+    },
+    {
+      "ok": true,
+      "label": "The exchange's shared field is the encounter session itself"
+    },
+    {
+      "ok": true,
+      "label": "The difference records the exact initiator and counterparty"
+    },
+    {
+      "ok": true,
+      "label": "The exchange reached the peer exactly once — one card discovery, one message send"
+    },
+    {
+      "ok": true,
+      "label": "The send speaks the A2A HTTP+JSON v1 binding — media type, version header, ROLE_USER message"
+    },
+    {
+      "ok": true,
+      "label": "The peer received the resident's exact reply and nothing else"
+    },
+    {
+      "ok": true,
+      "label": "The panel renders the difference as pending admission with its exchange identity, applied nowhere"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-11T23:36:19.274Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 42,
+      "data": {
+        "file": "agency-a2a-agency-a2a-reply-seeded.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 34,
+      "data": {
+        "file": "agency-a2a-agency-a2a-card-mismatch-refused.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 37,
+      "data": {
+        "file": "agency-a2a-agency-a2a-exchange-returned.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "agency-a2a-agency-a2a-reply-seeded.png",
+    "agency-a2a-agency-a2a-card-mismatch-refused.png",
+    "agency-a2a-agency-a2a-exchange-returned.png"
+  ]
+}

@@ -1,5 +1,5 @@
 import {useLayoutEffect,useRef,useState,type ReactNode} from "react";
-import type {EncounterReading,EncounterStatus,JournalPage,PermissionDecision} from "./client";
+import type {A2aDifference,A2aPeerFields,EncounterReading,EncounterStatus,JournalPage,PermissionDecision} from "./client";
 import {Glyph} from "../workspace/Glyph";
 import "./encounter.css";
 /** Rendering and interaction only; AIKit owns transcript, consent and shared draft.
@@ -7,7 +7,7 @@ import "./encounter.css";
  * "side"/"full" are the accompanying-agent-layer shapes, where the layer
  * renders its own header and plane nav (FND-02) and this view supplies only
  * the transcript + composer. */
-export function EncounterView({title,plane,onPlane,reading,status,draft,pending,error,providers,onProvider,onDraft,onSend,onCancel,onEarlier,onLatest,onPermission,presentation,concealed=false,addressed,resume,onReconnect,readJournal,deliveries,space}:{title:string;plane:string;onPlane:(plane:"Conversation"|"Activity"|"Context"|"Inspect")=>void;reading?:EncounterReading;status?:EncounterStatus;draft:string;pending:boolean;error?:string;providers:{id:string;label:string}[];onProvider:(id:string)=>void;onDraft:(text:string)=>void;onSend:()=>void;onCancel:()=>void;onEarlier:()=>void;onLatest:()=>void;onPermission:(id:string,decision:PermissionDecision)=>void;presentation:"tab"|"side"|"full";concealed?:boolean;addressed?:ReactNode;resume?:{provider:string};onReconnect:(provider:string)=>void;readJournal?:(after:number)=>Promise<JournalPage>;deliveries?:{ref:string;phase:string}[];space?:string}) {
+export function EncounterView({title,plane,onPlane,reading,status,draft,pending,error,providers,onProvider,onDraft,onSend,onCancel,onEarlier,onLatest,onPermission,presentation,concealed=false,addressed,resume,onReconnect,readJournal,deliveries,space,a2a,onA2aSeed,onA2aSend}:{title:string;plane:string;onPlane:(plane:"Conversation"|"Activity"|"Context"|"Inspect")=>void;reading?:EncounterReading;status?:EncounterStatus;draft:string;pending:boolean;error?:string;providers:{id:string;label:string}[];onProvider:(id:string)=>void;onDraft:(text:string)=>void;onSend:()=>void;onCancel:()=>void;onEarlier:()=>void;onLatest:()=>void;onPermission:(id:string,decision:PermissionDecision)=>void;presentation:"tab"|"side"|"full";concealed?:boolean;addressed?:ReactNode;resume?:{provider:string};onReconnect:(provider:string)=>void;readJournal?:(after:number)=>Promise<JournalPage>;deliveries?:{ref:string;phase:string}[];space?:string;a2a?:{seed?:string;busy:boolean;difference?:A2aDifference;error?:string};onA2aSeed?:(seed:string)=>void;onA2aSend?:(seed:string,fields:A2aPeerFields)=>void}) {
   const transcript=useRef<HTMLDivElement>(null);const following=useRef(true);
   const composerInput=useRef<HTMLTextAreaElement>(null);
   useLayoutEffect(()=>{const element=transcript.current;if(element&&following.current)element.scrollTop=element.scrollHeight;},[reading,plane]);
@@ -73,11 +73,15 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
       {blocks?.map(block=>(block.kind==="thinking"||block.kind==="provider-notice"||block.kind==="tool"||block.kind==="permission")?<details className="encounter-thinking" data-kind={block.kind} key={block.id}><summary>{block.kind==="thinking"?"Thinking":block.kind==="tool"?"Tool activity":block.kind==="permission"?"Provider consent":"Provider notice"}</summary><div>{block.text}</div></details>
         :block.kind==="error"?<div key={block.id} className="encounter-turn encounter-error" data-kind="error"><span className="encounter-avatar" aria-hidden="true"><Glyph name="chat" size={12}/></span><div><strong>Provider turn failed</strong><p>{block.text}</p></div></div>
         :block.kind==="completed"&&plane==="Conversation"?null
-        :<div key={block.id} className={`encounter-turn encounter-${block.kind}`}><span className="encounter-avatar" aria-hidden="true">{block.kind==="user"?"Y":<Glyph name="chat" size={12}/>}</span><div><strong>{block.kind==="user"?"You":block.kind==="assistant"?(status?.provider?.label??"Assistant"):block.kind==="permission"?"Native permission requested":block.kind==="cancelled"?"Stopped":"Provider report"}</strong><p>{block.text}</p></div></div>)}
+        :<div key={block.id} className={`encounter-turn encounter-${block.kind}`}><span className="encounter-avatar" aria-hidden="true">{block.kind==="user"?"Y":<Glyph name="chat" size={12}/>}</span><div><strong>{block.kind==="user"?"You":block.kind==="assistant"?(status?.provider?.label??"Assistant"):block.kind==="permission"?"Native permission requested":block.kind==="cancelled"?"Stopped":"Provider report"}</strong><p>{block.text}</p>{block.kind==="assistant"&&plane==="Conversation"&&onA2aSeed?<button className="encounter-a2a-seed" disabled={a2a?.busy} onClick={()=>onA2aSeed(block.text)}>Exchange over A2A</button>:null}</div></div>)}
       {!reading&&<p role="status">Reading encounter…</p>}{plane==="Activity"&&blocks?.length===0&&!status?.error&&<p>No provider activity in this transcript page.</p>}
       {plane==="Activity"&&readJournal&&<ActivityJournal read={readJournal}/>}
       </>}
     </div>
+    {/* The seeded A2A exchange lives beside the conversation it came from:
+      * the passage is the resident's own reply, the send is the human's
+      * authority, and the returned difference renders pending admission. */}
+    {plane==="Conversation"&&a2a?.seed&&onA2aSend&&<AgencyA2a key={a2a.seed} seed={a2a.seed} a2a={a2a} onSend={fields=>onA2aSend(a2a.seed!,fields)}/>}
     {/* Finding 14: the composer (and the permission/connect prompts that
       * live in it) rendered under every plane, including while inspecting —
       * a conversation composer with nothing to converse in. It mounts only
@@ -102,6 +106,41 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
       </div>
       {addressed}
     </div>}
+  </section>;
+}
+/** The agency panel's A2A exchange: the seeded passage is the resident's own
+ * reply, verbatim. The peer fields compose the owner floor's binding per send;
+ * the returned difference is the peer's untrusted return, pending admission
+ * under the receiving installation's law — rendered, never applied. */
+function AgencyA2a({seed,a2a,onSend}:{seed:string;a2a:{busy:boolean;difference?:A2aDifference;error?:string};onSend:(fields:A2aPeerFields)=>void}) {
+  const [peerAgent,setPeerAgent]=useState("");const [peerEndpoint,setPeerEndpoint]=useState("");
+  const [peerCard,setPeerCard]=useState("");const [peerAvailability,setPeerAvailability]=useState("online");
+  const difference=a2a.difference;
+  return <section className="encounter-a2a" aria-label="A2A exchange with a peer agent">
+    <header><strong>A2A exchange with a peer agent</strong><small>Protocol A2A v1, HTTP+JSON. Nothing reaches the network until you send; the peer&apos;s Agent Card must advertise exactly the published interface.</small></header>
+    <p className="encounter-a2a-quote">{seed}</p>
+    {difference
+      ? <div className="encounter-a2a-difference" data-a2a-difference={JSON.stringify(difference)}>
+          <strong>Returned difference — pending admission</strong>
+          <dl>
+            <dt>Exchange</dt><dd><code>{difference.exchange_ref}</code></dd>
+            <dt>Transport</dt><dd>{difference.transport_result.kind} · <code>{difference.transport_result.ref}</code></dd>
+            <dt>Peer</dt><dd>{difference.agent_ref}</dd>
+            <dt>Initiator</dt><dd>{difference.initiator_participant_ref}</dd>
+            <dt>Binding</dt><dd><code>{difference.binding_ref}</code> · rev {String(difference.binding_revision)}</dd>
+          </dl>
+          <p>The difference is the peer&apos;s untrusted return: it lands pending admission under the receiving installation&apos;s own law. Nothing here applies it.</p>
+        </div>
+      : <>
+        {a2a.error&&<p role="alert">{a2a.error}</p>}
+        <div className="encounter-a2a-fields">
+          <label>Peer agent ref<input aria-label="Peer agent ref" value={peerAgent} onChange={event=>setPeerAgent(event.target.value)} placeholder="agent ref of the peer" autoComplete="off" spellCheck={false}/></label>
+          <label>Peer A2A endpoint URL<input aria-label="Peer A2A endpoint URL" value={peerEndpoint} onChange={event=>setPeerEndpoint(event.target.value)} placeholder="https://peer.example/a2a" autoComplete="off" spellCheck={false}/></label>
+          <label>Peer Agent Card URL<input aria-label="Peer Agent Card URL" value={peerCard} onChange={event=>setPeerCard(event.target.value)} placeholder="https://peer.example/.well-known/agent-card.json" autoComplete="off" spellCheck={false}/></label>
+          <label>Peer availability<select aria-label="Peer availability" value={peerAvailability} onChange={event=>setPeerAvailability(event.target.value)}>{["online","degraded","offline"].map(state=><option key={state} value={state}>{state}</option>)}</select></label>
+        </div>
+        <div className="encounter-a2a-actions"><span>The human&apos;s send is the exchange authority; the binding names this encounter as the shared field.</span><button className="encounter-a2a-send" disabled={a2a.busy||!peerAgent.trim()||!peerEndpoint.trim()||!peerCard.trim()} onClick={()=>onSend({peerAgent,peerEndpoint,peerCard,peerAvailability})}>{a2a.busy?"Exchanging…":"Send over A2A"}</button></div>
+      </>}
   </section>;
 }
 /** The owner's raw journal, read on demand through its own cursor

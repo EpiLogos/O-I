@@ -1,7 +1,8 @@
 import {useEffect,useRef,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import type {SurfaceBinding} from "../surface/types";
-import {encounter,mintDeliveryRef,type AddressedPacket,type AddressedTurn,type DeliveryRecord,type Draft,type EncounterReading,type EncounterStatus,type GroupReceipt,type GroupRecipient,type JournalPage,type PermissionDecision,type SendReceipt} from "./client";
+import {encounter,mintDeliveryRef,type A2aDifference,type A2aPeerFields,type AddressedPacket,type AddressedTurn,type DeliveryRecord,type Draft,type EncounterReading,type EncounterStatus,type GroupReceipt,type GroupRecipient,type JournalPage,type PermissionDecision,type SendReceipt} from "./client";
+import {createA2aBinding,createA2aPresence,performA2aExchange} from "../../../../shared-field/a2a.mjs";
 import {AddressedComposer,ACTIVE_PHASES,type AddressedFields,type DispatchState,type DeliveryHistoryEntry,type GroupState} from "./AddressedComposer";
 import {EncounterView} from "./EncounterView";
 export interface EncounterExpressionReading {state?:string;pending:boolean;completed?:number;inputRevision?:number}
@@ -161,8 +162,52 @@ export function EncounterSurface({binding,onView,presentation="tab",onExpression
    setStatus(await call<EncounterStatus>({action:"status",agent_session:binding.ref!}));
   }catch(error){if(alive.current)setError(String(error));}finally{setPending(false);}
  };
+ // --- A2A exchange (wave 7 → the agency panel): the resident's own reply is
+ // the bounded passage. Binding, presence, exchange authority and the
+ // returned difference are the owner floor's contracts, composed per send —
+ // nothing reaches the network until the human's explicit send, exactly as
+ // beside the documents. The provenance names the encounter session and the
+ // native session the passage actually came from. ---
+ const [a2a,setA2a]=useState<{seed?:string;busy:boolean;difference?:A2aDifference;error?:string}>({busy:false});
+ const seedA2a=(seed:string)=>setA2a({seed,busy:false});
+ const sendA2a=async(seed:string,fields:A2aPeerFields)=>{
+  setA2a({seed,busy:true});setPending(true);
+  try{
+   const slug=fields.peerAgent.trim().replace(/[^a-z0-9]+/gi,"-").toLowerCase()||"peer";
+   const nativeSession=status?.native_session_id;
+   const a2aBinding=createA2aBinding({
+    binding_ref:`a2a-binding:agency-panel:${slug}`,
+    field_ref:`field:encounter:${binding.ref}`,
+    participant_ref:`participant:a2a:${slug}`,
+    agent_ref:fields.peerAgent.trim(),
+    publisher_participant_ref:"participant:desktop-operator",
+    publication_decision_ref:`decision:agency-panel-send:${Date.now().toString(36)}`,
+    source_revision:nativeSession??"desktop-operator",
+    published_at:new Date().toISOString(),
+    endpoint_url:fields.peerEndpoint.trim(),
+    agent_card_url:fields.peerCard.trim(),
+    provenance:[{kind:"agency-panel-exchange",ref:`agent-session ${binding.ref}${nativeSession?` · native ${nativeSession}`:""}`,source_system:"oi.cradle"}],
+   });
+   const a2aPresence=createA2aPresence({
+    binding_ref:a2aBinding.binding_ref,field_ref:a2aBinding.field_ref,participant_ref:a2aBinding.participant_ref,
+    sequence:1,observed_at:new Date().toISOString(),
+    availability:fields.peerAvailability==="offline"?"offline":fields.peerAvailability==="degraded"?"degraded":"online",
+    provenance:[{kind:"desktop-operator-observation",ref:"observation:agency-panel-peer",source_system:"oi.cradle"}],
+   });
+   const difference=await performA2aExchange({
+    binding:a2aBinding,presence:a2aPresence,
+    initiator_participant_ref:"participant:desktop-operator",
+    message:{message_id:`a2a-agency-${Date.now().toString(36)}`,text:seed,purpose:"agency-panel-a2a-exchange"},
+    authorize_exchange:async(demand:{operation_id:string})=>({allowed:true,grant_ref:`exchange-grant:agency:${demand.operation_id}`}),
+    fetch_impl:(input:RequestInfo|URL,init?:RequestInit)=>fetch(input,init),
+   }) as unknown as A2aDifference;
+   if(alive.current)setA2a({seed,busy:false,difference});
+  }catch(err){if(alive.current)setA2a({seed,busy:false,error:String(err)});}
+  finally{if(alive.current)setPending(false);}
+ };
  return <><EncounterView concealed={concealed} presentation={presentation} plane={binding.view?.encounterPlane??"Conversation"} onPlane={encounterPlane=>onView({encounterPlane})} title={binding.title} onPermission={(id,decision)=>void permission(id,decision)} reading={reading} status={status} draft={draft} pending={pending||dirty.current||saving.current||sending.current||failed.current} error={error} providers={providers} onProvider={provider=>void connect(provider)} onDraft={change} onSend={()=>void send()} onCancel={()=>{if(!allowed("cancel"))return;void call({action:"cancel",agent_session:binding.ref!,reason:"User stopped the encounter"}).catch(error=>setError(String(error)));}} onEarlier={()=>setBefore(reading?.blocks[0]?.id)} onLatest={()=>setBefore(undefined)} readJournal={after=>call<JournalPage>({action:"read",agent_session:binding.ref!,after,limit:32})} space={binding.encounter?.space} deliveries={[...addressedHistory.map(h=>({ref:h.ref,phase:h.record.phase})),...(group?[{ref:group.ref,phase:`group — ${group.rows.map(row=>row.error?"refused":row.phase??"in flight").join(", ")}`}]:[])]}
   resume={resume} onReconnect={provider=>void reconnect(provider)}
+  a2a={a2a} onA2aSeed={seedA2a} onA2aSend={(seed,fields)=>void sendA2a(seed,fields)}
   addressed={<AddressedComposer disabled={status?.state==="Disconnected"} dispatch={dispatch} history={addressedHistory} service={service} agentSession={binding.ref??undefined} group={group} onGroupSend={(sender,recipients,packet)=>void sendGroup(sender,recipients,packet)} onSend={(turn,fields)=>void sendAddressed(turn,fields)}/>}
  />{failed.current&&!concealed&&<button onClick={()=>void recover()}>Apply my typing to the current shared draft</button>}{reconnected&&!concealed&&<p className="encounter-reconnected" role="status">Reconnected to the recorded native session <code>{reconnected}</code> — nothing was replaced or silently created.</p>}</>;
 }

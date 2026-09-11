@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "document-entry",
-  "generated_at": "2026-09-11T22:52:21.934Z",
+  "generated_at": "2026-09-11T23:35:37.824Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 7193,
+  "duration_ms": 7033,
   "checks": [
     {
       "ok": true,
@@ -98,7 +98,7 @@
       "ok": true,
       "label": "The 4+2 document performs its own Save HTML copy — a separate, network-free export that overwrites nothing",
       "data": {
-        "filename": "2026-09-11-daily.html"
+        "filename": "2026-09-12-daily.html"
       }
     },
     {
@@ -144,7 +144,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 127,
+      "duration_ms": 111,
       "data": {
         "file": "document-entry-die-42-rendered.png"
       }
@@ -152,7 +152,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 26,
+      "duration_ms": 42,
       "data": {
         "file": "document-entry-dialogue-01-journal.png"
       }
@@ -160,7 +160,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 35,
+      "duration_ms": 37,
       "data": {
         "file": "document-entry-dialogue-01-native-save.png"
       }
@@ -168,7 +168,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 21,
+      "duration_ms": 20,
       "data": {
         "file": "document-entry-die-42-unavailable.png"
       }

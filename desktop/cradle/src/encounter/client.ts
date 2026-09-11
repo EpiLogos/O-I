@@ -16,6 +16,10 @@ export interface NativePermission {native_request_id:string;native_session_id:st
 export interface EncounterAction {ref:string;enabled:boolean;reason:string|null}
 export interface EncounterReading {schema?:"aikit.encounter-view/v1";agent_session:string;blocks:{id:number;kind:string;text:string}[];more:boolean;draft:Draft;connection?:EncounterStatus;permissions?:NativePermission[];permission_authority?:"native-provider-consent";actions?:EncounterAction[]}
 export interface EncounterStatus {resident?:boolean;native_session_id?:string;state:string;error?:string|null;provider?:{id:string;label:string}}
+/** The owner A2A floor's returned difference (shared-field/a2a.mjs), as the
+ * agency panel renders it: pending admission on the receiving installation. */
+export interface A2aDifference {exchange_ref:string;binding_ref:string;binding_revision:number;agent_ref:string;initiator_participant_ref:string;transport_result:{kind:string;ref:string};transport_provenance?:{agent_card?:{name?:string;version?:string}};[field:string]:unknown}
+export interface A2aPeerFields {peerAgent:string;peerEndpoint:string;peerCard:string;peerAvailability:string}
 /** One page of the owner's raw journal (`aikit encounter read`): the events
  * behind the transcript view, on the owner's own cursor. */
 export interface JournalEvent {cursor:number;event:unknown}
