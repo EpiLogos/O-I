@@ -71,6 +71,21 @@ export function DocumentReturns({sourceRef,project}:{sourceRef:string;project:st
    admission_ref:typeof lineage.admission_ref==="string"?lineage.admission_ref:undefined,
    withdrawn:lineage.withdrawn===true};
  };
+ /** A2A lineage carried in the proposal by the returning side: the exchange
+  * the admitted material came back over. Owner-carried verbatim, never
+  * desktop-derived. */
+ const a2aLineage=(proposal:unknown):{exchange_ref:string;transport_kind?:string;transport_ref?:string;binding_ref?:string;binding_revision?:number;exchange_grant_ref?:string}|undefined=>{
+  const field=(proposal as {a2a?:unknown})?.a2a;
+  if(!field||typeof field!=="object")return undefined;
+  const lineage=field as {exchange_ref?:unknown;transport_kind?:unknown;transport_ref?:unknown;binding_ref?:unknown;binding_revision?:unknown;exchange_grant_ref?:unknown};
+  if(typeof lineage.exchange_ref!=="string")return undefined;
+  return {exchange_ref:lineage.exchange_ref,
+   transport_kind:typeof lineage.transport_kind==="string"?lineage.transport_kind:undefined,
+   transport_ref:typeof lineage.transport_ref==="string"?lineage.transport_ref:undefined,
+   binding_ref:typeof lineage.binding_ref==="string"?lineage.binding_ref:undefined,
+   binding_revision:typeof lineage.binding_revision==="number"?lineage.binding_revision:undefined,
+   exchange_grant_ref:typeof lineage.exchange_grant_ref==="string"?lineage.exchange_grant_ref:undefined};
+ };
  return <section className="document-returns" aria-label="Returns for this document">
   <header><span>Returns for this document</span>{rows&&<small>{rows.length} in the receiving field</small>}<button className="returns-refresh" aria-label="Refresh this document's returns" disabled={pending} onClick={load}>↻</button></header>
   {rows?.map(row=><button key={row.return_ref} className={`project-return document-return ${open?.return_ref===row.return_ref?"return-open":""}`} aria-expanded={open?.return_ref===row.return_ref} onClick={()=>void expand(row)}>
@@ -87,6 +102,7 @@ export function DocumentReturns({sourceRef,project}:{sourceRef:string;project:st
       {basis&&<><dt>Current document basis</dt><dd>{basis.revision.revision}{basis.unreviewed_external_revision?" — externally edited since":""}</dd></>}
       {open.record.review&&<><dt>Review</dt><dd>{open.record.review.disposition} by {open.record.review.reviewer_ref} on {open.record.review.source_revision}</dd></>}
       {sharedFieldLineage(open.record.proposal)&&<><dt>Shared field</dt><dd className="return-shared-field" data-shared-field="true">admitted contribution — projection <code>{sharedFieldLineage(open.record.proposal)!.projection_ref}</code> rev {sharedFieldLineage(open.record.proposal)!.projection_revision}{sharedFieldLineage(open.record.proposal)!.withdrawn?" · withdrawn by the publisher, admitted material retained":""}{sharedFieldLineage(open.record.proposal)!.admission_ref?<> · admission <code>{sharedFieldLineage(open.record.proposal)!.admission_ref}</code></>:null}</dd></>}
+      {a2aLineage(open.record.proposal)&&<><dt>A2A exchange</dt><dd className="return-a2a" data-a2a="true">admitted contribution — exchange <code>{a2aLineage(open.record.proposal)!.exchange_ref}</code>{a2aLineage(open.record.proposal)!.transport_kind&&a2aLineage(open.record.proposal)!.transport_ref?<>{a2aLineage(open.record.proposal)!.transport_kind} <code>{a2aLineage(open.record.proposal)!.transport_ref}</code></>:null}{a2aLineage(open.record.proposal)!.binding_ref?<> · binding <code>{a2aLineage(open.record.proposal)!.binding_ref}</code> rev {a2aLineage(open.record.proposal)!.binding_revision}</>:null}</dd></>}
       {open.record.applied_source_revision&&<><dt>Applied</dt><dd>{open.record.applied_source_revision}</dd></>}
     </dl>
     {!open.included&&open.record.status!=="included"&&<div className="return-actions">

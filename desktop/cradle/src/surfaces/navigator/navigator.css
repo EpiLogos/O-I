@@ -246,3 +246,14 @@ aside.world-navigator[aria-label="World navigator"] { padding: 19px 10px 0; }
 .accepted-contribution-anchor,.accepted-contribution-reviewer{opacity:.7;margin-right:8px}
 .accepted-contribution-body{margin-top:3px}
 .return-shared-field code{overflow-wrap:anywhere}
+
+/* Wave 7 A2A: the peer-exchange form and its returned difference live in the
+ * same document strip — no second architecture. */
+.shared-field-a2a{margin-top:10px;border-top:1px dashed #e3e6dc;padding-top:8px}
+.shared-field-a2a-header{display:flex;flex-direction:column;gap:2px;margin-bottom:6px}
+.shared-field-a2a-header small{opacity:.65}
+.shared-field-a2a textarea{font:inherit;padding:4px 6px;border:1px solid #cbd1c3;border-radius:4px;background:inherit;color:inherit;width:100%;box-sizing:border-box}
+.shared-field-a2a-send{border:1px solid #cbd1c3;border-radius:6px;background:inherit;font:inherit;padding:3px 10px;cursor:pointer}
+.shared-field-a2a-send:hover:not(:disabled){border-color:var(--oi-accent-ink)}
+.shared-field-a2a-send:disabled{opacity:.5;cursor:default}
+.shared-field-a2a-difference p{margin:4px 0}

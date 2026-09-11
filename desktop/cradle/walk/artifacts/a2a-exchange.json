@@ -1,0 +1,148 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "a2a-exchange",
+  "generated_at": "2026-09-11T04:15:05.134Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 2949,
+  "checks": [
+    {
+      "ok": true,
+      "label": "The native document opens and renders its own bytes"
+    },
+    {
+      "ok": true,
+      "label": "No exchange form is advertised before the human asks for one"
+    },
+    {
+      "ok": true,
+      "label": "The A2A message is pre-filled with the exact selected passage"
+    },
+    {
+      "ok": true,
+      "label": "No A2A request exists before the human's explicit send"
+    },
+    {
+      "ok": true,
+      "label": "A peer whose Agent Card does not advertise the published interface is refused before any message exchange"
+    },
+    {
+      "ok": true,
+      "label": "The refused exchange fetched only the peer's Agent Card — zero message sends"
+    },
+    {
+      "ok": true,
+      "label": "The returned difference is a real oi.a2a-difference/v1, pending admission"
+    },
+    {
+      "ok": true,
+      "label": "The peer answered with an A2A Task"
+    },
+    {
+      "ok": true,
+      "label": "The difference records the exact initiator and counterparty participants"
+    },
+    {
+      "ok": true,
+      "label": "The exchange reached the peer exactly once — one card discovery, one message send"
+    },
+    {
+      "ok": true,
+      "label": "The send speaks the A2A HTTP+JSON v1 binding — media type, version header, ROLE_USER message"
+    },
+    {
+      "ok": true,
+      "label": "The peer received the exact selected passage and nothing else"
+    },
+    {
+      "ok": true,
+      "label": "The difference becomes a generic contribution ingress carrying the a2a-return representation"
+    },
+    {
+      "ok": true,
+      "label": "The A2A return was quarantined under a payload fingerprint, then admitted as its own receiving-side decision"
+    },
+    {
+      "ok": true,
+      "label": "The A2A return's producer is the receiving participant"
+    },
+    {
+      "ok": true,
+      "label": "The return discloses its A2A lineage — the exchange and the task it came back as"
+    },
+    {
+      "ok": true,
+      "label": "The exact peer reply is shown before any decision"
+    },
+    {
+      "ok": true,
+      "label": "Inclusion lands through the owner's revision-checked operation on the exact reviewed basis"
+    },
+    {
+      "ok": true,
+      "label": "The document holds the admitted A2A material with distinct producer and human-review facts"
+    },
+    {
+      "ok": true,
+      "label": "The document source revision advanced through the inclusion"
+    },
+    {
+      "ok": true,
+      "label": "The proposed entry anchor exists in the real document bytes"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-11T04:15:05.330Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 55,
+      "data": {
+        "file": "a2a-exchange-a2a-card-mismatch-refused.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 37,
+      "data": {
+        "file": "a2a-exchange-a2a-exchange-returned.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 36,
+      "data": {
+        "file": "a2a-exchange-a2a-return-included.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "a2a-exchange-a2a-card-mismatch-refused.png",
+    "a2a-exchange-a2a-exchange-returned.png",
+    "a2a-exchange-a2a-return-included.png"
+  ]
+}

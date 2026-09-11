@@ -53,6 +53,7 @@ const SCENARIOS = {
   "receive-recover": {module:"scenarios/receive-recover.mjs",kernel:true,aliases:["6e2"]},
   "first-vertical": {module:"scenarios/first-vertical.mjs",kernel:true,aliases:["vertical"]},
   "shared-field-return": {module:"scenarios/shared-field-return.mjs",kernel:true,aliases:["7"]},
+  "a2a-exchange": {module:"scenarios/a2a-exchange.mjs",kernel:true,aliases:["7b"]},
   "file-edit": {module:"scenarios/file-edit.mjs",kernel:true,aliases:[]},
   files: { module: "scenarios/files.mjs", kernel: true, aliases: [] },
   "rendering-quality": {module:"scenarios/rendering-quality.mjs",kernel:true,aliases:[]},
