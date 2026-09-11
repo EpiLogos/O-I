@@ -1,9 +1,9 @@
-// first-vertical (wave 6, one joined walk on the pinned cuts): a real Central
+// first-vertical (wave 6, one joined walk on the installed frozen cut): a real Central
 // document opens, a passage is selected, the selection composes an addressed
-// request to the resident agent (pinned ai-kit PR #278 head 3d23d1e — real
+// request to the resident agent (installed ai-kit frozen cut 62a238b — real
 // Actuation admission, controlled protocol provider), the attributable reply
 // arrives, and that reply is what the human reviews and includes through
-// Central's native receiving operations (pinned ctrl PR #155 head b79232b,
+// Central's native receiving operations (installed Central frozen cut 5d1b8bf,
 // host-supplied credential, never document JSON).
 //
 // The identity join is by construction of the fixture ground: the Central

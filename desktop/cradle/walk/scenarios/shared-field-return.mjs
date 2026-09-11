@@ -5,7 +5,7 @@
 // (oi.contribution-ingress + oi.admission), withdraw through the publisher's
 // own strip (a new projection revision, source history never deleted), and
 // source-Return the ADMITTED material back through the existing receiving
-// seam (pinned Central PR #155 head b79232b: central.receiving.submit →
+// seam (installed Central frozen cut 5d1b8bf: central.receiving.submit →
 // review → include, revision-checked).
 //
 // Reuses the Wave 6 document/participant/NOW/Return refs (the same editor

@@ -1,6 +1,6 @@
 // send-group-reconnect (6B, cut 2): the desktop dispatches one addressed packet
-// to a group of explicitly named residents through the pinned ai-kit candidate
-// (PR #278 head 3d23d1e) — the owner admits the whole group before the first
+// to a group of explicitly named residents through the installed ai-kit frozen
+// cut (main 62a238b) — the owner admits the whole group before the first
 // transport effect, every recipient receives an independent durable result with
 // its own participation basis, and the fanout is never atomic. After an owner
 // restart the desktop reconnects to the actually recorded native session

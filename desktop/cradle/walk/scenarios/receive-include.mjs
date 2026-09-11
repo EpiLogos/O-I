@@ -1,11 +1,12 @@
 // receive-include (6E, cut 1): the desktop receives a pending Return, reviews it
 // against the document's exact current basis, and includes it — through Central's
-// native receiving operations on the pinned ctrl candidate (PR #155 head b79232b),
+// native receiving operations on the installed Central frozen cut (main
+// 5d1b8bf, PR #157),
 // with real authenticated principals (host-supplied CENTRAL_NATIVE_TOKEN, never
 // document JSON) and the owner's own revision checks refusing staleness verbatim.
 //
 // Owner provisioning (policy sources, authority grants, document, producer
-// submit) is done owner-side exactly as the pinned PR's own integration test
+// submit) is done owner-side exactly as the owner's own integration test
 // seeds it; the browser drive exercises the desktop consumer: the Returns tray,
 // exact-basis acceptance, inclusion, and the stale-basis refusal.
 import {execFileSync} from "node:child_process";

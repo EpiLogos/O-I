@@ -1,5 +1,5 @@
 // select-send (6B, cut 1): the desktop dispatches an explicit addressed turn to a
-// real resident agent session through the pinned ai-kit candidate (PR #278 head),
+// real resident agent session through the installed ai-kit frozen cut (main 62a238b),
 // with a real Actuation owner admitting the selected Agency, and a controlled
 // protocol provider (FIXTURE_REPLY — D/C evidence, never model proof).
 //

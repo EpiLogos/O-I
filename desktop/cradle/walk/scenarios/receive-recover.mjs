@@ -7,9 +7,10 @@
 // the owner's central.receiving.recover — the recorded inclusion intent
 // replayed, nothing re-authored.
 //
-// Owner provisioning and credentials are exactly the pinned PR #155 cut's
-// (Central #155 head b79232b, host-supplied CENTRAL_NATIVE_TOKEN, never
-// document JSON); the browser drive exercises the desktop consumer.
+// Owner provisioning and credentials follow the owner's own integration-test
+// seeding (installed Central frozen cut 5d1b8bf, host-supplied
+// CENTRAL_NATIVE_TOKEN, never document JSON); the browser drive exercises the
+// desktop consumer.
 import {execFileSync} from "node:child_process";
 import {createHash} from "node:crypto";
 import {chmodSync, mkdirSync, readFileSync, writeFileSync} from "node:fs";

@@ -9,8 +9,8 @@
 // nothing reaches the network before the human's explicit send, the peer's
 // Agent Card must advertise exactly the published interface, the returned
 // difference lands pending admission, and only an admitted contribution is
-// source-Returned through Central's receiving operations (pinned ctrl PR
-// #155 head b79232b) for human review and inclusion.
+// source-Returned through Central's receiving operations (installed Central
+// frozen cut 5d1b8bf) for human review and inclusion.
 import {spawn} from "node:child_process";
 import {createHash} from "node:crypto";
 import {readFileSync} from "node:fs";
