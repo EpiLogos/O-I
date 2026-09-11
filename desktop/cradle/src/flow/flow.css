@@ -11,6 +11,10 @@
 .fresh-surface>div>nav>button {display:flex;align-items:center;justify-content:center;gap:8px}
 .fresh-surface>div>nav>button kbd {font:inherit;font-size:11px;color:var(--oi-muted-2)}
 .fresh-surface>div>nav>button svg {flex:none}
+.fresh-surface .fresh-docforms {width:100%;display:flex;gap:12px;margin-bottom:8px}
+.fresh-surface .fresh-docforms button {flex:1;display:grid;justify-items:center;row-gap:3px;padding:14px 12px;border:1px solid var(--oi-hairline-soft);border-radius:5px}
+.fresh-surface .fresh-docforms button b {font-size:15px;font-weight:600}
+.fresh-surface .fresh-docforms button span {font-size:11px;color:var(--oi-muted-2)}
 .fresh-surface .fresh-refusal {width:100%;margin:0;font-size:12px;line-height:1.6;color:var(--oi-accent-ink)}
 .draft-surface .draft-register {display:flex;align-items:center;flex:none}
 .draft-surface .draft-register select {border:0;border-bottom:1px solid var(--oi-hairline-soft);background:transparent;color:var(--oi-accent-ink);font:inherit;padding:1px 4px}

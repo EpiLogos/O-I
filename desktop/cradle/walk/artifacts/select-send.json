@@ -1,0 +1,112 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "select-send",
+  "generated_at": "2026-09-11T18:40:29.170Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 8335,
+  "checks": [
+    {
+      "ok": true,
+      "label": "The addressed section discloses the native dispatch service before any turn is composed"
+    },
+    {
+      "ok": true,
+      "label": "Nothing is dispatched until the addressed turn is fully composed"
+    },
+    {
+      "ok": true,
+      "label": "The composer previews the exact sender, recipient, basis and shared source scope"
+    },
+    {
+      "ok": true,
+      "label": "A settled delivery shows the owner phase with the honest not-task-success standing"
+    },
+    {
+      "ok": true,
+      "label": "The provider's reply reaches the canonical transcript through the ordinary read path"
+    },
+    {
+      "ok": true,
+      "label": "The controlled provider received exactly one addressed prompt"
+    },
+    {
+      "ok": true,
+      "label": "The addressed prompt carries the native selected-Agent identity header and the exact committed packet text"
+    },
+    {
+      "ok": true,
+      "label": "The human draft buffer never rides an addressed machine turn"
+    },
+    {
+      "ok": true,
+      "label": "Repeating the exact delivery identity returns the durable receipt without resending"
+    },
+    {
+      "ok": true,
+      "label": "A duplicate delivery produces no second provider prompt"
+    },
+    {
+      "ok": true,
+      "label": "An undisclosed audience is refused with the owner's structured disclosure code, shown verbatim"
+    },
+    {
+      "ok": true,
+      "label": "A refused turn produces no provider effect"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-11T18:40:29.340Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 36,
+      "data": {
+        "file": "select-send-addressed-composed-before-dispatch.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 27,
+      "data": {
+        "file": "select-send-addressed-returned-with-transcript.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 26,
+      "data": {
+        "file": "select-send-addressed-disclosure-refusal.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "select-send-addressed-composed-before-dispatch.png",
+    "select-send-addressed-returned-with-transcript.png",
+    "select-send-addressed-disclosure-refusal.png"
+  ]
+}

@@ -1,0 +1,132 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "receive-recover",
+  "generated_at": "2026-09-11T18:41:23.598Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 1845,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Returns for the open document render beside it, at the reading site"
+    },
+    {
+      "ok": true,
+      "label": "The proposal shows its exact document anchor — the field it targets"
+    },
+    {
+      "ok": true,
+      "label": "The return presents its real producer attribution and exact content"
+    },
+    {
+      "ok": true,
+      "label": "The rejection records the human reviewer beside the document"
+    },
+    {
+      "ok": true,
+      "label": "A rejected return contributes nothing to the document"
+    },
+    {
+      "ok": true,
+      "label": "The owner refuses to include a rejected return — the desktop's own attempt is not the guard, the owner is",
+      "data": {
+        "error": "Error: central.receiving.include refused: {\"code\":\"policy_or_source_denied\",\"message\":\"inclusion requires the authenticated accepting reviewer or a new explicit review\",\"details\":{\"automatic_authority_widening\":false,\"outside_writes_prevented\":false,\"retry_policy_action\":\"central.work.policy\"}}"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The second return shows its exact entry anchor"
+    },
+    {
+      "ok": true,
+      "label": "An inclusion the filesystem refuses lands `uncertain` with the owner's own record shown"
+    },
+    {
+      "ok": true,
+      "label": "The uncertain inclusion changed no document bytes"
+    },
+    {
+      "ok": true,
+      "label": "Recovery replays the owner's recorded inclusion intent once the environment allows it"
+    },
+    {
+      "ok": true,
+      "label": "The document holds exactly the recovered contribution"
+    },
+    {
+      "ok": true,
+      "label": "Producer attribution and human review remain distinct native facts through recovery"
+    },
+    {
+      "ok": true,
+      "label": "The document revision advanced through the recovered inclusion"
+    },
+    {
+      "ok": true,
+      "label": "The project tray shows the same receiving field beside the navigator branch"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-11T18:41:23.751Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 46,
+      "data": {
+        "file": "receive-recover-return-beside-open-document.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 30,
+      "data": {
+        "file": "receive-recover-rejected-beside-document.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 41,
+      "data": {
+        "file": "receive-recover-inclusion-uncertain.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 40,
+      "data": {
+        "file": "receive-recover-inclusion-recovered.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "receive-recover-return-beside-open-document.png",
+    "receive-recover-rejected-beside-document.png",
+    "receive-recover-inclusion-uncertain.png",
+    "receive-recover-inclusion-recovered.png"
+  ]
+}

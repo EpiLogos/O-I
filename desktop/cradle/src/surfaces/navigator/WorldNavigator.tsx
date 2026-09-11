@@ -1,5 +1,6 @@
 import {Loading} from "../../shared/Loading";
 import {EncounterList,type EncounterRow} from "../../encounter/EncounterList";
+import {ReturnsTray} from "../../receiving/ReturnsTray";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useKernel } from "../../kernel/KernelProvider";
 import type { CentralLocation } from "../../kernel/types";
@@ -123,6 +124,7 @@ export function WorldNavigator({ onSystem,onOpenEncounter, centralFiles, onCentr
               onExpansion={directories=>change({directories})}/>}
             {navigation.mode === "wiki" && <button className="project-wiki-link" disabled={!wiki} onClick={()=>openWiki(wiki!,`${project.name} wiki`,project.name)}>{wiki ? `${project.name} neighbourhood` : "No wiki declared"}</button>}
             {(navigation.mode??"chats") === "chats" && <EncounterList project={project.name} onOpen={onOpenEncounter} activeRef={activeEncounterRef}/>}
+            <ReturnsTray project={project.name} refresh={fileRefresh}/>
           </ProjectBranch>;
         })}
       </ul></>

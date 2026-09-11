@@ -74,3 +74,28 @@
 .encounter[data-presentation="side"] .encounter-composer,.encounter[data-presentation="full"] .encounter-composer{margin:10px 13px 13px;padding:10px;border-radius:9px;border-color:var(--oi-composer-rule);background:var(--oi-composer-ground);box-shadow:var(--oi-shadow-plane);width:auto}
 .encounter[data-presentation="full"] .encounter-transcript,.encounter[data-presentation="full"] .encounter-composer{width:min(720px,90%);margin-left:auto;margin-right:auto}
 @container (max-width:600px){.encounter-heading{height:45px;padding:0 16px}.encounter-heading h2{font-size:var(--oi-shell-type-ui)}.encounter-heading small{font-size:var(--oi-shell-type-eyebrow)}.encounter-planes{height:27px;padding:0 16px;gap:18px}.encounter-composer{width:calc(100% - 26px);margin-bottom:12px;padding:8px 10px}.encounter-composer textarea{min-height:38px;height:38px}.encounter-transcript{padding:16px}.encounter-turn p{font-size:var(--oi-shell-type-body)}}
+/* Addressed dispatch (6B): an explicit machine-turn composer, visually a
+ * distinct card above the human composer — never a second chat box. */
+.encounter-addressed{border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:9px;padding:11px 13px;margin:13px 0 0;background:var(--oi-canvas-ground)}
+.encounter-addressed header{display:flex;flex-direction:column;gap:3px;margin-bottom:9px}
+.encounter-addressed header strong{font-size:var(--oi-shell-type-ui);font-weight:550}
+.encounter-addressed header small{font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2)}
+.encounter-addressed-service{font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2);margin:0 0 9px}
+.encounter-addressed-service[data-service="stopped"]{color:var(--oi-accent-ink)}
+.encounter-addressed-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:9px;margin-bottom:9px}
+.encounter-addressed-fields label{display:flex;flex-direction:column;gap:4px;font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2)}
+.encounter-addressed-fields input{appearance:none;box-sizing:border-box;width:100%;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:6px;padding:6px 8px;background:var(--oi-composer-ground);color:inherit;font:inherit;font-size:var(--oi-shell-type-nav);outline:2px solid transparent;outline-offset:2px;transition:outline-color var(--oi-motion-ui) var(--oi-motion-ease-out)}
+.encounter-addressed-fields input:focus-visible{outline-color:var(--oi-accent-soft)}
+.encounter-addressed textarea{appearance:none;box-sizing:border-box;width:100%;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:6px;padding:8px;background:var(--oi-composer-ground);color:inherit;resize:vertical;font:inherit;font-size:var(--oi-shell-type-prose);min-height:52px;max-height:180px;outline:2px solid transparent;outline-offset:3px;transition:outline-color var(--oi-motion-ui) var(--oi-motion-ease-out)}
+.encounter-addressed textarea:focus-visible{outline-color:var(--oi-accent-soft)}
+.encounter-addressed-actions{display:flex;gap:9px;align-items:center;justify-content:flex-end;margin-top:8px}
+.encounter-addressed-preview{flex:1;font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2);overflow-wrap:anywhere}
+.encounter-addressed-send{border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:7px;padding:6px 12px;background:var(--oi-composer-ground);color:var(--oi-accent-ink);font:inherit;font-size:var(--oi-shell-type-nav);cursor:pointer;transition:border-color var(--oi-motion-ui) var(--oi-motion-ease-out)}
+.encounter-addressed-send:hover:not(:disabled),.encounter-addressed-send:focus-visible{border-color:var(--oi-accent);outline:none}
+.encounter-addressed-send:disabled{cursor:default;color:var(--oi-muted-2)}
+.encounter-addressed-state,.encounter-addressed-refusal{font-size:var(--oi-shell-type-nav);margin:8px 0 0;overflow-wrap:anywhere}
+.encounter-addressed-refusal{color:var(--oi-accent-ink)}
+.encounter-addressed-state code,.encounter-addressed-history code{font-size:var(--oi-shell-type-meta)}
+.encounter-addressed-history{margin-top:8px;font-size:var(--oi-shell-type-nav)}
+.encounter-addressed-history summary{cursor:pointer;color:var(--oi-muted-2)}
+.encounter-addressed-history ul{margin:6px 0 0;padding-left:18px}

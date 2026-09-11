@@ -1,0 +1,177 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "shared-field-return",
+  "generated_at": "2026-09-11T18:41:59.192Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 4550,
+  "checks": [
+    {
+      "ok": true,
+      "label": "The native document opens and renders its own bytes — the local material state"
+    },
+    {
+      "ok": true,
+      "label": "No shared material is advertised before anything is published"
+    },
+    {
+      "ok": true,
+      "label": "The tray presents the exact selected passage — the selected-projection state begins here"
+    },
+    {
+      "ok": true,
+      "label": "The strip holds the exact passage, not a transformation of it"
+    },
+    {
+      "ok": true,
+      "label": "The strip names the document's exact source ref and selection-time revision"
+    },
+    {
+      "ok": true,
+      "label": "Publishing without a named publisher is refused before any envelope exists"
+    },
+    {
+      "ok": true,
+      "label": "A restricted projection with no audience refs is refused"
+    },
+    {
+      "ok": true,
+      "label": "The composed envelope is a real oi.projection/v1 at revision 1 (owner floor, not a desktop re-implementation)"
+    },
+    {
+      "ok": true,
+      "label": "The projection preserves the document's native subject ref and exact source revision"
+    },
+    {
+      "ok": true,
+      "label": "The projection carries its explicit restricted audience"
+    },
+    {
+      "ok": true,
+      "label": "The representation carries the selected material"
+    },
+    {
+      "ok": true,
+      "label": "The receiving field quarantines the arrival under a payload fingerprint before any decision"
+    },
+    {
+      "ok": true,
+      "label": "The receiving side records its admission decision as its own actor"
+    },
+    {
+      "ok": true,
+      "label": "Withdrawal is a new projection revision and deletes no source history"
+    },
+    {
+      "ok": true,
+      "label": "The receiver's admitted records survive the withdrawal — retained evidence, not revoked"
+    },
+    {
+      "ok": true,
+      "label": "Before the Return arrives the strip honestly shows an empty receiving field"
+    },
+    {
+      "ok": true,
+      "label": "The Return's producer is the receiving participant"
+    },
+    {
+      "ok": true,
+      "label": "The return discloses its shared-field lineage — admitted, and withdrawn by the publisher yet retained"
+    },
+    {
+      "ok": true,
+      "label": "The exact admitted material is shown before any decision"
+    },
+    {
+      "ok": true,
+      "label": "Inclusion lands through the owner's revision-checked operation on the exact reviewed basis"
+    },
+    {
+      "ok": true,
+      "label": "The strip names the advanced source revision the inclusion produced"
+    },
+    {
+      "ok": true,
+      "label": "The accepted contribution shows producer, human reviewer and entry anchor as distinct facts"
+    },
+    {
+      "ok": true,
+      "label": "All four material states are visible at once — local document, published (withdrawn) projection, admitted return, accepted revision"
+    },
+    {
+      "ok": true,
+      "label": "The document holds the admitted contribution with distinct native attribution"
+    },
+    {
+      "ok": true,
+      "label": "The document source revision advanced through the inclusion"
+    },
+    {
+      "ok": true,
+      "label": "The proposed entry anchor exists in the real document bytes"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-11T18:41:59.332Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 37,
+      "data": {
+        "file": "shared-field-return-projection-published.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 34,
+      "data": {
+        "file": "shared-field-return-projection-withdrawn.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 44,
+      "data": {
+        "file": "shared-field-return-return-with-shared-field-lineage.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 36,
+      "data": {
+        "file": "shared-field-return-four-states-one-canvas.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "shared-field-return-projection-published.png",
+    "shared-field-return-projection-withdrawn.png",
+    "shared-field-return-return-with-shared-field-lineage.png",
+    "shared-field-return-four-states-one-canvas.png"
+  ]
+}

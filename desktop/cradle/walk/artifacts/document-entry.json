@@ -1,0 +1,184 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "document-entry",
+  "generated_at": "2026-09-11T18:40:00.962Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 6947,
+  "checks": [
+    {
+      "ok": true,
+      "label": "The blank tab offers exactly the two supplied document forms",
+      "data": {
+        "formButtons": [
+          "0/1Dialogue · Flow · Journal",
+          "4+2Day die"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "The 4+2 document renders in the contained material surface (opaque-origin sandbox; downloads allowed only for its own local export)"
+    },
+    {
+      "ok": true,
+      "label": "The 4+2 file IS the six-position die document (six faces rendered from the real payload)",
+      "data": {
+        "faces": 6
+      }
+    },
+    {
+      "ok": true,
+      "label": "The 4+2 payload keeps its daily type and all seventeen field keys",
+      "data": {
+        "type": "daily",
+        "fields": 17,
+        "revision": 0
+      }
+    },
+    {
+      "ok": true,
+      "label": "The 4+2 payload identity keys and fixture collections survive the round trip into the desktop (blank values are legitimate)",
+      "data": {
+        "metaKeys": [
+          "uuid",
+          "created",
+          "name",
+          "title",
+          "type",
+          "date",
+          "timezone",
+          "revision",
+          "exported",
+          "template"
+        ],
+        "collections": [
+          "capture",
+          "sessions",
+          "completed",
+          "media",
+          "notes",
+          "contributions"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "A desktop edit saves through Central with an advanced content-addressed revision",
+      "data": {
+        "before": 466929,
+        "after": 466930
+      }
+    },
+    {
+      "ok": true,
+      "label": "The 466,929-byte payload round-trips the desktop editor byte-exactly (the content hash returns to the original)",
+      "data": {
+        "original": "central.content-fnv1a64/v1:466929:c4a931ad6860d178",
+        "restored": "central.content-fnv1a64/v1:466929:c4a931ad6860d178"
+      }
+    },
+    {
+      "ok": true,
+      "label": "A stale save meets the structured conflict — the current file is shown beside the retained draft, nothing overwritten"
+    },
+    {
+      "ok": true,
+      "label": "Rebasing the draft on the current revision lets the save land through the owner"
+    },
+    {
+      "ok": true,
+      "label": "The 4+2 document performs its own Save HTML copy — a separate, network-free export that overwrites nothing",
+      "data": {
+        "filename": "2026-09-11-daily.html"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The 0/1 document exposes its Journal mode — no third file exists or is needed"
+    },
+    {
+      "ok": true,
+      "label": "Dialogue entries and single-person Journal pages remain distinct collections inside the 0/1 file",
+      "data": {
+        "entries": 0,
+        "journal": 0
+      }
+    },
+    {
+      "ok": true,
+      "label": "The 0/1 Journal view opens as a single-person writing page inside the same document"
+    },
+    {
+      "ok": true,
+      "label": "The 0/1 edit saved through the desktop is what Central now holds"
+    },
+    {
+      "ok": true,
+      "label": "Re-read from the owner, the rendered 0/1 document shows the saved writing"
+    },
+    {
+      "ok": true,
+      "label": "A missing form reports the precise unavailable state with its exact open location — no fabricated payload",
+      "data": {
+        "message": "Error: The 4+2 document form is not where this desktop expects it: no ql-daily-die.html in Work/O-I/desktop/cradle/documents (1 entry there)"
+      }
+    },
+    {
+      "ok": true,
+      "label": "No renderer page errors during document entry",
+      "data": {
+        "errors": []
+      }
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 183,
+      "data": {
+        "file": "document-entry-die-42-rendered.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 39,
+      "data": {
+        "file": "document-entry-dialogue-01-journal.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 31,
+      "data": {
+        "file": "document-entry-dialogue-01-native-save.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 26,
+      "data": {
+        "file": "document-entry-die-42-unavailable.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "document-entry-die-42-rendered.png",
+    "document-entry-dialogue-01-journal.png",
+    "document-entry-dialogue-01-native-save.png",
+    "document-entry-die-42-unavailable.png"
+  ]
+}

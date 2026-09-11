@@ -1,6 +1,7 @@
 import {ExpressionProvider,ExpressionLayout} from "./shared/Expression";
 import {flow} from "./flow/client";
 import {DRAFT_KEY} from "./flow/DraftSurface";
+import {DOCUMENT_FORMS,resolveDocumentForm} from "./flow/documentForms";
 import {ContextTray} from "./context/ContextTray";
 import {FileHistory} from "./files/FileHistory";
 import {encounter} from "./encounter/client";
@@ -490,6 +491,12 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
     const current=stateRef.current.surfaces[id];if(!current)return;
     project=project??current.project??workspaceRef.current.current.project??undefined;
     if(kind==="search"){setSearchOpen(true);return;}
+    // The supplied document forms (0/1, 4+2) are not created here: their
+    // real files are resolved through Central's file route and opened by
+    // the same path the navigator uses (dedup + focus included). A missing
+    // or withheld form surfaces its exact unavailable state in the tab.
+    const form=DOCUMENT_FORMS.find(candidate=>candidate.kind===kind);
+    if(form){await openFile(await resolveDocumentForm(kernel.transport,form,kernel.snapshot.navigator?.root?.work.projects));return;}
     let binding:SurfaceBinding={...current,project,kind,title:kind==="terminal"?"Terminal":"Browser"};
     if(kind==="flow"){
       if(!project)throw new Error("Choose a project for this Flow first");

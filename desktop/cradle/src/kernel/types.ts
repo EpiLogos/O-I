@@ -139,7 +139,8 @@ export type KernelOp =
   | { op: "file_bytes"; location: CentralLocation }
   | { op: "agency_read"; project: string }
   | {op:"file_operation";location:CentralLocation;request:import("../files/client").FileRequest}
-  | { op:"encounter";project:string;request:import("../encounter/client").EncounterRequest }
+  | {op:"encounter";project:string;request:import("../encounter/client").EncounterRequest}
+  | {op:"receiving";project:string;request:import("../receiving/client").ReceivingRequest}
   | { op: "knowledge"; project?: string; request: KnowledgeRequest }
   | { op: "state" }
   | { op: "world_read" }
@@ -177,6 +178,7 @@ export type KernelOpResult =
   | {result:"system_composition_reading";reading:import("../workspace/settings/types").SystemCompositionReading}
   | {result:"file_operation";data:unknown}
   | { result:"encounter_reading";data:unknown }
+  | { result:"receiving_reading";data:unknown }
   | { result: "agency_reading"; project_ref: string; spaces: unknown[]; observed_at_unix_ms: number }
   | { result: "knowledge"; data: unknown }
   | { result: "state"; snapshot: KernelSnapshotState }

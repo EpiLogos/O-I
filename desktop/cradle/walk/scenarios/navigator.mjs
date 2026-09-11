@@ -17,7 +17,14 @@ export default async function run({ page, baseUrl, check, metric, shot, channel 
   const writingText='Keep this writing while I explore my world.';
   const writingProject=expected.work.projects.find(p=>p.projectcentral.state!=='absent')?.name;
   if(!writingProject)throw new Error('A ProjectCentral-bound project is required to open a Flow');
-  await page.locator(`[data-project-path="${expected.work.projects.find(p=>p.name===writingProject).path}"]`).click();
+  const writingPath=expected.work.projects.find(p=>p.name===writingProject).path;
+  await page.locator(`[data-project-path="${writingPath}"]`).click();
+  // The row click browses asynchronously; the workspace project scope (which
+  // names the Flow's register) settles only when that browse lands. Wait for
+  // the selection like every other row interaction here — otherwise a fast
+  // "Start writing" legitimately opens in the root register (no project named
+  // YET) and the race, not the semantics, decides the outcome.
+  await page.waitForFunction(path => !!document.querySelector(`[data-project-path="${path}"][aria-current="true"]`), writingPath);
   await page.getByRole('button',{name:'Start writing',exact:true}).click();
   const writing=page.locator('.flow-surface .cm-content');
   await writing.waitFor({timeout:20000});

@@ -249,6 +249,34 @@ pub enum Response {
     },
 }
 
+/// One continuous-work receiving/document reading or human review mutation
+/// (Wave 6E). The owner owns every identity, basis revision and authority
+/// check; a refused review/include surfaces the owner's message verbatim.
+/// Mutations additionally require the host-supplied native credential
+/// (`CENTRAL_NATIVE_TOKEN` inherited by the owner child) — the kernel never
+/// handles or stores tokens.
+#[derive(Clone, Debug, serde::Deserialize, Eq, PartialEq, serde::Serialize)]
+#[serde(tag = "kind", rename_all = "kebab-case")]
+pub enum ReceivingRequest {
+    List { #[serde(default)] after: Option<u64>, #[serde(default)] limit: Option<u64> },
+    Read { return_ref: String },
+    /// The document's current native basis (the exact source revision the
+    /// human would accept) — `central.document.read`.
+    Document { source_ref: String, document_id: String },
+    Review {
+        return_ref: String,
+        expected_return_revision: String,
+        disposition: String,
+        /// Required for `accepted`: the exact current source revision the
+        /// human actually reviewed. Omitted for `rejected`.
+        #[serde(default)] expected_source_revision: Option<String>,
+    },
+    Include { return_ref: String, expected_return_revision: String, expected_source_revision: String },
+    /// Resume an interrupted inclusion from its recorded native intent
+    /// (`central.receiving.recover`); only the owner decides what may replay.
+    Recover { return_ref: String, expected_return_revision: String },
+}
+
 /// Client for the Central owner Actions the kernel reads and writes
 /// through `oi central`. OI_BIN selects the suite executable; the suite resolves
 /// OI_CENTRAL_CTRL_BIN or the registered owner. Root/project context is preserved.
@@ -394,6 +422,57 @@ impl CentralClient {
             });
         }
         Ok(value.get("data").cloned().unwrap_or(Value::Null))
+    }
+
+    // -----------------------------------------------------------------------
+    // Continuous-work receiving (Wave 6E) — the owner's own revision checks
+    // -----------------------------------------------------------------------
+
+    /// List/read pending Returns, read a native document's current basis, or
+    /// perform one human review/include. Every input is owner-validated; the
+    /// response payload is carried verbatim.
+    pub fn receiving(&self, project: &str, request: &ReceivingRequest) -> Result<Value, OwnerCallError> {
+        let mut input = serde_json::Map::new();
+        input.insert("project".to_owned(), Value::String(project.to_owned()));
+        let action: &str = match request {
+            ReceivingRequest::List { after, limit } => {
+                if let Some(after) = after { input.insert("after".to_owned(), json!(after)); }
+                if let Some(limit) = limit { input.insert("limit".to_owned(), json!(limit)); }
+                "central.receiving.list"
+            }
+            ReceivingRequest::Read { return_ref } => {
+                input.insert("return_ref".to_owned(), json!(return_ref));
+                "central.receiving.read"
+            }
+            ReceivingRequest::Document { source_ref, document_id } => {
+                input.insert("source_ref".to_owned(), json!(source_ref));
+                input.insert("document_id".to_owned(), json!(document_id));
+                "central.document.read"
+            }
+            ReceivingRequest::Review { return_ref, expected_return_revision, disposition, expected_source_revision } => {
+                input.insert("return_ref".to_owned(), json!(return_ref));
+                input.insert("expected_return_revision".to_owned(), json!(expected_return_revision));
+                input.insert("disposition".to_owned(), json!(disposition));
+                // `accepted` requires the exact reviewed source revision; a
+                // rejected review carries no source basis at all.
+                if let Some(revision) = expected_source_revision {
+                    input.insert("expected_source_revision".to_owned(), json!(revision));
+                }
+                "central.receiving.review"
+            }
+            ReceivingRequest::Include { return_ref, expected_return_revision, expected_source_revision } => {
+                input.insert("return_ref".to_owned(), json!(return_ref));
+                input.insert("expected_return_revision".to_owned(), json!(expected_return_revision));
+                input.insert("expected_source_revision".to_owned(), json!(expected_source_revision));
+                "central.receiving.include"
+            }
+            ReceivingRequest::Recover { return_ref, expected_return_revision } => {
+                input.insert("return_ref".to_owned(), json!(return_ref));
+                input.insert("expected_return_revision".to_owned(), json!(expected_return_revision));
+                "central.receiving.recover"
+            }
+        };
+        self.run(action, Value::Object(input))
     }
 
     // -----------------------------------------------------------------------

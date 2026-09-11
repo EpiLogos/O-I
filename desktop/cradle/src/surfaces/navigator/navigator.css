@@ -184,3 +184,76 @@ aside.world-navigator[aria-label="World navigator"] { padding: 19px 10px 0; }
 .world-navigator{display:flex;flex-direction:column;overflow:hidden}
 .world-system{flex:none;background:var(--oi-sidebar-ground)}
 .world-projects > li > button:first-child{padding-left:10px}
+/* Receiving (6E): pending human Returns under each project branch. */
+.project-returns{margin:8px 0 4px;border-top:1px solid var(--oi-hairline);padding-top:8px}
+.project-returns header{display:flex;align-items:baseline;gap:8px;font-size:var(--oi-shell-type-eyebrow);letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted-2)}
+.project-returns header small{text-transform:none;letter-spacing:normal;font-size:var(--oi-shell-type-meta)}
+.project-return{display:flex;gap:8px;align-items:center;width:100%;border:0;background:none;padding:4px 0;font:inherit;font-size:var(--oi-shell-type-nav);color:var(--oi-foreground);cursor:pointer;text-align:left}
+.project-return:hover,.project-return:focus-visible{color:var(--oi-accent-ink);outline:none}
+.return-status{flex:none;padding:1px 6px;border-radius:6px;border:1px solid var(--oi-hairline);color:var(--oi-muted-2)}
+.return-pending,.return-needs-review{color:var(--oi-accent-ink);border-color:var(--oi-accent-soft)}
+.return-accepted{color:var(--oi-accent-ink)}
+.return-included{color:var(--oi-muted-2)}
+.return-origin{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.return-detail{margin:6px 0 8px;padding:8px;border:1px solid var(--oi-hairline);border-radius:8px;font-size:var(--oi-shell-type-nav)}
+.return-detail dl{margin:0;display:grid;grid-template-columns:1fr;gap:1px;overflow-wrap:anywhere}
+.return-detail dt{margin-top:6px}
+.return-detail dt:first-child{margin-top:0}
+.return-detail dt{color:var(--oi-muted-2)}
+.return-detail dd{margin:0}
+.return-proposal{white-space:pre-wrap}
+.return-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.return-actions button{border:1px solid var(--oi-hairline);border-radius:7px;background:var(--oi-composer-ground);color:var(--oi-foreground);font:inherit;font-size:var(--oi-shell-type-nav);padding:4px 10px;cursor:pointer}
+.return-actions button:hover:not(:disabled),.return-actions button:focus-visible{border-color:var(--oi-accent);outline:none}
+.return-actions button:disabled{color:var(--oi-muted-2);cursor:default}
+.return-included{margin:8px 0 0;color:var(--oi-muted-2)}
+.returns-refresh{margin-left:auto;border:0;background:none;font:inherit;font-size:var(--oi-shell-type-nav);color:var(--oi-muted-2);cursor:pointer}
+.returns-refresh:hover,.returns-refresh:focus-visible{color:var(--oi-accent-ink);outline:none}
+
+/* Wave 6E cut 2: returns beside the open document (same receiving field,
+ * same owner operations as the project tray, placed at the reading site). */
+.document-returns{border-top:1px solid #d9ddd2;padding:10px 14px;font-size:12px}
+.document-returns header{display:flex;align-items:center;gap:8px}
+.document-returns header span{font-weight:500}
+.document-returns header small{opacity:.65}
+.document-returns .project-return{display:flex;gap:8px;align-items:center;width:100%;text-align:left;padding:5px 6px;border:1px solid transparent;border-radius:4px;background:transparent;font:inherit;color:inherit;cursor:pointer}
+.document-returns .project-return.return-open,.document-returns .project-return:hover{border-color:#cbd1c3}
+.return-anchor{opacity:.75}
+.return-last-error{opacity:.8;margin:6px 0 0}
+
+/* Wave 7: the four material states live in the ordinary canvas — the shared
+ * projection strip and the accepted-revision strip sit beside the returns
+ * strip, under the same document surface (no second panel architecture). */
+.shared-field-material,.document-contributions{border-top:1px solid #d9ddd2;padding:10px 14px;font-size:12px}
+.shared-field-material header,.document-contributions header{display:flex;align-items:center;gap:8px}
+.shared-field-material header span,.document-contributions header span{font-weight:500}
+.shared-field-material header small,.document-contributions header small{opacity:.65}
+.shared-field-quote{margin:4px 0;padding:6px 8px;border-left:3px solid #cbd1c3;white-space:pre-wrap;overflow-wrap:anywhere}
+.shared-field-fields{display:flex;flex-direction:column;gap:6px;margin:8px 0}
+.shared-field-fields label{display:flex;flex-direction:column;gap:2px;color:var(--oi-muted-2)}
+.shared-field-fields input,.shared-field-fields select{font:inherit;padding:3px 6px;border:1px solid #cbd1c3;border-radius:4px;background:inherit;color:inherit}
+.shared-field-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px}
+.shared-field-actions span{opacity:.7;margin-right:auto}
+.shared-field-publish,.shared-field-withdraw-send{border:1px solid #cbd1c3;border-radius:6px;background:inherit;font:inherit;padding:3px 10px;cursor:pointer}
+.shared-field-publish:hover,.shared-field-withdraw-send:hover{border-color:var(--oi-accent-ink)}
+.shared-field-withdraw{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.shared-field-withdraw label{display:flex;flex-direction:column;gap:2px;color:var(--oi-muted-2)}
+.shared-field-withdraw input{font:inherit;padding:3px 6px;border:1px solid #cbd1c3;border-radius:4px;background:inherit;color:inherit}
+.shared-field-published p{margin:4px 0}
+.document-contributions .accepted-contribution{padding:6px 0;border-bottom:1px dashed #e3e6dc}
+.document-contributions .accepted-contribution:last-child{border-bottom:0}
+.accepted-contribution-author{font-weight:500;margin-right:8px}
+.accepted-contribution-anchor,.accepted-contribution-reviewer{opacity:.7;margin-right:8px}
+.accepted-contribution-body{margin-top:3px}
+.return-shared-field code{overflow-wrap:anywhere}
+
+/* Wave 7 A2A: the peer-exchange form and its returned difference live in the
+ * same document strip — no second architecture. */
+.shared-field-a2a{margin-top:10px;border-top:1px dashed #e3e6dc;padding-top:8px}
+.shared-field-a2a-header{display:flex;flex-direction:column;gap:2px;margin-bottom:6px}
+.shared-field-a2a-header small{opacity:.65}
+.shared-field-a2a textarea{font:inherit;padding:4px 6px;border:1px solid #cbd1c3;border-radius:4px;background:inherit;color:inherit;width:100%;box-sizing:border-box}
+.shared-field-a2a-send{border:1px solid #cbd1c3;border-radius:6px;background:inherit;font:inherit;padding:3px 10px;cursor:pointer}
+.shared-field-a2a-send:hover:not(:disabled){border-color:var(--oi-accent-ink)}
+.shared-field-a2a-send:disabled{opacity:.5;cursor:default}
+.shared-field-a2a-difference p{margin:4px 0}

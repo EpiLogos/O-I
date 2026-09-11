@@ -115,7 +115,7 @@ export default async function run({ page, baseUrl, bridgeUrl, check, metric, sho
   check(await htmlFrame.locator('#sibling-link').getAttribute('href') === 'notes.txt', 'HTML relative <a> keeps its literal reference (never rewritten)');
   await htmlFrame.locator('#increment').click();
   check(await htmlFrame.locator('#count').innerText()==='1','Owner-resolved relative JavaScript executes the actual HTML interaction');
-  check(await page.locator('iframe.material-frame').getAttribute('sandbox')==='allow-scripts allow-forms','HTML retains opaque-origin sandbox without native bridge authority');
+  check(await page.locator('iframe.material-frame').getAttribute('sandbox')==='allow-scripts allow-forms allow-downloads','HTML retains opaque-origin sandbox without native bridge authority (allow-downloads only serves the document\'s own local Save HTML copy export)');
   await shot('html-rendered');
 
   // --- traversal outside the material directory is refused (direct bridge check) ---

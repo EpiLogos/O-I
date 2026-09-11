@@ -47,6 +47,13 @@ const SCENARIOS = {
   permission: {module:"scenarios/permission.mjs",kernel:true,aliases:[]},
   encounter: {module:"scenarios/encounter.mjs",kernel:true,aliases:[]},
   "context-draft": {module:"scenarios/context-draft.mjs",kernel:true,aliases:[]},
+  "select-send": {module:"scenarios/select-send.mjs",kernel:true,aliases:["6b"]},
+  "send-group-reconnect": {module:"scenarios/send-group-reconnect.mjs",kernel:true,aliases:["6b2"]},
+  "receive-include": {module:"scenarios/receive-include.mjs",kernel:true,aliases:["6e"]},
+  "receive-recover": {module:"scenarios/receive-recover.mjs",kernel:true,aliases:["6e2"]},
+  "first-vertical": {module:"scenarios/first-vertical.mjs",kernel:true,aliases:["vertical"]},
+  "shared-field-return": {module:"scenarios/shared-field-return.mjs",kernel:true,aliases:["7"]},
+  "a2a-exchange": {module:"scenarios/a2a-exchange.mjs",kernel:true,aliases:["7b"]},
   "file-edit": {module:"scenarios/file-edit.mjs",kernel:true,aliases:[]},
   files: { module: "scenarios/files.mjs", kernel: true, aliases: [] },
   "rendering-quality": {module:"scenarios/rendering-quality.mjs",kernel:true,aliases:[]},
@@ -62,6 +69,7 @@ const SCENARIOS = {
   companions: { module: "scenarios/companions.mjs", kernel: false, aliases: ["round2"] },
   study: { module: "scenarios/study.mjs", kernel: false, aliases: ["ui-study"] },
   native: { module: "scenarios/native.mjs", kernel: false, aliases: ["package"] },
+  "document-entry": { module: "scenarios/document-entry.mjs", kernel: true, aliases: ["6a"] },
 };
 
 // ---------------------------------------------------------------------------

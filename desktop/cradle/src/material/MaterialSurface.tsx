@@ -160,9 +160,13 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
     {error && <p role="alert" className="source-note">{error} <button type="button" onClick={()=>setGeneration(value=>value+1)}>Retry</button></p>}
     {!error && pending && <Loading label="Reading material…" scope="surface"/>}
     {!error && !pending && format === "html" && <div className="material-viewport" data-preview-zoom={zoom}><div className="material-scaled" style={{width:`${100/zoom}%`,height:`${100/zoom}%`,transform:`scale(${zoom})`}}>{(
+      // allow-downloads serves the document's own "Save HTML copy" — a
+      // frame-local, network-free export the host must permit (Wayfinder
+      // §3.3: the export is separate from native Save and overwrites
+      // nothing). The frame stays opaque-origin with no bridge authority.
       transport.kind === "tauri"
-        ? <iframe data-page-context className="material-frame" title={binding.title} sandbox="allow-scripts allow-forms" referrerPolicy="no-referrer" key={generation} src={suspended ? "about:blank" : baseUrl} />
-        : <iframe data-page-context className="material-frame" title={binding.title} sandbox="allow-scripts allow-forms" referrerPolicy="no-referrer" key={generation} srcDoc={suspended ? undefined : injectBase(textContent ?? "", resolveAsset(""))} />
+        ? <iframe data-page-context className="material-frame" title={binding.title} sandbox="allow-scripts allow-forms allow-downloads" referrerPolicy="no-referrer" key={generation} src={suspended ? "about:blank" : baseUrl} />
+        : <iframe data-page-context className="material-frame" title={binding.title} sandbox="allow-scripts allow-forms allow-downloads" referrerPolicy="no-referrer" key={generation} srcDoc={suspended ? undefined : injectBase(textContent ?? "", resolveAsset(""))} />
     )}</div></div>}
     {!error && !pending && format === "markdown" && <div className="material-viewport" data-preview-zoom={zoom}><div className="material-scaled" style={{width:`${100/zoom}%`,height:`${100/zoom}%`,transform:`scale(${zoom})`}}>
       <iframe data-page-context key={generation} className="material-frame" title={binding.title} sandbox="allow-scripts" srcDoc={suspended ? undefined : markdownDocument(textContent ?? "", resolveAsset)} />
