@@ -10,7 +10,6 @@ shared-field.yml      shared-field contracts and the live SpaceTimeDB acceptance
 npm-distribution.yml  npm package install proof, path-scoped to packages/oi-cli
 release.yml           attested artifacts from main (oi binary, npm package, desktop bundle)
 cross-product.yml     weekly + on demand: every check that builds/tests a sibling repo
-                      or asks GitHub about live sibling mains
 npm-publish.yml       manual publish
 branch-hygiene.yml    weekly branch lifecycle report
 ```
@@ -25,5 +24,7 @@ Rules:
 - **CI cannot claim human acceptance, and fixtures are not provider proofs.** Nothing here sets a human or provider evidence grade; `oi prove factory` records those grades as unavailable unless a real owner receipt is supplied (see `docs/FACTORY-PROVING-FLOOR.md`).
 
 Local preflight: `oi dev gate PRODUCT` builds an isolated candidate and runs the owner and Cradle consumer tests. It is a convenience before pushing, not a second requirement; CI is the record.
+
+Consume: the next local session refreshes the accepted source and rebuilds or rebinds the executable it will actually use (`oi dev sync`, `oi dev build`, `oi dev install`). `suite/mainline.json` is the recorded cut an install was made from, a receipt; it is checked for structure in `verify.yml` and is not required to equal every sibling's live main (`verify-mainline-snapshot.py --live` remains a manual comparison).
 
 Adding a check: put it in the job of `verify.yml` that already has its toolchain, or in `cross-product.yml` if it needs another repository. Do not add a workflow.
