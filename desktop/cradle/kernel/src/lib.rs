@@ -215,6 +215,9 @@ pub enum KernelOp {
         #[serde(default, skip_serializing_if = "Option::is_none")] agent_session_ref: Option<String>,
     },
     AgencyRead { project: String },
+    /// Wave 6E: pending Returns tray — list/read plus human review/include
+    /// through Central's native receiving operations (owner-validated).
+    Receiving {project:String,request:flow::ReceivingRequest},
     Encounter {project:String,request:agency::EncounterRequest},
     MaterialRead {target:material::Target},
     FactoryDiscover {project_ref:Option<String>},
@@ -310,6 +313,7 @@ pub enum KernelOpResult {
     FlowCommissioned { outcome: commission::CommissionOutcome },
     AgencyReading { project_ref: String, spaces: serde_json::Value, observed_at_unix_ms: u64 },
     EncounterReading {data:serde_json::Value},
+    ReceivingReading {data:serde_json::Value},
     FileOperation {data:serde_json::Value},
     NativeOwnerReading {owner:String,data:Option<serde_json::Value>,failure:Option<serde_json::Value>},
     GroundReading {reading:serde_json::Value},
@@ -463,6 +467,14 @@ impl Kernel {
                 let spaces=self.agency.read_project(&cwd,&project_ref)?;
                 let observed_at_unix_ms=std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d|d.as_millis() as u64).unwrap_or(0);
                 Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::AgencyReading {project_ref,spaces,observed_at_unix_ms}})
+            }
+            KernelOp::Receiving {project,request} => {
+                // Same disclosure gate as every project-scoped read: the
+                // project must be inside Central's disclosed ground.
+                let root=world::read_world(&self.client).map_err(|e|e.to_string())?;
+                root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(&project))).ok_or("Project is outside Central's disclosed ground")?;
+                let data=self.client.receiving(&project,&request).map_err(|e|e.to_string())?;
+                Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::ReceivingReading {data}})
             }
             KernelOp::Knowledge { project, request } => {
                 // Central discloses the scope; renderer-supplied filesystem paths

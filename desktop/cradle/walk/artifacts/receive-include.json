@@ -1,0 +1,117 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "receive-include",
+  "generated_at": "2026-09-11T00:19:27.070Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 1172,
+  "checks": [
+    {
+      "ok": true,
+      "label": "A pending Return is visible in the project's receiving field before any human act"
+    },
+    {
+      "ok": true,
+      "label": "The return presents its real producer attribution"
+    },
+    {
+      "ok": true,
+      "label": "The exact proposed operation and content are shown before any decision"
+    },
+    {
+      "ok": true,
+      "label": "The return shows the exact basis revision it was proposed against"
+    },
+    {
+      "ok": true,
+      "label": "Explicit acceptance records the human reviewer and the exact reviewed basis"
+    },
+    {
+      "ok": true,
+      "label": "Inclusion completes through the owner's revision-checked operation"
+    },
+    {
+      "ok": true,
+      "label": "The document holds exactly the reviewed contribution"
+    },
+    {
+      "ok": true,
+      "label": "Producer attribution and human review are carried as distinct native facts"
+    },
+    {
+      "ok": true,
+      "label": "The document source revision advanced through inclusion"
+    },
+    {
+      "ok": true,
+      "label": "Accepting a stale basis is refused by the owner's exact revision check"
+    },
+    {
+      "ok": true,
+      "label": "A refused acceptance changes no document bytes"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-11T00:19:27.385Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 35,
+      "data": {
+        "file": "receive-include-return-expanded-before-review.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 29,
+      "data": {
+        "file": "receive-include-accepted-on-current-basis.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 26,
+      "data": {
+        "file": "receive-include-included-with-attribution.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 32,
+      "data": {
+        "file": "receive-include-stale-basis-refusal.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "receive-include-return-expanded-before-review.png",
+    "receive-include-accepted-on-current-basis.png",
+    "receive-include-included-with-attribution.png",
+    "receive-include-stale-basis-refusal.png"
+  ]
+}

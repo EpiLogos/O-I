@@ -184,3 +184,28 @@ aside.world-navigator[aria-label="World navigator"] { padding: 19px 10px 0; }
 .world-navigator{display:flex;flex-direction:column;overflow:hidden}
 .world-system{flex:none;background:var(--oi-sidebar-ground)}
 .world-projects > li > button:first-child{padding-left:10px}
+/* Receiving (6E): pending human Returns under each project branch. */
+.project-returns{margin:8px 0 4px;border-top:1px solid var(--oi-hairline);padding-top:8px}
+.project-returns header{display:flex;align-items:baseline;gap:8px;font-size:var(--oi-shell-type-eyebrow);letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted-2)}
+.project-returns header small{text-transform:none;letter-spacing:normal;font-size:var(--oi-shell-type-meta)}
+.project-return{display:flex;gap:8px;align-items:center;width:100%;border:0;background:none;padding:4px 0;font:inherit;font-size:var(--oi-shell-type-nav);color:var(--oi-foreground);cursor:pointer;text-align:left}
+.project-return:hover,.project-return:focus-visible{color:var(--oi-accent-ink);outline:none}
+.return-status{flex:none;padding:1px 6px;border-radius:6px;border:1px solid var(--oi-hairline);color:var(--oi-muted-2)}
+.return-pending,.return-needs-review{color:var(--oi-accent-ink);border-color:var(--oi-accent-soft)}
+.return-accepted{color:var(--oi-accent-ink)}
+.return-included{color:var(--oi-muted-2)}
+.return-origin{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.return-detail{margin:6px 0 8px;padding:8px;border:1px solid var(--oi-hairline);border-radius:8px;font-size:var(--oi-shell-type-nav)}
+.return-detail dl{margin:0;display:grid;grid-template-columns:1fr;gap:1px;overflow-wrap:anywhere}
+.return-detail dt{margin-top:6px}
+.return-detail dt:first-child{margin-top:0}
+.return-detail dt{color:var(--oi-muted-2)}
+.return-detail dd{margin:0}
+.return-proposal{white-space:pre-wrap}
+.return-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.return-actions button{border:1px solid var(--oi-hairline);border-radius:7px;background:var(--oi-composer-ground);color:var(--oi-foreground);font:inherit;font-size:var(--oi-shell-type-nav);padding:4px 10px;cursor:pointer}
+.return-actions button:hover:not(:disabled),.return-actions button:focus-visible{border-color:var(--oi-accent);outline:none}
+.return-actions button:disabled{color:var(--oi-muted-2);cursor:default}
+.return-included{margin:8px 0 0;color:var(--oi-muted-2)}
+.returns-refresh{margin-left:auto;border:0;background:none;font:inherit;font-size:var(--oi-shell-type-nav);color:var(--oi-muted-2);cursor:pointer}
+.returns-refresh:hover,.returns-refresh:focus-visible{color:var(--oi-accent-ink);outline:none}
