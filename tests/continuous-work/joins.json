@@ -2,16 +2,16 @@
   "standing": "operation-joins-not-launch-gates",
   "web_code": {
     "central-temporal": {"owner": "EpiLogos/Central#150", "needed": "Native root/Project Day and NOW source creation, explicit authorised boundary, crash/replay/rollback-safe migration and retained source/reference readback."},
-    "central-placement": {"owner": "EpiLogos/Central#153", "needed": "Published scoped placement-policy revision/standing, NOW allocation, guarded create/adopt/write validation and reversible itemised repair."},
+    "central-placement": {"owner": "EpiLogos/Central#153", "needed": "Published scoped placement-policy revision/standing, NOW allocation, guarded create/adopt/write validation and reversible itemised repair.", "implemented_at_candidate": "Native source/policy/NOW allocation and read/validation are consumed in AIKit #286/#291 at the pinned cut. Supported task paths retain original source/NOW/policy/expiry and every protection requirement. Joined controlled native proof passes; full legacy repair and Candidate/worktree relation remain incomplete."},
     "central-documents": {"owner": "EpiLogos/Central#151", "needed": "Public Day and shared Flow/Dialogue create/read/edit/export operations, exact revisions/fixtures, sanitisation and source/attribution protection."},
     "central-receiving": {"owner": "EpiLogos/Central#152", "needed": "Concurrent append/replay-safe receiving ledger and reviewed contribution inclusion/refusal; artifact Return without implicit adoption or Recognition."},
     "aikit-selection": {"owner": "EpiLogos/ai-kit#274", "needed": "Actual producer -> participant/Knowledge resolver -> selected operative context -> eligible model/credentials/authority -> real Agency/WorldBinding, including no-profile participation."},
-    "aikit-dispatch": {"owner": "EpiLogos/ai-kit#275", "needed": "Native execution caller/session/gateway dispatch, actual addressed response ingress/readback, group/privacy, reconnect/continuation and supported A2A operations."},
+    "aikit-dispatch": {"owner": "EpiLogos/ai-kit#275", "needed": "Native execution caller/session/gateway dispatch, actual addressed response ingress/readback, group/privacy, reconnect/continuation and supported A2A operations.", "implemented_at_candidate": "Selected source-backed Agency -> task-bound resident -> actual addressed ACP response is exercised, including real Workcell hosting. Gateway ingress/egress, full catalogue selection, A2A and full compaction/relocation remain implementation work."},
     "aikit-recurrence": {"owner": "EpiLogos/ai-kit#276", "needed": "Enabled/proven/bounded recurrence consuming Central time policy and real dispatch; persisted duplicate/revocation/restart/uncertain-effect handling."},
-    "aikit-enforcement": {"owner": "EpiLogos/ai-kit#277", "needed": "Central placement-policy projection -> installed native hook/tool caller -> supported veto/readback; exact blockable event coverage, source/config/loaded-state correlation and withdrawal."},
+    "aikit-enforcement": {"owner": "EpiLogos/ai-kit#277", "needed": "Central placement-policy projection -> installed native hook/tool caller -> supported veto/readback; exact blockable event coverage, source/config/loaded-state correlation and withdrawal.", "implemented_at_candidate": "Actual task launch and each turn revalidate Central authority/source/NOW, native Workcell path identity and required persistent material. Real stdio child runs under the native Linux boundary. Full hook lifecycle and other bodies/coverage remain distinct implementation and installed proof."},
     "factory-operation": {"owner": "EpiLogos/Factory#221", "needed": "Commission -> real arranged attempt -> actual dispatch -> observe/verify -> interruption/reconciliation/re-resolution -> bounded retry/Return; native public persisted Actions/readback and fork/barrier/writer rules."},
     "factory-tracking": {"owner": "EpiLogos/Factory#222", "needed": "Task/usage/source/NOW/material evidence, retention/archive links, readable Return and real finding -> existing regression-learning path."},
-    "workcell-hosting": {"owner": "EpiLogos/Workcell#72", "needed": "Native prepare/inspect/observe/recover/release for NOW storage and persistent gateway/session/scheduler; supplied material restrictions/coverage, reconnect/relocation/correlations and bounded usage."},
+    "workcell-hosting": {"owner": "EpiLogos/Workcell#72", "needed": "Native prepare/inspect/observe/recover/release for NOW storage and persistent gateway/session/scheduler; supplied material restrictions/coverage, reconnect/relocation/correlations and bounded usage.", "implemented_at_candidate": "Actual required NOW storage and a managed real AIKit encounter service are prepared, inspected and observed. Exact host/process/storage correlation and storage-host restart/release are tested. Dynamic registration, remote hosting, body-loss rehydration and gateway/scheduler hosting are not inferred."},
     "actuation-owner": {"owner": "EpiLogos/Actuation#58", "needed": "Current accepted Agency/WorldBinding/authority/capability and Activity/Return owner APIs; corrections remain in the single-active refoundation queue."},
     "desktop": {"owner": "EpiLogos/O-I#190", "needed": "Existing desktop thread's published controls -> native owner operation -> transition/readback, Day/Flow and four panel planes; no alternative desktop runtime."},
     "tui": {"owner": "EpiLogos/ai-kit#211", "needed": "Actual Direct/Factory/external subjects, public Actions/readback, source/trajectory search/history and Return parity."},
@@ -24,5 +24,17 @@
     {"id": "material-canary", "cases": ["P14", "P16", "P17", "P26", "P28"], "operation": "Owner-approved disposable root/Project canaries; real allow/refuse writes, service restart/lost client and second supported placement. Never omit/replay a producer against personal live work."},
     {"id": "migration-and-return", "cases": ["P05", "P06", "P19", "P27"], "operation": "Read-only fresh census, reviewed reversible native migration/repair plan, source hashes and active obligations, pending artifact Return, stale inclusion refusal and rollback; preserve private bytes locally."},
     {"id": "human-and-independent", "cases": ["P02", "P03", "P04", "P10", "P16", "P21", "P22", "P23", "P24", "P27"], "operation": "Fresh non-implementer reads exact commission/specs/all 28 cases, executes full public story plus consequential failures/disconnections, then obtains actual human experience/Recognition where required."}
-  ]
+  ],
+  "controlled_joined_evidence": {
+    "source_lock": "sources/lock.json",
+    "native_campaign": "scripts/caw_native_tasks.py",
+    "owner_test_target": "aikit-cli/caw_task_dispatch",
+    "observed_cut": "8cdd368b83ecef7567ae3de6bc0cdaf0086b0cb3",
+    "workflow_run": 34551322509,
+    "cases": ["P26"],
+    "obligation": "native-material-task-public-operation-chain",
+    "grades": ["D", "C"],
+    "required_disconnection": "In a fresh invocation, remove the actual Workcell control-service producer; the exact hosted-encounter test must fail.",
+    "scope": "Seven native scenarios plus the removed-producer run; not complete P26, P01-P28 or installed/provider/human acceptance."
+  }
 }
