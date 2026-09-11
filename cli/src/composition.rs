@@ -169,7 +169,11 @@ fn run(args: &[OsString]) -> Result<i32, String> {
         "migrate" => command_migrate(&catalog, &args[1..]),
         "catalogue" => command_catalogue(&args[1..]),
         "version" | "--version" | "-V" => {
-            println!("oi {}", env!("CARGO_PKG_VERSION"));
+            println!(
+                "oi {} ({})",
+                env!("CARGO_PKG_VERSION"),
+                option_env!("SUITE_BUILD_REVISION").unwrap_or("unknown")
+            );
             Ok(0)
         }
         unknown => Err(format!(
