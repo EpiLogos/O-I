@@ -2,6 +2,8 @@
   "schema": "oi.package/v1",
   "package_ref": "package:example/model-environment",
   "version": "0.1.0",
+  "protocol_min": "1.0",
+  "protocol_max": "1.0",
   "source": {
     "kind": "git",
     "locator": "example/model-environment",

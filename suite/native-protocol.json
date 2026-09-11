@@ -1,0 +1,14 @@
+{
+  "schema": "oi.native-protocol-projection/v1",
+  "protocol": "1.0",
+  "source": "surfaces.json",
+  "standing": "oi-projection-of-accepted-owner-command-descriptors",
+  "products": [
+    {"id":"central","revision":"5b61b82835f4efbf57ab896b8efff72f9f8f3906","protocol_min":"1.0","protocol_max":"1.0"},
+    {"id":"actuation","revision":"ecac9ddd5009d03e6d38043341672b0409090c8d","protocol_min":"1.0","protocol_max":"1.0"},
+    {"id":"ai-kit","revision":"95e35ac6569a85239a4689aeb440929f5d07888b","protocol_min":"1.0","protocol_max":"1.0"},
+    {"id":"software-factory","revision":"885f3c29726dc6cb9397eca246abdfb1c65eff86","protocol_min":"1.0","protocol_max":"1.0"},
+    {"id":"workcell","revision":"fa47a29fa49a6636675d21309b00c269ac824abb","protocol_min":"1.0","protocol_max":"1.0"},
+    {"id":"quaternal-logic","revision":"44ed3cd0e7a8bc25508a4e18ad3bb4c730013913","protocol_min":"1.0","protocol_max":"1.0"}
+  ]
+}

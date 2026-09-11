@@ -1,0 +1,527 @@
+name: Cross-product (weekly)
+
+# Everything that checks out, builds or tests a sibling repository runs here
+# on a weekly schedule and on demand. Each sibling already gates its own main; O:I's per-push gate is
+# verify.yml. A red job here is a pin that rotted or a seam that moved, and
+# is repaired in its own change, not by re-running it on every pull request.
+
+on:
+  schedule:
+    - cron: '0 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+env:
+  CARGO_INCREMENTAL: '0'
+  CARGO_TERM_COLOR: never
+
+jobs:
+  # -------------------------------------------------------- installed suite
+  installed-suite:
+    name: Installed six-product suite from the recorded pre-local build set
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: cli
+          cache-on-failure: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build locked O:I CLI
+        run: cargo build --manifest-path cli/Cargo.toml --bin oi --locked
+      - name: Install recorded six-product pre-local build set twice
+        shell: bash
+        run: |
+          set -euo pipefail
+          export OI_HOME="$RUNNER_TEMP/oi-config"
+          export OI_DATA_HOME="$RUNNER_TEMP/oi-data"
+          ROOT="$RUNNER_TEMP/oi-personal-ground"
+          OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
+
+          mkdir -p "$ROOT/Control" "$ROOT/Work"
+          printf '%s\n' 'human-control-sentinel' > "$ROOT/Control/HUMAN-SENTINEL.txt"
+          printf '%s\n' 'ordinary-work-sentinel' > "$ROOT/Work/WORK-SENTINEL.txt"
+
+          python3 scripts/ci_install_retry.py --oi "$OI" --personal-ground "$ROOT" --out "$RUNNER_TEMP/preflight-install-first"
+          cp "$OI_HOME/composition.json" "$RUNNER_TEMP/composition-first.json"
+          cp "$OI_DATA_HOME/receipts/installed-suite.json" "$RUNNER_TEMP/installed-first.json"
+
+          python3 scripts/ci_install_retry.py --oi "$OI" --out "$RUNNER_TEMP/preflight-install-second"
+          cp "$OI_HOME/composition.json" "$RUNNER_TEMP/composition-second.json"
+          cmp "$RUNNER_TEMP/composition-first.json" "$RUNNER_TEMP/composition-second.json"
+
+          test -d "$OI_DATA_HOME/bin"
+          test -d "$OI_DATA_HOME/products"
+          test -d "$OI_DATA_HOME/receipts"
+          test -d "$OI_DATA_HOME/cache"
+          test ! -e "$ROOT/.central/oi/managed"
+          test "$(cat "$ROOT/Control/HUMAN-SENTINEL.txt")" = "human-control-sentinel"
+          test "$(cat "$ROOT/Work/WORK-SENTINEL.txt")" = "ordinary-work-sentinel"
+          jq -e '.products | to_entries | all(.value.attestation_locally_verified == true)' "$RUNNER_TEMP/installed-first.json"
+      - name: Status and doctor match recorded pre-local build manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          export OI_HOME="$RUNNER_TEMP/oi-config"
+          export OI_DATA_HOME="$RUNNER_TEMP/oi-data"
+          OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
+          "$OI" manifest --json > "$RUNNER_TEMP/manifest.json"
+          "$OI" status --json > "$RUNNER_TEMP/status.json"
+          "$OI" doctor --json > "$RUNNER_TEMP/doctor.json"
+          "$OI" verify --json > "$RUNNER_TEMP/verify.json"
+
+          jq -e '.schema == "oi.suite-manifest/v1" and .suite_version == "0.1.0-prelocal.2" and .standing == "historical-unratified-prelocal-build-record" and (.products | length == 6)' "$RUNNER_TEMP/manifest.json"
+          jq -e '.schema == "oi.suite-status/v1" and .suite_version == "0.1.0-prelocal.2" and (.installed.products | length == 6) and .physical_acceptance == false' "$RUNNER_TEMP/status.json"
+          jq -e '.schema == "oi.suite-doctor/v1" and .ok == true and (.checks | length == 6) and .physical_acceptance == false' "$RUNNER_TEMP/doctor.json"
+          cmp "$RUNNER_TEMP/doctor.json" "$RUNNER_TEMP/verify.json"
+
+          for id in central actuation ai-kit software-factory workcell quaternal-logic; do
+            expected="$(jq -r --arg id "$id" '.products[] | select(.id == $id) | .revision' "$RUNNER_TEMP/manifest.json")"
+            actual="$(jq -r --arg id "$id" '.installed.products[$id].revision' "$RUNNER_TEMP/status.json")"
+            test "$actual" = "$expected"
+          done
+      - name: Development launch affordances resolve
+        shell: bash
+        run: |
+          set -euo pipefail
+          export OI_HOME="$RUNNER_TEMP/oi-config"
+          export OI_DATA_HOME="$RUNNER_TEMP/oi-data"
+          OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
+          "$OI" web --check
+          "$OI" app --check
+      - name: Developer federation reports current-main truth and fails closed on unsafe state
+        shell: bash
+        run: |
+          set -euo pipefail
+          export OI_HOME="$RUNNER_TEMP/oi-config"
+          export OI_DATA_HOME="$RUNNER_TEMP/oi-data"
+          ROOT="$RUNNER_TEMP/oi-personal-ground"
+          OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
+
+          ln -s "$GITHUB_WORKSPACE" "$ROOT/Work/O-I"
+          "$OI" dev status --json > "$RUNNER_TEMP/dev-status.json"
+          jq -e '.schema == "oi.current-main-dev-status/v1" and (.repos | length == 7) and any(.repos[]; .id == "oi") and any(.repos[]; .id == "central")' "$RUNNER_TEMP/dev-status.json"
+
+          "$OI" dev build oi
+          "$OI" dev test oi
+
+          DETACHED="$RUNNER_TEMP/oi-detached-source"
+          git clone --quiet --no-hardlinks "$GITHUB_WORKSPACE" "$DETACHED"
+          git -C "$DETACHED" checkout --quiet --detach HEAD
+          ln -sfn "$DETACHED" "$ROOT/Work/O-I"
+          if "$OI" dev install oi > "$RUNNER_TEMP/detached-install.log" 2>&1; then
+            echo 'detached checkout was incorrectly accepted as current-main installation' >&2
+            exit 1
+          fi
+          grep -F 'refusing current-main install from branch DETACHED' "$RUNNER_TEMP/detached-install.log"
+
+          if "$OI" dev adopt central "$ROOT"; then
+            echo 'Central self-nesting adoption unexpectedly succeeded' >&2
+            exit 1
+          fi
+
+          BAD="$RUNNER_TEMP/adopt-no-origin"
+          git init -q "$BAD"
+          git -C "$BAD" config user.name preflight
+          git -C "$BAD" config user.email preflight@example.invalid
+          printf 'sentinel\n' > "$BAD/README.md"
+          git -C "$BAD" add README.md
+          git -C "$BAD" commit -qm init
+          if "$OI" dev adopt ai-kit "$BAD"; then
+            echo 'origin-less adoption unexpectedly succeeded' >&2
+            exit 1
+          fi
+          test -d "$BAD/.git"
+          test ! -e "$ROOT/Work/ai-kit"
+
+          LINKED="$RUNNER_TEMP/adopt-linked"
+          git init -q "$LINKED"
+          git -C "$LINKED" config user.name preflight
+          git -C "$LINKED" config user.email preflight@example.invalid
+          printf 'sentinel\n' > "$LINKED/README.md"
+          git -C "$LINKED" add README.md
+          git -C "$LINKED" commit -qm init
+          git -C "$LINKED" worktree add -q "$RUNNER_TEMP/adopt-linked-secondary" -b secondary
+          if "$OI" dev adopt workcell "$LINKED"; then
+            echo 'linked-worktree adoption unexpectedly succeeded' >&2
+            exit 1
+          fi
+          test -d "$LINKED/.git"
+          test ! -e "$ROOT/Work/Workcell"
+      - name: Bounded cleanup preserves human ground
+        shell: bash
+        run: |
+          set -euo pipefail
+          export OI_HOME="$RUNNER_TEMP/oi-config"
+          export OI_DATA_HOME="$RUNNER_TEMP/oi-data"
+          ROOT="$RUNNER_TEMP/oi-personal-ground"
+          OI="$GITHUB_WORKSPACE/cli/target/debug/oi"
+          "$OI" cleanup --managed
+          test "$(cat "$ROOT/Control/HUMAN-SENTINEL.txt")" = "human-control-sentinel"
+          test "$(cat "$ROOT/Work/WORK-SENTINEL.txt")" = "ordinary-work-sentinel"
+          test -e "$OI_HOME/composition.json"
+          test ! -e "$OI_DATA_HOME/bin"
+          test ! -e "$OI_DATA_HOME/products"
+          test ! -e "$OI_DATA_HOME/receipts"
+          test ! -e "$OI_DATA_HOME/cache"
+          test ! -e "$ROOT/.central/oi/managed"
+
+  # ---------------------------------------------------- current-main source
+  current-main-source:
+    name: current-source / ${{ matrix.product }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        # Quaternal Logic keeps a stable suite pin while its own programme
+        # moves; it is intentionally not a live-main source gate.
+        product: [central, actuation, ai-kit, software-factory, workcell]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: Test exact current in-scope native-main source
+        run: >-
+          python3 scripts/verify-current-main-source.py
+          --product '${{ matrix.product }}'
+          --receipt '${{ runner.temp }}/current-main-${{ matrix.product }}.json'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: current-main-${{ matrix.product }}
+          path: ${{ runner.temp }}/current-main-${{ matrix.product }}.json
+          if-no-files-found: warn
+
+  owner-seams:
+    name: seam / ${{ matrix.seam }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        seam: [project-context-handoff, native-action-parity, journey-routine-handoff]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: tests/${{ matrix.seam }}
+      - name: Exercise the pinned owner seam (git dependencies on sibling revisions)
+        run: cargo test --manifest-path tests/${{ matrix.seam }}/Cargo.toml
+
+  # -------------------------------------------------------- factory proving
+  factory-proving:
+    name: Factory proving floor against exact owner sources
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/agent-system-design
+          ref: 12a721dbbb51e3c70d52ef00220efa859ef930fd
+          path: .factory-owner
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Actuation
+          ref: 5eec4639f1c8727865373b27fdcde09fdcca2d53
+          path: .actuation-owner
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: |
+            .factory-owner
+            .actuation-owner
+      - name: Install schema validator
+        run: python3 -m pip install --disable-pip-version-check 'jsonschema>=4.18,<5'
+      - name: Exercise exact Factory owner CLI
+        run: |
+          python3 scripts/validate_factory_proving.py \
+            --factory-source .factory-owner \
+            --actuation-source .actuation-owner \
+            --actuation-usage suite/factory-proving-actuation-usage.json \
+            --actuation-usage-replay suite/factory-proving-actuation-usage-replay.json
+
+  # ------------------------------------------------------- wiki owner pins
+  living-wiki-w7:
+    name: Living Wiki W7 pinned owner contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      CENTRAL_SHA: 31d54eb4a6202c89c7f60ec004654916133dea94
+      AIKIT_SHA: 6b2517862faccc7787b36ef45ef8d19186fe8128
+      FACTORY_SHA: ec08c99a55a6320c6f59d3c73024b5d48063a989
+      QL_SHA: 9429a9fb5173f32138799046e8e2a4d7a2d86968
+      QL_LIVING_ANCESTOR: 30171fb9f3646a1ef6e306357503d8a9df4a8a1c
+    steps:
+      - uses: actions/checkout@v4
+      - name: W7 manifest names exactly these owner pins
+        shell: python
+        run: |
+          import json, os
+          from pathlib import Path
+          manifest = json.loads(Path('suite/living-wiki-w7.json').read_text())
+          assert manifest['schema'] == 'oi.living-wiki-w7/v1'
+          assert manifest['physical_evidence_claimed'] is False
+          assert [world['id'] for world in manifest['worlds']] == ['A', 'B', 'C']
+          expected = {
+              'central': os.environ['CENTRAL_SHA'],
+              'ai-kit': os.environ['AIKIT_SHA'],
+              'software-factory': os.environ['FACTORY_SHA'],
+              'quaternal-logic': os.environ['QL_SHA'],
+          }
+          for owner, revision in expected.items():
+              assert manifest['owners'][owner]['revision'] == revision, owner
+          minimal = next(world for world in manifest['worlds'] if world['id'] == 'A')
+          assert any('zero automatic Agent/model invocation' in p for p in minimal['proves'])
+          assert any('Contemplate implicitly' in i for i in manifest['global_invariants'])
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Central
+          ref: ${{ env.CENTRAL_SHA }}
+          path: owners/central
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/ai-kit
+          ref: ${{ env.AIKIT_SHA }}
+          path: owners/ai-kit
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/agent-system-design
+          ref: ${{ env.FACTORY_SHA }}
+          path: owners/factory
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/QL-MEF
+          ref: ${{ env.QL_SHA }}
+          path: owners/ql
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: |
+            owners/central
+            owners/ai-kit
+            owners/factory
+            owners/ql
+      - name: Prove exact owner revisions
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C owners/central rev-parse HEAD)" = "$CENTRAL_SHA"
+          test "$(git -C owners/ai-kit rev-parse HEAD)" = "$AIKIT_SHA"
+          test "$(git -C owners/factory rev-parse HEAD)" = "$FACTORY_SHA"
+          test "$(git -C owners/ql rev-parse HEAD)" = "$QL_SHA"
+          git -C owners/ql merge-base --is-ancestor "$QL_LIVING_ANCESTOR" "$QL_SHA"
+      - name: W7 A — Central source truth and deterministic horizon
+        run: cargo test --manifest-path owners/central/Cargo.toml -p ctrl
+      - name: W7 A/C — AIKit impact freshness, integrative reading, authored relations
+        run: cargo test --manifest-path owners/ai-kit/Cargo.toml -p aikit-core
+      - name: W7 B — Factory software Project orientation and returned evidence
+        run: cargo test --manifest-path owners/factory/Cargo.toml -p epilogos-factory
+      - name: W7 C — QL Wiki refraction, Context Frame and Return preservation
+        run: cargo test --manifest-path owners/ql/Cargo.toml -p ql-wiki
+
+  authored-wiki-w8:
+    name: Authored Wiki relations W8 pinned owner contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      CENTRAL_SHA: 31d54eb4a6202c89c7f60ec004654916133dea94
+      AIKIT_SHA: 6b2517862faccc7787b36ef45ef8d19186fe8128
+      FACTORY_SHA: 0731d654eab9357323f603f306332d3b7e0e71cb
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Central
+          ref: ${{ env.CENTRAL_SHA }}
+          path: owners/central
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/ai-kit
+          ref: ${{ env.AIKIT_SHA }}
+          path: owners/ai-kit
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/agent-system-design
+          ref: ${{ env.FACTORY_SHA }}
+          path: owners/factory
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: |
+            owners/central
+            owners/ai-kit
+            owners/factory
+      - name: Prove exact native owner revisions
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C owners/central rev-parse HEAD)" = "$CENTRAL_SHA"
+          test "$(git -C owners/ai-kit rev-parse HEAD)" = "$AIKIT_SHA"
+          test "$(git -C owners/factory rev-parse HEAD)" = "$FACTORY_SHA"
+      - name: Central — stable Flow/source identity, retained placement and revision authority
+        run: cargo test --manifest-path owners/central/Cargo.toml -p ctrl
+      - name: AIKit — authored relation and property adapters
+        shell: bash
+        run: |
+          set -euo pipefail
+          for case in \
+            plain_markdown_and_optional_okf_properties_join_on \
+            non_okf_frontmatter_does_not_capture_other_tools_m \
+            compilation_resolves_to_existing_wiki_and_rebuild_ \
+            source_revision_changes_edge_revision_but_not_stab \
+            unresolved_relation_survives_without_synthetic_gra \
+            unresolved_only_source_is_still_a_valid_relation_f \
+            consumer_gets_resolved_backlink_capable_view_and_p \
+            flow_subject_can_be_external_endpoint_without_beco \
+            explicit_relation_origin_does_not_overwrite_agent_ \
+            authored_relations_feed_existing_living_knowledge_ \
+            authored_properties_revision_change_enters_existin \
+            projectcentral_retained_markdown_rebuilds_into_exi \
+            source_revision_change_rebuilds_relation_revision_; do
+            cargo test --manifest-path owners/ai-kit/Cargo.toml -p aikit-adapters "$case"
+          done
+      - name: Factory — software Project orientation with authored relations
+        run: cargo test --manifest-path owners/factory/Cargo.toml -p epilogos-factory
+
+  # --------------------------------------------------- development field
+  development-field-native:
+    name: D / ${{ matrix.owner }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        owner: [oi, central, actuation, ai-kit, software-factory, workcell, quaternal-logic]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Factory native validator dependency
+        if: matrix.owner == 'software-factory'
+        run: python3 -m pip install 'jsonschema==4.25.1'
+      - name: Check out exact native owner and record live-main observation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          python3 scripts/development-field-ci.py prepare
+          --owner '${{ matrix.owner }}'
+          --source '${{ runner.temp }}/owner-source'
+          --out '${{ runner.temp }}/evidence'
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          shared-key: development-field-${{ matrix.owner }}
+          cache-on-failure: true
+          # O:I's standalone workspace is cli/; every other owner's is root.
+          workspaces: ${{ runner.temp }}/owner-source${{ matrix.owner == 'oi' && '/cli' || '' }} -> target
+      - name: Run the tested owner's native deterministic contract
+        run: >-
+          python3 scripts/development-field-ci.py native
+          --owner '${{ matrix.owner }}'
+          --source '${{ runner.temp }}/owner-source'
+          --out '${{ runner.temp }}/evidence'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: development-field-D-${{ matrix.owner }}
+          path: |
+            ${{ runner.temp }}/evidence/*.json
+            ${{ runner.temp }}/evidence/*.log
+          if-no-files-found: error
+
+  development-field-conformance:
+    name: Development Field native-owner conformance
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: One exact source cut for every participating owner
+        id: prepare
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/development-field-conformance.py prepare --out "$RUNNER_TEMP/development-field"
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          shared-key: development-field-conformance
+          cache-on-failure: true
+          workspaces: |
+            tests/development-field/probe
+            .development-field-owners/oi/cli
+            .development-field-owners/central
+            .development-field-owners/ai-kit
+            .development-field-owners/software-factory
+            .development-field-owners/workcell
+            .development-field-owners/quaternal-logic
+      - name: Native authored provenance and once-observed source snapshot conformance
+        id: source_snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          export DF_SNAPSHOT_EVIDENCE="$RUNNER_TEMP/development-field/source-snapshot.json"
+          export DF_CUT_SHA256="$(sha256sum tests/development-field/cut.json | cut -d' ' -f1)"
+          cargo test --manifest-path tests/development-field/probe/Cargo.toml --locked --test source_snapshot -- --nocapture 2>&1 | tee "$RUNNER_TEMP/development-field/source-snapshot.log"
+      - name: Bounded Central → QL carrier → AIKit → Workcell → Actuation → Factory specimen
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
+        id: probe
+        run: python3 scripts/development-field-conformance.py probe --out "$RUNNER_TEMP/development-field"
+      - name: Exact source-built six-product O:I dispatch with poisoned PATH
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
+        id: dispatch
+        run: python3 scripts/development-field-conformance.py dispatch --out "$RUNNER_TEMP/development-field"
+      - name: Accepted S3 same-specimen native Central, QL carrier, packet and CLI parity
+        if: ${{ !cancelled() && steps.dispatch.outcome == 'success' && steps.probe.outcome == 'success' }}
+        id: s3
+        run: python3 scripts/development-field-s3.py --out "$RUNNER_TEMP/development-field"
+      - name: Native S0 exact-source catalogue adoption and suite activation
+        if: ${{ !cancelled() && steps.dispatch.outcome == 'success' }}
+        id: activation
+        run: python3 scripts/development-field-activation.py --out "$RUNNER_TEMP/development-field"
+      - name: Native S0 whole-suite lifecycle (repair and rollback)
+        if: ${{ !cancelled() && steps.activation.outcome == 'success' }}
+        id: lifecycle
+        run: python3 scripts/development-field-lifecycle.py --out "$RUNNER_TEMP/development-field"
+      - name: Execute native integrations excluded from owner unit lanes
+        if: ${{ !cancelled() && steps.dispatch.outcome == 'success' }}
+        id: bridges
+        run: python3 scripts/development-field-native-bridges.py --out "$RUNNER_TEMP/development-field"
+      - name: Whole Development Field completion gate
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
+        id: whole_gate
+        run: python3 scripts/development-field-whole-gate.py --out "$RUNNER_TEMP/development-field"
+      - name: Explain actual failure versus blocked downstream proof
+        if: ${{ !cancelled() }}
+        env:
+          DF_STEPS_JSON: ${{ toJSON(steps) }}
+        run: python3 scripts/development-field-ci-status.py --out "$RUNNER_TEMP/development-field"
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: development-field-conformance-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/development-field
+            tests/development-field/probe/Cargo.lock
+          if-no-files-found: error

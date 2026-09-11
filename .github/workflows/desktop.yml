@@ -1,28 +1,17 @@
 name: O:I desktop
 
+# Guards the desktop surface only: the cradle kernel crate, the cradle web
+# build and the native Tauri shell graph. The CLI is gated by verify.yml; the
+# kernel tests that need built owner executables are marked ignored and run
+# through `oi dev gate`, so no sibling repository is built here.
+
 on:
   pull_request:
     paths:
       - 'desktop/**'
       - 'packages/oi-design-system/**'
-      - 'site/**'
-      - 'cli/src/status.rs'
-      - 'cli/src/lib.rs'
-      - 'cli/tests/desktop_status.rs'
-      - 'skills/suite-operator/**'
       - '.github/workflows/desktop.yml'
-  push:
-    branches:
-      - main
-    paths:
-      - 'desktop/**'
-      - 'packages/oi-design-system/**'
-      - 'site/**'
-      - 'cli/src/status.rs'
-      - 'cli/src/lib.rs'
-      - 'cli/tests/desktop_status.rs'
-      - 'skills/suite-operator/**'
-      - '.github/workflows/desktop.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -32,36 +21,23 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  core:
+  kernel:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
       - uses: Swatinem/rust-cache@v2.9.2
         with:
           workspaces: desktop/cradle/kernel
-      - name: Test and lint O:I CLI library
-        run: |
-          cargo test --manifest-path cli/Cargo.toml --all-targets --locked
-          cargo clippy --manifest-path cli/Cargo.toml --all-targets --locked -- -D warnings
-      - name: Build pinned Central ctrl for cradle kernel integration
-        shell: bash
-        run: |
-          set -euo pipefail
-          CENTRAL_SHA="$(python3 -c "import json; s=json.load(open('surfaces.json')); print(next(x['native']['command_revision'] for x in s['surfaces'] if x['id']=='central'))")"
-          git clone --quiet https://github.com/EpiLogos/Central.git "$RUNNER_TEMP/central"
-          git -C "$RUNNER_TEMP/central" checkout --quiet --detach "$CENTRAL_SHA"
-          test "$(git -C "$RUNNER_TEMP/central" rev-parse HEAD)" = "$CENTRAL_SHA"
-          cargo build --manifest-path "$RUNNER_TEMP/central/Cargo.toml" --workspace --locked --release
-          test -x "$RUNNER_TEMP/central/target/release/ctrl"
-          echo "OI_CENTRAL_CTRL_BIN=$RUNNER_TEMP/central/target/release/ctrl" >> "$GITHUB_ENV"
       - name: Test and lint cradle kernel
         run: |
           cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --all-targets
           cargo clippy --manifest-path desktop/cradle/kernel/Cargo.toml --all-targets -- -D warnings
 
-  presentation:
+  cradle:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -70,20 +46,11 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: |
-            site/package-lock.json
-            desktop/cradle/package-lock.json
-      - name: Build public front door against shared tokens
-        run: |
-          npm install --prefix site --no-audit --no-fund
-          npm --prefix site run build
-      - name: Build cradle rendered layer from lock
+          cache-dependency-path: desktop/cradle/package-lock.json
+      - name: Build cradle web bundle from the locked graph
         run: |
           npm ci --prefix desktop/cradle --no-audit --no-fund
           npm --prefix desktop/cradle run build
-      - name: Preserve shared-field presentation contracts
-        run: |
-          node --test shared-field/*.test.mjs
 
   native-shell:
     runs-on: macos-15
@@ -101,7 +68,9 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: desktop/cradle/package-lock.json
-      - name: Install cradle dependencies from lock
-        run: npm ci --prefix desktop/cradle --no-audit --no-fund
-      - name: Check Rust-owned native shell from lock
-        run: cargo check --manifest-path desktop/cradle/src-tauri/Cargo.toml --locked --target aarch64-apple-darwin
+      - name: Prove locked native-shell graph
+        run: |
+          npm ci --prefix desktop/cradle --no-audit --no-fund
+          cargo check --manifest-path desktop/cradle/src-tauri/Cargo.toml --locked --target aarch64-apple-darwin
+      - name: Prove the check did not rewrite locks
+        run: git diff --exit-code -- desktop/cradle/src-tauri/Cargo.lock desktop/cradle/package-lock.json
