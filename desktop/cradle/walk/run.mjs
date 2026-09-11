@@ -55,6 +55,8 @@ const SCENARIOS = {
   "shared-field-return": {module:"scenarios/shared-field-return.mjs",kernel:true,aliases:["7"]},
   "a2a-exchange": {module:"scenarios/a2a-exchange.mjs",kernel:true,aliases:["7b"]},
   "leave-reenter": {module:"scenarios/leave-reenter.mjs",kernel:true,aliases:["6f"]},
+  "day-edit": {module:"scenarios/day-edit.mjs",kernel:true,aliases:["6f2"]},
+  "agency-planes": {module:"scenarios/agency-planes.mjs",kernel:true,aliases:["6c"]},
   "file-edit": {module:"scenarios/file-edit.mjs",kernel:true,aliases:[]},
   files: { module: "scenarios/files.mjs", kernel: true, aliases: [] },
   "rendering-quality": {module:"scenarios/rendering-quality.mjs",kernel:true,aliases:[]},

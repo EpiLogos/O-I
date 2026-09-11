@@ -8,7 +8,8 @@ export type ReceivingRequest =
   | {kind:"document";source_ref:string;document_id:string}
   | {kind:"review";return_ref:string;expected_return_revision:string;disposition:"accepted"|"rejected";expected_source_revision?:string}
   | {kind:"include";return_ref:string;expected_return_revision:string;expected_source_revision:string}
-  | {kind:"recover";return_ref:string;expected_return_revision:string};
+  | {kind:"recover";return_ref:string;expected_return_revision:string}
+  | {kind:"mutate-field";source_ref:string;document_id:string;expected_revision:string;request_id:string;field_id:string;value:string};
 export interface ContributionAuthor {principal_ref:string;actor_kind:string}
 export interface ReturnRow {return_ref:string;revision:string;sequence:number;status:"pending"|"needs-review"|"accepted"|"rejected"|"including"|"uncertain"|"included"|string;source_ref:string;document_id:string;author:ContributionAuthor;occurred_at_unix_seconds?:number|null;received_at_unix_seconds:number;now_ref?:string|null;day_ref?:string|null;task_ref?:string|null;run_ref?:string|null;session_ref?:string|null}
 export interface ReturnReview {reviewer_ref:string;authority_ref:string;authority_revision:string;disposition:string;source_revision:string;reviewed_at_unix_seconds:number}
@@ -20,4 +21,12 @@ export async function receiving<T>(transport:KernelTransportStatus,project:strin
   const result=await kernelOp(transport,{op:"receiving",project,request});
   if(result.error || result.outcome?.result!=="receiving_reading")throw new Error(result.error??"Central receiving is unavailable");
   return result.outcome.data as T;
+}
+/** One human authored-field edit through the owner's `central.document.mutate`
+ * `field.set` (the die face's write route). The owner CAS-checks
+ * `expected_revision`, refuses non-human authors by its own law, and
+ * deduplicates on `request_id`; its receipt carries the advanced revision. */
+export async function mutateField(transport:KernelTransportStatus,project:string|null,input:{source_ref:string;document_id:string;expected_revision:string;field_id:string;value:string}):Promise<{operation_receipt?:{revision?:string;status?:string};[key:string]:unknown}> {
+  const request_id=`req/desktop-${typeof crypto!=="undefined"&&"randomUUID" in crypto?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)}`;
+  return receiving(transport,project,{kind:"mutate-field",...input,request_id});
 }

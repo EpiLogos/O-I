@@ -99,3 +99,53 @@
 .encounter-addressed-history{margin-top:8px;font-size:var(--oi-shell-type-nav)}
 .encounter-addressed-history summary{cursor:pointer;color:var(--oi-muted-2)}
 .encounter-addressed-history ul{margin:6px 0 0;padding-left:18px}
+
+/* The Activity plane's wait and fault rows: the owner's own connection state,
+ * carried verbatim — a wait is never progress, a fault is never softened. */
+.encounter-wait {
+  margin: 6px 0;
+  font-size: var(--oi-shell-type-ui);
+  color: var(--oi-muted-2);
+}
+.encounter-fault {
+  margin: 6px 0;
+  font-size: var(--oi-shell-type-ui);
+  color: var(--oi-ink);
+}
+.encounter-journal {
+  margin: 10px 0;
+  font-size: var(--oi-shell-type-ui);
+}
+.encounter-journal summary { cursor: pointer; color: var(--oi-muted-2); }
+.encounter-journal-list { list-style: none; margin: 6px 0; padding: 0; }
+.encounter-journal-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+  padding: 3px 0;
+  border-bottom: 1px solid var(--oi-line, rgba(0,0,0,0.1));
+}
+.encounter-journal-kind { color: var(--oi-ink); }
+.encounter-journal pre {
+  max-width: 60ch;
+  max-height: 12em;
+  overflow: auto;
+  font-size: var(--oi-shell-type-small, var(--oi-shell-type-ui));
+}
+.encounter-fault-held {
+  margin: 6px 0;
+  font-size: var(--oi-shell-type-ui);
+  color: var(--oi-muted-2);
+}
+
+/* The Context plane keeps §4.1's three correlated facts visibly distinct. */
+.encounter-context-facts dt { margin-top: 10px; font-weight: 600; }
+.encounter-context-facts dd { margin: 3px 0 0; color: var(--oi-muted-2); }
+.encounter-context-facts dd[data-fact="operative-context-absent"] { color: var(--oi-muted-2); }
+
+/* The Inspect plane's delivery registrations: identities minted here,
+ * bound durably by the owner, shown with their settled phases. */
+.encounter-inspect h3 { margin: 14px 0 4px; font-size: var(--oi-shell-type-ui); }
+.encounter-deliveries { list-style: none; margin: 4px 0; padding: 0; }
+.encounter-deliveries li { display: flex; gap: 10px; align-items: baseline; padding: 2px 0; }

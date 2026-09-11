@@ -923,3 +923,25 @@
   font-size: var(--oi-shell-type-body);
   color: var(--oi-muted-2);
 }
+
+/* The die face hosts the owner's field writes: a compact sync line above the
+ * frame reports what is saving, what saved, what the owner refused
+ * (verbatim), and which edited regions have no owner field mapping. */
+.die-face-host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.die-face-sync {
+  padding: 4px 15px;
+  font-size: var(--oi-shell-type-ui);
+  color: var(--oi-muted-2);
+}
+.die-face-sync p { margin: 2px 0; }
+.die-face-sync-saving { color: var(--oi-ink); }
+.die-face-sync-refused { color: var(--oi-ink); }
+.source-reread-day {
+  margin-right: 8px;
+  font-size: var(--oi-shell-type-body);
+}

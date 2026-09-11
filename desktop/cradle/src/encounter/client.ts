@@ -16,6 +16,10 @@ export interface NativePermission {native_request_id:string;native_session_id:st
 export interface EncounterAction {ref:string;enabled:boolean;reason:string|null}
 export interface EncounterReading {schema?:"aikit.encounter-view/v1";agent_session:string;blocks:{id:number;kind:string;text:string}[];more:boolean;draft:Draft;connection?:EncounterStatus;permissions?:NativePermission[];permission_authority?:"native-provider-consent";actions?:EncounterAction[]}
 export interface EncounterStatus {resident?:boolean;native_session_id?:string;state:string;error?:string|null;provider?:{id:string;label:string}}
+/** One page of the owner's raw journal (`aikit encounter read`): the events
+ * behind the transcript view, on the owner's own cursor. */
+export interface JournalEvent {cursor:number;event:unknown}
+export interface JournalPage {agent_session:string;events:JournalEvent[];next_cursor:number;more:boolean}
 /** Fresh sender-side delivery identity. The owner binds it durably; reuse with
  * different content is a conflict, and a repeat of the exact delivery is a
  * receipt read, never a resend. */
