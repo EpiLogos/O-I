@@ -48,6 +48,7 @@ const SCENARIOS = {
   encounter: {module:"scenarios/encounter.mjs",kernel:true,aliases:[]},
   "context-draft": {module:"scenarios/context-draft.mjs",kernel:true,aliases:[]},
   "select-send": {module:"scenarios/select-send.mjs",kernel:true,aliases:["6b"]},
+  "send-group-reconnect": {module:"scenarios/send-group-reconnect.mjs",kernel:true,aliases:["6b2"]},
   "receive-include": {module:"scenarios/receive-include.mjs",kernel:true,aliases:["6e"]},
   "first-vertical": {module:"scenarios/first-vertical.mjs",kernel:true,aliases:["vertical"]},
   "file-edit": {module:"scenarios/file-edit.mjs",kernel:true,aliases:[]},

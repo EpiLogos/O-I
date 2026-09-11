@@ -1,0 +1,149 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "send-group-reconnect",
+  "generated_at": "2026-09-11T01:47:33.690Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 19533,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Both participants are connected with the native dispatch service disclosed"
+    },
+    {
+      "ok": true,
+      "label": "The group composer previews the explicit recipients before any dispatch"
+    },
+    {
+      "ok": true,
+      "label": "Every recipient settles on its own durable delivery result under one group delivery identity"
+    },
+    {
+      "ok": true,
+      "label": "Each recipient's controlled provider received exactly one addressed prompt"
+    },
+    {
+      "ok": true,
+      "label": "Each prompt carries its own recipient's native selected-Agent identity"
+    },
+    {
+      "ok": true,
+      "label": "An audience that omits a recipient is refused by that participant's own disclosure law, shown verbatim"
+    },
+    {
+      "ok": true,
+      "label": "A refused group dispatch produces no provider effect on any recipient"
+    },
+    {
+      "ok": true,
+      "label": "An audience beyond the explicit recipient set is refused with the owner's group-agreement code"
+    },
+    {
+      "ok": true,
+      "label": "Still no provider effect from the refused group"
+    },
+    {
+      "ok": true,
+      "label": "An undisclosed packet source refuses the whole group before the first transport effect"
+    },
+    {
+      "ok": true,
+      "label": "Still no provider effect from the refused group"
+    },
+    {
+      "ok": true,
+      "label": "Repeating the exact group delivery identity returns durable receipts without resending"
+    },
+    {
+      "ok": true,
+      "label": "A duplicate group dispatch produces no second provider prompt"
+    },
+    {
+      "ok": true,
+      "label": "After the owner restart a fresh open is refused — the recorded session's existence is disclosed by the owner's own code"
+    },
+    {
+      "ok": true,
+      "label": "Reconnect resumes the actually recorded native session identity"
+    },
+    {
+      "ok": true,
+      "label": "The reconnected transcript carries the loaded native session's own replayed material, not a fresh session"
+    },
+    {
+      "ok": true,
+      "label": "The provider log shows the explicit native load of the recorded session"
+    },
+    {
+      "ok": true,
+      "label": "The group delivery receipt is durable across the owner restart"
+    },
+    {
+      "ok": true,
+      "label": "The durable receipt read produces no new provider prompt"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-11T01:47:33.910Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 41,
+      "data": {
+        "file": "send-group-reconnect-group-composed.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 41,
+      "data": {
+        "file": "send-group-reconnect-group-returned.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 39,
+      "data": {
+        "file": "send-group-reconnect-group-refusals.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 38,
+      "data": {
+        "file": "send-group-reconnect-reconnected-recorded-session.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "send-group-reconnect-group-composed.png",
+    "send-group-reconnect-group-returned.png",
+    "send-group-reconnect-group-refusals.png",
+    "send-group-reconnect-reconnected-recorded-session.png"
+  ]
+}

@@ -98,8 +98,17 @@ pub enum EncounterRequest {
     /// participation basis are owner-validated at commit; a refusal carries the
     /// owner's own code verbatim. The human draft buffer is never touched.
     Send { agent_session:String, turn:AddressedTurn },
+    /// Addressed group dispatch: one delivery identity, explicit per-recipient
+    /// participation bases. The owner admits the whole group (privacy
+    /// admission) before the first transport effect and every recipient gets
+    /// an independent durable result; the fanout is never atomic.
+    SendGroup { delivery_ref:String, sender:String, packet:AddressedPacket, recipients:Vec<GroupRecipient> },
     /// Read one addressed delivery's durable owner receipt.
     Delivery { agent_session:String, delivery_ref:String },
+    /// Resume the actually recorded native session identity. The owner refuses
+    /// contradictory provider/space/cwd/command bases; a plain open with a
+    /// recorded binding is refused first (`encounter.resume_required`).
+    Reconnect { space:String, agent_session:String, provider:String },
     /// Probe the resident owner dispatch service (never a provider effect).
     Health,
 }
@@ -109,13 +118,21 @@ pub enum EncounterRequest {
 pub struct AddressedPacket { pub text:String, pub source_refs:Vec<String>, pub audience:Vec<String> }
 #[derive(Clone, Debug, serde::Deserialize, PartialEq, serde::Serialize)]
 pub struct AddressedTurn { pub delivery_ref:String, pub sender:String, pub expected_binding_revision:String, pub packet:AddressedPacket }
+/// One explicit group recipient; field names are the owner wire contract
+/// (`encounter_agency.rs` in the bound ai-kit revision), carried verbatim.
+#[derive(Clone, Debug, serde::Deserialize, PartialEq, serde::Serialize)]
+pub struct GroupRecipient { pub agent_session:String, pub expected_binding_revision:String }
 #[derive(Clone, Debug, serde::Deserialize, PartialEq, serde::Serialize)]
 #[serde(tag="outcome",rename_all="lowercase")]
 pub enum PermissionDecision {Selected {option_id:String},Cancelled}
 impl EncounterRequest {
     fn sessions(&self)->Vec<&str> {match self {
         Self::Start|Self::Providers|Self::Health=>Vec::new(),
-        Self::Permission{agent_session,..}|Self::View{agent_session,..}|Self::Open{agent_session,..}|Self::Read{agent_session,..}|Self::Draft{agent_session,..}|Self::Prompt{agent_session,..}|Self::Cancel{agent_session,..}|Self::Status{agent_session}|Self::Send{agent_session,..}|Self::Delivery{agent_session,..}=>vec![agent_session],
+        Self::Permission{agent_session,..}|Self::View{agent_session,..}|Self::Open{agent_session,..}|Self::Read{agent_session,..}|Self::Draft{agent_session,..}|Self::Prompt{agent_session,..}|Self::Cancel{agent_session,..}|Self::Status{agent_session}|Self::Send{agent_session,..}|Self::Delivery{agent_session,..}|Self::Reconnect{agent_session,..}=>vec![agent_session],
+        // The attachment gate covers every named participant of a group: a
+        // session outside this Project's SessionSpaces is refused here, before
+        // the owner sees the turn.
+        Self::SendGroup{recipients,..}=>recipients.iter().map(|recipient|recipient.agent_session.as_str()).collect(),
     }}
 }
 impl Client {
@@ -136,7 +153,7 @@ impl Client {
         if matches!(request,EncounterRequest::Start) {command.arg("encounter-start");}
         else {
             let mut body=serde_json::to_value(request).map_err(|error|error.to_string())?;
-            if matches!(request,EncounterRequest::Open{..}) {body["cwd"]=serde_json::json!(cwd);}
+            if matches!(request,EncounterRequest::Open{..}|EncounterRequest::Reconnect{..}) {body["cwd"]=serde_json::json!(cwd);}
             command.args(["encounter","--request-json"]).arg(body.to_string());
         }
         let output=command.output().map_err(|error|format!("AIKit encounter owner unavailable: {error}"))?;
