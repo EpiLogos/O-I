@@ -430,10 +430,15 @@ impl CentralClient {
 
     /// List/read pending Returns, read a native document's current basis, or
     /// perform one human review/include. Every input is owner-validated; the
-    /// response payload is carried verbatim.
-    pub fn receiving(&self, project: &str, request: &ReceivingRequest) -> Result<Value, OwnerCallError> {
+    /// response payload is carried verbatim. `None` project omits the input
+    /// entirely — Central resolves the ROOT register's receiving field.
+    pub fn receiving(&self, project: Option<&str>, request: &ReceivingRequest) -> Result<Value, OwnerCallError> {
         let mut input = serde_json::Map::new();
-        input.insert("project".to_owned(), Value::String(project.to_owned()));
+        // None names the ROOT register: an explicit null is the run-level
+        // convention that carries as absence — omitting the key would let
+        // the configured project co-reference back-fill and silently query
+        // the wrong register's field.
+        input.insert("project".to_owned(), project.map(|p| json!(p)).unwrap_or(Value::Null));
         let action: &str = match request {
             ReceivingRequest::List { after, limit } => {
                 if let Some(after) = after { input.insert("after".to_owned(), json!(after)); }

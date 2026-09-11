@@ -206,6 +206,9 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
       const opened = await kernel.apply({ op: "surface_open", surface_id: binding.id, kind: binding.kind, ...(binding.ref ? { source_ref: binding.ref } : {}), title: binding.title });
       if (opened?.result !== "surface_opened") throw new Error("This surface could not be opened");
       if (binding.kind === "source" && binding.ref) {
+        // For a root-register buffer (the Day, opened through the owner's Day
+        // route) the kernel serves the held buffer here instead of re-reading
+        // through the project-scoped source route, which cannot serve it.
         const sourceOpened = await kernel.apply({ op: "source_open", source_ref: binding.ref, project: binding.project });
         if (sourceOpened?.result !== "source_opened") throw new Error("Central did not return this source's reading");
         const draft = readDraft(binding.ref);
@@ -345,7 +348,11 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
       ref = read.location.ref; resolvedLocation = read.location;
     } else {
       const read = await readFile(kernel.transport,location);
-      if(read.source && read.project) {openSource({...read.source,revision:read.revision},read.project.name);return;}
+      // A bound source opens as a source surface whether a project scope
+      // holds it or not — a root-register Day document is a source with no
+      // project, and its strips route by the ref's own register (null
+      // project = the root register's receiving field).
+      if(read.source) {openSource({...read.source,revision:read.revision},read.project?.name);return;}
       ref = read.location.ref; project = read.project?.name; resolvedLocation = read.location;
     }
     if(kernel.transport.kind==="tauri") {
@@ -358,6 +365,21 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
     const opened=await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"file",source_ref:binding.ref,title:binding.title});
     if(opened?.result!=="surface_opened")throw new Error("Central file surface could not be opened");
     setState(state=>groupsOf(state.root).some(group=>group.tabs.includes(binding.id))?executeFrameAction(state,"surface.activate",{surfaceId:binding.id}):openBinding({...state,closedStack:state.closedStack.filter(id=>id!==binding.id)},binding));
+  };
+
+  /** The human's Day, through the owner's own route: `central.day.read`
+   * discloses the Day source's canonical ref, and that disclosure is the
+   * only identity the desktop opens it by (never a ref derived from a
+   * path). The Day document is a root-register source; its strips route to
+   * the root register's receiving field. */
+  const openToday = async () => {
+    // The Day's buffer comes from the owner's Day route (root-register
+    // sources have no project-scoped source read); the surface then binds
+    // to the ref that reading disclosed.
+    const outcome = await kernel.dayOpen();
+    const buffer = outcome?.result === "source_opened" ? outcome.buffer : undefined;
+    if (!buffer) throw new Error("Central's Day reading did not yield a source to open");
+    await openSource({ref: buffer.source_ref, path: buffer.path ?? "", treatment: "projectcentral-user", agent_retrieval_allowed: true, revision: buffer.base_revision}, undefined);
   };
 
   const openKnowledge = async (address: KnowledgeAddress, title: string, project?: string, placement: "tab"|"page"|"window" = "tab", graphOrigin?:string) => {
@@ -779,7 +801,7 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
         subject={{ref:subjectRef,title:subjectTitle,context:<><h2>{subjectTitle}</h2>{subjectBuffer ? <p>{subjectBuffer.project} · {subjectBuffer.dirty ? "Unsaved changes" : "Saved"}</p> : subjectBinding?.project ? <p>{subjectBinding.project}</p> : <p>Select a surface to inspect its context.</p>}</>,history:subjectHistory}}
         right={<AgentLayer project={workspace.current.project} subject={{ref:subjectRef,kind:subjectBinding?.kind,title:subjectTitle,project:subjectBinding?.project ?? subjectBuffer?.project,location:subjectBinding?.location,dirty:subjectBuffer?.dirty,revision:subjectBuffer?.base_revision}} history={subjectHistory} historyAvailable={subjectHistoryAvailable} accompanying={state.accompanying} onAccompanying={value=>setState(s=>({...s,accompanying:value}))} full={state.rightDepth==="full"} onFull={()=>setState(s=>({...s,rightDepth:s.rightDepth==="full"?"panel":"full"}))} onClose={()=>setState(s=>({...s,rightDepth:"collapsed"}))}/>}
         layout={state} setLayout={setState} workspace={workspace.current} workspaces={workspace.workspaces} activate={workspace.activate} create={workspace.create} rename={workspace.rename} onRecover={workspace.showRecovery} error={workspace.error}
-        navigator={workspaceSelector => <WorldNavigator onAgent={summonAgent} onSystem={()=>void openSystem().catch(e=>setWindowError(String(e)))} onOpenEncounter={openEncounter} centralFiles={workspace.current.centralFiles??false} onCentralFilesChange={workspace.setCentralFiles} workspaceSelector={workspaceSelector} searchShortcut={leader.label} key={workspace.current.id} projectNavigation={workspace.current.projectNavigation ?? {}} onNavigationChange={(ref,change)=>workspace.setProjectNavigation(ref,change,workspace.current.id)} onOpenFile={openFile} onProjectChange={workspace.browse} onOpenWiki={(ref,title,project)=>openKnowledge({kind:"wiki",value:ref},title,project)} onSearch={()=>setSearchOpen(true)} activeEncounterRef={activeEncounterRef} />}>
+        navigator={workspaceSelector => <WorldNavigator onAgent={summonAgent} onSystem={()=>void openSystem().catch(e=>setWindowError(String(e)))} onOpenEncounter={openEncounter} centralFiles={workspace.current.centralFiles??false} onCentralFilesChange={workspace.setCentralFiles} workspaceSelector={workspaceSelector} searchShortcut={leader.label} key={workspace.current.id} projectNavigation={workspace.current.projectNavigation ?? {}} onNavigationChange={(ref,change)=>workspace.setProjectNavigation(ref,change,workspace.current.id)} onOpenFile={openFile} onProjectChange={workspace.browse} onOpenToday={openToday} onOpenWiki={(ref,title,project)=>openKnowledge({kind:"wiki",value:ref},title,project)} onSearch={()=>setSearchOpen(true)} activeEncounterRef={activeEncounterRef} />}>
       {state.root ? (
         <Workbench
           onView={(id,view)=>workspace.surfaceView(workspace.current.id,id,view)}

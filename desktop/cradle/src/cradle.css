@@ -885,3 +885,41 @@
 .pane[data-tab-focus="true"] > .tab-strip{height:0;min-height:0;overflow:hidden;border:0;padding-top:0;padding-bottom:0}
 .pane .tab-focus-reveal{position:absolute;right:35px;top:0;width:24px;height:5px;opacity:0;z-index:25;border:0;background:var(--oi-canvas-ground);color:var(--oi-muted-2);cursor:pointer;transition:height var(--oi-motion-ui),opacity var(--oi-motion-ui)}
 .pane .tab-focus-reveal:is(:hover,:focus-visible){height:24px;opacity:1}
+
+/* The die face of a native Day document: the supplied shell projected with
+ * the owner's canonical payload, read-only, beside the ordinary strips.
+ * Same opaque-origin posture as the material frames (no allow-same-origin,
+ * so the face can never reach the desktop bridge). */
+.die-face {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: var(--oi-canvas-ground);
+}
+
+.source-view-toggle {
+  display: inline-flex;
+  gap: 0;
+  margin-right: 8px;
+  border: 1px solid var(--oi-line, #ccc6);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.source-view-toggle button {
+  border: none;
+  border-radius: 0;
+  padding: 2px 10px;
+  font-size: var(--oi-shell-type-body);
+}
+.source-view-toggle button[aria-selected="true"] {
+  background: var(--oi-active, rgba(0,0,0,0.08));
+}
+
+.die-face-unavailable,
+.die-face-loading {
+  padding: 15px;
+  font-size: var(--oi-shell-type-body);
+  color: var(--oi-muted-2);
+}

@@ -18,6 +18,7 @@ import { SourceHistory } from "./SourceHistory";
 import { DocumentReturns } from "../receiving/DocumentReturns";
 import { DocumentContributions } from "../receiving/DocumentContributions";
 import { SharedFieldMaterial } from "../receiving/SharedFieldMaterial";
+import { DayDieFace } from "../receiving/DayDieFace";
 import { useKernel } from "../kernel/KernelProvider";
 import type { SurfaceBinding } from "./types";
 import {EditorFrame} from "../editor/EditorChrome";
@@ -38,6 +39,10 @@ export function SourceSurface(props: SourceSurfaceProps) {
   const buffer = kernel.snapshot.buffers[binding.ref ?? ""];
   const error = kernel.sourceErrors[binding.ref ?? ""];
   const [historyOpen, setHistoryOpen] = useState(false);
+  // Declared with the other hooks, BEFORE any early return: a restored
+  // surface can mount while its buffer has not arrived yet, and hook counts
+  // must match across that transition.
+  const [view,setView]=useState<"rendered"|"source">("rendered");
   const initialDraft = useRef(binding.ref ? readDraft(binding.ref) : null);
   const [draftError, setDraftError] = useState<string | null>(null);
   const [text, setText] = useState(initialDraft.current?.content ?? buffer?.content ?? "");
@@ -153,17 +158,30 @@ export function SourceSurface(props: SourceSurfaceProps) {
 
   const conflict = buffer.conflict;
   const saveFailed = conflict !== undefined;
+  /** A native Day document carries the owner's ql-doc format as its payload
+   * (central.contribution-document/v1, kind "day"). Its face is the supplied
+   * die shell projected with the CANONICAL payload — the owner's bytes, never
+   * the local dirty layer. Detection is total: anything that does not parse
+   * as a Day document is simply the ordinary source surface. */
+  const dayDocument = (()=>{
+    try{
+      const parsed=JSON.parse(buffer.content) as {schema?:string;kind?:string;template_payload?:unknown};
+      return parsed.schema==="central.contribution-document/v1"&&parsed.kind==="day"&&parsed.template_payload&&typeof parsed.template_payload==="object"?parsed:null;
+    }catch{return null;}
+  })();
+  const dieView = dayDocument!==null && view==="rendered";
   return (
     <EditorFrame
       className={`source-editor${buffer.dirty ? " dirty" : ""}${saveFailed ? " conflicted" : ""}`}
       label={`Editor ${binding.title}`}
-      toolbar={<EditorCommands editor={textareaRef} markdown={markdown}/>}
+      toolbar={<>{dayDocument&&<span className="source-view-toggle" role="group" aria-label="Document view"><button type="button" role="tab" aria-selected={dieView} onClick={()=>setView("rendered")}>Rendered</button><button type="button" role="tab" aria-selected={!dieView} onClick={()=>setView("source")}>Source</button></span>}<EditorCommands editor={textareaRef} markdown={markdown}/></>}
       footer={<><span className="editor-path source-revision" data-revision={buffer.base_revision} title={`Central / Work / ${buffer.project} / ${buffer.path}`}>Central / Work / {buffer.project} / {buffer.path}</span><span>Ln {caret.line}, Col {caret.column}</span><span className={buffer.dirty?"source-dirty-marker":"source-clean-marker"}>{buffer.dirty?"Unsaved":"Saved"}</span><button type="button" aria-expanded={historyOpen} onClick={()=>setHistoryOpen(open=>!open)}>History</button><button type="button" onClick={onSave} disabled={!buffer.dirty}>Save · ⌘S</button></>}
       data={{kind:"source",ref:binding.ref,dirty:buffer.dirty,conflicted:saveFailed}}
     >
       {draftError && <p role="alert">{draftError}</p>}
       {error && <p className="source-note" role="alert">{error}</p>}
-      <div className="source-editor-scroll" ref={scrollRef} onScroll={retainView} onKeyDown={onKeyDown}>
+      {dieView&&dayDocument&&<DayDieFace payload={dayDocument.template_payload} revision={buffer.base_revision}/>}
+      <div className="source-editor-scroll" ref={scrollRef} onScroll={retainView} onKeyDown={onKeyDown} hidden={dieView}>
         <div className="source-editor-body">
           <TextEditor ref={textareaRef} binding={binding} filename={buffer.path} aria-label={`Editing ${binding.title}`} value={text} onChange={onEdit} onSelect={updateCaret} onSave={onSave}/>
         </div>
@@ -217,8 +235,13 @@ export function SourceSurface(props: SourceSurfaceProps) {
         </div>
         ) : null}
       </div>
-      {buffer.project && <DocumentReturns sourceRef={binding.ref} project={buffer.project}/>}
-      {buffer.project && <DocumentContributions sourceRef={binding.ref} project={buffer.project}/>}
+      {/* The strips' register follows the owner's own ref grammar — a
+          `central:source:control:root:` source lives in the ROOT register
+          (a Day document does), so its receiving field is the root's;
+          everything else routes through the buffer's project register.
+          `null` project is the owner's root scope, carried verbatim. */}
+      <DocumentReturns sourceRef={binding.ref} project={binding.ref?.startsWith("central:source:control:root:")?null:buffer.project}/>
+      <DocumentContributions sourceRef={binding.ref} project={binding.ref?.startsWith("central:source:control:root:")?null:buffer.project}/>
       <SharedFieldMaterial sourceRef={binding.ref}/>
 
     </EditorFrame>

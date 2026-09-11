@@ -70,6 +70,8 @@ aside.world-navigator[aria-label="World navigator"] { padding: 19px 10px 0; }
 .world-navigator .world-root:hover { background: var(--oi-wash); color: var(--oi-accent-ink); }
 .world-navigator .world-root[aria-current="true"] { color: var(--oi-accent-ink); }
 .world-navigator .central-mode-row .world-root { flex: 1; margin: 0; padding: 4px 0 4px 24px; }
+.world-navigator .today-open { flex: 1; margin: 0; padding: 4px 0 4px 24px; font-size: var(--oi-shell-type-ui); color: var(--oi-muted); text-align: left; background: none; border: none; border-radius: 4px; transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.world-navigator .today-open:hover { background: var(--oi-wash); color: var(--oi-accent-ink); }
 
 /* ===== "Work projects" label row + refresh ===== */
 .world-navigator header { margin: 0 6px 5px; height: 26px; }

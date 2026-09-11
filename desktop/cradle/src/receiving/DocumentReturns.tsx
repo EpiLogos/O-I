@@ -7,7 +7,7 @@ import {receiving,type DocumentReading,type ReceivingPage,type ReceivingRequest,
  * Arrival never edits the document. Quietly absent when the bound owner does
  * not expose receiving or when nothing targets this source: the desktop never
  * advertises a capability its owner cannot do. */
-export function DocumentReturns({sourceRef,project}:{sourceRef:string;project:string}) {
+export function DocumentReturns({sourceRef,project}:{sourceRef:string;project:string|null}) {
  const kernel=useKernel();
  const [rows,setRows]=useState<ReturnRow[]>();
  const [unavailable,setUnavailable]=useState(false);
@@ -99,6 +99,11 @@ export function DocumentReturns({sourceRef,project}:{sourceRef:string;project:st
       <dt>Proposed operation</dt><dd>{String((open.record.proposal as {operation?:string}).operation??open.record.proposal)}{anchor(open.record.proposal as {entry_id?:string;field_id?:string;reply_to?:string})&&<span className="return-anchor"> — {anchor(open.record.proposal as {entry_id?:string;field_id?:string;reply_to?:string})}</span>}</dd>
       {"html" in open.record.proposal&&<><dt>Proposed content</dt><dd className="return-proposal">{String(open.record.proposal.html)}</dd></>}
       <dt>Basis at arrival</dt><dd>{open.record.proposed_source_revision}{open.record.stale_at_arrival?" — already stale when it arrived":""}</dd>
+      {/* Late Returns keep their own times: when the work happened and when
+        the owner received it. Both are the owner's record, shown verbatim —
+        arrival while the desktop was closed never rewrites either. */}
+      {open.record.occurred_at_unix_seconds!=null&&<><dt>Occurred</dt><dd className="return-occurred">{new Date(open.record.occurred_at_unix_seconds*1000).toISOString()}</dd></>}
+      <dt>Received</dt><dd className="return-received">{new Date(open.record.received_at_unix_seconds*1000).toISOString()}</dd>
       {basis&&<><dt>Current document basis</dt><dd>{basis.revision.revision}{basis.unreviewed_external_revision?" — externally edited since":""}</dd></>}
       {open.record.review&&<><dt>Review</dt><dd>{open.record.review.disposition} by {open.record.review.reviewer_ref} on {open.record.review.source_revision}</dd></>}
       {sharedFieldLineage(open.record.proposal)&&<><dt>Shared field</dt><dd className="return-shared-field" data-shared-field="true">admitted contribution — projection <code>{sharedFieldLineage(open.record.proposal)!.projection_ref}</code> rev {sharedFieldLineage(open.record.proposal)!.projection_revision}{sharedFieldLineage(open.record.proposal)!.withdrawn?" · withdrawn by the publisher, admitted material retained":""}{sharedFieldLineage(open.record.proposal)!.admission_ref?<> · admission <code>{sharedFieldLineage(open.record.proposal)!.admission_ref}</code></>:null}</dd></>}

@@ -21,7 +21,7 @@ const SETTINGS_GLYPH = "M4 7h16M4 17h16M8 4v6m8 4v6";
 
 /** Summoned reading over Central's owner operations; selection lives in the
  * kernel. Local state is only filter text and in-flight presentation. */
-export function WorldNavigator({ onSystem,onOpenEncounter, centralFiles, onCentralFilesChange, workspaceSelector, searchShortcut, projectNavigation, onNavigationChange, onOpenFile, onProjectChange, onOpenWiki, onSearch, activeEncounterRef }: { onSystem:()=>void;onOpenEncounter:(row:EncounterRow)=>Promise<void>; centralFiles: boolean; onCentralFilesChange:(files:boolean)=>void; workspaceSelector: ReactNode; searchShortcut: string; projectNavigation: Record<string, ProjectNavigation>; onNavigationChange: (ref: string, change: Partial<ProjectNavigation>) => void; onSearch: () => void; onOpenWiki: (ref:string,title:string,project?:string)=>Promise<void>; onOpenFile: (location:CentralLocation)=>Promise<void>; onProjectChange?: (project?: string) => void; onAgent?: () => void; activeEncounterRef?: string }) {
+export function WorldNavigator({ onSystem,onOpenEncounter, centralFiles, onCentralFilesChange, workspaceSelector, searchShortcut, projectNavigation, onNavigationChange, onOpenFile, onProjectChange, onOpenWiki, onSearch, onOpenToday, activeEncounterRef }: { onSystem:()=>void;onOpenEncounter:(row:EncounterRow)=>Promise<void>; centralFiles: boolean; onCentralFilesChange:(files:boolean)=>void; workspaceSelector: ReactNode; searchShortcut: string; projectNavigation: Record<string, ProjectNavigation>; onNavigationChange: (ref: string, change: Partial<ProjectNavigation>) => void; onSearch: () => void; onOpenWiki: (ref:string,title:string,project?:string)=>Promise<void>; onOpenFile: (location:CentralLocation)=>Promise<void>; onProjectChange?: (project?: string) => void; onOpenToday?: () => Promise<void>; onAgent?: () => void; activeEncounterRef?: string }) {
   const kernel = useKernel();
   const reading = kernel.snapshot.navigator;
   const [error,setError] = useState<string>();
@@ -89,6 +89,7 @@ export function WorldNavigator({ onSystem,onOpenEncounter, centralFiles, onCentr
     {workspaceSelector}
     <section className="central-operating-region" aria-label="Central operating spaces">
     <div className="central-mode-row"><button className="world-root" aria-label="Browse Central root" aria-current={!selected ? "true" : undefined} onClick={() => void load()}>Overview</button>{modes("","Central")}</div>
+    {onOpenToday&&<div className="central-mode-row"><button className="today-open" aria-label="Open today" onClick={()=>void onOpenToday().catch(reason=>setError(String(reason)))}>Today</button></div>}
       {root && <>
         <RootSpace name="User" path="Control/user" refresh={fileRefresh} onOpen={onOpenFile}/>
         <RootSpace name="Agent" path="Control/agents" refresh={fileRefresh} onOpen={onOpenFile}/>
