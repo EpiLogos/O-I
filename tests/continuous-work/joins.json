@@ -1,0 +1,28 @@
+{
+  "standing": "operation-joins-not-launch-gates",
+  "web_code": {
+    "central-temporal": {"owner": "EpiLogos/Central#150", "needed": "Native root/Project Day and NOW source creation, explicit authorised boundary, crash/replay/rollback-safe migration and retained source/reference readback."},
+    "central-placement": {"owner": "EpiLogos/Central#153", "needed": "Published scoped placement-policy revision/standing, NOW allocation, guarded create/adopt/write validation and reversible itemised repair."},
+    "central-documents": {"owner": "EpiLogos/Central#151", "needed": "Public Day and shared Flow/Dialogue create/read/edit/export operations, exact revisions/fixtures, sanitisation and source/attribution protection."},
+    "central-receiving": {"owner": "EpiLogos/Central#152", "needed": "Concurrent append/replay-safe receiving ledger and reviewed contribution inclusion/refusal; artifact Return without implicit adoption or Recognition."},
+    "aikit-selection": {"owner": "EpiLogos/ai-kit#274", "needed": "Actual producer -> participant/Knowledge resolver -> selected operative context -> eligible model/credentials/authority -> real Agency/WorldBinding, including no-profile participation."},
+    "aikit-dispatch": {"owner": "EpiLogos/ai-kit#275", "needed": "Native execution caller/session/gateway dispatch, actual addressed response ingress/readback, group/privacy, reconnect/continuation and supported A2A operations."},
+    "aikit-recurrence": {"owner": "EpiLogos/ai-kit#276", "needed": "Enabled/proven/bounded recurrence consuming Central time policy and real dispatch; persisted duplicate/revocation/restart/uncertain-effect handling."},
+    "aikit-enforcement": {"owner": "EpiLogos/ai-kit#277", "needed": "Central placement-policy projection -> installed native hook/tool caller -> supported veto/readback; exact blockable event coverage, source/config/loaded-state correlation and withdrawal."},
+    "factory-operation": {"owner": "EpiLogos/Factory#221", "needed": "Commission -> real arranged attempt -> actual dispatch -> observe/verify -> interruption/reconciliation/re-resolution -> bounded retry/Return; native public persisted Actions/readback and fork/barrier/writer rules."},
+    "factory-tracking": {"owner": "EpiLogos/Factory#222", "needed": "Task/usage/source/NOW/material evidence, retention/archive links, readable Return and real finding -> existing regression-learning path."},
+    "workcell-hosting": {"owner": "EpiLogos/Workcell#72", "needed": "Native prepare/inspect/observe/recover/release for NOW storage and persistent gateway/session/scheduler; supplied material restrictions/coverage, reconnect/relocation/correlations and bounded usage."},
+    "actuation-owner": {"owner": "EpiLogos/Actuation#58", "needed": "Current accepted Agency/WorldBinding/authority/capability and Activity/Return owner APIs; corrections remain in the single-active refoundation queue."},
+    "desktop": {"owner": "EpiLogos/O-I#190", "needed": "Existing desktop thread's published controls -> native owner operation -> transition/readback, Day/Flow and four panel planes; no alternative desktop runtime."},
+    "tui": {"owner": "EpiLogos/ai-kit#211", "needed": "Actual Direct/Factory/external subjects, public Actions/readback, source/trajectory search/history and Return parity."},
+    "self-hosting": {"owner": "EpiLogos/Factory#201", "needed": "Actual current root/six-Guardian composition and at least two different native-owner changes/checks on distinct real harnesses under the genuine commission."},
+    "template-bytes": {"owner": "O-I#220 / supplied template source", "needed": "Original exact Day/Flow HTML payloads and archive protocol. The recovered CT4b text supplies the 17 keys; extracted text is not raw-byte fidelity."}
+  },
+  "local_proof": [
+    {"id": "installed-binding", "cases": ["P01", "P07", "P08", "P25"], "operation": "Record actual installed executable paths/versions/digests and native registration; compare source cut; run both coding and verifier profile through actual AIKit/harness loading. Do not edit private Control."},
+    {"id": "provider-dispatch", "cases": ["P08", "P09", "P11", "P12", "P23", "P25"], "operation": "Use authorised actual credentials, two supported harnesses, addressed messages and native response readback, interruption and reconnect; fixture replies remain fixtures."},
+    {"id": "material-canary", "cases": ["P14", "P16", "P17", "P26", "P28"], "operation": "Owner-approved disposable root/Project canaries; real allow/refuse writes, service restart/lost client and second supported placement. Never omit/replay a producer against personal live work."},
+    {"id": "migration-and-return", "cases": ["P05", "P06", "P19", "P27"], "operation": "Read-only fresh census, reviewed reversible native migration/repair plan, source hashes and active obligations, pending artifact Return, stale inclusion refusal and rollback; preserve private bytes locally."},
+    {"id": "human-and-independent", "cases": ["P02", "P03", "P04", "P10", "P16", "P21", "P22", "P23", "P24", "P27"], "operation": "Fresh non-implementer reads exact commission/specs/all 28 cases, executes full public story plus consequential failures/disconnections, then obtains actual human experience/Recognition where required."}
+  ]
+}

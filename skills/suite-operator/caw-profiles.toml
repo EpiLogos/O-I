@@ -1,0 +1,17 @@
+# Native SuiteSkillSet profile overlay: append to the shipped skillset.toml
+# before parse_manifest/resolve_profile. No duplicated Skill definitions,
+# person/AgentProfile claims, permissions, or automatic local installation.
+
+[[profiles]]
+profile_ref = "oi:skillset:coding"
+purpose = "Commissioned coding with the maintained sixfold completion discipline; ordinary procedural scope only."
+scope = "ordinary"
+inherits = ["oi:skillset:base-guardian"]
+members = []
+
+[[profiles]]
+profile_ref = "oi:skillset:verifier"
+purpose = "Fresh non-implementer verification from original intent, public use, consequential failure and missing-link regression. Selection alone does not establish independence."
+scope = "ordinary"
+inherits = ["oi:skillset:base-guardian"]
+members = []
