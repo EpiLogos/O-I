@@ -18,7 +18,7 @@
     "oi_prerequisite": "570f9134aed094524d9e379eee00b3e070c0b633",
     "oi_candidate": "capture actual checkout HEAD and built executable digest; never substitute base for candidate",
     "central": "d91dee416a71b95f280c691c2d17e756bd8db10c",
-    "aikit": "19fc5a71d3c660a3eeb8b436755ea733032f6773",
+    "aikit": "c1ae1139a45433f5cc0de7d65f09c2b3c8419ade",
     "workcell": "dcac0a26f9c0f01d6b6b4dd2486566161ab9bf6f",
     "actuation": "0ac4bbb47cc37a7ac3c1db42b88a39ffd6bb5b30",
     "factory": "366a6b2bf18ba23053601f5d5eb543b79bfcfb27"
@@ -36,7 +36,7 @@
     "aikit": ["--json init", "--json adopt", "--json set create/show", "--json apply", "native current/generation metadata and projection readback", "encounter-task-configure", "encounter-task-read", "encounter-agency-configure", "encounter open/send/delivery/read", "encounter-serve", "native task protocol launch"],
     "workcell": ["native control status/prepare/inspect/observe/release", "workcell.directory-storage/v1", "workcell.service-declaration/v1", "write-boundary inspect/exec"],
     "actuation": ["agency actualise"],
-    "factory": ["development commission STATE REQUEST --json", "development commission-read STATE REQUEST_REF --json"]
+    "factory": ["development commission STATE REQUEST_REF --json", "development commission-read STATE REQUEST_REF --json"]
   },
   "preserved_existing_floor": {
     "entry": "scripts/validate_factory_proving.py / oi prove factory",
