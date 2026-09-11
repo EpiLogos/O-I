@@ -981,7 +981,16 @@ fn run_dev_command(root: &Path, command: &[String]) -> Result<(), String> {
 fn command_dev_install_v2(args: &[OsString]) -> Result<i32, String> {
     let manifest = suite_manifest()?;
     let ground = configured_ground()?;
-    let ids = requested_dev_ids(args, &manifest)?;
+    let mut args = args.to_vec();
+    let mut install_root: Option<PathBuf> = None;
+    if let Some(position) = args.iter().position(|arg| arg == "--root") {
+        let value = args.get(position + 1).ok_or("'--root' requires a target directory")?.to_owned();
+        args.drain(position..=position + 1);
+        let root = PathBuf::from(&value);
+        if !root.is_dir() { return Err(format!("'--root' directory does not exist: {}", root.display())); }
+        install_root = Some(root);
+    }
+    let ids = requested_dev_ids(&args, &manifest)?;
     let catalog = catalog()?;
     let mut composition = load_composition()?;
     for id in ids {
@@ -996,8 +1005,11 @@ fn command_dev_install_v2(args: &[OsString]) -> Result<i32, String> {
             let source = root.join("cli/target/release/oi");
             if !is_executable(&source) { return Err(format!("O:I developer build did not produce {}", source.display())); }
             let data_root = oi_data_root()?;
-            ensure_managed_layout(&data_root)?;
-            let target = data_root.join("bin/oi");
+            let target = match &install_root {
+                Some(root) => root.join("bin/oi"),
+                None => { ensure_managed_layout(&data_root)?; data_root.join("bin/oi") }
+            };
+            if let Some(parent) = target.parent() { fs::create_dir_all(parent).map_err(|e| e.to_string())?; }
             let temp = data_root.join("bin/.oi.dev.tmp");
             fs::copy(&source, &temp).map_err(|error| format!("cannot stage developer O:I binary: {error}"))?;
             #[cfg(unix)]
@@ -1008,12 +1020,14 @@ fn command_dev_install_v2(args: &[OsString]) -> Result<i32, String> {
                 fs::set_permissions(&temp, permissions).map_err(|e| e.to_string())?;
             }
             fs::rename(&temp, &target).map_err(|error| format!("cannot promote developer O:I binary: {error}"))?;
+            write_dev_receipt(&data_root, "oi", Some(&target), &root)?;
             println!("oi: installed developer build at {}", target.display());
             continue;
         }
         let product = manifest.products.iter().find(|p| p.id == id).unwrap();
         if !product.dev.build.is_empty() { run_dev_command(&root, &product.dev.build)?; }
         let executable = product.artifact.entry.as_deref().map(|entry| root.join("target/release").join(entry)).filter(|path| is_executable(path));
+        let executable_for_receipt = executable.clone();
         if product.artifact.entry.is_some() && executable.is_none() { return Err(format!("{} build did not produce expected release executable", id)); }
         let surface = find_surface(&catalog, &id)?;
         let registration = registration_in_modality(
@@ -1026,10 +1040,51 @@ fn command_dev_install_v2(args: &[OsString]) -> Result<i32, String> {
         )?;
         ensure_alias_available(&composition, &registration)?;
         composition.modules.insert(id.clone(), registration);
+        write_dev_receipt(&data_root_receipts(&oi_data_root()?), &id, executable_for_receipt.as_deref(), &root)?;
         println!("{id}: registered developer source/build at {}", root.display());
     }
     save_composition(&composition)?;
     Ok(0)
+}
+
+/// The one machine-readable answer to "what is installed here": per product,
+/// the executable, its digest and the exact source it was built from.
+fn data_root_receipts(data_root: &Path) -> PathBuf { data_root.join("receipts/dev/installed") }
+
+fn write_dev_receipt(receipts: &Path, product: &str, executable: Option<&Path>, source_root: &Path) -> Result<(), String> {
+    let git = |argument: &str| -> Result<String, String> {
+        let output = std::process::Command::new("git").arg("-C").arg(source_root)
+            .args(["rev-parse", argument]).output()
+            .map_err(|error| format!("cannot probe {product} source: {error}"))?;
+        if !output.status.success() { return Err(format!("cannot probe {product} source revision")); }
+        Ok(String::from_utf8_lossy(&output.stdout).trim().to_owned())
+    };
+    let revision = git("HEAD")?;
+    let tree = git("HEAD^{tree}")?;
+    let sha256 = match executable {
+        Some(path) => Some(sha256_file(path)?),
+        None => None,
+    };
+    let installed_at = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)
+        .map(|duration| duration.as_secs()).unwrap_or(0);
+    let receipt = dev_receipt_json(product, executable.map(|path| path.display().to_string()), sha256, &revision, &tree, source_root.display().to_string(), installed_at);
+    let path = receipts.join(format!("{product}.json"));
+    if let Some(parent) = path.parent() { fs::create_dir_all(parent).map_err(|e| e.to_string())?; }
+    fs::write(&path, serde_json::to_vec_pretty(&receipt).map_err(|e| e.to_string())?)
+        .map_err(|error| format!("cannot write {product} install receipt: {error}"))?;
+    Ok(())
+}
+
+fn dev_receipt_json(product: &str, executable: Option<String>, sha256: Option<String>, revision: &str, tree: &str, source_path: String, installed_at_unix_seconds: u64) -> serde_json::Value {
+    let mut receipt = serde_json::json!({
+        "schema": "oi.dev-install-receipt/v1",
+        "product": product,
+        "installed_at_unix_seconds": installed_at_unix_seconds,
+        "source": { "path": source_path, "revision": revision, "tree": tree },
+    });
+    if let Some(executable) = executable { receipt["executable"] = serde_json::Value::String(executable); }
+    if let Some(sha256) = sha256 { receipt["sha256"] = serde_json::Value::String(sha256); }
+    receipt
 }
 
 #[cfg(test)]
@@ -1069,6 +1124,26 @@ mod tests {
             ground.join("Work/agent-system-design"),
             "without a renamed checkout the legacy agent-system-design path remains the fallback"
         );
+    }
+
+    #[test]
+    fn dev_receipt_carries_the_install_identity() {
+        let receipt = dev_receipt_json(
+            "oi", Some("/usr/local/bin/oi".into()), Some("abc123".into()),
+            "a7ec336ac713edf4561c519fb98ac0418f495e72", "1aa2af139f971fd9099aa352aca2db5ee0c11de0",
+            "/ground/Work/O-I".into(), 1789154407,
+        );
+        assert_eq!(receipt["schema"], "oi.dev-install-receipt/v1");
+        assert_eq!(receipt["product"], "oi");
+        assert_eq!(receipt["executable"], "/usr/local/bin/oi");
+        assert_eq!(receipt["sha256"], "abc123");
+        assert_eq!(receipt["source"]["revision"], "a7ec336ac713edf4561c519fb98ac0418f495e72");
+        assert_eq!(receipt["source"]["tree"], "1aa2af139f971fd9099aa352aca2db5ee0c11de0");
+        assert_eq!(receipt["source"]["path"], "/ground/Work/O-I");
+        assert_eq!(receipt["installed_at_unix_seconds"], 1789154407);
+        let bare = dev_receipt_json("actuation", None, None, "2d73f957c287", "tree", "/ground/Work/Actuation".into(), 0);
+        assert!(bare.get("executable").is_none(), "a checkout-link product carries no executable claim");
+        assert!(bare.get("sha256").is_none());
     }
 
     #[test]
