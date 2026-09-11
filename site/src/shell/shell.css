@@ -245,19 +245,15 @@ a {
 
 .pl__video .vf__video {
   filter: invert(1) contrast(1.04);
+  -webkit-mask-image: radial-gradient(120% 105% at 50% 45%, #000 50%, transparent 82%);
+  mask-image: radial-gradient(120% 105% at 50% 45%, #000 50%, transparent 82%);
 }
 
 .pl__shade {
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: linear-gradient(
-    to top,
-    rgba(10, 10, 11, 0.96) 0%,
-    rgba(10, 10, 11, 0.68) 16%,
-    rgba(10, 10, 11, 0.12) 44%,
-    rgba(10, 10, 11, 0) 68%
-  );
+  background: radial-gradient(125% 100% at 50% 45%, rgba(10, 10, 11, 0) 52%, rgba(10, 10, 11, 0.5) 100%);
   transform-origin: bottom;
   will-change: transform, opacity;
 }
@@ -317,7 +313,7 @@ a {
 
 @keyframes heroShift {
   0% { color: #e9e3d6; }
-  50% { color: #2b3f63; }
+  50% { color: #4a6690; }
   100% { color: #f6f4ee; }
 }
 

@@ -49,18 +49,6 @@ export function HeroParallax() {
         );
       });
 
-      timeline.to(
-        root.querySelector('[data-pl-title]'),
-        {
-          keyframes: [
-            { yPercent: 24, opacity: 0.15 },
-            { yPercent: 0, opacity: 1 },
-          ],
-          ease: 'none',
-        },
-        0,
-      );
-
       timeline.fromTo(
         root.querySelector('[data-pl-shade]'),
         { scaleY: 0.4, opacity: 0.6 },
@@ -103,9 +91,6 @@ export function HeroParallax() {
             </div>
           </div>
 
-          <div className="pl__title-block" data-pl-title>
-            <h1 className="pl__title">Objective : Internality</h1>
-          </div>
         </div>
 
       </div>
