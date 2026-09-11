@@ -5,13 +5,7 @@ on:
     paths:
       - 'packages/oi-cli/**'
       - '.github/workflows/npm-distribution.yml'
-      - '.github/workflows/prelocal-release.yml'
-  push:
-    branches: [main]
-    paths:
-      - 'packages/oi-cli/**'
-      - '.github/workflows/npm-distribution.yml'
-      - '.github/workflows/prelocal-release.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
