@@ -172,3 +172,8 @@
 .encounter-a2a-difference dt { margin-top: 8px; font-weight: 600; }
 .encounter-a2a-difference dd { margin: 3px 0 0; color: var(--oi-muted-2); }
 .encounter-a2a-difference p { margin: 9px 0 0; font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); }
+
+/* NOW records reached this surface (queue cell 1): refs collected from this
+ * surface's own dispatch records, never inferred. Empty state is honest. */
+.encounter-now-refs{list-style:none;margin:6px 0;padding:0;display:flex;flex-direction:column;gap:4px}
+.encounter-now-refs li{display:flex;gap:8px;align-items:baseline;font-size:var(--oi-shell-type-nav)}

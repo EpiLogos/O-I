@@ -142,6 +142,7 @@ export type KernelOp =
   | {op:"file_operation";location:CentralLocation;request:import("../files/client").FileRequest}
   | {op:"encounter";project:string;request:import("../encounter/client").EncounterRequest}
   | {op:"receiving";project:string|null;request:import("../receiving/client").ReceivingRequest}
+  | {op:"now";project:string|null;request:import("../receiving/now").NowRequest}
   | {op:"day_read";day_ref?:string}
   | {op:"day_source_open";day_ref?:string}
   | { op: "knowledge"; project?: string; request: KnowledgeRequest }
@@ -182,6 +183,7 @@ export type KernelOpResult =
   | {result:"file_operation";data:unknown}
   | { result:"encounter_reading";data:unknown }
   | { result:"receiving_reading";data:unknown }
+  | { result:"now_reading";data:unknown }
   | { result:"day_reading";data:unknown }
   | { result: "agency_reading"; project_ref: string; spaces: unknown[]; observed_at_unix_ms: number }
   | { result: "knowledge"; data: unknown }

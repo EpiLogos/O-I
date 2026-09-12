@@ -228,6 +228,10 @@ pub enum KernelOp {
     /// register's field (a Day document lives there) — the scope follows the
     /// owner's own ref grammar, never the desktop's configured route.
     Receiving { #[serde(default)] project: Option<String>, request: flow::ReceivingRequest },
+    /// NOW-relations (queue cell 1): read allocated NOW clearings by list or
+    /// exact ref. Read-only; `project` follows the same explicit-null root
+    /// law as `Receiving` — the register is the caller's to name.
+    Now { #[serde(default)] project: Option<String>, request: flow::NowRequest },
     /// The human Day route: read the current today pointer (or one exact
     /// DayRef) through the owner. The disclosure carries the Day source's
     /// canonical ref — the only identity the desktop opens it by.
@@ -332,6 +336,7 @@ pub enum KernelOpResult {
     AgencyReading { project_ref: String, spaces: serde_json::Value, observed_at_unix_ms: u64 },
     EncounterReading {data:serde_json::Value},
     ReceivingReading {data:serde_json::Value},
+    NowReading {data:serde_json::Value},
     /// The owner's own `central.day.read` reading, carried verbatim — the
     /// Day's source identity is the owner's disclosure, never a ref the
     /// desktop derives from a path.
@@ -501,6 +506,17 @@ impl Kernel {
                 }
                 let data=self.client.receiving(project.as_deref(),&request).map_err(|e|e.to_string())?;
                 Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::ReceivingReading {data}})
+            }
+            KernelOp::Now {project,request} => {
+                // Same disclosure gate as `Receiving`: a named project must be
+                // inside Central's disclosed ground; `None` is the root
+                // register, carried as an explicit null to the owner.
+                if let Some(project)=&project {
+                    let root=world::read_world(&self.client).map_err(|e|e.to_string())?;
+                    root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(project.as_str()))).ok_or("Project is outside Central's disclosed ground")?;
+                }
+                let data=self.client.now(project.as_deref(),&request).map_err(|e|e.to_string())?;
+                Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::NowReading {data}})
             }
             KernelOp::DayRead {day_ref} => {
                 // The Day is a ROOT-register carrier: an explicit null
