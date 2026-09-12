@@ -1,0 +1,14 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "handoff-1789213962",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "zcode-site-redesign-v2",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1789213962,
+  "subject": "site redesign v2 state pushed; UI cleanup/enrichment handoff written for a web chat session",
+  "result": "Working-tree site content enrichment committed as 3bdd308d on site/redesign-v2 and pushed with upstream tracking now set. Full handoff brief for the next (web) session at site/HANDOFF-UI-ENRICHMENT-2026-09-12.md: owner verdict (video/imagery good; hero video over-zoomed and under-masked; text sections basic; layout and interaction states need professional polish), v2 shell file map, five workstreams (hero video treatment, hero scroll logic, text enrichment, layout cleanup, motion polish), constraints (keep design intent, keep content.ts and public-site.md in sync, build green), acceptance criteria. Unrelated ProjectCentral/now bookkeeping and desktop/cradle welcomePhrases change left uncommitted on purpose.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-09-12"
+  ]
+}
