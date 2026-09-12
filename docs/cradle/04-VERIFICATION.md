@@ -146,3 +146,59 @@ The app is accepted when the everyday loop of §2 has been lived in — used for
 real work over a sustained period on a physical machine — with every condition
 of §3 holding throughout that use. Acceptance is recorded as a receipt: what
 was done, on which machine, what returned.
+
+## 7. Epi domain walks
+
+This is the Epi composition of the §2 everyday spine, not a replacement spine
+or a requirement that ordinary writing depend on QL. The owner-approved living
+instrument is defined in QL-MEF's existing Kernel Rebuild Wayfinder and
+[UX reconciliation](https://github.com/EpiLogos/QL-MEF/blob/main/docs/kernel-rebuild/UX-SPINE-RECONCILIATION.md).
+[03 §L](03-UX-STATES.md#l-epi-living-instrument-states--a-domain-composition-of-this-spine)
+records the host states; UX01–UX12 there give the full starting conditions,
+person/agent acts, observable results, failures and durable return. Domain
+meaning and mathematical/source depth stay QL-owned.
+
+Before inviting the person to test, establish the exact installed suite/desktop,
+QL source and contracts, retained current particle implementation, real provider
+and audio/GPU support, selected test Nara and data authority, native agent body,
+actual Skill source/discovery/projection/harness loading and callable operations.
+Use QL's source-owned preparation Method through AIKit, or its explicit bounded
+source-reading bridge during bootstrap. Mark any prerequisite missing before
+the human starts; manual repair is evidence of a gap, not a passed experience.
+
+| Walk | Human question / result being settled |
+|---|---|
+| UX01 / L0 | Can I enter my real World and have a fresh Epii understand it without re-teaching the architecture? |
+| UX02 / L1 | Is the dated planetary event actually participating in this Nara's active field, with its basis inspectable? |
+| UX03 / L2 | Can I open and operate the complete coupled clock and its focused depths without losing the event? |
+| UX04 / L3 | Can a native expression be read, enacted and related to its actual source, including the dynamic `/`? |
+| UX05 / L4 | Can I move from the field to its Bimba/property/Wiki source and return, including pinned and detached views? |
+| UX06 / L5 | Can Epii find and perform the right native operation, show its work, accept interruption/refusal and explain its result? |
+| UX07 / L6 | Can my writing, question and practice participate through all Nara branches while authorship and identity remain mine? |
+| UX08 / L7 | Can I correct a concise report and find the useful consumed learning in later work? |
+| UX09 / L8 | Can we recognise a reusable named path, inspect it and use it with new inputs rather than unknowingly replay old ones? |
+| UX10 / L9 | Can a discrepancy become accountable development and return to a human decision? |
+| UX11 / L10 | Can I leave, interrupt and return with the actual event, drafts, source and continuity intact? |
+| UX12 / L11 | Can we inhabit a shared occasion while personal source and sensory derivatives remain under their actual disclosure rules? |
+
+Use a fresh agent for the discovery/loading portions. Record exact practice and
+Action identities, tool input/result/error, authority, source/instance/epoch,
+actual human choice, resulting state and retained Return. Test wrong scope,
+stale source, unavailability, cancellation, refusal, interruption and re-entry
+where the story requires them. No model call or side effect occurs merely
+because an observation changed.
+
+The evidence ladder remains source-specified, technically supported, native
+projected, harness-loaded, actually exercised, failed/blocked, and human-assessed.
+A prepared scenario or successful static/native test does not become
+human-validated. The operator demonstrates the objective path; the person
+assesses the sensory, learning, control and continuity qualities. Record absent
+assessment as absent. Retain approved private evidence locally; publish only
+reviewed non-sensitive references and summaries.
+
+Full coverage includes every existing A/B family and deeper mapped capability;
+one successful UX walk is not the completion of all M/S′ operations. QL-MEF
+#132/#94/#134/#133 own their already-assigned implementations. Final integration
+on the owner's machine follows repository acceptance and includes their current
+prototype and all native products. It is not a blanket blocker on repository
+work and does not retroactively turn a controlled test into a lived result.

@@ -1,24 +1,16 @@
 name: Epi UX spine and practice
 on:
   push:
-    branches: [agent/epi-ux-spine-practice]
+    branches: [main, agent/epi-ux-spine-practice]
+    paths: ['docs/cradle/**', 'docs/SUITE-OPERATOR-SKILLSET.md', 'skills/cradle-execution/**', 'scripts/check-epi-ux-spine.py', '.github/workflows/epi-ux-intent.yml']
   pull_request:
-    paths: ['docs/cradle/**', 'skills/cradle-execution/**', 'scripts/check-epi-ux-spine.py', '.github/workflows/epi-ux-intent.yml']
+    paths: ['docs/cradle/**', 'docs/SUITE-OPERATOR-SKILLSET.md', 'skills/cradle-execution/**', 'scripts/check-epi-ux-spine.py', '.github/workflows/epi-ux-intent.yml']
 permissions:
   contents: read
 jobs:
-  source:
+  spine:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Retain exact source basis
-        run: |
-          mkdir -p ux-source
-          git rev-parse HEAD > ux-source/revision.txt
-          git rev-parse HEAD^{tree} > ux-source/tree.txt
-          git archive --format=tar HEAD > ux-source/source.tar
-      - uses: actions/upload-artifact@v4
-        with:
-          name: oi-ux-source-basis
-          path: ux-source/
-          retention-days: 7
+      - name: Verify canonical spine and reject invalid edits
+        run: python3 scripts/check-epi-ux-spine.py --self-test

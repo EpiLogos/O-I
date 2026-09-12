@@ -252,7 +252,7 @@ Derived from: Reading ≠ Action; authority gates (architecture §9.4); FP §4
 
 | State | Meaning | Rest shows |
 |---|---|---|
-| `K-read` | Reading needs no authority | Silent |
+| `K-read` | Reading uses the existing authorised readability/disclosure; it needs no mutation grant | Silent |
 | `K-proposed` | Agent proposes durable change | Proposal with provenance, awaiting Recognition |
 | `K-grant-bounded` | Time/scope-bounded authority issued (e.g. one Action grant) | Visible grant; consumed on use |
 | `K-refused` | Human declined | Recorded with reason; agent informed through Return |
@@ -260,6 +260,50 @@ Derived from: Reading ≠ Action; authority gates (architecture §9.4); FP §4
 | `K-escalated` | Beyond bounds → attention | Attention item naming bound and subject |
 
 ---
+
+## L. Epi living-instrument states — a domain composition of this spine
+
+**Source authority:** owner conversation culminating in the QL-MEF pre-K8 lock;
+[exact authorial minute](https://github.com/EpiLogos/QL-MEF/blob/main/docs/kernel-rebuild/UX-INTENT-SOURCE-MINUTE.md),
+[whole domain-to-spine crosswalk](https://github.com/EpiLogos/QL-MEF/blob/main/docs/kernel-rebuild/UX-SPINE-RECONCILIATION.md),
+and QL-MEF #135/#133/#94/#132/#134. These states specify Epi participation in
+A–K, not a new master plan, runtime enum, or QL L-family coordinate system.
+
+Ordinary blank writing remains first-class. A person deliberately entering the
+Epi mode foregrounds the living planetary–Nara event within the same Canvas.
+Writing, sources, graph and conversation remain summonable. The Epi composition
+uses a left Bimba companion and right canonical Epii encounter; it does not
+replace the ordinary host's layout or make all three regions mandatory at rest.
+The native owners still determine source, identity, agency and material state.
+
+| State | Person's activity and visible consequence | Existing states and domain walk |
+|---|---|---|
+| `L0 Situated` | Enter the root Central World or a child Project. A fresh Epii can orient from actual disclosed source and loaded practice without another recital of the architecture. Absent capabilities are named. | A2/A3, D-create, E0, F; UX01 |
+| `L1 Living occasion` | Encounter a real current or historical sky around Earth through this Nara's independently determined centres. Inspect date/frame/provider freshness and distinguish modelled influence from reported experience. | B1, F, H; UX02 |
+| `L2 Clock opened` | Open the gathered clock around its existing centre, work with all 18 M2 aperture identities and paired lenses, change inscription/lensing independently or together, then gather the same event. | B1/B3, F-aperture, J; UX03 |
+| `L3 Expressed relation` | Meet a source-bearing glyph, image, geometry or musical condition. The 0→1 morph can enact `/`; written/enacted/combined forms and quiet readable modes preserve meaning and the same constituent. | B1, F, J; UX04 |
+| `L4 Source disclosed` | Follow a selected field object into Bimba, properties, source and Wiki constellation. Pin or detach a source while the event continues; return to the same object. | B1/B2/B4/B5, F, K; UX05 |
+| `L5 Co-operative act` | Ask Epii, inspect the proposed method and authorised scope, observe actual attention/operation and its musical/visual performance, interrupt or refuse, then receive a source-grounded result. | D/E/F/K; UX06 |
+| `L6 Personal participation` | Write, question, invoke an oracle or practise through Nara's full identity/body/oracle/transformation/context/integration field. Decide whether an interpretation enters activity. Authored writing and stable identity remain attributable. | C/E/K; UX07 |
+| `L7 Useful return` | Read a pithy report, expand its evidence, correct it, and see T/T′ work consumed from the actual NOW into useful context/learning. Recover that result later without twelve accumulating file silos. | C4/C5, D-returned, E4, F; UX08 |
+| `L8 Named praxis` | Recognise a performed path as `= name`, inspect its expansion, reuse it with new inputs, and separately replay its original occasion. Ambiguous names, stale proof and failed reuse remain visible. | D competence, F, K; UX09 |
+| `L9 Developmental return` | Carry a real discrepancy into source-grounded inquiry or commissioned Factory development. Inspect evidence and recognise, redirect or refuse the result; subsequently encounter the changed ground. | G, E, F, K; UX10 |
+| `L10 Continuing` | Mute, reduce motion, detach, interrupt or restart and re-enter the retained subject, draft, NOW and history. Live, frozen, replay and new interpretation remain distinguishable. | B4/B5, E5–E8/E.G, J, H; UX11 |
+| `L11 Shared encounter` | Two protected Naras receive one sky independently. Deliberately project a scoped presence, encounter another contribution and observe actual consent/withdrawal limits. Images and audio can also be private. | I, K, F; UX12 |
+
+All six M′ faculties remain accessible as focused relational regions or states
+of one continuous event. 3:3 Cosmic123/Personal450 and 4:2 explicit1234/50 are
+compositions of the same faculties; M4/M4′ is the hinge, M0′ actual Bimba and
+M5′ the same Epii. Focus/disclosure, presentation adjustment and a domain-changing
+Action must each preserve their actual meaning and source basis.
+
+The full QL A01–A18/B01–B12 coverage and deeper capability inventories remain
+mandatory. A successful walk does not define a smaller domain. These are
+**specified** states: local runtime, actual agent loading/use and human
+assessment need their own receipts. [04 §7](04-VERIFICATION.md#7-epi-domain-walks)
+sets the host acceptance route. QL-MEF's Wayfinder remains the implementation
+sequence; the Cradle does not acquire another QL runtime or Skill registry.
+
 
 ## Global invariants (apply to every state)
 
