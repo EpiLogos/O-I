@@ -1,6 +1,7 @@
 import {EncounterSurface} from "../encounter/EncounterSurface";
 import {requestResizeExpression} from "../shared/Expression";
 import {SystemPanel} from "../workspace/SystemPanel";
+import {FactoryDevelopmentSurface} from "../contributions/factory/FactoryDevelopmentSurface";
 /**
  * The Workbench (U0.3b) — the OS frame that exists ONLY while ≥1 surface is
  * open (law 12: austere rest governs what is on screen; at zero surfaces
@@ -313,6 +314,7 @@ function SurfaceBody({
   if (binding.kind === "browser") return <BrowserSurface binding={binding} />;
   if (binding.kind === "file") return <FileSurface key={binding.id} binding={binding}/>;
   if (binding.kind === "system") return <SystemPanel binding={binding}/>;
+  if (binding.kind === "factory") return <FactoryDevelopmentSurface />;
   if (binding.kind === "knowledge") return <KnowledgeSurface binding={binding} onOpen={openKnowledge} />;
   if (binding.kind === "source") {
     return <SourceSurface binding={binding} />;

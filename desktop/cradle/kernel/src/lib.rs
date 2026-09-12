@@ -250,6 +250,13 @@ pub enum KernelOp {
     FactorySnapshot {binding_ref:String},
     FactoryIntent {binding_ref:String,request:factory::Intent},
     FactoryInvoke {binding_ref:String,request:factory::Invocation},
+    /// 6D first consumer (queue cell 3): one developmental read through the
+    /// owner's own `factory development` family. The state path is the
+    /// caller's disclosure — the desktop never invents a Factory state.
+    FactoryDevelopmentRead { #[serde(default)] project: Option<String>, state_path: ::std::path::PathBuf, read: String, #[serde(default)] subject: Option<String> },
+    /// Workcell's own placement/status reading (`workcell status --json`),
+    /// beside the Factory reads — placement is Workcell's, never the desktop's.
+    WorkcellStatusRead,
     Ground {request:ground::Request},
     CompositionRead {#[serde(default)] owners:bool},
     /// Wave 5 (docs/cradle/07): mount each of the six owners' own native
@@ -342,6 +349,8 @@ pub enum KernelOpResult {
     ReceivingReading {data:serde_json::Value},
     NowReading {data:serde_json::Value},
     EncounterTaskReading {data:serde_json::Value},
+    FactoryDevelopmentReading {data:serde_json::Value},
+    WorkcellStatusReading {data:serde_json::Value},
     /// The owner's own `central.day.read` reading, carried verbatim — the
     /// Day's source identity is the owner's disclosure, never a ref the
     /// desktop derives from a path.
@@ -433,6 +442,32 @@ impl Kernel {
             KernelOp::FactorySnapshot{binding_ref} => native_owner_reading("software-factory",factory::Client::discover().snapshot(&binding_ref)),
             KernelOp::FactoryIntent{binding_ref,request} => native_owner_reading("software-factory",factory::Client::discover().intent(&binding_ref,&request)),
             KernelOp::FactoryInvoke{binding_ref,request} => native_owner_reading("software-factory",factory::Client::discover().invoke(&binding_ref,&request)),
+            KernelOp::FactoryDevelopmentRead {project,state_path,read,subject} => {
+                if let Some(project)=&project {
+                    let root=world::read_world(&self.client).map_err(|e|e.to_string())?;
+                    root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(project.as_str()))).ok_or("Project is outside Central's disclosed ground")?;
+                }
+                let direct=std::env::var_os("OI_FACTORY_BIN").map(std::path::PathBuf::from);
+                let (executable, suite_route)=match direct {
+                    Some(path)=>(path, false),
+                    None=>(std::env::var_os("OI_BIN").map(std::path::PathBuf::from).unwrap_or_else(|| std::path::PathBuf::from("oi")), true),
+                };
+                let args=factory::development_read_args(&state_path,&read,subject.as_deref(),suite_route);
+                let data=material::invoke(&executable,&args,None).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"factory development read failed".into()))?;
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::FactoryDevelopmentReading{data}})
+            }
+            KernelOp::WorkcellStatusRead => {
+                let workcell=std::env::var_os("OI_WORKCELL_BIN").map(std::path::PathBuf::from);
+                let (executable, namespace): (std::path::PathBuf, Option<&str>) = match workcell {
+                    Some(path)=>(path, None),
+                    None=>(std::env::var_os("OI_BIN").map(std::path::PathBuf::from).unwrap_or_else(|| std::path::PathBuf::from("oi")), Some("workcell")),
+                };
+                let mut args:Vec<std::ffi::OsString>=Vec::new();
+                if let Some(name)=namespace { args.push(name.into()); }
+                args.extend(["status".into(),"--json".into()]);
+                let data=material::invoke(&executable,&args,None).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"workcell status read failed".into()))?;
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::WorkcellStatusReading{data}})
+            }
             KernelOp::Ground{request} => Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::GroundReading{reading:ground::operate(request)?}}),
             KernelOp::CompositionRead{owners} => {
                 let root=world::read_world(&self.client).ok();

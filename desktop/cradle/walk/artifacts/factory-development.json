@@ -1,0 +1,83 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "factory-development",
+  "generated_at": "2026-09-12T11:07:50.866Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 919,
+  "checks": [
+    {
+      "ok": true,
+      "label": "At rest nothing reads — no owner payload exists before the explicit act"
+    },
+    {
+      "ok": true,
+      "label": "The owner's own refusal renders verbatim (The owner refused the read: Error: {\"kind\":\"owner-refused-or-failed\",\"message\":\"…)"
+    },
+    {
+      "ok": true,
+      "label": "The project read carries the owner's own contract verbatim"
+    },
+    {
+      "ok": true,
+      "label": "The owner's project ref renders as the owner names it"
+    },
+    {
+      "ok": true,
+      "label": "The project reading discloses the owner's journey registry"
+    },
+    {
+      "ok": true,
+      "label": "The workflow-units read carries the owner's contract with its units"
+    },
+    {
+      "ok": true,
+      "label": "Workcell placement status renders the owner's own reading"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-12T11:07:50.989Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 34,
+      "data": {
+        "file": "factory-development-factory-development-readings.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 30,
+      "data": {
+        "file": "factory-development-workcell-status-beside-factory.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "factory-development-factory-development-readings.png",
+    "factory-development-workcell-status-beside-factory.png"
+  ]
+}
