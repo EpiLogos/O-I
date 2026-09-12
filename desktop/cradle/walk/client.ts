@@ -286,7 +286,7 @@ export function createWalkChannel(kernel: KernelApi, readLayout:()=>LayoutState)
         timed("read.state", async () => {
           const outcome = await kernel.apply({ op: "state" });
           if (!outcome || outcome.result !== "state") {
-            return { error: kernel.opError ?? "the state read did not serve" };
+            return { error: kernel.lastOpError?.() ?? kernel.opError ?? "the state read did not serve" };
           }
           return { data: outcome.snapshot };
         }),
@@ -294,7 +294,7 @@ export function createWalkChannel(kernel: KernelApi, readLayout:()=>LayoutState)
         timed("read.focus", async () => {
           const outcome = await kernel.apply({ op: "state" });
           if (!outcome || outcome.result !== "state") {
-            return { error: kernel.opError ?? "the focus read did not serve" };
+            return { error: kernel.lastOpError?.() ?? kernel.opError ?? "the focus read did not serve" };
           }
           return { data: outcome.snapshot.focus };
         }),

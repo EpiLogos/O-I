@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "agency-planes",
-  "generated_at": "2026-09-12T02:17:12.146Z",
+  "generated_at": "2026-09-12T02:43:17.224Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 16114,
+  "duration_ms": 15674,
   "checks": [
     {
       "ok": true,
@@ -102,7 +102,7 @@
       "duration_ms": 0.1,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-12T02:17:12.246Z",
+        "mounted_at": "2026-09-12T02:43:17.322Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -113,7 +113,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 25,
+      "duration_ms": 24,
       "data": {
         "file": "agency-planes-activity-empty-honest.png"
       }
@@ -121,7 +121,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 24,
+      "duration_ms": 31,
       "data": {
         "file": "agency-planes-activity-consent-requested.png"
       }
@@ -129,7 +129,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 36,
+      "duration_ms": 34,
       "data": {
         "file": "agency-planes-activity-consent-answered.png"
       }
@@ -137,7 +137,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 27,
+      "duration_ms": 24,
       "data": {
         "file": "agency-planes-activity-inspect-deliveries.png"
       }
@@ -153,7 +153,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 18,
+      "duration_ms": 13,
       "data": {
         "file": "agency-planes-activity-thought-tool-wait.png"
       }
@@ -161,7 +161,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 25,
+      "duration_ms": 24,
       "data": {
         "file": "agency-planes-activity-stopped.png"
       }
@@ -169,7 +169,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 14,
+      "duration_ms": 17,
       "data": {
         "file": "agency-planes-activity-fault.png"
       }
@@ -177,7 +177,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 32,
+      "duration_ms": 33,
       "data": {
         "file": "agency-planes-activity-fault-held-seat.png"
       }
@@ -185,7 +185,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 21,
+      "duration_ms": 29,
       "data": {
         "file": "agency-planes-activity-journal.png"
       }

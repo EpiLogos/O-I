@@ -60,6 +60,9 @@ export interface KernelApi {
   listingError: string | null;
   opError: string | null;
   sourceErrors: Record<string, string>;
+  /** The last op error through a stable ref — a captured closure reading
+   * `opError` can go stale; diagnostics must always name the truth. */
+  lastOpError: () => string | null;
   apply: (op: KernelOp) => Promise<KernelOutcome | null>;
   refreshListing: () => Promise<void>;
   /** Typed conveniences the surfaces share. */
@@ -103,6 +106,15 @@ export function KernelProvider(props: { children: ReactNode }) {
   const [sourceErrors, setSourceErrors] = useState<Record<string, string>>({});
   const errorOperations = useRef<Record<string, string>>({});
   const [opError, setOpError] = useState<string | null>(null);
+  // The same last-op error through a stable ref: React state read from a
+  // captured closure (the walk seam, event handlers) goes stale, which once
+  // masked a real transport failure as "the state read did not serve".
+  // Diagnostics read `lastOpError()` and always name the truth.
+  const lastOpError = useRef<string | null>(null);
+  const reportOpError = useCallback((value: string | null) => {
+    lastOpError.current = value;
+    setOpError(value);
+  }, []);
   const seenSeq = useRef(0);
   const applySerial = useRef(Promise.resolve());
 
@@ -151,7 +163,7 @@ export function KernelProvider(props: { children: ReactNode }) {
       // deterministic under rapid typing.
       const run = applySerial.current.then(async () => {
         const call = await kernelOp(transport, op);
-        setOpError(call.error ?? null);
+        reportOpError(call.error ?? null);
         if ("source_ref" in op && op.source_ref && op.op.startsWith("source_")) {
           const ref = op.source_ref;
           let reason = call.error;
@@ -176,7 +188,7 @@ export function KernelProvider(props: { children: ReactNode }) {
           try {
             if (result.result === "source_saved") clearSavedDraft(result.buffer.source_ref, result.buffer.content);
             if (result.result === "source_reread" && result.buffer.dirty) writeDraft(result.buffer.source_ref, result.buffer);
-          } catch { setOpError("Working draft could not be persisted on this device."); }
+          } catch { reportOpError("Working draft could not be persisted on this device."); }
           merge(result);
         }
         return call.outcome;
@@ -184,7 +196,7 @@ export function KernelProvider(props: { children: ReactNode }) {
       applySerial.current = run.then(() => undefined, () => undefined);
       return run;
     },
-    [merge, transport],
+    [merge, transport, reportOpError],
   );
 
   const refreshListing = useCallback(async () => {
@@ -333,6 +345,7 @@ export function KernelProvider(props: { children: ReactNode }) {
       listingError,
       opError,
       sourceErrors,
+      lastOpError: () => lastOpError.current,
       apply,
       refreshListing,
       openSource,
