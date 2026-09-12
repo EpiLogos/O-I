@@ -220,7 +220,7 @@ def interactions(browser):
             expect(dialog).to_be_visible()
             assert dialog.evaluate('node => node.scrollWidth <= innerWidth + 1')
             href = '#/' + ('' if source['id'] == 'home' else source['id'])
-            link = dialog.locator(f'a[href="{href}"]')
+            link = dialog.locator(f'.sn__link[href="{href}"]')
             link.scroll_into_view_if_needed()
             if source == PAGES[-1]:
                 page.screenshot(path=str(OUT / 'menu-mobile.png'))
