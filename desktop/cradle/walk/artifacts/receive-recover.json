@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "receive-recover",
-  "generated_at": "2026-09-12T02:44:08.984Z",
+  "generated_at": "2026-09-12T03:18:11.713Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 1659,
+  "duration_ms": 1709,
   "checks": [
     {
       "ok": true,
@@ -78,10 +78,10 @@
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-12T02:44:09.101Z",
+        "mounted_at": "2026-09-12T03:18:11.817Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -92,7 +92,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 45,
+      "duration_ms": 43,
       "data": {
         "file": "receive-recover-return-beside-open-document.png"
       }
@@ -100,7 +100,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 39,
+      "duration_ms": 46,
       "data": {
         "file": "receive-recover-rejected-beside-document.png"
       }
@@ -108,7 +108,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 38,
+      "duration_ms": 40,
       "data": {
         "file": "receive-recover-inclusion-uncertain.png"
       }
@@ -116,7 +116,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 39,
+      "duration_ms": 37,
       "data": {
         "file": "receive-recover-inclusion-recovered.png"
       }

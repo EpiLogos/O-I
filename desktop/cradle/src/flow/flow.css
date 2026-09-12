@@ -18,3 +18,12 @@
 .fresh-surface .fresh-refusal {width:100%;margin:0;font-size:12px;line-height:1.6;color:var(--oi-accent-ink)}
 .draft-surface .draft-register {display:flex;align-items:center;flex:none}
 .draft-surface .draft-register select {border:0;border-bottom:1px solid var(--oi-hairline-soft);background:transparent;color:var(--oi-accent-ink);font:inherit;padding:1px 4px}
+.flow-cognition{border-top:1px solid #d9ddd2;margin-top:10px;padding-top:10px;font-size:12px}
+.flow-cognition summary{cursor:pointer;font-weight:500}
+.flow-cognition-law{font-size:10px;opacity:.7;line-height:1.5;margin:4px 0}
+.flow-cognition-answer{margin:8px 0}
+.flow-cognition-label{font-weight:500;opacity:.8}
+.flow-cognition-answer pre,.flow-changed-reading pre{white-space:pre-wrap;max-height:34vh;overflow:auto;border:1px solid #d9ddd2;border-radius:4px;padding:8px;font-size:10px;background:transparent}
+.flow-origin{overflow-wrap:anywhere;font-size:11px;opacity:.85}
+.flow-changed{margin-top:8px;border-top:1px dashed #d9ddd2;padding-top:8px}
+.flow-changed-title{font-weight:500}
