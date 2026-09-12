@@ -53,13 +53,17 @@ def probe(out: Path, bootstrap_lock: bool) -> None:
     if not existed:
         command(["cargo", "generate-lockfile", "--manifest-path", str(PROBE / "Cargo.toml")], ROOT, out, "probe-lock-bootstrap")
     native.write(out / "dependency-lock.json", {"sha256": native.digest(lock), "standing": "committed-lock" if existed else "bootstrap-candidate-lock", "whole_C": "not-established"})
+    # The witness drives the served Actuation executable and nothing else, so
+    # the pinned owner cut must be built before the specimen runs.
+    actuation_source = checked_source(native.cut_owner(CUT, "actuation"))
+    command(["cargo", "build", "--manifest-path", "Cargo.toml", "--package", "actuation-cli", "--bin", "actuation", "--locked"], actuation_source, out, "build-actuation")
     env = dict(os.environ, DF_HARNESS_ROOT=str(ROOT), DF_EVIDENCE_ROOT=str(out / "specimen"), DF_CUT_SHA256=native.digest(CUT))
     command(["cargo", "run", "--manifest-path", str(PROBE / "Cargo.toml"), "--locked"], ROOT, out, "bounded-native-probe", env)
 
 # O:I's existing public explicit-source overrides, not a new binary resolver.
 PRODUCTS = [
     ("central", "central", "ctrl", "OI_CENTRAL_CTRL_BIN", "Cargo.toml", "ctrl"),
-    ("actuation", "actuation", "actuation", "OI_ACTUATION_BIN", None, None),
+    ("actuation", "actuation", "actuation", "OI_ACTUATION_BIN", "Cargo.toml", "actuation-cli"),
     ("ai-kit", "aikit", "aikit", "OI_AIKIT_BIN", "Cargo.toml", "aikit-cli"),
     ("software-factory", "factory", "factory", "OI_FACTORY_BIN", "Cargo.toml", "epilogos-factory"),
     ("workcell", "workcell", "workcell", "OI_WORKCELL_BIN", "Cargo.toml", "epilogos-workcell-cli"),
