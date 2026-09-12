@@ -1,0 +1,24 @@
+name: Epi UX spine and practice
+on:
+  push:
+    branches: [agent/epi-ux-spine-practice]
+  pull_request:
+    paths: ['docs/cradle/**', 'skills/cradle-execution/**', 'scripts/check-epi-ux-spine.py', '.github/workflows/epi-ux-intent.yml']
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retain exact source basis
+        run: |
+          mkdir -p ux-source
+          git rev-parse HEAD > ux-source/revision.txt
+          git rev-parse HEAD^{tree} > ux-source/tree.txt
+          git archive --format=tar HEAD > ux-source/source.tar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: oi-ux-source-basis
+          path: ux-source/
+          retention-days: 7
