@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "select-send",
-  "generated_at": "2026-09-12T03:17:45.992Z",
+  "generated_at": "2026-09-12T09:50:47.852Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 6893,
+  "duration_ms": 6959,
   "checks": [
     {
       "ok": true,
@@ -70,7 +70,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-12T03:17:46.087Z",
+        "mounted_at": "2026-09-12T09:50:47.940Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -81,7 +81,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 38,
+      "duration_ms": 34,
       "data": {
         "file": "select-send-addressed-composed-before-dispatch.png"
       }
@@ -89,7 +89,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 28,
+      "duration_ms": 30,
       "data": {
         "file": "select-send-addressed-returned-with-transcript.png"
       }
@@ -97,7 +97,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 30,
+      "duration_ms": 27,
       "data": {
         "file": "select-send-addressed-disclosure-refusal.png"
       }

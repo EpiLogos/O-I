@@ -1,6 +1,7 @@
 import {useEffect,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {receiving,type DocumentReading,type ReceivingPage,type ReceivingRequest,type ReturnReading,type ReturnRow} from "./client";
+import {NowRelations} from "./NowRelations";
 /** Returns for the OPEN document, rendered beside it (Wave 6E cut 2). The
  * same native receiving field as the project tray, reviewed and included
  * through the same owner operations — placed where the human is reading.
@@ -88,9 +89,9 @@ export function DocumentReturns({sourceRef,project}:{sourceRef:string;project:st
  };
  return <section className="document-returns" aria-label="Returns for this document">
   <header><span>Returns for this document</span>{rows&&<small>{rows.length} in the receiving field</small>}<button className="returns-refresh" aria-label="Refresh this document's returns" disabled={pending} onClick={load}>↻</button></header>
-  {rows?.map(row=><button key={row.return_ref} className={`project-return document-return ${open?.return_ref===row.return_ref?"return-open":""}`} aria-expanded={open?.return_ref===row.return_ref} onClick={()=>void expand(row)}>
+  {rows?.map(row=><button key={row.return_ref} className={`project-return document-return ${open?.return_ref===row.return_ref?"return-open":""} ${row.now_ref?"return-has-now":""}`} data-now-ref={row.now_ref??undefined} aria-expanded={open?.return_ref===row.return_ref} onClick={()=>void expand(row)}>
     <span className={`return-status return-${row.status}`}>{row.status}</span>
-    <span className="return-origin">{row.author.actor_kind==="human"?"H":"Agent"} · {row.document_id}</span>
+    <span className="return-origin">{row.author.actor_kind==="human"?"H":"Agent"} · {row.document_id}{row.now_ref&&<span className="return-now-mark" data-now-ref={row.now_ref}> · now</span>}</span>
   </button>)}
   {open&&<div className="return-detail">
     <dl>
@@ -109,6 +110,7 @@ export function DocumentReturns({sourceRef,project}:{sourceRef:string;project:st
       {sharedFieldLineage(open.record.proposal)&&<><dt>Shared field</dt><dd className="return-shared-field" data-shared-field="true">admitted contribution — projection <code>{sharedFieldLineage(open.record.proposal)!.projection_ref}</code> rev {sharedFieldLineage(open.record.proposal)!.projection_revision}{sharedFieldLineage(open.record.proposal)!.withdrawn?" · withdrawn by the publisher, admitted material retained":""}{sharedFieldLineage(open.record.proposal)!.admission_ref?<> · admission <code>{sharedFieldLineage(open.record.proposal)!.admission_ref}</code></>:null}</dd></>}
       {a2aLineage(open.record.proposal)&&<><dt>A2A exchange</dt><dd className="return-a2a" data-a2a="true">admitted contribution — exchange <code>{a2aLineage(open.record.proposal)!.exchange_ref}</code>{a2aLineage(open.record.proposal)!.transport_kind&&a2aLineage(open.record.proposal)!.transport_ref?<>{a2aLineage(open.record.proposal)!.transport_kind} <code>{a2aLineage(open.record.proposal)!.transport_ref}</code></>:null}{a2aLineage(open.record.proposal)!.binding_ref?<> · binding <code>{a2aLineage(open.record.proposal)!.binding_ref}</code> rev {a2aLineage(open.record.proposal)!.binding_revision}</>:null}</dd></>}
       {open.record.applied_source_revision&&<><dt>Applied</dt><dd>{open.record.applied_source_revision}</dd></>}
+      {open.record.now_ref&&<NowRelations nowRef={open.record.now_ref} project={project}/>}
     </dl>
     {!open.included&&open.record.status!=="included"&&<div className="return-actions">
       {(open.record.status==="pending"||open.record.status==="needs-review")&&<>
