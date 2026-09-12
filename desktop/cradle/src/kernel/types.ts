@@ -173,7 +173,7 @@ export type KernelOp =
 export type KernelOpResult =
   | {result:"graph_reading";reading:import("../knowledge/graph").GraphReading}
   | {result:"action_dispatched";dispatch:ActionDispatch}
-  | {result:"flow";response:{kind:"flow_created"|"flow_read"|"flow_written";reading:{flow:import("../flow/client").FlowRecord;content?:string}}|{kind:"flow_inspection";inspection:import("../flow/client").FlowInspection}|{kind:"failure";error:{kind:string;message?:string;detail?:string}}}
+  | {result:"flow";response:{kind:"flow_created"|"flow_read"|"flow_written";reading:{flow:import("../flow/client").FlowRecord;content?:string}}|{kind:"flow_inspection";inspection:import("../flow/client").FlowInspection}|{kind:"flow_list";listing:{schema:string;project_id:string;flows:import("../flow/client").FlowRecord[];automatic_agent_or_model_invocation?:boolean}}|{kind:"failure";error:{kind:string;message?:string;detail?:string}}}
   | { result: "flow_changed_since"; reading: ChangedSinceReading }
   | { result: "flow_commissioned"; outcome: CommissionOutcome }
   | {result:"ground_reading";reading:Record<string,unknown>}

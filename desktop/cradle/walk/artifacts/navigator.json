@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "navigator",
-  "generated_at": "2026-09-11T23:37:34.522Z",
+  "generated_at": "2026-09-12T01:14:35.059Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,13 +12,13 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 6325,
+  "duration_ms": 6528,
   "checks": [
     {
       "ok": true,
       "label": "Writing opens as a real Central subject in the register, not a buffer with no identity",
       "data": {
-        "flowSubjectRef": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0037.md"
+        "flowSubjectRef": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0214.md"
       }
     },
     {
@@ -141,15 +141,15 @@
           "event": "surface_changed",
           "schema": "oi.kernel-event/v1",
           "seq": 3,
-          "summary": "Surface opened: 2026-09-12-0037.md.",
-          "surface_id": "55df9b2b-40f8-4ee9-b704-03ed09270194",
+          "summary": "Surface opened: 2026-09-12-0214.md.",
+          "surface_id": "b3d6c1c4-6b7a-45f7-b92e-3a38c27c9d6e",
           "surface_ref": {
             "kind": "source",
             "native_owner": "central",
             "provenance": {
               "source": "central.projectcentral"
             },
-            "ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0037.md"
+            "ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0214.md"
           },
           "version": 1
         },
@@ -162,7 +162,7 @@
               "provenance": {
                 "source": "central.projectcentral"
               },
-              "ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0037.md"
+              "ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0214.md"
             }
           },
           "schema": "oi.kernel-event/v1",
@@ -217,7 +217,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-11T23:37:35.477Z",
+        "mounted_at": "2026-09-12T01:14:36.002Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -228,7 +228,7 @@
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 6.9,
+      "duration_ms": 11.7,
       "data": {
         "subject": {
           "kind": "source",
@@ -236,7 +236,7 @@
           "provenance": {
             "source": "central.projectcentral"
           },
-          "ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0037.md"
+          "ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0214.md"
         }
       }
     },
@@ -264,15 +264,15 @@
             "event": "surface_changed",
             "schema": "oi.kernel-event/v1",
             "seq": 3,
-            "summary": "Surface opened: 2026-09-12-0037.md.",
-            "surface_id": "55df9b2b-40f8-4ee9-b704-03ed09270194",
+            "summary": "Surface opened: 2026-09-12-0214.md.",
+            "surface_id": "b3d6c1c4-6b7a-45f7-b92e-3a38c27c9d6e",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
               "provenance": {
                 "source": "central.projectcentral"
               },
-              "ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0037.md"
+              "ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0214.md"
             },
             "version": 1
           },
@@ -285,7 +285,7 @@
                 "provenance": {
                   "source": "central.projectcentral"
                 },
-                "ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0037.md"
+                "ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0214.md"
               }
             },
             "schema": "oi.kernel-event/v1",
@@ -301,7 +301,7 @@
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 1013.1,
+      "duration_ms": 1021.1,
       "data": {
         "buffers": {},
         "focus": {
@@ -311,7 +311,7 @@
             "provenance": {
               "source": "central.projectcentral"
             },
-            "ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0037.md"
+            "ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0214.md"
           }
         },
         "navigator": {
@@ -355,7 +355,7 @@
                 },
                 "manifest_errors": [],
                 "now": {
-                  "active_items": 46,
+                  "active_items": 48,
                   "day_records": 4,
                   "human_scratch": 0,
                   "inactive_items": 3,
@@ -496,12 +496,12 @@
                 "present": true,
                 "schema": "central.control.ground-relations/v1"
               },
-              "source_bindings": 208,
+              "source_bindings": 248,
               "unresolved_provenance_sources": 83,
               "user": {
                 "exists": true,
                 "path": "Control/user",
-                "sources": 175
+                "sources": 215
               }
             },
             "ground_state": "healthy",
@@ -541,7 +541,7 @@
                       }
                     },
                     "flows": {
-                      "active": 22,
+                      "active": 23,
                       "flows": [
                         {
                           "flow_ref": "central:flow:project:Actuation:1788951845510864000",
@@ -762,6 +762,16 @@
                           "source_present": true,
                           "source_ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-11-2358.md",
                           "uncommitted_edits": false
+                        },
+                        {
+                          "flow_ref": "central:flow:project:Actuation:1789169856558078000",
+                          "lifecycle": "active",
+                          "path": "ProjectCentral/now/flows/2026-09-12-0037.md",
+                          "revision": "central.content-fnv1a64/v1:0:cbf29ce484222325",
+                          "revisions_recorded": 1,
+                          "source_present": true,
+                          "source_ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0037.md",
+                          "uncommitted_edits": false
                         }
                       ],
                       "history": ".central/flow-revisions",
@@ -770,8 +780,8 @@
                     },
                     "manifest_errors": [],
                     "now": {
-                      "active_items": 11,
-                      "day_records": 1,
+                      "active_items": 12,
+                      "day_records": 2,
                       "human_scratch": 0,
                       "inactive_items": 3,
                       "invalid_items": 0,
@@ -801,7 +811,7 @@
                       }
                     ]
                   },
-                  "source_files": 359
+                  "source_files": 301
                 },
                 {
                   "name": "Central",
@@ -990,7 +1000,7 @@
                     },
                     "manifest_errors": [],
                     "now": {
-                      "active_items": 46,
+                      "active_items": 48,
                       "day_records": 4,
                       "human_scratch": 0,
                       "inactive_items": 3,
@@ -1779,11 +1789,11 @@
           }
         },
         "surfaces": {
-          "55df9b2b-40f8-4ee9-b704-03ed09270194": {
+          "b3d6c1c4-6b7a-45f7-b92e-3a38c27c9d6e": {
             "kind": "flow",
-            "source_ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0037.md",
-            "surface_id": "55df9b2b-40f8-4ee9-b704-03ed09270194",
-            "title": "2026-09-12-0037.md"
+            "source_ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0214.md",
+            "surface_id": "b3d6c1c4-6b7a-45f7-b92e-3a38c27c9d6e",
+            "title": "2026-09-12-0214.md"
           }
         }
       }
@@ -1791,7 +1801,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 32,
+      "duration_ms": 23,
       "data": {
         "file": "navigator-project-ground.png"
       }
@@ -1799,7 +1809,7 @@
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 438,
+      "duration_ms": 457.5,
       "data": {
         "buffers": {},
         "focus": {
@@ -1809,7 +1819,7 @@
             "provenance": {
               "source": "central.projectcentral"
             },
-            "ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0037.md"
+            "ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0214.md"
           }
         },
         "navigator": {
@@ -1911,12 +1921,12 @@
                 "present": true,
                 "schema": "central.control.ground-relations/v1"
               },
-              "source_bindings": 208,
+              "source_bindings": 248,
               "unresolved_provenance_sources": 83,
               "user": {
                 "exists": true,
                 "path": "Control/user",
-                "sources": 175
+                "sources": 215
               }
             },
             "ground_state": "healthy",
@@ -1956,7 +1966,7 @@
                       }
                     },
                     "flows": {
-                      "active": 23,
+                      "active": 24,
                       "flows": [
                         {
                           "flow_ref": "central:flow:project:Actuation:1788951845510864000",
@@ -2187,6 +2197,16 @@
                           "source_present": true,
                           "source_ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0037.md",
                           "uncommitted_edits": false
+                        },
+                        {
+                          "flow_ref": "central:flow:project:Actuation:1789175677106267000",
+                          "lifecycle": "active",
+                          "path": "ProjectCentral/now/flows/2026-09-12-0214.md",
+                          "revision": "central.content-fnv1a64/v1:0:cbf29ce484222325",
+                          "revisions_recorded": 1,
+                          "source_present": true,
+                          "source_ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0214.md",
+                          "uncommitted_edits": false
                         }
                       ],
                       "history": ".central/flow-revisions",
@@ -2195,8 +2215,8 @@
                     },
                     "manifest_errors": [],
                     "now": {
-                      "active_items": 11,
-                      "day_records": 1,
+                      "active_items": 12,
+                      "day_records": 2,
                       "human_scratch": 0,
                       "inactive_items": 3,
                       "invalid_items": 0,
@@ -2226,7 +2246,7 @@
                       }
                     ]
                   },
-                  "source_files": 359
+                  "source_files": 301
                 },
                 {
                   "name": "Central",
@@ -2415,7 +2435,7 @@
                     },
                     "manifest_errors": [],
                     "now": {
-                      "active_items": 46,
+                      "active_items": 48,
                       "day_records": 4,
                       "human_scratch": 0,
                       "inactive_items": 3,
@@ -3155,11 +3175,11 @@
           "sources": null
         },
         "surfaces": {
-          "55df9b2b-40f8-4ee9-b704-03ed09270194": {
+          "b3d6c1c4-6b7a-45f7-b92e-3a38c27c9d6e": {
             "kind": "flow",
-            "source_ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0037.md",
-            "surface_id": "55df9b2b-40f8-4ee9-b704-03ed09270194",
-            "title": "2026-09-12-0037.md"
+            "source_ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0214.md",
+            "surface_id": "b3d6c1c4-6b7a-45f7-b92e-3a38c27c9d6e",
+            "title": "2026-09-12-0214.md"
           }
         }
       }
@@ -3167,7 +3187,7 @@
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 1046.5,
+      "duration_ms": 1131.5,
       "data": {
         "buffers": {},
         "focus": {
@@ -3177,7 +3197,7 @@
             "provenance": {
               "source": "central.projectcentral"
             },
-            "ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0037.md"
+            "ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0214.md"
           }
         },
         "navigator": {
@@ -3349,12 +3369,12 @@
                 "present": true,
                 "schema": "central.control.ground-relations/v1"
               },
-              "source_bindings": 208,
+              "source_bindings": 248,
               "unresolved_provenance_sources": 83,
               "user": {
                 "exists": true,
                 "path": "Control/user",
-                "sources": 175
+                "sources": 215
               }
             },
             "ground_state": "healthy",
@@ -3394,7 +3414,7 @@
                       }
                     },
                     "flows": {
-                      "active": 23,
+                      "active": 24,
                       "flows": [
                         {
                           "flow_ref": "central:flow:project:Actuation:1788951845510864000",
@@ -3625,6 +3645,16 @@
                           "source_present": true,
                           "source_ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0037.md",
                           "uncommitted_edits": false
+                        },
+                        {
+                          "flow_ref": "central:flow:project:Actuation:1789175677106267000",
+                          "lifecycle": "active",
+                          "path": "ProjectCentral/now/flows/2026-09-12-0214.md",
+                          "revision": "central.content-fnv1a64/v1:0:cbf29ce484222325",
+                          "revisions_recorded": 1,
+                          "source_present": true,
+                          "source_ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0214.md",
+                          "uncommitted_edits": false
                         }
                       ],
                       "history": ".central/flow-revisions",
@@ -3633,8 +3663,8 @@
                     },
                     "manifest_errors": [],
                     "now": {
-                      "active_items": 11,
-                      "day_records": 1,
+                      "active_items": 12,
+                      "day_records": 2,
                       "human_scratch": 0,
                       "inactive_items": 3,
                       "invalid_items": 0,
@@ -3664,7 +3694,7 @@
                       }
                     ]
                   },
-                  "source_files": 359
+                  "source_files": 301
                 },
                 {
                   "name": "Central",
@@ -3853,7 +3883,7 @@
                     },
                     "manifest_errors": [],
                     "now": {
-                      "active_items": 46,
+                      "active_items": 48,
                       "day_records": 4,
                       "human_scratch": 0,
                       "inactive_items": 3,
@@ -4593,11 +4623,11 @@
           "sources": null
         },
         "surfaces": {
-          "55df9b2b-40f8-4ee9-b704-03ed09270194": {
+          "b3d6c1c4-6b7a-45f7-b92e-3a38c27c9d6e": {
             "kind": "flow",
-            "source_ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0037.md",
-            "surface_id": "55df9b2b-40f8-4ee9-b704-03ed09270194",
-            "title": "2026-09-12-0037.md"
+            "source_ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0214.md",
+            "surface_id": "b3d6c1c4-6b7a-45f7-b92e-3a38c27c9d6e",
+            "title": "2026-09-12-0214.md"
           }
         }
       }
@@ -4626,15 +4656,15 @@
             "event": "surface_changed",
             "schema": "oi.kernel-event/v1",
             "seq": 3,
-            "summary": "Surface opened: 2026-09-12-0037.md.",
-            "surface_id": "55df9b2b-40f8-4ee9-b704-03ed09270194",
+            "summary": "Surface opened: 2026-09-12-0214.md.",
+            "surface_id": "b3d6c1c4-6b7a-45f7-b92e-3a38c27c9d6e",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
               "provenance": {
                 "source": "central.projectcentral"
               },
-              "ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0037.md"
+              "ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0214.md"
             },
             "version": 1
           },
@@ -4647,7 +4677,7 @@
                 "provenance": {
                   "source": "central.projectcentral"
                 },
-                "ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0037.md"
+                "ref": "central:source:project:Actuation:ProjectCentral/now/flows/2026-09-12-0214.md"
               }
             },
             "schema": "oi.kernel-event/v1",
@@ -4684,7 +4714,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 37,
+      "duration_ms": 34,
       "data": {
         "file": "navigator-restored-writing.png"
       }
@@ -4695,7 +4725,7 @@
       "duration_ms": 0.1,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-11T23:37:40.782Z",
+        "mounted_at": "2026-09-12T01:14:41.520Z",
         "transport": {
           "kind": "unavailable",
           "reason": "no kernel transport: neither the Tauri host nor a dev walk bridge is reachable"
@@ -4705,7 +4735,7 @@
     }
   ],
   "metrics": {
-    "world_summon_ms": 6
+    "world_summon_ms": 5
   },
   "screenshots": [
     "navigator-project-ground.png",
