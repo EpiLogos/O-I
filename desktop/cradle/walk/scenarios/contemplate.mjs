@@ -22,7 +22,12 @@ export async function setup(args) {
   // the walk's explicit act should measure the owner's answer, not the
   // store's first boot.
   const { execFileSync } = await import("node:child_process");
-  const env = { ...process.env, ...source.env, AIKIT_HOME: join(source.root, ".aikit-home") };
+  // Pin the AIKit binding explicitly (same law as OI_CENTRAL_CTRL_BIN): the
+  // installed `oi aikit` multicall resolves the REGISTERED composition
+  // binding, which drifted to an older ai-kit cut without the flow
+  // subcommand mid-session on this machine — the walk binds the owner
+  // directly so the dispatch reaches the pinned cut.
+  const env = { ...process.env, ...source.env, AIKIT_HOME: join(source.root, ".aikit-home"), OI_AIKIT_BIN: process.env.OI_AIKIT_BIN ?? "aikit" };
   try { execFileSync(process.env.OI_AIKIT_BIN ?? "aikit", ["--json", "status"], { encoding: "utf8", env }); } catch { /* the preflight itself will disclose a real unavailability */ }
   return { ...source, env };
 }

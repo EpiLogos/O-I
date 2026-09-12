@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "a2a-exchange",
-  "generated_at": "2026-09-12T09:51:35.797Z",
+  "generated_at": "2026-09-12T10:37:17.166Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 2734,
+  "duration_ms": 2696,
   "checks": [
     {
       "ok": true,
@@ -103,10 +103,10 @@
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-12T09:51:35.914Z",
+        "mounted_at": "2026-09-12T10:37:17.272Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -117,7 +117,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 57,
+      "duration_ms": 54,
       "data": {
         "file": "a2a-exchange-a2a-card-mismatch-refused.png"
       }
@@ -125,7 +125,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 38,
+      "duration_ms": 35,
       "data": {
         "file": "a2a-exchange-a2a-exchange-returned.png"
       }
@@ -133,7 +133,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 36,
+      "duration_ms": 34,
       "data": {
         "file": "a2a-exchange-a2a-return-included.png"
       }

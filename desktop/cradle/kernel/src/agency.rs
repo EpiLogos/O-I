@@ -23,6 +23,41 @@ impl Client {
     pub fn read_project(&self, cwd: &Path, project_ref: &str) -> Result<Value, String> {
         read_project_with(&self.executable, self.home.as_deref(), cwd, project_ref, self.suite_route)
     }
+
+    /// Read one session's task record through the owner's own
+    /// `encounter-task-read` (`aikit.encounter-task/v1`). Read-only: the
+    /// record is the owner's — identity, readiness, the allocated Central
+    /// task — carried verbatim; absence (no task bound) surfaces the owner's
+    /// own refusal, never a desktop-fabricated record.
+    pub fn task_read(&self, cwd: &Path, agent_session: &str) -> Result<Value, String> {
+        let mut command = Command::new(&self.executable);
+        if self.suite_route { command.arg("aikit-session-space"); }
+        if let Some(home) = &self.home { command.env("AIKIT_HOME", home); }
+        command.arg("-C").arg(cwd);
+        command.args(["encounter-task-read", "--agent-session", agent_session]);
+        let output = command.output()
+            .map_err(|e| format!("AIKit SessionSpace is unavailable: {e}"))?;
+        if !output.status.success() {
+            return Err(String::from_utf8_lossy(&output.stderr).trim().to_owned());
+        }
+        let mut data: Value = serde_json::from_slice(&output.stdout)
+            .map_err(|e| format!("AIKit SessionSpace returned an unreadable task reading: {e}"))?;
+        // Some owner revisions wrap the reply in an `ok`/`data` envelope; the
+        // kernel's outcome carries the record itself.
+        if data.get("ok").and_then(Value::as_bool) == Some(true) {
+            data = data.get("data").cloned().unwrap_or(Value::Null);
+        }
+        // No task bound on this session is honest absence (`null`), not an
+        // error — the renderer renders nothing rather than a fabricated
+        // record.
+        if data.is_null() {
+            return Ok(data);
+        }
+        if !data.is_object() || data.get("schema").and_then(Value::as_str) != Some("aikit.encounter-task/v1") {
+            return Err("Unsupported native encounter task reading".into());
+        }
+        Ok(data)
+    }
 }
 
 pub fn executable() -> PathBuf {
@@ -116,12 +151,16 @@ pub enum EncounterRequest {
 /// in the bound ai-kit revision); they are carried verbatim, never re-keyed.
 #[derive(Clone, Debug, serde::Deserialize, PartialEq, serde::Serialize)]
 pub struct AddressedPacket { pub text:String, pub source_refs:Vec<String>, pub audience:Vec<String> }
+/// `expected_task` is the owner's `EncounterTaskBasis`, validated by the owner
+/// against the stored task and the session's agency binding before any
+/// transport. The kernel never interprets or composes it — an opaque value
+/// carried verbatim; a fabricated basis is the owner's refusal to answer.
 #[derive(Clone, Debug, serde::Deserialize, PartialEq, serde::Serialize)]
-pub struct AddressedTurn { pub delivery_ref:String, pub sender:String, pub expected_binding_revision:String, pub packet:AddressedPacket }
+pub struct AddressedTurn { pub delivery_ref:String, pub sender:String, pub expected_binding_revision:String, #[serde(default, skip_serializing_if="Option::is_none")] pub expected_task:Option<Value>, pub packet:AddressedPacket }
 /// One explicit group recipient; field names are the owner wire contract
 /// (`encounter_agency.rs` in the bound ai-kit revision), carried verbatim.
 #[derive(Clone, Debug, serde::Deserialize, PartialEq, serde::Serialize)]
-pub struct GroupRecipient { pub agent_session:String, pub expected_binding_revision:String }
+pub struct GroupRecipient { pub agent_session:String, pub expected_binding_revision:String, #[serde(default, skip_serializing_if="Option::is_none")] pub expected_task:Option<Value> }
 #[derive(Clone, Debug, serde::Deserialize, PartialEq, serde::Serialize)]
 #[serde(tag="outcome",rename_all="lowercase")]
 pub enum PermissionDecision {Selected {option_id:String},Cancelled}

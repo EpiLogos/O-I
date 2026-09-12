@@ -1,5 +1,5 @@
 import {useEffect,useState} from "react";
-import type {AddressedPacket,AddressedTurn,DeliveryRecord,GroupRecipient} from "./client";
+import type {AddressedPacket,AddressedTurn,DeliveryRecord,EncounterTaskReading,GroupRecipient} from "./client";
 
 /** Explicit addressed work: a machine turn the sender composes and commits,
  * carried by the owner's addressed dispatch — never the shared human draft.
@@ -37,7 +37,7 @@ const TERMINAL_NOTE:Record<string,string>={
   cancelled:"The turn was cancelled.",
   "reconciled-no-replay":"Correlated with reviewed owner evidence; never replayed.",
 };
-export function AddressedComposer({disabled,dispatch,history,service,agentSession,group,onGroupSend,onDispatchFields,onSend}:{disabled:boolean;dispatch:DispatchState;history:DeliveryHistoryEntry[];service?:{running:boolean;pid?:number;detail?:string};agentSession?:string;group?:GroupState;onGroupSend?:(sender:string,recipients:GroupRecipient[],packet:AddressedPacket)=>void;onDispatchFields?:(fields:AddressedFields)=>void;onSend:(turn:AddressedTurn,fields:AddressedFields)=>void}) {
+export function AddressedComposer({disabled,dispatch,history,service,agentSession,task,group,onGroupSend,onDispatchFields,onSend}:{disabled:boolean;dispatch:DispatchState;history:DeliveryHistoryEntry[];service?:{running:boolean;pid?:number;detail?:string};agentSession?:string;task?:EncounterTaskReading;group?:GroupState;onGroupSend?:(sender:string,recipients:GroupRecipient[],packet:AddressedPacket)=>void;onDispatchFields?:(fields:AddressedFields)=>void;onSend:(turn:AddressedTurn,fields:AddressedFields)=>void}) {
   const [sender,setSender]=useState("");const [audience,setAudience]=useState("");
   const [basis,setBasis]=useState("");const [sourceRefs,setSourceRefs]=useState("");
   const [text,setText]=useState("");const [selection,setSelection]=useState<{sourceRef:string}|undefined>();
@@ -72,6 +72,15 @@ export function AddressedComposer({disabled,dispatch,history,service,agentSessio
     <p className="encounter-addressed-service" role="status" data-service={service?(service.running?"running":"stopped"):"unknown"}>
       {service?(service.running?`Native dispatch service is running (pid ${service.pid}).`:"Native dispatch service is not running — the encounter owner is started by its owner, not by this window."):"Checking the native dispatch service…"}
     </p>
+    {task&&<div className="encounter-addressed-task" data-task-ref={task.request?.central?.task_ref} data-task-ready={task.ready?"ready":"preparing"}>
+      <strong>Task bound to this session</strong>
+      <dl>
+        <dt>Task</dt><dd><code>{task.request?.central?.task_ref}</code> — {task.request?.central?.purpose}</dd>
+        <dt>State</dt><dd>{task.ready?"ready (the Central task is allocated and the launcher prepared)":"preparing — the owner has not finished this task"}</dd>
+        {task.allocation?.allocation&&<><dt>Allocated NOW</dt><dd><code>{task.allocation.allocation.now_ref}</code> · rev {task.allocation.allocation.revision?.revision} · policy {task.allocation.allocation.policy?.revision}</dd></>}
+      </dl>
+      <p>The owner has not yet disclosed this session&apos;s agency basis to callers, so the desktop attaches no task expectation of its own; a sender-supplied expectation is carried verbatim and validated by the owner before anything transports.</p>
+    </div>}
     {selection&&<p className="encounter-addressed-selection">Composed from the selected passage at <code>{selection.sourceRef}</code> — edit it here freely; the shared draft above was never touched.</p>}
     <div className="encounter-addressed-fields">
       <label>Send as<input aria-label="Sender identity" value={sender} onChange={event=>update({sender:event.target.value})} placeholder="sender ref permitted by the participant" autoComplete="off" spellCheck={false}/></label>
