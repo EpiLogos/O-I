@@ -1,0 +1,84 @@
+name: Site shell v2 acceptance
+
+on:
+  push:
+    branches: [site/redesign-v2]
+    paths:
+      - 'site/**'
+      - '.github/workflows/site-shell-v2.yml'
+  pull_request:
+    paths:
+      - 'site/src/shell/**'
+      - 'site/src/tokens.css'
+      - 'site/tests/shell-v2-acceptance.py'
+      - '.github/workflows/site-shell-v2.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: site-shell-v2-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  shell:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+      - name: Install locked site dependencies
+        run: npm ci
+        working-directory: site
+      - name: Strict TypeScript and production build
+        run: npm run build
+        working-directory: site
+      - name: Install browser acceptance tooling (not a site dependency)
+        run: |
+          python -m pip install playwright==1.51.0
+          python -m playwright install --with-deps chromium firefox webkit
+      - name: Browser acceptance
+        working-directory: site
+        run: |
+          mkdir -p evidence/shell-v2
+          git rev-parse HEAD > evidence/shell-v2/commit.txt
+          npm run preview -- --host 127.0.0.1 --port 4173 > evidence/shell-v2/server.log 2>&1 &
+          for i in $(seq 1 40); do
+            curl -fsS http://127.0.0.1:4173/shell.html >/dev/null && break
+            sleep 1
+          done
+          if [ -f tests/shell-v2-acceptance.py ]; then
+            python tests/shell-v2-acceptance.py
+          else
+            python - <<'PY'
+          from pathlib import Path
+          from playwright.sync_api import sync_playwright
+          with sync_playwright() as p:
+              browser = p.chromium.launch()
+              for width, height in [(1440,900),(390,844)]:
+                  page = browser.new_page(viewport={'width':width,'height':height})
+                  for route in ['home','oi','products','shared-field','research','build']:
+                      page.goto('http://127.0.0.1:4173/shell.html#/' + ('' if route == 'home' else route))
+                      page.wait_for_timeout(1200)
+                      page.screenshot(path=f'evidence/shell-v2/baseline-{route}-{width}.png',full_page=True)
+                  page.close()
+              browser.close()
+          PY
+          fi
+      - name: Retain inspectable evidence and executable preview
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-shell-v2-${{ github.sha }}
+          retention-days: 14
+          if-no-files-found: error
+          path: |
+            site/evidence/shell-v2/
+            site/dist/
+            site/src/shell/
+            site/src/tokens.css
+            site/tests/shell-v2-acceptance.py
