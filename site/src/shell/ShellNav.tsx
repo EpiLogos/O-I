@@ -1,75 +1,67 @@
-'use client';
-
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import { ShellMark } from './ShellMark';
 import { PAGES } from './content';
 
-type ShellNavProps = {
-  page: string;
-  onNavigate: (id: string) => void;
-};
+type ShellNavProps = { page: string; onNavigate: (id: string) => void };
+const hrefFor = (id: string) => id === 'home' ? '#/' : `#/${id}`;
 
-/**
- * Fully transparent header (no tint, no darkening). The page list lives in a
- * full-screen accordion panel styled in the page's own voice: paper ground,
- * thin rules, uppercase labels.
- */
+/** Native modal supplies inert background, Escape, focus containment and return. */
 export function ShellNav({ page, onNavigate }: ShellNavProps) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const [open, setOpen] = useState(false);
-
   useEffect(() => {
     if (!open) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
-    };
-    window.addEventListener('keydown', onKey);
+    const previous = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = '';
-    };
+    return () => { document.body.style.overflow = previous; };
   }, [open]);
 
-  const go = (id: string) => {
-    setOpen(false);
+  const close = () => { dialogRef.current?.close(); setOpen(false); };
+  const go = (event: MouseEvent<HTMLAnchorElement>, id: string) => {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    close();
     onNavigate(id);
   };
+  const brand = (
+    <a className="sn__brand" href="#/" onClick={event => go(event, 'home')} aria-label="O:I home">
+      <ShellMark className="sn__mark" />
+    </a>
+  );
 
   return (
-    <header className={`sn${open ? ' sn--open' : ''}`}>
-      <button className="sn__brand" onClick={() => go('home')} aria-label="O:I home">
-        <ShellMark className="sn__mark" />
+    <header className={`sn${page === 'home' ? ' sn--light' : ''}`}>
+      {brand}
+      <button type="button" className="sn__toggle" aria-expanded={open} aria-controls="shell-menu" onClick={() => {
+        dialogRef.current?.showModal();
+        setOpen(true);
+      }}>
+        <span className="sn__toggle-label">Menu</span>
+        <span className="sn__toggle-icon" aria-hidden="true">+</span>
       </button>
-
-      <button
-        className="sn__toggle"
-        onClick={() => setOpen((value) => !value)}
-        aria-expanded={open}
-        aria-controls="shell-menu"
-      >
-        <span className="sn__toggle-label">{open ? 'Close' : 'Menu'}</span>
-        <span className="sn__toggle-icon" aria-hidden="true">
-          {open ? '×' : '+'}
-        </span>
-      </button>
-
-      <nav id="shell-menu" className="sn__panel" aria-hidden={!open}>
-        <ol className="sn__list">
-          {PAGES.map((entry) => (
-            <li key={entry.id} className="sn__item">
-              <button
-                className={`sn__link${page === entry.id ? ' sn__link--active' : ''}`}
-                onClick={() => go(entry.id)}
-              >
-                <span className="sn__index">{entry.index}</span>
-                <span className="sn__label">{entry.label}</span>
-                <span className="sn__hint">{entry.hint}</span>
-              </button>
-            </li>
-          ))}
-        </ol>
+      <dialog ref={dialogRef} id="shell-menu" className="sn__panel" aria-label="Site navigation" onClose={() => setOpen(false)} data-lenis-prevent>
+        <div className="sn__panel-head">
+          {brand}
+          <button type="button" className="sn__toggle" onClick={close} autoFocus>
+            <span className="sn__toggle-label">Close</span>
+            <span className="sn__toggle-icon" aria-hidden="true">×</span>
+          </button>
+        </div>
+        <nav aria-label="Main navigation">
+          <ol className="sn__list">
+            {PAGES.map(entry => (
+              <li key={entry.id} className="sn__item">
+                <a className={`sn__link${page === entry.id ? ' sn__link--active' : ''}`} href={hrefFor(entry.id)} onClick={event => go(event, entry.id)} aria-current={page === entry.id ? 'page' : undefined}>
+                  <span className="sn__index">{entry.index}</span>
+                  <span className="sn__label">{entry.label}</span>
+                  <span className="sn__hint">{entry.hint}</span>
+                </a>
+              </li>
+            ))}
+          </ol>
+        </nav>
         <div className="sn__foot">O:I — World and Life</div>
-      </nav>
+      </dialog>
     </header>
   );
 }

@@ -1,98 +1,64 @@
-'use client';
-
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { CustomEase } from 'gsap/CustomEase';
 import Lenis from '@studio-freight/lenis';
 import { ShellMark } from './ShellMark';
 import { VideoField } from './VideoField';
+import { motionSettings, useMotion } from './motion';
 
-/**
- * The original parallax hero, rebuilt for the point-cloud field: a light video
- * spills behind, the mark is drawn as thin black edges with a transparent body
- * so the dots reveal through every element, and the title sits on a dark wipe.
- */
+gsap.registerPlugin(ScrollTrigger, CustomEase);
+
+/** Composed at rest; one outward separation, then a quiet handoff to reading. */
 export function HeroParallax() {
   const rootRef = useRef<HTMLElement>(null);
+  const { still } = useMotion();
 
   useEffect(() => {
     const root = rootRef.current;
-    if (!root || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      return;
-    }
-
-    gsap.registerPlugin(ScrollTrigger);
-
+    if (!root || still) return;
     const lenis = new Lenis({ smoothWheel: true, lerp: 0.09 });
     const ticker = (time: number) => lenis.raf(time * 1000);
-
+    const ease = CustomEase.create('oi-shell', motionSettings().ease.replace(/^cubic-bezier\(|\)$/g, ''));
     const context = gsap.context(() => {
       const timeline = gsap.timeline({
-        scrollTrigger: { trigger: root, start: 'top top', end: 'bottom top', scrub: true },
+        defaults: { ease },
+        scrollTrigger: { trigger: root, start: 'top top', end: 'bottom top', scrub: 0.35, invalidateOnRefresh: true },
       });
-
-      const layers = [
-        { n: '1', out: 36 },
-        { n: '2', out: 24 },
-        { n: '3', out: 13 },
-        { n: '4', out: 6 },
-      ];
-
-      layers.forEach((layer, index) => {
-        timeline.to(
-          root.querySelectorAll(`[data-pl-layer="${layer.n}"]`),
-          {
-            keyframes: [{ yPercent: layer.out }, { yPercent: 0 }],
-            ease: 'none',
-          },
-          index === 0 ? 0 : '<',
-        );
+      [22, 15, 9, 4].forEach((distance, index) => {
+        timeline.to(`[data-pl-layer="${index + 1}"]`, {
+          yPercent: -distance,
+          opacity: 0,
+          duration: 0.9,
+        }, 0.06 + index * 0.025);
       });
-
-      timeline.fromTo(
-        root.querySelector('[data-pl-shade]'),
-        { scaleY: 0.4, opacity: 0.6 },
-        { scaleY: 1, opacity: 1, ease: 'none' },
-        0,
-      );
+      timeline.to('[data-pl-field]', { yPercent: -4, opacity: 0.15, duration: 1 }, 0);
     }, root);
-
     lenis.on('scroll', ScrollTrigger.update);
     gsap.ticker.add(ticker);
     gsap.ticker.lagSmoothing(0);
-
     return () => {
       gsap.ticker.remove(ticker);
       context.revert();
       lenis.destroy();
     };
-  }, []);
+  }, [still]);
 
   return (
     <section className="pl" ref={rootRef} aria-label="O:I opening statement">
       <div className="pl__sticky">
-        <VideoField media="b" poster={1} className="pl__video" zoom={1.12} shift={4} />
-
-        <div className="pl__shade" data-pl-shade aria-hidden="true" />
-
+        <div className="pl__field" data-pl-field>
+          <VideoField media="b" poster={1} className="pl__video" zoom={1.03} shift={1} priority />
+        </div>
         <div className="pl__inner">
           <div className="pl__mark" aria-hidden="true">
-            <div data-pl-layer="1" className="pl__layer">
-              <ShellMark piece="braces" className="pl__piece" />
-            </div>
-            <div data-pl-layer="2" className="pl__layer">
-              <ShellMark piece="ring" className="pl__piece" />
-            </div>
-            <div data-pl-layer="3" className="pl__layer">
-              <ShellMark piece="colon" className="pl__piece" />
-            </div>
-            <div data-pl-layer="4" className="pl__layer">
-              <ShellMark piece="bar" className="pl__piece" />
-            </div>
+            {(['braces', 'ring', 'colon', 'bar'] as const).map((piece, index) => (
+              <div key={piece} data-pl-layer={index + 1} className="pl__layer">
+                <ShellMark piece={piece} className="pl__piece" />
+              </div>
+            ))}
           </div>
-
         </div>
-
       </div>
     </section>
   );

@@ -1,6 +1,5 @@
-'use client';
-
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useMotion } from './motion';
 
 type VideoFieldProps = {
   media: 'a' | 'b' | 'c' | 'd';
@@ -8,50 +7,66 @@ type VideoFieldProps = {
   className?: string;
   zoom?: number;
   shift?: number;
+  priority?: boolean;
 };
 
-/**
- * A remake-material video used as a moving field. Zoomed past its edges and
- * feathered with a mask in CSS so it spills over and dissolves into the page.
- */
-export function VideoField({ media, poster = 1, className, zoom = 1.3, shift = 0 }: VideoFieldProps) {
+/** A still always exists; video is an enhancement, never native autoplay. */
+export function VideoField({ media, poster = 1, className, zoom = 1.03, shift = 0, priority = false }: VideoFieldProps) {
+  const { still } = useMotion();
+  const rootRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-    video.muted = true;
-    const play = () => {
-      const attempt = video.play();
-      if (attempt) attempt.catch(() => {});
+    const root = rootRef.current;
+    setPlaying(false);
+    if (still || !video || !root) return;
+    let visible = false;
+    let disposed = false;
+    const sync = () => {
+      if (disposed || !visible || document.hidden) {
+        video.pause();
+        return;
+      }
+      video.muted = true;
+      void video.play().then(() => {
+        // A play promise may settle after the tab, route or visibility changed.
+        if (disposed || !visible || document.hidden) video.pause();
+      }).catch(() => { if (!disposed) setPlaying(false); });
     };
-    play();
-
-    const onVisibility = () => {
-      if (!document.hidden) play();
+    const observer = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      sync();
+    }, { threshold: 0 });
+    observer.observe(root);
+    document.addEventListener('visibilitychange', sync);
+    return () => {
+      disposed = true;
+      observer.disconnect();
+      document.removeEventListener('visibilitychange', sync);
+      video.pause();
     };
-    document.addEventListener('visibilitychange', onVisibility);
-    return () => document.removeEventListener('visibilitychange', onVisibility);
-  }, []);
+  }, [media, still]);
 
+  const style = { '--vf-zoom': zoom, '--vf-shift': `${shift}%` } as CSSProperties;
+  const posterUrl = `./media/motion/oi-pointcloud-poster-${poster}.jpg`;
   return (
-    <div className={`vf${className ? ` ${className}` : ''}`} aria-hidden="true">
-      <video
-        ref={videoRef}
-        className="vf__video"
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="metadata"
-        poster={`./media/motion/oi-pointcloud-poster-${poster}.jpg`}
-        style={{ transform: `scale(${zoom}) translateX(${shift}%)` }}
-        tabIndex={-1}
-      >
-        <source src={`./media/motion/oi-pointcloud-${media}.mp4`} type="video/mp4" />
-      </video>
+    <div ref={rootRef} className={`vf${className ? ` ${className}` : ''}`} style={style} aria-hidden="true" data-media-state={still ? 'still' : playing ? 'video' : 'poster'}>
+      <div className="vf__frame">
+        <img className="vf__poster" src={posterUrl} alt="" loading={priority ? 'eager' : 'lazy'} decoding="async" />
+        {!still && (
+          <video
+            key={media}
+            ref={videoRef}
+            className={`vf__video${playing ? ' vf__video--ready' : ''}`}
+            muted loop playsInline preload="none" tabIndex={-1}
+            onPlaying={() => setPlaying(true)} onError={() => setPlaying(false)}
+          >
+            <source src={`./media/motion/oi-pointcloud-${media}.mp4`} type="video/mp4" />
+          </video>
+        )}
+      </div>
     </div>
   );
 }
