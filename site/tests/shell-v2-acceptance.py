@@ -174,6 +174,7 @@ def interactions(browser):
         for _ in range(12):
             page.keyboard.press('Tab')
             assert page.evaluate("!document.querySelector('main').contains(document.activeElement)"), 'focus escaped modal into content'
+        dialog.evaluate('node => Promise.all(node.getAnimations().map(animation => animation.finished))')
         page.screenshot(path=str(OUT / 'menu-desktop.png'))
         page.keyboard.press('Escape')
         expect(dialog).not_to_be_visible()
@@ -213,15 +214,21 @@ def interactions(browser):
     page = context.new_page()
     page.goto(route_url('home'))
     def mobile_menu():
-        page.locator('.sn > .sn__toggle').click()
-        dialog = page.get_by_role('dialog')
-        expect(dialog).to_be_visible()
-        assert dialog.evaluate('node => node.scrollWidth <= innerWidth + 1')
-        dialog.locator('a[href="#/build"]').scroll_into_view_if_needed()
-        page.screenshot(path=str(OUT / 'menu-mobile.png'))
-        dialog.locator('a[href="#/build"]').click()
-        expect(page.locator('main')).to_have_attribute('data-page', 'build')
-    check('mobile-menu-all-six-routes-reachable', mobile_menu, page)
+        for source in PAGES:
+            page.locator('.sn > .sn__toggle').click()
+            dialog = page.get_by_role('dialog')
+            expect(dialog).to_be_visible()
+            assert dialog.evaluate('node => node.scrollWidth <= innerWidth + 1')
+            href = '#/' + ('' if source['id'] == 'home' else source['id'])
+            link = dialog.locator(f'a[href="{href}"]')
+            link.scroll_into_view_if_needed()
+            if source == PAGES[-1]:
+                page.screenshot(path=str(OUT / 'menu-mobile.png'))
+            link.click()
+            expect(page.locator('main')).to_have_attribute('data-page', source['id'])
+            assert page.evaluate('document.body.style.overflow') != 'hidden'
+        return {'routes_reached': [source['id'] for source in PAGES]}
+    check('mobile-menu-every-source-route-reachable', mobile_menu, page)
     context.close()
 
     context = browser.new_context()

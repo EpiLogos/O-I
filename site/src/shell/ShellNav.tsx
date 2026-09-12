@@ -9,14 +9,16 @@ const hrefFor = (id: string) => id === 'home' ? '#/' : `#/${id}`;
 export function ShellNav({ page, onNavigate }: ShellNavProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [open, setOpen] = useState(false);
-  useEffect(() => {
-    if (!open) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = previous; };
-  }, [open]);
+  const previousOverflow = useRef<string | null>(null);
+  const unlock = () => {
+    if (previousOverflow.current === null) return;
+    document.body.style.overflow = previousOverflow.current;
+    previousOverflow.current = null;
+  };
+  useEffect(() => () => unlock(), []);
 
-  const close = () => { dialogRef.current?.close(); setOpen(false); };
+  // Release synchronously with dismissal, not in a later passive React effect.
+  const close = () => { unlock(); dialogRef.current?.close(); setOpen(false); };
   const go = (event: MouseEvent<HTMLAnchorElement>, id: string) => {
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
@@ -34,12 +36,14 @@ export function ShellNav({ page, onNavigate }: ShellNavProps) {
       {brand}
       <button type="button" className="sn__toggle" aria-expanded={open} aria-controls="shell-menu" onClick={() => {
         dialogRef.current?.showModal();
+        if (previousOverflow.current === null) previousOverflow.current = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
         setOpen(true);
       }}>
         <span className="sn__toggle-label">Menu</span>
         <span className="sn__toggle-icon" aria-hidden="true">+</span>
       </button>
-      <dialog ref={dialogRef} id="shell-menu" className="sn__panel" aria-label="Site navigation" onClose={() => setOpen(false)} data-lenis-prevent>
+      <dialog ref={dialogRef} id="shell-menu" className="sn__panel" aria-label="Site navigation" onCancel={event => { event.preventDefault(); close(); }} onClose={() => { if (!dialogRef.current?.open) { unlock(); setOpen(false); } }} data-lenis-prevent>
         <div className="sn__panel-head">
           {brand}
           <button type="button" className="sn__toggle" onClick={close} autoFocus>
