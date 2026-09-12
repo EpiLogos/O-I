@@ -1,145 +1,102 @@
 ---
 name: central-session-strap
-description: Strap a harness session standing anywhere in the Central personal world — orient to the register (root Control vs Work/<project>), place live session work in the NOW field instead of loose folders, run the NOW/DAY lifecycle (ctrl Actions at projects, now.py at the root register), route wiki knowledge through returns, and project governance into derived harness context files (CLAUDE.md/AGENTS.md). Use at session start in Central, before creating any working folder or file at the Work root.
+description: Use at session start, resume, compaction recovery or a root/Project scope change in Central, especially before allocating task scratch. Resolve the current World, governing intent, native NOW and applicable practices; a normal authorised repository edit is not an inbox contribution or a reason to move all work into NOW.
 ---
 
-<!-- O:I GUARDIAN SKILL SHIPMENT; adopted into the guardian SkillSet from Central Control ground = central:source:control:root:Control/user/skills/central-session-strap; commissioned by the owner 2026-09-06; this repository file is authoritative for the shipped copy. -->
+<!-- O:I GUARDIAN SKILL SHIPMENT; original adoption source = central:source:control:root:Control/user/skills/central-session-strap; commissioned 2026-09-06. This repository file remains authoritative for the shipped copy, not the owner's independently edited local repertoire. CAW reconciliation 2026-09-12 preserves that distinction. -->
 
 # Central session strap
 
 ## What this holds
 
-Central repeats one shape at two registers — the root (`Control/**`) and every
-project (`Work/<Name>/ProjectCentral/**`). The laws live in
-`Control/agents/governance/`; the temporal fields live at
-`Control/agents/now/` (root) and `ProjectCentral/now/` (projects); the wikis
-live at `Control/agents/wiki/wiki.json` and `ProjectCentral/agents/wiki/wiki.json`.
-This skill straps a session to that field so conformance is a procedure, not a
-hope. The always-on floor is the derived `CLAUDE.md`/`AGENTS.md` at the Central
-root (rendered by `render-context.py` from the governance statements); this
-skill is the full procedure.
+Central is the root meta-Project. Root/cross-Project work and child-Project work
+are equally valid. Day is human-owned writing/receiving; NOW and explicit T work
+are Agent-maintained under scope. Resolve their actual owner refs and locations;
+do not require a fake Project or hard-code an old mixed NOW/day layout.
 
-## 1 — Orient (session start)
+This Skill is the entry router, not a second lifecycle implementation. AIKit owns
+Skill/METHOD discovery, composition, trust and projection; Central owns source,
+placement and temporal operations; Actuation owns Agency/authority; Workcell owns
+actual hosting and restrictions. A Skill cannot enforce a filesystem boundary.
 
-1. Establish the register: is the work inside one project's concern
-   (`Work/<Name>`), or root/cross-project/world-keeping? Ambiguity resolves
-   toward the project that owns the concern.
-2. Read the current horizon of your register:
-   - root: `python3 Control/user/skills/central-session-strap/now.py inspect`
-   - project: `ctrl --json action run projectcentral.now.inspect '{"project":"<Name>"}'`
-3. Glance at the field: `ctrl central.world`. Read governance relevant to the
-   work: `ctrl control.search <term>`.
+## Orient and choose the next practice
 
-## 2 — Place work (the placement law)
+1. Recover the human request and governing issue/Wayfinder/plan, current World,
+   selected Agent/Agency, scope and retained next action. Use the native Central
+   index/read/inspect operations actually disclosed by the installed binary.
+   `ctrl control index`, when present, is a standing-aware source index, not the
+   contents of every instruction. Read only the relevant permitted source.
+2. Discover the current Action descriptors through `ctrl ... action list` and
+   the installed help; inspect required inputs, mutation class, result and failure
+   shape before invocation. Central's published CAW entry uses
+   `ctrl --json --root <root> action run <action-id> '<JSON>'`.
+   An omitted `project` means root in that contract; it is not a failed lookup.
+3. Resolve the existing applicable practices through AIKit. The maintained local
+   repertoire is mapped in EpiLogos/Central#164: orient/intake/retrieval; placement/
+   NOW/ledger; contribution/inclusion; day-close/archive; git-convergence/
+   delegation; field-health/capability-discovery; skill-authoring/release/handoff.
+   Its three native sets are `central-lifecycle`, `central-engineering` and
+   `central-skills-system`. Do not copy their bodies or infer installed availability
+   from this list. If unavailable, use the bounded native route below.
+4. Before task scratch, read effective placement policy and resume or allocate
+   the actual NOW through native operations. Current CAW operations include
+   `central.work.policy`, `central.now.allocate`, `central.now.read` and
+   `central.work.validate`; consume returned revisions and destination rather
+   than sample hashes. For existing work, a read does not renew an expired grant.
+5. Keep intended Candidate worktree/source/cwd/test basis and task NOW related.
+   Authorised source, README, docs, worktree and build writes remain in their own
+   places. Missing ProjectCentral is not proof that an existing repo is litter.
+6. Retain a bounded Return with governing-plan refs, actual delta/evidence and
+   the next executable action. Follow `central-ledger` when available; do not
+   duplicate its prose budgets here or apply them to human writing or plans.
 
-Source: `Control/agents/governance/field-and-now/session-work-placement.md`.
+## Time, contribution and continuation
 
-- Live session work goes to the register's NOW field — never a dated folder at
-  the `Work/` root, never a draft file parked beside the projects.
-- Bounded, attributed returns only: what was done, what it means, what remains
-  open, where the durable evidence lives. Not transcripts.
-- Durable material returns to its owner through promotion (human ground needs
-  human acceptance; wiki knowledge goes to `agents/wiki/returns/**`). NOW
-  keeps refs, not authority.
-- Finding pre-paradigm loose material: account for it in the register's NOW
-  field and propose placement. Never move silently — and never touch
-  `Work/wiki-continuity-2026-09-06/` or other material an active parallel
-  session is working (check mtime before judging).
+Use the selected native temporal policy and lifecycle. Day ensure/read, NOW
+lifecycle, source history and receiving are distinct operations. A civil date
+change alone does not close human writing, copy personal tasks, archive active
+work or invoke an Agent. A session ending does not imply the task is complete.
 
-## 3 — The NOW/DAY lifecycle
+A readable human Return states what changed, what remains and what needs the
+person, with evidence links. Receiving is not inclusion, acknowledgement,
+Recognition or task completion. Use exact-revision reviewed inclusion; protect
+human text and human-edited H. Operational Agent knowledge follows its native
+bounded write/return path and never becomes human-authored ground silently.
 
-Source: `Control/agents/governance/field-and-now/day-close.md`,
-`Work/Central/docs/PROJECTCENTRAL-NOW.md` (the contract).
+At re-entry distinguish retained history, prepared context and actual provider
+resume/rehydration. Preserve pending messages, permissions, uncertain effects,
+source revisions and archive references before releasing working material.
 
-Project register — canonical ctrl Actions:
+## Bounded bootstrap and repair
 
-```text
-ctrl --json action run projectcentral.now.init     '{"project":"<Name>"}'
-ctrl --json action run projectcentral.now.return   '{"project":"<Name>","actor":"<session-id>","kind":"handoff|question|note|learning","subject":"...","result":"...","status":"active|waiting"}'
-ctrl --json action run projectcentral.now.update   '{"project":"<Name>","id":"<id>","status":"...","preserve_refs":["..."]}'
-ctrl --json action run projectcentral.now.promote  '{"project":"<Name>","source":"...","target":"human-ground|agent-wiki","destination":"...","acceptance":"human-accepted|agent-return"}'
-ctrl --json action run projectcentral.now.rollover '{"project":"<Name>","day":"YYYY-MM-DD","next_day":"YYYY-MM-DD"}'
-```
+If native root CAW operations are absent, disclose the exact installed gap.
+The machine-local legacy `now.py` repertoire described in Central#164/#165 is a
+possible already-authorised compatibility route only after inspecting its actual
+source/version, field format and supported operation. Its derived daily reading
+is not permission to rewrite or close the human Day. Never run it against a new
+native clearing by guessed path. Do not recreate that private tool in O:I.
 
-Root register — same semantics through `now.py` (this skill's tool, mirroring
-the ctrl Actions until Central ships native root Actions):
+Use source-bound owner commands or an exact explicitly loaded Skill body when
+normal discovery is unavailable and the existing authority permits the act.
+Record the temporary route, input/source revisions, operation, result and native
+replacement condition. Missing authority, unreadable policy or unknown destructive
+semantics stops that effect; unrelated safe work can continue. Do not install or
+reorganise the user's World merely to complete repository coding.
 
-```text
-now.py return --actor <session-id> --kind note --subject "..." --result "..." --status active \
-        [--source-ref ...] [--evidence-ref ...] [--preserve-ref ...]
-now.py update --id <id> --status waiting [--preserve-ref ...]
-now.py promote --source Control/agents/now/agents/<id>.json \
-        --target agent-wiki --destination Control/agents/wiki/returns/<id>.json --acceptance agent-return
-now.py rollover --day YYYY-MM-DD --next-day YYYY-MM-DD
-```
+For a genuinely missing harness entry/link, follow the actual owned projection
+repair recorded under AIKit#299, preserving foreign files and a reversible receipt.
+Configured/projected/linked/loaded/used are different facts. A changed `current`
+pointer does not prove that a running Agent reread instructions. Private adoption
+and loaded-harness proof remain explicit local operations.
 
-Day close order (both registers, one law): inspect → classify (carry
-active/waiting/carried; release resolved/expired/promoted) → snapshot sources
-into `day/YYYY-MM-DD.sources/**` → write the dated reading → then carry/mark
-lineage, remove released (preserve refs protect), reset the promotions
-ledger. A failed close stops before cleanup and says so. Local civil dates
-only; the closing session supplies them. Human scratch (`now/user/**`) is
-copied into the day, never cleaned by the agent.
+## Verification and handoff
 
-When to close: the last session of a local civil day, or a session whose
-day-old field is stale on orient. When in doubt, inspect; rollover is
-refused for an already-closed day.
+Check one root and one child-Project orientation, a scope change, stale-policy
+refusal with a valid next route, correct NOW/worktree readback and later re-entry.
+Prove description-based selection and actual native effects independently of
+merely reading this Skill. Do not claim all harnesses loaded it from an apply
+receipt. Preserve locally edited projected copies during source refresh.
 
-## 4 — Wiki routing
-
-Source: `Control/agents/governance/field-and-now/wiki-field-law.md`.
-
-- Never edit `wiki.json` at either register. Returns are the only door:
-  promote into `agents/wiki/returns/**`; wiki maintenance belongs to the wiki
-  owner (`aikit wiki ...`).
-- Project cognition returns through the project's field; cross-project
-  cognition through the root field. The root wiki does not aggregate project
-  wikis.
-- A project's docs live in that project's repository under its conventions —
-  work them there, to that repo's standard. Central's wiki holds knowledge
-  about the work, not the work.
-- Session hooks, injection and wiki growth mechanics belong to the
-  wiki-continuity programme (`Work/wiki-continuity-2026-09-06/`); do not
-  duplicate them from here.
-
-## 5 — Governance projection (how conformance reaches harnesses)
-
-```text
-Control/agents/governance/**            authored source (statements)
-        ↓ render-context.py (this skill; byte-idempotent, fnv1a64-stamped)
-~/Central/AGENTS.md + CLAUDE.md         derived twins — the always-on floor
-        ↓ every harness reads its native file at session start
-harness session                          strapped to the field's law
-        ↓ session works, returns, closes the day
-NOW/DAY fields + wiki returns            conformance leaves a trail
-```
-
-Re-render when governance moves: `python3
-Control/user/skills/central-session-strap/render-context.py` (changed files
-only are rewritten; identical sources produce identical bytes). The outputs
-are generated-derived and stay that way until adopted in place — per
-`repos/repo-content-and-structure.md`, a generated suggestion stays generated
-until adopted.
-
-Skill projection itself rides AIKit: this skill lives at
-`Control/user/skills/central-session-strap/` (control ground, `central.skill/v1`
-manifest), is picked up by the `personal` source (`--control-ground`), and
-materialises into harness trees on `aikit apply`. After changing this skill:
-`aikit source sync personal && aikit source promote personal && aikit apply`,
-then verify with `aikit collate | grep central-session-strap`.
-
-## 6 — Session close checklist
-
-1. Every open thread returned to the register's NOW field (bounded, attributed).
-2. Durable material promoted (human-ground only with human acceptance).
-3. Day closed if the session owns the boundary.
-4. Nothing new loose at the `Work/` root; found litter accounted, not moved.
-5. Derived context files current (re-render if governance changed).
-
-## Boundary
-
-This skill executes the root-register lifecycle and the derived projection; it
-does not author Control content (propose-not-write), does not edit wikis, does
-not create product objects, and does not install hooks (wiki-continuity
-programme's ground). When Central ships native root NOW Actions, §3's root
-column retires in favour of the Actions and this skill says so.
+Return the current subject, governing source, observed outcome and next action
+through the same NOW/receiving route. A handoff should let the next participant
+read the canon and continue, not require the human to relay another agent chat.
