@@ -1,0 +1,179 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "task-basis",
+  "generated_at": "2026-09-12T11:07:44.984Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 4659,
+  "checks": [
+    {
+      "ok": true,
+      "label": "The kernel task route reads the owner's UNCERTAIN record exactly as the owner holds it"
+    },
+    {
+      "ok": true,
+      "label": "A session without a task reads as honest absence, not an error"
+    },
+    {
+      "ok": true,
+      "label": "The task section discloses the owner's own uncertain preparation — never a ready claim"
+    },
+    {
+      "ok": true,
+      "label": "Task ref and purpose render verbatim from the owner's record"
+    },
+    {
+      "ok": true,
+      "label": "No allocation row renders — the uncertain record does not hold one and the desktop invents nothing"
+    },
+    {
+      "ok": true,
+      "label": "The undisclosed agency basis is named honestly — the desktop composes no expectation of its own"
+    },
+    {
+      "ok": true,
+      "label": "The owner refuses an expectation against its unready task at its own preparation gate (direct control)",
+      "data": {
+        "refusal": "{\"code\":\"encounter.runtime\",\"message\":\"Task preparation is incomplete; explicitly recover the same request\"}"
+      }
+    },
+    {
+      "ok": true,
+      "label": "An expected_task against an unready task is refused by the owner before any transport, named through the repaired walk seam"
+    },
+    {
+      "ok": true,
+      "label": "A session without a task renders no task section — nothing is invented"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-12T11:07:45.086Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "invoke.encounter_task_read",
+      "duration_ms": 909.9,
+      "data": {
+        "outcome": {
+          "data": {
+            "agency_revision": "rev/1",
+            "allocation": null,
+            "cwd_anchor": null,
+            "inspection": null,
+            "launcher": {
+              "argv": [
+                "/Users/admin/.cargo/bin/aikit-session-space",
+                "encounter-task-exec",
+                "--agent-session",
+                "agent-session/task-basis-walk",
+                "--expected-revision",
+                "task-binding/01M2AMTGZ7F7E76DSQG8P8QRV1"
+              ],
+              "id": "task-e38fbf4d288acdf99bfa79fa6cd50b5795c0ef4b8af23d08f0e92458cbffbaed",
+              "label": "Task child acceptance ACP",
+              "protocol": "acp"
+            },
+            "material": null,
+            "ready": false,
+            "request": {
+              "authority_ref": "authority:task-basis-walk",
+              "central": {
+                "central_root": "/private/tmp/oi-cradle-editor-dbkQfu",
+                "ctrl_bin": "/Users/admin/.cargo/bin/ctrl",
+                "participant_refs": [
+                  "agent:editor-walk"
+                ],
+                "project": "Editor",
+                "purpose": "Task basis acceptance clearing",
+                "source_refs": [
+                  "source/editor-walk"
+                ],
+                "task_ref": "task:task-basis-walk"
+              },
+              "cwd": "/private/tmp/oi-cradle-editor-dbkQfu/Work/Editor/task-scratch",
+              "material_host": null,
+              "provider": {
+                "argv": [
+                  "python3",
+                  "-u",
+                  "/private/tmp/oi-nowrel/desktop/cradle/walk/fixtures/addressed-provider.py",
+                  "acp",
+                  "/private/tmp/oi-cradle-editor-dbkQfu/task-provider.log"
+                ],
+                "id": "task-child",
+                "label": "Task child acceptance ACP",
+                "protocol": "acp"
+              },
+              "selected_directories": [
+                "/private/tmp/oi-cradle-editor-dbkQfu/Work/Editor/task-scratch"
+              ],
+              "workcell_boundary_bin": "/Users/admin/Central/Work/Workcell/target/release/workcell-write-boundary"
+            },
+            "requirements": null,
+            "revision": "task-binding/01M2AMTGZ7F7E76DSQG8P8QRV1",
+            "schema": "aikit.encounter-task/v1"
+          },
+          "result": "encounter_task_reading"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "invoke.encounter_task_read",
+      "duration_ms": 128.4,
+      "data": {
+        "outcome": {
+          "data": null,
+          "result": "encounter_task_reading"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 26,
+      "data": {
+        "file": "task-basis-task-section-verbatim.png"
+      }
+    },
+    {
+      "ok": false,
+      "op": "invoke.encounter",
+      "duration_ms": 273.5,
+      "error": "Task preparation is incomplete; explicitly recover the same request [encounter.runtime]"
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 33,
+      "data": {
+        "file": "task-basis-plain-session-no-task-section.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "task-basis-task-section-verbatim.png",
+    "task-basis-plain-session-no-task-section.png"
+  ]
+}

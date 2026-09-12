@@ -1,7 +1,7 @@
 import {useEffect,useRef,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import type {SurfaceBinding} from "../surface/types";
-import {encounter,mintDeliveryRef,type A2aDifference,type A2aPeerFields,type AddressedPacket,type AddressedTurn,type DeliveryRecord,type Draft,type EncounterReading,type EncounterStatus,type GroupReceipt,type GroupRecipient,type JournalPage,type PermissionDecision,type SendReceipt} from "./client";
+ import {encounter,mintDeliveryRef,taskRead,type A2aDifference,type A2aPeerFields,type AddressedPacket,type AddressedTurn,type DeliveryRecord,type Draft,type EncounterReading,type EncounterStatus,type EncounterTaskReading,type GroupReceipt,type GroupRecipient,type JournalPage,type PermissionDecision,type SendReceipt} from "./client";
 import {createA2aBinding,createA2aPresence,performA2aExchange} from "../../../../shared-field/a2a.mjs";
 import {AddressedComposer,ACTIVE_PHASES,type AddressedFields,type DispatchState,type DeliveryHistoryEntry,type GroupState} from "./AddressedComposer";
 import {EncounterView} from "./EncounterView";
@@ -77,6 +77,17 @@ export function EncounterSurface({binding,onView,presentation="tab",onExpression
  // --- Addressed dispatch (6B): explicit machine turns, never the human draft. ---
  const alive=useRef(true);useEffect(()=>()=>{alive.current=false;},[]);
  const [dispatch,setDispatch]=useState<DispatchState>({kind:"idle"});
+ // The session's actual task, if the owner bound one (queue cell 2). Read
+ // once per session through the owner's own `encounter-task-read`; null is
+ // honest absence — the composer renders nothing rather than a placeholder.
+ const [task,setTask]=useState<EncounterTaskReading|null>();
+ useEffect(()=>{let live=true;setTask(undefined);
+  if(!binding.ref)return;
+  taskRead(kernel.transport,binding.project!,binding.ref)
+   .then(value=>{if(live)setTask(value);})
+   .catch(()=>{if(live)setTask(undefined);});
+  return()=>{live=false;};
+ },[binding.ref,binding.project,kernel.transport]);
  const [addressedHistory,setAddressedHistory]=useState<DeliveryHistoryEntry[]>([]);
  const [service,setService]=useState<{running:boolean;pid?:number;detail?:string}>();
  const probe=async()=>{try{const health=await call<{protocol:string;pid:number}>({action:"health"});if(alive.current)setService({running:true,pid:health.pid});}catch(error){if(alive.current)setService({running:false,detail:String(error)});}};
@@ -206,8 +217,9 @@ export function EncounterSurface({binding,onView,presentation="tab",onExpression
   finally{if(alive.current)setPending(false);}
  };
  return <><EncounterView concealed={concealed} presentation={presentation} plane={binding.view?.encounterPlane??"Conversation"} onPlane={encounterPlane=>onView({encounterPlane})} title={binding.title} onPermission={(id,decision)=>void permission(id,decision)} reading={reading} status={status} draft={draft} pending={pending||dirty.current||saving.current||sending.current||failed.current} error={error} providers={providers} onProvider={provider=>void connect(provider)} onDraft={change} onSend={()=>void send()} onCancel={()=>{if(!allowed("cancel"))return;void call({action:"cancel",agent_session:binding.ref!,reason:"User stopped the encounter"}).catch(error=>setError(String(error)));}} onEarlier={()=>setBefore(reading?.blocks[0]?.id)} onLatest={()=>setBefore(undefined)} readJournal={after=>call<JournalPage>({action:"read",agent_session:binding.ref!,after,limit:32})} space={binding.encounter?.space} deliveries={[...addressedHistory.map(h=>({ref:h.ref,phase:h.record.phase})),...(group?[{ref:group.ref,phase:`group — ${group.rows.map(row=>row.error?"refused":row.phase??"in flight").join(", ")}`}]:[])]}
+  nowRefs={addressedHistory.flatMap(h=>{const nowRef=(h.record as {now_ref?:unknown}).now_ref;return typeof nowRef==="string"&&nowRef?[{ref:nowRef,register:null}]:[];})}
   resume={resume} onReconnect={provider=>void reconnect(provider)}
   a2a={a2a} onA2aSeed={seedA2a} onA2aSend={(seed,fields)=>void sendA2a(seed,fields)}
-  addressed={<AddressedComposer disabled={status?.state==="Disconnected"} dispatch={dispatch} history={addressedHistory} service={service} agentSession={binding.ref??undefined} group={group} onGroupSend={(sender,recipients,packet)=>void sendGroup(sender,recipients,packet)} onSend={(turn,fields)=>void sendAddressed(turn,fields)}/>}
+  addressed={<AddressedComposer disabled={status?.state==="Disconnected"} dispatch={dispatch} history={addressedHistory} service={service} agentSession={binding.ref??undefined} task={task??undefined} group={group} onGroupSend={(sender,recipients,packet)=>void sendGroup(sender,recipients,packet)} onSend={(turn,fields)=>void sendAddressed(turn,fields)}/>}
  />{failed.current&&!concealed&&<button onClick={()=>void recover()}>Apply my typing to the current shared draft</button>}{reconnected&&!concealed&&<p className="encounter-reconnected" role="status">Reconnected to the recorded native session <code>{reconnected}</code> — nothing was replaced or silently created.</p>}</>;
 }

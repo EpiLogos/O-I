@@ -1,0 +1,257 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "now-relations",
+  "generated_at": "2026-09-12T11:07:42.378Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 786,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Exactly one row marks the NOW it names, by the owner's ref"
+    },
+    {
+      "ok": true,
+      "label": "A record without a NOW renders no NOW marker"
+    },
+    {
+      "ok": true,
+      "label": "The kernel now route reads the project NOW through the owner"
+    },
+    {
+      "ok": true,
+      "label": "The root register is read through the explicit-null convention"
+    },
+    {
+      "ok": true,
+      "label": "A project-scoped read of a root-register NOW is refused — registers never blur"
+    },
+    {
+      "ok": true,
+      "label": "central.now.list through the kernel discloses the allocated NOW"
+    },
+    {
+      "ok": true,
+      "label": "The NOW panel names the exact ref the record carried"
+    },
+    {
+      "ok": true,
+      "label": "Task and purpose render verbatim from the owner's reading"
+    },
+    {
+      "ok": true,
+      "label": "Lifecycle and source revision render verbatim"
+    },
+    {
+      "ok": true,
+      "label": "Participants render exactly as the owner disclosed them"
+    },
+    {
+      "ok": true,
+      "label": "Source relations render exactly as the owner disclosed them"
+    },
+    {
+      "ok": true,
+      "label": "The record's own source appears among the NOW's relations"
+    },
+    {
+      "ok": true,
+      "label": "Continuations render exactly as the owner disclosed them — an empty relation reads as none, never invented"
+    },
+    {
+      "ok": true,
+      "label": "A record that names no NOW renders no NOW section at all"
+    },
+    {
+      "ok": true,
+      "label": "The owner's own refusal is carried verbatim (Error: Central owner Action refused: NOW ref is not allocate…)"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-12T11:07:42.482Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "invoke.now",
+      "duration_ms": 14.7,
+      "data": {
+        "outcome": {
+          "data": {
+            "automatic_agent_or_model_invocation": false,
+            "pointer_note": "Records are pointers, not authority: follow the governing guidance, and search the native surface before building anything new.",
+            "record": {
+              "archive_ref": null,
+              "continuation_refs": [],
+              "created_at_unix_seconds": 1789211261,
+              "lifecycle": "active",
+              "now_ref": "central:now:project:editor-walk:9bc23ff0a3b4fae1b2987456062d617e46f5f839af2fe9221a7372ef5cb41788",
+              "obligations": [],
+              "participant_refs": [
+                "agent:walk",
+                "human:walk"
+              ],
+              "policy_revision_at_allocation": "central.content-fnv1a64/v1:1581:d735daccefe50e18",
+              "purpose": "now-relations walk clearing",
+              "schema": "central.now-clearing/v1",
+              "scope_ref": "project:editor-walk",
+              "source_ref": "central:source:project:editor-walk:ProjectCentral/agents/now/clearings/9bc23ff0a3b4fae1b2987456062d617e46f5f839af2fe9221a7372ef5cb41788/now.json",
+              "source_refs": [
+                "central:source:project:editor-walk:ProjectCentral/agents/now/flows/80e56ef015e6eba26694ab4697aebff21f2692ffbc2e9c48f6e4dd07b241f81b.json"
+              ],
+              "task_ref": "task:now-walk"
+            },
+            "revision": {
+              "byte_len": 887,
+              "revision": "central.content-fnv1a64/v1:887:b666d8b576cbb656"
+            },
+            "schema": "central.now-reading/v1",
+            "source": {
+              "agent_retrieval_allowed": true,
+              "path": "ProjectCentral/agents/now/clearings/9bc23ff0a3b4fae1b2987456062d617e46f5f839af2fe9221a7372ef5cb41788/now.json",
+              "provenance": "agent-maintained",
+              "ref": "central:source:project:editor-walk:ProjectCentral/agents/now/clearings/9bc23ff0a3b4fae1b2987456062d617e46f5f839af2fe9221a7372ef5cb41788/now.json",
+              "roles": [
+                "now-clearing"
+              ],
+              "standing": "current-development-state",
+              "treatment": "generated-derived"
+            }
+          },
+          "result": "now_reading"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "invoke.now",
+      "duration_ms": 7,
+      "data": {
+        "outcome": {
+          "data": {
+            "automatic_agent_or_model_invocation": false,
+            "pointer_note": "Records are pointers, not authority: follow the governing guidance, and search the native surface before building anything new.",
+            "record": {
+              "archive_ref": null,
+              "continuation_refs": [],
+              "created_at_unix_seconds": 1789211261,
+              "lifecycle": "active",
+              "now_ref": "central:now:control:root:56a7c041c386b6d02478b58d288fc89521b02cdc1106d10d5b755fe27aac6333",
+              "obligations": [],
+              "participant_refs": [
+                "human:walk"
+              ],
+              "policy_revision_at_allocation": "central.content-fnv1a64/v1:1360:36aa9ff7182a6308",
+              "purpose": "root register clearing",
+              "schema": "central.now-clearing/v1",
+              "scope_ref": "control:root",
+              "source_ref": "central:source:control:root:Control/agents/now/clearings/56a7c041c386b6d02478b58d288fc89521b02cdc1106d10d5b755fe27aac6333/now.json",
+              "source_refs": [],
+              "task_ref": "task:now-root"
+            },
+            "revision": {
+              "byte_len": 690,
+              "revision": "central.content-fnv1a64/v1:690:8c4146e07d3cd94a"
+            },
+            "schema": "central.now-reading/v1",
+            "source": {
+              "agent_retrieval_allowed": true,
+              "path": "Control/agents/now/clearings/56a7c041c386b6d02478b58d288fc89521b02cdc1106d10d5b755fe27aac6333/now.json",
+              "provenance": "agent-maintained",
+              "ref": "central:source:control:root:Control/agents/now/clearings/56a7c041c386b6d02478b58d288fc89521b02cdc1106d10d5b755fe27aac6333/now.json",
+              "roles": [
+                "now-clearing"
+              ],
+              "standing": "current-development-state",
+              "treatment": "generated-derived"
+            }
+          },
+          "result": "now_reading"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "op": "invoke.now",
+      "duration_ms": 14.1,
+      "error": "Central owner Action refused: NOW ref is not allocated in this World"
+    },
+    {
+      "ok": true,
+      "op": "invoke.now",
+      "duration_ms": 15.3,
+      "data": {
+        "outcome": {
+          "data": {
+            "automatic_agent_or_model_invocation": false,
+            "pointer_note": "Records are pointers, not authority: follow the governing guidance, and search the native surface before building anything new.",
+            "records": [
+              {
+                "created_at_unix_seconds": 1789211261,
+                "lifecycle": "active",
+                "now_ref": "central:now:project:editor-walk:9bc23ff0a3b4fae1b2987456062d617e46f5f839af2fe9221a7372ef5cb41788",
+                "participant_refs": [
+                  "agent:walk",
+                  "human:walk"
+                ],
+                "purpose": "now-relations walk clearing",
+                "revision": {
+                  "byte_len": 887,
+                  "revision": "central.content-fnv1a64/v1:887:b666d8b576cbb656"
+                },
+                "scope_ref": "project:editor-walk",
+                "source_ref": "central:source:project:editor-walk:ProjectCentral/agents/now/clearings/9bc23ff0a3b4fae1b2987456062d617e46f5f839af2fe9221a7372ef5cb41788/now.json",
+                "source_refs": [
+                  "central:source:project:editor-walk:ProjectCentral/agents/now/flows/80e56ef015e6eba26694ab4697aebff21f2692ffbc2e9c48f6e4dd07b241f81b.json"
+                ],
+                "task_ref": "task:now-walk"
+              }
+            ],
+            "schema": "central.now-listing/v1"
+          },
+          "result": "now_reading"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 30,
+      "data": {
+        "file": "now-relations-now-relations-rendered.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 27,
+      "data": {
+        "file": "now-relations-now-refusal-verbatim.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "now-relations-now-relations-rendered.png",
+    "now-relations-now-refusal-verbatim.png"
+  ]
+}

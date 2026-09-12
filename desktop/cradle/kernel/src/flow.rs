@@ -289,6 +289,16 @@ pub enum ReceivingRequest {
     },
 }
 
+/// One NOW-relations reading (queue cell 1). `central.now.list` /
+/// `central.now.read` are read-only; the payload is carried verbatim — the
+/// owner owns identity, lifecycle and every relation ref.
+#[derive(Clone, Debug, serde::Deserialize, Eq, PartialEq, serde::Serialize)]
+#[serde(tag = "kind", rename_all = "kebab-case")]
+pub enum NowRequest {
+    List { #[serde(default)] participant_refs: Option<Vec<String>> },
+    Read { now_ref: String },
+}
+
 /// Client for the Central owner Actions the kernel reads and writes
 /// through `oi central`. OI_BIN selects the suite executable; the suite resolves
 /// OI_CENTRAL_CTRL_BIN or the registered owner. Root/project context is preserved.
@@ -497,6 +507,30 @@ impl CentralClient {
                 input.insert("field_id".to_owned(), json!(field_id));
                 input.insert("value".to_owned(), value.clone());
                 "central.document.mutate"
+            }
+        };
+        self.run(action, Value::Object(input))
+    }
+
+    // -----------------------------------------------------------------------
+    // NOW relations (queue cell 1) — read-only identity/lifecycle/relations
+    // -----------------------------------------------------------------------
+
+    /// List allocated NOWs (optionally by participant) or read one exact NOW.
+    /// `None` project names the ROOT register with an explicit null — the same
+    /// run-level convention as `receiving`: omitting the key would let the
+    /// configured project co-reference silently query the wrong register.
+    pub fn now(&self, project: Option<&str>, request: &NowRequest) -> Result<Value, OwnerCallError> {
+        let mut input = serde_json::Map::new();
+        input.insert("project".to_owned(), project.map(|p| json!(p)).unwrap_or(Value::Null));
+        let action: &str = match request {
+            NowRequest::List { participant_refs } => {
+                if let Some(refs) = participant_refs { input.insert("participant_refs".to_owned(), json!(refs)); }
+                "central.now.list"
+            }
+            NowRequest::Read { now_ref } => {
+                input.insert("now_ref".to_owned(), json!(now_ref));
+                "central.now.read"
             }
         };
         self.run(action, Value::Object(input))

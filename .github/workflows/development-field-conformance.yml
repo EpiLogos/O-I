@@ -37,6 +37,7 @@ jobs:
             tests/development-field/probe
             .development-field-owners/oi/cli
             .development-field-owners/central
+            .development-field-owners/actuation
             .development-field-owners/ai-kit
             .development-field-owners/software-factory
             .development-field-owners/workcell

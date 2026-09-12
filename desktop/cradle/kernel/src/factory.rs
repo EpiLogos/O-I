@@ -3,7 +3,7 @@
 use crate::material::{invoke, Error};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{collections::BTreeMap, path::PathBuf};
+use std::{collections::BTreeMap, path::{Path, PathBuf}};
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Binding {
@@ -112,6 +112,44 @@ impl Client {
         }
         Ok(rows)
     }
+    /// One developmental read through the owner's own `factory development`
+    /// family (queue cell 3). The state path is the caller's disclosure —
+    /// the desktop never invents a Factory state — and the payload is
+    /// carried verbatim after the read's contract schema is verified.
+    /// `read`/`ref` are the owner's own CLI grammar, never re-keyed.
+    pub fn development_read(
+        &self,
+        state_path: &Path,
+        read: &str,
+        subject: Option<&str>,
+    ) -> Result<Value, Error> {
+        if !matches!(
+            read,
+            "project" | "journey" | "run" | "workflow-units" | "workflow-unit" | "execution-telemetry" | "commission-read"
+        ) {
+            return Err(incompatible("Unsupported Factory development read"));
+        }
+        let mut args: Vec<std::ffi::OsString> = vec![
+            "factory".into(),
+            "development".into(),
+            read.to_string().into(),
+            state_path.as_os_str().to_string_lossy().into_owned().into(),
+        ];
+        if let Some(subject) = subject {
+            args.push(subject.to_string().into());
+        }
+        args.push("--json".into());
+        let data = invoke(&self.executable, &args, None)?;
+        let schema = data
+            .get("contract")
+            .and_then(Value::as_str)
+            .unwrap_or_default()
+            .to_owned();
+        if !schema.starts_with("factory.") || !schema.ends_with("-reading/v1") {
+            return Err(incompatible("Unsupported Factory development reading"));
+        }
+        Ok(data)
+    }
     pub fn snapshot(&self, binding: &str) -> Result<Snapshot, Error> {
         let args = [
             "factory",
@@ -175,4 +213,29 @@ impl Client {
             Some(serde_json::to_vec(request).map_err(incompatible)?),
         )
     }
+}
+
+/// The owner CLI's own argument grammar for one development read — built
+/// here so the dispatch arm stays declarative. Never re-keyed.
+pub fn development_read_args(
+    state_path: &Path,
+    read: &str,
+    subject: Option<&str>,
+    suite_route: bool,
+) -> Vec<std::ffi::OsString> {
+    let mut args: Vec<std::ffi::OsString> = Vec::new();
+    if suite_route {
+        // Through the suite executable the product namespace names the route.
+        args.push("factory".into());
+    }
+    args.extend([
+        "development".into(),
+        read.to_string().into(),
+        state_path.as_os_str().to_string_lossy().into_owned().into(),
+    ]);
+    if let Some(subject) = subject {
+        args.push(subject.to_string().into());
+    }
+    args.push("--json".into());
+    args
 }

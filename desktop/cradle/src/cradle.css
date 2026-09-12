@@ -945,3 +945,21 @@
   margin-right: 8px;
   font-size: var(--oi-shell-type-body);
 }
+
+/* Factory development reads (queue cell 3): the owner's own developmental
+ * readings, verbatim; the state path is the human's to name on this cut. */
+.factory-development{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overflow:auto}
+.factory-development-header h2{margin:0;font-size:15px}
+.factory-development-header small{color:var(--oi-muted-2)}
+.factory-development-form{display:flex;flex-direction:column;gap:8px;border:1px solid var(--oi-hairline);border-radius:8px;padding:10px}
+.factory-development-form label{display:flex;flex-direction:column;gap:3px;font-size:var(--oi-shell-type-nav);color:var(--oi-muted-2)}
+.factory-development-form input{border:1px solid var(--oi-hairline);border-radius:6px;padding:5px 8px;font:inherit;background:var(--oi-composer-ground);color:var(--oi-foreground)}
+.factory-development-actions{display:flex;gap:8px;flex-wrap:wrap}
+.factory-development-actions button{border:1px solid var(--oi-hairline);border-radius:7px;background:var(--oi-composer-ground);color:var(--oi-foreground);font:inherit;font-size:var(--oi-shell-type-nav);padding:4px 10px;cursor:pointer}
+.factory-development-actions button:disabled{color:var(--oi-muted-2);cursor:default}
+.factory-development-reading h3,.factory-development-status h3{margin:0 0 6px;font-size:var(--oi-shell-type-eyebrow);letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted-2)}
+.factory-development-reading pre{margin:0;padding:8px;border:1px solid var(--oi-hairline);border-radius:8px;background:var(--oi-composer-ground);font-size:11px;overflow:auto;max-height:340px;white-space:pre-wrap;overflow-wrap:anywhere}
+.factory-development-status dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;overflow-wrap:anywhere;font-size:var(--oi-shell-type-nav)}
+.factory-development-status dt{color:var(--oi-muted-2)}
+.factory-development-status dd{margin:0}
+.factory-development-status p{color:var(--oi-muted-2);font-size:var(--oi-shell-type-nav)}

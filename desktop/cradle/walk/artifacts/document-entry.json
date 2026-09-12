@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "document-entry",
-  "generated_at": "2026-09-12T02:42:51.663Z",
+  "generated_at": "2026-09-12T11:05:35.094Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 7120,
+  "duration_ms": 6713,
   "checks": [
     {
       "ok": true,
@@ -144,7 +144,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 108,
+      "duration_ms": 87,
       "data": {
         "file": "document-entry-die-42-rendered.png"
       }
@@ -152,7 +152,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 37,
+      "duration_ms": 23,
       "data": {
         "file": "document-entry-dialogue-01-journal.png"
       }

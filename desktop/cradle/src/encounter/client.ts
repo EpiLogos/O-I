@@ -3,8 +3,11 @@ import type {KernelTransportStatus} from "../kernel/types";
 export type EncounterRequest = {action:"start"|"providers"|"health"} | {action:"open";space:string;agent_session:string;provider:string} | {action:"read";agent_session:string;after:number;limit:number} | {action:"view";agent_session:string;before?:number} | {action:"draft";agent_session:string;basis:number;text:string} | {action:"prompt";agent_session:string;draft_revision:number} | {action:"cancel";agent_session:string;reason?:string} | {action:"status";agent_session:string} | {action:"permission";agent_session:string;request_id:string;decision:PermissionDecision} | {action:"send";agent_session:string;turn:AddressedTurn} | {action:"send-group";delivery_ref:string;sender:string;packet:AddressedPacket;recipients:GroupRecipient[]} | {action:"delivery";agent_session:string;delivery_ref:string} | {action:"reconnect";space:string;agent_session:string;provider:string};
 /** Owner wire contract (bound ai-kit revision, `encounter_agency.rs`); field names verbatim. */
 export interface AddressedPacket {text:string;source_refs:string[];audience:string[]}
-export interface AddressedTurn {delivery_ref:string;sender:string;expected_binding_revision:string;packet:AddressedPacket}
-export interface GroupRecipient {agent_session:string;expected_binding_revision:string}
+/** `expected_task` is the owner's EncounterTaskBasis, validated owner-side
+ * against the stored task and the session's agency binding before transport.
+ * The kernel carries it verbatim; the desktop composes none of its own. */
+export interface AddressedTurn {delivery_ref:string;sender:string;expected_binding_revision:string;expected_task?:unknown;packet:AddressedPacket}
+export interface GroupRecipient {agent_session:string;expected_binding_revision:string;expected_task?:unknown}
 /** One durable owner receipt. `submitted` is a transport ACK; `returned` means the
  * native host observed a completed provider turn — neither is task success. */
 export interface DeliveryRecord {sender:string;phase:"dispatching"|"submitted"|"uncertain"|"returned"|"failed"|"cancelled"|"reconciled-no-replay"|string;first_cursor:number;terminal_cursor?:number|null;detail?:string|null}
@@ -35,4 +38,13 @@ export async function encounter<T>(transport:KernelTransportStatus,project:strin
   const result=await kernelOp(transport,{op:"encounter",project,request});
   if(result.error || result.outcome?.result!=="encounter_reading")throw new Error(result.error??"AIKit did not return an encounter reading");
   return result.outcome.data as T;
+}
+/** The session's task record (`aikit.encounter-task/v1`), read through the
+ * owner's `encounter-task-read`. `null` is honest absence — no task is bound
+ * to this session. Refusals surface the owner's own words. */
+export interface EncounterTaskReading {schema:"aikit.encounter-task/v1";revision:string;ready:boolean;request:{central:{task_ref:string;project?:string|null;purpose:string;participant_refs:string[];source_refs:string[]};cwd:string;authority_ref:string};allocation?:{request:unknown;allocation:{now_ref:string;revision:{revision:string};policy:{revision:string}}}|null;agency_revision?:string;[field:string]:unknown}
+export async function taskRead(transport:KernelTransportStatus,project:string,agent_session:string):Promise<EncounterTaskReading|null> {
+  const result=await kernelOp(transport,{op:"encounter_task_read",project,agent_session});
+  if(result.error || result.outcome?.result!=="encounter_task_reading")throw new Error(result.error??"AIKit did not return a task reading");
+  return (result.outcome.data ?? null) as EncounterTaskReading|null;
 }

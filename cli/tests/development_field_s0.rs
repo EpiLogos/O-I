@@ -13,7 +13,7 @@ const PRODUCTS: [(&str, &str, &str); 6] = [
     (
         "actuation",
         "actuation",
-        "ecac9ddd5009d03e6d38043341672b0409090c8d",
+        "90041d5f81331b636893d772c3288c062ad0e13b",
     ),
     (
         "ai-kit",

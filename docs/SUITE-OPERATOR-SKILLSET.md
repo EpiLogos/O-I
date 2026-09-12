@@ -4,7 +4,7 @@ O:I composes and explains source-owned procedural competence; it does not become
 
 ## What O:I ships
 
-The shipped manifest (`skills/suite-operator/skillset.toml`, schema `oi.suite-skillset/v1`, O:I's own TOML envelope) declares exactly one profile and three Skills — O:I's own guardian set:
+The shipped manifest (`skills/suite-operator/skillset.toml`, schema `oi.suite-skillset/v1`, TOML because AIKit's authored sets are TOML) declares exactly one profile and three Skills — O:I's own guardian set:
 
 ```text
 oi:skillset:base-guardian
@@ -13,19 +13,19 @@ oi:skillset:base-guardian
   oi:skill:central-session-strap  (skills/central-session-strap/SKILL.md)
 ```
 
-All three entries carry `revision_policy = "resolve_authoritative_installed_revision"`: O:I resolves each Skill's authoritative revision from the installed native owner rather than pinning one by hand. A projected copy carries its source revision in its receipt header; local edits never become authoritative.
+Both entries carry `revision_policy = "resolve_authoritative_installed_revision"`: O:I resolves each Skill's authoritative revision from the installed native owner rather than pinning one by hand. A projected copy carries its source revision in its receipt header; local edits never become authoritative.
 
 A test guards this shape: `shipped_manifest_declares_only_oi_owned_skills` fails if the shipped manifest ever names another product's Skills again. That is deliberate. The manifest once pinned every suite product's Skills; that made it a second registry in a second format, and its silent path drift proved the point.
 
 ## How the rest of the suite is composed
 
-Each product keeps its Skills as native files in its own repository (Central `skills/`, Quaternal Logic `skills/`, AIKit `registry/`). AIKit is the suite's normal resolver: `aikit source add-directory` discovers those trees, `sync` snapshots them, `aikit trust record` records review, `aikit set create` composes native sets across products, and `aikit enable`/scopes project them. O:I routes refs and explains composition; it never registers or pins foreign Skills.
+Each product keeps its Skills as native files in its own repository (Central `skills/`, Quaternal Logic `skills/`, AIKit `registry/`). AIKit is the suite's normal resolver: `aikit source add-directory` discovers those trees, `sync` snapshots them, `aikit trust record` records review, `aikit set create` composes TOML sets across products, and `aikit enable`/scopes project them. O:I routes refs and explains composition; it never registers or pins foreign Skills.
 
 The governing path is now:
 
 ```text
 native repository authoritative Skill source
-  -> AIKit source discovery / sync / review / native sets
+  -> AIKit source discovery / sync / trust / TOML sets
   -> scope-enabled projection
   -> Agent procedural competence
   -> native Capability / Action / authority gate
@@ -43,18 +43,26 @@ native repository authoritative Skill source
 
 Without AIKit, direct projection remains limited in code to O:I/Central Skills. Foreign source-owned Skill bodies are never copied into O:I as a convenience path.
 
-## Epi experience practices
+## Epi experience practices — pending H review
+
+**Publication authorised; H ratification pending (Satya).** This new domain
+practice guidance is available for review and provisional use against current
+native contracts. Its publication does not ratify it or change the preceding
+owner/resolver boundaries.
 
 QL-MEF owns its foundations, bounded provider Method, evidence-report Skill,
 experience-preparation and experience-walk Methods. Resolve those native files
-through AIKit; no foreign membership is added to the shipped O:I manifest.
-Their complete source/discovery/projection/loading/use distinction is specified
-in [QL's practice account](https://github.com/EpiLogos/QL-MEF/blob/main/docs/kernel-rebuild/AGENT-PRACTICE-AND-BOOTSTRAP.md).
+through AIKit; no foreign membership is added to O:I's shipped manifest.
+Their source/discovery/projection/loading/use distinction is specified in
+[QL's pending practice account](https://github.com/EpiLogos/QL-MEF/blob/main/docs/kernel-rebuild/AGENT-PRACTICE-AND-BOOTSTRAP.md).
 
-AIKit `docs/SPEC-III-SKILLSETS-AND-FRECENCY.md` §§1–1.2 defines sets as folders with optional manifests. The native CLI is the authoritative authoring interface for its supported set
-format. The tested AIKit revision creates writable folder sets with a `members`
-file through `aikit set create`; that native command owns the materialisation
-and no additional manifest is required. Membership still does not
-enable a capability: explicit native scope resolution governs actual projection.
-A controlled current-generation read-back proves delivery, not model loading or
-successful use. The latter is exercised by the fresh-agent UX01/UX06 walk.
+The actual installed AIKit command owns its materialisation format. Spec III
+§§1–1.2 defines sets as folders with optional manifests. The source-pinned
+projection probe uses a writable folder set with `members` created by native
+`set create`; this need not be another hand-maintained TOML manifest. This
+clarifies the format shorthand above without moving registration into O:I.
+Membership does not enable a capability; explicit scope resolution governs
+actual projection. Current-generation read-back proves delivery, not model
+loading or successful use. The fresh-agent UX01/UX06 walks exercise those later
+steps through the native host route; pending walk definitions do not claim
+those steps have been exercised.

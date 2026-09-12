@@ -52,3 +52,14 @@ system:
    Projection, never the source; a change returns to durable Central source
    only through explicit human authorship or an accepted proposal; human and
    Agent read the same Projection ref and revision.
+
+## Epi UX additions published for H review
+
+**Publication authorised; H ratification pending (Satya), 2026-09-12.** The new
+Epi domain composition is available in [03 §L](03-UX-STATES.md#l-epi-living-instrument-states--a-domain-composition-of-this-spine)
+and [04 §8](04-VERIFICATION.md#8-epi-domain-walks). Those additions and their
+QL-MEF source/practice crosswalk await the owner's H ratification. The existing
+Cradle A–K states, continuous-work amendments, §2 spine and §§1–7 verification
+remain intact and keep their prior standing. Publication and CI are not owner
+ratification or lived validation. The QL-MEF Wayfinder remains the domain's
+implementation map; this review does not introduce a new K8/AW launch gate.

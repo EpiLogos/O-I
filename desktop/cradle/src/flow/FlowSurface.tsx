@@ -4,6 +4,7 @@ import {EditorFrame} from "../editor/EditorChrome";
 import {useKernel} from "../kernel/KernelProvider";
 import type {SurfaceBinding} from "../surface/types";
 import {flow,inspectFlow,type FlowInspection,type FlowRecord} from "./client";
+import {FlowCognition} from "./contemplate";
 import "./flow.css";
 
 export function FlowSurface({binding}:{binding:SurfaceBinding}){
@@ -47,6 +48,7 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
     <div className="source-conflict-canonical"><p className="source-conflict-canonical-label">canonical side (read-only)</p><pre className="source-conflict-canonical-body" data-canonical="true">{conflict.canonical}</pre></div>
     <button type="button" className="source-reread" data-action="flow.take-canonical" onClick={takeCanonical}>Take the canonical side (discard my draft)</button>{" "}<button type="button" onClick={keepDraft}>Keep my draft and resolve later</button>
   </div>}
+  {loaded&&binding.flow&&<FlowCognition project={binding.project??null} flowRef={binding.flow.flowRef}/>}
 
  </EditorFrame>;
 }

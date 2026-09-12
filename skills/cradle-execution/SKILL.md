@@ -140,22 +140,27 @@ constitution-lecturing, no restating the design doc — cite its section.
 
 ## Epi domain: source, loading and the lived walk
 
+**Publication authorised; H ratification pending (Satya).** This new Epi practice
+extension is available for review. It does not supersede the preceding Cradle
+process or the already-approved QL execution map. Its publication and tests
+are not owner ratification or installed/human acceptance.
+
 When this host unit touches QL's living instrument, read `docs/cradle/03-UX-STATES.md`
-§L and `04-VERIFICATION.md` §7, then QL-MEF's canonical `docs/kernel-rebuild/UX-SPINE-RECONCILIATION.md`.
-The unit names its UX story, original owner intent, A/B criteria and native
-producer dependencies. Preserve the complete field rather than testing only
-what the renderer presently exposes.
+§L and `04-VERIFICATION.md` §8 with their explicit pending standing, then QL-MEF's
+`docs/kernel-rebuild/UX-SPINE-RECONCILIATION.md`. Name the UX story, original owner
+intent, A/B criteria and native producer dependencies. Preserve the complete
+field rather than testing only what the renderer presently exposes.
 
 Acquire QL source-owned preparation/report/walk Skills through AIKit's native
 source discovery and reviewed composition, as specified in
-`docs/SUITE-OPERATOR-SKILLSET.md`. Do not copy them into this repository or add
-them to O:I's shipped guardian manifest. Establish current-generation projection
-and actual harness loading separately. A present SKILL.md is not an operative
-agent; a live generic provider is not the full Epi instrument.
+`docs/SUITE-OPERATOR-SKILLSET.md`. Do not copy them here or add them to O:I's
+shipped guardian manifest. Establish current-generation projection and actual
+harness loading separately. A present Skill file is not an operative agent;
+a generic provider is not the full Epi instrument.
 
-Use a fresh agent in the real walk. Check shared subject, disclosed source,
-actual Action/authority/result, short report, human correction and retained
-Return/re-entry. Missing native support is reported before human testing.
+Use a fresh agent in the real walk. Check shared subject, permitted disclosed
+source, actual Action/authority/result, short report, human correction and
+retained Return/re-entry. Missing support is reported before human testing.
 This Skill's phase/branch loop governs Cradle units; it does not override the
 QL Wayfinder's separate parallel repository development. Source-only bootstrap
-is explicitly bounded and never a claim of installed or human acceptance.
+is bounded and never a claim of installed or human acceptance.
