@@ -120,9 +120,6 @@ jobs:
           mv _caw_workcell "$RUNNER_TEMP/caw-workcell"
           mv _caw_actuation "$RUNNER_TEMP/caw-actuation"
       - uses: dtolnay/rust-toolchain@1.98.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
       - name: Execute native governance tests and build exact owner binaries
         run: |
           set -euo pipefail
@@ -132,6 +129,7 @@ jobs:
           cargo build --locked --manifest-path "$RUNNER_TEMP/caw-aikit/Cargo.toml" -p aikit-cli --bins
           cargo build --locked --manifest-path "$RUNNER_TEMP/caw-factory/factory/Cargo.toml" --bin factory
           cargo build --locked --manifest-path "$RUNNER_TEMP/caw-workcell/Cargo.toml" -p epilogos-workcell-cli --bins
+          cargo build --locked --manifest-path "$RUNNER_TEMP/caw-actuation/Cargo.toml" -p actuation-cli
           cargo test --locked --manifest-path "$RUNNER_TEMP/caw-aikit/Cargo.toml" -p aikit-cli --test caw_task_dispatch --no-run --message-format=json > "$RUNNER_TEMP/caw-task-build.jsonl"
           python3 - "$RUNNER_TEMP/caw-task-build.jsonl" <<'PY' >> "$GITHUB_ENV"
           import json, sys
@@ -151,7 +149,7 @@ jobs:
             --entry workcell "$RUNNER_TEMP/caw-workcell/target/debug/workcell" "$RUNNER_TEMP/caw-workcell" \
             --entry workcell-control-service "$RUNNER_TEMP/caw-workcell/target/debug/workcell-control-service" "$RUNNER_TEMP/caw-workcell" \
             --entry workcell-write-boundary "$RUNNER_TEMP/caw-workcell/target/debug/workcell-write-boundary" "$RUNNER_TEMP/caw-workcell" \
-            --entry actuation "$RUNNER_TEMP/caw-actuation/bin/actuation" "$RUNNER_TEMP/caw-actuation" \
+            --entry actuation "$RUNNER_TEMP/caw-actuation/target/release/actuation" "$RUNNER_TEMP/caw-actuation" \
             --entry factory "$RUNNER_TEMP/caw-factory/target/debug/factory" "$RUNNER_TEMP/caw-factory" \
             --output "$RUNNER_TEMP/caw-bindings.json"
       - name: Execute the three native campaigns independently

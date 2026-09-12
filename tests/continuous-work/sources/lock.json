@@ -1,6 +1,6 @@
 {
   "schema": "oi.caw-source-basis/v1",
-  "observed_on": "2026-09-11",
+  "observed_on": "2026-09-12",
   "dispatch": "https://github.com/EpiLogos/O-I/issues/220#issuecomment-5625950828",
   "source_specification": "https://github.com/EpiLogos/Factory/issues/195#issuecomment-5620703383",
   "required_refinements": "https://github.com/EpiLogos/Factory/issues/195#issuecomment-5625273795",
@@ -28,7 +28,7 @@
     "central": "5d1b8bf6692f9aca45b2fe39db54cbc378dda70e",
     "aikit": "a7ec336ac713edf4561c519fb98ac0418f495e72",
     "workcell": "0c44ee373f5a5e11ab33e885be84dd8293bc358f",
-    "actuation": "2d73f957c287ef386b09ac2c55eeab3603b60873",
+    "actuation": "4af495f6509bb0dd779112a225d71a9df8145b6e",
     "factory": "48e0456d485d702a7521d754599e00a165ff1626"
   },
   "candidate_dependencies": {
@@ -97,5 +97,5 @@
     "standing": "bounded existing source cut; NOT CAW attempt execution or present joined feature acceptance"
   },
   "standing": "explicitly-pinned-unmerged-candidate-not-accepted-main-not-installed-or-human-proof",
-  "recut_note": "2026-09-11 suite-coordination session: owner cut re-pinned after the 22-PR convergence; ai-kit advanced to a7ec336 (#297 — the #294 profileless repair + persistent task-material chain folded onto accepted main). Supersedes the earlier unmerged candidate values. ql-mef rides 59f674d."
+  "recut_note": "2026-09-12 recut: actuation advanced to the Rust-native accepted main 4af495f (R7 cutover, PR #69); the CAW binding now builds and serves target/release/actuation from the locked cut instead of the retired Node launcher. Other owner cuts unchanged. Supersedes the 2026-09-11 note. ql-mef rides 59f674d."
 }

@@ -49,6 +49,7 @@ cargo build --locked --manifest-path "$CENTRAL/ctrl/Cargo.toml" --bin ctrl
 cargo build --locked --manifest-path "$AIKIT/Cargo.toml" -p aikit-cli --bins
 cargo build --locked --manifest-path "$FACTORY/factory/Cargo.toml" --bin factory
 cargo build --locked --manifest-path "$WORKCELL/Cargo.toml" -p epilogos-workcell-cli --bins
+cargo build --locked --manifest-path "$ACTUATION/Cargo.toml" -p actuation-cli
 cargo test --locked --manifest-path "$AIKIT/Cargo.toml" -p aikit-cli \
   --test caw_task_dispatch --no-run --message-format=json > "$EVIDENCE/task-build.jsonl"
 
@@ -71,7 +72,7 @@ python3 scripts/caw_bind.py \
   --entry workcell "$WORKCELL/target/debug/workcell" "$WORKCELL" \
   --entry workcell-control-service "$WORKCELL/target/debug/workcell-control-service" "$WORKCELL" \
   --entry workcell-write-boundary "$WORKCELL/target/debug/workcell-write-boundary" "$WORKCELL" \
-  --entry actuation "$ACTUATION/bin/actuation" "$ACTUATION" \
+  --entry actuation "$ACTUATION/target/release/actuation" "$ACTUATION" \
   --entry factory "$FACTORY/target/debug/factory" "$FACTORY" \
   --output "$EVIDENCE/bindings.json"
 

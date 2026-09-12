@@ -92,6 +92,10 @@ def native_commands(source: Path, owner_id: str) -> tuple[list[list[str]], list[
     if not isinstance(command, list) or not command or any(not isinstance(x, str) or not x for x in command):
         raise ValueError("native descriptor has no valid source_command")
     commands, authorities = [], [".oi/product.json"]
+    # The owner's own declared build precedes its declared source verification.
+    build = descriptor.get("build", {}).get("command")
+    if isinstance(build, list) and build and all(isinstance(x, str) and x for x in build):
+        commands.append(build)
     # Do not impose a new uniform lint regime. These are the owner's own gates.
     if owner_id in {"software-factory", "workcell", "quaternal-logic"}:
         commands.append(["cargo", "fmt", "--all", "--", "--check"])
@@ -105,9 +109,6 @@ def native_commands(source: Path, owner_id: str) -> tuple[list[list[str]], list[
     if owner_id in {"actuation", "workcell", "quaternal-logic"}:
         commands.append(["bash", "scripts/verify-native-skills.sh"])
         authorities.append(".github/workflows/native-skills.yml")
-    if owner_id == "actuation":
-        commands.append(["node", "--test", "ProjectCentral/tests/register.integrity.mjs"])
-        authorities.append(".github/workflows/native-cli.yml")
     if owner_id == "software-factory":
         for script in ["validate_agent_capability_intake.py", "validate_routine_continuation.py", "validate_self_hosting_commission.py", "validate_factory_skills.py"]:
             commands.append([sys.executable, "scripts/" + script])
