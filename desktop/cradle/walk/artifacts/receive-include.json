@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "receive-include",
-  "generated_at": "2026-09-11T23:36:51.238Z",
+  "generated_at": "2026-09-12T01:13:48.473Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 1053,
+  "duration_ms": 1077,
   "checks": [
     {
       "ok": true,
@@ -63,10 +63,10 @@
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-11T23:36:51.349Z",
+        "mounted_at": "2026-09-12T01:13:48.616Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -77,7 +77,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 17,
+      "duration_ms": 16,
       "data": {
         "file": "receive-include-return-expanded-before-review.png"
       }
@@ -85,7 +85,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 33,
+      "duration_ms": 31,
       "data": {
         "file": "receive-include-accepted-on-current-basis.png"
       }
@@ -93,7 +93,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 25,
+      "duration_ms": 22,
       "data": {
         "file": "receive-include-included-with-attribution.png"
       }
@@ -101,7 +101,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 30,
+      "duration_ms": 25,
       "data": {
         "file": "receive-include-stale-basis-refusal.png"
       }

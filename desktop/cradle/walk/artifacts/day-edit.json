@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "day-edit",
-  "generated_at": "2026-09-11T23:35:46.284Z",
+  "generated_at": "2026-09-12T01:12:38.072Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 12894,
+  "duration_ms": 13050,
   "checks": [
     {
       "ok": true,
@@ -37,8 +37,8 @@
       "ok": true,
       "label": "The owner advanced the document revision for the field operation",
       "data": {
-        "open": "central.content-fnv1a64/v1:395713:11b360ed27aef91a",
-        "now": "central.content-fnv1a64/v1:396114:5512963ec3df1a23"
+        "open": "central.content-fnv1a64/v1:395713:f8dca891bf6ebf3a",
+        "now": "central.content-fnv1a64/v1:396114:dca8721b6d38f254"
       }
     },
     {
@@ -49,8 +49,8 @@
       "ok": true,
       "label": "The open surface re-read the Day through the owner's route — buffer clean at the owner's new revision",
       "data": {
-        "bufferRevision": "central.content-fnv1a64/v1:396114:5512963ec3df1a23",
-        "owner": "central.content-fnv1a64/v1:396114:5512963ec3df1a23",
+        "bufferRevision": "central.content-fnv1a64/v1:396114:dca8721b6d38f254",
+        "owner": "central.content-fnv1a64/v1:396114:dca8721b6d38f254",
         "dirty": false
       }
     },
@@ -88,8 +88,8 @@
       "ok": true,
       "label": "The Re-read canonical affordance pulls the external Day change through the owner's Day route — buffer clean at the owner's revision",
       "data": {
-        "bufferRevision": "central.content-fnv1a64/v1:396892:29524e65a56e13c8",
-        "owner": "central.content-fnv1a64/v1:396892:29524e65a56e13c8"
+        "bufferRevision": "central.content-fnv1a64/v1:396892:a59606faf8128dcf",
+        "owner": "central.content-fnv1a64/v1:396892:a59606faf8128dcf"
       }
     },
     {
@@ -100,8 +100,8 @@
       "ok": true,
       "label": "The Re-read affordance pulls the byte-level external change too — the face re-projects it, the buffer is clean at the owner's revision",
       "data": {
-        "bufferRevision": "central.content-fnv1a64/v1:396893:02e86228b6f7ad4b",
-        "owner": "central.content-fnv1a64/v1:396893:02e86228b6f7ad4b"
+        "bufferRevision": "central.content-fnv1a64/v1:396893:a2cfa464a18f4c16",
+        "owner": "central.content-fnv1a64/v1:396893:a2cfa464a18f4c16"
       }
     },
     {
@@ -130,7 +130,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-11T23:35:46.425Z",
+        "mounted_at": "2026-09-12T01:12:38.212Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -141,7 +141,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 66,
+      "duration_ms": 49,
       "data": {
         "file": "day-edit-day-edit-field-saved.png"
       }
@@ -149,7 +149,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 45,
+      "duration_ms": 46,
       "data": {
         "file": "day-edit-day-edit-unmapped-disclosed.png"
       }
@@ -157,7 +157,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 54,
+      "duration_ms": 51,
       "data": {
         "file": "day-edit-day-edit-external-reread.png"
       }
@@ -165,7 +165,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 50,
+      "duration_ms": 48,
       "data": {
         "file": "day-edit-day-edit-refusal-verbatim.png"
       }
