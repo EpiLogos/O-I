@@ -72,7 +72,7 @@ python3 scripts/caw_bind.py \
   --entry workcell "$WORKCELL/target/debug/workcell" "$WORKCELL" \
   --entry workcell-control-service "$WORKCELL/target/debug/workcell-control-service" "$WORKCELL" \
   --entry workcell-write-boundary "$WORKCELL/target/debug/workcell-write-boundary" "$WORKCELL" \
-  --entry actuation "$ACTUATION/target/release/actuation" "$ACTUATION" \
+  --entry actuation "$ACTUATION/target/debug/actuation" "$ACTUATION" \
   --entry factory "$FACTORY/target/debug/factory" "$FACTORY" \
   --output "$EVIDENCE/bindings.json"
 

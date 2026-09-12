@@ -149,7 +149,7 @@ jobs:
             --entry workcell "$RUNNER_TEMP/caw-workcell/target/debug/workcell" "$RUNNER_TEMP/caw-workcell" \
             --entry workcell-control-service "$RUNNER_TEMP/caw-workcell/target/debug/workcell-control-service" "$RUNNER_TEMP/caw-workcell" \
             --entry workcell-write-boundary "$RUNNER_TEMP/caw-workcell/target/debug/workcell-write-boundary" "$RUNNER_TEMP/caw-workcell" \
-            --entry actuation "$RUNNER_TEMP/caw-actuation/target/release/actuation" "$RUNNER_TEMP/caw-actuation" \
+            --entry actuation "$RUNNER_TEMP/caw-actuation/target/debug/actuation" "$RUNNER_TEMP/caw-actuation" \
             --entry factory "$RUNNER_TEMP/caw-factory/target/debug/factory" "$RUNNER_TEMP/caw-factory" \
             --output "$RUNNER_TEMP/caw-bindings.json"
       - name: Execute the three native campaigns independently
