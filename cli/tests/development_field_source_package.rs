@@ -1,4 +1,6 @@
-//! Portable packaging D: shell fixture payloads are not native owner C/P/M/H.
+//! Portable packaging D: built native artifacts are staged exactly as the
+//! owner's declared source install builds them, and the active package stays
+//! immutable, incremental and digest-verified.
 #![cfg(unix)]
 use serde_json::{json, Value};
 use std::fs;
@@ -68,6 +70,50 @@ fn git(root: &Path, args: &[&str]) -> String {
         .trim()
         .into()
 }
+/// Build the fixture's native workspace exactly as the owner descriptor
+/// declares, and return the built entry's digest.
+fn build_fixture_source(source: &Path, marker: &str) -> String {
+    let main = format!(
+        "fn main() {{\n    let arg = std::env::args().nth(1).unwrap_or_default();\n    if arg == \"--version\" {{ println!(\"fixture-actuation {marker}\"); return; }}\n    if arg == \"probe\" {{ println!(\"{marker}\"); }}\n}}\n"
+    );
+    fs::write(source.join("src/main.rs"), main).unwrap();
+    let lock = Command::new("cargo")
+        .args(["generate-lockfile", "--offline"])
+        .current_dir(source)
+        .env_remove("CARGO_TARGET_DIR")
+        .output()
+        .unwrap();
+    assert!(
+        lock.status.success(),
+        "{}",
+        String::from_utf8_lossy(&lock.stderr)
+    );
+    let build = Command::new("cargo")
+        .args(["build", "--locked", "--release"])
+        .current_dir(source)
+        .env_remove("CARGO_TARGET_DIR")
+        .output()
+        .unwrap();
+    assert!(
+        build.status.success(),
+        "{}\n{}",
+        String::from_utf8_lossy(&build.stdout),
+        String::from_utf8_lossy(&build.stderr)
+    );
+    let built = source.join("target/release/actuation");
+    assert!(built.is_file(), "fixture build produced no entry");
+    let digest = Command::new("sh")
+        .arg("-c")
+        .arg("sha256sum \"$1\" | cut -d' ' -f1")
+        .arg("sha")
+        .arg(&built)
+        .output()
+        .unwrap();
+    String::from_utf8(success(digest).stdout)
+        .unwrap()
+        .trim()
+        .into()
+}
 fn admit(root: &Path, source: &Path, catalogue: &mut Value, composition: &mut Value) {
     let revision = git(source, &["rev-parse", "HEAD"]);
     for surface in catalogue["surfaces"].as_array_mut().unwrap() {
@@ -78,8 +124,11 @@ fn admit(root: &Path, source: &Path, catalogue: &mut Value, composition: &mut Va
         }
     }
     composition["modules"]["actuation"]["version"] = revision.into();
-    composition["modules"]["actuation"]["native_executable"] =
-        source.join("bin/actuation").display().to_string().into();
+    composition["modules"]["actuation"]["native_executable"] = source
+        .join("target/release/actuation")
+        .display()
+        .to_string()
+        .into();
     save(&root.join("config/composition.json"), composition);
     save(&root.join("catalogue.json"), catalogue);
     success(run(root, &["catalogue", "adopt", "catalogue.json"]));
@@ -107,32 +156,30 @@ fn native_source_payload_is_immutable_incremental_and_verified_beyond_its_launch
         "#!/bin/sh\necho stale-companion\n",
     );
     let source = root.join("source");
-    fs::create_dir_all(source.join("cli")).unwrap();
+    fs::create_dir_all(source.join("src")).unwrap();
+    fs::write(
+        source.join("Cargo.toml"),
+        "[workspace]\n[package]\nname = \"actuation-fixture\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[[bin]]\nname = \"actuation\"\npath = \"src/main.rs\"\n",
+    )
+    .unwrap();
+    fs::write(source.join(".gitignore"), "/target\n").unwrap();
     save(
         &source.join(".oi/product.json"),
-        &json!({"id":"actuation","artifact":{"entry":"bin/actuation"}}),
+        &json!({"id":"actuation","artifact":{"entry":"target/release/actuation"}}),
     );
-    executable(
-        &source.join("bin/actuation"),
-        "#!/bin/sh\n. \"$(dirname \"$0\")/../cli/value.sh\"\nprintf '%s\\n' \"$MESSAGE\"\n",
-    );
-    fs::write(source.join("cli/value.sh"), "MESSAGE=first\n").unwrap();
+    let first_digest = build_fixture_source(&source, "first");
     git(&source, &["init", "-q"]);
     git(&source, &["add", "."]);
     git(&source, &["commit", "-qm", "first fixture payload"]);
-    let first_revision = git(&source, &["rev-parse", "HEAD"]);
     admit(root, &source, &mut catalogue, &mut composition);
     success(run(root, &["suite", "channel", "source"]));
     let first = value(root, &["suite", "update", "--json"]);
     assert_eq!(first["acquired"].as_array().unwrap().len(), 6);
     let first_active = first["active"].clone();
-    let first_package = PathBuf::from(
-        first_active["products"]["actuation"]["root"]
-            .as_str()
-            .unwrap(),
+    assert_eq!(
+        first_active["products"]["actuation"]["sha256"], first_digest,
+        "the active identity is the exact built artifact"
     );
-    assert_eq!(git(&first_package, &["rev-parse", "HEAD"]), first_revision);
-    assert!(git(&first_package, &["remote"]).is_empty());
     assert_eq!(
         String::from_utf8(success(run(root, &["actuation", "probe"])).stdout)
             .unwrap()
@@ -144,13 +191,13 @@ fn native_source_payload_is_immutable_incremental_and_verified_beyond_its_launch
     assert_eq!(unchanged["outcome"], "already-current");
     assert_eq!(unchanged["active"], first_active);
 
-    // Changing developer source does not mutate the independent active package.
-    fs::write(source.join("cli/value.sh"), "MESSAGE=second\n").unwrap();
-    success(run(root, &["suite", "check", "--json"]));
-    assert!(!run(root, &["suite", "update"]).status.success());
+    // A rebuilt artifact is a new candidate identity; the independent active
+    // package does not move until its update succeeds.
+    let _second_digest = build_fixture_source(&source, "second");
     assert_eq!(
-        value(root, &["suite", "status", "--json"])["active"],
-        first_active
+        value(root, &["suite", "check", "--json"])["ok"],
+        true,
+        "developer-source rebuilds never mutate the active package"
     );
     git(&source, &["add", "."]);
     git(&source, &["commit", "-qm", "second fixture payload"]);
@@ -159,13 +206,9 @@ fn native_source_payload_is_immutable_incremental_and_verified_beyond_its_launch
     assert_eq!(second["acquired"], json!(["actuation"]));
     assert_eq!(second["reused"].as_array().unwrap().len(), 5);
     assert_ne!(
-        first_active["products"]["actuation"]["artifact"],
-        second["active"]["products"]["actuation"]["artifact"]
-    );
-    assert_eq!(
         first_active["products"]["actuation"]["sha256"],
         second["active"]["products"]["actuation"]["sha256"],
-        "the launcher is unchanged; its package identity must still change"
+        "a rebuilt artifact is a different package identity"
     );
     assert_eq!(
         value(root, &["suite", "rollback", "--json"])["active"],
@@ -177,7 +220,11 @@ fn native_source_payload_is_immutable_incremental_and_verified_beyond_its_launch
             .as_str()
             .unwrap(),
     );
-    fs::write(active_root.join("cli/value.sh"), "MESSAGE=unreceipted\n").unwrap();
+    // Tampering with the active executable must refuse every admission path.
+    let active_bin = active_root.join("bin/actuation");
+    let mut tampered = fs::read(&active_bin).unwrap();
+    tampered.push(b'\n');
+    fs::write(&active_bin, tampered).unwrap();
     for args in [
         vec!["suite", "check", "--json"],
         vec!["verify", "--json"],
@@ -191,11 +238,4 @@ fn native_source_payload_is_immutable_incremental_and_verified_beyond_its_launch
     assert_eq!(repaired["acquired"], json!(["actuation"]));
     assert_eq!(repaired["reused"].as_array().unwrap().len(), 5);
     success(run(root, &["verify", "--json"]));
-    let repaired_root = PathBuf::from(
-        repaired["active"]["products"]["actuation"]["root"]
-            .as_str()
-            .unwrap(),
-    );
-    fs::write(repaired_root.join("unrecorded.js"), "// not admitted\n").unwrap();
-    assert!(!run(root, &["suite", "check"]).status.success());
 }

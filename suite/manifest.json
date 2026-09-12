@@ -66,10 +66,18 @@
         "installed_verify": []
       },
       "dev": {
-        "build": [],
+        "build": [
+          "cargo",
+          "build",
+          "--workspace",
+          "--locked",
+          "--release"
+        ],
         "test": [
-          "npm",
-          "test"
+          "cargo",
+          "test",
+          "--workspace",
+          "--locked"
         ]
       },
       "historical_tag": "actuation-v0.1.0-prelocal.2"

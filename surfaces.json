@@ -82,7 +82,7 @@
       "public_name": "Actuation",
       "function": "Agency, WorldBinding, RootScope, Metagency, Determination and Return authority",
       "repository": "https://github.com/EpiLogos/Actuation",
-      "docs_ref": "ecac9ddd5009d03e6d38043341672b0409090c8d",
+      "docs_ref": "4af495f6509bb0dd779112a225d71a9df8145b6e",
       "docs_path": "docs/WORLD-BOUND-ROOT-AGENCY.md",
       "skill_paths": [],
       "native": {
@@ -103,21 +103,27 @@
           "verify",
           "--json"
         ],
-        "command_revision": "ecac9ddd5009d03e6d38043341672b0409090c8d",
+        "command_revision": "4af495f6509bb0dd779112a225d71a9df8145b6e",
         "command_standing": "accepted-main",
         "source_install": {
-          "build": [],
-          "executable_path": "bin/actuation"
+          "build": [
+            "cargo",
+            "build",
+            "--workspace",
+            "--locked",
+            "--release"
+          ],
+          "executable_path": "target/release/actuation"
         },
-        "version_manifest": "package.json"
+        "version_manifest": "crates/actuation-cli/Cargo.toml"
       },
       "install": {
         "kind": "oi-managed-native-cli",
         "modality": "developer-source",
-        "ref": "ecac9ddd5009d03e6d38043341672b0409090c8d",
-        "revision": "ecac9ddd5009d03e6d38043341672b0409090c8d",
-        "path": "bin/actuation",
-        "note": "Current accepted owner main publishes the dependency-free native Actuation command and declares native CLI installation."
+        "ref": "4af495f6509bb0dd779112a225d71a9df8145b6e",
+        "revision": "4af495f6509bb0dd779112a225d71a9df8145b6e",
+        "path": "target/release/actuation",
+        "note": "Current accepted owner main is the native Rust workspace; the served executable is target/release/actuation built with the locked cargo command, declared identically by the owner's .oi/product.json."
       },
       "verification": {
         "status": "supported",
