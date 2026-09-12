@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "flow-canvas",
-  "generated_at": "2026-09-12T02:19:27.067Z",
+  "generated_at": "2026-09-12T02:45:02.019Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 1732,
+  "duration_ms": 2482,
   "checks": [
     {
       "ok": true,
@@ -102,7 +102,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-12T02:19:27.173Z",
+        "mounted_at": "2026-09-12T02:45:02.207Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -113,28 +113,28 @@
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 1.1,
+      "duration_ms": 0.5,
       "data": {
         "layout": {
           "root": {
             "type": "group",
             "id": "g1",
             "tabs": [
-              "3e41885a-0663-411a-897a-f23db0090454"
+              "5c84e030-0a26-4761-baa5-4f48fc26728d"
             ],
             "pinned": [],
-            "active": "3e41885a-0663-411a-897a-f23db0090454"
+            "active": "5c84e030-0a26-4761-baa5-4f48fc26728d"
           },
           "surfaces": {
-            "3e41885a-0663-411a-897a-f23db0090454": {
-              "id": "3e41885a-0663-411a-897a-f23db0090454",
+            "5c84e030-0a26-4761-baa5-4f48fc26728d": {
+              "id": "5c84e030-0a26-4761-baa5-4f48fc26728d",
               "kind": "flow",
-              "title": "2026-09-12-0319.md",
+              "title": "2026-09-12-0345.md",
               "project": "Editor",
-              "ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-12-0319.md",
+              "ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-12-0345.md",
               "flow": {
-                "flowRef": "central:flow:project:editor-walk:1789179567354691000",
-                "path": "ProjectCentral/now/flows/2026-09-12-0319.md"
+                "flowRef": "central:flow:project:editor-walk:1789181102655302000",
+                "path": "ProjectCentral/now/flows/2026-09-12-0345.md"
               }
             }
           },
@@ -150,7 +150,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 38,
+      "duration_ms": 40,
       "data": {
         "file": "flow-canvas-flow-canvas-saved.png"
       }
@@ -158,7 +158,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 33,
+      "duration_ms": 38,
       "data": {
         "file": "flow-canvas-flow-canvas-sessions-bound.png"
       }
@@ -166,7 +166,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 22,
+      "duration_ms": 23,
       "data": {
         "file": "flow-canvas-flow-canvas-conflict-resolved.png"
       }
@@ -181,26 +181,26 @@
             "type": "group",
             "id": "g1",
             "tabs": [
-              "3e41885a-0663-411a-897a-f23db0090454",
-              "2f34a21b-a40a-4312-981a-76f38b2ac6b3"
+              "5c84e030-0a26-4761-baa5-4f48fc26728d",
+              "8444fc66-4753-46ce-b6cc-b5a44fa8866d"
             ],
             "pinned": [],
-            "active": "3e41885a-0663-411a-897a-f23db0090454"
+            "active": "5c84e030-0a26-4761-baa5-4f48fc26728d"
           },
           "surfaces": {
-            "3e41885a-0663-411a-897a-f23db0090454": {
-              "id": "3e41885a-0663-411a-897a-f23db0090454",
+            "5c84e030-0a26-4761-baa5-4f48fc26728d": {
+              "id": "5c84e030-0a26-4761-baa5-4f48fc26728d",
               "kind": "flow",
-              "title": "2026-09-12-0319.md",
+              "title": "2026-09-12-0345.md",
               "project": "Editor",
-              "ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-12-0319.md",
+              "ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-12-0345.md",
               "flow": {
-                "flowRef": "central:flow:project:editor-walk:1789179567354691000",
-                "path": "ProjectCentral/now/flows/2026-09-12-0319.md"
+                "flowRef": "central:flow:project:editor-walk:1789181102655302000",
+                "path": "ProjectCentral/now/flows/2026-09-12-0345.md"
               }
             },
-            "2f34a21b-a40a-4312-981a-76f38b2ac6b3": {
-              "id": "2f34a21b-a40a-4312-981a-76f38b2ac6b3",
+            "8444fc66-4753-46ce-b6cc-b5a44fa8866d": {
+              "id": "8444fc66-4753-46ce-b6cc-b5a44fa8866d",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "project": "Editor",
@@ -219,7 +219,7 @@
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 25.5,
+      "duration_ms": 52,
       "data": {
         "buffers": {
           "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md": {
@@ -250,7 +250,7 @@
             "provenance": {
               "source": "central.projectcentral"
             },
-            "ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-12-0319.md"
+            "ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-12-0345.md"
           },
           "world": {
             "kind": "world",
@@ -297,13 +297,13 @@
                   "active": 1,
                   "flows": [
                     {
-                      "flow_ref": "central:flow:project:editor-walk:1789179567354691000",
+                      "flow_ref": "central:flow:project:editor-walk:1789181102655302000",
                       "lifecycle": "active",
-                      "path": "ProjectCentral/now/flows/2026-09-12-0319.md",
+                      "path": "ProjectCentral/now/flows/2026-09-12-0345.md",
                       "revision": "central.content-fnv1a64/v1:61:5177ee8e1ca82d6d",
                       "revisions_recorded": 4,
                       "source_present": true,
-                      "source_ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-12-0319.md",
+                      "source_ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-12-0345.md",
                       "uncommitted_edits": false
                     }
                   ],
@@ -348,7 +348,7 @@
               "source_files": 0
             },
             "projection": "project",
-            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-AEttkC",
+            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bEuGAf",
             "schema": "central.world-map/v1",
             "sources": {
               "bindings": 12,
@@ -418,7 +418,7 @@
               "detected": false,
               "signals": []
             },
-            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-AEttkC",
+            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bEuGAf",
             "root_state": "directory",
             "schema": "central.world-map/v1",
             "valid": true,
@@ -561,8 +561,8 @@
               },
               {
                 "agent_retrieval_allowed": true,
-                "path": "ProjectCentral/now/flows/2026-09-12-0319.md",
-                "ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-12-0319.md",
+                "path": "ProjectCentral/now/flows/2026-09-12-0345.md",
+                "ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-12-0345.md",
                 "revision": "central.content-fnv1a64/v1:61:5177ee8e1ca82d6d",
                 "treatment": "projectcentral-flow-retained-in-place"
               },
@@ -641,17 +641,17 @@
           }
         },
         "surfaces": {
-          "2f34a21b-a40a-4312-981a-76f38b2ac6b3": {
+          "5c84e030-0a26-4761-baa5-4f48fc26728d": {
+            "kind": "flow",
+            "source_ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-12-0345.md",
+            "surface_id": "5c84e030-0a26-4761-baa5-4f48fc26728d",
+            "title": "2026-09-12-0345.md"
+          },
+          "8444fc66-4753-46ce-b6cc-b5a44fa8866d": {
             "kind": "source",
             "source_ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
-            "surface_id": "2f34a21b-a40a-4312-981a-76f38b2ac6b3",
+            "surface_id": "8444fc66-4753-46ce-b6cc-b5a44fa8866d",
             "title": "00 01-DESIGN.md"
-          },
-          "3e41885a-0663-411a-897a-f23db0090454": {
-            "kind": "flow",
-            "source_ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-12-0319.md",
-            "surface_id": "3e41885a-0663-411a-897a-f23db0090454",
-            "title": "2026-09-12-0319.md"
           }
         }
       }
