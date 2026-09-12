@@ -26,13 +26,13 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: npm
-          cache-dependency-path: site/package-lock.json
-      - name: Install locked site dependencies
-        run: npm ci
+      - name: Install site dependencies (retain resolved lock as evidence)
+        run: npm install --no-audit --no-fund
         working-directory: site
       - name: Strict TypeScript and production build
         run: npm run build
@@ -55,7 +55,6 @@ jobs:
             python tests/shell-v2-acceptance.py
           else
             python - <<'PY'
-          from pathlib import Path
           from playwright.sync_api import sync_playwright
           with sync_playwright() as p:
               browser = p.chromium.launch()
@@ -82,3 +81,4 @@ jobs:
             site/src/shell/
             site/src/tokens.css
             site/tests/shell-v2-acceptance.py
+            site/package-lock.json
