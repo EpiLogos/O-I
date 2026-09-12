@@ -5,7 +5,7 @@
   "standing": "oi-projection-of-accepted-owner-command-descriptors",
   "products": [
     {"id":"central","revision":"5b61b82835f4efbf57ab896b8efff72f9f8f3906","protocol_min":"1.0","protocol_max":"1.0"},
-    {"id":"actuation","revision":"4af495f6509bb0dd779112a225d71a9df8145b6e","protocol_min":"1.0","protocol_max":"1.0"},
+    {"id":"actuation","revision":"90041d5f81331b636893d772c3288c062ad0e13b","protocol_min":"1.0","protocol_max":"1.0"},
     {"id":"ai-kit","revision":"95e35ac6569a85239a4689aeb440929f5d07888b","protocol_min":"1.0","protocol_max":"1.0"},
     {"id":"software-factory","revision":"885f3c29726dc6cb9397eca246abdfb1c65eff86","protocol_min":"1.0","protocol_max":"1.0"},
     {"id":"workcell","revision":"fa47a29fa49a6636675d21309b00c269ac824abb","protocol_min":"1.0","protocol_max":"1.0"},

@@ -5,7 +5,7 @@
   "owners": [
     {"id":"oi","repository":"EpiLogos/O-I","revision":"0bcdcaa7f3558cd0f6bc4d1f017a7d5db6eefabf","track":212},
     {"id":"central","repository":"EpiLogos/Central","revision":"4cd0fe52b10fb0e09a5a9e4486ea3d40d4946c5c","track":136},
-    {"id":"actuation","repository":"EpiLogos/Actuation","revision":"4af495f6509bb0dd779112a225d71a9df8145b6e","track":53},
+    {"id":"actuation","repository":"EpiLogos/Actuation","revision":"90041d5f81331b636893d772c3288c062ad0e13b","track":53},
     {"id":"ai-kit","repository":"EpiLogos/ai-kit","revision":"1f9ef6ab2ab45cf79732426c171e5de13273d197","track":261},
     {"id":"software-factory","repository":"EpiLogos/Factory","repository_alias":"EpiLogos/agent-system-design","revision":"366a6b2bf18ba23053601f5d5eb543b79bfcfb27","track":215},
     {"id":"workcell","repository":"EpiLogos/Workcell","revision":"aa2d2ba59f0ac259158eb7d2cd1cfcab1579268a","track":67},
