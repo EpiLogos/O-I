@@ -6,16 +6,26 @@ import {flow} from "../flow/client";
 import {encounter,type EncounterReading} from "../encounter/client";
 import {composeAddressed} from "../encounter/AddressedComposer";
 import {composeSharedField,openA2aExchange} from "../receiving/SharedFieldMaterial";
+import {kernelOp} from "../kernel/bridge";
+import type {ActionDispatch} from "../kernel/types";
 import {readDraft} from "../workspace/drafts";
 import "./context.css";
 import {observationIsCurrent} from "./ComponentSelection";
 type Candidate={observationKey?:string;selector?:string;role?:string;bounds?:{x:number;y:number;width:number;height:number};bindingId:string;kind:string;text:string;sourceRef?:string;start?:number;end?:number;revision?:string;workingCopy?:boolean};
+/** The owner's typed remember answer (`central.remembered-note-proposal`,
+ * probed live on the installed cut). Unknown shapes render as the raw
+ * payload — the presentation invents no fields. */
+interface RememberedNoteProposal{
+ note:{ref:string;schema:string;destination:string;provenance:{schema:string;selection:string;source_ref:string;origin_action:string;recorded_at_unix_seconds:number;authorship:string;recognition:string}};
+ authorship:string;human_recognised:boolean;
+ read_path:{action:string;input:Record<string,unknown>};
+}
 function matches(candidate:Candidate,content:string){return candidate.start!==undefined&&candidate.end!==undefined?content.slice(candidate.start,candidate.end)===candidate.text:content.includes(candidate.text);}
 export function ContextTray({bindings,accompanying}:{bindings:Record<string,SurfaceBinding>;accompanying:LayoutState["accompanying"]}){
- const kernel=useKernel();const [candidate,setCandidate]=useState<Candidate>();const [target,setTarget]=useState("");const [error,setError]=useState<string>();const [busy,setBusy]=useState(false);
+ const kernel=useKernel();const [candidate,setCandidate]=useState<Candidate>();const [target,setTarget]=useState("");const [error,setError]=useState<string>();const [busy,setBusy]=useState(false);const [rememberScope,setRememberScope]=useState<"root"|"project"|undefined>();const [remembered,setRemembered]=useState<{outcome:ActionDispatch}|undefined>();
  const tray=useRef<HTMLElement>(null);const returnFocus=useRef<HTMLElement|null>(null);const latest=useRef({bindings,kernel});latest.current={bindings,kernel};
  useEffect(()=>{let generation=0;const take=(event:Event)=>{const next=(event as CustomEvent<Candidate>).detail;if(!next?.text?.trim()||!next.bindingId)return;const current=++generation;const binding=latest.current.bindings[next.bindingId];if(!binding)return;
-   const open=(value:Candidate,message?:string)=>{if(current!==generation)return;returnFocus.current=document.activeElement instanceof HTMLElement?document.activeElement:null;setTarget("");setCandidate(value);setError(message);};
+   const open=(value:Candidate,message?:string)=>{if(current!==generation)return;returnFocus.current=document.activeElement instanceof HTMLElement?document.activeElement:null;setTarget("");setRememberScope(undefined);setRemembered(undefined);setCandidate(value);setError(message);};
    const accept=(value:Candidate)=>open(value,undefined);
    if(next.kind==="element"){accept({...next,sourceRef:binding.ref??next.sourceRef??binding.browser?.url});return;}
    if(binding.kind==="source"&&binding.ref){const buffer=latest.current.kernel.snapshot.buffers[binding.ref];if(!buffer||!matches(next,buffer.content)){open({...next,sourceRef:binding.ref},"The selected source is no longer available. Select it again.");return;}accept({...next,sourceRef:binding.ref,revision:buffer.base_revision,workingCopy:buffer.dirty});return;}
@@ -97,6 +107,47 @@ export function ContextTray({bindings,accompanying}:{bindings:Record<string,Surf
    setCandidate(undefined);
   }catch(reason){setError(String(reason));}finally{setBusy(false);}
  };
+ /** The remember destination (U3.3, return mode): the selection travels
+  * VERBATIM to the owner's typed remember operation with its Central source
+  * ref — into the root register or the selection's own project register.
+  * The note is a generated proposal stamped by the owner; recognition is
+  * the human owner's separate act, and this surface offers no control that
+  * claims it. The typed receipt stays in the tray instead of closing it:
+  * the provenance IS the result of the act. */
+ const remember=async()=>{setBusy(true);setError(undefined);setRemembered(undefined);
+  try{
+   if(!binding?.ref)throw new Error("This selection has no Central source ref to remember against.");
+   const composed=await validateSelection();
+   if(!composed.revision)throw new Error("Remembering shares a revision-carrying source selection — select the passage again.");
+   const scope=rememberScope??(binding.project?"project":"root");
+   const action=scope==="project"?"projectcentral.remember":"central.remember";
+   const input=scope==="project"
+    ?{selection:candidate.text,source_ref:binding.ref,destination:"remembered",project:binding.project}
+    :{selection:candidate.text,source_ref:binding.ref,destination:"remembered",project:null};
+   const response=await kernelOp(kernel.transport,{op:"invoke_action",invocation:{action,target_ref:binding.ref,input}});
+   if(response.outcome?.result!=="action_dispatched")throw new Error(response.error??"the kernel returned no dispatch outcome");
+   setRemembered({outcome:response.outcome.dispatch});
+  }catch(reason){setError(String(reason));}finally{setBusy(false);}
+ };
  const keyboard=(e:React.KeyboardEvent)=>{if(e.key==="Escape"){e.preventDefault();close();return;}if(e.key!=="Tab"||!tray.current)return;const focusable=[...tray.current.querySelectorAll<HTMLElement>('button:not(:disabled),select:not(:disabled),[href],input:not(:disabled),textarea:not(:disabled),[tabindex]:not([tabindex="-1"])')].filter(node=>node.getClientRects().length);if(!focusable.length){e.preventDefault();tray.current.focus();return;}const first=focusable[0],last=focusable[focusable.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}};
- return <div className="context-scrim" onMouseDown={e=>{if(e.target===e.currentTarget)close();}}><section ref={tray} className="context-tray" role="dialog" aria-modal="true" aria-label="Include selected context" tabIndex={-1} onKeyDown={keyboard}><header><h2>Include selected context</h2><button aria-label="Close context selection" onClick={close} disabled={busy}>×</button></header><p>{binding?.title??"Selection"} · {candidate.text.length} characters</p><pre>{candidate.text}</pre>{candidate.kind==="element"&&<p className="context-origin">{candidate.selector}{candidate.bounds&&` · ${Math.round(candidate.bounds.width)} × ${Math.round(candidate.bounds.height)} at ${Math.round(candidate.bounds.x)}, ${Math.round(candidate.bounds.y)}`}</p>}<p className="context-origin">{candidate.sourceRef??binding?.terminal?.cwd??"Observed material"}</p><label>Conversation <select aria-label="Context destination" value={target||choices[0]?.id||""} onChange={e=>setTarget(e.target.value)}>{choices.map(b=><option key={b.id} value={b.id}>{b.title} · {b.project}</option>)}</select></label>{!choices.length&&<p>Open an agent conversation to include this selection.</p>}<p>The excerpt and its provenance will be added to the shared draft. Use Send in that conversation when ready.</p>{error&&<p role="alert">{error}</p>}<div className="context-actions"><button disabled={busy||!!error||!selected||!binding} onClick={()=>void add()}>{busy?"Adding…":"Add to draft"}</button><button className="context-address" disabled={busy||!!error||!selected||!binding} title="Compose this selection into that conversation's addressed request instead of the shared draft" onClick={()=>void address()}>Address to the participant</button>{candidate.revision&&<button className="context-publish" disabled={busy||!!error} title="Compose this selection into a shared-field projection beside the document — publication carries an explicit publisher and audience" onClick={()=>void publish()}>Publish to the shared field</button>}{candidate.revision&&<button className="context-a2a" disabled={busy||!!error} title="Seed a bounded A2A v1 message to a peer agent with this selection — the exchange form beside the document owns endpoint and send" onClick={()=>void exchangeA2a()}>Exchange over A2A</button>}</div></section></div>;
+ return <div className="context-scrim" onMouseDown={e=>{if(e.target===e.currentTarget)close();}}><section ref={tray} className="context-tray" role="dialog" aria-modal="true" aria-label="Include selected context" tabIndex={-1} onKeyDown={keyboard}><header><h2>Include selected context</h2><button aria-label="Close context selection" onClick={close} disabled={busy}>×</button></header><p>{binding?.title??"Selection"} · {candidate.text.length} characters</p><pre>{candidate.text}</pre>{candidate.kind==="element"&&<p className="context-origin">{candidate.selector}{candidate.bounds&&` · ${Math.round(candidate.bounds.width)} × ${Math.round(candidate.bounds.height)} at ${Math.round(candidate.bounds.x)}, ${Math.round(candidate.bounds.y)}`}</p>}<p className="context-origin">{candidate.sourceRef??binding?.terminal?.cwd??"Observed material"}</p><label>Conversation <select aria-label="Context destination" value={target||choices[0]?.id||""} onChange={e=>setTarget(e.target.value)}>{choices.map(b=><option key={b.id} value={b.id}>{b.title} · {b.project}</option>)}</select></label>{!choices.length&&<p>Open an agent conversation to include this selection.</p>}<p>The excerpt and its provenance will be added to the shared draft. Use Send in that conversation when ready.</p>{error&&<p role="alert">{error}</p>}<div className="context-actions"><button disabled={busy||!!error||!selected||!binding} onClick={()=>void add()}>{busy?"Adding…":"Add to draft"}</button><button className="context-address" disabled={busy||!!error||!selected||!binding} title="Compose this selection into that conversation's addressed request instead of the shared draft" onClick={()=>void address()}>Address to the participant</button>{candidate.revision&&<button className="context-publish" disabled={busy||!!error} title="Compose this selection into a shared-field projection beside the document — publication carries an explicit publisher and audience" onClick={()=>void publish()}>Publish to the shared field</button>}{candidate.revision&&<button className="context-a2a" disabled={busy||!!error} title="Seed a bounded A2A v1 message to a peer agent with this selection — the exchange form beside the document owns endpoint and send" onClick={()=>void exchangeA2a()}>Exchange over A2A</button>}</div>{candidate.revision&&binding?.ref&&<div className="context-remember-row"><label>Remember destination <select aria-label="Remember destination" value={rememberScope??(binding.project?"project":"root")} onChange={e=>setRememberScope(e.target.value as "root"|"project")}>{[...(binding.project?["project"]:[]),"root"].map(scope=><option key={scope} value={scope}>{scope==="root"?"Root register — Control/agents/remembered":`${binding.project} register — ProjectCentral/agents/remembered`}</option>)}</select></label><button className="context-remember" disabled={busy||!!error} title="Remember this selection verbatim into durable ground as a generated proposal with full provenance — the owner's typed remember operation; recognition stays the human owner's separate act" onClick={()=>void remember()}>{busy?"Remembering…":"Remember this"}</button></div>}{remembered&&<RememberReceipt outcome={remembered.outcome}/>}</section></div>;
+}
+
+/** The typed remember receipt: the owner payload verbatim — note ref,
+ * provenance, the owner's own read-path operation — with the one honest line
+ * the recognition law demands. Non-invoked dispatch states render the
+ * owner's (or kernel's) own words unchanged, never a desktop paraphrase. */
+function RememberReceipt({outcome}:{outcome:ActionDispatch}){
+ if(outcome.state!=="invoked"){const detail=!("state" in outcome)?"":outcome.state==="owner_refused"?outcome.message:outcome.state==="owner_unavailable"?outcome.detail:outcome.state==="malformed_ref"?outcome.detail:outcome.state==="unsupported_action"?`${outcome.owner}: ${outcome.detail}`:outcome.state==="unknown_owner"?outcome.action:"";
+  return <div className="context-remembered" data-remembered-state={outcome.state}><p role="alert">The remember operation did not land ({outcome.state})</p>{detail&&<p className="context-origin">{detail}</p>}</div>;}
+ const proposal=(outcome.data??{}) as Partial<RememberedNoteProposal>;
+ const note=proposal.note;
+ if(!note?.ref||!note.provenance)return <div className="context-remembered" data-remembered-state="invoked"><p role="status">Remembered · {outcome.owner_operation}</p><pre>{JSON.stringify(outcome.data,null,2)}</pre></div>;
+ const recorded=new Date(note.provenance.recorded_at_unix_seconds*1000);
+ return <div className="context-remembered" data-remembered-state="invoked">
+  <p role="status">Remembered · {note.ref} · {note.provenance.authorship}</p>
+  <p className="context-origin">{note.provenance.source_ref} · {note.provenance.origin_action} · recorded {recorded.toLocaleString()}</p>
+  <p className="context-origin">recognition: {note.provenance.recognition} — recognition is the human owner's separate act; this surface performs none and no control here claims it.</p>
+  {proposal.read_path&&<p className="context-origin">Owner read: {proposal.read_path.action}</p>}
+ </div>;
 }

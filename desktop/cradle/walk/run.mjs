@@ -47,6 +47,7 @@ const SCENARIOS = {
   permission: {module:"scenarios/permission.mjs",kernel:true,aliases:[]},
   encounter: {module:"scenarios/encounter.mjs",kernel:true,aliases:[]},
   "context-draft": {module:"scenarios/context-draft.mjs",kernel:true,aliases:[]},
+  "remember": {module:"scenarios/remember.mjs",kernel:true,aliases:["u3.3"]},
   "select-send": {module:"scenarios/select-send.mjs",kernel:true,aliases:["6b"]},
   "send-group-reconnect": {module:"scenarios/send-group-reconnect.mjs",kernel:true,aliases:["6b2"]},
   "receive-include": {module:"scenarios/receive-include.mjs",kernel:true,aliases:["6e"]},

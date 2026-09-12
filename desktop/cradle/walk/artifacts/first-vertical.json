@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "first-vertical",
-  "generated_at": "2026-09-12T01:13:54.893Z",
+  "generated_at": "2026-09-12T02:18:28.383Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 13614,
+  "duration_ms": 14829,
   "checks": [
     {
       "ok": true,
@@ -94,7 +94,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-12T01:13:54.992Z",
+        "mounted_at": "2026-09-12T02:18:28.473Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -105,7 +105,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 40,
+      "duration_ms": 32,
       "data": {
         "file": "first-vertical-document-open.png"
       }
@@ -113,7 +113,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 29,
+      "duration_ms": 33,
       "data": {
         "file": "first-vertical-selection-in-tray.png"
       }
@@ -121,7 +121,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 48,
+      "duration_ms": 66,
       "data": {
         "file": "first-vertical-addressed-composed-from-selection.png"
       }
@@ -129,7 +129,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 31,
+      "duration_ms": 46,
       "data": {
         "file": "first-vertical-reply-in-transcript.png"
       }
@@ -137,7 +137,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 39,
+      "duration_ms": 56,
       "data": {
         "file": "first-vertical-return-of-the-reply-before-review.png"
       }
@@ -145,7 +145,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 38,
+      "duration_ms": 47,
       "data": {
         "file": "first-vertical-reply-included.png"
       }
@@ -153,7 +153,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 27,
+      "duration_ms": 52,
       "data": {
         "file": "first-vertical-document-holds-reviewed-reply.png"
       }
