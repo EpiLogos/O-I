@@ -1,12 +1,15 @@
 //! The O:I guardian SkillSet — the bootstrap's cognition step.
 //!
 //! A fresh personal ground receives exactly one shipped SkillSet projected
-//! into its harnesses: the O:I guardian Skills (the `oi` router, the suite
-//! operator, and the Central session strap). Everything else in the suite
-//! stays authoritative in its own
-//! product repository and is resolved on demand — AIKit remains the normal
-//! resolver for that. Projected copies are derived state with receipts; local
-//! edits never become authoritative and are never clobbered.
+//! into its harnesses: the O:I guardian Skills (the `oi` router and the
+//! suite operator). The Central session strap used to ship here as a frozen
+//! copy claiming local authority; it forked from its Control source and
+//! resurrected retired procedure, so it is no longer a guardian member — it
+//! is Central ground and reaches a ground through AIKit's Central binding,
+//! the normal resolver. Everything else in the suite stays authoritative in
+//! its own product repository and is resolved on demand. Projected copies
+//! are derived state with receipts; local edits never become authoritative
+//! and are never clobbered.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -34,36 +37,12 @@ pub const GUARDIAN_SKILL_SOURCES: &[(&str, &str)] = &[
         "skills/suite-operator/SKILL.md",
         include_str!("../../skills/suite-operator/SKILL.md"),
     ),
-    (
-        "skills/central-session-strap/SKILL.md",
-        include_str!("../../skills/central-session-strap/SKILL.md"),
-    ),
 ];
 
 /// Sibling payload files a guardian Skill ships beside its SKILL.md, keyed by
-/// the same `source.path` scheme. Some guardian Skills are a directory, not
-/// one file: the strap's root-register NOW/DAY executor (`now.py`), its
-/// governance renderer and its verification suite are the procedure the Skill
-/// text teaches. Members without declared siblings project SKILL.md (and its
-/// receipt) exactly as before.
-pub const GUARDIAN_SKILL_PAYLOAD_FILES: &[(&str, &str)] = &[
-    (
-        "skills/central-session-strap/now.py",
-        include_str!("../../skills/central-session-strap/now.py"),
-    ),
-    (
-        "skills/central-session-strap/render-context.py",
-        include_str!("../../skills/central-session-strap/render-context.py"),
-    ),
-    (
-        "skills/central-session-strap/skill.json",
-        include_str!("../../skills/central-session-strap/skill.json"),
-    ),
-    (
-        "skills/central-session-strap/verify.sh",
-        include_str!("../../skills/central-session-strap/verify.sh"),
-    ),
-];
+/// the same `source.path` scheme. Members without declared siblings project
+/// SKILL.md (and its receipt) exactly as before.
+pub const GUARDIAN_SKILL_PAYLOAD_FILES: &[(&str, &str)] = &[];
 
 /// Harness skill trees a personal ground projects the guardian set into.
 pub const GUARDIAN_HARNESS_SKILL_ROOTS: &[&str] = &[".claude/skills", ".agents/skills"];

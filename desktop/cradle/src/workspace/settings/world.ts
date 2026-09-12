@@ -78,7 +78,7 @@ export function buildSections(reading:CompositionReading|undefined,extras:Activi
       configuration.push(openProject,{title:"Ground binding",native_path:"Config view — Central location"});
       actions.push(
         {title:"Doctor",availability:"native_only",note:"oi ctrl doctor --json"},
-        {title:"Day close",availability:"native_only",note:"projectcentral.now.rollover (project) · session-strap now.py rollover (root)"},
+        {title:"Day close",availability:"native_only",note:"projectcentral.now.rollover (project) · central.day.lifecycle (root)"},
       );
     }
     if(position.product_id==="ai-kit") {
