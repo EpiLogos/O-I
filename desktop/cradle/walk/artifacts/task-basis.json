@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "task-basis",
-  "generated_at": "2026-09-12T10:37:53.728Z",
+  "generated_at": "2026-09-12T11:07:44.984Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 4823,
+  "duration_ms": 4659,
   "checks": [
     {
       "ok": true,
@@ -61,7 +61,7 @@
       "duration_ms": 0.1,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-12T10:37:53.814Z",
+        "mounted_at": "2026-09-12T11:07:45.086Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -72,7 +72,7 @@
     {
       "ok": true,
       "op": "invoke.encounter_task_read",
-      "duration_ms": 1011.2,
+      "duration_ms": 909.9,
       "data": {
         "outcome": {
           "data": {
@@ -87,7 +87,7 @@
                 "--agent-session",
                 "agent-session/task-basis-walk",
                 "--expected-revision",
-                "task-binding/01M2AK3VS6FHVVMKFTFGZSQZXF"
+                "task-binding/01M2AMTGZ7F7E76DSQG8P8QRV1"
               ],
               "id": "task-e38fbf4d288acdf99bfa79fa6cd50b5795c0ef4b8af23d08f0e92458cbffbaed",
               "label": "Task child acceptance ACP",
@@ -98,7 +98,7 @@
             "request": {
               "authority_ref": "authority:task-basis-walk",
               "central": {
-                "central_root": "/private/tmp/oi-cradle-editor-GA2GE7",
+                "central_root": "/private/tmp/oi-cradle-editor-dbkQfu",
                 "ctrl_bin": "/Users/admin/.cargo/bin/ctrl",
                 "participant_refs": [
                   "agent:editor-walk"
@@ -110,7 +110,7 @@
                 ],
                 "task_ref": "task:task-basis-walk"
               },
-              "cwd": "/private/tmp/oi-cradle-editor-GA2GE7/Work/Editor/task-scratch",
+              "cwd": "/private/tmp/oi-cradle-editor-dbkQfu/Work/Editor/task-scratch",
               "material_host": null,
               "provider": {
                 "argv": [
@@ -118,19 +118,19 @@
                   "-u",
                   "/private/tmp/oi-nowrel/desktop/cradle/walk/fixtures/addressed-provider.py",
                   "acp",
-                  "/private/tmp/oi-cradle-editor-GA2GE7/task-provider.log"
+                  "/private/tmp/oi-cradle-editor-dbkQfu/task-provider.log"
                 ],
                 "id": "task-child",
                 "label": "Task child acceptance ACP",
                 "protocol": "acp"
               },
               "selected_directories": [
-                "/private/tmp/oi-cradle-editor-GA2GE7/Work/Editor/task-scratch"
+                "/private/tmp/oi-cradle-editor-dbkQfu/Work/Editor/task-scratch"
               ],
               "workcell_boundary_bin": "/Users/admin/Central/Work/Workcell/target/release/workcell-write-boundary"
             },
             "requirements": null,
-            "revision": "task-binding/01M2AK3VS6FHVVMKFTFGZSQZXF",
+            "revision": "task-binding/01M2AMTGZ7F7E76DSQG8P8QRV1",
             "schema": "aikit.encounter-task/v1"
           },
           "result": "encounter_task_reading"
@@ -140,7 +140,7 @@
     {
       "ok": true,
       "op": "invoke.encounter_task_read",
-      "duration_ms": 145.2,
+      "duration_ms": 128.4,
       "data": {
         "outcome": {
           "data": null,
@@ -151,7 +151,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 28,
+      "duration_ms": 26,
       "data": {
         "file": "task-basis-task-section-verbatim.png"
       }
@@ -159,13 +159,13 @@
     {
       "ok": false,
       "op": "invoke.encounter",
-      "duration_ms": 267.9,
+      "duration_ms": 273.5,
       "error": "Task preparation is incomplete; explicitly recover the same request [encounter.runtime]"
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 32,
+      "duration_ms": 33,
       "data": {
         "file": "task-basis-plain-session-no-task-section.png"
       }

@@ -22,7 +22,7 @@ const SETTINGS_GLYPH = "M4 7h16M4 17h16M8 4v6m8 4v6";
 
 /** Summoned reading over Central's owner operations; selection lives in the
  * kernel. Local state is only filter text and in-flight presentation. */
-export function WorldNavigator({ onSystem,onOpenEncounter, centralFiles, onCentralFilesChange, workspaceSelector, searchShortcut, projectNavigation, onNavigationChange, onOpenFile, onProjectChange, onOpenWiki, onSearch, onOpenToday, activeEncounterRef, onOpenFlow, onNewFlow }: { onSystem:()=>void;onOpenEncounter:(row:EncounterRow)=>Promise<void>; centralFiles: boolean; onCentralFilesChange:(files:boolean)=>void; workspaceSelector: ReactNode; searchShortcut: string; projectNavigation: Record<string, ProjectNavigation>; onNavigationChange: (ref: string, change: Partial<ProjectNavigation>) => void; onSearch: () => void; onOpenWiki: (ref:string,title:string,project?:string)=>Promise<void>; onOpenFile: (location:CentralLocation)=>Promise<void>; onProjectChange?: (project?: string) => void; onOpenToday?: () => Promise<void>; onAgent?: () => void; activeEncounterRef?: string; onOpenFlow?: (row:import("../../flow/client").FlowRecord, project:string)=>Promise<void>; onNewFlow?: (project:string)=>Promise<void> }) {
+export function WorldNavigator({ onSystem, onFactoryDevelopment,onOpenEncounter, centralFiles, onCentralFilesChange, workspaceSelector, searchShortcut, projectNavigation, onNavigationChange, onOpenFile, onProjectChange, onOpenWiki, onSearch, onOpenToday, activeEncounterRef, onOpenFlow, onNewFlow }: { onSystem:()=>void;onFactoryDevelopment?:()=>void;onOpenEncounter:(row:EncounterRow)=>Promise<void>; centralFiles: boolean; onCentralFilesChange:(files:boolean)=>void; workspaceSelector: ReactNode; searchShortcut: string; projectNavigation: Record<string, ProjectNavigation>; onNavigationChange: (ref: string, change: Partial<ProjectNavigation>) => void; onSearch: () => void; onOpenWiki: (ref:string,title:string,project?:string)=>Promise<void>; onOpenFile: (location:CentralLocation)=>Promise<void>; onProjectChange?: (project?: string) => void; onOpenToday?: () => Promise<void>; onAgent?: () => void; activeEncounterRef?: string; onOpenFlow?: (row:import("../../flow/client").FlowRecord, project:string)=>Promise<void>; onNewFlow?: (project:string)=>Promise<void> }) {
   const kernel = useKernel();
   const reading = kernel.snapshot.navigator;
   const [error,setError] = useState<string>();
@@ -140,7 +140,7 @@ export function WorldNavigator({ onSystem,onOpenEncounter, centralFiles, onCentr
 
     </>}
     </div>
-    <div className="world-system"><button onClick={onSystem}><SidebarGlyph path={SETTINGS_GLYPH} size={13}/>System</button></div>
+    <div className="world-system">{onFactoryDevelopment&&<button onClick={onFactoryDevelopment}>Factory development</button>}<button onClick={onSystem}><SidebarGlyph path={SETTINGS_GLYPH} size={13}/>System</button></div>
   </aside>;
 }
 

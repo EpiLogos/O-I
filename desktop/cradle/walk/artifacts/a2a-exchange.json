@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "a2a-exchange",
-  "generated_at": "2026-09-12T10:37:17.166Z",
+  "generated_at": "2026-09-12T11:07:08.847Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 2696,
+  "duration_ms": 2780,
   "checks": [
     {
       "ok": true,
@@ -106,7 +106,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-12T10:37:17.272Z",
+        "mounted_at": "2026-09-12T11:07:08.949Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -117,7 +117,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 54,
+      "duration_ms": 53,
       "data": {
         "file": "a2a-exchange-a2a-card-mismatch-refused.png"
       }
@@ -125,7 +125,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 35,
+      "duration_ms": 38,
       "data": {
         "file": "a2a-exchange-a2a-exchange-returned.png"
       }

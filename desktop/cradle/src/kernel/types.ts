@@ -144,6 +144,8 @@ export type KernelOp =
   | {op:"encounter_task_read";project:string;agent_session:string}
   | {op:"receiving";project:string|null;request:import("../receiving/client").ReceivingRequest}
   | {op:"now";project:string|null;request:import("../receiving/now").NowRequest}
+  | {op:"factory_development_read";project?:string;state_path:string;read:string;subject?:string}
+  | {op:"workcell_status_read"}
   | {op:"day_read";day_ref?:string}
   | {op:"day_source_open";day_ref?:string}
   | { op: "knowledge"; project?: string; request: KnowledgeRequest }
@@ -186,6 +188,8 @@ export type KernelOpResult =
   | { result:"receiving_reading";data:unknown }
   | { result:"now_reading";data:unknown }
   | { result:"encounter_task_reading";data:unknown }
+  | { result:"factory_development_reading";data:unknown }
+  | { result:"workcell_status_reading";data:unknown }
   | { result:"day_reading";data:unknown }
   | { result: "agency_reading"; project_ref: string; spaces: unknown[]; observed_at_unix_ms: number }
   | { result: "knowledge"; data: unknown }

@@ -62,6 +62,7 @@ const SCENARIOS = {
   "day-edit": {module:"scenarios/day-edit.mjs",kernel:true,aliases:["6f2"]},
   "now-relations": {module:"scenarios/now-relations.mjs",kernel:true,aliases:["now"]},
   "task-basis": {module:"scenarios/task-basis.mjs",kernel:true,aliases:["6b3"]},
+  "factory-development": {module:"scenarios/factory-development.mjs",kernel:true,aliases:["6d"]},
   "agency-planes": {module:"scenarios/agency-planes.mjs",kernel:true,aliases:["6c"]},
   "file-edit": {module:"scenarios/file-edit.mjs",kernel:true,aliases:[]},
   files: { module: "scenarios/files.mjs", kernel: true, aliases: [] },

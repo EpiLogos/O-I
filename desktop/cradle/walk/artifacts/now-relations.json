@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "now-relations",
-  "generated_at": "2026-09-12T10:37:51.318Z",
+  "generated_at": "2026-09-12T11:07:42.378Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 651,
+  "duration_ms": 786,
   "checks": [
     {
       "ok": true,
@@ -82,7 +82,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-12T10:37:51.431Z",
+        "mounted_at": "2026-09-12T11:07:42.482Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -93,15 +93,16 @@
     {
       "ok": true,
       "op": "invoke.now",
-      "duration_ms": 16.2,
+      "duration_ms": 14.7,
       "data": {
         "outcome": {
           "data": {
             "automatic_agent_or_model_invocation": false,
+            "pointer_note": "Records are pointers, not authority: follow the governing guidance, and search the native surface before building anything new.",
             "record": {
               "archive_ref": null,
               "continuation_refs": [],
-              "created_at_unix_seconds": 1789209470,
+              "created_at_unix_seconds": 1789211261,
               "lifecycle": "active",
               "now_ref": "central:now:project:editor-walk:9bc23ff0a3b4fae1b2987456062d617e46f5f839af2fe9221a7372ef5cb41788",
               "obligations": [],
@@ -109,7 +110,7 @@
                 "agent:walk",
                 "human:walk"
               ],
-              "policy_revision_at_allocation": "central.content-fnv1a64/v1:1581:a196d3246f2f6cc6",
+              "policy_revision_at_allocation": "central.content-fnv1a64/v1:1581:d735daccefe50e18",
               "purpose": "now-relations walk clearing",
               "schema": "central.now-clearing/v1",
               "scope_ref": "project:editor-walk",
@@ -121,7 +122,7 @@
             },
             "revision": {
               "byte_len": 887,
-              "revision": "central.content-fnv1a64/v1:887:c7399dc4b0816422"
+              "revision": "central.content-fnv1a64/v1:887:b666d8b576cbb656"
             },
             "schema": "central.now-reading/v1",
             "source": {
@@ -143,22 +144,23 @@
     {
       "ok": true,
       "op": "invoke.now",
-      "duration_ms": 8.1,
+      "duration_ms": 7,
       "data": {
         "outcome": {
           "data": {
             "automatic_agent_or_model_invocation": false,
+            "pointer_note": "Records are pointers, not authority: follow the governing guidance, and search the native surface before building anything new.",
             "record": {
               "archive_ref": null,
               "continuation_refs": [],
-              "created_at_unix_seconds": 1789209470,
+              "created_at_unix_seconds": 1789211261,
               "lifecycle": "active",
               "now_ref": "central:now:control:root:56a7c041c386b6d02478b58d288fc89521b02cdc1106d10d5b755fe27aac6333",
               "obligations": [],
               "participant_refs": [
                 "human:walk"
               ],
-              "policy_revision_at_allocation": "central.content-fnv1a64/v1:1360:6486dde33d043ac8",
+              "policy_revision_at_allocation": "central.content-fnv1a64/v1:1360:36aa9ff7182a6308",
               "purpose": "root register clearing",
               "schema": "central.now-clearing/v1",
               "scope_ref": "control:root",
@@ -168,7 +170,7 @@
             },
             "revision": {
               "byte_len": 690,
-              "revision": "central.content-fnv1a64/v1:690:e4da2d06b8ab46e3"
+              "revision": "central.content-fnv1a64/v1:690:8c4146e07d3cd94a"
             },
             "schema": "central.now-reading/v1",
             "source": {
@@ -190,20 +192,21 @@
     {
       "ok": false,
       "op": "invoke.now",
-      "duration_ms": 15.3,
+      "duration_ms": 14.1,
       "error": "Central owner Action refused: NOW ref is not allocated in this World"
     },
     {
       "ok": true,
       "op": "invoke.now",
-      "duration_ms": 14.9,
+      "duration_ms": 15.3,
       "data": {
         "outcome": {
           "data": {
             "automatic_agent_or_model_invocation": false,
+            "pointer_note": "Records are pointers, not authority: follow the governing guidance, and search the native surface before building anything new.",
             "records": [
               {
-                "created_at_unix_seconds": 1789209470,
+                "created_at_unix_seconds": 1789211261,
                 "lifecycle": "active",
                 "now_ref": "central:now:project:editor-walk:9bc23ff0a3b4fae1b2987456062d617e46f5f839af2fe9221a7372ef5cb41788",
                 "participant_refs": [
@@ -213,7 +216,7 @@
                 "purpose": "now-relations walk clearing",
                 "revision": {
                   "byte_len": 887,
-                  "revision": "central.content-fnv1a64/v1:887:c7399dc4b0816422"
+                  "revision": "central.content-fnv1a64/v1:887:b666d8b576cbb656"
                 },
                 "scope_ref": "project:editor-walk",
                 "source_ref": "central:source:project:editor-walk:ProjectCentral/agents/now/clearings/9bc23ff0a3b4fae1b2987456062d617e46f5f839af2fe9221a7372ef5cb41788/now.json",
@@ -232,7 +235,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 29,
+      "duration_ms": 30,
       "data": {
         "file": "now-relations-now-relations-rendered.png"
       }
