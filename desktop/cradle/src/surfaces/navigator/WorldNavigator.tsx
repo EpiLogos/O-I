@@ -49,7 +49,13 @@ export function WorldNavigator({ onSystem,onOpenEncounter, centralFiles, onCentr
   async function load(project?: string, activate = true) {
     setError(undefined);
     setPending(true);
-    try { const result = await apply(project ? { op: "project_browse", project } : { op: "world_browse" }); if (activate && result?.result === "world_read" && !result.snapshot.navigator?.error) onProjectChange?.(project); return result; }
+    // The human's row click IS the register choice, so it is recorded before
+    // the async browse: a fast "Start writing" after clicking a project names
+    // the project just chosen, never the previous register. A failed browse
+    // renders its own error and never un-chooses it — writing goes through
+    // the owner directly, never through the browse state.
+    if (activate) onProjectChange?.(project);
+    try { return await apply(project ? { op: "project_browse", project } : { op: "world_browse" }); }
     finally { setPending(false); setFileRefresh(n=>n+1); }
   }
   useEffect(() => {
