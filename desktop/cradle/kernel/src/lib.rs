@@ -232,6 +232,10 @@ pub enum KernelOp {
     /// exact ref. Read-only; `project` follows the same explicit-null root
     /// law as `Receiving` — the register is the caller's to name.
     Now { #[serde(default)] project: Option<String>, request: flow::NowRequest },
+    /// Task-basis cell (queue cell 2): read one session's task record through
+    /// the owner's `encounter-task-read`. Read-only; absence is a null
+    /// reading, never a fabricated record.
+    EncounterTaskRead { project: String, agent_session: String },
     /// The human Day route: read the current today pointer (or one exact
     /// DayRef) through the owner. The disclosure carries the Day source's
     /// canonical ref — the only identity the desktop opens it by.
@@ -337,6 +341,7 @@ pub enum KernelOpResult {
     EncounterReading {data:serde_json::Value},
     ReceivingReading {data:serde_json::Value},
     NowReading {data:serde_json::Value},
+    EncounterTaskReading {data:serde_json::Value},
     /// The owner's own `central.day.read` reading, carried verbatim — the
     /// Day's source identity is the owner's disclosure, never a ref the
     /// desktop derives from a path.
@@ -517,6 +522,16 @@ impl Kernel {
                 }
                 let data=self.client.now(project.as_deref(),&request).map_err(|e|e.to_string())?;
                 Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::NowReading {data}})
+            }
+            KernelOp::EncounterTaskRead {project,agent_session} => {
+                // The standard project-disclosure gate and cwd resolution —
+                // the task record belongs to a session attached to THIS
+                // project's SessionSpaces, exactly like the encounter reads.
+                let root=world::read_world(&self.client).map_err(|e|e.to_string())?;
+                let row=root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(&project))).ok_or("Project is outside Central's disclosed ground")?;
+                let cwd=std::path::Path::new(root["root"].as_str().ok_or("Central root location unavailable")?).join(row["path"].as_str().ok_or("Project location unavailable")?);
+                let data=self.agency.task_read(&cwd,&agent_session).map_err(|e|e.to_string())?;
+                Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::EncounterTaskReading {data}})
             }
             KernelOp::DayRead {day_ref} => {
                 // The Day is a ROOT-register carrier: an explicit null

@@ -212,9 +212,11 @@ export function createWalkChannel(kernel: KernelApi, readLayout:()=>LayoutState)
       const outcome = await kernel.apply(payload);
       if (!outcome) {
         // The provider resolves kernel refusals to a null outcome and
-        // records the reason on opError; ops are serialised, so the reason
-        // on the API right now is this op's reason.
-        return { error: kernel.opError ?? "the operation produced no outcome" };
+        // records the reason on its stable last-op-error ref; ops are
+        // serialised, so the reason on the API right now is this op's
+        // reason. The React-state fallback covers providers that predate
+        // the ref.
+        return { error: kernel.lastOpError?.() ?? kernel.opError ?? "the operation produced no outcome" };
       }
       // The receipts ride the receipt envelope (seq_range); the data carries
       // the outcome's result payload without duplicating them.

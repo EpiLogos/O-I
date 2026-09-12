@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "flow-canvas",
-  "generated_at": "2026-09-12T09:52:05.459Z",
+  "generated_at": "2026-09-12T10:37:48.085Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 1829,
+  "duration_ms": 1828,
   "checks": [
     {
       "ok": true,
@@ -99,10 +99,10 @@
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-12T09:52:05.562Z",
+        "mounted_at": "2026-09-12T10:37:48.190Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -113,28 +113,28 @@
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 0.4,
+      "duration_ms": 0.5,
       "data": {
         "layout": {
           "root": {
             "type": "group",
             "id": "g1",
             "tabs": [
-              "38c8980d-5dbf-410d-a056-e639124ffccc"
+              "5dd1803e-1aef-4fc6-8b99-cb696c95c2d2"
             ],
             "pinned": [],
-            "active": "38c8980d-5dbf-410d-a056-e639124ffccc"
+            "active": "5dd1803e-1aef-4fc6-8b99-cb696c95c2d2"
           },
           "surfaces": {
-            "38c8980d-5dbf-410d-a056-e639124ffccc": {
-              "id": "38c8980d-5dbf-410d-a056-e639124ffccc",
+            "5dd1803e-1aef-4fc6-8b99-cb696c95c2d2": {
+              "id": "5dd1803e-1aef-4fc6-8b99-cb696c95c2d2",
               "kind": "flow",
-              "title": "2026-09-12-1052.md",
+              "title": "2026-09-12-1137.md",
               "project": "Editor",
-              "ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-12-1052.md",
+              "ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-12-1137.md",
               "flow": {
-                "flowRef": "central:flow:project:editor-walk:1789206725761503000",
-                "path": "ProjectCentral/now/flows/2026-09-12-1052.md"
+                "flowRef": "central:flow:project:editor-walk:1789209468482631000",
+                "path": "ProjectCentral/now/flows/2026-09-12-1137.md"
               }
             }
           },
@@ -150,7 +150,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 23,
+      "duration_ms": 36,
       "data": {
         "file": "flow-canvas-flow-canvas-saved.png"
       }
@@ -158,7 +158,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 27,
+      "duration_ms": 34,
       "data": {
         "file": "flow-canvas-flow-canvas-sessions-bound.png"
       }
@@ -166,7 +166,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 23,
+      "duration_ms": 22,
       "data": {
         "file": "flow-canvas-flow-canvas-conflict-resolved.png"
       }
@@ -174,33 +174,33 @@
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "layout": {
           "root": {
             "type": "group",
             "id": "g1",
             "tabs": [
-              "38c8980d-5dbf-410d-a056-e639124ffccc",
-              "5c95d437-285c-4dc6-b5e9-57e1ac239f18"
+              "5dd1803e-1aef-4fc6-8b99-cb696c95c2d2",
+              "5717e03b-33f8-4cad-9613-c98132c93675"
             ],
             "pinned": [],
-            "active": "38c8980d-5dbf-410d-a056-e639124ffccc"
+            "active": "5dd1803e-1aef-4fc6-8b99-cb696c95c2d2"
           },
           "surfaces": {
-            "38c8980d-5dbf-410d-a056-e639124ffccc": {
-              "id": "38c8980d-5dbf-410d-a056-e639124ffccc",
+            "5dd1803e-1aef-4fc6-8b99-cb696c95c2d2": {
+              "id": "5dd1803e-1aef-4fc6-8b99-cb696c95c2d2",
               "kind": "flow",
-              "title": "2026-09-12-1052.md",
+              "title": "2026-09-12-1137.md",
               "project": "Editor",
-              "ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-12-1052.md",
+              "ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-12-1137.md",
               "flow": {
-                "flowRef": "central:flow:project:editor-walk:1789206725761503000",
-                "path": "ProjectCentral/now/flows/2026-09-12-1052.md"
+                "flowRef": "central:flow:project:editor-walk:1789209468482631000",
+                "path": "ProjectCentral/now/flows/2026-09-12-1137.md"
               }
             },
-            "5c95d437-285c-4dc6-b5e9-57e1ac239f18": {
-              "id": "5c95d437-285c-4dc6-b5e9-57e1ac239f18",
+            "5717e03b-33f8-4cad-9613-c98132c93675": {
+              "id": "5717e03b-33f8-4cad-9613-c98132c93675",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "project": "Editor",
@@ -219,7 +219,7 @@
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 48.1,
+      "duration_ms": 13.8,
       "data": {
         "buffers": {
           "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md": {
@@ -250,7 +250,7 @@
             "provenance": {
               "source": "central.projectcentral"
             },
-            "ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-12-1052.md"
+            "ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-12-1137.md"
           },
           "world": {
             "kind": "world",
@@ -297,13 +297,13 @@
                   "active": 1,
                   "flows": [
                     {
-                      "flow_ref": "central:flow:project:editor-walk:1789206725761503000",
+                      "flow_ref": "central:flow:project:editor-walk:1789209468482631000",
                       "lifecycle": "active",
-                      "path": "ProjectCentral/now/flows/2026-09-12-1052.md",
+                      "path": "ProjectCentral/now/flows/2026-09-12-1137.md",
                       "revision": "central.content-fnv1a64/v1:61:5177ee8e1ca82d6d",
                       "revisions_recorded": 4,
                       "source_present": true,
-                      "source_ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-12-1052.md",
+                      "source_ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-12-1137.md",
                       "uncommitted_edits": false
                     }
                   ],
@@ -348,7 +348,7 @@
               "source_files": 0
             },
             "projection": "project",
-            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-5JliaN",
+            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-734Gbt",
             "schema": "central.world-map/v1",
             "sources": {
               "bindings": 12,
@@ -418,7 +418,7 @@
               "detected": false,
               "signals": []
             },
-            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-5JliaN",
+            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-734Gbt",
             "root_state": "directory",
             "schema": "central.world-map/v1",
             "valid": true,
@@ -561,8 +561,8 @@
               },
               {
                 "agent_retrieval_allowed": true,
-                "path": "ProjectCentral/now/flows/2026-09-12-1052.md",
-                "ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-12-1052.md",
+                "path": "ProjectCentral/now/flows/2026-09-12-1137.md",
+                "ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-12-1137.md",
                 "revision": "central.content-fnv1a64/v1:61:5177ee8e1ca82d6d",
                 "treatment": "projectcentral-flow-retained-in-place"
               },
@@ -641,17 +641,17 @@
           }
         },
         "surfaces": {
-          "38c8980d-5dbf-410d-a056-e639124ffccc": {
-            "kind": "flow",
-            "source_ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-12-1052.md",
-            "surface_id": "38c8980d-5dbf-410d-a056-e639124ffccc",
-            "title": "2026-09-12-1052.md"
-          },
-          "5c95d437-285c-4dc6-b5e9-57e1ac239f18": {
+          "5717e03b-33f8-4cad-9613-c98132c93675": {
             "kind": "source",
             "source_ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
-            "surface_id": "5c95d437-285c-4dc6-b5e9-57e1ac239f18",
+            "surface_id": "5717e03b-33f8-4cad-9613-c98132c93675",
             "title": "00 01-DESIGN.md"
+          },
+          "5dd1803e-1aef-4fc6-8b99-cb696c95c2d2": {
+            "kind": "flow",
+            "source_ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-12-1137.md",
+            "surface_id": "5dd1803e-1aef-4fc6-8b99-cb696c95c2d2",
+            "title": "2026-09-12-1137.md"
           }
         }
       }
@@ -659,7 +659,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 74,
+      "duration_ms": 27,
       "data": {
         "file": "flow-canvas-flow-cocurrency-reference.png"
       }
