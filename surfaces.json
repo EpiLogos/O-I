@@ -82,7 +82,7 @@
       "public_name": "Actuation",
       "function": "Agency, WorldBinding, RootScope, Metagency, Determination and Return authority",
       "repository": "https://github.com/EpiLogos/Actuation",
-      "docs_ref": "4af495f6509bb0dd779112a225d71a9df8145b6e",
+      "docs_ref": "90041d5f81331b636893d772c3288c062ad0e13b",
       "docs_path": "docs/WORLD-BOUND-ROOT-AGENCY.md",
       "skill_paths": [],
       "native": {
@@ -103,7 +103,7 @@
           "verify",
           "--json"
         ],
-        "command_revision": "4af495f6509bb0dd779112a225d71a9df8145b6e",
+        "command_revision": "90041d5f81331b636893d772c3288c062ad0e13b",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [
@@ -120,8 +120,8 @@
       "install": {
         "kind": "oi-managed-native-cli",
         "modality": "developer-source",
-        "ref": "4af495f6509bb0dd779112a225d71a9df8145b6e",
-        "revision": "4af495f6509bb0dd779112a225d71a9df8145b6e",
+        "ref": "90041d5f81331b636893d772c3288c062ad0e13b",
+        "revision": "90041d5f81331b636893d772c3288c062ad0e13b",
         "path": "target/release/actuation",
         "note": "Current accepted owner main is the native Rust workspace; the served executable is target/release/actuation built with the locked cargo command, declared identically by the owner's .oi/product.json."
       },
