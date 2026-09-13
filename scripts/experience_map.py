@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Planning-only projection of #65 story source; never executes or certifies a feature.
+"""Planning-only projection of #65 source; never executes or certifies a feature.
 
-Uses the existing UX fields and ql-capability-matrix/1 relation carrier. It does
-not mutate native matrices, private context, source standing or test evidence.
+Read the existing UX profile and ql-capability-matrix/1 relation carrier.
+Native matrices, private context, source standing and evidence are never mutated.
 """
 from __future__ import annotations
 
@@ -18,7 +18,6 @@ from pathlib import Path
 from typing import Any
 
 BASE = Path(__file__).resolve().parents[1]
-# UXnn rows belong to the delegated QL source, not the short local index table.
 STORY_ID = re.compile(r"(?!UX)[A-Z]{2}[0-9]{2}\Z")
 PRACTICE_ID = re.compile(r"P[0-9]{2}\Z")
 COLUMNS = [
@@ -61,9 +60,41 @@ def table_rows(text: str, pattern: re.Pattern[str], width: int) -> list[tuple[in
 
 
 def load_sources(root: Path) -> dict[str, Any]:
-    config = read_json(source_path(root, "docs/experience/campaign.json"))
-    source = source_path(root, config["story_source"]).read_bytes()
-    practice_bytes = source_path(root, config["practice_source"]).read_bytes()
+    # Retain complete source, including family prose/negation/unknown metadata.
+    # This is an operator's reading, not permission to disclose it all to actors.
+    documents: dict[str, dict[str, str]] = {}
+
+    def read(relative: str) -> bytes:
+        data = source_path(root, relative).read_bytes()
+        documents[relative] = {"digest": digest(data), "text": data.decode("utf-8")}
+        return data
+
+    config_bytes = read("docs/experience/campaign.json")
+    config = json.loads(config_bytes)
+    source_config = copy.deepcopy(config)
+    primary_path = config["story_source"]
+    primary = read(primary_path)
+    practice_bytes = read(config["practice_source"])
+    # These are declared dependencies, never optional if their locator exists.
+    for key in ("profile", "operator_source", "document_operations_source"):
+        if config.get(key):
+            read(config[key])
+    modules = []
+    module_paths = config.get("source_modules", [])
+    if len(module_paths) != len(set(module_paths)):
+        raise ValueError("duplicate source module")
+    for path in module_paths:
+        module = json.loads(read(path))
+        module["source_module_path"] = path
+        modules.append(module)
+        read(module["story_source"])
+        if module.get("document_operations_source"):
+            read(module["document_operations_source"])
+        for family in module["families"]:
+            expanded = copy.deepcopy(family)
+            expanded["story_source"] = module["story_source"]
+            config["families"].append(expanded)
+
     practices: dict[str, Any] = {}
     for line, cells in table_rows(practice_bytes.decode("utf-8"), PRACTICE_ID, 4):
         key = cells[0].split()[0]
@@ -74,55 +105,115 @@ def load_sources(root: Path) -> dict[str, Any]:
                           "source_path": config["practice_source"], "line": line,
                           "source_digest": digest(practice_bytes)}
     expected: dict[str, dict[str, Any]] = {}
+    family_ids = set()
     for family in config["families"]:
+        if family["id"] in family_ids:
+            raise ValueError(f"duplicate family {family['id']}")
+        family_ids.add(family["id"])
         if not family["source_refs"] or not family["proof_refs"]:
             raise ValueError(f"family has no source/proof basis: {family['id']}")
         for key in family["ids"]:
             if key in expected or not STORY_ID.fullmatch(key) or not key.startswith(family["id"]):
                 raise ValueError(f"duplicate or malformed declared story {key}")
             expected[key] = family
-    stories = []
-    seen = set()
-    for line, cells in table_rows(source.decode("utf-8"), STORY_ID, 5):
-        key, human, agent, outcome, failure = cells
-        if key not in expected:
-            raise ValueError(f"undeclared local story {key}")
-        if key in seen:
-            raise ValueError(f"duplicate story {key}")
-        seen.add(key)
-        family = expected[key]
-        refs = list(dict.fromkeys(re.findall(r"\bP[0-9]{2}\b", agent)))
-        if not refs or any(ref not in practices for ref in refs):
-            raise ValueError(f"unresolved practice relation for {key}: {refs}")
-        stories.append({
-            "id": key, "kind": "ux", "parent_ref": family["id"],
-            "actor": "person and situated agent/operator as specified in the source row",
-            "story": human, "entry_state": human, "act": human,
-            "experienced_outcome": outcome, "return_state": outcome,
-            "branch_condition": failure, "surface_refs": [],
-            "source_refs": [config["story_source"], *family["source_refs"]],
-            "standing": "specified", "extensions": {
-                "source_locator": {"path": config["story_source"], "row_id": key,
-                                   "line": line, "digest": digest(source)},
-                "agent_ux": {"trigger": human, "determining_conditions": agent,
-                    "context_requirements": [practices[ref]["context"] for ref in refs],
-                    "practice_requirements": [copy.deepcopy(practices[ref]) for ref in refs],
-                    "capability_requirements": {"owners": family["owners"],
-                        "binding_status": "binding-required", "native_refs": []},
-                    "steps": {"source_statement": agent,
-                        "episode_binding": "Expand meaningful handoffs with actual actors, inputs, contracts and readback; do not infer from this projection."},
-                    "failure_and_reentry": failure},
-                "existing_proof_refs": family["proof_refs"],
-                "runtime_readiness": "not-assessed", "execution_evidence": [],
-                "human_experience": None,
-                "projection_note": "Shared source cells are repeated losslessly, not inferred into new state semantics. Actual step/entry/surface bindings belong to a selected episode."
-            }
-        })
+    stories, seen = [], set()
+    story_paths = list(dict.fromkeys([primary_path, *[m["story_source"] for m in modules]]))
+    for path in story_paths:
+        source = documents[path]
+        for line, cells in table_rows(source["text"], STORY_ID, 5):
+            key, human, agent, outcome, failure = cells
+            if key not in expected:
+                raise ValueError(f"undeclared local story {key}")
+            if key in seen:
+                raise ValueError(f"duplicate story {key}")
+            seen.add(key)
+            family = expected[key]
+            if family.get("story_source", primary_path) != path:
+                raise ValueError(f"story {key} is in the wrong declared source")
+            refs = list(dict.fromkeys(re.findall(r"\bP[0-9]{2}\b", agent)))
+            if not refs or any(ref not in practices for ref in refs):
+                raise ValueError(f"unresolved practice relation for {key}: {refs}")
+            stories.append({
+                "id": key, "kind": "ux", "parent_ref": family["id"],
+                "actor": "person and situated agent/operator as specified in the source row",
+                "story": human, "entry_state": human, "act": human,
+                "experienced_outcome": outcome, "return_state": outcome,
+                "branch_condition": failure, "surface_refs": [],
+                "source_refs": [path, *family["source_refs"]],
+                "standing": "specified", "extensions": {
+                    "source_locator": {"path": path, "row_id": key, "line": line,
+                                       "digest": source["digest"]},
+                    "source_family": copy.deepcopy(family),
+                    "document_role": {"tier": config.get("ux_tier", 1),
+                        "meaning": "intended experience / vision", "adoption": "not-conferred-by-projection"},
+                    "agent_ux": {"trigger": human, "determining_conditions": agent,
+                        "context_requirements": [practices[ref]["context"] for ref in refs],
+                        "practice_requirements": [copy.deepcopy(practices[ref]) for ref in refs],
+                        "capability_requirements": {"owners": family["owners"],
+                            "binding_status": "binding-required", "native_refs": [], "candidates": []},
+                        "steps": {"source_statement": agent,
+                            "episode_binding": "Expand meaningful handoffs from the full family/source with actual actors, inputs, contracts and readback."},
+                        "failure_and_reentry": failure},
+                    "existing_proof_refs": copy.deepcopy(family["proof_refs"]),
+                    "inherited_obligations": [],
+                    "runtime_readiness": "not-assessed", "execution_evidence": [],
+                    "human_experience": None,
+                    "projection_note": "Row cells and complete source are retained, not inferred into runtime state. Bind actual steps/entry/surface in an episode."
+                }
+            })
     if seen != set(expected):
         raise ValueError(f"missing stories: {sorted(set(expected) - seen)}")
+    obligations, candidates = [], []
+    obligation_ids = set()
+    by_id = {story["id"]: story for story in stories}
+    for module in modules:
+        required = module.get("required_obligation_ids", [])
+        actual = [o["id"] for o in module.get("obligations", [])]
+        if len(required) != len(set(required)) or len(actual) != len(set(actual)):
+            raise ValueError("duplicate inherited obligation")
+        if set(required) != set(actual):
+            raise ValueError("inherited obligation coverage differs from declared source scope")
+        for original in module.get("obligations", []):
+            obligation = copy.deepcopy(original)
+            key = obligation["id"]
+            if key in obligation_ids:
+                raise ValueError(f"duplicate inherited obligation {key}")
+            obligation_ids.add(key)
+            basis = module.get("obligation_sources", {}).get(obligation["source"])
+            if not basis or not basis.get("source_ref") or not obligation.get("native_locator"):
+                raise ValueError(f"inherited obligation lacks source: {key}")
+            ids = obligation["story_ids"]
+            if not ids or len(ids) != len(set(ids)) or any(s not in by_id for s in ids):
+                raise ValueError(f"inherited obligation has unknown/duplicate/empty story binding: {key}")
+            grades = obligation["required_evidence"]
+            if not grades or not set(grades).issubset({"D", "C", "P", "M", "H"}):
+                raise ValueError(f"invalid evidence requirement: {key}")
+            obligation.update(source_basis=copy.deepcopy(basis),
+                              source_module=module["source_module_path"],
+                              mapping_status="specified-not-exercised")
+            obligations.append(obligation)
+            for story_id in ids:
+                by_id[story_id]["extensions"]["inherited_obligations"].append(copy.deepcopy(obligation))
+                by_id[story_id]["extensions"]["existing_proof_refs"].append(key)
+        for candidate in module.get("capability_candidates", []):
+            for field in ("repository", "matrix_path", "inspected_blob", "capability_id", "reason", "binding_status"):
+                if not candidate.get(field):
+                    raise ValueError(f"capability candidate missing {field}")
+            ids = candidate.get("story_ids", [])
+            if not ids or any(s not in by_id for s in ids):
+                raise ValueError("capability candidate refers to unknown story")
+            candidates.append(copy.deepcopy(candidate))
+            for story_id in ids:
+                by_id[story_id]["extensions"]["agent_ux"]["capability_requirements"]["candidates"].append(copy.deepcopy(candidate))
+    source_basis = {path: row["digest"] for path, row in documents.items()}
+    reading_digest = digest(json.dumps(source_basis, sort_keys=True).encode("utf-8"))
     return {"planning_only": True, "feature_verdict": None,
-            "source_digest": digest(source), "practice_digest": digest(practice_bytes),
-            "config": config, "practices": practices, "stories": stories,
+            "source_digest": digest(primary), "practice_digest": digest(practice_bytes),
+            "reading_digest": reading_digest, "source_basis": source_basis,
+            "source_documents": documents, "source_config": source_config,
+            "source_modules": modules, "config": config, "practices": practices,
+            "stories": stories, "inherited_obligations": obligations,
+            "capability_candidates": candidates,
             "external_ql": {"binding_status": "source-root-required"},
             "capability_inventory": [], "capability_bindings": []}
 
@@ -169,6 +260,9 @@ def apply_bindings(result: dict[str, Any], bindings: list[dict[str, Any]]) -> No
     stories = {row["id"]: row for row in result["stories"]}
     ql_ids = {"QL-MEF:" + row["id"] for row in result["external_ql"].get("trace", {}).get("stories", [])}
     allowed = {"direct", "transitive", "deferred", "not-applicable", "retired", "uncovered"}
+    if not isinstance(bindings, list):
+        raise ValueError("bindings must be a reviewed list")
+    # Validate the complete proposal before applying any of its source relations.
     for binding in bindings:
         key = (binding["repository"], binding["capability_id"])
         if key not in inventory:
@@ -180,7 +274,7 @@ def apply_bindings(result: dict[str, Any], bindings: list[dict[str, Any]]) -> No
         if disposition not in allowed:
             raise ValueError(f"unsupported coverage disposition {disposition}")
         ids = binding.get("story_ids", [])
-        if any(key not in stories and key not in ql_ids for key in ids):
+        if any(s not in stories and s not in ql_ids for s in ids):
             raise ValueError("binding contains unknown or unread QL story")
         if disposition in {"direct", "transitive"} and not ids:
             raise ValueError("coverage relation requires a named story")
@@ -190,34 +284,39 @@ def apply_bindings(result: dict[str, Any], bindings: list[dict[str, Any]]) -> No
             raise ValueError("non-executed disposition requires its reason")
         if disposition == "deferred" and not (binding.get("owner") and binding.get("reentry_condition")):
             raise ValueError("deferment requires owner and re-entry condition")
+    for binding in bindings:
+        native = inventory[(binding["repository"], binding["capability_id"])]
         native.setdefault("coverage_relations", []).append(copy.deepcopy(binding))
         native["coverage_disposition"] = "relations-recorded-not-executed"
         result["capability_bindings"].append(copy.deepcopy(binding))
-        for key in ids:
-            if key in stories and disposition in {"direct", "transitive"}:
-                req = stories[key]["extensions"]["agent_ux"]["capability_requirements"]
+        for story_id in binding.get("story_ids", []):
+            if story_id in stories and binding["disposition"] in {"direct", "transitive"}:
+                req = stories[story_id]["extensions"]["agent_ux"]["capability_requirements"]
                 req["native_refs"].append(copy.deepcopy(binding))
-                # One link is not evidence that every required capability is bound.
                 req["binding_status"] = "partial-source-links-require-episode-review"
 
 
 def relation_projection(result: dict[str, Any]) -> tuple[dict[str, Any], list[dict[str, str]]]:
     practices = result["practices"]
+    story_axis = {"id": "stories", "label": "Intended activities", "members": [
+        {"id": row["id"], "label": row["story"],
+         "source_ref": row["extensions"]["source_locator"]["path"]}
+        for row in result["stories"]]}
     manifest = {"protocol": "ql-capability-matrix/1", "matrix_id": "oi-experience-practice-relations",
         "anchor_ref": "docs/experience/STORIES.md", "default_view": "story-practice",
         "views": [{"id": "story-practice", "title": "Which conditions require this practice?",
-            "semantics": "Declared practice requirements, not execution. Omitted cells make no assertion and are not proof that no relation exists.",
-            "row_axis": {"id": "stories", "label": "Intended activities", "members": [
-                {"id": row["id"], "label": row["story"], "source_ref": "docs/experience/STORIES.md"}
-                for row in result["stories"]]},
+            "semantics": "Declared practice requirements, not execution. Empty cells are unassessed, never proof of absence or success.",
+            "row_axis": copy.deepcopy(story_axis),
             "column_axis": {"id": "practices", "label": "Source-qualified practice conditions", "members": [
                 {"id": key, "label": row["label"], "source_ref": row["source_path"]}
                 for key, row in practices.items()]}}],
         "extensions": {"planning_only": True, "source_digest": result["source_digest"],
+                       "reading_digest": result["reading_digest"], "source_basis": result["source_basis"],
                        "profile": "docs/experience/STORY-PROFILE.md", "feature_verdict": None}}
     rows = []
     for story in result["stories"]:
         agent = story["extensions"]["agent_ux"]
+        locator = story["extensions"]["source_locator"]
         for practice in agent["practice_requirements"]:
             row = dict.fromkeys(COLUMNS, "")
             row.update({"id": f"rel.{story['id']}.{practice['id']}", "record_type": "relation",
@@ -225,18 +324,42 @@ def relation_projection(result: dict[str, Any]) -> tuple[dict[str, Any], list[di
                 "capability_refs": "[]", "need": story["story"],
                 "operation": agent["determining_conditions"], "outcome": story["experienced_outcome"],
                 "implementation_status": "not-assessed; source relation only", "standing": "specified",
-                # The native protocol uses semicolon-separated source/evidence
-                # refs; only capability_refs and extensions use JSON here.
                 "source_refs": ";".join(story["source_refs"]),
                 "test_refs": ";".join(story["extensions"]["existing_proof_refs"]),
-                "account_ref": "docs/experience/STORIES.md", "relation": "requires situated practice",
+                "account_ref": locator["path"], "relation": "requires situated practice",
                 "coverage": "unexercised", "extensions": json.dumps({"ux": {
-                    "story_ref": story["id"], "story_revision": result["source_digest"],
+                    "story_ref": story["id"], "story_revision": locator["digest"],
+                    "reading_revision": result["reading_digest"],
                     "perspective": "human-and-agent", "relation_kind": "practised-by",
                     "practice_refs": [practice], "external_capability_refs": agent["capability_requirements"]["native_refs"],
+                    "capability_candidates": agent["capability_requirements"]["candidates"],
                     "binding_status": "binding-required" if not agent["capability_requirements"]["native_refs"] else "source-bound-not-executed",
                     "failure_and_reentry": story["branch_condition"]}}, ensure_ascii=False)})
             rows.append(row)
+    obligations = result["inherited_obligations"]
+    if obligations:
+        manifest["views"].append({"id": "story-obligation", "title": "Which original proving obligation constrains this activity?",
+            "semantics": "Source-derived obligation links, not executed proof. Empty means unassessed. A brief local requirement does not replace its full native definition.",
+            "row_axis": copy.deepcopy(story_axis), "column_axis": {"id": "obligations", "label": "Original source obligations",
+                "members": [{"id": o["id"], "label": o["native_locator"], "source_ref": o["source_basis"]["source_ref"]} for o in obligations]}})
+        story_map = {s["id"]: s for s in result["stories"]}
+        for obligation in obligations:
+            for story_id in obligation["story_ids"]:
+                story = story_map[story_id]
+                row = dict.fromkeys(COLUMNS, "")
+                row.update({"id": f"rel.{story_id}.{obligation['id']}", "record_type": "relation",
+                    "view_id": "story-obligation", "row_id": story_id, "column_id": obligation["id"],
+                    "capability_refs": "[]", "need": story["story"], "outcome": story["experienced_outcome"],
+                    "implementation_status": "not-assessed; source requirement only", "standing": "specified",
+                    "source_refs": ";".join([story["extensions"]["source_locator"]["path"], obligation["source_basis"]["source_ref"]]),
+                    "test_refs": obligation["id"], "account_ref": story["extensions"]["source_locator"]["path"],
+                    "relation": obligation["requirement"], "coverage": "unexercised",
+                    "extensions": json.dumps({"ux": {"story_ref": story_id,
+                        "story_revision": story["extensions"]["source_locator"]["digest"],
+                        "perspective": "human-and-agent", "relation_kind": "tested-by",
+                        "binding_status": "binding-required", "existing_proof_refs": [copy.deepcopy(obligation)],
+                        "evidence": []}}, ensure_ascii=False)})
+                rows.append(row)
     return manifest, rows
 
 
@@ -269,11 +392,15 @@ def main(argv: list[str] | None = None) -> int:
                 writer.writeheader()
                 writer.writerows(rows)
         print(json.dumps({"planning_source_valid": True, "local_stories": len(result["stories"]),
-            "practice_relations": len(rows), "ql": result["external_ql"]["binding_status"],
+            "practice_relations": sum(r["view_id"] == "story-practice" for r in rows),
+            "inherited_obligations": len(result["inherited_obligations"]),
+            "obligation_relations": sum(r["view_id"] == "story-obligation" for r in rows),
+            "capability_candidates": len(result["capability_candidates"]),
+            "ql": result["external_ql"]["binding_status"],
             "native_capabilities_read": len(result["capability_inventory"]),
-            "uncovered_native_capabilities": sum(row["coverage_disposition"] == "uncovered" for row in result["capability_inventory"]),
+            "uncovered_native_capabilities": sum(r["coverage_disposition"] == "uncovered" for r in result["capability_inventory"]),
             "feature_verdict": None, "runtime_readiness": "not-assessed"}))
-        return 0  # Valid planning source only, explicitly not product acceptance.
+        return 0
     except (OSError, ValueError, KeyError, TypeError, csv.Error) as error:
         print(json.dumps({"planning_source_valid": False, "error": str(error), "feature_verdict": None}), file=sys.stderr)
         return 1
