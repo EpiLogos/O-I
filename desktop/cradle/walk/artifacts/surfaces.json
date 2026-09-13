@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "surfaces",
-  "generated_at": "2026-09-08T12:16:56.181Z",
+  "generated_at": "2026-09-13T23:25:14.528Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 5887,
+  "duration_ms": 4972,
   "checks": [
     {
       "ok": true,
@@ -100,7 +100,7 @@
     },
     {
       "ok": true,
-      "label": "Keyboard menu activation closes the selected view"
+      "label": "Menu activation closes the selected view"
     },
     {
       "ok": true,
@@ -134,7 +134,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-08T12:16:56.462Z",
+        "mounted_at": "2026-09-13T23:25:14.867Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -145,7 +145,7 @@
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 29.5,
+      "duration_ms": 32.4,
       "data": {
         "project": {
           "kind": "project",
@@ -176,7 +176,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 64,
+      "duration_ms": 80,
       "data": {
         "file": "surfaces-native-sources-tiled.png"
       }
@@ -184,7 +184,7 @@
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 0.6,
+      "duration_ms": 0.1,
       "data": {
         "layout": {
           "root": {
@@ -196,11 +196,11 @@
                 "type": "group",
                 "id": "g4",
                 "tabs": [
-                  "b3964b96-923b-4d52-bd8e-fbf5bccf650e",
-                  "cd4bac85-a441-47a6-ad95-3806572dca51"
+                  "67192aa0-b215-464f-8483-7554a0ebca50",
+                  "71531129-920e-4820-a16d-cb8e4893ce17"
                 ],
                 "pinned": [],
-                "active": "cd4bac85-a441-47a6-ad95-3806572dca51"
+                "active": "71531129-920e-4820-a16d-cb8e4893ce17"
               },
               {
                 "type": "split",
@@ -211,55 +211,55 @@
                     "type": "group",
                     "id": "g6",
                     "tabs": [
-                      "40351ce9-407e-4367-b9cf-8560e1aae843"
+                      "24c9af5f-d0e0-44fb-9aa0-0fbf65136eb2"
                     ],
                     "pinned": [],
-                    "active": "40351ce9-407e-4367-b9cf-8560e1aae843"
+                    "active": "24c9af5f-d0e0-44fb-9aa0-0fbf65136eb2"
                   },
                   {
                     "type": "group",
                     "id": "g7",
                     "tabs": [
-                      "e5ff05ca-d600-4362-b900-6230561b0bfb"
+                      "ed23b97a-b774-47cc-ba8a-390eb4e95261"
                     ],
                     "pinned": [],
-                    "active": "e5ff05ca-d600-4362-b900-6230561b0bfb"
+                    "active": "ed23b97a-b774-47cc-ba8a-390eb4e95261"
                   }
                 ]
               }
             ]
           },
           "surfaces": {
-            "b3964b96-923b-4d52-bd8e-fbf5bccf650e": {
-              "id": "b3964b96-923b-4d52-bd8e-fbf5bccf650e",
+            "67192aa0-b215-464f-8483-7554a0ebca50": {
+              "id": "67192aa0-b215-464f-8483-7554a0ebca50",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "project": "Editor",
               "title": "00 01-DESIGN.md"
             },
-            "cd4bac85-a441-47a6-ad95-3806572dca51": {
-              "id": "cd4bac85-a441-47a6-ad95-3806572dca51",
+            "71531129-920e-4820-a16d-cb8e4893ce17": {
+              "id": "71531129-920e-4820-a16d-cb8e4893ce17",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
               "project": "Editor",
               "title": "01 02-ARCHITECTURE.md"
             },
-            "e5ff05ca-d600-4362-b900-6230561b0bfb": {
-              "id": "e5ff05ca-d600-4362-b900-6230561b0bfb",
+            "ed23b97a-b774-47cc-ba8a-390eb4e95261": {
+              "id": "ed23b97a-b774-47cc-ba8a-390eb4e95261",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
               "project": "Editor",
               "title": "02 03-UX-STATES.md"
             },
-            "40351ce9-407e-4367-b9cf-8560e1aae843": {
-              "id": "40351ce9-407e-4367-b9cf-8560e1aae843",
+            "24c9af5f-d0e0-44fb-9aa0-0fbf65136eb2": {
+              "id": "24c9af5f-d0e0-44fb-9aa0-0fbf65136eb2",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/03%2004-VERIFICATION.md",
               "project": "Editor",
               "title": "03 04-VERIFICATION.md"
             },
-            "22ba410e-c1aa-47b7-94ee-e63aa46f3726": {
-              "id": "22ba410e-c1aa-47b7-94ee-e63aa46f3726",
+            "3d27c784-7730-4e11-96ca-83efa97c15b5": {
+              "id": "3d27c784-7730-4e11-96ca-83efa97c15b5",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/04%2005-EXECUTION.md",
               "project": "Editor",
@@ -267,7 +267,7 @@
             }
           },
           "closedStack": [
-            "22ba410e-c1aa-47b7-94ee-e63aa46f3726"
+            "3d27c784-7730-4e11-96ca-83efa97c15b5"
           ],
           "focusedGroupId": "g4",
           "agencyDepth": "panel",
@@ -283,7 +283,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-08T12:17:00.209Z",
+        "mounted_at": "2026-09-13T23:25:18.513Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -294,7 +294,7 @@
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "layout": {
           "subjectPlanes": {},
@@ -309,11 +309,11 @@
                 "type": "group",
                 "id": "g4",
                 "tabs": [
-                  "b3964b96-923b-4d52-bd8e-fbf5bccf650e",
-                  "cd4bac85-a441-47a6-ad95-3806572dca51"
+                  "67192aa0-b215-464f-8483-7554a0ebca50",
+                  "71531129-920e-4820-a16d-cb8e4893ce17"
                 ],
                 "pinned": [],
-                "active": "cd4bac85-a441-47a6-ad95-3806572dca51"
+                "active": "71531129-920e-4820-a16d-cb8e4893ce17"
               },
               {
                 "type": "split",
@@ -324,63 +324,63 @@
                     "type": "group",
                     "id": "g6",
                     "tabs": [
-                      "40351ce9-407e-4367-b9cf-8560e1aae843"
+                      "24c9af5f-d0e0-44fb-9aa0-0fbf65136eb2"
                     ],
                     "pinned": [],
-                    "active": "40351ce9-407e-4367-b9cf-8560e1aae843"
+                    "active": "24c9af5f-d0e0-44fb-9aa0-0fbf65136eb2"
                   },
                   {
                     "type": "group",
                     "id": "g7",
                     "tabs": [
-                      "e5ff05ca-d600-4362-b900-6230561b0bfb"
+                      "ed23b97a-b774-47cc-ba8a-390eb4e95261"
                     ],
                     "pinned": [],
-                    "active": "e5ff05ca-d600-4362-b900-6230561b0bfb"
+                    "active": "ed23b97a-b774-47cc-ba8a-390eb4e95261"
                   }
                 ]
               }
             ]
           },
           "surfaces": {
-            "b3964b96-923b-4d52-bd8e-fbf5bccf650e": {
+            "67192aa0-b215-464f-8483-7554a0ebca50": {
               "project": "Editor",
-              "id": "b3964b96-923b-4d52-bd8e-fbf5bccf650e",
+              "id": "67192aa0-b215-464f-8483-7554a0ebca50",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "title": "00 01-DESIGN.md"
             },
-            "cd4bac85-a441-47a6-ad95-3806572dca51": {
+            "71531129-920e-4820-a16d-cb8e4893ce17": {
               "project": "Editor",
-              "id": "cd4bac85-a441-47a6-ad95-3806572dca51",
+              "id": "71531129-920e-4820-a16d-cb8e4893ce17",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
               "title": "01 02-ARCHITECTURE.md"
             },
-            "e5ff05ca-d600-4362-b900-6230561b0bfb": {
+            "ed23b97a-b774-47cc-ba8a-390eb4e95261": {
               "project": "Editor",
-              "id": "e5ff05ca-d600-4362-b900-6230561b0bfb",
+              "id": "ed23b97a-b774-47cc-ba8a-390eb4e95261",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
               "title": "02 03-UX-STATES.md"
             },
-            "40351ce9-407e-4367-b9cf-8560e1aae843": {
+            "24c9af5f-d0e0-44fb-9aa0-0fbf65136eb2": {
               "project": "Editor",
-              "id": "40351ce9-407e-4367-b9cf-8560e1aae843",
+              "id": "24c9af5f-d0e0-44fb-9aa0-0fbf65136eb2",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/03%2004-VERIFICATION.md",
               "title": "03 04-VERIFICATION.md"
             },
-            "22ba410e-c1aa-47b7-94ee-e63aa46f3726": {
+            "3d27c784-7730-4e11-96ca-83efa97c15b5": {
               "project": "Editor",
-              "id": "22ba410e-c1aa-47b7-94ee-e63aa46f3726",
+              "id": "3d27c784-7730-4e11-96ca-83efa97c15b5",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/04%2005-EXECUTION.md",
               "title": "04 05-EXECUTION.md"
             }
           },
           "closedStack": [
-            "22ba410e-c1aa-47b7-94ee-e63aa46f3726"
+            "3d27c784-7730-4e11-96ca-83efa97c15b5"
           ],
           "focusedGroupId": "g4",
           "agencyDepth": "panel",
@@ -393,7 +393,7 @@
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 797.8,
+      "duration_ms": 278.8,
       "data": {
         "project": {
           "kind": "project",
@@ -439,11 +439,11 @@
                 "type": "group",
                 "id": "g4",
                 "tabs": [
-                  "b3964b96-923b-4d52-bd8e-fbf5bccf650e",
-                  "cd4bac85-a441-47a6-ad95-3806572dca51"
+                  "67192aa0-b215-464f-8483-7554a0ebca50",
+                  "71531129-920e-4820-a16d-cb8e4893ce17"
                 ],
                 "pinned": [],
-                "active": "b3964b96-923b-4d52-bd8e-fbf5bccf650e"
+                "active": "67192aa0-b215-464f-8483-7554a0ebca50"
               },
               {
                 "type": "split",
@@ -454,63 +454,63 @@
                     "type": "group",
                     "id": "g6",
                     "tabs": [
-                      "40351ce9-407e-4367-b9cf-8560e1aae843"
+                      "24c9af5f-d0e0-44fb-9aa0-0fbf65136eb2"
                     ],
                     "pinned": [],
-                    "active": "40351ce9-407e-4367-b9cf-8560e1aae843"
+                    "active": "24c9af5f-d0e0-44fb-9aa0-0fbf65136eb2"
                   },
                   {
                     "type": "group",
                     "id": "g7",
                     "tabs": [
-                      "e5ff05ca-d600-4362-b900-6230561b0bfb"
+                      "ed23b97a-b774-47cc-ba8a-390eb4e95261"
                     ],
                     "pinned": [],
-                    "active": "e5ff05ca-d600-4362-b900-6230561b0bfb"
+                    "active": "ed23b97a-b774-47cc-ba8a-390eb4e95261"
                   }
                 ]
               }
             ]
           },
           "surfaces": {
-            "b3964b96-923b-4d52-bd8e-fbf5bccf650e": {
+            "67192aa0-b215-464f-8483-7554a0ebca50": {
               "project": "Editor",
-              "id": "b3964b96-923b-4d52-bd8e-fbf5bccf650e",
+              "id": "67192aa0-b215-464f-8483-7554a0ebca50",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "title": "00 01-DESIGN.md"
             },
-            "cd4bac85-a441-47a6-ad95-3806572dca51": {
+            "71531129-920e-4820-a16d-cb8e4893ce17": {
               "project": "Editor",
-              "id": "cd4bac85-a441-47a6-ad95-3806572dca51",
+              "id": "71531129-920e-4820-a16d-cb8e4893ce17",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
               "title": "01 02-ARCHITECTURE.md"
             },
-            "e5ff05ca-d600-4362-b900-6230561b0bfb": {
+            "ed23b97a-b774-47cc-ba8a-390eb4e95261": {
               "project": "Editor",
-              "id": "e5ff05ca-d600-4362-b900-6230561b0bfb",
+              "id": "ed23b97a-b774-47cc-ba8a-390eb4e95261",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
               "title": "02 03-UX-STATES.md"
             },
-            "40351ce9-407e-4367-b9cf-8560e1aae843": {
+            "24c9af5f-d0e0-44fb-9aa0-0fbf65136eb2": {
               "project": "Editor",
-              "id": "40351ce9-407e-4367-b9cf-8560e1aae843",
+              "id": "24c9af5f-d0e0-44fb-9aa0-0fbf65136eb2",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/03%2004-VERIFICATION.md",
               "title": "03 04-VERIFICATION.md"
             },
-            "22ba410e-c1aa-47b7-94ee-e63aa46f3726": {
+            "3d27c784-7730-4e11-96ca-83efa97c15b5": {
               "project": "Editor",
-              "id": "22ba410e-c1aa-47b7-94ee-e63aa46f3726",
+              "id": "3d27c784-7730-4e11-96ca-83efa97c15b5",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/04%2005-EXECUTION.md",
               "title": "04 05-EXECUTION.md"
             }
           },
           "closedStack": [
-            "22ba410e-c1aa-47b7-94ee-e63aa46f3726"
+            "3d27c784-7730-4e11-96ca-83efa97c15b5"
           ],
           "focusedGroupId": "g4",
           "agencyDepth": "panel",
@@ -538,11 +538,11 @@
                 "type": "group",
                 "id": "g4",
                 "tabs": [
-                  "b3964b96-923b-4d52-bd8e-fbf5bccf650e",
-                  "cd4bac85-a441-47a6-ad95-3806572dca51"
+                  "67192aa0-b215-464f-8483-7554a0ebca50",
+                  "71531129-920e-4820-a16d-cb8e4893ce17"
                 ],
                 "pinned": [],
-                "active": "b3964b96-923b-4d52-bd8e-fbf5bccf650e"
+                "active": "67192aa0-b215-464f-8483-7554a0ebca50"
               },
               {
                 "type": "split",
@@ -553,63 +553,63 @@
                     "type": "group",
                     "id": "g6",
                     "tabs": [
-                      "40351ce9-407e-4367-b9cf-8560e1aae843"
+                      "24c9af5f-d0e0-44fb-9aa0-0fbf65136eb2"
                     ],
                     "pinned": [],
-                    "active": "40351ce9-407e-4367-b9cf-8560e1aae843"
+                    "active": "24c9af5f-d0e0-44fb-9aa0-0fbf65136eb2"
                   },
                   {
                     "type": "group",
                     "id": "g7",
                     "tabs": [
-                      "e5ff05ca-d600-4362-b900-6230561b0bfb"
+                      "ed23b97a-b774-47cc-ba8a-390eb4e95261"
                     ],
                     "pinned": [],
-                    "active": "e5ff05ca-d600-4362-b900-6230561b0bfb"
+                    "active": "ed23b97a-b774-47cc-ba8a-390eb4e95261"
                   }
                 ]
               }
             ]
           },
           "surfaces": {
-            "b3964b96-923b-4d52-bd8e-fbf5bccf650e": {
+            "67192aa0-b215-464f-8483-7554a0ebca50": {
               "project": "Editor",
-              "id": "b3964b96-923b-4d52-bd8e-fbf5bccf650e",
+              "id": "67192aa0-b215-464f-8483-7554a0ebca50",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "title": "00 01-DESIGN.md"
             },
-            "cd4bac85-a441-47a6-ad95-3806572dca51": {
+            "71531129-920e-4820-a16d-cb8e4893ce17": {
               "project": "Editor",
-              "id": "cd4bac85-a441-47a6-ad95-3806572dca51",
+              "id": "71531129-920e-4820-a16d-cb8e4893ce17",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
               "title": "01 02-ARCHITECTURE.md"
             },
-            "e5ff05ca-d600-4362-b900-6230561b0bfb": {
+            "ed23b97a-b774-47cc-ba8a-390eb4e95261": {
               "project": "Editor",
-              "id": "e5ff05ca-d600-4362-b900-6230561b0bfb",
+              "id": "ed23b97a-b774-47cc-ba8a-390eb4e95261",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
               "title": "02 03-UX-STATES.md"
             },
-            "40351ce9-407e-4367-b9cf-8560e1aae843": {
+            "24c9af5f-d0e0-44fb-9aa0-0fbf65136eb2": {
               "project": "Editor",
-              "id": "40351ce9-407e-4367-b9cf-8560e1aae843",
+              "id": "24c9af5f-d0e0-44fb-9aa0-0fbf65136eb2",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/03%2004-VERIFICATION.md",
               "title": "03 04-VERIFICATION.md"
             },
-            "22ba410e-c1aa-47b7-94ee-e63aa46f3726": {
+            "3d27c784-7730-4e11-96ca-83efa97c15b5": {
               "project": "Editor",
-              "id": "22ba410e-c1aa-47b7-94ee-e63aa46f3726",
+              "id": "3d27c784-7730-4e11-96ca-83efa97c15b5",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/04%2005-EXECUTION.md",
               "title": "04 05-EXECUTION.md"
             }
           },
           "closedStack": [
-            "22ba410e-c1aa-47b7-94ee-e63aa46f3726"
+            "3d27c784-7730-4e11-96ca-83efa97c15b5"
           ],
           "focusedGroupId": "g4",
           "agencyDepth": "panel",
@@ -622,7 +622,7 @@
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 366.5,
+      "duration_ms": 236.6,
       "data": {
         "project": {
           "kind": "project",
@@ -653,7 +653,7 @@
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0,
+      "duration_ms": 0.2,
       "data": {
         "receipts": [
           {
@@ -675,7 +675,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 3,
             "summary": "Surface opened: 00 01-DESIGN.md.",
-            "surface_id": "b3964b96-923b-4d52-bd8e-fbf5bccf650e",
+            "surface_id": "67192aa0-b215-464f-8483-7554a0ebca50",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -740,7 +740,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 6,
             "summary": "Surface opened: 01 02-ARCHITECTURE.md.",
-            "surface_id": "cd4bac85-a441-47a6-ad95-3806572dca51",
+            "surface_id": "71531129-920e-4820-a16d-cb8e4893ce17",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -753,19 +753,19 @@
           },
           {
             "event": "source_opened",
-            "revision": "central.content-fnv1a64/v1:16545:68439910925b9055",
+            "revision": "central.content-fnv1a64/v1:16605:6a00870aa4f8d1e2",
             "schema": "oi.kernel-event/v1",
             "seq": 7,
             "source": {
               "kind": "source",
               "native_owner": "central",
               "provenance": {
-                "revision": "central.content-fnv1a64/v1:16545:68439910925b9055",
+                "revision": "central.content-fnv1a64/v1:16605:6a00870aa4f8d1e2",
                 "source": "central.projectcentral"
               },
               "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md"
             },
-            "summary": "Opened from the owner's reading at revision 68439910925b9055 (16545 bytes).",
+            "summary": "Opened from the owner's reading at revision 6a00870aa4f8d1e2 (16605 bytes).",
             "version": 1
           },
           {
@@ -805,7 +805,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 9,
             "summary": "Surface opened: 02 03-UX-STATES.md.",
-            "surface_id": "e5ff05ca-d600-4362-b900-6230561b0bfb",
+            "surface_id": "ed23b97a-b774-47cc-ba8a-390eb4e95261",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -818,19 +818,19 @@
           },
           {
             "event": "source_opened",
-            "revision": "central.content-fnv1a64/v1:16196:f64ed1160615a241",
+            "revision": "central.content-fnv1a64/v1:32215:9d8030d70a675ecd",
             "schema": "oi.kernel-event/v1",
             "seq": 10,
             "source": {
               "kind": "source",
               "native_owner": "central",
               "provenance": {
-                "revision": "central.content-fnv1a64/v1:16196:f64ed1160615a241",
+                "revision": "central.content-fnv1a64/v1:32215:9d8030d70a675ecd",
                 "source": "central.projectcentral"
               },
               "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md"
             },
-            "summary": "Opened from the owner's reading at revision f64ed1160615a241 (16196 bytes).",
+            "summary": "Opened from the owner's reading at revision 9d8030d70a675ecd (32215 bytes).",
             "version": 1
           },
           {
@@ -870,7 +870,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 12,
             "summary": "Surface opened: 03 04-VERIFICATION.md.",
-            "surface_id": "40351ce9-407e-4367-b9cf-8560e1aae843",
+            "surface_id": "24c9af5f-d0e0-44fb-9aa0-0fbf65136eb2",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -883,19 +883,19 @@
           },
           {
             "event": "source_opened",
-            "revision": "central.content-fnv1a64/v1:8319:71e8d7f4566d7794",
+            "revision": "central.content-fnv1a64/v1:33138:9091d6660c618678",
             "schema": "oi.kernel-event/v1",
             "seq": 13,
             "source": {
               "kind": "source",
               "native_owner": "central",
               "provenance": {
-                "revision": "central.content-fnv1a64/v1:8319:71e8d7f4566d7794",
+                "revision": "central.content-fnv1a64/v1:33138:9091d6660c618678",
                 "source": "central.projectcentral"
               },
               "ref": "central:source:project:editor-walk:ProjectCentral/user/03%2004-VERIFICATION.md"
             },
-            "summary": "Opened from the owner's reading at revision 71e8d7f4566d7794 (8319 bytes).",
+            "summary": "Opened from the owner's reading at revision 9091d6660c618678 (33138 bytes).",
             "version": 1
           },
           {
@@ -984,7 +984,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 17,
             "summary": "Surface opened: 04 05-EXECUTION.md.",
-            "surface_id": "22ba410e-c1aa-47b7-94ee-e63aa46f3726",
+            "surface_id": "3d27c784-7730-4e11-96ca-83efa97c15b5",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -997,19 +997,19 @@
           },
           {
             "event": "source_opened",
-            "revision": "central.content-fnv1a64/v1:8240:484f33e4bc2d0338",
+            "revision": "central.content-fnv1a64/v1:8268:8ff860b26cd8d269",
             "schema": "oi.kernel-event/v1",
             "seq": 18,
             "source": {
               "kind": "source",
               "native_owner": "central",
               "provenance": {
-                "revision": "central.content-fnv1a64/v1:8240:484f33e4bc2d0338",
+                "revision": "central.content-fnv1a64/v1:8268:8ff860b26cd8d269",
                 "source": "central.projectcentral"
               },
               "ref": "central:source:project:editor-walk:ProjectCentral/user/04%2005-EXECUTION.md"
             },
-            "summary": "Opened from the owner's reading at revision 484f33e4bc2d0338 (8240 bytes).",
+            "summary": "Opened from the owner's reading at revision 8ff860b26cd8d269 (8268 bytes).",
             "version": 1
           },
           {
@@ -1049,7 +1049,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 20,
             "summary": "Surface closed: 04 05-EXECUTION.md.",
-            "surface_id": "22ba410e-c1aa-47b7-94ee-e63aa46f3726",
+            "surface_id": "3d27c784-7730-4e11-96ca-83efa97c15b5",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -1121,7 +1121,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 23,
             "summary": "Surface opened: 04 05-EXECUTION.md.",
-            "surface_id": "22ba410e-c1aa-47b7-94ee-e63aa46f3726",
+            "surface_id": "3d27c784-7730-4e11-96ca-83efa97c15b5",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -1137,7 +1137,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 24,
             "summary": "Surface closed: 04 05-EXECUTION.md.",
-            "surface_id": "22ba410e-c1aa-47b7-94ee-e63aa46f3726",
+            "surface_id": "3d27c784-7730-4e11-96ca-83efa97c15b5",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -1197,7 +1197,7 @@
                 "provenance": {
                   "source": "central.projectcentral"
                 },
-                "ref": "central:source:project:editor-walk:ProjectCentral/user/03%2004-VERIFICATION.md"
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
               },
               "world": {
                 "kind": "world",
@@ -1229,7 +1229,7 @@
                 "provenance": {
                   "source": "central.projectcentral"
                 },
-                "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md"
               },
               "world": {
                 "kind": "world",
@@ -1245,43 +1245,11 @@
             "version": 1
           },
           {
-            "event": "focus_changed",
-            "focus": {
-              "project": {
-                "kind": "project",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "projectcentral.inspect"
-                },
-                "ref": "editor-walk"
-              },
-              "subject": {
-                "kind": "source",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "central.projectcentral"
-                },
-                "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md"
-              },
-              "world": {
-                "kind": "world",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "projectcentral.source.read"
-                },
-                "ref": "project:editor-walk"
-              }
-            },
-            "schema": "oi.kernel-event/v1",
-            "seq": 28,
-            "version": 1
-          },
-          {
             "event": "surface_changed",
             "schema": "oi.kernel-event/v1",
-            "seq": 29,
+            "seq": 28,
             "summary": "Surface closed: 01 02-ARCHITECTURE.md.",
-            "surface_id": "cd4bac85-a441-47a6-ad95-3806572dca51",
+            "surface_id": "71531129-920e-4820-a16d-cb8e4893ce17",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -1302,6 +1270,38 @@
                   "source": "projectcentral.inspect"
                 },
                 "ref": "editor-walk"
+              },
+              "world": {
+                "kind": "world",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.source.read"
+                },
+                "ref": "project:editor-walk"
+              }
+            },
+            "schema": "oi.kernel-event/v1",
+            "seq": 29,
+            "version": 1
+          },
+          {
+            "event": "focus_changed",
+            "focus": {
+              "project": {
+                "kind": "project",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "projectcentral.inspect"
+                },
+                "ref": "editor-walk"
+              },
+              "subject": {
+                "kind": "source",
+                "native_owner": "central",
+                "provenance": {
+                  "source": "central.projectcentral"
+                },
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
               },
               "world": {
                 "kind": "world",
@@ -1317,73 +1317,25 @@
             "version": 1
           },
           {
-            "event": "focus_changed",
-            "focus": {
-              "project": {
-                "kind": "project",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "projectcentral.inspect"
-                },
-                "ref": "editor-walk"
-              },
-              "subject": {
-                "kind": "source",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "central.projectcentral"
-                },
-                "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
-              },
-              "world": {
-                "kind": "world",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "projectcentral.source.read"
-                },
-                "ref": "project:editor-walk"
-              }
-            },
+            "event": "world_changed",
             "schema": "oi.kernel-event/v1",
             "seq": 31,
+            "summary": "Central navigator reading changed",
             "version": 1
           },
           {
-            "event": "surface_changed",
+            "event": "world_changed",
             "schema": "oi.kernel-event/v1",
             "seq": 32,
-            "summary": "Surface opened: 01 02-ARCHITECTURE.md.",
-            "surface_id": "cd4bac85-a441-47a6-ad95-3806572dca51",
-            "surface_ref": {
-              "kind": "source",
-              "native_owner": "central",
-              "provenance": {
-                "source": "central.projectcentral"
-              },
-              "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md"
-            },
-            "version": 1
-          },
-          {
-            "event": "world_changed",
-            "schema": "oi.kernel-event/v1",
-            "seq": 33,
-            "summary": "Central navigator reading changed",
-            "version": 1
-          },
-          {
-            "event": "world_changed",
-            "schema": "oi.kernel-event/v1",
-            "seq": 34,
             "summary": "Central navigator reading changed",
             "version": 1
           },
           {
             "event": "surface_changed",
             "schema": "oi.kernel-event/v1",
-            "seq": 35,
+            "seq": 33,
             "summary": "Surface opened: 00 01-DESIGN.md.",
-            "surface_id": "b3964b96-923b-4d52-bd8e-fbf5bccf650e",
+            "surface_id": "67192aa0-b215-464f-8483-7554a0ebca50",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -1397,9 +1349,9 @@
           {
             "event": "surface_changed",
             "schema": "oi.kernel-event/v1",
-            "seq": 36,
+            "seq": 34,
             "summary": "Surface opened: 01 02-ARCHITECTURE.md.",
-            "surface_id": "cd4bac85-a441-47a6-ad95-3806572dca51",
+            "surface_id": "71531129-920e-4820-a16d-cb8e4893ce17",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -1413,9 +1365,9 @@
           {
             "event": "surface_changed",
             "schema": "oi.kernel-event/v1",
-            "seq": 37,
+            "seq": 35,
             "summary": "Surface opened: 03 04-VERIFICATION.md.",
-            "surface_id": "40351ce9-407e-4367-b9cf-8560e1aae843",
+            "surface_id": "24c9af5f-d0e0-44fb-9aa0-0fbf65136eb2",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -1429,9 +1381,9 @@
           {
             "event": "surface_changed",
             "schema": "oi.kernel-event/v1",
-            "seq": 38,
+            "seq": 36,
             "summary": "Surface opened: 02 03-UX-STATES.md.",
-            "surface_id": "e5ff05ca-d600-4362-b900-6230561b0bfb",
+            "surface_id": "ed23b97a-b774-47cc-ba8a-390eb4e95261",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -1443,93 +1395,29 @@
             "version": 1
           },
           {
-            "event": "focus_changed",
-            "focus": {
-              "project": {
-                "kind": "project",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "projectcentral.inspect"
-                },
-                "ref": "editor-walk"
-              },
-              "subject": {
-                "kind": "source",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "central.projectcentral"
-                },
-                "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md"
-              },
-              "world": {
-                "kind": "world",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "projectcentral.source.read"
-                },
-                "ref": "project:editor-walk"
-              }
-            },
-            "schema": "oi.kernel-event/v1",
-            "seq": 39,
-            "version": 1
-          },
-          {
-            "event": "focus_changed",
-            "focus": {
-              "project": {
-                "kind": "project",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "projectcentral.inspect"
-                },
-                "ref": "editor-walk"
-              },
-              "subject": {
-                "kind": "source",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "central.projectcentral"
-                },
-                "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
-              },
-              "world": {
-                "kind": "world",
-                "native_owner": "central",
-                "provenance": {
-                  "source": "projectcentral.source.read"
-                },
-                "ref": "project:editor-walk"
-              }
-            },
-            "schema": "oi.kernel-event/v1",
-            "seq": 40,
-            "version": 1
-          },
-          {
             "event": "world_changed",
             "schema": "oi.kernel-event/v1",
-            "seq": 41,
+            "seq": 37,
             "summary": "Central navigator reading changed",
             "version": 1
           }
         ],
-        "count": 41,
+        "count": 37,
         "first_seq": 1,
-        "last_seq": 41
+        "last_seq": 37
       }
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 97,
+      "duration_ms": 91,
       "data": {
         "file": "surfaces-source-frame-menu.png"
       }
     }
   ],
   "metrics": {
-    "open_4_tabs_ms": 1277
+    "open_4_tabs_ms": 1292
   },
   "screenshots": [
     "surfaces-native-sources-tiled.png",

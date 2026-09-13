@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "material",
-  "generated_at": "2026-09-08T15:35:45.271Z",
+  "generated_at": "2026-09-13T23:04:40.569Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 3468,
+  "duration_ms": 2296,
   "checks": [
     {
       "ok": true,
@@ -35,7 +35,7 @@
     },
     {
       "ok": true,
-      "label": "HTML retains opaque-origin sandbox without native bridge authority"
+      "label": "HTML retains opaque-origin sandbox without native bridge authority (allow-downloads only serves the document's own local Save HTML copy export)"
     },
     {
       "ok": true,
@@ -60,7 +60,7 @@
       "ok": true,
       "label": "Restoring the pane resumes the real material content (srcdoc restored)",
       "data": {
-        "resumedSrcdocLength": 764
+        "resumedSrcdocLength": 5856
       }
     },
     {
@@ -82,6 +82,18 @@
     {
       "ok": true,
       "label": "Markdown bold emphasis renders"
+    },
+    {
+      "ok": true,
+      "label": "GFM table header renders as real <th> elements"
+    },
+    {
+      "ok": true,
+      "label": "GFM table body rows render"
+    },
+    {
+      "ok": true,
+      "label": "GFM table cells render inline content"
     },
     {
       "ok": true,
@@ -128,7 +140,11 @@
     },
     {
       "ok": true,
-      "label": "Close and reopen restores the Markdown rendered view (fresh mount, not stuck on Source)"
+      "label": "Reopening a tab restores its persisted Source view"
+    },
+    {
+      "ok": true,
+      "label": "Reopening after returning to Rendered opens the faithful rendered view"
     },
     {
       "ok": true,
@@ -145,7 +161,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-08T15:35:45.378Z",
+        "mounted_at": "2026-09-13T23:04:40.745Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -156,7 +172,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 31,
+      "duration_ms": 37,
       "data": {
         "file": "material-html-rendered.png"
       }
@@ -164,7 +180,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 40,
+      "duration_ms": 31,
       "data": {
         "file": "material-markdown-rendered.png"
       }
@@ -172,7 +188,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 27,
+      "duration_ms": 32,
       "data": {
         "file": "material-image-rendered.png"
       }
@@ -180,7 +196,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 17,
+      "duration_ms": 23,
       "data": {
         "file": "material-pdf-state.png"
       }
@@ -188,7 +204,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 15,
+      "duration_ms": 31,
       "data": {
         "file": "material-unsupported-disposition.png"
       }

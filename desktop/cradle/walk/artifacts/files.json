@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "files",
-  "generated_at": "2026-09-09T17:08:27.954Z",
+  "generated_at": "2026-09-13T23:00:57.110Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 2703,
+  "duration_ms": 3949,
   "checks": [
     {
       "ok": true,
@@ -110,7 +110,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-09T17:08:28.122Z",
+        "mounted_at": "2026-09-13T23:00:57.352Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -121,21 +121,21 @@
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 0.5,
+      "duration_ms": 0.3,
       "data": {
         "layout": {
           "root": {
             "type": "group",
             "id": "g1",
             "tabs": [
-              "627df5e9-6c00-4b79-a315-73396403d2ce"
+              "4fe3fb1a-fd20-48cc-b228-4dcf53a24c9e"
             ],
             "pinned": [],
-            "active": "627df5e9-6c00-4b79-a315-73396403d2ce"
+            "active": "4fe3fb1a-fd20-48cc-b228-4dcf53a24c9e"
           },
           "surfaces": {
-            "627df5e9-6c00-4b79-a315-73396403d2ce": {
-              "id": "627df5e9-6c00-4b79-a315-73396403d2ce",
+            "4fe3fb1a-fd20-48cc-b228-4dcf53a24c9e": {
+              "id": "4fe3fb1a-fd20-48cc-b228-4dcf53a24c9e",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "project": "Editor",
@@ -161,14 +161,14 @@
             "type": "group",
             "id": "g1",
             "tabs": [
-              "627df5e9-6c00-4b79-a315-73396403d2ce"
+              "4fe3fb1a-fd20-48cc-b228-4dcf53a24c9e"
             ],
             "pinned": [],
-            "active": "627df5e9-6c00-4b79-a315-73396403d2ce"
+            "active": "4fe3fb1a-fd20-48cc-b228-4dcf53a24c9e"
           },
           "surfaces": {
-            "627df5e9-6c00-4b79-a315-73396403d2ce": {
-              "id": "627df5e9-6c00-4b79-a315-73396403d2ce",
+            "4fe3fb1a-fd20-48cc-b228-4dcf53a24c9e": {
+              "id": "4fe3fb1a-fd20-48cc-b228-4dcf53a24c9e",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "project": "Editor",
@@ -187,7 +187,7 @@
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 2.1,
+      "duration_ms": 3.5,
       "data": {
         "subject": {
           "kind": "file",
@@ -195,17 +195,17 @@
           "provenance": {
             "source": "central.files.read"
           },
-          "ref": "central:path:/private/tmp/w2-ui/walk-tmp/oi-cradle-editor-nat3q0:Work/Other/src/ordinary.ts"
+          "ref": "central:path:/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-mSNlCY:Work/Other/src/ordinary.ts"
         }
       }
     },
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-09T17:08:30.167Z",
+        "mounted_at": "2026-09-13T23:01:00.160Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -216,7 +216,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 34,
+      "duration_ms": 42,
       "data": {
         "file": "files-native-root-and-project-files.png"
       }

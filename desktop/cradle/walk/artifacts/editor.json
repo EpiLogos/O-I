@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "editor",
-  "generated_at": "2026-09-13T14:18:14.898Z",
+  "generated_at": "2026-09-13T23:12:46.452Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 5108,
+  "duration_ms": 6601,
   "checks": [
     {
       "ok": true,
@@ -20,7 +20,7 @@
     },
     {
       "ok": true,
-      "label": "Document 1 opens through real Central in <1s (192ms)",
+      "label": "Document 1 opens through real Central in <1s (195ms)",
       "data": {
         "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
         "path": "ProjectCentral/user/00 01-DESIGN.md"
@@ -32,7 +32,7 @@
     },
     {
       "ok": true,
-      "label": "Document 2 opens through real Central in <1s (76ms)",
+      "label": "Document 2 opens through real Central in <1s (114ms)",
       "data": {
         "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
         "path": "ProjectCentral/user/01 02-ARCHITECTURE.md"
@@ -44,7 +44,7 @@
     },
     {
       "ok": true,
-      "label": "Document 3 opens through real Central in <1s (88ms)",
+      "label": "Document 3 opens through real Central in <1s (110ms)",
       "data": {
         "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
         "path": "ProjectCentral/user/02 03-UX-STATES.md"
@@ -56,7 +56,7 @@
     },
     {
       "ok": true,
-      "label": "Document 4 opens through real Central in <1s (98ms)",
+      "label": "Document 4 opens through real Central in <1s (129ms)",
       "data": {
         "ref": "central:source:project:editor-walk:ProjectCentral/user/03%2004-VERIFICATION.md",
         "path": "ProjectCentral/user/03 04-VERIFICATION.md"
@@ -68,7 +68,7 @@
     },
     {
       "ok": true,
-      "label": "Document 5 opens through real Central in <1s (90ms)",
+      "label": "Document 5 opens through real Central in <1s (126ms)",
       "data": {
         "ref": "central:source:project:editor-walk:ProjectCentral/user/04%2005-EXECUTION.md",
         "path": "ProjectCentral/user/04 05-EXECUTION.md"
@@ -80,7 +80,7 @@
     },
     {
       "ok": true,
-      "label": "Document 6 opens through real Central in <1s (89ms)",
+      "label": "Document 6 opens through real Central in <1s (161ms)",
       "data": {
         "ref": "central:source:project:editor-walk:ProjectCentral/user/05%20FLOW.md",
         "path": "ProjectCentral/user/05 FLOW.md"
@@ -92,7 +92,7 @@
     },
     {
       "ok": true,
-      "label": "Document 7 opens through real Central in <1s (114ms)",
+      "label": "Document 7 opens through real Central in <1s (154ms)",
       "data": {
         "ref": "central:source:project:editor-walk:ProjectCentral/user/06%20CANONICAL-PRODUCT-FIELD.md",
         "path": "ProjectCentral/user/06 CANONICAL-PRODUCT-FIELD.md"
@@ -104,7 +104,7 @@
     },
     {
       "ok": true,
-      "label": "Document 8 opens through real Central in <1s (112ms)",
+      "label": "Document 8 opens through real Central in <1s (176ms)",
       "data": {
         "ref": "central:source:project:editor-walk:ProjectCentral/user/07%20OI-DESKTOP-APPLICATION-SPEC.md",
         "path": "ProjectCentral/user/07 OI-DESKTOP-APPLICATION-SPEC.md"
@@ -116,7 +116,7 @@
     },
     {
       "ok": true,
-      "label": "Document 9 opens through real Central in <1s (89ms)",
+      "label": "Document 9 opens through real Central in <1s (173ms)",
       "data": {
         "ref": "central:source:project:editor-walk:ProjectCentral/user/08%20OI-CENTRAL-FOUNDATION-2026-09-04.md",
         "path": "ProjectCentral/user/08 OI-CENTRAL-FOUNDATION-2026-09-04.md"
@@ -128,7 +128,7 @@
     },
     {
       "ok": true,
-      "label": "Document 10 opens through real Central in <1s (130ms)",
+      "label": "Document 10 opens through real Central in <1s (170ms)",
       "data": {
         "ref": "central:source:project:editor-walk:ProjectCentral/user/09%20FOUNDING-POSITIONS.md",
         "path": "ProjectCentral/user/09 FOUNDING-POSITIONS.md"
@@ -194,7 +194,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-13T14:18:15.146Z",
+        "mounted_at": "2026-09-13T23:12:46.669Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -205,7 +205,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 43,
+      "duration_ms": 86,
       "data": {
         "file": "editor-source-saved.png"
       }
@@ -213,24 +213,24 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 61,
+      "duration_ms": 79,
       "data": {
         "file": "editor-owner-refusal.png"
       }
     }
   ],
   "metrics": {
-    "open_file_1_ms": 192,
-    "open_file_2_ms": 76,
-    "open_file_3_ms": 88,
-    "open_file_4_ms": 98,
-    "open_file_5_ms": 90,
-    "open_file_6_ms": 89,
-    "open_file_7_ms": 114,
-    "open_file_8_ms": 112,
-    "open_file_9_ms": 89,
-    "open_file_10_ms": 130,
-    "open_file_max_ms": 192
+    "open_file_1_ms": 195,
+    "open_file_2_ms": 114,
+    "open_file_3_ms": 110,
+    "open_file_4_ms": 129,
+    "open_file_5_ms": 126,
+    "open_file_6_ms": 161,
+    "open_file_7_ms": 154,
+    "open_file_8_ms": 176,
+    "open_file_9_ms": 173,
+    "open_file_10_ms": 170,
+    "open_file_max_ms": 195
   },
   "screenshots": [
     "editor-source-saved.png",

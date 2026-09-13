@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "welcome",
-  "generated_at": "2026-09-10T22:24:34.461Z",
+  "generated_at": "2026-09-13T23:30:14.739Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": null,
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 6744,
+  "duration_ms": 14315,
   "checks": [
     {
       "ok": true,
@@ -28,7 +28,7 @@
     },
     {
       "ok": true,
-      "label": "The workspace is already composed behind the frontstate"
+      "label": "The workspace is already composed (mounted, unpainted) behind the frontstate"
     },
     {
       "ok": true,
@@ -51,7 +51,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 35,
+      "duration_ms": 73,
       "data": {
         "file": "welcome-welcome-reduced-motion.png"
       }
@@ -59,7 +59,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 235,
+      "duration_ms": 1653,
       "data": {
         "file": "welcome-welcome-frontstate-rest.png"
       }
@@ -67,7 +67,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 197,
+      "duration_ms": 1029,
       "data": {
         "file": "welcome-welcome-frontstate-dissolve.png"
       }
@@ -75,7 +75,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 31,
+      "duration_ms": 47,
       "data": {
         "file": "welcome-welcome-frontstate-entered.png"
       }
