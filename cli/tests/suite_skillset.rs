@@ -292,7 +292,7 @@ fn installed_product_without_native_skill_is_disclosed_as_gap_not_fake_competenc
     let effective = resolve_profile(
         &manifest,
         "oi:skillset:root-metagentic-operation",
-        AgentScope::Ordinary,
+        AgentScope::RootWorld,
         &oi_central_observations(),
         &installed(&["O:I", "Central", "Actuation"]),
         &AuthorityObservation::default(),
@@ -396,6 +396,7 @@ fn authoritative_revision_update_replaces_only_untouched_derived_projection() {
     assert_eq!(updated.receipt.as_ref().unwrap().source_revision, "rev-2");
     assert!(fs::read_to_string(&destination).unwrap().contains("# v2"));
 }
+
 #[test]
 fn user_owned_and_locally_edited_projection_conflicts_are_preserved() {
     let manifest = canonical_manifest();
