@@ -246,10 +246,12 @@ pub enum KernelOp {
     DaySourceOpen { #[serde(default)] day_ref: Option<String> },
     Encounter {project:String,request:agency::EncounterRequest},
     MaterialRead {target:material::Target},
-    FactoryDiscover {project_ref:Option<String>},
-    FactorySnapshot {binding_ref:String},
-    FactoryIntent {binding_ref:String,request:factory::Intent},
-    FactoryInvoke {binding_ref:String,request:factory::Invocation},
+    /// The re-pinned build view (queue cell B): the owner CLI reads it as
+    /// `factory build snapshot <state> <project-ref> <run-ref>` — the old
+    /// `build discover`/`--binding` grammar is gone from the installed cut.
+    /// Refs and state path are the caller's disclosure; payload verbatim
+    /// after the contract schemas are verified.
+    FactoryBuildSnapshot { #[serde(default)] project: Option<String>, state_path: ::std::path::PathBuf, project_ref: String, run_ref: String },
     /// 6D first consumer (queue cell 3): one developmental read through the
     /// owner's own `factory development` family. The state path is the
     /// caller's disclosure — the desktop never invents a Factory state.
@@ -438,10 +440,16 @@ impl Kernel {
     pub fn apply(&mut self, op: KernelOp) -> Result<KernelOpOutcome, String> {
         match op {
             KernelOp::MaterialRead{target} => native_owner_reading("workcell",material::Client::discover().read(&target)),
-            KernelOp::FactoryDiscover{project_ref} => native_owner_reading("software-factory",factory::Client::discover().bindings(project_ref.as_deref())),
-            KernelOp::FactorySnapshot{binding_ref} => native_owner_reading("software-factory",factory::Client::discover().snapshot(&binding_ref)),
-            KernelOp::FactoryIntent{binding_ref,request} => native_owner_reading("software-factory",factory::Client::discover().intent(&binding_ref,&request)),
-            KernelOp::FactoryInvoke{binding_ref,request} => native_owner_reading("software-factory",factory::Client::discover().invoke(&binding_ref,&request)),
+            KernelOp::FactoryBuildSnapshot {project,state_path,project_ref,run_ref} => {
+                if let Some(project)=&project {
+                    let root=world::read_world(&self.client).map_err(|e|e.to_string())?;
+                    root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(project.as_str()))).ok_or("Project is outside Central's disclosed ground")?;
+                }
+                let direct=std::env::var_os("OI_FACTORY_BIN").map(std::path::PathBuf::from);
+                let executable=direct.unwrap_or_else(|| std::env::var_os("OI_BIN").map(std::path::PathBuf::from).unwrap_or_else(|| std::path::PathBuf::from("oi")));
+                let data=factory::Client::with(executable).build_snapshot(&state_path,&project_ref,&run_ref).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"factory build snapshot failed".into()))?;
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::FactoryDevelopmentReading{data}})
+            }
             KernelOp::FactoryDevelopmentRead {project,state_path,read,subject} => {
                 if let Some(project)=&project {
                     let root=world::read_world(&self.client).map_err(|e|e.to_string())?;

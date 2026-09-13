@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "receive-include",
-  "generated_at": "2026-09-13T10:21:46.369Z",
+  "generated_at": "2026-09-13T10:40:56.188Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 1037,
+  "duration_ms": 925,
   "checks": [
     {
       "ok": true,
@@ -66,7 +66,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-13T10:21:46.484Z",
+        "mounted_at": "2026-09-13T10:40:56.309Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -85,7 +85,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 28,
+      "duration_ms": 29,
       "data": {
         "file": "receive-include-accepted-on-current-basis.png"
       }
@@ -93,7 +93,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 23,
+      "duration_ms": 22,
       "data": {
         "file": "receive-include-included-with-attribution.png"
       }
@@ -101,7 +101,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 29,
+      "duration_ms": 16,
       "data": {
         "file": "receive-include-stale-basis-refusal.png"
       }
