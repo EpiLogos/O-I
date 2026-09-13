@@ -107,6 +107,12 @@ Lifecycle evidence
 
 Requested, installed, effective, active, reachable and authorised states stay distinct. Remote availability is not local installation. A present executable is not proof of a usable capability. An unavailable remote endpoint must not cause silent local fallback. Arbitrary explicit selections are disclosed exactly as they are; they are never forced into a false canonical frame.
 
+The requested composition is the person's own statement, recorded through
+`oi mode set <frame>` and never inferred from presence. Reality may exceed
+the request (reality then wins and the stale request is called out), but
+reality may not fall short of the request silently (the request keeps
+naming the world, degraded, with the shortfall in warnings).
+
 Source acquisition and release channel remain ordinary installation facts; they do not become another set of public "modalities".
 
 ## 6. Three synchronisations, never collapsed

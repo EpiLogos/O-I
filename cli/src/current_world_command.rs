@@ -14,6 +14,12 @@ fn current_world_main() -> Option<ExitCode> {
     };
 
     let observed = oi_cli::current_world::live_current_world().and_then(|mut reading| {
+        // The person's recorded mode statement joins the reading when the
+        // composition state is readable; absence discloses presence-only
+        // resolution rather than an error.
+        if let Some(requested) = requested_mode_statement()? {
+            reading = reading.with_requested_mode(requested);
+        }
         if owners {
             let executable=env::current_exe().map_err(|e|e.to_string())?;
             let cwd=env::current_dir().map_err(|e|e.to_string())?;
@@ -51,7 +57,10 @@ fn current_world_main() -> Option<ExitCode> {
             println!(
                 "Install mode: {}",
                 match (&reading.context_frame.install_mode, install_mode) {
-                    (Some(frame), Some(mode)) => format!("{frame} — {}", mode.name),
+                    (Some(frame), Some(mode)) => match reading.context_frame.install_mode_basis.as_deref() {
+                        Some("requested") => format!("{frame} (requested) — {}", mode.name),
+                        _ => format!("{frame} — {}", mode.name),
+                    },
                     (Some(frame), None) => frame.to_owned(),
                     (None, _) => "explicit selection".to_owned(),
                 }

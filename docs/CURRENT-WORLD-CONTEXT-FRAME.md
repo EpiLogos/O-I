@@ -45,8 +45,29 @@ The reading names an **install mode** — by the frame notation it sits at — w
 context_frame.containing_frame   "cf5" — always; the material condition
 context_frame.install_mode       "00/00" | "0/1" | "0/1/2" | "0/1/2/3" | "4.5/0" | "5/0"
                                  | null (explicit selection without a named mode)
+context_frame.install_mode_basis "effective" | "requested" | null — how the mode was resolved
 context_frame.present_positions  exact present product positions
+requested_mode                   the person's recorded statement, when one exists
 ```
+
+### Requested and effective
+
+`oi mode set <frame>` records the person's own statement of which install
+mode they are adopting; it is never inferred from presence. The statement
+and reality stand in one ordered relation:
+
+- reality fully realises the request — with or without extra products —
+  the request names the world (basis `requested`);
+- reality *exceeds* the request (everything requested is present and
+  presence exact-matches a different mode): reality wins, basis
+  `effective`, and the stale request is called out in warnings;
+- reality *falls short* of the request: the request still names the world,
+  degraded, with the missing products named in warnings — the world does
+  not silently rename itself.
+
+Without a recorded statement the reading resolves from effective presence
+alone: an exact characteristic match names its mode; everything else
+discloses its exact positions as an explicit selection.
 
 The v1 fields are superseded honestly: v1's `context_frame.reading: "cf5"` meant *all six products installed* and v1's `composition_modality` carried the #192 bootstrap label of Central's registration. Historical v1 documents keep those meanings; v2 does not reinterpret them. The #192 labels themselves remain valid as per-registration installation-path provenance, not as an installation-modality taxonomy.
 

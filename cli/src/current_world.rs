@@ -58,13 +58,26 @@ pub struct ContextFrameStatus {
     /// reward for installing all six packages.
     pub containing_frame: String,
     /// The recognised install mode (#268), identified by the frame notation
-    /// it sits at, when the effective product presence matches one of the
-    /// six characteristic compositions exactly. `None` for explicit
-    /// selections — including all-products, which is a deployment inside
-    /// CF5, not one of the modes — disclosed through `present_positions` as
-    /// what they are.
+    /// it sits at, resolved per `install_mode_basis`. `None` when no
+    /// characteristic composition matches and no mode was requested.
     pub install_mode: Option<String>,
+    /// How `install_mode` was resolved: `effective` — presence exactly
+    /// matches the mode's characteristic composition; `requested` — the
+    /// person recorded this mode and presence realises it (possibly
+    /// degraded, disclosed through warnings); absent when `install_mode` is
+    /// `None`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub install_mode_basis: Option<String>,
     pub present_positions: Vec<u8>,
+}
+
+/// The person's recorded mode statement, joined into the reading when the
+/// disclosing process can see the composition state.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+pub struct RequestedModeDisclosure {
+    pub mode: String,
+    pub set_by: String,
+    pub set_at_unix_seconds: u64,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -87,6 +100,8 @@ pub struct CurrentWorldReading {
     pub personal_ground: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub current_machine: Option<CurrentMachineRelation>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub requested_mode: Option<RequestedModeDisclosure>,
     pub positions: Vec<CurrentWorldPosition>,
     pub context_frame: ContextFrameStatus,
     #[serde(default)]
@@ -115,6 +130,7 @@ impl CurrentWorldReading {
             owner_disclosures: None,
             personal_ground: disclosure.personal_ground.clone(),
             current_machine: None,
+            requested_mode: None,
             positions,
             context_frame,
             warnings: disclosure.warnings.clone(),
@@ -123,6 +139,21 @@ impl CurrentWorldReading {
 
     pub fn with_current_machine(mut self, machine: CurrentMachineRelation) -> Self {
         self.current_machine = Some(machine);
+        self
+    }
+
+    /// Join the person's recorded mode statement and re-resolve the frame
+    /// reading against it. The request can be exceeded by reality — reality
+    /// then wins and the stale request is called out — but reality may not
+    /// fall short of the request silently: a request with products missing
+    /// keeps naming the world, degraded, with the shortfall in warnings.
+    pub fn with_requested_mode(mut self, requested: RequestedModeDisclosure) -> Self {
+        let present = self.context_frame.present_positions.clone();
+        let (context_frame, mut resolutions) =
+            resolve_context_frame(&present, Some(&requested.mode));
+        self.warnings.append(&mut resolutions);
+        self.context_frame = context_frame;
+        self.requested_mode = Some(requested);
         self
     }
 }
@@ -232,11 +263,92 @@ fn context_frame_status(positions: &[CurrentWorldPosition]) -> ContextFrameStatu
         .filter(|position| position.present)
         .map(|position| position.position)
         .collect::<Vec<_>>();
-    ContextFrameStatus {
-        containing_frame: context_frames::CONTAINING_FRAME.to_owned(),
-        install_mode: context_frames::install_mode_for(&present_positions)
-            .map(|mode| mode.frame.to_owned()),
-        present_positions,
+    resolve_context_frame(&present_positions, None).0
+}
+
+/// Resolve the Context Frame reading from present positions and an optional
+/// requested mode, returning the reading plus any divergence warnings.
+///
+/// The request and reality stand in one ordered relation:
+/// - reality fully realises the request (with or without extra products,
+///   with or without an exact match of its own): the request names the
+///   world, basis `requested`;
+/// - reality exceeds the request — everything requested is present and
+///   presence exact-matches a *different* mode: reality wins, basis
+///   `effective`, and the stale request is warned about;
+/// - reality falls short of the request: the request still names the world
+///   (degraded) and the shortfall is warned about — the world does not
+///   silently rename itself.
+fn resolve_context_frame(
+    present_positions: &[u8],
+    requested: Option<&str>,
+) -> (ContextFrameStatus, Vec<String>) {
+    let status = |install_mode: Option<&str>, basis: Option<&str>| {
+        (
+            ContextFrameStatus {
+                containing_frame: context_frames::CONTAINING_FRAME.to_owned(),
+                install_mode: install_mode.map(str::to_owned),
+                install_mode_basis: basis.map(str::to_owned),
+                present_positions: present_positions.to_vec(),
+            },
+            Vec::new(),
+        )
+    };
+    let requested_mode = requested
+        .and_then(context_frames::install_mode_by_frame)
+        .filter(|mode| mode.products.is_some());
+    let effective_mode = context_frames::install_mode_for(present_positions);
+    let request_realised = |mode: &context_frames::InstallMode| {
+        mode.products
+            .unwrap_or(&[])
+            .iter()
+            .all(|position| present_positions.contains(position))
+    };
+    let shortfall_warning = |mode: &context_frames::InstallMode| {
+        let names: Vec<&str> = PRODUCT_POSITIONS
+            .iter()
+            .filter(|(position, _, _)| {
+                mode.products.unwrap_or(&[]).contains(position)
+                    && !present_positions.contains(position)
+            })
+            .map(|(_, _, name)| *name)
+            .collect();
+        format!(
+            "Requested install mode {} is not fully realised: {} {} not usable in the effective composition.",
+            mode.frame,
+            names.join(", "),
+            if names.len() == 1 { "is" } else { "are" }
+        )
+    };
+    match (requested_mode, effective_mode) {
+        (Some(request), Some(effective)) if request.frame == effective.frame => {
+            status(Some(request.frame), Some("requested"))
+        }
+        (Some(request), Some(effective)) => {
+            if request_realised(&request) {
+                // Reality grew past the request; the request is stale.
+                let (reading, _) = status(Some(effective.frame), Some("effective"));
+                let warning = format!(
+                    "Effective presence realises install mode {}, while the requested mode is {}. Re-run `oi mode set` if the statement is stale.",
+                    effective.frame, request.frame
+                );
+                (reading, vec![warning])
+            } else {
+                let (reading, _) = status(Some(request.frame), Some("requested"));
+                (reading, vec![shortfall_warning(&request)])
+            }
+        }
+        (Some(request), None) => {
+            let (reading, warnings) = status(Some(request.frame), Some("requested"));
+            let warnings = if request_realised(&request) {
+                warnings
+            } else {
+                vec![shortfall_warning(&request)]
+            };
+            (reading, warnings)
+        }
+        (None, Some(effective)) => status(Some(effective.frame), Some("effective")),
+        (None, None) => status(None, None),
     }
 }
 
@@ -502,5 +614,107 @@ mod tests {
         let unavailable = SuiteCompositionDisclosure::unavailable("none");
         let reading = CurrentWorldReading::from_disclosure(&unavailable);
         assert_eq!(reading.positions[0].modality, None);
+    }
+
+    fn requested(mode: &str) -> RequestedModeDisclosure {
+        RequestedModeDisclosure {
+            mode: mode.to_owned(),
+            set_by: "oi mode set".to_owned(),
+            set_at_unix_seconds: 0,
+        }
+    }
+
+    #[test]
+    fn requested_mode_names_a_degraded_world_instead_of_renaming_it() {
+        // Requested 0/1/2 with AIKit absent: the world keeps its requested
+        // mode and warns about the missing product — it does not silently
+        // rename itself 0/1 (the regression this proves: effective presence
+        // {0,1} alone would read as the 0/1 mode).
+        let reading = CurrentWorldReading::from_disclosure(&disclosure_with(
+            &["central", "actuation"],
+            NativeSurfaceState::Registered,
+        ))
+        .with_requested_mode(requested("0/1/2"));
+        assert_eq!(mode_of(&reading).as_deref(), Some("0/1/2"));
+        assert_eq!(
+            reading.context_frame.install_mode_basis.as_deref(),
+            Some("requested")
+        );
+        assert!(
+            reading
+                .warnings
+                .iter()
+                .any(|warning| warning.contains("AIKit") && warning.contains("not usable")),
+            "{:?}",
+            reading.warnings
+        );
+        assert_eq!(
+            reading.requested_mode.as_ref().map(|r| r.mode.as_str()),
+            Some("0/1/2")
+        );
+    }
+
+    #[test]
+    fn requested_mode_stands_with_explicit_additions() {
+        // Requested 0/1 with QL added explicitly: presence {0,1,5} matches
+        // no mode exactly, so the requested mode stands with the addition
+        // visible in positions and nothing missing.
+        let reading = CurrentWorldReading::from_disclosure(&disclosure_with(
+            &["central", "actuation", "quaternal-logic"],
+            NativeSurfaceState::Registered,
+        ))
+        .with_requested_mode(requested("0/1"));
+        assert_eq!(mode_of(&reading).as_deref(), Some("0/1"));
+        assert_eq!(
+            reading.context_frame.install_mode_basis.as_deref(),
+            Some("requested")
+        );
+        assert_eq!(reading.context_frame.present_positions, vec![0, 1, 5]);
+        assert!(reading.warnings.is_empty(), "{:?}", reading.warnings);
+    }
+
+    #[test]
+    fn exact_effective_match_wins_over_a_stale_request_and_warns() {
+        // Requested 0/1, effective presence {0,1,2}: the effective exact
+        // match names 0/1/2 and the stale request is called out.
+        let reading = CurrentWorldReading::from_disclosure(&disclosure_with(
+            &["central", "actuation", "ai-kit"],
+            NativeSurfaceState::Registered,
+        ))
+        .with_requested_mode(requested("0/1"));
+        assert_eq!(mode_of(&reading).as_deref(), Some("0/1/2"));
+        assert_eq!(
+            reading.context_frame.install_mode_basis.as_deref(),
+            Some("effective")
+        );
+        assert!(
+            reading
+                .warnings
+                .iter()
+                .any(|warning| warning.contains("stale")),
+            "{:?}",
+            reading.warnings
+        );
+    }
+
+    #[test]
+    fn unknown_requested_frame_falls_back_to_presence_only_resolution() {
+        // A recorded frame the catalogue does not know (a future or foreign
+        // writer) must not fabricate a mode: presence-only resolution holds
+        // and the statement is still disclosed.
+        let reading = CurrentWorldReading::from_disclosure(&disclosure_with(
+            &["central", "workcell"],
+            NativeSurfaceState::Registered,
+        ))
+        .with_requested_mode(requested("9/9"));
+        assert_eq!(mode_of(&reading).as_deref(), Some("4.5/0"));
+        assert_eq!(
+            reading.context_frame.install_mode_basis.as_deref(),
+            Some("effective")
+        );
+        assert_eq!(
+            reading.requested_mode.as_ref().map(|r| r.mode.as_str()),
+            Some("9/9")
+        );
     }
 }
