@@ -225,8 +225,10 @@ def relation_projection(result: dict[str, Any]) -> tuple[dict[str, Any], list[di
                 "capability_refs": "[]", "need": story["story"],
                 "operation": agent["determining_conditions"], "outcome": story["experienced_outcome"],
                 "implementation_status": "not-assessed; source relation only", "standing": "specified",
-                "source_refs": json.dumps(story["source_refs"], ensure_ascii=False),
-                "test_refs": json.dumps(story["extensions"]["existing_proof_refs"]),
+                # The native protocol uses semicolon-separated source/evidence
+                # refs; only capability_refs and extensions use JSON here.
+                "source_refs": ";".join(story["source_refs"]),
+                "test_refs": ";".join(story["extensions"]["existing_proof_refs"]),
                 "account_ref": "docs/experience/STORIES.md", "relation": "requires situated practice",
                 "coverage": "unexercised", "extensions": json.dumps({"ux": {
                     "story_ref": story["id"], "story_revision": result["source_digest"],
