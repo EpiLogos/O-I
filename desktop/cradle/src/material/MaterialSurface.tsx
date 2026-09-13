@@ -87,13 +87,24 @@ function imageMimeFor(path: string, mimeHint: string | null): string {
  * every non-text format it detects; the "Rendered | Source" toggle for
  * HTML/Markdown mounts the real `FileSurface` editor for Source (the
  * same CAS/history/read-only path — never a second, divergent reader). */
-export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; format: MaterialFormat }) {
+export function MaterialSurface({ binding, format, onView }: { binding: SurfaceBinding; format: MaterialFormat; onView?: (view: NonNullable<SurfaceBinding["view"]>) => void }) {
   const { transport } = useKernel();
   const viewKey = `oi-cradle.material-view:${binding.id}`;
   const [savedView] = useState(() => { try { return JSON.parse(localStorage.getItem(viewKey) ?? "null"); } catch { return null; } });
-  // Source is a transient editing choice. A newly mounted document opens in
-  // its faithful rendered form; only neutral preview zoom persists.
-  const [view, setView] = useState<"rendered" | "source">("rendered");
+  // The Rendered/Source choice is the surface's own view record
+  // (`binding.view.materialView`, persisted with the layout through tab
+  // switches, tiling and workspace restore, and synced to detached native
+  // windows through the same channel as every other view state). A
+  // document still OPENS rendered unless the person last left it in
+  // Source — the choice follows the tab, never the format.
+  const [view, setViewState] = useState<"rendered" | "source">(binding.view?.materialView === "source" ? "source" : "rendered");
+  useEffect(() => {
+    if (binding.view?.materialView === "source" || binding.view?.materialView === "rendered") setViewState(binding.view.materialView);
+  }, [binding.view?.materialView]);
+  const setView = (next: "rendered" | "source") => {
+    setViewState(next);
+    onView?.({ ...(binding.view ?? {}), materialView: next });
+  };
   const { containerRef, suspended } = useSuspend(view);
   useMaterialContext(containerRef,binding,view);
   const [zoom, setZoom] = useState<number>([.5,.75,1,1.25,1.5,2].includes(savedView?.zoom) ? savedView.zoom : 1);
@@ -254,6 +265,7 @@ function buildMarkdownStyle(): string {
   const ink = readShellToken("--oi-foreground", "#30372f");
   const accent = readShellToken("--oi-accent", "#657852");
   const wash = readShellToken("--oi-wash", "#e5e9dd");
+  const rule = readShellToken("--oi-rule", "#d9ddd1");
   const sans = readShellToken("--oi-font-sans", "'Avenir Next',Avenir,'Helvetica Neue',Arial,sans-serif");
   const mono = readShellToken("--oi-font-mono", "ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace");
   const prose = readShellToken("--oi-shell-type-prose", "13px");
@@ -270,5 +282,8 @@ pre code{background:none;padding:0;}
 img{max-width:100%;}
 a{color:${accent};}
 ul,ol{padding-left:1.4em;}
+table{border-collapse:collapse;margin:.8em 0;font-size:${body};max-width:100%;}
+th,td{border:1px solid ${rule};padding:4px 9px;text-align:left;vertical-align:top;overflow-wrap:anywhere;}
+th{background:${wash};font-weight:600;}
 `;
 }

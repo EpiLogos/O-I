@@ -228,6 +228,7 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
             title={state.surfaces[id].title}
             kind={state.surfaces[id].kind}
             active={active === id}
+            selected={focused && active === id}
             pinned={group.pinned.includes(id)}
             dirty={props.kernelDirty(state.surfaces[id].ref)}
             groupId={group.id}
@@ -312,7 +313,7 @@ function SurfaceBody({
   if (binding.kind === "draft") return <DraftSurface binding={binding} />;
   if (binding.kind === "blank") return <FreshSurface binding={binding} />;
   if (binding.kind === "browser") return <BrowserSurface binding={binding} />;
-  if (binding.kind === "file") return <FileSurface key={binding.id} binding={binding}/>;
+  if (binding.kind === "file") return <FileSurface key={binding.id} binding={binding} onView={view=>onView(binding.id,view)}/>;
   if (binding.kind === "system") return <SystemPanel binding={binding}/>;
   if (binding.kind === "factory") return <FactoryDevelopmentSurface />;
   if (binding.kind === "knowledge") return <KnowledgeSurface binding={binding} onOpen={openKnowledge} />;
@@ -331,6 +332,8 @@ interface TabProps {
   /** The binding kind (U0.4) — chooses the tab's kind glyph. */
   kind: string;
   active: boolean;
+  /** True only for the focused group's active tab (one per window). */
+  selected: boolean;
   pinned: boolean;
   /** The two-layer dirty state shows on the binding itself (U0.4). */
   dirty: boolean;
@@ -351,7 +354,7 @@ const KIND_GLYPH: Record<string, "chat" | "wiki" | "file" | "settings"> = {
   system: "settings",
 };
 
-function Tab({ id, title, kind, active, pinned, dirty, groupId, execute, openBindingMenu }: TabProps) {
+function Tab({ id, title, kind, active, selected, pinned, dirty, groupId, execute, openBindingMenu }: TabProps) {
   return (
     <div className="tab-entry" role="presentation">
     <button
@@ -359,7 +362,11 @@ function Tab({ id, title, kind, active, pinned, dirty, groupId, execute, openBin
       role="tab"
       id={`surface-tab-${id}`}
       aria-controls={`surface-panel-${groupId}`}
-      aria-selected={active}
+      // Exactly one selected tab in the whole window: the focused group's
+      // active surface. Other groups' active tabs keep the visual active
+      // state (and roving tabindex) but are not `aria-selected` — the
+      // kernel holds one focus relation, and the tab strip says so.
+      aria-selected={selected}
       tabIndex={active ? 0 : -1}
       className={`tab${active ? " active" : ""}`}
       draggable

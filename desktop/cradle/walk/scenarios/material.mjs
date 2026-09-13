@@ -64,7 +64,8 @@ export async function setup() {
     writeFileSync(
       join(projectRoot, 'notes.md'),
       '# Notes\n\nA paragraph with **bold** and *italic* text.\n\n- one\n- two\n\n'
-        + '`inline code`\n\n[sibling](notes.txt)\n\n![logo](assets/logo.png)\n',
+        + '`inline code`\n\n[sibling](notes.txt)\n\n![logo](assets/logo.png)\n\n'
+        + '| Layer | Carries |\n| --- | --- |\n| Rendered | the faithful preview |\n| Source | the real editor |\n',
     );
     writeFileSync(join(projectRoot, 'notes.txt'), 'Sibling text file.\n');
     writeFileSync(join(projectRoot, 'mystery.bin'), Buffer.from([0, 1, 2, 255, 0, 3]));
@@ -193,6 +194,10 @@ export default async function run({ page, baseUrl, bridgeUrl, check, metric, sho
   check((await mdFrame.locator('h1').innerText()) === 'Notes', 'Markdown heading renders');
   check((await mdFrame.locator('li').allInnerTexts()).join(',') === 'one,two', 'Markdown list renders as real <li> elements');
   check(await mdFrame.locator('strong').innerText() === 'bold', 'Markdown bold emphasis renders');
+  await mdFrame.locator('table').waitFor();
+  check(JSON.stringify(await mdFrame.locator('table thead th').allInnerTexts()) === JSON.stringify(['Layer', 'Carries']), 'GFM table header renders as real <th> elements');
+  check(await mdFrame.locator('table tbody tr').count() === 2, 'GFM table body rows render');
+  check((await mdFrame.locator('table tbody td').allInnerTexts()).join('|') === 'Rendered|the faithful preview|Source|the real editor', 'GFM table cells render inline content');
   const mdImageLoaded = await mdFrame.locator('img').evaluate((img) => new Promise((resolve) => {
     if (img.complete) return resolve(img.naturalWidth > 0);
     img.onload = () => resolve(img.naturalWidth > 0);
@@ -241,14 +246,22 @@ export default async function run({ page, baseUrl, bridgeUrl, check, metric, sho
   await page.locator('.cm-content').waitFor();
   check((await docText(page,'.cm-content')) === 'Sibling text file.\n', 'A plain text file still opens the native FileSurface editor directly');
 
-  // --- close and reopen restores the rendered view (not stuck on Source) ---
+  // --- the Rendered/Source choice follows the tab across close/reopen ---
   await openFile('notes.md');
   await page.getByRole('tab', { name: 'Source' }).click();
   await page.locator('.cm-content').waitFor();
   await page.keyboard.press('Meta+w');
   await openFile('notes.md');
+  // Source was the tab's persisted view, so the fresh mount reopens in
+  // Source — the choice belongs to the tab, not to the mount.
+  await page.locator('.cm-content').waitFor();
+  check(await page.getByRole('tab', { name: 'Source' }).getAttribute('aria-selected') === 'true', 'Reopening a tab restores its persisted Source view');
+  await page.getByRole('tab', { name: 'Rendered' }).click();
   await page.frameLocator('iframe.material-frame').locator('h1').waitFor();
-  check(true, 'Close and reopen restores the Markdown rendered view (fresh mount, not stuck on Source)');
+  await page.keyboard.press('Meta+w');
+  await openFile('notes.md');
+  await page.frameLocator('iframe.material-frame').locator('h1').waitFor();
+  check(true, 'Reopening after returning to Rendered opens the faithful rendered view');
 
   check(errors.length === 0, 'No uncaught page errors during the material walk', { errors });
   metric('material_checks', 1);

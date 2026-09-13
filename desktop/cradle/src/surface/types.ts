@@ -50,7 +50,7 @@ export interface SurfaceBinding {
   browser?: {url:string};
   terminal?: {cwd?:string};
   flow?: {flowRef:string;path:string};
-  view?: {graphOrigin?:string;knowledgePlane?: "graph"|"page";encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect"};
+  view?: {graphOrigin?:string;knowledgePlane?: "graph"|"page";encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect";materialView?: "rendered"|"source"};
   location?: import("../kernel/types").CentralLocation;
 }
 

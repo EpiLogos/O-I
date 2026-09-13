@@ -1,7 +1,8 @@
 /**
  * A small, dependency-free Markdown → HTML converter for the FND-04
  * Markdown rendered view. Not CommonMark-complete: headings, paragraphs,
- * fenced code, unordered/ordered lists, emphasis, links and images.
+ * fenced code, unordered/ordered lists, GFM tables, emphasis, links and
+ * images.
  * Everything else is escaped, never interpreted as raw HTML — the
  * rendered view has no ambient trust beyond what this converter
  * recognises. Images and relative links are resolved through
@@ -81,6 +82,32 @@ export function renderMarkdown(source: string, options: MarkdownOptions): string
     }
   };
 
+  // GFM tables: a header row of pipe-separated cells, a delimiter row of
+  // `---`/`:-:` cells, then body rows until a blank line. Only the two
+  // shapes this document set uses (plain and header-aligned cells); cells
+  // render through the same inline pass as everything else and stay
+  // escaped.
+  const splitRow = (line: string): string[] =>
+    line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map(cell => cell.trim());
+  const isDelimiterRow = (line: string): boolean => {
+    if (!line.includes("-") || !line.includes("|")) return false;
+    const cells = splitRow(line);
+    return cells.length > 0 && cells.every(cell => /^:?-+:?$/.test(cell));
+  };
+  const renderTable = (header: string[]): string => {
+    index += 2; // header + delimiter
+    const rows: string[][] = [];
+    while (index < lines.length && lines[index].trim() !== "" && lines[index].includes("|")) {
+      const cells = splitRow(lines[index]);
+      while (cells.length < header.length) cells.push("");
+      rows.push(cells.slice(0, header.length));
+      index++;
+    }
+    const head = `<thead><tr>${header.map(cell => `<th>${renderInline(cell, options.resolveAsset)}</th>`).join("")}</tr></thead>`;
+    const body = `<tbody>${rows.map(row => `<tr>${row.map(cell => `<td>${renderInline(cell, options.resolveAsset)}</td>`).join("")}</tr>`).join("")}</tbody>`;
+    return `<table>${head}${body}</table>`;
+  };
+
   let index = 0;
   while (index < lines.length) {
     const line = lines[index];
@@ -108,6 +135,14 @@ export function renderMarkdown(source: string, options: MarkdownOptions): string
       const level = heading[1].length;
       blocks.push(`<h${level}>${renderInline(heading[2], options.resolveAsset)}</h${level}>`);
       index++;
+      continue;
+    }
+    if (line.includes("|") && index + 1 < lines.length && isDelimiterRow(lines[index + 1])) {
+      // A table may interrupt a paragraph (GFM): the pending paragraph is
+      // flushed first, then the header row opens the table.
+      flushParagraph();
+      flushList();
+      blocks.push(renderTable(splitRow(line)));
       continue;
     }
     if (unordered) {
