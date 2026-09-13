@@ -51,6 +51,7 @@ pub const AIKIT_ACTION_ROUTE: &str = "knowledge/route";
 pub const AIKIT_ACTION_RUN: &str = "run";
 pub const AIKIT_ACTION_OVERLAY_SET: &str = "skill/overlay/set";
 pub const AIKIT_ACTION_CONTEMPLATE_FLOW: &str = "action:contemplate-flow";
+pub const AIKIT_ACTION_CONTEMPLATE_NOW: &str = "action:contemplate-now";
 
 /// One invocation of an owner-disclosed Action on one row/node ref. Every
 /// field is the owner spelling, verbatim — the kernel adds nothing.
@@ -149,6 +150,12 @@ pub fn invoke(
         // W4-D binding: preflight-first, record-gated execution through the
         // AIKit Flow cognition owner operations (`flow_cognition.rs`).
         return flow_cognition::dispatch_contemplate(cwd, &invocation.target_ref, invocation.input.as_ref());
+    }
+    if action == AIKIT_ACTION_CONTEMPLATE_NOW {
+        // The re-aimed subject (Central #175 cell 2): contemplate a NOW
+        // clearing's raw T stream. The kernel reads the stream from
+        // Central's own Action and supplies it as the AIKit seam.
+        return flow_cognition::dispatch_contemplate_now(client, cwd, &invocation.target_ref, invocation.input.as_ref());
     }
     ActionDispatch::UnknownOwner { action: action.to_owned() }
 }
