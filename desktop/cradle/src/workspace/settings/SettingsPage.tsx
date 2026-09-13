@@ -17,7 +17,7 @@ import {Loading} from "../../shared/Loading";
 import {formatRelativeTime} from "../../shared/relativeTime";
 import {GroundChooser} from "../GroundChooser";
 import type {ActivityExtras, CompositionReading, OwnerMount, SettingsView} from "./types";
-import {buildSections, RAIL} from "./world";
+import {buildSections, frameFact, RAIL} from "./world";
 import {ProductSection} from "./ProductSection";
 import {NativeProductSection} from "./NativeProductSection";
 import "./settings.css";
@@ -99,6 +99,7 @@ export function SettingsPage() {
       <div><h2>System</h2><p>The world read, configured, and maintained.</p></div>
       <dl className="settings-world-facts">
         <div><dt>Ground</dt><dd>{ground===undefined?"Unavailable":ground??"No default Central bound"}</dd></div>
+        <div><dt>Frame</dt><dd>{reading?frameFact(reading):"Not yet read"}</dd></div>
         <div><dt>Suite</dt><dd>{reading?String(reading.suite_executable??"oi"):"Not yet read"}</dd></div>
         <div><dt>Census</dt><dd>{reading?`${ready} disclosed · ${sections.length-ready} not disclosed`:"Not yet read"}</dd></div>
         {reading&&Number.isFinite(reading.observed_at_unix_ms)&&<div><dt>Observed</dt><dd>{formatRelativeTime(reading.observed_at_unix_ms)}</dd></div>}

@@ -110,6 +110,12 @@ fn composition_save_cas(composition: &Composition) -> Result<(), String> {
         Some(path) => { object.insert("personal_ground".into(), json!(path)); }
         None => { object.remove("personal_ground"); }
     }
+    match &composition.requested_mode {
+        Some(requested) => {
+            object.insert("requested_mode".into(), serde_json::to_value(requested).map_err(|e| e.to_string())?);
+        }
+        None => { object.remove("requested_mode"); }
+    }
     let bytes = serde_json::to_vec_pretty(&value).map_err(|e| e.to_string())?;
     composition_publish(&path, basis.as_deref(), &bytes)?;
     drop(basis);

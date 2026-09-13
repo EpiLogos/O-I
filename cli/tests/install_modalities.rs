@@ -1,8 +1,9 @@
-//! Installation-modality integration proofs (O:I #192): every modality's
-//! install/init path reports its frame, legacy state discloses `unknown`
-//! honestly, install sources are exclusive-and-declared, and the
-//! fresh-ground `machine.adopt-current` wiring (Central #87) is proven
-//! against a scripted fake ctrl — never a real Central install.
+//! Installation-path provenance integration proofs (O:I #192 as superseded
+//! by #268): every path's install/init flow reports its recorded label,
+//! legacy state discloses `unknown` honestly, install sources are
+//! exclusive-and-declared, and the fresh-ground `machine.adopt-current`
+//! wiring (Central #87) is proven against a scripted fake ctrl — never a
+//! real Central install.
 
 use serde_json::Value;
 use std::fs;
@@ -217,10 +218,19 @@ mod unix {
         let world = output(oi(home.path(), bin.path()).args(["current-world", "--json"]));
         assert!(world.status.success());
         let world: Value = serde_json::from_slice(&world.stdout).unwrap();
-        assert_eq!(world["composition_modality"], "fresh-ground");
+        assert_eq!(world["schema"], "oi.current-world/v2");
+        assert_eq!(
+            world["context_frame"]["containing_frame"], "cf5",
+            "the material frame applies with Central alone"
+        );
+        assert_eq!(
+            world["context_frame"]["install_mode"],
+            Value::Null,
+            "Central alone is an explicit selection, not one of the six install modes"
+        );
         assert_eq!(
             world["positions"][0]["modality"], "fresh-ground",
-            "central position carries its recorded modality"
+            "central position carries its recorded path provenance"
         );
 
         // doctor surfaces disclose the modality too.
@@ -267,7 +277,71 @@ mod unix {
 
         let world = output(oi(home.path(), bin.path()).args(["current-world", "--json"]));
         let world: Value = serde_json::from_slice(&world.stdout).unwrap();
-        assert_eq!(world["composition_modality"], "unknown");
+        assert_eq!(
+            world["positions"][0]["modality"], "unknown",
+            "legacy state must disclose unknown provenance at the position, not a guess"
+        );
+        assert_eq!(
+            world["context_frame"]["containing_frame"], "cf5",
+            "the material frame never depended on a registration field"
+        );
+    }
+
+    #[test]
+    fn a_requested_mode_is_recorded_and_disclosed_with_honest_divergence() {
+        let home = TempDir::new().unwrap();
+        let bin = TempDir::new().unwrap();
+        fake_ctrl(bin.path(), "ctrl", AdoptMode::Supports);
+
+        // The person states the operational core (0/1/2) as the mode adopted.
+        let set = output(oi(home.path(), bin.path()).args(["mode", "set", "0/1/2", "--json"]));
+        assert!(set.status.success(), "{}", text(&set.stderr));
+        let state = composition(home.path());
+        assert_eq!(state["requested_mode"]["frame"], "0/1/2");
+
+        // An unknown frame is refused with the modes the frames organise.
+        let refused = output(oi(home.path(), bin.path()).args(["mode", "set", "9/9"]));
+        assert_eq!(refused.status.code(), Some(2));
+        assert!(
+            text(&refused.stderr).contains("unknown install mode"),
+            "{}",
+            text(&refused.stderr)
+        );
+
+        // Central registered alone: presence {0} matches no mode, so the
+        // requested 0/1/2 names the world — degraded, shortfall named.
+        let install = output(oi(home.path(), bin.path()).args(["install", "central"]));
+        assert!(install.status.success(), "{}", text(&install.stderr));
+        let world = output(oi(home.path(), bin.path()).args(["current-world", "--json"]));
+        assert!(world.status.success());
+        let world: Value = serde_json::from_slice(&world.stdout).unwrap();
+        assert_eq!(world["requested_mode"]["mode"], "0/1/2");
+        assert_eq!(world["context_frame"]["install_mode"], "0/1/2");
+        assert_eq!(world["context_frame"]["install_mode_basis"], "requested");
+        let warnings = world["warnings"].as_array().unwrap();
+        assert!(
+            warnings
+                .iter()
+                .any(|warning| warning.as_str().unwrap().contains("not fully realised")),
+            "{warnings:?}"
+        );
+
+        // The mode catalogue discloses the six modes the frames organise.
+        let list = output(oi(home.path(), bin.path()).args(["mode", "list", "--json"]));
+        assert!(list.status.success(), "{}", text(&list.stderr));
+        let list: Value = serde_json::from_slice(&list.stdout).unwrap();
+        assert_eq!(list["schema"], "oi.install-modes/v1");
+        assert_eq!(list["modes"].as_array().unwrap().len(), 6);
+        assert_eq!(list["requested_mode"]["mode"], "0/1/2");
+
+        // Clearing the request returns the world to presence-only
+        // resolution: {central} alone names no mode.
+        let clear = output(oi(home.path(), bin.path()).args(["mode", "clear"]));
+        assert!(clear.status.success(), "{}", text(&clear.stderr));
+        let world = output(oi(home.path(), bin.path()).args(["current-world", "--json"]));
+        let world: Value = serde_json::from_slice(&world.stdout).unwrap();
+        assert_eq!(world["requested_mode"], Value::Null);
+        assert_eq!(world["context_frame"]["install_mode"], Value::Null);
     }
 
     #[test]

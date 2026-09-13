@@ -64,6 +64,20 @@ struct Composition {
     personal_ground: Option<String>,
     #[serde(default)]
     modules: BTreeMap<String, Registration>,
+    /// The person's own statement of which install mode (#268) they are
+    /// adopting — recorded only through `oi mode set`, never inferred from
+    /// presence. `None` until stated; disclosure resolves the mode from
+    /// effective presence when no statement exists.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    requested_mode: Option<RequestedMode>,
+}
+
+/// One recorded mode statement (#268). The frame notation is the mode id.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) struct RequestedMode {
+    pub frame: String,
+    pub set_at_unix_seconds: u64,
+    pub set_by: String,
 }
 
 impl Default for Composition {
@@ -73,6 +87,7 @@ impl Default for Composition {
             loaded_basis: std::cell::RefCell::new(None),
             personal_ground: None,
             modules: BTreeMap::new(),
+            requested_mode: None,
         }
     }
 }
