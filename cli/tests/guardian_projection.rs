@@ -114,10 +114,7 @@ fn guardian_sources_carry_discoverable_frontmatter() {
         .collect();
     assert_eq!(
         names,
-        vec![
-            "oi".to_owned(),
-            "oi-suite-operator".to_owned(),
-        ]
+        vec!["oi".to_owned(), "oi-suite-operator".to_owned(),]
     );
 
     // Every shipped source is manifest-referenced and O:I-owned.
@@ -840,7 +837,6 @@ fn sync_refreshes_a_stale_adopted_tree_through_aikit_procedures() {
             "payload for {name} was not refreshed"
         );
     }
-
 }
 
 #[cfg(unix)]

@@ -1,0 +1,48 @@
+/* Search material, owner direction 2026-09-13. Opt-in desktop roles: a
+ * local frosted plane, not an opaque card over a blurred whole workspace.
+ * Foregrounds stay opaque. Other surfaces and site tokens are unchanged. */
+.oi-desktop {
+  --oi-search-width: 680px;
+  --oi-search-top: clamp(24px, 12vh, 120px);
+  --oi-search-viewport-gap: 20px;
+  --oi-search-radius: 20px;
+  --oi-search-solid: var(--oi-sidebar-ground);
+  --oi-search-glass: rgba(245, 246, 240, .76);
+  --oi-search-scrim: rgba(34, 41, 31, .08);
+  --oi-search-edge: rgba(255, 255, 250, .74);
+  --oi-search-highlight: inset 0 1px 0 rgba(255, 255, 255, .62);
+  --oi-search-shadow: 0 24px 80px rgba(26, 34, 24, .20), 0 4px 16px rgba(26, 34, 24, .10);
+  --oi-search-blur: 28px;
+  --oi-search-saturation: 1.25;
+  --oi-search-selected: rgba(101, 120, 82, .12);
+  --oi-search-selection-edge: rgba(101, 120, 82, .28);
+  --oi-search-inner-rule: rgba(101, 120, 82, .15);
+  --oi-search-query-size: 22px;
+  --oi-search-result-size: 14px;
+  --oi-search-meta-size: 11px;
+  --oi-search-result-weight: 500;
+  --oi-search-line-height: 1.45;
+  --oi-search-input-height: 64px;
+  --oi-search-row-height: 54px;
+  --oi-search-symbol: 22px;
+  --oi-search-travel: 6px;
+  --oi-search-outline-offset: -2px;
+  --oi-search-key-ground: rgba(101, 120, 82, .06);
+}
+@media (prefers-contrast: more) {
+  .oi-desktop {
+    --oi-search-inner-rule: var(--oi-foreground);
+    --oi-search-edge: var(--oi-foreground);
+    --oi-search-selection-edge: var(--oi-focus);
+  }
+}
+@media (forced-colors: active) {
+  .oi-desktop {
+    --oi-search-solid: Canvas;
+    --oi-search-edge: CanvasText;
+    --oi-search-inner-rule: CanvasText;
+    --oi-search-selected: Highlight;
+    --oi-search-selection-edge: Highlight;
+    --oi-search-key-ground: Canvas;
+  }
+}

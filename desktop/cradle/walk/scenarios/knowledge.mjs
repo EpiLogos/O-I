@@ -52,6 +52,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
     check(await overlay.count()===0,'macOS Control-K remains ordinary editor input rather than summoning search');
   }
   await page.keyboard.press(`${primary}+k`);
+  await overlay.getByRole('button',{name:'Search options',exact:true}).click();
   await overlay.getByLabel('Search shortcut').selectOption('true');
   await page.keyboard.press('Escape');
   check((await page.locator('.summon-search kbd').innerText()).includes('⇧'),'Sidebar shortcut label follows the selected leader');
@@ -59,6 +60,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   check(await overlay.count()===0,'Previous shortcut no longer summons the configured aperture');
   await page.keyboard.press(`${primary}+Shift+k`); await overlay.waitFor();
   check(await overlay.isVisible(),'Configured shifted leader summons the same aperture');
+  await overlay.getByRole('button',{name:'Search options',exact:true}).click();
   await overlay.getByLabel('Search shortcut').selectOption('false'); await page.keyboard.press('Escape');
   await page.keyboard.press(`${primary}+k`);await overlay.getByRole('searchbox').fill('editor-walk');
   await overlay.locator('li strong').first().waitFor();await page.waitForFunction(()=>document.querySelector('.search-aperture ul')?.getAttribute('aria-busy')==='false');
