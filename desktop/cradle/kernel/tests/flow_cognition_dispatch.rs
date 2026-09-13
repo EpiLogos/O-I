@@ -228,6 +228,118 @@ impl Fixture {
         self.root.join("Work/W4DProj")
     }
 
+    /// The NOW contemplation dispatch: the same kernel route, re-aimed
+    /// subject (Central #175 cell 2). The Action spelling is the kernel's
+    /// binding; the target ref is the now_ref, verbatim.
+    fn dispatch_now(&self, target_ref: &str, input: Option<Value>) -> ActionDispatch {
+        let mut kernel = Kernel::new(self.client());
+        let outcome = kernel
+            .apply(KernelOp::InvokeAction {
+                project: Some("W4DProj".into()),
+                invocation: ActionInvocation {
+                    action: "action:contemplate-now".into(),
+                    target_ref: target_ref.into(),
+                    input,
+                },
+            })
+            .unwrap();
+        assert!(
+            outcome.receipts.is_empty(),
+            "the dispatch adapter records nothing of its own: no kernel receipts"
+        );
+        let KernelOpResult::ActionDispatched { dispatch } = outcome.result else {
+            panic!("typed ActionDispatched result expected")
+        };
+        dispatch
+    }
+
+    /// Allocate one NOW clearing in the fixture ground and append one raw
+    /// fixture to its T stream through Central's own Actions. The ground's
+    /// placement policy is a controlled test fixture with the exact
+    /// recognition the native authority law requires.
+    fn allocated_now_with_fixture(&self) -> String {
+        let relations_path = self.root.join("Control/relations/source-relations.json");
+        let mut relations: Value = match fs::read_to_string(&relations_path) {
+            Ok(raw) => serde_json::from_str(&raw).unwrap(),
+            Err(_) => json!({
+                "schema": "central.control.ground-relations/v1",
+                "project_id": "control:root",
+                "relations": []
+            }),
+        };
+        let policy_path = "Control/user/placement.json";
+        write(
+            &self.root.join(policy_path),
+            r#"{
+  "schema": "central.work-placement-policy/v1",
+  "scope_ref": "control:root",
+  "authority_refs": [],
+  "writable": [{"path": "Work/W4DProj", "class": "repository"}],
+  "protected": [],
+  "enforcement": "harness-interception",
+  "required_coverage": ["filesystem"],
+  "lease_seconds": 300
+}
+"#,
+        );
+        let policy_ref = format!("central:source:control:root:{policy_path}");
+        let entry = json!({
+            "ref": policy_ref,
+            "path": policy_path,
+            "roles": ["work-placement-policy"],
+            "provenance": "human-adopted",
+            "standing": "architecture-contract",
+            "treatment": "projectcentral-user",
+            "recognition": "explicit-controlled-test-fixture-not-personal-adoption",
+            "recorded_at_unix_seconds": 1
+        });
+        let relations_entries = relations["relations"]
+            .as_array_mut()
+            .expect("relations array");
+        if !relations_entries
+            .iter()
+            .any(|row| row["path"] == policy_path)
+        {
+            relations_entries.push(entry);
+        }
+        write(
+            &relations_path,
+            &format!("{}\n", serde_json::to_string_pretty(&relations).unwrap()),
+        );
+
+        let client = self.client();
+        let policy = client
+            .run("central.work.policy", json!({"project": Value::Null}))
+            .expect("root work policy resolves");
+        let allocation = client
+            .run(
+                "central.now.allocate",
+                json!({
+                    "project": Value::Null,
+                    "task_ref": "task:now-contemplate",
+                    "purpose": "NOW contemplation dispatch binding",
+                    "expected_policy_revision": policy["revision"],
+                }),
+            )
+            .expect("the fixture ground allocates a NOW clearing");
+        let now_ref = allocation["now_ref"].as_str().unwrap().to_owned();
+        client
+            .run(
+                "central.now.thoughts.append",
+                json!({
+                    "project": Value::Null,
+                    "now_ref": now_ref,
+                    "slug": "raw-finding",
+                    "day": "2026-09-13",
+                    "actor": "agent:w4d",
+                    "actor_kind": "agent",
+                    "content": "what returned today",
+                }),
+            )
+            .expect("the raw fixture appends");
+        now_ref
+    }
+
     fn dispatch(&self, target_ref: &str, input: Option<Value>) -> ActionDispatch {
         let mut kernel = Kernel::new(self.client());
         let outcome = kernel
@@ -490,4 +602,52 @@ mod support {
             }
         }
     }
+}
+
+#[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates with the NOW contemplation reading"]
+fn now_subject_dispatch_reads_central_stream_and_surfaces_the_owner_preflight() {
+    let fixture = Fixture::new("contemplate-now");
+    let now_ref = fixture.allocated_now_with_fixture();
+
+    // Bare dispatch: the kernel reads the stream from Central and the AIKit
+    // owner answers its explicit preflight — carried verbatim.
+    let dispatch = fixture.dispatch_now(&now_ref, None);
+    let ActionDispatch::Invoked {
+        owner_operation,
+        data,
+    } = &dispatch
+    else {
+        panic!("NOW dispatch must invoke the owner preflight, got {dispatch:?}")
+    };
+    assert_eq!(owner_operation, "aikit flow preflight");
+    assert_eq!(data["version"], "aikit.now-contemplation/v1");
+    assert_eq!(data["now_ref"], now_ref);
+    let preflight = &data["preflight"];
+    assert_eq!(preflight["fixture_count"], 1);
+    assert_eq!(preflight["days"], json!(["2026-09-13"]));
+    assert_eq!(
+        preflight["source_fixtures"],
+        json!(["raw-finding-2026-09-13.md"])
+    );
+    assert!(preflight["invocation_ref"]
+        .as_str()
+        .unwrap_or("")
+        .starts_with("now-contemplate/"));
+    assert_eq!(preflight["automatic_agent_or_model_invocation"], false);
+    // The CLI surface carries no host executor: the honest terminal state.
+    assert_eq!(data["contemplation"]["state"], "unavailable");
+
+    // A NOW ref that owns no stream refuses through Central's own words.
+    let refused = fixture.dispatch_now("central:now:control:root:nowhere", None);
+    assert!(
+        matches!(
+            refused,
+            ActionDispatch::OwnerRefused { ref owner_operation, .. }
+                if owner_operation == "central.now.thoughts.read"
+        ),
+        "the stream read refusal names Central's Action, got {refused:?}"
+    );
+
+    let _ = fs::remove_dir_all(&fixture.root);
 }

@@ -64,6 +64,13 @@ pub const CENTRAL_HORIZON_SCHEMA: &str = "central.source-change-horizon/v1";
 /// carrying a payload (the owner's own version strings).
 pub const FLOW_COGNITION_VERSION: &str = "aikit.flow-cognition/v1";
 pub const FLOW_CHANGED_SINCE_VERSION: &str = "aikit.flow-changed-since/v1";
+/// The NOW-subject contemplation reading (Central #175 cell 2): the
+/// contemplate subject is a NOW clearing's raw T stream.
+pub const NOW_CONTEMPLATE_VERSION: &str = "aikit.now-contemplation/v1";
+
+/// Central's owner Action that carries one NOW's raw contemplative stream —
+/// the kernel reads the seam from Central itself and supplies it verbatim.
+pub const CENTRAL_THOUGHTS_READ_ACTION: &str = "central.now.thoughts.read";
 
 // ---------------------------------------------------------------------------
 // Seam-file transport materialisation (per-call, removed before return)
@@ -287,6 +294,152 @@ fn verify_cognition_payload(data: &Value, executed: bool) -> Result<(), String> 
         return Err("AIKit returned a Flow cognition payload with no explicit state".to_owned());
     }
     Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// W1.4 re-aimed — the NOW contemplation dispatch binding (Central #175 cell 2)
+// ---------------------------------------------------------------------------
+
+/// Dispatch one `action:contemplate-now` invocation: the subject is a NOW
+/// clearing's raw contemplative stream. The kernel reads that stream from
+/// Central's own Action (`central.now.thoughts.read`) through the caller's
+/// client and materialises it as the AIKit `--fixtures` seam, verbatim —
+/// the kernel fabricates no stream. The owner call is preflight-first and
+/// record-gated exactly like the Flow binding; refusals and unavailable
+/// answers ride verbatim and the kernel records nothing. The T-prime write
+/// is not a kernel concern here: it belongs to the caller through Central's
+/// `central.now.learnings.distill` Action.
+pub fn dispatch_contemplate_now(
+    client: &CentralClient,
+    cwd: &Path,
+    now_ref: &str,
+    input: Option<&Value>,
+) -> ActionDispatch {
+    let basis = match input {
+        None => ContemplateBasis::default(),
+        Some(Value::Object(_)) => match ContemplateBasis::parse(input) {
+            Ok(basis) => basis,
+            Err(detail) => return ActionDispatch::MalformedRef { detail },
+        },
+        Some(other) => {
+            return ActionDispatch::MalformedRef {
+                detail: format!(
+                    "Contemplate NOW input must be a JSON object naming the owner seams, got {other}"
+                ),
+            };
+        }
+    };
+    if now_ref.trim().is_empty() {
+        return ActionDispatch::MalformedRef {
+            detail: "the contemplated NOW ref is empty".to_owned(),
+        };
+    }
+    // Central's own reading of the stream: the seam content, verbatim.
+    // Scope follows the caller when given; otherwise the read is explicit
+    // root (the now_ref grammar names its own scope, so the kernel never
+    // lets a configured project co-reference be back-filled here).
+    let mut read_input = json!({"now_ref": now_ref, "include_content": true});
+    match input.and_then(|value| value.get("project")) {
+        Some(project) => read_input["project"] = project.clone(),
+        None => read_input["project"] = Value::Null,
+    }
+    let stream = match client.run(CENTRAL_THOUGHTS_READ_ACTION, read_input) {
+        Ok(stream) => stream,
+        Err(OwnerCallError::Unavailable { detail }) => {
+            return ActionDispatch::OwnerUnavailable {
+                owner_operation: CENTRAL_THOUGHTS_READ_ACTION.to_owned(),
+                detail,
+            };
+        }
+        Err(OwnerCallError::Refused { message }) => {
+            return ActionDispatch::OwnerRefused {
+                owner_operation: CENTRAL_THOUGHTS_READ_ACTION.to_owned(),
+                message,
+            };
+        }
+        Err(OwnerCallError::Malformed { detail }) => {
+            return ActionDispatch::OwnerRefused {
+                owner_operation: CENTRAL_THOUGHTS_READ_ACTION.to_owned(),
+                message: detail,
+            };
+        }
+    };
+    let seam_error = |error: String| ActionDispatch::OwnerUnavailable {
+        owner_operation: basis.owner_operation().to_owned(),
+        detail: error,
+    };
+    let dir = match SeamDir::new("contemplate-now") {
+        Ok(dir) => dir,
+        Err(error) => return seam_error(error),
+    };
+    let fixtures = match dir.write("fixtures.json", &stream) {
+        Ok(path) => path,
+        Err(error) => return seam_error(error),
+    };
+    let horizon = match &basis.horizon {
+        Some(value) => match dir.write("horizon.json", value) {
+            Ok(path) => Some(path),
+            Err(error) => return seam_error(error),
+        },
+        None => None,
+    };
+    let runtime = match &basis.runtime {
+        Some(value) => match dir.write("runtime.json", value) {
+            Ok(path) => Some(path),
+            Err(error) => return seam_error(error),
+        },
+        None => None,
+    };
+    let mut args: Vec<String> = vec![
+        "flow".into(),
+        basis.subcommand().into(),
+        "--now-ref".into(),
+        now_ref.into(),
+        "--fixtures".into(),
+        fixtures.display().to_string(),
+    ];
+    if let Some(horizon) = &horizon {
+        args.extend(["--horizon".into(), horizon.display().to_string()]);
+    }
+    if let Some(runtime) = &runtime {
+        args.extend(["--runtime".into(), runtime.display().to_string()]);
+    }
+    let owner_operation = basis.owner_operation().to_owned();
+    let borrowed: Vec<&str> = args.iter().map(String::as_str).collect();
+    match knowledge::run(cwd, &borrowed) {
+        Ok(data) => {
+            if data.get("version").and_then(Value::as_str) != Some(NOW_CONTEMPLATE_VERSION)
+                || data
+                    .pointer("/contemplation/state")
+                    .and_then(Value::as_str)
+                    .is_none()
+            {
+                return ActionDispatch::OwnerRefused {
+                    owner_operation,
+                    message: format!(
+                        "AIKit returned an unsupported NOW contemplation payload (version {:?}, expected {NOW_CONTEMPLATE_VERSION})",
+                        data.get("version")
+                    ),
+                };
+            }
+            ActionDispatch::Invoked {
+                owner_operation,
+                data,
+            }
+        }
+        Err(knowledge::CallError::Refused { message }) => ActionDispatch::OwnerRefused {
+            owner_operation,
+            message,
+        },
+        Err(knowledge::CallError::Unavailable { detail }) => ActionDispatch::OwnerUnavailable {
+            owner_operation,
+            detail,
+        },
+        Err(knowledge::CallError::Malformed { detail }) => ActionDispatch::OwnerRefused {
+            owner_operation,
+            message: detail,
+        },
+    }
 }
 
 // ---------------------------------------------------------------------------
