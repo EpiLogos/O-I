@@ -1,5 +1,6 @@
 import {Loading} from "../../shared/Loading";
 import {EncounterList,type EncounterRow} from "../../encounter/EncounterList";
+import {RememberedList} from "../../context/RememberedList";
 import {FlowList} from "../../flow/FlowList";
 import {ReturnsTray} from "../../receiving/ReturnsTray";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -131,7 +132,7 @@ export function WorldNavigator({ onSystem, onFactoryDevelopment,onOpenEncounter,
               expanded={navigation.directories??[`${project.path}/ProjectCentral`,`${project.path}/ProjectCentral/user`]}
               onExpansion={directories=>change({directories})}/>}
             {navigation.mode === "wiki" && <button className="project-wiki-link" disabled={!wiki} onClick={()=>openWiki(wiki!,`${project.name} wiki`,project.name)}>{wiki ? `${project.name} neighbourhood` : "No wiki declared"}</button>}
-            {(navigation.mode??"chats") === "chats" && <><FlowList project={project.name} onOpen={row=>onOpenFlow ? onOpenFlow(row,project.name) : Promise.resolve()} onNewFlow={onNewFlow ? ()=>onNewFlow(project.name) : undefined}/><EncounterList project={project.name} onOpen={onOpenEncounter} activeRef={activeEncounterRef}/></>}
+            {(navigation.mode??"chats") === "chats" && <><FlowList project={project.name} onOpen={row=>onOpenFlow ? onOpenFlow(row,project.name) : Promise.resolve()} onNewFlow={onNewFlow ? ()=>onNewFlow(project.name) : undefined}/><EncounterList project={project.name} onOpen={onOpenEncounter} activeRef={activeEncounterRef}/><RememberedList path={`Work/${project.name}/ProjectCentral/agents/remembered`} label={project.name}/></>}
             <ReturnsTray project={project.name} refresh={fileRefresh}/>
           </ProjectBranch>;
         })}
