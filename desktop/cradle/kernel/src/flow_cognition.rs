@@ -335,9 +335,13 @@ pub fn dispatch_contemplate_now(
         };
     }
     // Central's own reading of the stream: the seam content, verbatim.
+    // Scope follows the caller when given; otherwise the read is explicit
+    // root (the now_ref grammar names its own scope, so the kernel never
+    // lets a configured project co-reference be back-filled here).
     let mut read_input = json!({"now_ref": now_ref, "include_content": true});
-    if let Some(project) = input.and_then(|value| value.get("project")) {
-        read_input["project"] = project.clone();
+    match input.and_then(|value| value.get("project")) {
+        Some(project) => read_input["project"] = project.clone(),
+        None => read_input["project"] = Value::Null,
     }
     let stream = match client.run(CENTRAL_THOUGHTS_READ_ACTION, read_input) {
         Ok(stream) => stream,

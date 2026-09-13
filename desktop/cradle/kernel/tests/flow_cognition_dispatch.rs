@@ -269,12 +269,12 @@ impl Fixture {
         };
         let policy_path = "Control/user/placement.json";
         write(
-            &self.root.join(&policy_path),
+            &self.root.join(policy_path),
             r#"{
   "schema": "central.work-placement-policy/v1",
   "scope_ref": "control:root",
   "authority_refs": [],
-  "writable": [{"path": "Work", "class": "repository"}],
+  "writable": [{"path": "Work/W4DProj", "class": "repository"}],
   "protected": [],
   "enforcement": "harness-interception",
   "required_coverage": ["filesystem"],
@@ -327,6 +327,7 @@ impl Fixture {
             .run(
                 "central.now.thoughts.append",
                 json!({
+                    "project": Value::Null,
                     "now_ref": now_ref,
                     "slug": "raw-finding",
                     "day": "2026-09-13",
