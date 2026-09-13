@@ -1,0 +1,48 @@
+{
+  "purpose": "Additive source module of O-I#65 for owner-approved O-I#279; not another campaign or runtime.",
+  "story_source": "docs/experience/PERSONAL-WEB.md",
+  "ux_tier": 1,
+  "standing": "owner-approved direction; agent-authored implementation/experience elaboration, not executed acceptance",
+  "families": [
+    {
+      "id": "PW",
+      "title": "Inhabit, craft and share a personal web",
+      "ids": [
+        "PW01",
+        "PW02",
+        "PW03",
+        "PW04",
+        "PW05",
+        "PW06",
+        "PW07",
+        "PW08",
+        "PW09",
+        "PW10",
+        "PW11",
+        "PW12"
+      ],
+      "owners": [
+        "O-I",
+        "Central",
+        "ai-kit",
+        "Actuation",
+        "Workcell",
+        "QL-MEF"
+      ],
+      "source_refs": [
+        "https://github.com/EpiLogos/O-I/issues/279",
+        "docs/cradle/PERSONAL-WEB.md",
+        "https://github.com/EpiLogos/QL-MEF/issues/94#issuecomment-5654421849"
+      ],
+      "proof_refs": [
+        "O-I#65:D",
+        "O-I#65:E",
+        "O-I#65:F",
+        "O-I#65:G",
+        "O-I#65:H",
+        "O-I#205",
+        "O-I#279:PW0-PW6"
+      ]
+    }
+  ]
+}

@@ -1,16 +1,19 @@
 /**
- * The two supplied document forms (Wayfinder §2) as blank-tab choices.
+ * Native HTML document forms (Wayfinder §2; Personal Web #279).
  *
- * A choice is a pointer at a real file, not a template registry: resolving
- * one lists the documents directory through Central's own file route and
+ * A choice points to a real file; the roster owns no source or person identity.
+ * Resolving one lists the documents directory through Central's own file route and
  * hands back the entry's owner location verbatim. Nothing here mints ids,
- * copies bytes or invents a third form — the Journal lives inside the 0/1
- * file. The labels are the owner's supplied ones (0/1, 4+2).
+ * copies bytes or dispatches an Agent. Journal remains inside the 0/1 file.
+ * The roster also retains planned Card/Cube scope without advertising absent files.
  */
 import { listFiles } from "../files/client";
 import type { CentralLocation, KernelTransportStatus } from "../kernel/types";
 
-export type DocumentFormKind = "document-01" | "document-42";
+import roster from "../../documents/forms.json";
+import {availableForms} from "../personal/page.mjs";
+
+export type DocumentFormKind = `document-${string}`;
 
 export interface DocumentForm {
   kind: DocumentFormKind;
@@ -19,10 +22,7 @@ export interface DocumentForm {
   file: string;
 }
 
-export const DOCUMENT_FORMS: readonly DocumentForm[] = [
-  { kind: "document-01", label: "0/1", hint: "Dialogue · Flow · Journal", file: "ql-dialogue-flow.html" },
-  { kind: "document-42", label: "4+2", hint: "Day die", file: "ql-daily-die.html" },
-];
+export const DOCUMENT_FORMS: readonly DocumentForm[] = availableForms(roster) as DocumentForm[];
 
 /** Where the supplied forms live inside the O-I ground. */
 export const DOCUMENT_FORM_DIR = "desktop/cradle/documents";
