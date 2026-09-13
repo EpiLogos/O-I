@@ -47,6 +47,42 @@ function censusRow(reading:CompositionReading|undefined,productId:string) {
   return reading?.positions.find(position=>position.product_id===productId);
 }
 
+/** The Context Frame reading (`oi.current-world/v2`, #268). A v1 census is
+ * an older installed `oi`: accepted as historical evidence, its frame facts
+ * disclose as unavailable rather than being reinterpreted here. */
+interface CensusDocument {schema?:string; context_frame?:{containing_frame?:string; install_mode?:string|null; present_positions?:number[]}}
+
+function census(reading:CompositionReading|undefined):CensusDocument|undefined {
+  return reading?.current_world.data as CensusDocument|undefined;
+}
+
+/** Provenance names the schema actually read, not the one we hope for. */
+function censusProvenance(reading:CompositionReading|undefined):string {
+  const schema = census(reading)?.schema;
+  return typeof schema==="string" ? schema : "oi.current-world";
+}
+
+/** Where each install mode sits (mirror of `cli/src/context_frames.rs` —
+ * the CLI catalogue is canonical). The frame notation is the mode id. */
+const MODE_NAMES:Record<string,string> = {
+  "00/00":"Desktop / integrated encounter",
+  "0/1":"Central + Actuation",
+  "0/1/2":"Central + Actuation + AIKit",
+  "0/1/2/3":"Central + Actuation + AIKit + Software Factory",
+  "4.5/0":"Central + minimal Workcell client/connectivity",
+  "5/0":"Central + Quaternal Logic",
+};
+
+/** The world-constitution fact for the System header: the containing frame
+ * and the install mode it organises here — honest about explicit
+ * selections the catalogue does not name (never forced into a mode). */
+export function frameFact(reading:CompositionReading|undefined):string {
+  const frame = census(reading)?.context_frame;
+  if(!frame||typeof frame.containing_frame!=="string") return "Not disclosed";
+  const mode = typeof frame.install_mode==="string" ? frame.install_mode : null;
+  return mode ? `${frame.containing_frame} · ${mode}` : `${frame.containing_frame} · explicit selection`;
+}
+
 function versionOf(row:ReturnType<typeof censusRow>):string|undefined {
   const version = row?.current_world.version;
   return typeof version==="string" ? version : undefined;
@@ -65,9 +101,20 @@ export function buildSections(reading:CompositionReading|undefined,extras:Activi
     const activity:ProductSectionModel["activity"] = [];
     const actions:ProductSectionModel["actions"] = [];
     if(position.product_id==="oi") {
+      const frame = reading ? census(reading)?.context_frame : undefined;
+      const mode = typeof frame?.install_mode==="string" ? frame.install_mode : null;
+      const modeValue = !reading
+        ? "Not yet read"
+        : frame===undefined
+          ? "Not disclosed (census predates v2)"
+          : mode
+            ? `${mode} — ${MODE_NAMES[mode]??"install mode"}`
+            : `explicit selection${frame.present_positions?.length?` (present: ${frame.present_positions.join(",")})`:""}`;
       configuration.push(
         {title:"Suite executable",value:reading?String(reading.suite_executable):"Not yet read",provenance:"composition_read"},
-        {title:"Product pins",value:reading?`${reading.positions.length} pinned revisions`:"Not yet read",provenance:"oi.current-world/v1"},
+        {title:"Containing frame",value:reading?(typeof frame?.containing_frame==="string"?`${frame.containing_frame} (4.0/1–4.4/5) — always applies`:"Not disclosed"):"Not yet read",provenance:censusProvenance(reading)},
+        {title:"Install mode",value:modeValue,provenance:censusProvenance(reading)},
+        {title:"Product pins",value:reading?`${reading.positions.length} pinned revisions`:"Not yet read",provenance:censusProvenance(reading)},
       );
       actions.push(
         {title:"install / verify / doctor",availability:"native_only",note:"oi CLI"},
@@ -84,7 +131,7 @@ export function buildSections(reading:CompositionReading|undefined,extras:Activi
     if(position.product_id==="ai-kit") {
       configuration.push(
         {title:"Executable bound",value:row?availabilityLabel(availability,nativeState):"Not yet read",provenance:"composition_read"},
-        ...(version?[{title:"Version",value:version,provenance:"oi.current-world/v1"} satisfies SettingRow]:[]),
+        ...(version?[{title:"Version",value:version,provenance:censusProvenance(reading)} satisfies SettingRow]:[]),
       );
       if(project) {
         activity.push(extras.spaces
@@ -101,11 +148,11 @@ export function buildSections(reading:CompositionReading|undefined,extras:Activi
       );
     }
     if(position.product_id==="software-factory") {
-      if(version) configuration.push({title:"Version",value:version,provenance:"oi.current-world/v1"});
+      if(version) configuration.push({title:"Version",value:version,provenance:censusProvenance(reading)});
       actions.push({title:"Intent / invoke",availability:"native_only",note:"via the Factory CLI"});
     }
     if(position.product_id==="workcell") {
-      if(version) configuration.push({title:"Version",value:version,provenance:"oi.current-world/v1"});
+      if(version) configuration.push({title:"Version",value:version,provenance:censusProvenance(reading)});
       actions.push(
         {title:"Lifecycle plan → release",availability:"native_only",note:"via the Workcell CLI"},
         {title:"Material read",availability:"native_only",note:"kernel material_read — projected through the owner seam"},

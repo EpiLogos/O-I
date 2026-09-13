@@ -42,8 +42,8 @@ export default async function run({ page, baseUrl, check, metric, shot, channel 
   await page.waitForFunction(path => !!document.querySelector(`[data-project-path="${path}"][aria-current="true"]`), writingPath);
   const writing=page.locator('.draft-surface .cm-content');
   await writing.waitFor({timeout:20000});
-  check(await page.locator('.draft-register select').evaluate(el=>el.value)===writingProject,
-    'Start writing opens a draft that already carries the register named before opening');
+  check((await page.locator('.draft-surface .editor-path').textContent())==='Control/user/flows',
+    'Start writing opens a draft destined for the user section\'s flows area — the ratified carrier home');
   check(owner('projectcentral.flow.list',{project:writingProject}).flows.length===flowsBefore,
     'Opening writing mints nothing — the owner\'s Flow listing is unchanged');
   await writing.click();

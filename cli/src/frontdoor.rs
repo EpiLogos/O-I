@@ -9,6 +9,8 @@ pub fn cli_main() -> ExitCode {
                 println!("  oi desktop --help             M′ application operations over the S command whole");
                 println!("  oi aikit-session-space ...    AIKit companion protocol (native arguments preserved)");
                 println!("  oi ground status|bind          inspect or explicitly change the default ground binding");
+                println!("  oi mode list|set <frame>|clear [--json]");
+                println!("                                state which install mode (#268) you are adopting; the Context Frames organise the six modes");
                 println!("Current world:");
                 println!("  oi current-world [--json]      disclose the situated six-product composition and current machine/Workcell relation");
                 println!();
@@ -52,6 +54,12 @@ pub fn cli_main() -> ExitCode {
     }
     if command == Some("ground") {
         return match command_ground_binding(args.get(1..).unwrap_or_default()) {
+            Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
+            Err(message) => { eprintln!("oi: {message}"); ExitCode::from(2) }
+        };
+    }
+    if command == Some("mode") {
+        return match command_mode(args.get(1..).unwrap_or_default()) {
             Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
             Err(message) => { eprintln!("oi: {message}"); ExitCode::from(2) }
         };

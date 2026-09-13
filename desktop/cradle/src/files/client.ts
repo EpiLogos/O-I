@@ -21,7 +21,7 @@ export async function readFileBytes(transport:KernelTransportStatus,location:Cen
 }
 
 export type FileRequest={action:"write";expected_revision:string;content:string}|{action:"history";limit?:number;before?:number}|{action:"recovery_preview"|"restore";expected_revision:string;revision:string};
-export interface FileMutation {outcome:"written"|"unchanged"|"conflict";revision?:string;current?:NativeFileReading}
+export interface FileMutation {outcome:"created"|"written"|"unchanged"|"conflict";revision?:string;current?:NativeFileReading}
 export interface FileChange {cursor:number;previous_revision:string;revision:string;actor:string;actor_kind:string;restored_from?:string}
 export interface FileHistory {current_revision:string;entries:FileChange[];more:boolean;next_before:number|null}
 export interface FilePreview {revision:string;expected_revision:string;content:string;current_content:string;changed:boolean}

@@ -1,22 +1,32 @@
-//! The canonical installation-modality vocabulary (O:I #192).
+//! The installation-path provenance vocabulary (O:I #192).
+//!
+//! Superseded scope: #192 originally presented these labels as the
+//! installation-modality taxonomy and called them "context frames". The
+//! Context Frame composition lock ([#268],
+//! `docs/CONTEXT-FRAME-COMPOSITION-LOCK.md`) supersedes that taxonomy: the
+//! Context Frames are one containing material frame (CF5) plus the six
+//! install modes it organises, defined in [`crate::context_frames`]. These
+//! labels remain valid as **per-registration
+//! provenance** — a truthful record of which installation path registered a
+//! surface — and historical receipts keep the meanings they had under v1.
 //!
 //! Every path that installs, registers, establishes or reconciles an {O:I}
-//! composition belongs to exactly one of these context frames. The frame is
-//! declared where the path is dispatched (the bootstrap dispatch table and
-//! the install descriptors in `surfaces.json`), recorded in composition
-//! state at install/init time, and disclosed by `oi status`, `oi doctor`
-//! and `oi current-world`. Legacy state that predates the field discloses
+//! composition records exactly one of these labels. The label is declared
+//! where the path is dispatched (the bootstrap dispatch table and the
+//! install descriptors in `surfaces.json`), recorded in composition state
+//! at install/init time, and disclosed by `oi status` and `oi doctor`.
+//! Legacy state that predates the field discloses
 //! [`InstallModality::Unknown`] honestly rather than guessing.
 //!
-//! Each modality exists to deliver one operative-UX outcome from
+//! Each path exists to deliver one operative-UX outcome from
 //! `docs/OI-OPERATIVE-FRONTDOOR-WAYFINDER.md`: bootstrap acceptance is UX
-//! acceptance, not just command success. The per-modality outcome is part
-//! of the vocabulary itself, so a bootstrap path cannot claim a modality
+//! acceptance, not just command success. The per-path outcome is part
+//! of the vocabulary itself, so a bootstrap path cannot claim a label
 //! without claiming its UX thread.
 
 use serde::{Deserialize, Serialize};
 
-/// One installation modality (context frame). Serde names are the canonical
+/// One installation-path provenance label. Serde names are the canonical
 /// kebab-case wire vocabulary; there are no synonyms.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -173,7 +183,7 @@ mod tests {
             assert_ne!(
                 modality,
                 InstallModality::Unknown,
-                "{id} declares modality unknown; descriptors must declare a real frame"
+                "{id} declares modality unknown; descriptors must declare a real path"
             );
         }
     }
