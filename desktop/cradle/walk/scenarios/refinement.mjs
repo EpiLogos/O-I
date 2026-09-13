@@ -1,6 +1,7 @@
 import {setup as sourceSetup} from './editor.mjs';
 import {readFileSync} from 'node:fs';
 import {join} from 'node:path';
+import {openChrome} from '../editor-doc.mjs';
 export const setup=sourceSetup;
 export default async function run({page,baseUrl,check,shot,channel,provision:p}){
  page.setDefaultTimeout(10000);await page.goto(baseUrl);await channel('info');
@@ -61,9 +62,17 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
  check(await page.locator('.welcome-prompt h2').innerText()!=='','Welcome phrase component is integrated');
  await page.waitForTimeout(350);await shot('fresh-canvas-refined');
  await page.getByRole('button',{name:'Write',exact:true}).click();
- const flow=page.locator('.flow-surface');await page.waitForFunction(()=>document.querySelector('.flow-surface [role="status"]')?.textContent==='Saved');
+ // Write opens the retained draft (it mints nothing); the explicit Save
+ // places it through Central, and the Flow then uses the same editor with
+ // real Central provenance.
+ const draft=page.locator('.draft-surface .cm-content');await draft.waitFor();
+ await draft.fill('Flow writing with the real editor.');
+ await openChrome(page,'.draft-surface');
+ await page.getByRole('button',{name:'Save · ⌘S',exact:true}).click();
+ const flow=page.locator('.flow-surface:not(.draft-surface)');await flow.waitFor();
+ await page.waitForFunction(()=>document.querySelector('.flow-surface:not(.draft-surface) [role="status"]')?.textContent==='Saved');
  await flow.locator('.cm-content').fill('Flow writing with the real editor.');await flow.locator('.cm-content').press('Meta+s');
- await page.waitForFunction(()=>document.querySelector('.flow-surface [role="status"]')?.textContent==='Saved');
+ await page.waitForFunction(()=>document.querySelector('.flow-surface:not(.draft-surface) [role="status"]')?.textContent==='Saved');
  const path=(await flow.locator('.editor-path').textContent()).split(' / ').slice(1).join(' / ');
  check(readFileSync(join(p.projectRoot,path),'utf8')==='Flow writing with the real editor.','Fresh Flow uses the same editor and saves to its real Central provenance');
  await page.locator('.tab').filter({hasText:source.binding.path.split('/').pop()}).click({button:'right'});await page.getByRole('menuitem',{name:'Split right',exact:true}).click();

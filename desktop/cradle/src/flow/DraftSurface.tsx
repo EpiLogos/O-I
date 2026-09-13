@@ -7,14 +7,17 @@ import type {SurfaceBinding} from "../surface/types";
 import "./flow.css";
 
 /**
- * Writing that has not been saved anywhere yet.
+ * Writing that has not been placed anywhere yet.
  *
- * Writing never waits. The surface opens, the writing is kept on this device
- * as it is typed, and it survives closing the tab and relaunching. The only
- * thing missing is where it belongs, so the footer carries a register picker
- * beside the ordinary Save — the same saving chrome every other editor uses.
- * Saving creates the real Flow in that register's NOW field through Central's
- * own operation; nothing else about the surface changes.
+ * Writing never waits and never mints: the surface opens, the writing is kept
+ * on this device as it is typed, and it survives closing the tab and
+ * relaunching. Nothing reaches the ground from here until the human
+ * explicitly saves real content — the footer carries a register picker beside
+ * the ordinary Save, and saving places the writing through Central's own Flow
+ * operation. An empty draft cannot be placed: no blank placeholder is ever
+ * written in the writing's name (owner correction, 2026-09-12 — the blank
+ * now/flows/ premise was the fault; the carrier resolution awaits
+ * ratification, PROPOSAL-FLOW-DAY-LOGICS-2026-09-13).
  */
 export const DRAFT_KEY=(id:string)=>`oi-cradle.unplaced-draft.v1:${id}`;
 
@@ -66,7 +69,9 @@ export function DraftSurface({binding}:{binding:SurfaceBinding}) {
     catch{setRetained(false);}
   };
   const save=()=>{
-    if(!project||saving)return;
+    // Empty writing has nothing to place: the ground never receives a blank
+    // placeholder from this surface, by the same law the button enforces.
+    if(!project||saving||!text.trim())return;
     setSaving(true);setError(undefined);
     window.dispatchEvent(new CustomEvent("oi:place-draft",{detail:{id:binding.id,project,content:text}}));
   };
@@ -87,7 +92,7 @@ export function DraftSurface({binding}:{binding:SurfaceBinding}) {
         </select>
       </label>
       <span role="status">{saving?"Saving…":retained?"Unsaved":"Not kept on this device"}</span>
-      <button disabled={!project||saving} onClick={save}>Save · ⌘S</button>
+      <button disabled={!project||saving||!text.trim()} onClick={save} title={text.trim()?"Place this writing through Central":"Nothing to place yet — write first"}>Save · ⌘S</button>
     </>}>
     {!retained&&<p role="alert" className="flow-error">This device would not keep the writing. Copy it somewhere you trust before closing this tab.</p>}
     {error&&<p role="alert" className="flow-error">{error}</p>}
