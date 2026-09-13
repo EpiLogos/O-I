@@ -16,6 +16,7 @@ import {encounter} from "../../encounter/client";
 import {Loading} from "../../shared/Loading";
 import {formatRelativeTime} from "../../shared/relativeTime";
 import {GroundChooser} from "../GroundChooser";
+import {VisualsView} from "./VisualsView";
 import type {ActivityExtras, CompositionReading, OwnerMount, SettingsView} from "./types";
 import {buildSections, frameFact, RAIL} from "./world";
 import {ProductSection} from "./ProductSection";
@@ -147,5 +148,6 @@ export function SettingsPage() {
       <p>Bind a ground, install the suite, and verify it — the same page, before anything is installed.</p>
       <ol className="settings-bootstrap">{BOOTSTRAP_STEPS.map((step,index)=><li key={step.title}><strong>{index+1}. {step.title}</strong><p>{step.detail}</p><em className="product-native-path">{step.native}</em></li>)}</ol>
     </div>}
+    {view==="visuals"&&<VisualsView/>}
   </section>;
 }

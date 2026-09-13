@@ -9,7 +9,8 @@
     "loading.mjs",
     "DESKTOP-LANGUAGE.md",
     "expression.mjs",
-    "expression.css"
+    "expression.css",
+    "point-cloud"
   ],
   "exports": {
     "./tokens.css": "./tokens.css",
@@ -19,7 +20,13 @@
     "./point-cloud.css": "./point-cloud.css",
     "./loading": "./loading.mjs",
     "./expression": "./expression.mjs",
-    "./expression.css": "./expression.css"
+    "./expression.css": "./expression.css",
+    "./point-cloud/config": "./point-cloud/config.mjs",
+    "./point-cloud/presets": "./point-cloud/presets.mjs",
+    "./point-cloud/host": "./point-cloud/host.mjs"
+  },
+  "peerDependencies": {
+    "three": ">= 0.160"
   },
   "scripts": {
     "verify": "node checks/verify.mjs",

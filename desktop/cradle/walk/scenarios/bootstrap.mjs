@@ -33,6 +33,7 @@ import {docText, waitForDoc} from '../editor-doc.mjs';
  * is logged rather than failing the whole scenario.
  */
 import { setup as groundSetup } from "./ground.mjs";
+import { enterApp } from "../editor-doc.mjs";
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -63,6 +64,7 @@ export default async function run(ctx) {
     const bareContext = await page.context().browser().newContext();
     const bare = await bareContext.newPage();
     await bare.goto(baseUrl);
+    await enterApp(bare);
     const start = bare.getByRole("button", { name: "Start writing", exact: true });
     await start.waitFor({ timeout: 15_000 });
     await start.click();
@@ -80,6 +82,7 @@ export default async function run(ctx) {
 
   // --- BOOT-02/03: ground-unrecognised shows the chooser first ---
   await page.goto(baseUrl);
+  await enterApp(page);
   const chooser = page.getByRole("region", { name: "Central location" });
   await chooser.waitFor({ timeout: 15_000 });
   await page.getByText("No default Central selected", { exact: true }).first().waitFor({ timeout: 15_000 });

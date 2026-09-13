@@ -84,6 +84,9 @@
   --oi-z-drawer: 60;
   --oi-z-popover: 80;
   --oi-z-notice: 90;
+  /* Decorative expression fields ride with content (0–5 local band):
+   * particles are ink on the planes, never above dialogs or menus. */
+  --oi-z-expression: 1;
 
   /* ===== section: motion ===== */
   --oi-motion-fast: 160ms;
@@ -273,6 +276,50 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .oi-desktop { --oi-motion-plane: 0.01ms; --oi-motion-ui: 0.01ms; }
+}
+
+/* Explicit dark appearance, selected by the host setting data-theme="dark"
+ * on the oi-desktop body (Visuals → Themes; "system" resolves there).
+ * Role names never change between themes (law 11): every shell token above
+ * is re-grounded, nothing is left to the light values by accident. */
+.oi-desktop[data-theme="dark"] {
+  color-scheme: dark;
+  --oi-paper: #10140f;
+  --oi-ink: #e4e8dc;
+  --oi-surface: #151a12;
+  --oi-inspector-ground: #131810;
+  --oi-composer-ground: #1a2015;
+  --oi-composer-rule: #2c3526;
+  --oi-message-ground: #171c13;
+  --oi-foreground: var(--oi-ink);
+  --oi-muted: #9aa68e;
+  --oi-rule: #262e21;
+  --oi-focus: #a3b58b;
+  --oi-relation: #7d8a6f;
+  --oi-projection: #8a967c;
+  /* shell vocabulary */
+  --oi-shell-ground: #0b0e09;
+  --oi-sidebar-ground: #141910;
+  --oi-sidebar-ground-glass: rgba(20, 25, 16, 0.92);
+  --oi-canvas-ground: #10140f;
+  --oi-pane-bar-ground: #171c13;
+  --oi-agent-ground: #131810;
+  --oi-wash: #1b2117;
+  --oi-wash-strong: #232b1d;
+  --oi-hairline: #2a3320;
+  --oi-hairline-soft: #232b1a;
+  --oi-accent: #93a97e;
+  --oi-accent-ink: #b8c9a4;
+  --oi-accent-soft: #55654a;
+  --oi-muted-2: #7f8b72;
+  --oi-muted-3: #5d6852;
+  --oi-shadow-plane: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --oi-shadow-menu: 0 10px 40px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --oi-shadow-overlay: 0 20px 70px rgba(0, 0, 0, 0.55);
+  --oi-shadow-drawer: -10px 0 25px rgba(0, 0, 0, 0.35);
+  --oi-loading-ground: var(--oi-surface);
+  --oi-loading-ink: var(--oi-foreground);
+  --oi-accent-ground: var(--oi-surface);
 }
 
 /* D22 expression: presentation density, timing, and field geometry. */
