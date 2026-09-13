@@ -84,7 +84,9 @@ main:focus { outline: none; }
 .vf[data-media-state='video'] .vf__poster { opacity: 0; }
 
 /* The mark remains transparent, ink-edged and composed when motion is off. */
-.pl { position: relative; height: 145vh; height: 145svh; background: var(--paper); }
+/* The sticky run is the scrub range: height minus one viewport. Kept long so
+   the mark's separation reads as a slow, full traversal rather than a flick. */
+.pl { position: relative; height: 230vh; height: 230svh; background: var(--paper); }
 .pl__sticky { position: sticky; top: 0; height: 100vh; height: 100svh; min-height: 25rem; overflow: hidden; }
 /* Twenty percent transparent at rest, independent of the mark's opacity. */
 .pl__field { position: absolute; inset: 0; opacity: .8; }
@@ -103,9 +105,6 @@ main:focus { outline: none; }
 .pl__piece { display: block; width: 100%; height: 100%; color: currentColor; opacity: .94; }
 
 /* Readable control for every moving field, including interior-page bands. */
-.motion-control { position: fixed; z-index: 40; right: max(1rem, env(safe-area-inset-right)); bottom: max(1rem, env(safe-area-inset-bottom)); display: flex; align-items: center; gap: .6rem; min-height: 44px; padding: .65rem .85rem; color: var(--oi-ink); background: rgb(251 250 246 / 94%); border: 1px solid var(--oi-rule); font-size: .66rem; letter-spacing: .08em; text-transform: uppercase; transition: border-color var(--oi-motion-fast) var(--ease); }
-.motion-control:hover { border-color: currentColor; }
-.motion-control > span:first-child { font-size: 1rem; line-height: 1; }
 
 /* Interior opening: a compact index above a generous, unboxed title. */
 .opening { padding: clamp(8rem, 16vh, 12rem) var(--gutter) calc(var(--oi-section-y) * .65); background: var(--bg); color: var(--white); border-bottom: 1px solid var(--rule); }
@@ -253,7 +252,7 @@ main:focus { outline: none; }
   .sn__hint { grid-column: 2; text-align: left; line-height: 1.5; }
   .sn__panel nav { padding-block: 1rem; }
   .sn__panel-head { gap: 1rem; }
-  .pl { height: 135vh; height: 135svh; }
+  .pl { height: 200vh; height: 200svh; }
   .pl__mark { width: min(88vw, 32rem); }
   .opening__body { line-height: 1.75; }
   .sf { flex-direction: column; }
@@ -279,13 +278,20 @@ main:focus { outline: none; }
   .resource-atlas__entry { grid-template-columns: minmax(0, 1fr); gap: .7rem; }
   .resource-atlas .sec__detail { grid-column: 1; font-size: .72rem; }
 }
+/* At the narrowest phones a two-line name plus detail outgrows the 1:1 tile by
+   a couple of pixels; reclaim it from the flex gaps and the detail leading. */
+@media (max-width: 360px) {
+  .office-tile__link { gap: .45rem; }
+  .office-tile__copy { gap: .3rem; }
+  .office-tile .sec__detail { line-height: 1.4; }
+}
 @media (max-height: 540px) and (orientation: landscape) {
   .pl__sticky { min-height: 0; }
   .pl__mark { width: min(50vw, 28rem); }
   .sn__panel-head { padding-block: .5rem; }
 }
 
-/* Both OS and explicit pause use one static visual grammar. Effects also
+/* The OS reduced-motion preference uses one static visual grammar. Effects also
    dispose their observers/timelines, and VideoField renders only its poster. */
 .shell[data-motion='still'] *, .shell[data-motion='still'] *::before, .shell[data-motion='still'] *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 .shell[data-motion='still'] [data-reveal] { opacity: 1; transform: none; }

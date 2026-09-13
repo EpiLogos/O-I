@@ -3,7 +3,7 @@ import { ShellNav } from './ShellNav';
 import { HeroParallax } from './HeroParallax';
 import { VideoField } from './VideoField';
 import { IndexCollection, collectionKind } from './IndexCollection';
-import { MotionControl, MotionProvider, motionSettings, useMotion } from './motion';
+import { MotionProvider, motionSettings, useMotion } from './motion';
 import { PAGES, type Page, type Section, type Item } from './content';
 import './shell.css';
 
@@ -214,7 +214,6 @@ function Shell() {
       {page.sections.map((section, index) => <SectionView key={index} section={section} />)}
       <Footer />
     </main>
-    <MotionControl />
   </div>;
 }
 

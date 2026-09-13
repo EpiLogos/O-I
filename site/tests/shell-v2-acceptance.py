@@ -191,14 +191,8 @@ def interactions(browser):
         page.emulate_media(reduced_motion='no-preference')
         expect(page.locator('.shell')).to_have_attribute('data-motion', 'full')
         expect(page.locator('.pl video')).to_have_count(1)
-        toggle = page.get_by_role('button', name='Pause motion', exact=True)
-        toggle.click()
-        expect(toggle).to_have_attribute('aria-pressed', 'true')
-        expect(page.locator('video')).to_have_count(0)
-        toggle.click()
-        expect(toggle).to_have_attribute('aria-pressed', 'false')
-        expect(page.locator('.pl video')).to_have_count(1)
-    check('live-os-preference-and-user-pause', preference, page)
+        assert page.get_by_role('button', name='Pause motion').count() == 0, 'motion is unconditional; no pause control may exist'
+    check('live-os-preference', preference, page)
 
     def menu():
         trigger = page.locator('.sn > .sn__toggle')

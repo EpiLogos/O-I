@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { createContext, useContext, useSyncExternalStore, type ReactNode } from 'react';
 
 export const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 const subscribe = (notify: () => void) => {
@@ -24,28 +24,16 @@ export function motionSettings() {
   };
 }
 
-type MotionState = { still: boolean; reduced: boolean; paused: boolean; toggle: () => void };
-const MotionContext = createContext<MotionState>({ still: true, reduced: true, paused: false, toggle: () => {} });
+type MotionState = { still: boolean; reduced: boolean };
+const MotionContext = createContext<MotionState>({ still: true, reduced: true });
 
 export function MotionProvider({ children }: { children: ReactNode }) {
   const reduced = useSyncExternalStore(subscribe, snapshot, () => true);
-  const [paused, setPaused] = useState(false);
   return (
-    <MotionContext.Provider value={{ still: reduced || paused, reduced, paused, toggle: () => setPaused(value => !value) }}>
+    <MotionContext.Provider value={{ still: reduced, reduced }}>
       {children}
     </MotionContext.Provider>
   );
 }
 
 export const useMotion = () => useContext(MotionContext);
-
-export function MotionControl() {
-  const { reduced, paused, toggle } = useMotion();
-  if (reduced) return null;
-  return (
-    <button className="motion-control" type="button" onClick={toggle} aria-pressed={paused} aria-label="Pause motion">
-      <span aria-hidden="true">{paused ? '▷' : 'Ⅱ'}</span>
-      <span>{paused ? 'Resume motion' : 'Pause motion'}</span>
-    </button>
-  );
-}
