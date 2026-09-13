@@ -1,9 +1,9 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "spatial",
-  "generated_at": "2026-09-08T12:23:11.657Z",
+  "generated_at": "2026-09-13T13:28:08.548Z",
   "environment": {
-    "base_url": "http://localhost:1423",
+    "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
     "viewport": "1280x820",
     "bundle": "walk (WALK=1) served by vite preview",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 5820,
+  "duration_ms": 8941,
   "checks": [
     {
       "ok": true,
@@ -37,6 +37,10 @@
     {
       "ok": true,
       "label": "One arrangement selector belongs to the canvas command strip"
+    },
+    {
+      "ok": true,
+      "label": "A fresh workspace opens with no panes — its arrangement starts empty"
     },
     {
       "ok": true,
@@ -80,14 +84,6 @@
     },
     {
       "ok": true,
-      "label": "Keyboard resizes the left region"
-    },
-    {
-      "ok": true,
-      "label": "Keyboard resizes the right region"
-    },
-    {
-      "ok": true,
       "label": "Right region promotes to full view"
     },
     {
@@ -108,15 +104,7 @@
     },
     {
       "ok": true,
-      "label": "A freeform workspace has its own surface arrangement"
-    },
-    {
-      "ok": true,
-      "label": "A different workspace has independent ProjectRef disclosure state"
-    },
-    {
-      "ok": true,
-      "label": "A new workspace also starts with inspection closed"
+      "label": "A different workspace drives the same per-project disclosure (expanded, with its file listing)"
     },
     {
       "ok": true,
@@ -124,15 +112,11 @@
     },
     {
       "ok": true,
-      "label": "Returning to a workspace restores that project disclosure"
+      "label": "Returning to a workspace restores that workspace's own project disclosure (collapsed here; Research holds its own)"
     },
     {
       "ok": true,
-      "label": "Workspace restores its own region depths"
-    },
-    {
-      "ok": true,
-      "label": "Workspace restores its region width"
+      "label": "Region depth is shell layout and survives the workspace switch"
     },
     {
       "ok": true,
@@ -148,11 +132,7 @@
     },
     {
       "ok": true,
-      "label": "Freeform workspace restores its distinct writing"
-    },
-    {
-      "ok": true,
-      "label": "Freeform workspace restores its distinct right depth"
+      "label": "The retained draft persists across workspace switches (the freeform per-workspace writing surface is superseded by the owner's retained draft)"
     },
     {
       "ok": true,
@@ -190,18 +170,18 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-08T12:23:11.968Z",
+        "mounted_at": "2026-09-13T13:28:08.691Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
         },
-        "url": "http://localhost:1423/"
+        "url": "http://localhost:4173/"
       }
     },
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 243.4,
+      "duration_ms": 12.2,
       "data": {
         "project": {
           "kind": "project",
@@ -232,7 +212,7 @@
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 5.7,
+      "duration_ms": 3.2,
       "data": {
         "project": {
           "kind": "project",
@@ -263,7 +243,7 @@
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 6.1,
+      "duration_ms": 10.2,
       "data": {
         "project": {
           "kind": "project",
@@ -294,7 +274,7 @@
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 7.2,
+      "duration_ms": 10.1,
       "data": {
         "project": {
           "kind": "project",
@@ -325,7 +305,7 @@
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 7.2,
+      "duration_ms": 10.4,
       "data": {
         "project": {
           "kind": "project",
@@ -351,20 +331,6 @@
           },
           "ref": "project:editor-walk"
         }
-      }
-    },
-    {
-      "ok": true,
-      "op": "info",
-      "duration_ms": 0.2,
-      "data": {
-        "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-08T12:23:15.776Z",
-        "transport": {
-          "kind": "bridge",
-          "url": "http://127.0.0.1:4179"
-        },
-        "url": "http://localhost:1423/"
       }
     },
     {
@@ -373,18 +339,32 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-08T12:23:16.978Z",
+        "mounted_at": "2026-09-13T13:28:15.823Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
         },
-        "url": "http://localhost:1423/"
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-13T13:28:17.122Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
       }
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 76,
+      "duration_ms": 45,
       "data": {
         "file": "spatial-three-region-workspace.png"
       }
