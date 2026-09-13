@@ -46,14 +46,14 @@ pub mod world;
 pub mod commission;
 pub mod flow_cognition;
 
-pub use flow::CentralClient;
+pub use flow::{CentralClient, OwnerCallError};
 
 use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 
 use events::{KernelEvent, KernelEventLog, KernelEventReceipt};
-use flow::{CRADLE_ACTOR, CRADLE_ACTOR_KIND, OwnerCallError, SourceReading, SourceWriteFailure};
+use flow::{CRADLE_ACTOR, CRADLE_ACTOR_KIND, SourceReading, SourceWriteFailure};
 use focus::GlobalFocus;
 use refs::{source_semantic_ref, SemanticRef};
 use world::{participating_sources, SourceListing};
@@ -197,9 +197,6 @@ pub enum KernelOp {
     /// happen through the owner operation and are provable through the
     /// owner store; the kernel records nothing and emits nothing.
     InvokeAction { #[serde(default)] project: Option<String>, invocation: action::ActionInvocation },
-    /// Forward one retained Flow/source-return Action to Central. The request
-    /// and response remain owner-shaped; the kernel is only the typed seam.
-    Flow { request: flow::Request },
     /// Compose the W1.5 changed-since-thought read (`flow_cognition.rs`):
     /// the kernel supplies the KnowledgeChangeHorizon adapted from Central's
     /// own `projectcentral.change.horizon` seam and calls the AIKit owner's
@@ -207,18 +204,18 @@ pub enum KernelOp {
     /// sides explicit — a side that could not be queried is named, never
     /// faked empty. Emits nothing (pull read + owner read).
     FlowChangedSince { #[serde(default)] project: Option<String>, thought: serde_json::Value },
-    /// Commission one verbatim selection in one retained Flow (U4.1/U4.2
-    /// loop mode, `commission.rs`): the selection travels verbatim with the
-    /// Central FlowRef and the expected revision it was made against; the
+    /// Commission one selection inside a flow instance (U4.1/U4.2 loop
+    /// mode, `commission.rs`): the desktop composes the next instance
+    /// through the template's own append-entry contract and hands it
+    /// verbatim with the instance location and the expected revision; the
     /// commission lands as an owner revision through Central's
-    /// `projectcentral.flow.write` CAS — a stale expected revision refuses
-    /// with both revisions observed, never a silent overwrite. An optional
-    /// AgentSession binds without owning the Flow's identity.
-    FlowCommission {
-        #[serde(default)] project: Option<String>,
-        flow_ref: String,
+    /// `central.files.write` CAS — a stale expected revision is the owner's
+    /// own structured conflict, never a silent overwrite. An optional
+    /// AgentSession binds as the write's actor.
+    InstanceCommission {
+        location: files::Location,
         expected_revision: String,
-        selection: String,
+        content: String,
         #[serde(default, skip_serializing_if = "Option::is_none")] agent_session_ref: Option<String>,
     },
     AgencyRead { project: String },
@@ -339,13 +336,12 @@ pub enum KernelOpResult {
     /// The typed result of one owner-Action dispatch (`action.rs`): the
     /// owner payload verbatim, or an explicit named state.
     ActionDispatched { dispatch: action::ActionDispatch },
-    Flow { response: flow::Response },
     /// The typed changed-since-thought compose (`flow_cognition.rs`): both
     /// owner sides of the read, explicit.
     FlowChangedSince { reading: flow_cognition::ChangedSinceReading },
     /// The typed selection commission outcome (`commission.rs`): owner
     /// revision, structured conflict, or the owner's own refusal.
-    FlowCommissioned { outcome: commission::CommissionOutcome },
+    InstanceCommissioned { outcome: commission::CommissionOutcome },
     AgencyReading { project_ref: String, spaces: serde_json::Value, observed_at_unix_ms: u64 },
     EncounterReading {data:serde_json::Value},
     ReceivingReading {data:serde_json::Value},
@@ -689,17 +685,6 @@ impl Kernel {
                 let dispatch = action::invoke(&self.client, &cwd, project.as_deref(), &invocation);
                 Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::ActionDispatched { dispatch } })
             }
-            KernelOp::Flow { request } => {
-                let action = request.owner_action().to_owned();
-                let response = self
-                    .client
-                    .apply_request(request)
-                    .unwrap_or_else(|error| flow::Response::Failure { action, error });
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::Flow { response },
-                })
-            }
             KernelOp::FlowChangedSince { project, thought } => {
                 // The changed-since compose resolves its owner cwd exactly as
                 // the InvokeAction arm: Central discloses the scope,
@@ -713,9 +698,9 @@ impl Kernel {
                 let reading = flow_cognition::changed_since(&self.client, project.as_deref().unwrap_or_else(|| self.client.configured_project()), &cwd, &thought).map_err(|e| e.to_string())?;
                 Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::FlowChangedSince { reading } })
             }
-            KernelOp::FlowCommission { project, flow_ref, expected_revision, selection, agent_session_ref } => {
-                let outcome = commission::commission(&self.client, project.as_deref().unwrap_or_else(|| self.client.configured_project()), &flow_ref, &expected_revision, &selection, agent_session_ref.as_deref()).map_err(|e| e.to_string())?;
-                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::FlowCommissioned { outcome } })
+            KernelOp::InstanceCommission { location, expected_revision, content, agent_session_ref } => {
+                let outcome = commission::commission(&self.client, &location, &expected_revision, &content, agent_session_ref.as_deref()).map_err(|e| e.to_string())?;
+                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::InstanceCommissioned { outcome } })
             }
             KernelOp::WorldRead => self.navigate(None, false),
             KernelOp::ProjectRead { project } => self.navigate(Some(&project), false),

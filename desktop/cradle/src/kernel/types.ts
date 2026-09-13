@@ -114,22 +114,20 @@ export interface ChangedSinceReading {
  * revision, a structured CAS conflict (both revisions observed), or the
  * owner's own refusal/unavailability, verbatim. */
 export type CommissionOutcome =
-  | { state: "commissioned"; flow: import("../flow/client").FlowRecord; previous_revision: string; revision: string; agent_session_ref: string | null }
-  | { state: "conflict"; flow_ref: string; expected: string; current: string }
-  | { state: "owner_refused"; flow_ref: string; message: string }
-  | { state: "owner_unavailable"; flow_ref: string; detail: string };
+  | { state: "commissioned"; path: string; previous_revision: string; revision: string; agent_session_ref: string | null }
+  | { state: "conflict"; path: string; expected: string; current: string }
+  | { state: "owner_refused"; path: string; message: string }
+  | { state: "owner_unavailable"; path: string; detail: string };
 
 export type KernelOp =
   | {op:"graph";project?:string;query:string}
   | { op: "invoke_action"; project?: string; invocation: ActionInvocation }
-  | {op:"flow";request:import("../flow/client").FlowRequest}
   | { op: "flow_changed_since"; project?: string; thought: Record<string, unknown> }
   | {
-      op: "flow_commission";
-      project?: string;
-      flow_ref: string;
+      op: "instance_commission";
+      location: CentralLocation;
       expected_revision: string;
-      selection: string;
+      content: string;
       agent_session_ref?: string;
     }
   | {op:"ground";request:import("../workspace/GroundChooser").GroundRequest}
@@ -178,9 +176,8 @@ export type KernelOp =
 export type KernelOpResult =
   | {result:"graph_reading";reading:import("../knowledge/graph").GraphReading}
   | {result:"action_dispatched";dispatch:ActionDispatch}
-  | {result:"flow";response:{kind:"flow_created"|"flow_read"|"flow_written";reading:{flow:import("../flow/client").FlowRecord;content?:string}}|{kind:"flow_inspection";inspection:import("../flow/client").FlowInspection}|{kind:"flow_list";listing:{schema:string;project_id:string;flows:import("../flow/client").FlowRecord[];automatic_agent_or_model_invocation?:boolean}}|{kind:"failure";error:{kind:string;message?:string;detail?:string}}}
   | { result: "flow_changed_since"; reading: ChangedSinceReading }
-  | { result: "flow_commissioned"; outcome: CommissionOutcome }
+  | { result: "instance_commissioned"; outcome: CommissionOutcome }
   | {result:"ground_reading";reading:Record<string,unknown>}
   | {result:"composition_reading";reading:import("../workspace/SystemPanel").CompositionReading}
   | {result:"system_composition_reading";reading:import("../workspace/settings/types").SystemCompositionReading}

@@ -1,162 +1,141 @@
-//! Wave-4 kernel cell W4-D — the Flow selection commission route
-//! (wayfinder U4.1/U4.2, loop mode), kernel half.
+//! The selection commission route over the ratified flow-instance carrier
+//! (O-I #271; Central #177 retires the registry era).
 //!
-//! A selection made inside a Flow commissions work: the kernel op carries
-//! the selection **verbatim**, the stable Central FlowRef and the
-//! **expected revision** the selection was made against. The commission
-//! lands as an owner revision through Central's `projectcentral.flow.write`
-//! compare-and-swap — dirty-buffer conflict safety is the owner CAS itself:
-//! a stale `expected_revision` refuses with both revisions observed, never
-//! a silent overwrite (the same expected-revision semantics the source
-//! buffer layer proves in `source_cas`).
+//! A selection made inside a flow instance commissions work: the desktop
+//! composes the next instance through the template's own append-entry
+//! contract (`src/flow/instance.ts`) and hands it verbatim; the kernel
+//! commits it through Central's `central.files.write` compare-and-swap —
+//! the same expected-revision safety the instance writing already proves.
+//! A stale expected revision is the owner's own structured conflict with
+//! both revisions observed, never a silent overwrite.
 //!
 //! Law:
 //!
-//! - The kernel composes nothing: the selection text is the write content,
-//!   carried verbatim; the FlowRef and revision travel in Central's own
-//!   grammar; no refs are minted and no prose is wrapped around the
-//!   selection.
-//! - An AgentSession binds **without owning the Flow's identity**: when the
-//!   caller names a session, the write declares that session as the actor
-//!   (`actor_kind: "agent"` — Central's attribution law refuses a write
-//!   that declares human authorship inside an agent session) and the
-//!   session ref rides as attribution on the owner revision receipt only.
-//!   The FlowRecord's identity — `flow_ref`, `source_ref`, `scope_ref`,
-//!   lifecycle — is the owner's and is never touched by the binding.
-//! - Without a session the commission is a human act at the desktop, the
-//!   ported `save_human` attribution (`human:desktop` / `human`).
-//! - Conflict detection is the ported heuristic: on a write refusal the
-//!   kernel re-reads the owner record and **compares revisions, never
-//!   conflict prose** — a moved revision is a structured `Conflict` with
-//!   both sides; anything else is the owner's own refusal, verbatim.
+//! - The kernel composes nothing: the composed instance content travels
+//!   verbatim; the location is the owner's own path-ref grammar. No refs
+//!   are minted and no prose is wrapped around the selection.
+//! - An AgentSession binds as the write's actor (`actor_kind: "agent"` —
+//!   Central's attribution law refuses an agent-session write declaring
+//!   human authorship); without a session the commission is the human
+//!   desktop act, the ported `save_human` attribution
+//!   (`human:desktop` / `human`).
+//! - Conflict detection is the owner CAS itself: `central.files.write`
+//!   answers with its own structured conflict carrying the current
+//!   reading — no re-read heuristic is ported any more.
 //! - The kernel records nothing and emits nothing: the commission is an
-//!   owner write; the receipts live in Central's Flow registry.
+//!   owner write; the receipts live in Central's file history.
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 
-use crate::flow::{CentralClient, FlowRecord, OwnerCallError, CRADLE_ACTOR, CRADLE_ACTOR_KIND};
+use crate::files::Location;
+use crate::flow::{CentralClient, OwnerCallError, CRADLE_ACTOR, CRADLE_ACTOR_KIND};
 
 /// Central's compare-and-swap write owner Action for one commission.
-pub const FLOW_COMMISSION_OWNER_ACTION: &str = "projectcentral.flow.write";
-/// The owner re-read used to settle a refusal (revisions compared, never
-/// conflict prose).
-pub const FLOW_COMMISSION_INSPECT_ACTION: &str = "projectcentral.flow.inspect";
-
-/// Central's canonical FlowRef grammar (`central:flow:project:{id}:{tail}`),
-/// verified before any owner call — the kernel invents no FlowRef.
-pub const FLOW_REF_PREFIX: &str = "central:flow:project:";
+pub const COMMISSION_WRITE_ACTION: &str = "central.files.write";
 
 /// The typed outcome of one selection commission. Every terminal state is
 /// explicit; owner words ride verbatim.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(tag = "state", rename_all = "snake_case")]
-// The outcome payloads are the owner's own shapes and differ in size by
-// nature; boxing one arm would change how every caller reads it.
-#[allow(clippy::large_enum_variant)]
 pub enum CommissionOutcome {
-    /// The owner CAS accepted the commission: the selection is now an owner
-    /// revision of the Flow. `previous_revision` is the expected base the
+    /// The owner CAS accepted the commission: the composed instance is now
+    /// the owner revision. `previous_revision` is the expected base the
     /// commission was made against; `revision` is the canonical layer now.
     Commissioned {
-        flow: FlowRecord,
+        path: String,
         previous_revision: String,
         revision: String,
         /// The session attribution the revision receipt recorded, verbatim.
         agent_session_ref: Option<String>,
     },
     /// The owner's CAS refused: the revision moved underneath the
-    /// commission. Both revisions observed; the selection is returned to
-    /// the caller unapplied — never a silent overwrite.
+    /// commission. Both revisions observed; the composed content is returned
+    /// to the caller unapplied — never a silent overwrite.
     Conflict {
-        flow_ref: String,
+        path: String,
         expected: String,
         current: String,
     },
     /// The owner answered, and the answer was no — the owner's own message,
     /// carried verbatim.
-    OwnerRefused { flow_ref: String, message: String },
+    OwnerRefused { path: String, message: String },
     /// The owner executable could not be launched. Absence, not an error.
-    OwnerUnavailable { flow_ref: String, detail: String },
+    OwnerUnavailable { path: String, detail: String },
 }
 
-/// Commission one verbatim selection in one retained Flow.
+/// Commission one composed flow instance through the owner CAS.
 ///
-/// `flow_ref` must be Central's canonical grammar; `expected_revision` the
-/// revision the selection was made against; `selection` non-empty. With a
-/// session the write declares that session as actor (`agent`); without one
-/// it is the human desktop act.
+/// `location` is the instance's native path-ref, verbatim;
+/// `expected_revision` the revision the composition was made against;
+/// `content` the composed next instance, verbatim. With a session the write
+/// declares that session as the actor; without one it is the human desktop
+/// act.
 pub fn commission(
     client: &CentralClient,
-    project: &str,
-    flow_ref: &str,
+    location: &Location,
     expected_revision: &str,
-    selection: &str,
+    content: &str,
     agent_session_ref: Option<&str>,
 ) -> Result<CommissionOutcome, String> {
-    if !flow_ref.starts_with(FLOW_REF_PREFIX) {
-        return Err(format!(
-            "FlowRef `{flow_ref}` is not Central's canonical Flow grammar ({FLOW_REF_PREFIX}…); the kernel mints no FlowRef"
-        ));
-    }
+    let path = location.path.clone();
     if expected_revision.is_empty() {
         return Err(
-            "a commission requires the expected revision the selection was made against".into(),
+            "a commission requires the expected revision the composition was made against".into(),
         );
     }
-    if selection.is_empty() {
-        return Err("a commission requires the selection text, carried verbatim".into());
+    if content.is_empty() {
+        return Err("a commission requires the composed instance content, carried verbatim".into());
     }
     let (actor, actor_kind) = match agent_session_ref {
-        // Central's attribution law: a write declaring human authorship may
-        // not also carry an agent session. A session-bound commission
-        // declares the session as the actor — it binds to the Flow, it does
-        // not own the Flow's identity.
         Some(session) => (session.to_owned(), "agent".to_owned()),
         None => (CRADLE_ACTOR.to_owned(), CRADLE_ACTOR_KIND.to_owned()),
     };
-    match client.flow_write_reading(
-        Some(project),
-        flow_ref,
-        expected_revision,
-        selection,
-        &actor,
-        &actor_kind,
-        agent_session_ref,
-    ) {
-        Ok(reading) => {
-            let revision = reading.flow.current_revision.clone();
-            Ok(CommissionOutcome::Commissioned {
-                flow: reading.flow,
-                previous_revision: expected_revision.to_owned(),
-                revision,
-                agent_session_ref: agent_session_ref.map(str::to_owned),
-            })
-        }
-        Err(error) => match error {
-            OwnerCallError::Unavailable { detail } => Ok(CommissionOutcome::OwnerUnavailable {
-                flow_ref: flow_ref.to_owned(),
-                detail,
-            }),
-            // The ported heuristic: re-read the owner record and compare
-            // revisions, never conflict prose.
-            refusal => {
-                let message = refusal.detail();
-                let moved = client
-                    .flow_inspect(Some(project), flow_ref)
-                    .map(|inspection| inspection.flow.current_revision)
-                    .ok()
-                    .filter(|current| current != expected_revision);
-                match moved {
-                    Some(current) => Ok(CommissionOutcome::Conflict {
-                        flow_ref: flow_ref.to_owned(),
-                        expected: expected_revision.to_owned(),
-                        current,
-                    }),
-                    None => Ok(CommissionOutcome::OwnerRefused {
-                        flow_ref: flow_ref.to_owned(),
-                        message,
-                    }),
-                }
+    let mut input = json!({
+        "location": location,
+        "expected_revision": expected_revision,
+        "content": content,
+        "actor": actor,
+        "actor_kind": actor_kind,
+    });
+    if let Some(session) = agent_session_ref {
+        input["agent_session_ref"] = json!(session);
+    }
+    match client.run(COMMISSION_WRITE_ACTION, input) {
+        Ok(data) => match data["outcome"].as_str() {
+            Some("written") | Some("created") | Some("unchanged") => {
+                Ok(CommissionOutcome::Commissioned {
+                path,
+                    previous_revision: data["previous_revision"]
+                        .as_str()
+                        .unwrap_or(expected_revision)
+                        .to_owned(),
+                    revision: data["revision"].as_str().unwrap_or_default().to_owned(),
+                    agent_session_ref: agent_session_ref.map(str::to_owned),
+                })
             }
+            Some("conflict") => Ok(CommissionOutcome::Conflict {
+                path,
+                expected: data["expected_revision"]
+                    .as_str()
+                    .unwrap_or(expected_revision)
+                    .to_owned(),
+                current: data["current"]["revision"]
+                    .as_str()
+                    .unwrap_or_default()
+                    .to_owned(),
+            }),
+            other => Ok(CommissionOutcome::OwnerRefused {
+                path,
+                message: format!("Central returned an unsupported commission outcome {other:?}"),
+            }),
         },
+        Err(OwnerCallError::Unavailable { detail }) => Ok(CommissionOutcome::OwnerUnavailable {
+            path,
+            detail,
+        }),
+        Err(refusal) => Ok(CommissionOutcome::OwnerRefused {
+            path,
+            message: refusal.detail().to_owned(),
+        }),
     }
 }

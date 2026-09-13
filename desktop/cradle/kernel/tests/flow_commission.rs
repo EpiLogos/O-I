@@ -1,17 +1,20 @@
-//! W4-D Flow selection commission route (U4.1/U4.2 loop mode) through the
-//! exact candidate O:I executable and pinned Central executable. Isolated
-//! temp Central grounds only — the live ground never moves.
+//! The selection commission route over the ratified flow-instance carrier
+//! (O-I #271) through the exact candidate O:I executable and pinned Central
+//! executable. Isolated temp Central grounds only — the live ground never
+//! moves.
 //!
-//! The adapter law under test: a selection made inside a Flow commissions
-//! work — the op carries the selection verbatim, the stable Central FlowRef
-//! and the expected revision the selection was made against; the commission
-//! lands as an owner revision through Central's `projectcentral.flow.write`
-//! compare-and-swap. A stale expected revision is a structured conflict with
-//! both revisions observed, never a silent overwrite. An AgentSession binds
-//! without owning the Flow's identity. The kernel records nothing and emits
-//! nothing — the commission is an owner write; the receipts live in Central's
-//! Flow registry.
+//! The adapter law under test: a selection made inside a flow instance
+//! commissions work — the desktop composes the next instance through the
+//! template's own append-entry contract and the op carries it verbatim with
+//! the instance location and the expected revision; the commission lands as
+//! an owner revision through Central's `central.files.write`
+//! compare-and-swap. A stale expected revision is the owner's own structured
+//! conflict with both revisions observed, never a silent overwrite. An
+//! AgentSession binds as the write's actor. The kernel records nothing and
+//! emits nothing — the commission is an owner write; the receipts live in
+//! Central's file history.
 use oi_cradle_kernel::commission::CommissionOutcome;
+use oi_cradle_kernel::files::Location;
 use oi_cradle_kernel::{CentralClient, Kernel, KernelOp, KernelOpResult};
 use serde_json::json;
 use std::fs;
@@ -23,7 +26,11 @@ use std::time::{SystemTime, UNIX_EPOCH};
 /// it under one lock so each test still gets its own isolated grounds.
 static ENV_LOCK: Mutex<()> = Mutex::new(());
 
-const SELECTION: &str = "line one commissions work\nline two rides verbatim\n";
+/// The composed next instance, verbatim: the caller's composition (the
+/// template's append-entry contract lives in `src/flow/instance.ts`; the
+/// kernel composes nothing, so the test composes the bytes itself).
+const COMPOSED_INSTANCE: &str =
+    "<html><script type=\"application/json\" id=\"ql-doc\">{\"revision\":2}</script></html>\n";
 
 fn candidate(name: &str) -> PathBuf {
     let variable = match name {
@@ -58,19 +65,22 @@ fn temporary_root(tag: &str) -> PathBuf {
         pid = std::process::id()
     ));
     fs::create_dir(&root).unwrap();
-    root
+    // Central's path-ref grammar carries the canonical root; the macOS temp
+    // directory is reached through a symlink.
+    fs::canonicalize(&root).unwrap()
 }
 
 struct Fixture {
     _env: MutexGuard<'static, ()>,
     root: PathBuf,
-    flow_ref: String,
+    instance: Location,
     revision0: String,
 }
 
 impl Fixture {
-    /// One isolated Central ground with one retained Flow at its initial
-    /// revision, exact bindings exported for every owner child process.
+    /// One isolated Central ground with one flow instance at its initial
+    /// revision, minted through the owner's own creation door, with exact
+    /// bindings exported for every owner child process.
     fn new(tag: &str) -> Self {
         let env = ENV_LOCK
             .lock()
@@ -81,32 +91,33 @@ impl Fixture {
 
         let client = self::client(&root);
         client.run("central.init", json!({})).unwrap();
-        fs::create_dir(root.join("Work/W4DCommission")).unwrap();
-        client
-            .run(
-                "projectcentral.init",
-                json!({"project": "W4DCommission", "project_id": "w4d-commission"}),
-            )
-            .unwrap();
+        let location = Location {
+            schema: "central.path-ref/v1".into(),
+            ref_id: format!(
+                "central:path:{}:Control/user/flows/flow-2026-09-13-1200.html",
+                root.display()
+            ),
+            root: root.to_string_lossy().into_owned(),
+            path: "Control/user/flows/flow-2026-09-13-1200.html".into(),
+        };
         let created = client
-            .flow_create(
-                Some("W4DCommission"),
-                "human:w4d-test",
-                "human",
-                Some("2026-09-09-1200"),
-                None,
-                Some("W4D Commission Flow"),
-                None,
+            .run(
+                "central.files.write",
+                json!({
+                    "location": location,
+                    "expected_revision": "",
+                    "content": "<html><script type=\"application/json\" id=\"ql-doc\">{\"revision\":1}</script></html>\n",
+                    "actor": "human:desktop",
+                    "actor_kind": "human",
+                }),
             )
             .unwrap();
-        assert!(created
-            .flow_ref
-            .starts_with("central:flow:project:w4d-commission:"));
+        assert_eq!(created["outcome"], "created", "{created}");
         Self {
             _env: env,
             root,
-            flow_ref: created.flow_ref,
-            revision0: created.current_revision,
+            instance: location,
+            revision0: created["revision"].as_str().unwrap().to_owned(),
         }
     }
 
@@ -117,16 +128,15 @@ impl Fixture {
     fn commission(
         &self,
         expected_revision: &str,
-        selection: &str,
+        content: &str,
         agent_session_ref: Option<&str>,
     ) -> CommissionOutcome {
         let mut kernel = Kernel::new(self.client());
         let outcome = kernel
-            .apply(KernelOp::FlowCommission {
-                project: Some("W4DCommission".into()),
-                flow_ref: self.flow_ref.clone(),
+            .apply(KernelOp::InstanceCommission {
+                location: self.instance.clone(),
                 expected_revision: expected_revision.into(),
-                selection: selection.into(),
+                content: content.into(),
                 agent_session_ref: agent_session_ref.map(str::to_owned),
             })
             .unwrap();
@@ -134,8 +144,8 @@ impl Fixture {
             outcome.receipts.is_empty(),
             "the commission is an owner write through the owner CAS: no kernel receipts"
         );
-        let KernelOpResult::FlowCommissioned { outcome } = outcome.result else {
-            panic!("typed FlowCommissioned result expected")
+        let KernelOpResult::InstanceCommissioned { outcome } = outcome.result else {
+            panic!("typed InstanceCommissioned result expected")
         };
         outcome
     }
@@ -152,12 +162,12 @@ fn client(root: &Path) -> CentralClient {
 
 #[test]
 #[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
-fn commission_lands_as_owner_revision_carrying_the_selection_verbatim() {
+fn commission_lands_as_owner_revision_carrying_the_composition_verbatim() {
     let fixture = Fixture::new("commission-verbatim");
 
-    let outcome = fixture.commission(&fixture.revision0.clone(), SELECTION, None);
+    let outcome = fixture.commission(&fixture.revision0.clone(), COMPOSED_INSTANCE, None);
     let CommissionOutcome::Commissioned {
-        flow,
+        path,
         previous_revision,
         revision,
         agent_session_ref,
@@ -165,25 +175,29 @@ fn commission_lands_as_owner_revision_carrying_the_selection_verbatim() {
     else {
         panic!("a fresh commission must land as an owner revision, got {outcome:?}")
     };
+    assert_eq!(path, &fixture.instance.path);
     assert_eq!(previous_revision, &fixture.revision0);
     assert_ne!(
         revision, &fixture.revision0,
         "the owner CAS minted the next revision"
     );
-    assert_eq!(flow.flow_ref, fixture.flow_ref);
     assert_eq!(agent_session_ref, &None);
 
-    // The selection is the write content, carried verbatim: the owner's own
-    // read proves it — the kernel composed nothing and wrapped no prose.
+    // The composed instance is the write content, carried verbatim: the
+    // owner's own read proves it — the kernel composed nothing.
     let read = fixture
         .client()
-        .flow_read(Some("W4DCommission"), &fixture.flow_ref, Some(revision))
+        .run(
+            "central.files.read",
+            json!({"location": fixture.instance}),
+        )
         .unwrap();
-    assert_eq!(read.content, SELECTION);
-    assert_eq!(read.flow.current_revision, *revision);
+    assert_eq!(read["content"], COMPOSED_INSTANCE);
+    assert_eq!(read["revision"], *revision);
 
     // A further commission against the new revision keeps the loop going.
-    let follow_up = fixture.commission(revision, "a second selection\n", None);
+    let next_instance = "<html><script type=\"application/json\" id=\"ql-doc\">{\"revision\":3}</script></html>\n";
+    let follow_up = fixture.commission(revision, next_instance, None);
     let CommissionOutcome::Commissioned {
         previous_revision,
         revision: revision2,
@@ -200,16 +214,65 @@ fn commission_lands_as_owner_revision_carrying_the_selection_verbatim() {
 
 #[test]
 #[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
-fn agent_session_binds_without_owning_the_flow_identity() {
+fn stale_expected_revision_is_the_owner_structured_conflict() {
+    let fixture = Fixture::new("commission-conflict");
+
+    // Move the instance underneath the commission.
+    let moved = fixture
+        .client()
+        .run(
+            "central.files.write",
+            json!({
+                "location": fixture.instance,
+                "expected_revision": fixture.revision0,
+                "content": "<html><script type=\"application/json\" id=\"ql-doc\">{\"revision\":9,\"external\":true}</script></html>\n",
+                "actor": "human:desktop",
+                "actor_kind": "human",
+            }),
+        )
+        .unwrap();
+    assert_eq!(moved["outcome"], "written");
+
+    let outcome = fixture.commission(&fixture.revision0.clone(), COMPOSED_INSTANCE, None);
+    let CommissionOutcome::Conflict {
+        path,
+        expected,
+        current,
+    } = &outcome
+    else {
+        panic!("a stale commission must be the owner's structured conflict, got {outcome:?}")
+    };
+    assert_eq!(path, &fixture.instance.path);
+    assert_eq!(expected, &fixture.revision0);
+    assert_ne!(current, expected, "both revisions observed, verbatim");
+
+    // The owner preserved the concurrent bytes; nothing was overwritten.
+    let read = fixture
+        .client()
+        .run(
+            "central.files.read",
+            json!({"location": fixture.instance}),
+        )
+        .unwrap();
+    assert!(read["content"]
+        .as_str()
+        .unwrap()
+        .contains("\"external\":true"));
+
+    let _ = fs::remove_dir_all(&fixture.root);
+}
+
+#[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
+fn agent_session_binds_as_the_write_actor() {
     let fixture = Fixture::new("commission-session");
 
     let outcome = fixture.commission(
         &fixture.revision0.clone(),
-        "session-bound selection\n",
+        COMPOSED_INSTANCE,
         Some("session:w4d-commission-1"),
     );
     let CommissionOutcome::Commissioned {
-        flow,
         revision,
         agent_session_ref,
         ..
@@ -222,175 +285,53 @@ fn agent_session_binds_without_owning_the_flow_identity() {
         &Some("session:w4d-commission-1".to_owned())
     );
 
-    // The Flow's identity — FlowRef, source ref, scope, lifecycle — is the
-    // owner's and is untouched by the binding.
-    let inspected = fixture
-        .client()
-        .flow_inspect(Some("W4DCommission"), &fixture.flow_ref)
-        .unwrap();
-    assert_eq!(inspected.flow.flow_ref, flow.flow_ref);
-    assert_eq!(inspected.flow.source_ref, flow.source_ref);
-    assert_eq!(inspected.flow.scope_ref, "project:w4d-commission");
-    assert_eq!(inspected.flow.lifecycle, "active");
-
-    // Central's attribution law: the write declares the session as the actor
-    // (`agent`) — the owner revision receipt records it verbatim.
+    // Central's attribution law recorded the session on the owner revision;
+    // the file history is the receipt (the retired registry kept none).
     let history = fixture
         .client()
-        .flow_history(Some("W4DCommission"), &fixture.flow_ref)
+        .run(
+            "central.files.history",
+            json!({"location": fixture.instance, "limit": 1}),
+        )
         .unwrap();
-    let last = history.revisions.last().unwrap();
-    assert_eq!(last.actor, "session:w4d-commission-1");
-    assert_eq!(last.actor_kind, "agent");
-    assert_eq!(history.current_revision, *revision);
+    assert_eq!(history["schema"], "central.file-history/v1");
+    assert_eq!(
+        history["entries"][0]["actor"],
+        "session:w4d-commission-1",
+        "{history}"
+    );
+    assert_eq!(history["entries"][0]["actor_kind"], "agent");
+    assert_eq!(history["entries"][0]["revision"], *revision);
 
     let _ = fs::remove_dir_all(&fixture.root);
 }
 
 #[test]
 #[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
-fn stale_expected_revision_is_a_structured_conflict_never_a_silent_overwrite() {
-    let fixture = Fixture::new("commission-conflict");
+fn commission_requires_expected_revision_and_content() {
+    let fixture = Fixture::new("commission-input");
 
-    // Land one commission so the owner revision moves.
-    let first = fixture.commission(&fixture.revision0.clone(), "first selection\n", None);
-    let CommissionOutcome::Commissioned {
-        revision: revision1,
-        ..
-    } = &first
-    else {
-        panic!("the first commission must land, got {first:?}")
-    };
-
-    // The same selection made against the stale base refuses: the owner CAS
-    // names both revisions and the kernel classifies the move structurally —
-    // the selection is returned unapplied.
-    let conflict = fixture.commission(&fixture.revision0.clone(), "conflicting selection\n", None);
-    let CommissionOutcome::Conflict {
-        flow_ref,
-        expected,
-        current,
-    } = &conflict
-    else {
-        panic!("a stale expected revision must be a structured conflict, got {conflict:?}")
-    };
-    assert_eq!(flow_ref, &fixture.flow_ref);
-    assert_eq!(expected, &fixture.revision0);
-    assert_eq!(current, revision1);
-
-    // The owner layer is untouched by the refused commission.
-    let read = fixture
-        .client()
-        .flow_read(Some("W4DCommission"), &fixture.flow_ref, None)
-        .unwrap();
-    assert_eq!(read.flow.current_revision, *revision1);
-    assert_eq!(read.content, "first selection\n");
-
-    // A commission against an unknown-but-well-formed revision is still a
-    // structured conflict only when the owner record moved; otherwise the
-    // owner's own refusal rides verbatim.
-    let _ = fs::remove_dir_all(&fixture.root);
-}
-
-#[test]
-#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
-fn owner_refusal_and_unavailable_pass_through_verbatim() {
-    let fixture = Fixture::new("commission-owner-failures");
-
-    // A grammar-valid FlowRef the owner does not hold: the write refuses and
-    // the re-read finds no moved revision — the owner's own words ride.
     let mut kernel = Kernel::new(fixture.client());
-    let unknown_ref = "central:flow:project:w4d-commission:9999999999999999999";
-    let outcome = kernel
-        .apply(KernelOp::FlowCommission {
-            project: Some("W4DCommission".into()),
-            flow_ref: unknown_ref.into(),
-            expected_revision: fixture.revision0.clone(),
-            selection: "a selection\n".into(),
+    for op in [
+        KernelOp::InstanceCommission {
+            location: fixture.instance.clone(),
+            expected_revision: String::new(),
+            content: COMPOSED_INSTANCE.into(),
             agent_session_ref: None,
-        })
-        .unwrap();
-    let KernelOpResult::FlowCommissioned { outcome } = outcome.result else {
-        panic!("typed FlowCommissioned result expected")
-    };
-    let CommissionOutcome::OwnerRefused { flow_ref, message } = &outcome else {
-        panic!("an unknown Flow must carry the owner's refusal, got {outcome:?}")
-    };
-    assert_eq!(flow_ref, unknown_ref);
-    assert!(
-        !message.is_empty(),
-        "the owner refusal carries the owner's own message verbatim"
-    );
-
-    // A FlowRef outside Central's canonical grammar is a structural error —
-    // the kernel mints no FlowRef.
-    let error = kernel
-        .apply(KernelOp::FlowCommission {
-            project: Some("W4DCommission".into()),
-            flow_ref: "not-a-central-flow-ref".into(),
+        },
+        KernelOp::InstanceCommission {
+            location: fixture.instance.clone(),
             expected_revision: fixture.revision0.clone(),
-            selection: "a selection\n".into(),
+            content: String::new(),
             agent_session_ref: None,
-        })
-        .unwrap_err();
-    assert!(
-        error.contains("canonical Flow grammar"),
-        "the structural error names the grammar law: {error}"
-    );
-
-    // An empty selection is equally structural.
-    let error = kernel
-        .apply(KernelOp::FlowCommission {
-            project: Some("W4DCommission".into()),
-            flow_ref: fixture.flow_ref.clone(),
-            expected_revision: fixture.revision0.clone(),
-            selection: String::new(),
-            agent_session_ref: None,
-        })
-        .unwrap_err();
-    assert!(
-        error.contains("selection text"),
-        "the structural error names the verbatim-selection law: {error}"
-    );
-
-    let _ = fs::remove_dir_all(&fixture.root);
-}
-
-#[test]
-#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
-fn owner_unavailable_is_explicit_absence_not_an_error() {
-    let fixture = Fixture::new("commission-unavailable");
-
-    // The owner executable could not be launched: honest absence, named —
-    // never a fabricated commission, never a faked conflict.
-    let bogus = fixture.root.join("no-such-suite-executable");
-    let client = CentralClient::with_suite_owner(
-        bogus,
-        candidate("ctrl"),
-        Some(fixture.root.clone()),
-        "W4DCommissionGround".into(),
-    );
-    let mut kernel = Kernel::new(client);
-    let outcome = kernel
-        .apply(KernelOp::FlowCommission {
-            project: Some("W4DCommission".into()),
-            flow_ref: fixture.flow_ref.clone(),
-            expected_revision: fixture.revision0.clone(),
-            selection: "a selection\n".into(),
-            agent_session_ref: None,
-        })
-        .unwrap();
-    let KernelOpResult::FlowCommissioned { outcome } = outcome.result else {
-        panic!("typed FlowCommissioned result expected")
-    };
-    let CommissionOutcome::OwnerUnavailable { flow_ref, detail } = &outcome else {
-        panic!("an absent owner must be explicit unavailability, got {outcome:?}")
-    };
-    assert_eq!(flow_ref, &fixture.flow_ref);
-    assert!(
-        !detail.is_empty(),
-        "the owner unavailability carries the launch detail verbatim"
-    );
+        },
+    ] {
+        let error = kernel.apply(op).unwrap_err();
+        assert!(
+            error.to_string().contains("requires"),
+            "the input law refuses before any owner call: {error}"
+        );
+    }
 
     let _ = fs::remove_dir_all(&fixture.root);
 }
