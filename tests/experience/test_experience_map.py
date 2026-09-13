@@ -6,6 +6,7 @@ import csv
 import importlib.util
 import json
 from pathlib import Path
+import shutil
 import tempfile
 import unittest
 
@@ -20,10 +21,8 @@ class ExperienceMapTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)
-        dest = self.root / "docs/experience"
-        dest.mkdir(parents=True)
-        for name in ("campaign.json", "STORIES.md", "PRACTICE-CONDITIONS.md"):
-            (dest / name).write_bytes((ROOT / "docs/experience" / name).read_bytes())
+        # Copy the declared public source module field, never a private World.
+        shutil.copytree(ROOT / "docs/experience", self.root / "docs/experience")
 
     def tearDown(self):
         self.temp.cleanup()
