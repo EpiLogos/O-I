@@ -54,7 +54,7 @@ try {
         },bytes.toString('base64'));
       };
       const variants={
-        production:'',
+        production:'/* Unmodified production material. */',
         no_animation:'.search-aperture.search-glass {animation:none;transform:none}',
         promoted:'.search-aperture.search-glass {animation:none;transform:translateZ(0)}',
         transparent_scrim:'.search-aperture.search-glass::backdrop {background:transparent}',
