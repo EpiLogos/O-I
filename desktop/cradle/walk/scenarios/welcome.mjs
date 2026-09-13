@@ -15,7 +15,13 @@ export default async function run({page,baseUrl,check,shot}) {
   check(await page.locator('.oi-point-cloud-overlay').count()===1,'The frontstate field renders through the one window expression canvas');
   const enter=page.locator('.oi-welcome-enter');
   check(await enter.getAttribute('aria-label')==='O:I is ready. Open the app.','The enter control is a real labelled control, not a bare scrim');
-  check(await page.getByRole('region',{name:'Empty workspace'}).isVisible(),'The workspace is already composed behind the frontstate');
+  // The shell is composed behind the frontstate — mounted and laid out so
+  // entering is instant — but deliberately unpainted while the frontstate
+  // covers the window (a restored surface must not flash beneath it), the
+  // same inert-behind-the-cover law as the boot overlay. Hidden from the
+  // accessibility tree too, so this reads the DOM directly.
+  await page.locator('.fresh-surface[aria-label="Empty workspace"]').waitFor({state:'attached',timeout:15000});
+  check(await page.locator('.fresh-surface[aria-label="Empty workspace"]').count()===1,'The workspace is already composed (mounted, unpainted) behind the frontstate');
 
   // Escape is a keyboard path into the app.
   await page.keyboard.press('Escape');

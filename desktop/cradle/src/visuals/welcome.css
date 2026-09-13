@@ -53,3 +53,8 @@
     transition: none;
   }
 }
+
+/* While the frontstate covers the window, the restored shell below is not
+ * painted at all — nothing can flash beneath the opening state. The flag
+ * clears the moment the frontstate leaves (its own fade reveals the app). */
+body[data-welcome-covering="true"] .desktop-shell{visibility:hidden}

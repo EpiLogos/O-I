@@ -69,7 +69,7 @@ const CHAOS_PATCH: PointCloudPatch = {
   },
 };
 
-export function WelcomeField({ onEntered }: { onEntered?: () => void }) {
+export function WelcomeField({ onEntered, onCovering }: { onEntered?: () => void; onCovering?: (covering: boolean) => void }) {
   const { snapshot, host, error } = useVisuals();
   const [phase, setPhase] = useState<"rest" | "dissolving" | "leaving" | "done">("rest");
   const instanceRef = useRef<PointCloudInstance | null>(null);
@@ -82,6 +82,14 @@ export function WelcomeField({ onEntered }: { onEntered?: () => void }) {
   );
 
   const show = gate && !error;
+
+  // The shell below stays hidden while this frontstate actually covers the
+  // window (rest and dissolve): a restored document surface must never
+  // flash beneath the opening state. The reveal is the leaving fade.
+  useEffect(() => {
+    onCovering?.(show && phase !== "done" && phase !== "leaving");
+    return () => onCovering?.(false);
+  }, [show, phase, onCovering]);
 
   const enter = useCallback(() => {
     if (sessionStorage.getItem(DONE_KEY)) return;

@@ -820,11 +820,22 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
   // person. It dissolves on the first click (or Escape); the workspace is
   // interactive the moment it lifts.
   const [welcomeUp, setWelcomeUp] = useState(true);
+  // While the frontstate actually covers the window, the shell underneath
+  // is kept unpainted: a restored Markdown (or any) surface must not flash
+  // beneath the opening state. The frontstate owns the truth of whether it
+  // covers — a declined frontstate (expression unavailable, already
+  // entered) never hides the shell.
+  const [welcomeCovering, setWelcomeCovering] = useState(false);
+  useEffect(() => {
+    if (welcomeCovering) document.body.dataset.welcomeCovering = "true";
+    else delete document.body.dataset.welcomeCovering;
+    return () => { delete document.body.dataset.welcomeCovering; };
+  }, [welcomeCovering]);
 
   return (
     <>
       <ExpressionLayout layout={state}/>
-      {welcomeUp && <WelcomeField onEntered={()=>setWelcomeUp(false)}/>}
+      {welcomeUp && <WelcomeField onEntered={()=>setWelcomeUp(false)} onCovering={setWelcomeCovering}/>}
       {windowError && <p role="alert">{windowError}</p>}
       {workspace.recovery&&<section className="workspace-recovery" aria-label="Workspace recovery"><p>The saved arrangement could not be restored. Its original data is retained.</p><button disabled={!workspace.recovery.key} onClick={workspace.recoverAvailable}>Recover available workspaces</button><button disabled={!workspace.recovery.key} onClick={workspace.startFresh}>Start a fresh arrangement</button></section>}
       <DesktopShell onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}
