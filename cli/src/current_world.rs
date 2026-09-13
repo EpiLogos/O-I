@@ -356,9 +356,14 @@ mod tests {
             vec!["central", "workcell"],
             vec!["central", "quaternal-logic"],
         ] {
-            let reading =
-                CurrentWorldReading::from_disclosure(&disclosure_with(&products, NativeSurfaceState::Registered));
-            assert_eq!(reading.context_frame.containing_frame, "cf5", "{products:?}");
+            let reading = CurrentWorldReading::from_disclosure(&disclosure_with(
+                &products,
+                NativeSurfaceState::Registered,
+            ));
+            assert_eq!(
+                reading.context_frame.containing_frame, "cf5",
+                "{products:?}"
+            );
         }
     }
 
@@ -402,8 +407,10 @@ mod tests {
             (&["central", "quaternal-logic"], "cf7"),
         ];
         for (products, expected) in cases {
-            let reading =
-                CurrentWorldReading::from_disclosure(&disclosure_with(products, NativeSurfaceState::Registered));
+            let reading = CurrentWorldReading::from_disclosure(&disclosure_with(
+                products,
+                NativeSurfaceState::Registered,
+            ));
             assert_eq!(form_of(&reading).as_deref(), Some(expected), "{products:?}");
         }
     }
@@ -427,7 +434,10 @@ mod tests {
 
     #[test]
     fn cf7_learning_composition_has_no_agent_development_stack_requirement() {
-        let learning = disclosure_with(&["central", "quaternal-logic"], NativeSurfaceState::Registered);
+        let learning = disclosure_with(
+            &["central", "quaternal-logic"],
+            NativeSurfaceState::Registered,
+        );
         let reading = CurrentWorldReading::from_disclosure(&learning);
         assert_eq!(form_of(&reading).as_deref(), Some("cf7"));
     }
@@ -447,7 +457,8 @@ mod tests {
 
     #[test]
     fn unavailable_disclosure_still_reports_the_containing_frame() {
-        let reading = CurrentWorldReading::from_disclosure(&SuiteCompositionDisclosure::unavailable("none"));
+        let reading =
+            CurrentWorldReading::from_disclosure(&SuiteCompositionDisclosure::unavailable("none"));
         assert_eq!(reading.context_frame.containing_frame, "cf5");
         assert_eq!(form_of(&reading), None);
         assert!(reading.context_frame.present_positions.is_empty());
