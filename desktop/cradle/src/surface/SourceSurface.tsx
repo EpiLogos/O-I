@@ -122,10 +122,20 @@ export function SourceSurface(props: SourceSurfaceProps) {
     });
   };
 
+  // ⌘S reaches onSave twice for one keystroke — TextEditor's CodeMirror
+  // `Mod-s` keymap AND this surface's own keydown handler. A second save
+  // launched with the same base revision would land as a second owner
+  // refusal (a duplicate conflict event beside the first), so — same law
+  // as the file surface — a save already in flight is never re-entered.
+  const savingRef = useRef(false);
   const onSave = () => {
     // Always queue an explicit save after preceding edits. The renderer's
     // dirty flag can still be one response behind a fast Cmd+S.
-    if (binding.ref) void kernel.saveSource(binding.ref);
+    if (savingRef.current || !binding.ref) return;
+    savingRef.current = true;
+    void kernel
+      .saveSource(binding.ref)
+      .finally(() => { savingRef.current = false; });
   };
   const updateCaret=()=>{const el=textareaRef.current;if(!el)return;const before=el.value.slice(0,el.selectionStart);const lines=before.split("\n");setCaret({line:lines.length,column:(lines[lines.length-1]?.length??0)+1,selected:el.selectionStart!==el.selectionEnd});retainView();};
   const extension=buffer?.path?.split(".").pop()?.toLowerCase();const markdown=extension==="md"||extension==="markdown";

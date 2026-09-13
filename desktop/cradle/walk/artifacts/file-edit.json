@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "file-edit",
-  "generated_at": "2026-09-08T12:06:10.214Z",
+  "generated_at": "2026-09-13T23:00:32.541Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 1226,
+  "duration_ms": 3695,
   "checks": [
     {
       "ok": true,
@@ -44,6 +44,10 @@
     },
     {
       "ok": true,
+      "label": "Closing the tab after a conflict is a quiet success, no raw refusal"
+    },
+    {
+      "ok": true,
       "label": "Explicit reconciliation then Save uses the current native basis"
     },
     {
@@ -63,10 +67,10 @@
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-08T12:06:10.310Z",
+        "mounted_at": "2026-09-13T23:00:32.795Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -77,7 +81,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 48,
+      "duration_ms": 40,
       "data": {
         "file": "file-edit-ordinary-native-cas-history-restore.png"
       }

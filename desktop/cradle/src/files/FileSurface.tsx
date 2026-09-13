@@ -50,10 +50,10 @@ function lastReading(ref:string|undefined):NativeFileReading|undefined{
   }catch{return undefined;}
 }
 
-export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceBinding;forceSource?:boolean;leadingTools?:ReactNode}) {
+export function FileSurface({binding,forceSource,leadingTools,onView}:{binding:SurfaceBinding;forceSource?:boolean;leadingTools?:ReactNode;onView?:(view:NonNullable<SurfaceBinding["view"]>)=>void}) {
   const format=detectFormat({path:binding.location?.path});
   if(!forceSource&&format!=="text"){
-    return <MaterialSurface binding={binding} format={format}/>;
+    return <MaterialSurface binding={binding} format={format} onView={onView}/>;
   }
   const {transport}=useKernel();
   const [reading,setReading]=useState<NativeFileReading>();
@@ -134,7 +134,10 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
   const formatJson=()=>{if(!draft)return;try{change(`${JSON.stringify(JSON.parse(draft.content),null,2)}\n`);setError(undefined);}catch{setError("JSON could not be formatted because it is not valid.");}};
   return <EditorFrame className="native-file-surface" label={`File ${binding.title}`}
     toolbar={<>{leadingTools}<EditorCommands editor={body} markdown={markdown} readOnly={!writable||pending}/>{json&&<EditorButton onClick={formatJson} disabled={!writable}>Format JSON</EditorButton>}</>}
-    footer={<><span className="editor-path" title={`Central / ${binding.location?.path}`}>Central / {binding.location?.path}</span>{reading&&<span>Ln {caret.line}, Col {caret.column}</span>}<span>{error&&reading?"Last reading":dirty?"Unsaved":writable?"Saved":"Read only"}</span>{reading?.operations?.history.available&&<button onClick={()=>void loadHistory()} disabled={pending}>History</button>}{writable&&<button onClick={()=>void save()} disabled={pending||!dirty||conflict}>Save ⌘S</button>}</>}
+    footer={<><span className="editor-path" title={`Central / ${binding.location?.path}`}>Central / {binding.location?.path}</span>{reading&&<span>Ln {caret.line}, Col {caret.column}</span>}{/* The persistent save marker shares SourceSurface's grammar: the dirty
+      * marker while typing remains, and after a successful save "Saved"
+      * stays in the footer as the standing confirmation — the class also
+      * carries the save-state styling. */}<span className={error&&reading?"":dirty?"source-dirty-marker":"source-clean-marker"}>{error&&reading?"Last reading":dirty?"Unsaved":writable?"Saved":"Read only"}</span>{reading?.operations?.history.available&&<button onClick={()=>void loadHistory()} disabled={pending}>History</button>}{writable&&<button onClick={()=>void save()} disabled={pending||!dirty||conflict}>Save ⌘S</button>}</>}
   >
     {error&&<p role="alert" className="source-note">{error}</p>}
     {pending&&!reading&&<Loading label="Reading file…" scope="surface"/>}

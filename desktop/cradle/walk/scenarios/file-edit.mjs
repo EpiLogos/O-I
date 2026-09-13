@@ -1,4 +1,4 @@
-import {docText, waitForDoc} from '../editor-doc.mjs';
+import {docText, waitForDoc, openChrome} from '../editor-doc.mjs';
 import {setup} from './files.mjs';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {join} from 'node:path';
@@ -23,16 +23,26 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
  await page.reload();await editor.waitFor();
  check(await docText(page,'.cm-content')===first,'Unsaved ordinary draft survives reload');
  check(readFileSync(join(p.root,p.path),'utf8')===p.content,'Retaining a draft does not write the source');
- await file.getByRole('button',{name:'Save',exact:true}).click();
+ await openChrome(page,'.native-file-surface');await file.getByRole('button',{name:'Save ⌘S',exact:true}).click();
  await page.waitForFunction(()=>document.querySelector('.source-clean-marker')?.textContent==='Saved');
  check(readFileSync(join(p.root,p.path),'utf8')===first,'Explicit Save writes actual bytes through Central');
  const mine='My conflicting draft.\n',theirs='External writer.\n';await editor.fill(mine);writeFileSync(join(p.root,p.path),theirs);
- await file.getByRole('button',{name:'Save',exact:true}).click();
+ await openChrome(page,'.native-file-surface');await file.getByRole('button',{name:'Save ⌘S',exact:true}).click();
  await file.getByRole('region',{name:'File conflict'}).waitFor();
  check(await docText(page,'.cm-content')===mine&&readFileSync(join(p.root,p.path),'utf8')===theirs,'CAS conflict preserves both actual source and held typing');
  check(await file.getByRole('textbox',{name:'Current file',exact:true}).inputValue()===theirs,'Conflict comparison reads the actual current owner revision');
+ // Closing the tab after a conflict degrades gracefully: the close is a
+ // quiet success and no raw kernel refusal ("no surface ... is open")
+ // surfaces anywhere in the shell.
+ await page.keyboard.press('Meta+w');
+ await page.waitForFunction(() => !document.querySelector('.tab'));
+ await page.waitForFunction(() => !document.body.innerText.includes('no surface'));
+ check(true, 'Closing the tab after a conflict is a quiet success, no raw refusal');
+ if (await nav.getByRole('button',{name:'Expand folder src',exact:true}).count()) await nav.getByRole('button',{name:'Expand folder src',exact:true}).click();
+ await nav.locator(`[data-file-path="${p.path}"]`).click();
+ await editor.waitFor();
  await file.getByRole('button',{name:'Use current revision as draft basis'}).click();
- await file.getByRole('button',{name:'Save',exact:true}).click();
+ await openChrome(page,'.native-file-surface');await file.getByRole('button',{name:'Save ⌘S',exact:true}).click();
  await page.waitForFunction(()=>document.querySelector('.source-clean-marker')?.textContent==='Saved');
  check(readFileSync(join(p.root,p.path),'utf8')===mine,'Explicit reconciliation then Save uses the current native basis');
  await file.getByRole('button',{name:'History',exact:true}).click();
