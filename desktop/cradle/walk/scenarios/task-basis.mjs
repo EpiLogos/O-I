@@ -176,6 +176,21 @@ export default async function run({page,baseUrl,check,shot,channel,log,provision
   check(taskText.includes("has not yet disclosed this session's agency basis"),"The undisclosed agency basis is named honestly — the desktop composes no expectation of its own");
   await shot("task-section-verbatim");
 
+  // The Inspect plane's NOW section is fed from this surface's own records.
+  // On this cut the owner's task record carries no allocated NOW (the record
+  // is published before the chain allocates, and the boundary refusal on
+  // macOS prevents the allocated republication), so the section renders the
+  // truthful intermediate state — a real task basis, no fabricated ref, no
+  // owner read issued for a ref the desktop does not hold.
+  await page.getByRole("button", {name: "Inspect", exact: true}).click();
+  const inspect = page.locator(".encounter-inspect");
+  await inspect.waitFor();
+  check(await inspect.locator("[data-now-task-uncertain]").count() === 1, "A task basis reached this surface with no allocated NOW yet: the truthful intermediate state renders");
+  check(await inspect.locator("[data-now-ref]").count() === 0, "No NOW ref renders — the desktop invents none while the owner's record holds none");
+  check(await inspect.locator("[data-now-reading]").count() === 0, "Absence issues no owner read — no relations panel renders without a named ref");
+  await shot("inspect-now-fed-honest-state");
+  await page.getByRole("button", {name: "Conversation", exact: true}).click();
+
   // A sender-supplied expectation (echoing the recorded allocation) is
   // REFUSED by the owner's task-expectation validation — the task is not
   // ready, and the owner refuses before any transport. This is the same
@@ -207,5 +222,12 @@ export default async function run({page,baseUrl,check,shot,channel,log,provision
   await page.getByRole("textbox",{name:"Message",exact:true}).waitFor();
   await page.waitForFunction(()=>document.querySelector(".encounter-addressed-task")===null,null,{timeout:20000});
   check(true,"A session without a task renders no task section — nothing is invented");
+
+  // The plain session's Inspect plane keeps the generic honest empty state —
+  // no task basis, no NOW, nothing inferred.
+  await page.getByRole("button", {name: "Inspect", exact: true}).click();
+  await page.locator(".encounter-inspect").waitFor();
+  check(await page.locator(".encounter-inspect [data-now-relations-empty]").count() === 1, "A session with no task basis keeps the generic honest empty state");
+  await shot("plain-session-inspect-empty");
   await shot("plain-session-no-task-section");
 }
