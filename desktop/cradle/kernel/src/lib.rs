@@ -1254,8 +1254,19 @@ impl Kernel {
     }
 
     fn surface_close(&mut self, surface_id: String) -> Result<KernelOpOutcome, String> {
+        // Closing is idempotent: a surface the kernel does not hold is already
+        // closed — exactly the state the caller asked for. The renderer closes
+        // every tab it can see, while the kernel only registers surfaces whose
+        // mount fully succeeded, so a failed mount (an unreadable file, an
+        // absent reading) must close its tab cleanly, not surface a raw
+        // refusal for a surface that never opened.
         let Some(surface) = self.surfaces.remove(&surface_id) else {
-            return Err(format!("no surface `{surface_id}` is open"));
+            return Ok(KernelOpOutcome {
+                receipts: Vec::new(),
+                result: KernelOpResult::SurfaceClosed {
+                    snapshot: self.snapshot(),
+                },
+            });
         };
         let mut receipts = vec![self.log.record(KernelEvent::SurfaceChanged {
             surface_id: surface.surface_id.clone(),
@@ -1436,5 +1447,44 @@ mod tests {
                 content: "x".into(),
             })
             .is_err());
+    }
+
+    #[test]
+    fn closing_an_unregistered_surface_is_a_quiet_success() {
+        let mut kernel = Kernel::new(CentralClient::with(
+            "/nonexistent/ctrl-fixture".into(),
+            None,
+            "test".into(),
+        ));
+        // A surface whose mount never reached the kernel (a failed read, a
+        // refused registration) is already closed: closing it again is the
+        // state the caller asked for — a quiet success, no receipt, no raw
+        // refusal travelling back to the person.
+        let outcome = kernel
+            .apply(KernelOp::SurfaceClose {
+                surface_id: "never-mounted".into(),
+            })
+            .expect("close of an unknown surface must succeed");
+        assert!(outcome.receipts.is_empty());
+        assert!(matches!(outcome.result, KernelOpResult::SurfaceClosed { .. }));
+        assert_eq!(kernel.event_log().len(), 0);
+
+        // A real registration closes with its receipt, and a second close of
+        // the same surface stays quiet rather than refusing.
+        kernel
+            .apply(KernelOp::SurfaceOpen {
+                surface_id: "s1".into(),
+                kind: "draft".into(),
+                source_ref: None,
+                title: "Draft".into(),
+            })
+            .expect("open");
+        let closed = kernel
+            .apply(KernelOp::SurfaceClose { surface_id: "s1".into() })
+            .expect("close of a known surface");
+        assert_eq!(closed.receipts.len(), 1);
+        kernel
+            .apply(KernelOp::SurfaceClose { surface_id: "s1".into() })
+            .expect("a second close is idempotent");
     }
 }
