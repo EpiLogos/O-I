@@ -2,6 +2,7 @@ import {useLayoutEffect,useRef,useState,type ReactNode} from "react";
 import type {A2aDifference,A2aPeerFields,EncounterReading,EncounterStatus,JournalPage,PermissionDecision} from "./client";
 import {Glyph} from "../workspace/Glyph";
 import {NowRelations} from "../receiving/NowRelations";
+import {sessionSpaceAbsenceNote} from "./sessionSpace";
 import "./encounter.css";
 /** Rendering and interaction only; AIKit owns transcript, consent and shared draft.
  * `presentation`: "tab" is the canvas-surface shape (own heading + plane nav);
@@ -31,6 +32,10 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
     {tab && <header className="encounter-heading"><span className="encounter-mark" aria-hidden="true">◌</span><div><h2>{title}</h2><small>{status?.provider?.label??(connected?"Native encounter":"Choose a provider")}</small></div><span className="encounter-state" role="status">{running?status?.state==="InterruptRequested"?"Stopping…":"Responding…":connected?"Connected":"Disconnected"}</span></header>}
     {tab && <nav className="encounter-planes" aria-label="Encounter planes">{(["Conversation","Activity","Context","Inspect"] as const).map(name=><button key={name} aria-pressed={plane===name} onClick={()=>onPlane(name)}>{name}</button>)}</nav>}
     <div ref={transcript} className="encounter-transcript" aria-label={plane==="Conversation"?"Transcript":`Encounter ${plane}`} onScroll={()=>{const element=transcript.current;if(element)following.current=element.scrollHeight-element.clientHeight-element.scrollTop<48;}}>
+      {/* An absent session-space binary is a machine state, not a failed
+        * read: every plane carries the calm remedy instead of a perpetual
+        * "Reading encounter…" or the owner's raw exec report. */}
+      {sessionSpaceAbsenceNote(error)&&<p className="encounter-absence" role="status">{sessionSpaceAbsenceNote(error)}</p>}
       {plane==="Context"?<div className="encounter-context">
         {/* §4.1's three correlated facts, kept distinct: what is recorded, what
           * the participant is permitted to carry, and what the provider actually
@@ -79,7 +84,7 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
         :block.kind==="error"?<div key={block.id} className="encounter-turn encounter-error" data-kind="error"><span className="encounter-avatar" aria-hidden="true"><Glyph name="chat" size={12}/></span><div><strong>Provider turn failed</strong><p>{block.text}</p></div></div>
         :block.kind==="completed"&&plane==="Conversation"?null
         :<div key={block.id} className={`encounter-turn encounter-${block.kind}`}><span className="encounter-avatar" aria-hidden="true">{block.kind==="user"?"Y":<Glyph name="chat" size={12}/>}</span><div><strong>{block.kind==="user"?"You":block.kind==="assistant"?(status?.provider?.label??"Assistant"):block.kind==="permission"?"Native permission requested":block.kind==="cancelled"?"Stopped":"Provider report"}</strong><p>{block.text}</p>{block.kind==="assistant"&&plane==="Conversation"&&onA2aSeed?<button className="encounter-a2a-seed" disabled={a2a?.busy} onClick={()=>onA2aSeed(block.text)}>Exchange over A2A</button>:null}</div></div>)}
-      {!reading&&<p role="status">Reading encounter…</p>}{plane==="Activity"&&blocks?.length===0&&!status?.error&&<p>No provider activity in this transcript page.</p>}
+      {!reading&&!sessionSpaceAbsenceNote(error)&&<p role="status">Reading encounter…</p>}{plane==="Activity"&&blocks?.length===0&&!status?.error&&<p>No provider activity in this transcript page.</p>}
       {plane==="Activity"&&readJournal&&<ActivityJournal read={readJournal}/>}
       </>}
     </div>
@@ -93,7 +98,7 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
       * in Conversation now; every other plane still reaches it by switching
       * planes, same as switching any other tab. */}
     {plane==="Conversation" && <div className="encounter-composer">
-      {(error||status?.error)&&<p role="alert">{error||status?.error}</p>}
+      {(error||status?.error)&&!sessionSpaceAbsenceNote(error)&&<p role="alert">{error||status?.error}</p>}
       {/* A faulted resident still holds its seat, so the connect section never
         * re-renders — and on the bound owner cut, reconnect returns that same
         * resident idempotently without starting a new transport. The honest

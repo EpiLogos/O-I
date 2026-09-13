@@ -1,0 +1,67 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "session-space-absence",
+  "generated_at": "2026-09-13T23:06:43.258Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 14492,
+  "checks": [
+    {
+      "ok": true,
+      "label": "The project conversation list names the absent session-space binary calmly"
+    },
+    {
+      "ok": true,
+      "label": "The absence names the oi command that installs the session-space binary",
+      "data": {
+        "text": "AIKit SessionSpace is not installed on this machine, so attached conversations, activity records and task readings are unavailable here. Install it with `oi install ai-kit`, then reopen this panel."
+      }
+    },
+    {
+      "ok": true,
+      "label": "The raw exec report never reaches the panel"
+    },
+    {
+      "ok": true,
+      "label": "The absence is a status, not an alert"
+    },
+    {
+      "ok": true,
+      "label": "Navigator browsing stays usable while SessionSpace is absent"
+    },
+    {
+      "ok": true,
+      "label": "The System Activity view carries the same remedy for the absent binary"
+    },
+    {
+      "ok": true,
+      "label": "The System Activity view never surfaces the raw exec report"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-13T23:06:57.558Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": []
+}

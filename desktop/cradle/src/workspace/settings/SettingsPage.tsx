@@ -13,6 +13,7 @@ import {useEffect,useState} from "react";
 import {useKernel} from "../../kernel/KernelProvider";
 import {kernelOp} from "../../kernel/bridge";
 import {encounter} from "../../encounter/client";
+import {sessionSpaceAbsenceNote} from "../../encounter/sessionSpace";
 import {Loading} from "../../shared/Loading";
 import {formatRelativeTime} from "../../shared/relativeTime";
 import {GroundChooser} from "../GroundChooser";
@@ -126,7 +127,7 @@ export function SettingsPage() {
       <h3>Activity</h3>
       {!project&&<p>No project is currently open — SessionSpace and provider readings are project-scoped.</p>}
       {project&&<>
-        {extras.spacesError&&<p role="alert">{extras.spacesError}</p>}
+        {extras.spacesError&&<p role="status" className="session-space-absence">{sessionSpaceAbsenceNote(extras.spacesError)??extras.spacesError}</p>}
         {extras.providersError&&<p role="alert">{extras.providersError}</p>}
         {extras.spaces&&<p>{extras.spaces.count} SessionSpace(s) disclosed for {extras.spaces.project_ref}.</p>}
         {extras.providers&&<p>{extras.providers.count} provider(s) disclosed for {project}.</p>}

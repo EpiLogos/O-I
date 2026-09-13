@@ -64,6 +64,7 @@ const SCENARIOS = {
   "day-edit": {module:"scenarios/day-edit.mjs",kernel:true,aliases:["6f2"]},
   "now-relations": {module:"scenarios/now-relations.mjs",kernel:true,aliases:["now"]},
   "task-basis": {module:"scenarios/task-basis.mjs",kernel:true,aliases:["6b3"]},
+  "session-space-absence": {module:"scenarios/session-space-absence.mjs",kernel:true,aliases:[]},
   "factory-development": {module:"scenarios/factory-development.mjs",kernel:true,aliases:["6d"]},
   "agency-planes": {module:"scenarios/agency-planes.mjs",kernel:true,aliases:["6c"]},
   "file-edit": {module:"scenarios/file-edit.mjs",kernel:true,aliases:[]},
@@ -363,8 +364,14 @@ async function runScenario(name, { baseUrl }) {
   // down for them — except when a scenario explicitly asks for it via
   // ?frontstate (the welcome scenario runs the real first-open path).
   await page.addInitScript(() => {
-    if (!new URLSearchParams(location.search).has("frontstate")) {
-      sessionStorage.setItem("oi-cradle.welcome.v1", "walk-continuing-session");
+    try {
+      if (!new URLSearchParams(location.search).has("frontstate")) {
+        sessionStorage.setItem("oi-cradle.welcome.v1", "walk-continuing-session");
+      }
+    } catch {
+      // Sandboxed material frames have no storage: the stand-down only
+      // concerns the top document, so an inaccessible sessionStorage is
+      // simply not applicable here.
     }
   });
 

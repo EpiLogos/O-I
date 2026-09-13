@@ -189,3 +189,8 @@
 .encounter-addressed-task dt{color:var(--oi-muted-2)}
 .encounter-addressed-task dd{margin:0}
 .encounter-addressed-task p{margin:6px 0 0;color:var(--oi-muted-2)}
+
+/* An absent session-space binary is a machine state, not a failed read: the
+ * note is calm prose (a status, not an alert) that names the installing
+ * command, and every encounter plane stays readable around it. */
+.encounter-absence{margin:8px 0;padding:8px 10px;border-left:2px solid var(--oi-hairline);border-radius:4px;color:var(--oi-muted-2);font-size:var(--oi-shell-type-ui);overflow-wrap:anywhere}

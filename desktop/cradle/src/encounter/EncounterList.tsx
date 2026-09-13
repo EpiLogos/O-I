@@ -3,6 +3,7 @@ import {useKernel} from "../kernel/KernelProvider";
 import {kernelOp} from "../kernel/bridge";
 import {Loading} from "../shared/Loading";
 import {formatRelativeTime} from "../shared/relativeTime";
+import {sessionSpaceAbsenceNote} from "./sessionSpace";
 export interface EncounterRow {space:string;ref:string;title:string;project:string}
 export function EncounterList({project,onOpen,activeRef}:{project:string;onOpen:(row:EncounterRow)=>Promise<void>;activeRef?:string}) {
  const kernel=useKernel();const [rows,setRows]=useState<EncounterRow[]>();const [observedAt,setObservedAt]=useState<number>();const [error,setError]=useState<string>();
@@ -16,7 +17,10 @@ export function EncounterList({project,onOpen,activeRef}:{project:string;onOpen:
   for(const raw of result.outcome.spaces){const space=raw as {definition:{id:string};label?:string;agent_sessions:Record<string,{purpose?:string}>};for(const [ref,attachment] of Object.entries(space.agent_sessions))found.push({space:space.definition.id,ref,title:attachment.purpose||space.label||ref,project});}
   if(live){setRows(found);setObservedAt(result.outcome.observed_at_unix_ms);setError(undefined);}
  }).catch(error=>{if(live)setError(String(error));}).finally(()=>{if(live)setPending(false);});return()=>{live=false;};},[project]);
- return <div className="project-encounters" aria-busy={pending}>{error?<p className="project-availability" role="status">{error}</p>:!rows?<Loading label="Reading chats and tasks…" scope="surface"/>:<>
+ // An absent session-space binary is a machine state, not a failed read: the
+ // list renders the calm remedy instead of the owner's raw exec report.
+ const absence=sessionSpaceAbsenceNote(error);
+ return <div className="project-encounters" aria-busy={pending}>{error?<p className="project-availability" role="status">{absence??error}</p>:!rows?<Loading label="Reading chats and tasks…" scope="surface"/>:<>
   {pending&&<Loading label="Refreshing chats and tasks…" detail="Keeping the last observed list visible" scope="surface"/>}
   {observedAt!==undefined&&<p className="project-availability" role="status">Observed {formatRelativeTime(observedAt)}</p>}
   {rows.length?rows.map(row=><button key={`${row.space}:${row.ref}`} className="encounter-row" aria-current={row.ref===activeRef?"true":undefined} onClick={()=>void onOpen(row).catch(error=>setError(String(error)))}><span className="encounter-dot" aria-hidden="true"/><span className="encounter-title">{row.title}</span></button>):<p className="project-availability">No attached encounters.</p>}

@@ -91,3 +91,7 @@
 .native-inline-field { display: contents; }
 .native-inline-fields dt { color: var(--oi-muted-2, #8f9a83); }
 .native-inline-fields dd { margin: 0; overflow-wrap: anywhere; }
+
+/* The System Activity view's session-space absence: calm status prose, not
+ * an alert — the remedy (the installing command) is the content. */
+.session-space-absence{padding:8px 10px;border-left:2px solid var(--oi-hairline);border-radius:4px;color:var(--oi-muted-2);overflow-wrap:anywhere}
