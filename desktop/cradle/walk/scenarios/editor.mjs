@@ -1,4 +1,4 @@
-import {docText, waitForDoc, openChrome} from '../editor-doc.mjs';
+import {docText, waitForDoc, openChrome, bindDefaultCentral} from '../editor-doc.mjs';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -6,6 +6,10 @@ import { join, resolve } from 'node:path';
 
 export async function setup({ cradleRoot }) {
   const root = mkdtempSync(join(tmpdir(), 'oi-cradle-editor-'));
+  // The kernel reads its suite binding from OI_HOME; without an isolated
+  // home the bridge reads the AMBIENT composition and this temp ground
+  // never lists (the ambient leak class from the wave-4 incident).
+  const home = mkdtempSync(join(tmpdir(), 'oi-cradle-editor-home-'));
   const ctrl = process.env.OI_CENTRAL_CTRL_BIN ?? 'ctrl';
   const call = (action, input = {}) => {
     const r = JSON.parse(execFileSync(ctrl, ['--root', root, '--json', 'action', 'run', action, JSON.stringify(input)], { encoding: 'utf8' }));
@@ -27,8 +31,8 @@ export async function setup({ cradleRoot }) {
       originals.set(path, content);
     }
     const sources = call('projectcentral.change.horizon', { project: 'Editor' }).sources.filter(s => originals.has(s.binding.path));
-    return { root, projectRoot, sources, originals, call, env: { OI_CENTRAL_ROOT: root, OI_CENTRAL_PROJECT_QUERY: 'Editor' }, cleanup: () => rmSync(root, { recursive: true, force: true }) };
-  } catch (error) { rmSync(root, { recursive: true, force: true }); throw error; }
+    return { root, projectRoot, sources, originals, call, env: { OI_CENTRAL_ROOT: root, OI_CENTRAL_PROJECT_QUERY: 'Editor', OI_HOME: home }, cleanup: () => { rmSync(root, { recursive: true, force: true }); rmSync(home, { recursive: true, force: true }); } };
+  } catch (error) { rmSync(root, { recursive: true, force: true }); rmSync(home, { recursive: true, force: true }); throw error; }
 }
 
 export default async function run({ page, baseUrl, check, metric, shot, channel, log, provision: p }) {
@@ -41,6 +45,10 @@ export default async function run({ page, baseUrl, check, metric, shot, channel,
     } catch { /* Teardown may close a completed response's browser handle. */ }
   });
   await page.goto(baseUrl); await channel('info');
+  // The boot law is explicit binding: an env-declared root is never
+  // auto-recognised, so the fixture ground is bound through the real UI
+  // before anything drives the navigator.
+  await bindDefaultCentral(page, p.root);
   // The thought that must survive opening documents now lives in a real Flow,
   // so its register has to be named before it can be opened.
   const thought='This thought survives opening documents.';

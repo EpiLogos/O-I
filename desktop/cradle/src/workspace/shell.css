@@ -169,7 +169,8 @@
 .region-resizer:hover::after, .region-resizer:focus-visible::after, .region-resizer[data-dragging="true"]::after { background: var(--oi-ink); }
 .region-resizer:focus-visible { outline: none; }
 
-.workspace-name { display: flex; gap: var(--oi-space-2); border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); padding: var(--oi-space-2); background: var(--oi-sidebar-ground); }
+/* The naming bar sits above .desktop-regions in the DOM but paints below its pane chrome (the pane tab strip's tools cover the Create/Save buttons); give it its own stacking place above the shell chrome. */
+.workspace-name { position: relative; z-index: 60; display: flex; gap: var(--oi-space-2); border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); padding: var(--oi-space-2); background: var(--oi-sidebar-ground); }
 .workspace-name input { flex: 1; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); }
 
 /* Splits: the resizer itself is the shell-ground gutter between two pane
@@ -224,7 +225,12 @@
 .desktop-menu summary { display: flex; padding: 4px; cursor: pointer; list-style: none; border-radius: 5px; }
 .desktop-menu summary::-webkit-details-marker { display: none; }
 .desktop-menu summary:hover { color: var(--oi-accent-ink); background: var(--oi-wash); }
-.desktop-menu > div { position: absolute; top: 100%; left: 0; z-index: var(--oi-z-popover); display: grid; min-width: 200px; padding: 7px; border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: 7px; background: var(--oi-sidebar-ground); box-shadow: var(--oi-shadow-menu); }
+/* The workspace strip is translated below a zero-height edge at the
+ * viewport's bottom, so a downward popover opens off-screen underneath the
+ * pane/agent chrome (spatial walk: "New workspace" unreachable with the
+ * inspector open). Open upward into the canvas, aligned to the menu's right
+ * edge — the strip's own z-index (50) carries the popover above panes. */
+.desktop-menu > div { position: absolute; bottom: 100%; top: auto; left: auto; right: 0; z-index: var(--oi-z-popover); display: grid; min-width: 200px; padding: 7px; border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: 7px; background: var(--oi-sidebar-ground); box-shadow: var(--oi-shadow-menu); }
 .desktop-menu button { width: auto; height: auto; padding: 9px; justify-content: flex-start; text-align: left; border-radius: 5px; font-size: var(--oi-shell-type-ui); color: var(--oi-accent-ink); }
 .desktop-menu button:hover { background: var(--oi-wash); }
 
