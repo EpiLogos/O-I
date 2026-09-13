@@ -1,0 +1,152 @@
+{
+  "purpose": "Additive source and proof crosswalk within O-I#65; not another campaign, capability registry or execution engine",
+  "owner": "EpiLogos/O-I#65",
+  "story_source": "docs/experience/DEVELOPER-STORIES.md",
+  "document_operations_source": "docs/experience/DOCUMENT-OPERATIONS-AND-RETURN.md",
+  "ux_role": {"development_tier": 1, "role": "intended-experience/vision", "standing": "source-grounded-agent-elaboration", "human_adoption_claimed": false},
+  "proof_role": {"test_definition_tier": 4, "observation_tier": 5, "execution_claimed": false},
+  "families": [
+    {"id":"TE","ids":["TE01","TE02","TE03","TE04","TE05","TE06","TE07","TE08","TE09","TE10","TE11","TE12"],"title":"Real developer terminal layers and native extension work","refines":["WK","DV","MC","EX","UI"],"owners":["ai-kit","Factory","Workcell","Central","Actuation","O-I"],"source_refs":["https://github.com/EpiLogos/ai-kit/issues/211","https://github.com/EpiLogos/ai-kit/blob/main/docs/v2/23-TUI-HUMAN-EXPERIENCE-SPEC.md","https://github.com/EpiLogos/O-I/issues/97","https://github.com/EpiLogos/O-I/issues/213"],"proof_refs":["ai-kit#211:W10","ai-kit:TUI:21:A-H","ai-kit:TUI:22:1-14","O-I#65:B/D/F/H","O-I#97","O-I#213"]},
+    {"id":"GW","ids":["GW01","GW02","GW03","GW04","GW05","GW06","GW07","GW08","GW09","GW10","GW11","GW12"],"title":"Real Telegram gateway work and continued agency","refines":["AG","WK","WR","MC","SH","EX"],"owners":["ai-kit","Actuation","Workcell","Central","Factory","O-I"],"source_refs":["https://github.com/EpiLogos/O-I/issues/154","https://github.com/EpiLogos/ai-kit/issues/53","https://github.com/EpiLogos/ai-kit/issues/275","https://github.com/EpiLogos/Workcell/issues/22"],"proof_refs":["O-I#154:A-G","ai-kit:TUI:21:H","ai-kit:TUI:22:7","O-I#65:D/G/H","CAW:P09-P12"]},
+    {"id":"DO","ids":["DO01","DO02","DO03","DO04","DO05","DO06","DO07","DO08"],"title":"Vision/source/capability/practice maintenance and evidence return","refines":["GV","KN","PX","DV"],"owners":["Central","ai-kit","Factory","O-I","QL-MEF"],"source_refs":["https://github.com/EpiLogos/Central/blob/main/docs/DEVELOPMENT-FIELD-SOURCE.md","https://github.com/EpiLogos/Central/blob/main/docs/PROJECT-CONTEXT-PROTOCOL.md","https://github.com/EpiLogos/Central/blob/main/docs/CAPABILITY-MATRIX-PROTOCOL.md","https://github.com/EpiLogos/ai-kit/blob/main/docs/v2/21-PROJECT-REFLECTION-AND-LOCAL-ARTICULATION.md","https://github.com/EpiLogos/O-I/issues/213"],"proof_refs":["O-I#213:source-reconciliation","AIKit:ProjectReflection:15-18","O-I#65:E","CAW:P18-P20/P25-P28"]}
+  ],
+  "proving_notes": [
+    "Entries below locate source obligations; linking is not a passed test. Keep current native test IDs and their source-cut evidence at execution.",
+    "Original #211 W10 has 15 clauses; current TUI section 22 has 14. Both sets and all eight Journeys remain represented; do not silently replace one denominator with the other.",
+    "Each new source revision requires a delta review for additional or changed obligations. A static count is not evidence of future completeness.",
+    "CI source/fixture, cross-product, actual provider, physical material, real UI and human EX observations remain separate. Each episode records exactly what it exercised.",
+    "Family links are candidates; discover exact native capability IDs, operation schemas, credentials, actual context/loading and grants before an episode. Library dependencies may be transitive.",
+    "Herdr, tmux and cmux each require a separate actual-provider variant where supported. A generic mux pass or an absent incompatible platform is not evidence for all three.",
+    "Full Telegram proof requires actual client messages and real recipient work, not a journal, echo or Bot API connectivity probe. Other advertised connector capabilities receive explicit support and proof dispositions."
+  ],
+  "proof_sets": [
+    {"id":"OI97","source_ref":"https://github.com/EpiLogos/O-I/issues/97","basis":"Original mainline-convergence obligations, read 2026-09-13; section locators below are crosswalk labels, not invented native test IDs","items":[
+      {"id":"branch-disposition","requirement":"Account for every relevant PR/non-main branch by meaning, ancestry, unique content, checks and owner; preserve local dirty/staged/untracked work and explicitly held live exceptions.","story_ids":["TE08","TE12","DV07"]},
+      {"id":"native-mains","requirement":"Land accepted native owner changes in dependency order; no hidden unmerged proof branch as the installation source.","story_ids":["TE12","DO08"]},
+      {"id":"final-source-tests","requirement":"Repeat native and relevant cross-product tests on the exact accepted source cut with exact counterpart revisions, not only earlier feature heads.","story_ids":["TE12","TE11","DO07"]},
+      {"id":"suite-snapshot","requirement":"Record selected native revisions/artifacts and actual source composition; named moving exclusions retain re-entry conditions.","story_ids":["TE12","DO01","DO08"]},
+      {"id":"real-local-install","requirement":"Use accepted sources and actual installed executable/registration/service state on the authorised workstation; Central inspect/plan/apply/verify retains original ground.","story_ids":["TE12","AD03","DO08"]},
+      {"id":"source-to-use","requirement":"Return converged source to real physical operation rather than certifying installed use from merge or source tests alone.","story_ids":["TE01","TE05","GW02","DO07"]}
+    ]},
+    {"id":"TUI-JOURNEYS","source_ref":"https://github.com/EpiLogos/ai-kit/blob/main/docs/v2/23-TUI-HUMAN-EXPERIENCE-SPEC.md#21-acceptance-journeys","source_blob":"0ada933fd589058d21b480bd262e38dbd8d9ec0f","items":[
+      {"id":"A","requirement":"Fast ordinary work; actual direct session, Context/Git/Knowledge, close/reopen, no Factory Run.","story_ids":["TE01","TE06"]},
+      {"id":"B","requirement":"Intention-first Agent composition, governance/practice/context/body preview, explain withheld choices, real first session.","story_ids":["AG01","AG02","AG03","AG04","DO06"]},
+      {"id":"C","requirement":"Factory multi-agent work in a real Herdr/tmux/cmux arrangement with Semantic/Live/Trajectory and real Evidence/Candidate/Recognition.","story_ids":["TE02","TE03","TE04","DV01","DV05"]},
+      {"id":"D","requirement":"Simultaneous Factory in Herdr, direct Codex in tmux, manual external Claude and persistent gateway; Workcell census with correct Factory correlation.","story_ids":["TE05","GW09"]},
+      {"id":"E","requirement":"Resolution failure, exact credential/adapter explanation, owner-native repair, re-resolution and actual session start.","story_ids":["TE09"]},
+      {"id":"F","requirement":"Search, actual spatial typed Graph, source/code origins, recenter/filter and same focus in a new tmux/cmux Surface.","story_ids":["TE07","KN02","KN03"]},
+      {"id":"G","requirement":"Direct current worktree versus Factory exact-base isolated Candidate, external Git change and truthful reconciliation.","story_ids":["TE08"]},
+      {"id":"H","requirement":"Gateway conversation plus another Surface over the same actual AgentSession; provider-honest restart/rebind and Workcell observation.","story_ids":["GW02","GW04","GW07","GW09"]}
+    ]},
+    {"id":"TUI-W10","source_ref":"https://github.com/EpiLogos/ai-kit/issues/211","basis":"Original W10 15-clause local proving World, source read 2026-09-13; retain separately from the file's 14 physical clauses","items":[
+      {"id":"01","requirement":"Direct native/external Harness Session.","story_ids":["TE01"]},
+      {"id":"02","requirement":"Direct tmux and cmux sessions, provider differences retained.","story_ids":["TE02","TE03"]},
+      {"id":"03","requirement":"Optional SessionSpace close/reopen/reconstruction.","story_ids":["TE06"]},
+      {"id":"04","requirement":"Factory multi-Agent execution in Herdr and/or mux.","story_ids":["TE04","TE02","TE03"]},
+      {"id":"05","requirement":"Factory plus unrelated direct Codex/Claude/Pi work simultaneously.","story_ids":["TE05"]},
+      {"id":"06","requirement":"Workcell sees every actual material instance with correct correlation.","story_ids":["TE05"]},
+      {"id":"07","requirement":"Working environment/gateway restart/rebind without invented semantic continuity.","story_ids":["TE02","TE03","TE06","GW07","GW09"]},
+      {"id":"08","requirement":"Gateway conversation and another supported Surface over one AgentSession.","story_ids":["GW04"]},
+      {"id":"09","requirement":"Missing credential setup followed by successful real launch.","story_ids":["TE09"]},
+      {"id":"10","requirement":"Adapter/provider failure, Explain, scoped repair and re-resolution.","story_ids":["TE09","TE11"]},
+      {"id":"11","requirement":"Direct current Git worktree and Factory exact-base Candidate worktree.","story_ids":["TE08"]},
+      {"id":"12","requirement":"Graph current pane and new tmux/cmux Surface with canonical focus retained.","story_ids":["TE07"]},
+      {"id":"13","requirement":"Manual/external process observed without invented Factory provenance.","story_ids":["TE01","TE05"]},
+      {"id":"14","requirement":"Real wide/medium/narrow review and terminal restore/panic/resize safety.","story_ids":["TE10"]},
+      {"id":"15","requirement":"Desktop semantic parity over the same native refs/actions, not copied TUI state.","story_ids":["TE10","GW04","UI04"]}
+    ]},
+    {"id":"TUI-PHYSICAL","source_ref":"https://github.com/EpiLogos/ai-kit/blob/main/docs/v2/23-TUI-HUMAN-EXPERIENCE-SPEC.md#22-physicallocal-proving-matrix","source_blob":"0ada933fd589058d21b480bd262e38dbd8d9ec0f","items":[
+      {"id":"01","requirement":"Direct native/external Harness Session.","story_ids":["TE01"]},
+      {"id":"02","requirement":"Direct mux Session.","story_ids":["TE02","TE03"]},
+      {"id":"03","requirement":"SessionSpace close/reopen/reconstruction.","story_ids":["TE06"]},
+      {"id":"04","requirement":"Factory multi-Agent execution in Herdr/mux.","story_ids":["TE04"]},
+      {"id":"05","requirement":"Factory, unrelated direct Harness and external Harness simultaneously.","story_ids":["TE05"]},
+      {"id":"06","requirement":"Workcell instance census/correlation across all of them.","story_ids":["TE05"]},
+      {"id":"07","requirement":"Gateway conversation plus another Surface over one AgentSession where supported.","story_ids":["GW02","GW04"]},
+      {"id":"08","requirement":"Missing credential setup to successful launch.","story_ids":["TE09"]},
+      {"id":"09","requirement":"Adapter/provider failure to safe repair/reconciliation.","story_ids":["TE09"]},
+      {"id":"10","requirement":"Git current-worktree plus Factory isolated-worktree.","story_ids":["TE08"]},
+      {"id":"11","requirement":"Graph current pane plus new pane/window.","story_ids":["TE07"]},
+      {"id":"12","requirement":"Real wide/medium/narrow terminal review.","story_ids":["TE10"]},
+      {"id":"13","requirement":"Terminal restore/panic/resize safety.","story_ids":["TE10"]},
+      {"id":"14","requirement":"Desktop semantic parity against the same owner refs/actions.","story_ids":["TE10","GW04","UI04"]}
+    ]},
+    {"id":"GATEWAY154","source_ref":"https://github.com/EpiLogos/O-I/issues/154","basis":"Original owner implementation/acceptance sections A-G, not PR completion prose","items":[
+      {"id":"A","requirement":"ActuationStream ordered attributable source, correlation, read/replay/subscribe; real provider signal path without hidden reasoning capture.","story_ids":["GW02","GW04","GW07"]},
+      {"id":"B","requirement":"First-party gateway protocol negotiation, attach/resume/send/subscribe/replay/interrupt, connector negotiation/health, restart/rebind and public SDK/wire contract.","story_ids":["GW01","GW04","GW06","GW07","GW11"]},
+      {"id":"C","requirement":"Telegram real adapter: supported polling and/or webhook, DM/group/thread, allow/pair, text/media, actual reply, reconnect, delivery and canonical attribution.","story_ids":["GW01","GW02","GW03","GW07","GW08","GW12"]},
+      {"id":"D","requirement":"Authorised session/agency ecology and actual bounded invocation with context/continuation/refine/fork lineage.","story_ids":["GW04","GW05","GW06","TE06"]},
+      {"id":"E","requirement":"Actual Workcell service and private Fabric placement, rematerialisation, storage/health/reachability without semantic identity drift.","story_ids":["GW09","GW07","GW12"]},
+      {"id":"F","requirement":"Cradle/Factory/gateway co-reference the same actual Agency/session/stream; authorised Factory Actions do not require the graphical UI.","story_ids":["GW04","GW05","GW10","TE04"]},
+      {"id":"G","requirement":"Further connector breadth uses the public SDK and preserves platform-specific capabilities; each claimed supported platform gets a real disposition, not automatic Telegram parity.","story_ids":["GW11","TE11"]},
+      {"id":"pre-local","requirement":"Retain native stream, UDS/WS, connector, fake-Telegram, restart, Workcell/Fabric, ecology authority and Cradle/Factory contract proofs separately from real token, message, harness, device and human proof.","story_ids":["GW01","GW02","GW07","GW09","DO07"]}
+    ]},
+    {"id":"SDK65D","source_ref":"https://github.com/EpiLogos/O-I/issues/65","basis":"Section D public external specimens; each runs full lifecycle, not a sample that substitutes for all owners","items":[
+      {"id":"aikit-provider-adapter","requirement":"Public AIKit provider/adapter authoring, conformance, registration, real use, upgrade/drift and removal.","story_ids":["TE11","EX01","EX02","EX03"]},
+      {"id":"session-component-surface","requirement":"Public SessionSpace/Component/Surface contribution and real host use including native lifecycle.","story_ids":["TE11","TE07","GW04"]},
+      {"id":"workcell-provider","requirement":"Public Workcell provider specimen with actual allowed/refused material demands and owned cleanup.","story_ids":["TE11","MC04","MC08"]},
+      {"id":"oi-multiproduct-package","requirement":"O:I package carries independently owned contributions without private registry mutation; install/change/remove preserves foreign state.","story_ids":["TE11","AD09","EX03"]},
+      {"id":"model-provider","requirement":"Real model/provider integration and its configuration, inference, feedback and deactivation path.","story_ids":["TE11","MC07","PX06"]},
+      {"id":"page-surface-host","requirement":"A real external-style page/Surface contribution is discovered and operated by the actual O:I host, not just rendered in a standalone fixture.","story_ids":["TE11","UI04","EX04"]}
+    ]},
+    {"id":"DOCUMENT213","source_ref":"https://github.com/EpiLogos/O-I/issues/213","basis":"Retained S7 phase obligations; current ownership/convergence rules replace obsolete session topology","items":[
+      {"id":"0","requirement":"Re-inspect actual live owner ground, branches, source and current contract state.","story_ids":["DO01","DO08","TE12"]},
+      {"id":"1","requirement":"Native source convergence with explicit active exceptions and accepted dependencies.","story_ids":["TE12"]},
+      {"id":"2","requirement":"Serialized capability/account reconciliation from accepted reality without invented evidence.","story_ids":["DO02","DO07"]},
+      {"id":"3","requirement":"Source-kind/tier/UX/EX ownership binding and safe in-place source relations.","story_ids":["DO01","DO03"]},
+      {"id":"4","requirement":"Duplicate/stale source and link reconciliation with exact successors and preserved unresolved meaning.","story_ids":["DO05"]},
+      {"id":"5","requirement":"Git/worktree/material debt accounted without losing unique work.","story_ids":["TE08","TE12"]},
+      {"id":"6","requirement":"Suite artifacts and exact selected snapshot.","story_ids":["TE12"]},
+      {"id":"7","requirement":"Actual machine PATH/installed/running state inspected.","story_ids":["TE05","TE12"]},
+      {"id":"8","requirement":"Coherent install/update/recovery; unchanged valid products need not be reinstalled.","story_ids":["TE12"]},
+      {"id":"9","requirement":"Specifically authorised personal-ground migration preserves existing material.","story_ids":["AD03","DO05","DO08"]},
+      {"id":"10","requirement":"Real Factory plan/Git/Workcell/harness/Actuation/Return alongside legitimate direct operation.","story_ids":["TE01","TE04","TE05","TE08"]},
+      {"id":"11","requirement":"Installed TUI/Desktop operation on the actual source/owner state.","story_ids":["TE10","GW04"]},
+      {"id":"12","requirement":"D/C/P/M/H evidence at actual supported scope.","story_ids":["DO07"]},
+      {"id":"13","requirement":"Human experiential return is supplied by the person, not a source fixture.","story_ids":["DO07","DO08"]},
+      {"id":"14","requirement":"Carry precise remaining intelligence/source-operation work into the existing next owner lane.","story_ids":["DO03","DO04","DO06","DO08"]}
+    ]},
+    {"id":"DOC-OPERATIONS","source_ref":"https://github.com/EpiLogos/ai-kit/blob/main/docs/v2/21-PROJECT-REFLECTION-AND-LOCAL-ARTICULATION.md","source_blob":"a5bffa72b99e8a7b27de90f4d5d17c7dd9273abe","items":[
+      {"id":"15-populate","requirement":"Bounded mixed-source population, explicit links, native identity/privacy/revision, actual knowledge read faculty and idempotent rebuild.","story_ids":["DO01","DO03"]},
+      {"id":"16-contemplate-return","requirement":"Capability-specific inquiry and coherent source/account/matrix proposal against exact revisions; preserve independent standing and partial-write recovery.","story_ids":["DO02","DO04","DO07"]},
+      {"id":"17-retire-restore","requirement":"Assess/consolidate/reconcile/retire/archive/restore with unit contribution coverage, exact original retrieval, successor and inbound-link continuity.","story_ids":["DO05"]},
+      {"id":"18-native-proof","requirement":"Read current implementations instead of assuming the historical availability table is current; exercise real parsers, storage, operations, privacy, concurrent edits, restart and retrieval.","story_ids":["DO02","DO03","DO04","DO05","DO08"]}
+    ]},
+    {"id":"COMPOSITION268","source_ref":"docs/CONTEXT-FRAME-ACCEPTANCE-CAMPAIGN.md","source_blob":"2f2d70e44073cba223f3d93840b5dbf99e9a8882","items":[
+      {"id":"modes","requirement":"All six forms inside CF5, all-products headless/desktop and standalone native products; full lifecycle and absent unselected dependencies.","story_ids":["AD01","AD02","AD05","AD08","AD09","TE01","TE12"]},
+      {"id":"two-machine","requirement":"Actual remote use, scoped disclosure, disconnect/offline/restart, expiry/revocation/skew, reconnect, source conflicts and independent client teardown.","story_ids":["GW09","GW12","MC02","MC06"]},
+      {"id":"teardown","requirement":"Baseline, isolated roots, evidence exported outside cleanup, owned removal and every residual explained; destructive physical cases separately authorised.","story_ids":["AD09","GW12","MC08","DO08"]}
+    ]}
+  ],
+  "legacy_candidate": {
+    "source_commit":"19a8f270832ba81611f9a90d7e0e271f7565df06",
+    "source_path":"docs/ux/EXISTING-WORK-STORIES.md",
+    "retained_path":"docs/experience/history/story-candidate-262/STORIES.md",
+    "git_blob":"f30e7102fe89b142f2cd157b281c6ebc45e37301",
+    "bindings_path":"docs/experience/history/story-candidate-262/bindings.json",
+    "bindings_git_blob":"db05c17a58009133c5d1aa48d349b5dba36977c8",
+    "relation":"retained obligation refined through the current source, not automatic semantic equivalence or runtime evidence",
+    "profile_successor":"docs/experience/STORY-PROFILE.md",
+    "operator_successor":"docs/experience/LOCAL-CAMPAIGN.md",
+    "source_corrections":["O-I#268 supersedes old install-modality taxonomy; preserve historical receipt semantics","Current QL UX source and publication standing remain independently authoritative","The current UX extension is agent_ux; no second participation runtime is introduced"],
+    "aliases": {
+      "ux.oi.install-existing":["AD01","AD07"],"ux.oi.install-minimal":["AD02","AD05","TE01"],"ux.oi.install-fresh":["AD02"],"ux.oi.install-reconcile":["AD03","TE12"],"ux.oi.install-harness":["AD04","DO06"],"ux.oi.install-depth":["AD08"],"ux.oi.install-reference-host":["AD06","MC02"],"ux.oi.install-remove":["AD09"],
+      "ux.oi.quiet-coding":["WK01","TE01"],"ux.oi.quiet-writing":["GV05","WR02","DO03"],"ux.oi.quiet-reentry":["WK02","TE06"],"ux.oi.quiet-explain":["PX06","DO07"],
+      "ux.oi.instructions-find":["GV01"],"ux.oi.instructions-change":["GV02","GV03","DO02"],"ux.oi.instructions-inflight":["GV04","DO06"],"ux.oi.instructions-private":["GV05","AG03"],"ux.oi.instructions-proposal":["GV06","DO07"],"ux.oi.instructions-undo":["GV07"],
+      "ux.oi.agent-create":["AG01","AG02"],"ux.oi.agent-choose-sources":["AG03"],"ux.oi.agent-choose-practice":["PX01","PX03","DO06"],"ux.oi.agent-first-use":["AG01","AG03","GW02"],"ux.oi.agent-change":["AG05"],"ux.oi.agent-carrier-change":["AG04","AG06","TE06"],"ux.oi.agent-profileless":["AG08"],"ux.oi.agent-stop-retire":["AG09"],
+      "ux.oi.conversation-address":["AG07","GW05"],"ux.oi.conversation-group":["AG07","GW03"],"ux.oi.conversation-private":["SH03","GW03"],"ux.oi.conversation-pending":["GW06"],"ux.oi.conversation-resume":["AG06","GW04","GW07"],
+      "ux.oi.knowledge-find":["KN01"],"ux.oi.knowledge-traverse":["KN02","KN04"],"ux.oi.knowledge-graph":["KN03","TE07"],"ux.oi.knowledge-edit-outside":["KN05","DO04"],"ux.oi.knowledge-reconsider":["KN06","DO04"],"ux.oi.knowledge-whole-part":["KN07"],"ux.oi.knowledge-formats":["DO03"],"ux.oi.knowledge-rebuild-archive":["KN09","DO05"],
+      "ux.oi.praxis-discover":["PX01"],"ux.oi.praxis-compose":["PX03","PX04"],"ux.oi.praxis-release":["PX02","DO06"],"ux.oi.praxis-learn":["PX05"],"ux.oi.praxis-retire":["PX04","DO05","DO06"],
+      "ux.oi.formal-inspect":["QL-MEF:UX03","QL-MEF:UX04","QL-MEF:UX05"],"ux.oi.formal-reason":["QL-MEF:UX06","QL-MEF:UX10"],"ux.oi.formal-performance":["QL-MEF:UX02","QL-MEF:UX04","QL-MEF:UX06"],"ux.oi.formal-praxis":["QL-MEF:UX09"],"ux.oi.formal-full-field":["QL-MEF:UX01","QL-MEF:UX02","QL-MEF:UX03","QL-MEF:UX04","QL-MEF:UX05","QL-MEF:UX06","QL-MEF:UX07","QL-MEF:UX08","QL-MEF:UX09","QL-MEF:UX10","QL-MEF:UX11","QL-MEF:UX12"],
+      "ux.oi.machine-local":["MC01"],"ux.oi.machine-add":["MC02","GW09"],"ux.oi.machine-persistent":["MC03","GW09"],"ux.oi.machine-isolate":["MC04"],"ux.oi.machine-model":["MC07"],"ux.oi.machine-move":["MC06","GW09"],"ux.oi.machine-release":["MC08","GW12"],
+      "ux.oi.document-day":["WR01"],"ux.oi.document-flow-dialogue":["WR02"],"ux.oi.document-help":["WR03"],"ux.oi.document-include":["WR04"],"ux.oi.document-portable":["WR07"],
+      "ux.oi.develop-commission":["DV01"],"ux.oi.develop-candidate":["DV02","TE08"],"ux.oi.develop-parallel":["DV03","TE04"],"ux.oi.develop-environment":["TE02","TE03","TE04","TE06"],"ux.oi.develop-compare":["DV05"],"ux.oi.develop-recover":["DV06","GW06"],
+      "ux.oi.time-recurring":["WR06","GW10"],"ux.oi.time-crossday":["WR06"],"ux.oi.time-results":["WR05","GW10"],"ux.oi.time-archive":["WR06","DO05"],
+      "ux.oi.update-understand":["TE12","DO01"],"ux.oi.update-converge":["TE12"],"ux.oi.update-activate":["TE12","GW09"],"ux.oi.update-repair":["TE09","TE12","DO08"],"ux.oi.update-rollback":["TE12","AD03"],
+      "ux.oi.extension-create":["EX01","TE11"],"ux.oi.extension-use":["EX02","TE11","GW11"],"ux.oi.extension-maintain":["EX03","TE11","GW12"],
+      "ux.oi.share-select":["SH01"],"ux.oi.share-discuss":["SH03","GW03","GW05"],"ux.oi.share-withdraw":["SH06","GW12"],
+      "ux.oi.interface-navigate":["UI01","TE07"],"ux.oi.interface-layout":["UI02","TE10"],"ux.oi.interface-parity":["UI04","TE10","GW04"]
+    },
+    "variant_rules":["Retained quiet-writing remains an ordinary non-template editor/document variant; WR/DO links do not require conversion to Day/Flow","Retained time-recurring also exercises its ordinary non-Telegram receiving route; the Telegram example does not narrow Routine scope","Candidate capability links remain source-qualified suggestions until their current owner record is read; do not install another capability catalogue","Read retained original conditions alongside successor rows; a refined target is not permission to drop a distinct branch"]
+  }
+}
