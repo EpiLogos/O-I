@@ -292,7 +292,7 @@ fn installed_product_without_native_skill_is_disclosed_as_gap_not_fake_competenc
     let effective = resolve_profile(
         &manifest,
         "oi:skillset:root-metagentic-operation",
-        AgentScope::RootWorld,
+        AgentScope::Ordinary,
         &oi_central_observations(),
         &installed(&["O:I", "Central", "Actuation"]),
         &AuthorityObservation::default(),
@@ -396,7 +396,6 @@ fn authoritative_revision_update_replaces_only_untouched_derived_projection() {
     assert_eq!(updated.receipt.as_ref().unwrap().source_revision, "rev-2");
     assert!(fs::read_to_string(&destination).unwrap().contains("# v2"));
 }
-
 #[test]
 fn user_owned_and_locally_edited_projection_conflicts_are_preserved() {
     let manifest = canonical_manifest();
@@ -461,10 +460,17 @@ fn shipped_manifest_declares_only_oi_owned_skills() {
         "oi:skillset:base-guardian"
     );
     assert!(manifest.expected_native_skills.is_empty());
-    // O:I owns exactly its three guardian Skills here. Every other product's
-    // skills are composed by AIKit's sets; pinning them in this file made it
-    // a second registry in a second format.
-    assert_eq!(manifest.skills.len(), 3);
+    // The shipped manifest names the router and suite operator. The retired
+    // Central session strap belongs to Central ground and is delivered through
+    // AIKit's Central binding, not frozen into O:I's guardian registry.
+    assert_eq!(
+        manifest
+            .skills
+            .iter()
+            .map(|skill| skill.skill_ref.as_str())
+            .collect::<Vec<_>>(),
+        vec!["oi:skill:operate-suite", "oi:skill:suite-operator"]
+    );
     for skill in &manifest.skills {
         assert!(
             skill.skill_ref.starts_with("oi:skill:"),
