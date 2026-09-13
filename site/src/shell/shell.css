@@ -265,7 +265,7 @@ main:focus { outline: none; }
 }
 @media (max-width: 600px) {
   .office-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
-  .office-tile__link { padding: .85rem; gap: .65rem; }
+  .office-tile__link { padding: clamp(.65rem, 3.5vw, .85rem); gap: .65rem; }
   .office-tile__head { gap: .5rem; }
   .office-tile__copy { gap: .4rem; }
   .office-tile .sec__cell-name { font-size: 1rem; }
