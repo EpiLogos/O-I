@@ -1,4 +1,4 @@
-# NEXT-SESSION PROMPT — continue the real work; decide the flow-placeholder collision (written 2026-09-12)
+# NEXT-SESSION PROMPT — continue the real work; clarify the flow/Day logic (written 2026-09-12; owner correction absorbed same day)
 
 You are continuing the O:I desktop Cradle programme ([OI-CRADLE-REBUILD-WF],
 issue #190, amended by docs/OI-DESKTOP-CONTINUOUS-WORK-WAYFINDER.md). The
@@ -18,64 +18,52 @@ disclose absence — never defer.
 3. docs/OI-DESKTOP-CONTINUOUS-WORK-WAYFINDER.md §1–§7 if touching the panel
    planes, Flow or Factory surfaces.
 
-## DECISION-1 (owner) — the empty flow placeholders vs the clean-worktree law
+## OWNER CORRECTION (absorbed 2026-09-12, supersedes the three-option decision formerly here)
 
-The situation, verified in code on 2026-09-12: Central's flow store for a
-project register lives at `ProjectCentral/now/flows/` — INSIDE the project's
-repository (`ctrl/src/projectcentral_flow.rs`: `DEFAULT_FLOW_DIR`).
-The desktop's "New flow" / Start-writing route calls the owner's
-`projectcentral.flow.create`, which writes a blank `YYYY-MM-DD-HHMM.md`
-there. For the O-I project that is this very repository, so every flow the
-desktop opens leaves an empty (or near-empty) untracked file dirtying the
-worktree — and `oi dev install` installs "from clean exact current-main
-source", recording `dirty` from `git status --porcelain` (cli/src/
-rolling_dev.rs, suite_v2.rs). The desktop's own writing surface therefore
-collides with the dev-install law on the repo the desktop is developed in.
-The owner reports four placeholders today and committed three byte-exact as
-custody; the working tree was clean again at dispatch time — re-survey
-`git status`, the flows directory and the reflog first, and treat the
-owner's custody commits as evidence, not as a verdict.
+The owner examined the flow-placeholder issue and ruled on the PREMISE, not
+the folder: **the `ProjectCentral/now/flows/` placeholders are themselves
+the fault — an agent preempted flow files with an assumed structure no
+design ever chose. Flows live inside the user's Day, and the HTML forms of
+both carriers already exist.** The clarifying of the LOGICS is the work;
+shuffling semantics around an erroneous folder is not.
 
-The decision is the owner's because it fixes where durable ground lives.
-Present these options in one question, with the recommendation first:
+The authored ground already holds the corrected shape — cite it, do not
+re-derive it:
 
-1. (Recommended) **Deferred materialisation, desktop side + repo side.** The
-   desktop's `createFlow` (Cradle.tsx) defers `projectcentral.flow.create`
-   until the human's first content exists (a typed character or a pasted
-   block) — an untyped flow tab claims no ground; AND the O-I repo declares
-   `ProjectCentral/now/flows/` scratch in `.gitignore` (flows are the
-   project's moving NOW field, not repo source; the owner's custody copies
-   stay in history). Consequential tradeoff: a flow that is never typed
-   leaves no trace at all — the Flows list shows it only from the owner's
-   registry (`.central/flows.json`), which is a separate file the repo may
-   or may not also ignore (ask in the same question if unclear).
-2. **Commit-law: flows are repo content.** Keep immediate creation; blank
-   files are legitimate and the repo tracks them. Then `oi dev install`'s
-   cleanliness check must learn to ignore the flows directory (an
-   O-I-side change to the porcelain filter), and every flow save is a repo
-   commit — heaviest, but flows become first-class repo history.
-3. **Central-side relocation.** The project flow store moves outside the
-   worktree (a placement-policy location). This contradicts Central's own
-   register design (ProjectCentral/now IS the project's NOW field) and
-   needs a Central architecture change — only if the owner wants the
-   field out of the repo entirely.
+> "0/1 `ql-dialogue-flow_1.html` — Flow and Dialogue are views of the same
+> document entries; Journal is supported inside this same file." — wayfinder §2.
+> "4+2 `ql-daily-die_2.html` — When used as a Day, consume Central's
+> source/temporal reading; opening a tab does not create another Day." — §2.
+> "Flow opens an entry as a full writing page; Dialogue reads the same entry
+> set conversationally … Do not maintain independent editable source copies
+> per view." — §3.2.
 
-Until the owner answers, NOTHING in this cell blocks the rest of the queue:
-the decision only shapes cell A's second half. Cell A's survey and desktop
-half are safe under option 1 and reversible under the others.
+The blank `.md`-per-flow store (`ctrl/src/projectcentral_flow.rs`
+`DEFAULT_FLOW_DIR`, registry `.central/flows.json`) and the desktop's
+"New flow" route onto it were built PAST that ground. The dev-install
+collision (blank files dirtying the worktree `oi dev install` requires
+clean) is a SYMPTOM of the wrong premise, not the problem to re-home — the
+former gitignore/commit-law/relocation options are WITHDRAWN.
 
 ## The queue (in order; one cell = one branch = one PR)
 
-1. **Cell A — flow placeholder collision (the survey half now, the ruling's
-   half when the owner answers).** Reproduce: open the real ground's O-I
-   project, click New flow, watch `ProjectCentral/now/flows/` gain a blank
-   file and `git status` go dirty. Then implement the owner's ruled option
-   (or stage option 1's desktop half — deferred materialisation — as the
-   default proposal while asking). Walk: New flow → type → the file appears
-   exactly once with the typed content; New flow → close untyped → no file,
-   no dirt, no orphan registry entry (or the ruled alternative's exact
-   behavior); `oi dev install`'s cleanliness read is demonstrably clean
-   after an untyped flow.
+1. **Cell A — clarify the flow/Day logics, then land the first half.** Write
+   the clarified position as a one-page proposal to the owner (this is
+   design meaning — propose, never write it into the owner's ground): what
+   a Flow IS (a view over entries of the Day/0/1 document carrier), how
+   Start writing / New flow must resolve (into the human's Day through the
+   owner's document operations — the die when it is a Day, the 0/1 entries
+   for Flow/Dialogue; opening a tab never mints another Day), what
+   `now/flows/` and `.central/flows.json` then are (residue: named for
+   cleanup/migration once the position is ratified, custody copies in
+   history stay), and what the kernel's typed flow ops should address
+   instead. While the proposal awaits ratification, the one reversible
+   desktop half is safe to build NOW: New flow / Start writing must stop
+   minting blank `now/flows/` placeholder files (the collision the owner
+   actually hit) — defer any ground write until real content or a ratified
+   carrier resolution exists, and let the walk prove the worktree stays
+   clean. Do NOT migrate, ignore, or delete the existing folder before the
+   owner ratifies the position.
 2. **Cell B — Journey/Run/telemetry depth on the Factory surface.** The
    development-read kernel route and surface exist (#255); add the journey/
    run/execution-telemetry reads as first-class panel rows (the wayfinder's
