@@ -285,3 +285,8 @@ aside.world-navigator[aria-label="World navigator"] { padding: 19px 10px 0; }
   text-align: left; border-radius: 4px; transition: background var(--oi-motion-ui) var(--oi-motion-ease-out);
 }
 .project-flows .flow-new:hover { background: var(--oi-wash); color: inherit; }
+.remembered-disclosure{margin:4px 0}
+.remembered-disclosure summary{cursor:pointer;font-size:var(--oi-shell-type-nav);color:var(--oi-muted-2)}
+.remembered-row{display:flex;flex-direction:column;gap:2px;margin:4px 0}
+.remembered-row button{border:none;background:none;color:var(--oi-foreground);font:inherit;font-size:var(--oi-shell-type-nav);text-align:left;cursor:pointer;padding:2px 0;overflow-wrap:anywhere}
+.remembered-row pre{margin:2px 0;padding:6px;border:1px solid var(--oi-hairline);border-radius:6px;background:var(--oi-composer-ground);font-size:11px;overflow:auto;max-height:200px;white-space:pre-wrap;overflow-wrap:anywhere}

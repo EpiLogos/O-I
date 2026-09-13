@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "factory-development",
-  "generated_at": "2026-09-13T10:53:32.092Z",
+  "generated_at": "2026-09-13T11:08:59.366Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 1151,
+  "duration_ms": 1030,
   "checks": [
     {
       "ok": true,
@@ -115,7 +115,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-13T10:53:32.212Z",
+        "mounted_at": "2026-09-13T11:08:59.470Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
