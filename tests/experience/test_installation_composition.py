@@ -56,9 +56,11 @@ class InstallationCompositionSourceTests(unittest.TestCase):
             self.assertIn(frame, text)
 
     def test_old_paths_are_history_not_a_second_taxonomy(self):
-        self.assertEqual(len(self.config["setup_contexts"]), 6)
-        self.assertIn("Historical", self.config["setup_context_semantics"])
-        self.assertIn("not", self.config["setup_context_semantics"])
+        self.assertEqual(set(self.config["setup_contexts"]), {
+            "fresh-ground", "existing-ground-reconcile", "developer-source",
+            "existing-world-adoption", "reference-world-host", "harness-strap"})
+        self.assertTrue(set(self.config["setup_contexts"]).isdisjoint(self.forms))
+        self.assertIn("#268", self.config["setup_context_semantics"])
         self.assertEqual(len(self.composition["cross_form_branches"]), 6)
 
     def test_source_projection_does_not_claim_installed_or_lived_use(self):
