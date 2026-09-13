@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "files": [
+    "search.css",
     "tokens.css",
     "assets",
     "point-cloud.css",
@@ -10,9 +11,10 @@
     "DESKTOP-LANGUAGE.md",
     "expression.mjs",
     "expression.css",
-    "search.css"
+    "point-cloud"
   ],
   "exports": {
+    "./search.css": "./search.css",
     "./tokens.css": "./tokens.css",
     "./assets/oi-mark.svg": "./assets/oi-mark.svg",
     "./assets/oi-glyph.svg": "./assets/oi-glyph.svg",
@@ -21,7 +23,12 @@
     "./loading": "./loading.mjs",
     "./expression": "./expression.mjs",
     "./expression.css": "./expression.css",
-    "./search.css": "./search.css"
+    "./point-cloud/config": "./point-cloud/config.mjs",
+    "./point-cloud/presets": "./point-cloud/presets.mjs",
+    "./point-cloud/host": "./point-cloud/host.mjs"
+  },
+  "peerDependencies": {
+    "three": ">= 0.160"
   },
   "scripts": {
     "verify": "node checks/verify.mjs",
