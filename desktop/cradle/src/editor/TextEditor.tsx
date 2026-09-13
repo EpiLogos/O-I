@@ -28,6 +28,8 @@ import {
   historyField,
 } from "@codemirror/commands";
 import { openSearchPanel } from "@codemirror/search";
+import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
+import { tags as t } from "@lezer/highlight";
 import { markdown } from "@codemirror/lang-markdown";
 import { javascript } from "@codemirror/lang-javascript";
 import { json } from "@codemirror/lang-json";
@@ -54,6 +56,18 @@ const editorMemory = new Map<
   string,
   { doc: string; state: unknown; top: number }
 >();
+// The house syntax palette: the same roles the design system defines for
+// code (`--oi-code-*`), which exist so token colors clear 4.5:1 on the
+// canvas — the CodeMirror default palette sits mid-tone on the olive
+// ground and JSON was hard to read. Added after basicSetup, so it (not
+// defaultHighlightStyle) wins for the tags it covers.
+const houseHighlight = HighlightStyle.define([
+  { tag: [t.propertyName], color: "var(--oi-code-key, var(--oi-focus))", fontWeight: "600" },
+  { tag: [t.string, t.special(t.string)], color: "var(--oi-code-string, var(--oi-ink))" },
+  { tag: [t.number, t.bool, t.null, t.atom], color: "var(--oi-code-literal, var(--oi-meta-relation))" },
+  { tag: [t.keyword, t.moduleKeyword, t.controlKeyword], color: "var(--oi-code-key, var(--oi-focus))" },
+  { tag: [t.comment, t.lineComment, t.blockComment], color: "var(--oi-muted, var(--oi-relation))", fontStyle: "italic" },
+]);
 const mark = StateEffect.define<{ from: number; to: number; color: string }>();
 const highlights = StateField.define<DecorationSet>({
   create: () => Decoration.none,
@@ -216,6 +230,7 @@ export const TextEditor = forwardRef<EditorHandle, Props>(
       const extensions = [
         basicSetup,
         highlights,
+        syntaxHighlighting(houseHighlight),
         editable.current.of(
           EditorState.readOnly.of(!!callbacks.current.readOnly),
         ),
