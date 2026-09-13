@@ -1,3 +1,6 @@
+# PROPOSAL — SUPERSEDED 2026-09-13 by PROPOSAL-FLOW-DAY-LOGICS-2026-09-13-2.md
+# (owner correction: flows do not resolve into the Day die; the founding shape is the real template's inner differentiation; flows live in the user section of top-level Central)
+
 # PROPOSAL — The flow/Day logics, clarified — for your ratification
 
 From the desktop Cradle programme, cell A of the 2026-09-12-2 queue. You ruled
