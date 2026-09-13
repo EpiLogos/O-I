@@ -43,3 +43,9 @@ not owner-chosen names; the clean base names are the owner's own).
 Both are self-contained HTML documents (embedded data, no network): the
 desktop renders them through the existing material route and their own
 scripts; `Save HTML copy` inside each document remains its portable export.
+
+## Beings / Things reference carriers (#279)
+
+`forms.json` records the six initial families without pretending un-ingested Card/Cube files are available. The existing two owner-supplied HTML files above remain byte-identical. `build-personal.mjs` generates only `oi-beings.html` and `oi-things.html` from `../src/personal/page.mjs` before native development/build. These are reproducible product assets, not new canonical person identities. User-created document copies are not generator targets.
+
+Run `node documents/build-personal.mjs` from the cradle, then `--check` for reproducibility. The current text/link references open through the existing Central file route, have embedded `ql-doc` source/subject/C bindings, and export a complete standalone copy. Their internal edit/export does not yet establish native edited-preview Save, safe filtered publication, Card/Cube delivery, user-roster discovery or installed asset placement; those are explicit [Personal Web](../../../docs/cradle/PERSONAL-WEB.md) obligations. Full-copy export retains private embedded data and is labelled accordingly.
