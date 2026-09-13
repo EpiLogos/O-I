@@ -14,13 +14,12 @@ import "./flow/flow.css";
  * fourth. `title` stays in the prop contract (Cradle.tsx still passes the
  * workspace name) but is not shown.
  *
- * Writing is not a mode this pane owns. "Start writing" opens a real Flow in
- * its register's NOW field through the same Central operation the fresh tab
- * uses (`projectcentral.flow.create`, named by Central's own
- * ProjectCentral/now/flows convention) — there is no isolated local canvas
- * and no "back to workspace" that only returns to this page. When no register
- * is named yet the writing still opens; the surface carries a picker beside
- * its ordinary Save, and saving creates the Flow then.
+ * Writing is not a mode this pane owns. "Start writing" opens writing kept on
+ * this device — no Flow, no file, no Day is minted as a side effect of
+ * opening (owner correction, 2026-09-12: the blank now/flows/ placeholder
+ * premise was the fault). The register named before opening rides the draft
+ * as its default; the ground receives the writing only when the human
+ * explicitly saves real content, through Central's own operation.
  *
  * BOOT-02/03/04: at boot phases `ground-unrecognised`/`ground-inaccessible`
  * the empty-workspace region hosts the existing `GroundChooser` first, with

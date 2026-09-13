@@ -464,10 +464,13 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
     return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`;};
   /** Central names the Flow from the local civil stamp
    *  (ProjectCentral/now/flows/YYYY-MM-DD-HHMM.md). That stamp has minute
-   *  resolution, so writing twice inside one minute collides and Central
+   *  resolution, so placing twice inside one minute collides and Central
    *  refuses the second — correctly, since a Flow may not take a path another
-   *  Flow owns. Writing is never lost to a clock: the same convention is
-   *  extended with a suffix until the owner accepts one. */
+   *  Flow owns. Placed writing is never lost to a clock: the same convention
+   *  is extended with a suffix until the owner accepts one. Reached only by
+   *  an explicit human Save of real content — no surface mints a Flow any
+   *  more (the blank now/flows/ placeholder premise is under owner
+   *  correction; PROPOSAL-FLOW-DAY-LOGICS-2026-09-13). */
   const createFlow=async(project:string|null)=>{
     const stamp=localStamp();
     const attempt=(path?:string)=>flow(kernel.transport,{action:"flow_create",project,actor:"desktop-user",actor_kind:"human",
@@ -480,36 +483,24 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
   };
   const flowDir=(project:string|null)=>project?"ProjectCentral/now/flows":"Control/agents/now/flows";
   const flowTitle=(created:{flow:{path:string;title?:string}})=>created.flow.title||created.flow.path.split("/").pop()||"Flow.md";
-  /** Writing opens a real Flow in its register's NOW field. Writing never
-   *  waits for a register: when the scope names a project, the Flow is
-   *  created through Central's own operation and lands in that project's
-   *  ProjectCentral NOW. When nothing can be named yet — no project chosen,
-   *  or no Central reachable at all — the writing still opens, as an
-   *  unplaced draft that keeps itself on this device and offers to place
-   *  itself the moment a register appears. Nothing is refused, and nothing
-   *  is lost. */
+  /** Writing opens on this device and never mints a placeholder: no Flow, no
+   *  file, no Day, no NOW allocation as a side effect of opening (owner
+   *  correction, 2026-09-12 — the blank now/flows/ premise was the fault).
+   *  The register named before opening — the clicked project, the workspace's
+   *  current one — rides the draft as its default; the ground is written only
+   *  when the human explicitly saves real content (placeDraft), through
+   *  Central's own operation. */
   const startWriting=async(project?:string)=>{
     const scope=project??workspaceRef.current.current.project??kernel.snapshot.navigator?.project?.project.name??null;
-    const id=crypto.randomUUID();
-    // No Central at all is the only case with nowhere to write yet: the
-    // writing opens anyway and keeps itself until a ground appears. With
-    // Central reachable and no project named, the Flow belongs to the root
-    // register — Central is the meta-project.
-    if(kernel.transport.kind==="unavailable"){
-      setState(s=>openBinding(s,{id,kind:"draft",title:"Draft"}));
-      return;
-    }
-    const created=await createFlow(scope);
-    const title=flowTitle(created);
-    const binding:SurfaceBinding={id,kind:"flow",title,project:scope??undefined,ref:created.flow.source_ref,flow:{flowRef:created.flow.flow_ref,path:created.flow.path}};
-    const opened=await kernel.apply({op:"surface_open",surface_id:id,kind:"flow",title,source_ref:binding.ref});
-    if(opened?.result!=="surface_opened")throw new Error("The new Flow surface could not be opened");
-    setState(s=>openBinding(s,binding));
+    setState(s=>openBinding(s,{id:crypto.randomUUID(),kind:"draft",title:"Draft",project:scope??undefined}));
   };
   /** Save unsaved writing into a register: one real Flow, created and written
-   *  through Central's own operations, replacing the surface in place. The
-   *  local copy is released only once the owner holds it. */
+   *  through Central's own operations, replacing the surface in place. Only
+   *  real content reaches the ground — an empty draft has nothing to place,
+   *  and no blank placeholder is ever minted in its name. The local copy is
+   *  released only once the owner holds it. */
   const placeDraft=async(bindingId:string,project:string,content:string)=>{
+    if(!content.trim())throw new Error("Nothing to place yet — write first, then save.");
     const created=await createFlow(project);
     const title=flowTitle(created);
     if(content.length){
@@ -544,12 +535,19 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
     if(form){await openFile(await resolveDocumentForm(kernel.transport,form,kernel.snapshot.navigator?.root?.work.projects));return;}
     let binding:SurfaceBinding={...current,project,kind,title:kind==="terminal"?"Terminal":"Browser"};
     if(kind==="flow"){
-      if(!project)throw new Error("Choose a project for this Flow first");
-      const created=await createFlow(project);
-      binding={...binding,title:flowTitle(created),ref:created.flow.source_ref,flow:{flowRef:created.flow.flow_ref,path:created.flow.path}};
+      // Writing, not minting: the fresh tab's Write opens the retained draft
+      // in place of the blank surface. No register refusal — blank writing is
+      // valid, and the picker names where a Save will place it.
+      binding={...current,project,kind:"draft",title:"Draft"};
     }else if(kind==="terminal"){
       binding.terminal={cwd:terminalCwd(project)};
     }else if(kind==="browser"){binding.browser={url:""};}else{return;}
+    if(binding.kind==="draft"){
+      // A draft is a client-side surface — the same shape the
+      // transport-unavailable path has always opened. Nothing to register.
+      workspaceRef.current.replaceSurface(workspaceId,binding);
+      return;
+    }
     const opened=await kernel.apply({op:"surface_open",surface_id:id,kind:binding.kind,title:binding.title,source_ref:binding.ref});
     if(opened?.result!=="surface_opened")throw new Error("The new surface could not be opened");
     workspaceRef.current.replaceSurface(workspaceId,binding);
