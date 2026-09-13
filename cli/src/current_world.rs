@@ -325,7 +325,7 @@ fn resolve_context_frame(
             status(Some(request.frame), Some("requested"))
         }
         (Some(request), Some(effective)) => {
-            if request_realised(&request) {
+            if request_realised(request) {
                 // Reality grew past the request; the request is stale.
                 let (reading, _) = status(Some(effective.frame), Some("effective"));
                 let warning = format!(
@@ -335,15 +335,15 @@ fn resolve_context_frame(
                 (reading, vec![warning])
             } else {
                 let (reading, _) = status(Some(request.frame), Some("requested"));
-                (reading, vec![shortfall_warning(&request)])
+                (reading, vec![shortfall_warning(request)])
             }
         }
         (Some(request), None) => {
             let (reading, warnings) = status(Some(request.frame), Some("requested"));
-            let warnings = if request_realised(&request) {
+            let warnings = if request_realised(request) {
                 warnings
             } else {
-                vec![shortfall_warning(&request)]
+                vec![shortfall_warning(request)]
             };
             (reading, warnings)
         }
