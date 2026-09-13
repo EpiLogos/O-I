@@ -191,14 +191,14 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
         <div id="knowledge-search-results">
           <ul aria-label="Search results" aria-busy={busy}>{hits.map((hit, index) => <li key={hit.resource} data-search-index={index} data-selected={selected === index}>
             <button className="search-result" id={`knowledge-search-${index}`} aria-current={selected === index ? "true" : undefined}
-              onFocus={() => setSelected(index)} onMouseEnter={() => setSelected(index)} onClick={() => void openAddress(hit.address, hit.label)}>
+              onFocus={() => setSelected(index)} onPointerMove={() => setSelected(index)} onClick={() => void openAddress(hit.address, hit.label)}>
               <span className="search-result-kind" aria-hidden="true">↗</span><span className="search-result-copy"><strong>{hit.label}</strong><small>{hit.kind} · {hit.snippet}</small></span>
             </button>
             <button className="search-row-more" aria-label={`Explain ${hit.label}`} onClick={() => void showDetail({ action: "explain", address: hit.address })}>Explain</button>
           </li>)}</ul>
           {rows.length > 0 && <section aria-label="Owner resolution results"><header>Resources &amp; actions</header><div role="list">{rows.map((row, index) => <div role="listitem" className="search-resolution-row" key={`${row.reference}:${index}`} data-search-index={hits.length + index} data-selected={selected === hits.length + index}>
             <button className="search-result" id={`knowledge-search-${hits.length + index}`} aria-current={selected === hits.length + index ? "true" : undefined}
-              onFocus={() => setSelected(hits.length + index)} onMouseEnter={() => setSelected(hits.length + index)} onClick={() => void openRow(row)}>
+              onFocus={() => setSelected(hits.length + index)} onPointerMove={() => setSelected(hits.length + index)} onClick={() => void openRow(row)}>
               <span className="search-result-kind" aria-hidden="true">↗</span><span className="search-result-copy"><strong>{row.label}</strong><small>{row.kind} · {row.owner}</small></span>
             </button>
             <details className="search-row-detail"><summary aria-label={`Actions and provenance for ${row.label}`}>Details</summary>

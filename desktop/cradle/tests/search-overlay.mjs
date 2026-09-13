@@ -113,6 +113,7 @@ try {
       check((await overlay.locator('.search-evidence pre').innerText()).includes('history'),`${name}: History is an explicit owner read`);
       await fill('many');
       await page.setViewportSize({width:420,height:420});
+      check(await input.getAttribute('aria-activedescendant')==='knowledge-search-0',`${name}: resizing does not invent a selection`);
       await input.press('ArrowUp');
       check(await input.getAttribute('aria-activedescendant')==='knowledge-search-50',`${name}: keyboard reaches resolution rows after all native search rows`);
       const bounds = await overlay.evaluate(el=>{const b=el.getBoundingClientRect();const s=el.querySelector('.search-scroll');return {x:b.x,y:b.y,right:b.right,bottom:b.bottom,scroll:s.scrollHeight>s.clientHeight};});
@@ -132,7 +133,7 @@ try {
       }
       check(errors.length===0,`${name}: no uncaught browser errors (${errors.join('; ')})`);
     } catch(error) {
-      receipt.failure={browser:name,error:String(error),lastCalls:calls.slice(-6),browserErrors:errors,input:await input.inputValue().catch(()=>null)};
+      receipt.failure={browser:name,error:String(error),lastCalls:calls.slice(-6),browserErrors:errors,input:await input.inputValue().catch(()=>null),active:await input.getAttribute('aria-activedescendant').catch(()=>null),status:await overlay.locator('.search-context').innerText().catch(()=>null)};
       console.error(JSON.stringify(receipt.failure));
       await page.screenshot({path:resolve(out,`${name}-failure.png`)}).catch(()=>{});
       throw error;
