@@ -18,7 +18,8 @@ from pathlib import Path
 from typing import Any
 
 BASE = Path(__file__).resolve().parents[1]
-STORY_ID = re.compile(r"[A-Z]{2}[0-9]{2}\Z")
+# UXnn rows belong to the delegated QL source, not the short local index table.
+STORY_ID = re.compile(r"(?!UX)[A-Z]{2}[0-9]{2}\Z")
 PRACTICE_ID = re.compile(r"P[0-9]{2}\Z")
 COLUMNS = [
     "id", "record_type", "view_id", "row_id", "column_id", "capability_refs",
@@ -34,6 +35,14 @@ def digest(data: bytes) -> str:
 
 def read_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def source_path(root: Path, relative: str) -> Path:
+    base = root.resolve()
+    target = (base / relative).resolve()
+    if Path(relative).is_absolute() or not target.is_relative_to(base):
+        raise ValueError(f"source path escapes its declared repository: {relative}")
+    return target
 
 
 def table_rows(text: str, pattern: re.Pattern[str], width: int) -> list[tuple[int, list[str]]]:
@@ -52,9 +61,9 @@ def table_rows(text: str, pattern: re.Pattern[str], width: int) -> list[tuple[in
 
 
 def load_sources(root: Path) -> dict[str, Any]:
-    config = read_json(root / "docs/experience/campaign.json")
-    source = (root / config["story_source"]).read_bytes()
-    practice_bytes = (root / config["practice_source"]).read_bytes()
+    config = read_json(source_path(root, "docs/experience/campaign.json"))
+    source = source_path(root, config["story_source"]).read_bytes()
+    practice_bytes = source_path(root, config["practice_source"]).read_bytes()
     practices: dict[str, Any] = {}
     for line, cells in table_rows(practice_bytes.decode("utf-8"), PRACTICE_ID, 4):
         key = cells[0].split()[0]
@@ -76,8 +85,6 @@ def load_sources(root: Path) -> dict[str, Any]:
     seen = set()
     for line, cells in table_rows(source.decode("utf-8"), STORY_ID, 5):
         key, human, agent, outcome, failure = cells
-        # QL owns its own full record. The local two-column summaries are not
-        # parsed as substitute stories; malformed five-column imports are refused.
         if key not in expected:
             raise ValueError(f"undeclared local story {key}")
         if key in seen:
@@ -122,8 +129,8 @@ def load_sources(root: Path) -> dict[str, Any]:
 
 def include_ql(result: dict[str, Any], root: Path) -> None:
     spec = result["config"]["delegated_ql"]
-    trace_bytes = (root / spec["trace_path"]).read_bytes()
-    standing_bytes = (root / spec["standing_path"]).read_bytes()
+    trace_bytes = source_path(root, spec["trace_path"]).read_bytes()
+    standing_bytes = source_path(root, spec["standing_path"]).read_bytes()
     trace, standing = json.loads(trace_bytes), json.loads(standing_bytes)
     ids = [item["id"] for item in trace["stories"]]
     if len(ids) != len(set(ids)) or not set(spec["known_ids"]).issubset(ids):
@@ -252,7 +259,7 @@ def main(argv: list[str] | None = None) -> int:
             apply_bindings(result, read_json(args.bindings))
         manifest, rows = relation_projection(result)
         if args.output_dir:
-            args.output_dir.mkdir(parents=True, exist_ok=False)
+            args.output_dir.mkdir(mode=0o700, parents=True, exist_ok=False)
             for name, value in [("ux-reading.json", result), ("matrix.json", manifest)]:
                 (args.output_dir / name).write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
             with (args.output_dir / "matrix.csv").open("w", encoding="utf-8", newline="") as target:
@@ -265,7 +272,7 @@ def main(argv: list[str] | None = None) -> int:
             "uncovered_native_capabilities": sum(row["coverage_disposition"] == "uncovered" for row in result["capability_inventory"]),
             "feature_verdict": None, "runtime_readiness": "not-assessed"}))
         return 0  # Valid planning source only, explicitly not product acceptance.
-    except (OSError, ValueError, KeyError, TypeError) as error:
+    except (OSError, ValueError, KeyError, TypeError, csv.Error) as error:
         print(json.dumps({"planning_source_valid": False, "error": str(error), "feature_verdict": None}), file=sys.stderr)
         return 1
 
