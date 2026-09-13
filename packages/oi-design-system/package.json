@@ -9,7 +9,8 @@
     "loading.mjs",
     "DESKTOP-LANGUAGE.md",
     "expression.mjs",
-    "expression.css"
+    "expression.css",
+    "search.css"
   ],
   "exports": {
     "./tokens.css": "./tokens.css",
@@ -19,7 +20,8 @@
     "./point-cloud.css": "./point-cloud.css",
     "./loading": "./loading.mjs",
     "./expression": "./expression.mjs",
-    "./expression.css": "./expression.css"
+    "./expression.css": "./expression.css",
+    "./search.css": "./search.css"
   },
   "scripts": {
     "verify": "node checks/verify.mjs",
