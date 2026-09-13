@@ -25,3 +25,4 @@ target/
 # (isolated owner checkouts at the cut revisions — never commit these).
 .development-field-owners/
 __pycache__/
+.worktrees/
