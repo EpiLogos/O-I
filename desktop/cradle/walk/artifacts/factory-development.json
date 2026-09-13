@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "factory-development",
-  "generated_at": "2026-09-13T10:22:56.338Z",
+  "generated_at": "2026-09-13T10:39:20.850Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 765,
+  "duration_ms": 1345,
   "checks": [
     {
       "ok": true,
@@ -40,6 +40,71 @@
     },
     {
       "ok": true,
+      "label": "The journey row renders the owner's frontier verbatim",
+      "data": {
+        "frontier": "Factory native conformance",
+        "journeyRef": "journey:01ARZ3NDEKTSV4RRFFQ69G5FAD",
+        "revision": 3,
+        "runRefs": [
+          "run:01ARZ3NDEKTSV4RRFFQ69G5FAA",
+          "run:01M22R1DE0A1PV3GQ6V7Q1HA1T"
+        ],
+        "status": "active"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The journey row's identity is the owner's journeyRef"
+    },
+    {
+      "ok": true,
+      "label": "The journey read carries the owner's identity and frontier verbatim"
+    },
+    {
+      "ok": true,
+      "label": "The journey's runRefs render as run rows, one per owner ref",
+      "data": [
+        "run:01ARZ3NDEKTSV4RRFFQ69G5FAA",
+        "run:01M22R1DE0A1PV3GQ6V7Q1HA1T"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "The run read carries the owner's run-reading contract"
+    },
+    {
+      "ok": true,
+      "label": "The executions band renders one row per owner execution in owner order",
+      "data": [
+        "execution:factory-conformance"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "The expanded execution detail is the owner's own payload verbatim",
+      "data": {
+        "agencyRef": "agency:factory/conformance",
+        "agentRef": "agent:factory-conformance",
+        "executionRef": "execution:factory-conformance",
+        "harnessRef": "harness:factory-native-cli",
+        "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA",
+        "status": "contract-fixture",
+        "surfaceRefs": [],
+        "workcellBindingRefs": []
+      }
+    },
+    {
+      "ok": true,
+      "label": "The owner's telemetry refusal renders verbatim",
+      "data": "Error: {\"kind\":\"owner-refused-or-failed\",\"message\":\"factory: Factory developmental provider error: Read(ExecutionTelemet"
+    },
+    {
+      "ok": true,
+      "label": "The re-pinned build-view route reaches the owner and discloses its answer verbatim",
+      "data": "BUILD VIEW\n\nThe owner refused the read: Error: {\"kind\":\"owner-refused-or-failed\",\"message\":\"factory: unknown command `factory`; run `factory"
+    },
+    {
+      "ok": true,
       "label": "Workcell placement status renders the owner's own reading"
     }
   ],
@@ -50,7 +115,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-13T10:22:56.453Z",
+        "mounted_at": "2026-09-13T10:39:21.040Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -61,9 +126,17 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 35,
+      "duration_ms": 34,
       "data": {
         "file": "factory-development-factory-development-readings.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 30,
+      "data": {
+        "file": "factory-development-factory-trajectory-rows.png"
       }
     },
     {
@@ -78,6 +151,7 @@
   "metrics": {},
   "screenshots": [
     "factory-development-factory-development-readings.png",
+    "factory-development-factory-trajectory-rows.png",
     "factory-development-workcell-status-beside-factory.png"
   ]
 }
