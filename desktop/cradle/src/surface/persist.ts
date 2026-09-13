@@ -36,7 +36,12 @@ function validBinding(raw: unknown): SurfaceBinding | null {
   const encounter=o.encounter as SurfaceBinding["encounter"];
   if(o.kind==="encounter" && (!encounter || typeof encounter.space!=="string" || typeof o.ref!=="string" || !o.ref.startsWith("agent-session/") || typeof o.project!=="string"))return null;
   const flow=o.flow as SurfaceBinding["flow"];
-  if(o.kind==="flow" && (!flow || typeof flow.flowRef!=="string" || !flow.flowRef || typeof flow.path!=="string" || !flow.path || typeof o.ref!=="string" || !o.ref || typeof o.project!=="string" || !o.project))return null;
+  // A flow instance is a user-section document: its identity is the file's
+  // path-ref (the binding's ref) plus the in-document id — no project
+  // register is involved, and the location must round-trip for the surface
+  // to read the file back.
+  if(o.kind==="flow" && (!flow || typeof flow.flowRef!=="string" || !flow.flowRef || typeof flow.path!=="string" || !flow.path || typeof o.ref!=="string" || !o.ref || !o.ref.startsWith("central:path:")))return null;
+  if(o.kind==="flow" && (!location || location.schema!=="central.path-ref/v1" || typeof location.ref!=="string" || location.ref!==o.ref || typeof location.root!=="string" || typeof location.path!=="string"))return null;
   const view=o.view as SurfaceBinding["view"];
   const encounterPlane=view?.encounterPlane;
   return { terminal:o.kind==="terminal"?{cwd:typeof (o.terminal as {cwd?:unknown})?.cwd==="string"?(o.terminal as {cwd:string}).cwd:undefined}:undefined, flow:o.kind==="flow"?flow:undefined, browser:o.kind==="browser"?{url:typeof (o.browser as {url?:unknown})?.url==="string"?(o.browser as {url:string}).url:""}:undefined, view:encounterPlane&&["Conversation","Activity","Context","Inspect"].includes(encounterPlane)?{encounterPlane}:undefined, encounter, location, address, project: o.project as string | undefined, id: o.id, kind: o.kind, ref: o.ref as string | undefined, title: o.title };

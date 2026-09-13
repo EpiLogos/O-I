@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "task-basis",
-  "generated_at": "2026-09-13T11:08:53.250Z",
+  "generated_at": "2026-09-13T13:32:34.435Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 4856,
+  "duration_ms": 4973,
   "checks": [
     {
       "ok": true,
@@ -77,7 +77,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-13T11:08:53.334Z",
+        "mounted_at": "2026-09-13T13:32:34.523Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -88,7 +88,7 @@
     {
       "ok": true,
       "op": "invoke.encounter_task_read",
-      "duration_ms": 942.1,
+      "duration_ms": 1212.1,
       "data": {
         "outcome": {
           "data": {
@@ -103,7 +103,7 @@
                 "--agent-session",
                 "agent-session/task-basis-walk",
                 "--expected-revision",
-                "task-binding/01M2D79AMBCYXNJNF43GGS1TZB"
+                "task-binding/01M2DFGDT5YEPMVAFX7EC0WXN4"
               ],
               "id": "task-e38fbf4d288acdf99bfa79fa6cd50b5795c0ef4b8af23d08f0e92458cbffbaed",
               "label": "Task child acceptance ACP",
@@ -114,7 +114,7 @@
             "request": {
               "authority_ref": "authority:task-basis-walk",
               "central": {
-                "central_root": "/private/tmp/oi-cradle-editor-neSMHy",
+                "central_root": "/private/tmp/oi-cradle-editor-4q4szu",
                 "ctrl_bin": "/Users/admin/.cargo/bin/ctrl",
                 "participant_refs": [
                   "agent:editor-walk"
@@ -126,27 +126,27 @@
                 ],
                 "task_ref": "task:task-basis-walk"
               },
-              "cwd": "/private/tmp/oi-cradle-editor-neSMHy/Work/Editor/task-scratch",
+              "cwd": "/private/tmp/oi-cradle-editor-4q4szu/Work/Editor/task-scratch",
               "material_host": null,
               "provider": {
                 "argv": [
                   "python3",
                   "-u",
-                  "/private/tmp/oi-cell-a/desktop/cradle/walk/fixtures/addressed-provider.py",
+                  "/private/tmp/oi-cell-e/desktop/cradle/walk/fixtures/addressed-provider.py",
                   "acp",
-                  "/private/tmp/oi-cradle-editor-neSMHy/task-provider.log"
+                  "/private/tmp/oi-cradle-editor-4q4szu/task-provider.log"
                 ],
                 "id": "task-child",
                 "label": "Task child acceptance ACP",
                 "protocol": "acp"
               },
               "selected_directories": [
-                "/private/tmp/oi-cradle-editor-neSMHy/Work/Editor/task-scratch"
+                "/private/tmp/oi-cradle-editor-4q4szu/Work/Editor/task-scratch"
               ],
               "workcell_boundary_bin": "/Users/admin/Central/Work/Workcell/target/release/workcell-write-boundary"
             },
             "requirements": null,
-            "revision": "task-binding/01M2D79AMBCYXNJNF43GGS1TZB",
+            "revision": "task-binding/01M2DFGDT5YEPMVAFX7EC0WXN4",
             "schema": "aikit.encounter-task/v1"
           },
           "result": "encounter_task_reading"
@@ -156,7 +156,7 @@
     {
       "ok": true,
       "op": "invoke.encounter_task_read",
-      "duration_ms": 129,
+      "duration_ms": 129.2,
       "data": {
         "outcome": {
           "data": null,
@@ -167,7 +167,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 27,
+      "duration_ms": 34,
       "data": {
         "file": "task-basis-task-section-verbatim.png"
       }
@@ -175,7 +175,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 28,
+      "duration_ms": 27,
       "data": {
         "file": "task-basis-inspect-now-fed-honest-state.png"
       }
@@ -183,13 +183,13 @@
     {
       "ok": false,
       "op": "invoke.encounter",
-      "duration_ms": 266.6,
+      "duration_ms": 272.5,
       "error": "Task preparation is incomplete; explicitly recover the same request [encounter.runtime]"
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 28,
+      "duration_ms": 29,
       "data": {
         "file": "task-basis-plain-session-inspect-empty.png"
       }
@@ -197,7 +197,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 33,
+      "duration_ms": 32,
       "data": {
         "file": "task-basis-plain-session-no-task-section.png"
       }

@@ -2,7 +2,7 @@ import {useEffect,useRef,useState} from "react";
 import type {SurfaceBinding,LayoutState} from "../surface/types";
 import {useKernel} from "../kernel/KernelProvider";
 import {readFile} from "../files/client";
-import {flow} from "../flow/client";
+import {parseInstance,htmlToText} from "../flow/instance";
 import {encounter,type EncounterReading} from "../encounter/client";
 import {composeAddressed} from "../encounter/AddressedComposer";
 import {composeSharedField,openA2aExchange} from "../receiving/SharedFieldMaterial";
@@ -48,7 +48,7 @@ export function ContextTray({bindings,accompanying}:{bindings:Record<string,Surf
   if(!binding)throw new Error("Open a source to include this selection.");
   let revision=candidate.revision;let working=!!candidate.workingCopy;let canonical:string|undefined;
   if(candidate.kind==="element"){if(!candidate.observationKey||!await observationIsCurrent(candidate.observationKey))throw new Error("The selected component changed. Pick it again.");}
-  else if(binding.kind==="flow"&&binding.flow){const read=await flow(kernel.transport,{action:"flow_read",project:binding.project!,flow_ref:binding.flow.flowRef});if(!revision||revision!==read.flow.current_revision)throw new Error("The Flow changed since selection. Select the passage again.");if(working){let draft:{text?:string;revision?:string}|undefined;try{draft=JSON.parse(localStorage.getItem(`oi-flow-draft:${binding.flow.flowRef}`)??"null")??undefined;}catch{}if(draft?.revision!==revision||!draft.text||!matches(candidate,draft.text))throw new Error("The Flow draft changed since selection. Select the passage again.");canonical=draft.text;}else canonical=read.content;}
+  else if(binding.kind==="flow"&&binding.location){const read=await readFile(kernel.transport,binding.location);const doc=parseInstance(read.content);canonical=doc.entries.map(e=>htmlToText(e.html)).join("\n\n");if(working){const draft=(JSON.parse(localStorage.getItem(`oi-flow-instance-draft:${binding.id}`)??"null")??undefined) as {text?:string}|undefined;if(!draft?.text||!matches(candidate,draft.text))throw new Error("The Flow draft changed since selection. Select the passage again.");canonical=draft.text;}}
   else if(binding.kind==="source"&&binding.ref){const buffer=kernel.snapshot.buffers[binding.ref];if(!buffer||!revision||buffer.base_revision!==revision)throw new Error("The source changed since selection. Select it again.");canonical=buffer.content;working=buffer.dirty;}
   else if(binding.location){const read=await readFile(kernel.transport,binding.location);if(!revision||read.revision!==revision)throw new Error("The file changed since selection. Select the passage again.");if(working){const draft=binding.ref?readDraft(binding.ref):undefined;if(!draft||draft.base_revision!==revision)throw new Error("The file draft changed since selection. Select the passage again.");canonical=draft.content;}else canonical=read.content;}
   if(canonical!==undefined&&!matches(candidate,canonical))throw new Error("The selected material changed. Select it again before including it.");
