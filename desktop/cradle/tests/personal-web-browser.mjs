@@ -25,6 +25,8 @@ try{
   assert.equal(JSON.parse(await page.locator("#ql-doc").textContent()).meta.title,"An explicitly revised page");checks++;
   await page.locator("#page-layout").selectOption(family==="beings"?"editorial":"portrait");await page.locator("#page-tone").selectOption("ink");
   assert.equal(await page.locator("body").getAttribute("data-tone"),"ink");checks++;
+  assert.deepEqual(await page.locator("body").evaluate(el=>({background:getComputedStyle(el).backgroundColor,color:getComputedStyle(el).color})),{background:"rgb(32, 35, 31)",color:"rgb(238, 238, 232)"});checks++;
+  await page.screenshot({path:new URL(`${family}-ink.png`,out).pathname,fullPage:true});
   await page.locator("#add-section").click();assert.equal(await page.locator(".section").count(),2);checks++;
   await page.locator('[data-section="section-2"][data-field="heading"]').fill("A further relation");
   // Actual reference runtime: identity is minted only at explicit export.
