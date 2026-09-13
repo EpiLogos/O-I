@@ -13,7 +13,7 @@ mkdirSync(out, {recursive:true});
 const cases = JSON.parse(readFileSync(resolve(root,'tests/search-queries.json'),'utf8'));
 const receipt = {grade:'D', scope:'production search component + client + HTTP bridge; controlled responses, not native owner/installed/human evidence', checks:[], browsers:[], passed:false};
 const check = (value, name) => { assert.ok(value,name); receipt.checks.push(name); };
-const server = await createServer({root, configFile:false, plugins:[react()], define:{__CRADLE_WALK__:'false'}, server:{host:'127.0.0.1',port:1437,strictPort:true}});
+const server = await createServer({root, configFile:false, plugins:[react()], define:{__CRADLE_WALK__:'false'}, server:{host:'127.0.0.1',port:1437,strictPort:true,fs:{allow:[root,resolve(root,'../../packages/oi-design-system')]}}});
 await server.listen();
 try {
   for (const [name, engine] of Object.entries({chromium,webkit})) {
@@ -52,7 +52,7 @@ try {
           const from = calls.length;
           await fill(item.query);
           const actual = calls.slice(from).filter(op=>['search','resolve'].includes(op.request.action));
-          assert.deepEqual(actual.map(op=>op.request.action).sort(),['resolve','search'],`${name}: ${item.name} both owners`);
+          assert.deepEqual(actual.map(op=>op.request.action).sort(),['resolve','search'],`${name}: ${item.name} both operations`);
           check(actual.every(op=>op.request.query===item.query && op.project===project),`${name}: ${project??'root'}: literal ${item.name}`);
           assert.deepEqual(await overlay.locator('li strong').allTextContents(),[0,1].map(i=>`Result ${i} · ${item.query}`));
         }
@@ -97,9 +97,10 @@ try {
       await input.dispatchEvent('keydown',{key:'Enter',isComposing:true,bubbles:true});
       await page.keyboard.press('Escape');
       check(calls.length===beforeIME && await overlay.isVisible(),`${name}: IME intermediate input neither queries nor opens/dismisses`);
+      check(await input.inputValue()==='語',`${name}: composition Escape preserves the input instead of native search clearing it`);
       await input.dispatchEvent('compositionend',{data:'語'});
-      await settled();
-      check(calls.slice(beforeIME).filter(op=>op.request.query==='語').length===2,`${name}: committed IME text reaches both owners`);
+      await page.waitForFunction(()=>document.querySelector('.search-aperture ul')?.getAttribute('aria-busy')==='false' && document.querySelector('.search-aperture li strong')?.textContent==='Result 0 · 語');
+      check(calls.slice(beforeIME).filter(op=>op.request.query==='語').length===2,`${name}: committed IME text reaches both operations`);
       await fill('refused');
       check((await overlay.getByRole('alert').innerText())==='resolve.unclosed_quote: quoted Resolve subject is not closed',`${name}: owner refusal remains verbatim`);
       await fill('absent');
@@ -123,6 +124,7 @@ try {
         const cdp = await page.context().newCDPSession(page);
         await cdp.send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-transparency',value:'reduce'}]});
         check(await overlay.evaluate(el=>getComputedStyle(el).backdropFilter)==='none',`${name}: reduced transparency uses opaque material`);
+        await cdp.send('Emulation.setEmulatedMedia',{features:[]});
         await cdp.detach();
         await page.emulateMedia({forcedColors:'active'});
         check(await overlay.evaluate(el=>getComputedStyle(el).backdropFilter)==='none',`${name}: forced-colour material has no blur`);
@@ -130,6 +132,8 @@ try {
       }
       check(errors.length===0,`${name}: no uncaught browser errors (${errors.join('; ')})`);
     } catch(error) {
+      receipt.failure={browser:name,error:String(error),lastCalls:calls.slice(-6),browserErrors:errors,input:await input.inputValue().catch(()=>null)};
+      console.error(JSON.stringify(receipt.failure));
       await page.screenshot({path:resolve(out,`${name}-failure.png`)}).catch(()=>{});
       throw error;
     } finally { await browser.close(); }

@@ -84,7 +84,7 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
     setBusy(!composing);
     if (composing) return;
     // O:I never parses, trims, tokenises or rewrites this input. Both native
-    // owners receive the same literal string, including incomplete syntax.
+    // operations receive the same literal string, including incomplete syntax.
     const timer = setTimeout(() => {
       void Promise.allSettled([
         knowledge<{ hits: KnowledgeHit[]; absences: string[] }>(transport, project, { action: "search", query }),
@@ -158,7 +158,12 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
 
   return <dialog ref={dialog} className="search-aperture search-glass" aria-label="Search Central"
     onKeyDownCapture={event => {
-      if (composition.current || event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) return;
+      if (composition.current || event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) {
+        // Escape belongs to the IME, not the search input's native clear act.
+        // Enter must not submit the current row while a composition is live.
+        if (event.key === "Escape" || event.key === "Enter") event.preventDefault();
+        return;
+      }
       if ((event.key === "ArrowDown" || event.key === "ArrowUp") && event.target instanceof HTMLInputElement) {
         event.preventDefault();
         navigate(event.key === "ArrowDown" ? 1 : -1);
@@ -173,7 +178,7 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
         aria-controls="knowledge-search-results" aria-activedescendant={count && !busy ? `knowledge-search-${selected}` : undefined}
         value={query} onChange={event => changeQuery(event.target.value)}
         onCompositionStart={() => { composition.current = true; ++epoch.current; setComposing(true); }}
-        onCompositionEnd={event => { composition.current = false; setQuery(event.currentTarget.value); setComposing(false); }}
+        onCompositionEnd={event => { composition.current = false; ++epoch.current; setBusy(true); setQuery(event.currentTarget.value); setComposing(false); }}
         onKeyDown={event => { if (event.key === "Enter" && (composition.current || event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229)) event.preventDefault(); }}
         placeholder={`Search ${project ?? "Central"}`} />
       <button type="button" className="search-dismiss" aria-label="Close search" onClick={onClose}><kbd>esc</kbd></button>
@@ -210,7 +215,7 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
       {detail !== undefined && <details className="search-evidence" open><summary>Owner evidence</summary><pre>{JSON.stringify(detail, null, 2)}</pre></details>}
       <section id="search-options" className="search-options" hidden={!optionsOpen} aria-label="Search options">
         <label className="search-shortcut">Shortcut <select aria-label="Search shortcut" value={String(leader)} onChange={event => onLeaderChange(event.target.value === "true")}><option value="false">{searchLeaderLabel(false)}</option><option value="true">{searchLeaderLabel(true)}</option></select></label>
-        <p>AIKit interprets the full query. Search does not invoke an action.</p>
+        <p>AIKit interprets the full query. Result actions run only when you choose them.</p>
         <dl className="search-syntax"><div><dt>Address</dt><dd><code>@</code> or <code>@0</code>–<code>@5</code></dd></div><div><dt>Relations</dt><dd><code>@# - + x / =</code></dd></div><div><dt>Group / literal</dt><dd><code>( … )</code> · <code>"quoted subject"</code> · escapes</dd></div></dl>
         <p className="search-syntax-note">Separate operators from subjects with spaces; punctuation inside paths and identifiers stays literal. Query completions are not exposed by the current kernel.</p>
       </section>
