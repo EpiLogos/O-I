@@ -2,7 +2,7 @@
 //! provenance and successful-use learning remain entirely native-owned.
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{path::Path, process::Command};
+use std::{ffi::OsStr, path::Path, process::Command};
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(tag = "kind", content = "value", rename_all = "kebab-case")]
@@ -43,6 +43,10 @@ pub enum CallError {
 /// and by the Action dispatch adapter — the kernel invents nothing on top.
 pub fn run(cwd: &Path, args: &[&str]) -> Result<Value, CallError> {
     let executable = std::env::var_os("OI_BIN").unwrap_or_else(|| "oi".into());
+    run_with_executable(cwd, args, &executable)
+}
+
+fn run_with_executable(cwd: &Path, args: &[&str], executable: &OsStr) -> Result<Value, CallError> {
     let output = Command::new(executable)
         .arg("aikit")
         .arg("--json")
@@ -74,7 +78,9 @@ fn decode_envelope(output: &std::process::Output) -> Result<Value, CallError> {
     envelope.get("data").cloned().ok_or_else(|| CallError::Malformed { detail: "AIKit response is missing its reading".into() })
 }
 
-pub fn call(cwd: &Path, request: &Request) -> Result<Value, String> {
+/// Transport only: the owner parser decides what every query means. Keeping
+/// construction separate makes the literal-operand contract executable.
+fn request_args(request: &Request) -> Result<Vec<String>, String> {
     let mut args: Vec<String> = vec!["knowledge".into()];
     match request {
         Request::Search { query } => { args.extend(["search".into(), "--limit".into(), "50".into(), "--".into(), query.clone()]); }
@@ -88,9 +94,70 @@ pub fn call(cwd: &Path, request: &Request) -> Result<Value, String> {
             args.push(serde_json::to_string(address).map_err(|e| e.to_string())?);
         }
     }
+    Ok(args)
+}
+
+pub fn call(cwd: &Path, request: &Request) -> Result<Value, String> {
+    let args = request_args(request)?;
     run(cwd, &args.iter().map(String::as_str).collect::<Vec<_>>()).map_err(|error| match error {
         CallError::Unavailable { detail } => format!("AIKit is unavailable: {detail}"),
         CallError::Refused { message } => message,
         CallError::Malformed { detail } => detail,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[derive(Deserialize)]
+    struct QueryCase { name: String, query: String }
+
+    fn cases() -> Vec<QueryCase> {
+        serde_json::from_str(include_str!("../../tests/search-queries.json")).unwrap()
+    }
+
+    #[test]
+    fn full_query_is_one_literal_operand_after_the_option_terminator() {
+        for case in cases() {
+            for (action, request) in [
+                ("search", Request::Search { query: case.query.clone() }),
+                ("resolve", Request::Resolve { query: case.query.clone() }),
+            ] {
+                let args = request_args(&request).unwrap();
+                assert_eq!(args, ["knowledge", action, "--limit", "50", "--", &case.query], "{}", case.name);
+                // The JSON seam must not flatten quoting or turn it into CLI flags.
+                let roundtrip: Request = serde_json::from_str(&serde_json::to_string(&request).unwrap()).unwrap();
+                assert_eq!(roundtrip, request, "{}", case.name);
+            }
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn actual_process_argv_preserves_queries_and_root_or_child_context() {
+        use std::{fs, os::unix::fs::PermissionsExt, path::PathBuf, time::{SystemTime, UNIX_EPOCH}};
+        struct Scratch(PathBuf);
+        impl Drop for Scratch { fn drop(&mut self) { let _ = fs::remove_dir_all(&self.0); } }
+        let nonce = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+        let scratch = Scratch(std::env::temp_dir().join(format!("oi search argv {} {nonce}", std::process::id())));
+        fs::create_dir_all(&scratch.0).unwrap();
+        let executable = scratch.0.join("oi argv witness");
+        // A transport witness, not an AIKit implementation or a parser. The
+        // query is argv data; neither this program nor the adapter evaluates it.
+        fs::write(&executable, "#!/usr/bin/env python3\nimport json, sys\nprint(json.dumps({'ok': True, 'data': sys.argv[1:]}))\n").unwrap();
+        fs::set_permissions(&executable, fs::Permissions::from_mode(0o700)).unwrap();
+        for cwd in [scratch.0.join("Central"), scratch.0.join("Central/Work/My Project")] {
+            fs::create_dir_all(&cwd).unwrap();
+            for case in cases() {
+                for request in [Request::Search { query: case.query.clone() }, Request::Resolve { query: case.query.clone() }] {
+                    let args = request_args(&request).unwrap();
+                    let reading = run_with_executable(&cwd, &args.iter().map(String::as_str).collect::<Vec<_>>(), executable.as_os_str()).unwrap();
+                    let mut expected = vec!["aikit".to_owned(), "--json".to_owned(), "-C".to_owned(), cwd.to_str().unwrap().to_owned()];
+                    expected.extend(args);
+                    assert_eq!(reading, serde_json::json!(expected), "{}", case.name);
+                }
+            }
+        }
+    }
 }

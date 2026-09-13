@@ -51,6 +51,19 @@ jobs:
         run: |
           npm ci --prefix desktop/cradle --no-audit --no-fund
           npm --prefix desktop/cradle run build
+      - name: Install browser engines for search component contracts
+        working-directory: desktop/cradle
+        run: npx playwright install --with-deps chromium webkit
+      - name: Prove search component and literal query transport (D)
+        working-directory: desktop/cradle
+        run: node tests/search-overlay.mjs
+      - name: Retain search browser receipts and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: search-component-${{ github.sha }}
+          path: desktop/cradle/tests/artifacts/search
+          if-no-files-found: warn
 
   native-shell:
     runs-on: macos-15
