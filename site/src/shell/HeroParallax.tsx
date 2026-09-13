@@ -9,7 +9,7 @@ import { motionSettings, useMotion } from './motion';
 
 gsap.registerPlugin(ScrollTrigger, CustomEase);
 
-/** Composed at rest; one outward separation, then a quiet handoff to reading. */
+/** The field recedes first; the separated mark stays legible through the handoff. */
 export function HeroParallax() {
   const rootRef = useRef<HTMLElement>(null);
   const { still } = useMotion();
@@ -25,14 +25,17 @@ export function HeroParallax() {
         defaults: { ease },
         scrollTrigger: { trigger: root, start: 'top top', end: 'bottom top', scrub: 0.35, invalidateOnRefresh: true },
       });
-      [22, 15, 9, 4].forEach((distance, index) => {
+      // Spatial separation and visibility have different jobs. Do not tie a
+      // layer's opacity to its travel: the outline must remain readable.
+      [96, 54, 24, 7].forEach((distance, index) => {
         timeline.to(`[data-pl-layer="${index + 1}"]`, {
           yPercent: -distance,
-          opacity: 0,
-          duration: 0.9,
-        }, 0.06 + index * 0.025);
+          xPercent: [-4, -1, 2, 5][index],
+          duration: 1,
+        }, 0);
       });
-      timeline.to('[data-pl-field]', { yPercent: -4, opacity: 0.15, duration: 1 }, 0);
+      timeline.to('[data-pl-field]', { yPercent: -4, opacity: 0.12, duration: 1, ease: 'sine.inOut' }, 0);
+      timeline.to('.pl__mark', { opacity: 0.78, duration: 0.55, ease: 'sine.inOut' }, 0.45);
     }, root);
     lenis.on('scroll', ScrollTrigger.update);
     gsap.ticker.add(ticker);
@@ -48,7 +51,7 @@ export function HeroParallax() {
     <section className="pl" ref={rootRef} aria-label="O:I opening statement">
       <div className="pl__sticky">
         <div className="pl__field" data-pl-field>
-          <VideoField media="b" poster={1} className="pl__video" zoom={1.03} shift={1} priority />
+          <VideoField media="b" poster={1} className="pl__video" zoom={1.12} shift={1} priority />
         </div>
         <div className="pl__inner">
           <div className="pl__mark" aria-hidden="true">

@@ -2,6 +2,7 @@ import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { ShellNav } from './ShellNav';
 import { HeroParallax } from './HeroParallax';
 import { VideoField } from './VideoField';
+import { IndexCollection, collectionKind } from './IndexCollection';
 import { MotionControl, MotionProvider, motionSettings, useMotion } from './motion';
 import { PAGES, type Page, type Section, type Item } from './content';
 import './shell.css';
@@ -65,19 +66,20 @@ function Figure({ n }: { n: number }) {
 function SectionView({ section }: { section: Section }) {
   const id = useId();
   const tone = section.tone === 'light' ? 'sec--light' : 'sec--dark';
+  const collection = section.items ? collectionKind(section.items) : undefined;
   if (section.layout === 'band') {
     return <section className="band sec--dark" data-layout="band" aria-labelledby={id}>
       <VideoField media={section.media?.media ?? 'b'} poster={section.media?.poster ?? 1}
-        zoom={Math.min(section.media?.zoom ?? 1.03, 1.06)} className="band__video" />
+        zoom={section.media?.zoom ?? 1.3} className="band__video" />
       <div className="band__shade" aria-hidden="true" />
       <div className="band__inner" data-reveal><Title section={section} id={id} /><Copy section={section} /></div>
     </section>;
   }
-  return <section className={`sec sec--${section.layout} ${tone}${section.flip ? ' sec--feature--flip' : ''}`} data-layout={section.layout} aria-labelledby={id}>
+  return <section className={`sec sec--${section.layout} ${tone}${section.flip ? ' sec--feature--flip' : ''}${section.layout === 'index' && collection ? ` sec--${collection}` : ''}`} data-layout={section.layout} data-presentation={section.layout === 'index' ? collection : undefined} aria-labelledby={id}>
     <div className="sec__inner" data-reveal>
       {section.layout === 'feature' ? <>
         <Figure n={section.figure ?? 1} />
-        <div className="sec__side"><Title section={section} id={id} /><Copy section={section} />{section.items && <Meta items={section.items} />}</div>
+        <div className="sec__side"><Title section={section} id={id} /><Copy section={section} />{section.items && (collection === 'offices' ? <IndexCollection items={section.items} /> : <Meta items={section.items} />)}</div>
       </> : section.layout === 'split' ? <>
         <div className="sec__head"><Title section={section} id={id} /></div>
         <div className="sec__side"><Copy section={section} />{section.items && <ItemsList items={section.items} />}</div>
@@ -90,13 +92,7 @@ function SectionView({ section }: { section: Section }) {
             {item.detail && <ItemLink detail={item.detail} />}
           </div>
         ))}</div>}
-        {section.layout === 'index' && <ol className="sec__rows">{section.items?.map((item, index) => (
-          <li key={index}>
-            <span className="sec__row-index">{String(index + 1).padStart(2, '0')}</span>
-            <strong className="sec__row-name">{item.name}</strong>
-            {item.detail && <ItemLink detail={item.detail} />}
-          </li>
-        ))}</ol>}
+        {section.layout === 'index' && section.items && <IndexCollection items={section.items} />}
         {section.layout === 'statement' && section.items && <ItemsList items={section.items} />}
       </>}
     </div>

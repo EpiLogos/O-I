@@ -101,11 +101,34 @@ def inspect_route(browser, engine, width, height, reduced, expected):
             image.scroll_into_view_if_needed()
             if MEDIA_READY:
                 expect(image).not_to_have_js_property('naturalWidth', 0)
-            assert image.evaluate('node => getComputedStyle(node).objectFit') == 'contain'
+            expected_fit = 'cover' if image.evaluate("node => !!node.closest('.band')") else 'contain'
+            assert image.evaluate('node => getComputedStyle(node).objectFit') == expected_fit
         if reduced:
             expect(page.locator('video')).to_have_count(0)
             assert not movies, 'reduced motion downloaded a video'
             assert not page.evaluate("document.documentElement.classList.contains('lenis')")
+        # Authored band zoom and immersive cover fit must not silently regress
+        # to the hero's independent composition/framing policy.
+        for band in page.locator('.band').all():
+            zoom = float(band.locator('.vf').evaluate("node => getComputedStyle(node).getPropertyValue('--vf-zoom')"))
+            assert zoom >= 1.25, f'band zoom capped again: {zoom}'
+        for panel in page.locator('[data-presentation]').all():
+            kind = panel.get_attribute('data-presentation')
+            selector = {'offices': '.office-grid', 'sequence': '.method-sequence', 'atlas': '.resource-atlas'}[kind]
+            grid = panel.locator(selector)
+            columns = grid.evaluate("node => getComputedStyle(node).gridTemplateColumns.split(' ').length")
+            expected_columns = (2 if width <= 600 else 3) if kind == 'offices' else ((2 if width <= 900 else 5) if kind == 'sequence' else (2 if width <= 1100 else 3))
+            assert columns == expected_columns, (kind, width, columns)
+            if kind == 'offices':
+                expect(grid.locator('li')).to_have_count(6)
+                for tile in grid.locator('.office-tile__link').all():
+                    bounds = tile.bounding_box()
+                    assert bounds and abs(bounds['width'] - bounds['height']) < 3, ('non-square office', width, bounds)
+                    assert tile.get_attribute('href').startswith('https://github.com/EpiLogos/')
+                    assert tile.evaluate("node => node.scrollWidth <= node.clientWidth + 1 && node.scrollHeight <= node.clientHeight + 1"), 'tile clips its label'
+            if kind == 'sequence' and width >= 1000:
+                assert grid.bounding_box()['height'] < 400, 'method returned to a sprawling vertical list'
+        assert page.locator('.sec__rows').count() == 0, 'obsolete full-width index renderer remains'
         assert not errors, errors
         unexpected = [url for url in missing if url.rsplit('/', 1)[-1] not in MISSING_ASSETS]
         assert not unexpected, unexpected
@@ -133,8 +156,20 @@ def interactions(browser):
             page.wait_for_timeout(800)
             return page.locator('[data-pl-layer]').evaluate_all("nodes => nodes.map(n => new DOMMatrix(getComputedStyle(n).transform).m42)")
         rest = positions(0)
+        assert abs(float(page.locator('.pl__field').evaluate('node => getComputedStyle(node).opacity')) - .8) < .01
+        assert float(page.locator('.pl__mark').evaluate('node => getComputedStyle(node).opacity')) == 1
+        frame = page.locator('.pl .vf__frame').bounding_box()
+        assert abs(frame['width'] - frame['height']) < 1, 'mask does not follow the square media frame'
+        assert float(page.locator('.pl .vf').evaluate("node => getComputedStyle(node).getPropertyValue('--vf-zoom')")) > 1.03
+        page.screenshot(path=str(OUT / 'hero-rest.png'))
         mid = positions(300)
+        mark_mid = float(page.locator('.pl__mark').evaluate('node => getComputedStyle(node).opacity'))
+        field_mid = float(page.locator('.pl__field').evaluate('node => getComputedStyle(node).opacity'))
+        assert mark_mid > .95 and mark_mid > field_mid + .2, (mark_mid, field_mid)
+        page.screenshot(path=str(OUT / 'hero-scroll-300.png'))
         end = positions(650)
+        mark_late = float(page.locator('.pl__mark').evaluate('node => getComputedStyle(node).opacity'))
+        assert mark_late >= .78 and abs(end[0] - end[3]) > 100, (mark_late, end)
         assert all(abs(value) < 1 for value in rest), rest
         assert all(value < -0.1 for value in mid), mid
         assert all(abs(b) > abs(a) for a, b in zip(mid, end)), (mid, end)

@@ -86,7 +86,17 @@ main:focus { outline: none; }
 /* The mark remains transparent, ink-edged and composed when motion is off. */
 .pl { position: relative; height: 145vh; height: 145svh; background: var(--paper); }
 .pl__sticky { position: sticky; top: 0; height: 100vh; height: 100svh; min-height: 25rem; overflow: hidden; }
-.pl__field { position: absolute; inset: 0; }
+/* Twenty percent transparent at rest, independent of the mark's opacity. */
+.pl__field { position: absolute; inset: 0; opacity: .8; }
+/* The originals are square. Feather their own square frame, not the wide
+   viewport: otherwise contain's letterbox edges sit inside an opaque mask. */
+.pl__video .vf__frame {
+  inset: auto; left: 50%; top: 50%; width: min(114vw, 114svh); aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  --pl-feather: transparent 0%, rgb(0 0 0 / 4%) 3%, rgb(0 0 0 / 20%) 8%, rgb(0 0 0 / 65%) 18%, #000 30%, #000 70%, rgb(0 0 0 / 65%) 82%, rgb(0 0 0 / 20%) 92%, rgb(0 0 0 / 4%) 97%, transparent 100%;
+  -webkit-mask-image: linear-gradient(90deg, var(--pl-feather)), linear-gradient(0deg, var(--pl-feather));
+  mask-image: linear-gradient(90deg, var(--pl-feather)), linear-gradient(0deg, var(--pl-feather));
+}
 .pl__inner { position: absolute; inset: 0; display: grid; place-items: center; padding: 0 var(--gutter); pointer-events: none; }
 .pl__mark { position: relative; width: min(60vw, 40rem); aspect-ratio: 720 / 280; color: var(--oi-ink); transform: translateY(1rem); }
 .pl__layer { position: absolute; inset: 0; }
@@ -149,29 +159,66 @@ main:focus { outline: none; }
 .sec__meta-name { color: var(--s-muted); font-size: .7rem; font-weight: 650; letter-spacing: var(--track); text-transform: uppercase; }
 .sec__meta .sec__detail { max-width: none; text-align: left; }
 
-/* Grid / index: ruled editorial structures, not boxed cards. */
+/* Grid: open editorial cells. Index collections have their own compositions. */
 .sec--grid .sec__inner, .sec--index .sec__inner { display: flex; flex-direction: column; gap: 2.75rem; }
 .sec--grid .sec__prose, .sec--index .sec__prose { max-width: 64ch; }
 .sec__cells { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3rem 2.75rem; }
 .sec__cell { display: flex; flex-direction: column; gap: .85rem; padding-top: 1.4rem; border-top: 1px solid var(--s-rule); min-width: 0; }
-.sec__cell-index, .sec__row-index { color: var(--s-accent); font-family: var(--mono); font-size: .72rem; }
+.sec__cell-index { color: var(--s-accent); font-family: var(--mono); font-size: .72rem; }
 .sec__cell-name { font-size: 1.3rem; font-weight: 500; letter-spacing: -.02em; line-height: 1.35; }
 .sec__cell .sec__detail { max-width: none; text-align: left; font-size: .98rem; line-height: 1.7; }
-.sec__rows, .sec__items { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--s-rule); }
-.sec__rows li { display: grid; grid-template-columns: 3rem minmax(0, 1fr) minmax(0, 1fr); gap: 1.75rem; align-items: baseline; padding: 1.7rem 0; border-bottom: 1px solid var(--s-rule); }
-.sec__row-name { font-size: clamp(1.25rem, 2.2vw, 2rem); font-weight: 500; letter-spacing: -.03em; line-height: 1.3; }
-.sec__rows .sec__detail { max-width: none; }
-.sec__items li { display: flex; gap: 1.5rem; justify-content: space-between; align-items: baseline; padding: 1.1rem 0; border-bottom: 1px solid var(--s-rule); }
-.sec__item-name { font-size: 1.05rem; font-weight: 500; line-height: 1.5; }
+.sec__items { list-style: none; margin: 0; padding: 0; }
+.sec__items li { display: flex; flex-direction: column; gap: .65rem; padding: 1.3rem 0; border-top: 1px solid var(--s-rule); }
+.sec__items .sec__detail { max-width: none; text-align: left; }
+.sec__item-name { color: var(--s-accent); font-size: .7rem; font-weight: 650; letter-spacing: var(--track); text-transform: uppercase; line-height: 1.5; }
 .sec__detail { min-width: 0; max-width: 60%; color: var(--s-muted); font-size: .92rem; line-height: 1.65; text-align: right; overflow-wrap: anywhere; }
 .sec__link { color: var(--s-fg); text-decoration: underline; text-decoration-color: var(--s-rule); text-underline-offset: .28em; text-decoration-thickness: 1px; transition: color var(--oi-motion-fast) var(--ease), text-decoration-color var(--oi-motion-fast) var(--ease); }
 .sec__link:hover, .sec__link:focus-visible { text-decoration-color: var(--s-accent); }
 .sec__arrow { display: inline-block; transition: transform var(--oi-motion-fast) var(--ease); }
 .sec__link:hover .sec__arrow { transform: translate(2px, -2px); }
-.sec__rows li, .sec__cell { transition: border-color var(--oi-motion-normal) var(--ease); }
-.sec__rows li:has(a):hover, .sec__rows li:focus-within, .sec__cell:has(a):hover, .sec__cell:focus-within { border-color: var(--s-accent); }
 
-/* Bands let the field breathe; the shade exists only to support reading. */
+/* Six offices: one compact field, six genuinely square, linked surfaces.
+   The miniature 3 × 2 locator indicates place in this set, not a new icon system. */
+.sec--index.sec--offices .sec__inner { display: grid; grid-template-columns: minmax(0, .78fr) minmax(0, 1.35fr); column-gap: clamp(2.5rem, 5vw, 5rem); row-gap: 2rem; grid-template-rows: auto 1fr; align-content: start; }
+.sec--offices .sec__heading { grid-column: 1; grid-row: 1; align-self: end; }
+.sec--offices .sec__prose { grid-column: 1; grid-row: 2; align-self: start; max-width: 38ch; }
+.sec--offices .office-grid { grid-column: 2; grid-row: 1 / span 2; }
+.office-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(.65rem, 1.1vw, 1rem); list-style: none; padding: 0; margin: 0; min-width: 0; }
+.office-tile { min-width: 0; display: flex; }
+.office-tile__link { width: 100%; min-width: 0; aspect-ratio: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 1.5rem; padding: clamp(1rem, 1.7vw, 1.75rem); border: 1px solid var(--s-rule); background: color-mix(in srgb, var(--s-fg) 3%, transparent); transition: background-color var(--oi-motion-normal) var(--ease), border-color var(--oi-motion-normal) var(--ease); }
+.office-tile__head { display: flex; align-items: center; gap: .8rem; }
+.collection-index { color: var(--s-accent); font-family: var(--mono); font-size: .72rem; line-height: 1.4; }
+.office-tile__locator { margin-left: auto; display: grid; grid-template-columns: repeat(3, 3px); gap: 4px; }
+.office-tile__locator i { width: 3px; height: 3px; background: var(--s-muted); opacity: .3; border-radius: 50%; }
+.office-tile__locator .is-current { opacity: 1; background: var(--s-accent); }
+.office-tile__arrow { color: var(--s-muted); font-size: .85rem; transition: color var(--oi-motion-fast) var(--ease), transform var(--oi-motion-fast) var(--ease); }
+.office-tile__copy { display: flex; flex-direction: column; gap: .55rem; }
+.office-tile .sec__cell-name { font-size: clamp(1.08rem, 1.6vw, 1.65rem); line-height: 1.2; }
+.office-tile .sec__detail { max-width: none; text-align: left; font-size: clamp(.76rem, 1vw, .94rem); line-height: 1.5; overflow-wrap: normal; }
+.office-tile__link:hover, .office-tile__link:focus-visible { border-color: var(--s-accent); background: color-mix(in srgb, var(--s-fg) 6%, transparent); }
+.office-tile__link:hover .office-tile__arrow, .office-tile__link:focus-visible .office-tile__arrow { color: var(--s-fg); transform: translate(2px, -2px); }
+.sec--feature .office-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* An ordered method occupies two reading lines, not ten full-width rows.
+   Numbering and DOM order retain the sequence at every breakpoint. */
+.method-sequence { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1.5rem 2rem; list-style: none; padding: 0; margin: .5rem 0 0; }
+.method-step { min-width: 0; padding: .5rem 0 1.75rem; }
+.method-step__track { display: flex; gap: .85rem; align-items: center; margin-bottom: 1.5rem; }
+.method-step__line { flex: 1; height: 1px; background: var(--s-rule); }
+.method-step__arrow { color: var(--s-muted); font-size: 1rem; }
+.method-step:nth-child(5n):not(:last-child) .method-step__arrow { transform: rotate(90deg); }
+.method-step:last-child .method-step__arrow, .method-step:last-child .sec__cell-name { color: var(--s-accent); }
+.method-step .sec__cell-name { display: block; font-size: clamp(1.05rem, 1.65vw, 1.55rem); font-weight: 500; line-height: 1.4; }
+.resource-atlas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem 3rem; list-style: none; padding: 0; margin: 0; }
+.resource-atlas__entry { display: grid; grid-template-columns: 2rem minmax(0, 1fr); gap: .65rem 1rem; align-content: start; padding: 1.4rem 0; border-top: 1px solid var(--s-rule); }
+.resource-atlas .sec__cell-name { font-size: clamp(1.1rem, 1.65vw, 1.5rem); }
+.resource-atlas .sec__detail { grid-column: 2; max-width: none; text-align: left; font-family: var(--mono); font-size: .78rem; line-height: 1.8; }
+.resource-atlas__entry:focus-within, .sec__cell:focus-within { border-color: var(--s-accent); }
+
+/* Bands retain the original immersive cover crop, unlike the composed hero
+   and full-poster figures. Their authored zoom is no longer silently capped. */
+.band .vf__video, .band .vf__poster { object-fit: cover; }
+/* The shade exists only to support reading. */
 .band { position: relative; display: flex; align-items: flex-end; min-height: 90vh; min-height: 90svh; overflow: hidden; background: var(--bg); color: var(--white); }
 .band__shade { position: absolute; inset: 0; background: linear-gradient(0deg, rgb(11 11 12 / 96%), rgb(11 11 12 / 65%) 65%, rgb(11 11 12 / 8%)); pointer-events: none; }
 .band__inner { position: relative; display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 3rem; align-items: end; }
@@ -182,6 +229,12 @@ main:focus { outline: none; }
 .sf { display: flex; flex-wrap: wrap; gap: 1rem 2rem; justify-content: space-between; padding: 2rem var(--gutter) 6rem; background: var(--bg); color: var(--muted); border-top: 1px solid var(--rule); font-size: .68rem; letter-spacing: var(--track); line-height: 1.7; text-transform: uppercase; }
 [data-reveal='pending'] { opacity: 0; transform: translateY(14px); }
 
+@media (max-width: 1100px) {
+  .sec--index.sec--offices .sec__inner { grid-template-columns: minmax(0, 1fr); }
+  .sec--offices .sec__heading, .sec--offices .sec__prose, .sec--offices .office-grid { grid-column: 1; grid-row: auto; }
+  .sec--offices .sec__prose { max-width: 64ch; }
+  .resource-atlas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 @media (max-width: 1000px) {
   .sec--split .sec__inner, .sec--feature .sec__inner { gap: 2.75rem; }
   .sec__cells { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -194,8 +247,6 @@ main:focus { outline: none; }
   .sec--feature--flip .sec__figure { order: 0; }
   .sec__figure { width: min(100%, 28rem); margin-inline: auto; }
   .sec__cells { grid-template-columns: minmax(0, 1fr); gap: 2.5rem; }
-  .sec__rows li { grid-template-columns: 2rem minmax(0, 1fr); gap: .8rem 1rem; }
-  .sec__rows li .sec__detail { grid-column: 2; text-align: left; }
   .sec__items li { flex-direction: column; gap: .5rem; }
   .sec__detail { max-width: none; text-align: left; }
   .sn__link { grid-template-columns: 2rem minmax(0, 1fr); gap: .65rem; }
@@ -206,6 +257,27 @@ main:focus { outline: none; }
   .pl__mark { width: min(88vw, 32rem); }
   .opening__body { line-height: 1.75; }
   .sf { flex-direction: column; }
+}
+@media (max-width: 900px) {
+  .method-sequence { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .method-step:nth-child(5n):not(:last-child) .method-step__arrow { transform: none; }
+  .method-step:nth-child(2n):not(:last-child) .method-step__arrow { transform: rotate(90deg); }
+}
+@media (max-width: 600px) {
+  .office-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
+  .office-tile__link { padding: .85rem; gap: .65rem; }
+  .office-tile__head { gap: .5rem; }
+  .office-tile__copy { gap: .4rem; }
+  .office-tile .sec__cell-name { font-size: 1rem; }
+  .office-tile .sec__detail { font-size: .72rem; }
+  .method-sequence { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem 1.5rem; }
+  .method-step { padding-bottom: 1.25rem; }
+  .method-step__track { margin-bottom: .9rem; }
+  .method-step:nth-child(5n):not(:last-child) .method-step__arrow { transform: none; }
+  .method-step:nth-child(2n):not(:last-child) .method-step__arrow { transform: rotate(90deg); }
+  .resource-atlas { gap: 1.1rem; }
+  .resource-atlas__entry { grid-template-columns: minmax(0, 1fr); gap: .7rem; }
+  .resource-atlas .sec__detail { grid-column: 1; font-size: .72rem; }
 }
 @media (max-height: 540px) and (orientation: landscape) {
   .pl__sticky { min-height: 0; }
