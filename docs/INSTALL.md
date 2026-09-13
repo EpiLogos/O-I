@@ -18,7 +18,7 @@ A release remains useful after development advances. It must not be presented as
 
 Every path that installs, registers, establishes or reconciles an {O:I} composition records exactly one named installation-path label — `cli/src/modality.rs` is the canonical vocabulary, and the install descriptors in `surfaces.json` carry a `modality` field. The label is recorded in composition state at install/init time and disclosed by `oi status [--json]` and `oi doctor [--json]`. Legacy state that predates the field discloses `modality: unknown` honestly; it is never inferred retroactively.
 
-These labels are **provenance, not an installation taxonomy**. Since the Context Frame composition lock ([CONTEXT-FRAME-COMPOSITION-LOCK.md](CONTEXT-FRAME-COMPOSITION-LOCK.md), #268) they no longer name "context frames" or choose which composition you have: the composition a person adopts is selected and described through the Context Frames — one containing material frame (CF5) plus six installation forms (CF1–CF4, CF6, CF7). A label tells you which path registered a surface; the lock tells you what the person adopted and what each product contributes.
+These labels are **provenance, not an installation taxonomy**. Since the Context Frame composition lock ([CONTEXT-FRAME-COMPOSITION-LOCK.md](CONTEXT-FRAME-COMPOSITION-LOCK.md), #268) they no longer name "context frames" or choose which composition you have: the composition a person adopts is selected and described through the Context Frames — one containing material frame (CF5) organising six install modes, each situated at a frame notation (`00/00`, `0/1`, `0/1/2`, `0/1/2/3`, `4.5/0`, `5/0`). A label tells you which path registered a surface; the lock tells you what the person adopted and what each product contributes.
 
 | Path label | What it is | Entry points |
 |---|---|---|
@@ -238,7 +238,7 @@ The local composition is a small JSON file, normally:
 
 Each module registration records the installation path that produced it and, where a choice existed, the declared install source. Use `OI_HOME` to place the state elsewhere or `XDG_CONFIG_HOME` for the standard XDG location. Managed command artifacts installed by O:I can live beside that state, but product configuration and runtime state remain in the native product.
 
-Run `oi status --json` to inspect registered/runtime composition, including each registration's `modality` (installation-path provenance) and `install_source`. `oi current-world --json` discloses the Context Frame reading: `context_frame.containing_frame` is always `cf5` — the material condition every installation stands in — and `context_frame.installation_form` names one of the six characteristic forms (CF1–CF4, CF6, CF7) when the effective product presence matches one exactly. Run `oi dev status --json` when the question is whether the developer source world matches the current accepted mains.
+Run `oi status --json` to inspect registered/runtime composition, including each registration's `modality` (installation-path provenance) and `install_source`. `oi current-world --json` discloses the Context Frame reading: `context_frame.containing_frame` is always `cf5` — the material condition every installation stands in — and `context_frame.install_mode` names the install mode — by its frame notation — when the effective product presence matches one of the six characteristic compositions exactly. Run `oi dev status --json` when the question is whether the developer source world matches the current accepted mains.
 
 ## Failure behavior
 

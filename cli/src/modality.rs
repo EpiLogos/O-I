@@ -4,9 +4,9 @@
 //! installation-modality taxonomy and called them "context frames". The
 //! Context Frame composition lock ([#268],
 //! `docs/CONTEXT-FRAME-COMPOSITION-LOCK.md`) supersedes that taxonomy: the
-//! Context Frames are one containing material frame (CF5) plus six
-//! installation forms (CF1–CF4, CF6, CF7), defined in
-//! [`crate::context_frames`]. These labels remain valid as **per-registration
+//! Context Frames are one containing material frame (CF5) plus the six
+//! install modes it organises, defined in [`crate::context_frames`]. These
+//! labels remain valid as **per-registration
 //! provenance** — a truthful record of which installation path registered a
 //! surface — and historical receipts keep the meanings they had under v1.
 //!

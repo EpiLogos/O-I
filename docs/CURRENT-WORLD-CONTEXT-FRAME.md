@@ -15,24 +15,27 @@ O:I has one whole-level reading for the world presently being inhabited. It comp
 
 The six positions are emitted in stable canonical order by `oi.current-world/v2`.
 
-## One containing frame, six installation forms
+## One containing frame, six install modes
 
 The Context Frames have a **1+6 organisation** (canonical lock:
 [CONTEXT-FRAME-COMPOSITION-LOCK.md](CONTEXT-FRAME-COMPOSITION-LOCK.md), #268):
 
 ```text
-CF5 — 4.0/1–4.4/5   the material nesting frame in which a world is realised
-├── CF1 — 00/00     Desktop / integrated encounter
-├── CF2 — 0/1       Central + Actuation
-├── CF3 — 0/1/2     Central + Actuation + AIKit
-├── CF4 — 0/1/2/3   Central + Actuation + AIKit + Factory
-├── CF6 — 4.5/0     Central + minimal Workcell, connecting cells
-└── CF7 — 5/0       Central + Quaternal Logic
+CF5 — 4.0/1–4.4/5   the containing material frame in which a world is realised
+│  organises six install modes, each situated at a frame notation:
+├── 00/00           Desktop mode — integrated encounter
+├── 0/1             Ground + agency — Central + Actuation
+├── 0/1/2           Operational core — Central + Actuation + AIKit
+├── 0/1/2/3         Developmental core — + Software Factory
+├── 4.5/0           Client mode — Central + minimal Workcell
+└── 5/0             Learning mode — Central + Quaternal Logic
 ```
 
-CF5 is the **containing material frame**: the machine or material environment is already the condition of every installation, whether two products, the Desktop, a remote client or the whole suite is present. It is **not** the tier obtained when all six product packages happen to be installed, and it is never withheld because packages are absent. The `4.0/1–4.4/5` notation situates the six products inside Workcell's internal composition; it is not an instruction to install product 5, and the CF6 `4.5/0` client form has no hidden QL dependency.
+**The Context Frames organise the install modes; the modes do not define the frames.**
 
-The reading names an **installation form** when the effective product presence matches one of the six characteristic compositions exactly. Partial and custom selections retain their exact present positions and remain usable as situated worlds in their actual form — they are disclosed as what they are, never forced into a false canonical frame.
+CF5 is the **containing material frame**: the machine or material environment is already the condition of every installation, whether two products, the Desktop, a remote client or the whole suite is present. It is **not** the tier obtained when all six product packages happen to be installed, and it is never withheld because packages are absent. The `4.0/1–4.4/5` notation situates the six products inside Workcell's internal composition; it is not an instruction to install product 5, and the `4.5/0` client mode has no hidden QL dependency.
+
+The reading names an **install mode** — by the frame notation it sits at — when the effective product presence matches one of the six characteristic compositions exactly. Partial and custom selections retain their exact present positions and remain usable as situated worlds in their actual form — they are disclosed as what they are, never forced into a false canonical frame.
 
 ## Reading schema (v2)
 
@@ -40,8 +43,8 @@ The reading names an **installation form** when the effective product presence m
 
 ```text
 context_frame.containing_frame   "cf5" — always; the material condition
-context_frame.installation_form  "cf1" | "cf2" | "cf3" | "cf4" | "cf6" | "cf7"
-                                 | null (explicit selection without a named form)
+context_frame.install_mode       "00/00" | "0/1" | "0/1/2" | "0/1/2/3" | "4.5/0" | "5/0"
+                                 | null (explicit selection without a named mode)
 context_frame.present_positions  exact present product positions
 ```
 

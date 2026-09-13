@@ -48,8 +48,8 @@ pub struct CurrentWorldPosition {
     pub modality: Option<InstallModality>,
 }
 
-/// The Context Frame reading (#268): one containing material frame plus the
-/// recognised installation form.
+/// The Context Frame reading (#268): the containing material frame plus the
+/// recognised install mode it organises.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct ContextFrameStatus {
     /// CF5 — `4.0/1–4.4/5` — the material nesting frame. Always applicable:
@@ -57,12 +57,13 @@ pub struct ContextFrameStatus {
     /// installation, regardless of which products are present. Never a
     /// reward for installing all six packages.
     pub containing_frame: String,
-    /// The recognised installation form (#268) when the effective product
-    /// presence matches one of the six characteristic compositions exactly.
-    /// `None` for explicit selections — including all-products, which is a
-    /// deployment inside CF5, not one of the six forms — disclosed through
-    /// `present_positions` as what they are.
-    pub installation_form: Option<String>,
+    /// The recognised install mode (#268), identified by the frame notation
+    /// it sits at, when the effective product presence matches one of the
+    /// six characteristic compositions exactly. `None` for explicit
+    /// selections — including all-products, which is a deployment inside
+    /// CF5, not one of the modes — disclosed through `present_positions` as
+    /// what they are.
+    pub install_mode: Option<String>,
     pub present_positions: Vec<u8>,
 }
 
@@ -233,8 +234,8 @@ fn context_frame_status(positions: &[CurrentWorldPosition]) -> ContextFrameStatu
         .collect::<Vec<_>>();
     ContextFrameStatus {
         containing_frame: context_frames::CONTAINING_FRAME.to_owned(),
-        installation_form: context_frames::installation_form_for(&present_positions)
-            .map(|form| form.id.to_owned()),
+        install_mode: context_frames::install_mode_for(&present_positions)
+            .map(|mode| mode.frame.to_owned()),
         present_positions,
     }
 }
@@ -339,8 +340,8 @@ mod tests {
         }
     }
 
-    fn form_of(reading: &CurrentWorldReading) -> Option<String> {
-        reading.context_frame.installation_form.clone()
+    fn mode_of(reading: &CurrentWorldReading) -> Option<String> {
+        reading.context_frame.install_mode.clone()
     }
 
     #[test]
@@ -370,7 +371,7 @@ mod tests {
     #[test]
     fn six_product_presence_is_no_longer_named_cf5() {
         // All-products remains a valid deployment inside CF5; it is not one
-        // of the six installation forms and no eighth frame exists.
+        // of the six install modes and no eighth frame exists.
         let all = disclosure_with(
             &[
                 "central",
@@ -387,7 +388,7 @@ mod tests {
             reading.context_frame.present_positions,
             vec![0, 1, 2, 3, 4, 5]
         );
-        assert_eq!(form_of(&reading), None);
+        assert_eq!(mode_of(&reading), None);
         assert!(reading
             .positions
             .iter()
@@ -395,34 +396,35 @@ mod tests {
     }
 
     #[test]
-    fn installation_forms_recognise_their_exact_composition() {
+    fn install_modes_recognise_their_exact_composition() {
         let cases: [(&[&str], &str); 5] = [
-            (&["central", "actuation"], "cf2"),
-            (&["central", "actuation", "ai-kit"], "cf3"),
+            (&["central", "actuation"], "0/1"),
+            (&["central", "actuation", "ai-kit"], "0/1/2"),
             (
                 &["central", "actuation", "ai-kit", "software-factory"],
-                "cf4",
+                "0/1/2/3",
             ),
-            (&["central", "workcell"], "cf6"),
-            (&["central", "quaternal-logic"], "cf7"),
+            (&["central", "workcell"], "4.5/0"),
+            (&["central", "quaternal-logic"], "5/0"),
         ];
         for (products, expected) in cases {
             let reading = CurrentWorldReading::from_disclosure(&disclosure_with(
                 products,
                 NativeSurfaceState::Registered,
             ));
-            assert_eq!(form_of(&reading).as_deref(), Some(expected), "{products:?}");
+            assert_eq!(mode_of(&reading).as_deref(), Some(expected), "{products:?}");
         }
     }
 
     #[test]
-    fn cf6_client_composition_has_no_hidden_ql_or_agent_stack_requirement() {
-        // The CF6 form is Central + minimal Workcell connectivity. Absence
-        // of QL, Actuation, AIKit and Factory must not withhold the name —
-        // `4.5` is not an instruction to install product 5.
+    fn client_mode_composition_has_no_hidden_ql_or_agent_stack_requirement() {
+        // The client mode (4.5/0) is Central + minimal Workcell
+        // connectivity. Absence of QL, Actuation, AIKit and Factory must not
+        // withhold the name — `4.5` is not an instruction to install product
+        // 5.
         let client = disclosure_with(&["central", "workcell"], NativeSurfaceState::Registered);
         let reading = CurrentWorldReading::from_disclosure(&client);
-        assert_eq!(form_of(&reading).as_deref(), Some("cf6"));
+        assert_eq!(mode_of(&reading).as_deref(), Some("4.5/0"));
         let absent: Vec<u8> = reading
             .positions
             .iter()
@@ -433,25 +435,25 @@ mod tests {
     }
 
     #[test]
-    fn cf7_learning_composition_has_no_agent_development_stack_requirement() {
+    fn learning_mode_composition_has_no_agent_development_stack_requirement() {
         let learning = disclosure_with(
             &["central", "quaternal-logic"],
             NativeSurfaceState::Registered,
         );
         let reading = CurrentWorldReading::from_disclosure(&learning);
-        assert_eq!(form_of(&reading).as_deref(), Some("cf7"));
+        assert_eq!(mode_of(&reading).as_deref(), Some("5/0"));
     }
 
     #[test]
-    fn custom_selections_are_disclosed_exactly_not_forced_into_a_form() {
-        // CF6's client plus local QL for learning: an explicit selection
-        // with its own shape. It keeps its exact positions and no frame name.
+    fn custom_selections_are_disclosed_exactly_not_forced_into_a_mode() {
+        // The client mode plus local QL for learning: an explicit selection
+        // with its own shape. It keeps its exact positions and no mode name.
         let mixed = disclosure_with(
             &["central", "workcell", "quaternal-logic"],
             NativeSurfaceState::Registered,
         );
         let reading = CurrentWorldReading::from_disclosure(&mixed);
-        assert_eq!(form_of(&reading), None);
+        assert_eq!(mode_of(&reading), None);
         assert_eq!(reading.context_frame.present_positions, vec![0, 4, 5]);
     }
 
@@ -460,7 +462,7 @@ mod tests {
         let reading =
             CurrentWorldReading::from_disclosure(&SuiteCompositionDisclosure::unavailable("none"));
         assert_eq!(reading.context_frame.containing_frame, "cf5");
-        assert_eq!(form_of(&reading), None);
+        assert_eq!(mode_of(&reading), None);
         assert!(reading.context_frame.present_positions.is_empty());
     }
 

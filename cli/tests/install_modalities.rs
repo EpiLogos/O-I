@@ -224,9 +224,9 @@ mod unix {
             "the material frame applies with Central alone"
         );
         assert_eq!(
-            world["context_frame"]["installation_form"],
+            world["context_frame"]["install_mode"],
             Value::Null,
-            "Central alone is an explicit selection, not one of the six forms"
+            "Central alone is an explicit selection, not one of the six install modes"
         );
         assert_eq!(
             world["positions"][0]["modality"], "fresh-ground",

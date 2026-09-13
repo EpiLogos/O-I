@@ -6,27 +6,28 @@ Standing: architecture-contract
 # {O:I} Context Frame Composition Lock
 
 **Status:** canonical composition lock
-**Scope:** the Context Frames as one containing material frame plus six installation forms; what each adoption contributes; the supersession of the #192 installation-modality taxonomy
+**Scope:** the Context Frames as one containing material frame organising six install modes; what each adoption contributes; the supersession of the #192 installation-modality taxonomy
 **Date:** 2026-09-13
 **Parent:** [#268](https://github.com/EpiLogos/O-I/issues/268) · corrects [#132](https://github.com/EpiLogos/O-I/issues/132) · supersedes [#192](https://github.com/EpiLogos/O-I/issues/192) as taxonomy
 
-## 1. The lock: one containing frame, six installation forms
+## 1. The lock: one containing frame, six install modes
 
 The structure is:
 
 ```text
 CF5 — 4.0/1–4.4/5
-The material nesting frame: the Workcell in which a world is realised
+The containing material frame: the Workcell in which a world is realised
+│  organises six install modes, each situated at a frame notation:
 │
-├── CF1 — 00/00       Desktop / integrated encounter
-├── CF2 — 0/1         Central + Actuation
-├── CF3 — 0/1/2       Central + Actuation + AIKit
-├── CF4 — 0/1/2/3     Central + Actuation + AIKit + Factory
-├── CF6 — 4.5/0       Central + minimal Workcell, connecting cells
-└── CF7 — 5/0         Central + Quaternal Logic, learning and exploration
+├── 00/00       Desktop mode — integrated encounter
+├── 0/1         Ground + agency — Central + Actuation
+├── 0/1/2       Operational core — Central + Actuation + AIKit
+├── 0/1/2/3     Developmental core — + Software Factory
+├── 4.5/0       Client mode — Central + minimal Workcell, connecting cells
+└── 5/0         Learning mode — Central + Quaternal Logic
 ```
 
-**These are not seven ascending editions.** There is one material condition within which six characteristic ways of adopting and encountering the system become possible. This is the founding position restated at installation scope: the products are centres within a field, not mandatory boxes in a workflow; the smaller relation — persistent ground plus actuated model capacity — is already the whole relation, developed through actual needs rather than mandatory product accumulation.
+**The Context Frames organise the install modes; the modes do not define the frames.** A mode's identity is the frame notation it sits at — `0/1`, `4.5/0`, `5/0` — not the reverse. **These are not seven ascending editions.** There is one material condition within which six characteristic ways of adopting and encountering the system become possible. This is the founding position restated at installation scope: the products are centres within a field, not mandatory boxes in a workflow; the smaller relation — persistent ground plus actuated model capacity — is already the whole relation, developed through actual needs rather than mandatory product accumulation.
 
 ## 2. CF5: the machine is already the condition
 
@@ -42,22 +43,22 @@ Recognising the machine condition must not silently install a server, virtualisa
 
 Every installation accounts for **where it exists, where its work executes, which ground it relates to, and which bindings have actually been verified**. CF5's applicability does not by itself prove any particular machine identity, connection or health state.
 
-## 3. The six installation forms
+## 3. The six install modes
 
-| Frame | Installation composition | What the person is choosing |
+| Mode (frame) | Installation composition | What the person is choosing |
 |---|---|---|
-| **CF1 — `00/00`** | **O:I Desktop + Central ground, with an explicitly selected backing composition** | Encounter the system through one integrated application. |
-| **CF2 — `0/1`** | **Central + Actuation** | Give an existing agent-engaged world durable ground and explicit agency, without adopting O:I provisioning or development management. Existing realised agency and harnesses remain legitimate; no hidden AIKit, Factory or QL requirement. |
-| **CF3 — `0/1/2`** | **Central + Actuation + AIKit** | Add coherent provision of context, models, capabilities, Skills, harnesses and sessions. This is the normal operational core. |
-| **CF4 — `0/1/2/3`** | **Central + Actuation + AIKit + Software Factory** | Add durable developmental organisation: intended change, Runs, candidates, evidence and Recognition. Factory's presence must not force every ordinary session into a Factory Run. |
-| **CF6 — `4.5/0`** | **Central + minimal Workcell client/connectivity** | Make this machine a grounded access point to a world realised on another machine. **`4.5` is not an instruction to install product 5**: QL is not a CF6 dependency, locally or for the connection itself. Local Actuation, AIKit and Factory are not required merely to establish the client relation. |
-| **CF7 — `5/0`** | **Central + Quaternal Logic, including usable learning/exploration material** | Learn, explore and work with QL without adopting the agent-development stack. A legitimate educational/formal installation; agent tutoring is an optional richer composition. |
+| **`00/00`** | **O:I Desktop + Central ground, with an explicitly selected backing composition** | Encounter the system through one integrated application. |
+| **`0/1`** | **Central + Actuation** | Give an existing agent-engaged world durable ground and explicit agency, without adopting O:I provisioning or development management. Existing realised agency and harnesses remain legitimate; no hidden AIKit, Factory or QL requirement. |
+| **`0/1/2`** | **Central + Actuation + AIKit** | Add coherent provision of context, models, capabilities, Skills, harnesses and sessions. This is the normal operational core. |
+| **`0/1/2/3`** | **Central + Actuation + AIKit + Software Factory** | Add durable developmental organisation: intended change, Runs, candidates, evidence and Recognition. Factory's presence must not force every ordinary session into a Factory Run. |
+| **`4.5/0`** | **Central + minimal Workcell client/connectivity** | Make this machine a grounded access point to a world realised on another machine. **`4.5` is not an instruction to install product 5**: QL is not a client-mode dependency, locally or for the connection itself. Local Actuation, AIKit and Factory are not required merely to establish the client relation. |
+| **`5/0`** | **Central + Quaternal Logic, including usable learning/exploration material** | Learn, explore and work with QL without adopting the agent-development stack. A legitimate educational/formal installation; agent tutoring is an optional richer composition. |
 
-The main adoption progression is straightforward: **CF2** makes ground and agency explicit; **CF3** also takes responsibility for provisioning agency; **CF4** also offers a durable form for developmental work; richer Workcell management makes material execution and hosting explicit; **CF7** offers the formal system itself as something to learn and use. **CF1** changes the integrated experience; **CF6** changes the distribution across machines. Neither is squeezed into a "more products equals better" ladder. The installer explains **what responsibility each additional product takes on**, and what remains with the person's existing tools.
+The main adoption progression is straightforward: **`0/1`** makes ground and agency explicit; **`0/1/2`** also takes responsibility for provisioning agency; **`0/1/2/3`** also offers a durable form for developmental work; richer Workcell management makes material execution and hosting explicit; **`5/0`** offers the formal system itself as something to learn and use. **`00/00`** changes the integrated experience; **`4.5/0`** changes the distribution across machines. Neither is squeezed into a "more products equals better" ladder. The installer explains **what responsibility each additional product takes on**, and what remains with the person's existing tools.
 
 ### Desktop remains a real choice, not a hidden dependency
 
-For CF1 the installer says what is actually behind the application. A new Desktop installation may default to **Central + Actuation + AIKit** as its backing composition, while lighter, richer or remotely backed arrangements remain explicitly selectable. That is a packaging default — not a claim that `00/00` and `0/1/2` are the same frame. Someone choosing CF3 without Desktop receives the same operative core; adding or removing Desktop must not reconstitute their Agents, rename their Projects or reinstall their ground.
+For the Desktop mode (`00/00`) the installer says what is actually behind the application. A new Desktop installation may default to **Central + Actuation + AIKit** as its backing composition, while lighter, richer or remotely backed arrangements remain explicitly selectable. That is a packaging default — not a claim that `00/00` and `0/1/2` are the same frame. Someone choosing `0/1/2` without Desktop receives the same operative core; adding or removing Desktop must not reconstitute their Agents, rename their Projects or reinstall their ground.
 
 ### All-products remains a valid deployment
 
@@ -110,7 +111,7 @@ Source acquisition and release channel remain ordinary installation facts; they 
 
 ## 6. Three synchronisations, never collapsed
 
-**Software updates** belong to O:I's suite composition and each machine's active receipt (#212 line). Two machines can follow compatible release lines while installing different product subsets; updating a CF6 client must not pull the host's entire suite onto it.
+**Software updates** belong to O:I's suite composition and each machine's active receipt (#212 line). Two machines can follow compatible release lines while installing different product subsets; updating a `4.5/0` client must not pull the host's entire suite onto it.
 
 **Ground and source synchronisation** belongs to Central and its native source/connector mechanisms, with explicit scope, direction, authority and conflict handling. Machine identities, credentials, absolute local paths and generated runtime state are not portable authored ground.
 
@@ -125,7 +126,7 @@ O:I coordinates and explains all three; it does not collapse them into an opaque
 | **Composition lock** | This document and [#268](https://github.com/EpiLogos/O-I/issues/268). |
 | **Composition contract** | Shared catalogue in code, corrected `CurrentWorld` semantics (`oi.current-world/v2`), honest schema versioning, absence-aware regression tests. |
 | **Lifecycle planner** | Native-owner install/change/remove operations, receipts, interruption recovery, composition-aware updates; `inspect → plan → install/adopt → verify → change/update/repair → rollback/disconnect/remove → verify retained state` with declared target machine, owner, effects and recovery per mutation. |
-| **Cross-cell composition** | CF6 minimum, Central projection rules, Workcell connection lifecycle and compatibility. |
+| **Cross-cell composition** | Client-mode (`4.5/0`) minimum, Central projection rules, Workcell connection lifecycle and compatibility. |
 | **Setup and System** | The same plans and owner operations through CLI, Desktop and authorised agents; recognition precedes mutation; no second O:I settings database; Desktop preferences stay separate from the world constitution. |
 | **Acceptance campaign** | Six forms inside CF5, standalone native products, all-products hosting, transitions, teardown and two-machine tests with exact evidence and physical readiness gates. |
 
