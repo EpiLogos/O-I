@@ -10,12 +10,14 @@ import "./flow.css";
  * Writing never waits and never mints: the surface opens, the writing is kept
  * on this device as it is typed, and it survives closing the tab and
  * relaunching. Nothing reaches the ground from here until the human
- * explicitly saves real content — the footer carries a register picker beside
- * the ordinary Save, and saving places the writing through Central's own Flow
- * operation. An empty draft cannot be placed: no blank placeholder is ever
- * written in the writing's name (owner correction, 2026-09-12 — the blank
- * now/flows/ premise was the fault; the carrier resolution awaits
- * ratification, PROPOSAL-FLOW-DAY-LOGICS-2026-09-13).
+ * explicitly saves real content — saving places the writing through Central's
+ * own Flow operation into its one owner-section home, Control/user/flows,
+ * which the footer names beside the ordinary Save. The earlier register
+ * picker is gone with the ratified carrier (PROPOSAL-FLOW-DAY-LOGICS-
+ * 2026-09-13-2 / #271): one user-section home, no choice to fabricate. An
+ * empty draft cannot be placed: no blank placeholder is ever written in the
+ * writing's name (owner correction, 2026-09-12 — the blank now/flows/
+ * premise was the fault).
  */
 export const DRAFT_KEY=(id:string)=>`oi-cradle.unplaced-draft.v1:${id}`;
 
