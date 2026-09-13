@@ -1,8 +1,6 @@
 name: Search material rendering
 
 on:
-  push:
-    branches: [cradle-search-glass]
   pull_request:
     paths:
       - 'desktop/cradle/src/knowledge/**'
