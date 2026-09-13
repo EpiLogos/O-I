@@ -38,7 +38,11 @@ fn current_world_main() -> Option<ExitCode> {
                 "Ground: {}",
                 reading.personal_ground.as_deref().unwrap_or("not configured")
             );
-            println!("Composition modality: {}", reading.composition_modality.as_str());
+            println!(
+                "Containing frame: {} ({})",
+                reading.context_frame.containing_frame,
+                oi_cli::context_frames::CONTAINING_FRAME_NOTATION
+            );
             if let Some(machine) = reading.current_machine.as_ref() {
                 println!(
                     "Machine: {}{}{}",
@@ -66,7 +70,7 @@ fn current_world_main() -> Option<ExitCode> {
                 "Context: {} ({present})",
                 reading
                     .context_frame
-                    .reading
+                    .installation_form
                     .as_deref()
                     .unwrap_or("situated composition")
             );

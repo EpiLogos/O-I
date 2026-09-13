@@ -1,3 +1,4 @@
+use crate::context_frames;
 use crate::modality::InstallModality;
 use crate::status::{
     live_disclosure, NativeSurfaceState, SuiteCompositionDisclosure, SurfaceDisclosure,
@@ -8,8 +9,7 @@ use std::fs;
 use std::path::Path;
 use std::process::{Command, Stdio};
 
-pub const CURRENT_WORLD_SCHEMA: &str = "oi.current-world/v1";
-pub const MAXIMAL_CONTEXT_FRAME: &str = "cf5";
+pub const CURRENT_WORLD_SCHEMA: &str = "oi.current-world/v2";
 pub const DEFAULT_MACHINE_ROLE: &str = "current";
 pub const DEFAULT_LOCAL_WORKCELL_REF: &str = "workcell:local";
 
@@ -40,18 +40,29 @@ pub struct CurrentWorldPosition {
     pub native_location: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub version: Option<String>,
-    /// The installation modality recorded for this surface's registration
-    /// (#192): `None` when not registered, `Some(InstallModality::Unknown)`
-    /// for legacy state that predates the field.
+    /// The installation-path label recorded for this surface's registration
+    /// (per-registration provenance, #192 as superseded by #268): `None`
+    /// when not registered, `Some(InstallModality::Unknown)` for legacy
+    /// state that predates the field.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub modality: Option<InstallModality>,
 }
 
+/// The Context Frame reading (#268): one containing material frame plus the
+/// recognised installation form.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct ContextFrameStatus {
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub reading: Option<String>,
-    pub maximal: bool,
+    /// CF5 — `4.0/1–4.4/5` — the material nesting frame. Always applicable:
+    /// the machine or material environment is already the condition of every
+    /// installation, regardless of which products are present. Never a
+    /// reward for installing all six packages.
+    pub containing_frame: String,
+    /// The recognised installation form (#268) when the effective product
+    /// presence matches one of the six characteristic compositions exactly.
+    /// `None` for explicit selections — including all-products, which is a
+    /// deployment inside CF5, not one of the six forms — disclosed through
+    /// `present_positions` as what they are.
+    pub installation_form: Option<String>,
     pub present_positions: Vec<u8>,
 }
 
@@ -73,12 +84,6 @@ pub struct CurrentWorldReading {
     pub owner_disclosures: Option<Value>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub personal_ground: Option<String>,
-    /// The installation modality of the current composition (#192): the
-    /// modality recorded on the Central registration, because Central owns
-    /// the ground the composition stands on. `InstallModality::Unknown`
-    /// when Central is not registered or its registration predates the
-    /// field — never a guess.
-    pub composition_modality: InstallModality,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub current_machine: Option<CurrentMachineRelation>,
     pub positions: Vec<CurrentWorldPosition>,
@@ -104,17 +109,10 @@ impl CurrentWorldReading {
             })
             .collect::<Vec<_>>();
         let context_frame = context_frame_status(&positions);
-        let composition_modality = disclosure
-            .surfaces
-            .iter()
-            .find(|surface| surface.id == "central")
-            .and_then(|surface| surface.modality)
-            .unwrap_or(InstallModality::Unknown);
         Self {
             schema: CURRENT_WORLD_SCHEMA.to_owned(),
             owner_disclosures: None,
             personal_ground: disclosure.personal_ground.clone(),
-            composition_modality,
             current_machine: None,
             positions,
             context_frame,
@@ -233,10 +231,10 @@ fn context_frame_status(positions: &[CurrentWorldPosition]) -> ContextFrameStatu
         .filter(|position| position.present)
         .map(|position| position.position)
         .collect::<Vec<_>>();
-    let maximal = present_positions == [0, 1, 2, 3, 4, 5];
     ContextFrameStatus {
-        reading: maximal.then(|| MAXIMAL_CONTEXT_FRAME.to_owned()),
-        maximal,
+        containing_frame: context_frames::CONTAINING_FRAME.to_owned(),
+        installation_form: context_frames::installation_form_for(&present_positions)
+            .map(|form| form.id.to_owned()),
         present_positions,
     }
 }
@@ -332,25 +330,59 @@ mod tests {
         }
     }
 
-    #[test]
-    fn maximal_six_product_presence_is_cf5() {
-        let disclosure = SuiteCompositionDisclosure {
+    fn disclosure_with(products: &[&str], state: NativeSurfaceState) -> SuiteCompositionDisclosure {
+        SuiteCompositionDisclosure {
             schema: "oi.desktop-composition-disclosure/v1".to_owned(),
             personal_ground: Some("/Central".to_owned()),
-            surfaces: PRODUCT_POSITIONS
-                .iter()
-                .map(|(_, id, _)| surface(id, NativeSurfaceState::Registered))
-                .collect(),
+            surfaces: products.iter().map(|id| surface(id, state)).collect(),
             warnings: Vec::new(),
-        };
-        let reading = CurrentWorldReading::from_disclosure(&disclosure);
-        assert_eq!(reading.positions.len(), 6);
+        }
+    }
+
+    fn form_of(reading: &CurrentWorldReading) -> Option<String> {
+        reading.context_frame.installation_form.clone()
+    }
+
+    #[test]
+    fn containing_frame_is_cf5_whatever_is_installed() {
+        // The material nesting frame does not wait for six packages: it is
+        // the condition of the machine, present before and beneath any
+        // composition. The v1 rule — cf5 only at maximal six-product
+        // presence — is the regression this test retires.
+        for products in [
+            vec![],
+            vec!["central"],
+            vec!["central", "actuation"],
+            vec!["central", "workcell"],
+            vec!["central", "quaternal-logic"],
+        ] {
+            let reading =
+                CurrentWorldReading::from_disclosure(&disclosure_with(&products, NativeSurfaceState::Registered));
+            assert_eq!(reading.context_frame.containing_frame, "cf5", "{products:?}");
+        }
+    }
+
+    #[test]
+    fn six_product_presence_is_no_longer_named_cf5() {
+        // All-products remains a valid deployment inside CF5; it is not one
+        // of the six installation forms and no eighth frame exists.
+        let all = disclosure_with(
+            &[
+                "central",
+                "actuation",
+                "ai-kit",
+                "software-factory",
+                "workcell",
+                "quaternal-logic",
+            ],
+            NativeSurfaceState::Registered,
+        );
+        let reading = CurrentWorldReading::from_disclosure(&all);
         assert_eq!(
             reading.context_frame.present_positions,
             vec![0, 1, 2, 3, 4, 5]
         );
-        assert_eq!(reading.context_frame.reading.as_deref(), Some("cf5"));
-        assert!(reading.context_frame.maximal);
+        assert_eq!(form_of(&reading), None);
         assert!(reading
             .positions
             .iter()
@@ -358,21 +390,67 @@ mod tests {
     }
 
     #[test]
-    fn partial_composition_retains_exact_positions() {
-        let disclosure = SuiteCompositionDisclosure {
-            schema: "oi.desktop-composition-disclosure/v1".to_owned(),
-            personal_ground: Some("/Central".to_owned()),
-            surfaces: vec![
-                surface("central", NativeSurfaceState::Registered),
-                surface("actuation", NativeSurfaceState::Registered),
-                surface("workcell", NativeSurfaceState::Installed),
-            ],
-            warnings: Vec::new(),
-        };
-        let reading = CurrentWorldReading::from_disclosure(&disclosure);
-        assert_eq!(reading.context_frame.present_positions, vec![0, 1, 4]);
-        assert_eq!(reading.context_frame.reading, None);
-        assert!(!reading.context_frame.maximal);
+    fn installation_forms_recognise_their_exact_composition() {
+        let cases: [(&[&str], &str); 5] = [
+            (&["central", "actuation"], "cf2"),
+            (&["central", "actuation", "ai-kit"], "cf3"),
+            (
+                &["central", "actuation", "ai-kit", "software-factory"],
+                "cf4",
+            ),
+            (&["central", "workcell"], "cf6"),
+            (&["central", "quaternal-logic"], "cf7"),
+        ];
+        for (products, expected) in cases {
+            let reading =
+                CurrentWorldReading::from_disclosure(&disclosure_with(products, NativeSurfaceState::Registered));
+            assert_eq!(form_of(&reading).as_deref(), Some(expected), "{products:?}");
+        }
+    }
+
+    #[test]
+    fn cf6_client_composition_has_no_hidden_ql_or_agent_stack_requirement() {
+        // The CF6 form is Central + minimal Workcell connectivity. Absence
+        // of QL, Actuation, AIKit and Factory must not withhold the name —
+        // `4.5` is not an instruction to install product 5.
+        let client = disclosure_with(&["central", "workcell"], NativeSurfaceState::Registered);
+        let reading = CurrentWorldReading::from_disclosure(&client);
+        assert_eq!(form_of(&reading).as_deref(), Some("cf6"));
+        let absent: Vec<u8> = reading
+            .positions
+            .iter()
+            .filter(|position| !position.present)
+            .map(|position| position.position)
+            .collect();
+        assert_eq!(absent, vec![1, 2, 3, 5]);
+    }
+
+    #[test]
+    fn cf7_learning_composition_has_no_agent_development_stack_requirement() {
+        let learning = disclosure_with(&["central", "quaternal-logic"], NativeSurfaceState::Registered);
+        let reading = CurrentWorldReading::from_disclosure(&learning);
+        assert_eq!(form_of(&reading).as_deref(), Some("cf7"));
+    }
+
+    #[test]
+    fn custom_selections_are_disclosed_exactly_not_forced_into_a_form() {
+        // CF6's client plus local QL for learning: an explicit selection
+        // with its own shape. It keeps its exact positions and no frame name.
+        let mixed = disclosure_with(
+            &["central", "workcell", "quaternal-logic"],
+            NativeSurfaceState::Registered,
+        );
+        let reading = CurrentWorldReading::from_disclosure(&mixed);
+        assert_eq!(form_of(&reading), None);
+        assert_eq!(reading.context_frame.present_positions, vec![0, 4, 5]);
+    }
+
+    #[test]
+    fn unavailable_disclosure_still_reports_the_containing_frame() {
+        let reading = CurrentWorldReading::from_disclosure(&SuiteCompositionDisclosure::unavailable("none"));
+        assert_eq!(reading.context_frame.containing_frame, "cf5");
+        assert_eq!(form_of(&reading), None);
+        assert!(reading.context_frame.present_positions.is_empty());
     }
 
     #[test]
@@ -397,28 +475,19 @@ mod tests {
     }
 
     #[test]
-    fn composition_modality_follows_the_central_registration_and_defaults_honestly() {
-        // Central owns the ground: the composition's modality is the
-        // modality recorded on Central's registration.
-        let full = SuiteCompositionDisclosure {
-            schema: "oi.desktop-composition-disclosure/v1".to_owned(),
-            personal_ground: Some("/Central".to_owned()),
-            surfaces: PRODUCT_POSITIONS
-                .iter()
-                .map(|(_, id, _)| surface(id, NativeSurfaceState::Registered))
-                .collect(),
-            warnings: Vec::new(),
-        };
+    fn position_modality_stays_registration_provenance() {
+        // The #192 labels remain valid as per-registration provenance: which
+        // installation path registered the surface. They are historical
+        // evidence about the registration, not a composition taxonomy.
+        let full = disclosure_with(&["central"], NativeSurfaceState::Registered);
         let reading = CurrentWorldReading::from_disclosure(&full);
-        assert_eq!(reading.composition_modality, InstallModality::FreshGround);
         assert_eq!(
             reading.positions[0].modality,
             Some(InstallModality::FreshGround)
         );
 
-        // Without a Central registration there is no frame to name.
-        let disclosure = SuiteCompositionDisclosure::unavailable("none");
-        let reading = CurrentWorldReading::from_disclosure(&disclosure);
-        assert_eq!(reading.composition_modality, InstallModality::Unknown);
+        let unavailable = SuiteCompositionDisclosure::unavailable("none");
+        let reading = CurrentWorldReading::from_disclosure(&unavailable);
+        assert_eq!(reading.positions[0].modality, None);
     }
 }

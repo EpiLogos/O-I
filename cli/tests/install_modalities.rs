@@ -1,8 +1,9 @@
-//! Installation-modality integration proofs (O:I #192): every modality's
-//! install/init path reports its frame, legacy state discloses `unknown`
-//! honestly, install sources are exclusive-and-declared, and the
-//! fresh-ground `machine.adopt-current` wiring (Central #87) is proven
-//! against a scripted fake ctrl — never a real Central install.
+//! Installation-path provenance integration proofs (O:I #192 as superseded
+//! by #268): every path's install/init flow reports its recorded label,
+//! legacy state discloses `unknown` honestly, install sources are
+//! exclusive-and-declared, and the fresh-ground `machine.adopt-current`
+//! wiring (Central #87) is proven against a scripted fake ctrl — never a
+//! real Central install.
 
 use serde_json::Value;
 use std::fs;
@@ -217,10 +218,19 @@ mod unix {
         let world = output(oi(home.path(), bin.path()).args(["current-world", "--json"]));
         assert!(world.status.success());
         let world: Value = serde_json::from_slice(&world.stdout).unwrap();
-        assert_eq!(world["composition_modality"], "fresh-ground");
+        assert_eq!(world["schema"], "oi.current-world/v2");
+        assert_eq!(
+            world["context_frame"]["containing_frame"], "cf5",
+            "the material frame applies with Central alone"
+        );
+        assert_eq!(
+            world["context_frame"]["installation_form"],
+            Value::Null,
+            "Central alone is an explicit selection, not one of the six forms"
+        );
         assert_eq!(
             world["positions"][0]["modality"], "fresh-ground",
-            "central position carries its recorded modality"
+            "central position carries its recorded path provenance"
         );
 
         // doctor surfaces disclose the modality too.
@@ -267,7 +277,14 @@ mod unix {
 
         let world = output(oi(home.path(), bin.path()).args(["current-world", "--json"]));
         let world: Value = serde_json::from_slice(&world.stdout).unwrap();
-        assert_eq!(world["composition_modality"], "unknown");
+        assert_eq!(
+            world["positions"][0]["modality"], "unknown",
+            "legacy state must disclose unknown provenance at the position, not a guess"
+        );
+        assert_eq!(
+            world["context_frame"]["containing_frame"], "cf5",
+            "the material frame never depended on a registration field"
+        );
     }
 
     #[test]
