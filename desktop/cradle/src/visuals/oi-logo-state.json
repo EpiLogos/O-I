@@ -5,7 +5,7 @@
   "config": {
     "glyph": ["O", "I"],
     "particleCount": 120000,
-    "particleSize": { "min": 0.7, "max": 2.4 },
+    "particleSize": { "min": 0.7, "max": 1.75 },
     "colorMode": "followTheme",
     "style": "stipple",
     "dotShape": "circle",
