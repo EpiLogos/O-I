@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "navigator",
-  "generated_at": "2026-09-13T14:18:49.305Z",
+  "generated_at": "2026-09-13T16:17:21.821Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 5019,
+  "duration_ms": 6017,
   "checks": [
     {
       "ok": true,
@@ -33,8 +33,10 @@
       "data": [
         "Work/Actuation",
         "Work/Central",
+        "Work/Central-retire-flows",
         "Work/Factory",
         "Work/O-I",
+        "Work/O-I-now-contemplate",
         "Work/Point-Cloud-Demo",
         "Work/Quaternal-Logic",
         "Work/Workcell",
@@ -191,7 +193,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-13T14:18:49.833Z",
+        "mounted_at": "2026-09-13T16:17:22.381Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -202,13 +204,13 @@
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 372.2,
+      "duration_ms": 404,
       "data": {}
     },
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "receipts": [
           {
@@ -234,7 +236,7 @@
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 679,
+      "duration_ms": 1241.6,
       "data": {
         "buffers": {},
         "focus": {},
@@ -244,8 +246,8 @@
             "ground_state": "healthy",
             "position": {
               "exists": true,
-              "index": 4,
-              "project_count": 16,
+              "index": 5,
+              "project_count": 18,
               "work_root": "Work"
             },
             "project": {
@@ -282,7 +284,7 @@
                   "active_items": 58,
                   "day_records": 4,
                   "human_scratch": 0,
-                  "inactive_items": 4,
+                  "inactive_items": 6,
                   "invalid_items": 0,
                   "open_questions": 0,
                   "path": "Work/O-I/ProjectCentral/now",
@@ -415,12 +417,12 @@
               },
               "path": "Control",
               "relations": {
-                "declared_overrides": 30,
+                "declared_overrides": 31,
                 "path": "Control/relations/source-relations.json",
                 "present": true,
                 "schema": "central.control.ground-relations/v1"
               },
-              "source_bindings": 254,
+              "source_bindings": 255,
               "unresolved_provenance_sources": 69,
               "user": {
                 "exists": true,
@@ -473,7 +475,7 @@
                     },
                     "manifest_errors": [],
                     "now": {
-                      "active_items": 18,
+                      "active_items": 19,
                       "day_records": 2,
                       "human_scratch": 0,
                       "inactive_items": 3,
@@ -504,7 +506,7 @@
                       }
                     ]
                   },
-                  "source_files": 348
+                  "source_files": 357
                 },
                 {
                   "name": "Central",
@@ -578,7 +580,81 @@
                       }
                     ]
                   },
-                  "source_files": 264
+                  "source_files": 267
+                },
+                {
+                  "name": "Central-retire-flows",
+                  "path": "Work/Central-retire-flows",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/Central-retire-flows/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": true,
+                      "path": "Work/Central-retire-flows/ProjectCentral/agents/wiki",
+                      "sources": 1,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/Central-retire-flows/ProjectCentral/agents/wiki/wiki.json",
+                        "present": true,
+                        "revision": 1,
+                        "space_ref": "central:wiki:project:project:central"
+                      }
+                    },
+                    "failed_checks": [
+                      {
+                        "detail": "/Users/admin/Central/Work/Central-retire-flows/ProjectCentral/agents/governance",
+                        "name": "agent_governance",
+                        "valid": false
+                      }
+                    ],
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "manifest_errors": [],
+                    "missing": [
+                      "agent_governance"
+                    ],
+                    "now": {
+                      "active_items": 2,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/Central-retire-flows/ProjectCentral/now",
+                      "present": true,
+                      "promotions": 0
+                    },
+                    "outcome": "unresolved_human_decision_required",
+                    "path": "Work/Central-retire-flows/ProjectCentral",
+                    "reason": "ProjectCentral metadata exists but the canonical user/agents directory relation is incomplete.",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/Central-retire-flows/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "unresolved",
+                    "user": {
+                      "exists": true,
+                      "path": "Work/Central-retire-flows/ProjectCentral/user",
+                      "sources": 4
+                    },
+                    "wiki_candidates": [
+                      {
+                        "source": "ProjectCentral/agents/wiki/wiki.json",
+                        "space_ref": "central:wiki:project:project:central"
+                      }
+                    ]
+                  },
+                  "source_files": 252
                 },
                 {
                   "name": "Factory",
@@ -684,7 +760,7 @@
                       "active_items": 58,
                       "day_records": 4,
                       "human_scratch": 0,
-                      "inactive_items": 4,
+                      "inactive_items": 6,
                       "invalid_items": 0,
                       "open_questions": 0,
                       "path": "Work/O-I/ProjectCentral/now",
@@ -713,6 +789,70 @@
                     ]
                   },
                   "source_files": 5147
+                },
+                {
+                  "name": "O-I-now-contemplate",
+                  "path": "Work/O-I-now-contemplate",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": true,
+                      "path": "Work/O-I-now-contemplate/ProjectCentral/agents/governance",
+                      "sources": 2
+                    },
+                    "agent_wiki": {
+                      "exists": true,
+                      "path": "Work/O-I-now-contemplate/ProjectCentral/agents/wiki",
+                      "sources": 1,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/O-I-now-contemplate/ProjectCentral/agents/wiki/wiki.json",
+                        "present": true,
+                        "revision": 3,
+                        "space_ref": "central:wiki:project:project:o-i"
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "manifest_errors": [],
+                    "now": {
+                      "active_items": 33,
+                      "day_records": 2,
+                      "human_scratch": 0,
+                      "inactive_items": 4,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/O-I-now-contemplate/ProjectCentral/now",
+                      "present": true,
+                      "promotions": 0
+                    },
+                    "outcome": "already_conformant",
+                    "path": "Work/O-I-now-contemplate/ProjectCentral",
+                    "reason": "ProjectCentral human-source and Agent-Wiki fractal is present and readable.",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/O-I-now-contemplate/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "healthy",
+                    "user": {
+                      "exists": true,
+                      "path": "Work/O-I-now-contemplate/ProjectCentral/user",
+                      "sources": 3
+                    },
+                    "wiki_candidates": [
+                      {
+                        "source": "ProjectCentral/agents/wiki/wiki.json",
+                        "space_ref": "central:wiki:project:project:o-i"
+                      }
+                    ]
+                  },
+                  "source_files": 1379
                 },
                 {
                   "name": "Point-Cloud-Demo",
@@ -977,7 +1117,7 @@
                       }
                     ]
                   },
-                  "source_files": 809
+                  "source_files": 814
                 },
                 {
                   "name": "documentation-audit-2026-09-06",
@@ -1463,7 +1603,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 17,
+      "duration_ms": 25,
       "data": {
         "file": "navigator-project-ground.png"
       }
@@ -1471,7 +1611,7 @@
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 433,
+      "duration_ms": 521.8,
       "data": {
         "buffers": {},
         "focus": {},
@@ -1569,12 +1709,12 @@
               },
               "path": "Control",
               "relations": {
-                "declared_overrides": 30,
+                "declared_overrides": 31,
                 "path": "Control/relations/source-relations.json",
                 "present": true,
                 "schema": "central.control.ground-relations/v1"
               },
-              "source_bindings": 254,
+              "source_bindings": 255,
               "unresolved_provenance_sources": 69,
               "user": {
                 "exists": true,
@@ -1627,7 +1767,7 @@
                     },
                     "manifest_errors": [],
                     "now": {
-                      "active_items": 18,
+                      "active_items": 19,
                       "day_records": 2,
                       "human_scratch": 0,
                       "inactive_items": 3,
@@ -1658,7 +1798,7 @@
                       }
                     ]
                   },
-                  "source_files": 348
+                  "source_files": 357
                 },
                 {
                   "name": "Central",
@@ -1732,7 +1872,81 @@
                       }
                     ]
                   },
-                  "source_files": 264
+                  "source_files": 267
+                },
+                {
+                  "name": "Central-retire-flows",
+                  "path": "Work/Central-retire-flows",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/Central-retire-flows/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": true,
+                      "path": "Work/Central-retire-flows/ProjectCentral/agents/wiki",
+                      "sources": 1,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/Central-retire-flows/ProjectCentral/agents/wiki/wiki.json",
+                        "present": true,
+                        "revision": 1,
+                        "space_ref": "central:wiki:project:project:central"
+                      }
+                    },
+                    "failed_checks": [
+                      {
+                        "detail": "/Users/admin/Central/Work/Central-retire-flows/ProjectCentral/agents/governance",
+                        "name": "agent_governance",
+                        "valid": false
+                      }
+                    ],
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "manifest_errors": [],
+                    "missing": [
+                      "agent_governance"
+                    ],
+                    "now": {
+                      "active_items": 2,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/Central-retire-flows/ProjectCentral/now",
+                      "present": true,
+                      "promotions": 0
+                    },
+                    "outcome": "unresolved_human_decision_required",
+                    "path": "Work/Central-retire-flows/ProjectCentral",
+                    "reason": "ProjectCentral metadata exists but the canonical user/agents directory relation is incomplete.",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/Central-retire-flows/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "unresolved",
+                    "user": {
+                      "exists": true,
+                      "path": "Work/Central-retire-flows/ProjectCentral/user",
+                      "sources": 4
+                    },
+                    "wiki_candidates": [
+                      {
+                        "source": "ProjectCentral/agents/wiki/wiki.json",
+                        "space_ref": "central:wiki:project:project:central"
+                      }
+                    ]
+                  },
+                  "source_files": 252
                 },
                 {
                   "name": "Factory",
@@ -1838,7 +2052,7 @@
                       "active_items": 58,
                       "day_records": 4,
                       "human_scratch": 0,
-                      "inactive_items": 4,
+                      "inactive_items": 6,
                       "invalid_items": 0,
                       "open_questions": 0,
                       "path": "Work/O-I/ProjectCentral/now",
@@ -1867,6 +2081,70 @@
                     ]
                   },
                   "source_files": 5147
+                },
+                {
+                  "name": "O-I-now-contemplate",
+                  "path": "Work/O-I-now-contemplate",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": true,
+                      "path": "Work/O-I-now-contemplate/ProjectCentral/agents/governance",
+                      "sources": 2
+                    },
+                    "agent_wiki": {
+                      "exists": true,
+                      "path": "Work/O-I-now-contemplate/ProjectCentral/agents/wiki",
+                      "sources": 1,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/O-I-now-contemplate/ProjectCentral/agents/wiki/wiki.json",
+                        "present": true,
+                        "revision": 3,
+                        "space_ref": "central:wiki:project:project:o-i"
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "manifest_errors": [],
+                    "now": {
+                      "active_items": 33,
+                      "day_records": 2,
+                      "human_scratch": 0,
+                      "inactive_items": 4,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/O-I-now-contemplate/ProjectCentral/now",
+                      "present": true,
+                      "promotions": 0
+                    },
+                    "outcome": "already_conformant",
+                    "path": "Work/O-I-now-contemplate/ProjectCentral",
+                    "reason": "ProjectCentral human-source and Agent-Wiki fractal is present and readable.",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/O-I-now-contemplate/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "healthy",
+                    "user": {
+                      "exists": true,
+                      "path": "Work/O-I-now-contemplate/ProjectCentral/user",
+                      "sources": 3
+                    },
+                    "wiki_candidates": [
+                      {
+                        "source": "ProjectCentral/agents/wiki/wiki.json",
+                        "space_ref": "central:wiki:project:project:o-i"
+                      }
+                    ]
+                  },
+                  "source_files": 1379
                 },
                 {
                   "name": "Point-Cloud-Demo",
@@ -2131,7 +2409,7 @@
                       }
                     ]
                   },
-                  "source_files": 809
+                  "source_files": 814
                 },
                 {
                   "name": "documentation-audit-2026-09-06",
@@ -2568,7 +2846,7 @@
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 1087.7,
+      "duration_ms": 1040.3,
       "data": {
         "buffers": {},
         "focus": {},
@@ -2578,8 +2856,8 @@
             "ground_state": "healthy",
             "position": {
               "exists": true,
-              "index": 5,
-              "project_count": 16,
+              "index": 7,
+              "project_count": 18,
               "work_root": "Work"
             },
             "project": {
@@ -2736,12 +3014,12 @@
               },
               "path": "Control",
               "relations": {
-                "declared_overrides": 30,
+                "declared_overrides": 31,
                 "path": "Control/relations/source-relations.json",
                 "present": true,
                 "schema": "central.control.ground-relations/v1"
               },
-              "source_bindings": 254,
+              "source_bindings": 255,
               "unresolved_provenance_sources": 69,
               "user": {
                 "exists": true,
@@ -2794,7 +3072,7 @@
                     },
                     "manifest_errors": [],
                     "now": {
-                      "active_items": 18,
+                      "active_items": 19,
                       "day_records": 2,
                       "human_scratch": 0,
                       "inactive_items": 3,
@@ -2825,7 +3103,7 @@
                       }
                     ]
                   },
-                  "source_files": 348
+                  "source_files": 357
                 },
                 {
                   "name": "Central",
@@ -2899,7 +3177,81 @@
                       }
                     ]
                   },
-                  "source_files": 264
+                  "source_files": 267
+                },
+                {
+                  "name": "Central-retire-flows",
+                  "path": "Work/Central-retire-flows",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": false,
+                      "path": "Work/Central-retire-flows/ProjectCentral/agents/governance",
+                      "sources": 0
+                    },
+                    "agent_wiki": {
+                      "exists": true,
+                      "path": "Work/Central-retire-flows/ProjectCentral/agents/wiki",
+                      "sources": 1,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/Central-retire-flows/ProjectCentral/agents/wiki/wiki.json",
+                        "present": true,
+                        "revision": 1,
+                        "space_ref": "central:wiki:project:project:central"
+                      }
+                    },
+                    "failed_checks": [
+                      {
+                        "detail": "/Users/admin/Central/Work/Central-retire-flows/ProjectCentral/agents/governance",
+                        "name": "agent_governance",
+                        "valid": false
+                      }
+                    ],
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "manifest_errors": [],
+                    "missing": [
+                      "agent_governance"
+                    ],
+                    "now": {
+                      "active_items": 2,
+                      "day_records": 0,
+                      "human_scratch": 0,
+                      "inactive_items": 0,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/Central-retire-flows/ProjectCentral/now",
+                      "present": true,
+                      "promotions": 0
+                    },
+                    "outcome": "unresolved_human_decision_required",
+                    "path": "Work/Central-retire-flows/ProjectCentral",
+                    "reason": "ProjectCentral metadata exists but the canonical user/agents directory relation is incomplete.",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/Central-retire-flows/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "unresolved",
+                    "user": {
+                      "exists": true,
+                      "path": "Work/Central-retire-flows/ProjectCentral/user",
+                      "sources": 4
+                    },
+                    "wiki_candidates": [
+                      {
+                        "source": "ProjectCentral/agents/wiki/wiki.json",
+                        "space_ref": "central:wiki:project:project:central"
+                      }
+                    ]
+                  },
+                  "source_files": 252
                 },
                 {
                   "name": "Factory",
@@ -3005,7 +3357,7 @@
                       "active_items": 58,
                       "day_records": 4,
                       "human_scratch": 0,
-                      "inactive_items": 4,
+                      "inactive_items": 6,
                       "invalid_items": 0,
                       "open_questions": 0,
                       "path": "Work/O-I/ProjectCentral/now",
@@ -3034,6 +3386,70 @@
                     ]
                   },
                   "source_files": 5147
+                },
+                {
+                  "name": "O-I-now-contemplate",
+                  "path": "Work/O-I-now-contemplate",
+                  "projectcentral": {
+                    "agent_governance": {
+                      "exists": true,
+                      "path": "Work/O-I-now-contemplate/ProjectCentral/agents/governance",
+                      "sources": 2
+                    },
+                    "agent_wiki": {
+                      "exists": true,
+                      "path": "Work/O-I-now-contemplate/ProjectCentral/agents/wiki",
+                      "sources": 1,
+                      "wiki": {
+                        "child_space_refs": [],
+                        "dangling_child_space_refs": [],
+                        "path": "Work/O-I-now-contemplate/ProjectCentral/agents/wiki/wiki.json",
+                        "present": true,
+                        "revision": 3,
+                        "space_ref": "central:wiki:project:project:o-i"
+                      }
+                    },
+                    "flows": {
+                      "active": 0,
+                      "flows": [],
+                      "history": ".central/flow-revisions",
+                      "present": false,
+                      "registry": ".central/flows.json"
+                    },
+                    "manifest_errors": [],
+                    "now": {
+                      "active_items": 33,
+                      "day_records": 2,
+                      "human_scratch": 0,
+                      "inactive_items": 4,
+                      "invalid_items": 0,
+                      "open_questions": 0,
+                      "path": "Work/O-I-now-contemplate/ProjectCentral/now",
+                      "present": true,
+                      "promotions": 0
+                    },
+                    "outcome": "already_conformant",
+                    "path": "Work/O-I-now-contemplate/ProjectCentral",
+                    "reason": "ProjectCentral human-source and Agent-Wiki fractal is present and readable.",
+                    "relations": {
+                      "declared_overrides": 0,
+                      "path": "Work/O-I-now-contemplate/ProjectCentral/relations/source-relations.json",
+                      "present": false
+                    },
+                    "state": "healthy",
+                    "user": {
+                      "exists": true,
+                      "path": "Work/O-I-now-contemplate/ProjectCentral/user",
+                      "sources": 3
+                    },
+                    "wiki_candidates": [
+                      {
+                        "source": "ProjectCentral/agents/wiki/wiki.json",
+                        "space_ref": "central:wiki:project:project:o-i"
+                      }
+                    ]
+                  },
+                  "source_files": 1379
                 },
                 {
                   "name": "Point-Cloud-Demo",
@@ -3298,7 +3714,7 @@
                       }
                     ]
                   },
-                  "source_files": 809
+                  "source_files": 814
                 },
                 {
                   "name": "documentation-audit-2026-09-06",
@@ -3782,7 +4198,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 33,
+      "duration_ms": 44,
       "data": {
         "file": "navigator-restored-writing.png"
       }
@@ -3793,7 +4209,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-13T14:18:54.260Z",
+        "mounted_at": "2026-09-13T16:17:27.802Z",
         "transport": {
           "kind": "unavailable",
           "reason": "no kernel transport: neither the Tauri host nor a dev walk bridge is reachable"
@@ -3803,7 +4219,7 @@
     }
   ],
   "metrics": {
-    "world_summon_ms": 2
+    "world_summon_ms": 3
   },
   "screenshots": [
     "navigator-project-ground.png",

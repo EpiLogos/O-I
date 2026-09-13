@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "system-settings",
-  "generated_at": "2026-09-10T11:00:14.853Z",
+  "generated_at": "2026-09-13T16:16:55.757Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 1387,
+  "duration_ms": 8562,
   "checks": [
     {
       "ok": true,
@@ -20,11 +20,25 @@
     },
     {
       "ok": true,
-      "label": "BOOT-06/12 honest availability chip on every discovered position"
+      "label": "BOOT-06/12 every position carries its honest availability label — the census chip or the owner's own disclosed word, never fabricated readiness",
+      "data": {
+        "unlabelled": []
+      }
     },
     {
       "ok": true,
-      "label": "QL renders its emptiness honestly — no fabricated controls"
+      "label": "L3 every section discloses its actions or renders its emptiness honestly — nothing fabricated, nothing filled in",
+      "data": {
+        "honesty": [
+          "O:I — composition: 2 disclosed action(s), 0 honest emptiness",
+          "Central: 8 disclosed action(s), 0 honest emptiness",
+          "AIKit: 1 disclosed action(s), 0 honest emptiness",
+          "Software Factory: 2 disclosed action(s), 0 honest emptiness",
+          "Workcell: 2 disclosed action(s), 0 honest emptiness",
+          "Actuation: 3 disclosed action(s), 0 honest emptiness",
+          "Quaternal Logic: 1 disclosed action(s), 0 honest emptiness"
+        ]
+      }
     },
     {
       "ok": true,
@@ -47,13 +61,13 @@
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 26.9,
+      "duration_ms": 4735.7,
       "data": {}
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 27,
+      "duration_ms": 32,
       "data": {
         "file": "system-settings-settings-activity.png"
       }
@@ -61,7 +75,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 25,
+      "duration_ms": 27,
       "data": {
         "file": "system-settings-settings-config.png"
       }
@@ -69,7 +83,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 28,
+      "duration_ms": 24,
       "data": {
         "file": "system-settings-settings-bootstrap.png"
       }
@@ -77,13 +91,13 @@
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 12.5,
+      "duration_ms": 11.4,
       "data": {}
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 29,
+      "duration_ms": 31,
       "data": {
         "file": "system-settings-settings-health.png"
       }
