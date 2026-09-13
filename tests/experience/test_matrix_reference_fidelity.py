@@ -1,7 +1,7 @@
 """Regressions against Central's native CSV reference contract, not runtime proof.
 
-Source: EpiLogos/Central docs/CAPABILITY-MATRIX-PROTOCOL.md, CSV records.
 source_refs/code_refs/test_refs are semicolon lists; capability_refs is JSON.
+Each named view retains the exact source/proof basis of the relation it asserts.
 """
 from pathlib import Path
 import csv
@@ -23,6 +23,7 @@ class NativeReferenceFidelity(unittest.TestCase):
         result = em.load_sources(ROOT)
         _, rows = em.relation_projection(result)
         stories = {s["id"]: s for s in result["stories"]}
+        obligations = {o["id"]: o for o in result["inherited_obligations"]}
         text = io.StringIO()
         writer = csv.DictWriter(text, fieldnames=em.COLUMNS)
         writer.writeheader()
@@ -31,10 +32,19 @@ class NativeReferenceFidelity(unittest.TestCase):
         for row in csv.DictReader(text):
             extension = json.loads(row["extensions"])["ux"]
             story = stories[extension["story_ref"]]
-            self.assertEqual(row["source_refs"].split(";"), story["source_refs"])
-            self.assertEqual(row["test_refs"].split(";"), story["extensions"]["existing_proof_refs"])
+            if row["view_id"] == "story-practice":
+                self.assertEqual(row["source_refs"].split(";"), story["source_refs"])
+                self.assertEqual(row["test_refs"].split(";"), story["extensions"]["existing_proof_refs"])
+            else:
+                self.assertEqual(row["view_id"], "story-obligation")
+                obligation = obligations[row["column_id"]]
+                self.assertEqual(row["source_refs"].split(";"), [
+                    story["extensions"]["source_locator"]["path"], obligation["source_basis"]["source_ref"]])
+                self.assertEqual(row["test_refs"].split(";"), [obligation["id"]])
+                self.assertEqual(extension["existing_proof_refs"], [obligation])
             self.assertEqual(json.loads(row["capability_refs"]), [])
             self.assertEqual(row["code_refs"], "")
+            self.assertEqual(row["account_ref"], story["extensions"]["source_locator"]["path"])
 
     def test_source_path_cannot_escape_the_named_repository(self):
         with tempfile.TemporaryDirectory() as directory:
