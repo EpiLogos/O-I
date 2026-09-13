@@ -10,7 +10,8 @@
   "runtime_or_human_acceptance": false,
   "setup_contexts": ["fresh-ground", "existing-ground-reconcile", "developer-source", "existing-world-adoption", "reference-world-host", "harness-strap"],
   "setup_context_semantics": "Historical bootstrap/registration operation provenance only. O-I#268 supersedes these as an installation-modality or Context Frame taxonomy. Preserve old receipts under their original version.",
-  "composition_note": "O-I#268 is the current authorial composition lock: CF5 contains the other six forms; selected/effective/installed, experience surface, source sync and material connection remain separate. Story variants are detailed in INSTALLATION-VARIANTS.md. Neither this source nor a CF string proves runtime support.",
+  "composition_examples": ["ground-only", "existing-native-harness", "selected-praxis-and-knowledge", "commissioned-development", "nested-material-work", "full-desktop", "headless", "optional-QL"],
+  "composition_note": "Examples remain non-prescriptive activity/view labels for existing readers. O-I#268 is the current authorial composition lock: CF5 contains the other six forms; selected/effective/installed, experience surface, source sync and material connection remain separate. Story variants are detailed in INSTALLATION-VARIANTS.md. Neither this source nor a CF string proves runtime support.",
   "installation_composition": {
     "authority": "https://github.com/EpiLogos/O-I/issues/268",
     "variant_source": "docs/experience/INSTALLATION-VARIANTS.md",
