@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "contemplate",
-  "generated_at": "2026-09-13T13:19:19.997Z",
+  "generated_at": "2026-09-13T13:32:20.946Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 1940,
+  "duration_ms": 1957,
   "checks": [
     {
       "ok": true,
@@ -29,7 +29,7 @@
     {
       "ok": true,
       "label": "The owner's own refusal renders verbatim (flow node not in this ground's store)",
-      "data": "no Flow node resolves ae7ab881-a395-4a8b-baf4-0f8c00826c67"
+      "data": "no Flow node resolves f2edd808-a4d0-4ee2-93fa-0a6a472673cb"
     },
     {
       "ok": true,
@@ -58,10 +58,10 @@
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-13T13:19:20.135Z",
+        "mounted_at": "2026-09-13T13:32:21.054Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -93,15 +93,15 @@
             "event": "surface_changed",
             "schema": "oi.kernel-event/v1",
             "seq": 3,
-            "summary": "Surface opened: flow-2026-09-13-1419.html.",
-            "surface_id": "68b5de35-cc55-4ded-8aa0-4bff5714ee0f",
+            "summary": "Surface opened: flow-2026-09-13-1432.html.",
+            "surface_id": "bf9388ba-81a3-4416-a008-a922dc4dd53b",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
               "provenance": {
                 "source": "central.projectcentral"
               },
-              "ref": "central:path:/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-ZutkPX:Control/user/flows/flow-2026-09-13-1419.html"
+              "ref": "central:path:/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-UWtHfw:Control/user/flows/flow-2026-09-13-1432.html"
             },
             "version": 1
           },
@@ -114,7 +114,7 @@
                 "provenance": {
                   "source": "central.projectcentral"
                 },
-                "ref": "central:path:/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-ZutkPX:Control/user/flows/flow-2026-09-13-1419.html"
+                "ref": "central:path:/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-UWtHfw:Control/user/flows/flow-2026-09-13-1432.html"
               }
             },
             "schema": "oi.kernel-event/v1",
@@ -130,7 +130,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 26,
+      "duration_ms": 33,
       "data": {
         "file": "contemplate-contemplate-owner-refusal-verbatim.png"
       }
