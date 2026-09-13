@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "navigator",
-  "generated_at": "2026-09-13T11:08:32.780Z",
+  "generated_at": "2026-09-13T13:21:04.368Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,11 +12,11 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 5587,
+  "duration_ms": 5301,
   "checks": [
     {
       "ok": true,
-      "label": "Start writing opens a draft that already carries the register named before opening"
+      "label": "Start writing opens a draft destined for the user section's flows area — the ratified carrier home"
     },
     {
       "ok": true,
@@ -191,7 +191,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-13T11:08:33.703Z",
+        "mounted_at": "2026-09-13T13:21:04.812Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -202,13 +202,13 @@
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 516.8,
+      "duration_ms": 447.1,
       "data": {}
     },
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "receipts": [
           {
@@ -234,7 +234,7 @@
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 698.2,
+      "duration_ms": 1034.5,
       "data": {
         "buffers": {},
         "focus": {},
@@ -279,10 +279,10 @@
                 },
                 "manifest_errors": [],
                 "now": {
-                  "active_items": 55,
+                  "active_items": 57,
                   "day_records": 4,
                   "human_scratch": 0,
-                  "inactive_items": 3,
+                  "inactive_items": 4,
                   "invalid_items": 0,
                   "open_questions": 0,
                   "path": "Work/O-I/ProjectCentral/now",
@@ -310,7 +310,7 @@
                   }
                 ]
               },
-              "source_files": 5108
+              "source_files": 5109
             },
             "projection": "project",
             "root": "/Users/admin/Central",
@@ -415,17 +415,17 @@
               },
               "path": "Control",
               "relations": {
-                "declared_overrides": 29,
+                "declared_overrides": 30,
                 "path": "Control/relations/source-relations.json",
                 "present": true,
                 "schema": "central.control.ground-relations/v1"
               },
-              "source_bindings": 258,
+              "source_bindings": 259,
               "unresolved_provenance_sources": 69,
               "user": {
                 "exists": true,
                 "path": "Control/user",
-                "sources": 224
+                "sources": 225
               }
             },
             "ground_state": "healthy",
@@ -824,7 +824,7 @@
                     },
                     "manifest_errors": [],
                     "now": {
-                      "active_items": 16,
+                      "active_items": 17,
                       "day_records": 2,
                       "human_scratch": 0,
                       "inactive_items": 3,
@@ -855,7 +855,7 @@
                       }
                     ]
                   },
-                  "source_files": 321
+                  "source_files": 340
                 },
                 {
                   "name": "Central",
@@ -1044,10 +1044,10 @@
                     },
                     "manifest_errors": [],
                     "now": {
-                      "active_items": 55,
+                      "active_items": 57,
                       "day_records": 4,
                       "human_scratch": 0,
-                      "inactive_items": 3,
+                      "inactive_items": 4,
                       "invalid_items": 0,
                       "open_questions": 0,
                       "path": "Work/O-I/ProjectCentral/now",
@@ -1075,7 +1075,7 @@
                       }
                     ]
                   },
-                  "source_files": 5108
+                  "source_files": 5109
                 },
                 {
                   "name": "Point-Cloud-Demo",
@@ -1838,7 +1838,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 30,
+      "duration_ms": 34,
       "data": {
         "file": "navigator-project-ground.png"
       }
@@ -1846,7 +1846,7 @@
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 419,
+      "duration_ms": 442,
       "data": {
         "buffers": {},
         "focus": {},
@@ -1944,17 +1944,17 @@
               },
               "path": "Control",
               "relations": {
-                "declared_overrides": 29,
+                "declared_overrides": 30,
                 "path": "Control/relations/source-relations.json",
                 "present": true,
                 "schema": "central.control.ground-relations/v1"
               },
-              "source_bindings": 258,
+              "source_bindings": 259,
               "unresolved_provenance_sources": 69,
               "user": {
                 "exists": true,
                 "path": "Control/user",
-                "sources": 224
+                "sources": 225
               }
             },
             "ground_state": "healthy",
@@ -2353,7 +2353,7 @@
                     },
                     "manifest_errors": [],
                     "now": {
-                      "active_items": 16,
+                      "active_items": 17,
                       "day_records": 2,
                       "human_scratch": 0,
                       "inactive_items": 3,
@@ -2384,7 +2384,7 @@
                       }
                     ]
                   },
-                  "source_files": 321
+                  "source_files": 340
                 },
                 {
                   "name": "Central",
@@ -2573,10 +2573,10 @@
                     },
                     "manifest_errors": [],
                     "now": {
-                      "active_items": 55,
+                      "active_items": 57,
                       "day_records": 4,
                       "human_scratch": 0,
-                      "inactive_items": 3,
+                      "inactive_items": 4,
                       "invalid_items": 0,
                       "open_questions": 0,
                       "path": "Work/O-I/ProjectCentral/now",
@@ -2604,7 +2604,7 @@
                       }
                     ]
                   },
-                  "source_files": 5108
+                  "source_files": 5109
                 },
                 {
                   "name": "Point-Cloud-Demo",
@@ -3318,7 +3318,7 @@
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 1097,
+      "duration_ms": 871.1,
       "data": {
         "buffers": {},
         "focus": {},
@@ -3486,17 +3486,17 @@
               },
               "path": "Control",
               "relations": {
-                "declared_overrides": 29,
+                "declared_overrides": 30,
                 "path": "Control/relations/source-relations.json",
                 "present": true,
                 "schema": "central.control.ground-relations/v1"
               },
-              "source_bindings": 258,
+              "source_bindings": 259,
               "unresolved_provenance_sources": 69,
               "user": {
                 "exists": true,
                 "path": "Control/user",
-                "sources": 224
+                "sources": 225
               }
             },
             "ground_state": "healthy",
@@ -3895,7 +3895,7 @@
                     },
                     "manifest_errors": [],
                     "now": {
-                      "active_items": 16,
+                      "active_items": 17,
                       "day_records": 2,
                       "human_scratch": 0,
                       "inactive_items": 3,
@@ -3926,7 +3926,7 @@
                       }
                     ]
                   },
-                  "source_files": 321
+                  "source_files": 340
                 },
                 {
                   "name": "Central",
@@ -4115,10 +4115,10 @@
                     },
                     "manifest_errors": [],
                     "now": {
-                      "active_items": 55,
+                      "active_items": 57,
                       "day_records": 4,
                       "human_scratch": 0,
-                      "inactive_items": 3,
+                      "inactive_items": 4,
                       "invalid_items": 0,
                       "open_questions": 0,
                       "path": "Work/O-I/ProjectCentral/now",
@@ -4146,7 +4146,7 @@
                       }
                     ]
                   },
-                  "source_files": 5108
+                  "source_files": 5109
                 },
                 {
                   "name": "Point-Cloud-Demo",
@@ -4907,7 +4907,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 34,
+      "duration_ms": 36,
       "data": {
         "file": "navigator-restored-writing.png"
       }
@@ -4918,7 +4918,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-13T11:08:38.300Z",
+        "mounted_at": "2026-09-13T13:21:09.602Z",
         "transport": {
           "kind": "unavailable",
           "reason": "no kernel transport: neither the Tauri host nor a dev walk bridge is reachable"
@@ -4928,7 +4928,7 @@
     }
   ],
   "metrics": {
-    "world_summon_ms": 2
+    "world_summon_ms": 3
   },
   "screenshots": [
     "navigator-project-ground.png",
