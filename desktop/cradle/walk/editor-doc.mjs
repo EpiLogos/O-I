@@ -72,3 +72,14 @@ export async function bindDefaultCentral(page, root) {
   await chooser.getByRole('button', { name: 'Use as default Central' }).click();
   await chooser.getByText(/Default Central saved/).waitFor();
 }
+
+/** The site redesign's welcome field plays over a cold boot; clicking its
+ *  enter control dismisses it. No-op when the gate is absent (already
+ *  entered, or a surface opened past it). */
+export async function enterApp(page) {
+  const enter = page.locator(".oi-welcome-enter");
+  if (await enter.isVisible().catch(() => false)) {
+    await enter.click();
+    await enter.waitFor({ state: "detached", timeout: 15_000 }).catch(() => {});
+  }
+}

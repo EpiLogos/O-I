@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "name": "O:I Mark",
+  "description": "The app mark as a living point cloud — the shipped first saved state and the welcome frontstate recipe.",
+  "config": {
+    "glyph": ["O", "I"],
+    "particleCount": 120000,
+    "particleSize": { "min": 0.7, "max": 2.4 },
+    "colorMode": "followTheme",
+    "style": "stipple",
+    "dotShape": "circle",
+    "fluid": {
+      "curlScale": 0.9,
+      "curlSpeed": 0.4,
+      "vortexStrength": 0.8,
+      "viscosity": 0.95,
+      "returnSpeed": 1.6,
+      "turbulence": 0.6,
+      "dispersion": 0.25
+    },
+    "interaction": {
+      "radius": 220,
+      "strength": 1.1,
+      "mode": "repel"
+    },
+    "relational": {
+      "enabled": false,
+      "mode": "orbital",
+      "attractorCount": 3,
+      "attractorGravity": 1.6,
+      "orbitSpeed": 0.8,
+      "orbitRadius": 240,
+      "relationalSpin": 1.4,
+      "chaosFactor": 0.2,
+      "wanderSpeed": 0.5
+    },
+    "autoMorph": true,
+    "autoMorphDuration": 6.0,
+    "morphProgress": 0.0
+  }
+}
