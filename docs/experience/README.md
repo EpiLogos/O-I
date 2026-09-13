@@ -6,6 +6,8 @@
 
 **Publication scope:** source-grounded planning and a locally executable testing procedure commissioned by the user. The detailed test stories are authored elaborations to be reviewed against their cited sources. Publication is not observed product behavior or the person's assessment. The separate QL UX synthesis remains at its own recorded H-ratification standing.
 
+**Current installation authority:** [#268's 1+6 composition lock](https://github.com/EpiLogos/O-I/issues/268). Its [concrete story variants](INSTALLATION-VARIANTS.md) and `campaign.json` supersede earlier interpretations of #192 as the current installation taxonomy. Preserve existing story IDs and earlier test evidence; do not reinterpret old receipts or restart completed work.
+
 The person already has applications, notes, projects, instructions, accounts, machines and ways of working. The intended benefit is that relevant information and useful agent practice accompany that work without constant restatement or supervision. The person can continue in familiar tools, use selected O:I facilities directly, or open richer interfaces when useful. Installing the system must not mean agreeing to use every product, fill a daily form, move every file, or route every conversation through Factory.
 
 Examples of the thing to prove:
@@ -31,7 +33,7 @@ Read in the order needed for the selected activity, not as a mandatory whole-cor
 | [Central capability-matrix protocol](https://github.com/EpiLogos/Central/blob/main/docs/CAPABILITY-MATRIX-PROTOCOL.md) | `ql-capability-matrix/1`, stable capability identity, named views, provenance, code/test links and extension preservation |
 | [Cradle state families](../cradle/03-UX-STATES.md) and [everyday loop](../cradle/04-VERIFICATION.md) | Desktop-specific interaction; retain A–K, the later Epi L extension and its scoped walks |
 | [TUI human experience](https://github.com/EpiLogos/ai-kit/blob/main/docs/v2/23-TUI-HUMAN-EXPERIENCE-SPEC.md) | Compose, ordinary work, Factory work, graph, System, repair and terminal interaction |
-| [Installation](../INSTALL.md), [adoption](../EXISTING-WORLD-ADOPTION.md), #93/#173/#192 | Fresh/existing setup, public extension path and named setup contexts |
+| [Composition lock #268](https://github.com/EpiLogos/O-I/issues/268), [installation variants](INSTALLATION-VARIANTS.md), [adoption](../EXISTING-WORLD-ADOPTION.md), #93/#173 | Current six forms inside CF5; fresh/existing entry, public extension, first use, transitions and teardown. #192 labels are historical path provenance only |
 | [Central source protocol](https://github.com/EpiLogos/Central/blob/main/docs/CONTROL-CONTENT-PROTOCOL.md) and #164 | Human instructions/source, agent knowledge, real operating repertoire and its latest local reports |
 | [Living Wiki #134](https://github.com/EpiLogos/O-I/issues/134) and AIKit #118/#122 | Source changes, affected knowledge, deliberate reasoning, source-backed summaries and context |
 | [Exact Day/Dialogue specifications](https://github.com/EpiLogos/Factory/issues/195#issuecomment-5620703383) | Original writing fixtures, passive behavior, attribution, reviewed inclusion and portable save |
@@ -48,7 +50,9 @@ This map does not change the six canonical Epi Agent names or replace Bimba, Epi
 - [STORY-PROFILE.md](STORY-PROFILE.md): a compatible profile of the existing UX fields, including `extensions.agent_ux`, condition-to-practice links and native capability-matrix references.
 - [PRACTICE-CONDITIONS.md](PRACTICE-CONDITIONS.md): the shared context/practice requirements that story rows bind, not a new Skill registry.
 - [LOCAL-CAMPAIGN.md](LOCAL-CAMPAIGN.md): one orchestrator's procedure, tester roles, seam diagnosis, repair, replay and final human testing.
-- [campaign.json](campaign.json): source locators, included programme families, installation axes and QL delegation used for machine-readable planning.
+- [INSTALLATION-VARIANTS.md](INSTALLATION-VARIANTS.md): source-locked minimum forms, real first use, transitions and removal under #268.
+- [campaign.json](campaign.json): source locators, included programme families, current composition conditions and QL delegation used for machine-readable planning.
+- [TOOLS.md](TOOLS.md): actual source compilation and native-capability binding commands, with no runtime-success claim.
 
 Human story, agent procedure, capability matrix and evidence are views of related records, not copies that can silently disagree. The readable source is primary. Compiled indexes record its digest. The profile does not add an executable permission, a new runtime Method type or a second Wiki.
 
@@ -61,7 +65,7 @@ A story may need several capabilities; a capability may support several stories.
 | Existing programme | What is retained | Story families |
 |---|---|---|
 | O:I #17/#97 and current convergence/source-cut procedures | Source convergence, install, rollback, final source/build/installed/running mapping and protected dirty work | AD, DV |
-| O:I #93/#173/#192, current bootstrap/loading specification | Existing-world recognition, six named setup contexts, partial composition, real extension and first use | AD, WK, EX |
+| O:I #93/#173/#268, current bootstrap/loading specification | Existing-world recognition, corrected 1+6 composition, historical path provenance, real extension, first use/change/teardown | AD, WK, EX, installation variants |
 | O:I #65 A/B/C | Individual product use, models, context, Skills, session/working-environment operation and actual fitness observations | WK, GV, AG, PX, MC |
 | O:I #65 D; AIKit #114; Workcell #23 | Public SDK authoring, conformance, package/register, use, update and removal | EX |
 | O:I #65 E; #84/#134 and native Knowledge owners | Source/Wiki/code navigation, graph, change impact, deliberate contemplation and multi-resolution knowledge | KN, PX |
@@ -73,13 +77,24 @@ A story may need several capabilities; a capability may support several stories.
 
 P01–P28 remain in `tests/continuous-work/cases.json` with their native campaign. QL preserves its `ux-spine-trace.json`, `check-ux-spine.py` and existing owner scripts. Human EX remains human testimony; computer-use evidence is not relabelled EX. Older executed receipts keep their exact source cut and scope, not automatic acceptance of today's changed system.
 
-### Installation has separate axes
+### Installation: the current 1+6 source law
 
-The six currently named setup contexts (`fresh-ground`, `existing-ground-reconcile`, `developer-source`, `existing-world-adoption`, `reference-world-host`, `harness-strap`) record how an installation/reconciliation is entered. They are **not** automatically a one-to-one mapping to the formal seven CFs or the amount of product someone has chosen.
+**CF5 (`4.0/1–4.4/5`) contains the other six forms.** The material condition is always present, even where no Workcell management package/daemon/VM is required. CF5 does not mean all six products are installed. The six forms are:
 
-Record separately: (a) setup context; (b) selected/declined products and interoperable alternatives; (c) actual user entry surface; (d) explicit sourced QL CF reading when invoked. Preserve the author's `00/00` full-desktop composition intention and the formal owner mapping without manufacturing new install presets or deriving authority from a CF label. Full desktop, headless and partial adoption all need their own first-use proof. A named scope still awaiting source reconciliation is not invented at run time.
+| Frame | Chosen composition and use |
+|---|---|
+| CF1 `00/00` | Desktop + Central + explicitly chosen backing, normally Central/Actuation/AIKit for a new install; app independently addable/removable |
+| CF2 `0/1` | Central + Actuation; existing agent tools remain valid, no hidden AIKit/Factory/QL requirement |
+| CF3 `0/1/2` | Central + Actuation + AIKit; ordinary context, model, skill and tool support, desktop optional |
+| CF4 `0/1/2/3` | Central + Actuation + AIKit + Factory; organised development without forcing ordinary sessions into it |
+| CF6 `4.5/0` | Central + minimal Workcell client/connectivity to a remote realised world; no required local Actuation/AIKit/Factory or QL |
+| CF7 `5/0` | Central + QL with useful learning/exploration; agent tutoring is a separately chosen richer composition |
 
-Test ground-only; native harness plus ordinary project; selected AIKit context/praxis; commissioned development; local/remote material support; and richer optional QL separately where meaningful. A person declining Factory or the desktop must still obtain the benefit offered by their selected composition. Optional absence is a test case, not a skipped whole-system failure.
+The six #192 labels remain historical registration-path evidence, not another taxonomy. Record requested, effective and installed composition, selected/declined products/native alternatives, actual entry surface, material placement and the appropriate source-qualified frame separately. Preserve old receipt meaning by version. Do not derive access or authority from a CF string.
+
+The [variant source](INSTALLATION-VARIANTS.md) binds these forms to the existing stories, including first/repeated use, transitions, interrupted setup, recovery and teardown. A form-to-story link still requires checking which action is applicable under the chosen backing. No app in a writing-only composition must pretend an Agent can respond. No QL learning-only composition is failed merely because optional agent tutoring is absent; the full richer QL stories remain separately covered.
+
+Test minimum compositions with excluded products actually absent, and test all-products arrangements with and without desktop. A person declining Factory or desktop must obtain the benefit promised by the selected composition. Separate software update, explicit source sync and material reconnection; no hidden “sync everything”. The second machine being available is not authority for destructive experiments.
 
 ## 4 — The actual Wayfinder: one campaign lead, bounded batches
 
@@ -87,12 +102,12 @@ These rows are execution units inside #65, not a request to start six product ch
 
 | Unit | Work now | Output / handoff | Wait condition |
 |---|---|---|---|
-| C0 — Read and bind the selected round | Pin this story source, relevant original specs, current capability matrices, approved practices, existing test references and QL standing. Record actual test resources/authority and implementation lineage. | One bounded round manifest and all unresolved bindings, not another whole-suite report before every test | Only unreadable or genuinely undecided required source blocks that branch |
+| C0 — Read and bind the selected round | Pin this story source, relevant original specs, current capability matrices, approved practices, existing test references, #268 composition and QL standing. Record actual test resources/authority and implementation lineage. | One bounded round manifest and all unresolved bindings, not another whole-suite report before every test | Only unreadable or genuinely undecided required source blocks that branch |
 | C1 — Prepare the real test world | Inspect installed state without altering it; create approved disposable workspaces and datasets; stage exact current builds or use agreed accepted installation; rehearse migration/rollback before personal changes | Reproducible preconditions, protected baseline, actual commands/surfaces and cleanup plan | Machine-only effects need that machine and authority, not a reason to postpone source tests |
-| C2 — Exercise ordinary and quiet use | AD/WK/GV/AG first-use stories in existing tools, including missing optional products and no desktop. Then the independent KN/PX/WR/UI/MC/EX/SH stories whose prerequisites exist | Actor traces, input/source and actual-output evidence, independent witness; no preloaded answer shortcut | A required missing capability is a native code gap; unused families continue |
+| C2 — Exercise ordinary and quiet use | AD/WK/GV/AG first-use stories in existing tools, including minimum compositions and no desktop. Then independent KN/PX/WR/UI/MC/EX/SH stories whose prerequisites exist | Actor traces, input/source and actual-output evidence, independent witness; no preloaded answer shortcut | A required missing capability is a native code gap; unused families continue |
 | C3 — Compose and stress real work | Combine real selected stories: two agents, knowledge/source changes, background work, remote service, interruption, revised instructions, limited authority and late output | Located failure seams, original failed evidence and correctly scoped repair tasks | Shared writable source/services serialize; disjoint disposable worlds can run concurrently |
 | C4 — Repair and replay | Freeze failure; diagnose context/discovery/contract/provider/material/UI/test seam; implement bounded repair, verify final code/build/installed state, rerun from the normal entry with a fresh actor | Failed and repaired attempts kept separately; a fix cannot rewrite the failed test or silently teach the actor the answer | A genuinely new design choice or destructive/private effect returns one exact question to the owner |
-| C5 — Independent and human assessment | Independent non-implementer reruns full selected activities and important negative cases; prepare the person only for the actual judgement/control/quality points | Evidence-backed per-story results, real EX where supplied, one next round or scoped completion | No human quality/ratification claim without the human; unmet parent obligations remain open |
+| C5 — Independent and human assessment | Independent non-implementer reruns full selected activities and important negative cases; prepare the person only for actual judgement/control/quality points | Evidence-backed per-story results, real EX where supplied, one next round or scoped completion | No human quality/ratification claim without the human; unmet parent obligations remain open |
 
 Remote GPT-web/GitHub coding and deterministic/native controlled tests can continue before local installation. The local lead may make or delegate native code repairs through the approved workflow. The central map does not turn a source-access failure into an excuse to build a tool-transfer system. **The sane model split is by what kind of reality can prove the work.** Local agents can automate real-machine, provider and computer-use tests; local does not mean manual.
 
@@ -101,6 +116,12 @@ Remote GPT-web/GitHub coding and deterministic/native controlled tests can conti
 Parallelise independent test worlds, read-only investigations, platform specimens and disjoint owner files. Serialize mutations of a personal instruction source, shared Agent definition, running service, suite installation, index under repair, or Git target. Two browser-driving testers cannot own one desktop focus concurrently. Use separate users/VMs/sessions or run them in sequence. A verifier does not share the acting agent's writable working context or its hidden expected-answer material.
 
 Do not require every story to pass before a useful selected round can begin. Do not shrink the umbrella when a round ends. Capture all discovered native capabilities as directly covered, transitively covered, explicitly deferred with owner/re-entry, not applicable to that composition with reason, or uncovered. An empty relation is never success.
+
+### First useful round and next rounds
+
+Begin with the person's existing tool and a disposable realistic project: WK01 (ordinary fix), GV03 (relevant instruction change), AG01/AG03 (a real assistant using permitted sources), KN01/KN05 (find a decision and notice external source change). Bind the exact current row meanings before execution; this list is a proposed efficient first round, not a narrowing of coverage. Run independent worlds in parallel. Do not modify the person's real instructions merely to obtain a test result.
+
+Then exercise UI and graph detail, richer knowledge/praxis, coordinated development, time/archive, each intended machine/provider placement and separate-person sharing. Installation minimums, source update/reconnect separation and teardown run in disposable compositions through the #268 variants. QL contributes its complete selected source trace through its own dependency sequence. Individual gaps create owner repair work, not a requirement that the user launch another chat.
 
 ## 5 — What closure means
 
