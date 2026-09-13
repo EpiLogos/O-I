@@ -1,7 +1,10 @@
-import {docText, waitForDoc, openWorkspaceStrip} from '../editor-doc.mjs';
+import {docText, waitForDoc, openWorkspaceStrip, bindDefaultCentral} from '../editor-doc.mjs';
 export { setup } from './editor.mjs';
 export default async function run({ page, baseUrl, check, shot, channel, provision:p }) {
   await page.goto(baseUrl); await channel('info');
+  // The boot law is explicit binding: the fixture ground is bound through
+  // the real UI before anything drives the navigator.
+  await bindDefaultCentral(page, p.root);
   const nav = page.getByRole('complementary', {name:'World navigator'});
   await nav.locator('[data-project-path="Work/Editor"]').click();
   if(await page.getByRole('button',{name:'Editor: files',exact:true}).getAttribute('aria-pressed') !== 'true') await page.getByRole('button',{name:'Editor: files',exact:true}).click();
@@ -21,6 +24,25 @@ export default async function run({ page, baseUrl, check, shot, channel, provisi
   check(await page.locator('[data-region="right"]').getAttribute('data-depth')==='collapsed','Inspector is absent by default, leaving one sidebar and the canvas');
   check((await page.locator('[data-region="right"]').boundingBox()).width===0,'No second persistent navigation rail occupies the canvas');
   check(await page.getByLabel('Workspace',{exact:true}).evaluate(el=>!!el.closest('.canvas-arrangement')),'One arrangement selector belongs to the canvas command strip');
+  // The second workspace is created here. The workspace-actions popover
+  // used to render off-screen underneath the pane/agent chrome (unreachable
+  // with the inspector open); this cell repairs it to open upward into the
+  // canvas (shell.css), and the dance now runs wherever the flow needs it.
+  await openWorkspaceStrip(page);
+  await page.locator('.desktop-menu > summary').click();
+  await page.getByRole('button',{name:'New workspace'}).click();
+  await openWorkspaceStrip(page);
+  await page.locator('.desktop-menu > summary').click();
+  await page.getByRole('textbox',{name:'Workspace name'}).fill('Research');
+  await page.getByRole('button',{name:'Create workspace',exact:true}).click();
+  check(await page.locator('.pane.group').count()===0,'A fresh workspace opens with no panes — its arrangement starts empty');
+  await openWorkspaceStrip(page);
+  await page.getByLabel('Workspace',{exact:true}).selectOption({label:'Writing desk'});
+  await page.waitForFunction(()=>document.querySelectorAll('.pane.group').length===1);
+  // The round-trip through the empty workspace left no pane focused, so the
+  // kernel holds no subject; focus the pane the way a reader returns to it.
+  await page.locator('.pane.group').first().click();
+  await page.waitForFunction(()=>!!document.querySelector('[data-region=\"right\"]')?.getAttribute('data-focus-ref'));
   await page.getByRole('button',{name:'Toggle right region'}).click();
   check(await page.locator('[data-region="right"]').getAttribute('data-depth')==='panel','Inspector opens explicitly over the active owner subject');
   check((await channel('read.focus')).data.subject.ref===p.sources[0].binding.ref,'Left selection, canvas and right inspector share one kernel subject');
@@ -53,20 +75,19 @@ export default async function run({ page, baseUrl, check, shot, channel, provisi
   // (brief FND-01 A6) — maximize stays on keyboard, the native Window menu,
   // and the pane/tab disclosures.
   await page.keyboard.press('Meta+Alt+Enter');
+  await page.waitForFunction(()=>document.querySelectorAll('[data-maximized="true"]').length===1);
   check(await page.locator('.pane.group:visible').count()===1,'Maximize presents the active pane alone');
   check(await nav.isVisible(),'Maximized pane retains Central access');
   check(await page.locator('.pane.group').count()===2,'Maximize keeps other source views mounted');
   check((await channel('read.focus')).data.subject.ref===p.sources[1].binding.ref,'Maximize retains canonical semantic focus');
   await page.keyboard.press('Meta+Alt+Enter');
+  await page.waitForFunction(()=>document.querySelectorAll('[data-maximized="true"]').length===0);
   check(await page.locator('.pane.group:visible').count()===2,'Keyboard restores all panes');
   const restoredGeometry=await stablePaneWidths();
   check(JSON.stringify(geometry)===JSON.stringify(restoredGeometry),'Restore preserves exact prior split widths');
-  const left=page.getByRole('separator',{name:'Resize left region'});
-  await left.focus(); await page.keyboard.press('ArrowRight');
-  check(await left.getAttribute('aria-valuenow')==='256','Keyboard resizes the left region');
-  const right=page.getByRole('separator',{name:'Resize right region'});
-  await right.focus(); await page.keyboard.press('ArrowLeft');
-  check(await right.getAttribute('aria-valuenow')==='336','Keyboard resizes the right region');
+  // The side regions no longer expose keyboard-resizable separators (the
+  // study-shell law): region width is the shell's own layout now. The
+  // canvas split remains keyboard-resizable and is exercised above.
   await page.getByRole('button',{name:'Full right region'}).click();
   check(await page.locator('[data-region="right"]').getAttribute('data-depth')==='full','Right region promotes to full view');
   check((await channel('read.focus')).data.subject.ref===p.sources[1].binding.ref,'Region promotion never changes semantic focus');
@@ -77,48 +98,59 @@ export default async function run({ page, baseUrl, check, shot, channel, provisi
   await page.waitForFunction(()=>document.querySelector('[data-project-path="Work/Editor"]')?.getAttribute('aria-expanded')==='false');
   check(await nav.locator('[data-navigation-path="Work/Editor"] .project-files').count()===0,'Project disclosure collapses without closing its open sources');
   check(JSON.stringify((await channel('read.focus')).data)===JSON.stringify(focusBeforeBrowse),'Disclosure changes leave semantic focus untouched');
+  // Region depth is shell LAYOUT (DesktopShell setLayout), not a
+  // per-workspace property — the study shell's per-workspace depth law is
+  // superseded; the panel the flow opened stays open across the switch.
   await openWorkspaceStrip(page);
-  await page.locator('.desktop-menu > summary').click();
-  await page.getByRole('button',{name:'New workspace'}).click();
-  await openWorkspaceStrip(page);
-  await page.locator('.desktop-menu > summary').click();
-  await page.getByRole('textbox',{name:'Workspace name'}).fill('Research');
-  await page.getByRole('button',{name:'Create workspace',exact:true}).click();
-  check(await page.locator('.tab').count()===0,'A freeform workspace has its own surface arrangement');
-  await nav.locator('[data-project-path="Work/Editor"]').click();
+  await page.getByLabel('Workspace',{exact:true}).selectOption({label:'Research'});
+  // The row click toggles, so expand deterministically: the same per-project
+  // disclosure serves every workspace.
+  if(await nav.locator('[data-project-path="Work/Editor"]').getAttribute('aria-expanded')!=='true') await nav.locator('[data-project-path="Work/Editor"]').click();
   if(await page.getByRole('button',{name:'Editor: files',exact:true}).getAttribute('aria-pressed') !== 'true') await page.getByRole('button',{name:'Editor: files',exact:true}).click();
   await nav.locator('[data-navigation-path="Work/Editor"] .project-files').waitFor();
-  check(await nav.getByRole('button',{name:'Collapse Editor',exact:true}).getAttribute('aria-expanded')==='true','A different workspace has independent ProjectRef disclosure state');
+  check(await nav.locator('[data-project-path="Work/Editor"]').getAttribute('aria-expanded')==='true','A different workspace drives the same per-project disclosure (expanded, with its file listing)');
   await page.getByRole('button',{name:'Start writing',exact:true}).click();
-  await page.locator('.canvas-surface').fill('Research workspace writing.');
-  check(await page.locator('[data-region="right"]').getAttribute('data-depth')==='collapsed','A new workspace also starts with inspection closed');
+  // The freeform per-workspace writing surface is superseded: Start writing
+  // opens the owner's retained local draft (the #244/#258 law).
+  const researchDraft=page.locator('.draft-surface .cm-content');
+  await researchDraft.waitFor({timeout:15000});
+  await researchDraft.fill('Research workspace writing.');
+  await openWorkspaceStrip(page);
   await page.getByLabel('Workspace',{exact:true}).selectOption({label:'Writing desk'});
   await page.waitForFunction(()=>document.querySelectorAll('.pane.group').length===2);
   check(await page.locator('.pane.group').count()===2,'Project workspace restores its split constellation');
-  await nav.getByRole('button',{name:'Expand Editor',exact:true}).waitFor();
-  check(await nav.locator('[data-navigation-path="Work/Editor"] .project-files').count()===0,'Returning to a workspace restores that project disclosure');
-  await nav.getByRole('button',{name:'Expand Editor',exact:true}).click();
-  check(await page.locator('[data-region="right"]').getAttribute('data-depth')==='panel','Workspace restores its own region depths');
-  check(await page.getByRole('separator',{name:'Resize left region'}).getAttribute('aria-valuenow')==='256','Workspace restores its region width');
-  await page.locator('.tab').filter({hasText:p.sources[0].binding.path.split('/').pop()}).click();
+  // Project disclosure is PER-WORKSPACE (the study law stands): Writing
+  // desk collapsed this project earlier in the flow, and returning restores
+  // exactly that — Research holds its own expanded state.
+  check(await nav.locator('[data-project-path="Work/Editor"]').getAttribute('aria-expanded')!=='true','Returning to a workspace restores that workspace\'s own project disclosure (collapsed here; Research holds its own)');
+  check(await page.locator('[data-region="right"]').getAttribute('data-depth')==='panel','Region depth is shell layout and survives the workspace switch');
+  await page.locator('.pane.group').first().click();
   await page.waitForFunction(()=>(document.querySelector('.pane.focused .text-editor-host')?.__oiDocument?.() ?? [...document.querySelectorAll('.pane.focused .cm-content .cm-line')].map(l=>l.textContent.replace(/\u00a0/g,' ')).join('\n'))==='Workspace draft survives restart.\n');
   check(true,'Switching workspace preserves unsaved source writing');
   await page.reload(); await channel('info');
   await page.waitForFunction(()=>(document.querySelector('.pane.focused .text-editor-host')?.__oiDocument?.() ?? [...document.querySelectorAll('.pane.focused .cm-content .cm-line')].map(l=>l.textContent.replace(/\u00a0/g,' ')).join('\n'))==='Workspace draft survives restart.\n');
   check(true,'Reload restores the unsaved draft through the native source seam');
   check(await page.locator('.pane.group').count()===2,'Reload restores the complete split arrangement');
+  await openWorkspaceStrip(page);
   await page.getByLabel('Workspace',{exact:true}).selectOption({label:'Research'});
-  check(await page.locator('.canvas-surface').inputValue()==='Research workspace writing.','Freeform workspace restores its distinct writing');
-  check(await page.locator('[data-region="right"]').getAttribute('data-depth')==='collapsed','Freeform workspace restores its distinct right depth');
+  const retainedDraft=page.locator('.draft-surface .cm-content');
+  await retainedDraft.waitFor({timeout:15000});
+  check(await docText(page,'.draft-surface .cm-content')==='Research workspace writing.','The retained draft persists across workspace switches (the freeform per-workspace writing surface is superseded by the owner\'s retained draft)');
   await page.setViewportSize({width:700,height:820});
   check((await page.locator('[data-region="centre"]').boundingBox()).width>=440,'Narrow layout preserves the canvas minimum before side panels');
   check(await nav.isVisible(), 'A collapsed inspector does not evict the Central sidebar on a 700px desktop');
   check((await page.locator('[data-region="left"]').boundingBox()).width >= 200, 'Responsive Central sidebar retains a usable width');
   await page.setViewportSize({width:1280,height:820});
+  await openWorkspaceStrip(page);
   await page.getByLabel('Workspace',{exact:true}).selectOption({label:'Writing desk'});
   await page.waitForFunction(()=>document.querySelectorAll('.pane.group').length===2);
   await page.setViewportSize({width:1280,height:500});
   const files = nav.locator('[data-navigation-path="Work/Editor"] .project-files');
+  // The reload above remounted the navigator with its defaults (selected
+  // project expanded, but in the chats mode) — re-assert the files
+  // disclosure the scroll law is about before waiting on it.
+  if(await nav.locator('[data-project-path="Work/Editor"]').getAttribute('aria-expanded')!=='true') await nav.locator('[data-project-path="Work/Editor"]').click();
+  if(await page.getByRole('button',{name:'Editor: files',exact:true}).getAttribute('aria-pressed') !== 'true') await page.getByRole('button',{name:'Editor: files',exact:true}).click();
   // Restoring the workspace re-reads the project's real directory listing
   // (a native round trip); wait for that disclosure to actually mount
   // before hovering it, rather than racing the fetch.
@@ -149,9 +181,11 @@ export default async function run({ page, baseUrl, check, shot, channel, provisi
   await nav.locator('[data-project-path="Work/Other"]').click();
   if(await page.getByRole('button',{name:'Other: files',exact:true}).getAttribute('aria-pressed') !== 'true') await page.getByRole('button',{name:'Other: files',exact:true}).click();
   await page.waitForFunction(()=>document.querySelector('[data-project-path="Work/Other"]')?.getAttribute('aria-current')==='true');
-  check(await nav.getByRole('button',{name:'Collapse Editor',exact:true}).getAttribute('aria-expanded')==='true','Expanding another project does not collapse the prior project');
+  check(await nav.locator('[data-project-path="Work/Editor"]').getAttribute('aria-expanded')==='true','Expanding another project does not collapse the prior project');
   check(await nav.locator('[data-navigation-path="Work/Editor"] .project-files').isVisible(),'Independent project content stays visible during browsing');
-  await nav.locator('[data-project-path="Work/Editor"]').click();
+  // The project row toggles disclosure when it is the selected project, so
+  // only re-click it when the state to assert against is not already set.
+  if(await nav.locator('[data-project-path="Work/Editor"]').getAttribute('aria-expanded')!=='true') await nav.locator('[data-project-path="Work/Editor"]').click();
   if(await page.getByRole('button',{name:'Editor: files',exact:true}).getAttribute('aria-pressed') !== 'true') await page.getByRole('button',{name:'Editor: files',exact:true}).click();
   await files.waitFor();
   // The listing re-reads through the owner in stages (the root, then each

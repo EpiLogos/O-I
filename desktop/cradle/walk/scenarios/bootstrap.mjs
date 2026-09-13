@@ -158,23 +158,34 @@ export default async function run(ctx) {
     log("BOOT-09 skipped: this run provides no ctx.bridge.restart (only this file's own standalone main() does) — a real restoration failure needs a kernel that does not remember the binding.");
   }
 
-  // --- System: discovered-not-ready + the Gateway absence section ---
+  // --- System: the composition reading + the honest per-product gateway absence ---
   await page.getByRole("button", { name: "System", exact: true }).click();
   const system = page.getByRole("region", { name: "System composition" });
-  await system.getByText(/^Observed /).waitFor({ timeout: 15_000 });
-  check(true, "BOOT-06/12: the composition reading carries an observed-<relative time> freshness stamp");
+  // The reading's freshness renders as header facts; the census line exists
+  // only once a reading is present, so it is the observed-freshness signal.
+  await system.getByText(/\d+ disclosed · \d+ not disclosed/).waitFor({ timeout: 15_000 });
+  for (const fact of ["Ground", "Suite", "Census", "Observed"]) {
+    check(await system.getByText(fact, { exact: true }).count() > 0, `BOOT-06/12: the composition reading carries its ${fact} fact`);
+  }
   const discoveredRow = system.getByText(/discovered, not verified ready/);
   check(await discoveredRow.count() > 0, "BOOT-06/12: an installed/registered product is labelled discovered, not verified ready — never asserted runtime-ready");
-  const gateway = page.getByRole("region", { name: "Agency Gateway" });
-  await gateway.getByText("No owner operation is exposed to the desktop yet.").waitFor({ timeout: 15_000 });
-  await gateway.getByText("Ecology read").waitFor();
-  await gateway.getByText("Attach", { exact: true }).waitFor();
-  await gateway.getByText("Stream cursor/replay").waitFor();
-  check(true, "BOOT-15: the Gateway absence section names the missing obligations honestly (no invented ecology row, no probe, no auto start)");
-  const aikitFact = gateway.getByText("AIKit executable bound");
-  const sessionSpaceFact = gateway.getByText(/SessionSpace discovery/);
-  const providerFact = gateway.getByText(/Providers \(/);
-  check((await aikitFact.count()) > 0 && (await sessionSpaceFact.count()) > 0 && (await providerFact.count()) > 0, "BOOT-15: the three real facts (AIKit executable bound, SessionSpace discovery, provider list) are all present");
+  // The gateway obligations moved into the per-product sections: the
+  // Actuation section names them and marks each "not available yet" — no
+  // invented ecology row, no probe, no auto start (BOOT-15).
+  const actuation = system.locator("details.product-section", { hasText: "Actuation" });
+  await actuation.getByText("Actuation", { exact: true }).waitFor({ timeout: 15_000 });
+  await actuation.locator("summary").first().click();
+  for (const obligation of ["Ecology read", "Attach", "Stream cursor / replay"]) {
+    const row = actuation.locator("li").filter({ hasText: obligation });
+    check(await row.getByText("not available yet").count() === 1, `BOOT-15: the gateway obligation "${obligation}" is disclosed honestly — not available yet, never invented`);
+  }
+  // The open project's SessionSpace topology is disclosed from the owner's
+  // own agency reading — the row exists with the owner's count or the
+  // owner's refusal, never an invented number.
+  const aikit = system.locator("details.product-section", { hasText: "AIKit" });
+  await aikit.locator("summary").first().click();
+  await aikit.getByText(/SessionSpaces \(/).waitFor({ timeout: 15_000 });
+  check(true, "BOOT-15: session topology is disclosed from the owner's agency reading (count or refusal verbatim), never invented");
   await shotTo(page, artifactsDir, "system-gateway");
 }
 
