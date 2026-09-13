@@ -31,6 +31,11 @@ selected `STORIES.md` / `DEVELOPER-FIELD.md` rows, their P01–P18 conditions,
 Resolve locators through native source, not assumed siblings of a projected copy.
 Read original issue/vision/specs for meaning, not PR prose or code alone.
 
+For each commissioned campaign round also read
+`docs/experience/OPTIMISATION.md`. Select the relevant optimisation lanes and
+quality/fidelity invariants before measuring. This is part of C0–C5, not a new
+campaign or an instruction to benchmark every model before useful work begins.
+
 ## Conduct within the one campaign
 
 1. **Reconcile the source-to-operation prerequisites.** Correct broken canonical
@@ -104,6 +109,32 @@ Read original issue/vision/specs for meaning, not PR prose or code alone.
     what remains broken, what was repaired, exact evidence and one next action.
     Don't stop at an impressive generated matrix. The lead carries dependencies
     and subagents; the human is not a dispatcher between product chats.
+
+## Optimisation within those same steps
+
+At C0/C1 bind a useful outcome, unchanged scope/authority/fidelity, exact baseline,
+eligible alternatives, measurement basis and finite budget. During C2/C3 retain
+whole-task costs including failed/rejected attempts, verification and learning;
+observe actual context/Skill loading, human friction and relevant composed-load
+resource behaviour. Unknown usage is not zero, and estimates are not billed spend.
+AIKit owns model/roster resolution; Factory consumes it and returns scoped outcome
+evidence. Historical fitness never creates present availability or authorisation.
+
+At C4/C5 compare the bounded native change using comparable inputs, fresh actors
+and independent negative/recovery proof. Keep a compact comparison behind the
+existing episode/issue: basis, hypothesis, change, result/resource delta,
+denominator/uncertainty, disposition, applicability and rollback. No improvement
+or inconclusive evidence is a valid return; do not manufacture a win.
+
+For learning, test trigger/near-miss and fresh-agent discovery, actual loading and
+useful reuse on unfamiliar inputs—not just a saved Skill or repeated transcript.
+For optimisation of optimisation, make the exact diagnosis/experiment/evaluation
+practice the Candidate; compare O0/O1 under equal total improvement budgets and
+fixed independent holdouts. Include all improvement overhead and regressions.
+Test the verifier with broken/stale/unsafe candidates; it cannot certify gains by
+changing its success criterion. Repair, learning and promotion retain different
+authority. Use OPTIMISATION.md and the existing QL #94 acceptance companion for
+the concrete cases; neither creates an unbounded self-rewrite loop.
 
 ## Outputs and stopping rules
 
