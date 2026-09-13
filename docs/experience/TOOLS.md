@@ -1,6 +1,6 @@
 # Source projection and native capability binding
 
-This tooling supports the existing story/capability conventions. It is **not** an execution engine, a substitute for normal AIKit discovery, or a verifier of the user's experience.
+This tooling supports the existing story/capability conventions. It is **not** an execution engine, a substitute for normal AIKit discovery, or a verifier of the user's experience. The UX source remains vision-level. Its readable and compiled forms connect to native documentation, capability and practice operations as described in [DOCUMENT-OPERATIONS.md](DOCUMENT-OPERATIONS.md).
 
 ## Source checks
 
@@ -12,6 +12,10 @@ python3 scripts/experience_map.py
 ```
 
 A successful command means the declared local story rows and their practice/source relationships parse and agree. It returns `feature_verdict: null` and `runtime_readiness: not-assessed`. Without a QL checkout it explicitly reports `source-root-required`; it does not silently claim the delegated field was imported.
+
+`campaign.json` is the single source entry. Its `source_modules` includes `developer-field.json`, which contributes the terminal, real Telegram/gateway and document-operation stories and an explicit crosswalk of inherited requirements. The compiler reads all declared modules, verifies story/practice/obligation references, rejects dropped or duplicate declared requirements, and retains full source text and unknown metadata. A file/family qualifier is not discarded merely because it is outside a story-table cell.
+
+The crosswalk includes the complete declared TUI §21 A–H and §22.1–14 set, inspected #97 physical/developer remainders, #154 A–G, #65 A–I and SDK specimens. It identifies where the original definitions must be read; it does not certify that its local summary exhausts every subcase or that newer owner requirements were automatically enumerated.
 
 ## Read the complete selected QL source and actual native matrices
 
@@ -31,10 +35,12 @@ The variables must name the inspected actual paths; they are not commands for di
 
 Outputs:
 
-- `ux-reading.json` — lossless structured reading of existing UX fields, `extensions.agent_ux`, source hashes, declared proof references, actual supplied native capability records and the full QL trace/standing when supplied;
-- `matrix.csv` and `matrix.json` — relation-only `ql-capability-matrix/1` reading of story/practice requirements, retaining the explicit conditions and qualified external capability links when bound.
+- `ux-reading.json` — structured reading of the existing UX fields and `extensions.agent_ux`, per-source hashes/locators and complete source prose, expanded family/practice conditions, inherited obligations and candidate links, actual supplied native capability records and the full QL trace/standing when supplied;
+- `matrix.csv` and `matrix.json` — relation-only `ql-capability-matrix/1` reading with declared **story-practice** and **story-obligation** views. The first states the practice required under these conditions. The second states which original proving obligation constrains the activity. Qualified external capabilities remain source candidates until explicitly bound; no native capability definition is copied into the relation view.
 
-The output directory is newly created with private access; no native source or matrix is edited. Treat output as private until reviewed because supplied native records can refer to local paths. A source digest identifies actual bytes, not runtime acceptance or cryptographic attestation of the operator.
+`source_digest` retains the original primary story-file basis for compatibility. Each story has its own actual source-file digest, and `reading_digest` binds the declared config, module sources, practice/profile/operator sources and document-operation source. These are byte-basis observations, not semantic review, cryptographic attestation of the operator or human adoption. Remote linked contracts and installed artifacts still require their exact episode basis.
+
+The output directory is newly created with private access; no native source or matrix is edited. Treat the reading as private until reviewed because supplied native records can refer to local paths. The operator reading contains complete source; the acting agent still receives only the permitted, appropriate packet, not a dump of the entire campaign or the verifier's hidden expected result.
 
 ## Bind capabilities without inventing IDs
 
@@ -54,7 +60,9 @@ The first inventory gives every actual capability an explicit `uncovered` dispos
 ]
 ```
 
-Run the same reading with `--bindings "$BINDINGS_FILE"` and another new output directory. Stale digest, fabricated capability, unknown story and unsupported coverage disposition are rejected. `transitive` additionally requires the support path; `deferred` requires reason, owner and re-entry. Extra native columns/metadata and binding extensions are preserved. A QL story is qualified as `QL-MEF:UX01` and is only accepted when the actual QL source was supplied.
+Run the same reading with `--bindings "$BINDINGS_FILE"` and another new output directory. Stale digest, fabricated capability, unknown story and unsupported coverage disposition are rejected. `transitive` additionally requires the support path; `deferred` requires reason, owner and re-entry. The complete proposed binding batch is validated before any binding is applied. Extra native columns/metadata and binding extensions are preserved. A QL story is qualified as `QL-MEF:UX01` and is only accepted when the actual QL source was supplied.
+
+The five inspected AIKit candidates in `developer-field.json` reduce lookup effort but do not populate the native inventory or `native_refs` automatically. Their blob/reason is historical source evidence; the selected current matrix and actual operation must be reviewed. Required unbound Central/Actuation/Factory/Workcell relationships remain explicit.
 
 One valid relation does **not** mark the story fully bound or executed. The complete selected episode still needs every required operation, practice, context, permission, actual surface and machine. Exact Action invocation/loading evidence remains in the current native campaign, not this source tool. The compiler deliberately does not accept a self-authored `passed` flag as proof.
 
@@ -64,8 +72,12 @@ The publication supplies a concrete source profile and planning projection now. 
 
 At C0/C2, inspect the current existing Knowledge/SourcePool/ProjectMap and UX-field reader. Use it if it supports these source/ref relations. If it does not, record the precise source-adapter/typed-relation delta at the existing native owner and implement it there within the ongoing programme; no new Wiki, renderer, scheduler or capability registry is required. Until then the exact source reading is an explicit usable bootstrap, not evidence of automatic graph/discovery support.
 
-The full forward/reverse inventory is deliberately performed against the selected current cut. No static hand-authored list can guarantee that later native capabilities were not added. Uncovered rows require a story or explicit supporting/deferred/inapplicable disposition before full campaign coverage is claimed. Refer to `STORY-PROFILE.md` for the retained source and standing rules.
+Use the current native document and practice repertoire from `DOCUMENT-OPERATIONS.md`: vision/source standing, directional capability-account updates, actual project-author set, source discovery/loading and evidence return. A source role in JSON is not an executed Central source-relation write, and a generated vision refinement does not author the human's position. Runtime mutation and source retirement retain their native revision and authority rules.
+
+The full forward/reverse inventory is performed against the selected current cut. No static list guarantees that later native capabilities or old requirement subcases were included. Uncovered rows require a story or explicit supporting/deferred/inapplicable disposition before full coverage is claimed. Refer to `STORY-PROFILE.md` for retained source and standing rules.
 
 ## Continue with real execution
 
-After source binding, the operator follows `LOCAL-CAMPAIGN.md` and the existing `CONTINUOUS-WORK-PROVING.md`/native campaign commands. Source compilation is not a substitute for those tests. Do not stop after generating a large map: select the first ready ordinary-use story, perform it through an actual agent/human entry, observe the handoffs, repair within scope and repeat.
+After the first bounded batch is bound, follow `LOCAL-CAMPAIGN.md` and the existing `CONTINUOUS-WORK-PROVING.md`/native campaign commands. Bind every promised terminal host separately; a tmux pass is not cmux or Herdr proof. For Telegram, actual sender/admission/agent/context/native operation/received reply and later continuation must be observed; fake Bot API or journal tests retain their narrower grade.
+
+Source compilation is not a substitute for those operations. Do not stop after generating a large map: select the first ready ordinary-use story, perform it through an actual agent/human entry, observe the handoffs, preserve failure, repair within scope and repeat. One orchestrator carries the source/practice/capability/test reconciliation; the human does not relay tasks between product chats.
