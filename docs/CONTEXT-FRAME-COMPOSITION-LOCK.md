@@ -134,7 +134,7 @@ O:I coordinates and explains all three; it does not collapse them into an opaque
 | **Lifecycle planner** | Native-owner install/change/remove operations, receipts, interruption recovery, composition-aware updates; `inspect → plan → install/adopt → verify → change/update/repair → rollback/disconnect/remove → verify retained state` with declared target machine, owner, effects and recovery per mutation. |
 | **Cross-cell composition** | Client-mode (`4.5/0`) minimum, Central projection rules, Workcell connection lifecycle and compatibility. |
 | **Setup and System** | The same plans and owner operations through CLI, Desktop and authorised agents; recognition precedes mutation; no second O:I settings database; Desktop preferences stay separate from the world constitution. |
-| **Acceptance campaign** | Six forms inside CF5, standalone native products, all-products hosting, transitions, teardown and two-machine tests with exact evidence and physical readiness gates. |
+| **Acceptance campaign** | Six modes inside CF5, standalone native products, all-products hosting, transitions, teardown and two-machine tests with exact evidence and physical readiness gates — carried in [CONTEXT-FRAME-ACCEPTANCE-CAMPAIGN.md](CONTEXT-FRAME-ACCEPTANCE-CAMPAIGN.md). |
 
 Acceptance proves, for each supported composition: fresh install, existing-world adoption, a useful capability journey, absence of unselected dependencies, repeat application, restart, composition change, update, interruption/recovery, supported rollback, removal and retained-state verification. A package rollback is not automatically a data rollback; interrupted multi-product operations are not magically atomic; teardown is complete only when the residual state is explained.
 
