@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "task-basis",
-  "generated_at": "2026-09-13T10:50:40.846Z",
+  "generated_at": "2026-09-13T10:53:25.987Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 4900,
+  "duration_ms": 4858,
   "checks": [
     {
       "ok": true,
@@ -77,7 +77,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-13T10:50:41.011Z",
+        "mounted_at": "2026-09-13T10:53:26.078Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -88,7 +88,7 @@
     {
       "ok": true,
       "op": "invoke.encounter_task_read",
-      "duration_ms": 833.3,
+      "duration_ms": 912.1,
       "data": {
         "outcome": {
           "data": {
@@ -103,7 +103,7 @@
                 "--agent-session",
                 "agent-session/task-basis-walk",
                 "--expected-revision",
-                "task-binding/01M2D67ZCS2GJTT5YRYWKGXH06"
+                "task-binding/01M2D6D14WSD04Q2R4XN90G8ZG"
               ],
               "id": "task-e38fbf4d288acdf99bfa79fa6cd50b5795c0ef4b8af23d08f0e92458cbffbaed",
               "label": "Task child acceptance ACP",
@@ -114,7 +114,7 @@
             "request": {
               "authority_ref": "authority:task-basis-walk",
               "central": {
-                "central_root": "/private/tmp/oi-cradle-editor-6kOrM3",
+                "central_root": "/private/tmp/oi-cradle-editor-hpwjgW",
                 "ctrl_bin": "/Users/admin/.cargo/bin/ctrl",
                 "participant_refs": [
                   "agent:editor-walk"
@@ -126,7 +126,7 @@
                 ],
                 "task_ref": "task:task-basis-walk"
               },
-              "cwd": "/private/tmp/oi-cradle-editor-6kOrM3/Work/Editor/task-scratch",
+              "cwd": "/private/tmp/oi-cradle-editor-hpwjgW/Work/Editor/task-scratch",
               "material_host": null,
               "provider": {
                 "argv": [
@@ -134,19 +134,19 @@
                   "-u",
                   "/private/tmp/oi-cell-a/desktop/cradle/walk/fixtures/addressed-provider.py",
                   "acp",
-                  "/private/tmp/oi-cradle-editor-6kOrM3/task-provider.log"
+                  "/private/tmp/oi-cradle-editor-hpwjgW/task-provider.log"
                 ],
                 "id": "task-child",
                 "label": "Task child acceptance ACP",
                 "protocol": "acp"
               },
               "selected_directories": [
-                "/private/tmp/oi-cradle-editor-6kOrM3/Work/Editor/task-scratch"
+                "/private/tmp/oi-cradle-editor-hpwjgW/Work/Editor/task-scratch"
               ],
               "workcell_boundary_bin": "/Users/admin/Central/Work/Workcell/target/release/workcell-write-boundary"
             },
             "requirements": null,
-            "revision": "task-binding/01M2D67ZCS2GJTT5YRYWKGXH06",
+            "revision": "task-binding/01M2D6D14WSD04Q2R4XN90G8ZG",
             "schema": "aikit.encounter-task/v1"
           },
           "result": "encounter_task_reading"
@@ -156,7 +156,7 @@
     {
       "ok": true,
       "op": "invoke.encounter_task_read",
-      "duration_ms": 125.8,
+      "duration_ms": 134.7,
       "data": {
         "outcome": {
           "data": null,
@@ -167,7 +167,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 24,
+      "duration_ms": 50,
       "data": {
         "file": "task-basis-task-section-verbatim.png"
       }
@@ -175,7 +175,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 27,
+      "duration_ms": 28,
       "data": {
         "file": "task-basis-inspect-now-fed-honest-state.png"
       }
@@ -183,7 +183,7 @@
     {
       "ok": false,
       "op": "invoke.encounter",
-      "duration_ms": 268.7,
+      "duration_ms": 287.4,
       "error": "Task preparation is incomplete; explicitly recover the same request [encounter.runtime]"
     },
     {

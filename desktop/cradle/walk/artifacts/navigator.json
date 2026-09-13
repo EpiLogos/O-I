@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "navigator",
-  "generated_at": "2026-09-13T10:41:38.611Z",
+  "generated_at": "2026-09-13T10:53:05.893Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 5655,
+  "duration_ms": 5516,
   "checks": [
     {
       "ok": true,
@@ -191,7 +191,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-13T10:41:39.503Z",
+        "mounted_at": "2026-09-13T10:53:06.818Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -202,13 +202,13 @@
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 527.5,
+      "duration_ms": 486.2,
       "data": {}
     },
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "receipts": [
           {
@@ -234,7 +234,7 @@
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 969.3,
+      "duration_ms": 696.3,
       "data": {
         "buffers": {},
         "focus": {},
@@ -1838,7 +1838,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 26,
+      "duration_ms": 17,
       "data": {
         "file": "navigator-project-ground.png"
       }
@@ -1846,7 +1846,7 @@
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 417.5,
+      "duration_ms": 416.5,
       "data": {
         "buffers": {},
         "focus": {},
@@ -3318,7 +3318,7 @@
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 858.4,
+      "duration_ms": 1047.1,
       "data": {
         "buffers": {},
         "focus": {},
@@ -4860,7 +4860,7 @@
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "receipts": [
           {
@@ -4907,7 +4907,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 34,
+      "duration_ms": 33,
       "data": {
         "file": "navigator-restored-writing.png"
       }
@@ -4918,7 +4918,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-13T10:41:44.202Z",
+        "mounted_at": "2026-09-13T10:53:11.346Z",
         "transport": {
           "kind": "unavailable",
           "reason": "no kernel transport: neither the Tauri host nor a dev walk bridge is reachable"
@@ -4928,7 +4928,7 @@
     }
   ],
   "metrics": {
-    "world_summon_ms": 2
+    "world_summon_ms": 3
   },
   "screenshots": [
     "navigator-project-ground.png",

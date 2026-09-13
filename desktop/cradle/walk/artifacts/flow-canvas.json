@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "flow-canvas",
-  "generated_at": "2026-09-13T10:41:51.088Z",
+  "generated_at": "2026-09-13T10:53:18.440Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 3277,
+  "duration_ms": 3463,
   "checks": [
     {
       "ok": true,
@@ -134,7 +134,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-13T10:41:51.187Z",
+        "mounted_at": "2026-09-13T10:53:18.542Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -145,39 +145,39 @@
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 0.4,
+      "duration_ms": 0.5,
       "data": {
         "layout": {
           "root": {
             "type": "group",
             "id": "g1",
             "tabs": [
-              "af6f575f-f761-457d-a721-b4ddb0051c33"
+              "04b08752-06d4-4598-b9ca-5c7868993ad8"
             ],
             "pinned": [],
-            "active": "af6f575f-f761-457d-a721-b4ddb0051c33"
+            "active": "04b08752-06d4-4598-b9ca-5c7868993ad8"
           },
           "surfaces": {
-            "128518af-c50c-476f-b641-3835d3b4b3ea": {
-              "id": "128518af-c50c-476f-b641-3835d3b4b3ea",
+            "514e78ea-f162-41f0-b3ab-ce6aad0d7035": {
+              "id": "514e78ea-f162-41f0-b3ab-ce6aad0d7035",
               "kind": "draft",
               "title": "Draft",
               "project": "Editor"
             },
-            "af6f575f-f761-457d-a721-b4ddb0051c33": {
-              "id": "af6f575f-f761-457d-a721-b4ddb0051c33",
+            "04b08752-06d4-4598-b9ca-5c7868993ad8": {
+              "id": "04b08752-06d4-4598-b9ca-5c7868993ad8",
               "kind": "flow",
-              "title": "2026-09-13-1141.md",
+              "title": "2026-09-13-1153.md",
               "project": "Editor",
-              "ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-13-1141.md",
+              "ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-13-1153.md",
               "flow": {
-                "flowRef": "central:flow:project:editor-walk:1789296113179142000",
-                "path": "ProjectCentral/now/flows/2026-09-13-1141.md"
+                "flowRef": "central:flow:project:editor-walk:1789296800561874000",
+                "path": "ProjectCentral/now/flows/2026-09-13-1153.md"
               }
             }
           },
           "closedStack": [
-            "128518af-c50c-476f-b641-3835d3b4b3ea"
+            "514e78ea-f162-41f0-b3ab-ce6aad0d7035"
           ],
           "focusedGroupId": "g1",
           "agencyDepth": "panel",
@@ -190,7 +190,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 18,
+      "duration_ms": 37,
       "data": {
         "file": "flow-canvas-flow-canvas-saved.png"
       }
@@ -198,7 +198,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 32,
+      "duration_ms": 19,
       "data": {
         "file": "flow-canvas-flow-canvas-sessions-bound.png"
       }
@@ -206,7 +206,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 30,
+      "duration_ms": 18,
       "data": {
         "file": "flow-canvas-flow-canvas-conflict-resolved.png"
       }
@@ -214,39 +214,39 @@
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "layout": {
           "root": {
             "type": "group",
             "id": "g1",
             "tabs": [
-              "af6f575f-f761-457d-a721-b4ddb0051c33",
-              "f355a59e-6ba7-4081-a47b-e85ec687f69a"
+              "04b08752-06d4-4598-b9ca-5c7868993ad8",
+              "27cc6f47-0327-4255-a061-e34ed8e9edb0"
             ],
             "pinned": [],
-            "active": "af6f575f-f761-457d-a721-b4ddb0051c33"
+            "active": "04b08752-06d4-4598-b9ca-5c7868993ad8"
           },
           "surfaces": {
-            "128518af-c50c-476f-b641-3835d3b4b3ea": {
-              "id": "128518af-c50c-476f-b641-3835d3b4b3ea",
+            "514e78ea-f162-41f0-b3ab-ce6aad0d7035": {
+              "id": "514e78ea-f162-41f0-b3ab-ce6aad0d7035",
               "kind": "draft",
               "title": "Draft",
               "project": "Editor"
             },
-            "af6f575f-f761-457d-a721-b4ddb0051c33": {
-              "id": "af6f575f-f761-457d-a721-b4ddb0051c33",
+            "04b08752-06d4-4598-b9ca-5c7868993ad8": {
+              "id": "04b08752-06d4-4598-b9ca-5c7868993ad8",
               "kind": "flow",
-              "title": "2026-09-13-1141.md",
+              "title": "2026-09-13-1153.md",
               "project": "Editor",
-              "ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-13-1141.md",
+              "ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-13-1153.md",
               "flow": {
-                "flowRef": "central:flow:project:editor-walk:1789296113179142000",
-                "path": "ProjectCentral/now/flows/2026-09-13-1141.md"
+                "flowRef": "central:flow:project:editor-walk:1789296800561874000",
+                "path": "ProjectCentral/now/flows/2026-09-13-1153.md"
               }
             },
-            "f355a59e-6ba7-4081-a47b-e85ec687f69a": {
-              "id": "f355a59e-6ba7-4081-a47b-e85ec687f69a",
+            "27cc6f47-0327-4255-a061-e34ed8e9edb0": {
+              "id": "27cc6f47-0327-4255-a061-e34ed8e9edb0",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "project": "Editor",
@@ -254,7 +254,7 @@
             }
           },
           "closedStack": [
-            "128518af-c50c-476f-b641-3835d3b4b3ea"
+            "514e78ea-f162-41f0-b3ab-ce6aad0d7035"
           ],
           "focusedGroupId": "g1",
           "agencyDepth": "panel",
@@ -267,7 +267,7 @@
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 14.1,
+      "duration_ms": 14,
       "data": {
         "buffers": {
           "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md": {
@@ -298,7 +298,7 @@
             "provenance": {
               "source": "central.projectcentral"
             },
-            "ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-13-1141.md"
+            "ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-13-1153.md"
           },
           "world": {
             "kind": "world",
@@ -345,13 +345,13 @@
                   "active": 1,
                   "flows": [
                     {
-                      "flow_ref": "central:flow:project:editor-walk:1789296113179142000",
+                      "flow_ref": "central:flow:project:editor-walk:1789296800561874000",
                       "lifecycle": "active",
-                      "path": "ProjectCentral/now/flows/2026-09-13-1141.md",
+                      "path": "ProjectCentral/now/flows/2026-09-13-1153.md",
                       "revision": "central.content-fnv1a64/v1:61:5177ee8e1ca82d6d",
                       "revisions_recorded": 5,
                       "source_present": true,
-                      "source_ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-13-1141.md",
+                      "source_ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-13-1153.md",
                       "uncommitted_edits": false
                     }
                   ],
@@ -396,7 +396,7 @@
               "source_files": 0
             },
             "projection": "project",
-            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-Ojeki2",
+            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-O1KvqJ",
             "schema": "central.world-map/v1",
             "sources": {
               "bindings": 12,
@@ -466,7 +466,7 @@
               "detected": false,
               "signals": []
             },
-            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-Ojeki2",
+            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-O1KvqJ",
             "root_state": "directory",
             "schema": "central.world-map/v1",
             "valid": true,
@@ -609,8 +609,8 @@
               },
               {
                 "agent_retrieval_allowed": true,
-                "path": "ProjectCentral/now/flows/2026-09-13-1141.md",
-                "ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-13-1141.md",
+                "path": "ProjectCentral/now/flows/2026-09-13-1153.md",
+                "ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-13-1153.md",
                 "revision": "central.content-fnv1a64/v1:61:5177ee8e1ca82d6d",
                 "treatment": "projectcentral-flow-retained-in-place"
               },
@@ -689,16 +689,16 @@
           }
         },
         "surfaces": {
-          "af6f575f-f761-457d-a721-b4ddb0051c33": {
+          "04b08752-06d4-4598-b9ca-5c7868993ad8": {
             "kind": "flow",
-            "source_ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-13-1141.md",
-            "surface_id": "af6f575f-f761-457d-a721-b4ddb0051c33",
-            "title": "2026-09-13-1141.md"
+            "source_ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-13-1153.md",
+            "surface_id": "04b08752-06d4-4598-b9ca-5c7868993ad8",
+            "title": "2026-09-13-1153.md"
           },
-          "f355a59e-6ba7-4081-a47b-e85ec687f69a": {
+          "27cc6f47-0327-4255-a061-e34ed8e9edb0": {
             "kind": "source",
             "source_ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
-            "surface_id": "f355a59e-6ba7-4081-a47b-e85ec687f69a",
+            "surface_id": "27cc6f47-0327-4255-a061-e34ed8e9edb0",
             "title": "00 01-DESIGN.md"
           }
         }
@@ -707,7 +707,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 20,
+      "duration_ms": 36,
       "data": {
         "file": "flow-canvas-flow-cocurrency-reference.png"
       }
