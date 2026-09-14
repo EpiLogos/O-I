@@ -2,7 +2,7 @@
 
 **Status:** active cross-programme bridge, 2026-09-14  
 **Purpose:** connect existing owners; this is **not** a new product programme or semantic owner.  
-**Native owners:** O:I #18 SharedField/Explore; O:I #289 desktop integration; O:I #65 physical/two-world acceptance; QL-MEF #135/#134 kernel/Nara finish; existing Central/AIKit/Actuation/Factory/Workcell contracts remain authoritative.
+**Native owners:** O:I #18 SharedField/Explore; O:I #289 desktop integration; O:I #65 physical/two-world acceptance; QL-MEF #135 retains whole kernel/lived acceptance while completed #94/#132/#133/#134 supply the returned QL/Epi producer floor; existing Central/AIKit/Actuation/Factory/Workcell contracts remain authoritative.
 
 ## 0. Why this bridge exists now
 
@@ -11,32 +11,29 @@ The QL/Epi field has crossed an integration threshold:
 - AW / QL-MEF #94 is complete: rooted Bimba/Wiki/property, original musical/Oikonomia C′, T/T′ consumption, canonical Epii and recognised named praxis are returned at their assigned scope.
 - K8 / #132 is complete: the accepted M1/M2/M3 engines are joined into the continuous field/runtime contract.
 - K9 / #133 is complete: the rich M′ living-instrument desktop/consumer contract is returned.
-- K10 / #134 remains the live producer lane for full Nara/M4, protected lived activity, Personal integration and whole-M accounting.
+- K10 / #134 is complete: full Nara/M4 producer, protected lived activity, Personal integration and whole-M accounting are returned at its assigned repository scope.
 - O:I already has a substantial SharedField/SpaceTimeDB/Projection/Explore implementation and security/conformance floor under #18.
 - O:I #289 / #292 is the current desktop integration lane and already owns the shared HTML output/template family, actual Agent/Run arrangement and Epi/Nara continuity.
 
-The remaining work must therefore not sequence as:
+The remaining work must therefore **not** sequence as:
 
 ```text
-finish K10
-→ integrate full Epi desktop
+integrate full Epi desktop
 → only then begin SharedField hosting/productisation
 ```
 
-The intended finish is parallel:
+The intended finish is parallel from the returned producer floor:
 
 ```text
-                  ┌──────── K10 / Nara finish ────────┐
-AW + K8 + K9 ─────┤                                    ├─→ joined local instrument
-                  ├──────── desktop integration ──────┤
-                  │                                    │
-                  └──────── SharedField hosting ──────┘
-                                      │
-                                      ▼
-                           two-world lived acceptance
+AW + K8 + K9 + K10 ───────┬──────── desktop integration ──────┐
+                           │                                    ├─→ joined local + shared instrument
+                           └──────── SharedField hosting ───────┘
+                                                                │
+                                                                ▼
+                                                     two-world lived acceptance
 ```
 
-The SharedField lane consumes already-returned public/projectable contracts now, while K10 finishes protected Personal state. K10 then joins the same Projection seam rather than causing a second SharedField build.
+SharedField productisation and desktop consumption now proceed together against the same returned refs, readings, Actions and privacy/provenance contracts. Neither should be postponed into another post-integration tranche.
 
 ## 1. Ownership law
 
@@ -67,25 +64,26 @@ Explore / desktop
 
 Do not turn SharedField into a Wiki store, the Wiki into a social feed, SpaceTimeDB into source identity, or a hosted HTML renderer into source authority.
 
-## 2. Three active finish lanes
+## 2. Returned producer floor and two active finish lanes
 
-### Lane A — K10 / Nara producer finish
+### Lane A — accepted QL/Epi producer floor
 
-Owner: QL-MEF #134.
+Owners returned through QL-MEF #94/#132/#133/#134; #135 retains whole-programme/lived acceptance.
 
-Complete the remaining native producer/accounting work:
+Consumers may now rely on the accepted producer contracts for:
 
 - full M4 identity/body/oracle/transformation/context/integration scope;
-- independently active centres and protected personal state;
-- Central Day/NOW/activity/replay consumption;
+- independently active centres and protected Personal state;
+- Central Day/NOW/activity/replay consumption relations;
 - actual Bimba ↔ Nara ↔ Epii operation;
-- Personal450 / whole-M receipt and protected disclosure law.
+- Personal450 / whole-M accounting and protected disclosure distinctions;
+- the M1–M3 continuous field and rich M′/Epi desktop consumer contract.
 
-K10 does **not** own public hosting. It publishes stable subjects, readings, Actions, revisions and disclosure-relevant state for O:I consumers.
+These producers do **not** own public hosting. They supply stable subjects, readings, Actions, revisions, source standing and disclosure-relevant state for O:I consumers.
 
 ### Lane B — current desktop integration
 
-Owner: O:I #289 / #292, consuming current QL/Epi producer contracts.
+Owner: O:I #289 / #292, consuming the returned QL/Epi producer contracts.
 
 Integrate the living instrument into the existing O:I host, preserving one semantic field:
 
@@ -108,7 +106,7 @@ The shared HTML template/output family in #289 is part of this bridge: structure
 
 Owner: O:I #18, coordinated with #65 and current Gateway/Workcell owners.
 
-Proceed now against already-returned public/projectable material:
+Proceed now against the returned public/projectable material:
 
 1. commission a persistent SpaceTimeDB SharedField service on the second machine / selected Workcell;
 2. connect the current hosted SharedField module, security/admission/exchange contracts and Explore subscription path to that real service;
@@ -118,13 +116,14 @@ Proceed now against already-returned public/projectable material:
 6. prove real Participant/Contact/Watch/Contribution/Encounter flows with distinct identities;
 7. return an accepted Contribution through the native owner path rather than mutating projected source directly;
 8. exercise restart, reconnect, network loss, backup/restore and service relocation at their proper Workcell/host layer;
-9. connect Agent participation through the existing Gateway/session ecology without making SharedField publication mandatory for local Agency communication.
+9. connect Agent participation through the existing Gateway/session ecology without making SharedField publication mandatory for local Agency communication;
+10. exercise selected Nara/Personal representations through the returned K10 disclosure/protection distinctions without leaking raw protected state.
 
-This lane must not wait for the final private Nara body. It begins with projectable Wiki/Bimba/Epii/named-praxis/artifact forms and adds selected Nara/Personal representations only when K10 supplies their disclosure contract.
+Lane C is now an active consumer of the complete returned QL/Epi producer floor; there is no remaining K10 sequencing gate.
 
-## 3. Projectable field as the rich kernel lands
+## 3. Projectable field from the returned rich kernel
 
-The already-returned QL/Epi work gives SharedField real things to carry. Candidate projectable objects include, subject to source authority and privacy:
+The returned QL/Epi work gives SharedField real things to carry. Candidate projectable objects include, subject to source authority and privacy:
 
 ```text
 Bimba / Wiki nodes and typed relations
@@ -136,9 +135,10 @@ Epii-attributable outputs and explanations
 Project/World knowledge
 curated HTML artifacts / structured reports / handoffs
 M′ event or instrument representations
+selected Nara/Personal representations
 ```
 
-Protected-by-default material includes raw personal identity/journal/activity/body/bioquaternion state and any representation whose disclosure would reveal unselected private source. K10 determines the native Personal subject/readings; O:I determines the Projection/SharedField audience relation. Neither layer silently broadens the other.
+Protected-by-default material includes raw personal identity/journal/activity/body/bioquaternion state and any representation whose disclosure would reveal unselected private source. QL/Epi owners determine the native Personal subjects/readings and their standing; O:I determines the Projection/SharedField audience relation. Neither layer silently broadens the other.
 
 ## 4. Wiki × HTML × SharedField relation
 
@@ -210,7 +210,7 @@ This bridge is complete only when one real journey succeeds across exact current
 8. return accepted difference through the native source/Wiki owner
 9. observe the new revision locally and optionally reproject it
 10. retain the same semantic refs through desktop/web, reconnect and server restart
-11. exercise one selected QL/Epi object and, once K10 is ready, one selected Nara/Personal representation without private-state leakage
+11. exercise one selected Bimba/QL/Epi object and one selected Nara/Personal representation without private-state leakage
 ```
 
 Evidence remains graded:
@@ -228,14 +228,15 @@ From 2026-09-14 forward:
 AW #94       COMPLETE
 K8 #132      COMPLETE
 K9 #133      COMPLETE
-K10 #134     ACTIVE — finish Nara/Personal producer
+K10 #134     COMPLETE
 
-O:I #289     ACTIVE — integrate current desktop/Factory/Agency + rich M′/Epi consumers
-O:I #18      ACTIVE — productise/host SharedField against existing contracts now
+QL #135      OPEN — whole kernel/lived programme acceptance
+O:I #289     ACTIVE — integrate current desktop/Factory/Agency + rich M′/Epi/Nara consumers
+O:I #18      ACTIVE — productise/host SharedField against the returned contracts now
 O:I #65      ACTIVE — joined physical/two-world acceptance destination
 ```
 
-Do not hold Lane C for K10 except where the exact subject is protected Personal/Nara material. Do not close the local instrument merely because SharedField is not yet public-internet hosted; the required target for this tranche is a real self-hosted/two-machine SharedField experience. Do not call that experience complete from CI or single-identity fixtures.
+Do not create another QL/Epi producer wave for SharedField. Consume the accepted contracts and route any real defect to its native owner. Do not close the local instrument merely because SharedField is not yet public-internet hosted; the required target for this tranche is a real self-hosted/two-machine SharedField experience. Do not call that experience complete from CI or single-identity fixtures.
 
 The desired returned state for this phase is:
 
