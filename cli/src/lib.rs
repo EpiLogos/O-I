@@ -1,4 +1,14 @@
+pub mod catalog_source;
+pub mod context_frames;
+pub mod current_world;
+pub mod dev_world;
+pub mod development_field;
+pub mod guardian;
+pub mod modality;
 pub mod native_lifecycle;
+pub mod owner_disclosure;
 pub mod package;
+pub mod product_command;
 pub mod skillset;
 pub mod status;
+pub mod world_recognition;

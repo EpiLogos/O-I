@@ -3,10 +3,7 @@ name: Shared field
 on:
   push:
     branches:
-      - platform/shared-field-explore
-      - research/cordis-composable-agency
-      - agent/oi-017-encounter-security
-      - agent/oi-017-exchange-authority
+      - main
     paths:
       - 'shared-field/**'
       - '.github/workflows/shared-field.yml'
@@ -18,9 +15,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -31,6 +33,7 @@ jobs:
 
   spacetimedb-live:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -79,6 +82,11 @@ jobs:
           SPACETIMEDB_URI: ws://127.0.0.1:3000
           SPACETIMEDB_DATABASE: oi-shared-field-ci
         run: npm --prefix shared-field/spacetimedb run acceptance:explore-surface
+      - name: Prove W11 authorised Projection return across application Surfaces
+        env:
+          SPACETIMEDB_URI: ws://127.0.0.1:3000
+          SPACETIMEDB_DATABASE: oi-shared-field-ci
+        run: npm --prefix shared-field/spacetimedb run acceptance:w11-return
       - name: Publish isolated live A2A SharedField database
         run: spacetime publish oi-shared-field-a2a-ci --server local --module-path shared-field/spacetimedb --yes=all
       - name: Prove grant-gated A2A exchange returns only to generic quarantine

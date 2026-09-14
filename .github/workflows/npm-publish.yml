@@ -1,0 +1,58 @@
+name: Publish O:I npm package
+
+on:
+  workflow_dispatch:
+    inputs:
+      dist_tag:
+        description: npm dist-tag to publish
+        required: true
+        default: prelocal
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+      - name: Verify package
+        working-directory: packages/oi-cli
+        run: |
+          npm test
+          npm pack --dry-run
+      - name: Require bootstrapped npm package
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! npm view '@epi-logos/oi' name --json >/dev/null 2>&1; then
+            cat >&2 <<'EOF'
+          @epi-logos/oi does not exist in the npm registry yet.
+
+          npm trusted publishing cannot create the first registry entry. Bootstrap the
+          package once with an authenticated npm account that owns the @epi-logos scope,
+          then configure its GitHub Actions trusted publisher as:
+
+            organization/user: EpiLogos
+            repository:        O-I
+            workflow filename: npm-publish.yml
+            allowed action:    npm publish
+
+          After that one-time bootstrap, this workflow is the tokenless publication path.
+          EOF
+            exit 1
+          fi
+      - name: Publish with npm trusted publishing
+        working-directory: packages/oi-cli
+        run: npm publish --provenance --access public --tag '${{ inputs.dist_tag }}'

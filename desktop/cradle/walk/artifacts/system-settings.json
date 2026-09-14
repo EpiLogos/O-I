@@ -1,0 +1,113 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "system-settings",
+  "generated_at": "2026-09-13T16:16:55.757Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 8562,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Settings projects all seven positions (O:I + six products)"
+    },
+    {
+      "ok": true,
+      "label": "BOOT-06/12 every position carries its honest availability label — the census chip or the owner's own disclosed word, never fabricated readiness",
+      "data": {
+        "unlabelled": []
+      }
+    },
+    {
+      "ok": true,
+      "label": "L3 every section discloses its actions or renders its emptiness honestly — nothing fabricated, nothing filled in",
+      "data": {
+        "honesty": [
+          "O:I — composition: 2 disclosed action(s), 0 honest emptiness",
+          "Central: 8 disclosed action(s), 0 honest emptiness",
+          "AIKit: 1 disclosed action(s), 0 honest emptiness",
+          "Software Factory: 2 disclosed action(s), 0 honest emptiness",
+          "Workcell: 2 disclosed action(s), 0 honest emptiness",
+          "Actuation: 3 disclosed action(s), 0 honest emptiness",
+          "Quaternal Logic: 1 disclosed action(s), 0 honest emptiness"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "Missing native operations render as a plain not-yet-available note, never as disabled buttons"
+    },
+    {
+      "ok": true,
+      "label": "Activity view shows the honest no-project absence"
+    },
+    {
+      "ok": true,
+      "label": "Health rail restores the seven-position census"
+    },
+    {
+      "ok": true,
+      "label": "Settings inspection never reassigns semantic focus"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "read.focus",
+      "duration_ms": 4735.7,
+      "data": {}
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 32,
+      "data": {
+        "file": "system-settings-settings-activity.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 27,
+      "data": {
+        "file": "system-settings-settings-config.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 24,
+      "data": {
+        "file": "system-settings-settings-bootstrap.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.focus",
+      "duration_ms": 11.4,
+      "data": {}
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 31,
+      "data": {
+        "file": "system-settings-settings-health.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "system-settings-settings-activity.png",
+    "system-settings-settings-config.png",
+    "system-settings-settings-bootstrap.png",
+    "system-settings-settings-health.png"
+  ]
+}

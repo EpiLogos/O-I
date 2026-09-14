@@ -1,0 +1,61 @@
+{
+  "ok": true,
+  "status": "success",
+  "action": "central.recognize",
+  "data": {
+    "access": {
+      "basis": "posix-access-current-process",
+      "read_only": false,
+      "readable": true,
+      "searchable": true,
+      "writable": true
+    },
+    "bound": false,
+    "canonical_path": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-kumDve",
+    "checks": [
+      {
+        "detail": null,
+        "path": "Control/user",
+        "status": "present"
+      },
+      {
+        "detail": null,
+        "path": "Control/agents/governance",
+        "status": "present"
+      },
+      {
+        "detail": null,
+        "path": "Control/agents/wiki",
+        "status": "present"
+      },
+      {
+        "detail": null,
+        "path": "Control/machines",
+        "status": "present"
+      },
+      {
+        "detail": null,
+        "path": ".central",
+        "status": "present"
+      },
+      {
+        "detail": null,
+        "path": "Work",
+        "status": "present"
+      }
+    ],
+    "identity": {
+      "device": "16777231",
+      "inode": "145671233"
+    },
+    "limitations": [
+      "Recognition checks the six native structural directories; it does not adopt files, validate every project or read source bodies.",
+      "Access is a read-only OS permission observation, not a mutation-authority grant or a guarantee of a later write. Binding must revalidate the canonical directory identity."
+    ],
+    "mutated": false,
+    "outcome": "recognized",
+    "redirected": true,
+    "requested_path": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-kumDve",
+    "schema": "central.root-recognition/v1"
+  }
+}

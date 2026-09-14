@@ -1,0 +1,81 @@
+{
+  "stream_ref": "actuation:stream:oi-factory-provider-proof-2026-09-09",
+  "event": {
+    "event_ref": "actuation:event:1fcdf067-ad03-4dac-96a8-2ea2c03321ef",
+    "sequence": 1,
+    "kind": "model-usage",
+    "observed_at": "2026-09-09T13:50:21Z",
+    "native_trace_ref": "trace:codex:01a0866e-03f7-7210-832f-0b0f675351ba",
+    "evidence_refs": [
+      "trace:codex:01a0866e-03f7-7210-832f-0b0f675351ba"
+    ],
+    "disclosure": "portable",
+    "model_usage": {
+      "schema": "actuation.model-usage/v1",
+      "usage_ref": "model-usage:codex:invocation:codex:01a0866e-03f7-7210-832f-0b0f675351ba",
+      "actuation_ref": "actuation:oi-factory-provider-proof-2026-09-09",
+      "invocation_ref": "invocation:codex:01a0866e-03f7-7210-832f-0b0f675351ba",
+      "correlation": {
+        "harness_ref": "harness:codex",
+        "native_session_ref": "codex:thread:01a0866e-03f7-7210-832f-0b0f675351ba",
+        "agent_session_ref": "agent-session:codex:01a0866e-03f7-7210-832f-0b0f675351ba",
+        "external_refs": [
+          "run:01M230M2G0R6QT43KQQ9V1SWBY"
+        ]
+      },
+      "provider": {
+        "standing": "not-reported"
+      },
+      "model": {
+        "standing": "not-reported"
+      },
+      "tokens": {
+        "standing": "normalized-from-native",
+        "input": 20236,
+        "output": 10
+      },
+      "cache": {
+        "standing": "normalized-from-native",
+        "read_input": 12288,
+        "creation_input": 0
+      },
+      "usage_classes": [
+        {
+          "class": "reasoning_output",
+          "quantity": 0,
+          "unit": "tokens",
+          "standing": "normalized-from-native"
+        }
+      ],
+      "timing": {
+        "latency": {
+          "standing": "not-reported"
+        }
+      },
+      "cost": {
+        "standing": "not-reported"
+      },
+      "outcome": {
+        "state": "completed",
+        "standing": "normalized-from-native"
+      },
+      "provenance": {
+        "reporter_ref": "harness:codex",
+        "native_event_ref": "codex:event:invocation:codex:01a0866e-03f7-7210-832f-0b0f675351ba:turn.completed",
+        "native_schema": "codex.exec-jsonl/turn.completed",
+        "observed_at": "2026-09-09T13:50:21Z",
+        "raw_evidence_refs": [
+          "trace:codex:01a0866e-03f7-7210-832f-0b0f675351ba"
+        ]
+      }
+    }
+  },
+  "cursor": {
+    "last_sequence": 1,
+    "next_sequence": 2
+  },
+  "lifecycle": {
+    "state": "open"
+  },
+  "deduplicated": false
+}

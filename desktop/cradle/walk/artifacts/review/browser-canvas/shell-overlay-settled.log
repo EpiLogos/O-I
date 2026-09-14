@@ -1,0 +1,53 @@
+serving the cradle at http://localhost:1423 (external)
+
+=== scenario: shell-recovery ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4197 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4197 (fresh kernel, seq from 1)
+PASS  One-tab Split creates a usable empty sibling
+PASS  Empty split survives relaunch of the renderer
+PASS  Opening another source fills the focused empty pane
+PASS  Workspace footer visible at 1280
+PASS  Global top strip visible at 1280
+PASS  Both region toggles remain at the top at 1280
+PASS  No page overflow at 1280
+  screenshot: artifacts/shell-recovery-1280.png
+PASS  Workspace footer visible at 900
+PASS  Global top strip visible at 900
+PASS  Both region toggles remain at the top at 900
+PASS  No page overflow at 900
+  screenshot: artifacts/shell-recovery-900.png
+PASS  Workspace footer visible at 760
+PASS  Global top strip visible at 760
+PASS  Both region toggles remain at the top at 760
+PASS  No page overflow at 760
+  screenshot: artifacts/shell-recovery-760.png
+PASS  Workspace footer visible at 639
+PASS  Global top strip visible at 639
+PASS  Both region toggles remain at the top at 639
+PASS  No page overflow at 639
+PASS  Narrow canvas exposes one usable focused pane at 639
+PASS  Top strip switches the focused pane at 639
+PASS  Central is summonable at 639
+PASS  Overlay returns focus at 639
+PASS  Keyboard summons Central at 639
+  screenshot: artifacts/shell-recovery-639.png
+PASS  Workspace footer visible at 390
+PASS  Global top strip visible at 390
+PASS  Both region toggles remain at the top at 390
+PASS  No page overflow at 390
+PASS  Narrow canvas exposes one usable focused pane at 390
+PASS  Top strip switches the focused pane at 390
+PASS  Central is summonable at 390
+PASS  Overlay returns focus at 390
+PASS  Keyboard summons Central at 390
+  screenshot: artifacts/shell-recovery-390.png
+PASS  Responsive transitions preserve the pane tree
+PASS  Overlay preserves intended sidebar depth
+  screenshot: artifacts/shell-recovery-system-1280.png
+  screenshot: artifacts/shell-recovery-system-900.png
+PASS  Point-cloud proposals are not mounted in production
+  stopped walk-bridge
+  receipt: artifacts/shell-recovery.json — 36/36 checks, PASS
+
+=== walk summary ===
+PASS  shell-recovery — 36/36 checks

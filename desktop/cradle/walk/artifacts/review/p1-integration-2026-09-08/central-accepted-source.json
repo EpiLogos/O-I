@@ -1,0 +1,28 @@
+{
+  "accepted_revision": "f3559dbf900b8409ff00b24a84b824c6cd6ec2c3",
+  "archive": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/central-binding-20260908-903v6fyq/accepted-f3559db.tar",
+  "archive_sha256": "b6b5d666ed6a45fa012a84d25c96362155d40c58fecebf2a2d5ffbc2606ce3ec",
+  "archive_files_match_build_source": true,
+  "cargo": "/Users/admin/.rustup/toolchains/1.98.0-aarch64-apple-darwin/bin/cargo",
+  "command": [
+    "/Users/admin/.rustup/toolchains/1.98.0-aarch64-apple-darwin/bin/cargo",
+    "build",
+    "--locked",
+    "--manifest-path",
+    "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/central-binding-20260908-903v6fyq/source/Cargo.toml",
+    "-p",
+    "ctrl",
+    "--bin",
+    "ctrl"
+  ],
+  "environment": {
+    "CARGO_TARGET_DIR": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/central-binding-20260908-903v6fyq/owner-target",
+    "RUSTC": "/Users/admin/.rustup/toolchains/1.98.0-aarch64-apple-darwin/bin/rustc"
+  },
+  "binary": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/central-binding-20260908-903v6fyq/owner-target/debug/ctrl",
+  "binary_sha256": "5d8c0deaa26dd5e67d97ead611ebc012b201506fa3289de7ed8104c4a23725dd",
+  "ordinary_checks": 35,
+  "profile": "debug",
+  "prior_binary_receipt": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/central-binding-20260908-903v6fyq/receipt.json",
+  "native_acceptance": false
+}

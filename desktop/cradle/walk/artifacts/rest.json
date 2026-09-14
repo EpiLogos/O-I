@@ -1,0 +1,146 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "rest",
+  "generated_at": "2026-09-14T19:22:26.627Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": null,
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 743,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Desktop cold start is below 3 seconds"
+    },
+    {
+      "ok": true,
+      "label": "Missing native transport is reported as unavailable"
+    },
+    {
+      "ok": true,
+      "label": "One spatial desktop hosts the empty workspace"
+    },
+    {
+      "ok": true,
+      "label": "Exactly one contextual left region"
+    },
+    {
+      "ok": true,
+      "label": "Unavailable owner produces no fabricated projects"
+    },
+    {
+      "ok": true,
+      "label": "No persistent sidebar search input"
+    },
+    {
+      "ok": true,
+      "label": "An empty workspace opens as the one fresh-surface composition"
+    },
+    {
+      "ok": true,
+      "label": "No automatic textarea or address simulation at desktop start"
+    },
+    {
+      "ok": true,
+      "label": "The fresh page offers only its real entries",
+      "data": {
+        "entries": [
+          "Search ⌘K",
+          "Start writing"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "The rolling welcome prompt is the page heading"
+    },
+    {
+      "ok": true,
+      "label": "No \"back to workspace\" control that only returns to this same page"
+    },
+    {
+      "ok": true,
+      "label": "Writing opens with no register reachable at all"
+    },
+    {
+      "ok": true,
+      "label": "Unsaved writing names its owner-section destination beside the ordinary Save, and fabricates no register choice",
+      "data": {
+        "footer": "Control/user/flowsUnsavedSave · ⌘S",
+        "picker": 0
+      }
+    },
+    {
+      "ok": true,
+      "label": "The surface says the writing is unsaved rather than claiming owner ground"
+    },
+    {
+      "ok": true,
+      "label": "Unsaved writing survives a relaunch"
+    },
+    {
+      "ok": true,
+      "label": "The search aperture opens from the fresh page"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "capture.timing",
+      "duration_ms": 0.4,
+      "data": {
+        "fcp_ms": 172,
+        "dom_content_loaded_ms": 113.3,
+        "load_ms": 113.3
+      }
+    },
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-14T19:22:26.800Z",
+        "transport": {
+          "kind": "unavailable",
+          "reason": "no kernel transport: neither the Tauri host nor a dev walk bridge is reachable"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-14T19:22:27.276Z",
+        "transport": {
+          "kind": "unavailable",
+          "reason": "no kernel transport: neither the Tauri host nor a dev walk bridge is reachable"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 21,
+      "data": {
+        "file": "rest-desktop-rest.png"
+      }
+    }
+  ],
+  "metrics": {
+    "cold_start_fcp_ms": 172
+  },
+  "screenshots": [
+    "rest-desktop-rest.png"
+  ]
+}

@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epilogos.github.io/o-i/schemas/oi.world-recognition-v1.schema.json",
+  "title": "O:I World Recognition Result v1",
+  "description": "Observation-only result returned by an oi.world-recognition/v1 package contribution.",
+  "type": "object",
+  "required": ["schema", "provider_ref", "observations", "extension_requests"],
+  "properties": {
+    "schema": { "const": "oi.world-recognition-result/v1" },
+    "provider_ref": { "type": "string", "minLength": 1 },
+    "observations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/observation" }
+    },
+    "extension_requests": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/extensionRequest" }
+    }
+  },
+  "$defs": {
+    "nativeSystem": {
+      "type": "object",
+      "required": ["system_ref", "kind", "name"],
+      "properties": {
+        "system_ref": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "locator": { "type": "string", "minLength": 1 },
+        "source_revision": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "relation": {
+      "type": "object",
+      "required": ["relation", "from_ref", "to_ref"],
+      "properties": {
+        "relation": { "type": "string", "minLength": 1 },
+        "from_ref": { "type": "string", "minLength": 1 },
+        "to_ref": { "type": "string", "minLength": 1 },
+        "evidence": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "ownerBinding": {
+      "type": "object",
+      "required": ["owner", "contract", "state", "provenance"],
+      "properties": {
+        "owner": { "type": "string", "minLength": 1 },
+        "contract": { "type": "string", "minLength": 1 },
+        "state": { "type": "string", "minLength": 1 },
+        "canonical_ref": { "type": "string", "minLength": 1 },
+        "provenance": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      },
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["kind", "source", "detail"],
+      "properties": {
+        "kind": { "type": "string", "minLength": 1 },
+        "source": { "type": "string", "minLength": 1 },
+        "detail": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "observation": {
+      "type": "object",
+      "required": [
+        "observation_ref",
+        "native_system",
+        "support",
+        "faculties",
+        "relations",
+        "facts",
+        "owner_bindings",
+        "evidence"
+      ],
+      "properties": {
+        "observation_ref": { "type": "string", "minLength": 1 },
+        "native_system": { "$ref": "#/$defs/nativeSystem" },
+        "support": { "type": "string", "minLength": 1 },
+        "faculties": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "relations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/relation" }
+        },
+        "facts": { "type": "object" },
+        "owner_bindings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ownerBinding" }
+        },
+        "evidence": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/evidence" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "extensionRequest": {
+      "type": "object",
+      "required": [
+        "request_ref",
+        "native_system_ref",
+        "owner",
+        "reason",
+        "sdk",
+        "authoring_skill",
+        "conformance",
+        "package_target"
+      ],
+      "properties": {
+        "request_ref": { "type": "string", "minLength": 1 },
+        "native_system_ref": { "type": "string", "minLength": 1 },
+        "owner": { "type": "string", "minLength": 1 },
+        "reason": { "type": "string", "minLength": 1 },
+        "sdk": { "type": "string", "minLength": 1 },
+        "authoring_skill": { "type": "string", "minLength": 1 },
+        "conformance": { "type": "string", "minLength": 1 },
+        "package_target": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

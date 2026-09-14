@@ -1,0 +1,15 @@
+{
+  "standing": "Two actual AIKit sessions prepared; provider not opened; native walk pending",
+  "sessions": [
+    {
+      "space": "session-space/p1-native-first",
+      "ref": "agent-session/p1-native-first"
+    },
+    {
+      "space": "session-space/p1-native-second",
+      "ref": "agent-session/p1-native-second"
+    }
+  ],
+  "home": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-kumDve/.aikit-home",
+  "cwd": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-kumDve/Work/Editor"
+}

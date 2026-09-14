@@ -2,8 +2,37 @@
   "name": "@epilogos/oi-design-system",
   "version": "0.1.0",
   "private": true,
-  "files": ["tokens.css"],
+  "files": [
+    "search.css",
+    "tokens.css",
+    "assets",
+    "point-cloud.css",
+    "loading.mjs",
+    "DESKTOP-LANGUAGE.md",
+    "expression.mjs",
+    "expression.css",
+    "point-cloud"
+  ],
   "exports": {
-    "./tokens.css": "./tokens.css"
+    "./search.css": "./search.css",
+    "./tokens.css": "./tokens.css",
+    "./assets/oi-mark.svg": "./assets/oi-mark.svg",
+    "./assets/oi-glyph.svg": "./assets/oi-glyph.svg",
+    "./assets/oi-cube.svg": "./assets/oi-cube.svg",
+    "./point-cloud.css": "./point-cloud.css",
+    "./loading": "./loading.mjs",
+    "./expression": "./expression.mjs",
+    "./expression.css": "./expression.css",
+    "./point-cloud/config": "./point-cloud/config.mjs",
+    "./point-cloud/presets": "./point-cloud/presets.mjs",
+    "./point-cloud/host": "./point-cloud/host.mjs",
+    "./expressions-engine/*": "./expressions-engine/*"
+  },
+  "peerDependencies": {
+    "three": ">= 0.160"
+  },
+  "scripts": {
+    "verify": "node checks/verify.mjs",
+    "verify:browser": "node checks/browser.mjs"
   }
 }

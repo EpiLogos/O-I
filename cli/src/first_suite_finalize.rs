@@ -46,14 +46,27 @@ fn finalize_central_suite_registration() -> Result<(), String> {
         .and_then(|registration| registration.native_executable.as_deref())
         .and_then(resolve_executable)
         .ok_or_else(|| "Central native executable disappeared after bootstrap".to_owned())?;
-    let registration = registration_for(
+    let registration = registration_in_modality(
         central,
-        Some(executable),
+        Some(executable.clone()),
         Some(checkout.clone()),
         Some(central.docs_ref.clone()),
+        oi_cli::modality::InstallModality::FreshGround,
+        Some("pinned-source-checkout".to_owned()),
     )?;
     composition.modules.insert("central".to_owned(), registration);
     save_composition(&composition)?;
+    // Fresh-ground machine adoption through the registered ctrl's own
+    // Action (Central #87), shared with `oi init --personal-ground`.
+    match adopt_current_machine_through_ctrl(&executable, &personal_ground)? {
+        MachineAdoptionReport::Adopted(adopted) => println!(
+            "machine-adoption: {} ({} \u{2194} {})",
+            adopted.outcome, adopted.role, adopted.workcell_ref
+        ),
+        MachineAdoptionReport::Unavailable { ctrl_version } => println!(
+            "machine-adoption: unavailable (ctrl {ctrl_version} lacks {MACHINE_ADOPT_CURRENT_ACTION})"
+        ),
+    }
     println!("Central source: {} @ {}", checkout.display(), central.docs_ref);
     Ok(())
 }

@@ -27,6 +27,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: site
@@ -35,7 +36,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Verify shared-field contracts and browser adapters
+      - name: Verify shared-field contracts, public content and browser adapters
         run: |
           node --test \
             ../shared-field/shared-field.test.mjs \
@@ -46,6 +47,7 @@ jobs:
             ../shared-field/account-projection.test.mjs \
             ../shared-field/explore-surface.test.mjs \
             ../shared-field/spacetimedb-explore-surface.test.mjs \
+            public-content.test.mjs \
             projection-renderer.test.mjs \
             self-other-read-model.test.mjs \
             field-proof-read-model.test.mjs \
@@ -84,6 +86,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

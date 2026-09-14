@@ -1,0 +1,58 @@
+{
+  "schema": "oi.mainline-snapshot/v1",
+  "observed_at": "2026-09-14",
+  "purpose": "Durable exact-current source snapshot for the six native products composed by O:I. Every recorded revision is an accepted owner main and participates equally in current-main verification; product semantics and feature branches remain owner-native.",
+  "source_catalog": "surfaces.json",
+  "coordinator_rule": "O:I is the containing suite and records the exact accepted native-product cut. O:I itself is recorded by its owning PR/receipt rather than self-referentially inside this six-product snapshot.",
+  "products": [
+    {
+      "id": "central",
+      "repository": "https://github.com/EpiLogos/Central",
+      "revision": "39efa03ea8607bdd8a79b0e317457c2ccc3ead4c",
+      "state": "accepted-main",
+      "note": "Exact Central main observed 2026-09-14; includes current root-meta-project, Agent expression allocation and the existing native verification contract."
+    },
+    {
+      "id": "actuation",
+      "repository": "https://github.com/EpiLogos/Actuation",
+      "revision": "67e6b296b85bd3eb1554802fd55a476c474aa566",
+      "state": "accepted-main",
+      "note": "Exact Actuation main observed 2026-09-14; current native Agency/Actuation authority includes the Rust research-policy move through compressed-intent control."
+    },
+    {
+      "id": "ai-kit",
+      "repository": "https://github.com/EpiLogos/ai-kit",
+      "revision": "856f454778e5a44e8055751bb59ed933caf210ce",
+      "state": "accepted-main",
+      "note": "Exact AIKit main observed 2026-09-14; current operational context/praxis owner includes AW2 operative-currentness separation and the established quick/full verification contract."
+    },
+    {
+      "id": "software-factory",
+      "repository": "https://github.com/EpiLogos/Factory",
+      "revision": "a335048b0a5b907adc5d09f0dcbda05b98f79a05",
+      "state": "accepted-main-with-active-research-exceptions",
+      "note": "Exact canonical Factory main observed 2026-09-14; current developmental owner includes retained task reads and DevelopmentalBuild while separately named research branches remain non-main candidates."
+    },
+    {
+      "id": "workcell",
+      "repository": "https://github.com/EpiLogos/Workcell",
+      "revision": "e4e40a91fe7ed1776e634cad768f1049c39fd34e",
+      "state": "accepted-main-with-physical-provider-gates",
+      "note": "Exact Workcell main observed 2026-09-14; source revision disclosure is native while owner-machine/provider acceptance remains distinct physical evidence."
+    },
+    {
+      "id": "quaternal-logic",
+      "repository": "https://github.com/EpiLogos/QL-MEF",
+      "revision": "a83148e93c500d5bebaa5811d9d25953652834cf",
+      "state": "accepted-main",
+      "note": "Exact Quaternal Logic main observed 2026-09-14 after CI convergence and accepted-main Native C parity repair: one protected native PR gate, repository quick/full verification, accepted-main local acceptance and centrally commissioned cross-product proof."
+    }
+  ],
+  "build_record": {
+    "path": "suite/manifest.json",
+    "suite_version": "0.1.0-prelocal.2",
+    "recorded_at": "2026-08-17",
+    "standing": "historical-unratified-prelocal-build-record",
+    "relation": "historical-build-evidence-not-current-main-authority"
+  }
+}

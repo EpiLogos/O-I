@@ -1,0 +1,90 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "file-edit",
+  "generated_at": "2026-09-08T12:06:10.214Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 1226,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Editable ordinary file begins with exact owner bytes"
+    },
+    {
+      "ok": true,
+      "label": "Close and reopen retains ordinary-file caret and selection"
+    },
+    {
+      "ok": true,
+      "label": "Unsaved ordinary draft survives reload"
+    },
+    {
+      "ok": true,
+      "label": "Retaining a draft does not write the source"
+    },
+    {
+      "ok": true,
+      "label": "Explicit Save writes actual bytes through Central"
+    },
+    {
+      "ok": true,
+      "label": "CAS conflict preserves both actual source and held typing"
+    },
+    {
+      "ok": true,
+      "label": "Conflict comparison reads the actual current owner revision"
+    },
+    {
+      "ok": true,
+      "label": "Explicit reconciliation then Save uses the current native basis"
+    },
+    {
+      "ok": true,
+      "label": "Recovery preview performs no source mutation"
+    },
+    {
+      "ok": true,
+      "label": "Recovery preview contains exact retained original bytes"
+    },
+    {
+      "ok": true,
+      "label": "Explicit Restore updates native source and visible reading together"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-08T12:06:10.310Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 48,
+      "data": {
+        "file": "file-edit-ordinary-native-cas-history-restore.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "file-edit-ordinary-native-cas-history-restore.png"
+  ]
+}

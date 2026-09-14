@@ -1,0 +1,191 @@
+{
+  "schema": "oi.product-command-catalogue/v1",
+  "verified_at": "2026-09-03",
+  "products": [
+    {
+      "id": "central",
+      "public_name": "Central",
+      "namespace": "central",
+      "executable": "ctrl",
+      "aliases": [
+        "ctrl"
+      ],
+      "version_command": [
+        "--version"
+      ],
+      "capability_command": [
+        "capabilities",
+        "--json"
+      ],
+      "verification_command": [
+        "doctor",
+        "--json"
+      ],
+      "command_revision": "832f2e5508cec43fed2b7599ddab2b4bd29b7653",
+      "command_standing": "accepted-main",
+      "install_kind": "oi-managed-binary",
+      "source_install": {
+        "build": [
+          "cargo",
+          "build",
+          "--workspace",
+          "--locked",
+          "--release"
+        ],
+        "executable_path": "target/release/ctrl"
+      }
+    },
+    {
+      "id": "actuation",
+      "public_name": "Actuation",
+      "namespace": "actuation",
+      "executable": "actuation",
+      "aliases": [],
+      "version_command": [
+        "--version"
+      ],
+      "capability_command": [
+        "capabilities",
+        "--json"
+      ],
+      "verification_command": [
+        "verify",
+        "--json"
+      ],
+      "command_revision": "faa5b79f75230ef259d5e523fcade491b23dc3eb",
+      "command_standing": "accepted-main",
+      "install_kind": "oi-managed-native-cli",
+      "source_install": {
+        "build": [],
+        "executable_path": "bin/actuation"
+      }
+    },
+    {
+      "id": "ai-kit",
+      "public_name": "AIKit",
+      "namespace": "aikit",
+      "executable": "aikit",
+      "aliases": [
+        "kit"
+      ],
+      "version_command": [
+        "--version"
+      ],
+      "capability_command": [
+        "capabilities",
+        "list",
+        "--json"
+      ],
+      "verification_command": [
+        "doctor",
+        "--json"
+      ],
+      "command_revision": "25cfdc72c29671673f1434abdea454442c91a47c",
+      "command_standing": "accepted-main",
+      "install_kind": "oi-managed-binary",
+      "source_install": {
+        "build": [
+          "cargo",
+          "build",
+          "--workspace",
+          "--locked",
+          "--release"
+        ],
+        "executable_path": "target/release/aikit"
+      }
+    },
+    {
+      "id": "software-factory",
+      "public_name": "Software Factory",
+      "namespace": "factory",
+      "executable": "factory",
+      "aliases": [],
+      "version_command": [
+        "--version"
+      ],
+      "capability_command": [
+        "capabilities",
+        "--json"
+      ],
+      "verification_command": [
+        "verify",
+        "--json"
+      ],
+      "command_revision": "3d9094177a7216697619db0a3c16bafb6bb815ca",
+      "command_standing": "accepted-main",
+      "install_kind": "oi-managed-native-cli",
+      "source_install": {
+        "build": [
+          "cargo",
+          "build",
+          "--workspace",
+          "--locked",
+          "--release"
+        ],
+        "executable_path": "target/release/factory"
+      }
+    },
+    {
+      "id": "workcell",
+      "public_name": "Workcell",
+      "namespace": "workcell",
+      "executable": "workcell",
+      "aliases": [],
+      "version_command": [
+        "--version"
+      ],
+      "capability_command": [
+        "--json",
+        "discover"
+      ],
+      "verification_command": [
+        "--json",
+        "doctor"
+      ],
+      "command_revision": "dc076fdf0c3e12835c17ded95ef199e200f7f8e1",
+      "command_standing": "accepted-main",
+      "install_kind": "oi-managed-binary",
+      "source_install": {
+        "build": [
+          "cargo",
+          "build",
+          "--workspace",
+          "--locked",
+          "--release"
+        ],
+        "executable_path": "target/release/workcell"
+      }
+    },
+    {
+      "id": "quaternal-logic",
+      "public_name": "Quaternal Logic",
+      "namespace": "ql",
+      "executable": "ql",
+      "aliases": [],
+      "version_command": [
+        "--version"
+      ],
+      "capability_command": [
+        "capabilities",
+        "--json"
+      ],
+      "verification_command": [
+        "verify",
+        "--json"
+      ],
+      "command_revision": "781981374eaa1f02952249dcdbca1af671d1ece4",
+      "command_standing": "accepted-main",
+      "install_kind": "oi-managed-native-cli",
+      "source_install": {
+        "build": [
+          "cargo",
+          "build",
+          "--workspace",
+          "--locked",
+          "--release"
+        ],
+        "executable_path": "target/release/ql"
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "standing": "Actual provider entrypoints prepared; no session launched; entrypoint hashes are not whole-package provenance",
+  "argv": [
+    "/tmp/oi-p1-exact-bindings-20260908/acceptance-acp"
+  ],
+  "files": {
+    "/opt/homebrew/opt/node@24/bin/node": "dbd06835a04a78ea89dc4f72694a68241cf3659d452fbcae666733d684fcf1ef",
+    "/Users/admin/.npm-global/lib/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js": "5406c369954516fb56879d685e082ff9095cd6e06e41af406f394942377fd4bf",
+    "/tmp/oi-implementation-20260906/pi-acp-native/node_modules/pi-acp/dist/index.js": "24ff73fda6e3c76ddce2d359a79f5c4b8f292eb290e4d2ab85aac94676b2c2dc",
+    "/tmp/oi-p1-exact-bindings-20260908/pi-exact": "c6c7dfea0506ed68ffdd96a2d9fdab6548ba274a4c91cf1367355ec523cc179f",
+    "/tmp/oi-p1-exact-bindings-20260908/acceptance-acp": "8ddcedaf1dfb51816a16859d3d4c6f6e41df48afcaad2d7a9bafe144fc1de3c2"
+  },
+  "auth": "existing local authentication copied into private isolated provider directory; no credential content in evidence"
+}

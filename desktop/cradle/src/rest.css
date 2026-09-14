@@ -1,0 +1,122 @@
+/*
+ * Rest — every colour, spacing, size, and motion value comes from
+ * @epilogos/oi-design-system tokens. No raw values live here.
+ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--oi-shell-ground);
+  color: var(--oi-foreground);
+  font-size: var(--oi-type-body);
+  caret-color: var(--oi-foreground);
+}
+
+.rest {
+  display: flex;
+  height: 100%;
+}
+
+/* Agency field — reserved column, honest absence. */
+.agency-field {
+  width: var(--oi-space-7);
+  flex: none;
+  border-right: 1px solid var(--oi-rule);
+}
+
+/* Canvas — the quiet writing surface, centre of rest. Sits on the paper
+ * card at max-width 720px centred, like the study's Flow page (brief
+ * FND-01 "Writing canvas" polish — the mode, text and labels are kept
+ * exactly; only the geometry and type change). */
+.canvas {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+  padding: 50px max(35px, 9%);
+  position: relative;
+}
+
+.canvas-surface {
+  flex: none;
+  width: 100%;
+  max-width: 720px;
+  min-height: 100%;
+  resize: none;
+  border: none;
+  outline: none;
+  appearance: none;
+  box-shadow: none;
+  background: transparent;
+  color: var(--oi-foreground);
+  caret-color: var(--oi-foreground);
+  font-family: var(--oi-font-sans);
+  font-size: var(--oi-shell-type-prose);
+  line-height: 1.95;
+}
+
+.canvas-surface:focus,
+.canvas-surface:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.canvas-surface::placeholder {
+  color: var(--oi-muted);
+}
+
+/* The single prompt affordance — unobtrusive, keyboard reachable. */
+.to-affordance {
+  align-self: flex-end;
+  border: none;
+  background: transparent;
+  color: var(--oi-muted);
+  font-size: var(--oi-type-sm);
+  letter-spacing: var(--oi-tracking-label);
+  padding: var(--oi-space-1) var(--oi-space-2);
+  cursor: pointer;
+  transition: color var(--oi-motion-fast) var(--oi-motion-ease);
+}
+
+.to-affordance:hover,
+.to-affordance:focus-visible {
+  color: var(--oi-foreground);
+  outline: none;
+}
+
+.address-line {
+  align-self: flex-end;
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-1);
+}
+
+.address-label {
+  color: var(--oi-muted);
+  font-size: var(--oi-type-sm);
+  letter-spacing: var(--oi-tracking-label);
+}
+
+.address-input {
+  border: none;
+  border-bottom: 1px solid var(--oi-rule);
+  outline: none;
+  background: transparent;
+  color: var(--oi-foreground);
+  caret-color: var(--oi-foreground);
+  font-size: var(--oi-type-sm);
+  padding: var(--oi-space-1) 0;
+  width: var(--oi-space-7);
+}

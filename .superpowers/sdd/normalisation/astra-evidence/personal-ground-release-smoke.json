@@ -1,0 +1,30 @@
+{
+  "binary": "/tmp/astra-aikit-user-ground/target/release/aikit",
+  "sha256": "1007473989fb451470df4b1f1a4ac6574b537b5f28ebf66eb2b9aa3b81c6e799",
+  "exit": 0,
+  "result": {
+    "context": {
+      "context_id": "ctx_PERSONALGROUND00000000",
+      "project_root": null,
+      "session_id": null
+    },
+    "data": {
+      "active": false,
+      "declared_enabled": true,
+      "dependencies": [],
+      "exports": [],
+      "id": "skill/personal/brainstorming",
+      "render": "skill/personal/brainstorming@e5db3b\nState: unavailable \u2014 withheld-retired on its Control ground: Scratch acceptance of archived superpowers; real human ground unchanged.\nTrust: trusted\nMaturity: draft\nSelected by:\n  enabled by global /tmp/astra-personal-ground-proof/aikit/scopes/global/profile.toml\nRequired by:\n  none\nDependencies:\n  none\nActivation means: projected into the relevant agent skill surface\n",
+      "required_by": [],
+      "revision": "e5db3b84661ebd91d57e07c865b549d193eb2df9d33f68abfdd7d89bd7995101",
+      "selected_by": [
+        "enabled by global /tmp/astra-personal-ground-proof/aikit/scopes/global/profile.toml"
+      ],
+      "skill_usage_overlays": [],
+      "unavailable": "withheld-retired on its Control ground: Scratch acceptance of archived superpowers; real human ground unchanged."
+    },
+    "ok": true,
+    "schema": 1,
+    "warnings": []
+  }
+}

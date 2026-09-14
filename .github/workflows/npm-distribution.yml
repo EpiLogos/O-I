@@ -1,0 +1,53 @@
+name: O:I npm distribution
+
+on:
+  pull_request:
+    paths:
+      - 'packages/oi-cli/**'
+      - '.github/workflows/npm-distribution.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Test package contract
+        working-directory: packages/oi-cli
+        run: npm test
+      - name: Inspect published file set
+        working-directory: packages/oi-cli
+        run: npm pack --dry-run
+
+  install-native-release:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Pack distribution wrapper
+        working-directory: packages/oi-cli
+        shell: bash
+        run: npm pack --pack-destination "$RUNNER_TEMP"
+      - name: Install through npm against accepted pre-local native artifacts
+        shell: bash
+        env:
+          OI_NPM_RELEASE_TAG: oi-v0.1.0-prelocal.2
+        run: |
+          set -euo pipefail
+          prefix="$RUNNER_TEMP/oi-npm-prefix"
+          package="$RUNNER_TEMP/epi-logos-oi-0.1.0-prelocal.4.tgz"
+          npm install --global "$package" --prefix "$prefix"
+          "$prefix/bin/oi" help >/dev/null

@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "handoff-1788877227963809000",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "codex-editor-context-plan-20260908",
+  "kind": "note",
+  "recorded_at_unix_seconds": 1788877227,
+  "subject": "New native browser implementation review",
+  "result": "Read-only review of desktop/cradle/src-tauri/src/browser.rs, BrowserSurface.tsx, windows.rs, main.rs, capabilities/main-window.json and material_protocol.rs found: address-bar origin can be spoofed after failed/cancelled navigation because requested URL is published before commit; browser reconciliation removes registry rows before close and aborts on first failure, orphaning live webviews; missing child webviews leave permanent stale Session rows; attach publishes host ownership before reparent/show succeeds and wrong-host controls silently return success; navigation callbacks lack generation ordering. Cargo check, frontend build and diff whitespace passed. Findings sent to parent; no edits.",
+  "status": "resolved"
+}

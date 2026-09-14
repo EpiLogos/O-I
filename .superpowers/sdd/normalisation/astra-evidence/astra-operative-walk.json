@@ -1,0 +1,309 @@
+[
+  {
+    "args": [
+      "resolve",
+      "@5 cradle"
+    ],
+    "exit": 0,
+    "reply": {
+      "context": {
+        "context_id": "ctx_ASTRAPROJECTION00000000",
+        "project_root": "/private/tmp/astra-ground/Work/harness-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "expression": {
+          "expression": {
+            "node": "subject",
+            "value": "cradle"
+          },
+          "horizon": "h5",
+          "node": "address"
+        },
+        "path": {
+          "candidates": [
+            {
+              "exact": false,
+              "horizons": [
+                "h5"
+              ],
+              "kind": "capability",
+              "ranking": {
+                "active_in_context": true,
+                "current_project": true,
+                "learned_contextual_frecency_milli": 0,
+                "learned_contextual_observations": 0,
+                "learned_frecency_milli": 0,
+                "learned_observations": 0,
+                "learned_path_contextual_frecency_milli": 0,
+                "learned_path_contextual_observations": 0,
+                "learned_path_frecency_milli": 0,
+                "learned_path_observations": 0
+              },
+              "resource": "skill/oi/cradle-execution",
+              "score": 19994
+            }
+          ],
+          "expression": {
+            "expression": {
+              "node": "subject",
+              "value": "cradle"
+            },
+            "horizon": "h5",
+            "node": "address"
+          },
+          "identity": "resolve-path:78dd17fae4393559",
+          "steps": [
+            {
+              "candidates": [
+                "skill/oi/cradle-execution"
+              ],
+              "kind": "subject",
+              "value": "cradle"
+            },
+            {
+              "candidates": [
+                "skill/oi/cradle-execution"
+              ],
+              "horizon": "h5",
+              "kind": "address"
+            }
+          ],
+          "version": "aikit.operative-resolve/v1"
+        },
+        "rows": [
+          {
+            "active": true,
+            "id": "skill/oi/cradle-execution",
+            "kind": "skill",
+            "name": "cradle-execution",
+            "resource_kind": "capability",
+            "runnable": false,
+            "summary": "Use when executing any unit of the O:I desktop cradle rebuild (OI-CRADLE-REBUILD-WF, issue #190) \u2014 the enforced loop: brief, build, walk, review, receipt; verification by app functionality; design-set precedence; capability-matrix grammar. \u00b7 evidence: current context: declared by the current Project scope, current context: active in the resolved context"
+          }
+        ]
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "args": [
+      "search",
+      "@5 cradle"
+    ],
+    "exit": 0,
+    "reply": {
+      "context": {
+        "context_id": "ctx_ASTRAPROJECTION00000000",
+        "project_root": "/private/tmp/astra-ground/Work/harness-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "expression": {
+          "expression": {
+            "node": "subject",
+            "value": "cradle"
+          },
+          "horizon": "h5",
+          "node": "address"
+        },
+        "path": {
+          "candidates": [
+            {
+              "exact": false,
+              "horizons": [
+                "h5"
+              ],
+              "kind": "capability",
+              "ranking": {
+                "active_in_context": true,
+                "current_project": true,
+                "learned_contextual_frecency_milli": 0,
+                "learned_contextual_observations": 0,
+                "learned_frecency_milli": 0,
+                "learned_observations": 0,
+                "learned_path_contextual_frecency_milli": 0,
+                "learned_path_contextual_observations": 0,
+                "learned_path_frecency_milli": 0,
+                "learned_path_observations": 0
+              },
+              "resource": "skill/oi/cradle-execution",
+              "score": 19994
+            }
+          ],
+          "expression": {
+            "expression": {
+              "node": "subject",
+              "value": "cradle"
+            },
+            "horizon": "h5",
+            "node": "address"
+          },
+          "identity": "resolve-path:78dd17fae4393559",
+          "steps": [
+            {
+              "candidates": [
+                "skill/oi/cradle-execution"
+              ],
+              "kind": "subject",
+              "value": "cradle"
+            },
+            {
+              "candidates": [
+                "skill/oi/cradle-execution"
+              ],
+              "horizon": "h5",
+              "kind": "address"
+            }
+          ],
+          "version": "aikit.operative-resolve/v1"
+        },
+        "rows": [
+          {
+            "active": true,
+            "id": "skill/oi/cradle-execution",
+            "kind": "skill",
+            "name": "cradle-execution",
+            "resource_kind": "capability",
+            "runnable": false,
+            "summary": "Use when executing any unit of the O:I desktop cradle rebuild (OI-CRADLE-REBUILD-WF, issue #190) \u2014 the enforced loop: brief, build, walk, review, receipt; verification by app functionality; design-set precedence; capability-matrix grammar. \u00b7 evidence: current context: declared by the current Project scope, current context: active in the resolved context"
+          }
+        ]
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "args": [
+      "z",
+      "cradle-execution"
+    ],
+    "exit": 0,
+    "reply": {
+      "context": {
+        "context_id": "ctx_ASTRAPROJECTION00000000",
+        "project_root": "/private/tmp/astra-ground/Work/harness-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "action": "open",
+        "activated": false,
+        "candidates": [
+          {
+            "active": true,
+            "capability": "skill/oi/cradle-execution",
+            "exact_export_name": false,
+            "in_current_project": true,
+            "score": 0.8999999761581421,
+            "successful_runs": 0
+          }
+        ],
+        "capability": "skill/oi/cradle-execution",
+        "decision": "act",
+        "query": "cradle-execution"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "args": [
+      "explain",
+      "skill/oi/cradle-execution"
+    ],
+    "exit": 0,
+    "reply": {
+      "context": {
+        "context_id": "ctx_ASTRAPROJECTION00000000",
+        "project_root": "/private/tmp/astra-ground/Work/harness-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "active": true,
+        "declared_enabled": true,
+        "dependencies": [],
+        "exports": [],
+        "id": "skill/oi/cradle-execution",
+        "render": "skill/oi/cradle-execution@0349b8\nState: active\nTrust: trusted\nMaturity: draft\nSelected by:\n  enabled by project /private/tmp/astra-ground/Work/harness-acceptance/.aikit/profile.toml\nRequired by:\n  none\nDependencies:\n  none\nProjection:\n  shell\n  claude-code\n  codex\n  deepseek-harness\nActivation means: projected into the relevant agent skill surface\n",
+        "required_by": [],
+        "revision": "0349b8fae9fba3cd5ba2f2eac8a38e0428bb44298adc9c97609b67b3cc4db1e2",
+        "selected_by": [
+          "enabled by project /private/tmp/astra-ground/Work/harness-acceptance/.aikit/profile.toml"
+        ],
+        "skill_usage_overlays": [],
+        "unavailable": null
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "args": [
+      "history",
+      "skill/oi/cradle-execution"
+    ],
+    "exit": 0,
+    "reply": {
+      "context": {
+        "context_id": "ctx_ASTRAPROJECTION00000000",
+        "project_root": "/private/tmp/astra-ground/Work/harness-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "entries": [],
+        "schema": "aikit.explain-history/v1"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "args": [
+      "session",
+      "list"
+    ],
+    "exit": 0,
+    "reply": {
+      "context": {
+        "context_id": "ctx_ASTRAPROJECTION00000000",
+        "project_root": "/private/tmp/astra-ground/Work/harness-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "count": 0,
+        "sessions": []
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "args": [
+      "task",
+      "list"
+    ],
+    "exit": 0,
+    "reply": {
+      "context": {
+        "context_id": "ctx_ASTRAPROJECTION00000000",
+        "project_root": "/private/tmp/astra-ground/Work/harness-acceptance",
+        "session_id": null
+      },
+      "data": {
+        "count": 0,
+        "tasks": []
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  }
+]

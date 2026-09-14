@@ -1,0 +1,7 @@
+{
+  "source_manifest": "source-inputs.json",
+  "changed_inputs": [],
+  "executable": "/tmp/oi-p1-native-target-final-20260908/debug/bundle/macos/O-I.app/Contents/MacOS/oi-cradle",
+  "sha256": "232384afdb4cf05c92d3862b0798aa985a5a6eb669e4273448a579d19cf86e9f",
+  "native_acceptance": "pending"
+}

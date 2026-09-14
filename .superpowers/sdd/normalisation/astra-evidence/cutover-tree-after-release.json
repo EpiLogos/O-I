@@ -1,0 +1,92 @@
+{
+  "context": {
+    "context_id": "ctx_PERSONALGROUND00000000",
+    "project_root": null,
+    "session_id": null
+  },
+  "data": {
+    "count": 11,
+    "rows": [
+      {
+        "depth": 0,
+        "expandable": true,
+        "expanded": false,
+        "path": "sets",
+        "summary": "2 sets"
+      },
+      {
+        "depth": 0,
+        "expandable": true,
+        "expanded": false,
+        "path": "kinds",
+        "summary": "39 catalogued"
+      },
+      {
+        "depth": 0,
+        "expandable": true,
+        "expanded": false,
+        "path": "hooks",
+        "summary": "0 steps across 0 events"
+      },
+      {
+        "depth": 0,
+        "expandable": true,
+        "expanded": false,
+        "path": "contexts",
+        "summary": "0 contexts"
+      },
+      {
+        "depth": 0,
+        "expandable": true,
+        "expanded": true,
+        "path": "registries",
+        "summary": "5 registries"
+      },
+      {
+        "depth": 1,
+        "expandable": false,
+        "expanded": false,
+        "path": "registries/oi",
+        "summary": "4 capsules"
+      },
+      {
+        "depth": 1,
+        "expandable": false,
+        "expanded": false,
+        "path": "registries/personal",
+        "summary": "35 capsules"
+      },
+      {
+        "depth": 1,
+        "expandable": false,
+        "expanded": false,
+        "path": "registries/@claude",
+        "summary": "generated \u00b7 21 skills \u00b7 generation gen_36535f6706370645"
+      },
+      {
+        "depth": 1,
+        "expandable": false,
+        "expanded": false,
+        "path": "registries/@agents",
+        "summary": "generated \u00b7 21 skills \u00b7 generation gen_36535f6706370645"
+      },
+      {
+        "depth": 1,
+        "expandable": false,
+        "expanded": false,
+        "path": "registries/@codex",
+        "summary": "generated \u00b7 21 skills \u00b7 generation gen_36535f6706370645"
+      },
+      {
+        "depth": 0,
+        "expandable": true,
+        "expanded": false,
+        "path": "inbox",
+        "summary": "0 open"
+      }
+    ]
+  },
+  "ok": true,
+  "schema": 1,
+  "warnings": []
+}

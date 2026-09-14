@@ -1,0 +1,8 @@
+guardian SkillSet oi:skillset:base-guardian (direct projection): 0 created, 0 updated, 2 unchanged, 2 aikit-managed, 0 conflict(s) preserved
+  aikit-managed  /Users/admin/Central/.claude/skills/oi/SKILL.md
+  unchanged  /Users/admin/Central/.agents/skills/oi/SKILL.md
+  aikit-managed  /Users/admin/Central/.claude/skills/oi-suite-operator/SKILL.md
+  unchanged  /Users/admin/Central/.agents/skills/oi-suite-operator/SKILL.md
+  aikit: guardian tree already adopted into AIKit ownership; adoption skipped
+  aikit: SkillSet oi-guardian holds 2 member(s)
+  aikit: applied generation gen_3afef7ee48c48455

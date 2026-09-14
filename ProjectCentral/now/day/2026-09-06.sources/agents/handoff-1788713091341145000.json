@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "handoff-1788713091341145000",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "codex-oi-execution-20260906",
+  "kind": "note",
+  "recorded_at_unix_seconds": 1788713091,
+  "subject": "Resume whole desktop execution programme",
+  "result": "Active implementation: finish independent sidebar state and presentation contracts, then native AIKit unbounded-duration ACP streaming with bounded retention and provider thinking, canonical encounter, and subsequent programme slices. Checkpoints are progress, not session completion. Evidence and exact continuation remain in .superpowers/sdd/cradle-rebuild/progress.md.",
+  "status": "active"
+}

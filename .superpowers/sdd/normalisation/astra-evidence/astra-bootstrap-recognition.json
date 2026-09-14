@@ -1,0 +1,940 @@
+{
+  "schema": "oi.existing-world-adoption/v1",
+  "target": "/tmp/astra-ground",
+  "principle": "recognise-and-retain-existing-world",
+  "sources": [
+    {
+      "path": ".claude/skills",
+      "class": "native-praxis-candidate",
+      "owner": "target/native-source",
+      "standing": "candidate-location-does-not-prove-authorship",
+      "treatment": "retain-in-place-and-offer-to-aikit-discovery",
+      "evidence": "directory-present"
+    },
+    {
+      "path": ".agents/skills",
+      "class": "native-praxis-candidate",
+      "owner": "target/native-source",
+      "standing": "candidate-location-does-not-prove-authorship",
+      "treatment": "retain-in-place-and-offer-to-aikit-discovery",
+      "evidence": "directory-present"
+    }
+  ],
+  "recognition": {
+    "schema": "oi.world-recognition-account/v1",
+    "target": "/tmp/astra-ground",
+    "sources": [
+      {
+        "path": ".claude/skills",
+        "class": "native-praxis-candidate",
+        "owner": "target/native-source",
+        "standing": "candidate-location-does-not-prove-authorship",
+        "treatment": "retain-in-place-and-offer-to-aikit-discovery",
+        "evidence": "directory-present"
+      },
+      {
+        "path": ".agents/skills",
+        "class": "native-praxis-candidate",
+        "owner": "target/native-source",
+        "standing": "candidate-location-does-not-prove-authorship",
+        "treatment": "retain-in-place-and-offer-to-aikit-discovery",
+        "evidence": "directory-present"
+      }
+    ],
+    "providers": [
+      {
+        "provider_ref": "oi:builtin/source-apertures",
+        "package_ref": "oi:core",
+        "status": "observed",
+        "detail": "2 recognised source/configuration apertures"
+      },
+      {
+        "provider_ref": "contribution:herdr/world-recognition",
+        "package_ref": "package:epilogos/herdr-recognition",
+        "status": "observed",
+        "detail": "1 observations; 0 extension requests"
+      },
+      {
+        "provider_ref": "oi:builtin/native-tool-observation",
+        "package_ref": "oi:core",
+        "status": "observed",
+        "detail": "9 installed native tools observed"
+      },
+      {
+        "provider_ref": "oi:builtin/owner-participation-reconciliation",
+        "package_ref": "oi:core",
+        "status": "observed",
+        "detail": "4 native-owner participations reconciled"
+      },
+      {
+        "provider_ref": "oi:builtin/owner-contract-reconciliation",
+        "package_ref": "oi:core",
+        "status": "observed",
+        "detail": "7 native-owner contracts disclosed"
+      },
+      {
+        "provider_ref": "oi:builtin/owner-capacity-reconciliation",
+        "package_ref": "oi:core",
+        "status": "not_present",
+        "detail": "0 native-owner capacities disclosed"
+      }
+    ],
+    "observations": [
+      {
+        "observation_ref": "observation:buzz:local",
+        "native_system": {
+          "system_ref": "native:buzz:local",
+          "kind": "collaboration-client",
+          "name": "buzz",
+          "locator": "/Users/admin/.local/bin/buzz"
+        },
+        "support": "observed",
+        "faculties": [],
+        "relations": [],
+        "facts": {
+          "degraded": false,
+          "version_flag": "none"
+        },
+        "owner_bindings": [],
+        "evidence": [
+          {
+            "kind": "native-presence",
+            "source": "/Users/admin/.local/bin/buzz",
+            "detail": "buzz installed; exposes no version flag"
+          }
+        ]
+      },
+      {
+        "observation_ref": "observation:claude:local",
+        "native_system": {
+          "system_ref": "native:claude:local",
+          "kind": "harness",
+          "name": "claude",
+          "version": "2.1.263 (Claude Code)",
+          "locator": "/Users/admin/.local/bin/claude"
+        },
+        "support": "observed",
+        "faculties": [],
+        "relations": [],
+        "facts": {
+          "degraded": false
+        },
+        "owner_bindings": [
+          {
+            "owner": "AIKit",
+            "contract": "aikit.client-adapter/v1",
+            "state": "installed",
+            "provenance": [
+              "AIKit crates/aikit-adapters/src/clients/claude.rs",
+              "aikit client status (operative capability projection)"
+            ]
+          }
+        ],
+        "evidence": [
+          {
+            "kind": "native-command",
+            "source": "/Users/admin/.local/bin/claude",
+            "detail": "claude --version"
+          }
+        ]
+      },
+      {
+        "observation_ref": "observation:codex:local",
+        "native_system": {
+          "system_ref": "native:codex:local",
+          "kind": "harness",
+          "name": "codex",
+          "version": "codex-cli 0.153.0",
+          "locator": "/opt/homebrew/bin/codex"
+        },
+        "support": "observed",
+        "faculties": [],
+        "relations": [],
+        "facts": {
+          "degraded": false
+        },
+        "owner_bindings": [
+          {
+            "owner": "AIKit",
+            "contract": "aikit.client-adapter/v1",
+            "state": "installed",
+            "provenance": [
+              "AIKit crates/aikit-adapters/src/clients/codex.rs",
+              "aikit client status (operative capability projection)"
+            ]
+          }
+        ],
+        "evidence": [
+          {
+            "kind": "native-command",
+            "source": "/opt/homebrew/bin/codex",
+            "detail": "codex --version"
+          }
+        ]
+      },
+      {
+        "observation_ref": "observation:docker:local",
+        "native_system": {
+          "system_ref": "native:docker:local",
+          "kind": "material-executor",
+          "name": "docker",
+          "version": "Docker version 29.2.1, build a5c7197",
+          "locator": "/usr/local/bin/docker"
+        },
+        "support": "observed",
+        "faculties": [],
+        "relations": [],
+        "facts": {
+          "degraded": false
+        },
+        "owner_bindings": [],
+        "evidence": [
+          {
+            "kind": "native-command",
+            "source": "/usr/local/bin/docker",
+            "detail": "docker --version"
+          }
+        ]
+      },
+      {
+        "observation_ref": "observation:gemini:local",
+        "native_system": {
+          "system_ref": "native:gemini:local",
+          "kind": "harness",
+          "name": "gemini",
+          "version": "0.29.5",
+          "locator": "/opt/homebrew/bin/gemini"
+        },
+        "support": "observed",
+        "faculties": [],
+        "relations": [],
+        "facts": {
+          "degraded": false
+        },
+        "owner_bindings": [],
+        "evidence": [
+          {
+            "kind": "native-command",
+            "source": "/opt/homebrew/bin/gemini",
+            "detail": "gemini --version"
+          }
+        ]
+      },
+      {
+        "observation_ref": "observation:grok:local",
+        "native_system": {
+          "system_ref": "native:grok:local",
+          "kind": "agent",
+          "name": "grok",
+          "version": "settings schema 1",
+          "locator": "/Users/admin/.grokbot"
+        },
+        "support": "observed",
+        "faculties": [],
+        "relations": [],
+        "facts": {
+          "degraded": false,
+          "running": false
+        },
+        "owner_bindings": [],
+        "evidence": [
+          {
+            "kind": "service-settings",
+            "source": "/Users/admin/.grokbot/settings.json",
+            "detail": "settings read live"
+          }
+        ]
+      },
+      {
+        "observation_ref": "observation:herdr:local",
+        "native_system": {
+          "system_ref": "native:herdr:local",
+          "kind": "working-environment",
+          "name": "Herdr",
+          "version": "0.8.2",
+          "locator": "/Users/admin/.local/bin/herdr",
+          "source_revision": "facf0aafca011d147e798ad37e83799bdd29b75e"
+        },
+        "support": "supported",
+        "faculties": [
+          "agent",
+          "api",
+          "automation",
+          "event",
+          "integration",
+          "layout",
+          "pane",
+          "persistence",
+          "plugin",
+          "process",
+          "remote",
+          "schema.$schema",
+          "schema.protocol",
+          "schema.schema_version",
+          "schema.schemas",
+          "schema.schemas.error_response",
+          "schema.schemas.error_response.$defs",
+          "schema.schemas.error_response.$defs.ErrorBody",
+          "schema.schemas.error_response.$schema",
+          "schema.schemas.error_response.properties",
+          "schema.schemas.error_response.properties.error",
+          "schema.schemas.error_response.properties.id",
+          "schema.schemas.error_response.required",
+          "schema.schemas.error_response.title",
+          "schema.schemas.error_response.type",
+          "schema.schemas.event",
+          "schema.schemas.event.$defs",
+          "schema.schemas.event.$defs.AgentSessionInfo",
+          "schema.schemas.event.$defs.AgentSessionRefKind",
+          "schema.schemas.event.$defs.AgentStatus",
+          "schema.schemas.event.$defs.EventData",
+          "schema.schemas.event.$defs.EventKind",
+          "schema.schemas.event.$defs.PaneInfo",
+          "schema.schemas.event.$defs.PaneLayoutPane",
+          "schema.schemas.event.$defs.PaneLayoutRect",
+          "schema.schemas.event.$defs.PaneLayoutSnapshot",
+          "schema.schemas.event.$defs.PaneLayoutSplit",
+          "schema.schemas.event.$defs.PaneScrollInfo",
+          "schema.schemas.event.$defs.SplitDirection",
+          "schema.schemas.event.$defs.TabInfo",
+          "schema.schemas.event.$defs.WorkspaceInfo",
+          "schema.schemas.event.$defs.WorkspaceWorktreeInfo",
+          "schema.schemas.event.$defs.WorktreeInfo",
+          "schema.schemas.event.$schema",
+          "schema.schemas.event.properties",
+          "schema.schemas.event.properties.data",
+          "schema.schemas.event.properties.event",
+          "schema.schemas.event.required",
+          "schema.schemas.event.title",
+          "schema.schemas.event.type",
+          "schema.schemas.request",
+          "schema.schemas.request.$defs",
+          "schema.schemas.request.$defs.AgentPromptParams",
+          "schema.schemas.request.$defs.AgentPromptWaitOptions",
+          "schema.schemas.request.$defs.AgentReadParams",
+          "schema.schemas.request.$defs.AgentRenameParams",
+          "schema.schemas.request.$defs.AgentSendKeysParams",
+          "schema.schemas.request.$defs.AgentStartParams",
+          "schema.schemas.request.$defs.AgentStatus",
+          "schema.schemas.request.$defs.AgentTarget",
+          "schema.schemas.request.$defs.AgentViewBuiltinField",
+          "schema.schemas.request.$defs.AgentViewBuiltinSortField",
+          "schema.schemas.request.$defs.AgentViewClearParams",
+          "schema.schemas.request.$defs.AgentViewContext",
+          "schema.schemas.request.$defs.AgentViewField",
+          "schema.schemas.request.$defs.AgentViewFilter",
+          "schema.schemas.request.$defs.AgentViewSetParams",
+          "schema.schemas.request.$defs.AgentViewSort",
+          "schema.schemas.request.$defs.AgentViewSortField",
+          "schema.schemas.request.$defs.AgentViewSortOrder",
+          "schema.schemas.request.$defs.AgentViewValue",
+          "schema.schemas.request.$defs.AgentWaitParams",
+          "schema.schemas.request.$defs.ClientWindowTitleSetParams",
+          "schema.schemas.request.$defs.EmptyParams",
+          "schema.schemas.request.$defs.EventMatch",
+          "schema.schemas.request.$defs.EventsSubscribeParams",
+          "schema.schemas.request.$defs.EventsWaitParams",
+          "schema.schemas.request.$defs.IntegrationInstallParams",
+          "schema.schemas.request.$defs.IntegrationTarget",
+          "schema.schemas.request.$defs.IntegrationUninstallParams",
+          "schema.schemas.request.$defs.LayoutApplyParams",
+          "schema.schemas.request.$defs.LayoutExportParams",
+          "schema.schemas.request.$defs.LayoutNode",
+          "schema.schemas.request.$defs.LayoutSetSplitRatioParams",
+          "schema.schemas.request.$defs.NotificationShowParams",
+          "schema.schemas.request.$defs.NotificationShowSound",
+          "schema.schemas.request.$defs.OutputMatch",
+          "schema.schemas.request.$defs.PaneAgentState",
+          "schema.schemas.request.$defs.PaneClearAgentAuthorityParams",
+          "schema.schemas.request.$defs.PaneCurrentParams",
+          "schema.schemas.request.$defs.PaneDirection",
+          "schema.schemas.request.$defs.PaneEdgesParams",
+          "schema.schemas.request.$defs.PaneFocusDirectionParams",
+          "schema.schemas.request.$defs.PaneGraphicsClearParams",
+          "schema.schemas.request.$defs.PaneGraphicsFormat",
+          "schema.schemas.request.$defs.PaneGraphicsPlacementParams",
+          "schema.schemas.request.$defs.PaneGraphicsSetParams",
+          "schema.schemas.request.$defs.PaneInputSetParams",
+          "schema.schemas.request.$defs.PaneLayoutParams",
+          "schema.schemas.request.$defs.PaneListParams",
+          "schema.schemas.request.$defs.PaneMoveDestination",
+          "schema.schemas.request.$defs.PaneMoveParams",
+          "schema.schemas.request.$defs.PaneNeighborParams",
+          "schema.schemas.request.$defs.PaneProcessInfoParams",
+          "schema.schemas.request.$defs.PaneReadParams",
+          "schema.schemas.request.$defs.PaneReleaseAgentParams",
+          "schema.schemas.request.$defs.PaneRenameParams",
+          "schema.schemas.request.$defs.PaneReportAgentParams",
+          "schema.schemas.request.$defs.PaneReportAgentSessionParams",
+          "schema.schemas.request.$defs.PaneReportMetadataParams",
+          "schema.schemas.request.$defs.PaneResizeParams",
+          "schema.schemas.request.$defs.PaneRightClickTarget",
+          "schema.schemas.request.$defs.PaneSendInputParams",
+          "schema.schemas.request.$defs.PaneSendKeysParams",
+          "schema.schemas.request.$defs.PaneSendTextParams",
+          "schema.schemas.request.$defs.PaneSplitParams",
+          "schema.schemas.request.$defs.PaneSwapParams",
+          "schema.schemas.request.$defs.PaneTarget",
+          "schema.schemas.request.$defs.PaneWaitForOutputParams",
+          "schema.schemas.request.$defs.PaneZoomMode",
+          "schema.schemas.request.$defs.PaneZoomParams",
+          "schema.schemas.request.$defs.PingParams",
+          "schema.schemas.request.$defs.PluginActionInvokeParams",
+          "schema.schemas.request.$defs.PluginActionListParams",
+          "schema.schemas.request.$defs.PluginInvocationContext",
+          "schema.schemas.request.$defs.PluginLinkParams",
+          "schema.schemas.request.$defs.PluginListParams",
+          "schema.schemas.request.$defs.PluginLogListParams",
+          "schema.schemas.request.$defs.PluginPaneCloseParams",
+          "schema.schemas.request.$defs.PluginPaneFocusParams",
+          "schema.schemas.request.$defs.PluginPaneOpenParams",
+          "schema.schemas.request.$defs.PluginPanePlacement",
+          "schema.schemas.request.$defs.PluginSetEnabledParams",
+          "schema.schemas.request.$defs.PluginSourceInfo",
+          "schema.schemas.request.$defs.PluginSourceKind",
+          "schema.schemas.request.$defs.PluginUnlinkParams",
+          "schema.schemas.request.$defs.PopupSize",
+          "schema.schemas.request.$defs.ReadFormat",
+          "schema.schemas.request.$defs.ReadSource",
+          "schema.schemas.request.$defs.ServerLiveHandoffParams",
+          "schema.schemas.request.$defs.SplitDirection",
+          "schema.schemas.request.$defs.Subscription",
+          "schema.schemas.request.$defs.TabCreateParams",
+          "schema.schemas.request.$defs.TabListParams",
+          "schema.schemas.request.$defs.TabMoveParams",
+          "schema.schemas.request.$defs.TabRenameParams",
+          "schema.schemas.request.$defs.TabTarget",
+          "schema.schemas.request.$defs.ToastHerdrPosition",
+          "schema.schemas.request.$defs.WorkspaceCreateParams",
+          "schema.schemas.request.$defs.WorkspaceMoveBlockParams",
+          "schema.schemas.request.$defs.WorkspaceMoveParams",
+          "schema.schemas.request.$defs.WorkspaceRenameParams",
+          "schema.schemas.request.$defs.WorkspaceReportMetadataParams",
+          "schema.schemas.request.$defs.WorkspaceTarget",
+          "schema.schemas.request.$defs.WorkspaceWorktreeInfo",
+          "schema.schemas.request.$defs.WorktreeCreateParams",
+          "schema.schemas.request.$defs.WorktreeListParams",
+          "schema.schemas.request.$defs.WorktreeOpenParams",
+          "schema.schemas.request.$defs.WorktreeRemoveParams",
+          "schema.schemas.request.$schema",
+          "schema.schemas.request.oneOf",
+          "schema.schemas.request.properties",
+          "schema.schemas.request.properties.id",
+          "schema.schemas.request.required",
+          "schema.schemas.request.title",
+          "schema.schemas.request.type",
+          "schema.schemas.subscription_event",
+          "schema.schemas.subscription_event.$defs",
+          "schema.schemas.subscription_event.$defs.AgentStatus",
+          "schema.schemas.subscription_event.$defs.PaneAgentStatusChangedEvent",
+          "schema.schemas.subscription_event.$defs.PaneOutputMatchedEvent",
+          "schema.schemas.subscription_event.$defs.PaneReadResult",
+          "schema.schemas.subscription_event.$defs.PaneScrollChangedEvent",
+          "schema.schemas.subscription_event.$defs.PaneScrollInfo",
+          "schema.schemas.subscription_event.$defs.ReadFormat",
+          "schema.schemas.subscription_event.$defs.ReadSource",
+          "schema.schemas.subscription_event.$defs.SubscriptionEventData",
+          "schema.schemas.subscription_event.$defs.SubscriptionEventKind",
+          "schema.schemas.subscription_event.$schema",
+          "schema.schemas.subscription_event.properties",
+          "schema.schemas.subscription_event.properties.data",
+          "schema.schemas.subscription_event.properties.event",
+          "schema.schemas.subscription_event.required",
+          "schema.schemas.subscription_event.title",
+          "schema.schemas.subscription_event.type",
+          "schema.schemas.success_response",
+          "schema.schemas.success_response.$defs",
+          "schema.schemas.success_response.$defs.AgentInfo",
+          "schema.schemas.success_response.$defs.AgentManifestInfo",
+          "schema.schemas.success_response.$defs.AgentSessionInfo",
+          "schema.schemas.success_response.$defs.AgentSessionRefKind",
+          "schema.schemas.success_response.$defs.AgentStatus",
+          "schema.schemas.success_response.$defs.ClientWindowTitleReason",
+          "schema.schemas.success_response.$defs.ConfigReloadStatus",
+          "schema.schemas.success_response.$defs.EventData",
+          "schema.schemas.success_response.$defs.EventEnvelope",
+          "schema.schemas.success_response.$defs.EventKind",
+          "schema.schemas.success_response.$defs.InstalledPluginInfo",
+          "schema.schemas.success_response.$defs.IntegrationInstallResult",
+          "schema.schemas.success_response.$defs.IntegrationTarget",
+          "schema.schemas.success_response.$defs.IntegrationUninstallResult",
+          "schema.schemas.success_response.$defs.LayoutDescription",
+          "schema.schemas.success_response.$defs.LayoutNode",
+          "server",
+          "snapshot.agents",
+          "snapshot.focused_pane_id",
+          "snapshot.focused_tab_id",
+          "snapshot.focused_workspace_id",
+          "snapshot.layouts",
+          "snapshot.layouts[].area",
+          "snapshot.layouts[].area.height",
+          "snapshot.layouts[].area.width",
+          "snapshot.layouts[].area.x",
+          "snapshot.layouts[].area.y",
+          "snapshot.layouts[].focused_pane_id",
+          "snapshot.layouts[].panes",
+          "snapshot.layouts[].splits",
+          "snapshot.layouts[].tab_id",
+          "snapshot.layouts[].workspace_id",
+          "snapshot.layouts[].zoomed",
+          "snapshot.panes",
+          "snapshot.panes[].agent_status",
+          "snapshot.panes[].cwd",
+          "snapshot.panes[].focused",
+          "snapshot.panes[].foreground_cwd",
+          "snapshot.panes[].pane_id",
+          "snapshot.panes[].revision",
+          "snapshot.panes[].scroll",
+          "snapshot.panes[].scroll.max_offset_from_bottom",
+          "snapshot.panes[].scroll.offset_from_bottom",
+          "snapshot.panes[].scroll.viewport_rows",
+          "snapshot.panes[].tab_id",
+          "snapshot.panes[].terminal_id",
+          "snapshot.panes[].workspace_id",
+          "snapshot.protocol",
+          "snapshot.tabs",
+          "snapshot.tabs[].agent_status",
+          "snapshot.tabs[].focused",
+          "snapshot.tabs[].label",
+          "snapshot.tabs[].number",
+          "snapshot.tabs[].pane_count",
+          "snapshot.tabs[].tab_id",
+          "snapshot.tabs[].workspace_id",
+          "snapshot.version",
+          "snapshot.workspaces",
+          "snapshot.workspaces[].active_tab_id",
+          "snapshot.workspaces[].agent_status",
+          "snapshot.workspaces[].focused",
+          "snapshot.workspaces[].label",
+          "snapshot.workspaces[].number",
+          "snapshot.workspaces[].pane_count",
+          "snapshot.workspaces[].tab_count",
+          "snapshot.workspaces[].workspace_id",
+          "tab",
+          "workspace",
+          "worktree"
+        ],
+        "relations": [
+          {
+            "relation": "workspace_contains_tab",
+            "from_ref": "herdr:workspace:w1",
+            "to_ref": "herdr:tab:w1:t1",
+            "evidence": "Herdr native snapshot"
+          },
+          {
+            "relation": "workspace_contains_tab",
+            "from_ref": "herdr:workspace:w2",
+            "to_ref": "herdr:tab:w2:t1",
+            "evidence": "Herdr native snapshot"
+          },
+          {
+            "relation": "tab_contains_pane",
+            "from_ref": "herdr:tab:w1:t1",
+            "to_ref": "herdr:pane:w1:p1",
+            "evidence": "Herdr native snapshot"
+          },
+          {
+            "relation": "tab_contains_pane",
+            "from_ref": "herdr:tab:w2:t1",
+            "to_ref": "herdr:pane:w2:p1",
+            "evidence": "Herdr native snapshot"
+          }
+        ],
+        "facts": {
+          "agents_count": 0,
+          "layouts_count": 2,
+          "panes_count": 2,
+          "protocol": 20,
+          "tabs_count": 2,
+          "upstream_revision": "facf0aafca011d147e798ad37e83799bdd29b75e",
+          "workspaces_count": 2
+        },
+        "owner_bindings": [
+          {
+            "owner": "AIKit",
+            "contract": "aikit.herdr-working-environment/v1",
+            "state": "accepted-working-environment-provider",
+            "provenance": [
+              "AIKit crates/aikit-adapters/src/herdr.rs",
+              "herdrdev/herdr@facf0aafca011d147e798ad37e83799bdd29b75e"
+            ]
+          }
+        ],
+        "evidence": [
+          {
+            "kind": "native-command",
+            "source": "/Users/admin/.local/bin/herdr",
+            "detail": "herdr api snapshot"
+          },
+          {
+            "kind": "native-command",
+            "source": "/Users/admin/.local/bin/herdr",
+            "detail": "herdr api schema --json when supported"
+          }
+        ]
+      },
+      {
+        "observation_ref": "observation:hermes:local",
+        "native_system": {
+          "system_ref": "native:hermes:local",
+          "kind": "harness",
+          "name": "hermes",
+          "version": "Hermes Agent v0.20.5 (2026.8.19) · upstream 06402ecb · local ab0d9841 (+1 carried commit)",
+          "locator": "/Users/admin/.local/bin/hermes",
+          "source_revision": "06402ecb"
+        },
+        "support": "observed",
+        "faculties": [],
+        "relations": [],
+        "facts": {
+          "degraded": false
+        },
+        "owner_bindings": [],
+        "evidence": [
+          {
+            "kind": "native-command",
+            "source": "/Users/admin/.local/bin/hermes",
+            "detail": "hermes --version"
+          }
+        ]
+      },
+      {
+        "observation_ref": "observation:ollama:local",
+        "native_system": {
+          "system_ref": "native:ollama:local",
+          "kind": "model-provider",
+          "name": "ollama",
+          "version": "ollama version is 0.12.6",
+          "locator": "/usr/local/bin/ollama"
+        },
+        "support": "observed",
+        "faculties": [],
+        "relations": [],
+        "facts": {
+          "degraded": false
+        },
+        "owner_bindings": [],
+        "evidence": [
+          {
+            "kind": "native-command",
+            "source": "/usr/local/bin/ollama",
+            "detail": "ollama --version"
+          }
+        ]
+      },
+      {
+        "observation_ref": "observation:pi:local",
+        "native_system": {
+          "system_ref": "native:pi:local",
+          "kind": "harness",
+          "name": "pi",
+          "version": "0.84.4",
+          "locator": "/Users/admin/.local/bin/pi"
+        },
+        "support": "observed",
+        "faculties": [],
+        "relations": [],
+        "facts": {
+          "degraded": false
+        },
+        "owner_bindings": [],
+        "evidence": [
+          {
+            "kind": "native-command",
+            "source": "/Users/admin/.local/bin/pi",
+            "detail": "pi --version"
+          }
+        ]
+      }
+    ],
+    "owner_participations": [
+      {
+        "owner": "AIKit",
+        "native_system": {
+          "system_ref": "native:claude:local",
+          "kind": "harness",
+          "name": "claude"
+        },
+        "contract": "aikit.client-adapter/v1",
+        "state": "installed",
+        "readiness": {
+          "config_dir": "/Users/admin/.claude",
+          "effect": "restart Claude",
+          "installed": true,
+          "items": 0
+        },
+        "provenance": [
+          "AIKit crates/aikit-adapters/src/clients/claude.rs",
+          "aikit client status (operative capability projection)"
+        ],
+        "faculties": [
+          "skill-projection"
+        ]
+      },
+      {
+        "owner": "AIKit",
+        "native_system": {
+          "system_ref": "native:cmux:local",
+          "kind": "working-environment",
+          "name": "cmux",
+          "version": "cmux 0.64.22 (102) [ddd4a01bc]",
+          "locator": "/Applications/cmux.app/Contents/Resources/bin/cmux"
+        },
+        "contract": "aikit.working-environment-provider/v1",
+        "state": "installed-not-running",
+        "readiness": {
+          "active": "plain",
+          "active_stack": [
+            "plain"
+          ],
+          "detail": "Error: Socket not found at /Users/admin/.local/state/cmux/cmux.sock",
+          "inside": false,
+          "installed": true,
+          "server_running": false
+        },
+        "provenance": [
+          "AIKit crates/aikit-adapters/src/mux/cmux.rs",
+          "aikit mux detect"
+        ],
+        "faculties": [
+          "session",
+          "pane",
+          "surface"
+        ]
+      },
+      {
+        "owner": "AIKit",
+        "native_system": {
+          "system_ref": "native:codex:local",
+          "kind": "harness",
+          "name": "codex"
+        },
+        "contract": "aikit.client-adapter/v1",
+        "state": "installed",
+        "readiness": {
+          "config_dir": "/Users/admin/.codex",
+          "effect": "next session only — plain Codex discovers project-stable skills at task start",
+          "installed": true,
+          "items": 0
+        },
+        "provenance": [
+          "AIKit crates/aikit-adapters/src/clients/codex.rs",
+          "aikit client status (operative capability projection)"
+        ],
+        "faculties": [
+          "skill-projection"
+        ]
+      },
+      {
+        "owner": "AIKit",
+        "native_system": {
+          "system_ref": "native:tmux:local",
+          "kind": "working-environment",
+          "name": "tmux",
+          "version": "3.6a",
+          "locator": "/opt/homebrew/Cellar/tmux/3.6a/bin/tmux"
+        },
+        "contract": "aikit.working-environment-provider/v1",
+        "state": "installed-running",
+        "readiness": {
+          "active": "plain",
+          "active_stack": [
+            "plain"
+          ],
+          "inside": false,
+          "installed": true,
+          "server_running": true
+        },
+        "provenance": [
+          "AIKit crates/aikit-adapters/src/mux/tmux.rs",
+          "aikit mux detect"
+        ],
+        "faculties": [
+          "session",
+          "pane",
+          "surface"
+        ]
+      }
+    ],
+    "owner_contracts": [
+      {
+        "owner": "Actuation",
+        "contract": "actuation.activity/v1",
+        "field": "activity",
+        "provenance": [
+          "actuation contract list"
+        ]
+      },
+      {
+        "owner": "Actuation",
+        "contract": "actuation.agency/v1",
+        "field": "agency",
+        "provenance": [
+          "actuation contract list"
+        ]
+      },
+      {
+        "owner": "Actuation",
+        "contract": "actuation.harness-detection/v1",
+        "field": "harness-detection",
+        "provenance": [
+          "actuation contract list"
+        ]
+      },
+      {
+        "owner": "Actuation",
+        "contract": "actuation.instantiation/v1",
+        "field": "instantiation",
+        "provenance": [
+          "actuation contract list"
+        ]
+      },
+      {
+        "owner": "Actuation",
+        "contract": "actuation.model-bearing/v1",
+        "field": "model-bearing-legacy",
+        "provenance": [
+          "actuation contract list"
+        ]
+      },
+      {
+        "owner": "Actuation",
+        "contract": "actuation.realised/v1",
+        "field": "realised",
+        "provenance": [
+          "actuation contract list"
+        ]
+      },
+      {
+        "owner": "Actuation",
+        "contract": "actuation.stream/v1",
+        "field": "stream",
+        "provenance": [
+          "actuation contract list"
+        ]
+      }
+    ],
+    "owner_capacities": [],
+    "extension_requests": [
+      {
+        "request_ref": "extension:docker:Workcell",
+        "native_system_ref": "native:docker:local",
+        "owner": "Workcell",
+        "reason": "material-executor present with no installed owner participation",
+        "sdk": "workcell.provider-sdk/v1",
+        "authoring_skill": "Workcell provider authoring Skill",
+        "conformance": "workcell.provider-sdk/v1 conformance",
+        "package_target": "oi.package/v1"
+      },
+      {
+        "request_ref": "extension:gemini:Actuation",
+        "native_system_ref": "native:gemini:local",
+        "owner": "Actuation",
+        "reason": "harness present with no installed owner participation",
+        "sdk": "actuation.model-bearing/v1",
+        "authoring_skill": "Actuation model-bearing authoring Skill",
+        "conformance": "actuation.model-bearing/v1 conformance",
+        "package_target": "oi.package/v1"
+      },
+      {
+        "request_ref": "extension:grok:Actuation",
+        "native_system_ref": "native:grok:local",
+        "owner": "Actuation",
+        "reason": "agent present with no installed owner participation",
+        "sdk": "actuation.model-bearing/v1",
+        "authoring_skill": "Actuation model-bearing authoring Skill",
+        "conformance": "actuation.model-bearing/v1 conformance",
+        "package_target": "oi.package/v1"
+      },
+      {
+        "request_ref": "extension:hermes:Actuation",
+        "native_system_ref": "native:hermes:local",
+        "owner": "Actuation",
+        "reason": "harness present with no installed owner participation",
+        "sdk": "actuation.model-bearing/v1",
+        "authoring_skill": "Actuation model-bearing authoring Skill",
+        "conformance": "actuation.model-bearing/v1 conformance",
+        "package_target": "oi.package/v1"
+      },
+      {
+        "request_ref": "extension:ollama:Actuation",
+        "native_system_ref": "native:ollama:local",
+        "owner": "Actuation",
+        "reason": "model-provider present with no installed owner participation",
+        "sdk": "actuation.model-bearing/v1",
+        "authoring_skill": "Actuation model-bearing authoring Skill",
+        "conformance": "actuation.model-bearing/v1 conformance",
+        "package_target": "oi.package/v1"
+      },
+      {
+        "request_ref": "extension:pi:Actuation",
+        "native_system_ref": "native:pi:local",
+        "owner": "Actuation",
+        "reason": "harness present with no installed owner participation",
+        "sdk": "actuation.model-bearing/v1",
+        "authoring_skill": "Actuation model-bearing authoring Skill",
+        "conformance": "actuation.model-bearing/v1 conformance",
+        "package_target": "oi.package/v1"
+      }
+    ],
+    "provider_errors": []
+  },
+  "owner_handoffs": [
+    {
+      "owner": "Actuation",
+      "relation": "what-model-harness-agent-instance-and-realised-agency-loop-exists",
+      "contract": "actuation.model-bearing/v1",
+      "required_for_minimal_adoption": false,
+      "state": "resolve through the native Actuation application/command surface when available",
+      "tracker": "EpiLogos/Actuation#16/#21"
+    },
+    {
+      "owner": "AIKit",
+      "relation": "how-operative-capability-projection-into-clients-and-environments-is-resolved",
+      "contract": "aikit.client-adapter/v1",
+      "required_for_minimal_adoption": false,
+      "state": "consume accepted adapters/providers; missing support returns the public adapter SDK path",
+      "tracker": "EpiLogos/ai-kit#114/#139"
+    },
+    {
+      "owner": "Central",
+      "relation": "authored-ground-governance-skill-method-machine-source",
+      "contract": "native Central public source/read/action/connector surface",
+      "required_for_minimal_adoption": false,
+      "state": "consume existing authored World/machine/source relations in place",
+      "tracker": "EpiLogos/Central#72/#82 and current connector surface"
+    },
+    {
+      "owner": "Software Factory",
+      "relation": "developmental-continuity-for-extension-work",
+      "contract": "native Commission/Journey/Run/evidence refs",
+      "required_for_minimal_adoption": false,
+      "state": "available when adapter development warrants persistent developmental continuity",
+      "tracker": "EpiLogos/agent-system-design current Factory application field"
+    },
+    {
+      "owner": "Workcell",
+      "relation": "material-hosting-and-provider-bindings",
+      "contract": "workcell.provider-sdk/v1",
+      "required_for_minimal_adoption": false,
+      "state": "consume accumulated providers; missing material integration returns the provider SDK path",
+      "tracker": "EpiLogos/Workcell#22/#23"
+    },
+    {
+      "owner": "Quaternal Logic",
+      "relation": "optional-formal-reflexive-reading",
+      "contract": "native ql service/read operation field",
+      "required_for_minimal_adoption": false,
+      "state": "optional product reading over the recognised World where invoked",
+      "tracker": "EpiLogos/QL-MEF current accepted service/CLI field"
+    }
+  ],
+  "changes": [],
+  "ql_required": false,
+  "notes": [
+    "Adopt is the read-only projection of the same World-recognition engine consumed by setup.",
+    "Registered oi.world-recognition/v1 contributions inspect technologies through their own source-pinned probes.",
+    "Native source bytes and existing target configuration remain in their native World.",
+    "Missing support is returned as an owner SDK/Skill/conformance extension request when a recogniser can establish that gap."
+  ]
+}

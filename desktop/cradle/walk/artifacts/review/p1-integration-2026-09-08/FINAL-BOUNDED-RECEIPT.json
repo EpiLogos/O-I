@@ -1,0 +1,16 @@
+{
+  "standing": "bounded native regression verified; full FND gate open",
+  "candidate_sha256": "d6c26aeb7e8a295b69579cc0509103399bc0632dae52581629b0b26a2c771420",
+  "frozen_source_files_verified": 145,
+  "warmup_cycles": 3,
+  "measured_small_cycles": 17,
+  "measured_start": "2026-09-08T19:39:11.287Z",
+  "measured_end": "2026-09-08T19:43:11.680Z",
+  "observations": [
+    "Every measured cycle verified maximize/restore, browser input retained through native detach/redock, terminal surface present.",
+    "Terminal output continuity was not independently read on every cycle.",
+    "User curtailed prolonged repetition; no large-dataset/resource-budget acceptance claim.",
+    "Owned sampler, HTTP server and native candidate stopped; live app5700 and resident79665 preserved."
+  ],
+  "raw_resource_samples": "native-rev4-curtailed-cycles.jsonl"
+}

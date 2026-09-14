@@ -1,0 +1,31 @@
+{
+  "schema": "oi.cradle.native-walk/v1",
+  "unit": "U1.2",
+  "observed_at": "2026-09-05T23:21:12.773097+00:00",
+  "application": "O-I.app",
+  "transport": "tauri://localhost",
+  "central_revision": "832f2e5508cec43fed2b7599ddab2b4bd29b7653",
+  "central_executable": "/tmp/oi-cradle-pins/832f2e5508cec43fed2b7599ddab2b4bd29b7653/target/release/ctrl",
+  "source_ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+  "original_revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664",
+  "saved_revision": "central.content-fnv1a64/v1:2462:b5475e962d2b0188",
+  "restored_revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664",
+  "original_bytes_restored": true,
+  "operations": [
+    "Write in canvas",
+    "Cmd+B, select O-I, open learning README",
+    "Edit and immediately Cmd+S; observe clean and changed canonical revision",
+    "Select all, paste original, immediately Cmd+S; owner confirms original bytes",
+    "Cmd+W returns to retained writing",
+    "Cmd+Shift+T reopens same README and original canonical revision"
+  ],
+  "retained_writing": "A quiet thought kept while opening a source.",
+  "screenshots": [
+    "editor-native-saved.png",
+    "editor-native-rest.png"
+  ],
+  "accessibility": [
+    "editor-native-saved.ax.txt",
+    "editor-native-rest.ax.txt"
+  ]
+}

@@ -4,7 +4,8 @@ const SUITE_MANIFEST_JSON: &str = include_str!("../../suite/manifest.json");
 struct SuiteManifest {
     schema: String,
     suite_version: String,
-    accepted_at: String,
+    recorded_at: String,
+    standing: String,
     products: Vec<SuiteProduct>,
     #[serde(default)]
     physical_gates: Vec<SuiteGate>,
@@ -19,7 +20,7 @@ struct SuiteProduct {
     canonical_repository: Option<String>,
     checkout: String,
     revision: String,
-    release_tag: String,
+    historical_tag: String,
     artifact: SuiteArtifact,
     #[serde(default)]
     dev: SuiteDev,
@@ -122,8 +123,8 @@ fn suite_v2_main() -> Option<ExitCode> {
 
 fn print_suite_v2_help() -> Result<(), String> {
     let manifest = suite_manifest()?;
-    println!("{{O:I}} — accepted six-product suite operator");
-    println!("Suite: {} (accepted {})", manifest.suite_version, manifest.accepted_at);
+    println!("{{O:I}} — pre-local six-product artifact operator");
+    println!("Build record: {} (recorded {}; {})", manifest.suite_version, manifest.recorded_at, manifest.standing);
     println!();
     println!("Ordinary operation:");
     println!("  oi install [--personal-ground PATH] [PRODUCT ...]");
@@ -144,6 +145,7 @@ fn print_suite_v2_help() -> Result<(), String> {
     println!();
     println!("Native product aliases remain product-owned; O:I dispatches registered executables by exact path.");
     println!("Managed artifacts live in the platform O:I application-data root, never in Central Control/ or Work/.");
+    println!("Developer source checkouts live under the personal ground's Work/ (e.g. Work/Central), never the personal root itself.");
     println!("Source/Cargo installation is a developer path, not the ordinary-user bootstrap.");
     println!("Physical workstation/provider acceptance is intentionally not claimed by this pre-local suite.");
     Ok(())
@@ -154,6 +156,9 @@ fn suite_manifest() -> Result<SuiteManifest, String> {
         .map_err(|error| format!("embedded suite manifest is invalid: {error}"))?;
     if manifest.schema != "oi.suite-manifest/v1" {
         return Err(format!("unsupported suite manifest schema {}", manifest.schema));
+    }
+    if manifest.standing != "historical-unratified-prelocal-build-record" {
+        return Err(format!("unsupported suite build standing {}", manifest.standing));
     }
     let mut ids = HashSet::new();
     for product in &manifest.products {
@@ -203,7 +208,7 @@ fn platform_target() -> Result<&'static str, String> {
     match (env::consts::OS, env::consts::ARCH) {
         ("macos", "aarch64") => Ok("aarch64-apple-darwin"),
         ("linux", "x86_64") => Ok("x86_64-unknown-linux-gnu"),
-        (os, arch) => Err(format!("no accepted first-suite binary target for {os}/{arch}")),
+        (os, arch) => Err(format!("no recorded pre-local build target for {os}/{arch}")),
     }
 }
 
@@ -214,7 +219,7 @@ fn selected_asset(product: &SuiteProduct) -> Result<&SuiteAsset, String> {
     }
     let target = platform_target()?;
     product.artifact.assets.iter().find(|asset| asset.target == target)
-        .ok_or_else(|| format!("{} has no accepted artifact for {target}", product.id))
+        .ok_or_else(|| format!("{} has no recorded pre-local build artifact for {target}", product.id))
 }
 
 fn parse_install_request(args: &[OsString], manifest: &SuiteManifest) -> Result<(Option<PathBuf>, Vec<String>), String> {
@@ -280,7 +285,8 @@ fn command_suite_v2_install(args: &[OsString]) -> Result<i32, String> {
         }
     }
 
-    println!("Installed accepted suite {}.", manifest.suite_version);
+    println!("Installed recorded pre-local build set {}.", manifest.suite_version);
+    println!("Modality: fresh-ground (recorded-release-artifact bootstrap)");
     println!("Managed root: {}", data_root.display());
     println!("Control/ and Work/ were not used as artifact storage.");
     println!("Next: oi verify");
@@ -335,7 +341,7 @@ fn install_manifest_product(
     let archive = cache_dir.join(&asset.name);
     if !archive.is_file() || sha256_file(&archive).ok().as_deref() != Some(asset.sha256.as_str()) {
         let temp = cache_dir.join(format!(".{}.download", asset.name));
-        let url = format!("{}/releases/download/{}/{}", product.repository.trim_end_matches('/'), product.release_tag, asset.name);
+        let url = format!("{}/releases/download/{}/{}", product.repository.trim_end_matches('/'), product.historical_tag, asset.name);
         download_exact(&url, &temp)?;
         let actual = sha256_file(&temp)?;
         if actual != asset.sha256 {
@@ -364,13 +370,13 @@ fn install_manifest_product(
             .as_deref() == Some(asset.sha256.as_str());
     if !reusable {
         if product_root.exists() {
-            return Err(format!("managed product root {} exists without the accepted marker; refusing to rewrite it", product_root.display()));
+            return Err(format!("managed product root {} exists without the recorded build marker; refusing to rewrite it", product_root.display()));
         }
         let parent = product_root.parent().ok_or_else(|| "managed product root has no parent".to_owned())?;
         fs::create_dir_all(parent).map_err(|error| format!("cannot create {}: {error}", parent.display()))?;
         let temp_root = parent.join(format!(".{}-{}.tmp", product.revision, prelocal_now_ms()?));
         fs::create_dir_all(&temp_root).map_err(|error| format!("cannot create {}: {error}", temp_root.display()))?;
-        let tar = resolve_executable("tar").ok_or_else(|| "tar is required to unpack accepted suite artifacts".to_owned())?;
+        let tar = resolve_executable("tar").ok_or_else(|| "tar is required to unpack recorded pre-local build artifacts".to_owned())?;
         let status = Command::new(tar).arg("-xzf").arg(&archive).arg("-C").arg(&temp_root).status()
             .map_err(|error| format!("failed to unpack {}: {error}", asset.name))?;
         if !status.success() {
@@ -382,7 +388,7 @@ fn install_manifest_product(
             "id": product.id,
             "suite_version": receipt.suite_version,
             "revision": product.revision,
-            "release_tag": product.release_tag,
+            "historical_tag": product.historical_tag,
             "asset": asset.name,
             "sha256": asset.sha256,
             "attestation": asset.attestation,
@@ -425,7 +431,14 @@ fn install_manifest_product(
     };
 
     let surface = find_surface(catalog, &product.id)?;
-    let registration = registration_for(surface, executable.clone(), Some(material_root.clone()), Some(product.revision.clone()))?;
+    let registration = registration_in_modality(
+        surface,
+        executable.clone(),
+        Some(material_root.clone()),
+        Some(product.revision.clone()),
+        oi_cli::modality::InstallModality::FreshGround,
+        Some("recorded-release-artifact".to_owned()),
+    )?;
     ensure_alias_available(composition, &registration)?;
     composition.modules.insert(product.id.clone(), registration);
 
@@ -445,7 +458,7 @@ fn install_manifest_product(
 }
 
 fn download_exact(url: &str, target: &Path) -> Result<(), String> {
-    let curl = resolve_executable("curl").ok_or_else(|| "curl is required for release-artifact installation".to_owned())?;
+    let curl = resolve_executable("curl").ok_or_else(|| "curl is required for pre-local build-artifact installation".to_owned())?;
     let status = Command::new(curl)
         .args(["--fail", "--location", "--retry", "5", "--retry-all-errors", "--silent", "--show-error", "--output"])
         .arg(target).arg(url).status()
@@ -528,7 +541,7 @@ fn command_suite_v2_update(args: &[OsString]) -> Result<i32, String> {
     } else {
         receipt.products.keys().map(OsString::from).collect()
     };
-    println!("Updating only to accepted suite manifest {} (never arbitrary latest).", manifest.suite_version);
+    println!("Updating only to recorded pre-local build set {} (never arbitrary latest).", manifest.suite_version);
     command_suite_v2_install(&ids)
 }
 
@@ -556,9 +569,9 @@ fn command_suite_v2_status(args: &[OsString]) -> Result<i32, String> {
     println!("Managed root: {}", data_root.display());
     for product in &manifest.products {
         match receipt.products.get(&product.id) {
-            Some(installed) if installed.revision == product.revision => println!("  {:<18} accepted  {}", product.public_name, product.revision),
-            Some(installed) => println!("  {:<18} drift     {} (accepted {})", product.public_name, installed.revision, product.revision),
-            None => println!("  {:<18} missing   accepted {}", product.public_name, product.revision),
+            Some(installed) if installed.revision == product.revision => println!("  {:<18} recorded  {}", product.public_name, product.revision),
+            Some(installed) => println!("  {:<18} drift     {} (recorded {})", product.public_name, installed.revision, product.revision),
+            None => println!("  {:<18} missing   recorded {}", product.public_name, product.revision),
         }
     }
     println!("Physical acceptance: NOT RUN (separate gate)");
@@ -571,25 +584,77 @@ fn command_suite_v2_doctor(args: &[OsString]) -> Result<i32, String> {
     let data_root = oi_data_root()?;
     let composition = load_composition()?;
     let receipt = load_installed_receipt(&data_root, &manifest.suite_version)?;
+    // The live surface disclosure is needed twice: per product (to tell a
+    // deliberate developer-path install from a genuinely unhealthy one) and
+    // as its own check block. Resolved once.
+    let live = oi_cli::status::live_disclosure();
+    let surface_in_step = |id: &str| live.as_ref().ok()
+        .and_then(|d| d.surfaces.iter().find(|s| s.id == id))
+        .map(|s| s.state == oi_cli::status::NativeSurfaceState::Registered && s.drift.is_none())
+        .unwrap_or(false);
     let mut checks = Vec::new();
     let mut ok = true;
     for product in &manifest.products {
-        let result = match receipt.products.get(&product.id) {
+        let managed = match receipt.products.get(&product.id) {
             None => Err("not installed".to_owned()),
             Some(installed) if installed.revision != product.revision => Err(format!("revision drift: {}", installed.revision)),
             Some(installed) => {
                 let asset = selected_asset(product)?;
                 let cached = data_root.join("cache").join(&product.id).join(&product.revision).join(&asset.name);
                 if !Path::new(&installed.root).is_dir() { Err("managed product root missing".to_owned()) }
-                else if !cached.is_file() { Err("verified release archive missing from managed cache".to_owned()) }
-                else if sha256_file(&cached)? != asset.sha256 { Err("cached release archive checksum mismatch".to_owned()) }
+                else if !cached.is_file() { Err("recorded build archive missing from managed cache".to_owned()) }
+                else if sha256_file(&cached)? != asset.sha256 { Err("cached build archive checksum mismatch".to_owned()) }
                 else if let Some(exe) = installed.executable.as_deref() {
                     verify_installed_product(product, Some(Path::new(exe)), composition.personal_ground.as_deref()).map_err(|e| e.to_string())
                 } else { Ok(()) }
             }
         };
-        if result.is_err() { ok = false; }
-        checks.push(json!({"product": product.id, "ok": result.is_ok(), "detail": result.err()}));
+        // A managed-receipt gap on a machine whose registered source surface
+        // is present and in step is a deliberate developer-path install, not
+        // a health failure: the surface's own drift check still fails this
+        // doctor when what runs is stale. Neither managed nor surface
+        // coverage, or a drifted surface, remains a failing condition.
+        let (product_ok, detail) = doctor_managed_standing(managed.err().as_deref(), surface_in_step(&product.id));
+        if !product_ok { ok = false; }
+        checks.push(json!({"product": product.id, "ok": product_ok, "detail": detail}));
+    }
+    let catalogue = catalogue_freshness();
+    if catalogue.is_err() { ok = false; }
+    checks.push(json!({"product": "surface-catalogue", "ok": catalogue.is_ok(), "detail": catalogue.err()}));
+    // Registered source surfaces: the managed-release checks above see only
+    // recorded receipts. What this machine actually runs also includes
+    // registered checkouts and whatever PATH resolves first. Found 2026-09-05:
+    // a machine executing a pre-harmonisation aikit (and no ctrl) reported
+    // ok across the board. Live drift is a failing condition, same class as a
+    // drifted receipt.
+    let mut surface_checks = Vec::new();
+    match live {
+        Ok(disclosure) => {
+            for surface in &disclosure.surfaces {
+                // Drift is the failing condition. A PATH shadow is recorded and
+                // reported; it fails only when its content actually differs
+                // (status.rs puts that finding in `drift` too).
+                let surface_ok = surface.drift.is_none();
+                if !surface_ok { ok = false; }
+                let detail = match (&surface.drift, &surface.detail) {
+                    (Some(drift), Some(note)) => format!("{drift}; {note}"),
+                    (Some(drift), None) => drift.clone(),
+                    (None, other) => other.clone().unwrap_or_default(),
+                };
+                surface_checks.push(json!({
+                    "surface": surface.id,
+                    "state": surface.state,
+                    "ok": surface_ok,
+                    "modality": surface.modality,
+                    "install_source": surface.install_source,
+                    "registered_version": surface.registered_version,
+                    "live_revision": surface.live_revision,
+                    "path_executable": surface.path_executable,
+                    "detail": detail,
+                }));
+            }
+        }
+        Err(error) => { ok = false; surface_checks.push(json!({"surface": "suite", "ok": false, "detail": error})); }
     }
     if json_mode {
         println!("{}", serde_json::to_string_pretty(&json!({
@@ -597,6 +662,7 @@ fn command_suite_v2_doctor(args: &[OsString]) -> Result<i32, String> {
             "suite_version": manifest.suite_version,
             "ok": ok,
             "checks": checks,
+            "surfaces": surface_checks,
             "physical_gates": manifest.physical_gates,
             "physical_acceptance": false
         })).map_err(|e| e.to_string())?);
@@ -605,9 +671,58 @@ fn command_suite_v2_doctor(args: &[OsString]) -> Result<i32, String> {
         for check in checks {
             println!("  {:<18} {}{}", check["product"].as_str().unwrap_or("?"), if check["ok"].as_bool().unwrap_or(false) { "PASS" } else { "FAIL" }, check["detail"].as_str().map(|d| format!(" — {d}")).unwrap_or_default());
         }
+        for check in &surface_checks {
+            println!("  {:<18} {}{}", check["surface"].as_str().unwrap_or("?"), if check["ok"].as_bool().unwrap_or(false) { "PASS" } else { "FAIL" }, check["detail"].as_str().map(|d| {
+                let d = if d.is_empty() { "in step" } else { d };
+                format!(" — {d}")
+            }).unwrap_or_else(|| " — in step".to_owned()));
+        }
         for gate in &manifest.physical_gates { println!("  DEFERRED {} — {}", gate.id, gate.description); }
     }
     Ok(if ok { 0 } else { 3 })
+}
+
+/// Managed-receipt standing for one product, reconciled against its live
+/// source surface. `Err` from the managed check plus an in-step registered
+/// surface is a deliberate developer-path install, not a health failure; the
+/// surface's own drift check still fails the doctor when what runs is stale.
+fn doctor_managed_standing(managed_error: Option<&str>, surface_in_step: bool) -> (bool, Option<String>) {
+    match managed_error {
+        None => (true, None),
+        Some(err) if surface_in_step => (true,
+            Some(format!("managed receipt not authoritative for this machine ({err}); live source surface is in step (developer-path install)"))),
+        Some(err) => (false, Some(err.to_owned())),
+    }
+}
+
+/// An adopted runtime surface catalogue older than the embedded snapshot is
+/// the stale-shadow failure mode: resolution prefers it over the embedded
+/// file, so a week-old adoption silently poisons every revision reading.
+/// Same-date or newer adoptions, and machines without an adoption, pass.
+fn catalogue_staleness_error(runtime_origin: &str, runtime_verified_at: Option<&str>, embedded_verified_at: &str) -> Option<String> {
+    if runtime_origin == "embedded" { return None; }
+    let runtime_verified_at = runtime_verified_at
+        .unwrap_or("0000-00-00");
+    if runtime_verified_at < embedded_verified_at {
+        Some(format!(
+            "adopted runtime surface catalogue (verified {runtime_verified_at}) is older than the embedded snapshot (verified {embedded_verified_at}); \
+             re-adopt 'oi catalogue adopt <surfaces.json>' or remove the adopted catalogue so the embedded snapshot resolves"))
+    } else { None }
+}
+
+fn catalogue_freshness() -> Result<(), String> {
+    let resolved = oi_cli::catalog_source::resolve()?;
+    let verified_at = |json: &str| -> Result<String, String> {
+        serde_json::from_str::<serde_json::Value>(json)
+            .map_err(|error| format!("surface catalogue is invalid JSON: {error}"))?
+            .get("verified_at").and_then(serde_json::Value::as_str)
+            .map(str::to_owned)
+            .ok_or_else(|| "surface catalogue carries no verified_at".to_owned())
+    };
+    let runtime_verified_at = verified_at(&resolved.json)?;
+    let embedded_verified_at = verified_at(include_str!("../../surfaces.json"))?;
+    catalogue_staleness_error(resolved.origin, Some(&runtime_verified_at), &embedded_verified_at)
+        .map_or(Ok(()), Err)
 }
 
 fn command_suite_v2_cleanup(args: &[OsString]) -> Result<i32, String> {
@@ -644,13 +759,20 @@ fn command_suite_v2_dev(args: &[OsString]) -> Result<i32, String> {
 
 fn dev_source_path(ground: &Path, id: &str) -> PathBuf {
     match id {
-        "central" => ground.to_path_buf(),
+        "central" => ground.join("Work/Central"),
         "oi" => ground.join("Work/O-I"),
         "actuation" => ground.join("Work/Actuation"),
         "ai-kit" => ground.join("Work/ai-kit"),
         "software-factory" => {
-            let canonical = ground.join("Work/Software-Factory");
-            if canonical.exists() { canonical } else { ground.join("Work/agent-system-design") }
+            // The repository and the personal-ground checkout are both named
+            // Factory since the 2026-09-10 rename; the older spellings remain
+            // as fallbacks for grounds not yet renamed.
+            let canonical = ground.join("Work/Factory");
+            if canonical.exists() { canonical }
+            else {
+                let prior = ground.join("Work/Software-Factory");
+                if prior.exists() { prior } else { ground.join("Work/agent-system-design") }
+            }
         }
         "workcell" => ground.join("Work/Workcell"),
         "quaternal-logic" => {
@@ -766,7 +888,6 @@ fn command_dev_adopt_v2(args: &[OsString]) -> Result<i32, String> {
     if args.len() != 2 { return Err("usage: oi dev adopt PRODUCT PATH".to_owned()); }
     let manifest = suite_manifest()?;
     let id = args[0].to_str().ok_or_else(|| "product id must be UTF-8".to_owned())?;
-    if id == "central" { return Err("Central is the configured personal ground itself and cannot be adopted into its own Work/ tree".to_owned()); }
     let canonical_id = if id == "oi" { "oi".to_owned() } else {
         manifest.products.iter().find(|p| p.id == id || p.public_name.eq_ignore_ascii_case(id)).map(|p| p.id.clone())
             .ok_or_else(|| format!("unknown product '{id}'"))?
@@ -779,6 +900,7 @@ fn command_dev_adopt_v2(args: &[OsString]) -> Result<i32, String> {
     if canonical_source != canonical_top { return Err(format!("adoption source must be the repository root: {}", canonical_top.display())); }
     let ground = configured_ground()?;
     let target = match canonical_id.as_str() {
+        "central" => ground.join("Work/Central"),
         "oi" => ground.join("Work/O-I"),
         "software-factory" => ground.join("Work/Software-Factory"),
         "quaternal-logic" => ground.join("Work/Quaternal-Logic"),
@@ -859,7 +981,16 @@ fn run_dev_command(root: &Path, command: &[String]) -> Result<(), String> {
 fn command_dev_install_v2(args: &[OsString]) -> Result<i32, String> {
     let manifest = suite_manifest()?;
     let ground = configured_ground()?;
-    let ids = requested_dev_ids(args, &manifest)?;
+    let mut args = args.to_vec();
+    let mut install_root: Option<PathBuf> = None;
+    if let Some(position) = args.iter().position(|arg| arg == "--root") {
+        let value = args.get(position + 1).ok_or("'--root' requires a target directory")?.to_owned();
+        args.drain(position..=position + 1);
+        let root = PathBuf::from(&value);
+        if !root.is_dir() { return Err(format!("'--root' directory does not exist: {}", root.display())); }
+        install_root = Some(root);
+    }
+    let ids = requested_dev_ids(&args, &manifest)?;
     let catalog = catalog()?;
     let mut composition = load_composition()?;
     for id in ids {
@@ -874,8 +1005,11 @@ fn command_dev_install_v2(args: &[OsString]) -> Result<i32, String> {
             let source = root.join("cli/target/release/oi");
             if !is_executable(&source) { return Err(format!("O:I developer build did not produce {}", source.display())); }
             let data_root = oi_data_root()?;
-            ensure_managed_layout(&data_root)?;
-            let target = data_root.join("bin/oi");
+            let target = match &install_root {
+                Some(root) => root.join("bin/oi"),
+                None => { ensure_managed_layout(&data_root)?; data_root.join("bin/oi") }
+            };
+            if let Some(parent) = target.parent() { fs::create_dir_all(parent).map_err(|e| e.to_string())?; }
             let temp = data_root.join("bin/.oi.dev.tmp");
             fs::copy(&source, &temp).map_err(|error| format!("cannot stage developer O:I binary: {error}"))?;
             #[cfg(unix)]
@@ -886,19 +1020,173 @@ fn command_dev_install_v2(args: &[OsString]) -> Result<i32, String> {
                 fs::set_permissions(&temp, permissions).map_err(|e| e.to_string())?;
             }
             fs::rename(&temp, &target).map_err(|error| format!("cannot promote developer O:I binary: {error}"))?;
+            write_dev_receipt(&data_root, "oi", Some(&target), &root)?;
             println!("oi: installed developer build at {}", target.display());
             continue;
         }
         let product = manifest.products.iter().find(|p| p.id == id).unwrap();
         if !product.dev.build.is_empty() { run_dev_command(&root, &product.dev.build)?; }
         let executable = product.artifact.entry.as_deref().map(|entry| root.join("target/release").join(entry)).filter(|path| is_executable(path));
+        let executable_for_receipt = executable.clone();
         if product.artifact.entry.is_some() && executable.is_none() { return Err(format!("{} build did not produce expected release executable", id)); }
         let surface = find_surface(&catalog, &id)?;
-        let registration = registration_for(surface, executable, Some(root.clone()), Some(product.revision.clone()))?;
+        let registration = registration_in_modality(
+            surface,
+            executable,
+            Some(root.clone()),
+            Some(product.revision.clone()),
+            oi_cli::modality::InstallModality::DeveloperSource,
+            Some("developer-source-build".to_owned()),
+        )?;
         ensure_alias_available(&composition, &registration)?;
         composition.modules.insert(id.clone(), registration);
+        write_dev_receipt(&data_root_receipts(&oi_data_root()?), &id, executable_for_receipt.as_deref(), &root)?;
         println!("{id}: registered developer source/build at {}", root.display());
     }
     save_composition(&composition)?;
     Ok(0)
+}
+
+/// The one machine-readable answer to "what is installed here": per product,
+/// the executable, its digest and the exact source it was built from.
+fn data_root_receipts(data_root: &Path) -> PathBuf { data_root.join("receipts/dev/installed") }
+
+fn write_dev_receipt(receipts: &Path, product: &str, executable: Option<&Path>, source_root: &Path) -> Result<(), String> {
+    let git = |argument: &str| -> Result<String, String> {
+        let output = std::process::Command::new("git").arg("-C").arg(source_root)
+            .args(["rev-parse", argument]).output()
+            .map_err(|error| format!("cannot probe {product} source: {error}"))?;
+        if !output.status.success() { return Err(format!("cannot probe {product} source revision")); }
+        Ok(String::from_utf8_lossy(&output.stdout).trim().to_owned())
+    };
+    let revision = git("HEAD")?;
+    let tree = git("HEAD^{tree}")?;
+    let sha256 = match executable {
+        Some(path) => Some(sha256_file(path)?),
+        None => None,
+    };
+    let installed_at = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)
+        .map(|duration| duration.as_secs()).unwrap_or(0);
+    let receipt = dev_receipt_json(product, executable.map(|path| path.display().to_string()), sha256, &revision, &tree, source_root.display().to_string(), installed_at);
+    let path = receipts.join(format!("{product}.json"));
+    if let Some(parent) = path.parent() { fs::create_dir_all(parent).map_err(|e| e.to_string())?; }
+    fs::write(&path, serde_json::to_vec_pretty(&receipt).map_err(|e| e.to_string())?)
+        .map_err(|error| format!("cannot write {product} install receipt: {error}"))?;
+    Ok(())
+}
+
+fn dev_receipt_json(product: &str, executable: Option<String>, sha256: Option<String>, revision: &str, tree: &str, source_path: String, installed_at_unix_seconds: u64) -> serde_json::Value {
+    let mut receipt = serde_json::json!({
+        "schema": "oi.dev-install-receipt/v1",
+        "product": product,
+        "installed_at_unix_seconds": installed_at_unix_seconds,
+        "source": { "path": source_path, "revision": revision, "tree": tree },
+    });
+    if let Some(executable) = executable { receipt["executable"] = serde_json::Value::String(executable); }
+    if let Some(sha256) = sha256 { receipt["sha256"] = serde_json::Value::String(sha256); }
+    receipt
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn dev_source_path_maps_central_into_work_not_the_ground_itself() {
+        let ground = PathBuf::from("/tmp/central-ground");
+        assert_eq!(
+            dev_source_path(&ground, "central"),
+            ground.join("Work/Central"),
+            "central dev source must live under Work/Central, never be the personal ground itself"
+        );
+        assert_eq!(dev_source_path(&ground, "oi"), ground.join("Work/O-I"));
+        assert_eq!(dev_source_path(&ground, "actuation"), ground.join("Work/Actuation"));
+    }
+
+    #[test]
+    fn dev_source_path_resolves_renamed_software_factory_checkout() {
+        let ground = std::env::temp_dir().join(format!("oi-dev-source-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&ground);
+        std::fs::create_dir_all(ground.join("Work/Factory")).expect("create renamed factory checkout");
+        assert_eq!(
+            dev_source_path(&ground, "software-factory"),
+            ground.join("Work/Factory"),
+            "the renamed Work/Factory checkout must win over the legacy spellings"
+        );
+        std::fs::remove_dir_all(&ground).ok();
+    }
+
+    #[test]
+    fn dev_source_path_software_factory_falls_back_to_legacy_names() {
+        let ground = PathBuf::from("/tmp/central-ground");
+        assert_eq!(
+            dev_source_path(&ground, "software-factory"),
+            ground.join("Work/agent-system-design"),
+            "without a renamed checkout the legacy agent-system-design path remains the fallback"
+        );
+    }
+
+    #[test]
+    fn dev_receipt_carries_the_install_identity() {
+        let receipt = dev_receipt_json(
+            "oi", Some("/usr/local/bin/oi".into()), Some("abc123".into()),
+            "a7ec336ac713edf4561c519fb98ac0418f495e72", "1aa2af139f971fd9099aa352aca2db5ee0c11de0",
+            "/ground/Work/O-I".into(), 1789154407,
+        );
+        assert_eq!(receipt["schema"], "oi.dev-install-receipt/v1");
+        assert_eq!(receipt["product"], "oi");
+        assert_eq!(receipt["executable"], "/usr/local/bin/oi");
+        assert_eq!(receipt["sha256"], "abc123");
+        assert_eq!(receipt["source"]["revision"], "a7ec336ac713edf4561c519fb98ac0418f495e72");
+        assert_eq!(receipt["source"]["tree"], "1aa2af139f971fd9099aa352aca2db5ee0c11de0");
+        assert_eq!(receipt["source"]["path"], "/ground/Work/O-I");
+        assert_eq!(receipt["installed_at_unix_seconds"], 1789154407);
+        let bare = dev_receipt_json("actuation", None, None, "2d73f957c287", "tree", "/ground/Work/Actuation".into(), 0);
+        assert!(bare.get("executable").is_none(), "a checkout-link product carries no executable claim");
+        assert!(bare.get("sha256").is_none());
+    }
+
+    #[test]
+    fn doctor_treats_in_step_surface_as_authoritative_over_stale_receipt() {
+        let (ok, detail) = doctor_managed_standing(Some("not installed"), true);
+        assert!(ok, "a developer-path install with an in-step surface is healthy");
+        let detail = detail.expect("the downgrade is disclosed, not silent");
+        assert!(detail.contains("developer-path install"), "{detail}");
+
+        let asset_error = "cached build archive checksum mismatch".to_owned();
+        let (ok, detail) = doctor_managed_standing(Some(&asset_error), true);
+        assert!(ok, "even an asset mismatch is superseded by an in-step live surface");
+        assert!(detail.unwrap().contains("checksum mismatch"));
+
+        let (ok, detail) = doctor_managed_standing(Some("not installed"), false);
+        assert!(!ok, "no managed receipt and no in-step surface is a failing condition");
+        assert_eq!(detail.unwrap(), "not installed");
+
+        let (ok, detail) = doctor_managed_standing(None, false);
+        assert!(ok, "a satisfied managed receipt needs no surface");
+        assert!(detail.is_none());
+    }
+
+    #[test]
+    fn doctor_fails_stale_adopted_catalogue_but_not_current_or_embedded() {
+        let stale = catalogue_staleness_error("runtime", Some("2026-09-03"), "2026-09-09").expect("stale adoption must fail");
+        assert!(stale.contains("re-adopt"), "{stale}");
+        assert!(catalogue_staleness_error("runtime", Some("2026-09-09"), "2026-09-09").is_none(), "same-day adoption is current");
+        assert!(catalogue_staleness_error("runtime", Some("2026-09-10"), "2026-09-09").is_none(), "newer adoption is current");
+        assert!(catalogue_staleness_error("runtime", None, "2026-09-09").is_some(), "an adoption without a date cannot be trusted");
+        assert!(catalogue_staleness_error("embedded", None, "2026-09-09").is_none(), "the embedded snapshot is always current by construction");
+    }
+
+    #[test]
+    fn adopt_target_for_central_is_work_central() {
+        let ground = PathBuf::from("/tmp/central-ground");
+        // central must adopt into Work/Central like every other suite product.
+        let canonical_id = "central";
+        let target = match canonical_id {
+            "central" => ground.join("Work/Central"),
+            "oi" => ground.join("Work/O-I"),
+            _ => unreachable!(),
+        };
+        assert_eq!(target, ground.join("Work/Central"));
+    }
 }

@@ -1,0 +1,7 @@
+/* The forms overlay rides on the stage's overlay plane: over ordinary
+ * chrome, under every dialog, menu or popover (the old --oi-z-notice
+ * altitude claimed more than forms may). The fallback keeps standalone
+ * design-system consumers at the old altitude rather than unstyled. */
+.oi-expression-overlay{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:var(--oi-z-stage-overlay,90)}
+.oi-expression-ink{position:fixed;visibility:hidden;pointer-events:none;color:color-mix(in srgb,var(--oi-foreground) 58%,var(--oi-surface))}
+.oi-expression-anchor{display:inline-block;width:var(--oi-expression-field-width);height:var(--oi-expression-field-height);flex:none;pointer-events:none}

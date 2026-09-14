@@ -1,0 +1,89 @@
+{
+  "schema": "oi.current-world/v1",
+  "personal_ground": "/tmp/astra-ground",
+  "positions": [
+    {
+      "position": 0,
+      "product_id": "central",
+      "public_name": "Central",
+      "native_owner": "https://github.com/EpiLogos/Central",
+      "accepted_revision": "f66794a712609ea29760355d66f632d669ad7c98",
+      "canonical_namespace": "central",
+      "compatibility_aliases": [
+        "ctrl"
+      ],
+      "state": "registered",
+      "present": true,
+      "native_location": "/Users/admin/.cargo/bin/ctrl",
+      "version": "f66794a712609ea29760355d66f632d669ad7c98"
+    },
+    {
+      "position": 1,
+      "product_id": "actuation",
+      "public_name": "Actuation",
+      "native_owner": "https://github.com/EpiLogos/Actuation",
+      "accepted_revision": "faa5b79f75230ef259d5e523fcade491b23dc3eb",
+      "canonical_namespace": "actuation",
+      "compatibility_aliases": [],
+      "state": "installed",
+      "present": true,
+      "native_location": "/Users/admin/.npm-global/bin/actuation"
+    },
+    {
+      "position": 2,
+      "product_id": "ai-kit",
+      "public_name": "AIKit",
+      "native_owner": "https://github.com/EpiLogos/ai-kit",
+      "accepted_revision": "c1503425cf1d9f2eb28917ee75117e619687c38b",
+      "canonical_namespace": "aikit",
+      "compatibility_aliases": [
+        "kit"
+      ],
+      "state": "installed",
+      "present": true,
+      "native_location": "/Users/admin/.cargo/bin/aikit"
+    },
+    {
+      "position": 3,
+      "product_id": "software-factory",
+      "public_name": "Software Factory",
+      "native_owner": "https://github.com/EpiLogos/agent-system-design",
+      "accepted_revision": "3d9094177a7216697619db0a3c16bafb6bb815ca",
+      "canonical_namespace": "factory",
+      "compatibility_aliases": [],
+      "state": "missing",
+      "present": false
+    },
+    {
+      "position": 4,
+      "product_id": "workcell",
+      "public_name": "Workcell",
+      "native_owner": "https://github.com/EpiLogos/Workcell",
+      "accepted_revision": "dc076fdf0c3e12835c17ded95ef199e200f7f8e1",
+      "canonical_namespace": "workcell",
+      "compatibility_aliases": [],
+      "state": "missing",
+      "present": false
+    },
+    {
+      "position": 5,
+      "product_id": "quaternal-logic",
+      "public_name": "Quaternal Logic",
+      "native_owner": "https://github.com/EpiLogos/QL-MEF",
+      "accepted_revision": "781981374eaa1f02952249dcdbca1af671d1ece4",
+      "canonical_namespace": "ql",
+      "compatibility_aliases": [],
+      "state": "missing",
+      "present": false
+    }
+  ],
+  "context_frame": {
+    "maximal": false,
+    "present_positions": [
+      0,
+      1,
+      2
+    ]
+  },
+  "warnings": []
+}

@@ -1,0 +1,90 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "page-context",
+  "generated_at": "2026-09-08T17:48:21.593Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4247",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 2234,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Native CSP permits exactly the reviewed material observation script"
+    },
+    {
+      "ok": true,
+      "label": "Rendered HTML keeps its real script interaction"
+    },
+    {
+      "ok": true,
+      "label": "Rendered HTML supports granular text selection"
+    },
+    {
+      "ok": true,
+      "label": "Opaque HTML frame returns exactly the user-selected text"
+    },
+    {
+      "ok": true,
+      "label": "Component picker observes a real page button"
+    },
+    {
+      "ok": true,
+      "label": "Picking a component does not activate the page control"
+    },
+    {
+      "ok": true,
+      "label": "Rendered component carries measured bounds"
+    },
+    {
+      "ok": true,
+      "label": "Leaving context mode restores ordinary page interaction"
+    },
+    {
+      "ok": true,
+      "label": "Rendered page still scrolls with hidden scrollbars"
+    },
+    {
+      "ok": true,
+      "label": "Rendered page scrollbar chrome is suppressed"
+    },
+    {
+      "ok": true,
+      "label": "Context observation preserves the opaque sandbox without shell authority"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-08T17:48:21.737Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4247"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 20,
+      "data": {
+        "file": "page-context-rendered-context-and-scroll.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "page-context-rendered-context-and-scroll.png"
+  ]
+}

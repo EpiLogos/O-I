@@ -1,0 +1,417 @@
+{
+  "schema": "actuation.harness-detection/v1",
+  "document": "detection",
+  "detection_ref": "detection:2026-09-06T13:11:06.087Z",
+  "observed_at": "2026-09-06T13:11:06.087Z",
+  "catalog_revision": 1,
+  "detector": {
+    "implementation": "actuation surface-probes",
+    "version": "0.1.0"
+  },
+  "harnesses": [
+    {
+      "slug": "claude-code",
+      "harness_ref": "harness/claude-code",
+      "state": "detected",
+      "probes": [
+        {
+          "kind": "executable",
+          "result": "pass",
+          "spec": "claude",
+          "detail": "/Users/admin/.local/bin/claude"
+        },
+        {
+          "kind": "config-dir",
+          "result": "pass",
+          "spec": "~/.claude",
+          "detail": "exists at /Users/admin/.claude"
+        }
+      ],
+      "receipts": {
+        "executable": "/Users/admin/.local/bin/claude",
+        "sha256": "ef5d2909c8af49f31ab6d5487e90316777bc2fac170adfe8160716caa8aaf4f9",
+        "mtime": 1788663274669,
+        "size": 199257984
+      },
+      "facets": [
+        {
+          "kind": "skills",
+          "path": "~/.claude/skills",
+          "exists": true,
+          "count": 52
+        },
+        {
+          "kind": "plugins",
+          "path": "~/.claude/plugins",
+          "exists": true,
+          "count": 9
+        },
+        {
+          "kind": "commands",
+          "path": "~/.claude/commands",
+          "exists": true,
+          "count": 8
+        },
+        {
+          "kind": "hooks",
+          "path": "~/.claude/hooks",
+          "exists": true,
+          "count": 11
+        },
+        {
+          "kind": "settings",
+          "path": "~/.claude/settings.json",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "slug": "codex",
+      "harness_ref": "harness/codex",
+      "state": "detected",
+      "probes": [
+        {
+          "kind": "executable",
+          "result": "pass",
+          "spec": "codex",
+          "detail": "/opt/homebrew/bin/codex"
+        },
+        {
+          "kind": "config-dir",
+          "result": "pass",
+          "spec": "~/.codex",
+          "detail": "exists at /Users/admin/.codex"
+        }
+      ],
+      "receipts": {
+        "executable": "/opt/homebrew/bin/codex",
+        "sha256": "a29d9e86eef88cbbd69f97ce8c590b1d0a287c8f77424f5eef226b883d7eaa22",
+        "mtime": 1788398743096,
+        "size": 220452192
+      },
+      "facets": [
+        {
+          "kind": "skills",
+          "path": "~/.codex/skills",
+          "exists": true,
+          "count": 31
+        },
+        {
+          "kind": "rules",
+          "path": "~/.codex/rules",
+          "exists": true,
+          "count": 1
+        },
+        {
+          "kind": "config",
+          "path": "~/.codex/config.toml",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "slug": "gemini",
+      "harness_ref": "harness/gemini",
+      "state": "detected",
+      "probes": [
+        {
+          "kind": "executable",
+          "result": "pass",
+          "spec": "gemini",
+          "detail": "/opt/homebrew/bin/gemini"
+        },
+        {
+          "kind": "config-dir",
+          "result": "pass",
+          "spec": "~/.gemini",
+          "detail": "exists at /Users/admin/.gemini"
+        }
+      ],
+      "receipts": {
+        "executable": "/opt/homebrew/bin/gemini",
+        "sha256": "b9d5748e3b98c4a6742a93aefb0617a9d8c9a7810af383df1a02f4b6f62f6381",
+        "mtime": 1771555141157,
+        "size": 1751
+      },
+      "facets": [
+        {
+          "kind": "extensions",
+          "path": "~/.gemini/extensions",
+          "exists": true,
+          "count": 2
+        },
+        {
+          "kind": "settings",
+          "path": "~/.gemini/settings.json",
+          "exists": true
+        },
+        {
+          "kind": "agents",
+          "path": "~/.gemini/antigravity",
+          "exists": true,
+          "count": 13
+        }
+      ]
+    },
+    {
+      "slug": "gemini-antigravity",
+      "harness_ref": "harness/gemini-antigravity",
+      "state": "detected",
+      "probes": [
+        {
+          "kind": "config-dir",
+          "result": "pass",
+          "spec": "~/.gemini/antigravity",
+          "detail": "exists at /Users/admin/.gemini/antigravity"
+        }
+      ],
+      "receipts": {
+        "executable": "/Users/admin/.gemini/antigravity",
+        "executable_is": "config-dir"
+      }
+    },
+    {
+      "slug": "pi",
+      "harness_ref": "harness/pi",
+      "state": "detected",
+      "probes": [
+        {
+          "kind": "executable",
+          "result": "pass",
+          "spec": "pi",
+          "detail": "/Users/admin/.local/bin/pi"
+        },
+        {
+          "kind": "config-dir",
+          "result": "pass",
+          "spec": "~/.pi/agent",
+          "detail": "exists at /Users/admin/.pi/agent"
+        }
+      ],
+      "receipts": {
+        "executable": "/Users/admin/.local/bin/pi",
+        "sha256": "5406c369954516fb56879d685e082ff9095cd6e06e41af406f394942377fd4bf",
+        "mtime": 1788363569873,
+        "size": 629
+      },
+      "facets": [
+        {
+          "kind": "skills",
+          "path": "~/.pi/agent/skills",
+          "exists": true,
+          "count": 14
+        },
+        {
+          "kind": "config",
+          "path": "~/.pi/agent/settings.json",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "slug": "hermes",
+      "harness_ref": "harness/hermes",
+      "state": "detected",
+      "probes": [
+        {
+          "kind": "executable",
+          "result": "pass",
+          "spec": "hermes",
+          "detail": "/Users/admin/.local/bin/hermes"
+        },
+        {
+          "kind": "config-dir",
+          "result": "pass",
+          "spec": "~/.hermes",
+          "detail": "exists at /Users/admin/.hermes"
+        }
+      ],
+      "receipts": {
+        "executable": "/Users/admin/.local/bin/hermes",
+        "sha256": "c5a8cdfedb29af93d79101e5d42b35eb24817cc67c9444bd524781a35e0f8aa8",
+        "mtime": 1780834165177,
+        "size": 116
+      },
+      "facets": [
+        {
+          "kind": "skills",
+          "path": "~/.hermes/skills",
+          "exists": true,
+          "count": 38
+        },
+        {
+          "kind": "config",
+          "path": "~/.hermes/config.yaml",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "slug": "hermes-acp",
+      "harness_ref": "harness/hermes-acp",
+      "state": "detected",
+      "probes": [
+        {
+          "kind": "executable",
+          "result": "pass",
+          "spec": "hermes-acp",
+          "detail": "/Users/admin/.local/bin/hermes-acp"
+        },
+        {
+          "kind": "config-dir",
+          "result": "pass",
+          "spec": "~/.hermes",
+          "detail": "exists at /Users/admin/.hermes"
+        }
+      ],
+      "receipts": {
+        "executable": "/Users/admin/.local/bin/hermes-acp",
+        "sha256": "f9cfd0ed0586ee3570af345e6f3f888f0d756fd465971a3539fc7b0e0c18960d",
+        "mtime": 1787608930481,
+        "size": 230
+      }
+    },
+    {
+      "slug": "grok-bot",
+      "harness_ref": "harness/grok-bot",
+      "state": "detected",
+      "probes": [
+        {
+          "kind": "executable",
+          "result": "pass",
+          "spec": "grok-bot gbot",
+          "detail": "/Users/admin/.npm-global/bin/grok-bot"
+        },
+        {
+          "kind": "config-dir",
+          "result": "pass",
+          "spec": "~/.grokbot",
+          "detail": "exists at /Users/admin/.grokbot"
+        },
+        {
+          "kind": "service",
+          "result": "pass",
+          "spec": "daemon",
+          "detail": "service probe not implemented; declared, not verified"
+        }
+      ],
+      "receipts": {
+        "executable": "/Users/admin/.npm-global/bin/grok-bot",
+        "sha256": "37d4ce54ab559bd80b37174258ae3cad232d5e31f6c1beb161c79359b0d2deee",
+        "mtime": 1788519474655,
+        "size": 15636
+      }
+    },
+    {
+      "slug": "ollama",
+      "harness_ref": "harness/ollama",
+      "state": "detected",
+      "probes": [
+        {
+          "kind": "executable",
+          "result": "pass",
+          "spec": "ollama",
+          "detail": "/usr/local/bin/ollama"
+        },
+        {
+          "kind": "config-dir",
+          "result": "pass",
+          "spec": "~/.ollama",
+          "detail": "exists at /Users/admin/.ollama"
+        },
+        {
+          "kind": "service",
+          "result": "pass",
+          "spec": "http",
+          "detail": "service probe not implemented; declared, not verified"
+        }
+      ],
+      "receipts": {
+        "executable": "/usr/local/bin/ollama",
+        "sha256": "5213ff550ef0be235af79afe5e239636e36fac44c5a1cedf62b26ecd604cdcfe",
+        "mtime": 1763400056903,
+        "size": 61997024
+      },
+      "facets": [
+        {
+          "kind": "models",
+          "path": "~/.ollama/models",
+          "exists": true,
+          "count": 3
+        }
+      ]
+    },
+    {
+      "slug": "openclaw",
+      "harness_ref": "harness/openclaw",
+      "state": "detected",
+      "probes": [
+        {
+          "kind": "executable",
+          "result": "pass",
+          "spec": "openclaw",
+          "detail": "/Users/admin/Library/pnpm/openclaw"
+        },
+        {
+          "kind": "config-dir",
+          "result": "pass",
+          "spec": "~/.openclaw",
+          "detail": "exists at /Users/admin/.openclaw"
+        }
+      ],
+      "receipts": {
+        "executable": "/Users/admin/Library/pnpm/openclaw",
+        "sha256": "bf7273d8f96922a7129b4db26fb8f17d56e032ce0033ed9a7d7f45b1b6b1a648",
+        "mtime": 1769875223212,
+        "size": 1612
+      },
+      "facets": [
+        {
+          "kind": "agents",
+          "path": "~/.openclaw/agents",
+          "exists": true,
+          "count": 1
+        },
+        {
+          "kind": "config",
+          "path": "~/.openclaw/openclaw.json",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "slug": "kimi",
+      "harness_ref": "harness/kimi",
+      "state": "detected",
+      "probes": [
+        {
+          "kind": "executable",
+          "result": "pass",
+          "spec": "kimi",
+          "detail": "/Users/admin/.local/bin/kimi"
+        },
+        {
+          "kind": "config-dir",
+          "result": "pass",
+          "spec": "~/.kimi",
+          "detail": "exists at /Users/admin/.kimi"
+        }
+      ],
+      "receipts": {
+        "executable": "/Users/admin/.local/bin/kimi",
+        "sha256": "ce20004bf1e26934645fa501705dfaade9a3ad0778e8639dd350681d52f8a515",
+        "mtime": 1770057190583,
+        "size": 330
+      },
+      "facets": [
+        {
+          "kind": "config",
+          "path": "~/.kimi/config.toml",
+          "exists": true
+        }
+      ]
+    }
+  ],
+  "absent": [],
+  "availability": "complete"
+}

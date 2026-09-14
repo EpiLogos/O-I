@@ -1,0 +1,50 @@
+[
+  {
+    "args": [
+      "task",
+      "list"
+    ],
+    "exit": 0,
+    "stdout": "{\"context\":{\"context_id\":\"ctx_ASTRAPROJECTION00000000\",\"project_root\":\"/private/tmp/astra-ground/Work/harness-acceptance\",\"session_id\":null},\"data\":{\"count\":1,\"tasks\":[{\"branch\":null,\"dirty\":false,\"isolation\":\"directory\",\"name\":\"astra-acceptance\",\"path\":\"/private/tmp/astra-ground/Work/harness-acceptance/.aikit/tasks/astra-acceptance\"}]},\"ok\":true,\"schema\":1,\"warnings\":[]}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "session",
+      "list"
+    ],
+    "exit": 0,
+    "stdout": "{\"context\":{\"context_id\":\"ctx_ASTRAPROJECTION00000000\",\"project_root\":\"/private/tmp/astra-ground/Work/harness-acceptance\",\"session_id\":null},\"data\":{\"count\":1,\"sessions\":[{\"last_seen\":\"2026-09-06T11:01:20.61116Z\",\"mux\":\"tmux\",\"mux_session\":\"harness-acceptance\",\"name\":\"harness-acceptance\",\"project_root\":\"/private/tmp/astra-ground/Work/harness-acceptance\",\"session_id\":\"ses_01M1V62GGCHC8CX2RPWZ3HYJMR\",\"state\":\"live\"}]},\"ok\":true,\"schema\":1,\"warnings\":[]}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "session",
+      "diff",
+      "harness-acceptance"
+    ],
+    "exit": 0,
+    "stdout": "{\"context\":{\"context_id\":\"ctx_ASTRAPROJECTION00000000\",\"project_root\":\"/private/tmp/astra-ground/Work/harness-acceptance\",\"session_id\":null},\"data\":{\"differences\":[],\"matches_spec\":true,\"mux\":\"tmux\",\"session\":\"harness-acceptance\"},\"ok\":true,\"schema\":1,\"warnings\":[]}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "task",
+      "close",
+      "astra-acceptance"
+    ],
+    "exit": 0,
+    "stdout": "{\"context\":{\"context_id\":\"ctx_ASTRAPROJECTION00000000\",\"project_root\":\"/private/tmp/astra-ground/Work/harness-acceptance\",\"session_id\":null},\"data\":{\"closed\":\"astra-acceptance\",\"forced\":false,\"isolation\":\"directory\"},\"ok\":true,\"schema\":1,\"warnings\":[]}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "session",
+      "down",
+      "harness-acceptance"
+    ],
+    "exit": 0,
+    "stdout": "{\"context\":{\"context_id\":\"ctx_ASTRAPROJECTION00000000\",\"project_root\":\"/private/tmp/astra-ground/Work/harness-acceptance\",\"session_id\":null},\"data\":{\"command\":[\"tmux\",\"kill-session\",\"-t\",\"harness-acceptance\"],\"commands\":[[\"tmux\",\"kill-session\",\"-t\",\"harness-acceptance\"]],\"mux\":\"tmux\",\"note\":\"AIKit prints the teardown command rather than running it: closing a session can discard work in a pane AIKit never started\",\"session\":\"harness-acceptance\"},\"ok\":true,\"schema\":1,\"warnings\":[]}\n",
+    "stderr": ""
+  }
+]

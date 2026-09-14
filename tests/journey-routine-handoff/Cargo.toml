@@ -1,0 +1,10 @@
+[package]
+name = "oi-journey-routine-handoff"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+central-ctrl = { git = "https://github.com/EpiLogos/Central", rev = "3d45044e3984e2f389e1e9237306ddeba4d3ca94", package = "ctrl" }
+aikit-core = { git = "https://github.com/EpiLogos/ai-kit", rev = "58465dc21f1deedfd43ef82b188d495eebe4561a", package = "aikit-core" }
+epilogos-factory = { git = "https://github.com/EpiLogos/agent-system-design", rev = "c9b620fab742ead8defea334fb45cdc7558ed43d", package = "epilogos-factory" }

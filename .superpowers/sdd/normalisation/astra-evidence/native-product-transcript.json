@@ -1,0 +1,202 @@
+[
+  {
+    "command": [
+      "/tmp/astra-aikit-user-ground/target/debug/aikit",
+      "--json",
+      "source",
+      "add-git",
+      "oi",
+      "https://github.com/EpiLogos/O-I.git",
+      "--revision",
+      "1d13af0f10d8887d2a9f2744035f0f24396eaab9",
+      "--root",
+      "skills"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_PERSONALGROUND00000000",
+        "project_root": null,
+        "session_id": null
+      },
+      "data": {
+        "id": "oi",
+        "kind": "git",
+        "portable": true
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/tmp/astra-aikit-user-ground/target/debug/aikit",
+      "--json",
+      "source",
+      "sync",
+      "oi"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_PERSONALGROUND00000000",
+        "project_root": null,
+        "session_id": null
+      },
+      "data": {
+        "active_snapshot": null,
+        "candidate_snapshot": "205d1f0a023d948d4499865ad9662ce8c4fa8931ffef4c39b28159befc802a9c",
+        "git_commit": "1d13af0f10d8887d2a9f2744035f0f24396eaab9",
+        "id": "oi",
+        "skills": 4
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/tmp/astra-aikit-user-ground/target/debug/aikit",
+      "--json",
+      "source",
+      "promote",
+      "oi",
+      "--trust"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_PERSONALGROUND00000000",
+        "project_root": null,
+        "session_id": null
+      },
+      "data": {
+        "active_snapshot": "205d1f0a023d948d4499865ad9662ce8c4fa8931ffef4c39b28159befc802a9c",
+        "id": "oi",
+        "skills": 4,
+        "trusted_skills": 4
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/tmp/astra-aikit-user-ground/target/debug/aikit",
+      "--json",
+      "enable",
+      "skill/oi/cradle-execution",
+      "--scope",
+      "user"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_PERSONALGROUND00000000",
+        "project_root": null,
+        "session_id": null
+      },
+      "data": {
+        "capability": "skill/oi/cradle-execution",
+        "enabled": true,
+        "generation": "gen_36535f6706370645",
+        "replaced": "gen_6398f5914181a31e",
+        "scope": "global"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/tmp/astra-aikit-user-ground/target/debug/aikit",
+      "--json",
+      "set",
+      "create",
+      "oi-native",
+      "skill/oi/cradle-execution"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_PERSONALGROUND00000000",
+        "project_root": null,
+        "session_id": null
+      },
+      "data": {
+        "diff": "procedure prc_01M1VCBG6PXK9T8BJG23KQ164G (76c135521728) \u2014 2 edits, staged staged\nnote: create writable set `oi-native`\n\ncreate directory /tmp/astra-personal-ground-proof/aikit/skillsets/oi-native\n  create /tmp/astra-personal-ground-proof/aikit/skillsets/oi-native\n  before: <absent>\n  after:\n    <directory>\n  undo: remove what was created\n\nwrite /tmp/astra-personal-ground-proof/aikit/skillsets/oi-native/members (140 bytes)\n  create /tmp/astra-personal-ground-proof/aikit/skillsets/oi-native/members\n  before: <absent>\n  after:\n    # One capsule id per line. A set is a folder; this is its membership.\n    # Blank lines and `#` comments are ignored.\n    skill/oi/cradle-execution\n  undo: remove what was created\n",
+        "edits": 2,
+        "expanded_from": [],
+        "members": 1,
+        "name": "oi-native",
+        "path": "/tmp/astra-personal-ground-proof/aikit/skillsets/oi-native",
+        "procedure": "prc_01M1VCBG6PXK9T8BJG23KQ164G",
+        "undo": "aikit procedure undo prc_01M1VCBG6PXK9T8BJG23KQ164G"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/tmp/astra-aikit-user-ground/target/debug/aikit",
+      "--json",
+      "set",
+      "show",
+      "oi-native"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_PERSONALGROUND00000000",
+        "project_root": null,
+        "session_id": null
+      },
+      "data": {
+        "children": [],
+        "complete": true,
+        "description": "",
+        "members": 1,
+        "name": "oi-native",
+        "patterns": [],
+        "projected": [
+          "skill/oi/cradle-execution"
+        ],
+        "provenance": "composed",
+        "summary": "sets/oi-native \u2014 1 member, 1 projected",
+        "withheld": []
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  {
+    "command": [
+      "/tmp/astra-aikit-user-ground/target/debug/aikit",
+      "--json",
+      "apply"
+    ],
+    "exit": 0,
+    "result": {
+      "context": {
+        "context_id": "ctx_PERSONALGROUND00000000",
+        "project_root": null,
+        "session_id": null
+      },
+      "data": {
+        "generation": "gen_36535f6706370645",
+        "label": null,
+        "replaced": "gen_36535f6706370645"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  }
+]

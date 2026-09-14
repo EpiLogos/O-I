@@ -83,3 +83,36 @@ export function structuredProjectionReading(value) {
 export function accountModuleKinds() {
   return [...new Set(ACCOUNT_RENDERERS.values())];
 }
+
+
+export function projectedAuthoredRelationRoutes(value, relationReading, routeBySubjectRef = {}) {
+  const projection = validateProjection(value);
+  if (projection.audience?.visibility !== 'public') return [];
+  const presentation = worldPresentationFromProjection(projection);
+  const projectedSubjects = new Set([projection.subject.ref]);
+  for (const region of presentation.regions) {
+    for (const binding of region.bindings) {
+      if (binding.subject_ref) projectedSubjects.add(binding.subject_ref);
+    }
+  }
+
+  const edges = relationReading?.resolved?.edges;
+  if (!Array.isArray(edges)) return [];
+  const authoredEdges = Array.isArray(relationReading?.authored_edges) ? relationReading.authored_edges : [];
+  return edges.flatMap((edge) => {
+    if (!projectedSubjects.has(edge.from) || !projectedSubjects.has(edge.to)) return [];
+    const fromRoute = routeBySubjectRef[edge.from];
+    const toRoute = routeBySubjectRef[edge.to];
+    if (typeof fromRoute !== 'string' || typeof toRoute !== 'string') return [];
+    const evidence = authoredEdges.find((candidate) => candidate.from_ref === edge.from && candidate.to_ref === edge.to && candidate.relation === edge.relation);
+    return [{
+      relation: edge.relation,
+      from_ref: edge.from,
+      to_ref: edge.to,
+      from_route: fromRoute,
+      to_route: toRoute,
+      origin: clone(edge.origin),
+      ...(evidence ? { edge_ref: evidence.ref, provenance: clone(evidence.provenance ?? []) } : {}),
+    }];
+  });
+}

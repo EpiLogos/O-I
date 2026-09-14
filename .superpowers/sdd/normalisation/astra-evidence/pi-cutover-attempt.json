@@ -1,0 +1,49 @@
+{
+  "command": [
+    "/Users/admin/.local/bin/pi",
+    "--provider",
+    "openai-codex",
+    "--model",
+    "gpt-5.4-mini",
+    "--thinking",
+    "off",
+    "--mode",
+    "json",
+    "--print",
+    "--no-session",
+    "--no-extensions",
+    "--no-context-files",
+    "--no-prompt-templates",
+    "--tools",
+    "read",
+    "--skill",
+    "/tmp/astra-personal-ground-proof/human-home/.agents/skills/brandkit/SKILL.md",
+    "Acceptance check only: use your read tool to open the projected brandkit SKILL.md at /tmp/astra-personal-ground-proof/human-home/.agents/skills/brandkit/SKILL.md. Then state its name, its intended capability, and the exact path you read. Do not perform the skill or change anything."
+  ],
+  "exit": 0,
+  "events": [
+    {
+      "type": "message_end",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Acceptance check only: use your read tool to open the projected brandkit SKILL.md at /tmp/astra-personal-ground-proof/human-home/.agents/skills/brandkit/SKILL.md. Then state its name, its intended capability, and the exact path you read. Do not perform the skill or change anything."
+          }
+        ],
+        "stopReason": null,
+        "errorMessage": null
+      }
+    },
+    {
+      "type": "message_end",
+      "message": {
+        "role": "assistant",
+        "content": [],
+        "stopReason": "error",
+        "errorMessage": "OAuth refresh failed for openai-codex: OpenAI Codex token refresh failed (401): {\n  \"error\": {\n    \"message\": \"Your refresh token has already been used to generate a new access token. Please try signing in again.\",\n    \"type\": \"invalid_request_error\",\n    \"param\": null,\n    \"code\": \"refresh_token_reused\"\n  }\n}"
+      }
+    }
+  ]
+}

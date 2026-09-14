@@ -1,0 +1,164 @@
+# O:I Development World — real tmux layout.
+#
+# This is a portable AIKit `SessionSpec` (schema 1): the canonical form that
+# `aikit session up` compiles into an ordered creation script for the current
+# multiplexer. tmux is an export target of this one description, not the source
+# of truth, and not the canonical SessionSpace identity.
+#
+# The layout is intentionally simple: one repo per window, plus a `world` window
+# for the parent O:I context, a `desktop` window for desktop development, and a
+# `parity` window for observing that HerdR/tmux/Desktop refer to the same
+# canonical SessionSpace.
+#
+# `cwd` values carry `@project/<key>` tokens rather than absolute paths: absolute
+# checkout roots are machine-local and live in
+# Control/machines/current/oi-development.toml. The `oi dev world` launcher
+# resolves those tokens against that file before reconciling. `@parent` is the
+# parent Pi ground (the Central parent directory).
+#
+# Reconciliation is non-destructive: AIKit's CreateOrAttach mode creates what is
+# missing, never re-runs a live pane's command, and never removes panes you split
+# off by hand.
+
+schema = 1
+id = "oi-development"
+name = "oi-development"
+attach = "if-created"
+lifecycle = "persist"
+backend = "tmux"
+
+# ── world: the parent O:I context ────────────────────────────────────────────
+[[views]]
+id = "world"
+name = "world"
+
+[[views.panes]]
+id = "parent-shell"
+name = "O:I parent shell"
+focus = true
+cwd = "@project/o-i"
+command = ["sh", "-c", "echo 'oi-development · world — O:I parent shell'; exec \"${SHELL:-/bin/sh}\""]
+
+[[views.panes]]
+id = "parent-pi"
+name = "parent Pi Surface"
+split_from = "parent-shell"
+direction = "right"
+cwd = "@parent"
+command = ["sh", "-c", "echo 'oi-development · world — parent Pi Surface (oi dev world focus pi to resume/bind the parent AgentSession)'; exec \"${SHELL:-/bin/sh}\""]
+
+# ── o-i ──────────────────────────────────────────────────────────────────────
+[[views]]
+id = "o-i"
+name = "o-i"
+
+[[views.panes]]
+id = "shell"
+name = "O-I Project shell"
+cwd = "@project/o-i"
+command = ["sh", "-c", "echo 'oi-development · o-i'; exec \"${SHELL:-/bin/sh}\""]
+
+# ── central ──────────────────────────────────────────────────────────────────
+[[views]]
+id = "central"
+name = "central"
+
+[[views.panes]]
+id = "shell"
+name = "Central Project shell"
+cwd = "@project/central"
+command = ["sh", "-c", "echo 'oi-development · central'; exec \"${SHELL:-/bin/sh}\""]
+
+# ── aikit ────────────────────────────────────────────────────────────────────
+[[views]]
+id = "aikit"
+name = "aikit"
+
+[[views.panes]]
+id = "shell"
+name = "AIKit Project shell"
+cwd = "@project/ai-kit"
+command = ["sh", "-c", "echo 'oi-development · aikit'; exec \"${SHELL:-/bin/sh}\""]
+
+# ── actuation ────────────────────────────────────────────────────────────────
+[[views]]
+id = "actuation"
+name = "actuation"
+
+[[views.panes]]
+id = "shell"
+name = "Actuation Project shell"
+cwd = "@project/actuation"
+command = ["sh", "-c", "echo 'oi-development · actuation'; exec \"${SHELL:-/bin/sh}\""]
+
+# ── factory ──────────────────────────────────────────────────────────────────
+[[views]]
+id = "factory"
+name = "factory"
+
+[[views.panes]]
+id = "shell"
+name = "Factory Project shell"
+cwd = "@project/factory"
+command = ["sh", "-c", "echo 'oi-development · factory'; exec \"${SHELL:-/bin/sh}\""]
+
+# ── workcell ─────────────────────────────────────────────────────────────────
+[[views]]
+id = "workcell"
+name = "workcell"
+
+[[views.panes]]
+id = "shell"
+name = "Workcell Project shell"
+cwd = "@project/workcell"
+command = ["sh", "-c", "echo 'oi-development · workcell'; exec \"${SHELL:-/bin/sh}\""]
+
+# ── ql ───────────────────────────────────────────────────────────────────────
+[[views]]
+id = "ql"
+name = "ql"
+
+[[views.panes]]
+id = "shell"
+name = "QL-MEF Project shell"
+cwd = "@project/ql-mef"
+command = ["sh", "-c", "echo 'oi-development · ql'; exec \"${SHELL:-/bin/sh}\""]
+
+# ── desktop: O:I desktop development ─────────────────────────────────────────
+[[views]]
+id = "desktop"
+name = "desktop"
+
+[[views.panes]]
+id = "desktop-dev"
+name = "desktop dev/server"
+cwd = "@project/o-i"
+command = ["sh", "-c", "echo 'oi-development · desktop — cargo tauri dev (UI on :1420)'; exec \"${SHELL:-/bin/sh}\""]
+
+[[views.panes]]
+id = "desktop-log"
+name = "desktop logs/test"
+split_from = "desktop-dev"
+direction = "down"
+ratio = 0.35
+cwd = "@project/o-i"
+command = ["sh", "-c", "echo 'oi-development · desktop — logs / test process'; exec \"${SHELL:-/bin/sh}\""]
+
+# ── parity: SessionSpace / provider observation ──────────────────────────────
+[[views]]
+id = "parity"
+name = "parity"
+
+[[views.panes]]
+id = "space-observation"
+name = "SessionSpace / provider observation"
+cwd = "@project/o-i"
+command = ["sh", "-c", "echo 'oi-development · parity — oi dev world status'; exec \"${SHELL:-/bin/sh}\""]
+
+[[views.panes]]
+id = "activity-reconciliation"
+name = "Activity / Action / reconciliation"
+split_from = "space-observation"
+direction = "right"
+cwd = "@project/o-i"
+command = ["sh", "-c", "echo 'oi-development · parity — Activity / Action / reconciliation inspection'; exec \"${SHELL:-/bin/sh}\""]

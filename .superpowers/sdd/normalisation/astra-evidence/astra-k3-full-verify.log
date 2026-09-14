@@ -1,0 +1,2669 @@
+   Compiling aikit-tui v0.1.0 (/Users/admin/Central/Work/ai-kit/crates/aikit-tui)
+   Compiling aikit-core v0.1.0 (/Users/admin/Central/Work/ai-kit/crates/aikit-core)
+   Compiling aikit-cli v0.1.0 (/Users/admin/Central/Work/ai-kit/crates/aikit-cli)
+   Compiling aikit-adapters v0.1.0 (/Users/admin/Central/Work/ai-kit/crates/aikit-adapters)
+   Compiling aikit-store v0.1.0 (/Users/admin/Central/Work/ai-kit/crates/aikit-store)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 08s
+     Running unittests src/lib.rs (target/debug/deps/aikit_adapters-4295b91527f73461)
+
+running 132 tests
+test actor_composition::tests::ambiguous_or_absent_profile_is_never_guessed ... ok
+test actor_composition::tests::composes_project_profile_and_model_bearing_into_actor_inputs ... ok
+test actor_composition::tests::model_bearing_absence_yields_central_only_slice ... ok
+test actor_composition::tests::non_central_project_is_not_mapped_to_a_member ... ok
+test actuation_harness_detection::tests::failed_spawn_is_unavailable_never_absence ... ok
+test actuation_harness_detection::tests::garbage_output_is_unavailable_never_a_record ... ok
+test actuation_harness_detection::tests::parses_record_and_maps_detected_candidates ... ok
+test actuation_harness_detection::tests::self_intake_discloses_ambiguity_never_guesses ... ok
+test actuation_harness_detection::tests::self_intake_failure_is_unavailable ... ok
+test actuation_harness_detection::tests::self_intake_no_match_is_first_class_not_failure ... ok
+test actuation_harness_detection::tests::self_intake_resolves_a_unique_match ... ok
+test actuation_instantiation::tests::composition_joins_actuation_live_and_central_authored_without_reowning ... ok
+test actuation_instantiation::tests::current_schema_and_wrong_schema_are_distinguished ... ok
+test actuation_instantiation::tests::empty_model_ref_is_rejected ... ok
+test actuation_instantiation::tests::identity_collapse_is_rejected_not_repaired ... ok
+test actuation_instantiation::tests::legacy_schema_reads_as_instantiation_receipt ... ok
+test actuation_instantiation::tests::parses_full_model_bearing_object_as_refs_and_nested_facts ... ok
+test actuation_instantiation::tests::promoted_refs_compose_into_resolution_inputs_without_reowning ... ok
+test actuation_stream_projection::tests::cancellation_and_degradation_are_not_flattened_into_chat_text ... ok
+test actuation_stream_projection::tests::invalid_canonical_identity_or_zero_sequence_is_rejected ... ok
+test actuation_stream_projection::tests::local_connection_sequence_is_never_promoted_to_stream_sequence ... ok
+test actuation_stream_projection::tests::message_chunk_projects_to_model_delta_with_canonical_stream_order ... ok
+test actuation_stream_projection::tests::session_open_keeps_provider_session_id_inside_native_evidence ... ok
+test actuation_stream_projection::tests::tool_payload_is_preserved_as_native_material_under_portable_event_kind ... ok
+test authored_wiki_living::tests::authored_properties_revision_change_enters_existing_changed_affected_metabolism ... ok
+test authored_wiki_living::tests::unchanged_exact_relation_basis_remains_fresh_without_model_work ... ok
+test authored_wiki_read::tests::consumer_gets_resolved_backlink_capable_view_and_pending_links_together ... ok
+test authored_wiki_read::tests::unresolved_only_source_is_still_a_valid_relation_focus ... ok
+test authored_wiki_source::tests::authored_relations_feed_existing_living_knowledge_dependency_path ... ok
+test authored_wiki_source::tests::compilation_resolves_to_existing_wiki_and_rebuild_produces_backlink ... ok
+test authored_wiki_source::tests::explicit_relation_origin_does_not_overwrite_agent_source_authority ... ok
+test authored_wiki_source::tests::flow_subject_can_be_external_endpoint_without_becoming_wiki_node ... ok
+test authored_wiki_source::tests::non_okf_frontmatter_does_not_capture_other_tools_metadata ... ok
+test authored_wiki_source::tests::plain_markdown_and_optional_okf_properties_join_one_authored_relation_field ... ok
+test authored_wiki_source::tests::source_revision_changes_edge_revision_but_not_stable_identity ... ok
+test authored_wiki_source::tests::unresolved_relation_survives_without_synthetic_graph_target ... ok
+test bkmr::tests::cli_without_the_db_selector_is_unavailable_with_the_gap_named ... ok
+test bkmr::tests::discovery_matches_the_glade_767_contract ... ok
+test bkmr::tests::rebuild_and_search_preserve_canonical_source_refs ... ok
+test central_agent_profile::tests::authored_projection_maps_agent_and_praxis_refs_without_host ... ok
+test central_agent_profile::tests::parses_central_profile_as_refs_and_intents ... ok
+test central_agent_profile::tests::rejects_wrong_schema_or_identity_collapse ... ok
+test central_temporal::tests::non_central_project_is_not_invented_into_central ... ok
+test central_temporal::tests::owner_actions_supply_now_and_only_active_flow_content ... ok
+test central_temporal::tests::rendered_ground_is_bounded_and_non_authorising ... ok
+test credential_provider::tests::dotenv_is_read_only_from_named_explicit_source ... ok
+test credential_provider::tests::env_import_exists_but_is_refused_without_explicit_intent ... ok
+test credential_provider::tests::explicit_env_import_stays_lowest_tier ... ok
+test factory_run_thought_authored_wiki::tests::factory_anchor_revision_must_match_authorised_disclosure_exactly ... ok
+test factory_run_thought_authored_wiki::tests::factory_thought_passage_enters_existing_wiki_backlink_and_living_dependency_paths ... ok
+test factory_run_thought_authored_wiki::tests::missing_factory_revision_requires_unambiguous_anchor_disclosure ... ok
+test factory_run_thought_authored_wiki::tests::passage_must_be_valid_for_exact_disclosed_source_bytes ... ok
+test flow_authored_wiki::tests::agent_maintained_flow_keeps_learned_authority ... ok
+test flow_authored_wiki::tests::ordinary_frontmatter_free_flow_projects_links_without_becoming_wiki_node ... ok
+test flow_authored_wiki::tests::undisclosed_flow_does_not_leak_source_language_into_relation_projection ... ok
+test gateway_connector::tests::credentials_are_not_part_of_the_public_descriptor_or_wire_hello ... ok
+test gateway_connector::tests::descriptor_conformance_preserves_connector_identity_and_capabilities ... ok
+test gateway_connector::tests::inbound_conversation_identity_does_not_imply_agent_session_identity ... ok
+test gateway_connector::tests::media_send_requires_media_capability_and_preserves_stream_attribution ... ok
+test gateway_connector::tests::outbound_operation_requires_advertised_capability ... ok
+test gateway_connector::tests::platform_or_connector_identity_drift_is_rejected ... ok
+test gateway_connector::tests::wire_frame_round_trip_is_transport_independent ... ok
+test gateway_runtime::tests::control_intent_preserves_actuation_identity_and_does_not_fake_execution ... ok
+test gateway_runtime::tests::duplicate_native_route_cannot_silently_target_two_sessions ... ok
+test gateway_runtime::tests::multiple_surfaces_share_one_stream_without_multiplying_agent_identity ... ok
+test gateway_runtime::tests::one_conversation_routes_into_canonical_actuation_stream ... ok
+test gateway_runtime::tests::outbound_operation_keeps_session_and_stream_attribution ... ok
+test gateway_runtime::tests::pair_or_deny_policy_does_not_append_stream_material ... ok
+test gateway_runtime::tests::replay_is_cursor_bounded_and_deterministic ... ok
+test gateway_runtime::tests::semantic_snapshot_survives_material_restart_without_identity_drift ... ok
+test gateway_runtime::tests::snapshot_contains_no_workcell_or_process_identity_requirement ... ok
+test gateway_runtime::tests::stdio_command_shapes_round_trip_as_portable_json ... ok
+test gateway_service::tests::bearer_comparison_rejects_length_and_value_drift ... ok
+test gateway_service::tests::invalid_websocket_auth_is_rejected_before_upgrade ... ok
+test gateway_service::tests::masked_client_frame_decodes_and_server_frame_remains_unmasked ... ok
+test gateway_service::tests::oversized_frame_is_rejected_before_payload_allocation ... ok
+test gateway_service::tests::semantic_state_round_trips_through_atomic_file_without_material_identity ... ok
+test gateway_service::tests::sha1_matches_reference_digest ... ok
+test gateway_service::tests::unix_socket_carrier_is_owner_only_and_executes_same_protocol ... ok
+test gateway_service::tests::websocket_accept_matches_rfc_6455_reference_vector ... ok
+test gateway_service::tests::websocket_service_executes_protocol_and_shutdown_on_one_shared_gateway ... ok
+test gateway_service::tests::websocket_upgrade_accepts_authenticated_reference_handshake ... ok
+test gitnexus::tests::context_impact_trace_changes_and_checks_bind_to_current_cli ... ok
+test gitnexus::tests::current_cli_surface_is_discovered ... ok
+test gitnexus::tests::query_provider_ids_never_become_code_identity ... ok
+test herdr::tests::agent_start_refuses_provider_pane_drift ... ok
+test herdr::tests::current_public_automation_binds_only_returned_provider_ids ... ok
+test herdr::tests::keeps_legacy_status_field_compatible ... ok
+test herdr::tests::parses_current_public_session_snapshot_without_collapsing_ids ... ok
+test herdr::tests::rejects_unknown_agent_state_instead_of_inventing_completion ... ok
+test home_agent_profile::tests::discovery_is_exactly_one_and_discloses_problems ... ok
+test home_agent_profile::tests::missing_root_is_a_valid_absence ... ok
+test home_agent_profile::tests::parses_standing_identity_and_ignores_other_tables ... ok
+test home_agent_profile::tests::rejects_unknown_schema ... ok
+test hyprland::tests::missing_address_is_not_allowed_to_mint_surface_identity ... ok
+test hyprland::tests::parses_graphical_state_as_provider_evidence ... ok
+test local_source_discovery::tests::discovery_budget_is_explicit ... ok
+test local_source_discovery::tests::filename_only_is_discovery_not_authority ... ok
+test local_source_discovery::tests::generated_projection_never_promotes_itself ... ok
+test local_source_discovery::tests::owner_relation_retains_native_source_in_place ... ok
+test native_git::tests::native_git_reconciles_external_cli_and_manages_isolated_worktree ... ok
+test native_git::tests::porcelain_parser_separates_working_states ... ok
+test okf::tests::external_markdown_links_are_left_for_external_resource_providers ... ok
+test okf::tests::malformed_or_missing_envelopes_fail_closed ... ok
+test okf::tests::parser_skips_frontmatter_code_and_embed_syntax ... ok
+test okf::tests::upstream_unknown_extensions_survive_parse_and_render ... ok
+test okf::tests::wikilinks_and_markdown_links_preserve_authored_spelling_and_fragments ... ok
+test projectcentral::tests::adopted_wiki_participates_without_replacing_canonical_identity ... ok
+test projectcentral::tests::canonical_project_wiki_and_root_wiki_load_from_central_owned_paths ... ok
+test projectcentral::tests::exact_source_retrieval_is_explicit_and_bounded ... ok
+test projectcentral::tests::no_agent_retrieval_prunes_subtree_without_magic_private_name ... ok
+test projectcentral::tests::project_entry_does_not_eagerly_parse_human_payload_or_wiki ... ok
+test projectcentral::tests::projectcentral_wiki_remains_native_knowledge_application_surface ... ok
+test projectcentral::tests::projectcentral_works_without_readme_and_recognises_arbitrarily_nested_human_source ... ok
+test projectcentral::tests::recognised_native_human_source_stays_in_place_with_exact_central_standing ... ok
+test projectcentral::tests::structured_account_handoff_preserves_exact_sources_and_standings ... ok
+test projectcentral::tests::unclassified_human_aperture_file_remains_unresolved_until_recognised ... ok
+test projectcentral::tests::unknown_non_text_material_can_exist_without_claiming_semantic_understanding ... ok
+test projectcentral::tests::wiki_maintenance_persists_agent_knowledge_with_provenance_and_not_human_source ... ok
+test projectcentral_authored_wiki::tests::projectcentral_retained_markdown_rebuilds_into_existing_wiki_and_backlinks ... ok
+test projectcentral_authored_wiki::tests::source_revision_change_rebuilds_relation_revision_without_model_work ... ok
+test session_space_reconstruction::tests::explicit_canonical_binding_is_preserved_with_provider_evidence ... ok
+test session_space_reconstruction::tests::native_id_without_explicit_canonical_ref_is_not_promoted_to_identity ... ok
+test telegram_bot_api::tests::connect_discovers_bot_without_disclosing_credentials ... ok
+test telegram_bot_api::tests::get_updates_advances_offset_and_maps_group_topic_identity ... ok
+test telegram_bot_api::tests::media_delivery_uses_existing_telegram_file_id_without_fake_upload ... ok
+test telegram_bot_api::tests::next_poll_confirms_prior_updates_with_last_update_plus_one_offset ... ok
+test telegram_bot_api::tests::photo_ingress_preserves_telegram_file_identity_as_media_material ... ok
+test telegram_bot_api::tests::provider_failure_yields_failed_receipt_and_degraded_health ... ok
+test telegram_bot_api::tests::send_message_preserves_topic_and_reply_and_returns_delivery_receipt ... ok
+test telegram_bot_api::tests::telegram_event_flows_through_gateway_into_same_canonical_stream ... ok
+test telegram_gateway::tests::typing_true_sends_provider_pulse_and_false_only_stops_refresh ... ok
+
+test result: ok. 132 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.48s
+
+     Running unittests src/bin/aikit-gateway.rs (target/debug/deps/aikit_gateway-9b0776a45aa1b1a1)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/aikit-git-project.rs (target/debug/deps/aikit_git_project-cc262591ddba9baf)
+
+running 2 tests
+test tests::status_preserves_dirty_material_beside_head ... ok
+test tests::worktree_parser_keeps_branch_and_material_path_separate ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running unittests src/bin/aikit-working-environment-control-probe.rs (target/debug/deps/aikit_working_environment_control_probe-71d1500bb619f500)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/actor_bootstrap_projection_v2.rs (target/debug/deps/actor_bootstrap_projection_v2-81cb2da71b0ea26d)
+
+running 2 tests
+test shared_codex_withholds_the_context_specific_actor_seed_and_reports_brokered_degradation ... ok
+test the_same_exact_project_and_run_seed_projects_through_claude_and_isolated_codex ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/agent_connection_v2.rs (target/debug/deps/agent_connection_v2-e6e02f2554227790)
+
+running 5 tests
+test acp_native_session_id_never_becomes_agent_session_identity_without_explicit_binding ... ok
+test acp_stream_permission_cancel_and_provenance_remain_ordered_and_distinct ... ok
+test classic_process_uses_same_connection_seam_without_acp_identity_or_permission_semantics ... ok
+test explicit_agent_session_binding_survives_acp_load_without_rewriting_native_identity ... ok
+test official_stable_acp_v1_is_negotiated_by_protocol_version_and_capabilities ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/agent_session_host_v2.rs (target/debug/deps/agent_session_host_v2-f9081da6b588ac22)
+
+running 12 tests
+test a_provider_cancelled_turn_is_recorded_as_provider_origin ... ok
+test a_second_interrupt_and_an_interrupt_without_a_turn_are_refused_honestly ... ok
+test a_transport_death_ends_its_turns_and_its_lanes ... ok
+test acp_host_negotiates_then_streams_one_turn_in_wire_order ... ok
+test an_interrupt_that_loses_the_race_records_no_false_interruption ... ok
+test dropping_a_host_without_shutdown_does_not_hang_the_caller ... ok
+test mid_turn_interrupt_stops_the_turn_and_preserves_canonical_identity ... ok
+test shutdown_records_no_transport_failure_and_identity_is_untouched ... ok
+test stopping_the_host_wakes_a_waiter_parked_on_an_in_flight_turn ... ok
+test the_host_refuses_to_invent_or_collapse_canonical_identity ... ok
+test the_stated_turn_bound_is_a_guard_and_not_the_ordinary_turn_end ... ok
+test two_sessions_on_one_transport_stream_without_blocking_one_another ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.44s
+
+     Running tests/agent_skills.rs (target/debug/deps/agent_skills-75755d2f1b928fc6)
+
+running 16 tests
+test a_copied_projection_reproduces_every_file_in_its_own_subdirectory ... ok
+test a_directory_without_a_skill_md_is_refused_by_name ... ok
+test a_linked_projection_is_one_item_because_the_directory_goes_across_whole ... ok
+test a_minimal_skill_with_only_a_skill_md_is_perfectly_valid ... ok
+test a_missing_name_and_a_missing_description_are_each_named_specifically ... ok
+test a_name_that_would_not_survive_becoming_a_directory_is_refused ... ok
+test a_projected_copy_really_reproduces_the_tree_on_disk ... ok
+test a_projection_that_would_escape_its_root_is_impossible_to_construct ... ok
+test a_skill_md_with_no_frontmatter_at_all_is_refused ... ok
+test a_well_formed_skill_directory_validates_and_reports_its_metadata ... ok
+test an_effective_skill_adds_framed_orientation_without_mutating_source_or_policy ... ok
+test an_empty_description_is_as_bad_as_a_missing_one ... ok
+test an_unterminated_frontmatter_block_is_refused_rather_than_read_as_a_body ... ok
+test quoted_values_and_extra_frontmatter_keys_are_handled_without_complaint ... ok
+test the_export_name_can_be_overridden_without_touching_the_skill_on_disk ... ok
+test the_progressive_disclosure_subdirectories_are_recorded_when_present ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/bkmr_real.rs (target/debug/deps/bkmr_real-c86e688764b78898)
+
+running 1 test
+test real_bkmr_767_preserves_refs_capabilities_and_privacy_membrane ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.17s
+
+     Running tests/bootstrap_render.rs (target/debug/deps/bootstrap_render-5dd4b192979b805a)
+
+running 2 tests
+test omits_engineering_ground_section_when_absent ... ok
+test renders_engineering_ground_provenance_line_when_resolved ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/broker.rs (target/debug/deps/broker-913fd941a6010e10)
+
+running 14 tests
+test a_large_catalogue_produces_a_bounded_index ... ok
+test a_multi_sentence_description_is_reduced_to_its_first_sentence ... ok
+test a_truncated_index_says_how_many_it_left_out_and_how_to_see_them ... ok
+test an_empty_context_produces_an_index_that_says_so_rather_than_an_empty_file ... ok
+test skill_routing_orientation_survives_upstream_first_sentence_compaction ... ok
+test the_broker_has_no_client_of_its_own_to_launch_or_configure ... ok
+test the_broker_skill_documents_the_three_commands_and_nothing_else ... ok
+test the_broker_skill_is_a_valid_agent_skill_when_projected ... ok
+test the_broker_works_in_a_shared_tree_because_it_writes_no_per_task_state ... ok
+test the_budget_is_configurable_and_is_actually_respected ... ok
+test the_index_lists_the_id_the_name_and_a_one_line_description ... ok
+test the_index_never_contains_a_payload_body ... ok
+test the_index_says_how_to_get_the_full_instructions ... ok
+test the_projection_is_the_skill_and_its_index_and_nothing_more ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.60s
+
+     Running tests/claude.rs (target/debug/deps/claude-f2f509e31fa66add)
+
+running 16 tests
+test a_changed_generation_requires_claude_to_restart_against_the_new_current_target ... ok
+test a_filesystem_without_symlinks_falls_back_to_copies_of_the_whole_tree ... ok
+test a_settings_file_that_is_not_json_is_refused_rather_than_overwritten ... ok
+test a_stale_aikit_entry_is_replaced_rather_than_joined_by_a_second_one ... ok
+test an_unchanged_projection_is_immediate_rather_than_pretending_to_reload ... ok
+test claude_can_isolate_a_shared_task_because_it_takes_an_arbitrary_directory ... ok
+test installing_merges_into_an_existing_settings_file_without_destroying_anything ... ok
+test installing_twice_is_byte_for_byte_idempotent ... ok
+test installing_writes_one_dispatcher_entry_per_event ... ok
+test no_item_ever_reaches_the_users_home_or_the_projects_own_skill_directory ... ok
+test one_skill_becomes_one_entry_under_dot_claude_skills ... ok
+test only_the_tool_events_carry_a_matcher ... ok
+test skills_are_symlinked_to_the_capsule_payload_so_they_cannot_drift ... ok
+test the_launch_command_points_claude_at_the_generations_projection ... ok
+test the_projected_tree_is_exactly_this ... ok
+test the_projection_root_is_inside_the_generation ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/cmux_contract.rs (target/debug/deps/cmux_contract-085f546de64e798e)
+
+running 48 tests
+test a_cmux_that_is_not_running_reports_absence_with_the_socket_error_as_the_reason ... ok
+test a_cmux_with_nowhere_to_put_a_notification_says_so_instead_of_swallowing_it ... ok
+test a_cmux_without_surface_introspection_refuses_unsafe_topology_changes ... ok
+test a_group_window_with_a_foreign_workspace_is_not_exclusive_to_aikit ... ok
+test a_matching_workspace_title_without_this_sessions_marker_does_not_exist ... ok
+test a_multi_view_session_becomes_a_group_with_one_workspace_per_view ... ok
+test a_notification_uses_the_native_one_when_there_is_one ... ok
+test a_notification_without_a_native_one_falls_back_rather_than_vanishing ... ok
+test a_pane_becomes_a_split_surface_in_the_views_workspace ... ok
+test a_pane_command_carries_the_aikit_context_because_cmux_has_no_session_environment ... ok
+test a_pane_with_no_command_is_flagged_because_it_cannot_inherit_the_context ... ok
+test a_popup_command_in_the_list_is_not_enough_to_claim_a_true_popup ... ok
+test a_same_named_untagged_workspace_is_not_adopted_by_title_alone ... ok
+test a_single_view_session_becomes_one_workspace_with_no_group ... ok
+test a_surface_this_cmux_does_not_have_is_reported_undelivered_with_a_reason ... ok
+test a_temporary_surface_palette_falls_back_to_inline_when_splitting_is_unavailable ... ok
+test a_temporary_surface_palette_is_available_when_it_is_asked_for ... ok
+test an_access_control_rejection_is_not_misreported_as_cmux_being_stopped ... ok
+test an_exact_reconcile_closes_workspaces_the_plan_no_longer_declares ... ok
+test an_existing_owned_workspace_gets_missing_panes_without_touching_manual_surfaces ... ok
+test an_existing_session_is_rebound_by_title_when_cmux_hands_back_new_ids ... ok
+test an_older_cmux_that_lacks_a_feature_is_reported_as_lacking_it ... ok
+test an_unparseable_capabilities_response_degrades_instead_of_guessing ... ok
+test capabilities_are_probed_from_the_running_cmux_rather_than_assumed ... ok
+test closing_a_surface_and_closing_a_workspace_are_different_commands ... ok
+test cmux_never_claims_to_be_tmux ... ok
+test common_plan_names_in_different_sessions_cannot_claim_the_same_workspace ... ok
+test current_cmux_ref_shaped_responses_and_plain_creation_handles_are_supported ... ok
+test duplicate_human_view_names_still_have_distinct_workspace_identities ... ok
+test durable_session_markers_resolve_the_current_workspace_and_window_handles ... ok
+test every_existing_workspace_is_preflighted_before_any_missing_view_is_created ... ok
+test every_machine_read_that_is_parsed_as_json_requests_json_from_cmux ... ok
+test exact_reconcile_closes_only_surplus_surfaces_with_aikit_ownership_tags ... ok
+test focusing_addresses_a_surface_or_a_workspace_with_the_right_command ... ok
+test grouping_always_wraps_even_a_single_view ... ok
+test grouping_comes_from_the_session_specs_own_backend_table ... ok
+test grouping_never_keeps_the_views_as_loose_workspaces_and_says_so ... ok
+test grouping_never_rebinds_each_view_to_its_own_identity_scoped_workspace ... ok
+test inspecting_cmux_drift_reports_missing_panes_without_reconciling_or_focusing ... ok
+test outside_cmux_the_location_is_empty_rather_than_invented ... ok
+test progress_and_logs_go_to_their_own_surfaces ... ok
+test session_existence_is_read_only_and_uses_the_same_stable_titles_as_rebind ... ok
+test session_up_reports_cmux_access_control_instead_of_claiming_missing_features ... ok
+test spawning_a_new_pane_splits_a_surface_and_a_new_view_creates_a_workspace ... ok
+test the_current_location_comes_from_identify ... ok
+test the_palette_is_inline_by_default_because_cmux_has_no_arbitrary_popup ... ok
+test the_probe_is_made_once_and_reused ... ok
+test the_status_pill_is_a_native_workspace_action_not_a_status_line_string ... ok
+
+test result: ok. 48 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/codex.rs (target/debug/deps/codex-dc2e93dcb0964923)
+
+running 21 tests
+test a_changed_shared_project_stable_tree_is_visible_to_the_next_codex_task ... ok
+test a_dedicated_directory_counts_as_isolation_even_without_a_git_worktree ... ok
+test a_fallback_effect_survives_a_no_op_apply_rather_than_becoming_immediate ... ok
+test a_shared_projection_is_refused_unless_it_was_explicitly_accepted ... ok
+test a_shared_task_projects_only_the_project_stable_skills ... ok
+test a_shared_task_with_no_project_root_above_it_falls_back_to_the_cwd_honestly ... ok
+test accepting_a_shared_projection_changes_nothing_for_an_isolated_task ... ok
+test an_accepted_shared_projection_writes_everything_and_says_who_asked_for_it ... ok
+test an_isolated_task_gets_a_real_per_task_agents_skills_directory ... ok
+test an_unchanged_isolated_projection_is_immediate ... ok
+test brokering_everything_writes_nothing_into_the_shared_tree ... ok
+test brokering_is_available_even_when_the_task_is_isolated ... ok
+test installing_does_not_touch_the_users_own_codex_configuration ... ok
+test installing_writes_an_aikit_owned_dispatcher_file_and_is_idempotent ... ok
+test no_synthetic_home_is_ever_invented_for_the_client ... ok
+test shared_and_isolated_tasks_project_into_different_roots_in_a_nested_layout ... ok
+test the_capabilities_say_plainly_that_isolation_needs_a_tree ... ok
+test the_launch_command_relies_on_discovery_rather_than_on_a_flag_that_does_not_exist ... ok
+test the_note_explains_the_fallback_in_words_a_person_can_act_on ... ok
+test the_projected_tree_for_an_isolated_codex_task_is_exactly_this ... ok
+test the_undeliverable_deltas_make_the_effect_brokered ... ok
+
+test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+     Running tests/connection_process_real.rs (target/debug/deps/connection_process_real-7b09fe2f93c5b6c0)
+
+running 2 tests
+test real_acp_sdk_target_streams_and_preserves_identity_boundary ... ok
+test real_classic_process_streams_interrupts_and_does_not_claim_reconnect ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.31s
+
+     Running tests/deepseek_cordis_real.rs (target/debug/deps/deepseek_cordis_real-018c3aab5ee556d2)
+
+running 1 test
+test real_pinned_deepseek_cordis_web_activates_inside_session_space_with_exact_authority ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/deepseek_harness_v2.rs (target/debug/deps/deepseek_harness_v2-26035daed01a8a4b)
+
+running 3 tests
+test adapter_does_not_claim_a_live_control_path_it_cannot_prove ... ok
+test current_upstream_specimen_preserves_plugin_injection_effect_and_surface_relations ... ok
+test sandbox_is_a_provider_swap_not_a_new_bash_capability_or_tool_component ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/deepseek_maximal_v2.rs (target/debug/deps/deepseek_maximal_v2-43dca5d2dca8d625)
+
+running 4 tests
+test containment_is_semantic_and_rejects_unmounted_or_cyclic_target_trees ... ok
+test current_dsh_pressure_covers_reactive_scoped_lifecycle_loop_command_policy_and_rich_web_ui ... ok
+test maximal_dsh_specimen_expresses_nested_cordis_and_client_ui_composition ... ok
+test staged_dsh_mutation_changes_desired_body_without_claiming_live_cordis_activation ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/dsh.rs (target/debug/deps/dsh-a486086804053fbc)
+
+running 4 tests
+test admission_is_evidence_backed_and_validates ... ok
+test capabilities_are_described_not_default ... ok
+test loaded_activation_overclaims_a_brokered_plan ... ok
+test target_is_distinct_and_identity_non_collapsing ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/gitnexus_real.rs (target/debug/deps/gitnexus_real-1f29bcf994bcfeef)
+
+running 1 test
+test real_gitnexus_current_cli_indexes_searches_contextualises_impacts_traces_changes_and_checks ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.31s
+
+     Running tests/interactive_connection_v2.rs (target/debug/deps/interactive_connection_v2-3f77b685a809c941)
+
+running 4 tests
+test invalid_permission_choice_does_not_consume_the_pending_request ... ok
+test prompt_cancel_answers_pending_permissions_cancelled_before_session_cancel ... ok
+test resume_close_and_transport_disconnect_remain_distinct_lifecycle_operations ... ok
+test stable_acp_wrapper_preserves_string_permission_ids_and_exact_selected_outcome ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/macos_keychain.rs (target/debug/deps/macos_keychain-ca4cea10859353ef)
+
+running 1 test
+test macos_keychain_round_trip_skip_if_unavailable ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.32s
+
+     Running tests/mux_contract.rs (target/debug/deps/mux_contract-a2dd5c4a244ddd74)
+
+running 12 tests
+test a_location_renders_the_line_the_palette_title_bar_shows ... ok
+test a_multiplexer_that_forgets_to_describe_itself_is_assumed_to_do_nothing ... ok
+test a_multiplexer_without_a_popup_hosts_the_palette_inline ... ok
+test a_notification_defaults_to_the_least_alarming_level ... ok
+test a_palette_request_carries_the_geometry_the_popup_is_opened_with ... ok
+test a_present_multiplexer_reports_its_version_and_whether_we_are_inside_it ... ok
+test a_status_update_is_a_set_of_named_values_not_a_rendered_string ... ok
+test a_target_addresses_the_most_specific_thing_it_knows ... ok
+test a_target_with_nothing_in_it_has_no_selector_rather_than_an_empty_one ... ok
+test an_absent_multiplexer_carries_the_reason_it_is_absent ... ok
+test every_ui_host_says_what_it_is_in_words_the_palette_can_print ... ok
+test the_default_reconcile_mode_is_the_non_destructive_one ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/plain.rs (target/debug/deps/plain-b343223e60d304ff)
+
+running 11 tests
+test a_bare_terminal_claims_no_capability_at_all ... ok
+test a_bare_terminal_is_always_present_because_it_is_where_we_already_are ... ok
+test a_multi_pane_plan_warns_about_every_pane_that_cannot_exist_here ... ok
+test asking_for_a_new_pane_is_refused_with_a_message_that_names_the_fix ... ok
+test asking_for_a_new_view_or_a_background_job_is_refused_too ... ok
+test ensuring_a_single_pane_session_succeeds_without_creating_anything ... ok
+test focus_is_a_no_op_and_closing_the_only_terminal_is_refused ... ok
+test running_in_the_current_terminal_is_the_one_placement_that_works ... ok
+test status_and_notifications_are_accepted_and_recorded_rather_than_dropped_silently ... ok
+test the_palette_is_hosted_inline_because_there_is_nowhere_else ... ok
+test the_single_pane_is_the_current_terminal ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/runner.rs (target/debug/deps/runner-9ce68a647a127d82)
+
+running 11 tests
+test a_missing_binary_is_an_error_with_a_stable_code ... ok
+test a_non_zero_exit_is_reported_as_data_rather_than_an_error ... ok
+test a_recording_runner_still_runs_the_real_command_and_remembers_the_argv ... ok
+test a_scripted_response_can_carry_a_failing_status_and_stderr ... ok
+test a_scripted_runner_answers_from_recorded_responses_and_records_what_was_asked ... ok
+test a_scripted_runner_matches_the_most_specific_recorded_pattern ... ok
+test a_scripted_sequence_answers_repeated_calls_with_successive_responses ... ok
+test an_empty_argv_is_refused_rather_than_spawning_something_surprising ... ok
+test an_unscripted_command_fails_loudly_instead_of_returning_empty_output ... ok
+test the_system_runner_can_be_given_a_working_directory_and_environment ... ok
+test the_system_runner_runs_a_real_process_and_captures_its_output ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.31s
+
+     Running tests/session_space_live_v2.rs (target/debug/deps/session_space_live_v2-2c3e76ce0c43f41e)
+
+running 4 tests
+test acp_connection_requires_explicit_agent_session_binding_and_preserves_withheld_authority ... ok
+test acp_degradation_does_not_counterfeit_classic_harness_failure ... ok
+test current_deepseek_adapter_resolves_proven_live_modes_into_the_canonical_fingerprint ... ok
+test session_space_active_transition_is_backed_by_a_real_authorised_provider_process_lifecycle ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/session_space_observation_v2.rs (target/debug/deps/session_space_observation_v2-c4fef6accd9f727e)
+
+running 1 test
+test runtime_publishes_real_read_model_and_external_reader_observes_new_revision ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/shells.rs (target/debug/deps/shells-fc37ea4dd06c48d4)
+
+running 17 tests
+test a_shell_can_be_named_the_way_a_person_would_name_it ... ok
+test a_shim_is_a_posix_wrapper_that_hands_the_arguments_straight_through ... ok
+test a_shim_is_syntactically_valid_sh ... ok
+test a_shim_name_that_would_break_out_of_the_command_is_refused ... ok
+test a_shim_really_runs_and_forwards_its_arguments ... ok
+test every_supported_shell_has_a_snippet_that_puts_the_view_bin_on_the_path ... ok
+test sourcing_the_bash_snippet_twice_puts_the_bin_directory_on_the_path_once ... ok
+test sourcing_the_snippet_twice_registers_the_directory_hook_once ... ok
+test sourcing_the_zsh_snippet_twice_puts_the_bin_directory_on_the_path_once ... ok
+test the_bash_and_zsh_snippets_use_the_hook_mechanism_each_shell_actually_has ... ok
+test the_bash_snippet_is_syntactically_valid_bash ... ok
+test the_fish_snippet_is_syntactically_valid_fish ... ok
+test the_fish_snippet_is_written_in_fish_rather_than_in_posix_sh ... ok
+test the_snippet_does_nothing_at_all_when_there_is_no_view_to_point_at ... ok
+test the_snippet_prepends_rather_than_replacing_what_was_already_on_the_path ... ok
+test the_snippet_survives_aikit_not_being_installed ... ok
+test the_zsh_snippet_is_syntactically_valid_zsh ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.09s
+
+     Running tests/stack.rs (target/debug/deps/stack-9ba565932fb84790)
+
+running 19 tests
+test a_cmux_only_stack_hosts_the_palette_inline ... ok
+test a_local_and_a_remote_registry_are_never_combined ... ok
+test a_local_hybrid_stack_still_names_the_presentation_host ... ok
+test a_plain_tmux_session_is_a_stack_of_one ... ok
+test a_remote_inner_mux_renders_the_host_in_the_location_line ... ok
+test a_remote_stack_says_plainly_that_the_local_registry_is_not_in_play ... ok
+test a_single_local_mux_says_the_least_it_can_get_away_with ... ok
+test an_override_naming_a_multiplexer_that_is_not_here_is_refused ... ok
+test ensuring_a_session_targets_the_innermost_mux ... ok
+test nothing_detected_falls_back_to_a_plain_terminal_rather_than_to_nothing ... ok
+test open_in_new_pane_inside_a_tmux_inside_cmux_splits_the_tmux_pane ... ok
+test plain_remains_a_fallback_when_a_real_multiplexer_is_active ... ok
+test status_reaches_both_the_inner_and_the_outer_host ... ok
+test the_effective_registry_across_a_remote_boundary_is_the_remote_one ... ok
+test the_innermost_multiplexer_owns_the_topology_and_the_outermost_presents_it ... ok
+test the_mux_override_wins_over_detection ... ok
+test the_palette_uses_the_tmux_popup_when_a_tmux_is_anywhere_in_the_stack ... ok
+test the_plain_fallback_is_not_reported_as_a_fake_status_layer_inside_tmux ... ok
+test the_topology_adapter_is_the_one_reached_for_focus_and_close_too ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/tmux_argv.rs (target/debug/deps/tmux_argv-c7a05218c56345ad)
+
+running 19 tests
+test a_left_or_up_split_asks_tmux_to_place_the_new_pane_before_the_origin ... ok
+test a_missing_session_is_created_detached_with_the_view_as_the_window_name ... ok
+test a_notification_becomes_a_display_message_because_tmux_has_no_native_one ... ok
+test a_palette_with_no_command_still_reports_the_popup_host_without_opening_one ... ok
+test a_root_panes_command_is_respawned_after_the_environment_is_in_place ... ok
+test a_second_view_becomes_a_window_rather_than_a_second_session ... ok
+test a_split_maps_a_compass_direction_and_a_ratio_onto_tmux_flags ... ok
+test closing_a_target_kills_the_smallest_thing_it_names ... ok
+test every_command_carries_the_private_socket_when_one_is_configured ... ok
+test every_created_pane_is_tagged_so_a_later_run_can_recognise_it ... ok
+test focusing_a_pane_selects_the_pane_and_its_window ... ok
+test spawning_a_new_pane_splits_the_target_pane ... ok
+test spawning_a_new_view_creates_a_window_and_spawning_in_the_background_detaches_it ... ok
+test spawning_into_the_current_pane_runs_the_command_there_rather_than_splitting ... ok
+test status_values_become_user_options_which_a_status_line_can_interpolate ... ok
+test the_context_environment_is_set_before_any_pane_runs_a_command ... ok
+test the_palette_popup_argv_is_exactly_the_documented_geometry ... ok
+test the_session_carries_aikit_user_options_for_status_and_recovery ... ok
+test tmux_claims_a_true_popup_and_panes_but_not_a_browser_surface ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/tmux_install.rs (target/debug/deps/tmux_install-56b8154e6ee06a82)
+
+running 9 tests
+test a_config_whose_directory_does_not_exist_yet_is_still_installable ... ok
+test an_empty_key_is_refused_rather_than_written_as_a_broken_binding ... ok
+test changing_the_key_rewrites_the_block_in_place_rather_than_adding_another ... ok
+test installing_into_a_missing_config_creates_it_with_one_marked_block ... ok
+test installing_twice_does_not_duplicate_the_block ... ok
+test the_block_is_removable_by_deleting_exactly_what_is_between_the_markers ... ok
+test the_key_is_the_users_choice_because_a_default_would_collide ... ok
+test the_managed_binding_opens_the_unified_surface ... ok
+test the_users_own_configuration_is_left_exactly_as_it_was ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/tmux_real.rs (target/debug/deps/tmux_real-6efecf4571a2b7f1)
+
+running 14 tests
+test a_missing_tmux_binary_is_reported_as_absent_rather_than_as_an_error ... ok
+test a_pane_really_inherits_the_aikit_context_environment ... ok
+test a_pane_the_user_split_off_by_hand_survives_create_or_attach ... ok
+test a_session_a_window_and_split_panes_are_really_created ... ok
+test a_split_ratio_really_changes_the_pane_geometry ... ok
+test a_view_the_plan_gained_since_the_session_was_built_is_added_without_disturbing_the_rest ... ok
+test detection_finds_the_real_tmux_and_notices_whether_a_server_is_up ... ok
+test ensure_session_twice_does_not_rerun_startup_commands_in_healthy_panes ... ok
+test exact_reconcile_closes_what_the_plan_does_not_declare_and_keeps_what_it_does ... ok
+test outside_tmux_the_current_location_is_empty_rather_than_invented ... ok
+test spawning_a_new_pane_and_closing_it_really_changes_the_session ... ok
+test spawning_a_real_pane_applies_the_requested_environment ... ok
+test the_aikit_user_options_are_written_and_can_be_read_back ... ok
+test the_layout_can_be_read_back_and_changes_when_the_user_moves_a_pane ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.62s
+
+     Running tests/working_environment_cmux_real.rs (target/debug/deps/working_environment_cmux_real-e6cd5dd1e72baef5)
+
+running 1 test
+test real_cmux_exposes_native_ids_only_through_explicit_session_space_bindings ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/working_environment_public_provider.rs (target/debug/deps/working_environment_public_provider-266518f0df69d3d2)
+
+running 1 test
+test external_provider_participates_through_public_v1_without_native_identity_promotion ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/working_environment_tmux_real.rs (target/debug/deps/working_environment_tmux_real-2152d36a3813f266)
+
+running 1 test
+test real_tmux_survives_adapter_restart_recovers_relations_and_never_mints_canonical_identity ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.27s
+
+     Running unittests src/lib.rs (target/debug/deps/aikit_cli-ee79815a34bad501)
+
+running 6 tests
+test credential::tests::headless_error_preserves_exact_unbound_reason ... ok
+test foreign::tests::skills_cli_sort_preserves_nodes_case_and_unicode_collation ... ok
+test model_roster::tests::text_and_json_expose_the_same_core_winner ... ok
+test temporal::tests::central_failure_is_visible_but_never_becomes_hook_denial ... ok
+test temporal::tests::next_prompt_reads_changed_flow_revision_instead_of_reusing_session_start ... ok
+test temporal::tests::only_causal_orientation_events_read_central ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+     Running unittests src/main.rs (target/debug/deps/aikit-356393e212c4fd15)
+
+running 5 tests
+test session_command_tests::a_project_without_a_marker_falls_back_to_its_exact_root ... ok
+test session_command_tests::cmux_commands_rebind_to_live_handles_and_close_every_owned_workspace ... ok
+test session_command_tests::grouped_cmux_sessions_use_window_lifecycle_commands ... ok
+test session_command_tests::session_lookup_is_scoped_by_project_and_declared_mux ... ok
+test session_command_tests::ungrouped_cmux_sessions_keep_workspace_lifecycle_commands ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/aikit-explain-history.rs (target/debug/deps/aikit_explain_history-36489257cf24c895)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/aikit-knowledge-living.rs (target/debug/deps/aikit_knowledge_living-e520faab1d0e3600)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/aikit-session-space.rs (target/debug/deps/aikit_session_space-cd7414f6b7aef84d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/acceptance.rs (target/debug/deps/acceptance-3297eb3e7a34bf8e)
+
+running 19 tests
+test a_captured_secret_never_enters_the_ordinary_registry ... ok
+test a_claude_session_receives_a_session_specific_skill_projection_after_restart ... ok
+test a_failed_projection_leaves_the_previous_generation_active ... ok
+test a_hook_bypass_is_visible_and_recorded ... ok
+test a_project_profile_change_does_not_mutate_another_projects_context ... ok
+test a_reviewed_script_needs_no_confirmation ... ok
+test a_session_toggle_cannot_affect_a_non_child_context ... ok
+test aikit_task_spawn_review_creates_no_git_worktree_and_shares_the_session_tree ... ok
+test aikit_task_spawn_review_worktree_creates_one ... ok
+test an_isolated_codex_task_gets_an_isolated_projection_and_a_shared_task_falls_back_with_a_reason ... ok
+test an_unreviewed_script_is_refused_without_confirmation_even_when_inactive ... ok
+test confirming_crosses_the_gate_so_the_failure_is_no_longer_about_trust ... ok
+test promotion_completes_without_hand_writing_a_manifest ... ok
+test task_close_refuses_to_delete_a_dirty_worktree_without_force ... ok
+test the_codex_projection_differs_between_a_shared_and_a_worktree_task_and_says_why ... ok
+test the_entire_cli_works_without_a_running_daemon ... ok
+test the_same_portable_session_capsule_launches_in_tmux_and_cmux ... ok
+test two_cmux_workspaces_for_the_same_project_carry_different_session_overlays ... ok
+test two_tmux_sessions_for_the_same_project_carry_different_skill_sets ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 32.40s
+
+     Running tests/adopt_command.rs (target/debug/deps/adopt_command-a59657a28e660498)
+
+running 12 tests
+test adoption_moves_a_linked_skill_without_mutating_its_external_target ... ok
+test adoption_refuses_a_skill_tree_that_escapes_through_a_directory_symlink ... ok
+test adoption_without_confirmation_is_a_real_diff_and_writes_nothing ... ok
+test authority_record_cannot_claim_a_source_root_the_procedure_did_not_move ... ok
+test authority_record_refuses_a_journal_from_an_unrelated_procedure_kind ... ok
+test confirmation_is_refused_when_the_source_changed_after_preview ... ok
+test confirmed_adoption_moves_authority_and_undo_restores_the_foreign_tree ... ok
+test control_adoption_preserves_retirement_and_refuses_external_links ... ok
+test control_adoption_refuses_changed_review_and_conflicting_staged_bytes ... ok
+test control_adoption_stages_exact_ground_and_preserves_originals_until_cutover ... ok
+test linked_skill_confirmation_is_refused_when_only_the_link_target_changes ... ok
+test the_tree_reports_an_adopted_root_as_adopted_not_foreign ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.50s
+
+     Running tests/apply_label.rs (target/debug/deps/apply_label-e59d763bf798d7ac)
+
+running 2 tests
+test apply_label_attaches_a_label_that_status_reads_back ... ok
+test relabelling_an_unchanged_view_does_not_mint_a_second_generation ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.44s
+
+     Running tests/bkmr_binding.rs (target/debug/deps/bkmr_binding-24ba55a80ed1e68f)
+
+running 3 tests
+test a_context_that_binds_no_database_exports_nothing_rather_than_guessing ... ok
+test a_value_containing_shell_syntax_cannot_escape_its_quoting ... ok
+test two_projects_resolve_to_two_bkmr_databases_with_nothing_shared ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+     Running tests/cli_binary.rs (target/debug/deps/cli_binary-d1d10ca435725d30)
+
+running 6 tests
+test a_bad_scope_argument_is_a_usage_error_with_exit_code_two ... ok
+test an_unknown_capability_is_a_resolution_failure_with_exit_code_three ... ok
+test doctor_json_is_the_installed_native_verification_path ... ok
+test search_json_finds_a_capability_by_name ... ok
+test shell_init_prints_a_sourceable_snippet ... ok
+test status_json_carries_the_envelope_and_the_active_capability ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+
+     Running tests/cli_parse.rs (target/debug/deps/cli_parse-e42e0ee5c7a5e1b9)
+
+running 9 tests
+test conflicting_isolation_flags_are_a_usage_error ... ok
+test json_is_accepted_on_substantive_commands ... ok
+test no_subcommand_means_open_the_palette ... ok
+test task_spawn_defaults_to_a_shared_tree_not_a_worktree ... ok
+test task_spawn_directory_and_shared_select_their_isolation ... ok
+test task_spawn_worktree_is_opt_in ... ok
+test the_nested_command_groups_all_parse ... ok
+test tmux_popup_install_has_a_safe_default_and_an_explicit_replacement_gate ... ok
+test ui_tree_selects_the_interactive_tree_host ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/cmux_install.rs (target/debug/deps/cmux_install-2f8498e6f0206f46)
+
+running 6 tests
+test cmux_install_is_idempotent_without_reformatting_the_file ... ok
+test cmux_installs_a_real_global_command_in_the_canonical_json_file ... ok
+test cmux_merge_preserves_unrelated_json_and_jsonc_comments_byte_for_byte ... ok
+test cmux_procedure_undo_restores_the_exact_original_bytes ... ok
+test cmux_refuses_a_foreign_aikit_command_unless_replacement_is_explicit ... ok
+test cmux_refuses_duplicate_command_authorities_instead_of_verifying_the_wrong_one ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.43s
+
+     Running tests/collate.rs (target/debug/deps/collate-07c264a3fd6adb58)
+
+running 7 tests
+test a_cluster_of_many_copies_with_fewer_distinct_contents_is_reported_precisely ... ok
+test a_plugin_installed_at_two_versions_is_a_conflict_and_backups_are_not ... ok
+test a_two_level_container_layout_is_surveyed_too ... ok
+test collating_never_writes_to_a_foreign_root ... ok
+test conflicts_are_filed_to_the_inbox_and_name_where_each_version_lives ... ok
+test identical_copies_across_roots_are_a_duplicate_not_a_conflict ... ok
+test the_same_skill_in_two_roots_with_different_contents_is_a_conflict ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/control_ground_source.rs (target/debug/deps/control_ground_source-800d30bf51dafeae)
+
+running 4 tests
+test a_projectcentral_ground_source_routes_per_project_through_existing_bindings ... ok
+test a_retired_member_never_projects_and_set_show_discloses_the_reason ... ok
+test a_source_that_never_opted_in_ignores_the_contract_entirely ... ok
+test contract_violations_are_refused_at_sync_naming_the_file ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 17.21s
+
+     Running tests/discover.rs (target/debug/deps/discover-13bf20c0c53e17d3)
+
+running 8 tests
+test a_single_marker_yields_a_one_element_chain_at_depth_zero ... ok
+test an_unparseable_isolation_value_falls_back_to_shared_honestly ... ok
+test discovery_walks_up_to_the_topmost_aikit_marker ... ok
+test no_marker_means_no_project ... ok
+test the_descriptor_defaults_isolation_to_shared ... ok
+test the_descriptor_honours_aikit_environment_variables ... ok
+test the_global_aikit_home_is_not_a_project_marker ... ok
+test the_global_aikit_store_is_not_a_project_marker ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/every_command.rs (target/debug/deps/every_command-e784edd085c051a3)
+
+running 3 tests
+test an_unknown_capability_reports_a_stable_error_code_not_a_stub ... ok
+test every_read_only_command_succeeds_on_a_fresh_machine ... ok
+test no_command_answers_not_implemented ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.36s
+
+     Running tests/explain_history_production_v2.rs (target/debug/deps/explain_history_production_v2-fc113995c5f06f40)
+
+running 1 test
+test common_explain_history_uses_live_knowledge_receipts_actions_and_read_only_navigation ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/foreign_discover.rs (target/debug/deps/foreign_discover-5e4063be81209cce)
+
+running 5 tests
+test a_directory_that_is_both_a_skill_and_a_category_does_not_hide_its_children ... ok
+test a_hook_script_nothing_dispatches_is_reported_as_wired_to_nothing ... ok
+test a_missing_hooks_directory_is_an_empty_survey_not_an_error ... ok
+test an_unreadable_symlink_target_is_not_reported_as_a_dead_link ... ok
+test discovery_counts_skills_dead_symlinks_and_missing_frontmatter ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/global_profile.rs (target/debug/deps/global_profile-0616d02a99308127)
+
+running 3 tests
+test a_named_profile_can_be_used_from_the_user_baseline ... ok
+test a_user_baseline_persists_and_a_project_can_override_it ... ok
+test malformed_user_baseline_is_reported_without_being_replaced ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.90s
+
+     Running tests/hook_bypass.rs (target/debug/deps/hook_bypass-1aa1e5e89345804b)
+
+running 2 tests
+test a_gate_denies_a_bypass_lets_exactly_one_event_through_then_is_spent ... ok
+test an_event_with_no_matching_chain_is_allowed ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.28s
+
+     Running tests/inbox_channel.rs (target/debug/deps/inbox_channel-66bc1059540ce47d)
+
+running 1 test
+test the_service_reads_back_channel_items_the_system_published ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/init_command.rs (target/debug/deps/init_command-97132242b6ce30b1)
+
+running 7 tests
+test init_discovers_foreign_roots_and_speaks_the_json_envelope ... ok
+test init_reads_npx_skills_locks_as_foreign_provenance_without_mutating_them ... ok
+test npx_global_provenance_honours_xdg_state_home ... ok
+test npx_hash_matches_the_reference_path_order_and_ignores_symlinks ... ok
+test npx_hash_uses_nodes_exact_unicode_collation ... ok
+test npx_project_skill_content_is_hashed_and_drift_is_reported_read_only ... ok
+test unsupported_npx_lock_versions_are_reported_but_never_interpreted ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.37s
+
+     Running tests/json_envelope.rs (target/debug/deps/json_envelope-9f63284d60fd3f35)
+
+running 4 tests
+test a_context_outside_any_project_or_session_still_reports_all_three_keys ... ok
+test a_resolution_failure_serialises_code_message_and_details ... ok
+test a_success_envelope_carries_schema_context_data_and_warnings ... ok
+test exit_codes_follow_the_published_table ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/knowledge_application_v2.rs (target/debug/deps/knowledge_application_v2-fec7906858f2ae44)
+
+running 1 test
+test one_production_service_materialises_routes_history_forget_and_tui_views ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+     Running tests/live_familiarity_v2.rs (target/debug/deps/live_familiarity_v2-7d3e42506027e7ee)
+
+running 1 test
+test production_service_persists_and_replays_actual_navigation_use ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/method_detection.rs (target/debug/deps/method_detection-429fbe3fffc84aee)
+
+running 2 tests
+test method_list_detects_prefixed_skills_and_only_prefixed_skills ... ok
+test method_list_filter_matches_name_and_payload ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+     Running tests/multicall_symlink.rs (target/debug/deps/multicall_symlink-3eaab314f3be66fe)
+
+running 4 tests
+test a_reviewed_export_invoked_by_symlink_runs ... ok
+test a_symlink_named_after_an_export_runs_the_capsule_that_owns_it ... ok
+test an_unknown_export_name_is_reported_not_silently_ignored ... ok
+test an_unreviewed_export_invoked_by_symlink_refuses_with_trust_required ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.28s
+
+     Running tests/mux_install.rs (target/debug/deps/mux_install-b1ad832ffe4c687d)
+
+running 13 tests
+test a_key_that_could_inject_tmux_configuration_is_rejected_before_writing ... ok
+test a_live_binding_that_only_mentions_aikit_words_is_not_mistaken_for_ownership ... ok
+test a_running_private_server_is_reloaded_and_the_live_binding_is_verified ... ok
+test an_effective_live_binding_is_a_conflict_even_when_the_config_is_empty ... ok
+test an_existing_binding_is_refused_unless_replacement_is_explicit ... ok
+test changing_the_managed_key_removes_the_old_live_binding ... ok
+test compact_root_table_syntax_still_conflicts_with_the_global_hotkey ... ok
+test custom_key_is_written_and_a_missing_server_is_reported_honestly ... ok
+test installing_twice_is_a_successful_byte_for_byte_no_op ... ok
+test prefix_and_named_table_bindings_do_not_collide_with_the_global_hotkey ... ok
+test procedure_undo_restores_both_the_config_and_the_live_key_table ... ok
+test undo_restores_a_user_binding_that_was_explicitly_replaced ... ok
+test unnamed_install_refuses_to_guess_when_both_real_muxes_are_installed ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.74s
+
+     Running tests/palette_run_intent.rs (target/debug/deps/palette_run_intent-783dcbf6e8ee4483)
+
+running 1 test
+test new_pane_mode_cwd_and_environment_survive_palette_teardown ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/procedure_commands.rs (target/debug/deps/procedure_commands-c07ebb1d3727aaf8)
+
+running 2 tests
+test a_saved_adoption_plan_can_be_diffed_and_applied_by_exact_id_and_digest ... ok
+test a_saved_plan_refuses_source_drift_and_a_wrong_digest ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+     Running tests/profile_fork.rs (target/debug/deps/profile_fork-39319522039d7466)
+
+running 6 tests
+test a_profile_fork_is_diff_first_and_writes_only_a_project_delta ... ok
+test a_profile_fork_refuses_a_stale_review_when_the_base_changes ... ok
+test a_required_base_parameter_must_be_bound_and_remains_active_through_the_fork ... ok
+test a_saved_profile_fork_rechecks_the_base_declaration_at_apply_time ... ok
+test cli_fork_bindings_preserve_boolean_integer_and_list_types ... ok
+test profile_diff_reports_the_project_delta_without_repeating_the_base ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.29s
+
+     Running tests/profile_parameters.rs (target/debug/deps/profile_parameters-47a8aff62b357d2e)
+
+running 3 tests
+test a_committed_profile_binding_cannot_declare_a_secret_parameter ... ok
+test a_default_and_an_explicit_binding_resolve_to_explicit_capsule_ids ... ok
+test an_invalid_binding_is_rejected_before_layering_with_a_stable_error ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+
+     Running tests/project_binding.rs (target/debug/deps/project_binding-2d27350209381660)
+
+running 1 test
+test project_spec_id_remains_migration_provenance_not_project_identity ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/project_skill_routing.rs (target/debug/deps/project_skill_routing-0a6725356a8abe68)
+
+running 4 tests
+test configurable_default_skill_sets_are_inherited_unless_a_project_opts_out ... ok
+test project_binding_routes_only_selected_sets_to_codex_and_claude ... ok
+test repository_binding_matches_transport_independently_and_uses_the_git_root ... ok
+test repository_identity_preserves_host_and_the_full_nested_namespace ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.64s
+
+     Running tests/run_exec.rs (target/debug/deps/run_exec-2bdc1527608f1186)
+
+running 3 tests
+test a_capsule_that_is_not_a_script_cannot_be_run ... ok
+test a_captured_script_run_returns_the_scripts_real_output_and_status ... ok
+test a_failing_script_reports_its_nonzero_status ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.49s
+
+     Running tests/search_surface_parity.rs (target/debug/deps/search_surface_parity-a0ec8f8cc31d7d1d)
+
+running 1 test
+test headless_and_interactive_search_share_typed_expressions_and_order ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.14s
+
+     Running tests/session_integration.rs (target/debug/deps/session_integration-edd4b31dfb779438)
+
+running 7 tests
+test a_cmux_pinned_session_never_falls_through_to_tmux ... ok
+test attach_reads_only_the_current_projects_session_record_from_real_state ... ok
+test cmux_attach_without_durable_state_refuses_to_invent_a_workspace_ref ... ok
+test diff_and_reconcile_compile_the_explicit_portable_spec ... ok
+test session_diff_does_not_repair_an_existing_drifted_tmux_session ... ok
+test session_diff_is_read_only_when_the_named_session_does_not_exist ... ok
+test session_up_builds_the_portable_spec_in_a_real_tmux_server_idempotently ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.89s
+
+     Running tests/session_space_application_parity.rs (target/debug/deps/session_space_application_parity-a47aa6ff5263b672)
+
+running 1 test
+test cli_adapter_uses_the_same_preview_receipt_and_read_model ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/session_space_service_v2.rs (target/debug/deps/session_space_service_v2-244c71ec85a445bf)
+
+running 1 test
+test canonical_service_stages_applies_reopens_and_explains_session_space ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/set_command.rs (target/debug/deps/set_command-51d992c2b077f3ca)
+
+running 4 tests
+test a_glob_expands_at_authoring_time_and_never_matches_dynamically ... ok
+test a_set_made_with_mkdir_and_a_text_file_is_a_real_set ... ok
+test a_set_withholds_an_unreviewed_member_and_says_why ... ok
+test removing_from_a_set_never_deletes_the_capability ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.14s
+
+     Running tests/skill_overlay.rs (target/debug/deps/skill_overlay-7e97ce2fd8ba18bb)
+
+running 6 tests
+test a_project_overlay_is_format_preserving_and_can_reset_user_orientation ... ok
+test a_review_pin_cannot_create_an_overlay_without_orientation ... ok
+test a_trusted_source_projects_the_same_effective_skill_to_codex_claude_and_broker_reads ... ok
+test guidance_can_be_set_inspected_and_cleared_at_user_scope ... ok
+test reviewed_against_refuses_anything_but_an_exact_content_digest ... ok
+test show_keeps_a_stale_review_pin_visible_until_the_user_reviews_the_update ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 22.17s
+
+     Running tests/source_lifecycle.rs (target/debug/deps/source_lifecycle-cad0e8681f329374)
+
+running 4 tests
+test directory_snapshot_identity_includes_executable_permissions ... ok
+test directory_source_sync_is_candidate_only_then_promotes_an_immutable_complete_snapshot ... ok
+test git_source_resolves_an_exact_commit_and_ignores_later_worktree_changes ... ok
+test git_sources_require_an_exact_commit_and_a_contained_root ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.45s
+
+     Running tests/task_worktree.rs (target/debug/deps/task_worktree-69661e9e4e51e027)
+
+running 9 tests
+test a_clean_worktree_closes ... ok
+test closing_a_directory_task_removes_the_directory_without_git ... ok
+test closing_a_dirty_worktree_is_refused_without_force ... ok
+test closing_a_dirty_worktree_task_is_still_refused_without_force ... ok
+test closing_a_shared_task_does_not_touch_git_and_succeeds ... ok
+test closing_a_worktree_task_removes_the_worktree ... ok
+test force_discards_even_a_dirty_worktree ... ok
+test spawning_a_shared_task_creates_no_worktree ... ok
+test spawning_a_worktree_task_creates_a_real_worktree_on_its_own_branch ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.49s
+
+     Running tests/v2_prelocal_product_acceptance.rs (target/debug/deps/v2_prelocal_product_acceptance-5fc324a8a50171d2)
+
+running 1 test
+test project_knowledge_familiarity_composition_generation_and_agent_projection_form_one_route ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.81s
+
+     Running tests/wiki_commands.rs (target/debug/deps/wiki_commands-e891781662a357b6)
+
+running 13 tests
+test a_healthy_document_validates_and_a_broken_one_fails_with_its_findings ... ok
+test a_node_written_through_the_cli_reparses_and_reindexes_identically ... ok
+test a_prune_dry_run_writes_nothing_and_apply_removes_exactly_one_ref ... ok
+test a_refused_write_leaves_the_file_byte_identical ... ok
+test adopt_federates_an_authored_project_wiki_idempotently ... ok
+test an_adopt_refuses_a_project_that_has_no_authored_wiki ... ok
+test anchor_project_names_the_root_node_from_the_project ... ok
+test anchor_root_creates_a_minimal_identity_node_and_is_idempotent ... ok
+test stage_records_the_authored_alignment_and_leaves_the_prose_alone ... ok
+test stage_refuses_positions_outside_the_local_sixfold_and_units_absent ... ok
+test stage_replaces_only_when_told_and_advances_the_revision ... ok
+test stage_without_an_authored_alignment_is_a_refusal_not_a_guess ... ok
+test the_root_doctor_reports_the_dangling_and_healthy_sets_and_writes_nothing ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s
+
+     Running tests/z_command.rs (target/debug/deps/z_command-403c87065df8fc03)
+
+running 3 tests
+test z_finds_a_capability_by_a_fragment_of_its_name_and_never_activates_it ... ok
+test z_reports_nothing_rather_than_running_something_unrelated ... ok
+test z_returns_ranked_candidates_for_an_agent_to_decide_from ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+     Running unittests src/lib.rs (target/debug/deps/aikit_core-45517d059311f949)
+
+running 287 tests
+test application_context::tests::host_and_project_identity_are_composed_without_a_surface ... ok
+test application_context::tests::ordered_scope_provenance_is_preserved_by_the_application_seam ... ok
+test application_context::tests::supplied_actors_resolve_agent_agency_and_host ... ok
+test application_context::world_inhabitation::tests::discovery_or_invocation_authority_alone_discloses_zero_peer_context ... ok
+test application_context::world_inhabitation::tests::explicit_grant_discloses_only_the_requested_allowed_resources ... ok
+test application_context::world_inhabitation::tests::participant_grammar_round_trips_human_agent_and_agent_set_without_authority ... ok
+test application_context::world_inhabitation::tests::remember_targets_agent_wiki_and_generalisation_stays_a_proposal ... ok
+test application_context::world_inhabitation::tests::same_agent_gets_distinct_attributable_knowledge_in_two_worlds ... ok
+test arg::tests::a_missing_required_argument_fails_before_execution ... ok
+test arg::tests::a_positional_argument_without_a_default_is_required ... ok
+test arg::tests::a_repeatable_flag_emits_once_per_value ... ok
+test arg::tests::a_secret_argument_may_not_carry_a_literal_default ... ok
+test arg::tests::an_argument_cannot_be_both_positional_and_flagged ... ok
+test arg::tests::boolean_flags_are_emitted_only_when_true ... ok
+test arg::tests::enum_values_are_checked_against_the_declared_choices ... ok
+test arg::tests::key_value_arguments_parse_into_a_sorted_map ... ok
+test arg::tests::numeric_ranges_are_enforced ... ok
+test arg::tests::positional_arguments_precede_flags_and_sort_by_position ... ok
+test arg::tests::secrets_are_redacted_in_previews ... ok
+test capsule::tests::a_capsule_may_not_require_or_conflict_with_itself ... ok
+test capsule::tests::a_capsule_with_a_section_for_another_kind_is_rejected ... ok
+test capsule::tests::a_script_export_defaults_to_the_capsule_leaf ... ok
+test capsule::tests::a_skill_export_name_defaults_to_the_capsule_leaf ... ok
+test capsule::tests::an_empty_description_is_rejected_because_it_destroys_discoverability ... ok
+test capsule::tests::behaviour_changing_kinds_require_trust_to_activate ... ok
+test capsule::tests::blocked_capsules_are_never_selectable ... ok
+test capsule::tests::duplicate_argument_names_are_rejected ... ok
+test capsule::tests::kinds_declare_what_activation_means_for_them ... ok
+test catalog::tests::capsules_iterate_in_deterministic_id_order ... ok
+test catalog::tests::the_catalog_revision_changes_when_a_capsule_revision_changes ... ok
+test catalog::tests::the_catalog_revision_is_stable_for_identical_contents ... ok
+test composition_explain_history::tests::staged_preview_is_authored_but_projected_activation_is_only_derived ... ok
+test composition_workspace::tests::project_skillset_relations_distinguish_authored_inherited_effective_and_unavailable ... ok
+test composition_workspace::tests::staging_project_skillset_selection_never_mutates_inherited_relations ... ok
+test context::tests::a_task_context_shares_the_working_tree_unless_asked_otherwise ... ok
+test context::tests::only_worktree_isolation_implies_git_teardown_checks ... ok
+test context::tests::permitted_scopes_never_offer_a_scope_that_does_not_exist_here ... ok
+test context::tests::the_default_mutation_scope_follows_where_the_user_is ... ok
+test context::tests::the_palette_label_names_the_task_when_there_is_one ... ok
+test credential::tests::explicit_headless_from_env_is_visible_as_degraded_provider_choice ... ok
+test credential::tests::headless_environment_import_never_silently_downgrades ... ok
+test credential::tests::keychain_first_then_rich_provider_then_explicit_encrypted_fallback ... ok
+test credential::tests::provider_neutral_headless_unbound_reports_exact_rejection ... ok
+test credential::tests::provider_replacement_changes_provenance_not_credential_ref ... ok
+test credential::tests::read_model_contains_no_raw_secret_material ... ok
+test credential::tests::rotation_changes_provider_revision_not_credential_ref ... ok
+test duration::tests::a_bare_number_means_seconds ... ok
+test duration::tests::a_trailing_unitless_number_after_a_unit_is_an_error ... ok
+test duration::tests::parses_the_units_used_by_the_specification ... ok
+test duration::tests::rejects_unknown_units_and_empty_input ... ok
+test duration::tests::renders_back_to_a_parseable_string ... ok
+test effects::tests::a_bare_verb_without_a_scope_is_not_silently_treated_as_project_scoped ... ok
+test effects::tests::credentials_imply_credential_access ... ok
+test effects::tests::empty_effects_summarize_readably ... ok
+test effects::tests::unqualified_filesystem_scopes_are_treated_as_outside_the_project ... ok
+test effects::tests::worktree_scope_counts_as_inside_the_project ... ok
+test explain_history::tests::history_filter_navigates_by_canonical_ref_not_provider_native_id ... ok
+test explain_history::tests::knowledge_route_history_is_learned_navigation_not_relation_truth ... ok
+test explain_history_actions::tests::action_records_are_action_resources_not_reading_surrogates ... ok
+test explain_history_actions::tests::actions_keep_one_identity_across_different_subjects ... ok
+test explain_history_actions::tests::install_relates_one_action_identity_to_every_existing_subject ... ok
+test flow::tests::central_and_non_central_containers_use_same_flow_provider_seam ... ok
+test flow::tests::contemplate_flow_uses_bounded_living_context_current_praxis_and_exactly_one_invocation ... ok
+test flow::tests::etymological_flow_enters_shape_generates_whole_and_returns_to_exact_source_basis ... ok
+test flow::tests::first_party_flow_praxis_uses_guidance_skill_method_and_explainable_resolution ... ok
+test flow::tests::flow_change_uses_living_knowledge_impact_without_invocation ... ok
+test flow::tests::flow_transport_keeps_living_validation_and_owner_mutation_intent_typed ... ok
+test flow::tests::one_flow_crosses_agent_sessions_without_becoming_session_identity ... ok
+test flow::tests::owner_write_is_expected_revision_once_and_stale_result_is_not_retried ... ok
+test flow::tests::unavailable_flow_remains_visible_without_leaking_body ... ok
+test guidance::tests::a_composition_reports_the_budget_it_did_not_spend ... ok
+test guidance::tests::a_fragment_built_from_a_manifest_section_carries_its_declarations ... ok
+test hooks::tests::a_bypass_scope_with_a_window_records_its_length_and_is_not_single_use ... ok
+test hooks::tests::a_denial_describes_itself_differently_when_it_came_from_a_crash ... ok
+test hooks::tests::an_empty_chain_allows_the_event_and_records_nothing ... ok
+test hooks::tests::event_kinds_survive_a_json_round_trip_including_unknown_ones ... ok
+test id::tests::capsule_slug_is_filesystem_safe ... ok
+test id::tests::generated_ids_are_unique_and_prefixed ... ok
+test id::tests::generated_session_ids_sort_by_creation_order ... ok
+test id::tests::profile_ids_require_the_profile_prefix ... ok
+test id::tests::revisions_shorten_for_display_without_panicking_on_short_input ... ok
+test knowledge::tests::knowledge_route_becomes_familiarity_without_becoming_a_provider_edge ... ok
+test knowledge::tests::relation_view_refuses_edges_to_invisible_nodes_and_respects_budget ... ok
+test knowledge_living::tests::deterministic_impact_is_relation_only_and_zero_agent ... ok
+test knowledge_living::tests::integrative_reading_preserves_exact_basis_and_reversible_return ... ok
+test knowledge_living::tests::integrative_reading_rejects_cycles_and_missing_return ... ok
+test knowledge_living::tests::only_explicit_contemplate_crosses_agent_model_execution_seam ... ok
+test knowledge_living::tests::ql_is_optional_additive_preflight_depth ... ok
+test knowledge_living::tests::unavailable_basis_is_truthful_instead_of_guessed ... ok
+test knowledge_living_context::tests::agent_model_line_begins_only_at_explicit_bounded_contemplate ... ok
+test knowledge_living_context::tests::bounded_preflight_recovers_part_whole_ground_relation_and_privacy_without_payload ... ok
+test knowledge_living_relations::tests::basis_revision_set_must_cover_every_basis_exactly_once ... ok
+test knowledge_living_relations::tests::current_revision_only_provider_participates_without_change_stream_or_central_identity ... ok
+test knowledge_living_relations::tests::dependency_manifest_cycles_fail_without_banning_semantic_wiki_cycles ... ok
+test knowledge_living_relations::tests::portable_preflight_includes_transitive_pending_without_invoking_agent ... ok
+test knowledge_living_relations::tests::revisioned_reading_is_reversible_and_cannot_refresh_by_metadata_only ... ok
+test knowledge_living_relations::tests::transitive_impact_crosses_multiple_reading_levels_with_paths ... ok
+test knowledge_living_transport::tests::empty_versioned_return_is_valid_and_proposal_only_shape_is_native ... ok
+test knowledge_living_transport::tests::free_prose_cannot_become_a_knowledge_return ... ok
+test knowledge_living_transport::tests::invalid_wiki_object_is_rejected_at_ai_kit_boundary ... ok
+test knowledge_living_transport::tests::unknown_transport_version_fails_closed ... ok
+test knowledge_navigation::tests::arbitrary_cross_lens_jumps_are_rejected_without_explicit_binding ... ok
+test knowledge_navigation::tests::project_map_bindings_are_native_cross_lens_route_transitions ... ok
+test knowledge_navigation::tests::search_prefers_provider_native_address_over_project_map_projection ... ok
+test knowledge_navigation::tests::source_backlinks_are_derived_from_canonical_wiki_source_refs ... ok
+test knowledge_navigation::tests::universal_search_read_relations_route_and_context_pack_share_one_service ... ok
+test knowledge_okf::tests::okf_floor_rejects_missing_type_but_not_unknown_fields ... ok
+test knowledge_okf::tests::resolved_authored_relation_materialises_as_authored_wiki_edge ... ok
+test knowledge_okf::tests::resolver_returns_resolved_ambiguous_and_unresolved_truthfully ... ok
+test knowledge_okf::tests::unknown_types_and_extensions_are_valid_core_data ... ok
+test knowledge_okf::tests::wiki_profile_interprets_aliases_sources_and_open_typed_relations ... ok
+test knowledge_source_pool::tests::native_provider_discloses_optional_capability_absence ... ok
+test knowledge_source_pool::tests::privacy_is_applied_before_native_provider_materialisation ... ok
+test knowledge_wiki::tests::portable_non_glade_node_preserves_unknown_extensions ... ok
+test knowledge_wiki::tests::provider_specific_identity_is_rejected ... ok
+test knowledge_wiki::tests::shared_nested_cross_space_shape_preserves_authority_and_anchor_returns ... ok
+test knowledge_wiki_index::tests::index_rejects_provider_identity_duplicates_and_broken_local_wholes ... ok
+test knowledge_wiki_index::tests::rebuild_is_deterministic_and_search_backlinks_preserve_authority ... ok
+test knowledge_wiki_index::tests::recursive_spaces_and_node_as_local_whole_are_bounded ... ok
+test knowledge_wiki_provider::tests::provider_exposes_complete_native_application_surface ... ok
+test knowledge_wiki_provider::tests::relation_expansion_keeps_external_source_and_flow_endpoints_outside_wiki_identity ... ok
+test knowledge_wiki_provider::tests::relation_expansion_preserves_wiki_relation_authority ... ok
+test knowledge_wiki_shape::tests::complete_constellation_exposes_positive_grain_nine_d3_fields_and_higher_shapes ... ok
+test knowledge_wiki_shape::tests::direct_sixfold_is_a_valid_shape_without_forced_conjugate_completion ... ok
+test knowledge_wiki_shape::tests::equal_vertex_d3_routes_retain_a_and_c_provenance ... ok
+test knowledge_wiki_shape::tests::mirrored_fixture_pins_the_exact_upstream_blob_and_cardinalities ... ok
+test knowledge_wiki_shape::tests::operative_context_retains_the_exact_resolve_expression_and_path_identity ... ok
+test knowledge_wiki_shape::tests::relational_generation_is_attributed_without_promoting_it_to_authored_ground ... ok
+test knowledge_wiki_write::tests::a_create_refuses_to_overwrite_a_ref_it_already_holds ... ok
+test knowledge_wiki_write::tests::a_document_field_owned_by_its_producer_survives_a_write ... ok
+test knowledge_wiki_write::tests::a_federated_ref_is_a_finding_while_a_broken_in_file_link_is_an_error ... ok
+test knowledge_wiki_write::tests::a_mutation_that_breaks_the_whole_renders_nothing ... ok
+test knowledge_wiki_write::tests::a_node_and_edge_written_through_the_pipeline_reparse_and_reindex_identically ... ok
+test knowledge_wiki_write::tests::a_projected_peer_is_never_persisted ... ok
+test knowledge_wiki_write::tests::a_prune_removes_exactly_one_ref_and_advances_the_revision_once ... ok
+test knowledge_wiki_write::tests::an_update_keeps_identity_and_advances_the_revision_once ... ok
+test knowledge_wiki_write::tests::an_update_refuses_an_object_this_document_does_not_hold ... ok
+test knowledge_wiki_write::tests::attaching_a_child_twice_advances_no_revision_the_second_time ... ok
+test knowledge_wiki_write::tests::dangling_source_refs_are_published_as_dependencies_not_errors ... ok
+test knowledge_wiki_write::tests::project_space_refs_round_trip_through_their_project_id ... ok
+test knowledge_wiki_write::tests::pruning_a_child_this_file_holds_retracts_the_object_and_every_ref_to_it ... ok
+test knowledge_wiki_write::tests::the_central_wiki_space_refs_are_defined_once_in_the_canonical_home ... ok
+test knowledge_wiki_write::tests::validate_names_a_duplicated_ref_and_refuses_the_document ... ok
+test lifecycle::tests::a_never_used_capability_is_aged_by_how_long_it_has_been_catalogued ... ok
+test lifecycle::tests::archiving_wins_over_any_idle_time ... ok
+test lifecycle::tests::only_stale_wants_review ... ok
+test lifecycle::tests::recent_use_is_active_and_long_idle_is_stale ... ok
+test live_activation_history::tests::degraded_observation_remains_provider_observed_with_reason ... ok
+test live_activation_history::tests::provider_active_is_observed_live_history_not_generated_or_derived_truth ... ok
+test method::tests::method_composes_refs_without_copying_or_conferring_authority ... ok
+test method::tests::method_detection_is_prefix_only_and_never_asserts_semantics ... ok
+test method::tests::missing_or_wrong_refs_are_explainable_not_promoted ... ok
+test platform::tests::plain_is_accepted_under_both_spellings ... ok
+test platform::tests::target_ids_are_open_ended_so_external_adapters_can_name_themselves ... ok
+test platform::tests::the_current_platform_is_one_of_the_known_ones ... ok
+test policy::tests::a_tag_denial_matches_any_declared_tag ... ok
+test policy::tests::an_effect_denial_uses_normalized_effect_classes ... ok
+test policy::tests::an_empty_policy_denies_nothing ... ok
+test policy::tests::the_digest_changes_when_the_policy_changes ... ok
+test policy::tests::the_digest_is_insensitive_to_declaration_order ... ok
+test praxis::tests::explain_and_history_preserve_method_source_overlay_and_resolution_condition ... ok
+test praxis::tests::method_selection_is_downstream_of_context_resolution_not_a_precedence_engine ... ok
+test procedure::tests::a_foreign_registry_refuses_a_write_and_names_the_fix ... ok
+test procedure::tests::a_lifted_field_is_visibly_absent_rather_than_silently_defaulted ... ok
+test procedure::tests::a_marked_block_preserves_prose_after_it ... ok
+test procedure::tests::a_marked_block_replaces_rather_than_appends ... ok
+test procedure::tests::a_note_does_not_change_a_plans_identity ... ok
+test procedure::tests::a_plan_digest_is_edit_order_and_content_sensitive ... ok
+test procedure::tests::direct_isolation_accepts_a_marked_block_because_it_is_idempotent ... ok
+test procedure::tests::direct_isolation_refuses_an_edit_that_cannot_be_undone ... ok
+test procedure::tests::fidelity_records_what_a_target_could_not_carry ... ok
+test procedure::tests::isolation_selection_prefers_a_branch_when_every_path_is_in_one_repo ... ok
+test profile::tests::a_patch_that_both_enables_and_disables_the_same_capsule_is_rejected ... ok
+test profile::tests::a_profile_file_parses_the_documented_shape ... ok
+test profile::tests::a_project_profile_file_parses_the_documented_shape ... ok
+test profile::tests::a_session_overlay_file_carries_its_base_generation ... ok
+test profile::tests::canonical_config_distinguishes_different_values ... ok
+test profile::tests::canonical_config_is_insensitive_to_key_insertion_order ... ok
+test profile::tests::exact_parameter_placeholders_keep_their_toml_types ... ok
+test profile::tests::named_profiles_can_parameterize_skill_usage_overlays ... ok
+test profile::tests::nested_config_tables_merge_rather_than_replace ... ok
+test profile::tests::toggling_moves_a_capsule_between_the_lists_without_duplicating_it ... ok
+test project_map::tests::bounded_route_crosses_only_explicit_federation_bindings ... ok
+test project_map::tests::cross_lens_bindings_are_reversible_without_becoming_provider_edges ... ok
+test project_recovery::tests::filename_hint_remains_partial_not_project_truth ... ok
+test project_recovery::tests::ordinary_project_needs_no_central_coordinates_or_methods ... ok
+test project_recovery::tests::partial_central_ground_creates_recognition_pressure_not_fake_authorship ... ok
+test project_reflection::tests::constitutive_conjugate_flattening_is_rejected_without_changing_project_map ... ok
+test project_reflection::tests::conventional_agent_instruction_filename_is_only_a_hint ... ok
+test project_reflection::tests::wrong_relation_is_reported_against_existing_project_map_binding ... ok
+test project_world::tests::context_source_horizon_disclosure_does_not_mark_payload_retrieved ... ok
+test project_world::tests::matching_versioned_world_attaches_without_rebinding_project_identity ... ok
+test project_world::tests::missing_actor_request_is_preserved_without_fake_effective_identity ... ok
+test project_world::tests::resource_intent_and_effective_binding_remain_separate ... ok
+test project_world::tests::versioned_provider_cannot_rebind_the_resolved_project ... ok
+test projectcentral::tests::account_context_preserves_human_source_standing_without_executing_account_craft ... ok
+test projectcentral::tests::maintenance_detects_stale_source_and_keeps_human_pressure_as_proposal ... ok
+test projectcentral::tests::project_entry_discloses_without_retrieving_or_focusing ... ok
+test projectcentral::tests::unresolved_human_aperture_material_does_not_acquire_authored_authority ... ok
+test projection::tests::a_default_target_admits_it_can_do_nothing ... ok
+test projection::tests::a_target_label_falls_back_to_title_case_for_third_party_adapters ... ok
+test projection::tests::an_empty_plan_still_has_a_stable_digest ... ok
+test projection::tests::an_immediate_effect_with_no_mechanism_still_reads_sensibly ... ok
+test projection::tests::two_shims_for_different_capsules_are_different_plans ... ok
+test resolve::hash::tests::a_generation_id_can_be_derived_from_any_hash ... ok
+test resolve::hash::tests::an_empty_view_still_hashes_to_something_stable ... ok
+test resolve::hash::tests::isolation_changes_the_hash_because_it_changes_projection ... ok
+test resolve::hash::tests::the_context_id_does_not_affect_the_hash ... ok
+test resource::action_search::tests::empty_query_preserves_provider_order ... ok
+test resource::action_search::tests::fuzzy_query_searches_label_description_id_and_keywords ... ok
+test resource::model_roster::tests::authored_preference_and_frecency_remain_separate_from_fitness ... ok
+test resource::model_roster::tests::capability_and_availability_are_hard_gates ... ok
+test resource::model_roster::tests::cheapest_and_task_fit_can_choose_different_models ... ok
+test resource::model_roster::tests::explanation_reconstructs_winner_and_independence_is_explicit ... ok
+test resource::model_roster::tests::missing_price_is_unknown_not_free ... ok
+test resource::model_roster::tests::observed_fitness_is_used_only_when_scope_matches ... ok
+test resource::model_roster::tests::profile_and_agency_are_contextual_not_global_quality ... ok
+test resource::model_roster::tests::provider_replacement_does_not_change_model_identity_and_access_axes_stay_visible ... ok
+test resource::model_roster::tests::use_type_changes_ranking ... ok
+test resource::operative::tests::bare_horizon_is_an_open_aperture_and_potential_horizon_is_executable ... ok
+test resource::operative::tests::disclosure_uses_same_refs_and_all_six_horizons_when_present ... ok
+test resource::operative::tests::heterogeneous_resolve_returns_real_refs_and_action_type_is_checked ... ok
+test resource::operative::tests::horizon_is_soft_and_can_be_extended_without_identity_duplication ... ok
+test resource::operative::tests::literal_syntax_round_trips_as_one_ast ... ok
+test resource::operative::tests::operator_boundaries_do_not_steal_exact_resource_refs ... ok
+test resource::operative::tests::ordinary_search_is_potential_universal_resolution ... ok
+test resource::operative::tests::punctuation_inside_real_world_subjects_is_literal ... ok
+test resource::operative::tests::search_handles_are_part_of_resolve_without_changing_identity ... ok
+test resource::operative::tests::tail_handle_beats_the_same_text_as_an_interior_fragment ... ok
+test resource::operative_provider::tests::provider_can_bind_full_profile_types_without_replacing_general_identity ... ok
+test resource::routine::tests::agent_profile_is_preserved_as_source_relation_not_context_identity ... ok
+test resource::routine::tests::authority_revoke_blocks_after_trigger_fired ... ok
+test resource::routine::tests::explanation_carries_proof_authority_trigger_and_provider_chain ... ok
+test resource::routine::tests::method_revision_drift_stales_proof ... ok
+test resource::routine::tests::reproof_restores_basis_but_requires_explicit_reenable ... ok
+test resource::routine::tests::routine_is_a_distinct_indexed_resource_kind ... ok
+test resource::routine::tests::scheduler_job_identity_can_change_without_routine_identity_drift ... ok
+test resource::routine::tests::successful_invocation_without_verification_is_not_proof ... ok
+test resource::routine::tests::trigger_observation_does_not_authorise_disabled_routine ... ok
+test resource::routine::tests::unrevisioned_method_cannot_be_proven_for_automation ... ok
+test resource::routine::tests::verified_method_yields_exact_proven_basis ... ok
+test resource::search::tests::equal_text_prefers_current_project_then_active_context ... ok
+test resource::search::tests::fuzzy_subsequence_prefers_compact_prefixes ... ok
+test resource::search::tests::learned_resolve_path_breaks_an_otherwise_equal_resolution_tie ... ok
+test resource::search::tests::navigation_index_is_also_a_resource_index_without_loading_providers ... ok
+test resource::search::tests::search_handles_are_reachable_without_changing_resource_identity ... ok
+test resource::versioned_world::tests::working_state_cleanliness_is_explicit ... ok
+test scope::tests::badges_are_unique_so_the_palette_column_is_unambiguous ... ok
+test scope::tests::one_shot_is_not_a_place_to_write_changes ... ok
+test scope::tests::origins_render_with_a_line_when_one_is_known ... ok
+test scope::tests::precedence_runs_from_global_up_to_one_shot ... ok
+test scope::tests::scope_names_round_trip ... ok
+test scope::tests::session_and_project_local_are_low_friction_but_project_is_not ... ok
+test search::tests::a_bare_colon_token_is_not_read_as_a_filter ... ok
+test search::tests::an_empty_query_is_recognized_as_empty ... ok
+test search::tests::compatibility_score_is_match_quality_only ... ok
+test search::tests::equal_matches_follow_exact_project_context_frecency_then_id ... ok
+test search::tests::every_fast_prefix_has_a_distinct_character_and_a_hint ... ok
+test search::tests::operative_at_and_plus_are_not_legacy_fast_prefixes ... ok
+test search::tests::stronger_match_cannot_be_overpowered_by_context_or_frecency ... ok
+test session::tests::a_direction_knows_its_axis_so_axis_only_adapters_can_translate ... ok
+test session::tests::a_plan_counts_the_panes_it_would_create ... ok
+test session::tests::a_task_reports_isolation_through_the_one_question_adapters_ask ... ok
+test session::tests::the_conservative_defaults_are_the_declared_ones ... ok
+test session_ecology::tests::ecology_unions_authored_and_runtime_sessions_without_collapsing_native_identity ... ok
+test session_ecology::tests::evidence_cannot_smuggle_an_unknown_session_into_the_ecology ... ok
+test session_ecology::tests::explicit_grant_makes_one_relation_invocable_without_granting_other_modes ... ok
+test session_ecology::tests::presence_never_implies_invocation_authority ... ok
+test session_ecology::tests::refine_and_fork_lineage_cite_prior_session_stream_and_exact_context_revision ... ok
+test session_ecology::tests::stream_sequence_without_stream_is_rejected ... ok
+test session_space_application::tests::provider_reconnect_does_not_prove_agent_session_continuity ... ok
+test session_space_application::tests::same_canonical_native_reference_can_be_reobserved_without_identity_transfer ... ok
+test session_space_application::tests::staging_is_write_free_and_basis_moves_only_in_proposed_state ... ok
+test session_space_application::tests::two_projects_keep_independent_context_provenance ... ok
+test surfacing::tests::a_both_facing_capability_surfaces_because_it_also_teaches ... ok
+test surfacing::tests::a_headless_run_writes_an_artifact_and_says_why_rather_than_pretending ... ok
+test surfacing::tests::a_notebook_preference_falls_back_to_a_browser_before_a_file ... ok
+test surfacing::tests::a_notebook_session_gets_the_native_reactive_rendering ... ok
+test surfacing::tests::an_artifact_by_design_stays_an_artifact_even_with_a_display ... ok
+test surfacing::tests::an_internal_facing_capability_is_never_surfaced ... ok
+test surfacing::tests::an_undeclared_surface_takes_the_best_the_surroundings_offer ... ok
+test surfacing::tests::ci_is_headless_even_with_a_terminal_attached ... ok
+test trust::tests::an_unrecorded_capsule_is_unseen_rather_than_trusted ... ok
+test trust::tests::quarantine_is_a_hard_stop_and_not_merely_unreviewed ... ok
+test trust::tests::trust_does_not_carry_across_a_registry_source_change ... ok
+test trust::tests::trust_does_not_carry_across_a_revision_change ... ok
+test trust::tests::trust_states_round_trip_through_their_names ... ok
+
+test result: ok. 287 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/actor_bootstrap_v2.rs (target/debug/deps/actor_bootstrap_v2-7fb5c808d9c3d9ee)
+
+running 6 tests
+test actor_identity_survives_session_and_body_replacement ... ok
+test bootstrap_is_thin_but_preserves_actor_provenance_and_runtime_body_pointer ... ok
+test bootstrap_remains_valid_without_a_composition_capable_body ... ok
+test failed_detection_run_is_disclosed_not_absence ... ok
+test missing_harness_reasons_from_detection_ground ... ok
+test no_detection_ground_stays_unproven_never_absence ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/composition_body_v1.rs (target/debug/deps/composition_body_v1-ccef8cfe4486c55b)
+
+running 2 tests
+test harness_composition_wraps_the_same_body_without_defining_body_identity ... ok
+test scope_neutral_body_does_not_require_harness_or_actor_identity ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/composition_mutation_v2.rs (target/debug/deps/composition_mutation_v2-f9e3704f28c0d772)
+
+running 4 tests
+test repeated_staging_for_one_component_is_deterministic_and_last_intent_wins ... ok
+test retraction_uses_the_same_resolver_and_reports_surface_projection_removal ... ok
+test staged_component_change_previews_surfaces_and_human_agent_projections_before_confirm_apply ... ok
+test unknown_component_fails_at_preview_without_mutating_current_body ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/composition_v2.rs (target/debug/deps/composition_v2-da7e40c91259eec7)
+
+running 9 tests
+test body_can_change_without_project_agent_or_harness_identity_drift ... ok
+test missing_required_requirement_is_a_structured_composition_error ... ok
+test non_action_reading_projects_to_a_surface_without_becoming_an_action ... ok
+test one_action_can_project_through_multiple_surfaces_without_identity_multiplication ... ok
+test provider_substitution_is_deterministic_and_preserves_contract_identity ... ok
+test required_and_optional_requirements_bind_or_degrade_explicitly ... ok
+test requirement_strength_is_not_activation_mode ... ok
+test resolution_activation_and_lifetime_scopes_remain_independent ... ok
+test thin_static_harness_is_a_valid_empty_composition ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/composition_views_v2.rs (target/debug/deps/composition_views_v2-48f51a5a06ad20d5)
+
+running 3 tests
+test body_history_refuses_to_compare_different_actor_anchors ... ok
+test explain_uses_resolver_owned_provider_scope_lifetime_and_surface_evidence ... ok
+test history_diff_reports_mount_retract_rebind_and_surface_changes ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/config_merge.rs (target/debug/deps/config_merge-238d8e5dd7d3d82a)
+
+running 5 tests
+test a_deep_merge_section_keeps_keys_a_higher_scope_did_not_restate ... ok
+test a_key_containing_a_separator_cannot_impersonate_another_key ... ok
+test a_replace_section_drops_keys_a_higher_scope_did_not_restate ... ok
+test config_merge_defaults_to_deep_and_parses_replace_from_the_manifest ... ok
+test two_different_configs_never_canonicalize_to_the_same_string ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/context_activation_v2.rs (target/debug/deps/context_activation_v2-72573325bfdf56ab)
+
+running 7 tests
+test activation_truth_changes_the_persisted_context_resolution_ref_but_not_by_arrival_order ... ok
+test adopted_claude_governance_keeps_source_standing_separate_from_native_loading ... ok
+test aikit_selection_and_material_activation_are_independent_states ... ok
+test ambient_codex_activation_does_not_imply_aikit_selection_or_source_authority ... ok
+test context_activation_receipts_survive_context_resolution_serialisation ... ok
+test empty_activation_basis_preserves_the_pre_activation_content_address ... ok
+test material_activation_requires_evidence_and_unknown_sources_are_rejected ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/context_resolution_v2.rs (target/debug/deps/context_resolution_v2-4ab05236c3953c48)
+
+running 4 tests
+test availability_is_independent_from_eligibility_and_preference ... ok
+test extended_resolution_preserves_deterministic_resolver_and_composes_full_v2_field ... ok
+test missing_and_wrong_kind_actor_relations_remain_explicit_and_explainable ... ok
+test unavailable_resources_remain_visible_and_external_identity_survives_reresolution ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/context_sources_v2.rs (target/debug/deps/context_sources_v2-6aea6874a39b58e3)
+
+running 10 tests
+test all_structured_absence_meanings_are_distinguishable ... ok
+test canonical_identity_survives_provider_loss_degradation_reappearance_and_rebuild ... ok
+test descriptor_search_is_deterministic_for_identical_explicit_inputs ... ok
+test disclosure_state_does_not_infer_operational_or_other_epistemic_states ... ok
+test generic_context_source_seam_rejects_non_context_resources ... ok
+test known_askable_retrieved_loaded_and_focused_are_independent_transitions ... ok
+test large_horizon_is_descriptor_searchable_without_provider_reads_or_payload_injection ... ok
+test metadata_only_agent_disclosure_exposes_descriptor_not_payload ... ok
+test privacy_excludes_never_agent_visible_material_and_denies_external_egress_before_read ... ok
+test retrieval_carries_identity_scope_revision_provider_provenance_and_eligibility ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/epi_holographic_reflection.rs (target/debug/deps/epi_holographic_reflection-703ba2c2b93d71e7)
+
+running 1 test
+test epi_manifest_subject_round_trips_to_exact_ql_c_symbol_and_evidence ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/facets.rs (target/debug/deps/facets-d92538d2ac4b7a45)
+
+running 5 tests
+test a_surface_is_only_meaningful_on_an_external_facing_capsule ... ok
+test an_external_facing_capsule_is_not_active_merely_because_it_is_external ... ok
+test an_unknown_facet_value_is_refused_rather_than_silently_defaulted ... ok
+test facing_defaults_to_internal_and_parses_all_three_values ... ok
+test unknown_metadata_keys_are_preserved_rather_than_rejected_or_dropped ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/familiarity_v2.rs (target/debug/deps/familiarity_v2-a8f88427728c8fac)
+
+running 7 tests
+test outcome_fitness_is_explained_separately_from_frequency_and_recency ... ok
+test repeated_use_has_no_authority_to_change_eligibility_preference_or_trust_like_state ... ok
+test resetting_one_learned_scope_does_not_touch_other_evidence_or_canonical_identity ... ok
+test resolve_path_familiarity_has_its_own_identity_and_reset_scope ... ok
+test route_familiarity_preserves_the_route_steps_provider_lens_and_revision_evidence ... ok
+test snapshot_schema_change_explicitly_invalidates_only_learned_influence ... ok
+test the_same_destination_learns_different_accessibility_in_different_contexts ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/frecency.rs (target/debug/deps/frecency-88c5f4f094aa1635)
+
+running 9 tests
+test frecency_counts_successes_not_invocations ... ok
+test matching_prefers_the_tail_of_the_id ... ok
+test scope_beats_globality ... ok
+test the_order_is_total_so_results_never_jitter ... ok
+test usage_breaks_a_tie_between_equally_good_matches ... ok
+test usage_never_outranks_a_better_match ... ok
+test z_acts_when_there_is_one_clear_winner ... ok
+test z_disambiguates_rather_than_guessing_when_the_top_is_contested ... ok
+test z_finding_nothing_says_nothing_rather_than_running_something ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/guidance.rs (target/debug/deps/guidance-67c809eb310b3654)
+
+running 16 tests
+test a_dedup_tie_is_broken_by_composition_order_so_the_result_is_deterministic ... ok
+test a_fragment_over_its_own_budget_is_included_but_recorded_as_over_budget ... ok
+test a_fragment_that_would_blow_the_total_budget_is_skipped_whole_rather_than_truncated ... ok
+test a_smaller_later_fragment_still_fits_after_a_bigger_one_was_skipped ... ok
+test a_zero_budget_composes_nothing_but_still_explains_itself ... ok
+test an_empty_composition_still_renders_a_record ... ok
+test an_empty_fragment_contributes_nothing_and_leaves_no_stray_separator ... ok
+test composition_is_a_pure_function_of_its_inputs ... ok
+test estimation_is_deterministic_across_calls ... ok
+test estimation_is_roughly_four_characters_per_token_and_never_rounds_to_zero ... ok
+test estimation_normalizes_whitespace_so_formatting_does_not_change_the_budget ... ok
+test fragments_are_ordered_by_declared_order_then_capsule_id ... ok
+test fragments_sharing_a_dedup_key_are_included_once_and_the_highest_precedence_wins ... ok
+test the_composed_text_follows_the_same_order_as_the_record ... ok
+test the_composed_text_is_always_within_the_total_budget ... ok
+test the_composition_record_renders_the_documented_table ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/harness_admission.rs (target/debug/deps/harness_admission-b527b2067842a719)
+
+running 6 tests
+test a_truthful_next_session_observation_is_valid ... ok
+test an_external_style_adapter_uses_existing_target_projection_plus_public_admission ... ok
+test generated_material_cannot_be_called_loaded_without_target_evidence ... ok
+test next_session_targets_cannot_be_overstated_as_loaded_now ... ok
+test supported_faculties_require_evidence ... ok
+test unsupported_targets_return_an_actionable_public_extension_path ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/hooks.rs (target/debug/deps/hooks-82f9f6dfcfb2e284)
+
+running 30 tests
+test a_bypass_issued_for_one_capsule_does_not_cover_another ... ok
+test a_bypass_without_a_reason_is_refused_when_the_capsule_demands_one ... ok
+test a_bypassed_step_is_skipped_recorded_and_loudly_warned_about ... ok
+test a_capsule_that_forbids_bypass_is_never_bypassed ... ok
+test a_chain_is_ordered_by_phase_then_order_then_capsule_id ... ok
+test a_cycle_between_two_hooks_in_one_chain_is_rejected ... ok
+test a_dependency_that_would_have_to_run_in_an_earlier_phase_is_rejected_not_reordered ... ok
+test a_failing_observer_never_denies_even_under_a_closed_failure_policy ... ok
+test a_failure_closed_hook_denies_but_is_recorded_as_a_failure_not_as_a_policy_denial ... ok
+test a_failure_open_hook_allows_the_event_through ... ok
+test a_failure_warn_hook_allows_the_event_and_says_so ... ok
+test a_gate_denial_short_circuits_the_verifiers_but_the_observers_still_run ... ok
+test a_hook_only_joins_the_chains_for_the_events_it_declares ... ok
+test a_hook_that_requires_another_runs_after_it_even_when_the_numbers_say_otherwise ... ok
+test a_manifest_may_spell_an_event_in_kebab_or_snake_case ... ok
+test a_matcher_selects_only_the_tools_it_names ... ok
+test a_matcher_that_does_not_compile_is_rejected_at_chain_build_time ... ok
+test a_step_carries_the_effective_config_the_resolver_produced_for_its_capsule ... ok
+test a_step_whose_matcher_misses_is_recorded_as_not_matched_and_never_invoked ... ok
+test a_step_with_no_matcher_runs_for_every_event_including_ones_with_no_tool ... ok
+test a_transform_rewrites_the_payload_that_every_later_step_sees ... ok
+test an_observer_can_never_deny_the_event ... ok
+test an_unknown_event_is_carried_through_rather_than_dropped ... ok
+test chains_are_keyed_by_the_normalized_event_name_whatever_the_manifest_wrote ... ok
+test event_kinds_round_trip_through_the_clients_own_spelling ... ok
+test every_step_appears_in_the_decision_record_with_its_phase_and_duration ... ok
+test independent_parallel_verifiers_are_grouped_while_gates_stay_serial ... ok
+test inject_steps_accumulate_their_text_in_chain_order ... ok
+test the_decision_is_computed_in_chain_order_even_though_a_group_may_run_in_parallel ... ok
+test two_parallel_verifiers_are_not_grouped_when_one_depends_on_the_other ... ok
+
+test result: ok. 30 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/living_knowledge_acceptance.rs (target/debug/deps/living_knowledge_acceptance-51800c24b1b46398)
+
+running 1 test
+test public_living_knowledge_path_is_deterministic_until_explicit_contemplate ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/manifest.rs (target/debug/deps/manifest-ebb7442f33be0a15)
+
+running 18 tests
+test a_capsule_may_not_declare_its_own_trust ... ok
+test a_retired_standing_keeps_its_retirement_record_and_reason ... ok
+test a_retired_standing_without_a_reason_is_refused ... ok
+test a_script_capsule_requires_a_script_section ... ok
+test an_unknown_schema_version_is_rejected_with_a_clear_code ... ok
+test an_unusable_control_table_is_refused_naming_the_capsule ... ok
+test capsule_id_round_trips_and_rejects_malformed_input ... ok
+test capsule_ids_order_deterministically_for_stable_hashing ... ok
+test control_ground_metadata_parses_as_capability_metadata ... ok
+test errors_expose_stable_machine_codes ... ok
+test guidance_carries_an_injection_budget ... ok
+test hooks_default_to_failing_closed_and_running_serially ... ok
+test kind_must_agree_with_the_id_prefix ... ok
+test parses_a_full_script_manifest ... ok
+test parses_a_hook_manifest_with_phase_ordering_and_failure_policy ... ok
+test parses_a_skill_manifest ... ok
+test script_manifest_derives_effect_classes ... ok
+test tool_capsules_describe_an_external_check_rather_than_an_installer ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/model_roster_acceptance.rs (target/debug/deps/model_roster_acceptance-ee3496a813d55605)
+
+running 2 tests
+test agency_context_can_reverse_the_same_roster_without_global_model_quality ... ok
+test unavailable_candidate_cannot_win_even_if_role_fit_is_highest ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/model_roster_provider_observation.rs (target/debug/deps/model_roster_provider_observation-f0b539f5017b182b)
+
+running 1 test
+test current_provider_fixture_is_provenance_bearing_and_not_fitness ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/model_runtime_v2.rs (target/debug/deps/model_runtime_v2-9506505c1d8df7d9)
+
+running 5 tests
+test engine_and_material_rebinding_do_not_mint_semantic_identity ... ok
+test one_action_projects_across_surfaces_while_reading_remains_non_action ... ok
+test semantic_model_mismatch_is_rejected_and_provider_matrix_is_not_daemon_normalised ... ok
+test thin_direct_target_is_valid_without_daemon_ui_trajectory_or_contract ... ok
+test three_access_axes_are_independent_and_absence_is_explained ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/pipeline.rs (target/debug/deps/pipeline-fa47eade0dd28a42)
+
+running 6 tests
+test a_resolved_view_feeds_a_hook_chain_that_denies_the_tool_it_guards ... ok
+test a_session_spec_compiles_into_a_script_an_adapter_can_run_with_no_lookahead ... ok
+test a_shared_task_gets_an_honest_fallback_and_an_isolated_one_gets_a_real_projection ... ok
+test the_active_guidance_composes_within_its_budget_and_accounts_for_what_it_dropped ... ok
+test the_object_safe_adapter_trait_can_be_held_in_a_boxed_list ... ok
+test the_palette_ranks_the_same_view_through_the_crate_root_policy ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/profile_composition_v2.rs (target/debug/deps/profile_composition_v2-000c0362b70444c7)
+
+running 4 tests
+test authored_profile_and_effective_profile_remain_distinct_and_skillset_projection_uses_effective_truth ... ok
+test preview_is_resolver_backed_reports_changed_ground_and_rejects_a_stale_basis ... ok
+test skillset_relation_stage_add_remove_is_write_free_and_observed_sets_remain_read_only ... ok
+test staging_profile_activation_is_typed_and_does_not_write_authored_state ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/project_reflection_roundtrip.rs (target/debug/deps/project_reflection_roundtrip-ac863c82ecf7ccdd)
+
+running 1 test
+test reflection_survives_round_trip_with_authority_provenance_and_reverse_route ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/projection.rs (target/debug/deps/projection-248cba70c1f6fc79)
+
+running 29 tests
+test a_destination_that_climbs_out_of_the_projection_root_is_rejected ... ok
+test a_payload_path_is_only_offered_for_a_capsule_the_context_knows ... ok
+test a_relative_destination_is_accepted_and_normalized ... ok
+test a_resolved_context_locates_a_capsules_payload_and_reports_its_isolation ... ok
+test a_shim_has_no_destination_because_the_adapter_chooses_the_bin_directory ... ok
+test a_shim_name_that_is_really_a_path_is_rejected ... ok
+test a_target_adapter_is_object_safe ... ok
+test a_target_needing_its_own_tree_falls_back_honestly_in_a_shared_task ... ok
+test a_target_that_needs_its_own_tree_cannot_isolate_a_shared_task ... ok
+test a_target_that_takes_an_arbitrary_directory_does_not_care_about_the_tree ... ok
+test a_target_with_no_isolation_and_no_broker_is_simply_unsupported ... ok
+test activation_effects_render_the_phrases_the_palette_prints_verbatim ... ok
+test an_absolute_destination_is_rejected ... ok
+test an_adapter_plans_one_item_per_active_capability_of_its_kind ... ok
+test an_effect_says_plainly_whether_the_user_has_to_do_something ... ok
+test an_empty_destination_is_rejected ... ok
+test an_explicit_copy_is_never_upgraded_to_a_link ... ok
+test an_explicit_link_degrades_to_a_copy_and_admits_it ... ok
+test an_interior_parent_segment_is_rejected_too ... ok
+test an_unchanged_plan_is_detectably_a_no_op ... ok
+test auto_prefers_links_and_falls_back_to_copies ... ok
+test every_item_kind_validates_its_destination ... ok
+test notes_and_the_activation_effect_do_not_change_the_digest ... ok
+test re_planning_an_unchanged_context_yields_an_identical_digest ... ok
+test the_digest_changes_when_a_link_becomes_a_copy ... ok
+test the_digest_changes_when_written_contents_change ... ok
+test the_digest_ignores_the_order_items_were_added_in ... ok
+test the_digest_is_specific_to_the_target ... ok
+test the_fallback_reason_names_the_shared_tree_rather_than_shrugging ... ok
+
+test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/ql_provider_v2.rs (target/debug/deps/ql_provider_v2-28434f5559f4f9c2)
+
+running 7 tests
+test degraded_provider_can_enrich_and_exposes_provider_version_and_exact_identity_provenance ... ok
+test disabled_ql_is_exact_noql_parity_and_never_calls_provider ... ok
+test incompatible_provider_is_non_fatal_in_optional_mode_and_is_not_called ... ok
+test legacy_ql_strings_are_rejected_before_provider_execution ... ok
+test optional_no_provider_preserves_context_and_reports_absence ... ok
+test provider_target_or_revision_drift_is_rejected_instead_of_translated ... ok
+test required_mode_fails_when_provider_is_absent_or_execution_fails ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/related_edges.rs (target/debug/deps/related_edges-cc029ba775088313)
+
+running 4 tests
+test a_related_edge_is_walkable_from_both_ends ... ok
+test a_related_edge_never_selects_or_activates_anything ... ok
+test a_related_edge_to_something_absent_is_inert_rather_than_fatal ... ok
+test related_edges_are_deduplicated_and_ordered_for_a_stable_ui ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/related_skills.rs (target/debug/deps/related_skills-355cc5d7963888fa)
+
+running 1 test
+test related_skills_parse_from_the_manifest_and_surface_in_explain ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/resolution.rs (target/debug/deps/resolution-46754f9b7111c888)
+
+running 52 tests
+test a_blocked_capsule_is_unavailable_even_when_trusted ... ok
+test a_capability_whose_dependency_is_unavailable_becomes_unavailable_too ... ok
+test a_capsule_in_the_catalog_is_not_active_merely_by_being_catalogued ... ok
+test a_capsule_supporting_no_context_target_at_all_is_unavailable ... ok
+test a_capsule_that_declares_no_support_for_a_context_target_is_not_projected_there ... ok
+test a_conflict_declared_by_only_one_side_is_still_detected ... ok
+test a_context_defaults_to_sharing_the_session_working_tree ... ok
+test a_dependency_cycle_is_reported_rather_than_looping_forever ... ok
+test a_healthy_context_diagnoses_cleanly ... ok
+test a_managed_denial_survives_an_explicit_session_enable ... ok
+test a_managed_requirement_survives_an_explicit_session_disable ... ok
+test a_missing_required_dependency_fails_visibly ... ok
+test a_more_specific_overlay_can_reset_inherited_orientation_without_forking_the_skill ... ok
+test a_platform_incompatible_capsule_is_unavailable_rather_than_a_hard_error ... ok
+test a_profile_cycle_is_reported ... ok
+test a_profile_referenced_twice_is_expanded_once ... ok
+test a_quarantined_capsule_never_projects_whatever_its_kind ... ok
+test a_session_overlay_can_disable_what_the_project_enabled ... ok
+test a_session_overlay_can_re_enable_what_the_project_disabled ... ok
+test activating_a_hook_or_guidance_capsule_does_not_make_it_runnable ... ok
+test an_explicitly_disabled_requirement_fails_rather_than_being_silently_re_enabled ... ok
+test an_inactive_capability_explains_why_it_is_not_active ... ok
+test an_inactive_script_is_still_runnable_but_an_inactive_hook_is_not ... ok
+test an_optional_dependency_that_is_absent_does_not_break_resolution ... ok
+test an_overlay_reviewed_against_an_older_revision_is_retained_with_a_warning ... ok
+test an_unknown_profile_is_an_error_not_a_silent_no_op ... ok
+test an_unreviewed_guidance_capsule_is_inspectable_but_not_injected ... ok
+test an_unreviewed_hook_cannot_activate ... ok
+test an_unreviewed_script_may_activate_but_is_flagged_for_run_confirmation ... ok
+test configuration_from_higher_layers_overrides_lower_layers_key_by_key ... ok
+test dependencies_are_expanded_transitively_and_marked_as_such ... ok
+test diagnostic_resolution_reports_every_problem_instead_of_stopping_at_the_first ... ok
+test disabling_an_unknown_capability_is_tolerated_because_registries_shrink ... ok
+test enabling_an_unknown_capability_is_an_error_so_typos_surface_immediately ... ok
+test every_active_capability_can_explain_why_it_is_active ... ok
+test every_rendered_overlay_identity_field_changes_the_view_hash ... ok
+test isolation_is_part_of_the_resolution_hash_because_it_changes_projection ... ok
+test layers_are_applied_in_precedence_order_regardless_of_the_order_they_are_supplied ... ok
+test managed_policy_can_deny_by_declared_effect_class ... ok
+test nested_project_layers_apply_from_the_repository_root_towards_the_working_directory ... ok
+test profiles_compose_through_extends_depth_first ... ok
+test sharing_a_tag_with_an_active_capsule_does_not_activate_anything ... ok
+test skill_usage_overlays_accumulate_in_scope_order_and_change_the_view_hash ... ok
+test skill_usage_overlays_reject_non_skill_capabilities ... ok
+test the_resolution_hash_changes_when_a_capsule_revision_changes ... ok
+test the_resolution_hash_changes_when_the_active_set_changes ... ok
+test the_resolution_hash_distinguishes_contexts_with_different_targets ... ok
+test the_resolution_hash_ignores_the_file_a_layer_came_from ... ok
+test the_resolution_hash_is_stable_across_semantically_equivalent_orderings ... ok
+test two_capsules_exporting_the_same_command_collide ... ok
+test two_conflicting_active_capsules_fail_resolution ... ok
+test worktree_isolation_is_available_but_must_be_asked_for ... ok
+
+test result: ok. 52 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/resource_navigation_v2.rs (target/debug/deps/resource_navigation_v2-abc3691fcc996e49)
+
+running 5 tests
+test contextual_action_requires_canonical_action_and_subject_resources ... ok
+test contextual_actions_keep_one_search_identity_across_many_subjects ... ok
+test shallow_fuzzy_search_stays_fast_over_a_large_resource_field ... ok
+test v2_navigation_field_includes_human_shell_and_future_knowledge_destinations ... ok
+test zero_query_results_are_evidence_bearing_not_implicit_recommendations ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/resource_search_familiarity_v2.rs (target/debug/deps/resource_search_familiarity_v2-86176e4d58b28f86)
+
+running 4 tests
+test authored_preference_remains_above_learned_accessibility_on_equal_text_matches ... ok
+test learned_accessibility_breaks_otherwise_equal_search_ties_and_explains_itself ... ok
+test text_match_quality_remains_above_learned_familiarity ... ok
+test zero_query_labels_familiarity_as_learned_evidence_instead_of_preference ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/search.rs (target/debug/deps/search-b5678e9b4416102f)
+
+running 29 tests
+test a_capability_held_back_by_trust_is_a_document_with_unavailable_status ... ok
+test a_capsule_absent_from_the_catalog_produces_no_document ... ok
+test a_colon_filter_is_not_mistaken_for_the_management_prefix ... ok
+test a_failed_run_does_not_earn_the_boost_a_successful_one_does ... ok
+test a_fast_prefix_is_stripped_from_the_free_text ... ok
+test a_never_used_capability_receives_no_usage_boost_at_all ... ok
+test a_prefix_character_in_the_middle_of_a_query_is_just_text ... ok
+test a_query_splits_filters_from_free_text ... ok
+test a_scope_filter_only_matches_a_capability_declared_at_that_scope ... ok
+test a_search_doc_is_built_from_a_real_resolved_view ... ok
+test a_status_filter_distinguishes_active_inactive_and_unavailable ... ok
+test affirm_and_management_do_not_invent_capsule_filters ... ok
+test an_exact_command_match_beats_a_merely_similar_name ... ok
+test an_old_frequently_used_action_does_not_permanently_outrank_a_recent_one ... ok
+test an_unknown_filter_key_is_free_text_rather_than_an_error ... ok
+test an_unknown_value_for_a_known_filter_key_is_free_text_too ... ok
+test every_documented_filter_key_parses ... ok
+test filters_are_case_insensitive_on_their_keys_and_values ... ok
+test free_text_is_not_a_filter_and_never_excludes_a_document ... ok
+test no_amount_of_usage_can_outweigh_a_direct_text_match ... ok
+test project_and_context_relevance_both_lift_a_capability ... ok
+test repeating_a_key_widens_it_while_different_keys_narrow_together ... ok
+test retained_fast_prefixes_map_to_their_documented_lanes_and_operative_tokens_do_not ... ok
+test scoring_is_deterministic_for_the_same_inputs ... ok
+test the_run_prefix_only_matches_things_that_can_actually_be_run ... ok
+test the_run_prefix_respects_a_capability_that_is_currently_unrunnable ... ok
+test the_usage_boost_halves_at_the_documented_half_life ... ok
+test universal_address_is_not_a_session_only_filter ... ok
+test with_equal_recency_more_successful_runs_still_ranks_higher ... ok
+
+test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/session.rs (target/debug/deps/session-da1c3f4789422579)
+
+running 37 tests
+test a_backend_table_carries_per_multiplexer_extensions ... ok
+test a_malformed_document_reports_a_parse_error_with_a_stable_code ... ok
+test a_named_backend_pins_the_multiplexer ... ok
+test a_pane_that_splits_from_itself_is_a_cycle_too ... ok
+test a_ratio_inside_the_open_unit_interval_is_accepted ... ok
+test a_ratio_outside_the_open_unit_interval_is_rejected ... ok
+test a_session_spec_parses_the_documented_toml ... ok
+test a_spec_with_no_task_table_declares_no_task ... ok
+test a_spec_with_no_views_at_all_is_rejected ... ok
+test a_split_cycle_is_rejected ... ok
+test a_split_from_naming_no_such_pane_is_rejected ... ok
+test a_split_with_no_direction_defaults_to_a_horizontal_neighbour ... ok
+test a_step_carries_everything_an_adapter_needs_to_create_the_pane ... ok
+test a_task_carries_its_own_capability_patch ... ok
+test a_task_declaration_parses_alongside_the_topology ... ok
+test a_task_table_with_no_isolation_key_shares_the_working_tree ... ok
+test a_view_where_every_pane_splits_from_another_has_no_root ... ok
+test a_view_with_no_panes_is_rejected ... ok
+test a_view_with_two_unsplit_panes_is_rejected ... ok
+test an_explicit_isolation_key_is_honoured ... ok
+test an_isolation_key_that_contradicts_the_legacy_flag_is_rejected ... ok
+test an_unknown_backend_extension_is_warned_about_rather_than_rejected ... ok
+test an_unsupported_schema_is_rejected_rather_than_guessed_at ... ok
+test attach_accepts_a_bool_or_a_policy_name ... ok
+test compiling_the_same_spec_twice_produces_the_same_plan ... ok
+test duplicate_pane_ids_within_one_view_are_rejected ... ok
+test duplicate_view_ids_are_rejected ... ok
+test independent_panes_keep_their_declared_order ... ok
+test more_than_one_focused_pane_in_a_view_is_rejected ... ok
+test one_focused_pane_per_view_across_several_views_is_fine ... ok
+test panes_declared_before_their_parent_are_reordered_so_the_parent_comes_first ... ok
+test the_first_step_of_every_view_is_its_root_and_has_no_split ... ok
+test the_legacy_worktree_flag_set_to_false_means_shared ... ok
+test the_legacy_worktree_flag_still_maps_to_worktree_isolation ... ok
+test the_plan_can_be_executed_top_to_bottom_with_no_lookahead ... ok
+test the_plan_carries_the_sessions_own_capability_patch ... ok
+test the_same_pane_id_in_two_different_views_is_perfectly_fine ... ok
+
+test result: ok. 37 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/session_space_adversarial_v2.rs (target/debug/deps/session_space_adversarial_v2-8901ef716eea40ec)
+
+running 4 tests
+test capability_grant_still_does_not_authorise_an_action ... ok
+test closing_a_space_with_a_live_connection_removes_the_runtime_binding ... ok
+test multiple_agent_sessions_coexist_without_becoming_one_session_identity ... ok
+test surface_without_a_live_component_is_declared_not_active ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/session_space_contribution_lifecycle_v2.rs (target/debug/deps/session_space_contribution_lifecycle_v2-dd75d0c10dd05728)
+
+running 2 tests
+test duplicate_registration_and_wrong_read_model_are_rejected ... ok
+test native_registration_readback_and_remove_preserve_session_space_identity ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/session_space_reference_world.rs (target/debug/deps/session_space_reference_world-3263ddbe555f2a70)
+
+running 1 test
+test one_session_space_keeps_identity_across_several_provider_relations_and_isolates_loss ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/session_space_substrate_harmonization_v2.rs (target/debug/deps/session_space_substrate_harmonization_v2-ca44ae19501ddbd4)
+
+running 2 tests
+test admitted_composition_project_provenance_never_authors_session_space_membership ... ok
+test changed_composition_fingerprint_invalidates_live_evidence_and_exact_surface_membership ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/session_space_v2.rs (target/debug/deps/session_space_v2-dc5f85e7f5f20315)
+
+running 6 tests
+test connection_presence_never_invents_capability_or_action_authority ... ok
+test next_session_descriptors_cannot_be_promoted_to_live_active ... ok
+test one_component_can_contribute_multiple_surfaces_and_surface_identity_survives_recomposition ... ok
+test provider_disappearance_degrades_active_component_and_surface_without_fake_continuity ... ok
+test stale_binding_cannot_mutate_after_rebind_or_space_close ... ok
+test two_spaces_with_the_same_component_identity_remain_isolated ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/skillsets.rs (target/debug/deps/skillsets-1cc056cb3c59ec84)
+
+running 11 tests
+test a_new_capsule_matching_a_retained_pattern_is_proposed_never_joined ... ok
+test a_retired_member_is_disclosed_retired_even_when_no_scope_selects_it ... ok
+test a_retired_member_never_projects_and_the_set_quotes_the_owners_reason ... ok
+test a_set_asking_for_something_not_installed_says_so_rather_than_failing ... ok
+test a_set_cannot_launder_trust_onto_an_unreviewed_member ... ok
+test a_set_reports_what_it_withheld_in_one_describable_line ... ok
+test a_single_star_stays_within_a_path_segment_and_a_double_star_crosses ... ok
+test an_active_control_standing_changes_nothing_about_selection ... ok
+test an_observed_set_is_read_only_and_wears_its_sigil ... ok
+test nesting_gives_sub_sets_and_the_parent_carries_the_whole_subtree ... ok
+test sets_compose_by_union_and_a_shared_member_appears_once ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/surface_material_v2.rs (target/debug/deps/surface_material_v2-01fb93b63e4b7ac1)
+
+running 6 tests
+test agent_session_replacement_is_not_gateway_or_material_restart ... ok
+test invalid_material_observations_fail_closed ... ok
+test material_rebinding_preserves_surface_actor_and_agent_session_identity ... ok
+test multiple_surfaces_bind_independently_and_missing_or_failed_material_is_explicit ... ok
+test one_action_projects_through_multiple_surfaces_without_retyping_readings ... ok
+test source_pinned_targets_keep_native_management_meanings_distinct ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/trust_keying.rs (target/debug/deps/trust_keying-f0a9b372f3f864ac)
+
+running 8 tests
+test a_refusal_is_scoped_to_the_registry_that_earned_it ... ok
+test a_standing_dismissal_also_survives_an_edit_but_yields_to_an_approval ... ok
+test a_standing_refusal_outranks_a_later_approval_of_the_same_capsule ... ok
+test approval_does_not_survive_an_edit ... ok
+test dismissal_is_distinct_from_refusal_and_from_never_having_been_seen ... ok
+test refusal_survives_an_edit ... ok
+test the_ledger_records_human_readable_identity_alongside_the_key ... ok
+test unblocking_is_explicit_and_restores_ordinary_per_revision_keying ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/v2_resource_foundation.rs (target/debug/deps/v2_resource_foundation-d94f1b9b5ef2b4dd)
+
+running 6 tests
+test action_and_capability_remain_distinct_resource_types ... ok
+test eligibility_and_preference_are_independent_axes ... ok
+test factory_cr001_fixture_is_consumed_as_external_resource_views_without_identity_translation ... ok
+test imported_factory_provider_and_source_state_can_degrade_without_rewriting_external_identity ... ok
+test legacy_context_becomes_a_binding_only_with_external_project_identity ... ok
+test provider_and_source_loss_do_not_rewrite_resource_identity ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/aikit_store-901ec6ffbfccb217)
+
+running 14 tests
+test composition_application::tests::accepted_preview_is_rejected_after_membership_drift ... ok
+test composition_application::tests::preview_is_write_free_and_apply_uses_the_exact_reviewed_reversible_procedure ... ok
+test credentials::tests::binding_store_round_trips_only_safe_metadata ... ok
+test generation_history::tests::changed_map_keys_reports_add_remove_and_value_change ... ok
+test history_evidence::tests::familiarity_projection_never_changes_learned_authority ... ok
+test history_evidence::tests::session_space_history_keeps_authored_and_generated_truth_separate_from_restore ... ok
+test knowledge_application::tests::address_cache_never_downgrades_a_native_address_to_project_map ... ok
+test knowledge_application::tests::route_and_frame_receipts_survive_reopen_and_filter_by_resource ... ok
+test procedure_history::tests::a_saved_plan_without_satisfaction_is_not_reported_as_applied ... ok
+test session_space_application::tests::authored_membership_alone_makes_a_session_space_discoverable_by_project ... ok
+test session_space_application::tests::canonical_semantic_state_survives_store_restart ... ok
+test session_space_application::tests::history_restore_is_staged_through_current_authority ... ok
+test session_space_application::tests::preview_is_write_free_and_apply_rejects_stale_basis ... ok
+test session_space_evidence::tests::explain_uses_the_same_receipt_that_changed_canonical_state ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.14s
+
+     Running tests/builtin_registry.rs (target/debug/deps/builtin_registry-eb47e8b2130f13f8)
+
+running 1 test
+test committed_builtin_registry_has_no_manifest_problems ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/channel.rs (target/debug/deps/channel-785898ac2dc660a9)
+
+running 5 tests
+test a_deferred_item_returns_to_pending_once_its_time_passes ... ok
+test a_published_item_is_redacted_before_storage_and_read_back_redacted ... ok
+test a_resolved_item_drops_out_of_pending_but_stays_for_audit ... ok
+test every_evidence_variant_is_redacted_not_just_the_summary ... ok
+test publishing_with_a_dedup_key_is_idempotent ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/curator.rs (target/debug/deps/curator-5821bd99ddd0a795)
+
+running 4 tests
+test a_healthy_tree_files_nothing ... ok
+test an_unchanged_tree_produces_no_drift ... ok
+test drift_is_detected_when_a_projected_payload_changes_and_filed_as_a_notice ... ok
+test the_curator_proposes_review_of_stale_capabilities_and_archives_nothing ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/edit.rs (target/debug/deps/edit-0f72ee46a3cf41e5)
+
+running 16 tests
+test a_local_profile_is_edited_the_same_way_as_a_shared_one ... ok
+test a_malformed_file_is_refused_with_a_stable_code_rather_than_overwritten ... ok
+test a_no_op_edit_leaves_the_file_byte_identical ... ok
+test a_session_overlay_is_created_with_its_session_id_and_parses_as_one ... ok
+test a_toggle_preserves_comments_key_order_and_hand_formatting ... ok
+test adding_a_profile_reference_appends_rather_than_replacing_the_list ... ok
+test an_enable_list_that_does_not_exist_yet_is_created ... ok
+test an_overlay_for_a_different_session_is_refused_rather_than_adopted ... ok
+test an_overlays_patch_reads_back_through_the_overlay_parser_not_the_project_one ... ok
+test clearing_removes_a_declaration_entirely ... ok
+test disabling_something_that_was_enabled_moves_it_rather_than_listing_it_twice ... ok
+test opening_a_missing_project_profile_creates_a_minimal_valid_one ... ok
+test parsing_and_rendering_without_an_edit_is_the_identity ... ok
+test per_capsule_configuration_can_be_set_without_disturbing_its_neighbours ... ok
+test saving_replaces_the_file_atomically_and_leaves_no_debris ... ok
+test updating_an_overlays_base_generation_preserves_the_rest_of_the_file ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/events.rs (target/debug/deps/events-17bc9c695d385626)
+
+running 11 tests
+test a_bypass_is_visible_in_the_recorded_history ... ok
+test a_missing_log_directory_is_created_rather_than_dropping_the_event ... ok
+test a_recorded_run_event_contains_no_secret_argument ... ok
+test a_timestamp_round_trips_through_its_rendered_form ... ok
+test an_argument_nobody_declared_is_masked_rather_than_trusted ... ok
+test an_event_carries_every_dimension_the_specification_lists ... ok
+test an_event_has_no_field_that_prompt_or_transcript_text_could_live_in ... ok
+test an_event_reaches_both_the_database_and_the_json_log ... ok
+test an_outcome_distinguishes_a_denial_from_a_failure ... ok
+test recent_events_come_back_newest_first ... ok
+test the_log_is_appended_to_rather_than_replaced ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+     Running tests/familiarity.rs (target/debug/deps/familiarity-bbb4efd0f6c666d4)
+
+running 4 tests
+test familiarity_reset_applies_to_run_history_in_event_order ... ok
+test observations_and_resets_replay_across_index_reopen ... ok
+test successful_runs_join_the_same_familiarity_replay_and_failures_do_not ... ok
+test unknown_persisted_schema_invalidates_only_learned_replay ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/generation.rs (target/debug/deps/generation-401aeaaf6e5bd643)
+
+running 24 tests
+test a_brokered_fallback_is_written_into_the_generation_rather_than_lost ... ok
+test a_built_generation_has_the_layout_the_specification_documents ... ok
+test a_cosmetic_property_is_excluded_from_the_generation_identity ... ok
+test a_failure_after_materialization_leaves_the_previous_generation_current ... ok
+test a_failure_during_materialization_leaves_the_previous_generation_current ... ok
+test a_first_commit_against_an_unexpected_base_is_also_refused ... ok
+test a_generation_stamps_the_generation_format_and_is_recognised_by_it ... ok
+test a_platform_without_symlinks_degrades_to_copies_and_says_so_in_the_metadata ... ok
+test an_identical_rebuild_is_the_same_generation_rather_than_a_duplicate ... ok
+test committing_names_the_generation_by_content_and_points_current_at_it ... ok
+test each_projection_item_kind_lands_as_the_thing_it_says_it_is ... ok
+test gc_keeps_the_requested_number_of_recent_generations ... ok
+test gc_never_deletes_what_current_or_previous_point_at ... ok
+test gc_on_a_context_with_nothing_to_collect_is_a_no_op ... ok
+test link_mode_and_copy_mode_produce_the_same_logical_projection ... ok
+test metadata_records_the_base_the_hash_and_the_isolation_it_was_built_under ... ok
+test relabelling_an_identical_generation_updates_the_label_without_minting_a_new_one ... ok
+test relabelling_replaces_the_lock_atomically_and_leaves_no_temp_file ... ok
+test rollback_restores_the_previous_tree_exactly ... ok
+test rolling_back_twice_returns_to_where_it_started ... ok
+test rolling_back_with_nothing_to_roll_back_to_says_so ... ok
+test the_current_path_is_stable_across_generation_swaps ... ok
+test the_lock_file_is_a_full_re_readable_serialization_of_the_resolved_view ... ok
+test two_concurrent_commits_from_one_base_produce_exactly_one_winner ... ok
+
+test result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.33s
+
+     Running tests/generation_history_v2.rs (target/debug/deps/generation_history_v2-03153bbdcedba2fc)
+
+running 2 tests
+test arbitrary_historical_comparison_is_inspection_not_generic_restore ... ok
+test comparison_reads_two_committed_locks_and_reports_real_capability_change ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/home.rs (target/debug/deps/home-da0671565ff1e690)
+
+running 9 tests
+test a_session_overlay_lives_under_the_session_it_belongs_to ... ok
+test an_explicit_root_is_used_verbatim ... ok
+test ensuring_a_context_directory_creates_its_generations_directory_too ... ok
+test every_path_the_home_offers_is_inside_the_home ... ok
+test the_aikit_home_environment_variable_wins_over_the_user_home ... ok
+test the_documented_file_names_are_the_ones_the_specification_lists ... ok
+test the_documented_layout_is_created_and_creating_it_twice_is_harmless ... ok
+test with_neither_an_override_nor_a_home_the_error_says_which_variable_to_set ... ok
+test without_an_override_the_home_is_dot_aikit_under_the_user_home ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/inbox.rs (target/debug/deps/inbox-07395a7d81d4ce16)
+
+running 18 tests
+test a_body_that_differs_only_in_whitespace_is_recognized_as_the_same_thing ... ok
+test a_capsule_that_shares_only_an_export_name_is_still_worth_mentioning ... ok
+test a_capture_containing_a_secret_is_quarantined_redacted_and_unpromotable ... ok
+test a_near_copy_of_a_catalogued_capsule_is_ranked_with_a_readable_explanation ... ok
+test a_promoted_candidate_is_marked_promoted_and_leaves_the_queue ... ok
+test a_promoted_capsule_starts_unreviewed_however_it_was_captured ... ok
+test a_shebang_is_classified_as_a_script_and_prose_as_guidance ... ok
+test an_explicit_kind_hint_beats_the_classifier ... ok
+test an_identical_body_already_in_the_catalog_is_reported_as_exactly_that ... ok
+test an_ordinary_capture_lands_in_the_ready_inbox_and_is_indexed ... ok
+test an_unrelated_capsule_is_not_reported_as_similar ... ok
+test capturing_the_identical_body_twice_reports_a_duplicate_rather_than_filing_it_again ... ok
+test promoting_a_guidance_capture_produces_a_guidance_capsule_with_the_right_entry ... ok
+test promotion_refuses_edits_that_would_produce_an_invalid_manifest ... ok
+test promotion_refuses_to_overwrite_an_existing_capsule ... ok
+test promotion_writes_a_capsule_the_registry_loader_can_read_without_anyone_writing_a_manifest ... ok
+test rejecting_a_candidate_moves_it_out_of_the_queue ... ok
+test releasing_a_quarantined_candidate_requires_the_secret_to_be_gone ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s
+
+     Running tests/index.rs (target/debug/deps/index-ad2a607fe3332270)
+
+running 16 tests
+test a_capsule_deleted_from_disk_disappears_from_the_index_on_the_next_reindex ... ok
+test a_loaded_snapshot_is_a_catalog_the_resolver_can_use_directly ... ok
+test a_reindex_preserves_context_bindings_and_issued_bypasses ... ok
+test a_reindex_preserves_usage_events_because_they_exist_nowhere_else ... ok
+test an_edited_payload_shows_up_as_a_new_revision_in_the_index ... ok
+test every_documented_table_exists_after_opening ... ok
+test facets_count_the_catalog_by_the_dimensions_the_palette_offers ... ok
+test filtering_by_kind_and_tag_narrows_the_way_the_query_language_says_it_does ... ok
+test opening_creates_the_database_in_write_ahead_logging_mode ... ok
+test reindexing_twice_in_a_row_is_stable ... ok
+test reindexing_writes_a_row_per_capsule_with_the_facts_the_palette_needs ... ok
+test reindexing_writes_the_profiles_too ... ok
+test text_filtering_matches_the_fields_a_person_would_expect_to_search ... ok
+test the_schema_version_is_recorded_and_reopening_does_not_migrate_again ... ok
+test usage_counts_separate_successes_from_failures ... ok
+test usage_for_a_capsule_that_has_never_run_is_zeroed_rather_than_missing ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s
+
+     Running tests/locks.rs (target/debug/deps/locks-be8f529074acada9)
+
+running 6 tests
+test a_contender_waits_up_to_the_timeout_and_then_succeeds_when_the_holder_leaves ... ok
+test a_zero_timeout_fails_immediately_rather_than_blocking_forever ... ok
+test acquiring_creates_the_lock_file_and_releasing_leaves_it_unlocked ... ok
+test locks_for_different_contexts_do_not_contend ... ok
+test the_holder_record_is_readable_while_the_lock_is_held ... ok
+test two_threads_contending_for_one_context_produce_lock_busy_naming_the_holder ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.26s
+
+     Running tests/procedure.rs (target/debug/deps/procedure-1b725c9383ba374a)
+
+running 22 tests
+test a_committed_procedure_is_fully_reversible ... ok
+test a_diff_reads_the_real_world_and_writes_nothing ... ok
+test a_failed_procedure_leaves_the_world_intact ... ok
+test a_failure_to_record_satisfaction_rolls_back_the_committed_world ... ok
+test a_marked_block_edit_is_idempotent_and_leaves_human_prose_alone ... ok
+test a_post_commit_metadata_failure_drops_the_commit_and_restores_the_original_branch ... ok
+test a_rejecting_commit_hook_leaves_the_original_branch_and_index_clean ... ok
+test a_run_command_executes_its_recorded_undo_command ... ok
+test a_satisfaction_marker_never_hides_drift_in_the_applied_result ... ok
+test an_inverse_capture_failure_restores_the_original_git_branch ... ok
+test apply_refuses_when_a_file_changes_after_the_plan_was_created ... ok
+test direct_isolation_is_refused_for_an_edit_that_cannot_be_undone ... ok
+test git_branch_isolation_commits_the_procedure_and_undo_reverts_it ... ok
+test git_branch_isolation_refuses_a_dirty_repo_before_touching_the_target ... ok
+test git_undo_refuses_when_the_recorded_branch_has_advanced ... ok
+test isolation_selection_uses_a_git_branch_for_a_real_repository ... ok
+test listing_reports_the_procedures_that_have_an_undo_record ... ok
+test marked_block_undo_refuses_to_erase_later_human_prose ... ok
+test re_running_a_satisfied_plan_is_a_no_op ... ok
+test replacing_a_symlink_restores_the_original_link_on_undo ... ok
+test undo_refuses_drift_before_touching_any_path ... ok
+test writing_through_a_symlink_replaces_only_the_declared_entry ... ok
+
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.15s
+
+     Running tests/registry.rs (target/debug/deps/registry-ea645753b0e3af9a)
+
+running 23 tests
+test a_broken_profile_does_not_stop_a_good_one_loading ... ok
+test a_capsule_is_loaded_from_its_manifest_and_stamped_with_registry_facts ... ok
+test a_capsule_nested_deeper_than_group_slash_name_is_still_found ... ok
+test a_directory_without_a_manifest_is_ignored_rather_than_reported ... ok
+test a_manifest_that_declares_its_own_trust_is_refused_by_the_loader_too ... ok
+test a_manifest_whose_id_disagrees_with_its_directory_is_a_problem_not_a_silent_rename ... ok
+test a_profile_whose_id_disagrees_with_its_path_is_a_problem ... ok
+test a_project_local_registry_is_loaded_from_dot_aikit_and_stamped_project_local ... ok
+test a_registry_directory_that_does_not_exist_yet_is_not_an_error ... ok
+test a_repository_without_a_dot_aikit_capsules_tree_yields_an_empty_project_registry ... ok
+test adding_a_payload_file_changes_the_revision ... ok
+test an_empty_registry_loads_as_an_empty_catalog_rather_than_an_error ... ok
+test an_unchanged_capsule_has_a_stable_revision_across_loads_and_across_registries ... ok
+test capsules_of_every_kind_are_found_at_their_documented_paths ... ok
+test changing_executable_permissions_changes_the_trust_revision ... ok
+test editing_a_payload_file_changes_the_revision ... ok
+test editing_the_manifest_changes_the_revision ... ok
+test identical_content_in_two_registries_shares_a_revision_but_not_a_trust_key ... ok
+test merging_carries_both_registries_problems_forward ... ok
+test merging_layers_a_project_registry_over_a_personal_one_and_records_the_shadow ... ok
+test moving_a_payload_file_changes_the_revision_even_when_the_bytes_are_the_same ... ok
+test one_unparseable_manifest_does_not_blind_the_rest_of_the_registry ... ok
+test profiles_are_loaded_from_the_profiles_tree ... ok
+
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/scan.rs (target/debug/deps/scan-66d5072a79c92581)
+
+running 29 tests
+test a_base64_asset_does_not_trip_the_entropy_rule ... ok
+test a_dot_env_secret_assignment_is_found_even_when_the_value_is_dull ... ok
+test a_finding_never_carries_the_secret_it_found ... ok
+test a_github_personal_access_token_is_found ... ok
+test a_google_api_key_is_found ... ok
+test a_high_entropy_value_assigned_to_a_secret_sounding_name_is_found ... ok
+test a_json_credential_field_is_found ... ok
+test a_long_hex_commit_sha_in_a_url_does_not_trip_the_entropy_rule ... ok
+test a_pem_private_key_block_is_found_whole ... ok
+test a_public_key_is_not_a_private_key ... ok
+test a_user_configured_pattern_is_honoured ... ok
+test a_uuid_is_not_a_secret ... ok
+test an_authorization_header_is_found_however_it_is_spelled ... ok
+test an_invalid_custom_pattern_is_refused_with_a_stable_code ... ok
+test an_obvious_placeholder_is_not_reported_as_a_secret ... ok
+test an_openai_style_key_is_found ... ok
+test aws_access_key_ids_are_found_in_both_flavours ... ok
+test every_common_private_key_header_is_recognized ... ok
+test every_slack_token_prefix_is_found ... ok
+test findings_come_back_in_document_order ... ok
+test gitlab_npm_and_docker_tokens_are_found ... ok
+test ordinary_environment_variables_are_left_alone ... ok
+test ordinary_source_code_is_not_flagged ... ok
+test overlapping_findings_redact_once_rather_than_corrupting_the_text ... ok
+test redacting_text_with_no_secrets_returns_it_unchanged ... ok
+test redaction_is_stable_under_multibyte_text ... ok
+test redaction_removes_the_secret_and_keeps_everything_else ... ok
+test the_fine_grained_github_token_shape_is_found_too ... ok
+test the_word_authorization_on_its_own_is_not_a_finding ... ok
+
+test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/session_space_application_matrix_v2.rs (target/debug/deps/session_space_application_matrix_v2-676f5ede31a34e50)
+
+running 1 test
+test durable_mutations_history_and_provider_loss_share_one_authority ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/skillsets.rs (target/debug/deps/skillsets-101880dbdec5c682)
+
+running 4 tests
+test every_writable_set_mutation_is_a_real_undoable_procedure ... ok
+test procedure_mutations_preserve_include_provenance_and_remove_it_at_its_source ... ok
+test rename_and_delete_are_real_and_delete_is_recoverable ... ok
+test set_names_cannot_escape_the_skillset_root ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/state.rs (target/debug/deps/state-2735060ea92d7511)
+
+running 13 tests
+test a_closed_session_is_not_reported_as_stale ... ok
+test a_context_binding_survives_being_rewritten_when_the_pane_moves ... ok
+test a_context_record_remembers_its_isolation_choice ... ok
+test a_restored_session_is_rebound_by_name_and_project_not_by_mux_id ... ok
+test a_session_not_seen_for_a_while_is_reported_stale_without_being_deleted ... ok
+test a_session_record_round_trips_through_the_database ... ok
+test one_session_can_own_several_contexts ... ok
+test queueing_the_same_candidate_twice_updates_the_reason_rather_than_duplicating ... ok
+test rebinding_an_unknown_session_reports_nothing_rather_than_inventing_one ... ok
+test rebinding_does_not_reach_across_multiplexers ... ok
+test rebinding_does_not_reach_across_projects_that_happen_to_share_a_name ... ok
+test the_promotion_queue_holds_candidates_with_the_reason_they_were_queued ... ok
+test touching_a_session_clears_its_staleness ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+
+     Running tests/template.rs (target/debug/deps/template-ab50e2607fc1ef84)
+
+running 6 tests
+test a_missing_required_parameter_is_refused_before_anything_is_planned ... ok
+test an_instantiation_is_undoable_like_any_other_procedure ... ok
+test instantiating_a_template_plans_a_procedure_rather_than_writing_directly ... ok
+test instantiating_over_an_existing_file_is_refused_rather_than_clobbering ... ok
+test instantiation_into_a_repository_stages_on_a_branch ... ok
+test instantiation_substitutes_parameters_in_both_paths_and_contents ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+     Running tests/trust.rs (target/debug/deps/trust-933f243c75e7f039)
+
+running 18 tests
+test a_block_is_not_swept_away_by_a_later_review_of_another_revision ... ok
+test a_capsule_nobody_has_reviewed_is_unseen_and_may_not_project ... ok
+test a_dismissal_survives_an_edit_but_yields_to_a_review_of_that_revision ... ok
+test a_manifest_cannot_talk_its_way_into_being_trusted ... ok
+test a_persisted_block_outranks_a_later_per_revision_approval ... ok
+test a_persisted_block_survives_a_content_edit ... ok
+test a_persisted_block_survives_reopening_the_database ... ok
+test a_recorded_review_persists_across_reopening_the_database ... ok
+test a_resolver_run_against_the_persistent_oracle_holds_an_unreviewed_hook_back ... ok
+test a_snapshot_answers_the_same_way_the_live_store_does ... ok
+test a_standing_verdict_is_carried_by_the_resolution_snapshot ... ok
+test an_edited_capsule_loses_its_review_because_the_revision_moved ... ok
+test blocking_a_revision_does_not_supersede_the_trusted_one ... ok
+test indexing_a_registry_does_not_review_anything ... ok
+test recording_the_same_revision_twice_updates_rather_than_duplicates ... ok
+test reviewing_a_new_revision_supersedes_the_one_it_replaces ... ok
+test superseding_does_not_reach_across_capsules_or_across_registries ... ok
+test unblocking_restores_per_revision_keying_without_granting_approval ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.23s
+
+     Running unittests src/lib.rs (target/debug/deps/aikit_tui-e77bde44d33afd28)
+
+running 18 tests
+test application_surface::tests::relation_view_rotation_is_total ... ok
+test credential_surface::tests::headless_panel_never_offers_secret_prompt ... ok
+test credential_surface::tests::interactive_panel_keeps_env_import_visible_without_claiming_value_was_read ... ok
+test knowledge_service::tests::tui_knowledge_contract_is_the_core_application_contract ... ok
+test model_roster_surface::tests::matrix_is_projection_of_core_ranking_and_keeps_unknown_price_visible ... ok
+test navigation::tests::absent_profile_and_agency_are_not_invented ... ok
+test navigation::tests::keyboard_and_mouse_invoke_the_same_contextual_action_relation ... ok
+test navigation::tests::keyboard_and_mouse_open_the_same_canonical_resource ... ok
+test navigation::tests::keyboard_and_mouse_selection_are_the_same_intent ... ok
+test navigation::tests::narrow_and_wide_context_chrome_keep_the_present_project_legible ... ok
+test navigation::tests::presentation_expansion_has_keyboard_mouse_parity ... ok
+test navigation::tests::space_only_stages_explicitly_stageable_actions ... ok
+test project_workspace::tests::four_compose_horizons_are_explicit_and_not_one_flat_list ... ok
+test project_workspace::tests::selecting_context_source_does_not_mark_retrieved_or_consume_retrieval_plan ... ok
+test project_world_service::tests::authoritative_scope_stack_is_disclosed_without_compatibility_warning ... ok
+test project_world_service::tests::compatibility_service_does_not_invent_unexposed_scope_layers ... ok
+test project_world_service::tests::tui_adapter_uses_core_application_context_resolution ... ok
+test session_space_service::resource_projection_tests::authored_session_space_enters_common_resource_action_field_without_identity_collapse ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/application_service_backend_v2.rs (target/debug/deps/application_service_backend_v2-f19fe8b7d0ba652c)
+
+running 8 tests
+test express_operator_qualifies_action_without_crossing_the_invocation_boundary ... ok
+test generic_host_never_falls_through_package_identity ... ok
+test legacy_package_usage_stats_do_not_become_v2_navigation_evidence ... ok
+test operative_action_is_qualified_then_invoked_through_the_existing_application_boundary ... ok
+test package_backed_capability_state_is_explicit_compatibility_evidence ... ok
+test production_application_never_calls_restart_only_effect_live ... ok
+test production_application_previews_target_activation_semantics_before_apply ... ok
+test production_application_searches_the_resolved_resource_field ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/application_service_v2.rs (target/debug/deps/application_service_v2-33a45937ba9f93f2)
+
+running 4 tests
+test preview_then_confirmation_then_apply_crosses_the_service_boundary_once ... ok
+test read_models_for_context_explain_history_and_relations_remain_service_owned ... ok
+test search_effect_is_executed_by_the_application_service_and_returns_as_state ... ok
+test semantic_selection_loads_contextual_actions_through_the_same_runtime ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/application_surface_prelocal_v2.rs (target/debug/deps/application_surface_prelocal_v2-ec1e1cdb775712bb)
+
+running 4 tests
+test final_surface_owns_the_only_staging_preview_confirmation_apply_route ... ok
+test final_surface_preserves_identity_across_field_navigation_and_relation_views ... ok
+test final_surface_renders_narrow_medium_and_wide_without_alternate_state ... ok
+test shipped_workspace_exposes_one_canonical_product_field ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/application_v2.rs (target/debug/deps/application_v2-5ae1ae6167123378)
+
+running 12 tests
+test apply_requires_scoped_preview_and_separate_confirmation ... ok
+test changing_scope_invalidates_preview_and_requires_a_new_one ... ok
+test discard_and_exit_are_explicit_actions ... ok
+test dismiss_and_back_never_discard_staged_state_scope_or_request_exit ... ok
+test exit_is_explicit_but_cannot_implicitly_discard_staged_intent ... ok
+test keyboard_and_mouse_resolve_to_the_same_semantic_selection_action ... ok
+test presentation_resize_relation_views_and_navigation_do_not_own_semantic_state ... ok
+test query_changes_request_search_without_reimplementing_search_in_the_reducer ... ok
+test refresh_explains_selection_invalidation_instead_of_falling_to_a_row_index ... ok
+test refresh_preserves_selection_by_resource_ref_when_rows_reorder ... ok
+test selection_navigation_is_stable_ref_based_not_index_identity ... ok
+test staged_intent_survives_refresh_even_when_the_resource_temporarily_disappears ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/domain_parity_v2.rs (target/debug/deps/domain_parity_v2-a75afa748a245121)
+
+running 1 test
+test presentation_and_provider_refresh_never_take_ownership_of_semantic_state ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/explain_history_action_parity_v2.rs (target/debug/deps/explain_history_action_parity_v2-923a09128d6678f7)
+
+running 2 tests
+test explain_and_history_are_the_same_actions_through_keyboard_and_mouse ... ok
+test surface_context_changes_the_subject_not_the_action_identity ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/host.rs (target/debug/deps/host-961d30f50683f62a)
+
+running 13 tests
+test a_large_promotion_diff_escalates_an_inline_palette_to_fullscreen ... ok
+test a_long_captured_result_escalates_but_a_merely_tall_one_does_not ... ok
+test a_plain_terminal_gets_an_inline_palette_that_preserves_scrollback ... ok
+test a_small_result_does_not_take_over_the_screen ... ok
+test a_terminal_too_short_for_an_inline_strip_goes_fullscreen_rather_than_cramped ... ok
+test an_explicit_request_wins_over_every_inference ... ok
+test an_inline_host_is_clamped_at_construction_so_no_caller_can_ask_for_a_takeover ... ok
+test an_inline_palette_stays_within_the_documented_row_band ... ok
+test cmux_gets_an_inline_palette_because_it_has_no_documented_popup_primitive ... ok
+test escalation_is_one_way_and_fullscreen_stays_fullscreen ... ok
+test only_the_inline_host_promises_to_preserve_scrollback ... ok
+test the_viewport_height_never_exceeds_the_terminal ... ok
+test tmux_gets_a_real_popup_because_it_has_one ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/knowledge_navigation_v2.rs (target/debug/deps/knowledge_navigation_v2-9b11338c2b3524ba)
+
+running 2 tests
+test capability_relation_read_model_uses_canonical_contextual_actions ... ok
+test resource_without_typed_relations_does_not_invent_edges ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/layout.rs (target/debug/deps/layout-a6234e5b3dc58875)
+
+running 15 tests
+test a_capability_active_only_through_a_dependency_is_not_shown_as_declared ... ok
+test a_medium_terminal_hides_the_preview_until_it_is_asked_for ... ok
+test a_narrow_terminal_puts_details_behind_enter_rather_than_squeezing_them_in ... ok
+test a_unicode_set_is_actually_different_from_the_ascii_one ... ok
+test a_wide_terminal_shows_the_list_and_the_preview_at_once ... ok
+test an_explicitly_disabled_capability_is_marked_with_a_cross ... ok
+test an_unavailable_row_carries_the_reason_core_gave_and_not_a_paraphrase ... ok
+test an_unavailable_row_without_a_recorded_reason_says_so_rather_than_inventing_one ... ok
+test an_undeclared_capability_has_a_blank_scope_badge_rather_than_a_guess ... ok
+test declared_and_effective_are_rendered_as_two_separate_marks ... ok
+test every_glyph_in_a_set_is_distinct_so_no_two_states_look_alike ... ok
+test every_pane_stays_inside_the_area_and_none_of_them_overlap ... ok
+test scope_badges_are_the_letters_core_defines_and_not_a_second_opinion ... ok
+test the_ascii_fallback_carries_the_same_information_without_a_single_non_ascii_byte ... ok
+test the_documented_breakpoints_are_exactly_where_they_say_they_are ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/mouse_context_v2.rs (target/debug/deps/mouse_context_v2-5cf364d6c35a8398)
+
+running 5 tests
+test live_shell_title_exposes_truthful_ambient_context_without_invented_identity ... ok
+test mouse_and_keyboard_choose_the_same_workspace_section ... ok
+test mouse_and_keyboard_expand_and_collapse_the_same_presentation_state ... ok
+test mouse_and_keyboard_invoke_the_same_contextual_action_operation ... ok
+test narrow_shell_keeps_compact_project_and_host_context_legible ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/performance.rs (target/debug/deps/performance-e4e84629c742407c)
+
+running 2 tests
+test application_first_frame_meets_cold_and_warm_budgets ... ok
+test five_thousand_resource_search_meets_the_keystroke_budget ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/profile_composition_stale_v2.rs (target/debug/deps/profile_composition_stale_v2-365376d3f699d60b)
+
+running 2 tests
+test production_application_preview_reports_shared_changed_ground ... ok
+test production_application_rejects_accepted_preview_after_material_resolution_drift ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/project_world_service_v2.rs (target/debug/deps/project_world_service_v2-5fc495c3d65fa91f)
+
+running 1 test
+test shared_application_service_discloses_project_local_world_without_tui_resolution ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/project_world_surface_v2.rs (target/debug/deps/project_world_surface_v2-798acf831d32b0de)
+
+running 5 tests
+test final_surface_uses_the_shared_project_world_read_model ... ok
+test global_surface_remains_first_class_without_inventing_project_world ... ok
+test narrow_workspace_progressively_discloses_project_world_without_a_second_controller ... ok
+test staged_composition_survives_field_navigation ... ok
+test wide_workspace_renders_context_compose_and_explain_from_one_world ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/resource_use_observation_v2.rs (target/debug/deps/resource_use_observation_v2-7c8949de27221e7c)
+
+running 2 tests
+test open_without_a_selected_resource_records_nothing ... ok
+test selection_alone_is_not_learned_but_opening_is ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/scope_guard_v2.rs (target/debug/deps/scope_guard_v2-3b0d23c2e8bf055c)
+
+running 1 test
+test staged_changes_without_a_mutation_scope_cannot_preview_or_apply ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/session_space_application_parity_v2.rs (target/debug/deps/session_space_application_parity_v2-6e99e0c5e1ea3bd7)
+
+running 1 test
+test tui_adapter_projects_the_same_preview_receipt_and_read_model ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/session_space_service_projection_v2.rs (target/debug/deps/session_space_service_projection_v2-575a6a08549efc8c)
+
+running 1 test
+test canonical_application_service_projects_session_space_preview_apply_history_and_explain ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/surface_navigation_v2.rs (target/debug/deps/surface_navigation_v2-0248f1a674669e3c)
+
+running 3 tests
+test ctrl_q_is_an_explicit_exit_when_nothing_is_staged ... ok
+test escape_at_rest_is_back_only_and_ctrl_u_is_explicit_query_clear ... ok
+test explicit_exit_is_refused_while_staged_intent_remains ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/tree.rs (target/debug/deps/tree-c58ac5017c2d100d)
+
+running 3 tests
+test ascii_projection_preserves_information_without_unicode_dependency ... ok
+test compatibility_tree_is_a_read_only_expand_and_filter_projection ... ok
+test compatibility_tree_rendering_has_no_staging_or_mutation_markers ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/v2_prelocal_acceptance.rs (target/debug/deps/v2_prelocal_acceptance-9579c54abe51f00f)
+
+running 1 test
+test resource_action_compose_explain_and_relations_share_one_identity_path ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/working_field_session_space_v2.rs (target/debug/deps/working_field_session_space_v2-2bd18c57f6fc3716)
+
+running 2 tests
+test tui_observes_degradation_instead_of_counterfeiting_active ... ok
+test tui_projects_same_live_space_session_component_surface_and_connection ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/working_field_v2.rs (target/debug/deps/working_field_v2-da74b01e3f81c438)
+
+running 5 tests
+test live_session_space_and_agent_session_replace_obsolete_contract_fixtures ... ok
+test parity_fixture_cannot_hide_missing_provenance_or_an_unrenderable_surface_reason ... ok
+test parity_fixture_consumes_live_central_and_actuation_refs_without_reowning_them ... ok
+test unsupported_rich_ui_is_disclosed_as_an_alternate_surface_not_fake_terminal_parity ... ok
+test working_field_selection_reuses_authoritative_tui_state_and_exact_resource_ref ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Checking aikit-core v0.1.0 (/Users/admin/Central/Work/ai-kit/crates/aikit-core)
+    Checking aikit-store v0.1.0 (/Users/admin/Central/Work/ai-kit/crates/aikit-store)
+    Checking aikit-adapters v0.1.0 (/Users/admin/Central/Work/ai-kit/crates/aikit-adapters)
+    Checking aikit-tui v0.1.0 (/Users/admin/Central/Work/ai-kit/crates/aikit-tui)
+    Checking aikit-cli v0.1.0 (/Users/admin/Central/Work/ai-kit/crates/aikit-cli)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 34.19s
+   Compiling aikit-core v0.1.0 (/Users/admin/Central/Work/ai-kit/crates/aikit-core)
+   Compiling aikit-adapters v0.1.0 (/Users/admin/Central/Work/ai-kit/crates/aikit-adapters)
+   Compiling aikit-store v0.1.0 (/Users/admin/Central/Work/ai-kit/crates/aikit-store)
+   Compiling aikit-tui v0.1.0 (/Users/admin/Central/Work/ai-kit/crates/aikit-tui)
+   Compiling aikit-cli v0.1.0 (/Users/admin/Central/Work/ai-kit/crates/aikit-cli)
+    Finished `release` profile [optimized] target(s) in 2m 49s

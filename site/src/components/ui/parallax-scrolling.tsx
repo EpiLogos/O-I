@@ -6,7 +6,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from '@studio-freight/lenis';
 import { OIMark } from '@/components/ui/oi-mark';
 
-export function ParallaxComponent() {
+export function ParallaxComponent({ title = 'Objective : Internality' }: { title?: string }) {
   const parallaxRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -18,7 +18,7 @@ export function ParallaxComponent() {
     gsap.registerPlugin(ScrollTrigger);
 
     const triggerElement = root.querySelector<HTMLElement>('[data-parallax-layers]');
-    const title = root.querySelector<HTMLElement>('[data-parallax-title]');
+    const titleElement = root.querySelector<HTMLElement>('[data-parallax-title]');
     const darkWipe = root.querySelector<HTMLElement>('[data-dark-wipe]');
     const lenis = new Lenis({
       smoothWheel: true,
@@ -59,9 +59,9 @@ export function ParallaxComponent() {
         );
       });
 
-      if (title) {
+      if (titleElement) {
         timeline.to(
-          title,
+          titleElement,
           {
             keyframes: [
               { yPercent: 18, opacity: 0.2, ease: 'none' },
@@ -116,7 +116,7 @@ export function ParallaxComponent() {
           </div>
 
           <div data-parallax-title className="parallax__title" aria-hidden="true">
-            Objective Internality
+            {title}
           </div>
         </div>
       </section>

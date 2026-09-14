@@ -1,0 +1,43 @@
+{
+  "command": [
+    "/tmp/astra-aikit-user-ground/target/release/aikit",
+    "--json",
+    "adopt",
+    "/Users/admin/.agents/skills",
+    "--control-ground",
+    "/Users/admin/Central/Control/user/skills",
+    "--namespace",
+    "personal"
+  ],
+  "full_local_preview": "/tmp/astra-real-adoption-review/preview.json",
+  "source": "/Users/admin/.agents/skills",
+  "control_ground": "/Users/admin/Central/Control/user/skills",
+  "skills": 20,
+  "capsules": [
+    "skill/personal/brandkit",
+    "skill/personal/design-taste-frontend",
+    "skill/personal/design-taste-frontend-v1",
+    "skill/personal/design-taste-frontend-v2",
+    "skill/personal/find-skills",
+    "skill/personal/full-output-enforcement",
+    "skill/personal/gpt-taste",
+    "skill/personal/high-end-visual-design",
+    "skill/personal/image-to-code",
+    "skill/personal/imagegen-frontend-mobile",
+    "skill/personal/imagegen-frontend-web",
+    "skill/personal/industrial-brutalist-ui",
+    "skill/personal/minimalist-ui",
+    "skill/personal/ralph-tui-create-beads",
+    "skill/personal/ralph-tui-create-beads-rust",
+    "skill/personal/ralph-tui-create-json",
+    "skill/personal/ralph-tui-prd",
+    "skill/personal/redesign-existing-projects",
+    "skill/personal/stitch-design-taste",
+    "skill/personal/unix-atomic-skill-maker"
+  ],
+  "review_digest": "e1b34c48d5d7dd77078cec61d0fbf390dc4f61fbbcdaf60e71840e4a84b69d31",
+  "procedure": "prc_01M1VDE1624W8BGH63D8A8XZ9B",
+  "applied": false,
+  "real_control_mutated": false,
+  "external_sources_resolved": false
+}

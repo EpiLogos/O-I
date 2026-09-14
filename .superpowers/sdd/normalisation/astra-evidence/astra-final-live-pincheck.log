@@ -1,0 +1,4 @@
+mainline snapshot verification: PASS
+live #97 in-scope native-main equality: PASS
+Quaternal Logic parallel owner: represented, NOT #97 live-gated
+historical build record remains distinct: 0.1.0-prelocal.2 recorded 2026-08-17; unratified

@@ -1,0 +1,153 @@
+{
+  "schema": "oi.webkit-attribution-preparation/v1",
+  "utc": "2026-09-08T18:57:59.879733+00:00",
+  "target_pid": 19773,
+  "bundle_id": "org.epilogos.oi.cradle.p1acceptance",
+  "operations": [
+    {
+      "command": [
+        "/bin/ps",
+        "-p",
+        "19773,19808,19809,19810",
+        "-o",
+        "pid,ppid,lstart,command"
+      ],
+      "exit_code": 0,
+      "stdout": "  PID  PPID STARTED                      COMMAND\n19773     1 Tue Sep  8 19:50:58 2026     /tmp/oi-p1-native-target-final-20260908/debug/bundle/macos/O-I P1 Acceptance.app/Contents/MacOS/oi-cradle\n19808     1 Tue Sep  8 19:50:59 2026     /System/Library/Frameworks/WebKit.framework/Versions/A/XPCServices/com.apple.WebKit.GPU.xpc/Contents/MacOS/com.apple.WebKit.GPU\n19809     1 Tue Sep  8 19:50:59 2026     /System/Library/Frameworks/WebKit.framework/Versions/A/XPCServices/com.apple.WebKit.Networking.xpc/Contents/MacOS/com.apple.WebKit.Networking\n19810     1 Tue Sep  8 19:50:59 2026     /System/Library/Frameworks/WebKit.framework/Versions/A/XPCServices/com.apple.WebKit.WebContent.xpc/Contents/MacOS/com.apple.WebKit.WebContent\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/usr/bin/lsappinfo",
+        "info",
+        "19773"
+      ],
+      "exit_code": 0,
+      "stdout": "\"O-I P1 Acceptance\" ASN:0x0-0x19fc7fae: \n    bundleID=\"org.epilogos.oi.cradle.p1acceptance\"\n    bundle path=\"/tmp/oi-p1-native-target-final-20260908/debug/bundle/macos/O-I P1 Acceptance.app\"\n    executable path=\"/tmp/oi-p1-native-target-final-20260908/debug/bundle/macos/O-I P1 Acceptance.app/Contents/MacOS/oi-cradle\"\n    pid = 19773 type=\"Foreground\" flavor=3 Version=\"0.1.0\" fileType=\"APPL\" creator=\"????\" Arch=ARM64 \n    checkin time = 2026/09/08 19:50:58 ( 7 minutes, 0.937687 seconds ago )\n\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/bin/launchctl",
+        "print",
+        "pid/19773"
+      ],
+      "exit_code": 0,
+      "selected_stdout": "\toriginator = /private/tmp/oi-p1-native-target-final-20260908/debug/bundle/macos/O-I P1 Acceptance.app\n\tcreator = oi-cradle[19773]\n\tuniqueid = 37725149\n\tresource coalition = {\n\t\tID = 547054\n\t\ttype = resource\n\t\tstate = active\n\t\tactive count = 2\n\t\tname = application.com.openai.codex.138214821.138214827\n\t\tbundle ID = com.openai.codex\n\t}\n\tjetsam coalition = {\n\t\tID = 547055\n\t\ttype = jetsam\n\t\tstate = active\n\t\tactive count = 1\n\t\tname = application.com.openai.codex.138214821.138214827\n\t\tbundle ID = com.openai.codex\n\t}",
+      "selection": "originator, creator, uniqueid, coalition fields only",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/usr/bin/lsappinfo",
+        "info",
+        "19808"
+      ],
+      "exit_code": 0,
+      "stdout": "\"O-I P1 Acceptance Graphics and Media\" ASN:0x0-0x19fc9fb0: \n    bundleID=\"com.apple.WebKit.GPU\"\n    bundle path=\"/System/Volumes/Preboot/Cryptexes/OS/System/Library/Frameworks/WebKit.framework/Versions/A/XPCServices/com.apple.WebKit.GPU.xpc\"\n    executable path=\"/System/Volumes/Preboot/Cryptexes/OS/System/Library/Frameworks/WebKit.framework/Versions/A/XPCServices/com.apple.WebKit.GPU.xpc/Contents/MacOS/com.apple.WebKit.GPU\"\n    pid = 19808 !cgsConnection !signalled type=\"UIElement\" flavor=[ NULL ]  Version=\"21624.2.5.11.8\" fileType=\"XPC!\" creator=\"????\" Arch=ARM64 sandboxed \n    checkin time = 2026/09/08 19:50:59 ( 7 minutes, 0.697429 seconds ago )\n\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/bin/launchctl",
+        "print",
+        "pid/19808"
+      ],
+      "exit_code": 0,
+      "selected_stdout": "\toriginator = /System/Library/Frameworks/WebKit.framework/Versions/A/XPCServices/com.apple.WebKit.GPU.xpc\n\tcreator = com.apple.WebKi[19808]\n\tuniqueid = 37725184\n\tresource coalition = {\n\t\tID = 547054\n\t\ttype = resource\n\t\tstate = active\n\t\tactive count = 2\n\t\tname = application.com.openai.codex.138214821.138214827\n\t\tbundle ID = com.openai.codex\n\t}\n\tjetsam coalition = {\n\t\tID = 547055\n\t\ttype = jetsam\n\t\tstate = active\n\t\tactive count = 1\n\t\tname = application.com.openai.codex.138214821.138214827\n\t\tbundle ID = com.openai.codex\n\t}",
+      "selection": "originator, creator, uniqueid, coalition fields only",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/usr/bin/lsappinfo",
+        "info",
+        "19809"
+      ],
+      "exit_code": 0,
+      "stdout": "\"O-I P1 Acceptance Networking\" ASN:0x0-0x19fc8faf: \n    bundleID=\"com.apple.WebKit.Networking\"\n    bundle path=\"/System/Volumes/Preboot/Cryptexes/OS/System/Library/Frameworks/WebKit.framework/Versions/A/XPCServices/com.apple.WebKit.Networking.xpc\"\n    executable path=\"/System/Volumes/Preboot/Cryptexes/OS/System/Library/Frameworks/WebKit.framework/Versions/A/XPCServices/com.apple.WebKit.Networking.xpc/Contents/MacOS/com.apple.WebKit.Networking\"\n    pid = 19809 !cgsConnection !signalled type=\"UIElement\" flavor=[ NULL ]  Version=\"21624.2.5.11.8\" fileType=\"XPC!\" creator=\"????\" Arch=ARM64 sandboxed \n    childASNs: ASN:0x0-0x19fcafb1: \n    checkin time = 2026/09/08 19:50:59 ( 7 minutes, 0.781032 seconds ago )\n\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/bin/launchctl",
+        "print",
+        "pid/19809"
+      ],
+      "exit_code": 0,
+      "selected_stdout": "\toriginator = /System/Library/Frameworks/WebKit.framework/Versions/A/XPCServices/com.apple.WebKit.Networking.xpc\n\tcreator = com.apple.WebKi[19809]\n\tuniqueid = 37725185\n\tresource coalition = {\n\t\tID = 547054\n\t\ttype = resource\n\t\tstate = active\n\t\tactive count = 2\n\t\tname = application.com.openai.codex.138214821.138214827\n\t\tbundle ID = com.openai.codex\n\t}\n\tjetsam coalition = {\n\t\tID = 547055\n\t\ttype = jetsam\n\t\tstate = active\n\t\tactive count = 1\n\t\tname = application.com.openai.codex.138214821.138214827\n\t\tbundle ID = com.openai.codex\n\t}",
+      "selection": "originator, creator, uniqueid, coalition fields only",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/usr/bin/lsappinfo",
+        "info",
+        "19810"
+      ],
+      "exit_code": 0,
+      "stdout": "\"O-I P1 Acceptance Web Content\" ASN:0x0-0x19fcafb1: \n    bundleID=\"com.apple.WebKit.WebContent\"\n    bundle path=[ NULL ] \n    executable path=\"com.apple.WebKit.WebContent\"\n    pid = 19810 !cgsConnection !signalled type=\"UIElement\" flavor=[ NULL ]  Version=\"21624.2.5.11.8\" fileType=\"XPC!\" creator=\"????\" Arch=ARM64 \n    parentASN=\"O-I P1 Acceptance Networking\" ASN:0x0-0x19fc8faf: \n    checkin time = 2026/09/08 19:50:59 ( 7 minutes, 0.705545 seconds ago )\n\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/bin/launchctl",
+        "print",
+        "pid/19810"
+      ],
+      "exit_code": 0,
+      "selected_stdout": "\toriginator = /System/Library/Frameworks/WebKit.framework/Versions/A/XPCServices/com.apple.WebKit.WebContent.xpc\n\tcreator = com.apple.WebKi[19810]\n\tuniqueid = 37725186\n\tresource coalition = {\n\t\tID = 547054\n\t\ttype = resource\n\t\tstate = active\n\t\tactive count = 2\n\t\tname = application.com.openai.codex.138214821.138214827\n\t\tbundle ID = com.openai.codex\n\t}\n\tjetsam coalition = {\n\t\tID = 547055\n\t\ttype = jetsam\n\t\tstate = active\n\t\tactive count = 1\n\t\tname = application.com.openai.codex.138214821.138214827\n\t\tbundle ID = com.openai.codex\n\t}",
+      "selection": "originator, creator, uniqueid, coalition fields only",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/bin/launchctl",
+        "procinfo",
+        "19808"
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "This subcommand requires root privileges: procinfo\n"
+    },
+    {
+      "command": [
+        "/usr/sbin/lsof",
+        "-p",
+        "19809",
+        "-Fn"
+      ],
+      "exit_code": 0,
+      "unique_bundle_path_matches": [
+        "n/Users/admin/Library/WebKit/org.epilogos.oi.cradle.p1acceptance/WebsiteDataStore/b906188e-d2c0-9296-78af-24ce9f21c129/ResourceLoadStatistics/observations.db-shm",
+        "n/Users/admin/Library/WebKit/org.epilogos.oi.cradle.p1acceptance/WebsiteDataStore/b906188e-d2c0-9296-78af-24ce9f21c129/ResourceLoadStatistics/pcm.db-shm",
+        "n/Users/admin/Library/WebKit/org.epilogos.oi.cradle.p1acceptance/WebsiteDataStore/b906188e-d2c0-9296-78af-24ce9f21c129/Origins/kwYbgBdJHJs5gP36_d6Lzw1rwGbfJ8FOWA-CxkoIVq0/kwYbgBdJHJs5gP36_d6Lzw1rwGbfJ8FOWA-CxkoIVq0/LocalStorage/localstorage.sqlite3-shm",
+        "n/Users/admin/Library/WebKit/org.epilogos.oi.cradle.p1acceptance/WebsiteDataStore/b906188e-d2c0-9296-78af-24ce9f21c129/ResourceLoadStatistics/observations.db",
+        "n/Users/admin/Library/WebKit/org.epilogos.oi.cradle.p1acceptance/WebsiteDataStore/b906188e-d2c0-9296-78af-24ce9f21c129/ResourceLoadStatistics/observations.db-wal",
+        "n/Users/admin/Library/WebKit/org.epilogos.oi.cradle.p1acceptance/WebsiteDataStore/b906188e-d2c0-9296-78af-24ce9f21c129/ResourceLoadStatistics/observations.db-shm",
+        "n/Users/admin/Library/WebKit/org.epilogos.oi.cradle.p1acceptance/WebsiteDataStore/b906188e-d2c0-9296-78af-24ce9f21c129/Origins/kwYbgBdJHJs5gP36_d6Lzw1rwGbfJ8FOWA-CxkoIVq0/kwYbgBdJHJs5gP36_d6Lzw1rwGbfJ8FOWA-CxkoIVq0/LocalStorage/localstorage.sqlite3",
+        "n/Users/admin/Library/WebKit/org.epilogos.oi.cradle.p1acceptance/WebsiteDataStore/b906188e-d2c0-9296-78af-24ce9f21c129/Origins/kwYbgBdJHJs5gP36_d6Lzw1rwGbfJ8FOWA-CxkoIVq0/kwYbgBdJHJs5gP36_d6Lzw1rwGbfJ8FOWA-CxkoIVq0/LocalStorage/localstorage.sqlite3-wal",
+        "n/Users/admin/Library/WebKit/org.epilogos.oi.cradle.p1acceptance/WebsiteDataStore/b906188e-d2c0-9296-78af-24ce9f21c129/Origins/kwYbgBdJHJs5gP36_d6Lzw1rwGbfJ8FOWA-CxkoIVq0/kwYbgBdJHJs5gP36_d6Lzw1rwGbfJ8FOWA-CxkoIVq0/LocalStorage/localstorage.sqlite3-shm",
+        "n/Users/admin/Library/WebKit/org.epilogos.oi.cradle.p1acceptance/WebsiteDataStore/b906188e-d2c0-9296-78af-24ce9f21c129/ResourceLoadStatistics/pcm.db",
+        "n/Users/admin/Library/WebKit/org.epilogos.oi.cradle.p1acceptance/WebsiteDataStore/b906188e-d2c0-9296-78af-24ce9f21c129/ResourceLoadStatistics/pcm.db-wal",
+        "n/Users/admin/Library/WebKit/org.epilogos.oi.cradle.p1acceptance/WebsiteDataStore/b906188e-d2c0-9296-78af-24ce9f21c129/ResourceLoadStatistics/pcm.db-shm"
+      ],
+      "selection": "unique acceptance bundle paths only; file contents never read"
+    }
+  ],
+  "attribution": {
+    "19773": "exact bundle path and identifier from LaunchServices; start Sep8 19:50:58 2026",
+    "19809": "unique bundle/store open file paths; LaunchServices name O-I P1 Acceptance Networking; start19:50:59",
+    "19810": "explicit LaunchServices parentASN points to19809, reciprocal childASN; name O-I P1 Acceptance Web Content; start19:50:59",
+    "19808": "LaunchServices registered name O-I P1 Acceptance Graphics and Media; start19:50:59; no explicit parentASN or unique store path obtained"
+  },
+  "uncertainty": [
+    "GPU attribution is OS registered unique application display-name attribution, not kernel responsibility-chain proof. Record it separately if strict responsibility proof is required.",
+    "Shared coalition547054/547055 belongs to Codex and is not uniquely attributable to acceptance app.",
+    "launchctl procinfo requires root; no elevation attempted.",
+    "PID and start identity must be revalidated on every sample; helper restart creates new identities.",
+    "RSS includes shared pages; native heap/GPU allocated bytes/subscriptions not obtained."
+  ],
+  "native_fnd06_accepted": false,
+  "mutations": "only this receipt; no process/UI/build changes"
+}

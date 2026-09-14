@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "handoff-1788871934154636000",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "codex-accountable-orchestrator",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1788871934,
+  "subject": "Owner-domain integration checkpoint f84bd61",
+  "result": "O:I f84bd61 binds typed Central Flow/Return KernelOps, exact Workcell material consumer evidence, truthful AIKit knowledge provider loss, and authority-correct Shared Field A2A acceptance. Workcell 70a39c1 owns the material route. Central f3559db isolated release 4389437f... passed ordinary-files 35/35. Factory remains unavailable pending canonical discovery and Actuation intent/grant handoff. AIKit native permission and FND-06 native resource stability remain open. UI-lead files and live processes were preserved.",
+  "status": "active"
+}

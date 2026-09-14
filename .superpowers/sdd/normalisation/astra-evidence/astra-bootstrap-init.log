@@ -1,0 +1,13 @@
+guardian SkillSet oi:skillset:base-guardian (direct projection): 4 created, 0 updated, 0 unchanged, 0 aikit-managed, 0 conflict(s) preserved
+  created  /tmp/astra-ground/.claude/skills/oi/SKILL.md
+  created  /tmp/astra-ground/.agents/skills/oi/SKILL.md
+  created  /tmp/astra-ground/.claude/skills/oi-suite-operator/SKILL.md
+  created  /tmp/astra-ground/.agents/skills/oi-suite-operator/SKILL.md
+  aikit: adopted 2 guardian capsule(s) under skill/oi: skill/oi/oi, skill/oi/oi-suite-operator
+  aikit: SkillSet oi-guardian holds 2 member(s)
+  aikit: applied generation gen_ec1b338128d63208
+Initialized current-main {O:I} composition: /tmp/astra-ground-state/oi/composition.json
+Personal ground: /tmp/astra-ground
+Central: /Users/admin/.cargo/bin/ctrl
+Central contract: ProjectCentral + root Wiki federation present
+Next: oi dev status

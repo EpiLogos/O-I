@@ -1,0 +1,47 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "O-I",
+  "version": "0.1.0",
+  "identifier": "org.epilogos.oi.cradle",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1421",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "bundle": {
+    "icon": [
+      "icons/icon.png"
+    ]
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "O-I",
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
+        "width": 1280,
+        "height": 820,
+        "minWidth": 360,
+        "minHeight": 560,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "capabilities": [
+        "main-window"
+      ],
+      "csp": {
+        "default-src": "'self' customprotocol: oi-material:",
+        "connect-src": "ipc: http://ipc.localhost",
+        "img-src": "'self' oi-material: data: blob:",
+        "style-src": "'self' 'unsafe-inline'",
+        "script-src": "'self' 'sha256-syyPNs0/yFjpLCxoa4UTLxpN++24s/47qbcZFtFJo9U='",
+        "object-src": "'none'",
+        "frame-src": "oi-material:",
+        "base-uri": "'none'"
+      }
+    }
+  }
+}

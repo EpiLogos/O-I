@@ -1,0 +1,108 @@
+{
+  "repository": "https://github.com/EpiLogos/Epi-Logos-C-Experiments.git",
+  "pushed_revision": "daa660cbc1b8c5da83828698665a753852cb0287",
+  "skills": [
+    {
+      "name": "apply-cmea",
+      "candidate_tree": "23da20d07ee2c042a171a6b6b87b78ed7dff0533",
+      "pushed_tree": "b3531d2bb614856b750a8838af02e7678bf979f6",
+      "identical": false
+    },
+    {
+      "name": "apply-tetralemma",
+      "candidate_tree": "25f88995273a96d7c2388ee7f272b8bdefc38f5f",
+      "pushed_tree": "94a48e57edabffeecc62ee4cbfeea927606ef4d6",
+      "identical": false
+    },
+    {
+      "name": "choose-modality",
+      "candidate_tree": "6a4bae5f3f357d6932a917ad6a18ea45fde72b6c",
+      "pushed_tree": "6a4bae5f3f357d6932a917ad6a18ea45fde72b6c",
+      "identical": true
+    },
+    {
+      "name": "choose-topological-mode",
+      "candidate_tree": "1ef86e7ee3e414c8bde7eb5d2328e8fed36afbf1",
+      "pushed_tree": "1ef86e7ee3e414c8bde7eb5d2328e8fed36afbf1",
+      "identical": true
+    },
+    {
+      "name": "compress-thought-artifacts",
+      "candidate_tree": "445a7e355a34cb30c1cf49e9548ee2711b77c869",
+      "pushed_tree": "c39bf898c86403d67c771be94123112f3e66b2e2",
+      "identical": false
+    },
+    {
+      "name": "converse-pedagogically",
+      "candidate_tree": "d867c73a56c8a99b1ba72e021f2c0b4fc90b7f92",
+      "pushed_tree": "4d4b3fc9e58d88dabb0090603466fcd822ed988b",
+      "identical": false
+    },
+    {
+      "name": "engage-encounter-axis",
+      "candidate_tree": "d1c7f6e0bc7652f787f4874f52278ae0fa9fa411",
+      "pushed_tree": "64d845a55e11215c426d84fa4b73d1934a6facfb",
+      "identical": false
+    },
+    {
+      "name": "epi-logos-argument-cartography",
+      "candidate_tree": "0ee4560ad1ca84915bbe9093aa1d25a71a4e8cfa",
+      "pushed_tree": "849cadcb63fd589f86af2b28f0ed1d101b6aaac9",
+      "identical": false
+    },
+    {
+      "name": "epi-logos-vault-compiler",
+      "candidate_tree": null,
+      "pushed_tree": null,
+      "identical": false
+    },
+    {
+      "name": "epi-logos-voice",
+      "candidate_tree": "6dd771075001e9e2c3b5ffdb006747c29f1b68e1",
+      "pushed_tree": "e464750fd9d6dd9553f6e9b4f39a10bce7790e8e",
+      "identical": false
+    },
+    {
+      "name": "etymological-archaeology",
+      "candidate_tree": "ae4ee65106678efb451d8c850e6091863547888c",
+      "pushed_tree": "3456e9dba70aa12063b188ff6d76cadce5693b64",
+      "identical": false
+    },
+    {
+      "name": "manage-thought-artifacts",
+      "candidate_tree": "f6698c6796a397ec54bcb8ae2ec6be1d398c1c9e",
+      "pushed_tree": "f50f54abf56bfa5d167a27e568001cee4b9a937b",
+      "identical": false
+    },
+    {
+      "name": "quaternal-i-ching",
+      "candidate_tree": "91b895544da79a69a912248a3a380b70fbf5278d",
+      "pushed_tree": "916c525cb659da30c397570aaeb6427d7eb53678",
+      "identical": false
+    },
+    {
+      "name": "quaternal-tarot",
+      "candidate_tree": "6149fe351c0470a6acfaa1207756696fb2660677",
+      "pushed_tree": "fab05041a34a168fbe6b2481d7618eeb7e511022",
+      "identical": false
+    },
+    {
+      "name": "run-l4-prime-loop",
+      "candidate_tree": "469d114904730edb20cefce4b43073403ac3443d",
+      "pushed_tree": "1ee5e4cc51403ba4c06a32d3c92192dc3871c5ad",
+      "identical": false
+    },
+    {
+      "name": "run-positional-coherence",
+      "candidate_tree": "93871b093f496c289050581f29d3a90eeca554da",
+      "pushed_tree": "22f4a118e347f18b27b443e6cb4c06904a5bea5f",
+      "identical": false
+    },
+    {
+      "name": "using-epi-logos",
+      "candidate_tree": "e5520d4e61540f7f34155d117e0721145296e3e4",
+      "pushed_tree": "db8db72c68ff7256e3a03e16bbb8024df8654ba9",
+      "identical": false
+    }
+  ]
+}

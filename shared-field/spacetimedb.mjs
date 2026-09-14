@@ -154,7 +154,7 @@ export function rowsFromSpacetimeDb(db) {
   };
 }
 
-export function createSpacetimeExploreSource(db) {
+export function createSpacetimeExploreSource(db, lifecycle) {
   const tables = Object.freeze([
     ['sharedField', 'shared-field'],
     ['participant', 'participant'],
@@ -170,6 +170,7 @@ export function createSpacetimeExploreSource(db) {
   function subscribe(listener) {
     if (typeof listener !== 'function') throw new TypeError('SpaceTimeDB source listener must be a function');
     const removers = [];
+    if (lifecycle) removers.push(lifecycle.subscribe(listener));
 
     for (const [property, table] of tables) {
       const handle = db[property];
@@ -202,7 +203,7 @@ export function createSpacetimeExploreSource(db) {
     };
   }
 
-  return Object.freeze({ snapshot, subscribe });
+  return Object.freeze({ snapshot, subscribe, status: () => lifecycle?.status() ?? { state: "unknown" } });
 }
 
 /**
@@ -221,6 +222,8 @@ export function createLiveExploreApplication(source) {
   let hostedSnapshot;
   let revision = 0;
   let lastError;
+  let lastGoodAt;
+  let disposed = false;
   const listeners = new Set();
 
   function rebuild(cause = { type: 'initial' }) {
@@ -231,6 +234,7 @@ export function createLiveExploreApplication(source) {
         relations: nextSnapshot.relations,
       });
       hostedSnapshot = nextSnapshot;
+      lastGoodAt = new Date().toISOString();
       application = nextApplication;
       revision += 1;
       lastError = undefined;
@@ -247,14 +251,22 @@ export function createLiveExploreApplication(source) {
   }
 
   rebuild();
-  const unsubscribeSource = source.subscribe((event) => rebuild(event));
+  const unsubscribeSource = source.subscribe((event) => {
+    if (event.type === 'transport') {
+      for (const listener of listeners) listener({ type: 'availability', status: status() });
+    } else rebuild(event);
+  });
 
   const call = (name) => (...args) => application[name](...args);
 
   function status() {
+    const transport = disposed ? { state: 'disposed' } : (source.status?.() ?? { state: 'unknown' });
     return {
       revision,
-      healthy: lastError === undefined,
+      healthy: lastError === undefined && transport.state === "available",
+      material_valid: lastError === undefined,
+      material: { state: lastError ? 'last-good' : 'validated', observed_at: lastGoodAt, age_ms: Math.max(0, Date.now() - Date.parse(lastGoodAt)) },
+      transport,
       ...(lastError ? { error: lastError.message } : {}),
     };
   }
@@ -270,7 +282,9 @@ export function createLiveExploreApplication(source) {
   }
 
   function dispose() {
+    disposed = true;
     unsubscribeSource?.();
+    for (const listener of listeners) listener({ type: "availability", status: status() });
     listeners.clear();
   }
 

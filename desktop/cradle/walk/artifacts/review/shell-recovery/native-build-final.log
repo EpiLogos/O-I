@@ -1,0 +1,35 @@
+        Info Looking up installed tauri packages to check mismatched versions...
+     Running beforeBuildCommand `npm run build`
+
+> oi-cradle@0.1.0 build
+> tsc --noEmit && vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 97 modules transformed.
+rendering chunks...
+[plugin:vite:reporter] [plugin vite:reporter] 
+(!) /Users/admin/Central/Work/O-I/desktop/cradle/node_modules/@tauri-apps/api/core.js is dynamically imported by /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/kernel/bridge.ts, /Users/admin/Central/Work/O-I/desktop/cradle/src/workspace/GroundChooser.tsx but also statically imported by /Users/admin/Central/Work/O-I/desktop/cradle/node_modules/@tauri-apps/api/dpi.js, /Users/admin/Central/Work/O-I/desktop/cradle/node_modules/@tauri-apps/api/event.js, /Users/admin/Central/Work/O-I/desktop/cradle/node_modules/@tauri-apps/api/image.js, /Users/admin/Central/Work/O-I/desktop/cradle/node_modules/@tauri-apps/api/window.js, /Users/admin/Central/Work/O-I/desktop/cradle/src/workspace/DetachedFrame.tsx, dynamic import will not move module into another chunk.
+
+[plugin:vite:reporter] [plugin vite:reporter] 
+(!) /Users/admin/Central/Work/O-I/desktop/cradle/node_modules/@tauri-apps/api/event.js is dynamically imported by /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/desktop/cradle/src/kernel/bridge.ts but also statically imported by /Users/admin/Central/Work/O-I/desktop/cradle/node_modules/@tauri-apps/api/window.js, /Users/admin/Central/Work/O-I/desktop/cradle/src/workspace/DetachedFrame.tsx, dynamic import will not move module into another chunk.
+
+[plugin:vite:reporter] [plugin vite:reporter] 
+(!) /Users/admin/Central/Work/O-I/desktop/cradle/node_modules/@tauri-apps/api/window.js is dynamically imported by /Users/admin/Central/Work/O-I/desktop/cradle/src/Cradle.tsx but also statically imported by /Users/admin/Central/Work/O-I/desktop/cradle/src/workspace/DetachedFrame.tsx, dynamic import will not move module into another chunk.
+
+computing gzip size...
+dist/index.html                            0.41 kB │ gzip:  0.28 kB
+dist/assets/WorkspaceStudy-DQI19hm7.css   19.13 kB │ gzip:  4.66 kB
+dist/assets/seed-pbLfZuQ0.css             20.63 kB │ gzip:  4.94 kB
+dist/assets/index-a-_rip9k.css            77.28 kB │ gzip: 12.92 kB
+dist/assets/Seed-DG2_8Ii3.js              28.33 kB │ gzip:  8.65 kB
+dist/assets/WorkspaceStudy-C8MYaXbn.js    31.41 kB │ gzip:  9.87 kB
+dist/assets/index-Rg6W9INx.js            322.03 kB │ gzip: 98.90 kB
+✓ built in 2.63s
+   Compiling oi-cradle v0.1.0 (/Users/admin/Central/Work/O-I/desktop/cradle/src-tauri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.78s
+       Built application at: /Users/admin/Central/Work/O-I/desktop/cradle/src-tauri/target/debug/oi-cradle
+    Bundling O-I.app (/Users/admin/Central/Work/O-I/desktop/cradle/src-tauri/target/debug/bundle/macos/O-I.app)
+    Finished 1 bundle at:
+        /Users/admin/Central/Work/O-I/desktop/cradle/src-tauri/target/debug/bundle/macos/O-I.app
+

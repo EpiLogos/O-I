@@ -1,0 +1,6 @@
+    Checking aikit-core v0.1.0 (/Users/admin/Central/Work/ai-kit/crates/aikit-core)
+    Checking aikit-store v0.1.0 (/Users/admin/Central/Work/ai-kit/crates/aikit-store)
+    Checking aikit-adapters v0.1.0 (/Users/admin/Central/Work/ai-kit/crates/aikit-adapters)
+    Checking aikit-tui v0.1.0 (/Users/admin/Central/Work/ai-kit/crates/aikit-tui)
+    Checking aikit-cli v0.1.0 (/Users/admin/Central/Work/ai-kit/crates/aikit-cli)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 37.41s

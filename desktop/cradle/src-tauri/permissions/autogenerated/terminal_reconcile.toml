@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-terminal-reconcile"
+description = "Enables the terminal_reconcile command without any pre-configured scope."
+commands.allow = ["terminal_reconcile"]
+
+[[permission]]
+identifier = "deny-terminal-reconcile"
+description = "Denies the terminal_reconcile command without any pre-configured scope."
+commands.deny = ["terminal_reconcile"]

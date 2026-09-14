@@ -1,0 +1,213 @@
+//! Read canonical AIKit SessionSpace attachment intent. Terminal topology and
+//! filesystem isolation are not evidence of an AgentSession or live encounter.
+use serde_json::Value;
+use std::{
+    path::{Path, PathBuf},
+    process::Command,
+};
+
+#[derive(Clone, Debug)]
+pub struct Client {
+    executable: PathBuf,
+    home: Option<PathBuf>,
+    suite_route: bool,
+}
+
+impl Client {
+    pub fn with(executable: PathBuf, home: Option<PathBuf>) -> Self {
+        Self { executable, home, suite_route: false }
+    }
+    pub fn discover() -> Self {
+        Self { executable: std::env::var_os("OI_BIN").map(PathBuf::from).unwrap_or_else(|| "oi".into()), home: None, suite_route: true }
+    }
+    pub fn read_project(&self, cwd: &Path, project_ref: &str) -> Result<Value, String> {
+        read_project_with(&self.executable, self.home.as_deref(), cwd, project_ref, self.suite_route)
+    }
+
+    /// Read one session's task record through the owner's own
+    /// `encounter-task-read` (`aikit.encounter-task/v1`). Read-only: the
+    /// record is the owner's — identity, readiness, the allocated Central
+    /// task — carried verbatim; absence (no task bound) surfaces the owner's
+    /// own refusal, never a desktop-fabricated record.
+    pub fn task_read(&self, cwd: &Path, agent_session: &str) -> Result<Value, String> {
+        let mut command = Command::new(&self.executable);
+        if self.suite_route { command.arg("aikit-session-space"); }
+        if let Some(home) = &self.home { command.env("AIKIT_HOME", home); }
+        command.arg("-C").arg(cwd);
+        command.args(["encounter-task-read", "--agent-session", agent_session]);
+        let output = command.output()
+            .map_err(|e| format!("AIKit SessionSpace is unavailable: {e}"))?;
+        if !output.status.success() {
+            return Err(String::from_utf8_lossy(&output.stderr).trim().to_owned());
+        }
+        let mut data: Value = serde_json::from_slice(&output.stdout)
+            .map_err(|e| format!("AIKit SessionSpace returned an unreadable task reading: {e}"))?;
+        // Some owner revisions wrap the reply in an `ok`/`data` envelope; the
+        // kernel's outcome carries the record itself.
+        if data.get("ok").and_then(Value::as_bool) == Some(true) {
+            data = data.get("data").cloned().unwrap_or(Value::Null);
+        }
+        // No task bound on this session is honest absence (`null`), not an
+        // error — the renderer renders nothing rather than a fabricated
+        // record.
+        if data.is_null() {
+            return Ok(data);
+        }
+        if !data.is_object() || data.get("schema").and_then(Value::as_str) != Some("aikit.encounter-task/v1") {
+            return Err("Unsupported native encounter task reading".into());
+        }
+        Ok(data)
+    }
+}
+
+pub fn executable() -> PathBuf {
+    std::env::var_os("OI_AIKIT_SESSION_SPACE_BIN")
+        .map(std::path::PathBuf::from)
+        .or_else(|| {
+            std::env::var_os("OI_AIKIT_BIN")
+                .map(|p| std::path::PathBuf::from(p).with_file_name("aikit-session-space"))
+        })
+        .unwrap_or_else(|| "aikit-session-space".into())
+}
+
+fn read_project_with(
+    executable: &Path,
+    home: Option<&Path>,
+    cwd: &Path,
+    project_ref: &str,
+    suite_route: bool,
+) -> Result<Value, String> {
+    let mut command = Command::new(executable);
+    if suite_route { command.arg("aikit-session-space"); }
+    if let Some(home) = home {
+        command.env("AIKIT_HOME", home);
+    }
+    let output = command
+        .arg("-C")
+        .arg(cwd)
+        .args(["discover", "--project", project_ref])
+        .output()
+        .map_err(|e| format!("AIKit SessionSpace is unavailable: {e}"))?;
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).trim().to_owned());
+    }
+    let data: Value = serde_json::from_slice(&output.stdout)
+        .map_err(|e| format!("AIKit SessionSpace returned an unreadable reading: {e}"))?;
+    let rows = data
+        .as_array()
+        .ok_or("AIKit SessionSpace discovery is not an array")?;
+    for row in rows {
+        if row["version"] != "aikit.session-space-application/v1"
+            || !row["definition"]["id"].is_string()
+        {
+            return Err("Unsupported native SessionSpace reading".into());
+        }
+        if !row["definition"]["projects"]
+            .as_array()
+            .is_some_and(|projects| projects.iter().any(|p| p.as_str() == Some(project_ref)))
+        {
+            return Err(
+                "AIKit returned a SessionSpace outside the requested Project membership".into(),
+            );
+        }
+    }
+    Ok(data.clone())
+}
+
+/// Presentation actions carry canonical identity only. The kernel supplies cwd
+/// from Central and this client verifies native project membership before use.
+#[derive(Clone, Debug, serde::Deserialize, PartialEq, serde::Serialize)]
+#[serde(tag="action", rename_all="kebab-case")]
+pub enum EncounterRequest {
+    Start,
+    Providers,
+    Open { space:String, agent_session:String, provider:String },
+    Read { agent_session:String, after:u64, limit:usize },
+    View {agent_session:String,before:Option<u64>},
+    Draft { agent_session:String, basis:u64, text:String },
+    Prompt { agent_session:String, draft_revision:u64 },
+    Cancel { agent_session:String, reason:Option<String> },
+    Status { agent_session:String },
+    Permission {agent_session:String,request_id:String,decision:PermissionDecision},
+    /// Explicit addressed machine turn. The payload, sender, audience and
+    /// participation basis are owner-validated at commit; a refusal carries the
+    /// owner's own code verbatim. The human draft buffer is never touched.
+    Send { agent_session:String, turn:AddressedTurn },
+    /// Addressed group dispatch: one delivery identity, explicit per-recipient
+    /// participation bases. The owner admits the whole group (privacy
+    /// admission) before the first transport effect and every recipient gets
+    /// an independent durable result; the fanout is never atomic.
+    SendGroup { delivery_ref:String, sender:String, packet:AddressedPacket, recipients:Vec<GroupRecipient> },
+    /// Read one addressed delivery's durable owner receipt.
+    Delivery { agent_session:String, delivery_ref:String },
+    /// Resume the actually recorded native session identity. The owner refuses
+    /// contradictory provider/space/cwd/command bases; a plain open with a
+    /// recorded binding is refused first (`encounter.resume_required`).
+    Reconnect { space:String, agent_session:String, provider:String },
+    /// Probe the resident owner dispatch service (never a provider effect).
+    Health,
+}
+/// Field names are the owner wire contract (`crates/aikit-cli/src/encounter_agency.rs`
+/// in the bound ai-kit revision); they are carried verbatim, never re-keyed.
+#[derive(Clone, Debug, serde::Deserialize, PartialEq, serde::Serialize)]
+pub struct AddressedPacket { pub text:String, pub source_refs:Vec<String>, pub audience:Vec<String> }
+/// `expected_task` is the owner's `EncounterTaskBasis`, validated by the owner
+/// against the stored task and the session's agency binding before any
+/// transport. The kernel never interprets or composes it — an opaque value
+/// carried verbatim; a fabricated basis is the owner's refusal to answer.
+#[derive(Clone, Debug, serde::Deserialize, PartialEq, serde::Serialize)]
+pub struct AddressedTurn { pub delivery_ref:String, pub sender:String, pub expected_binding_revision:String, #[serde(default, skip_serializing_if="Option::is_none")] pub expected_task:Option<Value>, pub packet:AddressedPacket }
+/// One explicit group recipient; field names are the owner wire contract
+/// (`encounter_agency.rs` in the bound ai-kit revision), carried verbatim.
+#[derive(Clone, Debug, serde::Deserialize, PartialEq, serde::Serialize)]
+pub struct GroupRecipient { pub agent_session:String, pub expected_binding_revision:String, #[serde(default, skip_serializing_if="Option::is_none")] pub expected_task:Option<Value> }
+#[derive(Clone, Debug, serde::Deserialize, PartialEq, serde::Serialize)]
+#[serde(tag="outcome",rename_all="lowercase")]
+pub enum PermissionDecision {Selected {option_id:String},Cancelled}
+impl EncounterRequest {
+    fn sessions(&self)->Vec<&str> {match self {
+        Self::Start|Self::Providers|Self::Health=>Vec::new(),
+        Self::Permission{agent_session,..}|Self::View{agent_session,..}|Self::Open{agent_session,..}|Self::Read{agent_session,..}|Self::Draft{agent_session,..}|Self::Prompt{agent_session,..}|Self::Cancel{agent_session,..}|Self::Status{agent_session}|Self::Send{agent_session,..}|Self::Delivery{agent_session,..}|Self::Reconnect{agent_session,..}=>vec![agent_session],
+        // The attachment gate covers every named participant of a group: a
+        // session outside this Project's SessionSpaces is refused here, before
+        // the owner sees the turn.
+        Self::SendGroup{recipients,..}=>recipients.iter().map(|recipient|recipient.agent_session.as_str()).collect(),
+    }}
+}
+impl Client {
+    pub fn encounter(&self,cwd:&Path,project_ref:&str,request:&EncounterRequest)->Result<Value,String> {
+        let sessions=request.sessions();
+        if !sessions.is_empty() {
+            let spaces=self.read_project(cwd,project_ref)?;
+            let authorized=sessions.iter().all(|session|spaces.as_array().is_some_and(|rows|rows.iter().any(|space| {
+                let attached=space["agent_sessions"].as_object().is_some_and(|sessions|sessions.contains_key(*session));
+                attached && match request {EncounterRequest::Open{space:requested,..}=>space["definition"]["id"].as_str()==Some(requested),_=>true}
+            })));
+            if !authorized{return Err("Encounter is not attached to this native Project's SessionSpaces".into());}
+        }
+        let mut command=Command::new(&self.executable);
+        if self.suite_route {command.arg("aikit-session-space");}
+        if let Some(home)=&self.home {command.env("AIKIT_HOME",home);}
+        command.arg("-C").arg(cwd);
+        if matches!(request,EncounterRequest::Start) {command.arg("encounter-start");}
+        else {
+            let mut body=serde_json::to_value(request).map_err(|error|error.to_string())?;
+            if matches!(request,EncounterRequest::Open{..}|EncounterRequest::Reconnect{..}) {body["cwd"]=serde_json::json!(cwd);}
+            command.args(["encounter","--request-json"]).arg(body.to_string());
+        }
+        let output=command.output().map_err(|error|format!("AIKit encounter owner unavailable: {error}"))?;
+        if !output.status.success(){return Err(String::from_utf8_lossy(&output.stderr).trim().into());}
+        let response:Value=serde_json::from_slice(&output.stdout).map_err(|error|format!("Unreadable AIKit encounter response: {error}"))?;
+        if response["ok"]!=true{
+            // The owner's own code travels with its message: addressed-dispatch
+            // refusals (`encounter.disclosure_denied`, `encounter.binding_changed`,
+            // …) are distinct facts, not one grey failure.
+            let message=response["error"]["message"].as_str().unwrap_or("Native encounter operation failed");
+            return match response["error"]["code"].as_str() {
+                Some(code)=>Err(format!("{message} [{code}]")),
+                None=>Err(message.into()),
+            };
+        }
+        Ok(response["data"].clone())
+    }
+}

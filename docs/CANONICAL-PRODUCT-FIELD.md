@@ -1,8 +1,96 @@
+---
+Register: episteme
+Standing: architecture-contract
+---
+
 # {O:I} Canonical Product Field
 
 **Status:** canonical architectural framing  
 **Scope:** the six-product field, its human/agent conjugate faces, and the relations used to compose the whole  
 **Date:** 2026-08-16
+
+## Capability collation contract
+
+O:I's product catalogue reads each product's `.oi/product.json`
+`capability_matrices` registry. Exactly one declared matrix has
+`suite_catalogue: true`; only that suite profile contributes records to the
+common catalogue. Every declared native matrix family, carrier, member and
+partition remains separately identified and receives a source hash in product
+provenance. QL and other products may therefore own several matrices without
+flattening them into the uniform suite view.
+
+During rollout, a product without the registry uses its historical
+`ProjectCentral/user/capability-matrix.{json,csv}` pair. This fallback is a
+compatibility boundary, not a second discovery system. Run
+`python3 scripts/collate-product-capabilities.py` after child reconciliation;
+repeat `--product-root PRODUCT_ID=PATH` when an accepted candidate lives in a
+clean product worktree rather than the default checkout. `--check-snapshot`
+verifies the shipped JSON/CSV and descriptor consistency without sibling
+checkouts; it cannot establish freshness against absent product repositories.
+
+## Coordinate determination — owner clarification, 2026-09-06
+
+**S is the `oi` CLI**, the functional command whole (`0/1`) of the six native
+CLI centres S0–S5. Each child retains its operations, authority and capability
+identities. O:I collates their disclosures and routes invocation to their owners.
+The child matrix's S column refers to this functional parent.
+
+**M′ is the O:I desktop**, itself a `0/1` whole. Its base arrangement is:
+
+- **0, left:** the file and project world, including project Chats/tasks, Files
+  and Wiki modes; the substrate for QL-MEF's later Anuttara projection.
+- **/, centre:** canvas and pane-local tabs, opening into the inner fourfold,
+  further subdivisions and detached windows as the arrangement requires.
+- **1, right:** active-subject context, activity and agency; the substrate for
+  QL-MEF's later Epii projection. A chat remains a surface across presentations.
+
+O:I brings **S and M′ into relation**: native function becomes a situated desktop
+operation. QL-MEF owns the complementary **M / S′** account, including Bimba and
+Ta-Onta particulars. These are scoped coordinate assignments supplied by the
+owner, not a claim that every three-panel interface or command set proves QL
+semantics. The six future QL instruments are not the desktop parent itself.
+
+H/A continue to describe encounter faces within the product field. They do not
+rename M′ or S′. Below, product-function descriptions remain applicable; references
+to the desktop as the whole S are replaced by this explicit S↔M′ relation.
+
+### Operative contract
+
+Desktop native calls enter through `oi central`, `oi aikit`, or another declared
+S namespace. AIKit's separate SessionSpace companion is exposed explicitly as
+`oi aikit-session-space`; it retains AIKit ownership. O:I preserves native
+arguments, streams, exit results and authority; it does not reinterpret them.
+`OI_BIN` selects the exact suite executable. Existing `OI_CENTRAL_CTRL_BIN`,
+`OI_AIKIT_BIN` and `OI_AIKIT_SESSION_SPACE_BIN` select native candidate artifacts
+at the suite dispatcher. Direct explicit kernel clients remain owner-level test
+and embedding seams; discovered application clients use the suite route.
+
+`oi desktop` exposes M′ application operations through the same kernel readers
+used by the app. `suite/desktop-projection.json` maps those operations to S routes
+and regions. Window/workspace actions remain resident-app operations until a
+real external control seam is implemented.
+
+The parent capability collation consumes each child's CSV and manifest with
+source hashes, preserving child IDs, placements, standing and evidence. Parent
+membership does not promote a child claim or prove desktop acceptance. M′ feature
+bindings add the concrete operation, region, implementation and walk evidence.
+Changes flow back to the native owner before regenerating the parent projection.
+
+Run `python3 scripts/collate-product-capabilities.py` after child reconciliation;
+`--check` verifies the projection against all six current source pairs.
+`oi capabilities --json` exposes the snapshot compiled into that suite executable.
+Rebuild `cli/Cargo.toml` after regeneration. `--check-snapshot` verifies the carried
+JSON/CSV and descriptor consistency in a standalone O:I checkout; it cannot
+establish freshness against absent child repositories.
+
+The first M′ mapping exposed two source gaps and drove their repair: Central's
+file list/read Actions now belong to `cap.central.files`; AIKit's SessionSpace
+`discover` companion is explicitly recorded on `cap.aikit.sessions`, separately
+from main-CLI commands. Native gated reads supply evidence for those specific
+operations. Unrelated source-hash drift remains visible to maintenance checks;
+this repair does not refresh claims about code that was not reviewed.
+
+---
 
 ## 1. Purpose
 
@@ -652,9 +740,9 @@ The live product field now uses **Actuation** at position `1`.
 
 Actuation is the canonical developmental/reference home for first-class Agent, Agency, Actuation, agentic composition, model/harness research, and epistemic cultivation. An actual agent can still inhabit the Central world to which it is bound. AIKit resolves the operative body for that agent. Workcell provides material conditions. Factory uses Actuation where developmental work requires first-class agentic composition.
 
-Some earlier O:I composition descriptors still refer to the prior Agent Runtime experiment surface in `agent-system-design`. That runtime work is source and migration history for Actuation. Suite convergence should update the executable composition descriptor only when the current Actuation integration surface is ready to replace the prior registration contract.
+The prior Agent Runtime experiment surface in `agent-system-design` has been replaced. The current `surfaces.json` registers Actuation as its own centre with its own native `actuation` executable owned by `EpiLogos/Actuation`, and separately registers Software Factory with its own native `factory` executable owned by `EpiLogos/agent-system-design`. All six product commands are declared `"command_standing": "accepted-main"` and composed into the `oi` namespace. The executable composition descriptor now reflects the canonical product-field relation.
 
-This document fixes the **product-field relation** now. Installation metadata can follow the tested native product state during the O:I Suite Snapshot and local-acceptance convergence.
+This document fixes the **product-field relation** now. Installation metadata follows the tested native product state through the current `surfaces.json` and `suite/mainline.json`.
 
 ---
 

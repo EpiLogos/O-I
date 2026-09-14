@@ -174,7 +174,9 @@ test('live subscribed SpaceTimeDB source rebuilds Explore without changing seman
 
   assert.equal(live.search('parasakti')[0].ref, 'agent:parasakti');
   assert.equal(live.open('agent:parasakti', { depth: 1 }).relations.focus, 'agent:parasakti');
-  assert.equal(live.status().healthy, true);
+  assert.equal(live.status().material_valid, true);
+  assert.equal(live.status().healthy, false);
+  assert.equal(live.status().transport.state, "unknown");
 
   const current = [...db.exploreEntry.iter()].find((row) => row.semanticRef === 'agent:parasakti');
   const entry = JSON.parse(current.entryJson);

@@ -1,0 +1,1078 @@
+{
+  "contract": "oi.factory-proving-snapshot/v1",
+  "createdAtUnixMs": 1788959777225,
+  "issues": [
+    "EpiLogos/O-I#202",
+    "EpiLogos/O-I#203"
+  ],
+  "factoryRevision": "12a721dbbb51e3c70d52ef00220efa859ef930fd",
+  "factoryExecutableSha256": "6c64b6b8147b1da69d61a3af5e328ef35fd96ef86837957d584959d8f80428ef",
+  "schemaPins": [
+    {
+      "path": "contracts/factory/commission-request.schema.json",
+      "sha256": "78dd34ae441ab585c82fcc1f30614ca4d116b347af896ba4ab2404566a530c69"
+    },
+    {
+      "path": "contracts/factory/commission.schema.json",
+      "sha256": "51c45a601685dbf24ebb766d9cc059f9b81a7258f27819f61b69c450cb7aa214"
+    },
+    {
+      "path": "contracts/factory/developmental-mutation.schema.json",
+      "sha256": "7ebca6174e212f7701d6d74adb51a0cbd609a6c8759b6727dee684b5f41006fc"
+    },
+    {
+      "path": "contracts/factory/developmental-read.schema.json",
+      "sha256": "6d29a65744f70af16b5a348ebbd0a803ddd0b295c7bda7587316c9e8a0d0c0ec"
+    }
+  ],
+  "factoryRefs": {
+    "requestRef": "commission-request:factory-195-self-hosting-201",
+    "projectRef": "project:0000000000W4SWJZCE2ZVCTNH2",
+    "journeyRef": "journey:01M230M2G0A9KZQYABTQ780QRD",
+    "runRef": "run:01M230M2G0R6QT43KQQ9V1SWBY"
+  },
+  "evidence": [
+    {
+      "operation": "development.commission",
+      "owner": "factory",
+      "outputSha256": "f60f742074fc41e43c114c91a31e722167baea8079bb29e5f590e98c049458da",
+      "output": {
+        "commission": {
+          "contract": "factory.commission/v1",
+          "journeyRef": "journey:01M230M2G0A9KZQYABTQ780QRD",
+          "projectRef": "project:0000000000W4SWJZCE2ZVCTNH2",
+          "request": {
+            "centralComposition": {
+              "agentProfileReceipts": [
+                {
+                  "ref": "profile/oi-guardian-anuttara",
+                  "revision": "oi-guardian-v1",
+                  "sha256": "688b26a8b8f07de09af135d9c6abe90f3165795437693116949031620d7bb61f",
+                  "sourcePath": "Control/agents/profiles/profile-f38255302f31150c.json"
+                },
+                {
+                  "ref": "profile/oi-guardian-paramasiva",
+                  "revision": "oi-guardian-v1",
+                  "sha256": "ca27260d856d4c797e21cfc4c22da69ea16e6611d1643326ef25fcc550031ec7",
+                  "sourcePath": "Control/agents/profiles/profile-c994187eac1a0b69.json"
+                },
+                {
+                  "ref": "profile/oi-guardian-parasakti",
+                  "revision": "oi-guardian-v1",
+                  "sha256": "030068c24f6da573639f3de08fefb871f298721322aa9887a4a74dea9bf090d5",
+                  "sourcePath": "Control/agents/profiles/profile-1a9349373c4c99c4.json"
+                },
+                {
+                  "ref": "profile/oi-guardian-mahamaya",
+                  "revision": "oi-guardian-v1",
+                  "sha256": "b058043e81d2e894991f5b5a4a2ebc1de9fd4ccdd44854ec67e06c47cecd30df",
+                  "sourcePath": "Control/agents/profiles/profile-122a77317676932d.json"
+                },
+                {
+                  "ref": "profile/oi-guardian-nara",
+                  "revision": "oi-guardian-v1",
+                  "sha256": "43af85754d711339d4ed0d272e682e813e3b81b7c20b12fd161abac621ea54cd",
+                  "sourcePath": "Control/agents/profiles/profile-24a7fe0350228fc8.json"
+                },
+                {
+                  "ref": "profile/oi-guardian-epii",
+                  "revision": "oi-guardian-v1",
+                  "sha256": "2db9aa5829152d8c39c5e3c895809b9f9a12af423f04f2b46d91e37eb9e4e65e",
+                  "sourcePath": "Control/agents/profiles/profile-c822feb6bb9f63ef.json"
+                }
+              ],
+              "authorityStanding": "membership-non-authoritative",
+              "developmentAgentSet": {
+                "ref": "oi-development-agency",
+                "revision": "r1",
+                "sha256": "f5d669ef436b1e1dbf21892aac8e50a34a97c1265b2bf9b81d13001f3b1346ec",
+                "sourcePath": "Control/relations/agent-sets/agent-set-cbf7f912c48546eb.json"
+              },
+              "guardianAgentSet": {
+                "ref": "oi-product-guardians",
+                "revision": "r1",
+                "sha256": "a0499c67d53bfb1d5232ee94659a04ad9bcd33fd08191fe6b213ec5752dfafde",
+                "sourcePath": "Control/relations/agent-sets/agent-set-94404c319e7e5e8a.json"
+              },
+              "owner": "central",
+              "resolvedAgentRefs": [
+                "agent/oi-guardian-anuttara",
+                "agent/oi-guardian-epii",
+                "agent/oi-guardian-mahamaya",
+                "agent/oi-guardian-nara",
+                "agent/oi-guardian-paramasiva",
+                "agent/oi-guardian-parasakti",
+                "agent:hermes"
+              ]
+            },
+            "commissionedAt": "2026-09-09T12:00:00Z",
+            "contract": "factory.commission-request/v1",
+            "frontier": "Commissioned; all owner-native workflow units remain unexecuted",
+            "projectKey": "factory-programme-195",
+            "purpose": "Self-host the remaining O:I and AIKit consumer work and the O:I snapshot/#188 tranche without inferring execution",
+            "requestRef": "commission-request:factory-195-self-hosting-201",
+            "rootAct": {
+              "actRef": "act:factory-195-self-hosting-root",
+              "agentRef": "agent:hermes",
+              "purpose": "Bound the remaining Factory programme work without scheduling or execution authority",
+              "scopeRefs": [
+                "issue:201",
+                "issue:188",
+                "product:factory",
+                "product:aikit",
+                "product:oi"
+              ],
+              "standing": "commissioned-not-executed"
+            },
+            "runDestination": "factory-programme/oi-aikit-consumer-and-oi-snapshot-188",
+            "writeOwner": "factory"
+          },
+          "revision": 1,
+          "runRef": "run:01M230M2G0R6QT43KQQ9V1SWBY"
+        },
+        "contract": "factory.commission-receipt/v1",
+        "status": "applied"
+      }
+    },
+    {
+      "operation": "development.commission.replay",
+      "owner": "factory",
+      "outputSha256": "f2df1a14492da71e894f366b0838fe8533238d4066b9b57a5f2b568099abf9cb",
+      "output": {
+        "commission": {
+          "contract": "factory.commission/v1",
+          "journeyRef": "journey:01M230M2G0A9KZQYABTQ780QRD",
+          "projectRef": "project:0000000000W4SWJZCE2ZVCTNH2",
+          "request": {
+            "centralComposition": {
+              "agentProfileReceipts": [
+                {
+                  "ref": "profile/oi-guardian-anuttara",
+                  "revision": "oi-guardian-v1",
+                  "sha256": "688b26a8b8f07de09af135d9c6abe90f3165795437693116949031620d7bb61f",
+                  "sourcePath": "Control/agents/profiles/profile-f38255302f31150c.json"
+                },
+                {
+                  "ref": "profile/oi-guardian-paramasiva",
+                  "revision": "oi-guardian-v1",
+                  "sha256": "ca27260d856d4c797e21cfc4c22da69ea16e6611d1643326ef25fcc550031ec7",
+                  "sourcePath": "Control/agents/profiles/profile-c994187eac1a0b69.json"
+                },
+                {
+                  "ref": "profile/oi-guardian-parasakti",
+                  "revision": "oi-guardian-v1",
+                  "sha256": "030068c24f6da573639f3de08fefb871f298721322aa9887a4a74dea9bf090d5",
+                  "sourcePath": "Control/agents/profiles/profile-1a9349373c4c99c4.json"
+                },
+                {
+                  "ref": "profile/oi-guardian-mahamaya",
+                  "revision": "oi-guardian-v1",
+                  "sha256": "b058043e81d2e894991f5b5a4a2ebc1de9fd4ccdd44854ec67e06c47cecd30df",
+                  "sourcePath": "Control/agents/profiles/profile-122a77317676932d.json"
+                },
+                {
+                  "ref": "profile/oi-guardian-nara",
+                  "revision": "oi-guardian-v1",
+                  "sha256": "43af85754d711339d4ed0d272e682e813e3b81b7c20b12fd161abac621ea54cd",
+                  "sourcePath": "Control/agents/profiles/profile-24a7fe0350228fc8.json"
+                },
+                {
+                  "ref": "profile/oi-guardian-epii",
+                  "revision": "oi-guardian-v1",
+                  "sha256": "2db9aa5829152d8c39c5e3c895809b9f9a12af423f04f2b46d91e37eb9e4e65e",
+                  "sourcePath": "Control/agents/profiles/profile-c822feb6bb9f63ef.json"
+                }
+              ],
+              "authorityStanding": "membership-non-authoritative",
+              "developmentAgentSet": {
+                "ref": "oi-development-agency",
+                "revision": "r1",
+                "sha256": "f5d669ef436b1e1dbf21892aac8e50a34a97c1265b2bf9b81d13001f3b1346ec",
+                "sourcePath": "Control/relations/agent-sets/agent-set-cbf7f912c48546eb.json"
+              },
+              "guardianAgentSet": {
+                "ref": "oi-product-guardians",
+                "revision": "r1",
+                "sha256": "a0499c67d53bfb1d5232ee94659a04ad9bcd33fd08191fe6b213ec5752dfafde",
+                "sourcePath": "Control/relations/agent-sets/agent-set-94404c319e7e5e8a.json"
+              },
+              "owner": "central",
+              "resolvedAgentRefs": [
+                "agent/oi-guardian-anuttara",
+                "agent/oi-guardian-epii",
+                "agent/oi-guardian-mahamaya",
+                "agent/oi-guardian-nara",
+                "agent/oi-guardian-paramasiva",
+                "agent/oi-guardian-parasakti",
+                "agent:hermes"
+              ]
+            },
+            "commissionedAt": "2026-09-09T12:00:00Z",
+            "contract": "factory.commission-request/v1",
+            "frontier": "Commissioned; all owner-native workflow units remain unexecuted",
+            "projectKey": "factory-programme-195",
+            "purpose": "Self-host the remaining O:I and AIKit consumer work and the O:I snapshot/#188 tranche without inferring execution",
+            "requestRef": "commission-request:factory-195-self-hosting-201",
+            "rootAct": {
+              "actRef": "act:factory-195-self-hosting-root",
+              "agentRef": "agent:hermes",
+              "purpose": "Bound the remaining Factory programme work without scheduling or execution authority",
+              "scopeRefs": [
+                "issue:201",
+                "issue:188",
+                "product:factory",
+                "product:aikit",
+                "product:oi"
+              ],
+              "standing": "commissioned-not-executed"
+            },
+            "runDestination": "factory-programme/oi-aikit-consumer-and-oi-snapshot-188",
+            "writeOwner": "factory"
+          },
+          "revision": 1,
+          "runRef": "run:01M230M2G0R6QT43KQQ9V1SWBY"
+        },
+        "contract": "factory.commission-receipt/v1",
+        "status": "already-applied"
+      }
+    },
+    {
+      "operation": "development.mutate",
+      "owner": "factory",
+      "outputSha256": "bdeaac074c2097d2ef3a97185ab4930324eabd71eb3773e75bbdd3855f68b383",
+      "output": {
+        "contract": "factory.developmental-mutation-receipt/v1",
+        "record": {
+          "contract": "factory.developmental-mutation/v1",
+          "request": {
+            "contract": "factory.developmental-mutation-request/v1",
+            "mutation": {
+              "kind": "attach-workflow-source",
+              "runRef": "run:01M230M2G0R6QT43KQQ9V1SWBY",
+              "workflowSource": {
+                "barriers": [],
+                "coordinationContract": "factory.bounded-coordination/v1",
+                "nesting": [],
+                "schemaVersion": "factory.agent-workflow-source/v1",
+                "source": {
+                  "digest": "e6aecc515dd6eba8acbe99ea68ca645a463f5cd306c0d8a290541972f5be11c5",
+                  "flowRef": "issue:201",
+                  "ref": "workflow-source:01K4Q7B8000VVK4R7NNH6E201A",
+                  "revision": "factory-201-v1"
+                },
+                "units": [
+                  {
+                    "agentRequirements": {
+                      "agencyRefs": [
+                        "agency:01K4Q7B8000VVK4R7NNH6E202A"
+                      ],
+                      "agentRefs": [],
+                      "agentSetRefs": []
+                    },
+                    "basisRevision": "issue-201",
+                    "capabilityRefs": [
+                      "capability:01K4Q7B8000VVK4R7NNH6E204A"
+                    ],
+                    "dependencies": [],
+                    "developmentalConcern": "Factory Guardian concern: complete and verify the Factory-owned self-hosting surface",
+                    "escalationConditions": "Escalate truthful unavailable owner evidence",
+                    "independenceFrom": [],
+                    "key": "factory-guardian-owner-surface",
+                    "permittedEffects": [
+                      "factory-repository-change",
+                      "factory-owner-pr"
+                    ],
+                    "praxisRefs": [
+                      "praxis:01K4Q7B8000VVK4R7NNH6E203A"
+                    ],
+                    "requiredDifference": "Factory Commission and correlations are accepted on owner main",
+                    "returnAddress": "return-address:01K4Q7B8000VVK4R7NNH6E205A",
+                    "returnContract": "owner-native Factory CI and PR evidence",
+                    "stopConditions": "Stop on owner-law conflict or failed production gate",
+                    "subjectRef": "issue:01K4Q7B8000VVK4R7NNH6E201B",
+                    "verificationObligations": [
+                      "factory-full-ci",
+                      "owner-main-acceptance"
+                    ]
+                  },
+                  {
+                    "agentRequirements": {
+                      "agencyRefs": [
+                        "agency:01K4Q7B8000VVK4R7NNH6E202B"
+                      ],
+                      "agentRefs": [],
+                      "agentSetRefs": []
+                    },
+                    "basisRevision": "post-factory-201",
+                    "capabilityRefs": [
+                      "capability:01K4Q7B8000VVK4R7NNH6E204B"
+                    ],
+                    "dependencies": [
+                      "factory-guardian-owner-surface"
+                    ],
+                    "developmentalConcern": "AIKit Guardian concern: exercise the accepted Factory surface from the AIKit owner",
+                    "escalationConditions": "Escalate contract drift or owner rejection",
+                    "independenceFrom": [],
+                    "key": "aikit-guardian-consumer",
+                    "permittedEffects": [
+                      "aikit-repository-change",
+                      "aikit-owner-pr"
+                    ],
+                    "praxisRefs": [
+                      "praxis:01K4Q7B8000VVK4R7NNH6E203B"
+                    ],
+                    "requiredDifference": "AIKit consumes the exact accepted Factory contract",
+                    "returnAddress": "return-address:01K4Q7B8000VVK4R7NNH6E205B",
+                    "returnContract": "owner-native AIKit consumer evidence",
+                    "stopConditions": "Stop if Factory owner contract is not accepted",
+                    "subjectRef": "issue:01K4Q7B8000VVK4R7NNH6E201C",
+                    "verificationObligations": [
+                      "aikit-full-ci",
+                      "exact-factory-contract-pin"
+                    ]
+                  },
+                  {
+                    "agentRequirements": {
+                      "agencyRefs": [
+                        "agency:01K4Q7B8000VVK4R7NNH6E202C"
+                      ],
+                      "agentRefs": [],
+                      "agentSetRefs": []
+                    },
+                    "basisRevision": "issue-188",
+                    "capabilityRefs": [
+                      "capability:01K4Q7B8000VVK4R7NNH6E204C"
+                    ],
+                    "dependencies": [
+                      "factory-guardian-owner-surface",
+                      "aikit-guardian-consumer"
+                    ],
+                    "developmentalConcern": "Complete the bounded O:I snapshot and issue 188 work",
+                    "escalationConditions": "Escalate absent owner-native evidence",
+                    "independenceFrom": [],
+                    "key": "oi-snapshot-188",
+                    "permittedEffects": [
+                      "oi-owner-change",
+                      "oi-snapshot-return"
+                    ],
+                    "praxisRefs": [
+                      "praxis:01K4Q7B8000VVK4R7NNH6E203C"
+                    ],
+                    "requiredDifference": "The named O:I snapshot tranche has owner-native evidence",
+                    "returnAddress": "return-address:01K4Q7B8000VVK4R7NNH6E205C",
+                    "returnContract": "owner-native O:I snapshot/#188 return",
+                    "stopConditions": "Stop if bounded scope expands beyond O:I snapshot/#188",
+                    "subjectRef": "issue:01K4Q7B8000VVK4R7NNH6E201D",
+                    "verificationObligations": [
+                      "oi-owner-verification",
+                      "issue-188-return"
+                    ]
+                  }
+                ],
+                "workflowKey": "factory-195-self-hosting"
+              }
+            },
+            "mutationRef": "mutation:factory-195-self-hosting-workflow-v1",
+            "observedAt": "2026-09-09T12:01:00Z",
+            "occurrenceRef": "occurrence:factory-201-owner-workflow-attachment",
+            "source": {
+              "owner": "factory",
+              "reference": "workflow-source:01K4Q7B8000VVK4R7NNH6E201A",
+              "revision": "factory-201-v1",
+              "standing": "owner-native-observation"
+            }
+          }
+        },
+        "status": "applied"
+      }
+    },
+    {
+      "operation": "development.mutate.replay",
+      "owner": "factory",
+      "outputSha256": "9bf7d44479a68a6d2d4bcd4cd00a2505ca69ab1dd57b54b0390b31f2549bd6e4",
+      "output": {
+        "contract": "factory.developmental-mutation-receipt/v1",
+        "record": {
+          "contract": "factory.developmental-mutation/v1",
+          "request": {
+            "contract": "factory.developmental-mutation-request/v1",
+            "mutation": {
+              "kind": "attach-workflow-source",
+              "runRef": "run:01M230M2G0R6QT43KQQ9V1SWBY",
+              "workflowSource": {
+                "barriers": [],
+                "coordinationContract": "factory.bounded-coordination/v1",
+                "nesting": [],
+                "schemaVersion": "factory.agent-workflow-source/v1",
+                "source": {
+                  "digest": "e6aecc515dd6eba8acbe99ea68ca645a463f5cd306c0d8a290541972f5be11c5",
+                  "flowRef": "issue:201",
+                  "ref": "workflow-source:01K4Q7B8000VVK4R7NNH6E201A",
+                  "revision": "factory-201-v1"
+                },
+                "units": [
+                  {
+                    "agentRequirements": {
+                      "agencyRefs": [
+                        "agency:01K4Q7B8000VVK4R7NNH6E202A"
+                      ],
+                      "agentRefs": [],
+                      "agentSetRefs": []
+                    },
+                    "basisRevision": "issue-201",
+                    "capabilityRefs": [
+                      "capability:01K4Q7B8000VVK4R7NNH6E204A"
+                    ],
+                    "dependencies": [],
+                    "developmentalConcern": "Factory Guardian concern: complete and verify the Factory-owned self-hosting surface",
+                    "escalationConditions": "Escalate truthful unavailable owner evidence",
+                    "independenceFrom": [],
+                    "key": "factory-guardian-owner-surface",
+                    "permittedEffects": [
+                      "factory-repository-change",
+                      "factory-owner-pr"
+                    ],
+                    "praxisRefs": [
+                      "praxis:01K4Q7B8000VVK4R7NNH6E203A"
+                    ],
+                    "requiredDifference": "Factory Commission and correlations are accepted on owner main",
+                    "returnAddress": "return-address:01K4Q7B8000VVK4R7NNH6E205A",
+                    "returnContract": "owner-native Factory CI and PR evidence",
+                    "stopConditions": "Stop on owner-law conflict or failed production gate",
+                    "subjectRef": "issue:01K4Q7B8000VVK4R7NNH6E201B",
+                    "verificationObligations": [
+                      "factory-full-ci",
+                      "owner-main-acceptance"
+                    ]
+                  },
+                  {
+                    "agentRequirements": {
+                      "agencyRefs": [
+                        "agency:01K4Q7B8000VVK4R7NNH6E202B"
+                      ],
+                      "agentRefs": [],
+                      "agentSetRefs": []
+                    },
+                    "basisRevision": "post-factory-201",
+                    "capabilityRefs": [
+                      "capability:01K4Q7B8000VVK4R7NNH6E204B"
+                    ],
+                    "dependencies": [
+                      "factory-guardian-owner-surface"
+                    ],
+                    "developmentalConcern": "AIKit Guardian concern: exercise the accepted Factory surface from the AIKit owner",
+                    "escalationConditions": "Escalate contract drift or owner rejection",
+                    "independenceFrom": [],
+                    "key": "aikit-guardian-consumer",
+                    "permittedEffects": [
+                      "aikit-repository-change",
+                      "aikit-owner-pr"
+                    ],
+                    "praxisRefs": [
+                      "praxis:01K4Q7B8000VVK4R7NNH6E203B"
+                    ],
+                    "requiredDifference": "AIKit consumes the exact accepted Factory contract",
+                    "returnAddress": "return-address:01K4Q7B8000VVK4R7NNH6E205B",
+                    "returnContract": "owner-native AIKit consumer evidence",
+                    "stopConditions": "Stop if Factory owner contract is not accepted",
+                    "subjectRef": "issue:01K4Q7B8000VVK4R7NNH6E201C",
+                    "verificationObligations": [
+                      "aikit-full-ci",
+                      "exact-factory-contract-pin"
+                    ]
+                  },
+                  {
+                    "agentRequirements": {
+                      "agencyRefs": [
+                        "agency:01K4Q7B8000VVK4R7NNH6E202C"
+                      ],
+                      "agentRefs": [],
+                      "agentSetRefs": []
+                    },
+                    "basisRevision": "issue-188",
+                    "capabilityRefs": [
+                      "capability:01K4Q7B8000VVK4R7NNH6E204C"
+                    ],
+                    "dependencies": [
+                      "factory-guardian-owner-surface",
+                      "aikit-guardian-consumer"
+                    ],
+                    "developmentalConcern": "Complete the bounded O:I snapshot and issue 188 work",
+                    "escalationConditions": "Escalate absent owner-native evidence",
+                    "independenceFrom": [],
+                    "key": "oi-snapshot-188",
+                    "permittedEffects": [
+                      "oi-owner-change",
+                      "oi-snapshot-return"
+                    ],
+                    "praxisRefs": [
+                      "praxis:01K4Q7B8000VVK4R7NNH6E203C"
+                    ],
+                    "requiredDifference": "The named O:I snapshot tranche has owner-native evidence",
+                    "returnAddress": "return-address:01K4Q7B8000VVK4R7NNH6E205C",
+                    "returnContract": "owner-native O:I snapshot/#188 return",
+                    "stopConditions": "Stop if bounded scope expands beyond O:I snapshot/#188",
+                    "subjectRef": "issue:01K4Q7B8000VVK4R7NNH6E201D",
+                    "verificationObligations": [
+                      "oi-owner-verification",
+                      "issue-188-return"
+                    ]
+                  }
+                ],
+                "workflowKey": "factory-195-self-hosting"
+              }
+            },
+            "mutationRef": "mutation:factory-195-self-hosting-workflow-v1",
+            "observedAt": "2026-09-09T12:01:00Z",
+            "occurrenceRef": "occurrence:factory-201-owner-workflow-attachment",
+            "source": {
+              "owner": "factory",
+              "reference": "workflow-source:01K4Q7B8000VVK4R7NNH6E201A",
+              "revision": "factory-201-v1",
+              "standing": "owner-native-observation"
+            }
+          }
+        },
+        "status": "already-applied"
+      }
+    },
+    {
+      "operation": "development.commission-read",
+      "owner": "factory",
+      "outputSha256": "051d2d4f860cdee655eb627410e2cb7f5a14373504c60486d26d18892a42d965",
+      "output": {
+        "commission": {
+          "contract": "factory.commission/v1",
+          "journeyRef": "journey:01M230M2G0A9KZQYABTQ780QRD",
+          "projectRef": "project:0000000000W4SWJZCE2ZVCTNH2",
+          "request": {
+            "centralComposition": {
+              "agentProfileReceipts": [
+                {
+                  "ref": "profile/oi-guardian-anuttara",
+                  "revision": "oi-guardian-v1",
+                  "sha256": "688b26a8b8f07de09af135d9c6abe90f3165795437693116949031620d7bb61f",
+                  "sourcePath": "Control/agents/profiles/profile-f38255302f31150c.json"
+                },
+                {
+                  "ref": "profile/oi-guardian-paramasiva",
+                  "revision": "oi-guardian-v1",
+                  "sha256": "ca27260d856d4c797e21cfc4c22da69ea16e6611d1643326ef25fcc550031ec7",
+                  "sourcePath": "Control/agents/profiles/profile-c994187eac1a0b69.json"
+                },
+                {
+                  "ref": "profile/oi-guardian-parasakti",
+                  "revision": "oi-guardian-v1",
+                  "sha256": "030068c24f6da573639f3de08fefb871f298721322aa9887a4a74dea9bf090d5",
+                  "sourcePath": "Control/agents/profiles/profile-1a9349373c4c99c4.json"
+                },
+                {
+                  "ref": "profile/oi-guardian-mahamaya",
+                  "revision": "oi-guardian-v1",
+                  "sha256": "b058043e81d2e894991f5b5a4a2ebc1de9fd4ccdd44854ec67e06c47cecd30df",
+                  "sourcePath": "Control/agents/profiles/profile-122a77317676932d.json"
+                },
+                {
+                  "ref": "profile/oi-guardian-nara",
+                  "revision": "oi-guardian-v1",
+                  "sha256": "43af85754d711339d4ed0d272e682e813e3b81b7c20b12fd161abac621ea54cd",
+                  "sourcePath": "Control/agents/profiles/profile-24a7fe0350228fc8.json"
+                },
+                {
+                  "ref": "profile/oi-guardian-epii",
+                  "revision": "oi-guardian-v1",
+                  "sha256": "2db9aa5829152d8c39c5e3c895809b9f9a12af423f04f2b46d91e37eb9e4e65e",
+                  "sourcePath": "Control/agents/profiles/profile-c822feb6bb9f63ef.json"
+                }
+              ],
+              "authorityStanding": "membership-non-authoritative",
+              "developmentAgentSet": {
+                "ref": "oi-development-agency",
+                "revision": "r1",
+                "sha256": "f5d669ef436b1e1dbf21892aac8e50a34a97c1265b2bf9b81d13001f3b1346ec",
+                "sourcePath": "Control/relations/agent-sets/agent-set-cbf7f912c48546eb.json"
+              },
+              "guardianAgentSet": {
+                "ref": "oi-product-guardians",
+                "revision": "r1",
+                "sha256": "a0499c67d53bfb1d5232ee94659a04ad9bcd33fd08191fe6b213ec5752dfafde",
+                "sourcePath": "Control/relations/agent-sets/agent-set-94404c319e7e5e8a.json"
+              },
+              "owner": "central",
+              "resolvedAgentRefs": [
+                "agent/oi-guardian-anuttara",
+                "agent/oi-guardian-epii",
+                "agent/oi-guardian-mahamaya",
+                "agent/oi-guardian-nara",
+                "agent/oi-guardian-paramasiva",
+                "agent/oi-guardian-parasakti",
+                "agent:hermes"
+              ]
+            },
+            "commissionedAt": "2026-09-09T12:00:00Z",
+            "contract": "factory.commission-request/v1",
+            "frontier": "Commissioned; all owner-native workflow units remain unexecuted",
+            "projectKey": "factory-programme-195",
+            "purpose": "Self-host the remaining O:I and AIKit consumer work and the O:I snapshot/#188 tranche without inferring execution",
+            "requestRef": "commission-request:factory-195-self-hosting-201",
+            "rootAct": {
+              "actRef": "act:factory-195-self-hosting-root",
+              "agentRef": "agent:hermes",
+              "purpose": "Bound the remaining Factory programme work without scheduling or execution authority",
+              "scopeRefs": [
+                "issue:201",
+                "issue:188",
+                "product:factory",
+                "product:aikit",
+                "product:oi"
+              ],
+              "standing": "commissioned-not-executed"
+            },
+            "runDestination": "factory-programme/oi-aikit-consumer-and-oi-snapshot-188",
+            "writeOwner": "factory"
+          },
+          "revision": 1,
+          "runRef": "run:01M230M2G0R6QT43KQQ9V1SWBY"
+        },
+        "contract": "factory.commission-reading/v1",
+        "traversal": [
+          {
+            "objectRef": "project:0000000000W4SWJZCE2ZVCTNH2",
+            "owner": "factory",
+            "relation": "commissioned",
+            "subjectRef": "commission-request:factory-195-self-hosting-201"
+          },
+          {
+            "objectRef": "journey:01M230M2G0A9KZQYABTQ780QRD",
+            "owner": "factory",
+            "relation": "contains",
+            "subjectRef": "project:0000000000W4SWJZCE2ZVCTNH2"
+          },
+          {
+            "objectRef": "run:01M230M2G0R6QT43KQQ9V1SWBY",
+            "owner": "factory",
+            "relation": "bounded-as",
+            "subjectRef": "journey:01M230M2G0A9KZQYABTQ780QRD"
+          },
+          {
+            "objectRef": "run:01M230M2G0R6QT43KQQ9V1SWBY",
+            "owner": "factory",
+            "relation": "bounds",
+            "subjectRef": "act:factory-195-self-hosting-root"
+          },
+          {
+            "objectRef": "journey:01M230M2G0A9KZQYABTQ780QRD",
+            "owner": "central",
+            "relation": "composition-evidence-for",
+            "subjectRef": "oi-development-agency"
+          },
+          {
+            "objectRef": "journey:01M230M2G0A9KZQYABTQ780QRD",
+            "owner": "central",
+            "relation": "composition-evidence-for",
+            "subjectRef": "oi-product-guardians"
+          },
+          {
+            "objectRef": "commission-request:factory-195-self-hosting-201",
+            "owner": "central",
+            "relation": "supports-membership-reading",
+            "subjectRef": "Control/relations/agent-sets/agent-set-cbf7f912c48546eb.json"
+          },
+          {
+            "objectRef": "commission-request:factory-195-self-hosting-201",
+            "owner": "central",
+            "relation": "supports-membership-reading",
+            "subjectRef": "Control/relations/agent-sets/agent-set-94404c319e7e5e8a.json"
+          }
+        ]
+      }
+    },
+    {
+      "operation": "development.project",
+      "owner": "factory",
+      "outputSha256": "0849d86a033acbc195eefe347acfaee5f84066274157472c0209163fa6eab6e8",
+      "output": {
+        "contract": "factory.project-reading/v1",
+        "journeys": [
+          {
+            "frontier": "Commissioned; all owner-native workflow units remain unexecuted",
+            "journeyRef": "journey:01M230M2G0A9KZQYABTQ780QRD",
+            "revision": 11,
+            "runRefs": [
+              "run:01M230M2G0R6QT43KQQ9V1SWBY"
+            ],
+            "status": "active"
+          }
+        ],
+        "projectRef": "project:0000000000W4SWJZCE2ZVCTNH2",
+        "projectRevision": 1,
+        "provenance": {
+          "factoryStateRevision": 2,
+          "owner": "factory",
+          "source": "canonical FactoryDevelopmentalState + Factory Journey registry",
+          "subjectRevision": 1
+        }
+      }
+    },
+    {
+      "operation": "development.journey",
+      "owner": "factory",
+      "outputSha256": "6d236285213c95627701572755ce1bc78054e4b85113a6aec2ec8cc1e6a32932",
+      "output": {
+        "activityRefs": [],
+        "agentSessionRefs": [],
+        "commission": {
+          "commission_ref": "commission-request:factory-195-self-hosting-201",
+          "purpose": "Self-host the remaining O:I and AIKit consumer work and the O:I snapshot/#188 tranche without inferring execution",
+          "why_refs": [
+            "Control/relations/agent-sets/agent-set-94404c319e7e5e8a.json",
+            "Control/relations/agent-sets/agent-set-cbf7f912c48546eb.json",
+            "act:factory-195-self-hosting-root",
+            "commission-request:factory-195-self-hosting-201",
+            "oi-development-agency",
+            "oi-product-guardians"
+          ]
+        },
+        "completedAt": null,
+        "contract": "factory.journey-reading/v1",
+        "flowRefs": [],
+        "frontier": "Commissioned; all owner-native workflow units remain unexecuted",
+        "journeyRef": "journey:01M230M2G0A9KZQYABTQ780QRD",
+        "materialContextRefs": [],
+        "participants": [
+          {
+            "participant_ref": "oi-development-agency",
+            "role": "central-composition-evidence-non-authoritative"
+          },
+          {
+            "participant_ref": "oi-product-guardians",
+            "role": "central-guardian-membership-evidence-non-authoritative"
+          },
+          {
+            "participant_ref": "agent/oi-guardian-anuttara",
+            "role": "resolved-membership-evidence-non-authoritative"
+          },
+          {
+            "participant_ref": "agent/oi-guardian-epii",
+            "role": "resolved-membership-evidence-non-authoritative"
+          },
+          {
+            "participant_ref": "agent/oi-guardian-mahamaya",
+            "role": "resolved-membership-evidence-non-authoritative"
+          },
+          {
+            "participant_ref": "agent/oi-guardian-nara",
+            "role": "resolved-membership-evidence-non-authoritative"
+          },
+          {
+            "participant_ref": "agent/oi-guardian-paramasiva",
+            "role": "resolved-membership-evidence-non-authoritative"
+          },
+          {
+            "participant_ref": "agent/oi-guardian-parasakti",
+            "role": "resolved-membership-evidence-non-authoritative"
+          },
+          {
+            "participant_ref": "agent:hermes",
+            "role": "bounded-root-act-commissioned-not-executed"
+          }
+        ],
+        "projectRef": "project:0000000000W4SWJZCE2ZVCTNH2",
+        "provenance": {
+          "factoryStateRevision": 2,
+          "owner": "factory",
+          "source": "canonical Factory Journey",
+          "subjectRevision": 11
+        },
+        "recognitions": [],
+        "relatedProjects": [],
+        "returns": [],
+        "revision": 11,
+        "routineInvocationRefs": [],
+        "runRefs": [
+          "run:01M230M2G0R6QT43KQQ9V1SWBY"
+        ],
+        "startedAt": "2026-09-09T12:00:00Z",
+        "status": "active"
+      }
+    },
+    {
+      "operation": "development.run",
+      "owner": "factory",
+      "outputSha256": "6006a28241847250b01420bbdeeb6432dd11bd7e8a9f3451f7975da62316f5ae",
+      "output": {
+        "actions": [
+          {
+            "actionRef": "action:01ARZ3NDEKTSV4RRFFQ69G5FAP",
+            "applicableSubjectRefs": [],
+            "authorityOwner": "factory",
+            "currentlyApplicable": false,
+            "inputContract": "factory.action-projection/v1",
+            "label": "Request more evidence",
+            "requiredCapabilityRef": "capability/factory/request-evidence",
+            "resultContract": "factory.action-projection/v1",
+            "subjectKinds": [
+              "candidate"
+            ]
+          }
+        ],
+        "agencies": [],
+        "candidates": [],
+        "contract": "factory.run-reading/v1",
+        "destination": "factory-programme/oi-aikit-consumer-and-oi-snapshot-188",
+        "evidence": [],
+        "executions": [],
+        "humanRequests": [],
+        "lifecycle": "seeded",
+        "owningJourneyRefs": [
+          "journey:01M230M2G0A9KZQYABTQ780QRD"
+        ],
+        "projectRef": "project:0000000000W4SWJZCE2ZVCTNH2",
+        "provenance": {
+          "factoryStateRevision": 2,
+          "owner": "factory",
+          "source": "canonical Factory Run/RunMap + Factory Build correlations",
+          "subjectRevision": 2
+        },
+        "revision": 2,
+        "routineInvocationRefs": [],
+        "runMap": {
+          "edges": [
+            {
+              "from": "destination",
+              "relation": "branches_to",
+              "to": "work-oi-snapshot-188"
+            },
+            {
+              "from": "work-aikit-guardian-consumer",
+              "relation": "requires",
+              "to": "work-factory-guardian-owner-surface"
+            },
+            {
+              "from": "work-oi-snapshot-188",
+              "relation": "requires",
+              "to": "work-aikit-guardian-consumer"
+            },
+            {
+              "from": "work-oi-snapshot-188",
+              "relation": "requires",
+              "to": "work-factory-guardian-owner-surface"
+            }
+          ],
+          "nodes": {
+            "destination": {
+              "id": "destination",
+              "kind": "destination",
+              "label": "factory-programme/oi-aikit-consumer-and-oi-snapshot-188",
+              "semanticRef": null,
+              "state": null
+            },
+            "work-aikit-guardian-consumer": {
+              "id": "work-aikit-guardian-consumer",
+              "kind": "work",
+              "label": "AIKit Guardian concern: exercise the accepted Factory surface from the AIKit owner",
+              "semanticRef": "workflow-unit:2G7TR1Y0JE8GVKY9K50P35PC1S",
+              "state": "planned"
+            },
+            "work-factory-guardian-owner-surface": {
+              "id": "work-factory-guardian-owner-surface",
+              "kind": "work",
+              "label": "Factory Guardian concern: complete and verify the Factory-owned self-hosting surface",
+              "semanticRef": "workflow-unit:1AD8YZ9QPDKTG4E35029CSJPBV",
+              "state": "ready"
+            },
+            "work-oi-snapshot-188": {
+              "id": "work-oi-snapshot-188",
+              "kind": "work",
+              "label": "Complete the bounded O:I snapshot and issue 188 work",
+              "semanticRef": "workflow-unit:2MTYWY73CJQQ2G24X6293RSMCH",
+              "state": "planned"
+            }
+          },
+          "runRef": "run:01M230M2G0R6QT43KQQ9V1SWBY",
+          "topologyRevision": 2
+        },
+        "runRef": "run:01M230M2G0R6QT43KQQ9V1SWBY",
+        "thoughtAvailable": false,
+        "thoughtRefs": []
+      }
+    },
+    {
+      "operation": "development.workflow-units",
+      "owner": "factory",
+      "outputSha256": "cb48e3318ffaf8a370d71872eeb6847941b0c46c70d1e3a86bc748a7d2d666bb",
+      "output": {
+        "contract": "factory.workflow-unit-list-reading/v1",
+        "projectRef": "project:0000000000W4SWJZCE2ZVCTNH2",
+        "provenance": {
+          "buildStateRevision": 2,
+          "owner": "factory",
+          "sourceBases": [
+            {
+              "sourceDigest": "e6aecc515dd6eba8acbe99ea68ca645a463f5cd306c0d8a290541972f5be11c5",
+              "sourceRef": "workflow-source:01K4Q7B8000VVK4R7NNH6E201A",
+              "sourceRevision": "factory-201-v1"
+            }
+          ]
+        },
+        "runFilter": null,
+        "units": [
+          {
+            "basisRevision": "post-factory-201",
+            "currentCorrelation": {
+              "agencyRefs": null,
+              "executionRefs": null,
+              "lowerCorrelationStatus": "not-owner-established",
+              "runJourneyBasis": "RunMap Work node semanticRef plus Factory Journey run link",
+              "runJourneyStatus": "owner-established",
+              "runs": [
+                {
+                  "journeyRefs": [
+                    "journey:01M230M2G0A9KZQYABTQ780QRD"
+                  ],
+                  "runMapAddress": "run:01M230M2G0R6QT43KQQ9V1SWBY/map",
+                  "runRef": "run:01M230M2G0R6QT43KQQ9V1SWBY",
+                  "runRevision": 2,
+                  "topologyRevision": 2
+                }
+              ],
+              "telemetryRefs": null
+            },
+            "key": "aikit-guardian-consumer",
+            "locator": "workflow-source:01K4Q7B8000VVK4R7NNH6E201A#factory-195-self-hosting/aikit-guardian-consumer",
+            "sourceDigest": "e6aecc515dd6eba8acbe99ea68ca645a463f5cd306c0d8a290541972f5be11c5",
+            "sourceRef": "workflow-source:01K4Q7B8000VVK4R7NNH6E201A",
+            "sourceRevision": "factory-201-v1",
+            "subjectRef": "issue:01K4Q7B8000VVK4R7NNH6E201C",
+            "workflowKey": "factory-195-self-hosting",
+            "workflowUnitRef": "workflow-unit:2G7TR1Y0JE8GVKY9K50P35PC1S"
+          },
+          {
+            "basisRevision": "issue-201",
+            "currentCorrelation": {
+              "agencyRefs": null,
+              "executionRefs": null,
+              "lowerCorrelationStatus": "not-owner-established",
+              "runJourneyBasis": "RunMap Work node semanticRef plus Factory Journey run link",
+              "runJourneyStatus": "owner-established",
+              "runs": [
+                {
+                  "journeyRefs": [
+                    "journey:01M230M2G0A9KZQYABTQ780QRD"
+                  ],
+                  "runMapAddress": "run:01M230M2G0R6QT43KQQ9V1SWBY/map",
+                  "runRef": "run:01M230M2G0R6QT43KQQ9V1SWBY",
+                  "runRevision": 2,
+                  "topologyRevision": 2
+                }
+              ],
+              "telemetryRefs": null
+            },
+            "key": "factory-guardian-owner-surface",
+            "locator": "workflow-source:01K4Q7B8000VVK4R7NNH6E201A#factory-195-self-hosting/factory-guardian-owner-surface",
+            "sourceDigest": "e6aecc515dd6eba8acbe99ea68ca645a463f5cd306c0d8a290541972f5be11c5",
+            "sourceRef": "workflow-source:01K4Q7B8000VVK4R7NNH6E201A",
+            "sourceRevision": "factory-201-v1",
+            "subjectRef": "issue:01K4Q7B8000VVK4R7NNH6E201B",
+            "workflowKey": "factory-195-self-hosting",
+            "workflowUnitRef": "workflow-unit:1AD8YZ9QPDKTG4E35029CSJPBV"
+          },
+          {
+            "basisRevision": "issue-188",
+            "currentCorrelation": {
+              "agencyRefs": null,
+              "executionRefs": null,
+              "lowerCorrelationStatus": "not-owner-established",
+              "runJourneyBasis": "RunMap Work node semanticRef plus Factory Journey run link",
+              "runJourneyStatus": "owner-established",
+              "runs": [
+                {
+                  "journeyRefs": [
+                    "journey:01M230M2G0A9KZQYABTQ780QRD"
+                  ],
+                  "runMapAddress": "run:01M230M2G0R6QT43KQQ9V1SWBY/map",
+                  "runRef": "run:01M230M2G0R6QT43KQQ9V1SWBY",
+                  "runRevision": 2,
+                  "topologyRevision": 2
+                }
+              ],
+              "telemetryRefs": null
+            },
+            "key": "oi-snapshot-188",
+            "locator": "workflow-source:01K4Q7B8000VVK4R7NNH6E201A#factory-195-self-hosting/oi-snapshot-188",
+            "sourceDigest": "e6aecc515dd6eba8acbe99ea68ca645a463f5cd306c0d8a290541972f5be11c5",
+            "sourceRef": "workflow-source:01K4Q7B8000VVK4R7NNH6E201A",
+            "sourceRevision": "factory-201-v1",
+            "subjectRef": "issue:01K4Q7B8000VVK4R7NNH6E201D",
+            "workflowKey": "factory-195-self-hosting",
+            "workflowUnitRef": "workflow-unit:2MTYWY73CJQQ2G24X6293RSMCH"
+          }
+        ]
+      }
+    }
+  ],
+  "claims": [
+    {
+      "id": "accepted-factory-contract",
+      "grade": "C",
+      "standing": "observed",
+      "basis": "exact accepted Factory revision and schema bytes verified"
+    },
+    {
+      "id": "commission-owner-read-path",
+      "grade": "D",
+      "standing": "observed",
+      "basis": "real Factory CLI admission, replay, mutation and public readings succeeded"
+    },
+    {
+      "id": "provider-execution",
+      "grade": "P",
+      "standing": "unavailable",
+      "basis": "no provider execution evidence was supplied to this bounded proving run"
+    },
+    {
+      "id": "material-execution",
+      "grade": "M",
+      "standing": "unavailable",
+      "basis": "no Workcell/process/material evidence was supplied to this bounded proving run"
+    },
+    {
+      "id": "human-recognition",
+      "grade": "H",
+      "standing": "unavailable",
+      "basis": "no human Recognition was supplied; Commission is not completion"
+    }
+  ],
+  "caseStanding": [
+    {
+      "case": "factory-single-agent",
+      "standing": "commissioned-unexecuted",
+      "factoryAncestry": "owner-established",
+      "basis": "Factory Project, Journey, Run and workflow-unit readings"
+    },
+    {
+      "case": "direct-session",
+      "standing": "not-observed",
+      "factoryAncestry": "not-claimed",
+      "basis": "outside this bounded Commission proof"
+    },
+    {
+      "case": "external-harness",
+      "standing": "not-observed",
+      "factoryAncestry": "not-claimed",
+      "basis": "outside this bounded Commission proof"
+    },
+    {
+      "case": "simultaneous-field",
+      "standing": "not-observed",
+      "factoryAncestry": "not-claimed",
+      "basis": "requires later provider/material evidence"
+    },
+    {
+      "case": "plural-guardian",
+      "standing": "planned-unexecuted",
+      "factoryAncestry": "owner-established",
+      "basis": "distinct Factory, AIKit and O:I units exist; lower correlations are not owner-established"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "spatial",
+  "generated_at": "2026-09-08T14:05:09.861Z",
+  "environment": {
+    "base_url": "http://localhost:1423",
+    "bridge_url": "http://127.0.0.1:4197",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": false,
+  "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('complementary', { name: 'World navigator' }).locator('[data-project-path=\"Work/Editor\"]')\u001b[22m\n\n    at Module.run (/Users/admin/Central/Work/O-I/desktop/cradle/walk/scenarios/spatial.mjs:5:58)\n    at async runScenario (/Users/admin/Central/Work/O-I/desktop/cradle/walk/run.mjs:340:5)\n    at async file:///Users/admin/Central/Work/O-I/desktop/cradle/walk/run.mjs:413:18",
+  "duration_ms": 30251,
+  "checks": [],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-08T14:05:10.069Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4197"
+        },
+        "url": "http://localhost:1423/"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": []
+}

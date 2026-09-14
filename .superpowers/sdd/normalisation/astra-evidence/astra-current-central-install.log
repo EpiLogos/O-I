@@ -1,0 +1,38 @@
+From https://github.com/EpiLogos/Central
+ * branch            616749373a60f55e9fd99e4f2b0bebf2c73a674b -> FETCH_HEAD
+  Installing ctrl v0.1.0 (/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-central-current-source-20466-1788692374897564000/ctrl)
+    Updating crates.io index
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.24
+   Compiling quote v1.0.47
+   Compiling serde_core v1.0.229
+   Compiling serde v1.0.229
+   Compiling zmij v1.0.23
+   Compiling serde_json v1.0.151
+   Compiling memchr v2.8.3
+   Compiling itoa v1.0.18
+   Compiling syn v3.0.3
+   Compiling serde_derive v1.0.229
+   Compiling central-connector-sdk v0.1.0 (/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-central-current-source-20466-1788692374897564000/crates/connector-sdk)
+   Compiling central-reference-connectors v0.1.0 (/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-central-current-source-20466-1788692374897564000/connectors/reference)
+   Compiling ctrl v0.1.0 (/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-central-current-source-20466-1788692374897564000/ctrl)
+warning: unused import: `BTreeMap`
+ --> ctrl/src/agent_governance.rs:7:24
+  |
+7 | use std::collections::{BTreeMap, BTreeSet};
+  |                        ^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `ctrl` (lib) generated 1 warning (run `cargo fix --lib -p ctrl` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 17.68s
+  Installing /tmp/astra-current-state/oi/installs/central-current/616749373a60f55e9fd99e4f2b0bebf2c73a674b/bin/central-machine-adopt
+  Installing /tmp/astra-current-state/oi/installs/central-current/616749373a60f55e9fd99e4f2b0bebf2c73a674b/bin/ctrl
+   Installed package `ctrl v0.1.0 (/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-central-current-source-20466-1788692374897564000/ctrl)` (executables `central-machine-adopt`, `ctrl`)
+warning: be sure to add `/tmp/astra-current-state/oi/installs/central-current/616749373a60f55e9fd99e4f2b0bebf2c73a674b/bin` to your PATH to be able to run the installed binaries
+Modality: fresh-ground
+Install source: oi-pinned-source-build
+Registered: Central
+Native command: /tmp/astra-current-state/oi/installs/central-current/616749373a60f55e9fd99e4f2b0bebf2c73a674b/bin/ctrl
+{O:I} alias: oi ctrl
+Docs: https://github.com/EpiLogos/Central/blob/616749373a60f55e9fd99e4f2b0bebf2c73a674b/README.md

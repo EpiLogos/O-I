@@ -1,0 +1,19 @@
+[package]
+name = "oi-agency-bounded-acp"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+epilogos-workcell-core = { path = "../../../Workcell/crates/workcell-core" }
+epilogos-workcell-runtime = { path = "../../../Workcell/crates/workcell-runtime" }
+serde_json = "1"
+aikit-core = { path = "../../../ai-kit/crates/aikit-core" }
+sha2 = "0.10"
+
+epilogos-factory = { path = "../../../Software-Factory/factory" }
+ulid = "1"
+tempfile = "3"
+blake3 = "1"
+
+[workspace]

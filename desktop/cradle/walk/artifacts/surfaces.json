@@ -1,0 +1,89 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "surfaces",
+  "generated_at": "2026-09-14T18:48:05.336Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": false,
+  "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('.tab').filter({ hasText: '04 05-EXECUTION.md' }).first().locator('.tab-close')\n\n    at Module.run (/Users/admin/Central/Work/O-I/desktop/cradle/walk/scenarios/surfaces.mjs:27:55)\n    at async runScenario (/Users/admin/Central/Work/O-I/desktop/cradle/walk/run.mjs:378:5)\n    at async file:///Users/admin/Central/Work/O-I/desktop/cradle/walk/run.mjs:451:18",
+  "duration_ms": 31131,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Four owner sources open as four unique bindings"
+    },
+    {
+      "ok": true,
+      "label": "Last opened source is the single kernel focus"
+    },
+    {
+      "ok": true,
+      "label": "Opening an existing ref reuses its binding"
+    },
+    {
+      "ok": true,
+      "label": "Keyboard closes the focused source view"
+    },
+    {
+      "ok": true,
+      "label": "Keyboard reopens the same source binding"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-14T18:48:05.541Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.focus",
+      "duration_ms": 6.4,
+      "data": {
+        "project": {
+          "kind": "project",
+          "native_owner": "central",
+          "provenance": {
+            "source": "projectcentral.inspect"
+          },
+          "ref": "editor-walk"
+        },
+        "subject": {
+          "kind": "source",
+          "native_owner": "central",
+          "provenance": {
+            "source": "central.projectcentral"
+          },
+          "ref": "central:source:project:editor-walk:ProjectCentral/user/03%2004-VERIFICATION.md"
+        },
+        "world": {
+          "kind": "world",
+          "native_owner": "central",
+          "provenance": {
+            "source": "projectcentral.source.read"
+          },
+          "ref": "project:editor-walk"
+        }
+      }
+    }
+  ],
+  "metrics": {
+    "open_4_tabs_ms": 547
+  },
+  "screenshots": []
+}

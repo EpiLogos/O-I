@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "handoff-1788835243652667000",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "codex-desktop-planning-20260908",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1788835243,
+  "subject": "Foundation UX specification completed with pane and resource contract",
+  "result": "Updated SELF-OTHER-FIELD-UX-2026-09-08.md and linked wayfinder/programme/orchestration/87-word-style minimal prompt. Latest owner decisions binding: NOW basis is intention plus one or more worlds/projections; retain selected outputs on closure; right sidebar remains optional accompanying agent; Shared Field details use general canvas panes/full/popout returning as tabs. First execution rounds improve actual shell fidelity and prove focus/caret/restore/window lifecycle, bounded loading/caches/disposal and measured repeated-cycle memory/resource behaviour. No application code/build/provider changes; local documentation links and scoped whitespace passed. Full programme continues after foundation gates, native shared-Central operations remain explicit obligations.",
+  "status": "active"
+}

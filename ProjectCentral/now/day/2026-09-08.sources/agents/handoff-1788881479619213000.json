@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "handoff-1788881479619213000",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "claude-fable",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1788881479,
+  "subject": "Expression overlay steps onto the wayfinder (D22 / FND-07 / W1.8); study rev 5",
+  "result": "Owner adopted the expression-overlay points on 2026-09-08. Written: D22 row in docs/OI-DESKTOP-CRADLE-REBUILD-WAYFINDER.md decision register, W1.8 waypoint in its §6, FND-07 row in .superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME foundation units, and the build brief .superpowers/sdd/cradle-rebuild/BRIEF-FND-07-EXPRESSION-2026-09-08.md for the shell agent. Study rev 5: round sprite dots (~4 device px), directional (from/rect/dir/lean) and temporal (delay/hold/then) seam, rev stamp + no-store; Playwright checks pass incl. hold/chain semantics. Owner kept idle/waiting, listening, presence, arrival, searching + elements; rest reserve. Next: shell agent builds FND-07 on cradle-p1 and returns a receipt to the lead.",
+  "status": "active"
+}

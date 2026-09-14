@@ -1,24 +1,45 @@
+/*
+ * O:I design-system tokens — the house visual vocabulary.
+ *
+ * The original vocabulary is extracted from the live production language in `site/src`
+ * (#25 extraction list; wayfinder D9 + law 11: tokens precede components,
+ * the host themes). The dated desktop extension records later owner direction. Consumers use `var(--oi-*)`
+ * only — never raw colours, spacing, type, radii, z-layers, durations, or
+ * focus values. Hosts theme by overriding these tokens; composable and
+ * agent-native bodies never self-chrome.
+ *
+ * Gold stays scarce: `--oi-gold` exists only to feed `--oi-meta-relation`
+ * (the meta-relation role). No other role may carry it.
+ */
+
 :root {
   color-scheme: light dark;
 
-  /* O:I foundation — extracted verbatim from the current public front door. */
+  /* ===== section: foundation tokens ===== */
   --oi-black: #050505;
   --oi-white: #f7f7f4;
   --oi-paper: #ffffff;
   --oi-ink: #0a0a0a;
   --oi-gold: #a8873f;
 
-  /* semantic colour */
+  /* ===== section: semantic tokens — surface / text / muted / rule roles ===== */
   --oi-surface: var(--oi-paper);
   --oi-foreground: var(--oi-ink);
   --oi-muted: rgba(10, 10, 10, 0.58);
   --oi-rule: rgba(10, 10, 10, 0.2);
-  --oi-relation: rgba(10, 10, 10, 0.55);
   --oi-focus: var(--oi-ink);
   --oi-projection: rgba(10, 10, 10, 0.7);
-  --oi-meta-relation: var(--oi-gold);
 
-  /* rhythm */
+  /* ===== section: relation / focus / projection roles — scarce gold meta-relation ===== */
+  --oi-relation: rgba(10, 10, 10, 0.55);
+  --oi-meta-relation: var(--oi-gold);
+  /* World host hooks (site explore.css `world-presentation`): a world
+   * provider may override these to carry its own ground; they default to
+   * the paper/ink foundation. */
+  --oi-world-surface: var(--oi-paper);
+  --oi-world-foreground: var(--oi-ink);
+
+  /* ===== section: spacing / rhythm ===== */
   --oi-space-1: 0.5rem;
   --oi-space-2: 0.75rem;
   --oi-space-3: 1rem;
@@ -29,7 +50,12 @@
   --oi-section-x: clamp(1.25rem, 5vw, 5rem);
   --oi-section-y: clamp(5rem, 10vw, 10rem);
 
-  /* typography */
+  /* ===== section: typography ===== */
+  /* Family stacks — verbatim from the site body (index.css, explore.css)
+   * and the site code faces (pages.css, explore.css, direct-authoring.css). */
+  --oi-font-sans: 'Avenir Next', Avenir, 'Helvetica Neue', Arial, sans-serif;
+  --oi-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  /* Scale steps. */
   --oi-type-xs: 0.68rem;
   --oi-type-sm: 0.82rem;
   --oi-type-body: clamp(1.02rem, 1.35vw, 1.28rem);
@@ -37,12 +63,54 @@
   --oi-type-display: clamp(3.5rem, 8vw, 8.5rem);
   --oi-tracking-label: 0.14em;
 
-  /* motion */
+  /* ===== section: radii ===== */
+  /* From the site's authored-surface language (direct-authoring.css).
+   * The default house edge is square (radius 0) — radii are the exception,
+   * used only where the site already uses them. */
+  --oi-radius-xs: 4px;
+  --oi-radius-sm: 10px;
+  --oi-radius-md: 12px;
+  --oi-radius-lg: 14px;
+  --oi-radius-xl: 18px;
+  --oi-radius-pill: 999px;
+
+  /* ===== section: z-layers ===== */
+  /* The site's stacking altitudes: sticky app bars (40), the front-door
+   * nav above stage layers (50), sliding side panes (60), modal popover
+   * planes (80), floating notices above all (90). Local stacking inside
+   * a component (0–5) is not a house layer. */
+  --oi-z-nav: 40;
+  --oi-z-nav-top: 50;
+  --oi-z-drawer: 60;
+  --oi-z-popover: 80;
+  --oi-z-notice: 90;
+  /* Decorative expression fields ride with content (0–5 local band):
+   * particles are ink on the planes, never above dialogs or menus. */
+  --oi-z-expression: 1;
+  /* The Global Expression Stage planes (desktop): overlay expressions
+   * float over ordinary chrome but under every dialog, menu or popover;
+   * frontstate is the opening/welcome ground that may become the
+   * foreground experience. Consent and security surfaces stay above both
+   * (they ride above every token here). */
+  --oi-z-stage-overlay: 65;
+  --oi-z-stage-frontstate: 75;
+
+  /* ===== section: motion ===== */
   --oi-motion-fast: 160ms;
   --oi-motion-normal: 240ms;
   --oi-motion-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  /* ===== section: focus / keyboard states ===== */
+  /* The keyboard ring: 2px of --oi-focus on :focus-visible (unanimous in
+   * site). Dense/app surfaces offset 3px (explore.css); spacious front-door
+   * surfaces offset 5px (index.css). */
+  --oi-focus-ring-width: 2px;
+  --oi-focus-ring-offset: 3px;
+  --oi-focus-ring-offset-loose: 5px;
 }
 
+/* Surface themes — the host themes by swapping these role values
+ * (law 11). Role names never change between themes. */
 .oi-surface-light {
   --oi-surface: var(--oi-paper);
   --oi-foreground: var(--oi-ink);
@@ -63,9 +131,217 @@
   --oi-projection: rgba(247, 247, 244, 0.72);
 }
 
+/* Reduced-motion convention: the motion durations collapse to ~0 under
+ * `prefers-reduced-motion: reduce`, so any transition built from
+ * `var(--oi-motion-*)` degrades automatically. Consumers that animate via
+ * raw keyframes or JS timings apply the same convention themselves (the
+ * site also collapses all animation/transition durations to 0.01ms). */
 @media (prefers-reduced-motion: reduce) {
   :root {
     --oi-motion-fast: 0.01ms;
     --oi-motion-normal: 0.01ms;
   }
 }
+
+/* Owner-directed desktop extension, 2026-09-06. Opt-in host theme keeps
+ * historical site defaults stable. Point clouds carry accents, not legibility. */
+.oi-desktop {
+  color-scheme: light;
+  --oi-paper: #eef0e7;
+  --oi-ink: #30372f;
+  --oi-surface: #f5f6f0;
+  --oi-inspector-ground: #e6ebdf;
+  --oi-composer-ground: #fafcf6;
+  --oi-composer-rule: #ccd7c1;
+  --oi-message-ground: #e5e9df;
+  --oi-foreground: var(--oi-ink);
+  --oi-muted: #68715f;
+  --oi-rule: #d9ddd1;
+  --oi-focus: #526544;
+  --oi-relation: #78866b;
+  --oi-projection: #7f8b74;
+  --oi-world-surface: var(--oi-paper);
+  --oi-world-foreground: var(--oi-ink);
+}
+
+:root {
+  /* ===== section: semantic tokens — surface / text / muted / rule roles ===== */
+  --oi-accent-ink: var(--oi-focus);
+  --oi-accent-ground: var(--oi-surface);
+  --oi-loading-ground: var(--oi-surface);
+  --oi-loading-ink: var(--oi-foreground);
+  /* ===== section: spacing / rhythm ===== */
+  --oi-desktop-gap-xs: 4px;
+  --oi-desktop-gap-sm: 8px;
+  --oi-desktop-gap: 12px;
+  --oi-desktop-gap-lg: 20px;
+  --oi-desktop-bar: 34px;
+  --oi-desktop-row: 30px;
+  --oi-desktop-hit-target: 28px;
+  --oi-desktop-rule: 1px;
+  --oi-cloud-dot: 0.45px;
+  --oi-cloud-edge: 0.4px;
+  --oi-cloud-pitch: 2px;
+  --oi-cloud-width: 40px;
+  --oi-cloud-height: 18px;
+  --oi-cloud-field-width: 180px;
+  --oi-cloud-field-height: 60px;
+  --oi-cloud-travel: 6px;
+  --oi-loading-mark-width: 480px;
+  --oi-loading-mark-ratio: 18 / 7;
+  --oi-loading-overlay-inset: 0px;
+  --oi-loading-content-gap: 20px;
+  --oi-loading-stage-min-height: 240px;
+  /* ===== section: typography ===== */
+  --oi-desktop-type-caption: 11px;
+  --oi-desktop-type-body: 13px;
+  --oi-desktop-type-title: 16px;
+  --oi-loading-fallback-type: 42px;
+  /* ===== section: motion ===== */
+  --oi-cloud-opacity-rest: 0.38;
+  --oi-cloud-opacity-active: 0.78;
+  --oi-cloud-period: 3600ms;
+  --oi-cloud-ease: ease-in-out;
+  --oi-loading-entry-duration: 160ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --oi-cloud-period: 0.01ms;
+    --oi-loading-entry-duration: 0.01ms;
+  }
+}
+
+/* Shell vocabulary — lead ruling for the FND-01/02 foundation round,
+ * 2026-09-08. The three regions float as distinct planes on one shell ground:
+ * a lighter sidebar, paper panes in a slightly darker gutter, and the agent
+ * layer on its own ground. Hairlines separate; gutters give the thin
+ * offsetting margin that lets the sidebar and each pane read as a card.
+ * These are additive: every existing role keeps its meaning. */
+.oi-desktop {
+  /* grounds */
+  --oi-shell-ground: #dfe4d6;          /* window ground behind every plane; pane gutter */
+  --oi-sidebar-ground: #f5f6f0;        /* left plane, lighter than paper */
+  --oi-sidebar-ground-glass: rgba(245, 246, 240, 0.92);
+  --oi-canvas-ground: #eef0e7;         /* pane body paper */
+  --oi-pane-bar-ground: #f0f3e9;       /* pane tab bar */
+  --oi-agent-ground: #e6ebdf;          /* right accompanying-agent plane */
+  --oi-wash: #e5e9dd;                  /* current row / hover wash */
+  --oi-wash-strong: #dfe5d5;
+  --oi-hairline: #d3d9c9;              /* card edge */
+  --oi-hairline-soft: #dde3d4;         /* tab separators, inner rules */
+  --oi-accent: #657852;                /* olive: selected underline, send, focus ring */
+  --oi-accent-ink: #47563b;
+  --oi-accent-soft: #8d9c7b;           /* pane focus highlight */
+  --oi-composer-ground: #fafcf6;
+  --oi-composer-rule: #ccd7c1;
+  --oi-message-ground: #e5e9df;
+  --oi-inspector-ground: var(--oi-agent-ground);
+  /* Loading roles must re-resolve against the desktop palette: a :root-level
+   * var() binds to :root's own surface/ink, not the host theme's. */
+  --oi-loading-ground: var(--oi-surface);
+  --oi-loading-ink: var(--oi-foreground);
+  --oi-accent-ground: var(--oi-surface);
+  --oi-muted-2: #8f9a83;               /* meta labels, eyebrows */
+  --oi-muted-3: #a1ac98;               /* placeholders, tertiary */
+  /* geometry */
+  --oi-shell-gutter: 4px;              /* the thin offsetting margin between planes */
+  --oi-shell-edge: 1px;
+  --oi-shell-radius: 6px;              /* plane corner */
+  --oi-shell-bar: 35px;                /* workbench bar */
+  --oi-shell-tabbar: 32px;             /* pane tab bar */
+  --oi-shell-row: 30px;                /* nav row */
+  --oi-shell-row-lg: 32px;             /* project row */
+  --oi-shell-control: 26px;            /* icon control body */
+  --oi-shell-hit: 28px;                /* minimum hit target */
+  --oi-sidebar-width: 240px;
+  --oi-sidebar-min: 200px;
+  --oi-sidebar-max: 330px;
+  --oi-agent-width: 300px;
+  --oi-agent-min: 260px;
+  --oi-agent-max: 520px;
+  /* type */
+  --oi-shell-type-eyebrow: 8px;        /* tracked uppercase */
+  --oi-shell-type-meta: 9px;
+  --oi-shell-type-ui: 10px;
+  --oi-shell-type-nav: 11px;
+  --oi-shell-type-body: 12px;
+  --oi-shell-type-prose: 13px;
+  --oi-shell-type-heading: 15px;
+  --oi-shell-type-title: 18px;
+  --oi-shell-tracking: 1.2px;
+  /* elevation */
+  --oi-shadow-plane: 0 1px 2px rgba(48, 55, 47, 0.05);
+  --oi-shadow-menu: 0 10px 40px rgba(57, 73, 45, 0.14), 0 1px 2px rgba(48, 55, 47, 0.08);
+  --oi-shadow-overlay: 0 20px 70px rgba(48, 55, 47, 0.15);
+  --oi-shadow-drawer: -10px 0 25px rgba(57, 73, 45, 0.07);
+  /* motion */
+  --oi-motion-plane: 200ms;            /* sidebar/agent width, maximize */
+  --oi-motion-ui: 120ms;               /* hover, selection, menu */
+  --oi-motion-ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --oi-motion-ease-spring: cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .oi-desktop { --oi-motion-plane: 0.01ms; --oi-motion-ui: 0.01ms; }
+}
+
+/* Explicit dark appearance, selected by the host setting data-theme="dark"
+ * on the oi-desktop body (Visuals → Themes; "system" resolves there).
+ * Role names never change between themes (law 11): every shell token above
+ * is re-grounded, nothing is left to the light values by accident. */
+.oi-desktop[data-theme="dark"] {
+  color-scheme: dark;
+  --oi-paper: #10140f;
+  --oi-ink: #e4e8dc;
+  --oi-surface: #151a12;
+  --oi-inspector-ground: #131810;
+  --oi-composer-ground: #1a2015;
+  --oi-composer-rule: #2c3526;
+  --oi-message-ground: #171c13;
+  --oi-foreground: var(--oi-ink);
+  --oi-muted: #9aa68e;
+  --oi-rule: #262e21;
+  --oi-focus: #a3b58b;
+  --oi-relation: #7d8a6f;
+  --oi-projection: #8a967c;
+  /* shell vocabulary */
+  --oi-shell-ground: #0b0e09;
+  --oi-sidebar-ground: #141910;
+  --oi-sidebar-ground-glass: rgba(20, 25, 16, 0.92);
+  --oi-canvas-ground: #10140f;
+  --oi-pane-bar-ground: #171c13;
+  --oi-agent-ground: #131810;
+  --oi-wash: #1b2117;
+  --oi-wash-strong: #232b1d;
+  --oi-hairline: #2a3320;
+  --oi-hairline-soft: #232b1a;
+  --oi-accent: #93a97e;
+  --oi-accent-ink: #b8c9a4;
+  --oi-accent-soft: #55654a;
+  --oi-muted-2: #7f8b72;
+  --oi-muted-3: #5d6852;
+  --oi-shadow-plane: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --oi-shadow-menu: 0 10px 40px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --oi-shadow-overlay: 0 20px 70px rgba(0, 0, 0, 0.55);
+  --oi-shadow-drawer: -10px 0 25px rgba(0, 0, 0, 0.35);
+  --oi-loading-ground: var(--oi-surface);
+  --oi-loading-ink: var(--oi-foreground);
+  --oi-accent-ground: var(--oi-surface);
+}
+
+/* D22 expression: presentation density, timing, and field geometry. */
+:root {
+  --oi-grain-radius: 1px;
+  --oi-grain-alpha-max: .34;
+  --oi-grain-density: .8;
+  --oi-gesture-duration: 600ms;
+  --oi-gesture-reach: 14px;
+  --oi-form-tempo: .8;
+  --oi-expression-crossfade: 400ms;
+  --oi-expression-lease: 30000ms;
+  --oi-expression-field-width: 44px;
+  --oi-expression-field-height: 28px;
+}
+/* Walk hardening surfaces; these do not register product theme choices. */
+.oi-surface-warm-dark { --oi-surface: #292622; --oi-foreground: #e8dfd0; }
+.oi-surface-contrast { --oi-surface: #fff; --oi-foreground: #252525; --oi-grain-density: .65; }

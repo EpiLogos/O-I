@@ -1,0 +1,34 @@
+name: Experience story source (not product acceptance)
+on:
+  pull_request:
+    paths:
+      - 'docs/experience/**'
+      - 'skills/experience-campaign/**'
+      - 'scripts/experience_map.py'
+      - 'tests/experience/**'
+      - '.github/workflows/experience-source.yml'
+  push:
+    branches: [main, agent/paired-experience-campaign]
+    paths:
+      - 'docs/experience/**'
+      - 'skills/experience-campaign/**'
+      - 'scripts/experience_map.py'
+      - 'tests/experience/**'
+      - '.github/workflows/experience-source.yml'
+permissions:
+  contents: read
+jobs:
+  source:
+    name: Source integrity and planning projection only
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify source and negative cases
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests/experience -p 'test_*.py' -v
+      - name: Compile source to UX and capability-matrix readings
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 scripts/experience_map.py --output-dir "$RUNNER_TEMP/experience-planning-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"

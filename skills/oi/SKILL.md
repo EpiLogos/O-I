@@ -1,10 +1,15 @@
+---
+name: oi
+description: Operate the installed O:I suite through the oi CLI — route work to the right product, navigate and augment the personal world through the AIKit branch, and keep Central as the durable authored ground.
+---
+
 # {O:I} Agent Skill
 
 ## Purpose
 
 Use this skill when a user asks you to understand, install, inspect, compose, snapshot, verify, or enter a {O:I} system.
 
-{O:I} is the sparse shared Idea and composition layer around six product surfaces. It is not the place to reimplement the products. Your first job is to disclose the field clearly and route work to the surface that owns it.
+{O:I} is the sparse shared Idea and composition layer around six product surfaces. It is not the place to reimplement the products. Your first job is to disclose the active field clearly, use the installed suite front door where it is actually available, and preserve the native owner of every product operation.
 
 ## Functional field
 
@@ -35,19 +40,37 @@ oi ctrl action list --json
 
 A fresh Central root must contain `Control/user`, `Control/agents`, `Control/machines`, `.central`, and `Work`. The three Control roots initially remain empty.
 
+## Guardian SkillSet and refresh
+
+`oi init --personal-ground` projects exactly one shipped SkillSet onto the ground: the O:I guardian Skills (`oi`, the suite operator, and the Central session strap) into the harness skill trees as receipt-gated derived copies. When AIKit is installed, the same pickup hands that tree to AIKit through its own confirmed procedures — `aikit adopt`, the `oi-guardian` SkillSet, and `aikit apply` — so AIKit becomes the owner of the harness-visible copies.
+
+Reconcile and refresh with `oi skills sync`. It re-projects the authoritative guardian SkillSet, preserves any locally edited copy instead of clobbering it, and keeps AIKit's collection current: when the authoritative source has moved ahead of AIKit-managed copies, sync drives AIKit's own refresh cycle (undo the recorded adoption Procedure, re-project, re-adopt) rather than writing through AIKit's ownership.
+
 ## Control authorship
 
 Do not generate default personal profiles, preferences, machine facts, or agent rules into Control.
 
 Durable Control content is human-authored or explicitly adopted. An agent can use Central's Control-maintenance and Machine-declaration Skills to propose durable material, but human acceptance is required before authored Control mutation.
 
-## Route by ownership
+## Route through the AIKit branch first
+
+For navigating and augmenting the personal world — context, knowledge, Skills, profiles, sessions, harness composition — go directly to the AIKit branch (`oi kit ...` forwards to `aikit ...`):
+
+- `aikit tree`, `aikit z`, `aikit collate` — see and resolve what is actually installed and running, where;
+- `aikit adopt`, `aikit set`, `aikit apply` — bring Skills into ownership, compose SkillSets, and project generations a harness will see;
+- `aikit use`, `aikit profile` — point a scope at the right Profile/SkillSet composition.
+
+AIKit is the suite's normal Skill resolver: when work needs a product procedure you do not already hold, resolve it through AIKit rather than reimplementing or hand-copying it. AIKit adoption and projection are its own confirmed procedures — do not run them as a side effect of other work.
+
+## Then route by ownership
+
+When the work is genuinely a product's own, route it there:
 
 Use Central for human-authored Control, ordinary Work, machine intent, machine reconciliation/recovery, and canonical Central Actions/Connectors.
 
 Use Actuation for first-class agency/actuation, model/harness/agent-instance research, and the QL runtime experiment programme.
 
-Use AIKit for capabilities, context sources, models, harnesses, profiles, Skills/tools, HarnessComposition, sessions, Surfaces, and local capability/context resolution.
+Use AIKit for its own source, store and resolver internals.
 
 Use Software Factory for developmental Projects, Runs, evidence, Candidates, repair, ExecutionDisposition and related developmental semantics.
 
@@ -55,16 +78,73 @@ Use Workcell for material execution demands, workspaces, providers, project runt
 
 Use Quaternal Logic for QL/MEF formal operations, refraction, operators and related structural research machinery.
 
-## Aliases
+## S and M′
 
-Only use aliases backed by verified native CLIs:
+S names this `oi` CLI whole and its six native CLI centres. M′ names the desktop
+whole with its three regions: left `0`, canvas `/`, and right `1`. O:I relates them;
+QL-MEF owns the complementary M / S′ account. H/A remain encounter faces.
+
+`oi capabilities --json` discloses a derived source snapshot of child capability
+records, including provenance; it is not an installed-availability probe.
+`oi desktop capabilities --json` discloses application-to-native bindings.
+`oi desktop --help` exposes the shared application readers. Resident window and
+workspace control remains in the app until its external control seam exists.
+
+## Product commands
+
+All six native product centres have accepted commands composed into the `oi` namespace. Use the canonical namespace or, where available, the compatibility alias:
 
 ```text
-oi ctrl ...  ->  ctrl ...
-oi kit ...   ->  aikit ...
+oi central ...      -> ctrl ...        (alias: oi ctrl)
+oi actuation ...    -> actuation ...
+oi aikit ...        -> aikit ...       (alias: oi kit)
+oi factory ...      -> factory ...
+oi workcell ...     -> workcell ...    (alias: oi workcell)
+oi ql ...           -> ql ...
 ```
 
-Alias dispatch is transparent. Native arguments, input/output, signal behavior, and exit status remain authoritative.
+`oi products [--json]` discloses the complete six-product command field.
+
+Dispatch is transparent. On Unix the implementation uses process replacement, so native arguments, input/output, signal behavior and exit status remain authoritative.
+
+## Operative praxis
+
+The target pre-`#97` suite UX is one first-hand `oi` instrument backed by AIKit's accepted general resolver. The implementation Wayfinder is `docs/OI-OPERATIVE-FRONTDOOR-WAYFINDER.md`; AIKit `#142` remains the runtime owner of `ResolveExpression`, typed refs, Search/Explain/History, Method discovery and the operative address grammar.
+
+**Do not pretend this resolver syntax exists when the installed AIKit/O:I composition does not expose the accepted contract.** On current compositions without that floor, use the verified aliases and native owner commands above.
+
+When the installed composition does expose the accepted resolver/front-door contract, operate in this order:
+
+1. **Resolve the present subject and World before inventory-scanning tools.** Use the semantic address/resolver to determine the canonical object, current context and relevant relations.
+2. **Prefer a Method when the intention is already intelligible.** A Method is the situated operational pattern that can draw together the relevant knowledge, Skills and Actions. Do not manually inspect a broad Skill catalogue when a Method already expresses the work.
+3. **Keep Skill, Capability and Action distinct.** A Skill explains reusable procedure. Capability says an operation is available. The native Action/authority seam decides whether it may actually happen.
+4. **Use Explain when resolution surprises you.** A ranked result should remain inspectable: semantic relevance first, then authored/context preference, then successful learned accessibility/familiarity, then stable identity.
+5. **Use History/familiarity to recover known paths, not to replace semantic identity.** A familiar alias or traversal may become easier to reach while the canonical ref remains authoritative.
+6. **Record familiarity only from successful use.** Displaying, hovering, ranking or failing an operation must not teach a path as successful praxis.
+7. **Dispatch canonical Actions through `oi` only when that front-door capability is present.** O:I forwards the selected canonical ActionRef to its native owner and preserves the real authority result; it does not guess shell commands or duplicate Action implementation.
+8. **Preserve surface parity.** CLI, TUI/palette, structured Agent, Pi and desktop projections should operate the same typed refs and resolver evidence rather than inventing surface-local identities or scoring laws.
+
+The intended relation is:
+
+```text
+present Focus / intention
+        ↓
+semantic address / ResolveExpression
+        ↓
+Method
+        ↓
+knowledge + Skills + Actions
+        ↓
+capability / authority
+        ↓
+Action / encounter
+        ↓
+Return
+        ↓
+revised World + successful familiarity
+```
+
+For Guardians, use this same ordinary instrument and broad tool ecology. Product differentiation comes from persistent product Focus, stewarded claims/dependencies, Wiki resonance, product-relative navigation history, attention over relevant Activity and unresolved Returns/Candidates. Do not create six private memory systems or six special tool inventories to simulate Guardian identity.
 
 ## Suite Snapshot
 
@@ -124,4 +204,4 @@ Write for the user's experience of the field. Use {O:I} as the canonical written
 
 ## Guardrail
 
-Before adding code to this repository, ask whether the change is shared disclosure, setup, installation/registration, status, snapshot/verification composition, documentation, safe work placement, compatibility, or aliasing. If it changes what a native product can actually do, implement it in that product instead.
+Before adding code to this repository, ask whether the change is shared disclosure, setup, installation/registration, status, snapshot/verification composition, documentation, safe work placement, compatibility, aliasing, or thin suite-level resolver/Action dispatch. If it changes what a native product can actually do, implement it in that product instead.

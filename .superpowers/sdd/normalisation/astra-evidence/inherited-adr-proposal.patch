@@ -1,0 +1,45 @@
+diff --git a/docs/adr/0002-managed-skill-sources-and-project-routing.md b/docs/adr/0002-managed-skill-sources-and-project-routing.md
+index 103034b..8084ea9 100644
+--- a/docs/adr/0002-managed-skill-sources-and-project-routing.md
++++ b/docs/adr/0002-managed-skill-sources-and-project-routing.md
+@@ -29,6 +29,40 @@ Local-directory paths remain machine-private in `AIKIT_HOME`. Git source
+ coordinates are portable. Updates create candidates and never mutate an active
+ snapshot in place.
+ 
++## Control ground (`--control-ground`)
++
++A directory source may declare that its directory is **Control ground**:
++`source add-directory <id> <dir> --control-ground`. Central (the sibling
++product) authors machine and personal skills on Control ground
++(`Control/user/skills/`, `Control/machines/<machine>/skills/`) and project
++skills on ProjectCentral ground (`<project>/ProjectCentral/user/skills/`),
++publishing each skill's standing beside its `SKILL.md` in a `skill.json`
++manifest — the `central.skill/v1` contract.
++
++AIKit reads exactly that published contract and nothing beyond it, the same way
++the harness adapters read Central projections: no path heuristics, no inferred
++semantics. At `sync`, a skill directory carrying a valid `skill.json` contributes
++its standing, scope and provenance to the capsule as `[metadata.control]`
++capability metadata; a skill without one stays an ordinary skill, so existing
++sources are unaffected. A contract violation — an unknown schema, an
++unresolvable standing, a retirement without who/when/why, a manifest name that
++disagrees with the directory — refuses the sync naming the file rather than
++guessing. A source that did not opt in never opens `skill.json` at all.
++
++One value has teeth: **a retired standing never projects.** Projection is
++inclusion, so retirement extends what is withheld rather than building a second
++catalogue — the retired skill remains a member of its sets, and `aikit set show`
++discloses it as withheld with the owner's own retirement reason from the ground
++manifest (never as missing, never as an error). The resolver holds this opinion:
++`RetiredStanding` outranks every other availability gate. Because the standing
++is read at sync time, a standing change on the ground is picked up by the normal
++`sync` → `promote` cycle; it always produces a new snapshot digest.
++
++Project scopes register the same way. Whether a ProjectCentral-ground skill
++projects is decided by the enable scoping and Project Specifications that
++already exist — bound inside the project root, absent outside it — with no new
++routing mechanism.
++
+ ## Composition and project binding
+ 
+ Skill Sets are reusable named projections over source-qualified skill ids.

@@ -1,0 +1,26 @@
+{
+  "schema": "oi.suite-channels/v1",
+  "protocol_min": "1.0",
+  "protocol_max": "1.0",
+  "default_channel": "mainline",
+  "channels": {
+    "stable": {
+      "candidate_ref": null,
+      "source": "ratified-release-candidate",
+      "standing": "unavailable-no-ratified-suite-yet",
+      "installable": false
+    },
+    "mainline": {
+      "candidate_ref": "mainline:2026-09-09",
+      "source": "suite/mainline.json",
+      "standing": "accepted-owner-mains-source-composition",
+      "installable": false
+    },
+    "source": {
+      "candidate_ref": null,
+      "source": "explicit-developer-source",
+      "standing": "explicit-local-source-composition",
+      "installable": false
+    }
+  }
+}

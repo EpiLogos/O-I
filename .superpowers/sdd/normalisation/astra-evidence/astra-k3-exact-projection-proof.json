@@ -1,0 +1,59 @@
+{
+  "claude": {
+    "projected": [
+      "aikit-context",
+      "brandkit",
+      "design-taste-frontend",
+      "design-taste-frontend-v1",
+      "design-taste-frontend-v2",
+      "find-skills",
+      "full-output-enforcement",
+      "gpt-taste",
+      "high-end-visual-design",
+      "image-to-code",
+      "imagegen-frontend-mobile",
+      "imagegen-frontend-web",
+      "industrial-brutalist-ui",
+      "minimalist-ui",
+      "ralph-tui-create-beads",
+      "ralph-tui-create-beads-rust",
+      "ralph-tui-create-json",
+      "ralph-tui-prd",
+      "redesign-existing-projects",
+      "stitch-design-taste",
+      "unix-atomic-skill-maker"
+    ],
+    "missing": [],
+    "unexpected": [],
+    "retired_present": [],
+    "content_mismatches": []
+  },
+  "codex": {
+    "projected": [
+      "brandkit",
+      "design-taste-frontend",
+      "design-taste-frontend-v1",
+      "design-taste-frontend-v2",
+      "find-skills",
+      "full-output-enforcement",
+      "gpt-taste",
+      "high-end-visual-design",
+      "image-to-code",
+      "imagegen-frontend-mobile",
+      "imagegen-frontend-web",
+      "industrial-brutalist-ui",
+      "minimalist-ui",
+      "ralph-tui-create-beads",
+      "ralph-tui-create-beads-rust",
+      "ralph-tui-create-json",
+      "ralph-tui-prd",
+      "redesign-existing-projects",
+      "stitch-design-taste",
+      "unix-atomic-skill-maker"
+    ],
+    "missing": [],
+    "unexpected": [],
+    "retired_present": [],
+    "content_mismatches": []
+  }
+}

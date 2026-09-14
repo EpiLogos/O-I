@@ -1,0 +1,41 @@
+/** Real Chromium integration checks for package DOM/CSS; no backend fixtures. */
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+import {createServer} from 'node:http';
+import {readFile} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+import {resolve,extname,sep} from 'node:path';
+const require=createRequire(new URL('../../../desktop/cradle/package.json',import.meta.url));
+const {chromium}=require('playwright');
+const root=fileURLToPath(new URL('../',import.meta.url));
+const server=createServer(async(req,res)=>{try{const path=resolve(root,'.'+decodeURIComponent(new URL(req.url,'http://localhost').pathname));if(!path.startsWith(root.endsWith(sep)?root:root+sep))throw Error('outside root');const data=await readFile(path);res.setHeader('Content-Type',({'.html':'text/html','.css':'text/css','.mjs':'text/javascript','.svg':'image/svg+xml'})[extname(path)]||'application/octet-stream');res.end(data);}catch{res.statusCode=404;res.end();}});
+await new Promise(r=>server.listen(0,'127.0.0.1',r));
+let browser;let count=0;
+const check=(name,result)=>{assert.ok(result,name);console.log('PASS '+name);count++;};
+try{
+ browser=await chromium.launch({headless:true});const page=await browser.newPage({viewport:{width:1280,height:1000}});
+ await page.goto(`http://127.0.0.1:${server.address().port}/examples/loading.html`);
+ await page.getByRole('status').waitFor();
+ check('loading status exposes the real supplied label',await page.getByRole('status').innerText().then(t=>t.includes('Opening Central')));
+ check('large dense mark uses shared tokens',await page.locator('.oi-loading-mark').evaluate(e=>e.getBoundingClientRect().width===480&&getComputedStyle(e).backgroundSize==='2px 2px'));
+ check('general clusters animate independently of logo',await page.locator('.oi-point-clusters').evaluate(e=>e.children.length===3&&[...e.children].every(c=>c.getAnimations().length===1)));
+ await page.getByRole('button',{name:'Pause motion'}).click();
+ check('pause stops all mark and cluster motion',await page.locator('#stage').evaluate(e=>e.getAnimations({subtree:true}).length===0)&&await page.locator('.oi-point-clusters').evaluate(e=>e.getAnimations({subtree:true}).length===0));
+ await page.getByRole('button',{name:'Resume motion'}).click();
+ await page.emulateMedia({reducedMotion:'reduce'});
+ check('reduced motion disables every cloud animation',await page.evaluate(()=>document.getAnimations().length===0));
+ await page.emulateMedia({reducedMotion:'no-preference',forcedColors:'active'});
+ check('high contrast shows readable fallback',await page.locator('.oi-loading-fallback').isVisible()&&!(await page.locator('.oi-loading-mark').isVisible()));
+ await page.emulateMedia({forcedColors:'none'});
+ await page.getByRole('button',{name:'Preview window overlay'}).click();
+ check('overlay covers window and disables background',await page.locator('#overlay').evaluate(e=>e.getBoundingClientRect().width===innerWidth&&document.querySelector('#reference').inert));
+ await page.keyboard.press('Escape');
+ check('dismiss restores background and initiating focus',await page.locator('#show').evaluate(e=>document.activeElement===e&&!document.querySelector('#reference').inert&&!document.querySelector('#overlay')));
+ check('component validates labels and renders strings safely',await page.evaluate(async()=>{const {createLoadingIndicator}=await import('/loading.mjs');let rejected=false;try{createLoadingIndicator({label:' '})}catch{rejected=true}const c=createLoadingIndicator({label:'<img src=x onerror=alert(1)>'});document.body.append(c.element);const safe=!c.element.querySelector('img')&&c.element.textContent.includes('<img');c.update({label:'Ready',active:false,detail:''});const updated=c.element.dataset.active==='false'&&c.element.querySelector('.oi-loading-detail').hidden;c.remove();return rejected&&safe&&updated&&!c.element.isConnected;}));
+ await page.reload(); await page.getByRole('status').waitFor();
+ await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+ await page.screenshot({path:'/tmp/oi-point-cloud-desktop.png',fullPage:true});
+ await page.setViewportSize({width:320,height:740});
+ check('large logo shrinks within narrow reference',await page.locator('.oi-loading-mark').evaluate(e=>e.getBoundingClientRect().left>=0&&e.getBoundingClientRect().right<=innerWidth));
+ console.log(`${count}/${count} browser checks passed`);
+}finally{await browser?.close();await new Promise(r=>server.close(r));}

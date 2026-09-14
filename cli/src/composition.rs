@@ -1,3 +1,4 @@
+use oi_cli::modality::InstallModality;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::collections::{BTreeMap, HashSet};
@@ -8,7 +9,6 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode, Stdio};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-const CATALOG_JSON: &str = include_str!("../../surfaces.json");
 const OI_REPOSITORY: &str = "https://github.com/EpiLogos/O-I";
 const STATE_SCHEMA: u32 = 1;
 
@@ -48,23 +48,46 @@ struct NativeSurface {
 struct InstallSurface {
     kind: String,
     note: String,
+    /// The installation modality this descriptor's install path serves
+    /// (#192). Additive and optional: descriptors that predate the field
+    /// deserialize as [`InstallModality::Unknown`].
+    #[serde(default)]
+    modality: InstallModality,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct Composition {
+    #[serde(skip)]
+    loaded_basis: std::cell::RefCell<Option<Vec<u8>>>,
     schema: u32,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     personal_ground: Option<String>,
     #[serde(default)]
     modules: BTreeMap<String, Registration>,
+    /// The person's own statement of which install mode (#268) they are
+    /// adopting — recorded only through `oi mode set`, never inferred from
+    /// presence. `None` until stated; disclosure resolves the mode from
+    /// effective presence when no statement exists.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    requested_mode: Option<RequestedMode>,
+}
+
+/// One recorded mode statement (#268). The frame notation is the mode id.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) struct RequestedMode {
+    pub frame: String,
+    pub set_at_unix_seconds: u64,
+    pub set_by: String,
 }
 
 impl Default for Composition {
     fn default() -> Self {
         Self {
             schema: STATE_SCHEMA,
+            loaded_basis: std::cell::RefCell::new(None),
             personal_ground: None,
             modules: BTreeMap::new(),
+            requested_mode: None,
         }
     }
 }
@@ -84,6 +107,17 @@ struct Registration {
     skill: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     root: Option<String>,
+    /// The installation modality that produced this registration, recorded
+    /// at install/init time (#192). Legacy state without the field
+    /// deserializes as [`InstallModality::Unknown`] and is disclosed as
+    /// such — never inferred retroactively.
+    #[serde(default)]
+    modality: InstallModality,
+    /// The declared install source of this registration (e.g.
+    /// `existing-path-ctrl`, `oi-pinned-source`), recorded when the source
+    /// was chosen. Absent for legacy state.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    install_source: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -100,6 +134,11 @@ struct StatusRow {
     docs: String,
     compatibility: String,
     detail: Option<String>,
+    /// Modality recorded for this registration at install/init time;
+    /// `None` when the surface is not registered (nothing produced it).
+    modality: Option<InstallModality>,
+    /// Declared install source of this registration, when recorded.
+    install_source: Option<String>,
 }
 
 fn main() -> ExitCode {
@@ -143,8 +182,13 @@ fn run(args: &[OsString]) -> Result<i32, String> {
         "install" => command_install(&catalog, &args[1..]),
         "docs" => command_docs(&catalog, &args[1..]),
         "migrate" => command_migrate(&catalog, &args[1..]),
+        "catalogue" => command_catalogue(&args[1..]),
         "version" | "--version" | "-V" => {
-            println!("oi {}", env!("CARGO_PKG_VERSION"));
+            println!(
+                "oi {} ({})",
+                env!("CARGO_PKG_VERSION"),
+                option_env!("SUITE_BUILD_REVISION").unwrap_or("unknown")
+            );
             Ok(0)
         }
         unknown => Err(format!(
@@ -154,8 +198,9 @@ fn run(args: &[OsString]) -> Result<i32, String> {
 }
 
 fn catalog() -> Result<Catalog, String> {
-    let catalog: Catalog = serde_json::from_str(CATALOG_JSON)
-        .map_err(|error| format!("embedded surface descriptors are invalid: {error}"))?;
+    let resolved = crate::catalog_source::resolve()?;
+    let catalog: Catalog = serde_json::from_str(&resolved.json)
+        .map_err(|error| format!("surface descriptors ({}) are invalid: {error}", resolved.origin))?;
     if catalog.schema != 1 {
         return Err(format!(
             "unsupported surface descriptor schema {}",
@@ -183,6 +228,8 @@ fn print_help(catalog: &Catalog) {
     println!("  oi register <module> [--executable PATH] [--root PATH] [--version TEXT]");
     println!("  oi install <module>");
     println!("  oi docs [topic|module]");
+    println!("  oi catalogue show [--json]");
+    println!("  oi catalogue adopt <surfaces.json>");
     println!("  oi migrate <path>");
     println!("  oi <alias> [native arguments...]");
     println!();
@@ -199,6 +246,71 @@ fn print_help(catalog: &Catalog) {
     println!();
     println!("The wrapper owns setup, discovery, documentation, registration and handoff only.");
     println!("Product behaviour remains in the native product surfaces.");
+}
+
+fn command_catalogue(args: &[OsString]) -> Result<i32, String> {
+    let sub = args.first().and_then(|value| value.to_str()).unwrap_or("show");
+    match sub {
+        "show" => {
+            let resolved = crate::catalog_source::resolve()?;
+            let value: serde_json::Value = serde_json::from_str(&resolved.json)
+                .map_err(|error| format!("catalogue ({}) is invalid: {error}", resolved.origin))?;
+            let verified_at = value["verified_at"].as_str().unwrap_or("(unrecorded)");
+            let surfaces = value["surfaces"].as_array().map(Vec::len).unwrap_or(0);
+            let json_mode = args.iter().any(|one| one == "--json");
+            if json_mode {
+                println!(
+                    "{}",
+                    serde_json::json!({
+                        "origin": resolved.origin,
+                        "path": resolved.path.as_ref().map(|path| path.display().to_string()),
+                        "verified_at": verified_at,
+                        "surfaces": surfaces,
+                    })
+                );
+                return Ok(0);
+            }
+            match &resolved.path {
+                Some(path) => println!("O:I catalogue: runtime ({})", path.display()),
+                None => println!("O:I catalogue: embedded snapshot (bootstrap fallback)"),
+            }
+            println!("verified_at {verified_at} · {surfaces} surfaces");
+            println!("adopt a live catalogue with: oi catalogue adopt <surfaces.json>");
+            Ok(0)
+        }
+        "adopt" => {
+            let source = args
+                .get(1)
+                .map(PathBuf::from)
+                .ok_or_else(|| "usage: oi catalogue adopt <surfaces.json>".to_owned())?;
+            let json = fs::read_to_string(&source)
+                .map_err(|error| format!("cannot read {}: {error}", source.display()))?;
+            crate::catalog_source::validate(&json, &source.display().to_string())?;
+            let value: serde_json::Value = serde_json::from_str(&json)
+                .map_err(|error| format!("catalogue {} is invalid: {error}", source.display()))?;
+            let verified_at = value["verified_at"].as_str().unwrap_or("(unrecorded)");
+            let destination = crate::catalog_source::state_catalogue_path()?;
+            let parent = destination
+                .parent()
+                .ok_or_else(|| "catalogue state path has no parent".to_owned())?;
+            fs::create_dir_all(parent)
+                .map_err(|error| format!("cannot create {}: {error}", parent.display()))?;
+            let temporary = parent.join("catalogue.json.tmp");
+            fs::write(&temporary, &json)
+                .map_err(|error| format!("cannot write {}: {error}", temporary.display()))?;
+            fs::rename(&temporary, &destination)
+                .map_err(|error| format!("cannot replace {}: {error}", destination.display()))?;
+            println!(
+                "Catalogue adopted: {} -> {} (verified_at {verified_at})",
+                source.display(),
+                destination.display()
+            );
+            Ok(0)
+        }
+        other => Err(format!(
+            "unknown catalogue command '{other}'; expected show or adopt"
+        )),
+    }
 }
 
 fn command_status(catalog: &Catalog, args: &[OsString]) -> Result<i32, String> {
@@ -266,10 +378,14 @@ fn status_rows(catalog: &Catalog, composition: &Composition) -> Vec<StatusRow> {
                 docs,
                 compatibility: surface.compatibility.clone(),
                 detail: None,
+                modality: None,
+                install_source: None,
             };
 
             if let Some(registration) = composition.modules.get(&surface.id) {
                 row.version = registration.version.clone();
+                row.modality = Some(registration.modality);
+                row.install_source = registration.install_source.clone();
                 if surface.native.kind == "cli" {
                     let candidate = registration
                         .native_executable
@@ -343,7 +459,14 @@ fn command_init(catalog: &Catalog, args: &[OsString]) -> Result<i32, String> {
             continue;
         };
         if let Some(path) = resolve_executable(executable) {
-            let registration = registration_for(surface, Some(path), None, None)?;
+            let registration = registration_in_modality(
+                surface,
+                Some(path),
+                None,
+                None,
+                InstallModality::ExistingGroundReconcile,
+                None,
+            )?;
             ensure_alias_available(&composition, &registration)?;
             composition.modules.insert(surface.id.clone(), registration);
         }
@@ -470,7 +593,14 @@ fn command_register(catalog: &Catalog, args: &[OsString]) -> Result<i32, String>
         }
     }
 
-    let registration = registration_for(surface, executable, root, version)?;
+    let registration = registration_in_modality(
+        surface,
+        executable,
+        root,
+        version,
+        InstallModality::ExistingGroundReconcile,
+        None,
+    )?;
     let mut composition = load_composition()?;
     ensure_alias_available(&composition, &registration)?;
     composition
@@ -479,6 +609,7 @@ fn command_register(catalog: &Catalog, args: &[OsString]) -> Result<i32, String>
     save_composition(&composition)?;
 
     println!("Registered: {}", surface.public_name);
+    println!("Modality: {}", registration.modality.as_str());
     if let Some(native) = &registration.native_executable {
         println!("Native command: {native}");
     } else if let Some(root) = &registration.root {
@@ -513,7 +644,13 @@ fn command_install(catalog: &Catalog, args: &[OsString]) -> Result<i32, String> 
                 "Found existing {} installation; registering it instead of reinstalling.",
                 surface.public_name
             );
-            return register_existing(catalog, surface, executable);
+            return register_existing_in_modality(
+                catalog,
+                surface,
+                executable,
+                InstallModality::ExistingGroundReconcile,
+                Some("existing-path-executable".to_owned()),
+            );
         }
     }
 
@@ -562,15 +699,39 @@ fn install_aikit(catalog: &Catalog, surface: &Surface) -> Result<i32, String> {
         .ok_or_else(|| {
             "AIKit installed but aikit could not be found. Add Cargo's bin directory to PATH and run 'oi register ai-kit'.".to_owned()
         })?;
-    register_existing(catalog, surface, executable)
+    // A pinned source build serves the frame the descriptor declares; a
+    // descriptor that predates the field still describes a source build.
+    let modality = if surface.install.modality == InstallModality::Unknown {
+        InstallModality::DeveloperSource
+    } else {
+        surface.install.modality
+    };
+    register_existing_in_modality(
+        catalog,
+        surface,
+        executable,
+        modality,
+        Some("aikit-source-build".to_owned()),
+    )
 }
 
-fn register_existing(
+/// Register an already-present executable, recording the modality and
+/// declared install source of the registration (#192).
+fn register_existing_in_modality(
     _catalog: &Catalog,
     surface: &Surface,
     executable: PathBuf,
+    modality: InstallModality,
+    install_source: Option<String>,
 ) -> Result<i32, String> {
-    let registration = registration_for(surface, Some(executable), None, None)?;
+    let registration = registration_in_modality(
+        surface,
+        Some(executable),
+        None,
+        None,
+        modality,
+        install_source,
+    )?;
     let mut composition = load_composition()?;
     ensure_alias_available(&composition, &registration)?;
     composition
@@ -667,11 +828,18 @@ fn find_surface<'a>(catalog: &'a Catalog, query: &str) -> Result<&'a Surface, St
         .ok_or_else(|| format!("unknown module '{query}'"))
 }
 
-fn registration_for(
+/// Build a registration with the installation modality (#192) and the
+/// declared install source recorded on it. Every install or init path
+/// calls this with the frame it actually serves so the composition
+/// discloses its provenance.
+#[allow(clippy::too_many_arguments)]
+fn registration_in_modality(
     surface: &Surface,
     executable: Option<PathBuf>,
     root: Option<PathBuf>,
     explicit_version: Option<String>,
+    modality: InstallModality,
+    install_source: Option<String>,
 ) -> Result<Registration, String> {
     let resolved_executable = executable.map(|path| path.display().to_string());
     let version = explicit_version.or_else(|| {
@@ -719,6 +887,8 @@ fn registration_for(
         docs,
         skill,
         root: root.map(|path| path.display().to_string()),
+        modality,
+        install_source,
     })
 }
 
@@ -814,11 +984,9 @@ fn oi_doc_topic(topic: &str) -> Option<&'static str> {
 
 fn load_composition() -> Result<Composition, String> {
     let path = state_path()?;
-    if !path.exists() {
+    let Some(bytes) = composition_read_bytes(&path)? else {
         return Ok(Composition::default());
-    }
-    let bytes = fs::read(&path)
-        .map_err(|error| format!("cannot read composition state {}: {error}", path.display()))?;
+    };
     let composition: Composition = serde_json::from_slice(&bytes)
         .map_err(|error| format!("invalid composition state {}: {error}", path.display()))?;
     if composition.schema != STATE_SCHEMA {
@@ -828,23 +996,12 @@ fn load_composition() -> Result<Composition, String> {
             path.display()
         ));
     }
+    *composition.loaded_basis.borrow_mut() = Some(bytes);
     Ok(composition)
 }
 
 fn save_composition(composition: &Composition) -> Result<(), String> {
-    let path = state_path()?;
-    let parent = path
-        .parent()
-        .ok_or_else(|| "composition state path has no parent".to_owned())?;
-    fs::create_dir_all(parent)
-        .map_err(|error| format!("cannot create {}: {error}", parent.display()))?;
-    let temporary = parent.join("composition.json.tmp");
-    let bytes = serde_json::to_vec_pretty(composition).map_err(|error| error.to_string())?;
-    fs::write(&temporary, bytes)
-        .map_err(|error| format!("cannot write {}: {error}", temporary.display()))?;
-    fs::rename(&temporary, &path)
-        .map_err(|error| format!("cannot replace {}: {error}", path.display()))?;
-    Ok(())
+    composition_save_cas(composition)
 }
 
 fn state_path() -> Result<PathBuf, String> {
