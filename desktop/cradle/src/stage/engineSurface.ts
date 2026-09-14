@@ -66,6 +66,7 @@ export class EngineSurface {
 
   private constructor(canvas: HTMLCanvasElement, element: HTMLElement | null, onError: (message: string) => void) {
     this.canvas = canvas;
+    this.canvas.style.visibility = "hidden";
     this.element = element;
     this.onError = onError;
     const factory = window.OI_ENGINE_FACTORY;
@@ -126,6 +127,7 @@ export class EngineSurface {
       throw new Error(`The engine surface already presents "${this.active.id}"; release it before presenting "${id}".`);
     }
     this.live = true;
+    this.canvas.style.visibility = "visible";
     this.activate(id, this.sceneFrom(stageRecipe(recipe)));
     this.wake();
   }
@@ -137,6 +139,7 @@ export class EngineSurface {
       throw new Error(`The engine surface already presents "${this.active.id}"; release it before presenting "${id}".`);
     }
     this.live = true;
+    this.canvas.style.visibility = "visible";
     this.activate(id, this.sceneFrom(config as NativeConfig));
     this.wake();
   }
@@ -188,8 +191,9 @@ export class EngineSurface {
     this.clearTimers();
     this.live = false;
     this.sleep();
-    // An idle frame keeps the shared canvas honest — a released scene
-    // leaves no lingering mark on the window's expression surface.
+    // A transition toward idle is not an empty frame. Hide the released
+    // presentation immediately; keep the native medium for the next scene.
+    this.canvas.style.visibility = "hidden";
     this.activate("stage-idle", this.sceneFrom(IDLE_CONFIG, "stage-idle"));
     this.renderFrame(0);
     this.active = null;

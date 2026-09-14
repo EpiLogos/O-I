@@ -1215,3 +1215,27 @@ C4 (graph presentation, ONE dedicated worker) dispatches next against a tree car
   renders the idle frame, clears the occupied slot, and stale releases do not
   cancel a different presentation's timers. Full-motion re-entry now passes the
   same 10 app checks; the previous failure is retained in factory-f1-failure.png.
+
+### Factory foundation correction — 2026-09-14
+
+Owner returned: the empty Agent panel reports unavailable gateway methods, the
+renderer visibly freezes, and the Factory presentation is not acceptable.
+Factory expansion is paused while these foundations are repaired; PR #292 stays
+draft. Previous C continuity receipts do not establish a usable live Factory
+vertical or visual/H acceptance.
+
+Readback: on Omarchy `oi aikit-session-space -C /home/frank/Central/Work/O-I list`
+fails `cannot exec AIKit SessionSpace aikit-session-space: No such file or directory`.
+AgentLayer's blanket gateway warning is hard-coded independently of that readback.
+The native encounter start/read path exists in kernel agency.rs; live conversation
+proof remains outstanding. Building the missing companion from AIKit GitHub main
+856f454 in its isolated remote worktree; no primary owner checkout edits.
+
+Renderer correction: release rendered one interpolated idle frame then stopped,
+leaving visible particles. The Stage now hides the released canvas explicitly and
+reveals it on presentation; added full-motion application assertion for invisibility.
+This supersedes the earlier assertion that one idle frame left no visible mark.
+
+Owner authorises a small demo job with real native operations for the live walk.
+No existing production Run is required; generated fixtures must not be claimed as
+actual provider activity or human Recognition.

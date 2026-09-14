@@ -37,6 +37,9 @@ for(let i=0;i<3;i++){
 check(await page.evaluate(()=>window.originalAgent===document.querySelector(".agent-layer")),"Rapid composition switches preserve Agent DOM");
 await page.getByRole("button",{name:"Factory development",exact:true}).click();
 await page.locator(".factory-encounter-host .agent-layer").waitFor();
+if(process.env.WALK_MOTION === "full") await page.locator('canvas[data-oi-stage="engine"]').waitFor({state:"attached"});
+await page.waitForFunction(()=>Array.from(document.querySelectorAll('canvas[data-oi-stage="engine"]')).every(canvas=>getComputedStyle(canvas).visibility==="hidden"));
+check(await page.evaluate(()=>Array.from(document.querySelectorAll('canvas[data-oi-stage="engine"]')).every(canvas=>getComputedStyle(canvas).visibility==="hidden")),"Released Stage leaves no frozen overlay");
 await page.screenshot({path:"walk/artifacts/factory-f1-wide.png"});
 await page.reload();
 await page.locator(".factory-encounter-host .agent-layer").waitFor();

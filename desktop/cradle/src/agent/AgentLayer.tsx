@@ -136,15 +136,10 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
  * launch, no fake session. Once chosen, EncounterSurface's own connect flow
  * discloses the real provider list. */
 function NoAccompanying({project, onOpen}: {project?: string; onOpen: (row: EncounterRow) => Promise<void>}) {
-  // The same truthful Agency Gateway absence line SystemPanel shows
-  // (`.gateway-aperture`, workspace/SystemPanel.tsx) — no new operation,
-  // just the same honest sentence wherever the person can land on it.
-  const gatewayNote = <p className="agent-note">Agency Gateway attach and stream operations are not exposed here. Existing local conversations remain available; see System.</p>;
-  if (!project) return <div className="agent-empty"><p>Select a project to bring its conversations here.</p>{gatewayNote}</div>;
+  if (!project) return <div className="agent-empty"><p>Select a project to bring its conversations here.</p></div>;
   return <div className="agent-empty">
     <p>No accompanying agent yet. Choose a conversation attached to this project.</p>
     <EncounterList project={project} onOpen={onOpen}/>
-    {gatewayNote}
   </div>;
 }
 

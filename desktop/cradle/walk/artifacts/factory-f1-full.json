@@ -9,6 +9,7 @@
     "Same Agent DOM returns to ordinary shell",
     "Ordinary geometry unchanged",
     "Rapid composition switches preserve Agent DOM",
+    "Released Stage leaves no frozen overlay",
     "Factory binding restores without recovery failure",
     "Narrow shell leaves Factory and restores draft",
     "No application page errors"
@@ -19,14 +20,14 @@
       "type": "group",
       "id": "g1",
       "tabs": [
-        "d194cc4e-6da5-404b-a4ee-7c27400fb433"
+        "ab6f4b53-55c3-4a91-8c19-8885f1aa61eb"
       ],
       "pinned": [],
-      "active": "d194cc4e-6da5-404b-a4ee-7c27400fb433"
+      "active": "ab6f4b53-55c3-4a91-8c19-8885f1aa61eb"
     },
     "surfaces": {
-      "d194cc4e-6da5-404b-a4ee-7c27400fb433": {
-        "id": "d194cc4e-6da5-404b-a4ee-7c27400fb433",
+      "ab6f4b53-55c3-4a91-8c19-8885f1aa61eb": {
+        "id": "ab6f4b53-55c3-4a91-8c19-8885f1aa61eb",
         "kind": "draft",
         "title": "Draft"
       }
@@ -43,25 +44,25 @@
       "type": "group",
       "id": "g1",
       "tabs": [
-        "d194cc4e-6da5-404b-a4ee-7c27400fb433"
+        "ab6f4b53-55c3-4a91-8c19-8885f1aa61eb"
       ],
       "pinned": [],
-      "active": "d194cc4e-6da5-404b-a4ee-7c27400fb433"
+      "active": "ab6f4b53-55c3-4a91-8c19-8885f1aa61eb"
     },
     "surfaces": {
-      "d194cc4e-6da5-404b-a4ee-7c27400fb433": {
-        "id": "d194cc4e-6da5-404b-a4ee-7c27400fb433",
+      "ab6f4b53-55c3-4a91-8c19-8885f1aa61eb": {
+        "id": "ab6f4b53-55c3-4a91-8c19-8885f1aa61eb",
         "kind": "draft",
         "title": "Draft"
       },
-      "c4b765ae-f210-4145-b876-67435f223b68": {
-        "id": "c4b765ae-f210-4145-b876-67435f223b68",
+      "05b6f317-4928-4d1e-a51f-3cd90592d2d7": {
+        "id": "05b6f317-4928-4d1e-a51f-3cd90592d2d7",
         "kind": "factory",
         "title": "Factory development"
       }
     },
     "closedStack": [
-      "c4b765ae-f210-4145-b876-67435f223b68"
+      "05b6f317-4928-4d1e-a51f-3cd90592d2d7"
     ],
     "focusedGroupId": "g1",
     "agencyDepth": "panel",
