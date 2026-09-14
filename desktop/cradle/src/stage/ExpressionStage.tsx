@@ -146,7 +146,9 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
 
   const present = useCallback((request: StagePresentationRequest): StagePresentation | null => {
     if (!snapshot.enabled || surfaceError) return null;
-    if (presentations.current.has(request.id)) return null;
+    // One native scene owns this window at a time. Optional composition
+    // expression declines while another presentation (e.g. welcome) holds it.
+    if (presentations.current.size > 0) return null;
     if (request.target && request.target !== "viewport") {
       throw new Error(`Element-target presentations are not engine window surfaces: ${request.target}`);
     }

@@ -184,13 +184,15 @@ export class EngineSurface {
   }
 
   release(id: string) {
-    if (!this.active || this.active.id !== id) { this.clearTimers(); return; }
+    if (!this.active || this.active.id !== id) return;
     this.clearTimers();
     this.live = false;
+    this.sleep();
     // An idle frame keeps the shared canvas honest — a released scene
     // leaves no lingering mark on the window's expression surface.
     this.activate("stage-idle", this.sceneFrom(IDLE_CONFIG, "stage-idle"));
     this.renderFrame(0);
+    this.active = null;
   }
 
   command(command: EngineCommand) {
@@ -257,12 +259,12 @@ export class EngineSurface {
 
   private frame = (now: number) => {
     this.raf = 0;
-    if (!this.active) return;
-    if (document.hidden) { this.last = now; this.raf = requestAnimationFrame(this.frame); return; }
+    if (!this.active || !this.live) return;
+    if (document.hidden) { this.last = now; return; }
     const animate = !this.paused && (this.forceMotion || !this.reduced.matches);
     const delta = animate ? Math.min(0.05, Math.max(0.001, (now - this.last) / 1000)) : 0;
     this.last = now;
-    if (this.renderFrame(delta) && this.active) this.raf = requestAnimationFrame(this.frame);
+    if (this.renderFrame(delta) && this.active && this.live) this.raf = requestAnimationFrame(this.frame);
   };
 
   /** Renders one frame; returns false when the surface has failed. */

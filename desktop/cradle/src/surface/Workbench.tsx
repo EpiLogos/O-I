@@ -1,7 +1,7 @@
 import {EncounterSurface} from "../encounter/EncounterSurface";
 import {requestResizeExpression} from "../shared/Expression";
 import {SystemPanel} from "../workspace/SystemPanel";
-import {FactoryDevelopmentSurface} from "../contributions/factory/FactoryDevelopmentSurface";
+import {FactoryComposition} from "../contributions/factory/FactoryComposition";
 /**
  * The Workbench (U0.3b) — the OS frame that exists ONLY while ≥1 surface is
  * open (law 12: austere rest governs what is on screen; at zero surfaces
@@ -288,7 +288,7 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
         }}
 
       >
-        {activeBinding ? <SurfaceBody key={activeBinding.id} binding={activeBinding} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} /> : <p className="source-note">{state.detached?.some(d=>d.groupId===group.id)?"This view is open in a native window. Close that window to re-dock it here.":"Move a tab here, or open a source or wiki with +."}</p>}
+        {activeBinding ? <SurfaceBody key={activeBinding.id} foreground={focused} binding={activeBinding} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} /> : <p className="source-note">{state.detached?.some(d=>d.groupId===group.id)?"This view is open in a native window. Close that window to re-dock it here.":"Move a tab here, or open a source or wiki with +."}</p>}
       </div>
       <footer className="pane-status pane-footer" aria-label={focused ? "Active pane" : "Pane status"} />
     </section>
@@ -298,10 +298,11 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
 /** The surface body by kind: real owner surfaces where they exist (U0.4:
  * 'source', 'sources'), the clearly-named test card otherwise. */
 function SurfaceBody({
-  binding,onView,
+  binding,onView,foreground,
   openSource, openKnowledge,
 }: {
   binding: import("./types").SurfaceBinding;
+  foreground: boolean;
   onView:WorkbenchProps["onView"];
   openKnowledge: WorkbenchProps["openKnowledge"];
   openSource: (source: ListedSource) => void;
@@ -314,7 +315,7 @@ function SurfaceBody({
   if (binding.kind === "browser") return <BrowserSurface binding={binding} />;
   if (binding.kind === "file") return <FileSurface key={binding.id} binding={binding}/>;
   if (binding.kind === "system") return <SystemPanel binding={binding}/>;
-  if (binding.kind === "factory") return <FactoryDevelopmentSurface />;
+  if (binding.kind === "factory") return <FactoryComposition binding={binding} foreground={foreground} />;
   if (binding.kind === "knowledge") return <KnowledgeSurface binding={binding} onOpen={openKnowledge} />;
   if (binding.kind === "source") {
     return <SourceSurface binding={binding} />;

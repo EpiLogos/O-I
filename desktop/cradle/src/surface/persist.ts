@@ -26,7 +26,7 @@ function validBinding(raw: unknown): SurfaceBinding | null {
   // `draft` is unplaced writing: it deliberately carries no owner ref, and it
   // must survive a relaunch — the writing lives beside it under the same
   // surface id, and dropping the binding would orphan it.
-  if (o.kind !== "source" && o.kind !== "sources" && o.kind !== "knowledge" && o.kind !== "file" && o.kind !== "encounter" && o.kind !== "system" && o.kind !== "browser" && o.kind !== "terminal" && o.kind !== "flow" && o.kind !== "draft" && o.kind !== "blank") return null;
+  if (o.kind !== "source" && o.kind !== "sources" && o.kind !== "knowledge" && o.kind !== "file" && o.kind !== "encounter" && o.kind !== "system" && o.kind !== "browser" && o.kind !== "terminal" && o.kind !== "flow" && o.kind !== "draft" && o.kind !== "blank" && o.kind !== "factory") return null;
   if (o.ref !== undefined && typeof o.ref !== "string") return null;
   if (o.project !== undefined && typeof o.project !== "string") return null;
   const address = o.address as SurfaceBinding["address"];

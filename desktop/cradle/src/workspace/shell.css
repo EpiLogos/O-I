@@ -413,3 +413,15 @@
  .desktop-shell .desktop-side.right.depth-full{top:-24px;padding-top:24px;box-sizing:border-box}
 }
 .desktop-shell:has(.desktop-regions[data-right-full="true"]) .shell-topbar{z-index:calc(var(--oi-z-drawer) + 2)}
+
+/* A retained Surface moves into an existing host without remounting its body. */
+.retained-region-home, .retained-region-surface, .shell-return-host {
+  height: 100%; min-height: 0; min-width: 0;
+}
+.retained-region-home[hidden], .shell-return-host[hidden] { display: none; }
+.factory-composition { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.factory-composition-heading { display: flex; gap: 12px; align-items: baseline; padding: 12px 16px; border-bottom: 1px solid var(--oi-border); }
+.factory-composition-heading span { opacity: .6; font-size: 12px; }
+.factory-encounter-host { flex: 1; min-height: 0; overflow: hidden; }
+.shell-return-host { overflow: auto; }
+.shell-return-host .factory-development { min-width: 0; }

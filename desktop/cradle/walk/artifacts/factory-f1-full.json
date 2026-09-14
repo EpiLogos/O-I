@@ -1,0 +1,72 @@
+{
+  "standing": "C: running production web bundle with real native kernel; no provider or H claim",
+  "motion": "full",
+  "checks": [
+    "Same Agent DOM enters centre",
+    "Real Factory inspection is hosted in right region",
+    "Exactly one AgentLayer mounted",
+    "Ordinary writing survives exit",
+    "Same Agent DOM returns to ordinary shell",
+    "Ordinary geometry unchanged",
+    "Rapid composition switches preserve Agent DOM",
+    "Factory binding restores without recovery failure",
+    "Narrow shell leaves Factory and restores draft",
+    "No application page errors"
+  ],
+  "errors": [],
+  "before": {
+    "root": {
+      "type": "group",
+      "id": "g1",
+      "tabs": [
+        "d194cc4e-6da5-404b-a4ee-7c27400fb433"
+      ],
+      "pinned": [],
+      "active": "d194cc4e-6da5-404b-a4ee-7c27400fb433"
+    },
+    "surfaces": {
+      "d194cc4e-6da5-404b-a4ee-7c27400fb433": {
+        "id": "d194cc4e-6da5-404b-a4ee-7c27400fb433",
+        "kind": "draft",
+        "title": "Draft"
+      }
+    },
+    "closedStack": [],
+    "focusedGroupId": "g1",
+    "agencyDepth": "panel",
+    "rightDepth": "collapsed",
+    "leftWidth": 240,
+    "rightWidth": 320
+  },
+  "after": {
+    "root": {
+      "type": "group",
+      "id": "g1",
+      "tabs": [
+        "d194cc4e-6da5-404b-a4ee-7c27400fb433"
+      ],
+      "pinned": [],
+      "active": "d194cc4e-6da5-404b-a4ee-7c27400fb433"
+    },
+    "surfaces": {
+      "d194cc4e-6da5-404b-a4ee-7c27400fb433": {
+        "id": "d194cc4e-6da5-404b-a4ee-7c27400fb433",
+        "kind": "draft",
+        "title": "Draft"
+      },
+      "c4b765ae-f210-4145-b876-67435f223b68": {
+        "id": "c4b765ae-f210-4145-b876-67435f223b68",
+        "kind": "factory",
+        "title": "Factory development"
+      }
+    },
+    "closedStack": [
+      "c4b765ae-f210-4145-b876-67435f223b68"
+    ],
+    "focusedGroupId": "g1",
+    "agencyDepth": "panel",
+    "rightDepth": "collapsed",
+    "leftWidth": 240,
+    "rightWidth": 320
+  }
+}

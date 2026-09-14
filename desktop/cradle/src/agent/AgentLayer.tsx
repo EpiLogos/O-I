@@ -44,13 +44,14 @@ const KIND_OWNER: Record<string, string> = {
   knowledge: "AIKit",
 };
 
-export function AgentLayer({project, subject, history, historyAvailable, accompanying, onAccompanying, full, onFull, onClose}: {
+export function AgentLayer({project, subject, history, historyAvailable, accompanying, onAccompanying, full, onFull, onClose, region = "right"}: {
   project?: string;
   subject: AgentSubject;
   history?: ReactNode;
   historyAvailable: boolean;
   accompanying?: AgentAccompanying;
   onAccompanying: (value: AgentAccompanying) => void;
+  region?: "right" | "centre";
   full: boolean;
   onFull: () => void;
   onClose: () => void;
@@ -111,11 +112,11 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
       <div className="agent-head-row">
         <ExpressionAnchor form={form}/>
         <div><strong>Agent</strong><small>{project ? `Situated in ${project}` : "Situated in Central"}</small></div>
-        <button className="agent-tool" aria-label={full ? "Restore right region" : "Full right region"} onClick={onFull}><Glyph name={full ? "restore" : "expand"}/></button>
-        <button className="agent-tool" aria-label="Collapse right region" onClick={onClose}><Glyph name="close"/></button>
+        <button className="agent-tool" aria-label={region === "centre" ? (full ? "Restore encounter pane" : "Maximize encounter pane") : (full ? "Restore right region" : "Full right region")} onClick={onFull}><Glyph name={full ? "restore" : "expand"}/></button>
+        <button className="agent-tool" aria-label={region === "centre" ? "Leave Factory" : "Collapse right region"} onClick={onClose}><Glyph name="close"/></button>
       </div>
     </header>
-    <nav className="agent-planes" aria-label="Right region planes">
+    <nav className="agent-planes" aria-label={region === "centre" ? "Encounter planes" : "Right region planes"}>
       {(["Conversation", "Activity", "Context", "Inspect"] as const).map(name =>
         <button key={name} aria-pressed={plane === name} onClick={() => setPlane(name)}>{name}</button>)}
     </nav>

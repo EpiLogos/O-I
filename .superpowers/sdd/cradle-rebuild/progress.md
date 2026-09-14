@@ -1179,3 +1179,39 @@ C4 (graph presentation, ONE dedicated worker) dispatches next against a tree car
 - APP REPAIRS: none — no product code regressed; the one product-file change is the DraftSurface doc-comment drift cure (comment only). Floor behavior changes only in the two suites whose failing checks were the named run-proven defects; every other floor check untouched (20-suite floor intact).
 - WALK (acceptance): rest 16/16 · system-settings 7/7 · bootstrap 15/15 · navigator 27/27; receipts + screenshots regenerated and committed (rest cold_start_fcp_ms 164).
 - Files: walk/scenarios/{rest,system-settings}.mjs, src/flow/DraftSurface.tsx (doc-comment only), walk/artifacts/{rest,system-settings,bootstrap,navigator}.json + screenshots regenerated. Branch agent/walk-recontract-rest-system-settings from origin/main 4ebd5ca9; PR #278.
+
+
+## 2026-09-14 — #289 Factory F1, Omarchy candidate
+- Base 1c340ab15177a899f64eb0bae87ce68d1a3d7c9a; owner-authorised remote isolated
+  lane at /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement.
+  Primary remote/local edits and K9 branch are untouched.
+- Factory SurfaceBinding foregrounds the same mounted AgentLayer in centre;
+  existing Factory owner reads move to right. RetainedRegionSurface is shell-only:
+  no QL adapter, new runtime identity or authority. Ordinary geometry is preserved.
+  Factory bindings now survive decode/reload.
+- D/C: TypeScript + Vite production build, real native Rust kernel build; app walk
+  via native walk bridge checks retained Agent DOM, draft, geometry, repeated
+  entry/exit, reload and narrow layout. Evidence: desktop/cradle/walk/factory-composition.mjs
+  and walk/artifacts/factory-f1-{reduced,full}.json (regenerated at current cut).
+- Native material: Linux Tauri debug binary built and launched against actual
+  Omarchy ground. AT-SPI reads confirmed the Factory owner inspection in the right
+  region. Native visual acceptance remains OPEN: monitor reported dpmsStatus=false,
+  compositor capture was black, X11 captures corrupted. Owner asked asynchronously
+  to wake/open/unlock the display. This is not an H or provider receipt.
+- Stage: semantic lifecycle cues/targets and a bounded factory.enter sequence
+  use the current native engine. Reduced motion skips presentation; readiness
+  never waits. A busy Stage declines optional composition expression.
+- Context checker: repaired external-URL misclassification of QL-MEF's UX source.
+  Remaining worktree gate is the explicit owner-authorised exception, not a pass.
+- F0 beyond shell: GitHub Factory 63d4147 and AIKit 856f454 were fetched as github/main
+  without moving their bundle-backed primary checkouts. AIKit SessionSpace open is
+  a persisted-state read, not native provider attachment. Exact provider entry and
+  Agent Expression/formation vertical remain to implement/verify.
+- F1 is a candidate, not programme closure. F2-F6 and first common-base K9 parity
+  remain required by the two governing Factory planning files.
+
+- Motion regression found and fixed: EngineSurface.release retained stage-idle as
+  an occupied presentation and left its RAF alive. Release now cancels RAF/timers,
+  renders the idle frame, clears the occupied slot, and stale releases do not
+  cancel a different presentation's timers. Full-motion re-entry now passes the
+  same 10 app checks; the previous failure is retained in factory-f1-failure.png.
