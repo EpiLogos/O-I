@@ -154,6 +154,7 @@ fn source_suite_activation_is_atomic_incremental_dispatch_authority_and_rollback
     );
     assert_eq!(stdout(&first_dispatch).trim(), "central-v1:probe");
 
+    // A broken next source composition must not alter the active receipt.
     fs::remove_file(bin.path().join("workcell")).unwrap();
     let rejected = output(oi(config.path(), data.path(), bin.path()).args(["suite", "update"]));
     assert!(!rejected.status.success());
@@ -164,6 +165,8 @@ fn source_suite_activation_is_atomic_incremental_dispatch_authority_and_rollback
     let still_first = output(oi(config.path(), data.path(), bin.path()).args(["central", "probe"]));
     assert_eq!(stdout(&still_first).trim(), "central-v1:probe");
 
+    // Restore the sixfold but change only Central. Five immutable artifact roots
+    // must be reused; only Central is acquired into the new receipt root.
     fake_executable(bin.path(), "workcell", "workcell");
     fake_executable(bin.path(), "ctrl", "central-v2");
     let second =
@@ -177,23 +180,56 @@ fn source_suite_activation_is_atomic_incremental_dispatch_authority_and_rollback
     let second_status =
         output(oi(config.path(), data.path(), bin.path()).args(["suite", "status", "--json"]));
     let second_status_json: Value = serde_json::from_slice(&second_status.stdout).unwrap();
-    assert_ne!(second_status_json["active"]["receipt_ref"], first_receipt);
-    assert_ne!(second_status_json["active"]["products"], first_products);
+    assert_eq!(
+        second_status_json["active"]["previous_receipt_ref"],
+        first_receipt
+    );
+    for (id, _, _) in PRODUCTS {
+        let before = first_products[id]["root"].as_str().unwrap();
+        let after = second_status_json["active"]["products"][id]["root"]
+            .as_str()
+            .unwrap();
+        if id == "central" {
+            assert_ne!(after, before, "changed product must acquire a new root");
+        } else {
+            assert_eq!(after, before, "unchanged product {id} must reuse its root");
+        }
+    }
+    assert!(
+        !data.path().join("receipts/previous-suite.json").exists(),
+        "rollback authority comes from immutable receipt lineage, not a second mutable pointer"
+    );
+
     let second_dispatch =
         output(oi(config.path(), data.path(), bin.path()).args(["central", "probe"]));
     assert_eq!(stdout(&second_dispatch).trim(), "central-v2:probe");
+
+    let location =
+        output(oi(config.path(), data.path(), bin.path()).args(["where", "central", "--json"]));
+    let location_json: Value = serde_json::from_slice(&location.stdout).unwrap();
+    assert_eq!(location_json["authority"], "active-suite-receipt");
+    assert_eq!(location_json["modality"], "managed-suite");
+    assert_eq!(location_json["revision"], PRODUCTS[0].2);
+    assert_eq!(location_json["revision_standing"], "receipt-exact");
+    assert!(location_json["sha256"].as_str().is_some());
+    assert!(location_json["executable"]
+        .as_str()
+        .unwrap()
+        .contains("/suites/"));
 
     let rollback =
         output(oi(config.path(), data.path(), bin.path()).args(["suite", "rollback", "--json"]));
     assert!(rollback.status.success(), "{}", stderr(&rollback));
     let rollback_json: Value = serde_json::from_slice(&rollback.stdout).unwrap();
-    assert_eq!(rollback_json["outcome"], "rolled-back");
-    let restored =
-        output(oi(config.path(), data.path(), bin.path()).args(["suite", "status", "--json"]));
-    let restored_json: Value = serde_json::from_slice(&restored.stdout).unwrap();
-    assert_eq!(restored_json["active"]["receipt_ref"], first_receipt);
-    assert_eq!(restored_json["active"]["products"], first_products);
-    let restored_dispatch =
-        output(oi(config.path(), data.path(), bin.path()).args(["central", "probe"]));
-    assert_eq!(stdout(&restored_dispatch).trim(), "central-v1:probe");
+    assert_eq!(rollback_json["operation"], "rollback");
+    assert_eq!(rollback_json["active"]["receipt_ref"], first_receipt);
+    let restored = output(oi(config.path(), data.path(), bin.path()).args(["central", "probe"]));
+    assert_eq!(stdout(&restored).trim(), "central-v1:probe");
+
+    let checked =
+        output(oi(config.path(), data.path(), bin.path()).args(["suite", "check", "--json"]));
+    assert!(checked.status.success(), "{}", stderr(&checked));
+    let checked_json: Value = serde_json::from_slice(&checked.stdout).unwrap();
+    assert_eq!(checked_json["ok"], true);
+    assert_eq!(checked_json["active_checks"].as_array().unwrap().len(), 6);
 }
