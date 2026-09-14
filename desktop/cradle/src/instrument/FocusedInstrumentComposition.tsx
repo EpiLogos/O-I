@@ -2,7 +2,8 @@ import {useCallback,useEffect,useRef,useState,type CSSProperties} from "react";
 import {createPortal} from "react-dom";
 import {activeBindingId} from "../surface/engine";
 import type {LayoutState,SurfaceBinding} from "../surface/types";
-import {ParticleField} from "../visuals/ParticleExpression";
+import {useExpressionStage} from "../stage/ExpressionStage";
+import {FOCUSED_INSTRUMENT_RECIPE} from "../stage/recipes";
 import {
   FOCUSED_INSTRUMENT_CONTRACT,
   focusedInstrumentSource,
@@ -17,6 +18,7 @@ import {
 } from "./source";
 
 const layer:CSSProperties={position:"absolute",inset:0,zIndex:8,overflow:"auto",background:"var(--oi-background, #f5f3ee)",color:"var(--oi-foreground, #111)"};
+const instrumentLayer:CSSProperties={...layer,background:"transparent",overflow:"hidden",pointerEvents:"none"};
 const panel:CSSProperties={padding:"18px",display:"flex",flexDirection:"column",gap:"14px",minHeight:"100%",boxSizing:"border-box"};
 const row:CSSProperties={display:"flex",gap:"6px",alignItems:"center",flexWrap:"wrap"};
 const quiet:CSSProperties={fontSize:"12px",lineHeight:1.45,opacity:.72,margin:0};
@@ -88,43 +90,56 @@ function mediumLabels(snapshot:FocusedInstrumentSnapshot){
 }
 
 function FocusedInstrumentSurface({binding}:{binding:SurfaceBinding}){
-  const ref=binding.ref!;const {snapshot,error}=useSource(ref);const [busy,setBusy]=useState(false);const [result,setResult]=useState<FocusedInstrumentCommandResult|null>(null);const detach=useRef<(()=>void)|undefined>(undefined);const leaseRef=useRef<RetainedExpressionLease|null>(null);
-  const attach=useCallback((instance:unknown,host:{canvas:HTMLCanvasElement})=>{
-    detach.current?.();detach.current=undefined;
-    const native=instance as RetainedExpressionLease;
-    let lease:RetainedExpressionLease;
-    lease={
-      retainedTargetPort:()=>native.retainedTargetPort(),
-      checkpointRetainedField:(owner)=>native.checkpointRetainedField(owner),
-      restoreRetainedField:(owner,checkpoint)=>{native.restoreRetainedField(owner,checkpoint);return lease;},
-      onRecoveryRequired:(listener)=>{const restored=()=>listener();host.canvas.addEventListener("webglcontextrestored",restored);return()=>host.canvas.removeEventListener("webglcontextrestored",restored);},
-      inspect:()=>native.inspect(),
-      pause:(value=true)=>{native.pause(value);return lease;},
-      resume:()=>{native.resume();return lease;},
-      renderOnce:()=>{native.renderOnce();return lease;},
+  const stage=useExpressionStage();
+  const ref=binding.ref!;const {snapshot,error}=useSource(ref);const [busy,setBusy]=useState(false);const [result,setResult]=useState<FocusedInstrumentCommandResult|null>(null);const [stageError,setStageError]=useState<string|null>(null);const leaseRef=useRef<RetainedExpressionLease|null>(null);
+  const presentationId=`k9:${binding.id}`;
+  useEffect(()=>{
+    let detached:(()=>void)|undefined;
+    let disposed=false;
+    setStageError(null);
+    const source=focusedInstrumentSource(ref);
+    if(!source){setStageError(`Focused instrument source ${ref} is not registered.`);return;}
+    let presentation;
+    try{
+      presentation=stage.present({id:presentationId,plane:"ambient",recipe:FOCUSED_INSTRUMENT_RECIPE});
+      if(!presentation){setStageError("The Global Expression Stage is unavailable or expression is disabled.");return;}
+      const stageLease=stage.retainedLease(presentationId);
+      if(!stageLease){presentation.release();setStageError("The focused stage could not issue its retained-field lease.");return;}
+      const lease=stageLease as RetainedExpressionLease;
+      leaseRef.current=lease;
+      if(source.attachExpression){
+        void Promise.resolve(source.attachExpression(lease)).then(stop=>{
+          if(disposed){if(typeof stop==="function")stop();return;}
+          detached=typeof stop==="function"?stop:undefined;
+        }).catch(reason=>{if(!disposed)setStageError(reason instanceof Error?reason.message:String(reason));});
+      }
+    }catch(reason){setStageError(reason instanceof Error?reason.message:String(reason));}
+    return()=>{
+      disposed=true;
+      detached?.();
+      detached=undefined;
+      leaseRef.current=null;
+      presentation?.release();
     };
-    leaseRef.current=lease;
-    const source=focusedInstrumentSource(ref);if(!source?.attachExpression)return;
-    void Promise.resolve(source.attachExpression(lease)).then(stop=>{detach.current=typeof stop==="function"?stop:undefined;}).catch(reason=>setResult({standing:"unknown",operation:"attach-expression",error:reason instanceof Error?reason.message:String(reason)}));
-  },[ref]);
+  },[stage,ref,presentationId]);
   useEffect(()=>{if(snapshot?.available)leaseRef.current?.resume();else leaseRef.current?.pause(true);},[snapshot?.available]);
-  useEffect(()=>()=>{detach.current?.();detach.current=undefined;leaseRef.current=null;},[]);
   const command=(value:FocusedInstrumentCommand)=>void issue(ref,value,setResult,setBusy);
   const active=snapshot?.focus.focus;
   const media=snapshot?mediumLabels(snapshot):[];
-  return <div style={layer} data-epi-nara-region="instrument"><ParticleField id={`k9:${binding.id}`} tag="ql.focused-instrument" config={{}} paused={!snapshot?.available} onReady={attach} className="k9-focused-field" style={{position:"absolute",inset:0}}/>
-    <div style={{...panel,position:"relative",zIndex:2,pointerEvents:"none"}}>
-      <header style={{display:"flex",justifyContent:"space-between",gap:"12px",alignItems:"flex-start"}}><div><small style={{letterSpacing:".1em",textTransform:"uppercase",opacity:.55}}>Focused instrument</small><h1 style={{margin:"3px 0",fontSize:"20px",fontWeight:500}}>{binding.title}</h1><p style={quiet}>{snapshot?.event.subject_ref??ref}</p></div><div style={{...row,pointerEvents:"auto"}}>{(["m1","m2","m3","m4","m5"] as InstrumentFocus[]).map(focus=><button key={focus} disabled={busy} aria-pressed={active===focus} onClick={()=>command({kind:"set-focus",focus})}>{focus.toUpperCase()}</button>)}</div></header>
+  return <div style={instrumentLayer} data-epi-nara-region="instrument">
+    <div style={{...panel,position:"relative",zIndex:2,pointerEvents:"none",height:"100%"}}>
+      <header style={{display:"flex",justifyContent:"space-between",gap:"12px",alignItems:"flex-start"}}><div style={{pointerEvents:"auto",padding:"8px 10px",borderRadius:"7px",background:"color-mix(in srgb,var(--oi-background,#f5f3ee) 78%,transparent)",backdropFilter:"blur(7px)"}}><small style={{letterSpacing:".1em",textTransform:"uppercase",opacity:.55}}>Focused instrument</small><h1 style={{margin:"3px 0",fontSize:"20px",fontWeight:500}}>{binding.title}</h1><p style={quiet}>{snapshot?.event.subject_ref??ref}</p></div><div style={{...row,pointerEvents:"auto"}}>{(["m1","m2","m3","m4","m5"] as InstrumentFocus[]).map(focus=><button key={focus} disabled={busy} aria-pressed={active===focus} onClick={()=>command({kind:"set-focus",focus})}>{focus.toUpperCase()}</button>)}</div></header>
       <div style={{flex:1,minHeight:"180px"}}/>
       <section style={{display:"grid",gridTemplateColumns:"minmax(180px,1fr) minmax(220px,1.3fr)",gap:"12px",alignItems:"end"}}>
-        <div style={{padding:"12px",background:"color-mix(in srgb,var(--oi-background,#f5f3ee) 86%,transparent)",backdropFilter:"blur(8px)",borderRadius:"7px",pointerEvents:"auto"}}><strong>{active?.toUpperCase()??"—"}</strong><p style={quiet}>{snapshot?.focus.standing??"Waiting for the QL owner."}</p>{snapshot?.focus.source_refs?.length?<p style={quiet}>source: {snapshot.focus.source_refs.join(" · ")}</p>:null}<p style={quiet}>field {snapshot?.presented_cursor.field_generation??"—"} / live {snapshot?.live_cursor.field_generation??"—"} · {snapshot?.temporal??"—"}</p></div>
-        <div style={{padding:"12px",background:"color-mix(in srgb,var(--oi-background,#f5f3ee) 86%,transparent)",backdropFilter:"blur(8px)",borderRadius:"7px",pointerEvents:"auto",display:"grid",gap:"8px"}}>
+        <div style={{padding:"12px",background:"color-mix(in srgb,var(--oi-background,#f5f3ee) 82%,transparent)",backdropFilter:"blur(8px)",borderRadius:"7px",pointerEvents:"auto"}}><strong>{active?.toUpperCase()??"—"}</strong><p style={quiet}>{snapshot?.focus.standing??"Waiting for the QL owner."}</p>{snapshot?.focus.source_refs?.length?<p style={quiet}>source: {snapshot.focus.source_refs.join(" · ")}</p>:null}<p style={quiet}>field {snapshot?.presented_cursor.field_generation??"—"} / live {snapshot?.live_cursor.field_generation??"—"} · {snapshot?.temporal??"—"}</p></div>
+        <div style={{padding:"12px",background:"color-mix(in srgb,var(--oi-background,#f5f3ee) 82%,transparent)",backdropFilter:"blur(8px)",borderRadius:"7px",pointerEvents:"auto",display:"grid",gap:"8px"}}>
           <div style={row}><button disabled={busy} onClick={()=>command(snapshot?.temporal==="frozen"?{kind:"resume-live"}:{kind:"freeze"})}>{snapshot?.temporal==="frozen"?"Resume live":"Freeze view"}</button><button disabled={busy} onClick={()=>command({kind:"assemble-clock"})}>Assemble clock</button><button disabled={busy} onClick={()=>command({kind:"explode-clock",pair:null})}>Explode clock</button><button disabled={busy||!snapshot?.available} onClick={()=>command({kind:"advance",frames:1,muted:false})}>Advance</button></div>
           <p style={quiet}>clock {snapshot?.clock.field_ref??"#3-0"} · centre {snapshot?.clock.centre_ref??"#3-5-5/0"} · {snapshot?.clock.presentation.view??"—"}</p>
           <p style={quiet}>Vāk: {media.length?media.join(" · "):"no source-qualified expression bound"}{snapshot?.vak_performance?` · ${snapshot.vak_performance.mode}${snapshot.vak_performance.has_interruption?" · interrupted":""}${snapshot.vak_performance.has_late_return?" · late Return":""}`:""}</p>
           {snapshot?.selection?<p style={quiet}>Bimba ↔ field: {snapshot.selection.coordinate_ref} · {snapshot.selection_standing}{snapshot.selected_target?` · target ${snapshot.selected_target.identity}`:""}</p>:null}
           {result?<p role="status" style={quiet}>{result.operation}: {result.standing}{result.error?` · ${result.error}`:""}</p>:null}
           {error?<p role="alert" style={quiet}>{error}</p>:null}
+          {stageError?<p role="alert" style={quiet}>expression: {stageError}</p>:null}
         </div>
       </section>
     </div>
@@ -134,8 +149,10 @@ function FocusedInstrumentSurface({binding}:{binding:SurfaceBinding}){
 /**
  * Privileged Epi/Nara composition. It does not replace DesktopShell: it fills
  * the shell's already-owned left and centre hosts while the canonical right
- * AgentLayer remains mounted by Cradle. Leaving the instrument binding removes
- * both portals and reveals the ordinary navigator/workbench unchanged.
+ * AgentLayer remains mounted by Cradle. The live medium is the window's one
+ * Global Expression Stage; this composition only overlays controls and leases
+ * retained targets to the registered QL source. Leaving the instrument binding
+ * removes both portals and releases that stage presentation.
  */
 export function FocusedInstrumentComposition({layout}:{layout:LayoutState}){
   const active=activeBindingId(layout);const binding=active?layout.surfaces[active]:undefined;const enabled=!!binding&&binding.kind==="instrument"&&!!binding.ref;
