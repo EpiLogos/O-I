@@ -2023,6 +2023,7 @@ mod tests {
                 "position {position} must keep naming {id}"
             );
         }
+    }
 
     /// Fabricate exactly the managed state `install_manifest_product` records
     /// for one product: a marker-carrying product tree, a cached archive and
