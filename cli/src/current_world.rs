@@ -13,7 +13,11 @@ pub const CURRENT_WORLD_SCHEMA: &str = "oi.current-world/v2";
 pub const DEFAULT_MACHINE_ROLE: &str = "current";
 pub const DEFAULT_LOCAL_WORKCELL_REF: &str = "workcell:local";
 
-const PRODUCT_POSITIONS: [(u8, &str, &str); 6] = [
+/// The canonical, stable product positions of the six-product field: the
+/// Context Frame notation (`0/1`, `0/1/2/3`, …) is spoken in these positions.
+/// Public so lifecycle surfaces (install, removal) can name which positions
+/// a mutation touches without duplicating the mapping.
+pub const PRODUCT_POSITIONS: [(u8, &str, &str); 6] = [
     (0, "central", "Central"),
     (1, "actuation", "Actuation"),
     (2, "ai-kit", "AIKit"),

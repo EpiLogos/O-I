@@ -58,8 +58,11 @@ fn command_development_suite(args: &[OsString]) -> Result<i32, String> {
         "repair" => command_development_suite_repair(args.get(1..).unwrap_or_default()),
         "rollback" => command_development_suite_rollback(args.get(1..).unwrap_or_default()),
         "channel" => command_development_suite_channel(args.get(1..).unwrap_or_default()),
+        // Per-product removal is the managed-install remover's operation
+        // (suite_v2); the whole-suite channel operations above are untouched.
+        "remove" | "uninstall" => command_suite_v2_remove(args.get(1..).unwrap_or_default()),
         _ => Err(format!(
-            "unknown suite command '{sub}'; expected status, check, install, update, repair, rollback or channel"
+            "unknown suite command '{sub}'; expected status, check, install, update, repair, rollback, channel or remove"
         )),
     }
 }
