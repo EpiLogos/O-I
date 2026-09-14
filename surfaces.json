@@ -171,7 +171,7 @@
           "doctor",
           "--json"
         ],
-        "command_revision": "856f454778e5a44e8055751bb59ed933caf210ce",
+        "command_revision": "8ef8a4f02ee9e095281d2d03d3e711404ead074a",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [
@@ -299,7 +299,7 @@
           "--json",
           "doctor"
         ],
-        "command_revision": "e4e40a91fe7ed1776e634cad768f1049c39fd34e",
+        "command_revision": "0c3ad1efafdeb254366b7b6122306fe657916a10",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [
@@ -374,7 +374,7 @@
           "verify",
           "--json"
         ],
-        "command_revision": "a83148e93c500d5bebaa5811d9d25953652834cf",
+        "command_revision": "4276b94157058d0b211be20b4ebf5587fcb85a72",
         "command_standing": "accepted-main",
         "source_install": {
           "build": [
