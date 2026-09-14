@@ -2,6 +2,8 @@
 
 ## Purpose
 
+Current cross-owner implementation and testing: [Session grounding and continuity](experience/SESSION-GROUNDING.md), commissioned 2026-09-14 under O:I #220. It connects this architecture to the accepted Factory/Agency experience, preserves existing native work and assigns independent Workcell/Central repairs. Its findings are source-cut observations; its obligations do not claim runtime completion.
+
 O:I exists partly to make distinctions visible that contemporary agent systems often collapse inside one application, gateway or deployment.
 
 A modern system may package an Agent, Harness, session, gateway process, messaging adapters, API, tools, machine and deployment under one product name. That can be a useful implementation. It should not force the wider architecture to treat those things as one identity.

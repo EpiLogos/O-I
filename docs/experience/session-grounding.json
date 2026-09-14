@@ -1,0 +1,380 @@
+{
+  "purpose": "Commissioned native integration and proof obligations within the existing #65 UX spine; no new story IDs, runtime, storage or evidence system.",
+  "story_source": "docs/experience/SESSION-GROUNDING.md",
+  "families": [],
+  "standing": "agent-inference; source-grounded implementation/testing map commissioned 2026-09-14",
+  "runtime_or_human_acceptance": false,
+  "obligation_sources": {
+    "grounding220": {
+      "source_ref": "docs/experience/SESSION-GROUNDING.md",
+      "issue": "https://github.com/EpiLogos/O-I/issues/220",
+      "policy": "Read full source, current owner tickets and exact source cut. These joins preserve accepted Factory design and earlier stories/obligations; declaration is not runtime or human evidence."
+    }
+  },
+  "required_obligation_ids": [
+    "grounding220:source-place",
+    "grounding220:identity",
+    "grounding220:census",
+    "grounding220:provider",
+    "grounding220:composition",
+    "grounding220:authority-delivery",
+    "grounding220:recovery",
+    "grounding220:remote",
+    "grounding220:guardians",
+    "grounding220:factory-return",
+    "grounding220:presence",
+    "grounding220:joined"
+  ],
+  "obligations": [
+    {
+      "id": "grounding220:source-place",
+      "source": "grounding220",
+      "native_locator": "SG1 · §§1,4",
+      "requirement": "Choose or continue legitimate existing/new work with real source, working destination and required/preferred environment; preserve thin/external sessions and the explicit rich Herdr reference.",
+      "story_ids": [
+        "TM01",
+        "TM02",
+        "AG01",
+        "MC01",
+        "DV02"
+      ],
+      "execution_lanes": [
+        "A",
+        "C"
+      ],
+      "required_evidence": [
+        "C",
+        "P",
+        "M"
+      ],
+      "required_branches": [
+        "Root versus Project NOW follows actual concern; material cwd and source ownership remain distinct.",
+        "No forced source migration or adoption of a guessed Guardian default.",
+        "A required host/environment cannot silently fall back; a preference can resolve only with a disclosed supported alternative."
+      ]
+    },
+    {
+      "id": "grounding220:identity",
+      "source": "grounding220",
+      "native_locator": "SG2 · §§3,6",
+      "requirement": "Maintain exact AgentSession/SessionSpace/provider/material relations across view movement, re-observation, explicit recreation and concurrent sessions.",
+      "story_ids": [
+        "TM02",
+        "AG06",
+        "DV05",
+        "WK04"
+      ],
+      "execution_lanes": [
+        "A",
+        "W"
+      ],
+      "required_evidence": [
+        "C",
+        "P",
+        "M"
+      ],
+      "required_branches": [
+        "Two sessions may share Project, executable, labels and even numeric PID across hosts; host/start marker/provider generation distinguishes material.",
+        "Stale binding or reused pane/session name must not redirect input, interrupt or close.",
+        "View continuity, native resume, context rehydration and successor session retain distinct evidence.",
+        "Creation interrupted before binding persistence reconciles material before another task starts."
+      ]
+    },
+    {
+      "id": "grounding220:census",
+      "source": "grounding220",
+      "native_locator": "SG3 · §§2,5",
+      "requirement": "Extend actual Workcell observations to provider places and each live process, preserving executable-based inventory aggregation and external unattributed work.",
+      "story_ids": [
+        "TM03",
+        "WK04",
+        "MC03",
+        "MC07"
+      ],
+      "execution_lanes": [
+        "W"
+      ],
+      "required_evidence": [
+        "C",
+        "P",
+        "M"
+      ],
+      "required_branches": [
+        "Reuse resource_usage process-start/executable evidence; a PID is not identity.",
+        "Unknown/failed/stale reads remain unknown, never empty healthy state or invented Agent/Factory ancestry.",
+        "Local and selected remote observations retain source, freshness, lifetime and authority; no new Central-like meta register.",
+        "Foreign processes and resident services survive bounded observation and cleanup."
+      ]
+    },
+    {
+      "id": "grounding220:provider",
+      "source": "grounding220",
+      "native_locator": "SG4 · §§2,6,13",
+      "requirement": "Make the existing Herdr adapter reachable through AIKit public environment operations and retained working-Surface bindings; prove actual open/attach/focus/close/recovery with supported providers.",
+      "story_ids": [
+        "TM02",
+        "TM06",
+        "TM08",
+        "AG09"
+      ],
+      "execution_lanes": [
+        "A"
+      ],
+      "required_evidence": [
+        "C",
+        "P",
+        "M"
+      ],
+      "required_branches": [
+        "Herdr reference, tmux portability and optional cmux each require their own real evidence.",
+        "Keep #311 unpublished work and ReobservedUnproven/ReboundByExplicitOpen semantics; don't reconstruct another session to claim resume.",
+        "Isolate tmux clients when their target dies; no switch/input leakage to a resident job and no global config rewrite.",
+        "Separate Herdr valid-PTY missing-target behaviour from no-TTY preflight; use actual installed command syntax.",
+        "Closing a view, interrupting a turn, closing a pane and destroying its material have different effects."
+      ]
+    },
+    {
+      "id": "grounding220:composition",
+      "source": "grounding220",
+      "native_locator": "SG5 · §7",
+      "requirement": "Resolve source/identity/praxis/context/model/harness/environment/authority through the existing native composition and expose confirmed target-effective behaviour.",
+      "story_ids": [
+        "AG03",
+        "AG04",
+        "PX02",
+        "PX03",
+        "PX04",
+        "PX06",
+        "TM01"
+      ],
+      "execution_lanes": [
+        "A",
+        "C"
+      ],
+      "required_evidence": [
+        "C",
+        "P",
+        "M"
+      ],
+      "required_branches": [
+        "Scope-neutral composition includes Herdr, graphical and client/UI contributions; do not make all composition harness-shaped.",
+        "Distinguish resolution scope, activation scope and lifetime, selected/projected/loaded/action-usable/enforced states.",
+        "Two sessions in one Project with different context/skills remain isolated when one changes.",
+        "Native model policy/routes, required tools and harness faculties re-resolve together; no private desktop roster.",
+        "Useful permitted source-dependent task proves loading; generated file alone is insufficient and unsupported readback remains explicit."
+      ]
+    },
+    {
+      "id": "grounding220:authority-delivery",
+      "source": "grounding220",
+      "native_locator": "SG6 · §8",
+      "requirement": "Join actual governing authority to a bounded grant and admitted Agency, then exact prepared body, real dispatch/result and attributable Activity; correlate Factory only when commissioned.",
+      "story_ids": [
+        "AG07",
+        "AG08",
+        "GW06",
+        "GW09",
+        "DV01",
+        "TM03"
+      ],
+      "execution_lanes": [
+        "A"
+      ],
+      "required_evidence": [
+        "C",
+        "P",
+        "M"
+      ],
+      "required_branches": [
+        "Actuation #84 continues accepted Rust #58; do not rebuild the gate or let Factory/React fabricate grants.",
+        "Wrong holder, World, operation, bounds, revoked/expired or unknown authority refuses before effects.",
+        "Addressing, session contribution, delegation and independent cooperation retain their native differences.",
+        "Children have bounded effects/lifetime/budget/return and independent verification; no model impersonating a second actor.",
+        "A gateway append, transport ack, terminal creation or human unsent draft does not stand in for actual Agent action."
+      ]
+    },
+    {
+      "id": "grounding220:recovery",
+      "source": "grounding220",
+      "native_locator": "SG7 · §§3,6,8,9",
+      "requirement": "Prove permitted work and return routes through detached UI, connection loss and selected service/provider restart, with exact native continuity or explicit recovery.",
+      "story_ids": [
+        "AG06",
+        "AG09",
+        "GW05",
+        "GW07",
+        "MC06",
+        "DV04"
+      ],
+      "execution_lanes": [
+        "A",
+        "W"
+      ],
+      "required_evidence": [
+        "C",
+        "P",
+        "M"
+      ],
+      "required_branches": [
+        "Provider server, Workcell service, Gateway and UI have separate lifetimes and tested failure boundaries.",
+        "Account for pending tool/permission, uncertain external effect, late response and replay before consequential retry.",
+        "Context/history restoration is not native session resume; re-created process is not the old material.",
+        "Failure of one selected provider/connection leaves unrelated sessions usable.",
+        "No unsupported exactly-once guarantee or hidden duplicated turn on restart."
+      ]
+    },
+    {
+      "id": "grounding220:remote",
+      "source": "grounding220",
+      "native_locator": "SG8 · §9",
+      "requirement": "Prove remote access to the same living work separately from deliberate execution re-placement on a real second material host.",
+      "story_ids": [
+        "MC02",
+        "MC04",
+        "MC08",
+        "GW08",
+        "TM09"
+      ],
+      "execution_lanes": [
+        "W",
+        "A"
+      ],
+      "required_evidence": [
+        "C",
+        "P",
+        "M"
+      ],
+      "required_branches": [
+        "Multi-host view leaves processes on their owning hosts; source sync, access and execution movement stay separate.",
+        "Resolve target offers/source/storage/credentials/authority with no silent required-target fallback.",
+        "Account for in-flight effects; preserve bounded permitted context, exact Git basis and obligations; revalidate target loading and authority.",
+        "Resume only where native support proves it; otherwise identify rehydration/successor and old/new attempt/material relation.",
+        "Prove target operation before release; prevent competing consequential execution and reconcile late old-host output.",
+        "Two directories and sampled differing IDs do not prove second-host recovery or permanent identifier uniqueness."
+      ]
+    },
+    {
+      "id": "grounding220:guardians",
+      "source": "grounding220",
+      "native_locator": "SG9 · §§2,8",
+      "requirement": "Recover existing Field Guardian/product Agent expressions, formation/default/skill provenance, resolve supported selections and prove actual ordinary harness activation.",
+      "story_ids": [
+        "AG01",
+        "AG02",
+        "AG05",
+        "AG08",
+        "TM01",
+        "TM03"
+      ],
+      "execution_lanes": [
+        "C",
+        "A"
+      ],
+      "required_evidence": [
+        "C",
+        "P",
+        "M"
+      ],
+      "required_branches": [
+        "Central world default_agent_set_ref and orchestrator_agent_ref already exist; repair consumers and source gaps rather than recreate fields.",
+        "Generic support, declared source, local adoption, effective selection and target loading are separate.",
+        "Private source/default adoption remains the owner's actual scoped choice; explicit and profile-less legitimate work remains usable.",
+        "Purpose/Focus/Knowledge/praxis differentiates Guardians; no privileged meta-profile class or authority from being a Guardian.",
+        "Central source operations stay in C; AIKit readers/projection/loading stay in A."
+      ]
+    },
+    {
+      "id": "grounding220:factory-return",
+      "source": "grounding220",
+      "native_locator": "SG10 · §10",
+      "requirement": "Carry real commissioned work through exact admitted execution, independent work/verification, native Git, durable structured outputs/handoff and Central temporal continuation.",
+      "story_ids": [
+        "DV01",
+        "DV02",
+        "DV03",
+        "DV04",
+        "WR05",
+        "WR06",
+        "TM05"
+      ],
+      "execution_lanes": [
+        "A",
+        "U"
+      ],
+      "required_evidence": [
+        "C",
+        "P",
+        "M"
+      ],
+      "required_branches": [
+        "Trace Run/attempt, Agency/session, working Surface, material observation, Activity and exact tested Git basis.",
+        "Queued Run plus unrelated terminal never counts as Factory execution; native direct/external work stays valid.",
+        "Actual result bodies remain reachable after terminal/view closure and feed the adopted shared HTML template family.",
+        "New revision exposes stale evidence; completion, Recognition and Git integration stay distinct.",
+        "NOW references actual material; supported Routine re-entry revalidates authority/proof and does not derive scheduling from reconnect or DAY rollover."
+      ]
+    },
+    {
+      "id": "grounding220:presence",
+      "source": "grounding220",
+      "native_locator": "SG11 · §10",
+      "requirement": "Connect native desktop/TUI/Gateway/Omarchy entry and attention to exact current work, preserving accepted Factory and ordinary arrangements.",
+      "story_ids": [
+        "UI02",
+        "UI04",
+        "UI05",
+        "TM07",
+        "TM09",
+        "GW05"
+      ],
+      "execution_lanes": [
+        "U",
+        "A"
+      ],
+      "required_evidence": [
+        "C",
+        "P",
+        "M",
+        "H"
+      ],
+      "required_branches": [
+        "One canonical conversation Surface; movement preserves draft/focus and does not clone or redirect work.",
+        "Factory centre work/right artifacts/footer attention remains the accepted design.",
+        "Provider-bound focus and alternate Surface open exact permitted subject; denied compositor action gets supported recovery.",
+        "Closing desktop leaves supported work alive; one unavailable service does not obscure unrelated usable work.",
+        "Record narrow/medium/wide and keyboard/pointer behaviour in actual installed host; human visual acceptance remains separate."
+      ]
+    },
+    {
+      "id": "grounding220:joined",
+      "source": "grounding220",
+      "native_locator": "SG12 · §§11–14",
+      "requirement": "Execute the complete connected source→operative Agent→Herdr Factory work alongside Direct tmux/external harness→independent verification→output→recovery→real remote access/re-placement→NOW/recurrence walk.",
+      "story_ids": [
+        "DV08",
+        "TM03",
+        "TM10",
+        "MC06",
+        "GW08"
+      ],
+      "execution_lanes": [
+        "A",
+        "V"
+      ],
+      "required_evidence": [
+        "C",
+        "P",
+        "M",
+        "H"
+      ],
+      "required_branches": [
+        "Exercise every available admitted harness against actual faculties with economical eligible models; label unavailable/unsupported/failed branches.",
+        "Preserve original TM02 failed certification and bounded successes; repair invalid syntax/count/PTY/PID assertions without rewriting evidence.",
+        "Keep actual source/build/install/running/provider versions, production checks and real material receipts; fixtures establish only their own boundary.",
+        "Independent verifier tests the same changed cut; required H comes from the human.",
+        "Existing CAW/QL/installation and Factory obligations remain; no provider smoke or map compilation closes the whole."
+      ]
+    }
+  ],
+  "closure": "A integrates native results; U completes accepted desktop experience; W/C are independent optional staffing. #201/#202–205 and #65 retain independent and human evidence requirements. No plan/test declaration promotes runtime readiness."
+}
