@@ -9,6 +9,6 @@
     {"id":"ai-kit","revision":"856f454778e5a44e8055751bb59ed933caf210ce","protocol_min":"1.0","protocol_max":"1.0"},
     {"id":"software-factory","revision":"a335048b0a5b907adc5d09f0dcbda05b98f79a05","protocol_min":"1.0","protocol_max":"1.0"},
     {"id":"workcell","revision":"e4e40a91fe7ed1776e634cad768f1049c39fd34e","protocol_min":"1.0","protocol_max":"1.0"},
-    {"id":"quaternal-logic","revision":"d88216301a8f76918073d46f5de064a68f7c1480","protocol_min":"1.0","protocol_max":"1.0"}
+    {"id":"quaternal-logic","revision":"a83148e93c500d5bebaa5811d9d25953652834cf","protocol_min":"1.0","protocol_max":"1.0"}
   ]
 }
