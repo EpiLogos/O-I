@@ -140,7 +140,7 @@ declare module "@epilogos/oi-design-system/expressions-engine/shell/production.m
     retainedTargetPort(): RetainedTargetPort;
     checkpointRetainedField(binding: { checkpoint(renderer: unknown): unknown }): unknown;
     restoreRetainedField(binding: { restore(renderer: unknown, checkpoint: unknown): void }, checkpoint: unknown): ProductionAdapter;
-    onRetainedRecoveryRequired(listener: () => void): () => void;
+    onRetainedRecoveryRequired(listener: (phase: "lost"|"restored") => void): () => void;
     releaseRetainedField(): void;
     dispose(): void;
   }
