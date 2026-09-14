@@ -13,10 +13,11 @@ pub const CURRENT_WORLD_SCHEMA: &str = "oi.current-world/v2";
 pub const DEFAULT_MACHINE_ROLE: &str = "current";
 pub const DEFAULT_LOCAL_WORKCELL_REF: &str = "workcell:local";
 
-/// The canonical product positions (#268): position → product id and public
-/// name, in the suite manifest's product order. Shared with the CLI's
-/// verification scope so an install mode's positions name manifest products
-/// through this one table.
+/// The canonical, stable product positions of the six-product field (#268):
+/// position → product id and public name, in the suite manifest's product
+/// order. The Context Frame notation (`0/1`, `0/1/2/3`, …) is spoken in these
+/// positions. Public so verification scopes and lifecycle surfaces (install,
+/// removal) name positions through this one table instead of duplicating it.
 pub const PRODUCT_POSITIONS: [(u8, &str, &str); 6] = [
     (0, "central", "Central"),
     (1, "actuation", "Actuation"),
