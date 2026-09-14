@@ -1,7 +1,7 @@
 # O:I Cradle — Factory Arrangement Wayfinder — 2026-09-14
 
 **Standing:** owner-directed execution map for the existing Cradle programme.  
-**Base:** O:I `main` at `c08f1e30976eee8af1c0e53642e507cf77d4cd64`.  
+**Planning base:** O:I `main` at `c08f1e30976eee8af1c0e53642e507cf77d4cd64`.  
 **Desktop owner:** O:I / Cradle.  
 **Development owner:** Factory #195 and current native Factory contracts.  
 **Agency/runtime owners:** Actuation + AIKit SessionSpace/AgentSession/composition.  
@@ -19,7 +19,89 @@ The human should be able to move from authored intent into one or many real Agen
 
 The arrangement is a presentation/inhabitation state over canonical owner objects. It must be reconstructable from those objects after restart; layout persistence is not semantic ownership.
 
-## 1. Governing relation
+## 1. Live source lock — what already exists
+
+This map is an integration plan over current owner work, not a speculative redesign.
+
+### Cradle / O:I
+
+Current O:I main already has:
+
+- the three-region `DesktopShell` with restorable depth, width, focus and responsive behaviour;
+- the real `AgentLayer` with `Conversation | Activity | Context | Inspect`, backed by the existing Encounter surface rather than a desktop transcript store;
+- ordinary detached native Surface windows and redocking;
+- the truthful `FactoryDevelopmentSurface`, with current Factory Project/Journey/Run/work-unit/build readings and owner refusals;
+- the Global Expression Stage landed in #284: one stage per native window, `ambient | overlay | frontstate` planes, semantic cue bus, Expression Target registry, authored recipe/sequence registry, and `present / play / express` seams over the shared point-field host.
+
+The current expression-stage law is explicit: application code names semantic cues, targets, recipes or sequences; it does not manipulate point physics. Current cues are application/surface facts (`app.opening`, `app.ready`, `surface.loading`, `surface.ready`, `surface.opened`, `surface.closed`, `surface.resized`, `source.saved`, `attention`). Factory-specific transition expression must extend or compose this language at O:I rather than bypass it.
+
+### Factory
+
+Factory #195 is already the developmental owner. Its vertical is:
+
+```text
+Central-authored Agent / AgentSet / World
+        ↓
+Commission → Journey → Run / workflow unit / ExecutionDisposition
+        ↓
+Actuation Agency / authority / Activity
+        ↓
+AIKit body / AgentSession / SessionSpace
+        ↓
+Workcell material actuality
+        ↓
+Evidence / Candidate / Return / Recognition
+```
+
+The separate Direct path remains valid and must not manufacture Factory ancestry.
+
+Recent Factory main also has durable native attempt/task dispatch and owner-call protection work. This Wayfinder consumes those execution relations; it does not create another scheduler or subagent state machine.
+
+### Central Agent Expression / profile ground
+
+Central #137 is the current explicit semantic source for the existing Agent-expression approach. Its four-layer law is:
+
+```text
+1. Agent EXPRESSION
+   Control-authored durable office / intent
+
+2. Agent PROFILE
+   Central-authored world-relative residence/configuration for an Agent
+
+3. AgentSet
+   Central-authored composition of Agent identities / nested AgentSets
+
+4. Instantiation / ACTIVITY
+   runtime actualisation owned downstream by Actuation
+```
+
+Current Central code also preserves an expressed intent verbatim when an AgentProfile is proposed from intent. Such a generated proposal is explicitly `generated-proposal / unrecognised`; the human's Recognition is a separate act that the generating Action cannot counterfeit.
+
+Therefore the Factory UI must not invent a second "minted Agent" object. It should make the existing expression/proposal/resolution path feel immediate while preserving authored/proposed/effective/runtime standing.
+
+### AIKit / Actuation participation and delivery
+
+AIKit #274 explicitly permits profile-backed and profile-less World participants without fabricating profiles or Agency. Central durable expression/profile residence is one source relation; Actuation owns Agent/Agency/WorldBinding actuality; AIKit owns caller-scoped participation/addressing and effective body/context resolution.
+
+AIKit #275 owns actual addressed cross-harness delivery and continuation:
+
+```text
+scoped request
+→ real recipient Agency / NOW / resident AgentSession
+→ native prompt delivery
+→ actual response
+→ attributed reply / operational Return
+```
+
+It already distinguishes AgentSet, temporary conversation participants, live Agency and provider sessions. Parallel requests are policy-bounded; membership does not manufacture delegation.
+
+This is the correct runtime bed for expression-shaped subagent requests. The missing join to implement, if current source still lacks it, is only the **smallest invocation-scoped intent-expression input into existing resolution/delegation**. Do not mint another canonical subagent ontology.
+
+### SessionSpace / provider entry
+
+AIKit's provider side already has real tmux/cmux working-environment conformance. Current TUI audit #282 records that the provider capability is owner-side and real while some consumer wiring remains absent. Factory arrangement should consume the same public SessionSpace/provider operations rather than issue mux commands from desktop business logic.
+
+## 2. Governing relation
 
 Ordinary Cradle remains valid:
 
@@ -46,21 +128,21 @@ across the World      (SessionSpace-resolved)    Diff / Preview / Inspect
 
 Entering Factory does not create a Run, AgentSession or SessionSpace. Exiting Factory does not stop one. The arrangement changes what is foregrounded.
 
-## 2. Ownership lock
+## 3. Ownership lock
 
 Preserve the existing owner boundaries:
 
 ```text
 Central
-  authored Agent expressions / durable Agent ground / Project world
+  durable Agent expression / profile / AgentSet / Project world
 
 Actuation
-  Agent / Agency / authority / Activity / Return actuality
+  Agent / Agency / WorldBinding / authority / Activity / Return actuality
 
 AIKit
-  expression/profile resolution where owned
+  participation / profile-body-context resolution
   capabilities / praxis / harness composition
-  AgentSession / SessionSpace / Surface resolution
+  AgentSession / SessionSpace / Surface resolution and dispatch
 
 Factory
   Commission / Journey / Run / RunMap / workflow unit / Execution
@@ -70,66 +152,87 @@ Workcell
   material environment / process / service / placement actuality
 
 O:I Cradle
-  arrangement, focus, disclosure, Surface hosting, point-field expression
+  arrangement, focus, disclosure, Surface hosting, point-field presentation
 ```
 
 Do not add desktop-local canonical truth for any owner object. Do not put tmux-specific business semantics into Factory or the desktop. tmux/Herdr/cmux/IDE/remote surfaces are provider realizations of SessionSpace/Surface relations.
 
-## 3. Agent Expression is the authored entrance, not a new minting ontology
+## 4. Agent Expression is the authored entrance
 
-Recover and consume the current Agent Expression path already present in the suite. The intended relation is:
+The durable relation is:
 
 ```text
-human intent expression
+human-authored intent / office
     ↓
-authored Agent expression / ground
+Central Agent Expression
     ↓
-resolution into effective profile/body/praxis/capabilities
+Central profile / AgentSet relations where chosen
+    ↓
+AIKit effective participation / body / praxis / context resolution
     ↓
 Actuation actualisation
     ↓
-AgentSession / SessionSpace
+AgentSession / SessionSpace / Activity
 ```
 
 The Factory arrangement adds no alternate Agent creator.
 
-The same expression path must be usable in three scopes:
+### 4.1 Durable Agent creation
+
+The interaction can be as light as one sentence:
 
 ```text
-A. durable Agent creation
-   "I want an agent oriented like this"
-
-B. Factory commission/formation
-   select existing and/or newly expressed Agents for developmental work
-
-C. bounded subagent invocation
-   use a task-local Agent expression as an explicit source for a delegated leg,
-   retaining provenance to the parent Agency/Run and without silently promoting
-   the temporary expression into durable authored Agent ground
+"I want an agent oriented to Rust systems work,
+careful about ownership boundaries and verification."
 ```
 
-Durable authored Agent creation and task-local subagent expression are therefore related but distinct transitions. Promotion from temporary/task-local expression to durable authored Agent ground requires the native authored-source acceptance path where current owners require it.
+But the UI must disclose the actual transition it is performing. If the current path produces a generated Central profile proposal from expressed intent, that proposal remains unrecognised until the human performs the native acceptance/Recognition step. Existing expression source remains authored ground; downstream resolution remains derived/effective state.
 
-The UI should keep the expressive interaction lightweight — one sentence can be sufficient — while the actual resolution remains inspectable afterwards. Model/harness selection is not the primary authored identity.
+The desktop should make this feel like expressive creation without erasing the provenance distinction.
 
-## 4. Agent and team composition UX
+### 4.2 Factory formation / team composition
 
-Use the existing Agent/AgentSet/Agency relations rather than desktop classes such as ManagerBot/WorkerBot.
+Use existing Agent / AgentSet / Agency relations rather than desktop classes such as `ManagerBot` or `WorkerBot`.
 
-The Factory arrangement should support:
+The human can:
 
 ```text
-express new Agent
-select existing Agent(s)
-combine them into a formation / AgentSet where current owner contracts permit
-state the developmental concern / Commission
-inspect effective resolution and authority
-start or continue the real work
+express or select Agent(s)
+→ compose/select an AgentSet or runtime formation where native contracts permit
+→ state the Commission / intended difference
+→ inspect effective resolution / scope / authority
+→ begin or continue the real work
 ```
 
-The interaction may feel like "minting" or assembling a constellation, but every node and relation must resolve to native owner identities.
+The interaction may feel like assembling a constellation. Every node and edge underneath remains a native owner identity/relation.
 
-Subagent creation from an active Agent/Run should reuse the same Agent Expression language. The parent can express a needed differentiated locus such as "review this from a Rust safety perspective"; the system resolves a bounded child Agent/Agency according to current owner law, with explicit scope, authority, return address and lifecycle. Do not create a second prompt-only subagent mechanism when a native expression/resolution path exists.
+### 4.3 Subagent invocation — reuse the expression language without falsifying authorship
+
+A bounded delegated child often begins with exactly the same kind of expression:
+
+```text
+"Review this branch specifically for Rust lifetime and ownership hazards."
+```
+
+Reuse the **intent-expression language and downstream resolution machinery**, but keep the standing distinct:
+
+```text
+invocation-scoped intent expression
+    + parent Agency / Run / workflow-unit relation
+    + exact subject/revision
+    + permitted effects
+    + verification obligation
+    + return address
+    + stop/lifecycle condition
+        ↓
+existing AIKit / Actuation resolution + dispatch
+        ↓
+bounded child locus / response / Return
+```
+
+This task-local expression is not silently a durable Central Agent Expression and does not silently author an AgentProfile. If the user chooses **Keep as Agent** / equivalent, route the same expressed intent through Central's native proposal/authorship path; generated source remains proposed/unrecognised until the human accepts it.
+
+Do not introduce a new persisted `SubagentExpression` type unless source inspection proves a durable identity is genuinely required. First try the smallest invocation input over the current delegation/dispatch contracts.
 
 ## 5. Factory activity horizon
 
@@ -159,7 +262,7 @@ failed
 cancel requested / cancelled / quiesced where distinguishable
 ```
 
-Never fabricate task percentage. If the owner exposes phases/spans/barriers or a meaningful bounded progression, the lane may express progression; otherwise use motion/state without a scalar completion claim.
+Never fabricate task percentage. If owner evidence exposes phases, spans, barriers or another meaningful bounded progression, the lane may express it; otherwise use motion/state without a scalar completion claim.
 
 Each lane retains enough stable correlation to answer:
 
@@ -171,15 +274,13 @@ where can I encounter its current working Surface?
 what Activity / Return / Evidence belongs to it?
 ```
 
-Direct and external work remains visible where useful but marked truthfully as Direct/external and must never acquire fabricated Factory ancestry.
+Direct and external work remains visible where useful but marked truthfully as Direct/external and never acquires fabricated Factory ancestry.
 
 ## 6. Click-through to the exact persisted working world
 
-Selecting an active lane should resolve through AIKit/SessionSpace public operations to the Surface currently carrying the work.
+Selecting an active lane resolves through AIKit/SessionSpace public operations to the Surface currently carrying the work.
 
 First proving provider: **tmux**, because persistence is obvious and materially testable.
-
-Target behaviour:
 
 ```text
 click active lane
@@ -190,13 +291,11 @@ click active lane
 → re-entry resolves the same session while it remains valid
 ```
 
-The desktop must not issue provider-specific attach commands as Factory business logic. Provider-specific mechanics stay inside the current SessionSpace/provider implementation.
-
-A second provider should later prove that the same Factory lane interaction works without changing Factory semantics.
+The desktop must not issue provider-specific attach commands as Factory business logic. A second provider later proves that the same Factory interaction survives a different provider realization.
 
 ## 7. Centre: encounter first, exact working Surface on demand
 
-On entering Factory arrangement, the existing real Agent encounter should be promotable from the ordinary right region into the centre. Do not duplicate its transcript or observer.
+On entering Factory arrangement, promote the existing real Agent encounter from the ordinary right region into the centre. Do not duplicate its transcript, draft or observer.
 
 The central region can then switch among correlated live Surfaces such as:
 
@@ -207,13 +306,11 @@ preview / browser Surface
 other owner-contributed working Surface
 ```
 
-The transition is one focus/composition change over the same refs, not a migration of canonical state.
+The transition is a focus/composition change over the same refs, not a migration of canonical state.
 
-## 8. Right region: Return material
+## 8. Right region: what the work has returned
 
-Factory arrangement liberates the right region for material returned by the selected work.
-
-The region may host native/read-model Surfaces for:
+Factory arrangement liberates the right region for Return material associated with the selected developmental subject:
 
 ```text
 Candidate
@@ -230,142 +327,148 @@ Inspect / provenance
 
 These are owner objects presented through the Cradle; the right region is not their store.
 
-Substantial Return material should support the ordinary Cradle Surface grammar:
+Substantial Return material should participate in the ordinary Surface grammar:
 
 ```text
-open in right region
-→ move to centre / split where supported
-→ detach into a native window
+right region
+→ centre / split where supported
+→ detach into native window
 → redock
 ```
 
-Recognition, return-for-repair, request-more-evidence and continuation invoke canonical Factory/native Actions. "Agent finished" never means "human recognised".
+Recognition, return-for-repair, request-more-evidence and continuation invoke canonical Factory/native Actions. `Agent finished` never means `human recognised`.
 
 ## 9. Left region: keep the World, add ambient work cues only
 
-The Central/World navigator remains structurally the same.
-
-Project/repo rows may disclose low-noise derived cues such as:
-
-```text
-active work present
-number of consequential active loci
-attention owed
-returned work waiting
-```
+The Central/World navigator remains structurally the same. Project/repo rows may disclose low-noise derived cues such as active work, consequential active-locus count, attention owed or returned work waiting.
 
 The left region must not become a duplicate trajectory dashboard. Detailed execution state belongs in the Factory horizon and selected surfaces.
 
-## 10. Arrangement and point-field transition expression
+## 10. Factory arrangement as an authored point-field transition
 
-The Global Expression Stage / point-field layer now owns whole-window presentation expression. Use it for the **felt transition** into and out of Factory arrangement without coupling application code to particle/physics parameters.
+The current Global Expression Stage is already the correct O:I owner for this presentation. It provides one persistent point-field host per window, semantic cues, registered targets, and authored `recipes.ts` / sequences behind `present()` / `play()`.
 
-The application should emit semantic transition cues / named recipes equivalent to:
+Implement Factory transition expression by extending **that** vocabulary rather than mounting a second renderer.
+
+The semantic application events required are equivalent to:
 
 ```text
-factory.enter
-factory.ready
-factory.leave
-factory.attention
-factory.return
+Factory arrangement entering
+Factory arrangement ready
+Factory arrangement leaving
+Factory attention
+Factory Return arriving
 ```
 
-Exact recipe names may follow the current expression registry conventions after source inspection.
+At implementation start decide, from current stage conventions, which are genuinely new cue kinds and which compose existing `surface.*` / `attention` cues with Factory targets. Do not add `factory.*` merely for naming symmetry.
 
-The point field may spatially disclose the recomposition — e.g. ordinary sidecar relation opening into a broader active field — but the visual expression is not semantic truth. Factory/SessionSpace/Activity owner state determines what is present; the expression layer only presents the transition.
+Author named Factory transition recipe/sequence material in the stage registry. The point field may spatially disclose the recomposition — e.g. the sidecar relation opening into a broader active field, lanes gathering as loci, Return drawing attention to the right — but the expression is presentation, never owner state.
 
-Preserve the current law: application code names semantic expressions/targets; the stage owns their visual realization.
+Preserve the law:
+
+```text
+owner state determines what is true
+O:I arrangement determines what is foregrounded
+semantic cue / target names what happened and where
+stage recipe / sequence determines how the point field expresses it
+```
+
+Interaction readiness must not wait on transition animation; reduced-motion remains truthful.
 
 ## 11. Existing Factory development surface disposition
 
 The current `FactoryDevelopmentSurface` is valuable truthful depth but remains an operator/debug/inspection surface, not the final Factory entrance.
 
-Preserve its native owner reads and honest refusals, but move normal Factory arrangement entry toward automatic current-Project/current-Run/current-SessionSpace resolution as owner contracts permit.
+Preserve its native owner reads and honest refusals. Normal Factory arrangement entry should resolve the current Project/Journey/Run/AgentSession field through owner-published state as those contracts permit.
 
 Manual developmental-state-path and explicit-ref entry may remain as advanced/debug depth until the owner publishes a better composed state locator. Do not invent one in O:I.
 
 ## 12. Minimal implementation sequence
 
-### F0 — source reconciliation and contract lock
+### F0 — bounded reinspection, not another census
 
-Inspect actual current mains and active PRs for O:I, Factory, AIKit, Actuation, Central and Workcell. Reconfirm:
+At the start of the implementation session inspect actual current mains/active PRs and this Wayfinder. Revalidate only the crossed seams that may have moved:
 
-- current Agent Expression source and durable-vs-ephemeral semantics;
-- current subagent/delegation path and whether it can consume Agent Expression directly;
-- current Factory public developmental read/Action contracts;
-- current Activity correlations;
-- current AgentSession/SessionSpace focus/open provider Actions;
-- current tmux provider capability;
-- current Cradle arrangement/layout/focus/detach APIs;
-- current Expression Stage point-field cue/recipe APIs.
+- Central expression/profile/AgentSet Actions and authored/proposed standing;
+- current AIKit invocation/delegation input and selected-Agent/profile-independent producer;
+- Factory current developmental public reads/Actions and Execution/AgentSession correlations;
+- Actuation Activity/Attention/Return correlations;
+- SessionSpace provider open/focus operation and tmux provider conformance;
+- Cradle shell/layout/detach APIs;
+- Global Expression Stage cue/target/recipe APIs.
 
-Write only the smallest missing shared contracts at their native owners.
+The source lock above is the starting point. Do not repeat a suite-wide architecture inventory.
 
-### F1 — Factory arrangement shell
+### F1 — Factory arrangement shell + point-field transition
 
 Add a restorable arrangement state to the existing Cradle composition layer:
 
 - enter/leave Factory without destroying current surfaces;
 - promote the existing Agent encounter into the centre;
-- reserve right region for Return material;
+- reserve the right region for Return material;
 - preserve/restore prior geometry/focus;
-- emit semantic Expression Stage cues for the transition.
+- extend/use the Global Expression Stage for the transition;
+- prove reduced-motion and interrupted-transition behaviour.
 
-No live activity horizon yet beyond a fixture/read model needed to prove layout.
+This is the first walkable cut.
 
 ### F2 — live activity horizon
 
-Build the correlated activity reading over current owner refs. Render lanes with honest state and no fabricated progress. Include Direct/external distinction.
+Build the smallest correlated activity reading from owner refs. Render honest lanes and the Direct/external distinction. Do not load full trajectory payloads into the horizon.
 
 ### F3 — exact working-Surface entry
 
-Click lane → resolve AgentSession/SessionSpace → focus/open exact provider Surface. Prove tmux persistence first, including provider unavailable/degraded behaviour.
+Click lane → resolve AgentSession/SessionSpace → focus/open exact provider Surface. Prove tmux persistence first, including unavailable/degraded provider behaviour. Do not wait for a second provider before the first vertical is useful.
 
 ### F4 — Return/evidence region + detach
 
-Bind selected Run/Execution/Candidate/Return to right-region surfaces and extend ordinary detach/redock support to required Factory/artifact surface kinds. Invoke native recognition/repair/evidence Actions.
+Bind selected Run/Execution/Candidate/Return to right-region surfaces; extend ordinary detach/redock only for genuinely required new Surface kinds. Wire owner Actions for repair/evidence/Recognition rather than UI mutation.
 
-### F5 — Agent Expression + formations + subagents
+### F5 — Agent Expression + formations + invocation-scoped subagents
 
-Expose the existing intent-based Agent Expression path in Factory arrangement:
+Expose the existing expression path in Factory arrangement:
 
-- create/use a durable Agent through native authored ground;
-- select existing Agents;
-- compose a native formation/AgentSet where supported;
-- commission it;
-- invoke one bounded subagent from an active Agent/Run through the same expression path;
-- prove temporary vs durable expression standing and provenance.
+- express/propose/select a durable Agent through Central's native ground;
+- preserve unrecognised proposal standing until human acceptance;
+- select existing Agents / AgentSet relations;
+- commission real Factory work;
+- invoke one bounded child using an invocation-scoped intent expression over the existing dispatch/delegation path;
+- retain parent/subject/scope/return/lifecycle provenance;
+- prove **Keep as Agent** uses Central's proposal/authorship route rather than silently persisting the child.
 
-### F6 — human/computer-use acceptance
+If one narrow public owner operation is missing, add it at that owner and consume it; do not create an O:I workaround.
 
-Run the joined experiential walk in the installed app against real providers and capture exact refs/receipts plus screenshots at experiential gates.
+### F6 — joined computer-use acceptance
+
+Run the installed app against real providers and capture screenshots at experiential gates plus exact canonical refs/receipts underneath them.
 
 ## 13. Computer-use acceptance walk
 
-A single coherent walk should cover the feature rather than independent screenshots.
+Use one coherent journey rather than isolated screenshots:
 
-1. Start in ordinary Cradle with a real Project and writing Surface; note exact layout/focus.
-2. Have one existing persisted tmux-backed AgentSession available.
-3. Enter Factory arrangement. Verify the shell recomposes through the Expression Stage without destroying the writing Surface or session.
-4. Confirm the existing encounter is central; left World remains; Return rail is available.
-5. Commission a small real Factory work item. Observe an activity lane from actual owner state.
-6. Click the lane. The exact persisted tmux Surface opens/focuses. Prove session continuity from inside it.
-7. Return to Conversation; work continues.
-8. Start a second real locus on another Project/repo. Verify ambient cue in left World and distinct activity lane.
-9. Run one unrelated Direct AgentSession and verify it appears, if presented, without Factory ancestry.
-10. Create/express one new Agent from intent through the native Agent Expression path; inspect its resolved effective body.
-11. Compose it with an existing Agent into a supported formation/team and commission real work.
-12. From one active Agent/Run, invoke a bounded subagent using the same expression language; prove scope/parent/return provenance and temporary-vs-durable standing.
-13. Trigger one real attention/permission state. Verify it is visually distinct from ordinary working and that authority is revalidated at the owner seam.
-14. Let work Return. Open the actual Candidate/Evidence/artifact in the right rail.
-15. Detach substantial Return material into a native window, inspect it, then redock.
-16. Invoke a real repair/additional-evidence or Recognition Action and verify owner receipt/state change.
-17. Make tmux/provider unavailable for one lane; verify truthful degradation and no fake terminal/session.
-18. Request genuinely absent telemetry; verify absence remains absence.
-19. Leave Factory arrangement. Verify prior writing geometry/focus is restored and work is not stopped.
-20. Re-enter Factory. Verify active state reconstructs from native refs rather than desktop-local remembered Factory truth.
+1. Start in ordinary Cradle with a real Project, writing Surface and known layout/focus.
+2. Have one persisted tmux-backed AgentSession available.
+3. Enter Factory arrangement; verify point-field transition and preservation of the writing/session world.
+4. Verify the real encounter is central, World remains left, Return region is available.
+5. Commission a small real Factory item; observe an activity lane from owner state.
+6. Click the lane and open the exact persisted tmux Surface; prove continuity from inside it.
+7. Return to Conversation while the work continues.
+8. Start a second real locus on another Project/repo; verify quiet left cue + distinct lane.
+9. Run one unrelated Direct AgentSession; verify no fabricated Factory ancestry.
+10. Express/propose one new Agent from intent; inspect authored/proposed vs effective/runtime standing.
+11. Select/compose it with another Agent through supported native formation relations and commission work.
+12. From active work, invoke one bounded child from an invocation-scoped intent expression; prove parent, subject, authority, return and lifecycle provenance.
+13. Choose **Keep as Agent** for that useful child; prove persistence goes through Central proposal/recognition rather than implicit runtime promotion.
+14. Trigger one real attention/permission condition; distinguish it from ordinary working.
+15. Let work Return; open actual Candidate/Evidence/artifact in the right region.
+16. Detach substantial Return material, inspect it, then redock.
+17. Invoke real repair/additional-evidence or Recognition and verify owner receipt/state change.
+18. Make the tmux/provider unavailable for one lane; verify truthful degradation and no fake terminal/session.
+19. Request genuinely absent telemetry; absence remains absence.
+20. Leave Factory; prior writing geometry/focus returns and work is not stopped.
+21. Re-enter Factory; active state reconstructs from native refs rather than desktop-local Factory truth.
 
-Evidence must distinguish deterministic/contract, provider, material and human-experience standing. Screenshots prove the encounter; exact refs/receipts prove that the encounter was connected to the owner reality it claimed to show.
+Evidence must distinguish deterministic/contract, provider, material and human-experience standing. Screenshots prove the encounter; exact refs/receipts prove the encounter was connected to the owner reality it claimed to show.
 
 ## 14. Performance / optimisation hooks
 
@@ -373,11 +476,11 @@ This surface can become dense. Preserve the current optimisation programme while
 
 - activity horizon uses bounded/streaming updates rather than polling full histories;
 - long trajectories stay lazy/virtualised;
-- opening Factory does not eagerly load every artifact/result body;
+- entering Factory does not eagerly load every artifact/result body;
 - inactive Project cues aggregate cheaply from owner readings;
-- point-field transition expression must not block interaction readiness;
-- record model/token/cost/resource observations only where owners report them;
-- include the Factory arrangement in full-scale optimisation measurement once the first real vertical is operative.
+- point-field transition expression does not block interaction readiness;
+- model/token/cost/resource facts appear only where owners report them;
+- Factory arrangement enters full-scale optimisation measurement once the first real vertical is operative.
 
 ## 15. Non-goals
 
@@ -387,12 +490,13 @@ This surface can become dense. Preserve the current optimisation programme while
 - no universal progress percentage;
 - no tmux-specific Factory semantics;
 - no second Agent minting/profile system;
-- no prompt-only subagent mechanism if current Agent Expression/resolution can carry it;
+- no task-local runtime expression silently becoming durable authored Central source;
+- no persisted new subagent-expression type unless owner evidence requires it;
 - no model selector as primary Agent identity;
 - no automatic Recognition on completion;
 - no new giant desktop programme or shell rewrite;
-- no visual particle state treated as semantic state.
+- no second point-field renderer and no visual particle state treated as semantic state.
 
 ## 16. Closure
 
-This feature is complete when the installed Cradle can be entered as a genuine Factory working arrangement over current owner contracts: intent can become durable or bounded task-local Agent expression; one or many real Agents can carry Factory work; live activity is spatially legible; a lane opens the exact persisted working Surface through provider-neutral SessionSpace resolution; returned material is encounterable, detachable and actionable; Direct work stays distinct; and leaving/re-entering the arrangement preserves both human workspace continuity and native Agent/Run continuity.
+This feature is complete when the installed Cradle can be entered as a genuine Factory working arrangement over current owner contracts: authored intent can become a durably grounded Agent through the existing Central relation; the same expressive language can orient bounded delegated loci without falsifying authorship; one or many real Agents can carry Factory work; live activity is spatially legible; a lane opens the exact persisted working Surface through provider-neutral SessionSpace resolution; returned material is encounterable, detachable and actionable; Direct work stays distinct; and leaving/re-entering the arrangement preserves both human workspace continuity and native Agent/Run continuity.
