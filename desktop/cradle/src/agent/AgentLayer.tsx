@@ -114,17 +114,17 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
     <nav className="agent-planes" aria-label={region === "centre" ? "Encounter planes" : "Right region planes"}>
       {(["Conversation", "Activity", "Context", "Inspect"] as const).map(name =>
         <button key={name} aria-pressed={plane === name} onClick={() => setPlane(name)}>{name}</button>)}
-      <span className="agent-plane-tools">
+      {region === "right" && <span className="agent-plane-tools">
         <button className="agent-tool" aria-label={full ? "Restore right region" : "Full right region"} onClick={onFull}><Glyph name={full ? "restore" : "expand"}/></button>
         <button className="agent-tool" aria-label="Collapse right region" onClick={onClose}><Glyph name="close"/></button>
-      </span>
+      </span>}
     </nav>
     <div className="agent-body">
       {error && <p role="alert">{error}</p>}
       {/* The visible head still reads this same encounter while Context is open.
           Keep its one observer mounted; hide only its body, never duplicate it. */}
       {binding
-        ? <EncounterSurface key={binding.id} binding={{...binding, view: {encounterPlane}}} onView={view => setPlane(view.encounterPlane ?? "Conversation")} presentation={full ? "full" : "side"} onExpression={setExpression} concealed={plane==="Context"}/>
+        ? <EncounterSurface key={binding.id} binding={{...binding, view: {encounterPlane}}} onView={view => setPlane(view.encounterPlane ?? "Conversation")} onExpression={setExpression} concealed={plane==="Context"} presentation={region === "centre" ? "tab" : full ? "full" : "side"}/>
         : plane!=="Context" ? <NoAccompanying project={project} onOpen={choose}/> : null}
       {plane==="Context"&&<ContextPlane subject={subject} history={history} historyAvailable={historyAvailable} accompanying={accompanying}/>}
     </div>
