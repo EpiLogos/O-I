@@ -1,0 +1,53 @@
+{
+  "fixture": "profile-development",
+  "kind": "profile",
+  "profile": {
+    "schema": "oi.profile/v1",
+    "profile_ref": "development",
+    "title": "Development world",
+    "description": "Sparse intent for the development world: a native AIKit profile held by reference plus deliberate overrides. Not a snapshot of any native configuration tree.",
+    "created_at_unix_ms": 0,
+    "revised_at_unix_ms": 0,
+    "native_profiles": [
+      { "owner_ref": "ai-kit", "native_profile_ref": "coding" }
+    ],
+    "desired": [
+      {
+        "setting_ref": "ai-kit:session:session.provider",
+        "scope": { "scope_kind": "world", "scope_ref": null },
+        "value": "herdr",
+        "secret_reference": null
+      },
+      {
+        "setting_ref": "ai-kit:resolution:model.default",
+        "scope": { "scope_kind": "project", "scope_ref": "epilogos/o-i" },
+        "value": "sonnet-next",
+        "secret_reference": null
+      },
+      {
+        "setting_ref": "oi:verify:verify.before-run",
+        "scope": { "scope_kind": "world", "scope_ref": null },
+        "value": true,
+        "secret_reference": null
+      },
+      {
+        "setting_ref": "ai-kit:providers:credentials.anthropic",
+        "scope": { "scope_kind": "world", "scope_ref": null },
+        "secret_reference": { "ref": "aikit:credentials:anthropic-key" }
+      },
+      {
+        "setting_ref": "connector/factory-actuation:authority:authority.mode",
+        "scope": { "scope_kind": "connector-relation", "scope_ref": "factory-actuation" },
+        "value": "delegated",
+        "secret_reference": null
+      }
+    ],
+    "provenance": { "authored_by": "human", "notes_ref": null, "imported_from_ref": null }
+  },
+  "expect": {
+    "sparse": true,
+    "native_profiles_by_reference_only": true,
+    "secret_entry_has_no_value": true,
+    "all_setting_refs_resolve_in_contribution_fixtures": true
+  }
+}

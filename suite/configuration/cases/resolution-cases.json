@@ -1,0 +1,96 @@
+{
+  "fixture": "resolution-cases",
+  "kind": "resolution-cases",
+  "cases": [
+    {
+      "name": "no desired state is satisfied",
+      "desired": null,
+      "native_effective": "sonnet-current",
+      "native_declared": "sonnet-current",
+      "stage_state": "none",
+      "owner_available": true,
+      "setting_supported": true,
+      "expect": "satisfied"
+    },
+    {
+      "name": "desired equal to effective is satisfied",
+      "desired": "sonnet-current",
+      "native_effective": "sonnet-current",
+      "native_declared": "sonnet-current",
+      "stage_state": "none",
+      "owner_available": true,
+      "setting_supported": true,
+      "expect": "satisfied"
+    },
+    {
+      "name": "desired differing from effective is drifted",
+      "desired": "sonnet-next",
+      "native_effective": "sonnet-current",
+      "native_declared": "sonnet-current",
+      "stage_state": "none",
+      "owner_available": true,
+      "setting_supported": true,
+      "expect": "drifted"
+    },
+    {
+      "name": "an owner-side stage in flight is pending",
+      "desired": "sonnet-next",
+      "native_effective": "sonnet-current",
+      "native_declared": "sonnet-current",
+      "stage_state": "prepared",
+      "owner_available": true,
+      "setting_supported": true,
+      "expect": "pending"
+    },
+    {
+      "name": "unavailable owner is blocked",
+      "desired": "sonnet-next",
+      "native_effective": null,
+      "native_declared": null,
+      "stage_state": "none",
+      "owner_available": false,
+      "setting_supported": true,
+      "expect": "blocked"
+    },
+    {
+      "name": "setting absent from the contribution is unsupported",
+      "desired": "sonnet-next",
+      "native_effective": "sonnet-current",
+      "native_declared": "sonnet-current",
+      "stage_state": "none",
+      "owner_available": true,
+      "setting_supported": false,
+      "expect": "unsupported"
+    },
+    {
+      "name": "no native axes disclosed is unknown, never guessed",
+      "desired": "sonnet-next",
+      "native_effective": null,
+      "native_declared": null,
+      "stage_state": "none",
+      "owner_available": true,
+      "setting_supported": true,
+      "expect": "unknown"
+    },
+    {
+      "name": "declared alone still compares (effective absent)",
+      "desired": "sonnet-current",
+      "native_effective": null,
+      "native_declared": "sonnet-current",
+      "stage_state": "none",
+      "owner_available": true,
+      "setting_supported": true,
+      "expect": "satisfied"
+    },
+    {
+      "name": "declared drift still drifts (effective absent)",
+      "desired": "sonnet-next",
+      "native_effective": null,
+      "native_declared": "sonnet-current",
+      "stage_state": "none",
+      "owner_available": true,
+      "setting_supported": true,
+      "expect": "drifted"
+    }
+  ]
+}
