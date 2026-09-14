@@ -24,7 +24,7 @@ export const LOGO_PRESET = Object.freeze({
     glyph: ['O', 'I'],
     particleCount: 120000,
     particleSize: { min: 0.7, max: 1.75 },
-    colorMode: 'followTheme',
+    colorMode: 'blackOnWhite',
     style: 'stipple',
     dotShape: 'circle',
     fluid: {

@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "rest",
-  "generated_at": "2026-09-13T23:55:08.363Z",
+  "generated_at": "2026-09-14T02:43:39.913Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": null,
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 1382,
+  "duration_ms": 646,
   "checks": [
     {
       "ok": true,
@@ -93,11 +93,11 @@
     {
       "ok": true,
       "op": "capture.timing",
-      "duration_ms": 0.5,
+      "duration_ms": 0.4,
       "data": {
-        "fcp_ms": 272,
-        "dom_content_loaded_ms": 177.4,
-        "load_ms": 177.5
+        "fcp_ms": 88,
+        "dom_content_loaded_ms": 58.1,
+        "load_ms": 58.1
       }
     },
     {
@@ -106,7 +106,7 @@
       "duration_ms": 0.1,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-13T23:55:08.661Z",
+        "mounted_at": "2026-09-14T02:43:40.008Z",
         "transport": {
           "kind": "unavailable",
           "reason": "no kernel transport: neither the Tauri host nor a dev walk bridge is reachable"
@@ -120,7 +120,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-13T23:55:09.566Z",
+        "mounted_at": "2026-09-14T02:43:40.456Z",
         "transport": {
           "kind": "unavailable",
           "reason": "no kernel transport: neither the Tauri host nor a dev walk bridge is reachable"
@@ -131,14 +131,14 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 81,
+      "duration_ms": 33,
       "data": {
         "file": "rest-desktop-rest.png"
       }
     }
   ],
   "metrics": {
-    "cold_start_fcp_ms": 272
+    "cold_start_fcp_ms": 88
   },
   "screenshots": [
     "rest-desktop-rest.png"
