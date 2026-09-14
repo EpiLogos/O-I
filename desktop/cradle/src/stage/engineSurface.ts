@@ -13,16 +13,31 @@
  * Laws carried over from the previous runtime: the surface exists exactly
  * while the expression is enabled (off removes canvas, context and
  * simulation entirely); prefers-reduced-motion renders a still field unless
- * a surface deliberately overrides it; context loss surfaces honestly and
- * recovery is an explicit reseed.
+ * a surface deliberately overrides it. A K9 retained lease is narrower:
+ * K8 may own the attraction targets of this same production field while O:I
+ * keeps the canvas, renderer, physics clock and lifecycle. Context return then
+ * restores the acknowledged resident GPU checkpoint instead of reseeding.
  */
-import { ProductionAdapter } from "@epilogos/oi-design-system/expressions-engine/shell/production.mjs";
+import { ProductionAdapter, type RetainedTargetPort } from "@epilogos/oi-design-system/expressions-engine/shell/production.mjs";
 import { nativeSnapshotToJourney, type NativeConfig, type StageScene } from "@epilogos/oi-design-system/expressions-engine/shell/nativeBridge.mjs";
 import { stageCentre, stageScale } from "@epilogos/oi-design-system/expressions-engine/shell/camera.mjs";
 import type { EngineCommand, EngineFrame } from "@epilogos/oi-design-system/expressions-engine/shell/engine.mjs";
 import { stageRecipe, stageSequence } from "./recipes";
 
 const WORLD_SCALE = 400; // the instrument's stage unit (nativeParameters.ts)
+
+/** The only K8-facing capability of a stage surface. It deliberately has no
+ * renderer, step, reseed, scene, recipe or document mutation method. */
+export interface StageRetainedLease {
+  retainedTargetPort(): RetainedTargetPort;
+  checkpointRetainedField(binding: unknown): unknown;
+  restoreRetainedField(binding: unknown, checkpoint: unknown): StageRetainedLease;
+  onRecoveryRequired(listener: (phase:"lost"|"restored") => void): () => void;
+  inspect(): unknown;
+  pause(value?: boolean): StageRetainedLease;
+  resume(): StageRetainedLease;
+  renderOnce(): StageRetainedLease;
+}
 
 /** Overlay merge for authored patches: objects merge recursively, arrays
  * and scalars replace. This is recipe semantics — untouched keys persist —
@@ -63,6 +78,7 @@ export class EngineSurface {
   private observer: ResizeObserver | null = null;
   private detachPointer: () => void = () => {};
   private onError: (message: string) => void;
+  private retainedLeaseOwner: string | null = null;
 
   private constructor(canvas: HTMLCanvasElement, element: HTMLElement | null, onError: (message: string) => void) {
     this.canvas = canvas;
@@ -97,8 +113,6 @@ export class EngineSurface {
     document.addEventListener("visibilitychange", this.wake);
   }
 
-  /** The window's expression surface: one fixed, aria-hidden, fully
-   * pointer-transparent canvas appended after the app root. */
   static forWindow(onError: (message: string) => void): EngineSurface {
     const canvas = document.createElement("canvas");
     canvas.className = "oi-point-cloud-overlay";
@@ -108,9 +122,6 @@ export class EngineSurface {
     return new EngineSurface(canvas, null, onError);
   }
 
-  /** An element-bounded surface (the settings preview): the canvas lives
-   * inside the container; the adapter's stage law frames the field to the
-   * element's own box. */
   static forElement(container: HTMLElement, onError: (message: string) => void): EngineSurface {
     const canvas = document.createElement("canvas");
     canvas.className = "oi-stage-element-surface";
@@ -120,33 +131,22 @@ export class EngineSurface {
     return new EngineSurface(canvas, container, onError);
   }
 
-  /** Present one authored recipe as the surface's scene. One scene at a
-   * time in this phase — the shared-medium model, not parallel simulations. */
   present(id: string, recipe: string) {
-    if (this.active && this.active.id !== id) {
-      throw new Error(`The engine surface already presents "${this.active.id}"; release it before presenting "${id}".`);
-    }
+    if (this.active && this.active.id !== id) throw new Error(`The engine surface already presents "${this.active.id}"; release it before presenting "${id}".`);
     this.live = true;
     this.canvas.style.visibility = "visible";
     this.activate(id, this.sceneFrom(stageRecipe(recipe)));
     this.wake();
   }
 
-  /** Present owner-authored configuration directly (the visual-preference
-   * owner's document — user material, not app-invented physics). */
   presentConfig(id: string, config: unknown) {
-    if (this.active && this.active.id !== id) {
-      throw new Error(`The engine surface already presents "${this.active.id}"; release it before presenting "${id}".`);
-    }
+    if (this.active && this.active.id !== id) throw new Error(`The engine surface already presents "${this.active.id}"; release it before presenting "${id}".`);
     this.live = true;
     this.canvas.style.visibility = "visible";
     this.activate(id, this.sceneFrom(config as NativeConfig));
     this.wake();
   }
 
-  /** Apply another authored recipe as an overlay on the presented scene's
-   * retained config — same scene id, so the adapter applies it immediately
-   * (no transition, no reseed). */
   update(id: string, recipe: string) {
     const active = this.require(id);
     const merged = mergePatch(active.scene.native?.config ?? {}, stageRecipe(recipe));
@@ -154,19 +154,12 @@ export class EngineSurface {
     this.wake();
   }
 
-  /** Play an authored sequence: each step merges over the presented
-   * scene's config and lands as a new scene id, so the adapter's
-   * persistent-ID interpolation carries the medium between steps without
-   * a reseed. Reduced motion applies the final state immediately. */
   play(id: string, sequenceId: string) {
     const active = this.require(id);
     this.clearTimers();
     const { steps } = stageSequence(sequenceId);
     if (this.reduced.matches && !this.forceMotion) {
-      const merged = steps.reduce<NativeConfig>(
-        (config, step) => mergePatch(config, stageRecipe(step.recipe)),
-        active.scene.native?.config ?? {},
-      );
+      const merged = steps.reduce<NativeConfig>((config, step) => mergePatch(config, stageRecipe(step.recipe)), active.scene.native?.config ?? {});
       this.activate(id, this.sceneFrom(merged, id));
       this.wake();
       return;
@@ -186,9 +179,38 @@ export class EngineSurface {
     });
   }
 
+  retainedLease(id: string): StageRetainedLease {
+    this.require(id);
+    if (this.retainedLeaseOwner && this.retainedLeaseOwner !== id) throw new Error(`The retained expression lease belongs to "${this.retainedLeaseOwner}".`);
+    if (!this.retainedLeaseOwner) {
+      if (!this.renderFrame(0)) throw new Error("The production expression field could not be materialised for retained binding.");
+      this.retainedLeaseOwner = id;
+    }
+    const surface = this;
+    const lease: StageRetainedLease = {
+      retainedTargetPort() { return surface.adapter.retainedTargetPort(); },
+      checkpointRetainedField(binding) { return surface.adapter.checkpointRetainedField(binding as { checkpoint(renderer: unknown): unknown }); },
+      restoreRetainedField(binding, checkpoint) {
+        surface.adapter.restoreRetainedField(binding as { restore(renderer: unknown, checkpoint: unknown): void }, checkpoint);
+        surface.wake();
+        return lease;
+      },
+      onRecoveryRequired(listener) { return surface.adapter.onRetainedRecoveryRequired(listener); },
+      inspect() { return surface.adapter.inspect(); },
+      pause(value = true) { surface.setPaused(value); return lease; },
+      resume() { surface.setPaused(false); return lease; },
+      renderOnce() { surface.renderFrame(0); return lease; },
+    };
+    return lease;
+  }
+
   release(id: string) {
     if (!this.active || this.active.id !== id) return;
     this.clearTimers();
+    if (this.retainedLeaseOwner === id) {
+      this.adapter.releaseRetainedField();
+      this.retainedLeaseOwner = null;
+    }
     this.live = false;
     this.sleep();
     // A transition toward idle is not an empty frame. Hide the released
@@ -200,20 +222,13 @@ export class EngineSurface {
   }
 
   command(command: EngineCommand) {
-    try {
-      this.adapter.command?.(command);
-    } catch (cause) {
-      this.fail(cause);
-    }
+    try { this.adapter.command?.(command); }
+    catch (cause) { this.fail(cause); }
   }
 
   setPaused(paused: boolean) { this.paused = paused; if (!paused) this.wake(); }
   setForceMotion(force: boolean) { this.forceMotion = force; if (force) this.wake(); }
-
-  telemetry(): unknown {
-    try { return this.adapter.telemetry?.() ?? null; } catch { return null; }
-  }
-
+  telemetry(): unknown { try { return this.adapter.telemetry?.() ?? null; } catch { return null; } }
   capabilities() { return this.adapter.capabilities; }
 
   dispose() {
@@ -224,43 +239,28 @@ export class EngineSurface {
     document.removeEventListener("visibilitychange", this.wake);
     this.detachPointer();
     this.active = null;
+    this.retainedLeaseOwner = null;
     try { this.adapter.dispose(); } catch { /* already gone with its context */ }
     this.canvas.remove();
   }
 
-  private activate(id: string, scene: StageScene) {
-    this.active = { id, scene, revision: ++this.revision };
-  }
-
+  private activate(id: string, scene: StageScene) { this.active = { id, scene, revision: ++this.revision }; }
   private require(id: string): { id: string; scene: StageScene; revision: number } {
-    if (!this.active || this.active.id !== id) {
-      throw new Error(`The engine surface is not presenting "${id}".`);
-    }
+    if (!this.active || this.active.id !== id) throw new Error(`The engine surface is not presenting "${id}".`);
     return this.active;
   }
-
   private sceneFrom(config: NativeConfig, id?: string): StageScene {
     const scene = nativeSnapshotToJourney({ config }).scenes[0]!;
     if (id !== undefined) scene.id = id;
     return scene;
   }
-
-  private clearTimers() {
-    for (const timer of this.timers) clearTimeout(timer);
-    this.timers.length = 0;
-  }
-
+  private clearTimers() { for (const timer of this.timers) clearTimeout(timer); this.timers.length = 0; }
   private wake = () => {
     if (this.raf || !this.active || !this.live) return;
     this.last = performance.now();
     this.raf = requestAnimationFrame(this.frame);
   };
-
-  private sleep() {
-    if (this.raf) cancelAnimationFrame(this.raf);
-    this.raf = 0;
-  }
-
+  private sleep() { if (this.raf) cancelAnimationFrame(this.raf); this.raf = 0; }
   private frame = (now: number) => {
     this.raf = 0;
     if (!this.active || !this.live) return;
@@ -270,8 +270,6 @@ export class EngineSurface {
     this.last = now;
     if (this.renderFrame(delta) && this.active && this.live) this.raf = requestAnimationFrame(this.frame);
   };
-
-  /** Renders one frame; returns false when the surface has failed. */
   private renderFrame(delta: number): boolean {
     const element = this.element;
     let width: number, height: number;
@@ -279,23 +277,10 @@ export class EngineSurface {
       const rect = element.getBoundingClientRect();
       width = Math.max(1, Math.round(rect.width));
       height = Math.max(1, Math.round(rect.height));
-    } else {
-      width = window.innerWidth;
-      height = window.innerHeight;
-    }
+    } else { width = window.innerWidth; height = window.innerHeight; }
     try {
       this.adapter.resize(width, height, window.devicePixelRatio || 1);
-      this.adapter.render({
-        scene: this.active!.scene,
-        authoringRevision: this.active!.revision,
-        simTime: 0,
-        delta,
-        params: {},
-        camera: CAMERA_2D,
-        pointer: this.pointer,
-        selectedIds: [],
-        scaffold: "off",
-      });
+      this.adapter.render({ scene: this.active!.scene, authoringRevision: this.active!.revision, simTime: 0, delta, params: {}, camera: CAMERA_2D, pointer: this.pointer, selectedIds: [], scaffold: "off" });
       return true;
     } catch (cause) {
       this.sleep();
@@ -303,9 +288,5 @@ export class EngineSurface {
       return false;
     }
   }
-
-  private fail(cause: unknown) {
-    const message = cause instanceof Error ? cause.message : String(cause);
-    this.onError(message);
-  }
+  private fail(cause: unknown) { this.onError(cause instanceof Error ? cause.message : String(cause)); }
 }

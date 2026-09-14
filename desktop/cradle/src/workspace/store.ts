@@ -1,9 +1,9 @@
 import {preservePresentation,latestRecovery} from "./recovery";
 import { useEffect, useRef, useState, type SetStateAction } from "react";
-import { redockBinding } from "../surface/engine";
+import { activateSurface, openBinding, redockBinding } from "../surface/engine";
 import { decodeLayout } from "../surface/persist";
-import { openBinding } from "../surface/engine";
 import { freshLayout, type LayoutState } from "../surface/types";
+import {focusedInstrumentBinding,focusedInstrumentSource,subscribeFocusedInstrumentOpen} from "../instrument/source";
 
 export type ProjectMode = "chats" | "files" | "wiki";
 export interface ProjectNavigation { expanded: boolean; scroll: number; directories?: string[]; mode?: ProjectMode; locationPath?: string }
@@ -87,6 +87,20 @@ export function useWorkspaces() {
   }, [book,recovery]);
   const update = (change: (w: Workspace) => Workspace) => setBook(b => ({ ...b, workspaces: b.workspaces.map(w => w.id === b.active ? change(w) : w) }));
   const setLayout = (change: SetStateAction<LayoutState>) => update(w => ({ ...w, layout: typeof change === "function" ? change(w.layout) : change }));
+  useEffect(()=>subscribeFocusedInstrumentOpen(request=>{
+    const source=focusedInstrumentSource(request.sourceRef);if(!source)return;
+    const binding=focusedInstrumentBinding(request);
+    setLayout(state=>{
+      const existing=Object.values(state.surfaces).find(surface=>surface.kind==="instrument"&&surface.ref===request.sourceRef);
+      const opened=existing?activateSurface(state,existing.id):openBinding(state,binding);
+      // K9 composes the shell's existing navigator/centre/AgentLayer. The
+      // accompanying ref is accepted only from the registered owner source.
+      return {...opened,agencyDepth:"panel",rightDepth:"panel",accompanying:source.accompanying??opened.accompanying};
+    });
+  // setLayout is a presentation setter over the current workspace; this
+  // subscription intentionally lives for the lifetime of this hook instance.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }),[]);
   const setWritingMode = (writingMode: boolean) => update(w => ({ ...w, writingMode }));
   const setWriting = (writing: string) => update(w => ({ ...w, writing }));
   const activate = (id: string) => setBook(b => b.workspaces.some(w => w.id === id) ? { ...b, active: id } : b);

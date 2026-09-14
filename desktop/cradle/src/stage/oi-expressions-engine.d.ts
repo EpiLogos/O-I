@@ -106,6 +106,20 @@ declare module "@epilogos/oi-design-system/expressions-engine/shell/engine.mjs" 
 
 declare module "@epilogos/oi-design-system/expressions-engine/shell/production.mjs" {
   import type { EngineCommand, EngineFrame, FieldEngineAdapter } from "@epilogos/oi-design-system/expressions-engine/shell/engine.mjs";
+  export interface RetainedTargetPort {
+    readonly texWidth: number;
+    readonly texHeight: number;
+    readonly particleCount: number;
+    readonly currentPosTarget: unknown;
+    readonly currentVelTarget: unknown;
+    readonly nextPosTarget: unknown;
+    readonly nextVelTarget: unknown;
+    /** O:I-authored source textures used only as admission material; a retained
+     * binding copies them before taking target ownership. */
+    readonly targetA: unknown;
+    readonly targetB: unknown;
+    setTargetTextures(targetA: unknown, targetB: unknown, centre: unknown): void;
+  }
   /** The production engine adapter: hosted PointCloudField with persistent-ID
    * scene interpolation and honest context-loss. Create one per canvas; the
    * caller owns the clock (render(frame) → advance), projection and document. */
@@ -123,6 +137,11 @@ declare module "@epilogos/oi-design-system/expressions-engine/shell/production.m
     command(command: EngineCommand): void;
     inspect(readParticles?: boolean): unknown;
     projectNative(point: { x: number; y: number; z: number }): unknown;
+    retainedTargetPort(): RetainedTargetPort;
+    checkpointRetainedField(binding: { checkpoint(renderer: unknown): unknown }): unknown;
+    restoreRetainedField(binding: { restore(renderer: unknown, checkpoint: unknown): void }, checkpoint: unknown): ProductionAdapter;
+    onRetainedRecoveryRequired(listener: (phase: "lost"|"restored") => void): () => void;
+    releaseRetainedField(): void;
     dispose(): void;
   }
 }
