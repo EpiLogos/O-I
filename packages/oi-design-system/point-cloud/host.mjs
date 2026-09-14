@@ -37,6 +37,7 @@ export async function createPointCloudHost(win, options = {}) {
     maxInstances = 6,
     maxAllocatedParticles = 786432,
     onLost = () => {},
+    onRestored = () => {},
   } = options;
 
   // --- lazy heavy load: three + engine modules ---
@@ -341,9 +342,24 @@ export async function createPointCloudHost(win, options = {}) {
     mode = 'context-lost';
     if (raf) win.cancelAnimationFrame(raf);
     raf = 0;
+    for (const record of instances.values()) {
+      if (!record.retainedPortIssued || record.released || record.stub) continue;
+      record.beforeContextLossPaused = record.paused;
+      record.paused = true;
+      record.retainedRecoveryRequired = true;
+    }
     onLost(new Error('The expression renderer lost its WebGL context; the field is paused'));
   }
+  function onContextRestored() {
+    if (disposed) return;
+    syncCanvasSize();
+    const pending = [...instances.values()].filter((record) => record.retainedRecoveryRequired && !record.released);
+    mode = pending.length ? 'recovery-required' : 'live';
+    onRestored({ mode, retainedInstanceIds: pending.map((record) => record.id) });
+    if (mode === 'live') ensureLoop();
+  }
   canvas.addEventListener('webglcontextlost', onContextLost);
+  canvas.addEventListener('webglcontextrestored', onContextRestored);
 
   const host = {
     canvas,
@@ -390,6 +406,7 @@ export async function createPointCloudHost(win, options = {}) {
         id, tag, target: target ?? null, pointer,
         paused: Boolean(paused), released: false, forceMotion: Boolean(forceMotion),
         sizeBucket: 0, rebakeTimer: 0, rect: null, stub: false,
+        retainedPortIssued: false, retainedRecoveryRequired: false, beforeContextLossPaused: null,
       };
       record.field = new PointCloudField({
         renderer,
@@ -420,6 +437,17 @@ export async function createPointCloudHost(win, options = {}) {
     },
 
     instance(record) {
+      let retainedPort = null;
+      const requireRetainedRecord = () => {
+        if (record.stub || record.released || !record.field?.simulator) {
+          throw new Error('Retained field is unavailable for this point-cloud instance');
+        }
+        return record.field.simulator;
+      };
+      const wakeAfterRetainedChange = () => {
+        if (record.paused || (media.matches && !record.forceMotion)) drawOnce(record);
+        else ensureLoop();
+      };
       const api = {
         id: record.id,
         pause(value = true) {
@@ -446,6 +474,63 @@ export async function createPointCloudHost(win, options = {}) {
           if (record.paused || (media.matches && !record.forceMotion)) drawOnce(record); else ensureLoop();
           return classification;
         },
+        /**
+         * Narrow capability for a source-qualified retained-field adapter.
+         * It deliberately does not expose `seedInitialState`, stepping, reset,
+         * renderer access or the PointCloudField. K8 may only replace the two
+         * target textures that the already-running O:I field is attracted to.
+         */
+        retainedTargetPort() {
+          const simulator = requireRetainedRecord();
+          record.retainedPortIssued = true;
+          if (!retainedPort) retainedPort = Object.freeze({
+            get texWidth() { return simulator.texWidth; },
+            get texHeight() { return simulator.texHeight; },
+            get particleCount() { return simulator.particleCount; },
+            get currentPosTarget() { return simulator.currentPosTarget; },
+            get currentVelTarget() { return simulator.currentVelTarget; },
+            get nextPosTarget() { return simulator.nextPosTarget; },
+            get nextVelTarget() { return simulator.nextVelTarget; },
+            setTargetTextures(targetA, targetB, centre) {
+              simulator.setTargetTextures(targetA, targetB, centre);
+              wakeAfterRetainedChange();
+            },
+          });
+          return retainedPort;
+        },
+        /**
+         * The renderer remains window-private. K8's retained binding is asked
+         * to checkpoint through this door so neither K8 nor K9 can acquire a
+         * second renderer/lifecycle owner.
+         */
+        checkpointRetainedField(binding) {
+          requireRetainedRecord();
+          if (!record.retainedPortIssued || !binding || typeof binding.checkpoint !== 'function') {
+            throw new Error('A retained-field binding must be attached before checkpointing');
+          }
+          return binding.checkpoint(renderer);
+        },
+        /** Restore once after explicit WebGL recovery. The host pauses its own
+         * scheduler while K8 restores full position + velocity, then returns
+         * to the exact pre-loss paused/running standing. No reseed or catch-up
+         * frame is invented by the presentation owner. */
+        restoreRetainedField(binding, checkpoint) {
+          requireRetainedRecord();
+          if (!record.retainedPortIssued || !binding || typeof binding.restore !== 'function') {
+            throw new Error('A retained-field binding must be attached before recovery');
+          }
+          const resumeAfter = record.beforeContextLossPaused === false;
+          record.paused = true;
+          binding.restore(renderer, checkpoint);
+          record.retainedRecoveryRequired = false;
+          record.beforeContextLossPaused = null;
+          if (![...instances.values()].some((candidate) => candidate.retainedRecoveryRequired && !candidate.released)) {
+            mode = 'live';
+          }
+          record.paused = !resumeAfter;
+          wakeAfterRetainedChange();
+          return api;
+        },
         release() {
           if (record.released) return;
           record.released = true;
@@ -471,6 +556,8 @@ export async function createPointCloudHost(win, options = {}) {
             tag: record.tag,
             mode: record.stub ? 'static-fallback' : 'live',
             paused: record.paused,
+            retainedPortIssued: Boolean(record.retainedPortIssued),
+            retainedRecoveryRequired: Boolean(record.retainedRecoveryRequired),
             requestedParticles: record.field?.config.particleCount ?? 0,
             allocatedParticles: record.field?.simulator.particleCount ?? 0,
             texWidth: record.field?.simulator.texWidth ?? 0,
@@ -496,6 +583,8 @@ export async function createPointCloudHost(win, options = {}) {
         instances: [...instances.values()].map((record) => ({
           id: record.id, tag: record.tag, paused: record.paused,
           glyph: record.field?.config.glyph ?? null,
+          retainedPortIssued: Boolean(record.retainedPortIssued),
+          retainedRecoveryRequired: Boolean(record.retainedRecoveryRequired),
           requestedParticles: record.field?.config.particleCount ?? 0,
           allocatedParticles: record.field?.simulator.particleCount ?? 0,
           texWidth: record.field?.simulator.texWidth ?? 0,
@@ -522,6 +611,7 @@ export async function createPointCloudHost(win, options = {}) {
       win.removeEventListener('resize', onResize);
       media.removeEventListener('change', onMotionChange);
       canvas.removeEventListener('webglcontextlost', onContextLost);
+      canvas.removeEventListener('webglcontextrestored', onContextRestored);
       sampler.destroy();
       renderer.dispose();
       canvas.remove();
