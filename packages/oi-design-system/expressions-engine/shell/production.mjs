@@ -45,7 +45,10 @@ class ProductionAdapter {
   lost = (event) => {
     event.preventDefault();
     this.contextLost = true;
-    if (this.retained) this.retained.recoveryRequired = true;
+    if (this.retained) {
+      this.retained.recoveryRequired = true;
+      for (const listener of this.recoveryListeners) listener("lost");
+    }
     this.dirty = true;
   };
   restored = () => {
@@ -59,7 +62,7 @@ class ProductionAdapter {
     this.contextLost = false;
     this.retained.recoveryRequired = true;
     this.dirty = true;
-    for (const listener of this.recoveryListeners) listener();
+    for (const listener of this.recoveryListeners) listener("restored");
   };
   resize(width, height, pixelRatio) {
     this.width = width;
@@ -302,7 +305,7 @@ class ProductionAdapter {
   onRetainedRecoveryRequired(listener) {
     if (typeof listener !== "function") throw new Error("Retained recovery listener must be callable.");
     this.recoveryListeners.add(listener);
-    if (this.retained?.recoveryRequired && !this.contextLost) queueMicrotask(listener);
+    if (this.retained?.recoveryRequired) queueMicrotask(() => listener(this.contextLost ? "lost" : "restored"));
     return () => this.recoveryListeners.delete(listener);
   }
   releaseRetainedField() {
