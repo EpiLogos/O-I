@@ -8,32 +8,32 @@ const PRODUCTS: [(&str, &str, &str); 6] = [
     (
         "central",
         "ctrl",
-        "5b61b82835f4efbf57ab896b8efff72f9f8f3906",
+        "39efa03ea8607bdd8a79b0e317457c2ccc3ead4c",
     ),
     (
         "actuation",
         "actuation",
-        "90041d5f81331b636893d772c3288c062ad0e13b",
+        "67e6b296b85bd3eb1554802fd55a476c474aa566",
     ),
     (
         "ai-kit",
         "aikit",
-        "95e35ac6569a85239a4689aeb440929f5d07888b",
+        "856f454778e5a44e8055751bb59ed933caf210ce",
     ),
     (
         "software-factory",
         "factory",
-        "885f3c29726dc6cb9397eca246abdfb1c65eff86",
+        "a335048b0a5b907adc5d09f0dcbda05b98f79a05",
     ),
     (
         "workcell",
         "workcell",
-        "fa47a29fa49a6636675d21309b00c269ac824abb",
+        "e4e40a91fe7ed1776e634cad768f1049c39fd34e",
     ),
     (
         "quaternal-logic",
         "ql",
-        "44ed3cd0e7a8bc25508a4e18ad3bb4c730013913",
+        "a83148e93c500d5bebaa5811d9d25953652834cf",
     ),
 ];
 

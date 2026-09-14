@@ -1,51 +1,51 @@
 {
   "schema": "oi.mainline-snapshot/v1",
-  "observed_at": "2026-09-09",
-  "purpose": "Durable source snapshot for the six-product O:I composition at the current pre-#97 deterministic cut. O:I #97 live-main convergence applies to its explicitly named primary repository set; Quaternal Logic remains represented as the separately owned parallel product and is not a #97 live-main dependency gate.",
+  "observed_at": "2026-09-14",
+  "purpose": "Durable exact-current source snapshot for the six native products composed by O:I. Every recorded revision is an accepted owner main and participates equally in current-main verification; product semantics and feature branches remain owner-native.",
   "source_catalog": "surfaces.json",
-  "coordinator_rule": "O:I itself is the repository containing this snapshot; its exact accepted commit is recorded by the owning PR/issue receipt rather than self-referentially inside this file.",
+  "coordinator_rule": "O:I is the containing suite and records the exact accepted native-product cut. O:I itself is recorded by its owning PR/receipt rather than self-referentially inside this six-product snapshot.",
   "products": [
     {
       "id": "central",
       "repository": "https://github.com/EpiLogos/Central",
-      "revision": "5b61b82835f4efbf57ab896b8efff72f9f8f3906",
+      "revision": "39efa03ea8607bdd8a79b0e317457c2ccc3ead4c",
       "state": "accepted-main",
-      "note": "Current Central main includes Project Context, ProjectCentral authored Ground/governance, NOW/DAY, current machine/World source relations, durable personal/Project AgentProfile source/persistence/Actions, authored RoutineRef assignment, and the native ctrl help/capabilities doorway. Central retains source standing while AIKit owns effective Profile/ContextResolution and Routine runtime state. Refreshed 2026-09-08 to published daec44cc (fast-forward over 61674937): native Central directory and text readings, a Central pilot account with capability matrix and maintenance check (#123), a targeted quick verify grade (#124), cargo build caching across rust workflows (#125), the central.pasu/v1 bounded-entity grammar with nara identity-source manifest (W10 V1, #126), and agent-set/world-relations persistence with owned Actions (W10 V2, #127). Re-pinned 2026-09-09 to exact accepted owner main f3559dbf."
+      "note": "Exact Central main observed 2026-09-14; includes current root-meta-project, Agent expression allocation and the existing native verification contract."
     },
     {
       "id": "actuation",
       "repository": "https://github.com/EpiLogos/Actuation",
-      "revision": "90041d5f81331b636893d772c3288c062ad0e13b",
+      "revision": "67e6b296b85bd3eb1554802fd55a476c474aa566",
       "state": "accepted-main",
-      "note": "Current Actuation main includes the realised authority/runtime floor, semantic Activity over canonical ActuationStream, the owner-native installable actuation CLI (oi-managed-native-cli with installed verify), actuation.instantiation/v1 evidence-gated receipts, the actuation.harness-detection/v1 contract with catalog r2 (zcode), environment/self detection and its live detection engine proof, and the Prime recursive relational Agency experiment (#26/#81) under experiments/ql-runtime/prime. Refreshed 2026-09-08 to published bdfdb987 (fast-forward over 2b458afd): branch-protection PR flow proof (#28), a capability-matrix account with CLI parity check, the harness.capability/v1 descriptor contract with catalog and read models (#30) and its zcode seven-event grammar correction (#31), capability-matrix re-pin over #30/#31 (#32), a Native CLI gate on every pull request, and the durable ActuationStream store with descriptor-driven boundary occurrence recording (W3, #33). Re-pinned 2026-09-09 to exact accepted owner main ecac9ddd, which lands catalog r6: model_dispatch on actuation.harness-capability/v1 and typed model-provider detection (#55), the revision ai-kit's harness-native model routes consume. Re-pinned 2026-09-12 to exact accepted owner main 4af495f, the native Rust cutover (PR #69): the served product is the actuation-cli executable (target/release/actuation, no Node runtime), package.json/bin/cli/contracts/detection are retired, the frozen Node-era corpora remain the wire oracle replayed natively, and the O:I source contract builds with the locked cargo command per the owner's .oi/product.json. Re-pinned 2026-09-12 to exact accepted owner main 90041d5 (PR #73): consumer harmonisation merged (O:I #245 source contract, ai-kit #300 CAW native builds with the material phase green), the joined Development Field witness drives the served binary (O:I #252), and the research acceptance horizon names only the owner-machine physical return."
+      "note": "Exact Actuation main observed 2026-09-14; current native Agency/Actuation authority includes the Rust research-policy move through compressed-intent control."
     },
     {
       "id": "ai-kit",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "revision": "95e35ac6569a85239a4689aeb440929f5d07888b",
+      "revision": "856f454778e5a44e8055751bb59ed933caf210ce",
       "state": "accepted-main",
-      "note": "Current AIKit main includes SessionSpace, content-addressed ContextResolution evidence, Herdr/Hyprland reference composition with deterministic Herdr automation-provider coverage, VersionedWorld/ProjectWorld, Method, proof-before-automation Routine, operative Resolve/search, canonical QL-shape use, Central-owned NOW/DAY/Flow temporal grounding through the public Action seam, pre-local build-only standing, native installed doctor verification for #172, and CI conformance that the committed builtin capability registry contains only valid manifests. Refreshed 2026-09-08 to published e8684f81 (fast-forward over bc7c158): Actuation capability-descriptor consumption in install dispatch projections (CASE 01 leg 2, #180), zcode and codex descriptor-driven dispatch projections with per-project hooks.json (W3, #182/#184), six harnesses admitted through the harness-adapter contract (#183) with claude/codex/zcode admission (W3, #187), a targeted quick verify grade (#181), native Central wiki declarations with verified ACP harness lifecycle, the W1 continuity reaction-engine skeleton (CASE 14, #188), compiled pasu entity materialisation behind SemanticWikiIndex with Vāk addressing, QL shape-contract v2 and authored-source ingestion (W10 V3/V4/V9, #189/#190/#191), root-to-project entity binding through effective world sources (W10 V5, #193), entity-aware disclosure as a composed capability (W10 V6, #194), and the gateway bootstrap fold with CLI front door, well-known endpoint and doctor probe (#192); KnowledgeDomain activation with content dedup follows on current main (W1, CASE 03, #195). Re-pinned 2026-09-09 to exact accepted owner main 3a373481 after Factory developmental consumption merged in PR #255."
+      "note": "Exact AIKit main observed 2026-09-14; current operational context/praxis owner includes AW2 operative-currentness separation and the established quick/full verification contract."
     },
     {
       "id": "software-factory",
-      "repository": "https://github.com/EpiLogos/agent-system-design",
-      "revision": "885f3c29726dc6cb9397eca246abdfb1c65eff86",
+      "repository": "https://github.com/EpiLogos/Factory",
+      "revision": "a335048b0a5b907adc5d09f0dcbda05b98f79a05",
       "state": "accepted-main-with-active-research-exceptions",
-      "note": "Current Factory main includes Git developmental Worlds, bounded P3 Intent→Run→P5 return, ProjectDevelopment persistence, canonical Actions, Journey Commission, AgentProfile→Method proof→Routine developmental correlation, whole-relative proof/RunThought/NOW hardening, the run-thought field line (#163), the owner-native factory CLI (oi-managed-native-cli artifact-kind admission on main), and the composed agent-capability intake through stable refs (#188): typed Central AgentProfile + AIKit SkillSet-generation refs with recorded pinned-revision evidence, W12-style three-way witness and a pin-bound conformance lane. The ql/deep-runtime research track remains the separately owned live branch (#95/#100). Refreshed 2026-09-08 to published ea4cec6 (fast-forward over 8ba2c041): a Factory Rust gate run on every pull request, and a capability-matrix account with maintenance check and CI (#189). Re-pinned 2026-09-09 to exact accepted owner main 12a721db after the atomic self-hosting Commission merged in PR #212."
+      "note": "Exact canonical Factory main observed 2026-09-14; current developmental owner includes retained task reads and DevelopmentalBuild while separately named research branches remain non-main candidates."
     },
     {
       "id": "workcell",
       "repository": "https://github.com/EpiLogos/Workcell",
-      "revision": "fa47a29fa49a6636675d21309b00c269ac824abb",
+      "revision": "e4e40a91fe7ed1776e634cad768f1049c39fd34e",
       "state": "accepted-main-with-physical-provider-gates",
-      "note": "Current Workcell main includes deterministic OpenSandbox World materialisation/lifecycle, AIKit Gateway managed-service materiality, the portable process/secret/provider foundation, pre-local build-only standing, selector-independent native workcell version/doctor identity, and the executable-identity / control-service-and-agent-hosting docs line. Actual owner-machine/provider execution remains #97 evidence. Refreshed 2026-09-08 to published 8eb521ee (fast-forward over b9cd5e02): OpenSandbox physical-acceptance defects found against a real server are fixed (#52), and the live harness-instance registry model with instances CLI follows (M1, #53). Re-pinned 2026-09-09 to exact accepted owner main fa47a29f after running executable identity was corrected in PR #66."
+      "note": "Exact Workcell main observed 2026-09-14; source revision disclosure is native while owner-machine/provider acceptance remains distinct physical evidence."
     },
     {
       "id": "quaternal-logic",
       "repository": "https://github.com/EpiLogos/QL-MEF",
-      "revision": "44ed3cd0e7a8bc25508a4e18ad3bb4c730013913",
-      "state": "parallel-native-owner-exception",
-      "note": "This accepted QL owner cut publishes the native ql executable and native-CLI lifecycle over current public kernel/service/MEF/Context-Frame/Vāk owners, and now carries the Epi-Logos research corpus (S/S' 12x12 relational field, Ta-Onta capability matrix, Pratibimba records), the musical harmonic system (#31/#76), generic external Context Frame reading, and the EPI-MATRIX P1 bounded Vāk context. The broader moving QL/Epi computational and research programme remains separately owned and is not a #97 live-main dependency gate. Re-pinned 2026-09-09 to exact accepted owner main 44ed3cd0."
+      "revision": "a83148e93c500d5bebaa5811d9d25953652834cf",
+      "state": "accepted-main",
+      "note": "Exact Quaternal Logic main observed 2026-09-14 after CI convergence and accepted-main Native C parity repair: one protected native PR gate, repository quick/full verification, accepted-main local acceptance and centrally commissioned cross-product proof."
     }
   ],
   "build_record": {
