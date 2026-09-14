@@ -335,7 +335,7 @@ fn command_status(catalog: &Catalog, args: &[OsString]) -> Result<i32, String> {
         return Ok(0);
     }
 
-    println!("{:<20} {:<11} {:<16} Native", "Surface", "State", "Alias");
+    println!("{:<20} {:<19} {:<16} Native", "Surface", "State", "Alias");
     for row in &rows {
         let alias = row
             .alias
@@ -344,7 +344,7 @@ fn command_status(catalog: &Catalog, args: &[OsString]) -> Result<i32, String> {
             .unwrap_or_else(|| "—".to_owned());
         let native = row.resolved.clone().unwrap_or_else(|| row.native.clone());
         println!(
-            "{:<20} {:<11} {:<16} {}",
+            "{:<20} {:<19} {:<16} {}",
             row.name, row.state, alias, native
         );
         if let Some(detail) = &row.detail {
@@ -395,6 +395,30 @@ fn status_rows(catalog: &Catalog, composition: &Composition) -> Vec<StatusRow> {
                         Some(path) => {
                             row.state = "registered".to_owned();
                             row.resolved = Some(path.display().to_string());
+                        }
+                        // No command was recorded as part of this install
+                        // (component install): the recorded material root is
+                        // what the product installed here. Present material
+                        // is an installed component, not a broken one.
+                        None if registration.native_executable.is_none() => {
+                            match registration.root.as_deref().map(Path::new) {
+                                Some(root) if root.is_dir() => {
+                                    row.state = "installed_component".to_owned();
+                                    row.resolved = Some(root.display().to_string());
+                                    row.detail = Some(format!(
+                                        "installed as component material at {}; no native {} command is part of this install",
+                                        root.display(),
+                                        surface.native.entry
+                                    ));
+                                }
+                                _ => {
+                                    row.state = "broken".to_owned();
+                                    row.detail = Some(
+                                        "this install recorded no native command and its component material root is missing"
+                                            .to_owned(),
+                                    );
+                                }
+                            }
                         }
                         None => {
                             row.state = "broken".to_owned();
