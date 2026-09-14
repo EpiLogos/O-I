@@ -135,6 +135,9 @@ export interface RetainedExpressionLease {
   retainedTargetPort():unknown;
   checkpointRetainedField(binding:unknown):unknown;
   restoreRetainedField(binding:unknown,checkpoint:unknown):RetainedExpressionLease;
+  /** Restore is explicitly source-driven after the same host reports WebGL
+   * recovery. This grants no renderer access and no permission to reseed. */
+  onRecoveryRequired(listener:()=>void):()=>void;
   inspect():unknown;
   pause(value?:boolean):RetainedExpressionLease;
   resume():RetainedExpressionLease;
@@ -176,13 +179,17 @@ export function registerFocusedInstrumentSource(source:FocusedInstrumentSource):
 
 export function focusedInstrumentSource(ref:string):FocusedInstrumentSource|undefined{return sources.get(ref);}
 
-/** Subscribe to both registry replacement and the owner's own push seam. */
+/** Subscribe to registry replacement and to the currently registered owner's
+ * push seam without turning absence into polling. */
 export function subscribeFocusedInstrumentSource(ref:string,listener:()=>void):()=>void {
-  let listeners=sourceListeners.get(ref);if(!listeners){listeners=new Set();sourceListeners.set(ref,listeners);}listeners.add(listener);
-  let ownerStop=focusedInstrumentSource(ref)?.subscribe?.(listener);
-  const refreshOwner=()=>{ownerStop?.();ownerStop=focusedInstrumentSource(ref)?.subscribe?.(listener);};
-  const registry=()=>{refreshOwner();listener();};
-  listeners.delete(listener);listeners.add(registry);
+  let owner:FocusedInstrumentSource|undefined=sources.get(ref);
+  let ownerStop=owner?.subscribe?.(listener);
+  const registry=()=>{
+    const next=sources.get(ref);
+    if(next!==owner){ownerStop?.();owner=next;ownerStop=owner?.subscribe?.(listener);}
+    listener();
+  };
+  let listeners=sourceListeners.get(ref);if(!listeners){listeners=new Set();sourceListeners.set(ref,listeners);}listeners.add(registry);
   return()=>{listeners?.delete(registry);if(!listeners?.size)sourceListeners.delete(ref);ownerStop?.();};
 }
 
