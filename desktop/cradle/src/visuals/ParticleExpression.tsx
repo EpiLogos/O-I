@@ -27,7 +27,7 @@ import { useKernel } from "../kernel/KernelProvider";
 interface VisualsContextValue {
   snapshot: VisualsSnapshot;
   host: PointCloudHost | null;
-  /** Honest host-level failure (context creation or loss) — surfaced, not swallowed. */
+  /** Honest host-level failure/recovery standing — surfaced, not swallowed. */
   error: string | null;
 }
 
@@ -49,12 +49,18 @@ function applyTheme(theme: VisualsSnapshot["theme"]) {
 }
 
 /** One host per window, held across provider remounts (strict mode double
- * invocation must not churn WebGL contexts); dropped only when the
- * expression is disabled or the context is lost. */
+ * invocation must not churn WebGL contexts). Context loss pauses the same
+ * host/instances for explicit retained-field recovery; only disabling or a
+ * creation failure drops the host. */
 let hostPromise: Promise<PointCloudHost> | null = null;
-function obtainHost(onLost: (cause: Error) => void): Promise<PointCloudHost> {
+const lossListeners=new Set<(cause:Error)=>void>();
+const restoreListeners=new Set<(info:unknown)=>void>();
+function obtainHost(): Promise<PointCloudHost> {
   if (!hostPromise) {
-    hostPromise = createPointCloudHost(window, { onLost }).catch((cause) => {
+    hostPromise = createPointCloudHost(window, {
+      onLost:(cause:Error)=>{for(const listener of lossListeners)listener(cause);},
+      onRestored:(info:unknown)=>{for(const listener of restoreListeners)listener(info);},
+    }).catch((cause) => {
       hostPromise = null;
       throw cause;
     });
@@ -85,7 +91,8 @@ export function VisualsProvider({ children }: { children: ReactNode }) {
     return () => media.removeEventListener("change", follow);
   }, [snapshot.theme]);
 
-  // The host lives exactly while the expression is enabled.
+  // The host lives exactly while the expression is enabled. WebGL loss is an
+  // interruption of that same owner, not permission to create a replacement.
   useEffect(() => {
     if (!snapshot.enabled) {
       dropHost();
@@ -93,13 +100,14 @@ export function VisualsProvider({ children }: { children: ReactNode }) {
         if (current) current.dispose();
         return null;
       });
+      setError(null);
       return;
     }
     let live = true;
-    void obtainHost((cause) => {
-      setError(cause.message);
-      setHost(null);
-    })
+    const lost=(cause:Error)=>{if(live)setError(cause.message);};
+    const restored=()=>{if(live)setError(null);};
+    lossListeners.add(lost);restoreListeners.add(restored);
+    void obtainHost()
       .then((created) => {
         if (!live) return;
         setError(null);
@@ -110,6 +118,7 @@ export function VisualsProvider({ children }: { children: ReactNode }) {
       });
     return () => {
       live = false;
+      lossListeners.delete(lost);restoreListeners.delete(restored);
     };
   }, [snapshot.enabled]);
 
@@ -167,8 +176,10 @@ export function ParticleField({
   style?: CSSProperties;
   forceMotion?: boolean;
   paused?: boolean;
-  /** Imperative handle for transitions (disperse, pause, renderOnce). */
-  onReady?: (instance: PointCloudInstance) => void;
+  /** Imperative handle for transitions/retained adapters. The second argument
+   * exposes only the host object already owned by this window; consumers must
+   * not construct another host/renderer from it. */
+  onReady?: (instance: PointCloudInstance, host: PointCloudHost) => void;
   children?: ReactNode;
 }) {
   const { host } = useVisuals();
@@ -192,7 +203,7 @@ export function ParticleField({
       paused,
     });
     instanceRef.current = instance;
-    onReady?.(instance);
+    onReady?.(instance,host);
     return () => {
       instanceRef.current = null;
       instance.release();
