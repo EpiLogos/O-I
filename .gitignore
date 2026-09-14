@@ -27,3 +27,9 @@ target/
 .development-field-owners/
 __pycache__/
 .worktrees/
+
+# SpaceTimeDB module build/codegen products are generated from src/index.ts
+shared-field/spacetimedb/dist/
+shared-field/spacetimedb/module_bindings/
+shared-field/spacetimedb/node_modules/
+shared-field/spacetimedb/package-lock.json
