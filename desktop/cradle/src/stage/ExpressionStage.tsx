@@ -51,7 +51,7 @@ import {
   type ExpressionCue,
 } from "./cues";
 import { expressionTargetIds, resolveExpressionTarget } from "./targets";
-import type { EngineSurface } from "./engineSurface";
+import type { EngineSurface, StageRetainedLease } from "./engineSurface";
 
 export type StagePlane = "ambient" | "overlay" | "frontstate";
 
@@ -79,6 +79,10 @@ export interface StagePresentation {
 
 export interface ExpressionStageApi {
   present(request: StagePresentationRequest): StagePresentation | null;
+  /** Lease only retained targets/checkpoint/recovery from a presentation that
+   * already occupies this window's production stage. No renderer or step owner
+   * crosses this seam. */
+  retainedLease(presentationId: string): StageRetainedLease | null;
   /** Emit a semantic cue onto the bus (relayed cross-window in native). */
   emit(cue: { kind: ExpressionCue["kind"]; target?: string; label?: string; detail?: string }): void;
   /** The semantic form vocabulary (idle/listening/…), rendered on the
@@ -86,8 +90,9 @@ export interface ExpressionStageApi {
   express(name: string, options: ExpressionOptions & { target?: string }): number | null;
   update(handle: number | null, options: Partial<ExpressionOptions> & { name?: FormName; target?: string }): boolean;
   release(handle: number | null): void;
-  /** Honest engine failure (context creation or loss) — surfaced, never
-   * swallowed; the frontstate declines rather than trapping the app. */
+  /** Honest engine failure (context creation or unrecoverable runtime failure)
+   * — surfaced, never swallowed. A retained context return is reconciled through
+   * its lease and therefore does not destroy this stage. */
   error: string | null;
   /** Bounded dev/walk diagnostics: presentations, recent cues, engine
    * capabilities, and the forms renderer's own counters. */
@@ -173,6 +178,13 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
       },
     };
   }, [snapshot.enabled, surfaceError, surface]);
+
+  const retainedLease = useCallback((presentationId: string): StageRetainedLease | null => {
+    if (!presentations.current.has(presentationId)) return null;
+    const current = surfaceRef.current;
+    if (!current) return null;
+    return current.retainedLease(presentationId);
+  }, [surface]);
 
   // The engine surface exists exactly while the expression is enabled —
   // the master switch is absolute: off removes the canvas, the context
@@ -333,13 +345,14 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
 
   const api = useMemo<ExpressionStageApi>(() => ({
     present,
+    retainedLease,
     emit,
     express,
     update: updateHandle,
     release: releaseHandle,
     error: surfaceError,
     inspect,
-  }), [present, emit, express, updateHandle, releaseHandle, surfaceError, inspect]);
+  }), [present, retainedLease, emit, express, updateHandle, releaseHandle, surfaceError, inspect]);
 
   return <StageContext.Provider value={api}>{children}</StageContext.Provider>;
 }
