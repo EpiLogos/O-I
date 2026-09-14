@@ -1,1 +1,80 @@
 .agents-roster{display:flex;flex-direction:column;gap:18px;padding:20px 22px;overflow:auto;color:var(--oi-accent-ink)}.agents-roster header{display:flex;justify-content:space-between;border-bottom:1px solid var(--oi-hairline);padding-bottom:12px}.agents-roster h2,.agents-roster h3{margin:0 0 8px}.agents-roster header p,.agents-roster p,.agents-roster small,.agents-roster span{color:var(--oi-muted-2)}.agents-roster ul{list-style:none;margin:0;padding:0;border-top:1px solid var(--oi-hairline)}.agents-roster li{display:grid;grid-template-columns:minmax(150px,1fr) minmax(150px,2fr) auto;gap:12px;padding:9px 0;border-bottom:1px dashed var(--oi-hairline)}.agents-roster button{border:1px solid var(--oi-hairline);border-radius:6px;background:var(--oi-composer-ground);color:inherit;padding:6px 10px}.agents-roster textarea{display:block;box-sizing:border-box;width:100%;margin:8px 0;padding:8px;background:var(--oi-composer-ground);color:inherit;border:1px solid var(--oi-hairline)}
+
+.agents-roster > section,
+.agents-roster > details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.agents-roster label {
+  display: grid;
+  gap: 5px;
+  color: var(--oi-accent-ink);
+}
+.agents-roster input,
+.agents-roster select {
+  box-sizing: border-box;
+  min-height: 32px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--oi-hairline);
+  border-radius: 5px;
+  background: var(--oi-composer-ground);
+  color: inherit;
+}
+.agents-roster fieldset {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 10px;
+  border: 1px solid var(--oi-hairline);
+  border-radius: 6px;
+}
+.agents-roster fieldset label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 7px;
+}
+.agents-session-space {
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--oi-hairline);
+}
+.agents-session-space > header {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+.agents-session-space > label {
+  grid-template-columns: minmax(84px, 110px) minmax(0, 1fr);
+  align-items: center;
+}
+.agents-session-space-review {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-left: 2px solid var(--oi-hairline);
+  background: color-mix(in srgb, var(--oi-composer-ground) 65%, transparent);
+}
+.agents-session-space-review p {
+  margin: 0;
+}
+.agents-roster details > summary {
+  cursor: pointer;
+  color: var(--oi-accent-ink);
+}
+.agents-roster pre {
+  max-width: 100%;
+  overflow: auto;
+  margin: 0;
+  padding: 10px;
+  background: var(--oi-composer-ground);
+  color: var(--oi-muted-2);
+  font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (max-width: 640px) {
+  .agents-session-space > label {
+    grid-template-columns: 1fr;
+  }
+}

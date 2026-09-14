@@ -86,23 +86,72 @@ export async function readAgentWorlds(
   project: string,
   projectRef: string,
 ): Promise<AgentWorld[]> {
-  const result = await call(transport, project, "central.world.project", projectRef, {
-    project,
-  });
-  if (result.state !== "invoked") throw new Error("Project World projection unavailable");
-  const data = result.data;
-  if (!data || typeof data !== "object") {
-    throw new Error("Central returned an invalid Project World projection");
-  }
-  const projected = (data as { project?: unknown }).project;
-  if (!projected || typeof projected !== "object" ||
-      (projected as { name?: unknown }).name !== project) {
-    throw new Error("Central returned a Project World projection for a different Project");
-  }
-  // central.world.project is a projection reading; it does not expose a
-  // recognized WorldRef inventory. Do not turn projectRef or a directory name
-  // into a WorldRef here.
-  return [];
+  // World relations are the owner-persisted inventory. Read both registers:
+  // project records overlay root records by their stable WorldRef.
+  const [root, projectScope] = await Promise.all([
+    call(transport, project, "central.world-relations.list", projectRef, {
+      scope: "root",
+    }),
+    call(transport, project, "central.world-relations.list", projectRef, {
+      scope: "project",
+      project,
+    }),
+  ]);
+
+  const decode = (result: ActionDispatch, scope: string): AgentWorld[] => {
+    if (result.state !== "invoked") {
+      throw new Error("Central World relation listing unavailable at " + scope + " scope");
+    }
+    const data = result.data;
+    if (!data || typeof data !== "object" || !Array.isArray((data as { records?: unknown }).records)) {
+      throw new Error("Central returned an invalid World relation list at " + scope + " scope");
+    }
+    return (data as { records: unknown[] }).records.map((reading) => {
+      if (!reading || typeof reading !== "object") {
+        throw new Error("Central returned an invalid World relation reading at " + scope + " scope");
+      }
+      const value = reading as {
+        ref?: unknown;
+        revision?: unknown;
+        record?: unknown;
+      };
+      if (
+        typeof value.ref !== "string" ||
+        value.ref.trim() === "" ||
+        typeof value.revision !== "string" ||
+        value.revision.trim() === "" ||
+        !value.record ||
+        typeof value.record !== "object" ||
+        Array.isArray(value.record)
+      ) {
+        throw new Error("Central returned an incomplete World relation reading at " + scope + " scope");
+      }
+      const record = value.record as {
+        schema?: unknown;
+        ref?: unknown;
+        revision?: unknown;
+        parent?: unknown;
+      };
+      if (
+        record.schema !== "central.world-relations/v1" ||
+        record.ref !== value.ref ||
+        record.revision !== value.revision ||
+        (record.parent !== null && typeof record.parent !== "string")
+      ) {
+        throw new Error("Central returned an inconsistent World relation reading at " + scope + " scope");
+      }
+      return {
+        ref: value.ref,
+        revision: value.revision,
+        parent: record.parent as string | null | undefined,
+      };
+    });
+  };
+
+  const merged = new Map<string, AgentWorld>();
+  for (const world of decode(root, "root")) merged.set(world.ref, world);
+  for (const world of decode(projectScope, "project")) merged.set(world.ref, world);
+  return [...merged.values()].sort((left, right) => left.ref.localeCompare(right.ref));
 }
 
 export interface AgentProfileExpression {
