@@ -25,9 +25,12 @@ function validBinding(raw: unknown): SurfaceBinding | null {
     return null;
   // `draft` is unplaced writing: it deliberately carries no owner ref, and it
   // must survive a relaunch — the writing lives beside it under the same
-  // surface id, and dropping the binding would orphan it.
-  if (o.kind !== "source" && o.kind !== "sources" && o.kind !== "knowledge" && o.kind !== "file" && o.kind !== "encounter" && o.kind !== "system" && o.kind !== "browser" && o.kind !== "terminal" && o.kind !== "flow" && o.kind !== "draft" && o.kind !== "blank") return null;
+  // surface id, and dropping the binding would orphan it. `instrument` is a
+  // presentation binding to an externally owned QL source; the source itself
+  // is never serialised into desktop state.
+  if (o.kind !== "source" && o.kind !== "sources" && o.kind !== "knowledge" && o.kind !== "file" && o.kind !== "encounter" && o.kind !== "system" && o.kind !== "browser" && o.kind !== "terminal" && o.kind !== "flow" && o.kind !== "draft" && o.kind !== "blank" && o.kind !== "instrument") return null;
   if (o.ref !== undefined && typeof o.ref !== "string") return null;
+  if (o.kind === "instrument" && (typeof o.ref !== "string" || !o.ref.trim())) return null;
   if (o.project !== undefined && typeof o.project !== "string") return null;
   const address = o.address as SurfaceBinding["address"];
   if (o.kind === "knowledge" && (!address || !["wiki","source","project-map"].includes(address.kind) || typeof address.value !== "string" || address.value !== o.ref)) return null;

@@ -10,6 +10,7 @@ import { blankScene, entity } from "@epilogos/oi-design-system/expressions-engin
 import { nativeExport, type NativeConfig } from "@epilogos/oi-design-system/expressions-engine/shell/nativeBridge.mjs";
 
 export const MARK_RECIPE = "oi.mark";
+export const FOCUSED_INSTRUMENT_RECIPE = "instrument.focused";
 
 /** The authored mark: O and I as two formations, proportioned like the
  * instrument's own field-studies opening — the large O and the narrow I
@@ -29,6 +30,23 @@ const MARK_CONFIG: NativeConfig = (() => {
   scene.field.background = "#f4f2eb";
   scene.field.params.count = 120000;
   scene.field.params.size = 1.6;
+  return nativeExport(scene).config;
+})();
+
+/** K9's foreground medium. This is presentation material only: one stable
+ * O:I-owned production field with a fixed allocation and no domain catalogue.
+ * The accepted K8 retained binding may take ownership of its attraction-target
+ * textures; O:I continues to own the GPU simulation, rendering and lifecycle. */
+const FOCUSED_INSTRUMENT_CONFIG: NativeConfig = (() => {
+  const scene = blankScene("Focused living instrument");
+  const medium = entity("Shared field", "·", { x: 0, y: 0, z: 0 });
+  medium.id = "focused-medium";
+  medium.size = { x: 1.55, y: 1.55 };
+  medium.share = 1;
+  scene.entities = [medium];
+  scene.field.background = "#f4f2eb";
+  scene.field.params.count = 65536;
+  scene.field.params.size = 1.2;
   return nativeExport(scene).config;
 })();
 
@@ -82,6 +100,7 @@ const WELCOME_CHAOS: NativeConfig = {
 
 export const RECIPES: Readonly<Record<string, NativeConfig>> = Object.freeze({
   [MARK_RECIPE]: MARK_CONFIG,
+  [FOCUSED_INSTRUMENT_RECIPE]: FOCUSED_INSTRUMENT_CONFIG,
   "welcome.relational": WELCOME_RELATIONAL,
   "welcome.chaos": WELCOME_CHAOS,
 });

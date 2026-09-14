@@ -13,6 +13,7 @@ import {useKernel} from "../kernel/KernelProvider";
 import {emitExpressionCue} from "../stage/cues";
 import {registerExpressionTarget} from "../stage/targets";
 import {useExpressionStage} from "../stage/ExpressionStage";
+import {FocusedInstrumentComposition} from "../instrument/FocusedInstrumentComposition";
 
 /** Called by the accepting React handler, not inferred from a bubbling key.
  * The stage will still require changed, settled DOM geometry before expressing. */
@@ -46,7 +47,10 @@ export function ExpressionLayout({layout}:{layout:LayoutState}) {
   }
   seen.current=Math.max(seen.current??0,...kernel.receipts.map(receipt=>receipt.seq));
  },[kernel.receipts]);
- return null;
+ // K9 is a privileged composition of existing owners, not another shell or
+ // renderer. The component portals only while an instrument binding is the
+ // active surface; ordinary expression mode is therefore unchanged.
+ return <FocusedInstrumentComposition layout={layout}/>;
 }
 
 /** One stage per native or detached window; this provider contributes the
