@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Exercise one exact native product source revision from O:I's current catalogue.
+"""Exercise one exact native product main through its owner lifecycle contract.
 
-The product owns its build and source-verification operations through
-`.oi/product.json`. O:I owns selecting the exact suite revision, executing that
-owner contract and retaining a composition receipt. The historical
+The product owns build and source-verification operations through `.oi/product.json`.
+O:I owns selecting the suite revision, proving it is the owner's actual live `main`,
+executing the owner contract and retaining a composition receipt. The historical
 `suite/manifest.json` is build evidence only and is never CI configuration.
 """
 
@@ -55,6 +55,16 @@ def surface_contract(product_id: str) -> dict:
     return surface
 
 
+def live_main(repository: str) -> str:
+    observed = run(["git", "ls-remote", repository, "refs/heads/main"])
+    if observed.returncode != 0:
+        fail(f"cannot inspect live main for {repository}")
+    fields = observed.stdout.strip().split()
+    if len(fields) != 2 or fields[1] != "refs/heads/main":
+        fail(f"unexpected live-main response for {repository}: {observed.stdout.strip()}")
+    return fields[0]
+
+
 def verify(product_id: str, receipt_path: Path | None) -> int:
     surface = surface_contract(product_id)
     repository = surface.get("repository")
@@ -75,6 +85,7 @@ def verify(product_id: str, receipt_path: Path | None) -> int:
         "product": product_id,
         "repository": repository,
         "revision": revision,
+        "observed_live_main": None,
         "lifecycle_contract": str(LIFECYCLE_PATH),
         "build_command": None,
         "verification_command": None,
@@ -83,6 +94,11 @@ def verify(product_id: str, receipt_path: Path | None) -> int:
         "elapsed_seconds": None,
     }
     try:
+        observed_main = live_main(repository)
+        result["observed_live_main"] = observed_main
+        if observed_main != revision:
+            fail(f"{product_id}: current-source pin {revision} is stale; live main is {observed_main}")
+
         if run(["git", "init", "--quiet", str(checkout)]).returncode != 0:
             fail(f"{product_id}: git init failed")
         if run(["git", "-C", str(checkout), "remote", "add", "origin", repository]).returncode != 0:
