@@ -42,7 +42,7 @@ const SCENARIOS = {
   rest: { module: "scenarios/rest.mjs", kernel: false, aliases: ["u0.3"] },
   welcome: { module: "scenarios/welcome.mjs", kernel: false, aliases: [] },
   instrument: { module: "scenarios/instrument.mjs", kernel: true, aliases: ["k9"] },
-  k9debug: { module: "scenarios/k9debug.mjs", kernel: true, aliases: [] },
+  "instrument-host": { module: "scenarios/instrument-host.mjs", kernel: true, aliases: ["k9-host"] },
   visuals: { module: "scenarios/visuals.mjs", kernel: true, aliases: [] },
   surfaces: { module: "scenarios/surfaces.mjs", kernel: true, aliases: ["u0.3b"] },
   "kernel-cas": { module: "scenarios/kernel-cas.mjs", kernel: true, aliases: ["u0.4"] },

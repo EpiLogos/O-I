@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "welcome",
-  "generated_at": "2026-09-14T02:43:22.344Z",
+  "generated_at": "2026-09-14T19:22:27.477Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": null,
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 9690,
+  "duration_ms": 10376,
   "checks": [
     {
       "ok": true,
@@ -55,7 +55,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 495,
+      "duration_ms": 530,
       "data": {
         "file": "welcome-welcome-reduced-motion.png"
       }
@@ -63,7 +63,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 221,
+      "duration_ms": 521,
       "data": {
         "file": "welcome-welcome-frontstate-rest.png"
       }
@@ -71,7 +71,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 230,
+      "duration_ms": 568,
       "data": {
         "file": "welcome-welcome-frontstate-dissolve.png"
       }
@@ -79,7 +79,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 47,
+      "duration_ms": 64,
       "data": {
         "file": "welcome-welcome-frontstate-entered.png"
       }
