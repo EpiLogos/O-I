@@ -33,7 +33,7 @@ impl Client {
             }
             let bindings = state["working_surfaces"].as_object().ok_or("This SessionSpace has no persisted working Surface bindings")?;
             let matches: Vec<_> = bindings.values().filter(|value| value["agent_session"].as_str() == Some(agent_session)
-                && surface.as_ref().map_or(true, |expected| value["surface"].as_str() == Some(expected))).collect();
+                && surface.as_ref().is_none_or(|expected| value["surface"].as_str() == Some(expected))).collect();
             if matches.len() != 1 { return Err(format!("Expected one exact persisted working Surface, found {}", matches.len())); }
             let binding = matches[0];
             let binding_ref = binding["binding"].as_str().ok_or("AIKit binding has no canonical ref")?;
