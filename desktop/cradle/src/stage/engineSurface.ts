@@ -13,16 +13,31 @@
  * Laws carried over from the previous runtime: the surface exists exactly
  * while the expression is enabled (off removes canvas, context and
  * simulation entirely); prefers-reduced-motion renders a still field unless
- * a surface deliberately overrides it; context loss surfaces honestly and
- * recovery is an explicit reseed.
+ * a surface deliberately overrides it. A K9 retained lease is narrower:
+ * K8 may own the attraction targets of this same production field while O:I
+ * keeps the canvas, renderer, physics clock and lifecycle. Context return then
+ * restores the acknowledged resident GPU checkpoint instead of reseeding.
  */
-import { ProductionAdapter } from "@epilogos/oi-design-system/expressions-engine/shell/production.mjs";
+import { ProductionAdapter, type RetainedTargetPort } from "@epilogos/oi-design-system/expressions-engine/shell/production.mjs";
 import { nativeSnapshotToJourney, type NativeConfig, type StageScene } from "@epilogos/oi-design-system/expressions-engine/shell/nativeBridge.mjs";
 import { stageCentre, stageScale } from "@epilogos/oi-design-system/expressions-engine/shell/camera.mjs";
 import type { EngineCommand, EngineFrame } from "@epilogos/oi-design-system/expressions-engine/shell/engine.mjs";
 import { stageRecipe, stageSequence } from "./recipes";
 
 const WORLD_SCALE = 400; // the instrument's stage unit (nativeParameters.ts)
+
+/** The only K8-facing capability of a stage surface. It deliberately has no
+ * renderer, step, reseed, scene, recipe or document mutation method. */
+export interface StageRetainedLease {
+  retainedTargetPort(): RetainedTargetPort;
+  checkpointRetainedField(binding: unknown): unknown;
+  restoreRetainedField(binding: unknown, checkpoint: unknown): StageRetainedLease;
+  onRecoveryRequired(listener: () => void): () => void;
+  inspect(): unknown;
+  pause(value?: boolean): StageRetainedLease;
+  resume(): StageRetainedLease;
+  renderOnce(): StageRetainedLease;
+}
 
 /** Overlay merge for authored patches: objects merge recursively, arrays
  * and scalars replace. This is recipe semantics — untouched keys persist —
@@ -63,6 +78,7 @@ export class EngineSurface {
   private observer: ResizeObserver | null = null;
   private detachPointer: () => void = () => {};
   private onError: (message: string) => void;
+  private retainedLeaseOwner: string | null = null;
 
   private constructor(canvas: HTMLCanvasElement, element: HTMLElement | null, onError: (message: string) => void) {
     this.canvas = canvas;
@@ -142,8 +158,7 @@ export class EngineSurface {
   }
 
   /** Apply another authored recipe as an overlay on the presented scene's
-   * retained config — same scene id, so the adapter applies it immediately
-   * (no transition, no reseed). */
+   * retained config — no reseed, no remount. */
   update(id: string, recipe: string) {
     const active = this.require(id);
     const merged = mergePatch(active.scene.native?.config ?? {}, stageRecipe(recipe));
@@ -183,9 +198,42 @@ export class EngineSurface {
     });
   }
 
+  /** Lease only the target/checkpoint surface of the already presented field.
+   * `renderFrame(0)` materialises it without advancing the simulation. */
+  retainedLease(id: string): StageRetainedLease {
+    this.require(id);
+    if (this.retainedLeaseOwner && this.retainedLeaseOwner !== id) {
+      throw new Error(`The retained expression lease belongs to "${this.retainedLeaseOwner}".`);
+    }
+    if (!this.retainedLeaseOwner) {
+      if (!this.renderFrame(0)) throw new Error("The production expression field could not be materialised for retained binding.");
+      this.retainedLeaseOwner = id;
+    }
+    const surface = this;
+    const lease: StageRetainedLease = {
+      retainedTargetPort() { return surface.adapter.retainedTargetPort(); },
+      checkpointRetainedField(binding) { return surface.adapter.checkpointRetainedField(binding as { checkpoint(renderer: unknown): unknown }); },
+      restoreRetainedField(binding, checkpoint) {
+        surface.adapter.restoreRetainedField(binding as { restore(renderer: unknown, checkpoint: unknown): void }, checkpoint);
+        surface.wake();
+        return lease;
+      },
+      onRecoveryRequired(listener) { return surface.adapter.onRetainedRecoveryRequired(listener); },
+      inspect() { return surface.adapter.inspect(); },
+      pause(value = true) { surface.setPaused(value); return lease; },
+      resume() { surface.setPaused(false); return lease; },
+      renderOnce() { surface.renderFrame(0); return lease; },
+    };
+    return lease;
+  }
+
   release(id: string) {
     if (!this.active || this.active.id !== id) { this.clearTimers(); return; }
     this.clearTimers();
+    if (this.retainedLeaseOwner === id) {
+      this.adapter.releaseRetainedField();
+      this.retainedLeaseOwner = null;
+    }
     this.live = false;
     // An idle frame keeps the shared canvas honest — a released scene
     // leaves no lingering mark on the window's expression surface.
@@ -218,6 +266,7 @@ export class EngineSurface {
     document.removeEventListener("visibilitychange", this.wake);
     this.detachPointer();
     this.active = null;
+    this.retainedLeaseOwner = null;
     try { this.adapter.dispose(); } catch { /* already gone with its context */ }
     this.canvas.remove();
   }
