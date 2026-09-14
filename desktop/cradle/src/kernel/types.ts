@@ -138,6 +138,7 @@ export type KernelOp =
   | { op: "file_bytes"; location: CentralLocation }
   | { op: "agency_read"; project: string }
   | {op:"file_operation";location:CentralLocation;request:import("../files/client").FileRequest}
+  | {op:"session_space";project:string;request:{action:"discover";project:string}|{action:"project_context"}|{action:"create";id:string;label?:string}|{action:"stage";space?:string;intent:unknown}|{action:"apply";preview:unknown}|{action:"open";space:string}|{action:"resolve_working";space:string;agent_session:string;surface?:string}}
   | {op:"encounter";project:string;request:import("../encounter/client").EncounterRequest}
   | {op:"encounter_task_read";project:string;agent_session:string}
   | {op:"receiving";project:string|null;request:import("../receiving/client").ReceivingRequest}
@@ -182,6 +183,7 @@ export type KernelOpResult =
   | {result:"composition_reading";reading:import("../workspace/SystemPanel").CompositionReading}
   | {result:"system_composition_reading";reading:import("../workspace/settings/types").SystemCompositionReading}
   | {result:"file_operation";data:unknown}
+  | {result:"session_space_reading";project_ref:string;data:unknown}
   | { result:"encounter_reading";data:unknown }
   | { result:"receiving_reading";data:unknown }
   | { result:"now_reading";data:unknown }

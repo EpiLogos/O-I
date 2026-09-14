@@ -105,6 +105,7 @@ pub enum ReceivingRequest {
 pub enum NowRequest {
     List { #[serde(default)] participant_refs: Option<Vec<String>> },
     Read { now_ref: String },
+    ProjectInspect { project: String },
 }
 
 /// Client for the Central owner Actions the kernel reads and writes
@@ -339,6 +340,10 @@ impl CentralClient {
             NowRequest::Read { now_ref } => {
                 input.insert("now_ref".to_owned(), json!(now_ref));
                 "central.now.read"
+            }
+            NowRequest::ProjectInspect { project } => {
+                input.insert("project".to_owned(), json!(project));
+                "projectcentral.now.inspect"
             }
         };
         self.run(action, Value::Object(input))

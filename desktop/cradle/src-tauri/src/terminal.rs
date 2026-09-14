@@ -56,6 +56,28 @@ pub struct Size {
     cols: u16,
     rows: u16,
 }
+
+/// A terminal can present an exact provider Surface only through AIKit's public
+/// owner command. The desktop never receives a mux name, pane id, or tmux argv.
+#[derive(Clone, Deserialize)]
+#[serde(tag = "kind", rename_all = "kebab-case")]
+pub enum TerminalAttachment {
+    AikitSessionSpaceWorkingSurface {
+        space: String,
+        binding: String,
+        #[serde(rename = "serviceCwd")]
+        service_cwd: String,
+    },
+}
+
+fn owner_ref(raw: &str, prefix: &str) -> bool {
+    let Some(rest) = raw.strip_prefix(prefix) else {
+        return false;
+    };
+    let mut chars = rest.chars();
+    matches!(chars.next(), Some(first) if first.is_ascii_alphanumeric())
+        && chars.all(|ch| ch.is_ascii_alphanumeric() || matches!(ch, '.' | '_' | ':' | '-'))
+}
 fn size(s: Size) -> Result<PtySize, String> {
     if s.cols < 2 || s.rows < 1 || s.cols > 1000 || s.rows > 1000 {
         return Err("Invalid terminal size".into());
@@ -109,7 +131,11 @@ fn reap_after_eof(row: &Arc<Session>) {
         std::thread::sleep(std::time::Duration::from_millis(25));
     }
 }
-fn start(cwd: String, dimensions: PtySize) -> Result<Arc<Session>, String> {
+fn start(
+    cwd: String,
+    dimensions: PtySize,
+    attachment: Option<TerminalAttachment>,
+) -> Result<Arc<Session>, String> {
     let cwd = std::fs::canonicalize(cwd).map_err(|e| e.to_string())?;
     if !cwd.is_dir() {
         return Err("Terminal directory is not a folder".into());
@@ -117,9 +143,33 @@ fn start(cwd: String, dimensions: PtySize) -> Result<Arc<Session>, String> {
     let pair = native_pty_system()
         .openpty(dimensions)
         .map_err(|e| e.to_string())?;
-    let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/sh".into());
-    let mut command = CommandBuilder::new(shell);
-    command.arg("-l");
+    let mut command = match attachment {
+        Some(TerminalAttachment::AikitSessionSpaceWorkingSurface { space, binding, service_cwd }) => {
+            if !owner_ref(&space, "session-space/") || !owner_ref(&binding, "working-surface/") {
+                return Err("Invalid persisted working Surface reference".into());
+            }
+            let service_cwd = std::fs::canonicalize(service_cwd).map_err(|e| e.to_string())?;
+            if service_cwd != cwd {
+                return Err("Working Surface service directory did not resolve to the terminal directory".into());
+            }
+            let oi = std::env::var("OI_BIN").unwrap_or_else(|_| "oi".into());
+            let mut command = CommandBuilder::new(oi);
+            command.arg("aikit-session-space");
+            command.arg("-C");
+            command.arg(service_cwd);
+            command.arg("working-surface");
+            command.arg("attach");
+            command.arg(space);
+            command.arg(binding);
+            command
+        }
+        None => {
+            let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/sh".into());
+            let mut command = CommandBuilder::new(shell);
+            command.arg("-l");
+            command
+        }
+    };
     command.cwd(&cwd);
     command.env("TERM", "xterm-256color");
     command.env("COLORTERM", "truecolor");
@@ -316,6 +366,7 @@ pub async fn terminal_attach(
     webview: Webview,
     id: String,
     cwd: Option<String>,
+    attachment: Option<TerminalAttachment>,
     dimensions: Size,
 ) -> Result<Attachment, String> {
     trusted(&webview)?;
@@ -338,11 +389,14 @@ pub async fn terminal_attach(
         if let Some(row) = rows.get(&id) {
             row.clone()
         } else {
-            let cwd = cwd
-                .or_else(|| std::env::var("OI_CENTRAL_ROOT").ok())
-                .or_else(|| std::env::var("HOME").ok())
-                .ok_or("Choose a terminal directory")?;
-            let row = start(cwd, dimensions)?;
+            let cwd = match attachment.as_ref() {
+                Some(TerminalAttachment::AikitSessionSpaceWorkingSurface { service_cwd, .. }) => service_cwd.clone(),
+                None => cwd
+                    .or_else(|| std::env::var("OI_CENTRAL_ROOT").ok())
+                    .or_else(|| std::env::var("HOME").ok())
+                    .ok_or("Choose a terminal directory")?,
+            };
+            let row = start(cwd, dimensions, attachment)?;
             rows.insert(id, row.clone());
             row
         }

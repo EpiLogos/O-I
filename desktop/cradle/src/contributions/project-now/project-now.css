@@ -1,0 +1,8 @@
+.project-now-surface { display:grid; gap:1rem; }
+.project-now-surface header { display:flex; justify-content:space-between; gap:1rem; align-items:start; }
+.project-now-surface h2,.project-now-surface h3 { margin:0; }
+.project-now-surface h3 small { color:var(--muted,#76808c); font-weight:500; margin-left:.4rem; }
+.project-now-surface ul { list-style:none; padding:0; margin:.6rem 0 0; display:grid; gap:.45rem; }
+.project-now-surface li { display:grid; gap:.15rem; padding:.55rem .7rem; border:1px solid var(--line,#d9dde2); border-radius:.45rem; }
+.project-now-surface li span,.project-now-surface li small { color:var(--muted,#76808c); }
+.project-now-surface code { overflow-wrap:anywhere; }

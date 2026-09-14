@@ -1,3 +1,5 @@
+import {resolveWorkingSurface,type WorkingSurfaceSelection} from "./encounter/working-surface";
+import {SessionIngress} from "./encounter/SessionIngress";
 import {ExpressionProvider,ExpressionLayout} from "./shared/Expression";
 import {ExpressionStageProvider} from "./stage/ExpressionStage";
 import {mintInstance,parseInstance,instanceFileName} from "./flow/instance";
@@ -434,12 +436,39 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
 
   /// The Factory development reads surface (queue cell 3): the first 6D
   /// consumer, opened from the navigator like every global surface.
-  const openFactoryDevelopment = async () => {
+  const openFactoryDevelopment = async (project: string, projectRef?: string) => {
     const current = stateRef.current;
-    const existing = Object.values(current.surfaces).find(b=>b.kind==="factory");
-    const binding = existing ?? {id:crypto.randomUUID(),kind:"factory",title:"Factory development"};
+    const existing = Object.values(current.surfaces).find(b=>b.kind==="factory" && b.project===project);
+    const binding: SurfaceBinding = existing ?? {id:crypto.randomUUID(),kind:"factory",title:`${project} · Runs`,project,ref:projectRef};
     const opened = await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"factory",source_ref:undefined,title:binding.title});
     if (opened?.result !== "surface_opened") throw new Error("The Factory development surface could not be opened");
+    setState(s=>groupsOf(s.root).some(g=>g.tabs.includes(binding.id)) ? executeFrameAction(s,"surface.activate",{surfaceId:binding.id}) : openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
+  };
+
+  const openObservatory = async (row: import("./encounter/EncounterList").EncounterRow) => {
+    const current=stateRef.current;
+    const existing=Object.values(current.surfaces).find(b=>b.kind==="observatory"&&b.ref===row.ref&&b.project===row.project);
+    const binding:SurfaceBinding=existing??{id:crypto.randomUUID(),kind:"observatory",ref:row.ref,project:row.project,title:row.title,encounter:{space:row.space}};
+    const opened=await kernel.apply({op:"surface_open",surface_id:binding.id,kind:binding.kind,source_ref:binding.ref,title:binding.title});
+    if(opened?.result!=="surface_opened")throw new Error("Session Observatory could not be opened");
+    setState(s=>groupsOf(s.root).some(g=>g.tabs.includes(binding.id))?executeFrameAction(s,"surface.activate",{surfaceId:binding.id}):openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
+  };
+
+  const openWorkingSurface = async (selection:WorkingSurfaceSelection) => {
+    const resolved=await resolveWorkingSurface(kernel.transport,selection);
+    const existing=Object.values(stateRef.current.surfaces).find(surface=>surface.kind==="terminal"&&surface.ref===resolved.binding.surface&&surface.project===selection.project&&surface.terminal?.attachment?.binding===resolved.binding.binding);
+    const binding:SurfaceBinding=existing??{id:crypto.randomUUID(),kind:"terminal",title:"Working Surface",project:selection.project,ref:resolved.binding.surface,terminal:{attachment:{kind:"aikit-session-space-working-surface",space:selection.space,binding:resolved.binding.binding,serviceCwd:resolved.service_cwd}}};
+    const opened=await kernel.apply({op:"surface_open",surface_id:binding.id,kind:binding.kind,source_ref:binding.ref,title:binding.title});
+    if(opened?.result!=="surface_opened")throw new Error("Working Surface could not be opened");
+    setState(s=>groupsOf(s.root).some(g=>g.tabs.includes(binding.id))?executeFrameAction(s,"surface.activate",{surfaceId:binding.id}):openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
+  };
+
+  const openProjectAgents = async (project: string, projectRef?: string) => {
+    const current = stateRef.current;
+    const existing = Object.values(current.surfaces).find(b=>b.kind==="agents" && b.project===project);
+    const binding: SurfaceBinding = existing ?? {id:crypto.randomUUID(),kind:"agents",title:`${project} · Agents`,project,ref:projectRef};
+    const opened = await kernel.apply({op:"surface_open",surface_id:binding.id,kind:binding.kind,source_ref:binding.ref,title:binding.title});
+    if (opened?.result !== "surface_opened") throw new Error("The Project Agents surface could not be opened");
     setState(s=>groupsOf(s.root).some(g=>g.tabs.includes(binding.id)) ? executeFrameAction(s,"surface.activate",{surfaceId:binding.id}) : openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
   };
 
@@ -830,14 +859,15 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
       {welcomeUp && <WelcomeField onEntered={()=>setWelcomeUp(false)}/>}
       {windowError && <p role="alert">{windowError}</p>}
       {workspace.recovery&&<section className="workspace-recovery" aria-label="Workspace recovery"><p>The saved arrangement could not be restored. Its original data is retained.</p><button disabled={!workspace.recovery.key} onClick={workspace.recoverAvailable}>Recover available workspaces</button><button disabled={!workspace.recovery.key} onClick={workspace.startFresh}>Start a fresh arrangement</button></section>}
-      <DesktopShell accompanyingTarget={subjectBinding?.kind==="factory" ? `[data-factory-encounter="${CSS.escape(subjectBinding.id)}"]` : undefined} onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}
+      <DesktopShell sessionIngress={<SessionIngress project={workspace.current.project} selected={state.accompanying} onOpen={openObservatory}/>} onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}
         arrangementActions={<ArrangementActions state={state} execute={execute} openFrameMenu={openFrameMenu} nativeWindows={kernel.transport.kind==="tauri"}/>}
         subject={{ref:subjectRef,title:subjectTitle,context:<><h2>{subjectTitle}</h2>{subjectBinding?.flow&&<p data-subject-flow-ref={subjectBinding.flow.flowRef}>Working through <code>{subjectBinding.flow.flowRef}</code></p>}{subjectBuffer ? <p>{subjectBuffer.project} · {subjectBuffer.dirty ? "Unsaved changes" : "Saved"}</p> : subjectBinding?.project ? <p>{subjectBinding.project}</p> : <p>Select a surface to inspect its context.</p>}</>,history:subjectHistory}}
-        right={<AgentLayer region={subjectBinding?.kind==="factory"?"centre":"right"} project={workspace.current.project} subject={{ref:subjectRef,kind:subjectBinding?.kind,title:subjectTitle,project:subjectBinding?.project ?? subjectBuffer?.project,location:subjectBinding?.location,dirty:subjectBuffer?.dirty,revision:subjectBuffer?.base_revision}} history={subjectHistory} historyAvailable={subjectHistoryAvailable} accompanying={state.accompanying} onAccompanying={value=>setState(s=>({...s,accompanying:value}))} full={subjectBinding?.kind==="factory" ? !!state.maximizedGroupId : state.rightDepth==="full"} onFull={()=>subjectBinding?.kind==="factory" ? execute("surface.maximize",{surfaceId:subjectBinding.id}) : setState(s=>({...s,rightDepth:s.rightDepth==="full"?"panel":"full"}))} onClose={()=>subjectBinding?.kind==="factory" ? execute("surface.close",{surfaceId:subjectBinding.id}) : setState(s=>({...s,rightDepth:"collapsed"}))}/>}
+        right={<AgentLayer region="right" project={workspace.current.project} subject={{ref:subjectRef,kind:subjectBinding?.kind,title:subjectTitle,project:subjectBinding?.project ?? subjectBuffer?.project,location:subjectBinding?.location,dirty:subjectBuffer?.dirty,revision:subjectBuffer?.base_revision}} history={subjectHistory} historyAvailable={subjectHistoryAvailable} accompanying={state.accompanying} onAccompanying={value=>setState(s=>({...s,accompanying:value}))} full={state.rightDepth==="full"} onFull={()=>setState(s=>({...s,rightDepth:s.rightDepth==="full"?"panel":"full"}))} onClose={()=>setState(s=>({...s,rightDepth:"collapsed"}))}/>}
         layout={state} setLayout={setState} workspace={workspace.current} workspaces={workspace.workspaces} activate={workspace.activate} create={workspace.create} rename={workspace.rename} onRecover={workspace.showRecovery} error={workspace.error}
-        navigator={workspaceSelector => <WorldNavigator onAgent={summonAgent} onSystem={()=>void openSystem().catch(e=>setWindowError(String(e)))} onFactoryDevelopment={()=>void openFactoryDevelopment().catch(e=>setWindowError(String(e)))} onOpenEncounter={openEncounter} centralFiles={workspace.current.centralFiles??false} onCentralFilesChange={workspace.setCentralFiles} workspaceSelector={workspaceSelector} searchShortcut={leader.label} key={workspace.current.id} projectNavigation={workspace.current.projectNavigation ?? {}} onNavigationChange={(ref,change)=>workspace.setProjectNavigation(ref,change,workspace.current.id)} onOpenFile={openFile} onProjectChange={workspace.browse} onOpenToday={openToday} onOpenWiki={(ref,title,project)=>openKnowledge({kind:"wiki",value:ref},title,project)} onSearch={()=>setSearchOpen(true)} activeEncounterRef={activeEncounterRef} onOpenFlowInstance={row=>openFlowInstance(row)} onNewFlow={()=>startWriting()} />}>
+        navigator={workspaceSelector => <WorldNavigator onOpenAgents={openProjectAgents} onAgent={summonAgent} onSystem={()=>void openSystem().catch(e=>setWindowError(String(e)))} onFactoryDevelopment={(project,ref)=>openFactoryDevelopment(project,ref)} onOpenEncounter={openEncounter} centralFiles={workspace.current.centralFiles??false} onCentralFilesChange={workspace.setCentralFiles} workspaceSelector={workspaceSelector} searchShortcut={leader.label} key={workspace.current.id} projectNavigation={workspace.current.projectNavigation ?? {}} onNavigationChange={(ref,change)=>workspace.setProjectNavigation(ref,change,workspace.current.id)} onOpenFile={openFile} onProjectChange={workspace.browse} onOpenToday={openToday} onOpenWiki={(ref,title,project)=>openKnowledge({kind:"wiki",value:ref},title,project)} onSearch={()=>setSearchOpen(true)} activeEncounterRef={activeEncounterRef} onOpenFlowInstance={row=>openFlowInstance(row)} onNewFlow={()=>startWriting()} />}>
       {state.root ? (
         <Workbench
+          onOpenEncounter={openEncounter} onOpenWorkingSurface={openWorkingSurface}
           onView={(id,view)=>workspace.surfaceView(workspace.current.id,id,view)}
           workspaceName={workspace.current.name}
           state={state}

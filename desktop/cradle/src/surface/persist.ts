@@ -18,6 +18,13 @@ import {
 
 const KEY = "oi-cradle.layout.v1";
 
+/** Match the owner grammar needed here without turning the desktop into a ref owner. */
+function validOwnerRef(value: unknown, prefix: string): value is string {
+  return typeof value === "string"
+    && value.startsWith(prefix)
+    && new RegExp(`^${prefix}[A-Za-z0-9][A-Za-z0-9._:-]*$`).test(value);
+}
+
 function validBinding(raw: unknown): SurfaceBinding | null {
   if (!raw || typeof raw !== "object") return null;
   const o = raw as Record<string, unknown>;
@@ -26,7 +33,7 @@ function validBinding(raw: unknown): SurfaceBinding | null {
   // `draft` is unplaced writing: it deliberately carries no owner ref, and it
   // must survive a relaunch — the writing lives beside it under the same
   // surface id, and dropping the binding would orphan it.
-  if (o.kind !== "source" && o.kind !== "sources" && o.kind !== "knowledge" && o.kind !== "file" && o.kind !== "encounter" && o.kind !== "system" && o.kind !== "browser" && o.kind !== "terminal" && o.kind !== "flow" && o.kind !== "draft" && o.kind !== "blank" && o.kind !== "factory") return null;
+  if (o.kind !== "source" && o.kind !== "sources" && o.kind !== "knowledge" && o.kind !== "file" && o.kind !== "encounter" && o.kind !== "system" && o.kind !== "browser" && o.kind !== "terminal" && o.kind !== "flow" && o.kind !== "draft" && o.kind !== "blank" && o.kind !== "factory" && o.kind !== "agents" && o.kind !== "observatory") return null;
   if (o.ref !== undefined && typeof o.ref !== "string") return null;
   if (o.project !== undefined && typeof o.project !== "string") return null;
   const address = o.address as SurfaceBinding["address"];
@@ -34,7 +41,7 @@ function validBinding(raw: unknown): SurfaceBinding | null {
   const location = o.location as SurfaceBinding["location"];
   if(o.kind === "file" && (!location || location.schema !== "central.path-ref/v1" || typeof location.ref !== "string" || location.ref !== o.ref || typeof location.root !== "string" || typeof location.path !== "string")) return null;
   const encounter=o.encounter as SurfaceBinding["encounter"];
-  if(o.kind==="encounter" && (!encounter || typeof encounter.space!=="string" || typeof o.ref!=="string" || !o.ref.startsWith("agent-session/") || typeof o.project!=="string"))return null;
+  if((o.kind==="encounter"||o.kind==="observatory") && (!encounter || typeof encounter.space!=="string" || typeof o.ref!=="string" || !o.ref.startsWith("agent-session/") || typeof o.project!=="string"))return null;
   const flow=o.flow as SurfaceBinding["flow"];
   // A flow instance is a user-section document: its identity is the file's
   // path-ref (the binding's ref) plus the in-document id — no project
@@ -42,14 +49,27 @@ function validBinding(raw: unknown): SurfaceBinding | null {
   // to read the file back.
   if(o.kind==="flow" && (!flow || typeof flow.flowRef!=="string" || !flow.flowRef || typeof flow.path!=="string" || !flow.path || typeof o.ref!=="string" || !o.ref || !o.ref.startsWith("central:path:")))return null;
   if(o.kind==="flow" && (!location || location.schema!=="central.path-ref/v1" || typeof location.ref!=="string" || location.ref!==o.ref || typeof location.root!=="string" || typeof location.path!=="string"))return null;
+  const terminalRaw = o.terminal as {cwd?: unknown; attachment?: unknown} | undefined;
+  const attachmentRaw = terminalRaw?.attachment as Record<string, unknown> | undefined;
+  const attachment = attachmentRaw
+    && attachmentRaw.kind === "aikit-session-space-working-surface"
+    && validOwnerRef(attachmentRaw.space, "session-space/")
+    && validOwnerRef(attachmentRaw.binding, "working-surface/")
+    && typeof attachmentRaw.serviceCwd === "string"
+    && attachmentRaw.serviceCwd.startsWith("/")
+    ? { kind: "aikit-session-space-working-surface" as const, space: attachmentRaw.space, binding: attachmentRaw.binding, serviceCwd: attachmentRaw.serviceCwd }
+    : undefined;
+  if (o.kind === "terminal" && attachmentRaw !== undefined && !attachment) return null;
   const view=o.view as SurfaceBinding["view"];
   const encounterPlane=view?.encounterPlane;
   const rawFactory=view?.factory;
   const factory=o.kind==="factory" && rawFactory && typeof rawFactory.statePath==="string"
     && rawFactory.statePath.trim() ? {statePath:rawFactory.statePath,
+      centralProjectRef:typeof rawFactory.centralProjectRef==="string"?rawFactory.centralProjectRef:undefined,
+      projectRef:typeof rawFactory.projectRef==="string"?rawFactory.projectRef:undefined,
       runRef:typeof rawFactory.runRef==="string"?rawFactory.runRef:undefined,
       telemetryRef:typeof rawFactory.telemetryRef==="string"?rawFactory.telemetryRef:undefined}:undefined;
-  return { terminal:o.kind==="terminal"?{cwd:typeof (o.terminal as {cwd?:unknown})?.cwd==="string"?(o.terminal as {cwd:string}).cwd:undefined}:undefined, flow:o.kind==="flow"?flow:undefined, browser:o.kind==="browser"?{url:typeof (o.browser as {url?:unknown})?.url==="string"?(o.browser as {url:string}).url:""}:undefined, view:factory ? {factory} : encounterPlane&&["Conversation","Activity","Context","Inspect"].includes(encounterPlane)?{encounterPlane}:undefined, encounter, location, address, project: o.project as string | undefined, id: o.id, kind: o.kind, ref: o.ref as string | undefined, title: o.title };
+  return { terminal:o.kind==="terminal"?{cwd:typeof terminalRaw?.cwd==="string"?terminalRaw.cwd:undefined,attachment}:undefined, flow:o.kind==="flow"?flow:undefined, browser:o.kind==="browser"?{url:typeof (o.browser as {url?:unknown})?.url==="string"?(o.browser as {url:string}).url:""}:undefined, view:factory ? {factory} : encounterPlane&&["Conversation","Activity","Context","Inspect"].includes(encounterPlane)?{encounterPlane}:undefined, encounter, location, address, project: o.project as string | undefined, id: o.id, kind: o.kind, ref: o.ref as string | undefined, title: o.title };
 }
 
 function validPane(raw: unknown, surfaces: Record<SurfaceId, SurfaceBinding>): Pane | null {

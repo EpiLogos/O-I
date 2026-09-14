@@ -3,7 +3,7 @@ import {useEffect,useRef,useState, type ReactNode} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {Glyph} from "../workspace/Glyph";
 import {EncounterList, type EncounterRow} from "../encounter/EncounterList";
-import {ExpressionAnchor} from "../shared/Expression";
+
 import type {FormName} from "@epilogos/oi-design-system/expression";
 import {EncounterSurface,type EncounterExpressionReading} from "../encounter/EncounterSurface";
 import {encounter} from "../encounter/client";
@@ -41,6 +41,9 @@ const KIND_GLYPH: Record<string, "chat" | "wiki" | "file"> = {
 
 const KIND_OWNER: Record<string, string> = {
   encounter: "AIKit",
+  observatory: "AIKit",
+  factory: "Factory",
+  agents: "Central",
   knowledge: "AIKit",
 };
 
@@ -107,18 +110,14 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
   } : undefined;
   const encounterPlane: "Conversation" | "Activity" | "Inspect" = plane === "Context" ? "Conversation" : plane;
 
-  return <section className="agent-layer" aria-label="Accompanying agent" data-full={full} onFocusCapture={event=>{if((event.target as Element).matches(".encounter-composer textarea"))setListening(true);}} onBlurCapture={event=>{if((event.target as Element).matches(".encounter-composer textarea"))setListening(false);}}>
-    <header className="agent-head">
-      <div className="agent-head-row">
-        <ExpressionAnchor form={form}/>
-        <div><strong>Agent</strong><small>{project ? `Situated in ${project}` : "Situated in Central"}</small></div>
-        <button className="agent-tool" aria-label={region === "centre" ? (full ? "Restore encounter pane" : "Maximize encounter pane") : (full ? "Restore right region" : "Full right region")} onClick={onFull}><Glyph name={full ? "restore" : "expand"}/></button>
-        <button className="agent-tool" aria-label={region === "centre" ? "Leave Factory" : "Collapse right region"} onClick={onClose}><Glyph name="close"/></button>
-      </div>
-    </header>
+  return <section className="agent-layer" aria-label="Accompanying agent" data-full={full} data-expression={form} onFocusCapture={event=>{if((event.target as Element).matches(".encounter-composer textarea"))setListening(true);}} onBlurCapture={event=>{if((event.target as Element).matches(".encounter-composer textarea"))setListening(false);}}>
     <nav className="agent-planes" aria-label={region === "centre" ? "Encounter planes" : "Right region planes"}>
       {(["Conversation", "Activity", "Context", "Inspect"] as const).map(name =>
         <button key={name} aria-pressed={plane === name} onClick={() => setPlane(name)}>{name}</button>)}
+      <span className="agent-plane-tools">
+        <button className="agent-tool" aria-label={full ? "Restore right region" : "Full right region"} onClick={onFull}><Glyph name={full ? "restore" : "expand"}/></button>
+        <button className="agent-tool" aria-label="Collapse right region" onClick={onClose}><Glyph name="close"/></button>
+      </span>
     </nav>
     <div className="agent-body">
       {error && <p role="alert">{error}</p>}
@@ -168,11 +167,12 @@ function ContextPlane({subject, history, historyAvailable, accompanying}: {
         : <p className="agent-note">No history operation is available for this subject.</p>}
     </> : <p className="agent-note">Select a surface to inspect its context.</p>}
     {accompanying && <div className="agent-section">
-      <h3>Bounds &amp; return</h3>
+      <h3>Selected session</h3>
       <dl>
-        <dt>Working ground</dt><dd>{accompanying.project}</dd>
-        <dt>Source changes</dt><dd>Human acceptance</dd>
-        <dt>Permission authority</dt><dd>Native provider consent</dd>
+        <dt>Project</dt><dd>{accompanying.project}</dd>
+        <dt>AgentSession</dt><dd>{accompanying.ref}</dd>
+        <dt>SessionSpace</dt><dd>{accompanying.space}</dd>
+        <dt>Context disclosure</dt><dd>Not read</dd>
       </dl>
     </div>}
   </div>;

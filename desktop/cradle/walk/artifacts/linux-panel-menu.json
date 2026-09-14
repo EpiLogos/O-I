@@ -1,0 +1,15 @@
+{
+  "standing": "Native installed Omarchy panel DBusMenu export and actual menu dispatch; panel pointer-menu visual interaction remains unverified",
+  "candidate_basis": "PR #292 uncommitted menus.rs Linux tray-menu increment",
+  "app_pid": 373110,
+  "native_owner": "org.kde.StatusNotifierWatcher",
+  "registered_item": ":1.539/org/ayatana/NotificationItem/tray_icon_tray_app_oi_workbench_menu",
+  "menu_path": "/org/ayatana/NotificationItem/tray_icon_tray_app_oi_workbench_menu/Menu",
+  "observations": [
+    "Grey in-window menu bar is absent in compositor screenshot after native rebuild/restart",
+    "GetLayout returns existing Edit, Workspace, Window menus and accelerators",
+    "DBusMenu Event on observed New Tab item 68 opens a real New tab in the native workbench",
+    "AT-SPI snapshot s00000025 observes New tab and Close New tab",
+    "Existing Codex session response remains visible after app restart"
+  ]
+}

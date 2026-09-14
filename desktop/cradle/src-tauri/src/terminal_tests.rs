@@ -17,6 +17,7 @@ fn test_session() -> Arc<Session> {
     start(
         std::env::temp_dir().to_string_lossy().into_owned(),
         dimensions(80, 24),
+        None,
     )
     .unwrap()
 }
@@ -226,4 +227,29 @@ fn close_hangs_up_shell_waiting_on_foreground_child() {
         "PTY close did not hang up the shell waiting on its foreground child"
     );
     assert!(row.output.lock().unwrap().reaped);
+}
+
+#[test]
+fn working_surface_attachment_refuses_noncanonical_owner_refs() {
+    let cwd = std::env::temp_dir().to_string_lossy().into_owned();
+    let invalid_space = start(
+        cwd.clone(),
+        dimensions(80, 24),
+        Some(TerminalAttachment::AikitSessionSpaceWorkingSurface {
+            space: "tmux/recycled-name".into(),
+            binding: "working-surface/demo".into(),
+            service_cwd: cwd.clone(),
+        }),
+    );
+    assert!(invalid_space.is_err());
+    let invalid_binding = start(
+        cwd.clone(),
+        dimensions(80, 24),
+        Some(TerminalAttachment::AikitSessionSpaceWorkingSurface {
+            space: "session-space/demo".into(),
+            binding: "surface/recycled-name".into(),
+            service_cwd: cwd,
+        }),
+    );
+    assert!(invalid_binding.is_err());
 }

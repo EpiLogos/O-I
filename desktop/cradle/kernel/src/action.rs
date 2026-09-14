@@ -131,7 +131,7 @@ pub fn invoke(
     if invocation.target_ref.trim().is_empty() {
         return ActionDispatch::MalformedRef { detail: "target ref is empty".into() };
     }
-    if action.starts_with("central.") || action.starts_with("projectcentral.") {
+    if action.starts_with("central.") || action.starts_with("projectcentral.") || action.starts_with("agent-profile.") {
         return invoke_central(client, action, default_project, invocation);
     }
     if action == AIKIT_ACTION_OPEN {

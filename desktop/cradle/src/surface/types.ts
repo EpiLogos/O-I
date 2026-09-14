@@ -48,9 +48,19 @@ export interface SurfaceBinding {
   address?: import("../kernel/types").KnowledgeAddress;
   encounter?: {space:string};
   browser?: {url:string};
-  terminal?: {cwd?:string};
+  terminal?: {
+    cwd?: string;
+    /** Exact AIKit owner binding for an already-persisted provider Surface. */
+    attachment?: {
+      kind: "aikit-session-space-working-surface";
+      space: string;
+      binding: string;
+      /** Kernel-resolved Project path used only by the public owner CLI. */
+      serviceCwd: string;
+    };
+  };
   flow?: {flowRef:string;path:string};
-  view?: {factory?: {statePath:string;runRef?:string;telemetryRef?:string};graphOrigin?:string;knowledgePlane?: "graph"|"page";encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect"};
+  view?: {factory?: {statePath:string;centralProjectRef?:string;projectRef?:string;runRef?:string;telemetryRef?:string};graphOrigin?:string;knowledgePlane?: "graph"|"page";encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect"};
   location?: import("../kernel/types").CentralLocation;
 }
 

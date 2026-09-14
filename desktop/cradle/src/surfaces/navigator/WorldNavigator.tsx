@@ -23,7 +23,7 @@ const SETTINGS_GLYPH = "M4 7h16M4 17h16M8 4v6m8 4v6";
 
 /** Summoned reading over Central's owner operations; selection lives in the
  * kernel. Local state is only filter text and in-flight presentation. */
-export function WorldNavigator({ onSystem, onFactoryDevelopment,onOpenEncounter, centralFiles, onCentralFilesChange, workspaceSelector, searchShortcut, projectNavigation, onNavigationChange, onOpenFile, onProjectChange, onOpenWiki, onSearch, onOpenToday, activeEncounterRef, onOpenFlowInstance, onNewFlow }: { onSystem:()=>void;onFactoryDevelopment?:()=>void;onOpenEncounter:(row:EncounterRow)=>Promise<void>; centralFiles: boolean; onCentralFilesChange:(files:boolean)=>void; workspaceSelector: ReactNode; searchShortcut: string; projectNavigation: Record<string, ProjectNavigation>; onNavigationChange: (ref: string, change: Partial<ProjectNavigation>) => void; onSearch: () => void; onOpenWiki: (ref:string,title:string,project?:string)=>Promise<void>; onOpenFile: (location:CentralLocation)=>Promise<void>; onProjectChange?: (project?: string) => void; onOpenToday?: () => Promise<void>; onAgent?: () => void; activeEncounterRef?: string; onOpenFlowInstance?: (row:import("../../flow/instances").FlowInstanceRow)=>Promise<void>; onNewFlow?: ()=>void }) {
+export function WorldNavigator({ onSystem, onOpenAgents, onFactoryDevelopment,onOpenEncounter, centralFiles, onCentralFilesChange, workspaceSelector, searchShortcut, projectNavigation, onNavigationChange, onOpenFile, onProjectChange, onOpenWiki, onSearch, onOpenToday, activeEncounterRef, onOpenFlowInstance, onNewFlow }: { onSystem:()=>void;onFactoryDevelopment?:(project:string,ref?:string)=>Promise<void>;onOpenAgents?:(project:string,ref?:string)=>Promise<void>;onOpenEncounter:(row:EncounterRow)=>Promise<void>; centralFiles: boolean; onCentralFilesChange:(files:boolean)=>void; workspaceSelector: ReactNode; searchShortcut: string; projectNavigation: Record<string, ProjectNavigation>; onNavigationChange: (ref: string, change: Partial<ProjectNavigation>) => void; onSearch: () => void; onOpenWiki: (ref:string,title:string,project?:string)=>Promise<void>; onOpenFile: (location:CentralLocation)=>Promise<void>; onProjectChange?: (project?: string) => void; onOpenToday?: () => Promise<void>; onAgent?: () => void; activeEncounterRef?: string; onOpenFlowInstance?: (row:import("../../flow/instances").FlowInstanceRow)=>Promise<void>; onNewFlow?: ()=>void }) {
   const kernel = useKernel();
   const reading = kernel.snapshot.navigator;
   const [error,setError] = useState<string>();
@@ -74,6 +74,15 @@ export function WorldNavigator({ onSystem, onFactoryDevelopment,onOpenEncounter,
     }
     onNavigationChange(key,{mode,expanded:true,locationPath:path});
     if (!project) onCentralFilesChange(mode === "files");
+  };
+  const openProjectWork = async (project:string, open:(project:string,ref?:string)=>Promise<void>) => {
+    setError(undefined);
+    try {
+      const result=await load(project);
+      const ref=result?.result==="world_read" ? result.snapshot.navigator?.project_ref ?? undefined : undefined;
+      if (!ref) throw new Error("Central did not resolve this Project");
+      await open(project,ref);
+    } catch(error) { setError(String(error)); }
   };
   const modes = (path:string,name:string,project?:string) => <ProjectModes name={name} mode={projectNavigation[keyFor(path)]?.mode ?? (!project && centralFiles ? "files" : "chats")} onMode={mode=>void changeMode(path,project,mode)}/>;
   const disclose = async(path:string,project:string,expanded:boolean,browse=false) => {
@@ -128,6 +137,10 @@ export function WorldNavigator({ onSystem, onFactoryDevelopment,onOpenEncounter,
           return <ProjectBranch key={project.path} path={project.path} name={project.name} selected={selected?.path===project.path}
             navigation={navigation} onBrowse={()=>void disclose(project.path,project.name,true,true)}
             onDisclosure={expanded=>void disclose(project.path,project.name,expanded)} onMode={mode=>void changeMode(project.path,project.name,mode)} onScroll={scroll=>change({scroll})}>
+            <nav className="project-work-links" aria-label={`${project.name} work`}>
+              {onOpenAgents&&<button onClick={()=>void openProjectWork(project.name,onOpenAgents)}>Agents</button>}
+              {onFactoryDevelopment&&<button onClick={()=>void openProjectWork(project.name,onFactoryDevelopment)}>Runs / Build</button>}
+            </nav>
             {(navigation.mode??"chats") === "files" && <FileTree path={project.path} onOpen={onOpenFile} refresh={fileRefresh}
               onRootRef={ref=>{setDirectoryRefs(held=>({...held,[project.path]:ref}));const ownerKey=key??ref;if(projectNavigation[ownerKey]?.locationPath!==project.path)onNavigationChange(ownerKey,{locationPath:project.path});}}
               expanded={navigation.directories??[`${project.path}/ProjectCentral`,`${project.path}/ProjectCentral/user`]}
@@ -142,7 +155,7 @@ export function WorldNavigator({ onSystem, onFactoryDevelopment,onOpenEncounter,
 
     </>}
     </div>
-    <div className="world-system">{onFactoryDevelopment&&<button onClick={onFactoryDevelopment}>Factory development</button>}<button onClick={onSystem}><SidebarGlyph path={SETTINGS_GLYPH} size={13}/>System</button></div>
+    <div className="world-system"><button onClick={onSystem}><SidebarGlyph path={SETTINGS_GLYPH} size={13}/>System</button></div>
   </aside>;
 }
 

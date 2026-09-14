@@ -421,10 +421,11 @@
 .retained-region-home[hidden], .shell-return-host[hidden] { display: none; }
 .shell-return-host { overflow: auto; }
 
-.shell-activity-host { flex: none; min-width: 0; }
-.shell-activity-host[hidden] { display: none; }
-.shell-activity-host .retained-region-surface { height: auto; }
 
-/* The ordinary tab strip shares the titlebar. With an activity host it must
-   start below that host, otherwise it covers the connection controls. */
-.desktop-shell:has(.shell-activity-host:not([hidden])) .desktop-centre:has(.tab-strip) { margin-top: 0; }
+
+.project-work-links{display:flex;gap:12px;padding:6px 0 10px}
+.project-work-links button{font-size:var(--oi-shell-type-nav);color:var(--oi-muted-2)}
+
+/* W6: current session ingress remains a quiet footer signal, never a top strip. */
+.workspace-footer-edge:has(.session-ingress){height:24px;flex:none}
+.workspace-footer-edge:has(.session-ingress) .canvas-arrangement{opacity:1;transform:none;pointer-events:auto}

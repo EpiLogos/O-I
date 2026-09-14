@@ -11,7 +11,7 @@ export function EncounterSurface({binding,onView,presentation="tab",onExpression
  const kernel=useKernel();
  const [reading,setReading]=useState<EncounterReading>();const [status,setStatus]=useState<EncounterStatus>();
  const [providers,setProviders]=useState<{id:string;label:string}[]>([]);const [draft,setDraft]=useState("");
- const [error,setError]=useState<string>();const [pending,setPending]=useState(false);
+ const [error,setError]=useState<string>();const [pollError,setPollError]=useState<string>();const [pending,setPending]=useState(false);
  const canonical=useRef<Draft>({revision:0,text:""});const input=useRef("");const dirty=useRef(false);const saving=useRef(false);const sending=useRef(false);const failed=useRef(false);
  const [before,setBefore]=useState<number>();
  const expression=useRef(onExpression);expression.current=onExpression;
@@ -30,11 +30,11 @@ export function EncounterSurface({binding,onView,presentation="tab",onExpression
   const poll=async()=>{
    if(hidden()){if(live)timer=setTimeout(poll,1000);return;}
    try {
-    const next=await read();if(!live)return;setReading(next);
+    const next=await read();if(!live)return;setReading(next);setPollError(undefined);
     if(!dirty.current&&!saving.current&&!sending.current&&next.draft.revision>=canonical.current.revision){canonical.current=next.draft;input.current=next.draft.text;setDraft(next.draft.text);}
     const current=next.connection ?? await call<EncounterStatus>({action:"status",agent_session:binding.ref!}).catch(()=>undefined);
     if(live)setStatus(current);
-   }catch(error){if(live)setError(String(error));}
+   }catch(error){if(live)setPollError(String(error));}
    if(live)timer=setTimeout(poll,750);
   };
   void call({action:"start"}).then(()=>{if(live){void call<typeof providers>({action:"providers"}).then(rows=>{if(live)setProviders(rows);}).catch(error=>{if(live)setError(String(error));});void poll();}}).catch(error=>{if(live)setError(String(error));});
@@ -216,7 +216,7 @@ export function EncounterSurface({binding,onView,presentation="tab",onExpression
   }catch(err){if(alive.current)setA2a({seed,busy:false,error:String(err)});}
   finally{if(alive.current)setPending(false);}
  };
- return <><EncounterView concealed={concealed} presentation={presentation} plane={binding.view?.encounterPlane??"Conversation"} onPlane={encounterPlane=>onView({encounterPlane})} title={binding.title} onPermission={(id,decision)=>void permission(id,decision)} reading={reading} status={status} draft={draft} pending={pending||dirty.current||saving.current||sending.current||failed.current} error={error} providers={providers} onProvider={provider=>void connect(provider)} onDraft={change} onSend={()=>void send()} onCancel={()=>{if(!allowed("cancel"))return;void call({action:"cancel",agent_session:binding.ref!,reason:"User stopped the encounter"}).catch(error=>setError(String(error)));}} onEarlier={()=>setBefore(reading?.blocks[0]?.id)} onLatest={()=>setBefore(undefined)} readJournal={after=>call<JournalPage>({action:"read",agent_session:binding.ref!,after,limit:32})} space={binding.encounter?.space} deliveries={[...addressedHistory.map(h=>({ref:h.ref,phase:h.record.phase})),...(group?[{ref:group.ref,phase:`group — ${group.rows.map(row=>row.error?"refused":row.phase??"in flight").join(", ")}`}]:[])]}
+ return <><EncounterView concealed={concealed} presentation={presentation} plane={binding.view?.encounterPlane??"Conversation"} onPlane={encounterPlane=>onView({encounterPlane})} title={binding.title} onPermission={(id,decision)=>void permission(id,decision)} reading={reading} status={status} draft={draft} pending={pending||dirty.current||saving.current||sending.current||failed.current} error={error??pollError} providers={providers} onProvider={provider=>void connect(provider)} onDraft={change} onSend={()=>void send()} onCancel={()=>{if(!allowed("cancel"))return;void call({action:"cancel",agent_session:binding.ref!,reason:"User stopped the encounter"}).catch(error=>setError(String(error)));}} onEarlier={()=>setBefore(reading?.blocks[0]?.id)} onLatest={()=>setBefore(undefined)} readJournal={after=>call<JournalPage>({action:"read",agent_session:binding.ref!,after,limit:32})} space={binding.encounter?.space} deliveries={[...addressedHistory.map(h=>({ref:h.ref,phase:h.record.phase})),...(group?[{ref:group.ref,phase:`group — ${group.rows.map(row=>row.error?"refused":row.phase??"in flight").join(", ")}`}]:[])]}
   nowRefs={(()=>{const refs:{ref:string;register:string|null}[]=addressedHistory.flatMap(h=>{const nowRef=(h.record as {now_ref?:unknown}).now_ref;return typeof nowRef==="string"&&nowRef?[{ref:nowRef,register:null}]:[];});const allocated=task?.allocation?.allocation?.now_ref;if(allocated&&!refs.some(r=>r.ref===allocated))refs.push({ref:allocated,register:task?.request?.central?.project??null});return refs;})()}
   taskBasisWithoutNow={!!task&&!task.allocation?.allocation?.now_ref}
   resume={resume} onReconnect={provider=>void reconnect(provider)}

@@ -12,7 +12,12 @@ pub fn arrangement_menu(app: AppHandle, window: tauri::Window, arrangements: Vec
 }
 
 pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> tauri::Result<()> {
+    #[cfg(not(target_os = "linux"))]
     let application = SubmenuBuilder::new(app, "O-I").hide().hide_others().separator().quit().build()?;
+    #[cfg(target_os = "linux")]
+    let application = SubmenuBuilder::new(app, "O-I")
+        .text("application.show", "Show O:I").separator()
+        .text("application.quit", "Quit O:I").build()?;
     let edit = SubmenuBuilder::new(app, "Edit").undo().redo().separator().cut().copy().paste().select_all().build()?;
     let browser = MenuItemBuilder::with_id("workspace.browser", "New Browser Pane").accelerator("CmdOrCtrl+Shift+L").build(app)?;
     let address = MenuItemBuilder::with_id("workspace.browser-address", "Go to Web Address…").accelerator("CmdOrCtrl+L").build(app)?;
@@ -37,7 +42,15 @@ pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> t
         .text("surface.detach", "Detach Active Surface")
         .separator().text("region.left", "Show / Hide Central")
         .text("region.right", "Show / Hide Agent").build()?;
-    app.set_menu(MenuBuilder::new(app).items(&[&application, &edit, &workspace, &window]).build()?)?;
+    let menu = MenuBuilder::new(app).items(&[&application, &edit, &workspace, &window]).build()?;
+    app.set_menu(menu.clone())?;
+    // Linux panel hosts consume the standard StatusNotifier/DBusMenu export.
+    // Reuse the same native menu and dispatch; no second menu action model.
+    // Keep the window menu as fallback if the native panel export fails.
+    #[cfg(target_os = "linux")]
+    if install_panel_menu(app, menu).is_ok() {
+        for window in app.windows().values() { window.hide_menu()?; }
+    }
     if let Some(current) = arrangements.iter().find(|w| w.id == active) {
         if let Some(window) = app.get_window("main") { window.set_title(&format!("{} — O-I", current.name))?; }
     }
@@ -45,6 +58,13 @@ pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> t
 }
 
 pub fn dispatch(app: &AppHandle, id: &str) {
+    if id == "application.quit" { app.exit(0); return; }
+    if id == "application.show" {
+        if let Some(window) = app.get_window("main") {
+            let _ = window.show(); let _ = window.unminimize(); let _ = window.set_focus();
+        }
+        return;
+    }
     if id.starts_with("workspace.") || id.starts_with("surface.") || id.starts_with("region.") {
         // Arrangement actions have one resident main-window dispatcher.
         if let Some(window) = app.get_window("main") {
@@ -53,4 +73,17 @@ pub fn dispatch(app: &AppHandle, id: &str) {
             if let Some(shell)=app.get_webview("main") {let _=shell.set_focus();}
         }
     }
+}
+
+#[cfg(target_os = "linux")]
+fn install_panel_menu(app: &AppHandle, menu: tauri::menu::Menu<tauri::Wry>) -> tauri::Result<()> {
+    if let Some(tray) = app.tray_by_id("oi-workbench-menu") {
+        return tray.set_menu(Some(menu));
+    }
+    let mut builder = tauri::tray::TrayIconBuilder::with_id("oi-workbench-menu")
+        .tooltip("O:I — Workspace and Window")
+        .menu(&menu);
+    if let Some(icon) = app.default_window_icon() { builder = builder.icon(icon.clone()); }
+    builder.build(app)?;
+    Ok(())
 }

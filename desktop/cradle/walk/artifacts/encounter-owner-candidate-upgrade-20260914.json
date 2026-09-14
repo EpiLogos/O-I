@@ -1,0 +1,55 @@
+{
+  "schema": "oi.cradle.encounter-owner-upgrade-receipt/v1",
+  "standing": "observed-native-owner-upgrade",
+  "purpose": "Restore current SessionSpace journal compatibility without replacing the canonical AgentSession or native Codex session.",
+  "installation_order_requirement": "Upgrade a resident encounter owner by its public expected-PID shutdown and exact recorded-native-id reconnect before any command writes a SessionSpace journal variant that the resident binary cannot parse. Do not kill the owner, delete encounter state, or issue a fresh Open as an upgrade substitute.",
+  "recorded_before_upgrade": {
+    "owner_pid": 301882,
+    "agent_session": "agent-session/oi-factory-codex-20260914",
+    "space": "session-space/oi-factory-demo-20260914",
+    "provider": "oi-live-walk-codex",
+    "cwd": "/home/frank/Central/Work/O-I",
+    "native_session_id": "01a09ff3-f1fd-7f92-a156-2d85d11a9462",
+    "resident": true,
+    "transcript_cursors_preserved": [4, 20]
+  },
+  "operations": [
+    {
+      "kind": "public-owner-shutdown",
+      "request": { "expected_pid": 301882 },
+      "receipt": {
+        "canonical_sessions_retained": true,
+        "native_session_id": "01a09ff3-f1fd-7f92-a156-2d85d11a9462",
+        "process_stopped": true
+      }
+    },
+    {
+      "kind": "candidate-owner-start",
+      "receipt": { "owner_pid": 439695, "protocol": "aikit-encounter-v1" }
+    },
+    {
+      "kind": "public-owner-reconnect",
+      "request": {
+        "space": "session-space/oi-factory-demo-20260914",
+        "agent_session": "agent-session/oi-factory-codex-20260914",
+        "provider": "oi-live-walk-codex",
+        "cwd": "/home/frank/Central/Work/O-I"
+      },
+      "receipt": {
+        "native_session_id": "01a09ff3-f1fd-7f92-a156-2d85d11a9462",
+        "resident": true,
+        "inference_observed": false,
+        "continuation": "native-load"
+      }
+    }
+  ],
+  "readback": {
+    "same_canonical_agent_session": true,
+    "same_native_session_id": true,
+    "candidate_status": "Resident",
+    "transcript_readable_after_upgrade": true,
+    "post_upgrade_cursor": 30,
+    "inference_requested_by_upgrade": false
+  },
+  "limits": "The prior provider process was intentionally stopped by the public owner lifecycle operation. Continuity is the provider-confirmed native load using the exact recorded native session id; it is not a claim that the old process survived."
+}

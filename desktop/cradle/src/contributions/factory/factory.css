@@ -1,39 +1,27 @@
-/* Factory presentation; shell host geometry remains O:I-owned. */
-.factory-composition { display: flex; flex-direction: column; height: 100%; min-height: 0; }
-.factory-encounter-host { flex: 1; min-height: 0; overflow: hidden; }
-.shell-return-host .factory-development { min-width: 0; }
-.factory-activity { padding: 8px 14px; border-bottom: 1px solid var(--oi-border); max-height: 220px; overflow: auto; }
-.factory-activity header { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
-.factory-activity form { display: flex; align-items: end; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-.factory-activity label { display: grid; gap: 4px; font-size: 12px; }
-.factory-activity input { width: 260px; max-width: 65vw; }
-.factory-activity-lanes { display: flex; overflow-x: auto; gap: 8px; margin-top: 8px; }
-.factory-activity-lanes button { display: grid; text-align: left; gap: 4px; min-width: 180px; padding: 8px; }
-.factory-activity-lanes button[aria-pressed=true] { outline: 1px solid currentColor; }
-.factory-execution-reading { padding: 16px; overflow-wrap: anywhere; }
-.factory-execution-reading h2 { font-size: 15px; }
-.factory-execution-reading dt { opacity: .6; font-size: 11px; margin-top: 8px; }
-.factory-execution-reading dd { margin: 2px 0; font-size: 12px; }
-.factory-execution-reading pre { white-space: pre-wrap; font-size: 11px; }
-.desktop-shell .factory-activity input { padding: 6px 8px; border: 1px solid var(--oi-border); border-radius: 4px; min-height: 28px; box-sizing: border-box; }
-.desktop-shell .factory-activity button { padding: 6px 8px; min-height: 28px; }
-.factory-activity { padding: 10px 18px 12px; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); }
-.factory-activity header { align-items: center; }
-.factory-activity-title { font-size: var(--oi-shell-type-body); font-weight: 550; margin-right: auto; }
-.factory-activity header small { color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); font-variant-numeric: tabular-nums; }
-.factory-source-picker { font-size: var(--oi-shell-type-nav); }
-.factory-source-picker summary { cursor: pointer; padding: 5px 0; color: var(--oi-muted-2); }
-.factory-source-picker[open] { flex-basis: 100%; }
-.factory-source-picker form { padding-top: 5px; }
-.factory-activity-empty { margin: 5px 0 0; color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); }
-.factory-activity-lanes:empty { margin: 0; }
-.desktop-shell .factory-activity-lanes button { border-left: 2px solid var(--oi-hairline); border-radius: 0; padding: 8px 14px; }
-.desktop-shell .factory-activity-lanes button[aria-pressed=true] { outline: none; border-left-color: var(--oi-accent); background: var(--oi-wash); }
-.factory-return-region { padding: 18px 16px; }
-.factory-return-region>header { display: grid; gap: 5px; padding-bottom: 18px; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); }
-.factory-return-region>header strong { font-size: var(--oi-shell-type-body); font-weight: 550; }
-.factory-return-region>header span,.factory-return-empty { font-size: var(--oi-shell-type-nav); line-height: 1.6; color: var(--oi-muted-2); }
-.factory-return-empty { margin: 20px 0 28px; max-width: 30ch; }
-.factory-source-inspection { border-top: var(--oi-shell-edge) solid var(--oi-hairline); padding-top: 12px; }
-.factory-source-inspection>summary { cursor: pointer; font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); }
-.factory-return-region .factory-execution-reading { padding: 16px 0; }
+/* Factory supplies the Runs/Build body. The surrounding workbench owns panes,
+ * sidecars and retained-region geometry. */
+.factory-composition { height: 100%; min-height: 0; overflow: hidden; }
+.factory-runs { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.factory-runs-heading { display: flex; align-items: start; justify-content: space-between; gap: 18px; padding: 16px 20px 12px; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); }
+.factory-runs-heading h1 { margin: 0; font-size: var(--oi-shell-type-title); font-weight: 550; }
+.factory-runs-heading p, .factory-runs-empty, .factory-run-list p { color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); line-height: 1.55; }
+.factory-runs-heading p { margin: 4px 0 0; }
+.factory-source-picker { font-size: var(--oi-shell-type-nav); color: var(--oi-muted-2); }
+.factory-source-picker summary { cursor: pointer; padding: 4px 0; }
+.factory-source-picker form { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(160px, 1fr) auto; gap: 8px; align-items: end; margin-top: 8px; min-width: min(620px, 72vw); }
+.factory-source-picker label { display: grid; gap: 4px; font-size: var(--oi-shell-type-meta); }
+.factory-source-picker input { min-width: 0; }
+.factory-owner-refusal { margin: 12px 20px; color: var(--oi-danger, #a33); font-size: var(--oi-shell-type-nav); }
+.factory-runs-empty { margin: 24px 20px; max-width: 56ch; }
+.factory-runs-layout { display: grid; grid-template-columns: minmax(235px, 29%) minmax(0, 1fr); flex: 1; min-height: 0; }
+.factory-run-list { overflow: auto; border-right: var(--oi-shell-edge) solid var(--oi-hairline); padding: 10px; }
+.factory-run-list-heading { display: grid; gap: 3px; padding: 7px 9px 12px; font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); }
+.factory-run-list-heading strong { overflow-wrap: anywhere; color: var(--oi-ink); font-weight: 550; }
+.factory-journey-row { display: grid; gap: 7px; margin: 0 0 14px; padding: 9px; border-top: var(--oi-shell-edge) solid var(--oi-hairline); }
+.factory-journey-row > div { display: grid; gap: 3px; overflow-wrap: anywhere; }
+.factory-journey-row code { font-size: var(--oi-shell-type-meta); }
+.factory-journey-row span, .factory-journey-row small { color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); }
+.factory-journey-row button { text-align: left; }
+.factory-journey-row button.is-selected { border-left: 2px solid var(--oi-accent); background: var(--oi-wash); }
+.factory-build-centre { min-width: 0; overflow: auto; }
+@media (max-width: 720px) { .factory-runs-heading { display: grid; } .factory-source-picker form { grid-template-columns: 1fr; min-width: 0; } .factory-runs-layout { grid-template-columns: 1fr; } .factory-run-list { max-height: 38vh; border-right: 0; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); } }

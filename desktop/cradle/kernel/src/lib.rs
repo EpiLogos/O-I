@@ -34,6 +34,7 @@ pub mod action;
 pub mod graph;
 pub mod encounter;
 pub mod agency;
+pub mod session_space;
 pub mod files;
 pub mod composition;
 pub mod system_composition;
@@ -219,6 +220,7 @@ pub enum KernelOp {
         #[serde(default, skip_serializing_if = "Option::is_none")] agent_session_ref: Option<String>,
     },
     AgencyRead { project: String },
+    SessionSpace { project: String, request: session_space::Request },
     /// Wave 6E: pending Returns tray — list/read plus human review/include
     /// through Central's native receiving operations (owner-validated).
     /// `project` names the project register's field; `None` is the ROOT
@@ -343,6 +345,7 @@ pub enum KernelOpResult {
     /// revision, structured conflict, or the owner's own refusal.
     InstanceCommissioned { outcome: commission::CommissionOutcome },
     AgencyReading { project_ref: String, spaces: serde_json::Value, observed_at_unix_ms: u64 },
+    SessionSpaceReading { project_ref: String, data: serde_json::Value },
     EncounterReading {data:serde_json::Value},
     ReceivingReading {data:serde_json::Value},
     NowReading {data:serde_json::Value},
@@ -528,6 +531,19 @@ impl Kernel {
                     self.encounter_refs.insert(agent_session.clone(),(SemanticRef {ref_id:agent_session.clone(),kind:"agent-session".into(),native_owner:"ai-kit".into(),provenance:refs::RefProvenance {source:"aikit.encounter.read".into(),revision:None}},project));
                 }
                 Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::EncounterReading {data}})
+            }
+            KernelOp::SessionSpace { project, request } => {
+                let root = world::read_world(&self.client).map_err(|e| e.to_string())?;
+                let base = root["root"].as_str().ok_or("Central root location unavailable")?;
+                let row = root["work"]["projects"].as_array().and_then(|rows| rows.iter().find(|r| r["name"].as_str() == Some(&project))).ok_or("Project is outside disclosed ground")?;
+                let cwd = std::path::Path::new(base).join(row["path"].as_str().ok_or("Project location unavailable")?);
+                let inspection = self.client.run("projectcentral.inspect", serde_json::json!({"project":project})).map_err(|e|e.to_string())?;
+                let project_ref = inspection["manifest"]["project_id"].as_str().ok_or("Central has not bound a canonical ProjectRef")?.to_owned();
+                if let session_space::Request::Discover { project: requested } = &request {
+                    if requested != &project_ref { return Err("SessionSpace discovery Project identity mismatch".into()); }
+                }
+                let data = session_space::Client::discover().run(&cwd, &request, &project_ref)?;
+                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::SessionSpaceReading { project_ref, data } })
             }
             KernelOp::AgencyRead { project } => {
                 let root=world::read_world(&self.client).map_err(|e|e.to_string())?;

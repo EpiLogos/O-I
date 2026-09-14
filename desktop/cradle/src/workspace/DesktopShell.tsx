@@ -21,6 +21,7 @@ interface Props {
   /** FND-02: when provided, replaces the right region's legacy plane body
    * (the accompanying agent layer owns its own header/planes/composer). */
   right?: ReactNode;
+  sessionIngress?: ReactNode;
   accompanyingTarget?: string;
   namingRequest: "create" | "rename" | null; onNamingHandled: () => void;
   error: string | null; navigator: (workspaceSelector: ReactNode) => ReactNode; children: ReactNode;
@@ -221,7 +222,6 @@ export function DesktopShell(p: Props) {
       <div className="shell-focus" data-tauri-drag-region>{width < 640 && groupCount > 1 ? <select aria-label="Focused pane" value={l.focusedGroupId ?? ""} onChange={event => { const id=event.target.value; p.setLayout(state => focusGroup(state,id)); }}>{groupsOf(l.root).map((group,index) => <option key={group.id} value={group.id}>{index+1}/{groupCount} · {group.active ? l.surfaces[group.active]?.title : "Empty pane"}</option>)}</select> : null}</div>
       <button className="shell-region-toggle shell-agent-toggle" aria-label="Toggle right region" aria-expanded={right === "panel" || right === "full"} onClick={() => toggle("right")} title="Show / hide accompanying agent (⌘⇧B)"><Glyph name="sidebar"/></button>
     </header>
-    <div className="shell-activity-host" data-shell-activity-host hidden={!composed}/>
     {naming && <form className="workspace-name" onSubmit={e => { e.preventDefault(); if (!name.trim()) return; if (naming === "create") p.create(name); else p.rename(name); setNaming(null); }}>
       <input aria-label="Workspace name" autoFocus value={name} onChange={e => setName(e.target.value)} />
       <button type="submit">{naming === "create" ? "Create workspace" : "Save name"}</button><button type="button" onClick={() => setNaming(null)}>Cancel</button>
@@ -267,6 +267,7 @@ export function DesktopShell(p: Props) {
           </div>
           <small className="arrangement-state">{l.maximizedGroupId ? "Focused view" : groupCount === 0 ? "Empty workspace" : `${groupCount} group${groupCount === 1 ? "" : "s"}`}</small>
           <span className="canvas-arrangement-spacer"/>
+          {p.sessionIngress}
           <details className="desktop-menu"><summary aria-label="Workspace actions"><Glyph name="more"/></summary><div>
             <button aria-label="New workspace" onClick={() => { setName(""); setNaming("create"); }}>New workspace</button>
             <button aria-label="Rename workspace" onClick={() => { setName(p.workspace.name); setNaming("rename"); }}>Rename workspace</button>

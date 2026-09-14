@@ -11,6 +11,7 @@ export interface BuildSurfaceProps {
   view: FactoryBuildView
   initialDepth?: ViewDepth
   onAction?: (invocation: ActionInvocation) => void
+  onOpenWorkingSurface?: (selection: Omit<import("../../encounter/working-surface").WorkingSurfaceSelection,"project">) => Promise<void>
 }
 
 function Ref({ children }: { children: string }) {
@@ -23,7 +24,7 @@ function ActionButton({ actionRef, subjectRef, label, availability, unavailableR
   return <button type="button" className="fb-action" disabled={!onAction || availability !== "available"} title={unavailableReason ?? (!onAction || availability !== "available" ? "Native Action admission is unavailable" : undefined)} onClick={() => onAction?.({ actionRef, subjectRef })}>{label}</button>
 }
 
-export function BuildSurface({ view, initialDepth = 'semantic', onAction }: BuildSurfaceProps) {
+export function BuildSurface({ view, initialDepth = 'semantic', onAction, onOpenWorkingSurface }: BuildSurfaceProps) {
   const [depth, setDepth] = useState<ViewDepth>(initialDepth)
   const [executionRef, setExecutionRef] = useState(view.trajectories[0]?.executionRef)
   const trace = useMemo(() => view.trajectories.find((item) => item.executionRef === executionRef) ?? view.trajectories[0], [executionRef, view.trajectories])
@@ -82,7 +83,7 @@ export function BuildSurface({ view, initialDepth = 'semantic', onAction }: Buil
       <div className="fb-section-head"><h2>Live working world</h2><span>read-only projection of external owners</span></div>
       <div className="fb-live-grid">
         {view.agencies.map((agency) => <article key={agency.agencyRef} className="fb-live-card"><span className="fb-kicker">{agency.position ?? 'local'} agency</span><h3>{agency.label}</h3><Ref>{agency.agencyRef}</Ref><p>Agent <Ref>{agency.agentRef}</Ref></p>{agency.rootScopeRef ? <p>Root scope <Ref>{agency.rootScopeRef}</Ref></p> : null}{agency.metagencyGrantRefs?.map((ref) => <p key={ref}>Grant <Ref>{ref}</Ref></p>)}{agency.actuationRef ? <p>Actuation <Ref>{agency.actuationRef}</Ref></p> : null}{agency.returnRef ? <p>Return <Ref>{agency.returnRef}</Ref> · {agency.returnState}</p> : null}</article>)}
-        {view.executions.map((execution) => <article key={execution.executionRef} className="fb-live-card"><span className="fb-kicker">execution</span><div className="fb-card-top"><Ref>{execution.executionRef}</Ref><span className={`fb-status fb-status-${execution.status}`}>{execution.status}</span></div><p>Harness <Ref>{execution.harnessRef ?? 'unavailable'}</Ref></p>{execution.harnessCompositionRef ? <p>Body <Ref>{execution.harnessCompositionRef}</Ref></p> : <p className="fb-muted">No rich harness composition supplied.</p>}{execution.agentSessionRef ? <p>Session <Ref>{execution.agentSessionRef}</Ref></p> : null}{execution.sessionSpaceRef ? <p>SessionSpace <Ref>{execution.sessionSpaceRef}</Ref></p> : <p className="fb-muted">SessionSpace unavailable / not yet bound.</p>}{execution.surfaceRefs?.map((ref) => <p key={ref}>Surface <Ref>{ref}</Ref></p>)}{execution.workcellBindingRefs?.map((ref) => <p key={ref}>Material binding <Ref>{ref}</Ref></p>)}</article>)}
+        {view.executions.map((execution) => <article key={execution.executionRef} className="fb-live-card"><span className="fb-kicker">execution</span><div className="fb-card-top"><Ref>{execution.executionRef}</Ref><span className={`fb-status fb-status-${execution.status}`}>{execution.status}</span></div><p>Harness <Ref>{execution.harnessRef ?? 'unavailable'}</Ref></p>{execution.harnessCompositionRef ? <p>Body <Ref>{execution.harnessCompositionRef}</Ref></p> : <p className="fb-muted">No rich harness composition supplied.</p>}{execution.agentSessionRef ? <p>Session <Ref>{execution.agentSessionRef}</Ref></p> : null}{execution.sessionSpaceRef ? <p>SessionSpace <Ref>{execution.sessionSpaceRef}</Ref></p> : <p className="fb-muted">SessionSpace unavailable / not yet bound.</p>}{execution.surfaceRefs?.map((ref) => <p key={ref}>Surface <Ref>{ref}</Ref></p>)}{execution.workcellBindingRefs?.map((ref) => <p key={ref}>Material binding <Ref>{ref}</Ref></p>)}{onOpenWorkingSurface&&execution.agentSessionRef&&execution.sessionSpaceRef&&execution.surfaceRefs&&(execution.surfaceRefs?.length??0)<=1?<button type="button" onClick={()=>void onOpenWorkingSurface({agentSession:execution.agentSessionRef!,space:execution.sessionSpaceRef!,surface:execution.surfaceRefs?.[0]})}>Open working Surface</button>:null}</article>)}
       </div>
     </section> : null}
 
