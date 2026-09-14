@@ -3,7 +3,8 @@
   "motion": "full",
   "checks": [
     "Same Agent DOM enters centre",
-    "Real Factory inspection is hosted in right region",
+    "Factory returned material is hosted in right region",
+    "Native Factory inspection remains explicitly accessible",
     "Exactly one AgentLayer mounted",
     "Ordinary writing survives exit",
     "Same Agent DOM returns to ordinary shell",
@@ -20,14 +21,14 @@
       "type": "group",
       "id": "g1",
       "tabs": [
-        "ab6f4b53-55c3-4a91-8c19-8885f1aa61eb"
+        "10ed17e1-3535-4e52-a010-08dff3f0316f"
       ],
       "pinned": [],
-      "active": "ab6f4b53-55c3-4a91-8c19-8885f1aa61eb"
+      "active": "10ed17e1-3535-4e52-a010-08dff3f0316f"
     },
     "surfaces": {
-      "ab6f4b53-55c3-4a91-8c19-8885f1aa61eb": {
-        "id": "ab6f4b53-55c3-4a91-8c19-8885f1aa61eb",
+      "10ed17e1-3535-4e52-a010-08dff3f0316f": {
+        "id": "10ed17e1-3535-4e52-a010-08dff3f0316f",
         "kind": "draft",
         "title": "Draft"
       }
@@ -44,25 +45,25 @@
       "type": "group",
       "id": "g1",
       "tabs": [
-        "ab6f4b53-55c3-4a91-8c19-8885f1aa61eb"
+        "10ed17e1-3535-4e52-a010-08dff3f0316f"
       ],
       "pinned": [],
-      "active": "ab6f4b53-55c3-4a91-8c19-8885f1aa61eb"
+      "active": "10ed17e1-3535-4e52-a010-08dff3f0316f"
     },
     "surfaces": {
-      "ab6f4b53-55c3-4a91-8c19-8885f1aa61eb": {
-        "id": "ab6f4b53-55c3-4a91-8c19-8885f1aa61eb",
+      "10ed17e1-3535-4e52-a010-08dff3f0316f": {
+        "id": "10ed17e1-3535-4e52-a010-08dff3f0316f",
         "kind": "draft",
         "title": "Draft"
       },
-      "05b6f317-4928-4d1e-a51f-3cd90592d2d7": {
-        "id": "05b6f317-4928-4d1e-a51f-3cd90592d2d7",
+      "b9a3ad35-7896-4659-a6d7-f0a14fe76fad": {
+        "id": "b9a3ad35-7896-4659-a6d7-f0a14fe76fad",
         "kind": "factory",
         "title": "Factory development"
       }
     },
     "closedStack": [
-      "05b6f317-4928-4d1e-a51f-3cd90592d2d7"
+      "b9a3ad35-7896-4659-a6d7-f0a14fe76fad"
     ],
     "focusedGroupId": "g1",
     "agencyDepth": "panel",

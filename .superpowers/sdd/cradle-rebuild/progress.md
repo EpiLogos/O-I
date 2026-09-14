@@ -1239,3 +1239,36 @@ This supersedes the earlier assertion that one idle frame left no visible mark.
 Owner authorises a small demo job with real native operations for the live walk.
 No existing production Run is required; generated fixtures must not be claimed as
 actual provider activity or human Recognition.
+
+### Native encounter foundation readback — 2026-09-14
+
+Omarchy installation repaired: companion aikit-session-space built from AIKit
+856f454, installed alongside aikit; native registry source restored under
+~/.aikit/registries/oi-native-856f454; O-I matched through native Project
+Specification oi-desktop without changing its authored profile enables. Native
+project identity remains project:o-i. The suite installer now refuses readiness
+when its companion executable is absent. `cargo check --manifest-path
+cli/Cargo.toml -j 2` passed.
+
+The Pi demo connected but its model refused for missing credentials; retained as
+a failed provider attempt. Existing Codex ChatGPT login was read back, then the
+pinned @agentclientprotocol/codex-acp 1.11.0 adapter was installed and configured
+read-only through AIKit. No credential material was copied into artifacts.
+
+Native CUA typed and sent a message, AIKit recorded the actual assistant response
+“Cradle native conversation is live.” and completed event. Canonical refs:
+session-space/oi-factory-demo-20260914 and
+agent-session/oi-factory-codex-20260914; native provider session
+01a09ff3-f1fd-7f92-a156-2d85d11a9462.
+
+Native Draft → Factory → Draft then retained that exact AgentSession, provider
+session and transcript, with the response visible in the accompanying Agent.
+Receipts: desktop/cradle/walk/artifacts/encounter-codex-native-reply.json and
+factory-native-encounter-continuity.json. This is real conversation/arrangement
+evidence, not a Factory execution, tmux working-Surface, Agency authority or H
+acceptance claim. The owner rejected the earlier Factory UI; revised presentation
+hides source/dispatch plumbing behind disclosure, but remains a candidate.
+
+Full-motion production app walk passed including an actually mounted Stage
+becoming invisible on release. Native Factory rejection/locator persistence walk
+passed. F2–F6 remain open. No merged increment is claimed.

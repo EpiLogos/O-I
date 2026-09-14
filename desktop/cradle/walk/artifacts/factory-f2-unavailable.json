@@ -1,0 +1,10 @@
+{
+  "standing": "C: real application/native owner rejection; no successful execution correlation claim",
+  "rejection": "Activity reading unavailable: Error: {\"kind\":\"owner-refused-or-failed\",\"message\":\"factory: Factory developmental provider error: Io(Os { code: 2, kind: NotFound, message: \\\"No such file or directory\\\" })\\n\",\"operation_may_have_run\":true}. Earlier rows are not a current reading.",
+  "checks": [
+    "Native failure shown without fabricated executions",
+    "Exact locator persists across reload",
+    "Leaving removes activity host",
+    "No page errors"
+  ]
+}
