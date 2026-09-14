@@ -72,14 +72,14 @@ It downloads the native archive and SHA-256 sidecar for your platform from the r
 
 The repository defines `@epi-logos/oi` as the public distribution package for the native Rust CLI. It is a thin installer/launcher over O:I's prebuilt release artifacts, not a JavaScript reimplementation of `oi` and not the `oi.package/v1` extension envelope.
 
-The `oi-v0.1.0-prelocal.5` release line publishes the npm package tarball beside the native binary archives. Once that release exists, the package can be installed without a repository checkout or Rust toolchain:
+The `oi-v0.1.0-prelocal.6` release line publishes the npm package tarball beside the native binary archives. Once that release exists, the package can be installed without a repository checkout or Rust toolchain:
 
 ```sh
-npm install -g https://github.com/EpiLogos/O-I/releases/download/oi-v0.1.0-prelocal.5/epi-logos-oi-0.1.0-prelocal.5.tgz
+npm install -g https://github.com/EpiLogos/O-I/releases/download/oi-v0.1.0-prelocal.6/epi-logos-oi-0.1.0-prelocal.6.tgz
 oi help
 ```
 
-The tarball published at `oi-v0.1.0-prelocal.4` predates the installer's default release tag and its postinstall needs the release named explicitly; from `prelocal.5` the package carries the default and the plain command above is sufficient:
+The tarball published at `oi-v0.1.0-prelocal.4` predates the installer's default release tag and its postinstall needs the release named explicitly; from `prelocal.5` onward the package carries the default and the plain command above is sufficient:
 
 ```sh
 OI_NPM_RELEASE_TAG=oi-v0.1.0-prelocal.4 npm install -g https://github.com/EpiLogos/O-I/releases/download/oi-v0.1.0-prelocal.4/epi-logos-oi-0.1.0-prelocal.4.tgz

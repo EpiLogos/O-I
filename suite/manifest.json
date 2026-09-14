@@ -1,6 +1,6 @@
 {
   "schema": "oi.suite-manifest/v1",
-  "suite_version": "0.1.0-prelocal.2",
+  "suite_version": "0.1.0-prelocal.6",
   "products": [
     {
       "id": "central",
@@ -8,7 +8,7 @@
       "repository": "https://github.com/EpiLogos/Central",
       "canonical_repository": "https://github.com/EpiLogos/Central",
       "checkout": "Central",
-      "revision": "78a545214ad70e055fae38ccae2d78443112f283",
+      "revision": "39efa03ea8607bdd8a79b0e317457c2ccc3ead4c",
       "artifact": {
         "kind": "cli",
         "entry": "ctrl",
@@ -16,14 +16,14 @@
           {
             "target": "aarch64-apple-darwin",
             "name": "central-0.1.0-aarch64-apple-darwin.tar.gz",
-            "sha256": "a15468f1d121cb2158552f510ce4f03720e9f4dd9e2127339b2e395ae3acac24",
-            "attestation": "https://github.com/EpiLogos/Central/attestations/41163489"
+            "sha256": "f42b4795edd91e17f2373ba473b5c75ea846a9bf98b4d960193697def6ad9474",
+            "attestation": "https://github.com/EpiLogos/Central/attestations"
           },
           {
             "target": "x86_64-unknown-linux-gnu",
             "name": "central-0.1.0-x86_64-unknown-linux-gnu.tar.gz",
-            "sha256": "011f85f3af24775d0fa3740a88ebf256f1a146f067c1fa1520b267202e25054d",
-            "attestation": "https://github.com/EpiLogos/Central/attestations/41163516"
+            "sha256": "a03b5e9af64a97079dbbe6a7df797fdeef98f4759b0ccd3e7691c8bfe86f9b17",
+            "attestation": "https://github.com/EpiLogos/Central/attestations"
           }
         ],
         "installed_verify": []
@@ -43,7 +43,7 @@
           "--locked"
         ]
       },
-      "historical_tag": "central-v0.1.0-prelocal.2"
+      "historical_tag": "central-v0.1.0-prelocal.6"
     },
     {
       "id": "actuation",
@@ -51,16 +51,22 @@
       "repository": "https://github.com/EpiLogos/Actuation",
       "canonical_repository": "https://github.com/EpiLogos/Actuation",
       "checkout": "Actuation",
-      "revision": "03e03acb1ae47d60f26903209112258e60f83627",
+      "revision": "67e6b296b85bd3eb1554802fd55a476c474aa566",
       "artifact": {
-        "kind": "component",
-        "entry": null,
+        "kind": "cli",
+        "entry": "actuation",
         "assets": [
           {
-            "target": "any",
-            "name": "actuation-0.1.0-component.tar.gz",
-            "sha256": "7245550045269562811da8a73ca13a01feb4431a314c30784657e7be35f425ca",
-            "attestation": "https://github.com/EpiLogos/Actuation/attestations/41163540"
+            "target": "aarch64-apple-darwin",
+            "name": "actuation-0.2.0-aarch64-apple-darwin.tar.gz",
+            "sha256": "0c10bfbbaabc761f81492e908db2e925171e13e5b8ec89dfb58c5308c481bd82",
+            "attestation": "https://github.com/EpiLogos/Actuation/attestations"
+          },
+          {
+            "target": "x86_64-unknown-linux-gnu",
+            "name": "actuation-0.2.0-x86_64-unknown-linux-gnu.tar.gz",
+            "sha256": "eaaccd28cdf835f848b86bb1d09dce6700ff4f1d5b9f628ea4c98016d5582571",
+            "attestation": "https://github.com/EpiLogos/Actuation/attestations"
           }
         ],
         "installed_verify": []
@@ -80,7 +86,7 @@
           "--locked"
         ]
       },
-      "historical_tag": "actuation-v0.1.0-prelocal.2"
+      "historical_tag": "actuation-v0.1.0-prelocal.6"
     },
     {
       "id": "ai-kit",
@@ -88,7 +94,7 @@
       "repository": "https://github.com/EpiLogos/ai-kit",
       "canonical_repository": "https://github.com/EpiLogos/ai-kit",
       "checkout": "ai-kit",
-      "revision": "9ff28ca31c723b314ddf62b7f85b6e2611d53d66",
+      "revision": "8ef8a4f02ee9e095281d2d03d3e711404ead074a",
       "artifact": {
         "kind": "cli",
         "entry": "aikit",
@@ -96,14 +102,14 @@
           {
             "target": "aarch64-apple-darwin",
             "name": "ai-kit-0.1.0-aarch64-apple-darwin.tar.gz",
-            "sha256": "369afd41fb8c0fea201b46aad4f08d0b9c43f46a4055a829d9a1477a6c7408b0",
-            "attestation": "https://github.com/EpiLogos/ai-kit/attestations/41163810"
+            "sha256": "c677c2b3554d9a413b72d8ca0fef87f10508d1aa55969849ee87bba33c72c95b",
+            "attestation": "https://github.com/EpiLogos/ai-kit/attestations"
           },
           {
             "target": "x86_64-unknown-linux-gnu",
             "name": "ai-kit-0.1.0-x86_64-unknown-linux-gnu.tar.gz",
-            "sha256": "5b2d11c94726740e3f25e5408dd7abc8f5a8837c36fad90f11a82bf5273984fb",
-            "attestation": "https://github.com/EpiLogos/ai-kit/attestations/41163813"
+            "sha256": "63e5a5774c395c2dd175bc0d1fc8ed3b0d0cb26dfa8d8551409ecb57b6bb3f20",
+            "attestation": "https://github.com/EpiLogos/ai-kit/attestations"
           }
         ],
         "installed_verify": [
@@ -126,24 +132,24 @@
           "--locked"
         ]
       },
-      "historical_tag": "aikit-v0.1.0-prelocal.2"
+      "historical_tag": "aikit-v0.1.0-prelocal.6"
     },
     {
       "id": "software-factory",
       "public_name": "Software Factory",
-      "repository": "https://github.com/EpiLogos/agent-system-design",
-      "canonical_repository": "https://github.com/EpiLogos/Software-Factory",
+      "repository": "https://github.com/EpiLogos/Factory",
+      "canonical_repository": "https://github.com/EpiLogos/Factory",
       "checkout": "Software-Factory",
-      "revision": "621624c7c8a9919604ad36db451f1a30806fc0ce",
+      "revision": "a335048b0a5b907adc5d09f0dcbda05b98f79a05",
       "artifact": {
         "kind": "component",
         "entry": null,
         "assets": [
           {
             "target": "any",
-            "name": "software-factory-0.1.0-component.tar.gz",
-            "sha256": "c2c4af6cd96e200a113d2904fa60aadf705ee29a9a458e66cc7d2d3f4635fb1a",
-            "attestation": "https://github.com/EpiLogos/agent-system-design/attestations/41163579"
+            "name": "factory-0.1.0-component.tar.gz",
+            "sha256": "86a8d5f617223d1a176a9395e56f455f88d14d85c19db0c481fe06e3078e6f10",
+            "attestation": "https://github.com/EpiLogos/Factory/attestations"
           }
         ],
         "installed_verify": []
@@ -163,7 +169,7 @@
           "--locked"
         ]
       },
-      "historical_tag": "software-factory-v0.1.0-prelocal.2"
+      "historical_tag": "software-factory-v0.1.0-prelocal.6"
     },
     {
       "id": "workcell",
@@ -171,7 +177,7 @@
       "repository": "https://github.com/EpiLogos/Workcell",
       "canonical_repository": "https://github.com/EpiLogos/Workcell",
       "checkout": "Workcell",
-      "revision": "9277fdc852a468f1c53f62b766a38e06705fe482",
+      "revision": "0c3ad1efafdeb254366b7b6122306fe657916a10",
       "artifact": {
         "kind": "cli",
         "entry": "workcell",
@@ -179,14 +185,14 @@
           {
             "target": "aarch64-apple-darwin",
             "name": "workcell-0.1.0-aarch64-apple-darwin.tar.gz",
-            "sha256": "55dc3aea4bcb91531b719dbc348a18fa0f44d90a30a0dd2a74983b88520d82d7",
-            "attestation": "https://github.com/EpiLogos/Workcell/attestations/41163600"
+            "sha256": "f315ae744eaed640b9f7fdaf6cb279617bd0a861a7ac3bc228b489cd0f70b650",
+            "attestation": "https://github.com/EpiLogos/Workcell/attestations"
           },
           {
             "target": "x86_64-unknown-linux-gnu",
             "name": "workcell-0.1.0-x86_64-unknown-linux-gnu.tar.gz",
-            "sha256": "1509f020a026e572a2080c3e41d8a04a33ac242f43de5a21a55d093df588ca6a",
-            "attestation": "https://github.com/EpiLogos/Workcell/attestations/41163517"
+            "sha256": "6fe580c73cfbd1bef39d81a43c53725cd7217c52ad9727eccce55fdb43f8ef08",
+            "attestation": "https://github.com/EpiLogos/Workcell/attestations"
           }
         ],
         "installed_verify": [
@@ -210,7 +216,7 @@
           "--locked"
         ]
       },
-      "historical_tag": "workcell-v0.1.0-prelocal.2"
+      "historical_tag": "workcell-v0.1.0-prelocal.6"
     },
     {
       "id": "quaternal-logic",
@@ -218,7 +224,7 @@
       "repository": "https://github.com/EpiLogos/QL-MEF",
       "canonical_repository": "https://github.com/EpiLogos/Quaternal-Logic",
       "checkout": "Quaternal-Logic",
-      "revision": "cab0baf52f7d7726708d7fb13c6ac98f9b09b643",
+      "revision": "4276b94157058d0b211be20b4ebf5587fcb85a72",
       "artifact": {
         "kind": "component",
         "entry": null,
@@ -226,8 +232,8 @@
           {
             "target": "any",
             "name": "quaternal-logic-0.1.0-component.tar.gz",
-            "sha256": "54f87c9c0f44704bee3a077a9348b471c7a2101c0284c068b9579132f0f6fa9e",
-            "attestation": "https://github.com/EpiLogos/QL-MEF/attestations/41163591"
+            "sha256": "b6c2e95630983f20c19ebe66f3057ac37b6ef631ba2413bef0f3f42ff5166859",
+            "attestation": "https://github.com/EpiLogos/QL-MEF/attestations"
           }
         ],
         "installed_verify": []
@@ -248,7 +254,7 @@
           "--locked"
         ]
       },
-      "historical_tag": "quaternal-logic-v0.1.0-prelocal.2"
+      "historical_tag": "quaternal-logic-v0.1.0-prelocal.6"
     }
   ],
   "physical_gates": [
@@ -265,7 +271,7 @@
       "description": "Private credential, Tailscale, Docker/GPU and live model-provider materialisation are deferred and are not inferred from cloud CI."
     }
   ],
-  "recorded_at": "2026-08-17",
+  "recorded_at": "2026-09-14",
   "standing": "historical-unratified-prelocal-build-record",
   "purpose": "Historical checksummed and attested pre-local build evidence retained for reproducibility and deterministic installation tests; not release ratification, product acceptance, or current-main authority."
 }

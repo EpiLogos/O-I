@@ -147,7 +147,7 @@
       "public_name": "AIKit",
       "function": "context, capability, model, credential, SessionSpace and provider-process resolution",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "docs_ref": "856f454778e5a44e8055751bb59ed933caf210ce",
+      "docs_ref": "8ef8a4f02ee9e095281d2d03d3e711404ead074a",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -188,8 +188,8 @@
       "install": {
         "kind": "oi-managed-binary",
         "modality": "developer-source",
-        "ref": "856f454778e5a44e8055751bb59ed933caf210ce",
-        "revision": "856f454778e5a44e8055751bb59ed933caf210ce",
+        "ref": "8ef8a4f02ee9e095281d2d03d3e711404ead074a",
+        "revision": "8ef8a4f02ee9e095281d2d03d3e711404ead074a",
         "path": "crates/aikit-cli",
         "note": "Current source/install pin; immutable released artifacts remain separately recorded in suite/manifest.json."
       },
@@ -278,7 +278,7 @@
       "public_name": "Workcell",
       "function": "material execution, model-serving base, process containment and secret materialisation",
       "repository": "https://github.com/EpiLogos/Workcell",
-      "docs_ref": "e4e40a91fe7ed1776e634cad768f1049c39fd34e",
+      "docs_ref": "0c3ad1efafdeb254366b7b6122306fe657916a10",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -316,8 +316,8 @@
       "install": {
         "kind": "oi-managed-binary",
         "modality": "developer-source",
-        "ref": "e4e40a91fe7ed1776e634cad768f1049c39fd34e",
-        "revision": "e4e40a91fe7ed1776e634cad768f1049c39fd34e",
+        "ref": "0c3ad1efafdeb254366b7b6122306fe657916a10",
+        "revision": "0c3ad1efafdeb254366b7b6122306fe657916a10",
         "path": "crates/workcell-cli",
         "note": "Current source/install pin including selector-independent native executable identity. Provider-specific physical resources remain physical acceptance evidence."
       },
@@ -353,7 +353,7 @@
       "public_name": "Quaternal Logic",
       "function": "deterministic QL kernel, complete MEF registry, service boundary and Vāk/formal operation surfaces",
       "repository": "https://github.com/EpiLogos/QL-MEF",
-      "docs_ref": "a83148e93c500d5bebaa5811d9d25953652834cf",
+      "docs_ref": "4276b94157058d0b211be20b4ebf5587fcb85a72",
       "docs_path": "README.md",
       "skill_paths": [],
       "native": {
@@ -391,8 +391,8 @@
       "install": {
         "kind": "oi-managed-native-cli",
         "modality": "developer-source",
-        "ref": "a83148e93c500d5bebaa5811d9d25953652834cf",
-        "revision": "a83148e93c500d5bebaa5811d9d25953652834cf",
+        "ref": "4276b94157058d0b211be20b4ebf5587fcb85a72",
+        "revision": "4276b94157058d0b211be20b4ebf5587fcb85a72",
         "path": "crates/ql-cli",
         "note": "Current accepted QL owner cut publishes the native ql executable and the complete current kernel/service/MEF/Vāk surface. Feature and research branches remain separately owned candidate work; accepted main now participates normally in the six-product current-main verification field."
       },
