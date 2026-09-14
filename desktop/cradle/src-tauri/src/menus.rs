@@ -49,6 +49,10 @@ pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> t
     // Keep the window menu as fallback if the native panel export fails.
     #[cfg(target_os = "linux")]
     if install_panel_menu(app, menu).is_ok() {
+        // The configured main window may be created after the setup-time
+        // windows map is populated; hide it explicitly as well as any
+        // already-created detached windows.
+        if let Some(window) = app.get_webview_window("main") { window.hide_menu()?; }
         for window in app.windows().values() { window.hide_menu()?; }
     }
     if let Some(current) = arrangements.iter().find(|w| w.id == active) {
