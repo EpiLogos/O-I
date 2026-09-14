@@ -48,6 +48,8 @@ Sources: Central CONTROL-CONTENT-PROTOCOL §§2–5/10–15, #72/#164, AIKit sou
 | GV06 | Mark personal notes as unavailable to agents, then ask a broad project question. | P03/P10: enforce source treatment in discovery, search, context and sharing; verifier observes canary without supplying it to the actor. | Useful permitted answer; private contents and prohibited metadata do not leak through alternate routes. | Revocation affects subsequent access; hiding a UI row while a tool still retrieves it fails. |
 | GV07 | Restore an earlier instruction or move an old source without losing why it changed. | P05/P13/P17: current revision/history, inbound refs and successor relation; preview diff and recover only within safe basis. | The intended version/location becomes current, earlier evidence remains navigable and later agents find the correct source. | Stale restoration preserves newer edits; no blanket reset or destructive cleanup of a personal source tree. |
 
+The adopted [Factory/Agency design](FACTORY-AGENCY.md) refines the existing Agent, praxis, writing, development and interface stories below. Its exact clause/branch mapping is carried in [factory-agency.json](factory-agency.json); the compiler attaches it as inherited obligations. All original row meanings and IDs remain.
+
 ## AG — Create and work with actual collaborators
 
 Sources: TUI §§5–7/12, O:I #155/#154, Central #137 and current native agency contracts; original Agency handoff. The creation form should be simple while deeper decisions remain available. Names here describe human intent, not native type invention.

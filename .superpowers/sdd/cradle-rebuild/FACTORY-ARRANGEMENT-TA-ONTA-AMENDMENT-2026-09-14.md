@@ -1,5 +1,8 @@
 # Factory Arrangement ↔ Ta-Onta / Agency Composition Amendment — 2026-09-14
 
+> **Later owner-adopted design — 2026-09-14:** Read [Factory and Agency](../../../docs/experience/FACTORY-AGENCY.md) and current [#289](https://github.com/EpiLogos/O-I/issues/289) for experienced-product detail and the F0–F6 continuation. Factory centre = conversation/Run/working Surface; right = actual artifacts in the ordinary pane host. The ordinary four-plane companion remains outside that arrangement. “Activity horizon” is now footer/Observatory/Run activity, with no top strip. Shared HTML output templates, native-resolved Agent/session choices and Git/temporal relations are mandatory. This scoped correction governs conflicting presentation shorthand here; native ownership, identity continuity and Ta-Onta/Epi/Nara boundaries remain.
+
+
 **Status:** authoritative amendment to `FACTORY-ARRANGEMENT-WAYFINDER-2026-09-14.md` for O:I #289. Read both; where this file refines F0/F1/F4/F5/F6, this later returned-reality amendment governs.  
 **Planning cut:** O:I `main` `75c59be94926ca5597a2b0c538f3a789ddc09c3c` after #288 and #287.  
 **Cross-field inputs:** QL-MEF #42/#47/#74/#94/#133/#134/#135; QL-MEF PRs #188/#189; O:I PR #286.  

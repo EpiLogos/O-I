@@ -1,5 +1,12 @@
 # 04 — Verification
 
+
+## Factory/Agency joined acceptance — adopted 2026-09-14
+
+For #289/#292, apply the complete connected walk and per-harness branches in [FACTORY-AGENCY.md §14](../experience/FACTORY-AGENCY.md#14-joined-acceptance-and-ux-spine-mapping). [factory-agency.json](../experience/factory-agency.json) maps fourteen detailed obligations into existing UX stories and the same compiler/matrix. #201 and #202–#205 retain joined proving; this adds concrete Factory/Agency episodes without replacing CAW or QL scope.
+
+Required evidence covers the actual centre/right arrangement, single visible conversation/draft continuity, native-resolved session choices and operative context/skills, real plural participation and authority, artifact arrival/version/relocation, all shared template variants and complete handoff, SSSF Run inspection, native Git basis/verification, footer/Gateway, NOW/recurrence, native menu/keyboard/narrow/reduced-motion and Epi/Nara parity. Use a real commissioned Run and bounded child; an unrelated conversation/tmux plus a queued Run cannot pass. Every available admitted harness is tested against its supported faculties with economical eligible models; unavailable/unsupported/failed branches stay explicit. Independent whole-feature verification and human visual evidence remain required. Design adoption and source compilation prove neither.
+
 **Status:** the conditions that hold when the Cradle exists as designed.
 **Companions:** [01-DESIGN.md](01-DESIGN.md) (intent), [02-ARCHITECTURE.md](02-ARCHITECTURE.md) (structure), [03-UX-STATES.md](03-UX-STATES.md) (states).
 

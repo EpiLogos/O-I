@@ -1,5 +1,8 @@
 # O:I Cradle — Factory Arrangement Wayfinder — 2026-09-14
 
+> **Later owner-adopted design — 2026-09-14:** Read [Factory and Agency](../../../docs/experience/FACTORY-AGENCY.md) and current [#289](https://github.com/EpiLogos/O-I/issues/289) for experienced-product detail and the F0–F6 continuation. Factory centre = conversation/Run/working Surface; right = actual artifacts in the ordinary pane host. The ordinary four-plane companion remains outside that arrangement. “Activity horizon” is now footer/Observatory/Run activity, with no top strip. Shared HTML output templates, native-resolved Agent/session choices and Git/temporal relations are mandatory. This scoped correction governs conflicting presentation shorthand here; native ownership, identity continuity and Ta-Onta/Epi/Nara boundaries remain.
+
+
 **Standing:** owner-directed execution map for the existing Cradle programme.  
 **Planning base:** O:I `main` at `c08f1e30976eee8af1c0e53642e507cf77d4cd64`.  
 **Desktop owner:** O:I / Cradle.  
