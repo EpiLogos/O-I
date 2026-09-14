@@ -18,6 +18,12 @@ The person already has applications, files, instructions, projects, accounts, ma
 
 Each story includes the agent's intended experience: recognising the task, finding the sufficient permitted context and appropriate practice, discovering usable operations, acting within current bounds, understanding feedback and leaving a continuation. The human, acting agent and test supervisor therefore see different aspects of the **same activity**, not separate feature lists.
 
+## Factory and Agency design adopted — 2026-09-14
+
+[FACTORY-AGENCY.md](FACTORY-AGENCY.md) is the owner-validated design for #289/#292: ordinary four-plane companion, Factory centre conversation/work and right actual artifacts, resolved Agent/session setup, shared HTML returned-document templates, Git, Run inspection, footer/Gateway and temporal recurrence. Its adoption is scoped to that design; it does not supply implementation or human-experience acceptance for the wider map.
+
+[factory-agency.json](factory-agency.json) maps fourteen detailed obligations onto the existing AG/PX/WR/DV/UI/TM/GW/WK stories. The existing compiler retains the complete design and emits their story-obligation relations; no story IDs are replaced and all prior CAW, developer, personal-web and delegated QL scope remains. #289 is the implementation entry; #201/#202–#205 are the joined proving owners; #65 remains the broad campaign.
+
 ## 1 — Canonical sources and the audit correction
 
 [Founding positions](../positions/FOUNDING-POSITIONS.md) govern meaning. [Development Field §§4–7](../DEVELOPMENT-FIELD-PROTOCOL-WAYFINDER.md) supplies existing UX/EX/capability/evidence relations. [Central's matrix protocol](https://github.com/EpiLogos/Central/blob/main/docs/CAPABILITY-MATRIX-PROTOCOL.md) owns `ql-capability-matrix/1`; native products retain capability identity and operations.
