@@ -1,9 +1,10 @@
 import {useEffect,useRef,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import type {SurfaceBinding} from "../surface/types";
- import {encounter,mintDeliveryRef,taskRead,type A2aDifference,type A2aPeerFields,type AddressedPacket,type AddressedTurn,type DeliveryRecord,type Draft,type EncounterReading,type EncounterStatus,type EncounterTaskReading,type GroupReceipt,type GroupRecipient,type JournalPage,type PermissionDecision,type SendReceipt} from "./client";
+import {addressableParticipants,encounter,mintDeliveryRef,taskRead,type A2aDifference,type A2aPeerFields,type AddressedPacket,type AddressedTurn,type DeliveryRecord,type Draft,type EncounterReading,type EncounterStatus,type EncounterTaskReading,type GroupReceipt,type GroupRecipient,type JournalPage,type PermissionDecision,type SendReceipt} from "./client";
 import {createA2aBinding,createA2aPresence,performA2aExchange} from "../../../../shared-field/a2a.mjs";
 import {AddressedComposer,ACTIVE_PHASES,type AddressedFields,type DispatchState,type DeliveryHistoryEntry,type GroupState} from "./AddressedComposer";
+import type {AddressableParticipantsState} from "./AddressedRecipientPicker";
 import {EncounterView} from "./EncounterView";
 export interface EncounterExpressionReading {state?:string;pending:boolean;completed?:number;inputRevision?:number}
 /** Ephemeral input buffering only. Every accepted edit and message is AIKit-owned. */
@@ -88,6 +89,17 @@ export function EncounterSurface({binding,onView,presentation="tab",onExpression
    .catch(()=>{if(live)setTask(undefined);});
   return()=>{live=false;};
  },[binding.ref,binding.project,kernel.transport]);
+ const [addressedFields,setAddressedFields]=useState<AddressedFields>({sender:"",audience:"",basis:"",sourceRefs:"",text:""});
+ const [addressable,setAddressable]=useState<AddressableParticipantsState>();
+ useEffect(()=>{
+  const sender=addressedFields.sender.trim();
+  if(!sender){setAddressable({kind:"awaiting-sender"});return;}
+  let live=true;const sources=addressedFields.sourceRefs.split(/[\s,]+/).filter(Boolean);setAddressable({kind:"loading"});
+  const timer=setTimeout(()=>{void addressableParticipants(kernel.transport,binding.project!,sender,sources).then(reading=>{
+   if(live)setAddressable({kind:"ready",participants:reading.participants});
+  }).catch(error=>{if(live)setAddressable({kind:"refused",error:String(error)});});},180);
+  return()=>{live=false;clearTimeout(timer);};
+ },[addressedFields.sender,addressedFields.sourceRefs,binding.project,kernel.transport]);
  const [addressedHistory,setAddressedHistory]=useState<DeliveryHistoryEntry[]>([]);
  const [service,setService]=useState<{running:boolean;pid?:number;detail?:string}>();
  const probe=async()=>{try{const health=await call<{protocol:string;pid:number}>({action:"health"});if(alive.current)setService({running:true,pid:health.pid});}catch(error){if(alive.current)setService({running:false,detail:String(error)});}};
@@ -222,6 +234,6 @@ export function EncounterSurface({binding,onView,presentation="tab",onExpression
   taskBasisWithoutNow={!!task&&!task.allocation?.allocation?.now_ref}
   resume={resume} onReconnect={provider=>void reconnect(provider)}
   a2a={a2a} onA2aSeed={seedA2a} onA2aSend={(seed,fields)=>void sendA2a(seed,fields)}
-  addressed={<AddressedComposer disabled={status?.state==="Disconnected"} dispatch={dispatch} history={addressedHistory} service={service} agentSession={binding.ref??undefined} task={task??undefined} group={group} onGroupSend={(sender,recipients,packet)=>void sendGroup(sender,recipients,packet)} onSend={(turn,fields)=>void sendAddressed(turn,fields)}/>}
+  addressed={<AddressedComposer disabled={status?.state==="Disconnected"} dispatch={dispatch} history={addressedHistory} service={service} agentSession={binding.ref??undefined} task={task??undefined} group={group} addressable={addressable} onDispatchFields={setAddressedFields} onGroupSend={(sender,recipients,packet)=>void sendGroup(sender,recipients,packet)} onSend={(turn,fields)=>void sendAddressed(turn,fields)}/>}
  />{(startupError||pollError)&&!concealed&&<button onClick={retryStart} disabled={pending}>Retry connection check</button>}{failed.current&&!concealed&&<button onClick={()=>void recover()}>Apply my typing to the current shared draft</button>}{reconnected&&!concealed&&<p className="encounter-reconnected" role="status">Reconnected to the recorded native session <code>{reconnected}</code> — nothing was replaced or silently created.</p>}</>;
 }

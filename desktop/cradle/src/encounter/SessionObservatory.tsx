@@ -4,6 +4,7 @@ import type {SurfaceBinding} from "../surface/types";
 import {EncounterSurface} from "./EncounterSurface";
 import {encounter,type EncounterReading} from "./client";
 import "./session-observatory.css";
+import {SessionModelControl} from "./SessionModelControl";
 
 type Plane="Conversation"|"Activity"|"Context"|"Actions"|"Runtime";
 /** Additional presentation of an existing native session, never its owner. */
@@ -31,6 +32,7 @@ export function SessionObservatory({binding,onOpenWorkingSurface}: {binding:Surf
       {reading&&plane==="Actions"&&<ul>{reading.actions?.map(action=><li key={action.ref}><code>{action.ref}</code><span>{action.enabled?"Available":action.reason??"Unavailable"}</span></li>)}</ul>}
       {reading&&plane==="Runtime"&&<>
         <dl><dt>AgentSession</dt><dd>{reading.agent_session}</dd><dt>SessionSpace</dt><dd>{binding.encounter?.space}</dd><dt>Provider</dt><dd>{reading.connection?.provider?.label??"Not disclosed"}</dd><dt>Connection</dt><dd>{reading.connection?.state??"Not disclosed"}</dd><dt>Native session</dt><dd>{reading.connection?.native_session_id??"Not resident"}</dd><dt>Permission authority</dt><dd>{reading.permission_authority??"Not disclosed"}</dd></dl>
+        <SessionModelControl project={binding.project!} agentSession={binding.ref!}/>
         <button disabled={!binding.project||!binding.ref||!binding.encounter?.space} onClick={()=>{setError(undefined);void onOpenWorkingSurface({project:binding.project!,space:binding.encounter!.space,agentSession:binding.ref!}).catch(reason=>setError(String(reason)));}}>Open working Surface</button>
         <details><summary>Native evidence</summary><pre>{JSON.stringify({connection:reading.connection,actions:reading.actions,permission_authority:reading.permission_authority},null,2)}</pre></details>
       </>}

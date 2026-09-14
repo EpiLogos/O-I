@@ -13,3 +13,16 @@
 .session-ingress-menu{position:absolute;bottom:28px;right:0;width:260px;padding:12px;background:var(--oi-canvas-ground);border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:6px;max-height:360px;overflow:auto;z-index:100}
 .session-ingress-menu>button{display:block;width:100%;text-align:left;padding:7px 0}
 .session-ingress-menu p{font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2)}
+
+.session-inspection{padding:24px;line-height:1.5}
+.session-inspection>button{margin-bottom:16px}
+.session-inspection dl{margin:0 0 24px;max-width:760px;grid-template-columns:140px minmax(0,1fr)}
+.session-inspection dt{color:var(--oi-muted-2)}
+.session-inspection button{min-height:28px;padding:4px 9px;border:var(--oi-shell-edge) solid var(--oi-hairline-soft);border-radius:4px}
+.session-inspection button:disabled{opacity:.45}
+.session-inspection details{margin:12px 0}
+.session-inspection summary{cursor:pointer;color:var(--oi-muted-2)}
+.session-model-control{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:0 0 20px}
+.session-model-control label{display:flex;align-items:center;gap:10px}
+.session-model-control select{min-width:180px;max-width:100%;min-height:30px;padding:4px 8px;background:var(--oi-canvas-ground);color:inherit;border:var(--oi-shell-edge) solid var(--oi-hairline-soft);border-radius:4px}
+.session-model-control details,.session-model-control [role=alert]{flex-basis:100%;margin:4px 0}
