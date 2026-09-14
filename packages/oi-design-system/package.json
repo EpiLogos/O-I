@@ -25,7 +25,8 @@
     "./expression.css": "./expression.css",
     "./point-cloud/config": "./point-cloud/config.mjs",
     "./point-cloud/presets": "./point-cloud/presets.mjs",
-    "./point-cloud/host": "./point-cloud/host.mjs"
+    "./point-cloud/host": "./point-cloud/host.mjs",
+    "./expressions-engine/*": "./expressions-engine/*"
   },
   "peerDependencies": {
     "three": ">= 0.160"

@@ -6,18 +6,16 @@
  * body; nothing here invents colours).
  *
  * Expression hosts the FULL control set of the particle engine — the same
- * parameters the reference demo exposes — plus the two desktop asks: a
- * master on/off switch that is unambiguous, and typed text targets
+ * parameters the reference instrument exposes — plus the two desktop asks:
+ * a master on/off switch that is unambiguous, and typed text targets
  * (glyph A/B and arbitrary words). The panel is a controller of the
  * instrument, never its owner: every value flows through the validated
- * visual-preference owner, and the preview below uses the shared window
- * host and its budget.
+ * visual-preference owner, and the preview is an element-bounded engine
+ * surface framing the owner's own document to this box.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  useVisuals,
-  ParticleField,
-} from "../../visuals/ParticleExpression";
+import { useVisuals } from "../../visuals/ParticleExpression";
+import type { EngineSurface } from "../../stage/engineSurface";
 import {
   visuals,
   type SavedState,
@@ -32,7 +30,6 @@ import {
   type PointCloudConfig,
   type PointCloudPatch,
 } from "@epilogos/oi-design-system/point-cloud/config";
-import type { PointCloudHostInspect, PointCloudInstance } from "@epilogos/oi-design-system/point-cloud/host";
 import "./visuals.css";
 
 type ExpressionSubview = "themes" | "expression";
@@ -77,11 +74,50 @@ function ThemesView({ theme }: { theme: ThemeChoice }) {
 }
 
 function ExpressionView() {
-  const { snapshot, host, error } = useVisuals();
+  const { snapshot } = useVisuals();
   const config = snapshot.config;
-  const previewRef = useRef<PointCloudInstance | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const surfaceRef = useRef<EngineSurface | null>(null);
+  const [surfaceError, setSurfaceError] = useState<string | null>(null);
   const [previewPaused, setPreviewPaused] = useState(false);
   const [previewForceMotion, setPreviewForceMotion] = useState(false);
+  const configRef = useRef(config); configRef.current = config;
+
+  // The preview is an element-bounded engine surface: the owner's own
+  // document (never app-invented physics), re-presented per accepted
+  // revision. The engine module loads only on the enabled path. Engine
+  // failure surfaces here and disposes the surface.
+  useEffect(() => {
+    if (!snapshot.enabled || surfaceError) return;
+    const container = containerRef.current;
+    if (!container || surfaceRef.current) return;
+    let cancelled = false;
+    let surface: EngineSurface | null = null;
+    void import("../../stage/engineSurface").then(({ EngineSurface }) => {
+      if (cancelled || surfaceRef.current) return;
+      surface = EngineSurface.forElement(container, (message) => setSurfaceError(message));
+      surfaceRef.current = surface;
+      surface.presentConfig("oi-visuals-preview", configRef.current);
+    }).catch((cause: unknown) => {
+      setSurfaceError(cause instanceof Error ? cause.message : String(cause));
+    });
+    return () => {
+      cancelled = true;
+      surface?.dispose();
+      if (surface && surfaceRef.current === surface) surfaceRef.current = null;
+    };
+  }, [snapshot.enabled, surfaceError]);
+
+  // Accepted writes re-present the owner's document — one migration per
+  // revision; the store's own emission is the coalescing point.
+  useEffect(() => {
+    surfaceRef.current?.presentConfig("oi-visuals-preview", config);
+  }, [config]);
+
+  // The deliberate reduced-motion override belongs to this surface alone.
+  useEffect(() => {
+    surfaceRef.current?.setForceMotion(previewForceMotion);
+  }, [previewForceMotion]);
 
   return (
     <div className="visuals-expression">
@@ -113,26 +149,21 @@ function ExpressionView() {
         <p className="settings-native-note">Turn the expression on to see and shape the field.</p>
       )}
 
-      {snapshot.enabled && error && <p role="alert">The expression layer could not start: {error}</p>}
+      {snapshot.enabled && surfaceError && <p role="alert">The expression layer could not start: {surfaceError}</p>}
 
       {snapshot.enabled && (
         <>
-          {/* The explicit preview: the only renderer this panel starts,
-              through the shared host and its budget. */}
+          {/* The explicit preview: the only renderer this panel starts —
+              an element-bounded engine surface framing the owner's own
+              document to this box. */}
           <div className="visuals-preview">
-            {host && !error
-              ? <ParticleField
-                  id="oi-visuals-preview"
-                  tag="preview"
-                  config={config}
-                  className="visuals-preview-stage"
-                  forceMotion={previewForceMotion}
-                  onReady={(instance) => {
-                    previewRef.current = instance;
-                    setPreviewPaused(false);
-                  }}
-                />
-              : <div className="visuals-preview-stage visuals-preview-stage-empty">{error ? "Renderer unavailable" : "Starting renderer…"}</div>}
+            <div
+              className={surfaceError ? "visuals-preview-stage visuals-preview-stage-empty" : "visuals-preview-stage"}
+              ref={surfaceError ? undefined : containerRef}
+              style={surfaceError ? undefined : { position: "relative" }}
+            >
+              {surfaceError && "Renderer unavailable"}
+            </div>
             <label className="visuals-check">
               <input
                 type="checkbox"
@@ -256,18 +287,17 @@ function ExpressionView() {
           </fieldset>
 
           <div className="visuals-actions" role="group" aria-label="Field actions">
-            <button onClick={() => previewRef.current?.disperse(0, 0, 3.5)}>Disperse</button>
+            <button onClick={() => surfaceRef.current?.command({ type: "disperse", strength: 3.5 })}>Disperse</button>
             <button
               onClick={() => {
-                const instance = previewRef.current;
-                if (!instance) return;
-                instance.pause(!previewPaused);
-                setPreviewPaused(!previewPaused);
+                const next = !previewPaused;
+                surfaceRef.current?.setPaused(next);
+                setPreviewPaused(next);
               }}
             >
               {previewPaused ? "Resume simulation" : "Pause simulation"}
             </button>
-            <button onClick={() => previewRef.current?.reset()}>Reset field</button>
+            <button onClick={() => surfaceRef.current?.command({ type: "reset-field" })}>Reset field</button>
             <button onClick={() => visuals.resetConfig()}>Restore defaults</button>
           </div>
 
@@ -275,7 +305,7 @@ function ExpressionView() {
 
           <ImportExport />
 
-          {host && <Diagnostics />}
+          <Diagnostics read={() => surfaceRef.current?.telemetry() ?? null} />
         </>
       )}
     </div>
@@ -480,26 +510,27 @@ function ImportExport() {
   );
 }
 
-function Diagnostics() {
-  const { host } = useVisuals();
-  const [reading, setReading] = useState<PointCloudHostInspect | null>(null);
+function Diagnostics({ read }: { read: () => unknown }) {
+  const [reading, setReading] = useState<Record<string, unknown> | null>(null);
   useEffect(() => {
-    if (!host) return;
-    const tick = () => setReading(host.inspect());
+    const tick = () => setReading(read() as Record<string, unknown> | null);
     tick();
     const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
-  }, [host]);
+  }, [read]);
   const summary = useMemo(() => {
     if (!reading) return null;
-    const instances = reading.instances.map((instance) => `${instance.id}${instance.tag ? ` (${instance.tag})` : ""}: target ${JSON.stringify(instance.glyph)} — requested ${instance.requestedParticles}, allocated ${instance.allocatedParticles} (${instance.texWidth}×${instance.texHeight})`);
-    return [
-      `Renderer: ${reading.mode} · ${reading.floatType} targets · ${reading.dpr}× DPR`,
-      `Frames drawn: ${reading.frames}`,
-      `Allocated particles: ${reading.allocatedParticles} of ${reading.particleBudget} budget`,
-      `Instances: ${reading.instances.length} of ${reading.instanceBudget}`,
-      ...instances,
-    ].join("\n");
+    const config = (reading.config ?? {}) as { entities?: Array<{ name?: string; shape?: { text?: string } }> };
+    const lines = [
+      `Renderer: native engine · ${reading.live ? "live" : "idle"} · one simulation clock`,
+      `Background: ${String(reading.background ?? "—")} · transition ${String(reading.transition ?? "—")}`,
+    ];
+    const entities = Array.isArray(config.entities) ? config.entities : [];
+    for (const entity of entities) {
+      const text = entity.shape?.text;
+      if (text) lines.push(`Entity: ${entity.name ?? "unnamed"} — glyph ${JSON.stringify(text)}`);
+    }
+    return lines.join("\n");
   }, [reading]);
   if (!reading) return null;
   return (
