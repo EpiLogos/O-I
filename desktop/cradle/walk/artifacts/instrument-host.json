@@ -1,0 +1,159 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "instrument-host",
+  "generated_at": "2026-09-14T19:23:04.628Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 5091,
+  "checks": [
+    {
+      "ok": true,
+      "label": "The externally constructed QL adapter session registers through the owner registry"
+    },
+    {
+      "ok": true,
+      "label": "Attach acknowledged natively: the first host exchange is the zero-frame read",
+      "data": [
+        "advance"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "The session is available from its ready receipt"
+    },
+    {
+      "ok": true,
+      "label": "Focus and freeze commands reach the controlled host on the session sequence"
+    },
+    {
+      "ok": true,
+      "label": "A host refusal surfaces in the composition as refused"
+    },
+    {
+      "ok": true,
+      "label": "An accepted advance admits the field block and moves the native cursor",
+      "data": {
+        "available": true,
+        "attached": true,
+        "recovering": false,
+        "host_sequence": "5",
+        "native_cursor": {
+          "event_ref": "event:host-walk",
+          "subject_ref": "subject:nara-walk",
+          "profile_generation": 1,
+          "field_generation": "1",
+          "samples_elapsed": "513"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "The composition mirrors the host's frozen temporal state"
+    },
+    {
+      "ok": true,
+      "label": "A real context loss puts the session into honest recovery"
+    },
+    {
+      "ok": true,
+      "label": "The session restores its acknowledged checkpoint after the same canvas reports restoration",
+      "data": {
+        "available": false,
+        "attached": true,
+        "recovering": false,
+        "host_sequence": "5",
+        "native_cursor": {
+          "event_ref": "event:host-walk",
+          "subject_ref": "subject:nara-walk",
+          "profile_generation": 1,
+          "field_generation": "1",
+          "samples_elapsed": "513"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "Leaving the binding removes the composition"
+    },
+    {
+      "ok": true,
+      "label": "The adapter's expression is detached with the binding",
+      "data": {
+        "available": false,
+        "attached": false,
+        "recovering": false,
+        "host_sequence": "5",
+        "native_cursor": {
+          "event_ref": "event:host-walk",
+          "subject_ref": "subject:nara-walk",
+          "profile_generation": 1,
+          "field_generation": "1",
+          "samples_elapsed": "513"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "Adapter provenance: sha256 of the served QL bytes",
+      "data": {
+        "focused-instrument-session.mjs": "6ee7d0edbad2048d2ceb17033530de3e705bb090614d55e7fbcc3faf56d33b17",
+        "retained-field.mjs": "853b22f4212a0c2ed9d56b89ac654414d4175a03a531e672bdf61bd1e4d67d6a",
+        "native-audio.mjs": "2d6d97262aaf71778bd7e0e049b2aeb2a05cf8105640cfd0b6f311bde76c7cbc",
+        "_ql_ref": "origin/main",
+        "_ql_head": "fa97f8395b08bce05cafb13ec3351fd4cdf3bb1d"
+      }
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-14T19:23:04.984Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "instrument.registerExisting",
+      "duration_ms": 0.2,
+      "data": {
+        "registered": true
+      }
+    },
+    {
+      "ok": true,
+      "op": "instrument.requestOpen",
+      "duration_ms": 0.1,
+      "data": {
+        "requested": true
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 147,
+      "data": {
+        "file": "instrument-host-instrument-host-focused.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "instrument-host-instrument-host-focused.png"
+  ]
+}
