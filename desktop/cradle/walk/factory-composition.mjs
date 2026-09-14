@@ -20,7 +20,10 @@ const before=(await page.evaluate(()=>window.__cradle.walk.read.layout())).data.
 await page.getByRole("button",{name:"Factory development",exact:true}).click();
 await page.locator(".factory-encounter-host .agent-layer").waitFor();
 check(await page.evaluate(()=>window.originalAgent===document.querySelector(".agent-layer")),"Same Agent DOM enters centre");
-check(await page.locator("[data-region=right] .factory-development").isVisible(),"Real Factory inspection is hosted in right region");
+check(await page.getByRole("region",{name:"Factory returned material"}).isVisible(),"Factory returned material is hosted in right region");
+await page.getByText("Inspect Factory source",{exact:true}).click();
+check(await page.locator("[data-region=right] .factory-development").isVisible(),"Native Factory inspection remains explicitly accessible");
+await page.getByText("Inspect Factory source",{exact:true}).click();
 check(await page.locator(".agent-layer").count()===1,"Exactly one AgentLayer mounted");
 await page.getByRole("button",{name:"Leave Factory",exact:true}).click();
 await page.locator(".cm-content").waitFor();

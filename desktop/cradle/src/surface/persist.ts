@@ -44,7 +44,12 @@ function validBinding(raw: unknown): SurfaceBinding | null {
   if(o.kind==="flow" && (!location || location.schema!=="central.path-ref/v1" || typeof location.ref!=="string" || location.ref!==o.ref || typeof location.root!=="string" || typeof location.path!=="string"))return null;
   const view=o.view as SurfaceBinding["view"];
   const encounterPlane=view?.encounterPlane;
-  return { terminal:o.kind==="terminal"?{cwd:typeof (o.terminal as {cwd?:unknown})?.cwd==="string"?(o.terminal as {cwd:string}).cwd:undefined}:undefined, flow:o.kind==="flow"?flow:undefined, browser:o.kind==="browser"?{url:typeof (o.browser as {url?:unknown})?.url==="string"?(o.browser as {url:string}).url:""}:undefined, view:encounterPlane&&["Conversation","Activity","Context","Inspect"].includes(encounterPlane)?{encounterPlane}:undefined, encounter, location, address, project: o.project as string | undefined, id: o.id, kind: o.kind, ref: o.ref as string | undefined, title: o.title };
+  const rawFactory=view?.factory;
+  const factory=o.kind==="factory" && rawFactory && typeof rawFactory.statePath==="string"
+    && rawFactory.statePath.trim() ? {statePath:rawFactory.statePath,
+      runRef:typeof rawFactory.runRef==="string"?rawFactory.runRef:undefined,
+      telemetryRef:typeof rawFactory.telemetryRef==="string"?rawFactory.telemetryRef:undefined}:undefined;
+  return { terminal:o.kind==="terminal"?{cwd:typeof (o.terminal as {cwd?:unknown})?.cwd==="string"?(o.terminal as {cwd:string}).cwd:undefined}:undefined, flow:o.kind==="flow"?flow:undefined, browser:o.kind==="browser"?{url:typeof (o.browser as {url?:unknown})?.url==="string"?(o.browser as {url:string}).url:""}:undefined, view:factory ? {factory} : encounterPlane&&["Conversation","Activity","Context","Inspect"].includes(encounterPlane)?{encounterPlane}:undefined, encounter, location, address, project: o.project as string | undefined, id: o.id, kind: o.kind, ref: o.ref as string | undefined, title: o.title };
 }
 
 function validPane(raw: unknown, surfaces: Record<SurfaceId, SurfaceBinding>): Pane | null {

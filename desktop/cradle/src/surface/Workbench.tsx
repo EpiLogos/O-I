@@ -315,7 +315,7 @@ function SurfaceBody({
   if (binding.kind === "browser") return <BrowserSurface binding={binding} />;
   if (binding.kind === "file") return <FileSurface key={binding.id} binding={binding}/>;
   if (binding.kind === "system") return <SystemPanel binding={binding}/>;
-  if (binding.kind === "factory") return <FactoryComposition binding={binding} foreground={foreground} />;
+  if (binding.kind === "factory") return <FactoryComposition binding={binding} foreground={foreground} onView={view=>onView(binding.id,view)} />;
   if (binding.kind === "knowledge") return <KnowledgeSurface binding={binding} onOpen={openKnowledge} />;
   if (binding.kind === "source") {
     return <SourceSurface binding={binding} />;
