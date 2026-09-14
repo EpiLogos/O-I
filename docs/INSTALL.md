@@ -54,7 +54,7 @@ npm route           npm (Node.js >= 18), already on the machine
 source route        a Rust toolchain (cargo) AND an O-I checkout
 ```
 
-No route has zero prerequisites; the bootstrap script is the closest — it installs the prebuilt release binary and needs no Node and no Rust. The released-artifact route also installs Central without a toolchain. A Rust toolchain (cargo) enters only through the current-main source path: `oi install central --source pinned` and the `oi dev` flow build Central from source, and a release-line `ctrl` predates the current root NOW/DAY Actions, so reaching the current development world from a bare machine requires the developer/source route.
+No route has zero prerequisites; the bootstrap script is the closest — it installs the prebuilt release binary and needs no Node and no Rust, and `oi install` (the recorded release artifacts, all products) likewise needs no toolchain. But the *First encounter* sequence below needs a Rust toolchain on a bare machine: a personal ground requires current-main Central, `oi install central` builds that Central from source, and an older release-line `ctrl` is intentionally not accepted. The release-line suite also predates the current root NOW/DAY Actions. So: bootstrap + released suite run anywhere; establishing a ground needs cargo.
 
 ### Bootstrap script (no Node, no Rust)
 
