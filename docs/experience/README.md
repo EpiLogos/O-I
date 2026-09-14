@@ -20,6 +20,8 @@ Each story includes the agent's intended experience: recognising the task, findi
 
 ## Factory and Agency design adopted — 2026-09-14
 
+The separate native architecture commission is [SESSION-GROUNDING.md](SESSION-GROUNDING.md), with twelve detailed obligations in [session-grounding.json](session-grounding.json). It connects actual source/context/authority, persistent environments, Workcell observation, Guardian defaults, remote access/re-placement and Factory continuity to the same existing stories. #220 owns native integration; #289/#292 owns the desktop; Workcell #72 and Central #137/#153 can proceed independently under the explicit file/operation boundaries in §11. The map preserves the current #311 checkout and corrects stale prerequisite claims without declaring runtime success.
+
 [FACTORY-AGENCY.md](FACTORY-AGENCY.md) is the owner-validated design for #289/#292: ordinary four-plane companion, Factory centre conversation/work and right actual artifacts, resolved Agent/session setup, shared HTML returned-document templates, Git, Run inspection, footer/Gateway and temporal recurrence. Its adoption is scoped to that design; it does not supply implementation or human-experience acceptance for the wider map.
 
 [factory-agency.json](factory-agency.json) maps fourteen detailed obligations onto the existing AG/PX/WR/DV/UI/TM/GW/WK stories. The existing compiler retains the complete design and emits their story-obligation relations; no story IDs are replaced and all prior CAW, developer, personal-web and delegated QL scope remains. #289 is the implementation entry; #201/#202–#205 are the joined proving owners; #65 remains the broad campaign.
@@ -60,7 +62,7 @@ Use human utterances, current issues and source maps for intended experience. PR
 | [campaign.json](campaign.json), [developer-field.json](developer-field.json), [TOOLS.md](TOOLS.md) | One source compiler, declared module/crosswalk, native capability candidates/bindings and named views of the existing matrix carrier |
 | [INSTALLATION-VARIANTS.md](INSTALLATION-VARIANTS.md) | #268 minimum forms and lifecycle variants; historical #192 path labels remain provenance only |
 
-Current local source has 113 leaves, with the full QL trace federated separately. Counts are a source reading, **not executed experiences or a guarantee that later native additions have been reviewed**. Newly added owner capabilities and original proving subcases must enter the current coverage review.
+Current local source has 125 leaves (including PERSONAL-WEB.md), with the full QL trace federated separately. Factory/Agency and session-grounding modules add obligations to existing stories. Counts are a source reading, **not executed experiences or a guarantee that later native additions have been reviewed**. Newly added owner capabilities and original proving subcases must enter the current coverage review.
 
 The compiler preserves whole source prose and unknown metadata, per-file digests, exact row locators and inherited obligations. `story-practice` asks what context calls for which practice; `story-obligation` retains what earlier proving requires. Five source-inspected AIKit capability candidates make some concrete joins visible; they do not exhaust all native owners or establish current runtime bindings. Read current matrices and review exact public-operation and loading support at the selected cut.
 
