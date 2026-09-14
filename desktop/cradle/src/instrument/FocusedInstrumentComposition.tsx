@@ -2,7 +2,7 @@ import {useCallback,useEffect,useRef,useState,type CSSProperties} from "react";
 import {createPortal} from "react-dom";
 import {activeBindingId} from "../surface/engine";
 import type {LayoutState,SurfaceBinding} from "../surface/types";
-import {useExpressionStage} from "../stage/ExpressionStage";
+import {useExpressionStage,type StagePresentation} from "../stage/ExpressionStage";
 import {FOCUSED_INSTRUMENT_RECIPE} from "../stage/recipes";
 import {
   FOCUSED_INSTRUMENT_CONTRACT,
@@ -99,7 +99,7 @@ function FocusedInstrumentSurface({binding}:{binding:SurfaceBinding}){
     setStageError(null);
     const source=focusedInstrumentSource(ref);
     if(!source){setStageError(`Focused instrument source ${ref} is not registered.`);return;}
-    let presentation;
+    let presentation:StagePresentation|null=null;
     try{
       presentation=stage.present({id:presentationId,plane:"ambient",recipe:FOCUSED_INSTRUMENT_RECIPE});
       if(!presentation){setStageError("The Global Expression Stage is unavailable or expression is disabled.");return;}
