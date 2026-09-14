@@ -14,6 +14,8 @@ import { createExploreBrowserModel } from '../explore-read-model.mjs';
 import { applyPresentationAuthoringOperation, authoringDisclosure, normalizeContributionField } from '../../shared-field/presentation-authoring.mjs';
 // @ts-ignore -- canonical Projection refinement operation.
 import { refineWorldPresentationProjection } from '../../shared-field/presentation-projection.mjs';
+// @ts-ignore -- AIKit composition body → authoring contribution field (AIKit owns the body).
+import { contributionFieldFromCompositionBody } from '../../shared-field/aikit-contribution-field.mjs';
 
 type ExploreEntry = {
   ref: string;
@@ -161,6 +163,10 @@ export default function DirectExploreApp() {
     let cancelled = false;
     let provider: SpacetimeExploreProvider | null = null;
 
+    // A hosted page/edition addresses one semantic ref: /explore.html?ref=<semantic ref>.
+    const requestedRef = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('ref') : null;
+    let requestedRefApplied = false;
+
     function applySeed(seed: any) {
       if (cancelled) return;
       const next = createExploreBrowserModel(seed) as ExploreModel;
@@ -170,9 +176,23 @@ export default function DirectExploreApp() {
       setStaticAuthoringAuthority(readAuthoringAuthority(seed));
       setSourceReturn(seed.source_return && typeof seed.source_return === 'object' ? clone(seed.source_return) : null);
       setSelectedRef((current) => {
+        if (!requestedRefApplied && requestedRef && next.open(requestedRef, { depth: 1, budget: 1 })) {
+          requestedRefApplied = true;
+          return requestedRef;
+        }
         if (current && next.open(current, { depth: 1, budget: 1 })) return current;
         return (next.worlds()[0] ?? next.search('', { limit: 1 })[0])?.ref ?? null;
       });
+    }
+
+    // The author's AIKit-resolved composition body supplies the contribution field
+    // (aikit.composition-body/v1). It is local authoring material, never hosted state.
+    const compositionBodyUrl = (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('composition_body') : null) ?? import.meta.env.VITE_OI_COMPOSITION_BODY_URL;
+    if (compositionBodyUrl) {
+      fetch(String(compositionBodyUrl))
+        .then((response) => { if (!response.ok) throw new Error(String(response.status)); return response.json(); })
+        .then((body) => { if (!cancelled) setSeedContributions(contributionFieldFromCompositionBody(body, { surface_kinds: ['web'] }) as Contribution[]); })
+        .catch(() => { /* an unavailable body leaves the field empty; nothing is invented */ });
     }
 
     const config = readSpacetimeExploreConfig();

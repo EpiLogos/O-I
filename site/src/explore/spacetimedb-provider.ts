@@ -1,6 +1,8 @@
 import { DbConnection } from './spacetimedb-bindings/index';
 // @ts-ignore -- transport-neutral hosted adapter is intentionally plain JS.
 import { createLiveExploreApplication, createSpacetimeExploreSource, projectionStorageKey } from '../../../shared-field/spacetimedb.mjs';
+// @ts-ignore -- transport lifecycle disclosure is plain JS shared with desktop and agent consumers.
+import { createExploreTransportLifecycle } from '../../../shared-field/transport-lifecycle.mjs';
 // @ts-ignore -- Surface composition remains transport-neutral plain JS.
 import { exploreSurfaceSeedFromHostedSnapshot } from '../../../shared-field/spacetimedb-explore-surface.mjs';
 
@@ -16,6 +18,7 @@ type Status = {
   uri: string;
   database: string;
   detail?: string;
+  transport?: Record<string, unknown>;
 };
 
 type Callbacks = {
@@ -98,7 +101,8 @@ export function connectSpacetimeExplore(config: Config, callbacks: Callbacks) {
   let subscriptionHandle: any;
   let removeAuthorityListeners: (() => void) | undefined;
 
-  const status = (state: Status['state'], detail?: string) => callbacks.onStatus?.({ state, ...config, ...(detail ? { detail } : {}) });
+  const status = (state: Status['state'], detail?: string, transport?: Record<string, unknown>) =>
+    callbacks.onStatus?.({ state, ...config, ...(detail ? { detail } : {}), ...(transport ? { transport } : {}) });
 
   function scheduleReconnect(error?: Error) {
     if (disposed || reconnectTimer !== undefined) return;
@@ -132,17 +136,23 @@ export function connectSpacetimeExplore(config: Config, callbacks: Callbacks) {
     return () => removers.reverse().forEach((remove) => remove());
   }
 
-  function installLiveConnection(conn: any) {
+  function installLiveConnection(conn: any, lifecycle: any) {
     let applied = false;
-    const nextLive = createLiveExploreApplication(createSpacetimeExploreSource(conn.db));
+    const nextLive = createLiveExploreApplication(createSpacetimeExploreSource(conn.db, lifecycle));
     const removeLiveListener = nextLive.subscribe((event: any) => {
-      if (!applied || event?.type !== 'rebuild') return;
-      callbacks.onSeed(exploreSurfaceSeedFromHostedSnapshot(nextLive.snapshot()));
+      if (!applied) return;
+      if (event?.type === 'rebuild') callbacks.onSeed(exploreSurfaceSeedFromHostedSnapshot(nextLive.snapshot()));
+      if (event?.type === 'availability') {
+        const transport = event.status?.transport ?? {};
+        status(transport.state === 'available' ? 'live' : 'degraded', transport.error, transport);
+      }
     });
 
+    lifecycle.subscribing();
     const handle = conn.subscriptionBuilder()
       .onApplied(() => {
         if (disposed) return;
+        lifecycle.applied();
         applied = true;
         reconnectAttempt = 0;
         liveApplication?.dispose?.();
@@ -153,9 +163,10 @@ export function connectSpacetimeExplore(config: Config, callbacks: Callbacks) {
         removeAuthorityListeners = attachAuthorityListeners(conn.db);
         callbacks.onSeed(exploreSurfaceSeedFromHostedSnapshot(nextLive.snapshot()));
         callbacks.onAuthorityChange?.();
-        status('live');
+        status('live', undefined, lifecycle.status());
       })
       .onError((_ctx: unknown, error: Error) => {
+        lifecycle.subscriptionError(error);
         removeLiveListener();
         nextLive.dispose?.();
         try { conn.disconnect(); } catch { /* already disconnected */ }
@@ -167,19 +178,25 @@ export function connectSpacetimeExplore(config: Config, callbacks: Callbacks) {
   function connect() {
     if (disposed) return;
     status('connecting');
+    // One transport lifecycle per connection attempt: availability is disclosed by
+    // the native callbacks, never inferred from cached rows. The identity it
+    // records is transport provenance, not a Participant or human identity.
+    const lifecycle = createExploreTransportLifecycle();
     let builder = DbConnection.builder()
       .withUri(config.uri)
       .withDatabaseName(config.database)
-      .onConnect((conn: any, _identity: unknown, token: string) => {
+      .onConnect((conn: any, identity: any, token: string) => {
         if (disposed) {
           try { conn.disconnect(); } catch { /* already disconnected */ }
           return;
         }
+        lifecycle.connected(identity?.toHexString?.() ?? String(identity));
         if (token) localStorage.setItem(tokenKey(config), token);
-        installLiveConnection(conn);
+        installLiveConnection(conn, lifecycle);
       })
-      .onConnectError((_ctx: unknown, error: Error) => scheduleReconnect(error))
+      .onConnectError((_ctx: unknown, error: Error) => { lifecycle.connectError(error); scheduleReconnect(error); })
       .onDisconnect((_ctx: unknown, error: Error | undefined) => {
+        lifecycle.disconnected(error);
         if (!disposed) scheduleReconnect(error ?? new Error('SpaceTimeDB disconnected.'));
       });
 
@@ -227,6 +244,10 @@ export function connectSpacetimeExplore(config: Config, callbacks: Callbacks) {
     return { field_ref: fieldRef, projection_ref: projection.projection_ref, projection_revision: projection.projection_revision };
   }
 
+  function transportStatus() {
+    return liveApplication?.status?.() ?? { transport: { state: 'unknown' } };
+  }
+
   function dispose() {
     disposed = true;
     if (reconnectTimer !== undefined) window.clearTimeout(reconnectTimer);
@@ -244,6 +265,7 @@ export function connectSpacetimeExplore(config: Config, callbacks: Callbacks) {
     config,
     authoringAuthorityFor,
     publishProjection,
+    status: transportStatus,
     dispose,
   });
 }
