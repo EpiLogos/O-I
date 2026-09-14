@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
 """Build O:I's derived catalogue of the six native product capability matrices.
 
-This is deliberately a catalogue, not another capability matrix.  Product CSV
+This is deliberately a catalogue, not another capability matrix. Product CSV
 records remain the owned assertions; the catalogue retains every record and its
 owner, source paths, hashes, relations, and native command mappings so `oi` can
 discover composition without absorbing product acceptance into the desktop.
+
+The checked-in capability snapshot is intentionally *not* invalidated merely
+because an accepted owner revision changes. Its actual semantic dependency on
+`surfaces.json` is the native routing projection, which is validated record by
+record below. A legacy whole-file surfaces digest may remain as historical
+provenance, but it is not a current-source lock.
 """
 
 from __future__ import annotations
@@ -327,9 +333,6 @@ def catalogue(
     if unknown_overrides:
         fail(f"--product-root names products absent from suite manifest: {', '.join(sorted(unknown_overrides))}")
 
-    # Relation ids are local matrix addresses (for example H0->H1) and may recur
-    # across owners. Capability identities are suite-composable, so those must be
-    # globally unique.
     seen_capability_ids: set[str] = set()
     source_products = []
     catalogue_records = []
@@ -376,8 +379,6 @@ def catalogue(
                 "native_namespace": native["namespace"],
                 "native_dispatch": routing["dispatch"],
             }
-            # JSON keeps command identities as an array for `oi` consumers; CSV
-            # uses its normal JSON-in-a-cell representation.
             catalogue_records.append({**provenance, "cli_commands": commands, "native_routing": routing, **row})
             flat_rows.append({
                 **provenance,
@@ -432,8 +433,6 @@ def catalogue(
 
 def encoded_outputs(result: dict, rows: list[dict[str, str]]) -> tuple[bytes, bytes]:
     json_output = (json.dumps(result, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
-    # Matrices may retain product-specific extension columns. Take their stable
-    # first-seen union instead of assuming every child has Central's header.
     fields: list[str] = []
     for row in rows:
         for field in row:
@@ -467,17 +466,24 @@ def validate_snapshot(
 ) -> None:
     snapshot, _ = read_json(snapshot_json)
     suite, suite_raw = read_json(suite_manifest)
-    native_by_product, surfaces_raw = native_surfaces(surfaces_path)
+    native_by_product, _ = native_surfaces(surfaces_path)
     if snapshot.get("schema") != "oi.product-capability-catalogue/v1":
         fail(f"{snapshot_json}: unexpected catalogue schema")
     derived = snapshot.get("derived_from")
-    if not isinstance(derived, dict) or derived != {
-        "suite_manifest": suite_manifest_ref,
-        "suite_manifest_sha256": sha256_bytes(suite_raw),
-        "surfaces": surfaces_ref,
-        "surfaces_sha256": sha256_bytes(surfaces_raw),
-    }:
-        fail(f"{snapshot_json}: suite or surfaces provenance hash mismatch")
+    if not isinstance(derived, dict):
+        fail(f"{snapshot_json}: derived_from is required")
+    if derived.get("suite_manifest") != suite_manifest_ref or derived.get("suite_manifest_sha256") != sha256_bytes(suite_raw):
+        fail(f"{snapshot_json}: suite-manifest provenance mismatch")
+    if derived.get("surfaces") != surfaces_ref:
+        fail(f"{snapshot_json}: surfaces provenance reference mismatch")
+    legacy_surface_digest = derived.get("surfaces_sha256")
+    if legacy_surface_digest is not None and (
+        not isinstance(legacy_surface_digest, str)
+        or len(legacy_surface_digest) != 64
+        or any(char not in "0123456789abcdef" for char in legacy_surface_digest)
+    ):
+        fail(f"{snapshot_json}: invalid historical surfaces digest")
+
     suite_products = suite.get("products")
     products = snapshot.get("products")
     records = snapshot.get("records")
@@ -526,7 +532,7 @@ def validate_snapshot(
         if not isinstance(commands, list) or not all(isinstance(command, str) and command for command in commands) or len(commands) != len(set(commands)):
             fail(f"{snapshot_json}: record {number} has invalid cli_commands")
         if routing != {"namespace": native_by_product[product_id]["namespace"], "command_identities": commands, "dispatch": expected_dispatch}:
-            fail(f"{snapshot_json}: record {number} native routing disagrees with surfaces.json")
+            fail(f"{snapshot_json}: record {number} native routing disagrees with current surfaces.json")
         if record.get("native_namespace") != routing["namespace"] or record.get("native_dispatch") != expected_dispatch:
             fail(f"{snapshot_json}: record {number} CSV routing fields disagree")
         typed_records.append(record)
@@ -574,7 +580,7 @@ def validate_snapshot(
             if product_id == "central" else "oi <namespace> forwards the native leaf path unchanged"
         )
         if product.get("native_routing") != {"namespace": native_by_product[product_id]["namespace"], "dispatch": expected_dispatch}:
-            fail(f"{snapshot_json}: product {product_id!r} routing disagrees with surfaces.json")
+            fail(f"{snapshot_json}: product {product_id!r} routing disagrees with current surfaces.json")
         validate_rows(product_id, snapshot_json, per_product_rows[product_id])
         for row in per_product_rows[product_id]:
             if row["record_type"] == "capability":

@@ -352,6 +352,9 @@ function SurfaceBody({
   if (binding.kind === "sources") {
     return <SourcesIndex binding={binding} onOpenSource={openSource} />;
   }
+  // The instrument binding has no body renderer of its own: the privileged
+  // Epi/Nara composition portals into this body and owns it completely.
+  if (binding.kind === "instrument") return null;
   return <p className="source-note">This surface is unavailable.</p>;
 }
 

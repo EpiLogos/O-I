@@ -86,6 +86,7 @@ const CAMERA_2D: EngineFrame["camera"] = {
 };
 
 const IDLE_CONFIG: NativeConfig = { glyph: " ", particleCount: 2048 };
+const STAGE_IDLE = "stage-idle";
 
 export class EngineSurface {
   readonly canvas: HTMLCanvasElement;
@@ -161,7 +162,10 @@ export class EngineSurface {
   }
 
   present(id: string, recipe: string) {
-    if (this.active && this.active.id !== id) throw new Error(`The engine surface already presents "${this.active.id}"; release it before presenting "${id}".`);
+    // The idle handover (after a release) is not a live presentation: the
+    // same surface may present again — that is exactly the exit→re-enter
+    // law. Only a different LIVE presentation refuses.
+    if (this.active && this.active.id !== id && this.active.id !== STAGE_IDLE) throw new Error(`The engine surface already presents "${this.active.id}"; release it before presenting "${id}".`);
     this.live = true;
     this.canvas.style.visibility = "visible";
     this.activate(id, this.sceneFrom(stageRecipe(recipe)));
@@ -170,7 +174,7 @@ export class EngineSurface {
   }
 
   presentConfig(id: string, config: unknown) {
-    if (this.active && this.active.id !== id) throw new Error(`The engine surface already presents "${this.active.id}"; release it before presenting "${id}".`);
+    if (this.active && this.active.id !== id && this.active.id !== STAGE_IDLE) throw new Error(`The engine surface already presents "${this.active.id}"; release it before presenting "${id}".`);
     this.live = true;
     this.canvas.style.visibility = "visible";
     this.activate(id, this.sceneFrom(config as NativeConfig));
@@ -247,7 +251,7 @@ export class EngineSurface {
     // A transition toward idle is not an empty frame. Hide the released
     // presentation immediately; keep the native medium for the next scene.
     this.canvas.style.visibility = "hidden";
-    this.activate("stage-idle", this.sceneFrom(IDLE_CONFIG, "stage-idle"));
+    this.activate(STAGE_IDLE, this.sceneFrom(IDLE_CONFIG, STAGE_IDLE));
     this.renderFrame(0);
     this.active = null;
     this.recordPresentationEvent("release", id);
@@ -259,6 +263,8 @@ export class EngineSurface {
   }
 
   setPaused(paused: boolean) { this.paused = paused; if (!paused) this.wake(); }
+  /** Walk/dev observability: whether the surface's own clock is held. */
+  get isPaused() { return this.paused; }
   setForceMotion(force: boolean) { this.forceMotion = force; if (force) this.wake(); }
   telemetry(): unknown { try { return this.adapter.telemetry?.() ?? null; } catch { return null; } }
   capabilities() { return this.adapter.capabilities; }

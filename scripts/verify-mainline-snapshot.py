@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-"""Verify O:I's six-product source snapshot without collapsing owner programmes.
+"""Verify O:I's six-product source snapshot and CI composition.
 
 This guard separates three claims:
 
 1. suite/manifest.json is a historical unratified pre-local build record;
 2. suite/mainline.json + surfaces.json describe one coherent six-product source cut;
-3. O:I #97 live-main convergence applies only to its explicitly authored primary
-   repository set. Quaternal Logic remains the separately owned parallel product
-   and its moving development main is not a #97 closure dependency.
+3. every native product participates equally in the current-source CI matrix while
+   retaining its own product semantics and native lifecycle verification contract.
 """
 
 from __future__ import annotations
@@ -29,7 +28,6 @@ EXPECTED_IDS = {
     "workcell",
     "quaternal-logic",
 }
-PARALLEL_LIVE_EXCEPTIONS = {"quaternal-logic"}
 
 
 def load(path: str):
@@ -56,15 +54,28 @@ def live_main(repository: str) -> str:
     return fields[0]
 
 
+def verify_ci_composition() -> None:
+    current_source = (ROOT / "scripts" / "verify-current-main-source.py").read_text(encoding="utf-8")
+    if 'LIFECYCLE_PATH = Path(".oi/product.json")' not in current_source:
+        die("current-source verification is not rooted in the owner lifecycle contract")
+    if "RELEASE_MANIFEST" in current_source:
+        die("historical suite/manifest.json leaked back into current-source CI configuration")
+
+    workflow = (ROOT / ".github" / "workflows" / "cross-product.yml").read_text(encoding="utf-8")
+    match = re.search(r"(?m)^\s*product:\s*\[([^\]]+)\]\s*$", workflow)
+    if match is None:
+        die("cannot find current-main-source product matrix")
+    observed = {item.strip() for item in match.group(1).split(",") if item.strip()}
+    if observed != EXPECTED_IDS:
+        die(f"current-main-source matrix must contain all six owners; observed {sorted(observed)}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--live",
         action="store_true",
-        help=(
-            "compare #97 in-scope product revisions with their live mains; "
-            "parallel Quaternal Logic remains represented but is not live-gated"
-        ),
+        help="compare all six recorded native product revisions with their live mains",
     )
     args = parser.parse_args()
 
@@ -99,6 +110,8 @@ def main() -> int:
         revision = product.get("revision", "")
         if not HEX40.fullmatch(revision):
             die(f"{product_id} revision is not an immutable 40-character SHA: {revision!r}")
+        if product.get("state") == "parallel-native-owner-exception":
+            die(f"{product_id} still carries the retired parallel-live exception")
         if surface.get("repository") != product.get("repository"):
             die(f"{product_id} repository differs between surfaces and mainline snapshot")
         if surface.get("docs_ref") != revision:
@@ -107,26 +120,20 @@ def main() -> int:
         if install.get("ref") != revision or install.get("revision") != revision:
             die(f"{product_id} source-install pin does not match mainline revision")
 
-        if product_id in PARALLEL_LIVE_EXCEPTIONS:
-            if product.get("state") != "parallel-native-owner-exception":
-                die(
-                    f"{product_id} must declare parallel-native-owner-exception "
-                    "while outside #97 live-main gating"
-                )
-            continue
-
         if args.live:
             observed = live_main(product["repository"])
             if observed != revision:
                 die(
                     f"{product_id} live main moved: snapshot {revision}, live {observed}; "
-                    "update the #97 source cut or explicitly reclassify the in-scope line"
+                    "refresh the current-main source cut before claiming equality"
                 )
 
+    verify_ci_composition()
+
     print("mainline snapshot verification: PASS")
+    print("six-owner lifecycle-driven CI composition: PASS")
     if args.live:
-        print("live #97 in-scope native-main equality: PASS")
-        print("Quaternal Logic parallel owner: represented, NOT #97 live-gated")
+        print("live six-product native-main equality: PASS")
     if build_record.get("standing") != "historical-unratified-prelocal-build-record":
         die("historical build record has release/acceptance standing")
     print(

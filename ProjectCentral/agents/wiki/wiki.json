@@ -12,9 +12,9 @@
       ],
       "profile": "okf-wiki/v1",
       "provenance": [],
-      "ref": "central:wiki:project:project:o-i",
+      "ref": "central:wiki:project:O-I",
       "revision": 3,
-      "title": "project:o-i"
+      "title": "O-I"
     },
     {
       "object": "node",
@@ -30,7 +30,7 @@
         "ProjectCentral/project.json"
       ],
       "space_refs": [
-        "central:wiki:project:project:o-i"
+        "central:wiki:project:O-I"
       ],
       "title": "O-I",
       "type": "project-root"
