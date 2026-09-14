@@ -47,6 +47,9 @@ jobs:
             ../shared-field/account-projection.test.mjs \
             ../shared-field/explore-surface.test.mjs \
             ../shared-field/spacetimedb-explore-surface.test.mjs \
+            ../shared-field/central-wiki-projection.test.mjs \
+            ../shared-field/aikit-contribution-field.test.mjs \
+            ../shared-field/native-action-binding.test.mjs \
             public-content.test.mjs \
             projection-renderer.test.mjs \
             self-other-read-model.test.mjs \

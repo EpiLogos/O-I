@@ -1,0 +1,92 @@
+{
+  "schema": "central.wiki-reading/v1",
+  "register": "root",
+  "world_ref": "control:root",
+  "profile": "okf-wiki/v1",
+  "automatic_agent_or_model_invocation": false,
+  "counts": {
+    "edges": 6,
+    "nodes": 2,
+    "objects": 3,
+    "other_objects": 0,
+    "spaces": 1
+  },
+  "source": {
+    "path": "Control/agents/wiki/wiki.json",
+    "ref": "central:source:control:root:Control/agents/wiki/wiki.json",
+    "revision": "central.content-fnv1a64/v1:1639:ci-root-1"
+  },
+  "spaces": [
+    {
+      "ref": "central:wiki:root",
+      "title": "Central (CI fixture)",
+      "revision": 1,
+      "anchor_ref": "wiki:node:identity",
+      "parent_space_refs": [],
+      "child_space_refs": [
+        "central:wiki:project:Fixture",
+        "central:wiki:project:PRIVATE_SENTINEL_LAB"
+      ],
+      "node_refs": [
+        "wiki:node:identity",
+        "wiki:node:PRIVATE_SENTINEL_JOURNAL"
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "ref": "wiki:node:identity",
+      "title": "User identity",
+      "node_type": "identity",
+      "revision": 1,
+      "space_refs": [
+        "central:wiki:root"
+      ],
+      "source_refs": [
+        "Control/user/identity.md"
+      ],
+      "provenance_source_refs": [
+        "Control/user/identity.md"
+      ]
+    },
+    {
+      "ref": "wiki:node:PRIVATE_SENTINEL_JOURNAL",
+      "title": "PRIVATE_SENTINEL_JOURNAL",
+      "node_type": "journal",
+      "revision": 1,
+      "space_refs": [
+        "central:wiki:root"
+      ],
+      "source_refs": [
+        "Control/user/journal/PRIVATE_SENTINEL_JOURNAL.md"
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "from_ref": "wiki:node:identity",
+      "kind": "node-source",
+      "to_ref": "Control/user/identity.md"
+    },
+    {
+      "from_ref": "central:wiki:root",
+      "kind": "space-child-space",
+      "to_ref": "central:wiki:project:Fixture"
+    },
+    {
+      "from_ref": "central:wiki:root",
+      "kind": "space-child-space",
+      "to_ref": "central:wiki:project:PRIVATE_SENTINEL_LAB"
+    },
+    {
+      "from_ref": "central:wiki:root",
+      "kind": "space-node",
+      "to_ref": "wiki:node:identity"
+    },
+    {
+      "from_ref": "central:wiki:root",
+      "kind": "space-node",
+      "to_ref": "wiki:node:PRIVATE_SENTINEL_JOURNAL"
+    }
+  ]
+}
