@@ -1,22 +1,9 @@
-import { createExploreBrowserModel, EXPLORE_BROWSER_SEED_SCHEMA } from './explore-read-model.mjs';
-import { WORLD_PRESENTATION_SCHEMA } from '../shared-field/presentation.mjs';
+import { createExploreBrowserModel } from './explore-read-model.mjs';
+import { exploreSurfaceSeedFromHostedSnapshot } from '../shared-field/spacetimedb-explore-surface.mjs';
 
 function requireFunction(value, name) {
   if (typeof value !== 'function') throw new TypeError(`${name} must be a function`);
   return value;
-}
-
-function browserSeedFromHostedSnapshot(snapshot = {}) {
-  const projections = Array.isArray(snapshot.projections) ? snapshot.projections : [];
-  return {
-    schema: EXPLORE_BROWSER_SEED_SCHEMA,
-    entries: Array.isArray(snapshot.entries) ? snapshot.entries : [],
-    relations: Array.isArray(snapshot.relations) ? snapshot.relations : [],
-    presentations: [],
-    presentation_projections: projections.filter(
-      (projection) => projection?.state === 'published' && projection?.representation?.kind === WORLD_PRESENTATION_SCHEMA,
-    ),
-  };
 }
 
 /**
@@ -60,7 +47,7 @@ export function createLiveExploreBrowserProvider(liveApplication) {
   requireFunction(liveApplication.subscribe, 'live Explore application.subscribe');
 
   function current() {
-    return createExploreBrowserModel(browserSeedFromHostedSnapshot(liveApplication.snapshot()));
+    return createExploreBrowserModel(exploreSurfaceSeedFromHostedSnapshot(liveApplication.snapshot()));
   }
 
   function subscribe(listener) {
@@ -80,4 +67,4 @@ export function createLiveExploreBrowserProvider(liveApplication) {
   return Object.freeze({ kind: 'live', current, subscribe, status });
 }
 
-export { browserSeedFromHostedSnapshot };
+export { exploreSurfaceSeedFromHostedSnapshot as browserSeedFromHostedSnapshot };

@@ -101,7 +101,7 @@ The first executable security floor provides:
 
 This remains deliberately narrower than a universal policy engine. Central remains the natural durable source of human-authored world-local policy; native product/host boundaries continue to own the authority they actually enforce.
 
-The current PR #19 content surface is still a **public-field proof**. SharedField, Participant, Projection and Explore content are not yet presented as audience-filtered private-world Views. OI-017 now rejects non-public SharedField/Projection content at that public reducer boundary rather than allowing a false privacy claim. Relationship metadata is protected now; audience/private-content subscription policy is a later security slice.
+The hosted content surface is audience-filtered server-side (OI-017 Phase 1, PR #44): SharedField, Participant, Projection, Contribution and Explore rows live in private backing tables and reach callers only through caller-filtered Views, with effective Projection visibility the intersection of SharedField visibility and Projection audience. Hosted `unlisted` remains rejected. See `PHASE1-PRIVATE-CONTENT-SECURITY-RECEIPT.md`; the earlier note that private-content Views were a later slice is superseded.
 
 SpaceTimeDB documents one-shot schedule tables for timed execution, but the exact pinned 2.8.1 standalone used by O:I CI did not reproduce a one-second scheduled authority-expiry event in repeated live fixtures. O:I therefore does not rely on that timer for private-read revocation. See `docs/ENCOUNTER-SECURITY-SPACETIMEDB-CONFORMANCE.md` for the provider finding and fail-closed consequence.
 
@@ -167,7 +167,7 @@ interest_refs[]
 output_refs[]
 ```
 
-There is no selector for `Central/Control`. The fixture includes private sentinel material under `Control/` and the golden public root proves it never enters the Projection unless a future explicit contract adds a narrower source operation. This matches Central's own invariant that availability does not imply disclosure.
+There is no selector for `Central/Control` as a tree. The one narrower source operation that exists is the explicit wiki selection (`oi.central-wiki-selection/v1`, see `WORLD-PUBLICATION.md`): it reads the owner's wiki topology through Central's own `central.wiki.read` / `projectcentral.wiki.read` Actions and publishes only the spaces and nodes the selection names. The golden public root and the wiki publication sentinel tests both prove that private material never enters a Projection. This matches Central's own invariant that availability does not imply disclosure.
 
 ## Existing projection fixtures
 
