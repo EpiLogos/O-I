@@ -43,9 +43,9 @@
     {
       "id": "quaternal-logic",
       "repository": "https://github.com/EpiLogos/QL-MEF",
-      "revision": "d88216301a8f76918073d46f5de064a68f7c1480",
+      "revision": "a83148e93c500d5bebaa5811d9d25953652834cf",
       "state": "accepted-main",
-      "note": "Exact Quaternal Logic main observed 2026-09-14 after CI convergence: one protected native PR gate, repository quick/full verification, accepted-main local acceptance and centrally commissioned cross-product proof."
+      "note": "Exact Quaternal Logic main observed 2026-09-14 after CI convergence and accepted-main Native C parity repair: one protected native PR gate, repository quick/full verification, accepted-main local acceptance and centrally commissioned cross-product proof."
     }
   ],
   "build_record": {
