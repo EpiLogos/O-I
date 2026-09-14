@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Verify O:I's six-product source snapshot without collapsing owner programmes.
+"""Verify O:I's six-product source snapshot and CI composition.
 
 This guard separates three claims:
 
 1. suite/manifest.json is a historical unratified pre-local build record;
 2. suite/mainline.json + surfaces.json describe one coherent six-product source cut;
-3. every native product main participates equally in current-main convergence while
-   retaining its own product semantics and independent development branches.
+3. every native product participates equally in the current-source CI matrix while
+   retaining its own product semantics and native lifecycle verification contract.
 """
 
 from __future__ import annotations
@@ -52,6 +52,22 @@ def live_main(repository: str) -> str:
     if len(fields) != 2 or fields[1] != "refs/heads/main":
         die(f"unexpected live-main response for {repository}: {result.stdout.strip()}")
     return fields[0]
+
+
+def verify_ci_composition() -> None:
+    current_source = (ROOT / "scripts" / "verify-current-main-source.py").read_text(encoding="utf-8")
+    if 'LIFECYCLE_PATH = Path(".oi/product.json")' not in current_source:
+        die("current-source verification is not rooted in the owner lifecycle contract")
+    if "RELEASE_MANIFEST" in current_source:
+        die("historical suite/manifest.json leaked back into current-source CI configuration")
+
+    workflow = (ROOT / ".github" / "workflows" / "cross-product.yml").read_text(encoding="utf-8")
+    match = re.search(r"(?m)^\s*product:\s*\[([^\]]+)\]\s*$", workflow)
+    if match is None:
+        die("cannot find current-main-source product matrix")
+    observed = {item.strip() for item in match.group(1).split(",") if item.strip()}
+    if observed != EXPECTED_IDS:
+        die(f"current-main-source matrix must contain all six owners; observed {sorted(observed)}")
 
 
 def main() -> int:
@@ -112,7 +128,10 @@ def main() -> int:
                     "refresh the current-main source cut before claiming equality"
                 )
 
+    verify_ci_composition()
+
     print("mainline snapshot verification: PASS")
+    print("six-owner lifecycle-driven CI composition: PASS")
     if args.live:
         print("live six-product native-main equality: PASS")
     if build_record.get("standing") != "historical-unratified-prelocal-build-record":
