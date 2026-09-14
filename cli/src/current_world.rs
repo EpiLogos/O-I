@@ -13,7 +13,11 @@ pub const CURRENT_WORLD_SCHEMA: &str = "oi.current-world/v2";
 pub const DEFAULT_MACHINE_ROLE: &str = "current";
 pub const DEFAULT_LOCAL_WORKCELL_REF: &str = "workcell:local";
 
-const PRODUCT_POSITIONS: [(u8, &str, &str); 6] = [
+/// The canonical product positions (#268): position → product id and public
+/// name, in the suite manifest's product order. Shared with the CLI's
+/// verification scope so an install mode's positions name manifest products
+/// through this one table.
+pub const PRODUCT_POSITIONS: [(u8, &str, &str); 6] = [
     (0, "central", "Central"),
     (1, "actuation", "Actuation"),
     (2, "ai-kit", "AIKit"),

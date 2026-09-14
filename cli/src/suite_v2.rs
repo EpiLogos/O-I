@@ -107,7 +107,7 @@ fn suite_v2_main() -> Option<ExitCode> {
             Some(command_suite_v2_cleanup(args.get(1..).unwrap_or_default()))
         }
         "dev" => Some(command_suite_v2_dev(args.get(1..).unwrap_or_default())),
-        "verify" if args.len() == 1 || (args.len() == 2 && args[1] == "--json") => {
+        "verify" if is_doctor_invocation(args.get(1..).unwrap_or_default()) => {
             Some(command_suite_v2_doctor(args.get(1..).unwrap_or_default()))
         }
         _ => None,
@@ -121,6 +121,14 @@ fn suite_v2_main() -> Option<ExitCode> {
     })
 }
 
+/// `oi verify` reaches this doctor when its arguments are a subset of the
+/// doctor's flags; anything else (for example `verify --snapshot …`) stays
+/// on the Suite Snapshot verification path below.
+fn is_doctor_invocation(tail: &[OsString]) -> bool {
+    tail.iter()
+        .all(|argument| matches!(argument.to_str(), Some("--json") | Some("--all")))
+}
+
 fn print_suite_v2_help() -> Result<(), String> {
     let manifest = suite_manifest()?;
     println!("{{O:I}} — pre-local six-product artifact operator");
@@ -130,11 +138,14 @@ fn print_suite_v2_help() -> Result<(), String> {
     println!("  oi install [--personal-ground PATH] [PRODUCT ...]");
     println!("  oi update");
     println!("  oi status [--json]");
-    println!("  oi doctor [--json]");
-    println!("  oi verify [--json]");
+    println!("  oi doctor [--all] [--json]");
+    println!("  oi verify [--all] [--json]");
     println!("  oi manifest [--json]");
     println!("  oi cleanup --managed");
     println!();
+    println!("Verification asks whether the requested composition is installed and usable:");
+    println!("a recorded install mode scopes it to that mode's products, the installation");
+    println!("receipt scopes it to what is installed, and --all verifies the whole suite strictly.");
     println!("Developer federation:");
     println!("  oi dev status [--json]");
     println!("  oi dev sync [PRODUCT]");
@@ -578,12 +589,142 @@ fn command_suite_v2_status(args: &[OsString]) -> Result<i32, String> {
     Ok(0)
 }
 
+/// The product set one verification run answers for (#268 lock §5: the
+/// operative installation account separates what was requested from what is
+/// installed). `basis` records which statement produced the set:
+/// `requested-mode` — the person's recorded `oi mode set` statement;
+/// `receipt` — the products this machine's installation receipt records;
+/// `all` — the whole six-product suite (explicit `--all`, or the fallback
+/// when nothing narrower can be named).
+struct VerificationScope {
+    basis: &'static str,
+    install_mode: Option<&'static oi_cli::context_frames::InstallMode>,
+    requested: Option<RequestedMode>,
+    selected: std::collections::BTreeSet<String>,
+    detail: String,
+}
+
+impl VerificationScope {
+    /// Plain-language name of the selection, for per-product disclosure.
+    fn selection_description(&self) -> String {
+        match self.install_mode {
+            Some(mode) => format!("install mode {} ({})", mode.frame, mode.name),
+            None => match self.basis {
+                "receipt" => "the installation receipt".to_owned(),
+                _ => "the whole suite".to_owned(),
+            },
+        }
+    }
+}
+
+/// Map one install mode position onto the suite manifest product that holds
+/// it, through the canonical position table the current-world reading uses.
+fn product_id_at_position(manifest: &SuiteManifest, position: u8) -> Option<&str> {
+    let (_, expected, _) = oi_cli::current_world::PRODUCT_POSITIONS
+        .iter()
+        .find(|(index, _, _)| *index == position)?;
+    manifest
+        .products
+        .iter()
+        .find(|product| product.id == *expected)
+        .map(|product| product.id.as_str())
+}
+
+/// Resolve what this verification run is answering for. The requested
+/// composition is the person's own statement, so it scopes the run when it
+/// names a six-product selection; the installation receipt answers
+/// otherwise; `--all` keeps the strict whole-suite question.
+fn resolve_verification_scope(
+    all_products: bool,
+    requested: Option<&RequestedMode>,
+    receipt: &InstalledSuiteReceipt,
+    manifest: &SuiteManifest,
+) -> VerificationScope {
+    let whole_suite = |detail: &str| VerificationScope {
+        basis: "all",
+        install_mode: None,
+        requested: requested.cloned(),
+        selected: manifest.products.iter().map(|p| p.id.clone()).collect(),
+        detail: detail.to_owned(),
+    };
+    if all_products {
+        return whole_suite("every recorded suite product is verified (--all)");
+    }
+    if let Some(requested) = requested {
+        if let Some(mode) = oi_cli::context_frames::install_mode_by_frame(&requested.frame)
+            .filter(|mode| mode.products.is_some())
+        {
+            let selected = mode
+                .products
+                .unwrap_or(&[])
+                .iter()
+                .filter_map(|position| product_id_at_position(manifest, *position))
+                .map(str::to_owned)
+                .collect::<std::collections::BTreeSet<_>>();
+            return VerificationScope {
+                basis: "requested-mode",
+                install_mode: Some(mode),
+                requested: Some(requested.clone()),
+                selected,
+                detail: format!(
+                    "verifying the products of requested install mode {} ({})",
+                    mode.frame, mode.name
+                ),
+            };
+        }
+    }
+    if !receipt.products.is_empty() {
+        let detail = match requested {
+            Some(requested) => format!(
+                "the recorded requested mode {} names no six-product selection; \
+                 verifying the {} products recorded in the installation receipt",
+                requested.frame,
+                receipt.products.len()
+            ),
+            None => format!(
+                "no install mode is requested; verifying the {} products recorded \
+                 in the installation receipt",
+                receipt.products.len()
+            ),
+        };
+        return VerificationScope {
+            basis: "receipt",
+            install_mode: None,
+            requested: requested.cloned(),
+            selected: receipt.products.keys().cloned().collect(),
+            detail,
+        };
+    }
+    whole_suite(
+        "no products are recorded as installed and no requested mode names a \
+         selection; the whole suite is verified strictly",
+    )
+}
+
 fn command_suite_v2_doctor(args: &[OsString]) -> Result<i32, String> {
-    let json_mode = match args { [] => false, [one] if one == "--json" => true, _ => return Err("usage: oi doctor [--json]".to_owned()) };
+    let mut json_mode = false;
+    let mut all_products = false;
+    for argument in args {
+        match argument.to_str() {
+            Some("--json") => json_mode = true,
+            Some("--all") => all_products = true,
+            _ => return Err("usage: oi doctor [--all] [--json]".to_owned()),
+        }
+    }
     let manifest = suite_manifest()?;
     let data_root = oi_data_root()?;
     let composition = load_composition()?;
     let receipt = load_installed_receipt(&data_root, &manifest.suite_version)?;
+    // Verification answers "is what was requested installed and usable?",
+    // not "is the entire six-product suite installed?" (#268). A subset
+    // install is a kept promise, not a failure: products outside the
+    // verified selection are disclosed as absent by selection.
+    let scope = resolve_verification_scope(
+        all_products,
+        composition.requested_mode.as_ref(),
+        &receipt,
+        &manifest,
+    );
     // The live surface disclosure is needed twice: per product (to tell a
     // deliberate developer-path install from a genuinely unhealthy one) and
     // as its own check block. Resolved once.
@@ -594,29 +735,53 @@ fn command_suite_v2_doctor(args: &[OsString]) -> Result<i32, String> {
         .unwrap_or(false);
     let mut checks = Vec::new();
     let mut ok = true;
+    let mut shortfall: Vec<String> = Vec::new();
     for product in &manifest.products {
-        let managed = match receipt.products.get(&product.id) {
-            None => Err("not installed".to_owned()),
-            Some(installed) if installed.revision != product.revision => Err(format!("revision drift: {}", installed.revision)),
-            Some(installed) => {
-                let asset = selected_asset(product)?;
-                let cached = data_root.join("cache").join(&product.id).join(&product.revision).join(&asset.name);
-                if !Path::new(&installed.root).is_dir() { Err("managed product root missing".to_owned()) }
-                else if !cached.is_file() { Err("recorded build archive missing from managed cache".to_owned()) }
-                else if sha256_file(&cached)? != asset.sha256 { Err("cached build archive checksum mismatch".to_owned()) }
-                else if let Some(exe) = installed.executable.as_deref() {
-                    verify_installed_product(product, Some(Path::new(exe)), composition.personal_ground.as_deref()).map_err(|e| e.to_string())
-                } else { Ok(()) }
+        if scope.selected.contains(&product.id) {
+            let managed = match receipt.products.get(&product.id) {
+                None => Err("not installed".to_owned()),
+                Some(installed) if installed.revision != product.revision => Err(format!("revision drift: {}", installed.revision)),
+                Some(installed) => {
+                    let asset = selected_asset(product)?;
+                    let cached = data_root.join("cache").join(&product.id).join(&product.revision).join(&asset.name);
+                    if !Path::new(&installed.root).is_dir() { Err("managed product root missing".to_owned()) }
+                    else if !cached.is_file() { Err("recorded build archive missing from managed cache".to_owned()) }
+                    else if sha256_file(&cached)? != asset.sha256 { Err("cached build archive checksum mismatch".to_owned()) }
+                    else if let Some(exe) = installed.executable.as_deref() {
+                        verify_installed_product(product, Some(Path::new(exe)), composition.personal_ground.as_deref()).map_err(|e| e.to_string())
+                    } else { Ok(()) }
+                }
+            };
+            // A managed-receipt gap on a machine whose registered source surface
+            // is present and in step is a deliberate developer-path install, not
+            // a health failure: the surface's own drift check still fails this
+            // doctor when what runs is stale. Neither managed nor surface
+            // coverage, or a drifted surface, remains a failing condition.
+            let (product_ok, detail) = doctor_managed_standing(managed.err().as_deref(), surface_in_step(&product.id));
+            if !product_ok {
+                ok = false;
+                shortfall.push(product.public_name.clone());
             }
-        };
-        // A managed-receipt gap on a machine whose registered source surface
-        // is present and in step is a deliberate developer-path install, not
-        // a health failure: the surface's own drift check still fails this
-        // doctor when what runs is stale. Neither managed nor surface
-        // coverage, or a drifted surface, remains a failing condition.
-        let (product_ok, detail) = doctor_managed_standing(managed.err().as_deref(), surface_in_step(&product.id));
-        if !product_ok { ok = false; }
-        checks.push(json!({"product": product.id, "ok": product_ok, "detail": detail}));
+            checks.push(json!({"product": product.id, "ok": product_ok, "detail": detail, "selected": true, "scope_state": "selected"}));
+        } else {
+            // Outside the verified selection: present or absent, never a
+            // failure — the composition lock keeps unselected products out of
+            // the promise, disclosed exactly as they stand.
+            let present =
+                receipt.products.contains_key(&product.id) || surface_in_step(&product.id);
+            let (scope_state, detail) = if present {
+                (
+                    "outside-selection",
+                    "installed outside the selection being verified; disclosed, not verified here".to_owned(),
+                )
+            } else {
+                (
+                    "absent-by-selection",
+                    format!("absent by selection — not part of {}", scope.selection_description()),
+                )
+            };
+            checks.push(json!({"product": product.id, "ok": true, "detail": detail, "selected": false, "scope_state": scope_state}));
+        }
     }
     let catalogue = catalogue_freshness();
     if catalogue.is_err() { ok = false; }
@@ -656,18 +821,47 @@ fn command_suite_v2_doctor(args: &[OsString]) -> Result<i32, String> {
         }
         Err(error) => { ok = false; surface_checks.push(json!({"surface": "suite", "ok": false, "detail": error})); }
     }
+    // Reality may not fall short of the request silently: when the requested
+    // mode's own products are not usable, the shortfall names them.
+    let shortfall_message = match (scope.install_mode, shortfall.as_slice()) {
+        (Some(mode), names) if !names.is_empty() => Some(format!(
+            "Requested install mode {} is not fully realised: {} {} not usable.",
+            mode.frame,
+            names.join(", "),
+            if names.len() == 1 { "is" } else { "are" }
+        )),
+        _ => None,
+    };
+    let scope_json = verification_scope_json(&scope, shortfall_message.as_deref(), &manifest);
     if json_mode {
         println!("{}", serde_json::to_string_pretty(&json!({
             "schema": "oi.suite-doctor/v1",
             "suite_version": manifest.suite_version,
             "ok": ok,
+            "scope": scope_json,
             "checks": checks,
             "surfaces": surface_checks,
             "physical_gates": manifest.physical_gates,
             "physical_acceptance": false
         })).map_err(|e| e.to_string())?);
     } else {
-        println!("Suite {} verification: {}", manifest.suite_version, if ok { "PASS" } else { "FAIL" });
+        let verdict = if ok { "PASS" } else { "FAIL" };
+        match scope.install_mode {
+            Some(mode) => println!(
+                "Suite {} verification (requested install mode {} — {}): {}",
+                manifest.suite_version, mode.frame, mode.name, verdict
+            ),
+            None if scope.basis == "receipt" => println!(
+                "Suite {} verification (installed selection — {} products): {}",
+                manifest.suite_version,
+                scope.selected.len(),
+                verdict
+            ),
+            None => println!("Suite {} verification: {}", manifest.suite_version, verdict),
+        }
+        if let Some(shortfall) = &shortfall_message {
+            println!("  {shortfall}");
+        }
         for check in checks {
             println!("  {:<18} {}{}", check["product"].as_str().unwrap_or("?"), if check["ok"].as_bool().unwrap_or(false) { "PASS" } else { "FAIL" }, check["detail"].as_str().map(|d| format!(" — {d}")).unwrap_or_default());
         }
@@ -680,6 +874,42 @@ fn command_suite_v2_doctor(args: &[OsString]) -> Result<i32, String> {
         for gate in &manifest.physical_gates { println!("  DEFERRED {} — {}", gate.id, gate.description); }
     }
     Ok(if ok { 0 } else { 3 })
+}
+
+/// The machine-readable account of what this run verified. Additive fields
+/// only: existing doctor fields keep their meaning.
+fn verification_scope_json(
+    scope: &VerificationScope,
+    shortfall_message: Option<&str>,
+    manifest: &SuiteManifest,
+) -> serde_json::Value {
+    // Products are listed in canonical manifest order, not alphabetical.
+    let products: Vec<&String> = manifest
+        .products
+        .iter()
+        .filter(|product| scope.selected.contains(&product.id))
+        .map(|product| &product.id)
+        .collect();
+    let mut value = json!({
+        "basis": scope.basis,
+        "products": products,
+        "detail": scope.detail,
+    });
+    if let Some(mode) = scope.install_mode {
+        value["install_mode"] = json!(mode.frame);
+        value["install_mode_name"] = json!(mode.name);
+    }
+    if let Some(requested) = &scope.requested {
+        value["requested_mode"] = json!({
+            "frame": requested.frame,
+            "set_by": requested.set_by,
+            "set_at_unix_seconds": requested.set_at_unix_seconds,
+        });
+    }
+    if let Some(shortfall) = shortfall_message {
+        value["shortfall"] = json!(shortfall);
+    }
+    value
 }
 
 /// Managed-receipt standing for one product, reconciled against its live
@@ -1188,5 +1418,135 @@ mod tests {
             _ => unreachable!(),
         };
         assert_eq!(target, ground.join("Work/Central"));
+    }
+
+    fn empty_receipt() -> InstalledSuiteReceipt {
+        InstalledSuiteReceipt {
+            schema: "oi.installed-suite/v1".to_owned(),
+            suite_version: "test".to_owned(),
+            products: BTreeMap::new(),
+        }
+    }
+
+    fn receipt_with(ids: &[&str]) -> InstalledSuiteReceipt {
+        let mut receipt = empty_receipt();
+        for id in ids {
+            receipt.products.insert(
+                (*id).to_owned(),
+                InstalledProduct {
+                    revision: "0".to_owned(),
+                    asset: "a".to_owned(),
+                    sha256: "0".repeat(64),
+                    installed_at_ms: 0,
+                    attestation: "a".to_owned(),
+                    attestation_locally_verified: false,
+                    root: "/unused".to_owned(),
+                    executable: None,
+                },
+            );
+        }
+        receipt
+    }
+
+    fn requested_mode(frame: &str) -> RequestedMode {
+        RequestedMode {
+            frame: frame.to_owned(),
+            set_at_unix_seconds: 0,
+            set_by: "oi mode set".to_owned(),
+        }
+    }
+
+    fn selected_ids(scope: &VerificationScope) -> Vec<&str> {
+        let mut ids: Vec<&str> = scope.selected.iter().map(String::as_str).collect();
+        ids.sort_unstable();
+        ids
+    }
+
+    #[test]
+    fn requested_mode_scopes_verification_to_its_products() {
+        let manifest = suite_manifest().expect("embedded manifest is valid");
+        let receipt = empty_receipt();
+        for (frame, expected) in [
+            ("0/1", vec!["actuation", "central"]),
+            ("0/1/2", vec!["actuation", "ai-kit", "central"]),
+            ("0/1/2/3", vec!["actuation", "ai-kit", "central", "software-factory"]),
+            ("4.5/0", vec!["central", "workcell"]),
+            ("5/0", vec!["central", "quaternal-logic"]),
+        ] {
+            let scope =
+                resolve_verification_scope(false, Some(&requested_mode(frame)), &receipt, &manifest);
+            assert_eq!(scope.basis, "requested-mode", "{frame}");
+            assert_eq!(scope.install_mode.map(|mode| mode.frame), Some(frame));
+            assert_eq!(selected_ids(&scope), expected, "{frame}");
+        }
+    }
+
+    #[test]
+    fn verification_falls_back_to_receipt_then_whole_suite() {
+        let manifest = suite_manifest().expect("embedded manifest is valid");
+        // No requested mode, installed subset: the receipt scopes the run.
+        let scope = resolve_verification_scope(
+            false,
+            None,
+            &receipt_with(&["central", "actuation"]),
+            &manifest,
+        );
+        assert_eq!(scope.basis, "receipt");
+        assert_eq!(selected_ids(&scope), vec!["actuation", "central"]);
+
+        // A requested mode that names no six-product selection (Desktop, or a
+        // foreign frame) also falls back to the receipt.
+        for frame in ["00/00", "9/9"] {
+            let scope = resolve_verification_scope(
+                false,
+                Some(&requested_mode(frame)),
+                &receipt_with(&["central"]),
+                &manifest,
+            );
+            assert_eq!(scope.basis, "receipt", "{frame}");
+            assert_eq!(selected_ids(&scope), vec!["central"], "{frame}");
+            assert!(scope.requested.is_some(), "{frame} stays disclosed");
+        }
+
+        // Nothing requested, nothing installed: the strict whole-suite
+        // question stands, as before this change.
+        let scope = resolve_verification_scope(false, None, &empty_receipt(), &manifest);
+        assert_eq!(scope.basis, "all");
+        assert_eq!(selected_ids(&scope).len(), manifest.products.len());
+    }
+
+    #[test]
+    fn explicit_all_overrides_everything_and_keeps_strict_semantics() {
+        let manifest = suite_manifest().expect("embedded manifest is valid");
+        let scope = resolve_verification_scope(
+            true,
+            Some(&requested_mode("0/1")),
+            &receipt_with(&["central"]),
+            &manifest,
+        );
+        assert_eq!(scope.basis, "all");
+        assert_eq!(selected_ids(&scope).len(), manifest.products.len());
+        assert!(scope.install_mode.is_none(), "--all is not a mode");
+    }
+
+    #[test]
+    fn every_install_mode_position_names_a_manifest_product() {
+        let manifest = suite_manifest().expect("embedded manifest is valid");
+        for mode in oi_cli::context_frames::INSTALL_MODES {
+            let Some(positions) = mode.products else { continue };
+            for position in positions {
+                let id = product_id_at_position(&manifest, *position)
+                    .unwrap_or_else(|| panic!("mode {} position {position} names no product", mode.frame));
+                assert!(manifest.products.iter().any(|product| product.id == id));
+            }
+        }
+        // The canonical positions and the manifest order must never drift apart.
+        for (position, id, _) in oi_cli::current_world::PRODUCT_POSITIONS {
+            assert_eq!(
+                product_id_at_position(&manifest, position),
+                Some(id),
+                "position {position} must keep naming {id}"
+            );
+        }
     }
 }
