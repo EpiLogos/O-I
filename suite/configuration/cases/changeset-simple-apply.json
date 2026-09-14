@@ -1,0 +1,163 @@
+{
+  "fixture": "changeset-simple-apply",
+  "kind": "changeset",
+  "case": "simple-apply",
+  "changeset_id": "cs-fixture-simple-apply-1",
+  "lifecycle": [
+    {
+      "stage": "planned",
+      "changeset": {
+        "schema": "oi.config-changeset/v1",
+        "changeset_id": "cs-fixture-simple-apply-1",
+        "created_at_unix_ms": 0,
+        "profile_ref": "development",
+        "requested": [
+          {
+            "setting_ref": "ai-kit:resolution:model.default",
+            "scope": { "scope_kind": "project", "scope_ref": "epilogos/o-i" },
+            "value": "sonnet-next"
+          }
+        ],
+        "operations": [
+          {
+            "op_id": "op-1",
+            "depends_on": [],
+            "owner_ref": "ai-kit",
+            "setting_ref": "ai-kit:resolution:model.default",
+            "scope": { "scope_kind": "project", "scope_ref": "epilogos/o-i" },
+            "kind": "apply",
+            "plan_digest": "3f7a1c",
+            "status": "planned",
+            "receipt_ref": null,
+            "error": null
+          }
+        ],
+        "verification": null,
+        "status": "planned"
+      }
+    },
+    {
+      "stage": "validated",
+      "changeset": {
+        "schema": "oi.config-changeset/v1",
+        "changeset_id": "cs-fixture-simple-apply-1",
+        "created_at_unix_ms": 0,
+        "profile_ref": "development",
+        "requested": [
+          {
+            "setting_ref": "ai-kit:resolution:model.default",
+            "scope": { "scope_kind": "project", "scope_ref": "epilogos/o-i" },
+            "value": "sonnet-next"
+          }
+        ],
+        "operations": [
+          {
+            "op_id": "op-1",
+            "depends_on": [],
+            "owner_ref": "ai-kit",
+            "setting_ref": "ai-kit:resolution:model.default",
+            "scope": { "scope_kind": "project", "scope_ref": "epilogos/o-i" },
+            "kind": "apply",
+            "plan_digest": "3f7a1c",
+            "status": "validated",
+            "receipt_ref": null,
+            "error": null
+          }
+        ],
+        "verification": null,
+        "status": "validated"
+      }
+    },
+    {
+      "stage": "applied",
+      "changeset": {
+        "schema": "oi.config-changeset/v1",
+        "changeset_id": "cs-fixture-simple-apply-1",
+        "created_at_unix_ms": 0,
+        "profile_ref": "development",
+        "requested": [
+          {
+            "setting_ref": "ai-kit:resolution:model.default",
+            "scope": { "scope_kind": "project", "scope_ref": "epilogos/o-i" },
+            "value": "sonnet-next"
+          }
+        ],
+        "operations": [
+          {
+            "op_id": "op-1",
+            "depends_on": [],
+            "owner_ref": "ai-kit",
+            "setting_ref": "ai-kit:resolution:model.default",
+            "scope": { "scope_kind": "project", "scope_ref": "epilogos/o-i" },
+            "kind": "apply",
+            "plan_digest": "3f7a1c",
+            "status": "applied",
+            "receipt_ref": "aikit-receipt-1",
+            "error": null
+          }
+        ],
+        "verification": null,
+        "status": "applied"
+      }
+    },
+    {
+      "stage": "verified",
+      "changeset": {
+        "schema": "oi.config-changeset/v1",
+        "changeset_id": "cs-fixture-simple-apply-1",
+        "created_at_unix_ms": 0,
+        "profile_ref": "development",
+        "requested": [
+          {
+            "setting_ref": "ai-kit:resolution:model.default",
+            "scope": { "scope_kind": "project", "scope_ref": "epilogos/o-i" },
+            "value": "sonnet-next"
+          }
+        ],
+        "operations": [
+          {
+            "op_id": "op-1",
+            "depends_on": [],
+            "owner_ref": "ai-kit",
+            "setting_ref": "ai-kit:resolution:model.default",
+            "scope": { "scope_kind": "project", "scope_ref": "epilogos/o-i" },
+            "kind": "apply",
+            "plan_digest": "3f7a1c",
+            "status": "verified",
+            "receipt_ref": "aikit-receipt-1",
+            "error": null
+          }
+        ],
+        "verification": {
+          "reading_digest": "b2c9dd",
+          "observed_at_unix_ms": 0,
+          "reconciliations": [
+            { "setting_ref": "ai-kit:resolution:model.default", "status": "satisfied" }
+          ]
+        },
+        "status": "verified"
+      }
+    }
+  ],
+  "receipt": {
+    "schema": "oi.config-receipt/v1",
+    "receipt_id": "aikit-receipt-1",
+    "owner_ref": "ai-kit",
+    "changeset_id": "cs-fixture-simple-apply-1",
+    "plan_digest": "3f7a1c",
+    "setting_ref": "ai-kit:resolution:model.default",
+    "scope": { "scope_kind": "project", "scope_ref": "epilogos/o-i" },
+    "operation": "apply",
+    "outcome": "applied",
+    "applied_at_unix_ms": 0,
+    "native_ref": "aikit:history:model.default:1",
+    "expected_effect": { "kind": "session-restart-required", "summary": "New sessions resolve the new model.", "ref": null },
+    "original_receipt_id": null,
+    "error": null
+  },
+  "expect": {
+    "derived_statuses": ["planned", "validated", "applied", "verified"],
+    "final_status": "verified",
+    "receipt_outcome": "applied"
+  }
+}

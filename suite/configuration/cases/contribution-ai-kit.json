@@ -1,0 +1,182 @@
+{
+  "fixture": "contribution-ai-kit",
+  "kind": "contribution",
+  "contribution": {
+    "schema": "oi.configuration-contribution/v1",
+    "contract_revision": "configuration-plane/contribution.1",
+    "owner": {
+      "owner_ref": "ai-kit",
+      "owner_kind": "product",
+      "owner_version": "0.4.2",
+      "contribution_command": ["aikit", "config-contribution", "--json"],
+      "disclosed_at_unix_ms": 0,
+      "reading_digest": null,
+      "reading_digest_covers": "07 §4.5 convention"
+    },
+    "about": "Resolution and composition: which model, skill sources, session provider and provider bindings the composed World may address.",
+    "sections": [
+      {
+        "id": "resolution",
+        "title": "Resolution chain",
+        "settings": [
+          {
+            "setting_ref": "ai-kit:resolution:model.default",
+            "section_ref": "resolution",
+            "title": "Default model",
+            "description": "The model new sessions resolve to when nothing narrower is set.",
+            "value_schema": {
+              "type": "enum",
+              "options": [
+                { "value": "sonnet-current", "title": "Sonnet (current)" },
+                { "value": "sonnet-next", "title": "Sonnet (next)" },
+                { "value": "opus" }
+              ]
+            },
+            "allowed_scopes": [
+              { "scope_kind": "project", "scope_ref": null },
+              { "scope_kind": "session-space", "scope_ref": null }
+            ],
+            "writable": true,
+            "profileable": true,
+            "sensitive": false,
+            "default_semantics": "computed",
+            "effect": {
+              "kind": "session-restart-required",
+              "summary": "New sessions resolve the new model; running sessions keep theirs.",
+              "ref": "aikit explain --json"
+            },
+            "operations": { "validate": true, "plan": true, "apply": true, "reset": true },
+            "native_ref": "aikit:project:profiles:default:model"
+          },
+          {
+            "setting_ref": "ai-kit:resolution:skill-set",
+            "section_ref": "resolution",
+            "title": "Applied skill-set path",
+            "description": "Which skill-set tree the project resolves against.",
+            "value_schema": { "type": "path", "format": "aikit-set-ref" },
+            "allowed_scopes": [{ "scope_kind": "project", "scope_ref": null }],
+            "writable": true,
+            "profileable": false,
+            "sensitive": false,
+            "default": "default",
+            "default_semantics": "constant",
+            "effect": { "kind": "value-change", "summary": "Next resolution uses the named set.", "ref": null },
+            "operations": { "validate": true, "plan": true, "apply": true, "reset": true },
+            "native_ref": "aikit:project:sets:applied"
+          }
+        ]
+      },
+      {
+        "id": "session",
+        "title": "Sessions",
+        "settings": [
+          {
+            "setting_ref": "ai-kit:session:session.provider",
+            "section_ref": "session",
+            "title": "Session provider",
+            "description": "Which session host new AgentSessions are opened on.",
+            "value_schema": {
+              "type": "enum",
+              "options": [
+                { "value": "herdr" },
+                { "value": "tmux" },
+                { "value": "cmux" },
+                { "value": "plain" }
+              ]
+            },
+            "allowed_scopes": [
+              { "scope_kind": "world", "scope_ref": null },
+              { "scope_kind": "project", "scope_ref": null }
+            ],
+            "writable": true,
+            "profileable": true,
+            "sensitive": false,
+            "default": "herdr",
+            "default_semantics": "constant",
+            "effect": {
+              "kind": "session-restart-required",
+              "summary": "Existing sessions keep their host until re-attached.",
+              "ref": null
+            },
+            "operations": { "validate": true, "plan": true, "apply": true, "reset": true },
+            "native_ref": "aikit:sessions:provider:default"
+          },
+          {
+            "setting_ref": "ai-kit:session:provider-instance",
+            "section_ref": "session",
+            "title": "Session provider instance",
+            "description": "The Workcell instance bound as this project's session host.",
+            "value_schema": { "type": "reference", "subject_kind": "workcell.instance" },
+            "allowed_scopes": [{ "scope_kind": "project", "scope_ref": null }],
+            "writable": true,
+            "profileable": false,
+            "sensitive": false,
+            "default_semantics": "computed",
+            "effect": { "kind": "material-effect", "summary": "Prepares or rebinds the material session host.", "ref": "workcell plan --json" },
+            "operations": { "validate": true, "plan": true, "apply": true, "reset": true },
+            "native_ref": "aikit:sessions:binding:instance"
+          }
+        ]
+      },
+      {
+        "id": "sources",
+        "title": "Skill sources",
+        "settings": [
+          {
+            "setting_ref": "ai-kit:sources:pins",
+            "section_ref": "sources",
+            "title": "Skill source pins",
+            "description": "The pinned skill repositories resolution draws from.",
+            "value_schema": {
+              "type": "table",
+              "columns": [
+                { "name": "name", "type": "scalar" },
+                { "name": "url", "type": "path" },
+                { "name": "revision", "type": "scalar" }
+              ]
+            },
+            "allowed_scopes": [{ "scope_kind": "project", "scope_ref": null }],
+            "writable": true,
+            "profileable": false,
+            "sensitive": false,
+            "default_semantics": "computed",
+            "effect": { "kind": "value-change", "summary": "Next resolution reads the new pins.", "ref": "aikit sources list --json" },
+            "operations": { "validate": true, "plan": true, "apply": true, "reset": true },
+            "native_ref": "aikit:sources:pins"
+          }
+        ]
+      },
+      {
+        "id": "providers",
+        "title": "Model providers",
+        "settings": [
+          {
+            "setting_ref": "ai-kit:providers:credentials.anthropic",
+            "section_ref": "providers",
+            "title": "Anthropic credential reference",
+            "description": "Which owner-native credential the Anthropic provider uses. Presence and reference only; the material is mutated owner-natively.",
+            "value_schema": { "type": "secret" },
+            "allowed_scopes": [{ "scope_kind": "world", "scope_ref": null }],
+            "writable": true,
+            "profileable": true,
+            "sensitive": true,
+            "default_semantics": "none",
+            "effect": { "kind": "provider-reconnect-required", "summary": "Providers reconnect with the referenced credential.", "ref": null },
+            "operations": { "validate": true, "plan": true, "apply": true, "reset": true },
+            "native_ref": "aikit:credentials:anthropic-key"
+          }
+        ]
+      }
+    ],
+    "operations": {
+      "transport": "cli/v1",
+      "validate": { "availability": "disclosed", "reason": null },
+      "plan": { "availability": "disclosed", "reason": null },
+      "apply": { "availability": "disclosed", "reason": null },
+      "reset": { "availability": "disclosed", "reason": null }
+    },
+    "availability": { "state": "available", "reason": null },
+    "degradations": [],
+    "obligations": []
+  }
+}

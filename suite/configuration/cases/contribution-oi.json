@@ -1,0 +1,88 @@
+{
+  "fixture": "contribution-oi",
+  "kind": "contribution",
+  "contribution": {
+    "schema": "oi.configuration-contribution/v1",
+    "contract_revision": "configuration-plane/contribution.1",
+    "owner": {
+      "owner_ref": "oi",
+      "owner_kind": "oi",
+      "owner_version": "suite-pre-local.2",
+      "contribution_command": ["oi", "config-contribution", "--json"],
+      "disclosed_at_unix_ms": 0,
+      "reading_digest": null,
+      "reading_digest_covers": "07 §4.5 convention"
+    },
+    "about": "The composition layer's own configuration: ground binding, managed root, and verification behaviour of the whole World.",
+    "sections": [
+      {
+        "id": "composition",
+        "title": "World composition",
+        "settings": [
+          {
+            "setting_ref": "oi:composition:ground-binding",
+            "section_ref": "composition",
+            "title": "Personal ground binding",
+            "description": "Where the World's authored ground (Central) is bound.",
+            "value_schema": { "type": "path", "format": "directory" },
+            "allowed_scopes": [{ "scope_kind": "world", "scope_ref": null }],
+            "writable": true,
+            "profileable": true,
+            "sensitive": false,
+            "default_semantics": "computed",
+            "effect": { "kind": "value-change", "summary": "The World reads a different authored ground.", "ref": null },
+            "operations": { "validate": true, "plan": true, "apply": true, "reset": true },
+            "native_ref": "oi:composition:personal_ground"
+          },
+          {
+            "setting_ref": "oi:composition:managed-root",
+            "section_ref": "composition",
+            "title": "Managed root",
+            "description": "Where installed product builds and receipts live. Set by install, not by profiles.",
+            "value_schema": { "type": "path", "format": "directory" },
+            "allowed_scopes": [{ "scope_kind": "machine", "scope_ref": null }],
+            "writable": false,
+            "profileable": false,
+            "sensitive": false,
+            "default_semantics": "computed",
+            "effect": { "kind": "material-effect", "summary": "Relocating the managed root is an install operation, not a setting write.", "ref": "oi install --help" },
+            "operations": { "validate": true, "plan": false, "apply": false, "reset": false },
+            "native_ref": "oi:composition:managed_root"
+          }
+        ]
+      },
+      {
+        "id": "verify",
+        "title": "Verification",
+        "settings": [
+          {
+            "setting_ref": "oi:verify:verify.before-run",
+            "section_ref": "verify",
+            "title": "Verify before run",
+            "description": "Whether ordinary runs verify the composed World first.",
+            "value_schema": { "type": "boolean" },
+            "allowed_scopes": [{ "scope_kind": "world", "scope_ref": null }],
+            "writable": true,
+            "profileable": true,
+            "sensitive": false,
+            "default": true,
+            "default_semantics": "constant",
+            "effect": { "kind": "value-change", "summary": "Applies to the next ordinary run.", "ref": null },
+            "operations": { "validate": true, "plan": true, "apply": true, "reset": true },
+            "native_ref": "oi:verify:before_run"
+          }
+        ]
+      }
+    ],
+    "operations": {
+      "transport": "cli/v1",
+      "validate": { "availability": "disclosed", "reason": null },
+      "plan": { "availability": "disclosed", "reason": null },
+      "apply": { "availability": "disclosed", "reason": null },
+      "reset": { "availability": "disclosed", "reason": null }
+    },
+    "availability": { "state": "available", "reason": null },
+    "degradations": [],
+    "obligations": []
+  }
+}
