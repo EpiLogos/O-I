@@ -338,6 +338,8 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
   const inspect = useCallback(() => ({
     presentations: [...presentations.current.values()].map((record) => ({ id: record.id, plane: record.plane })),
     engine: surface ? surface.capabilities() : null,
+    /** Whether the window surface's own clock is held (lease pause law). */
+    paused: surfaceRef.current ? surfaceRef.current.isPaused : null,
     targets: expressionTargetIds(),
     cues: cueLog.current,
     overlay: overlayRef.current ? overlayRef.current.inspect() : null,
