@@ -38,6 +38,16 @@ export const AGENCY_DEPTHS: readonly AgencyDepth[] = [
  * ('test', 'test:silent') — the single synthetic allowance of U0.3b. No fake
  * file trees, no invented owner semantics (law 4, law 7).
  */
+/** A retained owner reading for one explicitly chosen Git comparison. It is
+ * presentation state only: the desktop never derives or updates Git facts. */
+export interface DevelopmentFieldViewSnapshot {
+  project: string;
+  cwd: string;
+  requestedBase: string;
+  resolvedBase?: string;
+  reading: import("../kernel/types").DevelopmentFieldReading;
+}
+
 export interface SurfaceBinding {
   id: SurfaceId;
   kind: string;
@@ -60,7 +70,7 @@ export interface SurfaceBinding {
     };
   };
   flow?: {flowRef:string;path:string};
-  view?: {developmentField?:{cwd:string;baseRevision?:string};factory?: {statePath:string;centralProjectRef?:string;projectRef?:string;runRef?:string;telemetryRef?:string;expectedRevision?:number};graphOrigin?:string;knowledgePlane?: "graph"|"page";encounterReturnSurfaceId?:string;encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect"};
+  view?: {developmentField?:{cwd:string;baseRevision?:string;snapshot?:DevelopmentFieldViewSnapshot;snapshotUnavailable?:string};factory?: {statePath:string;centralProjectRef?:string;projectRef?:string;runRef?:string;telemetryRef?:string;expectedRevision?:number};graphOrigin?:string;knowledgePlane?: "graph"|"page";encounterReturnSurfaceId?:string;encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect"};
   location?: import("../kernel/types").CentralLocation;
 }
 

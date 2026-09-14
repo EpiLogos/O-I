@@ -1,0 +1,17 @@
+PASS Actual owner exact-base reading is retainable
+PASS Exact decoder returns the actual owner reading
+PASS Rejects a snapshot for another display Project: comparison identity does not match this Surface
+PASS Rejects a snapshot for another worktree identity: comparison identity does not match this Surface
+PASS Rejects a snapshot for another requested comparison base: comparison identity does not match this Surface
+PASS Rejects a resolved base that differs from the retained owner diff: resolved base does not match the retained native diff
+PASS Rejects an oversized retained native patch: exceeds the 65536-byte presentation bound
+PASS Rejects a corrupt native repository field: owner Git reading is malformed
+PASS Keeps owner ProjectRef distinct from the desktop display Project
+PASS Retains an owner-reported worktree mismatch under the exact requested Surface identity
+PASS Git projection detects the retained owner/request worktree mismatch
+PASS A retained mismatched reading cannot be treated as a matching-worktree patch
+PASS Matching outer view retains the actual reviewed snapshot
+PASS Rejects a valid snapshot under a wrong outer worktree
+PASS Rejects a valid snapshot under a wrong outer comparison base
+PASS Retains a bounded recovery notice without an old snapshot
+PASS Rejects an oversized recovery notice

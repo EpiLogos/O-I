@@ -5,6 +5,7 @@
  */
 
 import {paneById} from "./composition";
+import {developmentFieldSnapshotError, exactDevelopmentFieldSnapshot} from "./development-field-snapshot";
 import { contains, groupsOf } from "./engine";
 import {
   AGENCY_DEPTHS,
@@ -65,8 +66,27 @@ function validBinding(raw: unknown): SurfaceBinding | null {
     : undefined;
   if (o.kind === "terminal" && attachmentRaw !== undefined && !attachment) return null;
   const view=o.view as SurfaceBinding["view"];
-  const developmentField=o.kind==="development-field"&&view?.developmentField&&typeof view.developmentField.cwd==="string"&&view.developmentField.cwd.startsWith("/")?{cwd:view.developmentField.cwd,baseRevision:typeof view.developmentField.baseRevision==="string"?view.developmentField.baseRevision:undefined}:undefined;
-  if(o.kind==="development-field"&&(!developmentField||typeof o.project!=="string"))return null;
+  const rawDevelopmentField = o.kind === "development-field" && view?.developmentField && typeof view.developmentField === "object"
+    ? view.developmentField as Record<string, unknown>
+    : undefined;
+  const developmentField = rawDevelopmentField && typeof rawDevelopmentField.cwd === "string" && rawDevelopmentField.cwd.startsWith("/")
+    ? {cwd: rawDevelopmentField.cwd, baseRevision: typeof rawDevelopmentField.baseRevision === "string" ? rawDevelopmentField.baseRevision : undefined}
+    : undefined;
+  if(o.kind === "development-field" && (!developmentField || typeof o.project !== "string")) return null;
+  const developmentIdentity = developmentField ? {project: o.project as string, cwd: developmentField.cwd, requestedBase: developmentField.baseRevision ?? "HEAD"} : undefined;
+  const developmentSnapshot = developmentIdentity && rawDevelopmentField?.snapshot !== undefined
+    ? exactDevelopmentFieldSnapshot(rawDevelopmentField.snapshot, developmentIdentity)
+    : undefined;
+  const suppliedSnapshotError = typeof rawDevelopmentField?.snapshotUnavailable === "string" && rawDevelopmentField.snapshotUnavailable.trim()
+    ? rawDevelopmentField.snapshotUnavailable
+    : undefined;
+  // Keep the binding even when the retained response cannot be trusted. A
+  // marker blocks an automatic current-checkout read, so reload never presents
+  // a different dirty patch as the one the person reviewed.
+  const snapshotUnavailable = developmentIdentity && rawDevelopmentField?.snapshot !== undefined && !developmentSnapshot
+    ? `The retained native Git reading cannot be restored: ${developmentFieldSnapshotError(rawDevelopmentField.snapshot, developmentIdentity) ?? "invalid owner response"}. Refresh explicitly to read the current worktree.`
+    : suppliedSnapshotError;
+  const retainedDevelopmentField = developmentField && {...developmentField, ...(developmentSnapshot ? {snapshot: developmentSnapshot} : {}), ...(snapshotUnavailable ? {snapshotUnavailable} : {})};
   const encounterPlane=view?.encounterPlane;
   const encounterReturnSurfaceId=o.kind==="encounter"&&typeof view?.encounterReturnSurfaceId==="string"?view.encounterReturnSurfaceId:undefined;
   const rawFactory=view?.factory;
@@ -79,7 +99,7 @@ function validBinding(raw: unknown): SurfaceBinding | null {
       expectedRevision:typeof rawFactory.expectedRevision==="number"&&Number.isSafeInteger(rawFactory.expectedRevision)&&rawFactory.expectedRevision>=0?rawFactory.expectedRevision:undefined}:undefined;
   if(o.kind==="factory-handoff"&&(!factory||factory.runRef!==o.ref))return null;
   if(o.kind==="factory-material"&&(!factory||!factory.runRef?.trim()||(rawFactory?.expectedRevision!==undefined&&factory.expectedRevision===undefined)))return null;
-  return { terminal:o.kind==="terminal"?{cwd:typeof terminalRaw?.cwd==="string"?terminalRaw.cwd:undefined,attachment}:undefined, flow:o.kind==="flow"?flow:undefined, browser:o.kind==="browser"?{url:typeof (o.browser as {url?:unknown})?.url==="string"?(o.browser as {url:string}).url:""}:undefined, view:developmentField?{developmentField}:factory ? {factory} : (encounterReturnSurfaceId||encounterPlane&&["Conversation","Activity","Context","Inspect"].includes(encounterPlane))?{encounterPlane,encounterReturnSurfaceId}:undefined, encounter, location, address, project: o.project as string | undefined, id: o.id, kind: o.kind, ref: o.ref as string | undefined, title: o.title };
+  return { terminal:o.kind==="terminal"?{cwd:typeof terminalRaw?.cwd==="string"?terminalRaw.cwd:undefined,attachment}:undefined, flow:o.kind==="flow"?flow:undefined, browser:o.kind==="browser"?{url:typeof (o.browser as {url?:unknown})?.url==="string"?(o.browser as {url:string}).url:""}:undefined, view:retainedDevelopmentField?{developmentField:retainedDevelopmentField}:factory ? {factory} : (encounterReturnSurfaceId||encounterPlane&&["Conversation","Activity","Context","Inspect"].includes(encounterPlane))?{encounterPlane,encounterReturnSurfaceId}:undefined, encounter, location, address, project: o.project as string | undefined, id: o.id, kind: o.kind, ref: o.ref as string | undefined, title: o.title };
 }
 
 function validPane(raw: unknown, surfaces: Record<SurfaceId, SurfaceBinding>): Pane | null {

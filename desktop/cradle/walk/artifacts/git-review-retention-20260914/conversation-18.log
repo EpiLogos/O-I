@@ -1,0 +1,18 @@
+PASS Local Draft retains its unsent sentinel before conversation placement
+PASS Actual conversation has one central composer
+PASS Only one visible conversation composer is mounted
+PASS Activity remains complementary and does not duplicate the composer
+PASS Context remains complementary and does not duplicate the composer
+PASS Inspect remains complementary and does not duplicate the composer
+PASS Inspect retains the exact native AgentSession identity
+PASS Inspect retains the exact native SessionSpace identity
+PASS Returning Conversation to the side restores the same local Draft text
+PASS Returned side conversation leaves the central Draft as the single central subject
+PASS Returned side conversation still has one visible composer
+PASS Returned conversation keeps its canonical native session identities
+PASS Factory promotes the same conversation centrally on the explicit Conversation command
+PASS Factory retains the existing complementary result desk in the right region
+PASS Factory conversation promotion does not duplicate the composer
+PASS Leaving Factory restores the original local Draft
+PASS The local Draft sentinel is cleared before the walk exits
+PASS No application page errors

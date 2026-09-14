@@ -42,3 +42,5 @@ The production build and native Linux build passed. The rebuilt native app resto
 The real public Central catalogue now crosses the read-only O:I `central_actions_read` operation. It returned 150 owner descriptors, with no `agent-profile.express`. The intent form is therefore omitted. This catalogue does not grant authority. An independent native kernel test matched the public catalogue, preserved the snapshot and emitted no receipts (1 passed). Kernel all-target tests passed (32, with other owner-gated tests explicitly ignored); all-target clippy passed with warnings denied. Production Agents capability-gate walk passed (11); final Git document walk passed (13). Together the seven recorded browser walks contain 103 checks.
 
 This is a tested presentation/consumer increment; the missing native joins above still prevent complete #289 acceptance. No full Factory execution, all-harness acceptance or H claim is made.
+
+The subsequent Git-retention fix and expanded 34-check walk are recorded in [the follow-up receipt](../git-review-retention-20260914/receipt.md). The 13-check Git log above retains the original increment's standing.
