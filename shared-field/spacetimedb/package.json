@@ -6,7 +6,14 @@
     "acceptance": "tsx security-live-acceptance-v4-bootstrap.ts",
     "acceptance:a2a": "tsx a2a-phase2-ingress-live-acceptance.ts",
     "acceptance:watch-notify": "tsx watch-notification-live-acceptance.ts",
-    "acceptance:w11-return": "tsx application-return-live-acceptance.ts"
+    "acceptance:explore-surface": "tsx explore-surface-live-acceptance.ts",
+    "acceptance:w11-return": "tsx application-return-live-acceptance.ts",
+    "publish:world": "tsx publish-world.ts",
+    "acceptance:two-world": "tsx two-world-live-acceptance.ts",
+    "deploy:hosted": "./deploy.sh hosted",
+    "deploy:local": "./deploy.sh local --clear",
+    "acceptance:native-action": "node ../scripts/native-action-live-acceptance.mjs",
+    "deploy:hosted-acceptance": "./deploy.sh hosted-acceptance"
   },
   "dependencies": {
     "spacetimedb": "2.8.1"
