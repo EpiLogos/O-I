@@ -1,3 +1,4 @@
+import {GitWorkingState} from "../returns/GitWorkingState";
 import {FactoryHandoffSurface} from "../contributions/factory/FactoryHandoffSurface";
 import {ProjectNowSurface} from "../contributions/project-now/ProjectNowSurface";
 import {AgentRosterSurface} from "../contributions/agents";
@@ -20,6 +21,8 @@ import {FactoryComposition} from "../contributions/factory/FactoryComposition";
  *   absence: no encounters are fabricated before the agency vertical mounts.
  */
 
+import {createPortal} from "react-dom";
+import {paneById,withoutPane} from "./composition";
 import { Glyph } from "../workspace/Glyph";
 import { Fragment, useEffect, useLayoutEffect } from "react";
 import { useKernel } from "../kernel/KernelProvider";
@@ -37,6 +40,8 @@ import { contains, groupsOf, renderOrder } from "./engine";
 import type { ActionArg, LayoutState, Pane, SurfaceId, SurfaceBinding } from "./types";
 
 export interface WorkbenchProps {
+  returnedHost?: HTMLElement | null;
+  accompanyingRef?: string;
   onOpenBinding:(binding:SurfaceBinding)=>Promise<void>;
   onOpenFile:(location:import("../kernel/types").CentralLocation)=>Promise<void>;
   onOpenWorkingSurface:(selection:import("../encounter/working-surface").WorkingSurfaceSelection)=>Promise<void>;
@@ -57,7 +62,7 @@ export interface WorkbenchProps {
 export function Workbench(props: WorkbenchProps) {
   const { state, menuOpen } = props;
   const kernel = useKernel();
-  if (!state.root) return null;
+
 
   // A pointer entering a rendered material iframe crosses the document
   // boundary before React can observe it. The browser focuses the owning
@@ -117,10 +122,15 @@ export function Workbench(props: WorkbenchProps) {
     return () => cancelAnimationFrame(frame);
   }, [state.focusedGroupId, groupsOf(state.root).find(g => g.id === state.focusedGroupId)?.active, state.surfaces[groupsOf(state.root).find(g => g.id === state.focusedGroupId)?.active ?? ""]?.title, state.maximizedGroupId, menuOpen]);
 
+  if (!state.root) return null;
+  const returned=state.composition?paneById(state.root,state.composition.returnPaneId):null;
+  const centre=state.composition?withoutPane(state.root,state.composition.returnPaneId):state.root;
+  const dirty=(ref:string|undefined)=>!!ref&&!!kernel.snapshot.buffers[ref]?.dirty;
   return (
     <div className="workbench">
       <main className="surface-host" aria-label="Canvas">
-        <PaneNode pane={state.root} {...props} kernelDirty={(ref) => !!ref && !!kernel.snapshot.buffers[ref]?.dirty} />
+        {centre&&<PaneNode pane={centre} {...props} kernelDirty={dirty} />}
+        {returned&&props.returnedHost&&createPortal(<PaneNode pane={returned} {...props} kernelDirty={dirty}/>,props.returnedHost)}
       </main>
     </div>
   );
@@ -296,7 +306,7 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
         }}
 
       >
-        {activeBinding ? <SurfaceBody key={activeBinding.id} foreground={focused} binding={activeBinding} onOpenEncounter={props.onOpenEncounter} onOpenWorkingSurface={props.onOpenWorkingSurface} onOpenFile={props.onOpenFile} onOpenBinding={props.onOpenBinding} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} /> : <p className="source-note">{state.detached?.some(d=>d.groupId===group.id)?"This view is open in a native window. Close that window to re-dock it here.":"Move a tab here, or open a source or wiki with +."}</p>}
+        {activeBinding ? <SurfaceBody key={activeBinding.id} foreground={focused} binding={activeBinding} accompanyingRef={props.accompanyingRef} onOpenEncounter={props.onOpenEncounter} onOpenWorkingSurface={props.onOpenWorkingSurface} onOpenFile={props.onOpenFile} onOpenBinding={props.onOpenBinding} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} /> : <p className="source-note">{state.detached?.some(d=>d.groupId===group.id)?"This view is open in a native window. Close that window to re-dock it here.":"Move a tab here, or open a source or wiki with +."}</p>}
       </div>
       <footer className="pane-status pane-footer" aria-label={focused ? "Active pane" : "Pane status"} />
     </section>
@@ -306,11 +316,12 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
 /** The surface body by kind: real owner surfaces where they exist (U0.4:
  * 'source', 'sources'), the clearly-named test card otherwise. */
 function SurfaceBody({
-  binding,onView,foreground,onOpenEncounter,onOpenWorkingSurface,onOpenFile,onOpenBinding,
+  binding,onView,foreground,accompanyingRef,onOpenEncounter,onOpenWorkingSurface,onOpenFile,onOpenBinding,
   openSource, openKnowledge,
 }: {
   binding: import("./types").SurfaceBinding;
   foreground: boolean;
+  accompanyingRef?:string;
   onOpenFile:WorkbenchProps["onOpenFile"];
   onOpenWorkingSurface:WorkbenchProps["onOpenWorkingSurface"];
   onOpenBinding:WorkbenchProps["onOpenBinding"];
@@ -319,10 +330,12 @@ function SurfaceBody({
   openKnowledge: WorkbenchProps["openKnowledge"];
   openSource: (source: ListedSource) => void;
 }) {
+  if(binding.kind==="development-field")return binding.project&&binding.view?.developmentField?<GitWorkingState project={binding.project} cwd={binding.view.developmentField.cwd} baseRevision={binding.view.developmentField.baseRevision}/>:<p role="alert">The working changes Surface has no disclosed Project location.</p>;
   if(binding.kind==="factory-handoff")return binding.view?.factory?.statePath&&binding.ref?<FactoryHandoffSurface statePath={binding.view.factory.statePath} runRef={binding.ref}/>:<p role="alert">The handoff Surface has no retained Factory source.</p>;
   if(binding.kind==="project-now")return binding.project&&binding.ref?<ProjectNowSurface project={binding.project} projectRef={binding.ref} onOpenFile={onOpenFile}/>:<p role="status">Open NOW from a Project.</p>;
   if(binding.kind==="observatory")return <SessionObservatory binding={binding} onOpenWorkingSurface={onOpenWorkingSurface}/>;
   if(binding.kind==="agents")return binding.project&&binding.ref ? <AgentRosterSurface project={binding.project} projectRef={binding.ref} onOpenEncounter={onOpenEncounter}/> : <p role="status">Open Agents from a Project.</p>;
+  if(binding.kind==="encounter"&&binding.ref===accompanyingRef)return <div className="surface-accompanying-host" data-accompanying-host={binding.id}/>;
   if(binding.kind==="encounter")return <EncounterSurface key={binding.id} binding={binding} onView={view=>onView(binding.id,view)}/>;
   if (binding.kind === "terminal") return <TerminalSurface binding={binding} />;
   if (binding.kind === "flow") return <FlowSurface binding={binding} />;
@@ -478,7 +491,7 @@ export function ArrangementActions({state, execute, openFrameMenu, nativeWindows
   const props = {state, execute, openFrameMenu, nativeWindows};
   const group = groupsOf(state.root).find(g => g.id === state.focusedGroupId);
   const active = group?.active ? state.surfaces[group.active] : undefined;
-  const detachable = !!active && ["source", "knowledge", "file", "encounter"].includes(active.kind);
+  const detachable = !!active && ["source", "knowledge", "file", "encounter", "factory-handoff", "development-field"].includes(active.kind);
   return <>
         <button aria-label="Split active surface right" title="Split right (⌘D)" disabled={!active} onClick={() => props.execute("surface.split-right")}><Glyph name="columns"/></button>
         <button aria-label="Split active surface down" title="Split down (⌘⇧D)" disabled={!active} onClick={() => props.execute("surface.split-down")}><Glyph name="rows"/></button>

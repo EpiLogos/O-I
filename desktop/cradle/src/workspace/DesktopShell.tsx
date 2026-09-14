@@ -7,7 +7,7 @@ import type { AgencyDepth, LayoutState } from "../surface/types";
 import type { Workspace } from "./store";
 import "./shell.css";
 import { Glyph } from "./Glyph";
-import { focusGroup, groupsOf } from "../surface/engine";
+import { focusGroup, groupsOf, paneById } from "../surface/engine";
 
 type Side = "left" | "right";
 interface Props {
@@ -23,6 +23,7 @@ interface Props {
   right?: ReactNode;
   sessionIngress?: ReactNode;
   accompanyingTarget?: string;
+  returnedHost?: (node:HTMLDivElement|null)=>void;
   namingRequest: "create" | "rename" | null; onNamingHandled: () => void;
   error: string | null; navigator: (workspaceSelector: ReactNode) => ReactNode; children: ReactNode;
 }
@@ -71,11 +72,13 @@ export function DesktopShell(p: Props) {
     window.addEventListener('blur', closeMenus);
     return () => { window.removeEventListener('pointerdown', closeMenus, true); window.removeEventListener('keydown', closeMenus, true); window.removeEventListener('blur', closeMenus); };
   }, []);
-  const [returnedDepth, setReturnedDepth] = useState<AgencyDepth>("panel");
-  const [returnedWidth, setReturnedWidth] = useState(320);
-  const composed = !!p.accompanyingTarget;
-  const l = composed ? {...p.layout, rightDepth: returnedDepth, rightWidth: returnedWidth} : p.layout;
-  const intended = (side: Side) => side === "left" ? l.agencyDepth : l.rightDepth ?? "strip";
+  const composed = !!p.layout.composition;
+  const l = p.layout;
+  const returnedMaximized = !!l.composition && !!l.maximizedGroupId
+    && groupsOf(paneById(l.root, l.composition.returnPaneId)).some(group => group.id === l.maximizedGroupId);
+  // This is presentation derived from the maximized group. It never writes
+  // rightDepth, so restoring maximize returns to the persisted side geometry.
+  const intended = (side: Side) => side === "left" ? l.agencyDepth : returnedMaximized ? "full" : l.rightDepth ?? "strip";
   // Responsive tiers (brief FND-01 A4): ≤1000px snaps the sidebar/agent to
   // their compact widths so both can stay open together (the study reference
   // at 900×760 keeps both; production used to starve the room and collapse
@@ -132,8 +135,7 @@ export function DesktopShell(p: Props) {
     return () => window.removeEventListener("keydown", onKey, true);
   }, [width < 640]);
   const setDepth = (side: Side, value: AgencyDepth) => {
-    if (side === "right" && composed) setReturnedDepth(value);
-    else p.setLayout(s => ({ ...s, [side === "left" ? "agencyDepth" : "rightDepth"]: value }));
+    p.setLayout(s => ({ ...s, [side === "left" ? "agencyDepth" : "rightDepth"]: value }));
   };
   const toggle = (side: Side) => setDepth(side, intended(side) === "panel" ? "collapsed" : "panel");
   const toggleFull = (side: Side) => {
@@ -159,8 +161,7 @@ export function DesktopShell(p: Props) {
   });
   const clampWidth = (side: Side, value: number) => Math.max(side === "left" ? 200 : 240, Math.min(side === "left" ? Math.min(600,overlayLeft?width-40:width-440-(rightOpen&&!overlayRight?rightWidth:0)) : Math.min(720,overlayRight?width-40:width-440-(leftOpen?leftWidth:0)), value));
   const resize = (side: Side, value: number) => {
-    if (side === "right" && composed) setReturnedWidth(clampWidth(side, value));
-    else p.setLayout(s => ({ ...s, [side === "left" ? "leftWidth" : "rightWidth"]: clampWidth(side, value) }));
+    p.setLayout(s => ({ ...s, [side === "left" ? "leftWidth" : "rightWidth"]: clampWidth(side, value) }));
   };
   const separator = (side: Side) => <div className={`region-resizer ${side}`} role="separator" aria-label={`Resize ${side} region`} aria-orientation="vertical"
     aria-valuenow={side === "left" ? l.leftWidth ?? 240 : l.rightWidth ?? 320}
@@ -240,7 +241,7 @@ export function DesktopShell(p: Props) {
 
         {p.children}
       </main>
-      <aside className={`desktop-side right depth-${right}`} data-region="right" data-depth={right} data-overlay={overlayRight && right === "panel"} data-focus-ref={ref} aria-hidden={!rightOpen} aria-label="Agent and inspector region">
+      <aside className={`desktop-side right depth-${right}`} data-region="right" data-depth={right} data-overlay={overlayRight && right === "panel"} data-focus-ref={ref} aria-hidden={!rightOpen} aria-label={composed?"Returned material region":"Agent and inspector region"}>
         {<>
           {right === "panel" && separator("right")}
           <div className="desktop-side-content">
@@ -256,7 +257,7 @@ export function DesktopShell(p: Props) {
             <div className="inspector-body">
               {plane === "system" ? <SystemPanel/> : plane === "history" ? p.subject.history ?? <p>No history operation is available for this subject.</p> : p.subject.context}
             </div>
-          </>}<div className="shell-return-host" data-shell-return-host hidden={!composed}/></div>
+          </>}<div ref={p.returnedHost} className="shell-return-host" data-shell-return-host hidden={!composed}/></div>
         </>}
       </aside>
     </div>

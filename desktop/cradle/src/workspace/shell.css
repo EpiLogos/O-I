@@ -409,9 +409,6 @@
 .world-scroll{flex:1;min-height:0;overflow:auto}
 .shell-topbar .shell-region-toggle{transform:translateY(2px)}
 .desktop-regions[data-right-full="true"] .desktop-centre{visibility:hidden;pointer-events:none}
-@media(min-width:760px) and (pointer:fine){
- .desktop-shell .desktop-side.right.depth-full{top:-24px;padding-top:24px;box-sizing:border-box}
-}
 .desktop-shell:has(.desktop-regions[data-right-full="true"]) .shell-topbar{z-index:calc(var(--oi-z-drawer) + 2)}
 
 /* A retained Surface moves into an existing host without remounting its body. */
@@ -423,9 +420,22 @@
 
 
 
-.project-work-links{display:flex;gap:12px;padding:6px 0 10px}
-.project-work-links button{font-size:var(--oi-shell-type-nav);color:var(--oi-muted-2)}
+.project-work-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 12px;padding:6px 0 10px}
+.project-work-links button{font-size:var(--oi-shell-type-nav);color:var(--oi-muted-2);text-align:left;white-space:nowrap}
 
 /* W6: current session ingress remains a quiet footer signal, never a top strip. */
 .workspace-footer-edge:has(.session-ingress){height:24px;flex:none}
 .workspace-footer-edge:has(.session-ingress) .canvas-arrangement{opacity:1;transform:none;pointer-events:auto}
+
+/* Compositions project existing Workbench panes into the shell's right host. */
+.shell-return-host:not([hidden]) {display:flex;flex:1;min-width:0;min-height:0;height:100%;overflow:hidden;}
+.shell-return-host > .pane {min-width:0;min-height:0;flex:1;}
+.surface-accompanying-host {display:flex;flex:1;min-height:0;height:100%;}
+.surface-accompanying-host > .retained-region-surface {flex:1;min-width:0;}
+
+.composition-actions {display:flex;align-items:center;gap:12px;flex:none;white-space:nowrap;}
+.composition-actions button {white-space:nowrap;min-height:24px;color:var(--oi-ink);font-size:var(--oi-shell-type-nav);background:none;border:0;padding:2px 0;}
+@media(min-width:760px) and (pointer:fine) {
+  .desktop-shell:has(.shell-return-host:not([hidden])) .desktop-side.right {top:-24px;}
+  .shell-return-host .tab-strip {padding-right:38px;}
+}

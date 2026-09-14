@@ -7,10 +7,14 @@
 .factory-runs-heading p, .factory-runs-empty, .factory-run-list p { color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); line-height: 1.55; }
 .factory-runs-heading p { margin: 4px 0 0; }
 .factory-source-picker { font-size: var(--oi-shell-type-nav); color: var(--oi-muted-2); }
+.factory-source-picker[open] { width: min(520px, 100%); min-width: 0; }
 .factory-source-picker summary { cursor: pointer; padding: 4px 0; }
-.factory-source-picker form { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(160px, 1fr) auto; gap: 8px; align-items: end; margin-top: 8px; min-width: min(620px, 72vw); }
-.factory-source-picker label { display: grid; gap: 4px; font-size: var(--oi-shell-type-meta); }
-.factory-source-picker input { min-width: 0; }
+.factory-source-picker form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-items: end; margin-top: 8px; width: min(520px, 100%); min-width: 0; }
+.factory-source-picker label { display: grid; gap: 6px; font-size: var(--oi-shell-type-nav); }
+.factory-source-picker label:first-child { grid-column: 1 / -1; }
+.factory-source-picker input { min-width: 0; width: 100%; min-height: 32px; padding: 6px 8px; font-size: var(--oi-shell-type-ui); color: var(--oi-ink); background: var(--oi-canvas-ground); border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: 4px; }
+.factory-source-picker button, .factory-runs-heading > button { min-height: 30px; padding: 6px 10px; font-size: var(--oi-shell-type-nav); border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: 4px; }
+.factory-source-picker form > button { justify-self: start; }
 .factory-owner-refusal { margin: 12px 20px; color: var(--oi-danger, #a33); font-size: var(--oi-shell-type-nav); }
 .factory-runs-empty { margin: 24px 20px; max-width: 56ch; }
 .factory-runs-layout { display: grid; grid-template-columns: minmax(235px, 29%) minmax(0, 1fr); flex: 1; min-height: 0; }
@@ -25,3 +29,21 @@
 .factory-journey-row button.is-selected { border-left: 2px solid var(--oi-accent); background: var(--oi-wash); }
 .factory-build-centre { min-width: 0; overflow: auto; }
 @media (max-width: 720px) { .factory-runs-heading { display: grid; } .factory-source-picker form { grid-template-columns: 1fr; min-width: 0; } .factory-runs-layout { grid-template-columns: 1fr; } .factory-run-list { max-height: 38vh; border-right: 0; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); } }
+
+.factory-handoff-surface { padding: 24px; overflow: auto; height: 100%; font-size: var(--oi-shell-type-ui); line-height: 1.6; }
+.factory-handoff-surface > header h1 { margin: 0 0 20px; font-size: var(--oi-shell-type-title); font-weight: 550; }
+.factory-handoff-surface > p { max-width: 64ch; font-size: var(--oi-shell-type-body); color: var(--oi-ink); }
+
+/* O:I controls live in the selected Build header; this keeps Runs from
+ * adding a second title band above Factory's semantic/live/trajectory view. */
+.factory-build .fb-header-controls { margin-left: auto; min-width: 0; }
+.factory-build-controls { display: flex; align-items: center; justify-content: flex-end; gap: 8px; color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); }
+.factory-build-controls > button { min-height: 28px; padding: 4px 8px; color: var(--oi-ink); background: transparent; border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: 4px; font: inherit; }
+.factory-build-controls .factory-source-picker { color: inherit; }
+.factory-build-controls .factory-source-picker[open] { position: relative; z-index: 5; }
+.factory-build-controls .factory-source-picker form { position: absolute; right: 0; z-index: 6; padding: 10px; border: var(--oi-shell-edge) solid var(--oi-hairline); background: var(--oi-surface); box-shadow: 0 8px 24px rgb(0 0 0 / .18); }
+.factory-handoff-standing { color: var(--oi-muted-2); white-space: nowrap; }
+@media (max-width: 860px) { .factory-build .fb-header-controls { width: 100%; margin-left: 0; } .factory-build-controls { justify-content: flex-start; flex-wrap: wrap; } .factory-build-controls .factory-source-picker form { right: auto; left: 0; } }
+.factory-runs-control-row { display: flex; align-items: center; gap: 8px; margin: 0 20px 16px; color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); }
+.factory-handoff-standing { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+.factory-handoff-standing button, .factory-handoff-surface button { min-height: 28px; padding: 4px 8px; color: var(--oi-ink); background: transparent; border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: 4px; font: inherit; }

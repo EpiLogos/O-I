@@ -4,6 +4,7 @@
  * foreign payload degrades honestly to austere rest — never a guess (law 7).
  */
 
+import {paneById} from "./composition";
 import { contains, groupsOf } from "./engine";
 import {
   AGENCY_DEPTHS,
@@ -33,7 +34,7 @@ function validBinding(raw: unknown): SurfaceBinding | null {
   // `draft` is unplaced writing: it deliberately carries no owner ref, and it
   // must survive a relaunch — the writing lives beside it under the same
   // surface id, and dropping the binding would orphan it.
-  if (o.kind !== "source" && o.kind !== "sources" && o.kind !== "knowledge" && o.kind !== "file" && o.kind !== "encounter" && o.kind !== "system" && o.kind !== "browser" && o.kind !== "terminal" && o.kind !== "flow" && o.kind !== "draft" && o.kind !== "blank" && o.kind !== "factory" && o.kind !== "agents" && o.kind !== "observatory" && o.kind !== "instrument" && o.kind !== "project-now" && o.kind !== "factory-handoff") return null;
+  if (o.kind !== "source" && o.kind !== "sources" && o.kind !== "knowledge" && o.kind !== "file" && o.kind !== "encounter" && o.kind !== "system" && o.kind !== "browser" && o.kind !== "terminal" && o.kind !== "flow" && o.kind !== "draft" && o.kind !== "blank" && o.kind !== "factory" && o.kind !== "agents" && o.kind !== "observatory" && o.kind !== "instrument" && o.kind !== "project-now" && o.kind !== "factory-handoff" && o.kind !== "development-field") return null;
   if (o.ref !== undefined && typeof o.ref !== "string") return null;
   if(o.kind==="factory-handoff"&&(typeof o.ref!=="string"||typeof o.project!=="string"))return null;
   if (o.kind === "project-now" && (typeof o.ref!=="string"||typeof o.project!=="string"))return null;
@@ -64,6 +65,8 @@ function validBinding(raw: unknown): SurfaceBinding | null {
     : undefined;
   if (o.kind === "terminal" && attachmentRaw !== undefined && !attachment) return null;
   const view=o.view as SurfaceBinding["view"];
+  const developmentField=o.kind==="development-field"&&view?.developmentField&&typeof view.developmentField.cwd==="string"&&view.developmentField.cwd.startsWith("/")?{cwd:view.developmentField.cwd,baseRevision:typeof view.developmentField.baseRevision==="string"?view.developmentField.baseRevision:undefined}:undefined;
+  if(o.kind==="development-field"&&(!developmentField||typeof o.project!=="string"))return null;
   const encounterPlane=view?.encounterPlane;
   const rawFactory=view?.factory;
   const factory=(o.kind==="factory"||o.kind==="factory-handoff") && rawFactory && typeof rawFactory.statePath==="string"
@@ -73,7 +76,7 @@ function validBinding(raw: unknown): SurfaceBinding | null {
       runRef:typeof rawFactory.runRef==="string"?rawFactory.runRef:undefined,
       telemetryRef:typeof rawFactory.telemetryRef==="string"?rawFactory.telemetryRef:undefined}:undefined;
   if(o.kind==="factory-handoff"&&(!factory||factory.runRef!==o.ref))return null;
-  return { terminal:o.kind==="terminal"?{cwd:typeof terminalRaw?.cwd==="string"?terminalRaw.cwd:undefined,attachment}:undefined, flow:o.kind==="flow"?flow:undefined, browser:o.kind==="browser"?{url:typeof (o.browser as {url?:unknown})?.url==="string"?(o.browser as {url:string}).url:""}:undefined, view:factory ? {factory} : encounterPlane&&["Conversation","Activity","Context","Inspect"].includes(encounterPlane)?{encounterPlane}:undefined, encounter, location, address, project: o.project as string | undefined, id: o.id, kind: o.kind, ref: o.ref as string | undefined, title: o.title };
+  return { terminal:o.kind==="terminal"?{cwd:typeof terminalRaw?.cwd==="string"?terminalRaw.cwd:undefined,attachment}:undefined, flow:o.kind==="flow"?flow:undefined, browser:o.kind==="browser"?{url:typeof (o.browser as {url?:unknown})?.url==="string"?(o.browser as {url:string}).url:""}:undefined, view:developmentField?{developmentField}:factory ? {factory} : encounterPlane&&["Conversation","Activity","Context","Inspect"].includes(encounterPlane)?{encounterPlane}:undefined, encounter, location, address, project: o.project as string | undefined, id: o.id, kind: o.kind, ref: o.ref as string | undefined, title: o.title };
 }
 
 function validPane(raw: unknown, surfaces: Record<SurfaceId, SurfaceBinding>): Pane | null {
@@ -97,9 +100,9 @@ function validPane(raw: unknown, surfaces: Record<SurfaceId, SurfaceBinding>): P
       .map((c) => validPane(c, surfaces))
       .filter((c): c is Pane => c !== null);
     if (children.length === 0) return null;
-    if (children.length === 1) return children[0]; // normalise degraded splits
+    if (children.length === 1 && o.regionHost !== true) return children[0]; // normalise degraded splits
     if (typeof o.id !== "string") return null;
-    return { type: "split", id: o.id, dir: o.dir, children, weights: Array.isArray(o.weights) && o.weights.length === children.length && o.weights.every(v => typeof v === "number" && Number.isFinite(v) && v > 0) ? o.weights as number[] : undefined };
+    return { type: "split", id: o.id, dir: o.dir, children, regionHost:o.regionHost===true?true:undefined, weights: Array.isArray(o.weights) && o.weights.length === children.length && o.weights.every(v => typeof v === "number" && Number.isFinite(v) && v > 0) ? o.weights as number[] : undefined };
   }
   return null;
 }
@@ -123,12 +126,9 @@ export function decodeLayout(value: unknown): LayoutState {
       }
     }
     const root = validPane(parsed.root, surfaces);
-    const closedStack = Array.isArray(parsed.closedStack)
-      ? (parsed.closedStack as unknown[]).filter(
-          (id): id is SurfaceId =>
-            typeof id === "string" && !!surfaces[id] && !(root && contains(root, id)),
-        )
-      : [];
+    const visibleIds = groupsOf(root).flatMap(group => group.tabs);
+    if (new Set(visibleIds).size !== visibleIds.length) throw new Error("Duplicate open surface identity");
+    const visible = new Set(visibleIds);
     const depth = AGENCY_DEPTHS.includes(parsed.agencyDepth as AgencyDepth)
       ? (parsed.agencyDepth as AgencyDepth)
       : "strip";
@@ -142,7 +142,22 @@ export function decodeLayout(value: unknown): LayoutState {
       ? { ref: accompanyingRaw.ref, project: accompanyingRaw.project, space: accompanyingRaw.space }
       : undefined;
     const windowBounds = Object.fromEntries(Object.entries(parsed.windowBounds && typeof parsed.windowBounds === "object" ? parsed.windowBounds : {}).filter(([id,b]) => !!surfaces[id] && b && [b.x,b.y,b.width,b.height].every(Number.isFinite) && b.width>=400 && b.height>=300));
-    const detached = Array.isArray(parsed.detached) ? parsed.detached.filter((d): d is NonNullable<LayoutState["detached"]>[number] => !!d && typeof d === "object" && typeof d.surfaceId === "string" && !!surfaces[d.surfaceId] && typeof d.groupId === "string" && Number.isInteger(d.index) && d.index >= 0 && typeof d.pinned === "boolean") : [];
+    const groupIds = new Set(groupsOf(root).map(group => group.id));
+    const detached: NonNullable<LayoutState["detached"]> = [];
+    const detachedIds = new Set<SurfaceId>();
+    for (const raw of Array.isArray(parsed.detached) ? parsed.detached : []) {
+      if (!raw || typeof raw !== "object") continue;
+      const entry = raw as Record<string, unknown>;
+      if (typeof entry.surfaceId !== "string" || !surfaces[entry.surfaceId] || visible.has(entry.surfaceId) || detachedIds.has(entry.surfaceId)
+        || typeof entry.groupId !== "string" || !groupIds.has(entry.groupId)
+        || !Number.isInteger(entry.index) || (entry.index as number) < 0 || typeof entry.pinned !== "boolean") continue;
+      detached.push({surfaceId: entry.surfaceId, groupId: entry.groupId, index: entry.index as number, pinned: entry.pinned});
+      detachedIds.add(entry.surfaceId);
+    }
+    const closedSeen = new Set<SurfaceId>();
+    const closedStack = (Array.isArray(parsed.closedStack) ? parsed.closedStack : []).filter((id): id is SurfaceId =>
+      typeof id === "string" && !!surfaces[id] && !visible.has(id) && !detachedIds.has(id) && !closedSeen.has(id) && (closedSeen.add(id), true),
+    );
     if (!root) {
       // Austere rest: no chrome, depth clamped, nothing carried visually.
       return { ...freshLayout(), accompanying, detached, subjectPlanes, windowBounds, surfaces, closedStack, agencyDepth: depth, rightDepth: AGENCY_DEPTHS.includes(parsed.rightDepth as AgencyDepth) ? parsed.rightDepth as AgencyDepth : "strip", leftWidth: typeof parsed.leftWidth === "number" ? Math.max(200, Math.min(600, parsed.leftWidth)) : 260, rightWidth: typeof parsed.rightWidth === "number" ? Math.max(240, Math.min(720, parsed.rightWidth)) : 320 };
@@ -167,6 +182,12 @@ export function decodeLayout(value: unknown): LayoutState {
       leftWidth: typeof parsed.leftWidth === "number" ? Math.max(200, Math.min(600, parsed.leftWidth)) : 260,
       rightWidth: typeof parsed.rightWidth === "number" ? Math.max(240, Math.min(720, parsed.rightWidth)) : 320,
     };
+    const raw=parsed.composition as Record<string,unknown>|undefined;
+    if(raw && typeof raw.bindingId==="string" && surfaces[raw.bindingId] && typeof raw.returnPaneId==="string" && paneById(root,raw.returnPaneId)?.type==="split" && raw.ordinary && typeof raw.ordinary==="object") {
+      const saved=raw.ordinary as Record<string,unknown>;
+      const prior=decodeLayout({...saved,surfaces,composition:undefined});
+      state.composition={bindingId:raw.bindingId,returnPaneId:raw.returnPaneId,collectionRef:typeof raw.collectionRef==="string"?raw.collectionRef:undefined,ordinary:{root:prior.root,focusedGroupId:prior.focusedGroupId,maximizedGroupId:prior.maximizedGroupId,rightDepth:prior.rightDepth,leftWidth:prior.leftWidth,rightWidth:prior.rightWidth,agencyDepth:prior.agencyDepth}};
+    }
     return state;
   } catch {
     return freshLayout();

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import type { ActionInvocation, FactoryBuildView, ViewDepth } from './types'
 import { SessionCards } from './components/SessionCards'
 import { SpanDetail } from './components/SpanDetail'
@@ -12,6 +12,8 @@ export interface BuildSurfaceProps {
   initialDepth?: ViewDepth
   onAction?: (invocation: ActionInvocation) => void
   onOpenWorkingSurface?: (selection: Omit<import("../../encounter/working-surface").WorkingSurfaceSelection,"project">) => Promise<void>
+  /** O:I-owned controls for this selected Run, kept inside Build's existing header. */
+  headerControls?: ReactNode
 }
 
 function Ref({ children }: { children: string }) {
@@ -24,17 +26,32 @@ function ActionButton({ actionRef, subjectRef, label, availability, unavailableR
   return <button type="button" className="fb-action" disabled={!onAction || availability !== "available"} title={unavailableReason ?? (!onAction || availability !== "available" ? "Native Action admission is unavailable" : undefined)} onClick={() => onAction?.({ actionRef, subjectRef })}>{label}</button>
 }
 
-export function BuildSurface({ view, initialDepth = 'semantic', onAction, onOpenWorkingSurface }: BuildSurfaceProps) {
+export function BuildSurface({ view, initialDepth = 'semantic', onAction, onOpenWorkingSurface, headerControls }: BuildSurfaceProps) {
   const [depth, setDepth] = useState<ViewDepth>(initialDepth)
   const [executionRef, setExecutionRef] = useState(view.trajectories[0]?.executionRef)
   const trace = useMemo(() => view.trajectories.find((item) => item.executionRef === executionRef) ?? view.trajectories[0], [executionRef, view.trajectories])
   const [spanRef, setSpanRef] = useState<string | undefined>(trace ? chronologicalSpans(trace)[0]?.spanRef : undefined)
+  const [openingExecutionRef, setOpeningExecutionRef] = useState<string>()
+  const [workingSurfaceError, setWorkingSurfaceError] = useState<{ executionRef: string; detail: string }>()
   const selectedSpan = trace?.spans.find((span) => span.spanRef === spanRef)
 
   function selectExecution(ref: string) {
     setExecutionRef(ref)
     const next = view.trajectories.find((item) => item.executionRef === ref)
     setSpanRef(next ? chronologicalSpans(next)[0]?.spanRef : undefined)
+  }
+
+  async function openWorkingSurface(execution: FactoryBuildView["executions"][number]) {
+    if (!onOpenWorkingSurface || !execution.agentSessionRef || !execution.sessionSpaceRef || (execution.surfaceRefs?.length ?? 0) > 1) return
+    setOpeningExecutionRef(execution.executionRef)
+    setWorkingSurfaceError(undefined)
+    try {
+      await onOpenWorkingSurface({ agentSession: execution.agentSessionRef, space: execution.sessionSpaceRef, surface: execution.surfaceRefs?.[0] })
+    } catch (error) {
+      setWorkingSurfaceError({ executionRef: execution.executionRef, detail: String(error) })
+    } finally {
+      setOpeningExecutionRef(current => current === execution.executionRef ? undefined : current)
+    }
   }
 
   const candidateActions = view.actions.filter((action) => action.subjectKinds.includes('candidate'))
@@ -46,6 +63,7 @@ export function BuildSurface({ view, initialDepth = 'semantic', onAction, onOpen
       <div className="fb-title-row">
         <div><h1>{view.project.label}</h1><p>{view.run.label}</p></div>
         <div className="fb-run-state"><span className={`fb-status fb-status-${view.run.status}`}>{view.run.status}</span><Ref>{view.run.runRef}</Ref></div>
+        {headerControls&&<div className="fb-header-controls">{headerControls}</div>}
       </div>
       <nav className="fb-depth-tabs" aria-label="Build view depth">
         {(['semantic', 'live', 'trajectory'] as const).map((item) => <button key={item} type="button" className={depth === item ? 'is-selected' : ''} onClick={() => setDepth(item)}>{item}</button>)}
@@ -83,7 +101,7 @@ export function BuildSurface({ view, initialDepth = 'semantic', onAction, onOpen
       <div className="fb-section-head"><h2>Live working world</h2><span>read-only projection of external owners</span></div>
       <div className="fb-live-grid">
         {view.agencies.map((agency) => <article key={agency.agencyRef} className="fb-live-card"><span className="fb-kicker">{agency.position ?? 'local'} agency</span><h3>{agency.label}</h3><Ref>{agency.agencyRef}</Ref><p>Agent <Ref>{agency.agentRef}</Ref></p>{agency.rootScopeRef ? <p>Root scope <Ref>{agency.rootScopeRef}</Ref></p> : null}{agency.metagencyGrantRefs?.map((ref) => <p key={ref}>Grant <Ref>{ref}</Ref></p>)}{agency.actuationRef ? <p>Actuation <Ref>{agency.actuationRef}</Ref></p> : null}{agency.returnRef ? <p>Return <Ref>{agency.returnRef}</Ref> · {agency.returnState}</p> : null}</article>)}
-        {view.executions.map((execution) => <article key={execution.executionRef} className="fb-live-card"><span className="fb-kicker">execution</span><div className="fb-card-top"><Ref>{execution.executionRef}</Ref><span className={`fb-status fb-status-${execution.status}`}>{execution.status}</span></div><p>Harness <Ref>{execution.harnessRef ?? 'unavailable'}</Ref></p>{execution.harnessCompositionRef ? <p>Body <Ref>{execution.harnessCompositionRef}</Ref></p> : <p className="fb-muted">No rich harness composition supplied.</p>}{execution.agentSessionRef ? <p>Session <Ref>{execution.agentSessionRef}</Ref></p> : null}{execution.sessionSpaceRef ? <p>SessionSpace <Ref>{execution.sessionSpaceRef}</Ref></p> : <p className="fb-muted">SessionSpace unavailable / not yet bound.</p>}{execution.surfaceRefs?.map((ref) => <p key={ref}>Surface <Ref>{ref}</Ref></p>)}{execution.workcellBindingRefs?.map((ref) => <p key={ref}>Material binding <Ref>{ref}</Ref></p>)}{onOpenWorkingSurface&&execution.agentSessionRef&&execution.sessionSpaceRef&&execution.surfaceRefs&&(execution.surfaceRefs?.length??0)<=1?<button type="button" onClick={()=>void onOpenWorkingSurface({agentSession:execution.agentSessionRef!,space:execution.sessionSpaceRef!,surface:execution.surfaceRefs?.[0]})}>Open working Surface</button>:null}</article>)}
+        {view.executions.map((execution) => <article key={execution.executionRef} className="fb-live-card"><span className="fb-kicker">execution</span><div className="fb-card-top"><Ref>{execution.executionRef}</Ref><span className={`fb-status fb-status-${execution.status}`}>{execution.status}</span></div><p>Harness <Ref>{execution.harnessRef ?? 'unavailable'}</Ref></p>{execution.harnessCompositionRef ? <p>Body <Ref>{execution.harnessCompositionRef}</Ref></p> : <p className="fb-muted">No rich harness composition supplied.</p>}{execution.agentSessionRef ? <p>Session <Ref>{execution.agentSessionRef}</Ref></p> : null}{execution.sessionSpaceRef ? <p>SessionSpace <Ref>{execution.sessionSpaceRef}</Ref></p> : <p className="fb-muted">SessionSpace unavailable / not yet bound.</p>}{execution.surfaceRefs?.map((ref) => <p key={ref}>Surface <Ref>{ref}</Ref></p>)}{execution.workcellBindingRefs?.map((ref) => <p key={ref}>Material binding <Ref>{ref}</Ref></p>)}{onOpenWorkingSurface&&execution.agentSessionRef&&execution.sessionSpaceRef&&execution.surfaceRefs&&(execution.surfaceRefs?.length??0)<=1?<><button type="button" disabled={openingExecutionRef===execution.executionRef} onClick={()=>void openWorkingSurface(execution)}>{openingExecutionRef===execution.executionRef?"Opening working Surface…":"Open working Surface"}</button>{workingSurfaceError?.executionRef===execution.executionRef&&<p role="alert">Working Surface unavailable: {workingSurfaceError.detail}</p>}</>:null}</article>)}
       </div>
     </section> : null}
 

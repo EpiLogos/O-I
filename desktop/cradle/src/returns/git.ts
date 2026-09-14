@@ -1,5 +1,18 @@
 import type {DevelopmentFieldReading} from "../kernel/types";
-import type {ReturnedDocumentReading, ReturnedOutstanding, ReturnedRuntimeObservation} from "./types";
+import type {ReturnedDocumentReading, ReturnedEvidence, ReturnedOutstanding, ReturnedRuntimeObservation} from "./types";
+
+export interface DevelopmentFieldWorktreeMismatch {
+  requested: string;
+  observed: string;
+}
+
+/** The requested cwd stays adapter provenance. AIKit's observed worktree is
+ * authoritative for the returned Git material and can disagree with it. */
+export function developmentFieldWorktreeMismatch(reading: DevelopmentFieldReading, requestedCwd: string): DevelopmentFieldWorktreeMismatch | undefined {
+  const observed = reading.git?.world.repository.worktree_root;
+  if (!observed || observed === requestedCwd) return undefined;
+  return {requested: requestedCwd, observed};
+}
 
 /**
  * Turn one AIKit Development Field reading into the shared returned-document
@@ -18,18 +31,18 @@ export function developmentFieldGitDocument(reading: DevelopmentFieldReading): R
   }
   if (diff?.truncated) outstanding.push({label: "Diff was truncated", detail: "AIKit limited the tracked patch; untracked paths remain listed separately."});
   if (reading.truncated) outstanding.push({label: "Development Field subjects were truncated", detail: "AIKit limited the bounded subject reading."});
+  const evidence: ReturnedEvidence[] = [{
+    label: "Verification not supplied",
+    standing: "missing",
+    detail: "This working-tree observation does not include test results.",
+    required: true,
+  }];
   const runtime: ReturnedRuntimeObservation[] = [
     {label: "AIKit executable", value: reading.executable_basis.executable, standing: "observed"},
     {label: "Executable modality", value: reading.executable_basis.modality, standing: "observed"},
     {label: "Executable source standing", value: reading.executable_basis.source_dirty ? "dirty developer/source executable" : "clean source basis", standing: "observed"},
   ];
   if (reading.executable_basis.source_revision) runtime.push({label: "Executable source revision", value: reading.executable_basis.source_revision, standing: "observed"});
-  const material = diff ? [{
-    kind: "diff" as const,
-    label: `Working difference from ${diff.base_revision}`,
-    description: diff.truncated ? "AIKit supplied a truncated tracked patch." : "AIKit supplied the tracked patch.",
-    ref: `base ${diff.base_revision}  observed HEAD ${diff.observed_head}`,
-  }] : [];
   const provenance = [
     {label: "AIKit reading", value: reading.version},
     {label: "Git basis", value: availability.state},
@@ -41,13 +54,14 @@ export function developmentFieldGitDocument(reading: DevelopmentFieldReading): R
       {label: "Observed branch", value: repository.branch},
     ] : []),
     ...(git?.base_revision ? [{label: "Requested base revision", value: git.base_revision}] : []),
+    ...(diff ? [{label: "Compared base revision", value: diff.base_revision}, {label: "Compared observed HEAD", value: diff.observed_head}] : []),
   ];
   return {
     variant: "code",
-    subject: {title: repository ? `${repository.branch}  Git working state` : "Git working state"},
-    outcome: {summary: repository ? `AIKit observed ${repository.worktree_root} at ${repository.head}.` : "AIKit did not provide a Git observation.", standing: availability.state},
-    material,
-    evidence: [],
+    subject: {title: "Working changes"},
+    outcome: {summary: repository ? `${repository.worktree_root.split("/").filter(Boolean).slice(-1)[0]} · ${repository.branch}` : "AIKit did not provide a Git observation.", standing: availability.state === "available" ? undefined : availability.state},
+    material: [],
+    evidence,
     runtime,
     outstanding,
     continuations: [],

@@ -1,0 +1,48 @@
+import {chromium} from "playwright";
+import assert from "node:assert/strict";
+import {writeFileSync} from "node:fs";
+const browser=await chromium.launch({headless:true,executablePath:process.env.WALK_CHROMIUM_EXECUTABLE});
+const page=await browser.newPage({viewport:{width:1422,height:858}});
+const checks=[],errors=[];
+const check=(value,name)=>{assert.ok(value,name);checks.push(name);console.log("PASS",name);};
+page.on("pageerror",error=>errors.push(String(error)));
+await page.addInitScript(()=>{window.__OI_KERNEL_BRIDGE__="http://127.0.0.1:4179";sessionStorage.setItem("oi-cradle.welcome.v1","1");});
+try {
+ await page.goto(process.env.WALK_URL??"http://localhost:4173");
+ await page.getByRole("button",{name:"O-I",exact:true}).click();
+ const nav=page.getByRole("navigation",{name:"O-I work",exact:true});
+ await nav.getByRole("button",{name:"Changes",exact:true}).click();
+ const surface=page.getByRole("region",{name:"Uncommitted working changes",exact:true});
+ await surface.getByRole("region",{name:"Native Git patch",exact:true}).waitFor({timeout:120000});
+ check(await page.locator('[data-region="centre"] .git-working-state').count()===1,"Project Changes opens the real native Git reading centrally");
+ const before=await surface.locator(".git-working-state-patch pre").innerText();
+ check(before.length>0,"Native patch body is rendered in the shared return document");
+ check(await surface.getByRole("heading",{level:2}).count()===1,"Git return has one document heading");
+ check(await surface.locator(".returned-document-section").first().locator(".git-working-state-patch").count()===1,"Actual patch is in What changed");
+ check(await surface.getByText("missing",{exact:true}).count()>0,"Git read does not claim verification");
+ await nav.getByRole("button",{name:"Runs / Build",exact:true}).click();
+ await page.getByRole("region",{name:"Factory Runs and Build",exact:true}).waitFor();
+ await nav.getByRole("button",{name:"Changes",exact:true}).click();
+ await page.locator('[data-region="right"] .git-working-state-patch').waitFor({timeout:120000});
+ check(await page.locator('[data-region="right"] .git-working-state').count()===1,"Factory presents the selected native Git document in the existing right pane");
+ check(await page.locator(".git-working-state").count()===1,"One visible Git document after relocating its Surface");
+ const returnedPane=page.locator('[data-region="right"] .pane.group').filter({has:page.locator(".git-working-state")}).first();
+ const rightBefore=await returnedPane.boundingBox();
+ await returnedPane.getByRole("button",{name:"Maximize this pane",exact:true}).click();
+ await page.waitForFunction(()=>document.querySelector('[data-region="right"]')?.getAttribute("data-depth")==="full");
+ await page.waitForTimeout(240);
+ const rightMaximized=await page.locator('[data-region="right"]').boundingBox();
+ check((rightMaximized?.width??0)>900,"Maximizing the returned Git pane uses the full right region at 1422px");
+ await returnedPane.getByRole("button",{name:"Restore pane arrangement",exact:true}).click();
+ await page.waitForFunction(()=>document.querySelector('[data-region="right"]')?.getAttribute("data-depth")==="panel");
+ await page.waitForTimeout(240);
+ const rightRestored=await returnedPane.boundingBox();
+ check(Math.abs((rightRestored?.width??0)-(rightBefore?.width??0))<=2,"Restoring the returned Git pane preserves its persisted right width");
+ await page.getByRole("button",{name:"Leave Factory",exact:true}).click();
+ await page.locator('[data-region="centre"] .git-working-state').waitFor();
+ check(await page.locator('[data-region="centre"] .git-working-state').count()===1,"Leaving restores the original central Git Surface");
+ check(errors.length===0,"No application errors");
+ await page.screenshot({path:"walk/artifacts/git-return-ui.png"});
+ writeFileSync("walk/artifacts/git-return-ui.json",JSON.stringify({standing:"C: real web application and native AIKit Git read; no Factory execution or verification claim",checks,errors},null,2));
+} catch(error) {console.error(errors);console.error((await page.locator("body").innerText()).slice(0,4000));await page.screenshot({path:"walk/artifacts/git-return-ui-failure.png"});throw error;}
+finally{await browser.close();}

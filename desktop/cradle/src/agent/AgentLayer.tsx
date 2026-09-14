@@ -124,7 +124,7 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
       {/* The visible head still reads this same encounter while Context is open.
           Keep its one observer mounted; hide only its body, never duplicate it. */}
       {binding
-        ? <EncounterSurface key={binding.id} binding={{...binding, view: {encounterPlane}}} onView={view => setPlane(view.encounterPlane ?? "Conversation")} onExpression={setExpression} concealed={plane==="Context"} presentation={region === "centre" ? "tab" : full ? "full" : "side"}/>
+        ? <EncounterSurface key={binding.id} binding={{...binding, view: {encounterPlane}}} onView={view => setPlane(view.encounterPlane ?? "Conversation")} onExpression={setExpression} concealed={plane==="Context"} presentation={region === "centre" || full ? "full" : "side"}/>
         : plane!=="Context" ? <NoAccompanying project={project} onOpen={choose}/> : null}
       {plane==="Context"&&<ContextPlane subject={subject} history={history} historyAvailable={historyAvailable} accompanying={accompanying}/>}
     </div>

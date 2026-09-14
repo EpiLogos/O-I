@@ -1,3 +1,4 @@
+import {leaveComposition} from "../surface/composition";
 import {preservePresentation,latestRecovery} from "./recovery";
 import { useEffect, useRef, useState, type SetStateAction } from "react";
 import { activateSurface, openBinding, redockBinding } from "../surface/engine";
@@ -116,7 +117,8 @@ export function useWorkspaces() {
   useEffect(()=>subscribeFocusedInstrumentOpen(request=>{
     const source=focusedInstrumentSource(request.sourceRef);if(!source)return;
     const binding=focusedInstrumentBinding(request);
-    setLayout(state=>{
+    setLayout(current=>{
+      const state=leaveComposition(current);
       const existing=Object.values(state.surfaces).find(surface=>surface.kind==="instrument"&&surface.ref===request.sourceRef);
       const opened=existing?activateSurface(state,existing.id):openBinding(state,binding);
       // K9 composes the shell's existing navigator/centre/AgentLayer. The

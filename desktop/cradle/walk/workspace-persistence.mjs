@@ -3,11 +3,12 @@ import assert from "node:assert/strict";
 
 const baseUrl = process.env.WALK_URL ?? "http://localhost:4173";
 const browser = await chromium.launch({headless: true, executablePath: process.env.WALK_CHROMIUM_EXECUTABLE});
+const errors=[];
 const page = await browser.newPage({viewport: {width: 1422, height: 858}});
+page.on("pageerror",error=>errors.push(String(error)));
 await page.addInitScript(() => {
   window.__OI_KERNEL_BRIDGE__ = "http://127.0.0.1:4179";
   sessionStorage.setItem("oi-cradle.welcome.v1", "1");
-  localStorage.removeItem("oi-cradle.workspaces.v1");
 });
 try {
   await page.goto(baseUrl, {waitUntil: "domcontentloaded"});
@@ -28,9 +29,8 @@ try {
   assert.ok(created, "pagehide persisted the newly created workspace");
   await page.reload({waitUntil: "domcontentloaded"});
   await page.locator('footer[aria-label="Workspace status"]').waitFor({state: "attached"});
-  await page.getByRole("combobox", {name: "Workspace"}).selectOption(created.id);
   assert.equal(await page.getByRole("combobox", {name: "Workspace"}).inputValue(), created.id);
   console.log(JSON.stringify({checks: ["new workspace", "pagehide flush", "reload restore"], workspace: created.name}));
-} finally {
+} catch(error) { console.error(errors); console.error((await page.locator("body").innerText()).slice(0,2000)); await page.screenshot({path:"walk/artifacts/workspace-persistence-failure.png"}); throw error; } finally {
   await browser.close();
 }

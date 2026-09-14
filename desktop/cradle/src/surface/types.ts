@@ -60,7 +60,7 @@ export interface SurfaceBinding {
     };
   };
   flow?: {flowRef:string;path:string};
-  view?: {factory?: {statePath:string;centralProjectRef?:string;projectRef?:string;runRef?:string;telemetryRef?:string};graphOrigin?:string;knowledgePlane?: "graph"|"page";encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect"};
+  view?: {developmentField?:{cwd:string;baseRevision?:string};factory?: {statePath:string;centralProjectRef?:string;projectRef?:string;runRef?:string;telemetryRef?:string};graphOrigin?:string;knowledgePlane?: "graph"|"page";encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect"};
   location?: import("../kernel/types").CentralLocation;
 }
 
@@ -79,6 +79,8 @@ export interface TabGroupPane {
 }
 
 export interface SplitPane {
+  /** Retain an existing pane subtree as a shell region destination. */
+  regionHost?: boolean;
   type: "split";
   id: string;
   dir: PaneDir;
@@ -91,6 +93,14 @@ export type Pane = TabGroupPane | SplitPane;
 export interface NativeWindowBounds { x: number; y: number; width: number; height: number }
 
 export interface LayoutState {
+  /** Presentation-only composition over the same Surface bindings and pane tree. */
+  composition?: {
+    bindingId: SurfaceId;
+    returnPaneId: string;
+    /** Opaque owner subject whose currently selected outputs occupy the region. */
+    collectionRef?: string;
+    ordinary: Pick<LayoutState, "root" | "focusedGroupId" | "maximizedGroupId" | "rightDepth" | "leftWidth" | "rightWidth" | "agencyDepth">;
+  };
   focusedTabId?: SurfaceId;
   /** null = austere rest (law 12: rest is *what is on screen*). */
   root: Pane | null;
@@ -142,7 +152,7 @@ export interface ActionArg {
 /** The layout as it was at load — the restore point for `restore-layout`. */
 export type RestorePoint = Pick<
   LayoutState,
-  "root" | "surfaces" | "closedStack" | "focusedGroupId"
+  "root" | "surfaces" | "closedStack" | "focusedGroupId" | "composition"
 >;
 
 export const freshLayout = (): LayoutState => ({

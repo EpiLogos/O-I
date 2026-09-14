@@ -38,6 +38,22 @@ export function surfaceExpressionChanges(before:LayoutState, after:LayoutState):
   return changes;
 }
 
+/** Select an existing pane subtree without allocating a second layout/store. */
+export function paneById(root: Pane | null, id: string): Pane | null {
+  if (!root || root.id === id) return root;
+  if (root.type === "group") return null;
+  for (const child of root.children) { const found = paneById(child, id); if (found) return found; }
+  return null;
+}
+export function withoutPane(root: Pane | null, id: string): Pane | null {
+  if (!root || root.id === id) return null;
+  if (root.type === "group") return root;
+  const kept = root.children.map((child, index) => ({child: withoutPane(child,id), weight:root.weights?.[index]??1})).filter(row=>row.child);
+  if (!kept.length) return null;
+  if (kept.length === 1 && !root.regionHost) return kept[0].child;
+  return {...root,children:kept.map(row=>row.child!),weights:kept.map(row=>row.weight)};
+}
+
 // ---------------------------------------------------------------------------
 // tree helpers
 
@@ -67,12 +83,16 @@ function mapPane(pane: Pane, fn: (g: TabGroupPane) => TabGroupPane): Pane {
 function prune(pane: Pane | null, reservedGroups: ReadonlySet<string> = new Set()): Pane | null {
   if (!pane) return null;
   if (pane.type === "group") return pane.tabs.length || pane.emptySlot || reservedGroups.has(pane.id) ? pane : null;
+  if (pane.regionHost) {
+    const first=groupsOf(pane)[0];
+    if(first) reservedGroups=new Set([...reservedGroups,first.id]);
+  }
   const surviving = pane.children
     .map((child, index) => ({ child: prune(child, reservedGroups), weight: pane.weights?.[index] ?? 1 }))
     .filter(entry => entry.child !== null);
   const children = surviving.map(entry => entry.child!);
   if (children.length === 0) return null;
-  if (children.length === 1) return children[0];
+  if (children.length === 1 && !pane.regionHost) return children[0];
   return { ...pane, children, weights: pane.weights ? surviving.map(entry => entry.weight) : undefined };
 }
 
@@ -362,30 +382,47 @@ export function splitOff(
   return { ...next, focusedGroupId: ng.id, maximizedGroupId: undefined };
 }
 
-/** Tile: every open surface in its own group, balanced alternating splits. */
+/** Tile: every open surface in its own group, balanced alternating splits.
+ * Detached bindings retain their original empty group as a redock anchor. */
 export function tileSurfaces(state: LayoutState): LayoutState {
   const ids = groupsOf(state.root).flatMap((g) => g.tabs);
   if (ids.length === 0) return state;
   const gen = idGen(state);
   const pinnedOf = (id: SurfaceId) => (isPinned(state, id) ? [id] : []);
-  const build = (list: SurfaceId[], depth: number): Pane => {
-    if (list.length === 1)
+  const anchors = (pane: Pane | null): TabGroupPane[] => groupsOf(pane)
+    .filter(group => state.detached?.some(entry => entry.groupId === group.id))
+    .map(group => ({type: "group", id: group.id, tabs: [], pinned: [], active: null}));
+  const tile = (surfaceIds: SurfaceId[], retainedAnchors: TabGroupPane[]): Pane | null => {
+    const leaves: Pane[] = [
+      ...surfaceIds.map(id => ({type: "group" as const, id: gen("g"), tabs: [id], pinned: pinnedOf(id), active: id})),
+      ...retainedAnchors,
+    ];
+    const build = (list: Pane[], depth: number): Pane => {
+      if (list.length === 1) return list[0];
+      const mid = Math.ceil(list.length / 2);
       return {
-        type: "group",
-        id: gen("g"),
-        tabs: [list[0]],
-        pinned: pinnedOf(list[0]),
-        active: list[0],
+        type: "split",
+        id: gen("sp"),
+        dir: depth % 2 === 0 ? "h" : "v",
+        children: [build(list.slice(0, mid), depth + 1), build(list.slice(mid), depth + 1)],
       };
-    const mid = Math.ceil(list.length / 2);
-    return {
+    };
+    return leaves.length ? build(leaves, 0) : null;
+  };
+  let root: Pane;
+  const returned = state.composition ? paneById(state.root, state.composition.returnPaneId) : null;
+  if (returned?.type === "split" && state.composition) {
+    const centre = withoutPane(state.root, state.composition.returnPaneId);
+    const tiledCentre = tile(groupsOf(centre).flatMap(group => group.tabs), anchors(centre));
+    const tiledReturn = tile(groupsOf(returned).flatMap(group => group.tabs), anchors(returned));
+    const right = {...returned, children: tiledReturn ? [tiledReturn] : returned.children};
+    root = {
       type: "split",
       id: gen("sp"),
-      dir: depth % 2 === 0 ? "h" : "v",
-      children: [build(list.slice(0, mid), depth + 1), build(list.slice(mid), depth + 1)],
+      dir: "h",
+      children: [...(tiledCentre ? [tiledCentre] : centre ? [centre] : []), right],
     };
-  };
-  const root = build(ids, 0);
+  } else root = tile(ids, anchors(state.root))!;
   const active = activeBindingId(state);
   const focused = groupsOf(root).find(g => g.active === active) ?? groupsOf(root)[0];
   return { ...state, root, focusedGroupId: focused.id, maximizedGroupId: undefined };
@@ -533,6 +570,7 @@ export function restoreLayout(state: LayoutState, point: RestorePoint): LayoutSt
   return withRoot(
     {
       ...state,
+      composition: point.composition,
       root: point.root,
       surfaces: point.surfaces,
       closedStack: point.closedStack,

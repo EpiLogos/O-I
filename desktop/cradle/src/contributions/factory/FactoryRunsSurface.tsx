@@ -1,6 +1,7 @@
 import {useCallback, useEffect, useRef, useState} from "react";
 import {useKernel} from "../../kernel/KernelProvider";
 import {developmentRead} from "./development";
+import {listFactoryAttemptTasks} from "./attempt-task";
 import {BuildSurface} from "./BuildSurface";
 import type {FactoryBuildView} from "./types";
 
@@ -20,6 +21,7 @@ interface ProjectReading {contract: string; projectRef: string; journeys: Journe
 interface JourneyReading {contract: string; journeyRef: string; frontier?: string; status?: string; runRefs: string[]}
 interface RunReading {contract: string; runRef: string; projectRef: string}
 interface BuildSnapshot {contract: string; view: FactoryBuildView}
+type HandoffAvailability={kind:"idle"}|{kind:"checking"}|{kind:"empty"}|{kind:"available";taskRefs:string[]}|{kind:"unavailable";detail:string};
 interface CentralProjectLinkReading {contract: string; link: {factoryProjectRef: string; centralProjectRef: string}; project: ProjectReading}
 
 function projectReading(value: unknown): value is ProjectReading {
@@ -53,6 +55,7 @@ export function FactoryRunsSurface({locator,boundProjectRef,project:projectName,
  const [journeys,setJourneys]=useState<Record<string,JourneyReading|undefined>>({});
  const [selectedRunReading,setSelectedRunReading]=useState<RunReading>();
  const [build,setBuild]=useState<BuildSnapshot>();
+ const [handoff,setHandoff]=useState<HandoffAvailability>({kind:"idle"});
  const [selectedRun,setSelectedRun]=useState(locator?.runRef);
  const [requestedRun,setRequestedRun]=useState(locator?.runRef??"");
  const [error,setError]=useState<string>();
@@ -70,17 +73,30 @@ export function FactoryRunsSurface({locator,boundProjectRef,project:projectName,
   setBuild(snapshot);
  },[current,kernel.transport]);
 
+ const readHandoffAvailability=useCallback(async(path:string,runRef:string,generation:number)=>{
+  if(!current(generation))return;
+  setHandoff({kind:"checking"});
+  try {const reading=await listFactoryAttemptTasks(kernel.transport,path,runRef);
+   if(!current(generation))return;
+   setHandoff(reading.taskRefs.length>0?{kind:"available",taskRefs:reading.taskRefs}:{kind:"empty"});
+  } catch(reason) {if(current(generation))setHandoff({kind:"unavailable",detail:String(reason)});}
+ },[current,kernel.transport]);
+
  const readRun=useCallback(async(path:string,ref:string,runRef:string,generation:number)=>{
   if(!current(generation))return;
-  setBusy(true);setError(undefined);setSelectedRun(runRef);setSelectedRunReading(undefined);setBuild(undefined);
+  setBusy(true);setError(undefined);setSelectedRun(runRef);setSelectedRunReading(undefined);setBuild(undefined);setHandoff({kind:"idle"});
   try{const reading=await developmentRead(kernel.transport,path,"run",runRef);
    if(!current(generation))return;
    if(!runReading(reading)||reading.runRef!==runRef||reading.projectRef!==ref)throw new Error("Factory returned an incompatible Run reading");
    setSelectedRunReading(reading);
-   await readBuild(path,ref,runRef,generation);
+   const [buildOutcome]=await Promise.allSettled([
+    readBuild(path,ref,runRef,generation),
+    readHandoffAvailability(path,runRef,generation),
+   ]);
+   if(buildOutcome.status==="rejected")throw buildOutcome.reason;
   }catch(reason){if(current(generation))setError(String(reason));}
   finally{if(current(generation))setBusy(false);}
- },[current,kernel.transport,readBuild]);
+ },[current,kernel.transport,readBuild,readHandoffAvailability]);
 
  const readJourney=useCallback(async(path:string,journeyRef:string,generation:number)=>{
   if(!current(generation))return undefined;
@@ -128,7 +144,7 @@ export function FactoryRunsSurface({locator,boundProjectRef,project:projectName,
  useEffect(()=>{
   const generation=++request.current;
   const path=locator?.statePath??"",ref=locator?.centralProjectRef??boundProjectRef??"",run=locator?.runRef;
-  setStatePath(path);setProjectRef(ref);setSelectedRun(run);setRequestedRun(run??"");setProject(undefined);setJourneys({});setSelectedRunReading(undefined);setBuild(undefined);setError(undefined);setBusy(false);
+  setStatePath(path);setProjectRef(ref);setSelectedRun(run);setRequestedRun(run??"");setProject(undefined);setJourneys({});setSelectedRunReading(undefined);setBuild(undefined);setHandoff({kind:"idle"});setError(undefined);setBusy(false);
   if(path&&ref)void readCentralProject(path,ref,run,generation);
  },[locatorKey,boundProjectRef,readCentralProject]);
 
@@ -147,16 +163,16 @@ export function FactoryRunsSurface({locator,boundProjectRef,project:projectName,
   void readJourney(locator.statePath,journeyRef,generation);
  };
  const listed=project?.journeys??[];
+ const sourceControl=<details className="factory-source-picker"><summary>{locator?"Factory source":"Connect Factory source"}</summary><form onSubmit={event=>{event.preventDefault();connect();}}>
+   <label>Developmental state path<input value={statePath} onChange={event=>setStatePath(event.target.value)} required spellCheck={false} autoComplete="off"/></label>
+   <label>Central Project ref<input value={projectRef} onChange={event=>setProjectRef(event.target.value)} required placeholder="project:…" spellCheck={false} autoComplete="off"/></label>
+   <label>Run ref (optional)<input value={requestedRun} onChange={event=>setRequestedRun(event.target.value)} spellCheck={false} autoComplete="off"/></label>
+   <button type="submit" disabled={busy}>Read Runs</button>
+  </form></details>;
+ const retryHandoff=()=>{if(locator?.statePath&&selectedRun)void readHandoffAvailability(locator.statePath,selectedRun,request.current);};
+ const handoffControl=handoff.kind==="available"&&locator?.statePath&&selectedRun?<button type="button" onClick={()=>void onOpenHandoff(locator.statePath,selectedRun).catch(reason=>setError(String(reason)))}>Open handoff</button>:handoff.kind==="checking"?<span className="factory-handoff-standing" role="status">Checking retained handoff…</span>:handoff.kind==="empty"?<span className="factory-handoff-standing">No retained handoff</span>:handoff.kind==="unavailable"?<span className="factory-handoff-standing" role="status">Retained handoff unavailable: {handoff.detail}<button type="button" onClick={retryHandoff}>Retry</button></span>:null;
  return <section className="factory-runs" aria-label="Factory Runs and Build">
-  <header className="factory-runs-heading"><h1>Runs</h1>
-   {build&&locator?.statePath&&selectedRun&&<button onClick={()=>void onOpenHandoff(locator.statePath,selectedRun).catch(reason=>setError(String(reason)))}>Open handoff</button>}
-   <details className="factory-source-picker"><summary>{locator?"Factory source":"Connect Factory source"}</summary><form onSubmit={event=>{event.preventDefault();connect();}}>
-    <label>Developmental state path<input value={statePath} onChange={event=>setStatePath(event.target.value)} required spellCheck={false} autoComplete="off"/></label>
-    <label>Central Project ref<input value={projectRef} onChange={event=>setProjectRef(event.target.value)} required placeholder="project:…" spellCheck={false} autoComplete="off"/></label>
-    <label>Run ref (optional)<input value={requestedRun} onChange={event=>setRequestedRun(event.target.value)} spellCheck={false} autoComplete="off"/></label>
-    <button type="submit" disabled={busy}>Read Runs</button>
-   </form></details>
-  </header>
+  {!build&&<header className="factory-runs-heading"><h1>Runs</h1>{sourceControl}</header>}
   {error&&<p className="factory-owner-refusal" role="alert">Factory read unavailable: {error}</p>}
   {!locator&&<p className="factory-runs-empty">Choose a Factory source and Project ref.</p>}
   {locator&&!project&&!error&&<p className="factory-runs-empty">No Runs are loaded.</p>}
@@ -169,6 +185,7 @@ export function FactoryRunsSurface({locator,boundProjectRef,project:projectName,
     {detail&&runs.length===0&&<p>No Runs are named by this Journey.</p>}
     {runs.map(runRef=><button key={runRef} type="button" className={selectedRun===runRef?"is-selected":""} disabled={busy} onClick={()=>selectRun(runRef)}><code>{runRef}</code></button>)}
    </section>;})}
-  </aside><div className="factory-build-centre">{build?<BuildSurface view={build.view} onOpenWorkingSurface={projectName?selection=>onOpenWorkingSurface({...selection,project:projectName}):undefined}/>:selectedRunReading?<p className="factory-runs-empty">The selected Run is loaded; Factory has not returned its Build view.</p>:<p className="factory-runs-empty">Select a published Run.</p>}</div></div>}
+  </aside><div className="factory-build-centre">{build?<BuildSurface view={build.view} headerControls={<div className="factory-build-controls">{sourceControl}{handoffControl}</div>} onOpenWorkingSurface={projectName?selection=>onOpenWorkingSurface({...selection,project:projectName}):undefined}/>:selectedRunReading?<p className="factory-runs-empty">The selected Run is loaded; Factory has not returned its Build view.</p>:<p className="factory-runs-empty">Select a published Run.</p>}</div></div>}
+  {project&&selectedRunReading&&!build&&handoffControl&&<div className="factory-runs-control-row">{handoffControl}</div>}
  </section>;
 }

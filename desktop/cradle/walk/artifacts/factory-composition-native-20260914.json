@@ -1,0 +1,51 @@
+{
+  "schema": "oi.cradle.factory-composition-native/v1",
+  "observed_at": "2026-09-14T18:10:15.854692+00:00",
+  "standing": "M: native Omarchy presentation and same-session working Surface continuity; no Factory execution/output or H claim",
+  "app": {
+    "pid": 521689,
+    "window_id": 6291459,
+    "frontend": "Vite from existing cradle-factory-arrangement checkout",
+    "native_binary": "pre-single-instance native host, updated host validation is separate"
+  },
+  "native_refs": {
+    "project": "project:o-i",
+    "agent_session": "agent-session/oi-factory-codex-20260914",
+    "session_space": "session-space/oi-factory-demo-20260914",
+    "native_session_id": "01a09ff3-f1fd-7f92-a156-2d85d11a9462",
+    "working_surface_binding": "working-surface/oi-factory-demo-20260914-shell",
+    "provider": "provider/tmux/current"
+  },
+  "sequence": [
+    "Ordinary workspace with existing tabs and accompanying Codex conversation",
+    "Enter Factory through Project Runs / Build",
+    "Open existing Codex encounter in centre; one visible transcript and composer",
+    "Type a draft without dispatching a turn; native draft readback revision22",
+    "Select existing persisted tmux Working Surface; prior native terminal marker remains",
+    "Leave Factory; original tab selection and shell widths return, same draft visible on right",
+    "Re-enter through Project Runs / Build and Conversation; same draft visible in centre"
+  ],
+  "checks": {
+    "same_native_session": true,
+    "same_draft_revision_before_after": 22,
+    "same_draft_text_before_after": true,
+    "one_visible_transcript": true,
+    "right_region_uses_existing_pane": true,
+    "aligned_tab_bars_and_unwrapped_footer_visually_observed": true
+  },
+  "evidence": [
+    "/tmp/oi-u-native-start-ax.json",
+    "/tmp/oi-u-native-composed-ax.json",
+    "/tmp/oi-u-native-reentered-ax.json",
+    "/tmp/oi-u-native-working.png",
+    "/tmp/oi-u-native-left.png",
+    "/tmp/oi-u-native-reentered.png",
+    "/tmp/oi-u-composed-encounter-read.json"
+  ],
+  "limitations": [
+    "The installed Factory refuses merged central-project-link-read and attempt list operations.",
+    "Demo Run remains without an admitted execution or actual returned artifact.",
+    "This working Surface is not correlated to a Factory execution.",
+    "No Herdr, cross-harness, K9 owner-source parity, full effective Agent composition or human acceptance claim."
+  ]
+}
