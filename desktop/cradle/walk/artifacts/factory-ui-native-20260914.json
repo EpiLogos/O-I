@@ -1,0 +1,81 @@
+{
+  "schema": "oi.factory-ui-native-receipt/v1",
+  "standing": {
+    "D": "FACTORY-AGENCY.md and SESSION-GROUNDING.md lane U",
+    "C": "Implementation, production build, 41 application/native-reader checks and real-CLI nullable Run regression passed; positive populated Candidate/Agent/Return acceptance remains open",
+    "P": "Existing application loaded persisted Factory source through frozen native Factory CLI",
+    "M": "Native Omarchy X11 desktop: selected actual Run, Live work, leave, re-enter and exact Run disclosure",
+    "H": "Not claimed"
+  },
+  "base": "894289630519dedaae73da5c41311dda4163371a",
+  "main": "7d0761391dc0c4aaa1f93b7ab572a22d304b77db",
+  "native": {
+    "pid": 975685,
+    "window_id": 6291459,
+    "backend": "GDK x11; CUA driver 0.28.1",
+    "factory_executable": "/home/frank/Central/Work/Factory/.worktrees/codex-developmental-build-read/target/debug/factory",
+    "factory_version": "0.1.0 (63d4147dfcef)",
+    "installed_owner_changed": false
+  },
+  "source": {
+    "statePath": "/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/material/header-continuity.state.json",
+    "centralProjectRef": "project:o-i",
+    "factoryProjectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC",
+    "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD",
+    "factoryRevision": 1,
+    "runRevision": 2,
+    "runMapRevision": 2,
+    "executionCount": 0,
+    "candidateCount": 0
+  },
+  "observed": [
+    "Actual Factory destination and work item rendered from persisted source",
+    "Live Work disclosed zero native executions",
+    "Leave restored ordinary pane arrangement and existing Codex conversation, including earlier OI_LUNA_LOW_OK reply",
+    "Re-enter recovered the saved Factory source and same canonical Run",
+    "Run details disclosed the exact Run and Run map refs",
+    "Empty Run list no longer consumes a second navigation column"
+  ],
+  "limits": [
+    "No admitted Factory execution or Candidate/Return exists in this retained state",
+    "No new dispatch, working-Surface opening, evidence action, Recognition or Keep-as-Agent was performed",
+    "No positive populated Agent roster or Return copy/material-open acceptance; corresponding real-owner walk requires actual owner records",
+    "No Herdr, additional model harness or K9 cross-composition proof added"
+  ],
+  "screenshots": [
+    "factory-ui-native-run-20260914.png",
+    "factory-ui-native-live-20260914.png",
+    "factory-ui-native-ordinary-20260914.png",
+    "factory-ui-native-exact-20260914.png"
+  ],
+  "validation": [
+    {
+      "command": "cd desktop/cradle && npm run build",
+      "result": "pass: TypeScript and production Vite build",
+      "log": "/tmp/oi-u-factory-ui-release-build.log"
+    },
+    {
+      "command": "WALK_CHROMIUM_EXECUTABLE=/usr/bin/chromium WALK_FACTORY_STATE=<source.statePath> WALK_FACTORY_RUN=<source.runRef> WALK_FACTORY_PROJECT_REF=project:o-i node walk/factory-run-content.mjs",
+      "result": "12 passed: actual Factory reads and Agent expression form",
+      "receipt": "factory-run-content-20260914.json"
+    },
+    {
+      "command": "WALK_CHROMIUM_EXECUTABLE=/usr/bin/chromium WALK_URL=http://localhost:4173 node walk/factory-workbench.mjs",
+      "result": "18 passed",
+      "log": "/tmp/oi-u-factory-ui-final-arrangement.log"
+    },
+    {
+      "command": "WALK_CHROMIUM_EXECUTABLE=/usr/bin/chromium WALK_URL=http://localhost:4173 node walk/git-return.mjs",
+      "result": "11 passed",
+      "log": "/tmp/oi-u-factory-ui-final-git.log"
+    },
+    {
+      "command": "node walk/factory-run-read.mjs <native.factory_executable> <source.statePath> <source.runRef>",
+      "result": "pass: actual Run with null destination node state decoded"
+    },
+    {
+      "command": "node walk/returned-document.mjs",
+      "result": "not run: requires real retained Return, artifact and verification receipt; those do not exist in this Run"
+    }
+  ]
+}

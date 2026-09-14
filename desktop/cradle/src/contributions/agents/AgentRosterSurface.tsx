@@ -9,8 +9,10 @@ import {
   type AgentProfileExpression,
   type AgentRoster,
   type AgentWorld,
+  type AgentProposal,
 } from "./client";
 import { SessionSpaceControls } from "./SessionSpaceControls";
+import { AgentDetail } from "./AgentDetail";
 
 export interface AgentRosterSurfaceProps {
   project: string;
@@ -38,8 +40,9 @@ export function AgentRosterSurface({
     ratified_world_refs: [],
     intent_expression: "",
   });
-  const [proposal, setProposal] = useState<unknown>();
+  const [proposal, setProposal] = useState<AgentProposal>();
   const [busy, setBusy] = useState(false);
+  const [selected, setSelected] = useState<{ kind: "profile"; ref: string } | { kind: "set"; ref: string }>();
 
   useEffect(() => {
     let live = true;
@@ -77,6 +80,9 @@ export function AgentRosterSurface({
       live = false;
     };
   }, [kernel.transport, project, projectRef, tick]);
+
+  const selectedProfile = selected?.kind === "profile" ? roster?.profiles.find((profile) => profile.profile_ref === selected.ref) : undefined;
+  const selectedSet = selected?.kind === "set" ? roster?.sets.find((set) => set.ref === selected.ref) : undefined;
 
   const incomplete =
     !form.world_ref.trim() ||
@@ -139,11 +145,11 @@ export function AgentRosterSurface({
         <h3>Profiles</h3>
         {roster?.profiles.length ? (
           <ul>
-            {roster.profiles.map((profile, index) => (
-              <li key={String(profile.profile_ref ?? profile.agent_ref ?? index)}>
-                <strong>{String(profile.agent_ref ?? profile.profile_ref ?? "Unnamed Agent")}</strong>
-                <span>{String(profile.purpose ?? "Profile source")}</span>
-                <small>{String(profile.revision ?? "revision unavailable")}</small>
+            {roster.profiles.map((profile) => (
+              <li key={String(profile.profile_ref)} role="button" tabIndex={0} onClick={() => setSelected({ kind: "profile", ref: profile.profile_ref })} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelected({ kind: "profile", ref: profile.profile_ref }); } }}>
+                <strong>{profile.purpose || profile.role || "Agent profile"}</strong>
+                <span>{profile.role || "Authored project profile"}</span>
+                <small>Select for details</small>
               </li>
             ))}
           </ul>
@@ -156,9 +162,9 @@ export function AgentRosterSurface({
         <h3>AgentSets</h3>
         {roster?.sets.length ? (
           <ul>
-            {roster.sets.map((set, index) => (
-              <li key={String(set.ref ?? index)}>
-                <strong>{String(set.ref ?? "Unnamed AgentSet")}</strong>
+            {roster.sets.map((set) => (
+              <li key={String(set.ref)} role="button" tabIndex={0} onClick={() => setSelected({ kind: "set", ref: set.ref })} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelected({ kind: "set", ref: set.ref }); } }}>
+                <strong>Agent team</strong>
                 <span>
                   {Array.isArray(set.members)
                     ? `${set.members.length} declared members`
@@ -177,6 +183,8 @@ export function AgentRosterSurface({
         )}
       </section>
 
+      <AgentDetail profile={selectedProfile} set={selectedSet} />
+
       <section>
         <h3>Current sessions</h3>
         {onOpenEncounter ? (
@@ -194,6 +202,18 @@ export function AgentRosterSurface({
           Central allocates the profile and Agent refs. The result remains a generated,
           unrecognised proposal until the owner recognises it.
         </p>
+        <label className="agents-expression-intent">
+          Intent
+          <textarea
+            value={form.intent_expression}
+            onChange={(event) => {
+              setForm((value) => ({ ...value, intent_expression: event.target.value }));
+              setProposal(undefined);
+            }}
+            disabled={busy}
+            rows={4}
+          />
+        </label>
         <label>
           World
           <select
@@ -227,18 +247,7 @@ export function AgentRosterSurface({
             <p>No ratified Worlds were returned for this Project.</p>
           )}
         </fieldset>
-        <label>
-          Intent
-          <textarea
-            value={form.intent_expression}
-            onChange={(event) => {
-              setForm((value) => ({ ...value, intent_expression: event.target.value }));
-              setProposal(undefined);
-            }}
-            disabled={busy}
-            rows={4}
-          />
-        </label>
+        <details><summary>Optional purpose and role</summary>
         <label>
           Purpose (optional)
           <input
@@ -259,15 +268,24 @@ export function AgentRosterSurface({
             disabled={busy}
           />
         </label>
+        </details>
         <button onClick={() => void express()} disabled={busy || incomplete}>
           {busy ? "Expressing…" : "Express AgentProfile intent"}
         </button>
         {proposal !== undefined && (
           <details open>
             <summary>Generated proposal · unrecognised</summary>
-            <pre data-proposal-standing="generated-proposal-unrecognised">
-              {JSON.stringify(proposal, null, 2)}
-            </pre>
+            <p className="agents-detail-purpose">{String(proposal.profile.purpose ?? proposal.profile.role ?? "Agent profile proposal")}</p>
+            <dl className="agents-proposal-summary">
+              <dt>Standing</dt><dd>{proposal.recognition}</dd>
+              <dt>Intent</dt><dd>{proposal.intent_expression}</dd>
+              <dt>Role</dt><dd>{String(proposal.profile.role ?? "Not authored")}</dd>
+              <dt>Scope</dt><dd>{String(proposal.profile.scope ?? "Not disclosed")}</dd>
+            </dl>
+            <details>
+              <summary>Native proposal evidence</summary>
+              <pre data-proposal-standing="generated-proposal-unrecognised">{JSON.stringify(proposal, null, 2)}</pre>
+            </details>
           </details>
         )}
       </details>
