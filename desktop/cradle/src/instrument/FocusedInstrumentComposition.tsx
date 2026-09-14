@@ -55,7 +55,7 @@ function useSource(ref:string){
     }catch(reason){if(run===sequence.current)setError(reason instanceof Error?reason.message:String(reason));}
   },[ref]);
   useEffect(()=>{void refresh();return subscribeFocusedInstrumentSource(ref,()=>void refresh());},[ref,refresh]);
-  return {snapshot,bimba,error,refresh};
+  return {snapshot,bimba,error};
 }
 
 async function issue(ref:string,command:FocusedInstrumentCommand,setResult:(value:FocusedInstrumentCommandResult|null)=>void,setBusy:(value:boolean)=>void){
@@ -88,13 +88,27 @@ function mediumLabels(snapshot:FocusedInstrumentSnapshot){
 }
 
 function FocusedInstrumentSurface({binding}:{binding:SurfaceBinding}){
-  const ref=binding.ref!;const {snapshot,error}=useSource(ref);const [busy,setBusy]=useState(false);const [result,setResult]=useState<FocusedInstrumentCommandResult|null>(null);const detach=useRef<(()=>void)|void>();
-  const attach=useCallback((instance:unknown)=>{
+  const ref=binding.ref!;const {snapshot,error}=useSource(ref);const [busy,setBusy]=useState(false);const [result,setResult]=useState<FocusedInstrumentCommandResult|null>(null);const detach=useRef<(()=>void)|undefined>(undefined);const leaseRef=useRef<RetainedExpressionLease|null>(null);
+  const attach=useCallback((instance:unknown,host:{canvas:HTMLCanvasElement})=>{
     detach.current?.();detach.current=undefined;
+    const native=instance as RetainedExpressionLease;
+    let lease:RetainedExpressionLease;
+    lease={
+      retainedTargetPort:()=>native.retainedTargetPort(),
+      checkpointRetainedField:(owner)=>native.checkpointRetainedField(owner),
+      restoreRetainedField:(owner,checkpoint)=>{native.restoreRetainedField(owner,checkpoint);return lease;},
+      onRecoveryRequired:(listener)=>{const restored=()=>listener();host.canvas.addEventListener("webglcontextrestored",restored);return()=>host.canvas.removeEventListener("webglcontextrestored",restored);},
+      inspect:()=>native.inspect(),
+      pause:(value=true)=>{native.pause(value);return lease;},
+      resume:()=>{native.resume();return lease;},
+      renderOnce:()=>{native.renderOnce();return lease;},
+    };
+    leaseRef.current=lease;
     const source=focusedInstrumentSource(ref);if(!source?.attachExpression)return;
-    void Promise.resolve(source.attachExpression(instance as RetainedExpressionLease)).then(stop=>{detach.current=stop;}).catch(reason=>setResult({standing:"unknown",operation:"attach-expression",error:reason instanceof Error?reason.message:String(reason)}));
+    void Promise.resolve(source.attachExpression(lease)).then(stop=>{detach.current=typeof stop==="function"?stop:undefined;}).catch(reason=>setResult({standing:"unknown",operation:"attach-expression",error:reason instanceof Error?reason.message:String(reason)}));
   },[ref]);
-  useEffect(()=>()=>{detach.current?.();detach.current=undefined;},[]);
+  useEffect(()=>{if(snapshot?.available)leaseRef.current?.resume();else leaseRef.current?.pause(true);},[snapshot?.available]);
+  useEffect(()=>()=>{detach.current?.();detach.current=undefined;leaseRef.current=null;},[]);
   const command=(value:FocusedInstrumentCommand)=>void issue(ref,value,setResult,setBusy);
   const active=snapshot?.focus.focus;
   const media=snapshot?mediumLabels(snapshot):[];
