@@ -1,13 +1,13 @@
 /**
  * The Global Expression Stage — O:I's owner-side expression contract. One
- * stage per native window (the field host underneath already enforces one
- * canvas, one scheduler, one simulation clock; every window runs the same
- * provider tree). The stage owns WHERE the expressive faculty sits in the
- * application — the presentation planes — and WHAT application events may
- * address it — semantic cues, targets and the form vocabulary. The
- * expression engine stays behind the present()/express() seam and owns
- * physics, scenes and rendering; when the upgraded native engine lands it
- * replaces the runtime inside this seam without changing the contract.
+ * stage per native window (every window runs the same provider tree). The
+ * stage owns WHERE the expressive faculty sits in the application — the
+ * presentation planes — and WHAT application events may address it —
+ * semantic cues, targets and the form vocabulary. The runtime behind the
+ * present()/express() seam is the merged native Expressions engine
+ * (engineSurface.ts): hosted production fields, persistent-ID scene
+ * interpolation, honest context loss. Application code still never speaks
+ * physics — it names recipes, addresses targets, states cues.
  *
  * Planes:
  *   ambient     — the resting altitude (--oi-z-expression): ink on the
@@ -15,8 +15,8 @@
  *   overlay     — the forms renderer's own canvas over ordinary chrome
  *                 (--oi-z-stage-overlay), still under popovers.
  *   frontstate  — the opening/welcome ground (--oi-z-stage-frontstate).
- *                 While a frontstate presentation stands, the shared
- *                 field canvas is raised with it — at boot nothing else
+ *                 While a frontstate presentation stands, the engine
+ *                 surface canvas is raised with it — at boot nothing else
  *                 is painted, and popovers and consent stay above.
  *
  * Cues: application layers emit facts (app.opening, surface.loading,
@@ -42,7 +42,6 @@ import {
   type FormName,
 } from "@epilogos/oi-design-system/expression";
 import "@epilogos/oi-design-system/expression.css";
-import type { PointCloudHost } from "@epilogos/oi-design-system/point-cloud/host";
 import { useVisuals } from "../visuals/ParticleExpression";
 import { useKernel } from "../kernel/KernelProvider";
 import {
@@ -52,7 +51,7 @@ import {
   type ExpressionCue,
 } from "./cues";
 import { expressionTargetIds, resolveExpressionTarget } from "./targets";
-import { stageRecipe, stageSequence } from "./recipes";
+import type { EngineSurface } from "./engineSurface";
 
 export type StagePlane = "ambient" | "overlay" | "frontstate";
 
@@ -62,7 +61,8 @@ export interface StagePresentationRequest {
   plane: StagePlane;
   /** Authored recipe id (recipes.ts); application code never patches. */
   recipe: string;
-  /** Registered Expression Target id; defaults to the viewport. */
+  /** Registered Expression Target id; the viewport surface is the window
+   * canvas. Element targets are a later surface kind, not a scissor. */
   target?: string;
   paused?: boolean;
 }
@@ -70,7 +70,7 @@ export interface StagePresentationRequest {
 export interface StagePresentation {
   readonly id: string;
   readonly plane: StagePlane;
-  /** Swap the presented recipe by id — never a remount, never a patch. */
+  /** Apply another authored recipe as an overlay — no reseed, no remount. */
   update(recipe: string): void;
   /** Play an authored sequence (recipes.ts) against this presentation. */
   play(sequence: string): void;
@@ -86,8 +86,11 @@ export interface ExpressionStageApi {
   express(name: string, options: ExpressionOptions & { target?: string }): number | null;
   update(handle: number | null, options: Partial<ExpressionOptions> & { name?: FormName; target?: string }): boolean;
   release(handle: number | null): void;
-  /** Bounded dev/walk diagnostics: presentations, recent cues, and the
-   * forms renderer's own counters. */
+  /** Honest engine failure (context creation or loss) — surfaced, never
+   * swallowed; the frontstate declines rather than trapping the app. */
+  error: string | null;
+  /** Bounded dev/walk diagnostics: presentations, recent cues, engine
+   * capabilities, and the forms renderer's own counters. */
   inspect(): Record<string, unknown>;
 }
 
@@ -105,18 +108,19 @@ const CUE_RELAY = "oi:stage-cue-relay";
 interface PresentationRecord {
   id: string;
   plane: StagePlane;
-  instance: ReturnType<PointCloudHost["createInstance"]>;
-  timers: ReturnType<typeof setTimeout>[];
 }
 
 export function ExpressionStageProvider({ children }: { children: ReactNode }) {
-  const { host } = useVisuals();
+  const { snapshot } = useVisuals();
   const kernel = useKernel();
-  // The overlay-plane renderer is a window-lifetime singleton created on
-  // first use (one per window is the renderer's own law); the ref is the
-  // source of truth so the creating call can already serve requests.
+  // The overlay-plane renderer is a window-lifetime singleton created at
+  // mount (one per window is the renderer's own law); the ref is the source
+  // of truth so the creating call can already serve requests.
   const overlayRef = useRef<ExpressionOverlay | null>(null);
   const [, markOverlayReady] = useState(0);
+  const [surface, setSurface] = useState<EngineSurface | null>(null);
+  const surfaceRef = useRef<EngineSurface | null>(null);
+  const [surfaceError, setSurfaceError] = useState<string | null>(null);
   const [frontstateCount, setFrontstateCount] = useState(0);
   const presentations = useRef(new Map<string, PresentationRecord>());
   const cueLog = useRef<ExpressionCue[]>([]);
@@ -140,85 +144,90 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
 
   // Presentation lifecycle -------------------------------------------------
 
-  const releaseRecord = useCallback((record: PresentationRecord) => {
-    for (const timer of record.timers) clearTimeout(timer);
-    record.timers.length = 0;
-    if (record.plane === "frontstate") setFrontstateCount((count) => Math.max(0, count - 1));
-    record.instance.release();
-  }, []);
-
   const present = useCallback((request: StagePresentationRequest): StagePresentation | null => {
-    if (!host || presentations.current.has(request.id)) return null;
-    const recipe = stageRecipe(request.recipe);
-    const targetRect = request.target
-      ? () => resolveExpressionTarget(request.target)
-      : null;
-    const instance = host.createInstance({
-      id: `stage:${request.id}`,
-      tag: request.id,
-      target: targetRect,
-      config: recipe,
-      // A target-bound presentation samples no pointer; window-scope
-      // presentations sample the window passively (never capture).
-      pointer: targetRect ? null : "window",
-      paused: request.paused,
-    });
-    const record: PresentationRecord = {
-      id: request.id,
-      plane: request.plane,
-      instance,
-      timers: [],
-    };
-    presentations.current.set(request.id, record);
+    if (!snapshot.enabled || surfaceError) return null;
+    if (presentations.current.has(request.id)) return null;
+    if (request.target && request.target !== "viewport") {
+      throw new Error(`Element-target presentations are not engine window surfaces: ${request.target}`);
+    }
+    const surface = surfaceRef.current;
+    if (!surface) return null;
+    surface.present(request.id, request.recipe);
+    if (request.paused) surface.setPaused(true);
+    presentations.current.set(request.id, { id: request.id, plane: request.plane });
     if (request.plane === "frontstate") setFrontstateCount((count) => count + 1);
     return {
       id: request.id,
       plane: request.plane,
-      update(nextRecipe: string) {
-        instance.update(stageRecipe(nextRecipe));
+      update(recipe: string) {
+        surface.update(request.id, recipe);
       },
-      play(sequenceId: string) {
-        if (host.reducedMotion) return;
-        for (const timer of record.timers) clearTimeout(timer);
-        record.timers.length = 0;
-        const { steps } = stageSequence(sequenceId);
-        for (const step of steps) {
-          record.timers.push(setTimeout(() => {
-            instance.update(stageRecipe(step.recipe));
-            if (step.disperse !== undefined) instance.disperse(0, 0, step.disperse);
-          }, step.at));
-        }
+      play(sequence: string) {
+        surface.play(request.id, sequence);
       },
       release() {
-        if (presentations.current.get(request.id) !== record) return;
+        if (!presentations.current.has(request.id)) return;
         presentations.current.delete(request.id);
-        releaseRecord(record);
+        if (request.plane === "frontstate") setFrontstateCount((count) => Math.max(0, count - 1));
+        surfaceRef.current?.release(request.id);
       },
     };
-  }, [host, releaseRecord]);
+  }, [snapshot.enabled, surfaceError, surface]);
 
-  // The field host lives exactly while the expression is enabled; when it
-  // goes (master switch, context loss) no stage presentation may outlive it.
+  // The engine surface exists exactly while the expression is enabled —
+  // the master switch is absolute: off removes the canvas, the context
+  // and the simulation entirely, and the engine module is loaded only on
+  // the enabled path (the never-enabled path allocates nothing). Engine
+  // failure surfaces and disposes; the next enable starts a fresh field
+  // with an explicit reseed.
   useEffect(() => {
-    if (host) return;
-    for (const record of presentations.current.values()) releaseRecord(record);
-    presentations.current.clear();
-    setFrontstateCount(0);
-  }, [host, releaseRecord]);
+    if (!snapshot.enabled) {
+      surfaceRef.current?.dispose();
+      surfaceRef.current = null;
+      setSurface(null);
+      setSurfaceError(null);
+      presentations.current.clear();
+      setFrontstateCount(0);
+      return;
+    }
+    if (surfaceRef.current) return;
+    let cancelled = false;
+    let created: EngineSurface | null = null;
+    void import("./engineSurface").then(({ EngineSurface: Surface }) => {
+      if (cancelled || surfaceRef.current) return;
+      created = Surface.forWindow((message) => {
+        setSurfaceError(message);
+        surfaceRef.current?.dispose();
+        surfaceRef.current = null;
+        setSurface(null);
+        presentations.current.clear();
+        setFrontstateCount(0);
+      });
+      surfaceRef.current = created;
+      setSurface(created);
+    }).catch((cause: unknown) => {
+      setSurfaceError(cause instanceof Error ? cause.message : String(cause));
+    });
+    return () => {
+      cancelled = true;
+      created?.dispose();
+      if (created && surfaceRef.current === created) {
+        surfaceRef.current = null;
+        setSurface(null);
+        presentations.current.clear();
+        setFrontstateCount(0);
+      }
+    };
+  }, [snapshot.enabled]);
 
-  useEffect(() => () => {
-    for (const record of presentations.current.values()) releaseRecord(record);
-    presentations.current.clear();
-  }, [releaseRecord]);
-
-  // Frontstate altitude law: the shared field canvas is raised with the
+  // Frontstate altitude law: the engine surface canvas is raised with the
   // frontstate plane while (and only while) a frontstate presentation
   // stands. Popovers and consent stay above by token altitude.
   useEffect(() => {
-    if (!host) return;
-    host.canvas.style.zIndex = frontstateCount > 0 ? "var(--oi-z-stage-frontstate)" : "";
-    return () => { host.canvas.style.zIndex = ""; };
-  }, [host, frontstateCount]);
+    if (!surface) return;
+    surface.canvas.style.zIndex = frontstateCount > 0 ? "var(--oi-z-stage-frontstate)" : "";
+    return () => { surface.canvas.style.zIndex = ""; };
+  }, [surface, frontstateCount]);
 
   // Cue bus + native relay -------------------------------------------------
 
@@ -316,10 +325,11 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
 
   const inspect = useCallback(() => ({
     presentations: [...presentations.current.values()].map((record) => ({ id: record.id, plane: record.plane })),
+    engine: surface ? surface.capabilities() : null,
     targets: expressionTargetIds(),
     cues: cueLog.current,
     overlay: overlayRef.current ? overlayRef.current.inspect() : null,
-  }), []);
+  }), [surface]);
 
   const api = useMemo<ExpressionStageApi>(() => ({
     present,
@@ -327,8 +337,9 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
     express,
     update: updateHandle,
     release: releaseHandle,
+    error: surfaceError,
     inspect,
-  }), [present, emit, express, updateHandle, releaseHandle, inspect]);
+  }), [present, emit, express, updateHandle, releaseHandle, surfaceError, inspect]);
 
   return <StageContext.Provider value={api}>{children}</StageContext.Provider>;
 }

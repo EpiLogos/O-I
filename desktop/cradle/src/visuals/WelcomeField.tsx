@@ -30,8 +30,9 @@ const DISSOLVE_MS = 1050;
 const LEAVE_MS = 420;
 
 export function WelcomeField({ onEntered }: { onEntered?: () => void }) {
-  const { snapshot, host, error } = useVisuals();
+  const { snapshot } = useVisuals();
   const stage = useExpressionStage();
+  const error = stage.error;
   const [phase, setPhase] = useState<"rest" | "dissolving" | "leaving" | "done">("rest");
   const [booting, setBooting] = useState(true);
   const [bootDetail, setBootDetail] = useState<string | undefined>(undefined);
@@ -56,9 +57,8 @@ export function WelcomeField({ onEntered }: { onEntered?: () => void }) {
   }), []);
 
   // The mark is a stage presentation (frontstate plane, "oi.mark"
-  // recipe); it stands exactly while the frontstate does. `host` is a
-  // dependency because a lazily-arriving host enables a late first
-  // presentation; a lost host releases it through the stage.
+  // recipe); it stands exactly while the frontstate does, on the engine
+  // surface the stage holds while the expression is enabled.
   useEffect(() => {
     if (!show) return;
     const presentation = stage.present({ id: "welcome.mark", plane: "frontstate", recipe: "oi.mark" });
@@ -67,7 +67,7 @@ export function WelcomeField({ onEntered }: { onEntered?: () => void }) {
       presentationRef.current = null;
       presentation?.release();
     };
-  }, [show, stage, host]);
+  }, [show, stage]);
 
   const enter = useCallback(() => {
     if (sessionStorage.getItem(DONE_KEY) || booting) return;

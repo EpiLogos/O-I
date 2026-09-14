@@ -2,16 +2,35 @@
  * Authored recipes: the named visual material and scene sequences the
  * stage may present. This module is the boundary the Global Expression
  * Stage draws — application code names a recipe ("oi.mark") or a sequence
- * ("welcome.enter"); it never writes physics. When the upgraded native
- * engine lands, these entries become authored Expressions/scenes and the
- * stage's contract (cue → recipe identity) does not change.
+ * ("welcome.enter"); it never writes physics. The mark is authored
+ * directly in the engine's own scene schema (two formations on the shared
+ * medium); the flight steps are overlay patches on its retained config.
  */
-import type { PointCloudPatch } from "@epilogos/oi-design-system/point-cloud/config";
-import logoState from "../visuals/oi-logo-state.json";
+import { blankScene, entity } from "@epilogos/oi-design-system/expressions-engine/shell/model.mjs";
+import { nativeExport, type NativeConfig } from "@epilogos/oi-design-system/expressions-engine/shell/nativeBridge.mjs";
 
 export const MARK_RECIPE = "oi.mark";
 
-const MARK_CONFIG: PointCloudPatch = (logoState as unknown as { config: PointCloudPatch }).config;
+/** The authored mark: O and I as two formations, proportioned like the
+ * instrument's own field-studies opening — the large O and the narrow I
+ * sharing one medium at 120,000 particles, ink on paper. */
+const MARK_CONFIG: NativeConfig = (() => {
+  const scene = blankScene("O:I mark");
+  const o = entity("O — opening", "O", { x: -0.22, y: 0.03, z: 0 });
+  o.id = "mark-o";
+  o.size = { x: 1.43, y: 1.63 };
+  o.rotation = -5;
+  o.share = 4;
+  const i = entity("I — interval", "I", { x: 0.66, y: 0.015, z: 0 });
+  i.id = "mark-i";
+  i.size = { x: 0.28, y: 1.62 };
+  i.share = 1;
+  scene.entities = [o, i];
+  scene.field.background = "#f4f2eb";
+  scene.field.params.count = 120000;
+  scene.field.params.size = 1.6;
+  return nativeExport(scene).config;
+})();
 
 /** The opening flight, in two stages: the mark first goes relational
  * (attractors on, orbits up) and starts to swirl while still tethered;
@@ -19,7 +38,7 @@ const MARK_CONFIG: PointCloudPatch = (logoState as unknown as { config: PointClo
  * flies apart as the app takes over. (Moved verbatim from the bespoke
  * WelcomeField patches: the choreography is now authored material, not
  * React changing physics parameters.) */
-const WELCOME_RELATIONAL: PointCloudPatch = {
+const WELCOME_RELATIONAL: NativeConfig = {
   fluid: {
     turbulence: 1.3,
     curlSpeed: 1.0,
@@ -42,7 +61,7 @@ const WELCOME_RELATIONAL: PointCloudPatch = {
   morphProgress: 1,
 };
 
-const WELCOME_CHAOS: PointCloudPatch = {
+const WELCOME_CHAOS: NativeConfig = {
   fluid: {
     turbulence: 2.0,
     curlSpeed: 1.4,
@@ -61,7 +80,7 @@ const WELCOME_CHAOS: PointCloudPatch = {
   },
 };
 
-export const RECIPES: Readonly<Record<string, PointCloudPatch>> = Object.freeze({
+export const RECIPES: Readonly<Record<string, NativeConfig>> = Object.freeze({
   [MARK_RECIPE]: MARK_CONFIG,
   "welcome.relational": WELCOME_RELATIONAL,
   "welcome.chaos": WELCOME_CHAOS,
@@ -88,7 +107,7 @@ export const SEQUENCES: Readonly<Record<string, StageSequence>> = Object.freeze(
   }),
 });
 
-export function stageRecipe(id: string): PointCloudPatch {
+export function stageRecipe(id: string): NativeConfig {
   const recipe = RECIPES[id];
   if (!recipe) throw new Error(`Unknown stage recipe: ${id}`);
   return recipe;
