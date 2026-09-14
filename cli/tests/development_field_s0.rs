@@ -33,7 +33,7 @@ const PRODUCTS: [(&str, &str, &str); 6] = [
     (
         "quaternal-logic",
         "ql",
-        "d88216301a8f76918073d46f5de064a68f7c1480",
+        "a83148e93c500d5bebaa5811d9d25953652834cf",
     ),
 ];
 
