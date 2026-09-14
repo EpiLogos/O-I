@@ -1,4 +1,5 @@
 import {ExpressionProvider,ExpressionLayout} from "./shared/Expression";
+import {ExpressionStageProvider} from "./stage/ExpressionStage";
 import {mintInstance,parseInstance,instanceFileName} from "./flow/instance";
 import {userFlowsArea} from "./flow/instances";
 import {fileOperation,type FileMutation} from "./files/client";
@@ -103,11 +104,13 @@ export function Cradle() {
   }, []);
   return (
     <KernelProvider>
-      <ExpressionProvider>
-        <VisualsProvider>
-          {window.__OI_DETACHED__ ? <DetachedFrame /> : <CradleFrame WalkChannel={WalkChannel} />}
-        </VisualsProvider>
-      </ExpressionProvider>
+      <VisualsProvider>
+        <ExpressionStageProvider>
+          <ExpressionProvider>
+            {window.__OI_DETACHED__ ? <DetachedFrame /> : <CradleFrame WalkChannel={WalkChannel} />}
+          </ExpressionProvider>
+        </ExpressionStageProvider>
+      </VisualsProvider>
     </KernelProvider>
   );
 }

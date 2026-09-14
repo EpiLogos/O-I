@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "welcome",
-  "generated_at": "2026-09-10T22:24:34.461Z",
+  "generated_at": "2026-09-13T23:46:52.872Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": null,
@@ -12,11 +12,15 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 6744,
+  "duration_ms": 15310,
   "checks": [
     {
       "ok": true,
       "label": "The welcome frontstate stands between the app and the person on first open"
+    },
+    {
+      "ok": true,
+      "label": "Boot is one continuous frontstate — no second loader stands over it"
     },
     {
       "ok": true,
@@ -51,7 +55,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 35,
+      "duration_ms": 54,
       "data": {
         "file": "welcome-welcome-reduced-motion.png"
       }
@@ -59,7 +63,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 235,
+      "duration_ms": 2573,
       "data": {
         "file": "welcome-welcome-frontstate-rest.png"
       }
@@ -67,7 +71,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 197,
+      "duration_ms": 1166,
       "data": {
         "file": "welcome-welcome-frontstate-dissolve.png"
       }
@@ -75,7 +79,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 31,
+      "duration_ms": 55,
       "data": {
         "file": "welcome-welcome-frontstate-entered.png"
       }

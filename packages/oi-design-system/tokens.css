@@ -87,6 +87,13 @@
   /* Decorative expression fields ride with content (0–5 local band):
    * particles are ink on the planes, never above dialogs or menus. */
   --oi-z-expression: 1;
+  /* The Global Expression Stage planes (desktop): overlay expressions
+   * float over ordinary chrome but under every dialog, menu or popover;
+   * frontstate is the opening/welcome ground that may become the
+   * foreground experience. Consent and security surfaces stay above both
+   * (they ride above every token here). */
+  --oi-z-stage-overlay: 65;
+  --oi-z-stage-frontstate: 75;
 
   /* ===== section: motion ===== */
   --oi-motion-fast: 160ms;

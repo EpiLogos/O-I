@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "kernel-cas",
-  "generated_at": "2026-09-08T12:06:01.365Z",
+  "generated_at": "2026-09-13T16:14:34.971Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -10,9 +10,9 @@
     "node": "v24.16.0",
     "platform": "darwin"
   },
-  "passed": true,
+  "passed": false,
   "error": null,
-  "duration_ms": 4178,
+  "duration_ms": 3558,
   "checks": [
     {
       "ok": true,
@@ -91,7 +91,7 @@
       "label": "the buffer is clean again (both layers synced)"
     },
     {
-      "ok": true,
+      "ok": false,
       "label": "exactly one conflict (source_write_conflict) event"
     },
     {
@@ -119,8 +119,8 @@
       "label": "invoke.source_reread crosses the seam and returns its receipt",
       "data": {
         "seq_range": {
-          "from": 10,
-          "to": 10
+          "from": 11,
+          "to": 11
         }
       }
     },
@@ -157,8 +157,8 @@
       "label": "invoke.surface_focus returns ok with its receipt seq range",
       "data": {
         "seq_range": {
-          "from": 15,
-          "to": 15
+          "from": 16,
+          "to": 16
         }
       }
     },
@@ -184,7 +184,7 @@
     },
     {
       "ok": true,
-      "label": "the event log is strictly monotonic 1..17 with no gaps and no duplicate emission",
+      "label": "the event log is strictly monotonic 1..18 with no gaps and no duplicate emission",
       "data": {
         "histogram": {
           "world_changed": 2,
@@ -193,7 +193,7 @@
           "focus_changed": 3,
           "buffer_dirty": 3,
           "source_changed": 3,
-          "source_write_conflict": 1
+          "source_write_conflict": 2
         }
       }
     }
@@ -202,7 +202,7 @@
     {
       "ok": true,
       "op": "read.sources",
-      "duration_ms": 17.4,
+      "duration_ms": 11,
       "data": {
         "availability": "horizon",
         "project": "Editor",
@@ -226,14 +226,14 @@
             "agent_retrieval_allowed": true,
             "path": "ProjectCentral/user/01 02-ARCHITECTURE.md",
             "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
-            "revision": "central.content-fnv1a64/v1:16545:68439910925b9055",
+            "revision": "central.content-fnv1a64/v1:16605:6a00870aa4f8d1e2",
             "treatment": "projectcentral-user"
           },
           {
             "agent_retrieval_allowed": true,
             "path": "ProjectCentral/user/02 03-UX-STATES.md",
             "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
-            "revision": "central.content-fnv1a64/v1:16196:f64ed1160615a241",
+            "revision": "central.content-fnv1a64/v1:16252:0f45f344af6c9754",
             "treatment": "projectcentral-user"
           },
           {
@@ -247,7 +247,7 @@
             "agent_retrieval_allowed": true,
             "path": "ProjectCentral/user/04 05-EXECUTION.md",
             "ref": "central:source:project:editor-walk:ProjectCentral/user/04%2005-EXECUTION.md",
-            "revision": "central.content-fnv1a64/v1:8240:484f33e4bc2d0338",
+            "revision": "central.content-fnv1a64/v1:8268:8ff860b26cd8d269",
             "treatment": "projectcentral-user"
           },
           {
@@ -261,14 +261,14 @@
             "agent_retrieval_allowed": true,
             "path": "ProjectCentral/user/06 CANONICAL-PRODUCT-FIELD.md",
             "ref": "central:source:project:editor-walk:ProjectCentral/user/06%20CANONICAL-PRODUCT-FIELD.md",
-            "revision": "central.content-fnv1a64/v1:32660:6034469841378f21",
+            "revision": "central.content-fnv1a64/v1:33820:ee6914b1bd5555b1",
             "treatment": "projectcentral-user"
           },
           {
             "agent_retrieval_allowed": true,
             "path": "ProjectCentral/user/07 OI-DESKTOP-APPLICATION-SPEC.md",
             "ref": "central:source:project:editor-walk:ProjectCentral/user/07%20OI-DESKTOP-APPLICATION-SPEC.md",
-            "revision": "central.content-fnv1a64/v1:36268:1ec5a6dc86a29c7d",
+            "revision": "central.content-fnv1a64/v1:36324:7e3ed6684620a128",
             "treatment": "projectcentral-user"
           },
           {
@@ -292,7 +292,7 @@
     {
       "ok": true,
       "op": "read.sources",
-      "duration_ms": 17.4,
+      "duration_ms": 13.8,
       "data": {
         "availability": "horizon",
         "project": "Editor",
@@ -316,14 +316,14 @@
             "agent_retrieval_allowed": true,
             "path": "ProjectCentral/user/01 02-ARCHITECTURE.md",
             "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
-            "revision": "central.content-fnv1a64/v1:16545:68439910925b9055",
+            "revision": "central.content-fnv1a64/v1:16605:6a00870aa4f8d1e2",
             "treatment": "projectcentral-user"
           },
           {
             "agent_retrieval_allowed": true,
             "path": "ProjectCentral/user/02 03-UX-STATES.md",
             "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
-            "revision": "central.content-fnv1a64/v1:16196:f64ed1160615a241",
+            "revision": "central.content-fnv1a64/v1:16252:0f45f344af6c9754",
             "treatment": "projectcentral-user"
           },
           {
@@ -337,7 +337,7 @@
             "agent_retrieval_allowed": true,
             "path": "ProjectCentral/user/04 05-EXECUTION.md",
             "ref": "central:source:project:editor-walk:ProjectCentral/user/04%2005-EXECUTION.md",
-            "revision": "central.content-fnv1a64/v1:8240:484f33e4bc2d0338",
+            "revision": "central.content-fnv1a64/v1:8268:8ff860b26cd8d269",
             "treatment": "projectcentral-user"
           },
           {
@@ -351,14 +351,14 @@
             "agent_retrieval_allowed": true,
             "path": "ProjectCentral/user/06 CANONICAL-PRODUCT-FIELD.md",
             "ref": "central:source:project:editor-walk:ProjectCentral/user/06%20CANONICAL-PRODUCT-FIELD.md",
-            "revision": "central.content-fnv1a64/v1:32660:6034469841378f21",
+            "revision": "central.content-fnv1a64/v1:33820:ee6914b1bd5555b1",
             "treatment": "projectcentral-user"
           },
           {
             "agent_retrieval_allowed": true,
             "path": "ProjectCentral/user/07 OI-DESKTOP-APPLICATION-SPEC.md",
             "ref": "central:source:project:editor-walk:ProjectCentral/user/07%20OI-DESKTOP-APPLICATION-SPEC.md",
-            "revision": "central.content-fnv1a64/v1:36268:1ec5a6dc86a29c7d",
+            "revision": "central.content-fnv1a64/v1:36324:7e3ed6684620a128",
             "treatment": "projectcentral-user"
           },
           {
@@ -408,12 +408,12 @@
     {
       "ok": true,
       "op": "ui.open_real_file",
-      "duration_ms": 125
+      "duration_ms": 110
     },
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "receipts": [
           {
@@ -421,7 +421,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 3,
             "summary": "Surface opened: 00 01-DESIGN.md.",
-            "surface_id": "f0d66fb4-5a0b-4fb6-805a-b673dfa5ff2e",
+            "surface_id": "ab5d49f9-92d7-463d-82bd-c14c6856d102",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -513,7 +513,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 3,
             "summary": "Surface opened: 00 01-DESIGN.md.",
-            "surface_id": "f0d66fb4-5a0b-4fb6-805a-b673dfa5ff2e",
+            "surface_id": "ab5d49f9-92d7-463d-82bd-c14c6856d102",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -599,7 +599,7 @@
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "receipts": [],
         "count": 0,
@@ -611,7 +611,7 @@
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "receipts": [
           {
@@ -633,7 +633,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 3,
             "summary": "Surface opened: 00 01-DESIGN.md.",
-            "surface_id": "f0d66fb4-5a0b-4fb6-805a-b673dfa5ff2e",
+            "surface_id": "ab5d49f9-92d7-463d-82bd-c14c6856d102",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -761,7 +761,7 @@
     {
       "ok": true,
       "op": "ui.save",
-      "duration_ms": 109
+      "duration_ms": 116
     },
     {
       "ok": true,
@@ -818,7 +818,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 3,
             "summary": "Surface opened: 00 01-DESIGN.md.",
-            "surface_id": "f0d66fb4-5a0b-4fb6-805a-b673dfa5ff2e",
+            "surface_id": "ab5d49f9-92d7-463d-82bd-c14c6856d102",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -938,7 +938,7 @@
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "receipts": [],
         "count": 0,
@@ -970,11 +970,29 @@
             },
             "summary": "The owner's CAS refused the save: the revision moved underneath the buffer. Both sides are preserved.",
             "version": 1
+          },
+          {
+            "current_revision": "central.content-fnv1a64/v1:19769:eec121ae58d2607b",
+            "event": "source_write_conflict",
+            "expected_revision": "central.content-fnv1a64/v1:19709:7fcf9af778d7872b",
+            "schema": "oi.kernel-event/v1",
+            "seq": 10,
+            "source": {
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "revision": "central.content-fnv1a64/v1:19709:7fcf9af778d7872b",
+                "source": "central.projectcentral"
+              },
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+            },
+            "summary": "The owner's CAS refused the save: the revision moved underneath the buffer. Both sides are preserved.",
+            "version": 1
           }
         ],
-        "count": 1,
+        "count": 2,
         "first_seq": 9,
-        "last_seq": 9,
+        "last_seq": 10,
         "since_seq": 8
       }
     },
@@ -1001,18 +1019,36 @@
             },
             "summary": "The owner's CAS refused the save: the revision moved underneath the buffer. Both sides are preserved.",
             "version": 1
+          },
+          {
+            "current_revision": "central.content-fnv1a64/v1:19769:eec121ae58d2607b",
+            "event": "source_write_conflict",
+            "expected_revision": "central.content-fnv1a64/v1:19709:7fcf9af778d7872b",
+            "schema": "oi.kernel-event/v1",
+            "seq": 10,
+            "source": {
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "revision": "central.content-fnv1a64/v1:19709:7fcf9af778d7872b",
+                "source": "central.projectcentral"
+              },
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+            },
+            "summary": "The owner's CAS refused the save: the revision moved underneath the buffer. Both sides are preserved.",
+            "version": 1
           }
         ],
-        "count": 1,
+        "count": 2,
         "first_seq": 9,
-        "last_seq": 9,
+        "last_seq": 10,
         "since_seq": 8
       }
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 57,
+      "duration_ms": 55,
       "data": {
         "file": "kernel-cas-conflict.png"
       }
@@ -1020,7 +1056,7 @@
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "receipts": [
           {
@@ -1042,7 +1078,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 3,
             "summary": "Surface opened: 00 01-DESIGN.md.",
-            "surface_id": "f0d66fb4-5a0b-4fb6-805a-b673dfa5ff2e",
+            "surface_id": "ab5d49f9-92d7-463d-82bd-c14c6856d102",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -1170,20 +1206,38 @@
             },
             "summary": "The owner's CAS refused the save: the revision moved underneath the buffer. Both sides are preserved.",
             "version": 1
+          },
+          {
+            "current_revision": "central.content-fnv1a64/v1:19769:eec121ae58d2607b",
+            "event": "source_write_conflict",
+            "expected_revision": "central.content-fnv1a64/v1:19709:7fcf9af778d7872b",
+            "schema": "oi.kernel-event/v1",
+            "seq": 10,
+            "source": {
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "revision": "central.content-fnv1a64/v1:19709:7fcf9af778d7872b",
+                "source": "central.projectcentral"
+              },
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+            },
+            "summary": "The owner's CAS refused the save: the revision moved underneath the buffer. Both sides are preserved.",
+            "version": 1
           }
         ],
-        "count": 9,
+        "count": 10,
         "first_seq": 1,
-        "last_seq": 9
+        "last_seq": 10
       }
     },
     {
       "ok": true,
       "op": "invoke.source_reread",
-      "duration_ms": 29.1,
+      "duration_ms": 17.6,
       "seq_range": {
-        "from": 10,
-        "to": 10
+        "from": 11,
+        "to": 11
       },
       "data": {
         "outcome": {
@@ -1212,7 +1266,7 @@
             "event": "source_opened",
             "revision": "central.content-fnv1a64/v1:19769:eec121ae58d2607b",
             "schema": "oi.kernel-event/v1",
-            "seq": 10,
+            "seq": 11,
             "source": {
               "kind": "source",
               "native_owner": "central",
@@ -1227,9 +1281,9 @@
           }
         ],
         "count": 1,
-        "first_seq": 10,
-        "last_seq": 10,
-        "since_seq": 9
+        "first_seq": 11,
+        "last_seq": 11,
+        "since_seq": 10
       }
     },
     {
@@ -1257,7 +1311,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 3,
             "summary": "Surface opened: 00 01-DESIGN.md.",
-            "surface_id": "f0d66fb4-5a0b-4fb6-805a-b673dfa5ff2e",
+            "surface_id": "ab5d49f9-92d7-463d-82bd-c14c6856d102",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -1387,10 +1441,28 @@
             "version": 1
           },
           {
+            "current_revision": "central.content-fnv1a64/v1:19769:eec121ae58d2607b",
+            "event": "source_write_conflict",
+            "expected_revision": "central.content-fnv1a64/v1:19709:7fcf9af778d7872b",
+            "schema": "oi.kernel-event/v1",
+            "seq": 10,
+            "source": {
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "revision": "central.content-fnv1a64/v1:19709:7fcf9af778d7872b",
+                "source": "central.projectcentral"
+              },
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+            },
+            "summary": "The owner's CAS refused the save: the revision moved underneath the buffer. Both sides are preserved.",
+            "version": 1
+          },
+          {
             "event": "source_opened",
             "revision": "central.content-fnv1a64/v1:19769:eec121ae58d2607b",
             "schema": "oi.kernel-event/v1",
-            "seq": 10,
+            "seq": 11,
             "source": {
               "kind": "source",
               "native_owner": "central",
@@ -1404,18 +1476,18 @@
             "version": 1
           }
         ],
-        "count": 10,
+        "count": 11,
         "first_seq": 1,
-        "last_seq": 10
+        "last_seq": 11
       }
     },
     {
       "ok": true,
       "op": "invoke.source_save",
-      "duration_ms": 30.3,
+      "duration_ms": 20.5,
       "seq_range": {
-        "from": 11,
-        "to": 11
+        "from": 12,
+        "to": 12
       },
       "data": {
         "outcome": {
@@ -1447,7 +1519,7 @@
             "event": "source_changed",
             "revision": "central.content-fnv1a64/v1:19769:0a953a98ade6cb85",
             "schema": "oi.kernel-event/v1",
-            "seq": 11,
+            "seq": 12,
             "source": {
               "kind": "source",
               "native_owner": "central",
@@ -1462,15 +1534,15 @@
           }
         ],
         "count": 1,
-        "first_seq": 11,
-        "last_seq": 11,
-        "since_seq": 10
+        "first_seq": 12,
+        "last_seq": 12,
+        "since_seq": 11
       }
     },
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 5.6,
+      "duration_ms": 11.4,
       "data": {
         "buffers": {
           "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md": {
@@ -1485,13 +1557,13 @@
             "world_ref": "project:editor-walk"
           },
           "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md": {
-            "base_revision": "central.content-fnv1a64/v1:16545:68439910925b9055",
-            "content": "# 02 — Cradle architecture\n\n**Status:** architecture commitment for the O:I desktop.\n**Companion:** [01-DESIGN.md](01-DESIGN.md) (intent), [03-UX-STATES.md](03-UX-STATES.md) (states), [04-VERIFICATION.md](04-VERIFICATION.md) (evidence).\n\n## 1. Stack and kernel\n\nTauri + Rust + React/TypeScript. React sits on top of a **real O:I application\nkernel** — a small set of coarse application services composing the native\nproducts — rather than on dozens of widget-scoped read-model calls. The renderer is a deterministic\nprojection of kernel events, and every human intent becomes a native operation\nthrough the kernel.\n\n```mermaid\nflowchart LR\n    UI[\"React / TypeScript\\nCradle UI (presentation)\"] -->|\"intents / commands\"| K[\"Cradle application kernel\\nRust\"]\n    K -->|\"typed application events\"| UI\n    K --> C[\"Central\"]\n    K --> A[\"Actuation\"]\n    K --> AI[\"AIKit\"]\n    K --> F[\"Factory\"]\n    K --> W[\"Workcell\"]\n    K --> S[\"SharedField\"]\n    A <--> G[\"Agency Gateway (#154)\"]\n    AI <--> G\n    W <--> G\n    G --> X[\"Telegram · Slack · Discord · terminal · harness UI\"]\n```\n\n## 2. The kernel is the current constitution of the environment\n\nThe kernel is not another database containing copies of everything. It is the\n**current constitution of the environment** — what #158 calls the composition,\nread as inhabitation:\n\n```rust\nCradle {\n    world: WorldRef,                    // Central ground + recognised machines\n    project: Option<ProjectRef>,\n    focus: Option<SubjectRef>,          // the one global subject (§7)\n    journey: Option<JourneyRef>,        // active structured development, if any\n\n    session_space: SessionSpaceRef,     // AIKit working environment\n    agencies: Vec<AgencyPresence>,      // who is present (Gateway-informed)\n    agent_sessions: Vec<AgentSessionPresence>,\n\n    surfaces: SurfaceLayout,            // composed surface bindings (§8)\n    attention: AttentionState,          // what requires the human\n    composition: EffectiveComposition,  // products present / degraded / absent\n    material: MaterialSituation,        // Workcell: bodies, services, placement\n}\n```\n\nComposition asks what is constituted together; inhabitation asks what that\nconstitution means for the situated human and Agencies — the kernel answers\nboth, and the UI renders the answer.\n\n## 3. Coarse application services\n\nTen services, not one command per widget. The first six **compose native\nproducts**; the last four genuinely belong to the application whole.\n\n| Service | Composes | Owns |\n|---|---|---|\n| `WorldService` | Central (`ctrl`), oi recognition | The first-class authored World (`WorldRef` tree with source treatment), Ground, Work files, machine/install recognition — read as a **selected Projection** (selection ≠ readability; omission by default), never as a profile database |\n| `AgencyService` | Actuation, AIKit sessions, Gateway #154 | Agencies, AgentSessions, activity, encounter continuity |\n| `KnowledgeService` | AIKit knowledge, Central | Search, semantic neighbourhoods, disclosure receipts, remember-this |\n| `DevelopmentService` | Factory | Journeys, Runs, Candidates, Evidence, Recognition |\n| `MaterialService` | Workcell | Material bodies, services, placement, bindings |\n| `SharedFieldService` | shared-field contracts | Projections, participants, contributions, encounters |\n| `SurfaceService` | — (application) | Surface registry, bindings, promotion/detach, layout |\n| `ActionRouter` | — (application) | Intent → owner Action dispatch, authority gates |\n| `SearchService` | — (application) | The one command/search aggregator over native descriptors |\n| `AttentionService` | — (application) | Activity → Notification → Attention altitudes |\n\n## 4. The integration ladder\n\nWhere a product exposes a clean Rust crate, use it in-process. Where it is\nindependently executable, use its stable CLI/application protocol. Where it is\npersistent/networked, use its service protocol. **The renderer does not care.**\n\n```text\nReact intent\n  ↓\nkernel service operation\n  ↓\nRust adapter\n  ├── in-process crate API        (factory, aikit-core/store today)\n  ├── native CLI protocol         (ctrl, aikit, actuation, factory, workcell, ql)\n  ├── local IPC / stdio           (ACP agent sessions, Gateway UDS)\n  └── service / network API       (Gateway WebSocket, hosted SharedField)\n```\n\nThis lets moving-but-stable product heads keep moving without binding the UI to\ntheir internals. Every adaptation is honest at the UI: which seam served a\nreading is disclosed (see the provider-truth law, §10).\n\n## 5. Commands and events\n\n```text\nCOMMANDS (human and agent intent)              EVENTS (kernel → renderer)\nopen subject                ◀────────────────  FocusChanged\nexecute Action              ◀────────────────  WorldChanged\nedit / save / author        ◀────────────────  SourceChanged\nsend / address / interrupt  ◀────────────────  ActivityUpdated · SessionChanged\nstage composition           ◀────────────────  KnowledgeChanged\nresolve Attention           ◀────────────────  AttentionRaised · AttentionResolved\ncompose projection          ◀────────────────  RunChanged · JourneyChanged\ncreate Agent from intent    ◀────────────────  MaterialChanged · CompositionChanged\n                                             SharedFieldChanged\n```\n\nThe key loop: **native operation returns → kernel state changes → typed events\n→ React projection re-renders reality.** No optimistic fake mutation followed by\na \"saved\" card. Push, not poll: the current build's absence of any event seam is\nthe single largest infrastructure gap (§11).\n\n## 6. Two state layers — both real\n\n**Semantic/application state** lives in the kernel and native products: World,\nProject, Source, Knowledge, Agency, AgentSession, Journey, Run, SharedField,\nActivity, Attention, material state, Action results.\n\n**Presentation state** lives in the desktop: open surface bindings, split\narrangement, panel widths, resting vs summoned regions, drawer, focused\npresentation, scroll positions, popover state, draft composer content.\n\nRules:\n\n1. Never derive semantic state from presentation state.\n2. Presentation state is **real product state** — persisted professionally,\n   versioned, restorable; \"presentation isn't semantic authority\" never mutated\n   into \"presentation doesn't matter\".\n3. Layout persistence never persists semantic selection.\n\n## 7. One global focus model\n\nThe whole application shares one notion of *what we are currently talking\nabout* — a stable `SubjectRef` plus its surrounding relations:\n\n```text\nCurrent World · Current Project · Current Focus (SubjectRef)\nCurrent Journey · Current Agency encounter\n```\n\nSelecting `src/project.rs` yields `SubjectRef = Central source ref`,\n`ProjectRef`, `WorldRef`. From that one relation: the canvas opens the editor;\nknowledge shows its neighbourhood; the Cradle addresses an agent about *that\nexact subject*; Factory shows Runs touching it; history shows change; search\nrecentres; SharedField can project it if eligible. No component copies selection\nstate independently. This is the backbone of human/agent co-reference: an agent\nreceives refs to selected subjects, never pasted screen text.\n\nFocus changes propagate as events (§5). Focus is semantic state — kernel-owned,\nnot a UI store.\n\n## 8. Tabs are Surface bindings\n\nA tab is not a page URL. It is:\n\n```text\nSurfaceBinding {\n    surface_ref      // which presentation\n    subject_ref      // which subject it shows\n    provider         // which service/product supplies it\n    region           // centre · left · summoned · drawer · detached\n    presentation     // mode (read/edit/graph/…)\n    local_state      // dirty buffer, scroll — presentation layer (§6)\n}\n```\n\nThe same binding can move: centre tab → split; summoned aperture → centre\npanel; centre surface → detached window; detached Observatory → back into the\nleft field. Same subject, same binding, different area and region. Bindings are\npresentation identity, non-canonical; the *subject* is canonical and\nnative-owned.\n\n## 9. Product seams — the four-part contract\n\nEvery native product already converges on the same integration shape; the\nkernel consumes them uniformly:\n\n1. **Capabilities descriptor** — `ctrl action.list`, `factory capabilities`,\n   `aikit` profile/context resolution, `actuation.cli/v1` surface descriptor,\n   `ql capabilities`, Workcell SDK/wire.\n2. **Read-model projection without mutation** — Factory `build-view/v1`,\n   Central `personal.show`, AIKit effective-skill/context readings,\n   Actuation `agency.read / realised.read / activity.read / stream.read`.\n3. **Opaque client-owned refs** — Workcell `ExternalRef`, QL client subjects,\n   Factory's preserved AIKit/Actuation/Workcell refs. No product re-owns\n   another's nouns; the kernel treats them as opaque and routes by owner.\n4. **Explicit authority gates on mutation** — Central CAS + `accepted_by_ref`\n   proposals, Factory bounded Action grants, AIKit reviewable Procedures,\n   Actuation recognition-before-mutation. The desktop adds no bypass: rich\n   rendered code is never a privileged caller (§12).\n\n## 10. Honesty laws (rendered, not implied)\n\n- **Provider truth:** `live-provider → may claim live; fixture → Degraded;\n  derived-only → Degraded`. The UI never upgrades a source class, anywhere in\n  the application.\n- **Absence is an observation, not a failure.** An uninstalled product, a\n  stopped daemon, an unprojected skill, a missing version flag: rendered as\n  what-is, never as error, never fabricated.\n- **Degradation is local.** A provider disappearing degrades one reading; the\n  SessionSpace and other relations keep their identity\n  (`provider pane ≠ SurfaceRef ≠ SessionSpaceRef`).\n- **Authority is visible.** An action discoverable is not an action authorised;\n  the UI shows which authority stands behind each mutation.\n\n## 11. Current build disposition (implementation facts)\n\nEvidence: `desktop/core`, `desktop/src-tauri/main.rs` (39 commands, zero\nevents), `desktop/ui/src` as of 2026-09-04.\n\n**Keep and build on (real today):** the workbench host frame with tabs/splits/\nregions/keyboard grammar (`workbench-host.tsx`); Flow authoring with CAS\nrevision conflict; AgentProfile CRUD over `ctrl`; Knowledge\nsearch/read/relations/explain/history; real ACP agent conversation with\ncanonical AgentSession identity; Factory bounded Action dispatch;\nSessionSpace focus.\n\n**Mount (written, tested, unreachable):** participant composer (To:/@\naddressing, `participant-composer-model.mjs`); the full session observatory /\nactivity / notification / attention model (`session-observatory-model.mjs`);\nthe real Factory `BuildSurface` body in place of the summary cards now rendered.\n\n**Add (the load-bearing gaps):** the event seam (Tauri channel + native change\nsources); global focus events and subject-scoped read models; streaming and\nconcurrent ACP sessions with mid-turn interrupt; the Actuation payload adapter\n(`agency.read`/`activity.read`/`stream.read` → kernel); intent-created Agent\nresolution (AIKit AgentProfile + compose + Workcell placement as one flow);\nJourney/Run readings from Factory; live World/file editing through Central\nowner-Actions; the Agency Gateway integration for cross-surface continuity.\n\n**Retire/replace:** the static System constitution table → live composition\nreading (what is present/degraded/absent, from recognition + capability\ndescriptors); descriptor cards for region surfaces → real region renderers;\nenv-var JSON handoffs → kernel services (the handoff files were honest scaffolding);\nExplore stays read-only until SharedField has a live substrate — the desktop\nmust not simulate one.\n\n## 12. Security boundary\n\n`rendered UI → named kernel commands → BridgePolicy → native operation`. No\ngeneric shell, filesystem, process, network or secret bridge; the capability\ngrant remains `core:default`; contribution code is never the authorising\ncaller. What the kernel may do on the human's behalf runs through the owner\nproducts' own authority gates (§9.4), surfaced as visible grants, never as\nambient power.\n\n## 13. Omarchy and the larger host (#158/#159)\n\nThe kernel's composition is scope-neutral: the same inhabitation reading serves\nthe desktop on macOS, and the Omarchy reference World where the desktop is an\nintegral Quickshell-composed constituent of the host shell. The desktop owns the\nwhole application experience; Omarchy owns shell config, plugin discovery and\nhot-reload; neither imports the other's identity (`file presence ≠ activation`;\n`tmux pane ≠ SurfaceRef`; `Quickshell widget ≠ Surface`). Adaptive bootstrap\n(`oi host omarchy plan|realise|verify`) is World recognition, not installation\nof a foreign app.\n\n\n## 14. Agency Gateway desktop consumer contract\n\nOwner-directed desktop clarification,2026-09-06. Native specification remains\n[O-I #154](https://github.com/EpiLogos/O-I/issues/154); this section gives its\nexisting architecture placement (§1/§3/§4) an explicit consumer boundary. The\nproduct team develops the Gateway/connector/Stream/hosting implementation.\nExecution units GW-01–06 live in\n[the programme](../../.superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md#agency-gateway-desktop-integration--explicit-dependency-track).\n\n`AgencyService` consumes AIKit's authorised ecology and native Gateway client\nthrough S's declared integration route. Use the product protocol/SDK and its\nnegotiated local/network carrier; no renderer-owned websocket protocol or second\nconnector/session registry. The desktop owns view binding, attention and focus,\nnot Agency, AgentSession, ActuationStream or connector identity. Workcell owns\nservice/Fabric materiality; Actuation owns attributable Stream and authority.\n\n| Owner input, where supplied and authorised | Desktop projection |\n|---|---|\n| SessionSpace, Agency/Agent, AgentSession, purpose and Focus | Existing-session selection and agent details in the dynamic right panel; selection attaches the actual owner session |\n| Actuation/ActuationStream, sequence/cursor, attribution/locus, native evidence and Return refs | Conversation and semantic Activity over the same encounter; ordered incremental reading/replay with native correlation intact |\n| Operative Context, resolved Harness/model condition, context revision/lineage | Context and Inspect planes; authored, effective and actually active facts remain distinct |\n| Surface, connection, reachability, material observation, compatibility and age | Side/full/tab/detached/Observatory views with exact serving seam and local degraded/last-observed state |\n| Available/granted capabilities and permitted invocation modes | Owner-disclosed operations with exact scope/refusal; presence and reachability never imply authority |\n\nOne canonical encounter retains one transcript, draft/composer and native session\nacross presentations. ActuationStream is the semantic event source for Gateway\nintegration; native provider traces/exposed thinking retain their richer content\nand attribution. ACP connection events alone do not establish canonical Stream\nor cross-surface Gateway acceptance. Preserve bounded retention/backpressure and\ndurable owner replay; a replay gap or unsupported operation is not repaired with\nfabricated events. Continue/refine/fork/recompose are explicit owner relations.\n\nA disappearing UI consumer detaches its view; it does not cancel the provider or\nGateway. Explicit cancel is a separate owner operation. Provider conversation IDs,\ntransport credentials, sockets/hosts and Fabric addresses never become canonical\nAgentSession identity. Fabric admission, Gateway scopes, AIKit capabilities,\nActuation bounds and native Action authority remain separate.\n\nUntil a compatible native ecology/attach operation is available, disclose the\nmissing seam and affected reachability. Local sources/wiki/workspaces remain\nusable. Reuse the existing resident encounter only with its truthful local scope;\nnever call it the Gateway, introduce another persistent desktop encounter owner,\nor replace an active provider to force an upgrade. A subsequent owner-supported\nbinding/migration must prove preserved identity and history explicitly.\n",
+            "base_revision": "central.content-fnv1a64/v1:16605:6a00870aa4f8d1e2",
+            "content": "---\nRegister: episteme\nStanding: architecture-contract\n---\n\n# 02 — Cradle architecture\n\n**Status:** architecture commitment for the O:I desktop.\n**Companion:** [01-DESIGN.md](01-DESIGN.md) (intent), [03-UX-STATES.md](03-UX-STATES.md) (states), [04-VERIFICATION.md](04-VERIFICATION.md) (evidence).\n\n## 1. Stack and kernel\n\nTauri + Rust + React/TypeScript. React sits on top of a **real O:I application\nkernel** — a small set of coarse application services composing the native\nproducts — rather than on dozens of widget-scoped read-model calls. The renderer is a deterministic\nprojection of kernel events, and every human intent becomes a native operation\nthrough the kernel.\n\n```mermaid\nflowchart LR\n    UI[\"React / TypeScript\\nCradle UI (presentation)\"] -->|\"intents / commands\"| K[\"Cradle application kernel\\nRust\"]\n    K -->|\"typed application events\"| UI\n    K --> C[\"Central\"]\n    K --> A[\"Actuation\"]\n    K --> AI[\"AIKit\"]\n    K --> F[\"Factory\"]\n    K --> W[\"Workcell\"]\n    K --> S[\"SharedField\"]\n    A <--> G[\"Agency Gateway (#154)\"]\n    AI <--> G\n    W <--> G\n    G --> X[\"Telegram · Slack · Discord · terminal · harness UI\"]\n```\n\n## 2. The kernel is the current constitution of the environment\n\nThe kernel is not another database containing copies of everything. It is the\n**current constitution of the environment** — what #158 calls the composition,\nread as inhabitation:\n\n```rust\nCradle {\n    world: WorldRef,                    // Central ground + recognised machines\n    project: Option<ProjectRef>,\n    focus: Option<SubjectRef>,          // the one global subject (§7)\n    journey: Option<JourneyRef>,        // active structured development, if any\n\n    session_space: SessionSpaceRef,     // AIKit working environment\n    agencies: Vec<AgencyPresence>,      // who is present (Gateway-informed)\n    agent_sessions: Vec<AgentSessionPresence>,\n\n    surfaces: SurfaceLayout,            // composed surface bindings (§8)\n    attention: AttentionState,          // what requires the human\n    composition: EffectiveComposition,  // products present / degraded / absent\n    material: MaterialSituation,        // Workcell: bodies, services, placement\n}\n```\n\nComposition asks what is constituted together; inhabitation asks what that\nconstitution means for the situated human and Agencies — the kernel answers\nboth, and the UI renders the answer.\n\n## 3. Coarse application services\n\nTen services, not one command per widget. The first six **compose native\nproducts**; the last four genuinely belong to the application whole.\n\n| Service | Composes | Owns |\n|---|---|---|\n| `WorldService` | Central (`ctrl`), oi recognition | The first-class authored World (`WorldRef` tree with source treatment), Ground, Work files, machine/install recognition — read as a **selected Projection** (selection ≠ readability; omission by default), never as a profile database |\n| `AgencyService` | Actuation, AIKit sessions, Gateway #154 | Agencies, AgentSessions, activity, encounter continuity |\n| `KnowledgeService` | AIKit knowledge, Central | Search, semantic neighbourhoods, disclosure receipts, remember-this |\n| `DevelopmentService` | Factory | Journeys, Runs, Candidates, Evidence, Recognition |\n| `MaterialService` | Workcell | Material bodies, services, placement, bindings |\n| `SharedFieldService` | shared-field contracts | Projections, participants, contributions, encounters |\n| `SurfaceService` | — (application) | Surface registry, bindings, promotion/detach, layout |\n| `ActionRouter` | — (application) | Intent → owner Action dispatch, authority gates |\n| `SearchService` | — (application) | The one command/search aggregator over native descriptors |\n| `AttentionService` | — (application) | Activity → Notification → Attention altitudes |\n\n## 4. The integration ladder\n\nWhere a product exposes a clean Rust crate, use it in-process. Where it is\nindependently executable, use its stable CLI/application protocol. Where it is\npersistent/networked, use its service protocol. **The renderer does not care.**\n\n```text\nReact intent\n  ↓\nkernel service operation\n  ↓\nRust adapter\n  ├── in-process crate API        (factory, aikit-core/store today)\n  ├── native CLI protocol         (ctrl, aikit, actuation, factory, workcell, ql)\n  ├── local IPC / stdio           (ACP agent sessions, Gateway UDS)\n  └── service / network API       (Gateway WebSocket, hosted SharedField)\n```\n\nThis lets moving-but-stable product heads keep moving without binding the UI to\ntheir internals. Every adaptation is honest at the UI: which seam served a\nreading is disclosed (see the provider-truth law, §10).\n\n## 5. Commands and events\n\n```text\nCOMMANDS (human and agent intent)              EVENTS (kernel → renderer)\nopen subject                ◀────────────────  FocusChanged\nexecute Action              ◀────────────────  WorldChanged\nedit / save / author        ◀────────────────  SourceChanged\nsend / address / interrupt  ◀────────────────  ActivityUpdated · SessionChanged\nstage composition           ◀────────────────  KnowledgeChanged\nresolve Attention           ◀────────────────  AttentionRaised · AttentionResolved\ncompose projection          ◀────────────────  RunChanged · JourneyChanged\ncreate Agent from intent    ◀────────────────  MaterialChanged · CompositionChanged\n                                             SharedFieldChanged\n```\n\nThe key loop: **native operation returns → kernel state changes → typed events\n→ React projection re-renders reality.** No optimistic fake mutation followed by\na \"saved\" card. Push, not poll: the current build's absence of any event seam is\nthe single largest infrastructure gap (§11).\n\n## 6. Two state layers — both real\n\n**Semantic/application state** lives in the kernel and native products: World,\nProject, Source, Knowledge, Agency, AgentSession, Journey, Run, SharedField,\nActivity, Attention, material state, Action results.\n\n**Presentation state** lives in the desktop: open surface bindings, split\narrangement, panel widths, resting vs summoned regions, drawer, focused\npresentation, scroll positions, popover state, draft composer content.\n\nRules:\n\n1. Never derive semantic state from presentation state.\n2. Presentation state is **real product state** — persisted professionally,\n   versioned, restorable; \"presentation isn't semantic authority\" never mutated\n   into \"presentation doesn't matter\".\n3. Layout persistence never persists semantic selection.\n\n## 7. One global focus model\n\nThe whole application shares one notion of *what we are currently talking\nabout* — a stable `SubjectRef` plus its surrounding relations:\n\n```text\nCurrent World · Current Project · Current Focus (SubjectRef)\nCurrent Journey · Current Agency encounter\n```\n\nSelecting `src/project.rs` yields `SubjectRef = Central source ref`,\n`ProjectRef`, `WorldRef`. From that one relation: the canvas opens the editor;\nknowledge shows its neighbourhood; the Cradle addresses an agent about *that\nexact subject*; Factory shows Runs touching it; history shows change; search\nrecentres; SharedField can project it if eligible. No component copies selection\nstate independently. This is the backbone of human/agent co-reference: an agent\nreceives refs to selected subjects, never pasted screen text.\n\nFocus changes propagate as events (§5). Focus is semantic state — kernel-owned,\nnot a UI store.\n\n## 8. Tabs are Surface bindings\n\nA tab is not a page URL. It is:\n\n```text\nSurfaceBinding {\n    surface_ref      // which presentation\n    subject_ref      // which subject it shows\n    provider         // which service/product supplies it\n    region           // centre · left · summoned · drawer · detached\n    presentation     // mode (read/edit/graph/…)\n    local_state      // dirty buffer, scroll — presentation layer (§6)\n}\n```\n\nThe same binding can move: centre tab → split; summoned aperture → centre\npanel; centre surface → detached window; detached Observatory → back into the\nleft field. Same subject, same binding, different area and region. Bindings are\npresentation identity, non-canonical; the *subject* is canonical and\nnative-owned.\n\n## 9. Product seams — the four-part contract\n\nEvery native product already converges on the same integration shape; the\nkernel consumes them uniformly:\n\n1. **Capabilities descriptor** — `ctrl action.list`, `factory capabilities`,\n   `aikit` profile/context resolution, `actuation.cli/v1` surface descriptor,\n   `ql capabilities`, Workcell SDK/wire.\n2. **Read-model projection without mutation** — Factory `build-view/v1`,\n   Central `personal.show`, AIKit effective-skill/context readings,\n   Actuation `agency.read / realised.read / activity.read / stream.read`.\n3. **Opaque client-owned refs** — Workcell `ExternalRef`, QL client subjects,\n   Factory's preserved AIKit/Actuation/Workcell refs. No product re-owns\n   another's nouns; the kernel treats them as opaque and routes by owner.\n4. **Explicit authority gates on mutation** — Central CAS + `accepted_by_ref`\n   proposals, Factory bounded Action grants, AIKit reviewable Procedures,\n   Actuation recognition-before-mutation. The desktop adds no bypass: rich\n   rendered code is never a privileged caller (§12).\n\n## 10. Honesty laws (rendered, not implied)\n\n- **Provider truth:** `live-provider → may claim live; fixture → Degraded;\n  derived-only → Degraded`. The UI never upgrades a source class, anywhere in\n  the application.\n- **Absence is an observation, not a failure.** An uninstalled product, a\n  stopped daemon, an unprojected skill, a missing version flag: rendered as\n  what-is, never as error, never fabricated.\n- **Degradation is local.** A provider disappearing degrades one reading; the\n  SessionSpace and other relations keep their identity\n  (`provider pane ≠ SurfaceRef ≠ SessionSpaceRef`).\n- **Authority is visible.** An action discoverable is not an action authorised;\n  the UI shows which authority stands behind each mutation.\n\n## 11. Current build disposition (implementation facts)\n\nEvidence: `desktop/core`, `desktop/src-tauri/main.rs` (39 commands, zero\nevents), `desktop/ui/src` as of 2026-09-04.\n\n**Keep and build on (real today):** the workbench host frame with tabs/splits/\nregions/keyboard grammar (`workbench-host.tsx`); Flow authoring with CAS\nrevision conflict; AgentProfile CRUD over `ctrl`; Knowledge\nsearch/read/relations/explain/history; real ACP agent conversation with\ncanonical AgentSession identity; Factory bounded Action dispatch;\nSessionSpace focus.\n\n**Mount (written, tested, unreachable):** participant composer (To:/@\naddressing, `participant-composer-model.mjs`); the full session observatory /\nactivity / notification / attention model (`session-observatory-model.mjs`);\nthe real Factory `BuildSurface` body in place of the summary cards now rendered.\n\n**Add (the load-bearing gaps):** the event seam (Tauri channel + native change\nsources); global focus events and subject-scoped read models; streaming and\nconcurrent ACP sessions with mid-turn interrupt; the Actuation payload adapter\n(`agency.read`/`activity.read`/`stream.read` → kernel); intent-created Agent\nresolution (AIKit AgentProfile + compose + Workcell placement as one flow);\nJourney/Run readings from Factory; live World/file editing through Central\nowner-Actions; the Agency Gateway integration for cross-surface continuity.\n\n**Retire/replace:** the static System constitution table → live composition\nreading (what is present/degraded/absent, from recognition + capability\ndescriptors); descriptor cards for region surfaces → real region renderers;\nenv-var JSON handoffs → kernel services (the handoff files were honest scaffolding);\nExplore stays read-only until SharedField has a live substrate — the desktop\nmust not simulate one.\n\n## 12. Security boundary\n\n`rendered UI → named kernel commands → BridgePolicy → native operation`. No\ngeneric shell, filesystem, process, network or secret bridge; the capability\ngrant remains `core:default`; contribution code is never the authorising\ncaller. What the kernel may do on the human's behalf runs through the owner\nproducts' own authority gates (§9.4), surfaced as visible grants, never as\nambient power.\n\n## 13. Omarchy and the larger host (#158/#159)\n\nThe kernel's composition is scope-neutral: the same inhabitation reading serves\nthe desktop on macOS, and the Omarchy reference World where the desktop is an\nintegral Quickshell-composed constituent of the host shell. The desktop owns the\nwhole application experience; Omarchy owns shell config, plugin discovery and\nhot-reload; neither imports the other's identity (`file presence ≠ activation`;\n`tmux pane ≠ SurfaceRef`; `Quickshell widget ≠ Surface`). Adaptive bootstrap\n(`oi host omarchy plan|realise|verify`) is World recognition, not installation\nof a foreign app.\n\n\n## 14. Agency Gateway desktop consumer contract\n\nOwner-directed desktop clarification,2026-09-06. Native specification remains\n[O-I #154](https://github.com/EpiLogos/O-I/issues/154); this section gives its\nexisting architecture placement (§1/§3/§4) an explicit consumer boundary. The\nproduct team develops the Gateway/connector/Stream/hosting implementation.\nExecution units GW-01–06 live in\n[the programme](../../.superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md#agency-gateway-desktop-integration--explicit-dependency-track).\n\n`AgencyService` consumes AIKit's authorised ecology and native Gateway client\nthrough S's declared integration route. Use the product protocol/SDK and its\nnegotiated local/network carrier; no renderer-owned websocket protocol or second\nconnector/session registry. The desktop owns view binding, attention and focus,\nnot Agency, AgentSession, ActuationStream or connector identity. Workcell owns\nservice/Fabric materiality; Actuation owns attributable Stream and authority.\n\n| Owner input, where supplied and authorised | Desktop projection |\n|---|---|\n| SessionSpace, Agency/Agent, AgentSession, purpose and Focus | Existing-session selection and agent details in the dynamic right panel; selection attaches the actual owner session |\n| Actuation/ActuationStream, sequence/cursor, attribution/locus, native evidence and Return refs | Conversation and semantic Activity over the same encounter; ordered incremental reading/replay with native correlation intact |\n| Operative Context, resolved Harness/model condition, context revision/lineage | Context and Inspect planes; authored, effective and actually active facts remain distinct |\n| Surface, connection, reachability, material observation, compatibility and age | Side/full/tab/detached/Observatory views with exact serving seam and local degraded/last-observed state |\n| Available/granted capabilities and permitted invocation modes | Owner-disclosed operations with exact scope/refusal; presence and reachability never imply authority |\n\nOne canonical encounter retains one transcript, draft/composer and native session\nacross presentations. ActuationStream is the semantic event source for Gateway\nintegration; native provider traces/exposed thinking retain their richer content\nand attribution. ACP connection events alone do not establish canonical Stream\nor cross-surface Gateway acceptance. Preserve bounded retention/backpressure and\ndurable owner replay; a replay gap or unsupported operation is not repaired with\nfabricated events. Continue/refine/fork/recompose are explicit owner relations.\n\nA disappearing UI consumer detaches its view; it does not cancel the provider or\nGateway. Explicit cancel is a separate owner operation. Provider conversation IDs,\ntransport credentials, sockets/hosts and Fabric addresses never become canonical\nAgentSession identity. Fabric admission, Gateway scopes, AIKit capabilities,\nActuation bounds and native Action authority remain separate.\n\nUntil a compatible native ecology/attach operation is available, disclose the\nmissing seam and affected reachability. Local sources/wiki/workspaces remain\nusable. Reuse the existing resident encounter only with its truthful local scope;\nnever call it the Gateway, introduce another persistent desktop encounter owner,\nor replace an active provider to force an upgrade. A subsequent owner-supported\nbinding/migration must prove preserved identity and history explicitly.\n",
             "dirty": false,
             "path": "ProjectCentral/user/01 02-ARCHITECTURE.md",
             "project": "Editor",
             "project_ref": "editor-walk",
-            "saved_content": "# 02 — Cradle architecture\n\n**Status:** architecture commitment for the O:I desktop.\n**Companion:** [01-DESIGN.md](01-DESIGN.md) (intent), [03-UX-STATES.md](03-UX-STATES.md) (states), [04-VERIFICATION.md](04-VERIFICATION.md) (evidence).\n\n## 1. Stack and kernel\n\nTauri + Rust + React/TypeScript. React sits on top of a **real O:I application\nkernel** — a small set of coarse application services composing the native\nproducts — rather than on dozens of widget-scoped read-model calls. The renderer is a deterministic\nprojection of kernel events, and every human intent becomes a native operation\nthrough the kernel.\n\n```mermaid\nflowchart LR\n    UI[\"React / TypeScript\\nCradle UI (presentation)\"] -->|\"intents / commands\"| K[\"Cradle application kernel\\nRust\"]\n    K -->|\"typed application events\"| UI\n    K --> C[\"Central\"]\n    K --> A[\"Actuation\"]\n    K --> AI[\"AIKit\"]\n    K --> F[\"Factory\"]\n    K --> W[\"Workcell\"]\n    K --> S[\"SharedField\"]\n    A <--> G[\"Agency Gateway (#154)\"]\n    AI <--> G\n    W <--> G\n    G --> X[\"Telegram · Slack · Discord · terminal · harness UI\"]\n```\n\n## 2. The kernel is the current constitution of the environment\n\nThe kernel is not another database containing copies of everything. It is the\n**current constitution of the environment** — what #158 calls the composition,\nread as inhabitation:\n\n```rust\nCradle {\n    world: WorldRef,                    // Central ground + recognised machines\n    project: Option<ProjectRef>,\n    focus: Option<SubjectRef>,          // the one global subject (§7)\n    journey: Option<JourneyRef>,        // active structured development, if any\n\n    session_space: SessionSpaceRef,     // AIKit working environment\n    agencies: Vec<AgencyPresence>,      // who is present (Gateway-informed)\n    agent_sessions: Vec<AgentSessionPresence>,\n\n    surfaces: SurfaceLayout,            // composed surface bindings (§8)\n    attention: AttentionState,          // what requires the human\n    composition: EffectiveComposition,  // products present / degraded / absent\n    material: MaterialSituation,        // Workcell: bodies, services, placement\n}\n```\n\nComposition asks what is constituted together; inhabitation asks what that\nconstitution means for the situated human and Agencies — the kernel answers\nboth, and the UI renders the answer.\n\n## 3. Coarse application services\n\nTen services, not one command per widget. The first six **compose native\nproducts**; the last four genuinely belong to the application whole.\n\n| Service | Composes | Owns |\n|---|---|---|\n| `WorldService` | Central (`ctrl`), oi recognition | The first-class authored World (`WorldRef` tree with source treatment), Ground, Work files, machine/install recognition — read as a **selected Projection** (selection ≠ readability; omission by default), never as a profile database |\n| `AgencyService` | Actuation, AIKit sessions, Gateway #154 | Agencies, AgentSessions, activity, encounter continuity |\n| `KnowledgeService` | AIKit knowledge, Central | Search, semantic neighbourhoods, disclosure receipts, remember-this |\n| `DevelopmentService` | Factory | Journeys, Runs, Candidates, Evidence, Recognition |\n| `MaterialService` | Workcell | Material bodies, services, placement, bindings |\n| `SharedFieldService` | shared-field contracts | Projections, participants, contributions, encounters |\n| `SurfaceService` | — (application) | Surface registry, bindings, promotion/detach, layout |\n| `ActionRouter` | — (application) | Intent → owner Action dispatch, authority gates |\n| `SearchService` | — (application) | The one command/search aggregator over native descriptors |\n| `AttentionService` | — (application) | Activity → Notification → Attention altitudes |\n\n## 4. The integration ladder\n\nWhere a product exposes a clean Rust crate, use it in-process. Where it is\nindependently executable, use its stable CLI/application protocol. Where it is\npersistent/networked, use its service protocol. **The renderer does not care.**\n\n```text\nReact intent\n  ↓\nkernel service operation\n  ↓\nRust adapter\n  ├── in-process crate API        (factory, aikit-core/store today)\n  ├── native CLI protocol         (ctrl, aikit, actuation, factory, workcell, ql)\n  ├── local IPC / stdio           (ACP agent sessions, Gateway UDS)\n  └── service / network API       (Gateway WebSocket, hosted SharedField)\n```\n\nThis lets moving-but-stable product heads keep moving without binding the UI to\ntheir internals. Every adaptation is honest at the UI: which seam served a\nreading is disclosed (see the provider-truth law, §10).\n\n## 5. Commands and events\n\n```text\nCOMMANDS (human and agent intent)              EVENTS (kernel → renderer)\nopen subject                ◀────────────────  FocusChanged\nexecute Action              ◀────────────────  WorldChanged\nedit / save / author        ◀────────────────  SourceChanged\nsend / address / interrupt  ◀────────────────  ActivityUpdated · SessionChanged\nstage composition           ◀────────────────  KnowledgeChanged\nresolve Attention           ◀────────────────  AttentionRaised · AttentionResolved\ncompose projection          ◀────────────────  RunChanged · JourneyChanged\ncreate Agent from intent    ◀────────────────  MaterialChanged · CompositionChanged\n                                             SharedFieldChanged\n```\n\nThe key loop: **native operation returns → kernel state changes → typed events\n→ React projection re-renders reality.** No optimistic fake mutation followed by\na \"saved\" card. Push, not poll: the current build's absence of any event seam is\nthe single largest infrastructure gap (§11).\n\n## 6. Two state layers — both real\n\n**Semantic/application state** lives in the kernel and native products: World,\nProject, Source, Knowledge, Agency, AgentSession, Journey, Run, SharedField,\nActivity, Attention, material state, Action results.\n\n**Presentation state** lives in the desktop: open surface bindings, split\narrangement, panel widths, resting vs summoned regions, drawer, focused\npresentation, scroll positions, popover state, draft composer content.\n\nRules:\n\n1. Never derive semantic state from presentation state.\n2. Presentation state is **real product state** — persisted professionally,\n   versioned, restorable; \"presentation isn't semantic authority\" never mutated\n   into \"presentation doesn't matter\".\n3. Layout persistence never persists semantic selection.\n\n## 7. One global focus model\n\nThe whole application shares one notion of *what we are currently talking\nabout* — a stable `SubjectRef` plus its surrounding relations:\n\n```text\nCurrent World · Current Project · Current Focus (SubjectRef)\nCurrent Journey · Current Agency encounter\n```\n\nSelecting `src/project.rs` yields `SubjectRef = Central source ref`,\n`ProjectRef`, `WorldRef`. From that one relation: the canvas opens the editor;\nknowledge shows its neighbourhood; the Cradle addresses an agent about *that\nexact subject*; Factory shows Runs touching it; history shows change; search\nrecentres; SharedField can project it if eligible. No component copies selection\nstate independently. This is the backbone of human/agent co-reference: an agent\nreceives refs to selected subjects, never pasted screen text.\n\nFocus changes propagate as events (§5). Focus is semantic state — kernel-owned,\nnot a UI store.\n\n## 8. Tabs are Surface bindings\n\nA tab is not a page URL. It is:\n\n```text\nSurfaceBinding {\n    surface_ref      // which presentation\n    subject_ref      // which subject it shows\n    provider         // which service/product supplies it\n    region           // centre · left · summoned · drawer · detached\n    presentation     // mode (read/edit/graph/…)\n    local_state      // dirty buffer, scroll — presentation layer (§6)\n}\n```\n\nThe same binding can move: centre tab → split; summoned aperture → centre\npanel; centre surface → detached window; detached Observatory → back into the\nleft field. Same subject, same binding, different area and region. Bindings are\npresentation identity, non-canonical; the *subject* is canonical and\nnative-owned.\n\n## 9. Product seams — the four-part contract\n\nEvery native product already converges on the same integration shape; the\nkernel consumes them uniformly:\n\n1. **Capabilities descriptor** — `ctrl action.list`, `factory capabilities`,\n   `aikit` profile/context resolution, `actuation.cli/v1` surface descriptor,\n   `ql capabilities`, Workcell SDK/wire.\n2. **Read-model projection without mutation** — Factory `build-view/v1`,\n   Central `personal.show`, AIKit effective-skill/context readings,\n   Actuation `agency.read / realised.read / activity.read / stream.read`.\n3. **Opaque client-owned refs** — Workcell `ExternalRef`, QL client subjects,\n   Factory's preserved AIKit/Actuation/Workcell refs. No product re-owns\n   another's nouns; the kernel treats them as opaque and routes by owner.\n4. **Explicit authority gates on mutation** — Central CAS + `accepted_by_ref`\n   proposals, Factory bounded Action grants, AIKit reviewable Procedures,\n   Actuation recognition-before-mutation. The desktop adds no bypass: rich\n   rendered code is never a privileged caller (§12).\n\n## 10. Honesty laws (rendered, not implied)\n\n- **Provider truth:** `live-provider → may claim live; fixture → Degraded;\n  derived-only → Degraded`. The UI never upgrades a source class, anywhere in\n  the application.\n- **Absence is an observation, not a failure.** An uninstalled product, a\n  stopped daemon, an unprojected skill, a missing version flag: rendered as\n  what-is, never as error, never fabricated.\n- **Degradation is local.** A provider disappearing degrades one reading; the\n  SessionSpace and other relations keep their identity\n  (`provider pane ≠ SurfaceRef ≠ SessionSpaceRef`).\n- **Authority is visible.** An action discoverable is not an action authorised;\n  the UI shows which authority stands behind each mutation.\n\n## 11. Current build disposition (implementation facts)\n\nEvidence: `desktop/core`, `desktop/src-tauri/main.rs` (39 commands, zero\nevents), `desktop/ui/src` as of 2026-09-04.\n\n**Keep and build on (real today):** the workbench host frame with tabs/splits/\nregions/keyboard grammar (`workbench-host.tsx`); Flow authoring with CAS\nrevision conflict; AgentProfile CRUD over `ctrl`; Knowledge\nsearch/read/relations/explain/history; real ACP agent conversation with\ncanonical AgentSession identity; Factory bounded Action dispatch;\nSessionSpace focus.\n\n**Mount (written, tested, unreachable):** participant composer (To:/@\naddressing, `participant-composer-model.mjs`); the full session observatory /\nactivity / notification / attention model (`session-observatory-model.mjs`);\nthe real Factory `BuildSurface` body in place of the summary cards now rendered.\n\n**Add (the load-bearing gaps):** the event seam (Tauri channel + native change\nsources); global focus events and subject-scoped read models; streaming and\nconcurrent ACP sessions with mid-turn interrupt; the Actuation payload adapter\n(`agency.read`/`activity.read`/`stream.read` → kernel); intent-created Agent\nresolution (AIKit AgentProfile + compose + Workcell placement as one flow);\nJourney/Run readings from Factory; live World/file editing through Central\nowner-Actions; the Agency Gateway integration for cross-surface continuity.\n\n**Retire/replace:** the static System constitution table → live composition\nreading (what is present/degraded/absent, from recognition + capability\ndescriptors); descriptor cards for region surfaces → real region renderers;\nenv-var JSON handoffs → kernel services (the handoff files were honest scaffolding);\nExplore stays read-only until SharedField has a live substrate — the desktop\nmust not simulate one.\n\n## 12. Security boundary\n\n`rendered UI → named kernel commands → BridgePolicy → native operation`. No\ngeneric shell, filesystem, process, network or secret bridge; the capability\ngrant remains `core:default`; contribution code is never the authorising\ncaller. What the kernel may do on the human's behalf runs through the owner\nproducts' own authority gates (§9.4), surfaced as visible grants, never as\nambient power.\n\n## 13. Omarchy and the larger host (#158/#159)\n\nThe kernel's composition is scope-neutral: the same inhabitation reading serves\nthe desktop on macOS, and the Omarchy reference World where the desktop is an\nintegral Quickshell-composed constituent of the host shell. The desktop owns the\nwhole application experience; Omarchy owns shell config, plugin discovery and\nhot-reload; neither imports the other's identity (`file presence ≠ activation`;\n`tmux pane ≠ SurfaceRef`; `Quickshell widget ≠ Surface`). Adaptive bootstrap\n(`oi host omarchy plan|realise|verify`) is World recognition, not installation\nof a foreign app.\n\n\n## 14. Agency Gateway desktop consumer contract\n\nOwner-directed desktop clarification,2026-09-06. Native specification remains\n[O-I #154](https://github.com/EpiLogos/O-I/issues/154); this section gives its\nexisting architecture placement (§1/§3/§4) an explicit consumer boundary. The\nproduct team develops the Gateway/connector/Stream/hosting implementation.\nExecution units GW-01–06 live in\n[the programme](../../.superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md#agency-gateway-desktop-integration--explicit-dependency-track).\n\n`AgencyService` consumes AIKit's authorised ecology and native Gateway client\nthrough S's declared integration route. Use the product protocol/SDK and its\nnegotiated local/network carrier; no renderer-owned websocket protocol or second\nconnector/session registry. The desktop owns view binding, attention and focus,\nnot Agency, AgentSession, ActuationStream or connector identity. Workcell owns\nservice/Fabric materiality; Actuation owns attributable Stream and authority.\n\n| Owner input, where supplied and authorised | Desktop projection |\n|---|---|\n| SessionSpace, Agency/Agent, AgentSession, purpose and Focus | Existing-session selection and agent details in the dynamic right panel; selection attaches the actual owner session |\n| Actuation/ActuationStream, sequence/cursor, attribution/locus, native evidence and Return refs | Conversation and semantic Activity over the same encounter; ordered incremental reading/replay with native correlation intact |\n| Operative Context, resolved Harness/model condition, context revision/lineage | Context and Inspect planes; authored, effective and actually active facts remain distinct |\n| Surface, connection, reachability, material observation, compatibility and age | Side/full/tab/detached/Observatory views with exact serving seam and local degraded/last-observed state |\n| Available/granted capabilities and permitted invocation modes | Owner-disclosed operations with exact scope/refusal; presence and reachability never imply authority |\n\nOne canonical encounter retains one transcript, draft/composer and native session\nacross presentations. ActuationStream is the semantic event source for Gateway\nintegration; native provider traces/exposed thinking retain their richer content\nand attribution. ACP connection events alone do not establish canonical Stream\nor cross-surface Gateway acceptance. Preserve bounded retention/backpressure and\ndurable owner replay; a replay gap or unsupported operation is not repaired with\nfabricated events. Continue/refine/fork/recompose are explicit owner relations.\n\nA disappearing UI consumer detaches its view; it does not cancel the provider or\nGateway. Explicit cancel is a separate owner operation. Provider conversation IDs,\ntransport credentials, sockets/hosts and Fabric addresses never become canonical\nAgentSession identity. Fabric admission, Gateway scopes, AIKit capabilities,\nActuation bounds and native Action authority remain separate.\n\nUntil a compatible native ecology/attach operation is available, disclose the\nmissing seam and affected reachability. Local sources/wiki/workspaces remain\nusable. Reuse the existing resident encounter only with its truthful local scope;\nnever call it the Gateway, introduce another persistent desktop encounter owner,\nor replace an active provider to force an upgrade. A subsequent owner-supported\nbinding/migration must prove preserved identity and history explicitly.\n",
+            "saved_content": "---\nRegister: episteme\nStanding: architecture-contract\n---\n\n# 02 — Cradle architecture\n\n**Status:** architecture commitment for the O:I desktop.\n**Companion:** [01-DESIGN.md](01-DESIGN.md) (intent), [03-UX-STATES.md](03-UX-STATES.md) (states), [04-VERIFICATION.md](04-VERIFICATION.md) (evidence).\n\n## 1. Stack and kernel\n\nTauri + Rust + React/TypeScript. React sits on top of a **real O:I application\nkernel** — a small set of coarse application services composing the native\nproducts — rather than on dozens of widget-scoped read-model calls. The renderer is a deterministic\nprojection of kernel events, and every human intent becomes a native operation\nthrough the kernel.\n\n```mermaid\nflowchart LR\n    UI[\"React / TypeScript\\nCradle UI (presentation)\"] -->|\"intents / commands\"| K[\"Cradle application kernel\\nRust\"]\n    K -->|\"typed application events\"| UI\n    K --> C[\"Central\"]\n    K --> A[\"Actuation\"]\n    K --> AI[\"AIKit\"]\n    K --> F[\"Factory\"]\n    K --> W[\"Workcell\"]\n    K --> S[\"SharedField\"]\n    A <--> G[\"Agency Gateway (#154)\"]\n    AI <--> G\n    W <--> G\n    G --> X[\"Telegram · Slack · Discord · terminal · harness UI\"]\n```\n\n## 2. The kernel is the current constitution of the environment\n\nThe kernel is not another database containing copies of everything. It is the\n**current constitution of the environment** — what #158 calls the composition,\nread as inhabitation:\n\n```rust\nCradle {\n    world: WorldRef,                    // Central ground + recognised machines\n    project: Option<ProjectRef>,\n    focus: Option<SubjectRef>,          // the one global subject (§7)\n    journey: Option<JourneyRef>,        // active structured development, if any\n\n    session_space: SessionSpaceRef,     // AIKit working environment\n    agencies: Vec<AgencyPresence>,      // who is present (Gateway-informed)\n    agent_sessions: Vec<AgentSessionPresence>,\n\n    surfaces: SurfaceLayout,            // composed surface bindings (§8)\n    attention: AttentionState,          // what requires the human\n    composition: EffectiveComposition,  // products present / degraded / absent\n    material: MaterialSituation,        // Workcell: bodies, services, placement\n}\n```\n\nComposition asks what is constituted together; inhabitation asks what that\nconstitution means for the situated human and Agencies — the kernel answers\nboth, and the UI renders the answer.\n\n## 3. Coarse application services\n\nTen services, not one command per widget. The first six **compose native\nproducts**; the last four genuinely belong to the application whole.\n\n| Service | Composes | Owns |\n|---|---|---|\n| `WorldService` | Central (`ctrl`), oi recognition | The first-class authored World (`WorldRef` tree with source treatment), Ground, Work files, machine/install recognition — read as a **selected Projection** (selection ≠ readability; omission by default), never as a profile database |\n| `AgencyService` | Actuation, AIKit sessions, Gateway #154 | Agencies, AgentSessions, activity, encounter continuity |\n| `KnowledgeService` | AIKit knowledge, Central | Search, semantic neighbourhoods, disclosure receipts, remember-this |\n| `DevelopmentService` | Factory | Journeys, Runs, Candidates, Evidence, Recognition |\n| `MaterialService` | Workcell | Material bodies, services, placement, bindings |\n| `SharedFieldService` | shared-field contracts | Projections, participants, contributions, encounters |\n| `SurfaceService` | — (application) | Surface registry, bindings, promotion/detach, layout |\n| `ActionRouter` | — (application) | Intent → owner Action dispatch, authority gates |\n| `SearchService` | — (application) | The one command/search aggregator over native descriptors |\n| `AttentionService` | — (application) | Activity → Notification → Attention altitudes |\n\n## 4. The integration ladder\n\nWhere a product exposes a clean Rust crate, use it in-process. Where it is\nindependently executable, use its stable CLI/application protocol. Where it is\npersistent/networked, use its service protocol. **The renderer does not care.**\n\n```text\nReact intent\n  ↓\nkernel service operation\n  ↓\nRust adapter\n  ├── in-process crate API        (factory, aikit-core/store today)\n  ├── native CLI protocol         (ctrl, aikit, actuation, factory, workcell, ql)\n  ├── local IPC / stdio           (ACP agent sessions, Gateway UDS)\n  └── service / network API       (Gateway WebSocket, hosted SharedField)\n```\n\nThis lets moving-but-stable product heads keep moving without binding the UI to\ntheir internals. Every adaptation is honest at the UI: which seam served a\nreading is disclosed (see the provider-truth law, §10).\n\n## 5. Commands and events\n\n```text\nCOMMANDS (human and agent intent)              EVENTS (kernel → renderer)\nopen subject                ◀────────────────  FocusChanged\nexecute Action              ◀────────────────  WorldChanged\nedit / save / author        ◀────────────────  SourceChanged\nsend / address / interrupt  ◀────────────────  ActivityUpdated · SessionChanged\nstage composition           ◀────────────────  KnowledgeChanged\nresolve Attention           ◀────────────────  AttentionRaised · AttentionResolved\ncompose projection          ◀────────────────  RunChanged · JourneyChanged\ncreate Agent from intent    ◀────────────────  MaterialChanged · CompositionChanged\n                                             SharedFieldChanged\n```\n\nThe key loop: **native operation returns → kernel state changes → typed events\n→ React projection re-renders reality.** No optimistic fake mutation followed by\na \"saved\" card. Push, not poll: the current build's absence of any event seam is\nthe single largest infrastructure gap (§11).\n\n## 6. Two state layers — both real\n\n**Semantic/application state** lives in the kernel and native products: World,\nProject, Source, Knowledge, Agency, AgentSession, Journey, Run, SharedField,\nActivity, Attention, material state, Action results.\n\n**Presentation state** lives in the desktop: open surface bindings, split\narrangement, panel widths, resting vs summoned regions, drawer, focused\npresentation, scroll positions, popover state, draft composer content.\n\nRules:\n\n1. Never derive semantic state from presentation state.\n2. Presentation state is **real product state** — persisted professionally,\n   versioned, restorable; \"presentation isn't semantic authority\" never mutated\n   into \"presentation doesn't matter\".\n3. Layout persistence never persists semantic selection.\n\n## 7. One global focus model\n\nThe whole application shares one notion of *what we are currently talking\nabout* — a stable `SubjectRef` plus its surrounding relations:\n\n```text\nCurrent World · Current Project · Current Focus (SubjectRef)\nCurrent Journey · Current Agency encounter\n```\n\nSelecting `src/project.rs` yields `SubjectRef = Central source ref`,\n`ProjectRef`, `WorldRef`. From that one relation: the canvas opens the editor;\nknowledge shows its neighbourhood; the Cradle addresses an agent about *that\nexact subject*; Factory shows Runs touching it; history shows change; search\nrecentres; SharedField can project it if eligible. No component copies selection\nstate independently. This is the backbone of human/agent co-reference: an agent\nreceives refs to selected subjects, never pasted screen text.\n\nFocus changes propagate as events (§5). Focus is semantic state — kernel-owned,\nnot a UI store.\n\n## 8. Tabs are Surface bindings\n\nA tab is not a page URL. It is:\n\n```text\nSurfaceBinding {\n    surface_ref      // which presentation\n    subject_ref      // which subject it shows\n    provider         // which service/product supplies it\n    region           // centre · left · summoned · drawer · detached\n    presentation     // mode (read/edit/graph/…)\n    local_state      // dirty buffer, scroll — presentation layer (§6)\n}\n```\n\nThe same binding can move: centre tab → split; summoned aperture → centre\npanel; centre surface → detached window; detached Observatory → back into the\nleft field. Same subject, same binding, different area and region. Bindings are\npresentation identity, non-canonical; the *subject* is canonical and\nnative-owned.\n\n## 9. Product seams — the four-part contract\n\nEvery native product already converges on the same integration shape; the\nkernel consumes them uniformly:\n\n1. **Capabilities descriptor** — `ctrl action.list`, `factory capabilities`,\n   `aikit` profile/context resolution, `actuation.cli/v1` surface descriptor,\n   `ql capabilities`, Workcell SDK/wire.\n2. **Read-model projection without mutation** — Factory `build-view/v1`,\n   Central `personal.show`, AIKit effective-skill/context readings,\n   Actuation `agency.read / realised.read / activity.read / stream.read`.\n3. **Opaque client-owned refs** — Workcell `ExternalRef`, QL client subjects,\n   Factory's preserved AIKit/Actuation/Workcell refs. No product re-owns\n   another's nouns; the kernel treats them as opaque and routes by owner.\n4. **Explicit authority gates on mutation** — Central CAS + `accepted_by_ref`\n   proposals, Factory bounded Action grants, AIKit reviewable Procedures,\n   Actuation recognition-before-mutation. The desktop adds no bypass: rich\n   rendered code is never a privileged caller (§12).\n\n## 10. Honesty laws (rendered, not implied)\n\n- **Provider truth:** `live-provider → may claim live; fixture → Degraded;\n  derived-only → Degraded`. The UI never upgrades a source class, anywhere in\n  the application.\n- **Absence is an observation, not a failure.** An uninstalled product, a\n  stopped daemon, an unprojected skill, a missing version flag: rendered as\n  what-is, never as error, never fabricated.\n- **Degradation is local.** A provider disappearing degrades one reading; the\n  SessionSpace and other relations keep their identity\n  (`provider pane ≠ SurfaceRef ≠ SessionSpaceRef`).\n- **Authority is visible.** An action discoverable is not an action authorised;\n  the UI shows which authority stands behind each mutation.\n\n## 11. Current build disposition (implementation facts)\n\nEvidence: `desktop/core`, `desktop/src-tauri/main.rs` (39 commands, zero\nevents), `desktop/ui/src` as of 2026-09-04.\n\n**Keep and build on (real today):** the workbench host frame with tabs/splits/\nregions/keyboard grammar (`workbench-host.tsx`); Flow authoring with CAS\nrevision conflict; AgentProfile CRUD over `ctrl`; Knowledge\nsearch/read/relations/explain/history; real ACP agent conversation with\ncanonical AgentSession identity; Factory bounded Action dispatch;\nSessionSpace focus.\n\n**Mount (written, tested, unreachable):** participant composer (To:/@\naddressing, `participant-composer-model.mjs`); the full session observatory /\nactivity / notification / attention model (`session-observatory-model.mjs`);\nthe real Factory `BuildSurface` body in place of the summary cards now rendered.\n\n**Add (the load-bearing gaps):** the event seam (Tauri channel + native change\nsources); global focus events and subject-scoped read models; streaming and\nconcurrent ACP sessions with mid-turn interrupt; the Actuation payload adapter\n(`agency.read`/`activity.read`/`stream.read` → kernel); intent-created Agent\nresolution (AIKit AgentProfile + compose + Workcell placement as one flow);\nJourney/Run readings from Factory; live World/file editing through Central\nowner-Actions; the Agency Gateway integration for cross-surface continuity.\n\n**Retire/replace:** the static System constitution table → live composition\nreading (what is present/degraded/absent, from recognition + capability\ndescriptors); descriptor cards for region surfaces → real region renderers;\nenv-var JSON handoffs → kernel services (the handoff files were honest scaffolding);\nExplore stays read-only until SharedField has a live substrate — the desktop\nmust not simulate one.\n\n## 12. Security boundary\n\n`rendered UI → named kernel commands → BridgePolicy → native operation`. No\ngeneric shell, filesystem, process, network or secret bridge; the capability\ngrant remains `core:default`; contribution code is never the authorising\ncaller. What the kernel may do on the human's behalf runs through the owner\nproducts' own authority gates (§9.4), surfaced as visible grants, never as\nambient power.\n\n## 13. Omarchy and the larger host (#158/#159)\n\nThe kernel's composition is scope-neutral: the same inhabitation reading serves\nthe desktop on macOS, and the Omarchy reference World where the desktop is an\nintegral Quickshell-composed constituent of the host shell. The desktop owns the\nwhole application experience; Omarchy owns shell config, plugin discovery and\nhot-reload; neither imports the other's identity (`file presence ≠ activation`;\n`tmux pane ≠ SurfaceRef`; `Quickshell widget ≠ Surface`). Adaptive bootstrap\n(`oi host omarchy plan|realise|verify`) is World recognition, not installation\nof a foreign app.\n\n\n## 14. Agency Gateway desktop consumer contract\n\nOwner-directed desktop clarification,2026-09-06. Native specification remains\n[O-I #154](https://github.com/EpiLogos/O-I/issues/154); this section gives its\nexisting architecture placement (§1/§3/§4) an explicit consumer boundary. The\nproduct team develops the Gateway/connector/Stream/hosting implementation.\nExecution units GW-01–06 live in\n[the programme](../../.superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md#agency-gateway-desktop-integration--explicit-dependency-track).\n\n`AgencyService` consumes AIKit's authorised ecology and native Gateway client\nthrough S's declared integration route. Use the product protocol/SDK and its\nnegotiated local/network carrier; no renderer-owned websocket protocol or second\nconnector/session registry. The desktop owns view binding, attention and focus,\nnot Agency, AgentSession, ActuationStream or connector identity. Workcell owns\nservice/Fabric materiality; Actuation owns attributable Stream and authority.\n\n| Owner input, where supplied and authorised | Desktop projection |\n|---|---|\n| SessionSpace, Agency/Agent, AgentSession, purpose and Focus | Existing-session selection and agent details in the dynamic right panel; selection attaches the actual owner session |\n| Actuation/ActuationStream, sequence/cursor, attribution/locus, native evidence and Return refs | Conversation and semantic Activity over the same encounter; ordered incremental reading/replay with native correlation intact |\n| Operative Context, resolved Harness/model condition, context revision/lineage | Context and Inspect planes; authored, effective and actually active facts remain distinct |\n| Surface, connection, reachability, material observation, compatibility and age | Side/full/tab/detached/Observatory views with exact serving seam and local degraded/last-observed state |\n| Available/granted capabilities and permitted invocation modes | Owner-disclosed operations with exact scope/refusal; presence and reachability never imply authority |\n\nOne canonical encounter retains one transcript, draft/composer and native session\nacross presentations. ActuationStream is the semantic event source for Gateway\nintegration; native provider traces/exposed thinking retain their richer content\nand attribution. ACP connection events alone do not establish canonical Stream\nor cross-surface Gateway acceptance. Preserve bounded retention/backpressure and\ndurable owner replay; a replay gap or unsupported operation is not repaired with\nfabricated events. Continue/refine/fork/recompose are explicit owner relations.\n\nA disappearing UI consumer detaches its view; it does not cancel the provider or\nGateway. Explicit cancel is a separate owner operation. Provider conversation IDs,\ntransport credentials, sockets/hosts and Fabric addresses never become canonical\nAgentSession identity. Fabric admission, Gateway scopes, AIKit capabilities,\nActuation bounds and native Action authority remain separate.\n\nUntil a compatible native ecology/attach operation is available, disclose the\nmissing seam and affected reachability. Local sources/wiki/workspaces remain\nusable. Reuse the existing resident encounter only with its truthful local scope;\nnever call it the Gateway, introduce another persistent desktop encounter owner,\nor replace an active provider to force an upgrade. A subsequent owner-supported\nbinding/migration must prove preserved identity and history explicitly.\n",
             "source_ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
             "world_ref": "project:editor-walk"
           }
@@ -1597,7 +1669,7 @@
               "source_files": 0
             },
             "projection": "project",
-            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-tTulIg",
+            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-Y2qBJZ",
             "schema": "central.world-map/v1",
             "sources": {
               "bindings": 11,
@@ -1666,7 +1738,7 @@
               "detected": false,
               "signals": []
             },
-            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-tTulIg",
+            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-Y2qBJZ",
             "root_state": "directory",
             "schema": "central.world-map/v1",
             "valid": true,
@@ -1818,14 +1890,14 @@
                 "agent_retrieval_allowed": true,
                 "path": "ProjectCentral/user/01 02-ARCHITECTURE.md",
                 "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
-                "revision": "central.content-fnv1a64/v1:16545:68439910925b9055",
+                "revision": "central.content-fnv1a64/v1:16605:6a00870aa4f8d1e2",
                 "treatment": "projectcentral-user"
               },
               {
                 "agent_retrieval_allowed": true,
                 "path": "ProjectCentral/user/02 03-UX-STATES.md",
                 "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
-                "revision": "central.content-fnv1a64/v1:16196:f64ed1160615a241",
+                "revision": "central.content-fnv1a64/v1:16252:0f45f344af6c9754",
                 "treatment": "projectcentral-user"
               },
               {
@@ -1839,7 +1911,7 @@
                 "agent_retrieval_allowed": true,
                 "path": "ProjectCentral/user/04 05-EXECUTION.md",
                 "ref": "central:source:project:editor-walk:ProjectCentral/user/04%2005-EXECUTION.md",
-                "revision": "central.content-fnv1a64/v1:8240:484f33e4bc2d0338",
+                "revision": "central.content-fnv1a64/v1:8268:8ff860b26cd8d269",
                 "treatment": "projectcentral-user"
               },
               {
@@ -1853,14 +1925,14 @@
                 "agent_retrieval_allowed": true,
                 "path": "ProjectCentral/user/06 CANONICAL-PRODUCT-FIELD.md",
                 "ref": "central:source:project:editor-walk:ProjectCentral/user/06%20CANONICAL-PRODUCT-FIELD.md",
-                "revision": "central.content-fnv1a64/v1:32660:6034469841378f21",
+                "revision": "central.content-fnv1a64/v1:33820:ee6914b1bd5555b1",
                 "treatment": "projectcentral-user"
               },
               {
                 "agent_retrieval_allowed": true,
                 "path": "ProjectCentral/user/07 OI-DESKTOP-APPLICATION-SPEC.md",
                 "ref": "central:source:project:editor-walk:ProjectCentral/user/07%20OI-DESKTOP-APPLICATION-SPEC.md",
-                "revision": "central.content-fnv1a64/v1:36268:1ec5a6dc86a29c7d",
+                "revision": "central.content-fnv1a64/v1:36324:7e3ed6684620a128",
                 "treatment": "projectcentral-user"
               },
               {
@@ -1882,16 +1954,16 @@
           }
         },
         "surfaces": {
-          "1b055246-dd34-4d39-bdff-d3d117b38116": {
+          "4f22a5d4-ebf0-4a2e-80af-de6f71caee64": {
             "kind": "source",
             "source_ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
-            "surface_id": "1b055246-dd34-4d39-bdff-d3d117b38116",
+            "surface_id": "4f22a5d4-ebf0-4a2e-80af-de6f71caee64",
             "title": "01 02-ARCHITECTURE.md"
           },
-          "f0d66fb4-5a0b-4fb6-805a-b673dfa5ff2e": {
+          "ab5d49f9-92d7-463d-82bd-c14c6856d102": {
             "kind": "source",
             "source_ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
-            "surface_id": "f0d66fb4-5a0b-4fb6-805a-b673dfa5ff2e",
+            "surface_id": "ab5d49f9-92d7-463d-82bd-c14c6856d102",
             "title": "00 01-DESIGN.md"
           }
         }
@@ -1922,7 +1994,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 3,
             "summary": "Surface opened: 00 01-DESIGN.md.",
-            "surface_id": "f0d66fb4-5a0b-4fb6-805a-b673dfa5ff2e",
+            "surface_id": "ab5d49f9-92d7-463d-82bd-c14c6856d102",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -2052,10 +2124,28 @@
             "version": 1
           },
           {
+            "current_revision": "central.content-fnv1a64/v1:19769:eec121ae58d2607b",
+            "event": "source_write_conflict",
+            "expected_revision": "central.content-fnv1a64/v1:19709:7fcf9af778d7872b",
+            "schema": "oi.kernel-event/v1",
+            "seq": 10,
+            "source": {
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "revision": "central.content-fnv1a64/v1:19709:7fcf9af778d7872b",
+                "source": "central.projectcentral"
+              },
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+            },
+            "summary": "The owner's CAS refused the save: the revision moved underneath the buffer. Both sides are preserved.",
+            "version": 1
+          },
+          {
             "event": "source_opened",
             "revision": "central.content-fnv1a64/v1:19769:eec121ae58d2607b",
             "schema": "oi.kernel-event/v1",
-            "seq": 10,
+            "seq": 11,
             "source": {
               "kind": "source",
               "native_owner": "central",
@@ -2072,7 +2162,7 @@
             "event": "source_changed",
             "revision": "central.content-fnv1a64/v1:19769:0a953a98ade6cb85",
             "schema": "oi.kernel-event/v1",
-            "seq": 11,
+            "seq": 12,
             "source": {
               "kind": "source",
               "native_owner": "central",
@@ -2088,9 +2178,9 @@
           {
             "event": "surface_changed",
             "schema": "oi.kernel-event/v1",
-            "seq": 12,
+            "seq": 13,
             "summary": "Surface opened: 01 02-ARCHITECTURE.md.",
-            "surface_id": "1b055246-dd34-4d39-bdff-d3d117b38116",
+            "surface_id": "4f22a5d4-ebf0-4a2e-80af-de6f71caee64",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -2103,19 +2193,19 @@
           },
           {
             "event": "source_opened",
-            "revision": "central.content-fnv1a64/v1:16545:68439910925b9055",
+            "revision": "central.content-fnv1a64/v1:16605:6a00870aa4f8d1e2",
             "schema": "oi.kernel-event/v1",
-            "seq": 13,
+            "seq": 14,
             "source": {
               "kind": "source",
               "native_owner": "central",
               "provenance": {
-                "revision": "central.content-fnv1a64/v1:16545:68439910925b9055",
+                "revision": "central.content-fnv1a64/v1:16605:6a00870aa4f8d1e2",
                 "source": "central.projectcentral"
               },
               "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md"
             },
-            "summary": "Opened from the owner's reading at revision 68439910925b9055 (16545 bytes).",
+            "summary": "Opened from the owner's reading at revision 6a00870aa4f8d1e2 (16605 bytes).",
             "version": 1
           },
           {
@@ -2147,22 +2237,22 @@
               }
             },
             "schema": "oi.kernel-event/v1",
-            "seq": 14,
+            "seq": 15,
             "version": 1
           }
         ],
-        "count": 14,
+        "count": 15,
         "first_seq": 1,
-        "last_seq": 14
+        "last_seq": 15
       }
     },
     {
       "ok": true,
       "op": "invoke.surface_focus",
-      "duration_ms": 5.2,
+      "duration_ms": 5.7,
       "seq_range": {
-        "from": 15,
-        "to": 15
+        "from": 16,
+        "to": 16
       },
       "data": {
         "outcome": {
@@ -2181,13 +2271,13 @@
                 "world_ref": "project:editor-walk"
               },
               "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md": {
-                "base_revision": "central.content-fnv1a64/v1:16545:68439910925b9055",
-                "content": "# 02 — Cradle architecture\n\n**Status:** architecture commitment for the O:I desktop.\n**Companion:** [01-DESIGN.md](01-DESIGN.md) (intent), [03-UX-STATES.md](03-UX-STATES.md) (states), [04-VERIFICATION.md](04-VERIFICATION.md) (evidence).\n\n## 1. Stack and kernel\n\nTauri + Rust + React/TypeScript. React sits on top of a **real O:I application\nkernel** — a small set of coarse application services composing the native\nproducts — rather than on dozens of widget-scoped read-model calls. The renderer is a deterministic\nprojection of kernel events, and every human intent becomes a native operation\nthrough the kernel.\n\n```mermaid\nflowchart LR\n    UI[\"React / TypeScript\\nCradle UI (presentation)\"] -->|\"intents / commands\"| K[\"Cradle application kernel\\nRust\"]\n    K -->|\"typed application events\"| UI\n    K --> C[\"Central\"]\n    K --> A[\"Actuation\"]\n    K --> AI[\"AIKit\"]\n    K --> F[\"Factory\"]\n    K --> W[\"Workcell\"]\n    K --> S[\"SharedField\"]\n    A <--> G[\"Agency Gateway (#154)\"]\n    AI <--> G\n    W <--> G\n    G --> X[\"Telegram · Slack · Discord · terminal · harness UI\"]\n```\n\n## 2. The kernel is the current constitution of the environment\n\nThe kernel is not another database containing copies of everything. It is the\n**current constitution of the environment** — what #158 calls the composition,\nread as inhabitation:\n\n```rust\nCradle {\n    world: WorldRef,                    // Central ground + recognised machines\n    project: Option<ProjectRef>,\n    focus: Option<SubjectRef>,          // the one global subject (§7)\n    journey: Option<JourneyRef>,        // active structured development, if any\n\n    session_space: SessionSpaceRef,     // AIKit working environment\n    agencies: Vec<AgencyPresence>,      // who is present (Gateway-informed)\n    agent_sessions: Vec<AgentSessionPresence>,\n\n    surfaces: SurfaceLayout,            // composed surface bindings (§8)\n    attention: AttentionState,          // what requires the human\n    composition: EffectiveComposition,  // products present / degraded / absent\n    material: MaterialSituation,        // Workcell: bodies, services, placement\n}\n```\n\nComposition asks what is constituted together; inhabitation asks what that\nconstitution means for the situated human and Agencies — the kernel answers\nboth, and the UI renders the answer.\n\n## 3. Coarse application services\n\nTen services, not one command per widget. The first six **compose native\nproducts**; the last four genuinely belong to the application whole.\n\n| Service | Composes | Owns |\n|---|---|---|\n| `WorldService` | Central (`ctrl`), oi recognition | The first-class authored World (`WorldRef` tree with source treatment), Ground, Work files, machine/install recognition — read as a **selected Projection** (selection ≠ readability; omission by default), never as a profile database |\n| `AgencyService` | Actuation, AIKit sessions, Gateway #154 | Agencies, AgentSessions, activity, encounter continuity |\n| `KnowledgeService` | AIKit knowledge, Central | Search, semantic neighbourhoods, disclosure receipts, remember-this |\n| `DevelopmentService` | Factory | Journeys, Runs, Candidates, Evidence, Recognition |\n| `MaterialService` | Workcell | Material bodies, services, placement, bindings |\n| `SharedFieldService` | shared-field contracts | Projections, participants, contributions, encounters |\n| `SurfaceService` | — (application) | Surface registry, bindings, promotion/detach, layout |\n| `ActionRouter` | — (application) | Intent → owner Action dispatch, authority gates |\n| `SearchService` | — (application) | The one command/search aggregator over native descriptors |\n| `AttentionService` | — (application) | Activity → Notification → Attention altitudes |\n\n## 4. The integration ladder\n\nWhere a product exposes a clean Rust crate, use it in-process. Where it is\nindependently executable, use its stable CLI/application protocol. Where it is\npersistent/networked, use its service protocol. **The renderer does not care.**\n\n```text\nReact intent\n  ↓\nkernel service operation\n  ↓\nRust adapter\n  ├── in-process crate API        (factory, aikit-core/store today)\n  ├── native CLI protocol         (ctrl, aikit, actuation, factory, workcell, ql)\n  ├── local IPC / stdio           (ACP agent sessions, Gateway UDS)\n  └── service / network API       (Gateway WebSocket, hosted SharedField)\n```\n\nThis lets moving-but-stable product heads keep moving without binding the UI to\ntheir internals. Every adaptation is honest at the UI: which seam served a\nreading is disclosed (see the provider-truth law, §10).\n\n## 5. Commands and events\n\n```text\nCOMMANDS (human and agent intent)              EVENTS (kernel → renderer)\nopen subject                ◀────────────────  FocusChanged\nexecute Action              ◀────────────────  WorldChanged\nedit / save / author        ◀────────────────  SourceChanged\nsend / address / interrupt  ◀────────────────  ActivityUpdated · SessionChanged\nstage composition           ◀────────────────  KnowledgeChanged\nresolve Attention           ◀────────────────  AttentionRaised · AttentionResolved\ncompose projection          ◀────────────────  RunChanged · JourneyChanged\ncreate Agent from intent    ◀────────────────  MaterialChanged · CompositionChanged\n                                             SharedFieldChanged\n```\n\nThe key loop: **native operation returns → kernel state changes → typed events\n→ React projection re-renders reality.** No optimistic fake mutation followed by\na \"saved\" card. Push, not poll: the current build's absence of any event seam is\nthe single largest infrastructure gap (§11).\n\n## 6. Two state layers — both real\n\n**Semantic/application state** lives in the kernel and native products: World,\nProject, Source, Knowledge, Agency, AgentSession, Journey, Run, SharedField,\nActivity, Attention, material state, Action results.\n\n**Presentation state** lives in the desktop: open surface bindings, split\narrangement, panel widths, resting vs summoned regions, drawer, focused\npresentation, scroll positions, popover state, draft composer content.\n\nRules:\n\n1. Never derive semantic state from presentation state.\n2. Presentation state is **real product state** — persisted professionally,\n   versioned, restorable; \"presentation isn't semantic authority\" never mutated\n   into \"presentation doesn't matter\".\n3. Layout persistence never persists semantic selection.\n\n## 7. One global focus model\n\nThe whole application shares one notion of *what we are currently talking\nabout* — a stable `SubjectRef` plus its surrounding relations:\n\n```text\nCurrent World · Current Project · Current Focus (SubjectRef)\nCurrent Journey · Current Agency encounter\n```\n\nSelecting `src/project.rs` yields `SubjectRef = Central source ref`,\n`ProjectRef`, `WorldRef`. From that one relation: the canvas opens the editor;\nknowledge shows its neighbourhood; the Cradle addresses an agent about *that\nexact subject*; Factory shows Runs touching it; history shows change; search\nrecentres; SharedField can project it if eligible. No component copies selection\nstate independently. This is the backbone of human/agent co-reference: an agent\nreceives refs to selected subjects, never pasted screen text.\n\nFocus changes propagate as events (§5). Focus is semantic state — kernel-owned,\nnot a UI store.\n\n## 8. Tabs are Surface bindings\n\nA tab is not a page URL. It is:\n\n```text\nSurfaceBinding {\n    surface_ref      // which presentation\n    subject_ref      // which subject it shows\n    provider         // which service/product supplies it\n    region           // centre · left · summoned · drawer · detached\n    presentation     // mode (read/edit/graph/…)\n    local_state      // dirty buffer, scroll — presentation layer (§6)\n}\n```\n\nThe same binding can move: centre tab → split; summoned aperture → centre\npanel; centre surface → detached window; detached Observatory → back into the\nleft field. Same subject, same binding, different area and region. Bindings are\npresentation identity, non-canonical; the *subject* is canonical and\nnative-owned.\n\n## 9. Product seams — the four-part contract\n\nEvery native product already converges on the same integration shape; the\nkernel consumes them uniformly:\n\n1. **Capabilities descriptor** — `ctrl action.list`, `factory capabilities`,\n   `aikit` profile/context resolution, `actuation.cli/v1` surface descriptor,\n   `ql capabilities`, Workcell SDK/wire.\n2. **Read-model projection without mutation** — Factory `build-view/v1`,\n   Central `personal.show`, AIKit effective-skill/context readings,\n   Actuation `agency.read / realised.read / activity.read / stream.read`.\n3. **Opaque client-owned refs** — Workcell `ExternalRef`, QL client subjects,\n   Factory's preserved AIKit/Actuation/Workcell refs. No product re-owns\n   another's nouns; the kernel treats them as opaque and routes by owner.\n4. **Explicit authority gates on mutation** — Central CAS + `accepted_by_ref`\n   proposals, Factory bounded Action grants, AIKit reviewable Procedures,\n   Actuation recognition-before-mutation. The desktop adds no bypass: rich\n   rendered code is never a privileged caller (§12).\n\n## 10. Honesty laws (rendered, not implied)\n\n- **Provider truth:** `live-provider → may claim live; fixture → Degraded;\n  derived-only → Degraded`. The UI never upgrades a source class, anywhere in\n  the application.\n- **Absence is an observation, not a failure.** An uninstalled product, a\n  stopped daemon, an unprojected skill, a missing version flag: rendered as\n  what-is, never as error, never fabricated.\n- **Degradation is local.** A provider disappearing degrades one reading; the\n  SessionSpace and other relations keep their identity\n  (`provider pane ≠ SurfaceRef ≠ SessionSpaceRef`).\n- **Authority is visible.** An action discoverable is not an action authorised;\n  the UI shows which authority stands behind each mutation.\n\n## 11. Current build disposition (implementation facts)\n\nEvidence: `desktop/core`, `desktop/src-tauri/main.rs` (39 commands, zero\nevents), `desktop/ui/src` as of 2026-09-04.\n\n**Keep and build on (real today):** the workbench host frame with tabs/splits/\nregions/keyboard grammar (`workbench-host.tsx`); Flow authoring with CAS\nrevision conflict; AgentProfile CRUD over `ctrl`; Knowledge\nsearch/read/relations/explain/history; real ACP agent conversation with\ncanonical AgentSession identity; Factory bounded Action dispatch;\nSessionSpace focus.\n\n**Mount (written, tested, unreachable):** participant composer (To:/@\naddressing, `participant-composer-model.mjs`); the full session observatory /\nactivity / notification / attention model (`session-observatory-model.mjs`);\nthe real Factory `BuildSurface` body in place of the summary cards now rendered.\n\n**Add (the load-bearing gaps):** the event seam (Tauri channel + native change\nsources); global focus events and subject-scoped read models; streaming and\nconcurrent ACP sessions with mid-turn interrupt; the Actuation payload adapter\n(`agency.read`/`activity.read`/`stream.read` → kernel); intent-created Agent\nresolution (AIKit AgentProfile + compose + Workcell placement as one flow);\nJourney/Run readings from Factory; live World/file editing through Central\nowner-Actions; the Agency Gateway integration for cross-surface continuity.\n\n**Retire/replace:** the static System constitution table → live composition\nreading (what is present/degraded/absent, from recognition + capability\ndescriptors); descriptor cards for region surfaces → real region renderers;\nenv-var JSON handoffs → kernel services (the handoff files were honest scaffolding);\nExplore stays read-only until SharedField has a live substrate — the desktop\nmust not simulate one.\n\n## 12. Security boundary\n\n`rendered UI → named kernel commands → BridgePolicy → native operation`. No\ngeneric shell, filesystem, process, network or secret bridge; the capability\ngrant remains `core:default`; contribution code is never the authorising\ncaller. What the kernel may do on the human's behalf runs through the owner\nproducts' own authority gates (§9.4), surfaced as visible grants, never as\nambient power.\n\n## 13. Omarchy and the larger host (#158/#159)\n\nThe kernel's composition is scope-neutral: the same inhabitation reading serves\nthe desktop on macOS, and the Omarchy reference World where the desktop is an\nintegral Quickshell-composed constituent of the host shell. The desktop owns the\nwhole application experience; Omarchy owns shell config, plugin discovery and\nhot-reload; neither imports the other's identity (`file presence ≠ activation`;\n`tmux pane ≠ SurfaceRef`; `Quickshell widget ≠ Surface`). Adaptive bootstrap\n(`oi host omarchy plan|realise|verify`) is World recognition, not installation\nof a foreign app.\n\n\n## 14. Agency Gateway desktop consumer contract\n\nOwner-directed desktop clarification,2026-09-06. Native specification remains\n[O-I #154](https://github.com/EpiLogos/O-I/issues/154); this section gives its\nexisting architecture placement (§1/§3/§4) an explicit consumer boundary. The\nproduct team develops the Gateway/connector/Stream/hosting implementation.\nExecution units GW-01–06 live in\n[the programme](../../.superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md#agency-gateway-desktop-integration--explicit-dependency-track).\n\n`AgencyService` consumes AIKit's authorised ecology and native Gateway client\nthrough S's declared integration route. Use the product protocol/SDK and its\nnegotiated local/network carrier; no renderer-owned websocket protocol or second\nconnector/session registry. The desktop owns view binding, attention and focus,\nnot Agency, AgentSession, ActuationStream or connector identity. Workcell owns\nservice/Fabric materiality; Actuation owns attributable Stream and authority.\n\n| Owner input, where supplied and authorised | Desktop projection |\n|---|---|\n| SessionSpace, Agency/Agent, AgentSession, purpose and Focus | Existing-session selection and agent details in the dynamic right panel; selection attaches the actual owner session |\n| Actuation/ActuationStream, sequence/cursor, attribution/locus, native evidence and Return refs | Conversation and semantic Activity over the same encounter; ordered incremental reading/replay with native correlation intact |\n| Operative Context, resolved Harness/model condition, context revision/lineage | Context and Inspect planes; authored, effective and actually active facts remain distinct |\n| Surface, connection, reachability, material observation, compatibility and age | Side/full/tab/detached/Observatory views with exact serving seam and local degraded/last-observed state |\n| Available/granted capabilities and permitted invocation modes | Owner-disclosed operations with exact scope/refusal; presence and reachability never imply authority |\n\nOne canonical encounter retains one transcript, draft/composer and native session\nacross presentations. ActuationStream is the semantic event source for Gateway\nintegration; native provider traces/exposed thinking retain their richer content\nand attribution. ACP connection events alone do not establish canonical Stream\nor cross-surface Gateway acceptance. Preserve bounded retention/backpressure and\ndurable owner replay; a replay gap or unsupported operation is not repaired with\nfabricated events. Continue/refine/fork/recompose are explicit owner relations.\n\nA disappearing UI consumer detaches its view; it does not cancel the provider or\nGateway. Explicit cancel is a separate owner operation. Provider conversation IDs,\ntransport credentials, sockets/hosts and Fabric addresses never become canonical\nAgentSession identity. Fabric admission, Gateway scopes, AIKit capabilities,\nActuation bounds and native Action authority remain separate.\n\nUntil a compatible native ecology/attach operation is available, disclose the\nmissing seam and affected reachability. Local sources/wiki/workspaces remain\nusable. Reuse the existing resident encounter only with its truthful local scope;\nnever call it the Gateway, introduce another persistent desktop encounter owner,\nor replace an active provider to force an upgrade. A subsequent owner-supported\nbinding/migration must prove preserved identity and history explicitly.\n",
+                "base_revision": "central.content-fnv1a64/v1:16605:6a00870aa4f8d1e2",
+                "content": "---\nRegister: episteme\nStanding: architecture-contract\n---\n\n# 02 — Cradle architecture\n\n**Status:** architecture commitment for the O:I desktop.\n**Companion:** [01-DESIGN.md](01-DESIGN.md) (intent), [03-UX-STATES.md](03-UX-STATES.md) (states), [04-VERIFICATION.md](04-VERIFICATION.md) (evidence).\n\n## 1. Stack and kernel\n\nTauri + Rust + React/TypeScript. React sits on top of a **real O:I application\nkernel** — a small set of coarse application services composing the native\nproducts — rather than on dozens of widget-scoped read-model calls. The renderer is a deterministic\nprojection of kernel events, and every human intent becomes a native operation\nthrough the kernel.\n\n```mermaid\nflowchart LR\n    UI[\"React / TypeScript\\nCradle UI (presentation)\"] -->|\"intents / commands\"| K[\"Cradle application kernel\\nRust\"]\n    K -->|\"typed application events\"| UI\n    K --> C[\"Central\"]\n    K --> A[\"Actuation\"]\n    K --> AI[\"AIKit\"]\n    K --> F[\"Factory\"]\n    K --> W[\"Workcell\"]\n    K --> S[\"SharedField\"]\n    A <--> G[\"Agency Gateway (#154)\"]\n    AI <--> G\n    W <--> G\n    G --> X[\"Telegram · Slack · Discord · terminal · harness UI\"]\n```\n\n## 2. The kernel is the current constitution of the environment\n\nThe kernel is not another database containing copies of everything. It is the\n**current constitution of the environment** — what #158 calls the composition,\nread as inhabitation:\n\n```rust\nCradle {\n    world: WorldRef,                    // Central ground + recognised machines\n    project: Option<ProjectRef>,\n    focus: Option<SubjectRef>,          // the one global subject (§7)\n    journey: Option<JourneyRef>,        // active structured development, if any\n\n    session_space: SessionSpaceRef,     // AIKit working environment\n    agencies: Vec<AgencyPresence>,      // who is present (Gateway-informed)\n    agent_sessions: Vec<AgentSessionPresence>,\n\n    surfaces: SurfaceLayout,            // composed surface bindings (§8)\n    attention: AttentionState,          // what requires the human\n    composition: EffectiveComposition,  // products present / degraded / absent\n    material: MaterialSituation,        // Workcell: bodies, services, placement\n}\n```\n\nComposition asks what is constituted together; inhabitation asks what that\nconstitution means for the situated human and Agencies — the kernel answers\nboth, and the UI renders the answer.\n\n## 3. Coarse application services\n\nTen services, not one command per widget. The first six **compose native\nproducts**; the last four genuinely belong to the application whole.\n\n| Service | Composes | Owns |\n|---|---|---|\n| `WorldService` | Central (`ctrl`), oi recognition | The first-class authored World (`WorldRef` tree with source treatment), Ground, Work files, machine/install recognition — read as a **selected Projection** (selection ≠ readability; omission by default), never as a profile database |\n| `AgencyService` | Actuation, AIKit sessions, Gateway #154 | Agencies, AgentSessions, activity, encounter continuity |\n| `KnowledgeService` | AIKit knowledge, Central | Search, semantic neighbourhoods, disclosure receipts, remember-this |\n| `DevelopmentService` | Factory | Journeys, Runs, Candidates, Evidence, Recognition |\n| `MaterialService` | Workcell | Material bodies, services, placement, bindings |\n| `SharedFieldService` | shared-field contracts | Projections, participants, contributions, encounters |\n| `SurfaceService` | — (application) | Surface registry, bindings, promotion/detach, layout |\n| `ActionRouter` | — (application) | Intent → owner Action dispatch, authority gates |\n| `SearchService` | — (application) | The one command/search aggregator over native descriptors |\n| `AttentionService` | — (application) | Activity → Notification → Attention altitudes |\n\n## 4. The integration ladder\n\nWhere a product exposes a clean Rust crate, use it in-process. Where it is\nindependently executable, use its stable CLI/application protocol. Where it is\npersistent/networked, use its service protocol. **The renderer does not care.**\n\n```text\nReact intent\n  ↓\nkernel service operation\n  ↓\nRust adapter\n  ├── in-process crate API        (factory, aikit-core/store today)\n  ├── native CLI protocol         (ctrl, aikit, actuation, factory, workcell, ql)\n  ├── local IPC / stdio           (ACP agent sessions, Gateway UDS)\n  └── service / network API       (Gateway WebSocket, hosted SharedField)\n```\n\nThis lets moving-but-stable product heads keep moving without binding the UI to\ntheir internals. Every adaptation is honest at the UI: which seam served a\nreading is disclosed (see the provider-truth law, §10).\n\n## 5. Commands and events\n\n```text\nCOMMANDS (human and agent intent)              EVENTS (kernel → renderer)\nopen subject                ◀────────────────  FocusChanged\nexecute Action              ◀────────────────  WorldChanged\nedit / save / author        ◀────────────────  SourceChanged\nsend / address / interrupt  ◀────────────────  ActivityUpdated · SessionChanged\nstage composition           ◀────────────────  KnowledgeChanged\nresolve Attention           ◀────────────────  AttentionRaised · AttentionResolved\ncompose projection          ◀────────────────  RunChanged · JourneyChanged\ncreate Agent from intent    ◀────────────────  MaterialChanged · CompositionChanged\n                                             SharedFieldChanged\n```\n\nThe key loop: **native operation returns → kernel state changes → typed events\n→ React projection re-renders reality.** No optimistic fake mutation followed by\na \"saved\" card. Push, not poll: the current build's absence of any event seam is\nthe single largest infrastructure gap (§11).\n\n## 6. Two state layers — both real\n\n**Semantic/application state** lives in the kernel and native products: World,\nProject, Source, Knowledge, Agency, AgentSession, Journey, Run, SharedField,\nActivity, Attention, material state, Action results.\n\n**Presentation state** lives in the desktop: open surface bindings, split\narrangement, panel widths, resting vs summoned regions, drawer, focused\npresentation, scroll positions, popover state, draft composer content.\n\nRules:\n\n1. Never derive semantic state from presentation state.\n2. Presentation state is **real product state** — persisted professionally,\n   versioned, restorable; \"presentation isn't semantic authority\" never mutated\n   into \"presentation doesn't matter\".\n3. Layout persistence never persists semantic selection.\n\n## 7. One global focus model\n\nThe whole application shares one notion of *what we are currently talking\nabout* — a stable `SubjectRef` plus its surrounding relations:\n\n```text\nCurrent World · Current Project · Current Focus (SubjectRef)\nCurrent Journey · Current Agency encounter\n```\n\nSelecting `src/project.rs` yields `SubjectRef = Central source ref`,\n`ProjectRef`, `WorldRef`. From that one relation: the canvas opens the editor;\nknowledge shows its neighbourhood; the Cradle addresses an agent about *that\nexact subject*; Factory shows Runs touching it; history shows change; search\nrecentres; SharedField can project it if eligible. No component copies selection\nstate independently. This is the backbone of human/agent co-reference: an agent\nreceives refs to selected subjects, never pasted screen text.\n\nFocus changes propagate as events (§5). Focus is semantic state — kernel-owned,\nnot a UI store.\n\n## 8. Tabs are Surface bindings\n\nA tab is not a page URL. It is:\n\n```text\nSurfaceBinding {\n    surface_ref      // which presentation\n    subject_ref      // which subject it shows\n    provider         // which service/product supplies it\n    region           // centre · left · summoned · drawer · detached\n    presentation     // mode (read/edit/graph/…)\n    local_state      // dirty buffer, scroll — presentation layer (§6)\n}\n```\n\nThe same binding can move: centre tab → split; summoned aperture → centre\npanel; centre surface → detached window; detached Observatory → back into the\nleft field. Same subject, same binding, different area and region. Bindings are\npresentation identity, non-canonical; the *subject* is canonical and\nnative-owned.\n\n## 9. Product seams — the four-part contract\n\nEvery native product already converges on the same integration shape; the\nkernel consumes them uniformly:\n\n1. **Capabilities descriptor** — `ctrl action.list`, `factory capabilities`,\n   `aikit` profile/context resolution, `actuation.cli/v1` surface descriptor,\n   `ql capabilities`, Workcell SDK/wire.\n2. **Read-model projection without mutation** — Factory `build-view/v1`,\n   Central `personal.show`, AIKit effective-skill/context readings,\n   Actuation `agency.read / realised.read / activity.read / stream.read`.\n3. **Opaque client-owned refs** — Workcell `ExternalRef`, QL client subjects,\n   Factory's preserved AIKit/Actuation/Workcell refs. No product re-owns\n   another's nouns; the kernel treats them as opaque and routes by owner.\n4. **Explicit authority gates on mutation** — Central CAS + `accepted_by_ref`\n   proposals, Factory bounded Action grants, AIKit reviewable Procedures,\n   Actuation recognition-before-mutation. The desktop adds no bypass: rich\n   rendered code is never a privileged caller (§12).\n\n## 10. Honesty laws (rendered, not implied)\n\n- **Provider truth:** `live-provider → may claim live; fixture → Degraded;\n  derived-only → Degraded`. The UI never upgrades a source class, anywhere in\n  the application.\n- **Absence is an observation, not a failure.** An uninstalled product, a\n  stopped daemon, an unprojected skill, a missing version flag: rendered as\n  what-is, never as error, never fabricated.\n- **Degradation is local.** A provider disappearing degrades one reading; the\n  SessionSpace and other relations keep their identity\n  (`provider pane ≠ SurfaceRef ≠ SessionSpaceRef`).\n- **Authority is visible.** An action discoverable is not an action authorised;\n  the UI shows which authority stands behind each mutation.\n\n## 11. Current build disposition (implementation facts)\n\nEvidence: `desktop/core`, `desktop/src-tauri/main.rs` (39 commands, zero\nevents), `desktop/ui/src` as of 2026-09-04.\n\n**Keep and build on (real today):** the workbench host frame with tabs/splits/\nregions/keyboard grammar (`workbench-host.tsx`); Flow authoring with CAS\nrevision conflict; AgentProfile CRUD over `ctrl`; Knowledge\nsearch/read/relations/explain/history; real ACP agent conversation with\ncanonical AgentSession identity; Factory bounded Action dispatch;\nSessionSpace focus.\n\n**Mount (written, tested, unreachable):** participant composer (To:/@\naddressing, `participant-composer-model.mjs`); the full session observatory /\nactivity / notification / attention model (`session-observatory-model.mjs`);\nthe real Factory `BuildSurface` body in place of the summary cards now rendered.\n\n**Add (the load-bearing gaps):** the event seam (Tauri channel + native change\nsources); global focus events and subject-scoped read models; streaming and\nconcurrent ACP sessions with mid-turn interrupt; the Actuation payload adapter\n(`agency.read`/`activity.read`/`stream.read` → kernel); intent-created Agent\nresolution (AIKit AgentProfile + compose + Workcell placement as one flow);\nJourney/Run readings from Factory; live World/file editing through Central\nowner-Actions; the Agency Gateway integration for cross-surface continuity.\n\n**Retire/replace:** the static System constitution table → live composition\nreading (what is present/degraded/absent, from recognition + capability\ndescriptors); descriptor cards for region surfaces → real region renderers;\nenv-var JSON handoffs → kernel services (the handoff files were honest scaffolding);\nExplore stays read-only until SharedField has a live substrate — the desktop\nmust not simulate one.\n\n## 12. Security boundary\n\n`rendered UI → named kernel commands → BridgePolicy → native operation`. No\ngeneric shell, filesystem, process, network or secret bridge; the capability\ngrant remains `core:default`; contribution code is never the authorising\ncaller. What the kernel may do on the human's behalf runs through the owner\nproducts' own authority gates (§9.4), surfaced as visible grants, never as\nambient power.\n\n## 13. Omarchy and the larger host (#158/#159)\n\nThe kernel's composition is scope-neutral: the same inhabitation reading serves\nthe desktop on macOS, and the Omarchy reference World where the desktop is an\nintegral Quickshell-composed constituent of the host shell. The desktop owns the\nwhole application experience; Omarchy owns shell config, plugin discovery and\nhot-reload; neither imports the other's identity (`file presence ≠ activation`;\n`tmux pane ≠ SurfaceRef`; `Quickshell widget ≠ Surface`). Adaptive bootstrap\n(`oi host omarchy plan|realise|verify`) is World recognition, not installation\nof a foreign app.\n\n\n## 14. Agency Gateway desktop consumer contract\n\nOwner-directed desktop clarification,2026-09-06. Native specification remains\n[O-I #154](https://github.com/EpiLogos/O-I/issues/154); this section gives its\nexisting architecture placement (§1/§3/§4) an explicit consumer boundary. The\nproduct team develops the Gateway/connector/Stream/hosting implementation.\nExecution units GW-01–06 live in\n[the programme](../../.superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md#agency-gateway-desktop-integration--explicit-dependency-track).\n\n`AgencyService` consumes AIKit's authorised ecology and native Gateway client\nthrough S's declared integration route. Use the product protocol/SDK and its\nnegotiated local/network carrier; no renderer-owned websocket protocol or second\nconnector/session registry. The desktop owns view binding, attention and focus,\nnot Agency, AgentSession, ActuationStream or connector identity. Workcell owns\nservice/Fabric materiality; Actuation owns attributable Stream and authority.\n\n| Owner input, where supplied and authorised | Desktop projection |\n|---|---|\n| SessionSpace, Agency/Agent, AgentSession, purpose and Focus | Existing-session selection and agent details in the dynamic right panel; selection attaches the actual owner session |\n| Actuation/ActuationStream, sequence/cursor, attribution/locus, native evidence and Return refs | Conversation and semantic Activity over the same encounter; ordered incremental reading/replay with native correlation intact |\n| Operative Context, resolved Harness/model condition, context revision/lineage | Context and Inspect planes; authored, effective and actually active facts remain distinct |\n| Surface, connection, reachability, material observation, compatibility and age | Side/full/tab/detached/Observatory views with exact serving seam and local degraded/last-observed state |\n| Available/granted capabilities and permitted invocation modes | Owner-disclosed operations with exact scope/refusal; presence and reachability never imply authority |\n\nOne canonical encounter retains one transcript, draft/composer and native session\nacross presentations. ActuationStream is the semantic event source for Gateway\nintegration; native provider traces/exposed thinking retain their richer content\nand attribution. ACP connection events alone do not establish canonical Stream\nor cross-surface Gateway acceptance. Preserve bounded retention/backpressure and\ndurable owner replay; a replay gap or unsupported operation is not repaired with\nfabricated events. Continue/refine/fork/recompose are explicit owner relations.\n\nA disappearing UI consumer detaches its view; it does not cancel the provider or\nGateway. Explicit cancel is a separate owner operation. Provider conversation IDs,\ntransport credentials, sockets/hosts and Fabric addresses never become canonical\nAgentSession identity. Fabric admission, Gateway scopes, AIKit capabilities,\nActuation bounds and native Action authority remain separate.\n\nUntil a compatible native ecology/attach operation is available, disclose the\nmissing seam and affected reachability. Local sources/wiki/workspaces remain\nusable. Reuse the existing resident encounter only with its truthful local scope;\nnever call it the Gateway, introduce another persistent desktop encounter owner,\nor replace an active provider to force an upgrade. A subsequent owner-supported\nbinding/migration must prove preserved identity and history explicitly.\n",
                 "dirty": false,
                 "path": "ProjectCentral/user/01 02-ARCHITECTURE.md",
                 "project": "Editor",
                 "project_ref": "editor-walk",
-                "saved_content": "# 02 — Cradle architecture\n\n**Status:** architecture commitment for the O:I desktop.\n**Companion:** [01-DESIGN.md](01-DESIGN.md) (intent), [03-UX-STATES.md](03-UX-STATES.md) (states), [04-VERIFICATION.md](04-VERIFICATION.md) (evidence).\n\n## 1. Stack and kernel\n\nTauri + Rust + React/TypeScript. React sits on top of a **real O:I application\nkernel** — a small set of coarse application services composing the native\nproducts — rather than on dozens of widget-scoped read-model calls. The renderer is a deterministic\nprojection of kernel events, and every human intent becomes a native operation\nthrough the kernel.\n\n```mermaid\nflowchart LR\n    UI[\"React / TypeScript\\nCradle UI (presentation)\"] -->|\"intents / commands\"| K[\"Cradle application kernel\\nRust\"]\n    K -->|\"typed application events\"| UI\n    K --> C[\"Central\"]\n    K --> A[\"Actuation\"]\n    K --> AI[\"AIKit\"]\n    K --> F[\"Factory\"]\n    K --> W[\"Workcell\"]\n    K --> S[\"SharedField\"]\n    A <--> G[\"Agency Gateway (#154)\"]\n    AI <--> G\n    W <--> G\n    G --> X[\"Telegram · Slack · Discord · terminal · harness UI\"]\n```\n\n## 2. The kernel is the current constitution of the environment\n\nThe kernel is not another database containing copies of everything. It is the\n**current constitution of the environment** — what #158 calls the composition,\nread as inhabitation:\n\n```rust\nCradle {\n    world: WorldRef,                    // Central ground + recognised machines\n    project: Option<ProjectRef>,\n    focus: Option<SubjectRef>,          // the one global subject (§7)\n    journey: Option<JourneyRef>,        // active structured development, if any\n\n    session_space: SessionSpaceRef,     // AIKit working environment\n    agencies: Vec<AgencyPresence>,      // who is present (Gateway-informed)\n    agent_sessions: Vec<AgentSessionPresence>,\n\n    surfaces: SurfaceLayout,            // composed surface bindings (§8)\n    attention: AttentionState,          // what requires the human\n    composition: EffectiveComposition,  // products present / degraded / absent\n    material: MaterialSituation,        // Workcell: bodies, services, placement\n}\n```\n\nComposition asks what is constituted together; inhabitation asks what that\nconstitution means for the situated human and Agencies — the kernel answers\nboth, and the UI renders the answer.\n\n## 3. Coarse application services\n\nTen services, not one command per widget. The first six **compose native\nproducts**; the last four genuinely belong to the application whole.\n\n| Service | Composes | Owns |\n|---|---|---|\n| `WorldService` | Central (`ctrl`), oi recognition | The first-class authored World (`WorldRef` tree with source treatment), Ground, Work files, machine/install recognition — read as a **selected Projection** (selection ≠ readability; omission by default), never as a profile database |\n| `AgencyService` | Actuation, AIKit sessions, Gateway #154 | Agencies, AgentSessions, activity, encounter continuity |\n| `KnowledgeService` | AIKit knowledge, Central | Search, semantic neighbourhoods, disclosure receipts, remember-this |\n| `DevelopmentService` | Factory | Journeys, Runs, Candidates, Evidence, Recognition |\n| `MaterialService` | Workcell | Material bodies, services, placement, bindings |\n| `SharedFieldService` | shared-field contracts | Projections, participants, contributions, encounters |\n| `SurfaceService` | — (application) | Surface registry, bindings, promotion/detach, layout |\n| `ActionRouter` | — (application) | Intent → owner Action dispatch, authority gates |\n| `SearchService` | — (application) | The one command/search aggregator over native descriptors |\n| `AttentionService` | — (application) | Activity → Notification → Attention altitudes |\n\n## 4. The integration ladder\n\nWhere a product exposes a clean Rust crate, use it in-process. Where it is\nindependently executable, use its stable CLI/application protocol. Where it is\npersistent/networked, use its service protocol. **The renderer does not care.**\n\n```text\nReact intent\n  ↓\nkernel service operation\n  ↓\nRust adapter\n  ├── in-process crate API        (factory, aikit-core/store today)\n  ├── native CLI protocol         (ctrl, aikit, actuation, factory, workcell, ql)\n  ├── local IPC / stdio           (ACP agent sessions, Gateway UDS)\n  └── service / network API       (Gateway WebSocket, hosted SharedField)\n```\n\nThis lets moving-but-stable product heads keep moving without binding the UI to\ntheir internals. Every adaptation is honest at the UI: which seam served a\nreading is disclosed (see the provider-truth law, §10).\n\n## 5. Commands and events\n\n```text\nCOMMANDS (human and agent intent)              EVENTS (kernel → renderer)\nopen subject                ◀────────────────  FocusChanged\nexecute Action              ◀────────────────  WorldChanged\nedit / save / author        ◀────────────────  SourceChanged\nsend / address / interrupt  ◀────────────────  ActivityUpdated · SessionChanged\nstage composition           ◀────────────────  KnowledgeChanged\nresolve Attention           ◀────────────────  AttentionRaised · AttentionResolved\ncompose projection          ◀────────────────  RunChanged · JourneyChanged\ncreate Agent from intent    ◀────────────────  MaterialChanged · CompositionChanged\n                                             SharedFieldChanged\n```\n\nThe key loop: **native operation returns → kernel state changes → typed events\n→ React projection re-renders reality.** No optimistic fake mutation followed by\na \"saved\" card. Push, not poll: the current build's absence of any event seam is\nthe single largest infrastructure gap (§11).\n\n## 6. Two state layers — both real\n\n**Semantic/application state** lives in the kernel and native products: World,\nProject, Source, Knowledge, Agency, AgentSession, Journey, Run, SharedField,\nActivity, Attention, material state, Action results.\n\n**Presentation state** lives in the desktop: open surface bindings, split\narrangement, panel widths, resting vs summoned regions, drawer, focused\npresentation, scroll positions, popover state, draft composer content.\n\nRules:\n\n1. Never derive semantic state from presentation state.\n2. Presentation state is **real product state** — persisted professionally,\n   versioned, restorable; \"presentation isn't semantic authority\" never mutated\n   into \"presentation doesn't matter\".\n3. Layout persistence never persists semantic selection.\n\n## 7. One global focus model\n\nThe whole application shares one notion of *what we are currently talking\nabout* — a stable `SubjectRef` plus its surrounding relations:\n\n```text\nCurrent World · Current Project · Current Focus (SubjectRef)\nCurrent Journey · Current Agency encounter\n```\n\nSelecting `src/project.rs` yields `SubjectRef = Central source ref`,\n`ProjectRef`, `WorldRef`. From that one relation: the canvas opens the editor;\nknowledge shows its neighbourhood; the Cradle addresses an agent about *that\nexact subject*; Factory shows Runs touching it; history shows change; search\nrecentres; SharedField can project it if eligible. No component copies selection\nstate independently. This is the backbone of human/agent co-reference: an agent\nreceives refs to selected subjects, never pasted screen text.\n\nFocus changes propagate as events (§5). Focus is semantic state — kernel-owned,\nnot a UI store.\n\n## 8. Tabs are Surface bindings\n\nA tab is not a page URL. It is:\n\n```text\nSurfaceBinding {\n    surface_ref      // which presentation\n    subject_ref      // which subject it shows\n    provider         // which service/product supplies it\n    region           // centre · left · summoned · drawer · detached\n    presentation     // mode (read/edit/graph/…)\n    local_state      // dirty buffer, scroll — presentation layer (§6)\n}\n```\n\nThe same binding can move: centre tab → split; summoned aperture → centre\npanel; centre surface → detached window; detached Observatory → back into the\nleft field. Same subject, same binding, different area and region. Bindings are\npresentation identity, non-canonical; the *subject* is canonical and\nnative-owned.\n\n## 9. Product seams — the four-part contract\n\nEvery native product already converges on the same integration shape; the\nkernel consumes them uniformly:\n\n1. **Capabilities descriptor** — `ctrl action.list`, `factory capabilities`,\n   `aikit` profile/context resolution, `actuation.cli/v1` surface descriptor,\n   `ql capabilities`, Workcell SDK/wire.\n2. **Read-model projection without mutation** — Factory `build-view/v1`,\n   Central `personal.show`, AIKit effective-skill/context readings,\n   Actuation `agency.read / realised.read / activity.read / stream.read`.\n3. **Opaque client-owned refs** — Workcell `ExternalRef`, QL client subjects,\n   Factory's preserved AIKit/Actuation/Workcell refs. No product re-owns\n   another's nouns; the kernel treats them as opaque and routes by owner.\n4. **Explicit authority gates on mutation** — Central CAS + `accepted_by_ref`\n   proposals, Factory bounded Action grants, AIKit reviewable Procedures,\n   Actuation recognition-before-mutation. The desktop adds no bypass: rich\n   rendered code is never a privileged caller (§12).\n\n## 10. Honesty laws (rendered, not implied)\n\n- **Provider truth:** `live-provider → may claim live; fixture → Degraded;\n  derived-only → Degraded`. The UI never upgrades a source class, anywhere in\n  the application.\n- **Absence is an observation, not a failure.** An uninstalled product, a\n  stopped daemon, an unprojected skill, a missing version flag: rendered as\n  what-is, never as error, never fabricated.\n- **Degradation is local.** A provider disappearing degrades one reading; the\n  SessionSpace and other relations keep their identity\n  (`provider pane ≠ SurfaceRef ≠ SessionSpaceRef`).\n- **Authority is visible.** An action discoverable is not an action authorised;\n  the UI shows which authority stands behind each mutation.\n\n## 11. Current build disposition (implementation facts)\n\nEvidence: `desktop/core`, `desktop/src-tauri/main.rs` (39 commands, zero\nevents), `desktop/ui/src` as of 2026-09-04.\n\n**Keep and build on (real today):** the workbench host frame with tabs/splits/\nregions/keyboard grammar (`workbench-host.tsx`); Flow authoring with CAS\nrevision conflict; AgentProfile CRUD over `ctrl`; Knowledge\nsearch/read/relations/explain/history; real ACP agent conversation with\ncanonical AgentSession identity; Factory bounded Action dispatch;\nSessionSpace focus.\n\n**Mount (written, tested, unreachable):** participant composer (To:/@\naddressing, `participant-composer-model.mjs`); the full session observatory /\nactivity / notification / attention model (`session-observatory-model.mjs`);\nthe real Factory `BuildSurface` body in place of the summary cards now rendered.\n\n**Add (the load-bearing gaps):** the event seam (Tauri channel + native change\nsources); global focus events and subject-scoped read models; streaming and\nconcurrent ACP sessions with mid-turn interrupt; the Actuation payload adapter\n(`agency.read`/`activity.read`/`stream.read` → kernel); intent-created Agent\nresolution (AIKit AgentProfile + compose + Workcell placement as one flow);\nJourney/Run readings from Factory; live World/file editing through Central\nowner-Actions; the Agency Gateway integration for cross-surface continuity.\n\n**Retire/replace:** the static System constitution table → live composition\nreading (what is present/degraded/absent, from recognition + capability\ndescriptors); descriptor cards for region surfaces → real region renderers;\nenv-var JSON handoffs → kernel services (the handoff files were honest scaffolding);\nExplore stays read-only until SharedField has a live substrate — the desktop\nmust not simulate one.\n\n## 12. Security boundary\n\n`rendered UI → named kernel commands → BridgePolicy → native operation`. No\ngeneric shell, filesystem, process, network or secret bridge; the capability\ngrant remains `core:default`; contribution code is never the authorising\ncaller. What the kernel may do on the human's behalf runs through the owner\nproducts' own authority gates (§9.4), surfaced as visible grants, never as\nambient power.\n\n## 13. Omarchy and the larger host (#158/#159)\n\nThe kernel's composition is scope-neutral: the same inhabitation reading serves\nthe desktop on macOS, and the Omarchy reference World where the desktop is an\nintegral Quickshell-composed constituent of the host shell. The desktop owns the\nwhole application experience; Omarchy owns shell config, plugin discovery and\nhot-reload; neither imports the other's identity (`file presence ≠ activation`;\n`tmux pane ≠ SurfaceRef`; `Quickshell widget ≠ Surface`). Adaptive bootstrap\n(`oi host omarchy plan|realise|verify`) is World recognition, not installation\nof a foreign app.\n\n\n## 14. Agency Gateway desktop consumer contract\n\nOwner-directed desktop clarification,2026-09-06. Native specification remains\n[O-I #154](https://github.com/EpiLogos/O-I/issues/154); this section gives its\nexisting architecture placement (§1/§3/§4) an explicit consumer boundary. The\nproduct team develops the Gateway/connector/Stream/hosting implementation.\nExecution units GW-01–06 live in\n[the programme](../../.superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md#agency-gateway-desktop-integration--explicit-dependency-track).\n\n`AgencyService` consumes AIKit's authorised ecology and native Gateway client\nthrough S's declared integration route. Use the product protocol/SDK and its\nnegotiated local/network carrier; no renderer-owned websocket protocol or second\nconnector/session registry. The desktop owns view binding, attention and focus,\nnot Agency, AgentSession, ActuationStream or connector identity. Workcell owns\nservice/Fabric materiality; Actuation owns attributable Stream and authority.\n\n| Owner input, where supplied and authorised | Desktop projection |\n|---|---|\n| SessionSpace, Agency/Agent, AgentSession, purpose and Focus | Existing-session selection and agent details in the dynamic right panel; selection attaches the actual owner session |\n| Actuation/ActuationStream, sequence/cursor, attribution/locus, native evidence and Return refs | Conversation and semantic Activity over the same encounter; ordered incremental reading/replay with native correlation intact |\n| Operative Context, resolved Harness/model condition, context revision/lineage | Context and Inspect planes; authored, effective and actually active facts remain distinct |\n| Surface, connection, reachability, material observation, compatibility and age | Side/full/tab/detached/Observatory views with exact serving seam and local degraded/last-observed state |\n| Available/granted capabilities and permitted invocation modes | Owner-disclosed operations with exact scope/refusal; presence and reachability never imply authority |\n\nOne canonical encounter retains one transcript, draft/composer and native session\nacross presentations. ActuationStream is the semantic event source for Gateway\nintegration; native provider traces/exposed thinking retain their richer content\nand attribution. ACP connection events alone do not establish canonical Stream\nor cross-surface Gateway acceptance. Preserve bounded retention/backpressure and\ndurable owner replay; a replay gap or unsupported operation is not repaired with\nfabricated events. Continue/refine/fork/recompose are explicit owner relations.\n\nA disappearing UI consumer detaches its view; it does not cancel the provider or\nGateway. Explicit cancel is a separate owner operation. Provider conversation IDs,\ntransport credentials, sockets/hosts and Fabric addresses never become canonical\nAgentSession identity. Fabric admission, Gateway scopes, AIKit capabilities,\nActuation bounds and native Action authority remain separate.\n\nUntil a compatible native ecology/attach operation is available, disclose the\nmissing seam and affected reachability. Local sources/wiki/workspaces remain\nusable. Reuse the existing resident encounter only with its truthful local scope;\nnever call it the Gateway, introduce another persistent desktop encounter owner,\nor replace an active provider to force an upgrade. A subsequent owner-supported\nbinding/migration must prove preserved identity and history explicitly.\n",
+                "saved_content": "---\nRegister: episteme\nStanding: architecture-contract\n---\n\n# 02 — Cradle architecture\n\n**Status:** architecture commitment for the O:I desktop.\n**Companion:** [01-DESIGN.md](01-DESIGN.md) (intent), [03-UX-STATES.md](03-UX-STATES.md) (states), [04-VERIFICATION.md](04-VERIFICATION.md) (evidence).\n\n## 1. Stack and kernel\n\nTauri + Rust + React/TypeScript. React sits on top of a **real O:I application\nkernel** — a small set of coarse application services composing the native\nproducts — rather than on dozens of widget-scoped read-model calls. The renderer is a deterministic\nprojection of kernel events, and every human intent becomes a native operation\nthrough the kernel.\n\n```mermaid\nflowchart LR\n    UI[\"React / TypeScript\\nCradle UI (presentation)\"] -->|\"intents / commands\"| K[\"Cradle application kernel\\nRust\"]\n    K -->|\"typed application events\"| UI\n    K --> C[\"Central\"]\n    K --> A[\"Actuation\"]\n    K --> AI[\"AIKit\"]\n    K --> F[\"Factory\"]\n    K --> W[\"Workcell\"]\n    K --> S[\"SharedField\"]\n    A <--> G[\"Agency Gateway (#154)\"]\n    AI <--> G\n    W <--> G\n    G --> X[\"Telegram · Slack · Discord · terminal · harness UI\"]\n```\n\n## 2. The kernel is the current constitution of the environment\n\nThe kernel is not another database containing copies of everything. It is the\n**current constitution of the environment** — what #158 calls the composition,\nread as inhabitation:\n\n```rust\nCradle {\n    world: WorldRef,                    // Central ground + recognised machines\n    project: Option<ProjectRef>,\n    focus: Option<SubjectRef>,          // the one global subject (§7)\n    journey: Option<JourneyRef>,        // active structured development, if any\n\n    session_space: SessionSpaceRef,     // AIKit working environment\n    agencies: Vec<AgencyPresence>,      // who is present (Gateway-informed)\n    agent_sessions: Vec<AgentSessionPresence>,\n\n    surfaces: SurfaceLayout,            // composed surface bindings (§8)\n    attention: AttentionState,          // what requires the human\n    composition: EffectiveComposition,  // products present / degraded / absent\n    material: MaterialSituation,        // Workcell: bodies, services, placement\n}\n```\n\nComposition asks what is constituted together; inhabitation asks what that\nconstitution means for the situated human and Agencies — the kernel answers\nboth, and the UI renders the answer.\n\n## 3. Coarse application services\n\nTen services, not one command per widget. The first six **compose native\nproducts**; the last four genuinely belong to the application whole.\n\n| Service | Composes | Owns |\n|---|---|---|\n| `WorldService` | Central (`ctrl`), oi recognition | The first-class authored World (`WorldRef` tree with source treatment), Ground, Work files, machine/install recognition — read as a **selected Projection** (selection ≠ readability; omission by default), never as a profile database |\n| `AgencyService` | Actuation, AIKit sessions, Gateway #154 | Agencies, AgentSessions, activity, encounter continuity |\n| `KnowledgeService` | AIKit knowledge, Central | Search, semantic neighbourhoods, disclosure receipts, remember-this |\n| `DevelopmentService` | Factory | Journeys, Runs, Candidates, Evidence, Recognition |\n| `MaterialService` | Workcell | Material bodies, services, placement, bindings |\n| `SharedFieldService` | shared-field contracts | Projections, participants, contributions, encounters |\n| `SurfaceService` | — (application) | Surface registry, bindings, promotion/detach, layout |\n| `ActionRouter` | — (application) | Intent → owner Action dispatch, authority gates |\n| `SearchService` | — (application) | The one command/search aggregator over native descriptors |\n| `AttentionService` | — (application) | Activity → Notification → Attention altitudes |\n\n## 4. The integration ladder\n\nWhere a product exposes a clean Rust crate, use it in-process. Where it is\nindependently executable, use its stable CLI/application protocol. Where it is\npersistent/networked, use its service protocol. **The renderer does not care.**\n\n```text\nReact intent\n  ↓\nkernel service operation\n  ↓\nRust adapter\n  ├── in-process crate API        (factory, aikit-core/store today)\n  ├── native CLI protocol         (ctrl, aikit, actuation, factory, workcell, ql)\n  ├── local IPC / stdio           (ACP agent sessions, Gateway UDS)\n  └── service / network API       (Gateway WebSocket, hosted SharedField)\n```\n\nThis lets moving-but-stable product heads keep moving without binding the UI to\ntheir internals. Every adaptation is honest at the UI: which seam served a\nreading is disclosed (see the provider-truth law, §10).\n\n## 5. Commands and events\n\n```text\nCOMMANDS (human and agent intent)              EVENTS (kernel → renderer)\nopen subject                ◀────────────────  FocusChanged\nexecute Action              ◀────────────────  WorldChanged\nedit / save / author        ◀────────────────  SourceChanged\nsend / address / interrupt  ◀────────────────  ActivityUpdated · SessionChanged\nstage composition           ◀────────────────  KnowledgeChanged\nresolve Attention           ◀────────────────  AttentionRaised · AttentionResolved\ncompose projection          ◀────────────────  RunChanged · JourneyChanged\ncreate Agent from intent    ◀────────────────  MaterialChanged · CompositionChanged\n                                             SharedFieldChanged\n```\n\nThe key loop: **native operation returns → kernel state changes → typed events\n→ React projection re-renders reality.** No optimistic fake mutation followed by\na \"saved\" card. Push, not poll: the current build's absence of any event seam is\nthe single largest infrastructure gap (§11).\n\n## 6. Two state layers — both real\n\n**Semantic/application state** lives in the kernel and native products: World,\nProject, Source, Knowledge, Agency, AgentSession, Journey, Run, SharedField,\nActivity, Attention, material state, Action results.\n\n**Presentation state** lives in the desktop: open surface bindings, split\narrangement, panel widths, resting vs summoned regions, drawer, focused\npresentation, scroll positions, popover state, draft composer content.\n\nRules:\n\n1. Never derive semantic state from presentation state.\n2. Presentation state is **real product state** — persisted professionally,\n   versioned, restorable; \"presentation isn't semantic authority\" never mutated\n   into \"presentation doesn't matter\".\n3. Layout persistence never persists semantic selection.\n\n## 7. One global focus model\n\nThe whole application shares one notion of *what we are currently talking\nabout* — a stable `SubjectRef` plus its surrounding relations:\n\n```text\nCurrent World · Current Project · Current Focus (SubjectRef)\nCurrent Journey · Current Agency encounter\n```\n\nSelecting `src/project.rs` yields `SubjectRef = Central source ref`,\n`ProjectRef`, `WorldRef`. From that one relation: the canvas opens the editor;\nknowledge shows its neighbourhood; the Cradle addresses an agent about *that\nexact subject*; Factory shows Runs touching it; history shows change; search\nrecentres; SharedField can project it if eligible. No component copies selection\nstate independently. This is the backbone of human/agent co-reference: an agent\nreceives refs to selected subjects, never pasted screen text.\n\nFocus changes propagate as events (§5). Focus is semantic state — kernel-owned,\nnot a UI store.\n\n## 8. Tabs are Surface bindings\n\nA tab is not a page URL. It is:\n\n```text\nSurfaceBinding {\n    surface_ref      // which presentation\n    subject_ref      // which subject it shows\n    provider         // which service/product supplies it\n    region           // centre · left · summoned · drawer · detached\n    presentation     // mode (read/edit/graph/…)\n    local_state      // dirty buffer, scroll — presentation layer (§6)\n}\n```\n\nThe same binding can move: centre tab → split; summoned aperture → centre\npanel; centre surface → detached window; detached Observatory → back into the\nleft field. Same subject, same binding, different area and region. Bindings are\npresentation identity, non-canonical; the *subject* is canonical and\nnative-owned.\n\n## 9. Product seams — the four-part contract\n\nEvery native product already converges on the same integration shape; the\nkernel consumes them uniformly:\n\n1. **Capabilities descriptor** — `ctrl action.list`, `factory capabilities`,\n   `aikit` profile/context resolution, `actuation.cli/v1` surface descriptor,\n   `ql capabilities`, Workcell SDK/wire.\n2. **Read-model projection without mutation** — Factory `build-view/v1`,\n   Central `personal.show`, AIKit effective-skill/context readings,\n   Actuation `agency.read / realised.read / activity.read / stream.read`.\n3. **Opaque client-owned refs** — Workcell `ExternalRef`, QL client subjects,\n   Factory's preserved AIKit/Actuation/Workcell refs. No product re-owns\n   another's nouns; the kernel treats them as opaque and routes by owner.\n4. **Explicit authority gates on mutation** — Central CAS + `accepted_by_ref`\n   proposals, Factory bounded Action grants, AIKit reviewable Procedures,\n   Actuation recognition-before-mutation. The desktop adds no bypass: rich\n   rendered code is never a privileged caller (§12).\n\n## 10. Honesty laws (rendered, not implied)\n\n- **Provider truth:** `live-provider → may claim live; fixture → Degraded;\n  derived-only → Degraded`. The UI never upgrades a source class, anywhere in\n  the application.\n- **Absence is an observation, not a failure.** An uninstalled product, a\n  stopped daemon, an unprojected skill, a missing version flag: rendered as\n  what-is, never as error, never fabricated.\n- **Degradation is local.** A provider disappearing degrades one reading; the\n  SessionSpace and other relations keep their identity\n  (`provider pane ≠ SurfaceRef ≠ SessionSpaceRef`).\n- **Authority is visible.** An action discoverable is not an action authorised;\n  the UI shows which authority stands behind each mutation.\n\n## 11. Current build disposition (implementation facts)\n\nEvidence: `desktop/core`, `desktop/src-tauri/main.rs` (39 commands, zero\nevents), `desktop/ui/src` as of 2026-09-04.\n\n**Keep and build on (real today):** the workbench host frame with tabs/splits/\nregions/keyboard grammar (`workbench-host.tsx`); Flow authoring with CAS\nrevision conflict; AgentProfile CRUD over `ctrl`; Knowledge\nsearch/read/relations/explain/history; real ACP agent conversation with\ncanonical AgentSession identity; Factory bounded Action dispatch;\nSessionSpace focus.\n\n**Mount (written, tested, unreachable):** participant composer (To:/@\naddressing, `participant-composer-model.mjs`); the full session observatory /\nactivity / notification / attention model (`session-observatory-model.mjs`);\nthe real Factory `BuildSurface` body in place of the summary cards now rendered.\n\n**Add (the load-bearing gaps):** the event seam (Tauri channel + native change\nsources); global focus events and subject-scoped read models; streaming and\nconcurrent ACP sessions with mid-turn interrupt; the Actuation payload adapter\n(`agency.read`/`activity.read`/`stream.read` → kernel); intent-created Agent\nresolution (AIKit AgentProfile + compose + Workcell placement as one flow);\nJourney/Run readings from Factory; live World/file editing through Central\nowner-Actions; the Agency Gateway integration for cross-surface continuity.\n\n**Retire/replace:** the static System constitution table → live composition\nreading (what is present/degraded/absent, from recognition + capability\ndescriptors); descriptor cards for region surfaces → real region renderers;\nenv-var JSON handoffs → kernel services (the handoff files were honest scaffolding);\nExplore stays read-only until SharedField has a live substrate — the desktop\nmust not simulate one.\n\n## 12. Security boundary\n\n`rendered UI → named kernel commands → BridgePolicy → native operation`. No\ngeneric shell, filesystem, process, network or secret bridge; the capability\ngrant remains `core:default`; contribution code is never the authorising\ncaller. What the kernel may do on the human's behalf runs through the owner\nproducts' own authority gates (§9.4), surfaced as visible grants, never as\nambient power.\n\n## 13. Omarchy and the larger host (#158/#159)\n\nThe kernel's composition is scope-neutral: the same inhabitation reading serves\nthe desktop on macOS, and the Omarchy reference World where the desktop is an\nintegral Quickshell-composed constituent of the host shell. The desktop owns the\nwhole application experience; Omarchy owns shell config, plugin discovery and\nhot-reload; neither imports the other's identity (`file presence ≠ activation`;\n`tmux pane ≠ SurfaceRef`; `Quickshell widget ≠ Surface`). Adaptive bootstrap\n(`oi host omarchy plan|realise|verify`) is World recognition, not installation\nof a foreign app.\n\n\n## 14. Agency Gateway desktop consumer contract\n\nOwner-directed desktop clarification,2026-09-06. Native specification remains\n[O-I #154](https://github.com/EpiLogos/O-I/issues/154); this section gives its\nexisting architecture placement (§1/§3/§4) an explicit consumer boundary. The\nproduct team develops the Gateway/connector/Stream/hosting implementation.\nExecution units GW-01–06 live in\n[the programme](../../.superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md#agency-gateway-desktop-integration--explicit-dependency-track).\n\n`AgencyService` consumes AIKit's authorised ecology and native Gateway client\nthrough S's declared integration route. Use the product protocol/SDK and its\nnegotiated local/network carrier; no renderer-owned websocket protocol or second\nconnector/session registry. The desktop owns view binding, attention and focus,\nnot Agency, AgentSession, ActuationStream or connector identity. Workcell owns\nservice/Fabric materiality; Actuation owns attributable Stream and authority.\n\n| Owner input, where supplied and authorised | Desktop projection |\n|---|---|\n| SessionSpace, Agency/Agent, AgentSession, purpose and Focus | Existing-session selection and agent details in the dynamic right panel; selection attaches the actual owner session |\n| Actuation/ActuationStream, sequence/cursor, attribution/locus, native evidence and Return refs | Conversation and semantic Activity over the same encounter; ordered incremental reading/replay with native correlation intact |\n| Operative Context, resolved Harness/model condition, context revision/lineage | Context and Inspect planes; authored, effective and actually active facts remain distinct |\n| Surface, connection, reachability, material observation, compatibility and age | Side/full/tab/detached/Observatory views with exact serving seam and local degraded/last-observed state |\n| Available/granted capabilities and permitted invocation modes | Owner-disclosed operations with exact scope/refusal; presence and reachability never imply authority |\n\nOne canonical encounter retains one transcript, draft/composer and native session\nacross presentations. ActuationStream is the semantic event source for Gateway\nintegration; native provider traces/exposed thinking retain their richer content\nand attribution. ACP connection events alone do not establish canonical Stream\nor cross-surface Gateway acceptance. Preserve bounded retention/backpressure and\ndurable owner replay; a replay gap or unsupported operation is not repaired with\nfabricated events. Continue/refine/fork/recompose are explicit owner relations.\n\nA disappearing UI consumer detaches its view; it does not cancel the provider or\nGateway. Explicit cancel is a separate owner operation. Provider conversation IDs,\ntransport credentials, sockets/hosts and Fabric addresses never become canonical\nAgentSession identity. Fabric admission, Gateway scopes, AIKit capabilities,\nActuation bounds and native Action authority remain separate.\n\nUntil a compatible native ecology/attach operation is available, disclose the\nmissing seam and affected reachability. Local sources/wiki/workspaces remain\nusable. Reuse the existing resident encounter only with its truthful local scope;\nnever call it the Gateway, introduce another persistent desktop encounter owner,\nor replace an active provider to force an upgrade. A subsequent owner-supported\nbinding/migration must prove preserved identity and history explicitly.\n",
                 "source_ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
                 "world_ref": "project:editor-walk"
               }
@@ -2293,7 +2383,7 @@
                   "source_files": 0
                 },
                 "projection": "project",
-                "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-tTulIg",
+                "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-Y2qBJZ",
                 "schema": "central.world-map/v1",
                 "sources": {
                   "bindings": 11,
@@ -2362,7 +2452,7 @@
                   "detected": false,
                   "signals": []
                 },
-                "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-tTulIg",
+                "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-Y2qBJZ",
                 "root_state": "directory",
                 "schema": "central.world-map/v1",
                 "valid": true,
@@ -2514,14 +2604,14 @@
                     "agent_retrieval_allowed": true,
                     "path": "ProjectCentral/user/01 02-ARCHITECTURE.md",
                     "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
-                    "revision": "central.content-fnv1a64/v1:16545:68439910925b9055",
+                    "revision": "central.content-fnv1a64/v1:16605:6a00870aa4f8d1e2",
                     "treatment": "projectcentral-user"
                   },
                   {
                     "agent_retrieval_allowed": true,
                     "path": "ProjectCentral/user/02 03-UX-STATES.md",
                     "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
-                    "revision": "central.content-fnv1a64/v1:16196:f64ed1160615a241",
+                    "revision": "central.content-fnv1a64/v1:16252:0f45f344af6c9754",
                     "treatment": "projectcentral-user"
                   },
                   {
@@ -2535,7 +2625,7 @@
                     "agent_retrieval_allowed": true,
                     "path": "ProjectCentral/user/04 05-EXECUTION.md",
                     "ref": "central:source:project:editor-walk:ProjectCentral/user/04%2005-EXECUTION.md",
-                    "revision": "central.content-fnv1a64/v1:8240:484f33e4bc2d0338",
+                    "revision": "central.content-fnv1a64/v1:8268:8ff860b26cd8d269",
                     "treatment": "projectcentral-user"
                   },
                   {
@@ -2549,14 +2639,14 @@
                     "agent_retrieval_allowed": true,
                     "path": "ProjectCentral/user/06 CANONICAL-PRODUCT-FIELD.md",
                     "ref": "central:source:project:editor-walk:ProjectCentral/user/06%20CANONICAL-PRODUCT-FIELD.md",
-                    "revision": "central.content-fnv1a64/v1:32660:6034469841378f21",
+                    "revision": "central.content-fnv1a64/v1:33820:ee6914b1bd5555b1",
                     "treatment": "projectcentral-user"
                   },
                   {
                     "agent_retrieval_allowed": true,
                     "path": "ProjectCentral/user/07 OI-DESKTOP-APPLICATION-SPEC.md",
                     "ref": "central:source:project:editor-walk:ProjectCentral/user/07%20OI-DESKTOP-APPLICATION-SPEC.md",
-                    "revision": "central.content-fnv1a64/v1:36268:1ec5a6dc86a29c7d",
+                    "revision": "central.content-fnv1a64/v1:36324:7e3ed6684620a128",
                     "treatment": "projectcentral-user"
                   },
                   {
@@ -2578,16 +2668,16 @@
               }
             },
             "surfaces": {
-              "1b055246-dd34-4d39-bdff-d3d117b38116": {
+              "4f22a5d4-ebf0-4a2e-80af-de6f71caee64": {
                 "kind": "source",
                 "source_ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
-                "surface_id": "1b055246-dd34-4d39-bdff-d3d117b38116",
+                "surface_id": "4f22a5d4-ebf0-4a2e-80af-de6f71caee64",
                 "title": "01 02-ARCHITECTURE.md"
               },
-              "f0d66fb4-5a0b-4fb6-805a-b673dfa5ff2e": {
+              "ab5d49f9-92d7-463d-82bd-c14c6856d102": {
                 "kind": "source",
                 "source_ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
-                "surface_id": "f0d66fb4-5a0b-4fb6-805a-b673dfa5ff2e",
+                "surface_id": "ab5d49f9-92d7-463d-82bd-c14c6856d102",
                 "title": "00 01-DESIGN.md"
               }
             }
@@ -2630,20 +2720,20 @@
               }
             },
             "schema": "oi.kernel-event/v1",
-            "seq": 15,
+            "seq": 16,
             "version": 1
           }
         ],
         "count": 1,
-        "first_seq": 15,
-        "last_seq": 15,
-        "since_seq": 14
+        "first_seq": 16,
+        "last_seq": 16,
+        "since_seq": 15
       }
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 43,
+      "duration_ms": 52,
       "data": {
         "file": "kernel-cas-focus.png"
       }
@@ -2673,7 +2763,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 3,
             "summary": "Surface opened: 00 01-DESIGN.md.",
-            "surface_id": "f0d66fb4-5a0b-4fb6-805a-b673dfa5ff2e",
+            "surface_id": "ab5d49f9-92d7-463d-82bd-c14c6856d102",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -2803,10 +2893,28 @@
             "version": 1
           },
           {
+            "current_revision": "central.content-fnv1a64/v1:19769:eec121ae58d2607b",
+            "event": "source_write_conflict",
+            "expected_revision": "central.content-fnv1a64/v1:19709:7fcf9af778d7872b",
+            "schema": "oi.kernel-event/v1",
+            "seq": 10,
+            "source": {
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "revision": "central.content-fnv1a64/v1:19709:7fcf9af778d7872b",
+                "source": "central.projectcentral"
+              },
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+            },
+            "summary": "The owner's CAS refused the save: the revision moved underneath the buffer. Both sides are preserved.",
+            "version": 1
+          },
+          {
             "event": "source_opened",
             "revision": "central.content-fnv1a64/v1:19769:eec121ae58d2607b",
             "schema": "oi.kernel-event/v1",
-            "seq": 10,
+            "seq": 11,
             "source": {
               "kind": "source",
               "native_owner": "central",
@@ -2823,7 +2931,7 @@
             "event": "source_changed",
             "revision": "central.content-fnv1a64/v1:19769:0a953a98ade6cb85",
             "schema": "oi.kernel-event/v1",
-            "seq": 11,
+            "seq": 12,
             "source": {
               "kind": "source",
               "native_owner": "central",
@@ -2839,9 +2947,9 @@
           {
             "event": "surface_changed",
             "schema": "oi.kernel-event/v1",
-            "seq": 12,
+            "seq": 13,
             "summary": "Surface opened: 01 02-ARCHITECTURE.md.",
-            "surface_id": "1b055246-dd34-4d39-bdff-d3d117b38116",
+            "surface_id": "4f22a5d4-ebf0-4a2e-80af-de6f71caee64",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -2854,19 +2962,19 @@
           },
           {
             "event": "source_opened",
-            "revision": "central.content-fnv1a64/v1:16545:68439910925b9055",
+            "revision": "central.content-fnv1a64/v1:16605:6a00870aa4f8d1e2",
             "schema": "oi.kernel-event/v1",
-            "seq": 13,
+            "seq": 14,
             "source": {
               "kind": "source",
               "native_owner": "central",
               "provenance": {
-                "revision": "central.content-fnv1a64/v1:16545:68439910925b9055",
+                "revision": "central.content-fnv1a64/v1:16605:6a00870aa4f8d1e2",
                 "source": "central.projectcentral"
               },
               "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md"
             },
-            "summary": "Opened from the owner's reading at revision 68439910925b9055 (16545 bytes).",
+            "summary": "Opened from the owner's reading at revision 6a00870aa4f8d1e2 (16605 bytes).",
             "version": 1
           },
           {
@@ -2898,7 +3006,7 @@
               }
             },
             "schema": "oi.kernel-event/v1",
-            "seq": 14,
+            "seq": 15,
             "version": 1
           },
           {
@@ -2930,14 +3038,14 @@
               }
             },
             "schema": "oi.kernel-event/v1",
-            "seq": 15,
+            "seq": 16,
             "version": 1
           },
           {
             "dirty": true,
             "event": "buffer_dirty",
             "schema": "oi.kernel-event/v1",
-            "seq": 16,
+            "seq": 17,
             "source": {
               "kind": "source",
               "native_owner": "central",
@@ -2951,9 +3059,9 @@
             "version": 1
           }
         ],
-        "count": 16,
+        "count": 17,
         "first_seq": 1,
-        "last_seq": 16
+        "last_seq": 17
       }
     },
     {
@@ -2965,7 +3073,7 @@
         "count": 0,
         "first_seq": null,
         "last_seq": null,
-        "since_seq": 16
+        "since_seq": 17
       }
     },
     {
@@ -2978,7 +3086,7 @@
             "event": "source_changed",
             "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
             "schema": "oi.kernel-event/v1",
-            "seq": 17,
+            "seq": 18,
             "source": {
               "kind": "source",
               "native_owner": "central",
@@ -2993,9 +3101,9 @@
           }
         ],
         "count": 1,
-        "first_seq": 17,
-        "last_seq": 17,
-        "since_seq": 16
+        "first_seq": 18,
+        "last_seq": 18,
+        "since_seq": 17
       }
     },
     {
@@ -3008,7 +3116,7 @@
             "event": "source_changed",
             "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
             "schema": "oi.kernel-event/v1",
-            "seq": 17,
+            "seq": 18,
             "source": {
               "kind": "source",
               "native_owner": "central",
@@ -3023,15 +3131,15 @@
           }
         ],
         "count": 1,
-        "first_seq": 17,
-        "last_seq": 17,
-        "since_seq": 16
+        "first_seq": 18,
+        "last_seq": 18,
+        "since_seq": 17
       }
     },
     {
       "ok": true,
       "op": "capture.events",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "receipts": [
           {
@@ -3053,7 +3161,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 3,
             "summary": "Surface opened: 00 01-DESIGN.md.",
-            "surface_id": "f0d66fb4-5a0b-4fb6-805a-b673dfa5ff2e",
+            "surface_id": "ab5d49f9-92d7-463d-82bd-c14c6856d102",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -3183,10 +3291,28 @@
             "version": 1
           },
           {
+            "current_revision": "central.content-fnv1a64/v1:19769:eec121ae58d2607b",
+            "event": "source_write_conflict",
+            "expected_revision": "central.content-fnv1a64/v1:19709:7fcf9af778d7872b",
+            "schema": "oi.kernel-event/v1",
+            "seq": 10,
+            "source": {
+              "kind": "source",
+              "native_owner": "central",
+              "provenance": {
+                "revision": "central.content-fnv1a64/v1:19709:7fcf9af778d7872b",
+                "source": "central.projectcentral"
+              },
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+            },
+            "summary": "The owner's CAS refused the save: the revision moved underneath the buffer. Both sides are preserved.",
+            "version": 1
+          },
+          {
             "event": "source_opened",
             "revision": "central.content-fnv1a64/v1:19769:eec121ae58d2607b",
             "schema": "oi.kernel-event/v1",
-            "seq": 10,
+            "seq": 11,
             "source": {
               "kind": "source",
               "native_owner": "central",
@@ -3203,7 +3329,7 @@
             "event": "source_changed",
             "revision": "central.content-fnv1a64/v1:19769:0a953a98ade6cb85",
             "schema": "oi.kernel-event/v1",
-            "seq": 11,
+            "seq": 12,
             "source": {
               "kind": "source",
               "native_owner": "central",
@@ -3219,9 +3345,9 @@
           {
             "event": "surface_changed",
             "schema": "oi.kernel-event/v1",
-            "seq": 12,
+            "seq": 13,
             "summary": "Surface opened: 01 02-ARCHITECTURE.md.",
-            "surface_id": "1b055246-dd34-4d39-bdff-d3d117b38116",
+            "surface_id": "4f22a5d4-ebf0-4a2e-80af-de6f71caee64",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -3234,19 +3360,19 @@
           },
           {
             "event": "source_opened",
-            "revision": "central.content-fnv1a64/v1:16545:68439910925b9055",
+            "revision": "central.content-fnv1a64/v1:16605:6a00870aa4f8d1e2",
             "schema": "oi.kernel-event/v1",
-            "seq": 13,
+            "seq": 14,
             "source": {
               "kind": "source",
               "native_owner": "central",
               "provenance": {
-                "revision": "central.content-fnv1a64/v1:16545:68439910925b9055",
+                "revision": "central.content-fnv1a64/v1:16605:6a00870aa4f8d1e2",
                 "source": "central.projectcentral"
               },
               "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md"
             },
-            "summary": "Opened from the owner's reading at revision 68439910925b9055 (16545 bytes).",
+            "summary": "Opened from the owner's reading at revision 6a00870aa4f8d1e2 (16605 bytes).",
             "version": 1
           },
           {
@@ -3278,7 +3404,7 @@
               }
             },
             "schema": "oi.kernel-event/v1",
-            "seq": 14,
+            "seq": 15,
             "version": 1
           },
           {
@@ -3310,14 +3436,14 @@
               }
             },
             "schema": "oi.kernel-event/v1",
-            "seq": 15,
+            "seq": 16,
             "version": 1
           },
           {
             "dirty": true,
             "event": "buffer_dirty",
             "schema": "oi.kernel-event/v1",
-            "seq": 16,
+            "seq": 17,
             "source": {
               "kind": "source",
               "native_owner": "central",
@@ -3334,7 +3460,7 @@
             "event": "source_changed",
             "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
             "schema": "oi.kernel-event/v1",
-            "seq": 17,
+            "seq": 18,
             "source": {
               "kind": "source",
               "native_owner": "central",
@@ -3348,17 +3474,17 @@
             "version": 1
           }
         ],
-        "count": 17,
+        "count": 18,
         "first_seq": 1,
-        "last_seq": 17,
-        "captured_at": "2026-09-08T12:06:05.541Z"
+        "last_seq": 18,
+        "captured_at": "2026-09-13T16:14:38.528Z"
       }
     }
   ],
   "metrics": {
-    "open_file_ms": 125,
-    "save_ms": 109,
-    "kernel_events_total": 17
+    "open_file_ms": 110,
+    "save_ms": 116,
+    "kernel_events_total": 18
   },
   "screenshots": [
     "kernel-cas-conflict.png",
