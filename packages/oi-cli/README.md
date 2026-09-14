@@ -10,7 +10,7 @@ The npm and GitHub Release paths are developed **distribution channels**, not ev
 
 Ordinary `main` development produces exact-commit build artifacts and attestations through the pre-local build workflow. It does not mint or select a GitHub Release. A known-good suite state remains downstream of the convergence and physical-acceptance protocol.
 
-Until a release is deliberately selected, the npm installer has no default GitHub release tag. To exercise the GitHub Release download channel explicitly, set:
+The installer defaults to the GitHub release tag matching this package's own version (`oi-v<version>`, currently `oi-v0.1.0-prelocal.4`, the release documented in `docs/INSTALL.md`). To exercise a different release explicitly, set:
 
 ```sh
 OI_NPM_RELEASE_TAG=<tag> npm install -g <package-or-tarball>
@@ -35,7 +35,7 @@ allowed action      npm publish
 
 ## What the GitHub Release download channel does
 
-When `OI_NPM_RELEASE_TAG` is explicitly supplied, the package resolves the current platform, downloads the corresponding O:I archive and SHA-256 sidecar from that GitHub Release, verifies the archive bytes, extracts the native `oi` executable into the package, and exposes it through npm's normal `bin` mechanism.
+The package resolves the current platform, downloads the corresponding O:I archive and SHA-256 sidecar from the selected GitHub Release, verifies the archive bytes, extracts the native `oi` executable into the package, and exposes it through npm's normal `bin` mechanism.
 
 The current prebuilt channel supports:
 

@@ -44,6 +44,30 @@ The chosen source is recorded on the registration (`install_source`) and disclos
 
 ## Install the `oi` command
 
+### Prerequisites, honestly stated
+
+What each route presupposes on a bare machine:
+
+```text
+bootstrap script    curl (or wget), tar, and a sha256 tool — nothing else
+npm route           npm (Node.js >= 18), already on the machine
+source route        a Rust toolchain (cargo) AND an O-I checkout
+```
+
+No route has zero prerequisites; the bootstrap script is the closest — it installs the prebuilt release binary and needs no Node and no Rust. The released-artifact route also installs Central without a toolchain. A Rust toolchain (cargo) enters only through the current-main source path: `oi install central --source pinned` and the `oi dev` flow build Central from source, and a release-line `ctrl` predates the current root NOW/DAY Actions, so reaching the current development world from a bare machine requires the developer/source route.
+
+### Bootstrap script (no Node, no Rust)
+
+From any machine with `curl` and `tar`, download and inspect the script, then run it:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/EpiLogos/O-I/main/install.sh -o oi-install.sh
+less oi-install.sh          # inspect before running; the script installs a binary onto your PATH
+sh oi-install.sh
+```
+
+It downloads the native archive and SHA-256 sidecar for your platform from the release below, verifies the checksum, and installs `oi` into `~/.local/bin` (override the location with `OI_BIN_DIR`; override the release with `OI_RELEASE_TAG`). Prebuilt targets today are Apple Silicon macOS (`aarch64-apple-darwin`) and x64 Linux (`x86_64-unknown-linux-gnu`); anything else fails explicitly.
+
 ### npm-formatted native distribution
 
 The repository defines `@epi-logos/oi` as the public distribution package for the native Rust CLI. It is a thin installer/launcher over O:I's prebuilt release artifacts, not a JavaScript reimplementation of `oi` and not the `oi.package/v1` extension envelope.
@@ -54,6 +78,14 @@ The `oi-v0.1.0-prelocal.4` release line publishes the npm package tarball beside
 npm install -g https://github.com/EpiLogos/O-I/releases/download/oi-v0.1.0-prelocal.4/epi-logos-oi-0.1.0-prelocal.4.tgz
 oi help
 ```
+
+The tarball published at that release predates the installer's default release tag, so its postinstall still needs the release named explicitly; the bootstrap script above avoids this entirely:
+
+```sh
+OI_NPM_RELEASE_TAG=oi-v0.1.0-prelocal.4 npm install -g <tarball-url>
+```
+
+A future package publication carries the default and makes the plain command above sufficient.
 
 The short registry form is the intended public entry point:
 
