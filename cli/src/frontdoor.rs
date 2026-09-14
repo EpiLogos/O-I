@@ -6,7 +6,7 @@ pub fn cli_main() -> ExitCode {
             Ok(()) => {
                 println!();
                 println!("  oi capabilities --json        derived child capability records with source hashes; not installed availability");
-                println!("  oi desktop --help             M′ application operations over the S command whole");
+                println!("  oi desktop --help             install/remove/status lifecycle plus M′ application operations");
                 println!("  oi aikit-session-space ...    AIKit companion protocol (native arguments preserved)");
                 println!("  oi ground status|bind          inspect or explicitly change the default ground binding");
                 println!("  oi mode list|set <frame>|clear [--json]");
