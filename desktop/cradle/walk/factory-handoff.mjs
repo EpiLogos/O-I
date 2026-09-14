@@ -1,0 +1,35 @@
+import {chromium} from "playwright";
+import assert from "node:assert/strict";
+import {writeFileSync} from "node:fs";
+const statePath=process.env.WALK_FACTORY_STATE;
+const runRef=process.env.WALK_FACTORY_RUN;
+assert.ok(statePath&&runRef,"Supply WALK_FACTORY_STATE and WALK_FACTORY_RUN for an actual queued Run with no retained attempts, linked to project:o-i");
+const browser=await chromium.launch({executablePath:process.env.WALK_CHROMIUM_EXECUTABLE,headless:true});
+const page=await browser.newPage({viewport:{width:1422,height:858}});
+const checks=[];
+const check=(value,label)=>{assert.ok(value,label);checks.push(label);console.log("PASS",label);};
+await page.addInitScript(()=>{window.__OI_KERNEL_BRIDGE__="http://127.0.0.1:4179";sessionStorage.setItem("oi-cradle.welcome.v1","1");});
+try{
+ const owner=await (await fetch("http://127.0.0.1:4179/op",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({op:"factory_attempt_task_list_read",state_path:statePath,run_ref:runRef})})).json();
+ assert.equal(owner.outcome?.result,"factory_attempt_task_list_reading");
+ assert.deepEqual(owner.outcome.data.taskRefs,[]);
+ await page.goto(process.env.WALK_URL??"http://localhost:4173",{waitUntil:"domcontentloaded"});
+ await page.getByRole("button",{name:"O-I",exact:true}).click();
+ await page.getByRole("navigation",{name:"O-I work",exact:true}).getByRole("button",{name:"Runs / Build",exact:true}).click();
+ const runs=page.getByRole("region",{name:"Factory Runs and Build",exact:true});
+ await runs.getByText("Connect Factory source",{exact:true}).click();
+ await runs.getByLabel("Developmental state path").fill(statePath);
+ await runs.getByLabel("Run ref (optional)").fill(runRef);
+ await runs.getByRole("button",{name:"Read Runs",exact:true}).click();
+ await runs.getByRole("button",{name:"Open handoff",exact:true}).click();
+ const handoff=page.getByRole("region",{name:"Factory handoff",exact:true});
+ await handoff.getByText("Factory has retained no attempt handoff for this Run.",{exact:true}).waitFor();
+ check(await handoff.getByRole("alert").count()===0,"Native retained-task read opens in an ordinary handoff Surface");
+ check(await handoff.getByRole("navigation",{name:"Retained Factory tasks",exact:true}).count()===0,"Queued Run does not fabricate task or Return material");
+ await page.waitForFunction(()=>JSON.parse(localStorage.getItem("oi-cradle.workspaces.v1")??"null")?.workspaces.some(w=>Object.values(w.layout.surfaces).some(s=>s.kind==="factory-handoff")));
+ await page.reload({waitUntil:"domcontentloaded"});
+ await handoff.getByText("Factory has retained no attempt handoff for this Run.",{exact:true}).waitFor();
+ check(await page.locator(".workspace-recovery").count()===0,"Exact handoff Run and source locator survive reload");
+ await page.screenshot({path:"walk/artifacts/factory-handoff-owner-walk.png"});
+ writeFileSync("walk/artifacts/factory-handoff-owner-walk.json",JSON.stringify({standing:"C: running application with native Factory readbacks; queued Run only, no execution or H claim",checks,runRef,owner:owner.outcome.data},null,2));
+}catch(error){console.error((await page.locator("body").innerText()).slice(-5500));await page.screenshot({path:"walk/artifacts/factory-handoff-failure.png"});throw error;}finally{await browser.close();}

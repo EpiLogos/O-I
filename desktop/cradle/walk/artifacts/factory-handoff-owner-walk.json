@@ -1,0 +1,20 @@
+{
+  "standing": "C: running application with native Factory readbacks; queued Run only, no execution or H claim",
+  "checks": [
+    "Native retained-task read opens in an ordinary handoff Surface",
+    "Queued Run does not fabricate task or Return material",
+    "Exact handoff Run and source locator survive reload"
+  ],
+  "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD",
+  "owner": {
+    "contract": "factory.attempt-task-list-reading/v1",
+    "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC",
+    "revision": 1,
+    "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD",
+    "runRevision": 2,
+    "sourceCurrent": true,
+    "taskRefs": [],
+    "topologyRevision": 2,
+    "totalTasks": 0
+  }
+}

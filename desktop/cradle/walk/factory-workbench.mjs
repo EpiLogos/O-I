@@ -33,6 +33,15 @@ try {
   const after=(await page.evaluate(()=>window.__cradle.walk.read.layout())).data.layout;
   check(before.rightDepth===after.rightDepth&&before.rightWidth===after.rightWidth&&before.leftWidth===after.leftWidth,"Opening Runs does not rewrite shell geometry");
   await runs().click();
+  await page.getByRole("region",{name:"Factory Runs and Build"}).waitFor();
+  await page.waitForFunction(()=>{
+    const book=JSON.parse(localStorage.getItem("oi-cradle.workspaces.v1")??"null");
+    const active=book?.workspaces?.find(workspace=>workspace.id===book.active);
+    const hasFactory=node=>node?.type==="group"
+      ? node.tabs.some(id=>id===node.active&&active.layout.surfaces[id]?.kind==="factory")
+      : node?.children?.some(hasFactory);
+    return hasFactory(active?.layout?.root);
+  });
   await page.reload({waitUntil:"domcontentloaded"});
   await page.getByRole("region",{name:"Factory Runs and Build"}).waitFor();
   check(await page.locator(".workspace-recovery").count()===0,"Project Runs binding survives reload");

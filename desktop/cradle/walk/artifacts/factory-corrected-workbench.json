@@ -1,0 +1,73 @@
+{
+  "standing": "C: actual web application with native kernel; not Factory execution or human visual acceptance",
+  "checks": [
+    "No Factory banner, activity strip or Return rail",
+    "Factory retains the same accompanying Agent DOM",
+    "Conversation stays in the right workbench region",
+    "No redundant Agent heading",
+    "No A2A exchange chrome in ordinary conversation",
+    "Mounted Stage releases without a frozen overlay",
+    "Closing Runs preserves ordinary writing",
+    "Opening Runs does not rewrite shell geometry",
+    "Project Runs binding survives reload",
+    "No application page errors"
+  ],
+  "before": {
+    "root": {
+      "type": "group",
+      "id": "g1",
+      "tabs": [
+        "c720bb4b-96fb-48d4-a4c1-84b1d8056ad6"
+      ],
+      "pinned": [],
+      "active": "c720bb4b-96fb-48d4-a4c1-84b1d8056ad6"
+    },
+    "surfaces": {
+      "c720bb4b-96fb-48d4-a4c1-84b1d8056ad6": {
+        "id": "c720bb4b-96fb-48d4-a4c1-84b1d8056ad6",
+        "kind": "draft",
+        "title": "Draft"
+      }
+    },
+    "closedStack": [],
+    "focusedGroupId": "g1",
+    "agencyDepth": "panel",
+    "rightDepth": "collapsed",
+    "leftWidth": 240,
+    "rightWidth": 320
+  },
+  "after": {
+    "root": {
+      "type": "group",
+      "id": "g1",
+      "tabs": [
+        "c720bb4b-96fb-48d4-a4c1-84b1d8056ad6"
+      ],
+      "pinned": [],
+      "active": "c720bb4b-96fb-48d4-a4c1-84b1d8056ad6"
+    },
+    "surfaces": {
+      "c720bb4b-96fb-48d4-a4c1-84b1d8056ad6": {
+        "id": "c720bb4b-96fb-48d4-a4c1-84b1d8056ad6",
+        "kind": "draft",
+        "title": "Draft"
+      },
+      "f1a07461-cdb5-4b38-ac93-4bda129e8eef": {
+        "id": "f1a07461-cdb5-4b38-ac93-4bda129e8eef",
+        "kind": "factory",
+        "title": "O-I · Runs",
+        "project": "O-I",
+        "ref": "project:o-i"
+      }
+    },
+    "closedStack": [
+      "f1a07461-cdb5-4b38-ac93-4bda129e8eef"
+    ],
+    "focusedGroupId": "g1",
+    "agencyDepth": "panel",
+    "rightDepth": "collapsed",
+    "leftWidth": 240,
+    "rightWidth": 320
+  },
+  "errors": []
+}

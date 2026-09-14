@@ -8,7 +8,7 @@ import type {WorkingSurfaceSelection} from "../../encounter/working-surface";
 
 /** Factory's concrete privileged composition. Its binding foregrounds existing
  * hosts; Factory's developmental reads retain their native owner. */
-export function FactoryComposition({binding, foreground, onView, onOpenWorkingSurface}: {binding: SurfaceBinding; foreground: boolean; onView:(view:NonNullable<SurfaceBinding["view"]>)=>void; onOpenWorkingSurface:(selection:WorkingSurfaceSelection)=>Promise<void>}) {
+export function FactoryComposition({binding, foreground, onView, onOpenWorkingSurface, onOpenBinding}: {onOpenBinding:(binding:SurfaceBinding)=>Promise<void>; binding: SurfaceBinding; foreground: boolean; onView:(view:NonNullable<SurfaceBinding["view"]>)=>void; onOpenWorkingSurface:(selection:WorkingSurfaceSelection)=>Promise<void>}) {
   const root = useRef<HTMLDivElement>(null);
   const stage = useExpressionStage();
   const stageRef = useRef(stage); stageRef.current = stage;
@@ -33,6 +33,6 @@ export function FactoryComposition({binding, foreground, onView, onOpenWorkingSu
   }, [binding.id, foreground, stage.present]);
   const updateLocator = (factory: FactoryLocator) => onView({...binding.view, factory});
   return <div ref={root} className="factory-composition" data-factory-binding={binding.id}>
-    <FactoryRunsSurface locator={binding.view?.factory} boundProjectRef={binding.ref} project={binding.project} onOpenWorkingSurface={onOpenWorkingSurface} onLocator={updateLocator}/>
+    <FactoryRunsSurface onOpenHandoff={async(statePath,runRef)=>onOpenBinding({id:crypto.randomUUID(),kind:"factory-handoff",title:"Run handoff",project:binding.project,ref:runRef,view:{factory:{statePath,runRef}}})} locator={binding.view?.factory} boundProjectRef={binding.ref} project={binding.project} onOpenWorkingSurface={onOpenWorkingSurface} onLocator={updateLocator}/>
   </div>;
 }

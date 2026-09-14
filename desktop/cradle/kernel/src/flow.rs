@@ -65,6 +65,7 @@ impl std::fmt::Display for OwnerCallError {
 impl std::error::Error for OwnerCallError {}
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(tag = "kind", rename_all = "kebab-case")]
 pub enum ReceivingRequest {
     List { #[serde(default)] after: Option<u64>, #[serde(default)] limit: Option<u64> },
     Read { return_ref: String },
@@ -105,7 +106,7 @@ pub enum ReceivingRequest {
 pub enum NowRequest {
     List { #[serde(default)] participant_refs: Option<Vec<String>> },
     Read { now_ref: String },
-    ProjectInspect { project: String },
+    ProjectInspect,
 }
 
 /// Client for the Central owner Actions the kernel reads and writes
@@ -341,8 +342,8 @@ impl CentralClient {
                 input.insert("now_ref".to_owned(), json!(now_ref));
                 "central.now.read"
             }
-            NowRequest::ProjectInspect { project } => {
-                input.insert("project".to_owned(), json!(project));
+            NowRequest::ProjectInspect => {
+                if project.is_none() { return Err(OwnerCallError::Refused {message:"Project NOW requires a disclosed Project".into()}); }
                 "projectcentral.now.inspect"
             }
         };
@@ -893,5 +894,21 @@ mod tests {
         assert_eq!(wire["expected"], "central.content-fnv1a64/v1:2389:e");
         assert_eq!(wire["current"], "central.content-fnv1a64/v1:2404:c");
         assert!(failure.to_string().contains("both sides preserved"));
+    }
+}
+
+#[cfg(test)]
+mod receiving_wire_contract_tests {
+    use super::ReceivingRequest;
+    #[test]
+    fn desktop_inbox_and_review_requests_use_the_disclosed_tagged_wire_contract() {
+        for value in [
+            serde_json::json!({"kind":"list","after":null,"limit":50}),
+            serde_json::json!({"kind":"review","return_ref":"return:one","expected_return_revision":"r1","disposition":"rejected","expected_source_revision":null}),
+            serde_json::json!({"kind":"mutate-field","source_ref":"source:one","document_id":"document:one","expected_revision":"r1","request_id":"request:one","field_id":"field:one","value":"Reviewed text"}),
+        ] {
+            let decoded: ReceivingRequest = serde_json::from_value(value.clone()).expect("desktop request must reach the native owner adapter");
+            assert_eq!(serde_json::to_value(decoded).unwrap(), value);
+        }
     }
 }

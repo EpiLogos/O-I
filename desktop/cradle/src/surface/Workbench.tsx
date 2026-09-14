@@ -1,3 +1,5 @@
+import {FactoryHandoffSurface} from "../contributions/factory/FactoryHandoffSurface";
+import {ProjectNowSurface} from "../contributions/project-now/ProjectNowSurface";
 import {AgentRosterSurface} from "../contributions/agents";
 import {SessionObservatory} from "../encounter/SessionObservatory";
 import {EncounterSurface} from "../encounter/EncounterSurface";
@@ -32,9 +34,11 @@ import { DraftSurface } from "../flow/DraftSurface";
 import { FlowSurface } from "../flow/FlowSurface";
 import { FreshSurface } from "../flow/FreshSurface";
 import { contains, groupsOf, renderOrder } from "./engine";
-import type { ActionArg, LayoutState, Pane, SurfaceId } from "./types";
+import type { ActionArg, LayoutState, Pane, SurfaceId, SurfaceBinding } from "./types";
 
 export interface WorkbenchProps {
+  onOpenBinding:(binding:SurfaceBinding)=>Promise<void>;
+  onOpenFile:(location:import("../kernel/types").CentralLocation)=>Promise<void>;
   onOpenWorkingSurface:(selection:import("../encounter/working-surface").WorkingSurfaceSelection)=>Promise<void>;
   onOpenEncounter:(row:import("../encounter/EncounterList").EncounterRow)=>Promise<void>;
   workspaceName: string;
@@ -292,7 +296,7 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
         }}
 
       >
-        {activeBinding ? <SurfaceBody key={activeBinding.id} foreground={focused} binding={activeBinding} onOpenEncounter={props.onOpenEncounter} onOpenWorkingSurface={props.onOpenWorkingSurface} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} /> : <p className="source-note">{state.detached?.some(d=>d.groupId===group.id)?"This view is open in a native window. Close that window to re-dock it here.":"Move a tab here, or open a source or wiki with +."}</p>}
+        {activeBinding ? <SurfaceBody key={activeBinding.id} foreground={focused} binding={activeBinding} onOpenEncounter={props.onOpenEncounter} onOpenWorkingSurface={props.onOpenWorkingSurface} onOpenFile={props.onOpenFile} onOpenBinding={props.onOpenBinding} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} /> : <p className="source-note">{state.detached?.some(d=>d.groupId===group.id)?"This view is open in a native window. Close that window to re-dock it here.":"Move a tab here, or open a source or wiki with +."}</p>}
       </div>
       <footer className="pane-status pane-footer" aria-label={focused ? "Active pane" : "Pane status"} />
     </section>
@@ -302,17 +306,21 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
 /** The surface body by kind: real owner surfaces where they exist (U0.4:
  * 'source', 'sources'), the clearly-named test card otherwise. */
 function SurfaceBody({
-  binding,onView,foreground,onOpenEncounter,onOpenWorkingSurface,
+  binding,onView,foreground,onOpenEncounter,onOpenWorkingSurface,onOpenFile,onOpenBinding,
   openSource, openKnowledge,
 }: {
   binding: import("./types").SurfaceBinding;
   foreground: boolean;
+  onOpenFile:WorkbenchProps["onOpenFile"];
   onOpenWorkingSurface:WorkbenchProps["onOpenWorkingSurface"];
+  onOpenBinding:WorkbenchProps["onOpenBinding"];
   onOpenEncounter:WorkbenchProps["onOpenEncounter"];
   onView:WorkbenchProps["onView"];
   openKnowledge: WorkbenchProps["openKnowledge"];
   openSource: (source: ListedSource) => void;
 }) {
+  if(binding.kind==="factory-handoff")return binding.view?.factory?.statePath&&binding.ref?<FactoryHandoffSurface statePath={binding.view.factory.statePath} runRef={binding.ref}/>:<p role="alert">The handoff Surface has no retained Factory source.</p>;
+  if(binding.kind==="project-now")return binding.project&&binding.ref?<ProjectNowSurface project={binding.project} projectRef={binding.ref} onOpenFile={onOpenFile}/>:<p role="status">Open NOW from a Project.</p>;
   if(binding.kind==="observatory")return <SessionObservatory binding={binding} onOpenWorkingSurface={onOpenWorkingSurface}/>;
   if(binding.kind==="agents")return binding.project&&binding.ref ? <AgentRosterSurface project={binding.project} projectRef={binding.ref} onOpenEncounter={onOpenEncounter}/> : <p role="status">Open Agents from a Project.</p>;
   if(binding.kind==="encounter")return <EncounterSurface key={binding.id} binding={binding} onView={view=>onView(binding.id,view)}/>;
@@ -323,7 +331,7 @@ function SurfaceBody({
   if (binding.kind === "browser") return <BrowserSurface binding={binding} />;
   if (binding.kind === "file") return <FileSurface key={binding.id} binding={binding}/>;
   if (binding.kind === "system") return <SystemPanel binding={binding}/>;
-  if (binding.kind === "factory") return <FactoryComposition onOpenWorkingSurface={onOpenWorkingSurface} binding={binding} foreground={foreground} onView={view=>onView(binding.id,view)} />;
+  if (binding.kind === "factory") return <FactoryComposition onOpenBinding={onOpenBinding} onOpenWorkingSurface={onOpenWorkingSurface} binding={binding} foreground={foreground} onView={view=>onView(binding.id,view)} />;
   if (binding.kind === "knowledge") return <KnowledgeSurface binding={binding} onOpen={openKnowledge} />;
   if (binding.kind === "source") {
     return <SourceSurface binding={binding} />;

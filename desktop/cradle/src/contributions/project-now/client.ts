@@ -15,8 +15,8 @@ export interface ProjectNowInspection {
   [key: string]: unknown;
 }
 
-export async function inspectProjectNow(transport: KernelTransportStatus, project: string, projectRef: string): Promise<ProjectNowInspection> {
-  const reading = await nowReading<ProjectNowInspection>(transport, project, { kind: "project-inspect", project: projectRef });
+export async function inspectProjectNow(transport: KernelTransportStatus, project: string): Promise<ProjectNowInspection> {
+  const reading = await nowReading<ProjectNowInspection>(transport, project, { kind: "project-inspect" });
   if (!Array.isArray(reading.active_items) || !Array.isArray(reading.inactive_items) || !Array.isArray(reading.day_records) || !Array.isArray(reading.human_scratch) || !Array.isArray(reading.open_questions)) {
     throw new Error("Central returned an invalid Project NOW inspection");
   }

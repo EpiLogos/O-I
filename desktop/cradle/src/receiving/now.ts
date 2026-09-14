@@ -7,7 +7,7 @@ import type {KernelTransportStatus} from "../kernel/types";
 export type NowRequest =
   | {kind:"list";participant_refs?:string[]}
   | {kind:"read";now_ref:string}
-  | {kind:"project-inspect";project:string};
+  | {kind:"project-inspect"};
 /** One `central.now.list` row (owner's own shape, `central.now-listing/v1`). */
 export interface NowRow {now_ref:string;source_ref:string;scope_ref:string;task_ref:string;purpose:string;participant_refs:string[];source_refs:string[];lifecycle:string;created_at_unix_seconds:number;revision:string}
 /** The full `central.now-reading/v1` payload: the record plus its source identity. */

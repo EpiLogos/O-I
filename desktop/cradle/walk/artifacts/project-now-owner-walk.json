@@ -1,0 +1,15 @@
+{
+  "standing": "C: actual application with native kernel and Central readbacks; H not claimed",
+  "checks": [
+    "NOW and Inbox both reach their native owners",
+    "Active work matches the current native Project reading",
+    "DAY lists only owner-disclosed dated records",
+    "DAY opens its exact native file in an ordinary workbench pane"
+  ],
+  "project_root": "/home/frank/Central/Work/O-I",
+  "day_records": [
+    "ProjectCentral/now/day/2026-09-06.md",
+    "ProjectCentral/now/day/2026-09-08.md"
+  ],
+  "active_count": 33
+}

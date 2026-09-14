@@ -45,7 +45,7 @@ function centralProjectLinkReading(value: unknown): value is CentralProjectLinkR
 
 /** Centre-plane Runs/Build reader. It never polls, guesses a Project ref, or
  * creates a second Factory execution model. */
-export function FactoryRunsSurface({locator,boundProjectRef,project:projectName,onOpenWorkingSurface,onLocator}:{locator?:FactoryLocator;boundProjectRef?:string;project?:string;onOpenWorkingSurface:(selection:import("../../encounter/working-surface").WorkingSurfaceSelection)=>Promise<void>;onLocator:(value:FactoryLocator)=>void}) {
+export function FactoryRunsSurface({locator,boundProjectRef,project:projectName,onOpenWorkingSurface,onLocator,onOpenHandoff}:{onOpenHandoff:(statePath:string,runRef:string)=>Promise<void>;locator?:FactoryLocator;boundProjectRef?:string;project?:string;onOpenWorkingSurface:(selection:import("../../encounter/working-surface").WorkingSurfaceSelection)=>Promise<void>;onLocator:(value:FactoryLocator)=>void}) {
  const kernel=useKernel();
  const [statePath,setStatePath]=useState(locator?.statePath??"");
  const [projectRef,setProjectRef]=useState(locator?.centralProjectRef??boundProjectRef??"");
@@ -54,6 +54,7 @@ export function FactoryRunsSurface({locator,boundProjectRef,project:projectName,
  const [selectedRunReading,setSelectedRunReading]=useState<RunReading>();
  const [build,setBuild]=useState<BuildSnapshot>();
  const [selectedRun,setSelectedRun]=useState(locator?.runRef);
+ const [requestedRun,setRequestedRun]=useState(locator?.runRef??"");
  const [error,setError]=useState<string>();
  const [busy,setBusy]=useState(false);
  const request=useRef(0);
@@ -127,13 +128,13 @@ export function FactoryRunsSurface({locator,boundProjectRef,project:projectName,
  useEffect(()=>{
   const generation=++request.current;
   const path=locator?.statePath??"",ref=locator?.centralProjectRef??boundProjectRef??"",run=locator?.runRef;
-  setStatePath(path);setProjectRef(ref);setSelectedRun(run);setProject(undefined);setJourneys({});setSelectedRunReading(undefined);setBuild(undefined);setError(undefined);setBusy(false);
+  setStatePath(path);setProjectRef(ref);setSelectedRun(run);setRequestedRun(run??"");setProject(undefined);setJourneys({});setSelectedRunReading(undefined);setBuild(undefined);setError(undefined);setBusy(false);
   if(path&&ref)void readCentralProject(path,ref,run,generation);
  },[locatorKey,boundProjectRef,readCentralProject]);
 
  const connect=()=>{
   const path=statePath.trim(),ref=projectRef.trim();if(!path||!ref)return;
-  onLocator({statePath:path,centralProjectRef:ref});
+  onLocator({statePath:path,centralProjectRef:ref,...(requestedRun.trim()?{runRef:requestedRun.trim()}:{})});
  };
  const selectRun=(runRef:string)=>{
   const centralRef=locator?.centralProjectRef??boundProjectRef;
@@ -148,9 +149,11 @@ export function FactoryRunsSurface({locator,boundProjectRef,project:projectName,
  const listed=project?.journeys??[];
  return <section className="factory-runs" aria-label="Factory Runs and Build">
   <header className="factory-runs-heading"><h1>Runs</h1>
+   {build&&locator?.statePath&&selectedRun&&<button onClick={()=>void onOpenHandoff(locator.statePath,selectedRun).catch(reason=>setError(String(reason)))}>Open handoff</button>}
    <details className="factory-source-picker"><summary>{locator?"Factory source":"Connect Factory source"}</summary><form onSubmit={event=>{event.preventDefault();connect();}}>
     <label>Developmental state path<input value={statePath} onChange={event=>setStatePath(event.target.value)} required spellCheck={false} autoComplete="off"/></label>
     <label>Central Project ref<input value={projectRef} onChange={event=>setProjectRef(event.target.value)} required placeholder="project:…" spellCheck={false} autoComplete="off"/></label>
+    <label>Run ref (optional)<input value={requestedRun} onChange={event=>setRequestedRun(event.target.value)} spellCheck={false} autoComplete="off"/></label>
     <button type="submit" disabled={busy}>Read Runs</button>
    </form></details>
   </header>
