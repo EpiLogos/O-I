@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import type { ActionInvocation, FactoryBuildView, ViewDepth } from './types'
+import type { ActionInvocation, FactoryBuildView, FactoryMaterialSelection, ViewDepth } from './types'
 import { CandidateReading } from "./CandidateReading"
 import { SessionCards } from './components/SessionCards'
 import { SpanDetail } from './components/SpanDetail'
@@ -16,11 +16,17 @@ export interface BuildSurfaceProps {
   /** O:I-owned controls for this selected Run, kept inside Build's existing header. */
   headerControls?: ReactNode
   runSummary?: ReactNode
-  projectLabel?: string
+  runMap?: ReactNode
+  onOpenMaterial?: (selection:FactoryMaterialSelection)=>Promise<void>
 }
 
 function Ref({ children }: { children: string }) {
   return <code className="fb-ref" title={children}>{children}</code>
+}
+
+function frontierSummary(summary: string) {
+  const state = /^RunMap frontier: Some\(([^)]+)\)$/.exec(summary)?.[1]
+  return state ? `Frontier: ${state.replace(/[_-]+/g, " ")}` : summary
 }
 
 function ActionButton({ actionRef, subjectRef, label, availability, unavailableReason, onAction }: {
@@ -38,7 +44,7 @@ function ActionButton({ actionRef, subjectRef, label, availability, unavailableR
   return <div><button type="button" className="fb-action" disabled={busy} onClick={()=>void invoke()}>{busy?"Applying…":label}</button>{error&&<p role="alert">{error}</p>}</div>
 }
 
-export function BuildSurface({ view, initialDepth = 'semantic', onAction, onOpenWorkingSurface, headerControls, runSummary, projectLabel }: BuildSurfaceProps) {
+export function BuildSurface({ view, initialDepth = 'semantic', onAction, onOpenWorkingSurface, headerControls, runSummary, runMap, onOpenMaterial }: BuildSurfaceProps) {
   const [depth, setDepth] = useState<ViewDepth>(initialDepth)
   const [executionRef, setExecutionRef] = useState(view.trajectories[0]?.executionRef)
   const trace = useMemo(() => view.trajectories.find((item) => item.executionRef === executionRef) ?? view.trajectories[0], [executionRef, view.trajectories])
@@ -87,7 +93,7 @@ export function BuildSurface({ view, initialDepth = 'semantic', onAction, onOpen
     <header className="fb-header">
 
       <div className="fb-title-row">
-        <div><h1>{view.run.label}</h1><p>{projectLabel??(view.project.label!==view.project.projectRef?view.project.label:undefined)}</p></div>
+        <div><h1>{view.run.label}</h1></div>
         <div className="fb-run-state"><span className={`fb-status fb-status-${view.run.status}`}>{view.run.status}</span></div>
         {headerControls&&<div className="fb-header-controls">{headerControls}</div>}
       </div>
@@ -99,11 +105,12 @@ export function BuildSurface({ view, initialDepth = 'semantic', onAction, onOpen
     {depth === 'semantic' ? <section className="fb-depth fb-semantic">
       {runSummary}
       <div className="fb-frontier">
-        <div><span className="fb-kicker">{view.frontier.mode}</span><h2>{view.frontier.title}</h2><p>{view.frontier.summary}</p></div>
+        <div><span className="fb-kicker">{view.frontier.mode}</span><h2>{view.frontier.title}</h2><p>{frontierSummary(view.frontier.summary)}</p></div>
         <div className="fb-frontier-meta">{view.frontier.closureState&&<span>{view.frontier.closureState}</span>}{view.frontier.gateState&&<span>Gate: {view.frontier.gateState}</span>}</div>
       </div>
 
-      <CandidateReading key={view.run.runRef} view={view} actions={candidate=><div className="fb-actions">{candidateActions.map(action=><ActionButton key={action.actionRef+"-"+candidate.candidateRef} {...action} subjectRef={candidate.candidateRef} onAction={onAction}/>)}</div>}/>
+      {runMap}
+      <CandidateReading onOpenMaterial={onOpenMaterial} key={view.run.runRef} view={view} actions={candidate=><div className="fb-actions">{candidateActions.map(action=><ActionButton key={action.actionRef+"-"+candidate.candidateRef} {...action} subjectRef={candidate.candidateRef} onAction={onAction}/>)}</div>}/>
       {!!view.humanRequests.length&&<section className="fb-human-requests"><div className="fb-section-head"><h3>Needs your decision</h3></div>
         {view.humanRequests.map(request=><article className="fb-human-request" key={request.humanRequestRef}><strong>{request.question}</strong><p>{request.whyHuman}</p>
           <div className="fb-actions">{view.actions.filter(action=>action.subjectKinds.includes('human-request')).map(action=><ActionButton key={action.actionRef} {...action} subjectRef={request.humanRequestRef} onAction={onAction}/>)}</div>

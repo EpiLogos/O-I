@@ -1,3 +1,4 @@
+import {createPortal} from "react-dom";
 import {advanceCompletion} from "./expressionReading";
 import {useEffect,useRef,useState, type ReactNode} from "react";
 import {useKernel} from "../kernel/KernelProvider";
@@ -47,7 +48,7 @@ const KIND_OWNER: Record<string, string> = {
   knowledge: "AIKit",
 };
 
-export function AgentLayer({project, subject, history, historyAvailable, accompanying, onAccompanying, full, onFull, onClose, region = "right"}: {
+export function AgentLayer({project, subject, history, historyAvailable, accompanying, onAccompanying, full, onFull, onClose, region = "right",complementaryHost,onReturnConversation,onOpenWorkingSurface}: {
   project?: string;
   subject: AgentSubject;
   history?: ReactNode;
@@ -55,11 +56,15 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
   accompanying?: AgentAccompanying;
   onAccompanying: (value: AgentAccompanying) => void;
   region?: "right" | "centre";
+  complementaryHost?:HTMLElement|null;
+  onReturnConversation?:()=>void;
+  onOpenWorkingSurface?:(selection:import("../encounter/working-surface").WorkingSurfaceSelection)=>Promise<void>;
   full: boolean;
   onFull: () => void;
   onClose: () => void;
 }) {
   const kernel = useKernel();
+  const [detailHost,setDetailHost]=useState<HTMLDivElement|null>(null);
   const [plane, setPlane] = useState<EncounterPlane>("Conversation");
   const [error, setError] = useState<string>();
   const [expression,setExpression]=useState<EncounterExpressionReading>({pending:false});
@@ -71,7 +76,8 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
   const completion=useRef<number>();
   const arrivalTimer=useRef<ReturnType<typeof setTimeout>>();
   useEffect(()=>()=>clearTimeout(arrivalTimer.current),[]);
-  useEffect(()=>{clearTimeout(arrivalTimer.current);completion.current=undefined;inputRevision.current=undefined;setInputArrived(false);setExpression({pending:false});setArrived(false);setListening(false);},[accompanying?.ref]);
+  const accompanyingIdentity=accompanying?JSON.stringify([accompanying.project,accompanying.ref,accompanying.space]):undefined;
+  useEffect(()=>{clearTimeout(arrivalTimer.current);completion.current=undefined;inputRevision.current=undefined;setInputArrived(false);setExpression({pending:false});setArrived(false);setListening(false);},[accompanyingIdentity]);
   useEffect(()=>{
     const next=advanceCompletion(completion.current,expression.completed);
     completion.current=next.highWater;
@@ -101,32 +107,32 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
   };
 
   const binding: SurfaceBinding | undefined = accompanying ? {
-    id: `accompanying:${accompanying.ref}`,
+    id: `accompanying:${accompanyingIdentity}`,
     kind: "encounter",
     ref: accompanying.ref,
     project: accompanying.project,
     title: "Accompanying agent",
     encounter: {space: accompanying.space},
   } : undefined;
-  const encounterPlane: "Conversation" | "Activity" | "Inspect" = plane === "Context" ? "Conversation" : plane;
+  const complementary=!!complementaryHost;
+  const detailPlane=plane==="Conversation"?"Activity":plane;
+  const encounterPlane: "Conversation" | "Activity" | "Inspect" = complementary||plane === "Context" ? "Conversation" : plane;
+  const planes=<nav className="agent-planes" aria-label={complementary||region==="right"?"Right region planes":"Encounter planes"}>
+    {(["Conversation","Activity","Context","Inspect"] as const).map(name=><button key={name} aria-pressed={name===(complementary?detailPlane:plane)} title={complementary&&name==="Conversation"?"Return conversation to the right":undefined} onClick={()=>{if(complementary&&name==="Conversation"){setPlane(name);onReturnConversation?.();}else setPlane(name);}}>{name}</button>)}
+    {(region==="right"||complementary)&&<span className="agent-plane-tools"><button className="agent-tool" aria-label={full?"Restore right region":"Full right region"} onClick={onFull}><Glyph name={full?"restore":"expand"}/></button><button className="agent-tool" aria-label="Collapse right region" onClick={onClose}><Glyph name="close"/></button></span>}
+  </nav>;
 
   return <section className="agent-layer" aria-label="Accompanying agent" data-full={full} data-expression={form} onFocusCapture={event=>{if((event.target as Element).matches(".encounter-composer textarea"))setListening(true);}} onBlurCapture={event=>{if((event.target as Element).matches(".encounter-composer textarea"))setListening(false);}}>
-    <nav className="agent-planes" aria-label={region === "centre" ? "Encounter planes" : "Right region planes"}>
-      {(["Conversation", "Activity", "Context", "Inspect"] as const).map(name =>
-        <button key={name} aria-pressed={plane === name} onClick={() => setPlane(name)}>{name}</button>)}
-      {region === "right" && <span className="agent-plane-tools">
-        <button className="agent-tool" aria-label={full ? "Restore right region" : "Full right region"} onClick={onFull}><Glyph name={full ? "restore" : "expand"}/></button>
-        <button className="agent-tool" aria-label="Collapse right region" onClick={onClose}><Glyph name="close"/></button>
-      </span>}
-    </nav>
+    {!complementary&&planes}
+    {complementaryHost&&createPortal(<section className="agent-layer agent-complementary" aria-label="Conversation details">{planes}<div className="agent-body">{detailPlane==="Context"&&<ContextPlane subject={subject} history={history} historyAvailable={historyAvailable} accompanying={accompanying}/>}<div ref={setDetailHost} className="agent-detail-host"/></div></section>,complementaryHost)}
     <div className="agent-body">
       {error && <p role="alert">{error}</p>}
       {/* The visible head still reads this same encounter while Context is open.
           Keep its one observer mounted; hide only its body, never duplicate it. */}
       {binding
-        ? <EncounterSurface key={binding.id} binding={{...binding, view: {encounterPlane}}} onView={view => setPlane(view.encounterPlane ?? "Conversation")} onExpression={setExpression} concealed={plane==="Context"} presentation={region === "centre" || full ? "full" : "side"}/>
+        ? <EncounterSurface onOpenWorkingSurface={onOpenWorkingSurface} key={binding.id} binding={{...binding, view: {encounterPlane}}} onView={view => setPlane(view.encounterPlane ?? "Conversation")} onExpression={setExpression} complementary={complementary&&detailHost?{host:detailHost,plane:detailPlane}:undefined} concealed={!complementary&&plane==="Context"} presentation={region === "centre" || full ? "full" : "side"}/>
         : plane!=="Context" ? <NoAccompanying project={project} onOpen={choose}/> : null}
-      {plane==="Context"&&<ContextPlane subject={subject} history={history} historyAvailable={historyAvailable} accompanying={accompanying}/>}
+      {!complementary&&plane==="Context"&&<ContextPlane subject={subject} history={history} historyAvailable={historyAvailable} accompanying={accompanying}/>}
     </div>
   </section>;
 }
@@ -159,7 +165,7 @@ function ContextPlane({subject, history, historyAvailable, accompanying}: {
       <dl>
         <dt>Project</dt><dd>{subject.project ?? "Not attached to a project"}</dd>
         <dt>Revision</dt><dd>{subject.revision ? subject.revision.slice(0, 10) : "Unknown"}</dd>
-        <dt>State</dt><dd>{subject.dirty ? "Unsaved changes" : "Saved"}</dd>
+        <dt>State</dt><dd>{subject.dirty===true?"Unsaved changes":subject.dirty===false?"Saved":"Not disclosed"}</dd>
         <dt>Owner</dt><dd>{owner}</dd>
       </dl>
       {historyAvailable
@@ -172,7 +178,7 @@ function ContextPlane({subject, history, historyAvailable, accompanying}: {
         <dt>Project</dt><dd>{accompanying.project}</dd>
         <dt>AgentSession</dt><dd>{accompanying.ref}</dd>
         <dt>SessionSpace</dt><dd>{accompanying.space}</dd>
-        <dt>Context disclosure</dt><dd>Not read</dd>
+        <dt>Context disclosure</dt><dd>Not disclosed by the current session reading</dd>
       </dl>
     </div>}
   </div>;

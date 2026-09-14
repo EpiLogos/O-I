@@ -5,6 +5,8 @@
     "Native patch body is rendered in the shared return document",
     "Git return has one document heading",
     "Actual patch is in What changed",
+    "Native patch exposes multiple actual changed sections",
+    "Selecting a native changed section displays its returned diff",
     "Git read does not claim verification",
     "Factory presents the selected native Git document in the existing right pane",
     "One visible Git document after relocating its Surface",

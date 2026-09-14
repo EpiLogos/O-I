@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import {build} from "esbuild";
-const result=await build({stdin:{contents:'export * from "./src/surface/engine"; export * from "./src/surface/composition"; export * from "./src/surface/persist"; export * from "./src/surface/types";',resolveDir:process.cwd()},bundle:true,write:false,platform:"node",format:"esm"});
+const result=await build({stdin:{contents:'export * from "./src/surface/engine"; export * from "./src/surface/composition"; export * from "./src/surface/persist"; export * from "./src/surface/conversation-placement"; export * from "./src/surface/types";',resolveDir:process.cwd()},bundle:true,write:false,platform:"node",format:"esm"});
 const e=await import("data:text/javascript;base64,"+Buffer.from(result.outputFiles[0].text).toString("base64"));
 const draft={id:crypto.randomUUID(),kind:"draft",title:"Draft"};
 const factory={id:crypto.randomUUID(),kind:"factory",title:"O-I · Runs",project:"O-I",ref:"project:o-i"};
@@ -62,5 +62,26 @@ const visibleGroup=e.groupsOf(exclusive.root)[0];
 exclusive={...exclusive,detached:[{surfaceId:visible.id,groupId:visibleGroup.id,index:0,pinned:false}],closedStack:[visible.id]};
 const exclusiveDecoded=e.decodeLayout(exclusive);
 check(!exclusiveDecoded.detached?.some(entry=>entry.surfaceId===visible.id)&&!exclusiveDecoded.closedStack.includes(visible.id),"Decoder excludes detached and closed identities already visible");
+
+// Presentation engine checks only: no owner session is started or claimed here.
+const conversation={id:"conversation-placement",kind:"encounter",title:"Conversation",project:"O-I",ref:"agent-session/oi-factory-codex-20260914",encounter:{space:"session-space/oi-factory-demo-20260914"}};
+let relocated=e.presentConversation(ordinary,conversation);
+check(relocated.surfaces[conversation.id].view.encounterReturnSurfaceId===draft.id,"Conversation promotion retains the previous central work");
+relocated=e.decodeLayout(JSON.parse(JSON.stringify(relocated)));
+check(relocated.surfaces[conversation.id].view.encounterReturnSurfaceId===draft.id,"Conversation return destination survives persistence");
+const conversationRef=relocated.accompanying;
+relocated=e.returnConversationToSide(relocated,conversation.id);
+check(e.groupsOf(relocated.root).some(group=>group.active===draft.id),"Returning conversation to the companion restores central work");
+check(relocated.surfaces[conversation.id].ref===conversation.ref&&relocated.accompanying.ref===conversationRef.ref&&relocated.accompanying.space===conversationRef.space,"Conversation relocation retains binding and native session identities");
+check(!e.groupsOf(relocated.root).some(group=>group.active===conversation.id),"Side companion return leaves no central duplicate conversation");
+
+const sameRefOtherProject={...conversation,id:"conversation-placement-other-project",project:"Central",title:"Central conversation",encounter:{space:"session-space/central-demo-20260914"}};
+let isolated=e.presentConversation(ordinary,conversation);
+isolated=e.presentConversation(isolated,sameRefOtherProject);
+check(isolated.accompanying.project===sameRefOtherProject.project&&isolated.accompanying.ref===sameRefOtherProject.ref&&isolated.accompanying.space===sameRefOtherProject.encounter.space,"Conversation placement retains project and SessionSpace beside an identical session ref");
+const unchanged=e.returnConversationToSide(isolated,conversation.id);
+check(unchanged===isolated,"Returning a same-ref conversation from another project cannot alter the accompanying placement");
+isolated=e.returnConversationToSide(isolated,sameRefOtherProject.id);
+check(e.groupsOf(isolated.root).some(group=>group.active===conversation.id),"Returning the exact cross-project companion restores its retained prior work");
 
 console.log(JSON.stringify({standing:"C: production Surface engine and decoder, no owner execution assertion",checks},null,2));

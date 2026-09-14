@@ -133,6 +133,7 @@ export type CommissionOutcome =
   | { state: "owner_unavailable"; path: string; detail: string };
 
 export type KernelOp =
+  | {op:"central_actions_read"}
   | {op:"graph";project?:string;query:string}
   | { op: "invoke_action"; project?: string; invocation: ActionInvocation }
   | { op: "flow_changed_since"; project?: string; thought: Record<string, unknown> }
@@ -193,6 +194,7 @@ export type KernelOp =
 export type KernelOpResult =
   | {result:"graph_reading";reading:import("../knowledge/graph").GraphReading}
   | {result:"action_dispatched";dispatch:ActionDispatch}
+  | {result:"central_actions_reading";data:unknown}
   | { result: "flow_changed_since"; reading: ChangedSinceReading }
   | { result: "instance_commissioned"; outcome: CommissionOutcome }
   | {result:"ground_reading";reading:Record<string,unknown>}

@@ -5,7 +5,15 @@
     "Displays actual Factory Run destination",
     "Actual empty Candidate state remains empty",
     "Actual empty execution state is not fabricated",
-    "Refresh retains a single current Run view",
+    "Native Run Map retains the selected Run identity",
+    "Native Run Map discloses an actual work node",
+    "Selects the actual Factory work node",
+    "Shows the exact native semantic reference",
+    "Native Run Map supplies the work-node dependency edge",
+    "Renders the selected node incoming dependency",
+    "Renders the native dependency relation",
+    "Refresh re-reads the native Factory Build",
+    "Run Map selection survives the Build refresh",
     "Reads canonical Central-to-Factory project link",
     "Reads native Factory Build",
     "Agent creation exposes the human intent",
@@ -19,7 +27,7 @@
     {
       "request": {
         "op": "factory_development_read",
-        "state_path": "/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/material/header-continuity.state.json",
+        "state_path": "desktop/cradle/walk/material/header-continuity.state.json",
         "read": "central-project-link-read",
         "subject": "project:o-i"
       },
@@ -54,7 +62,7 @@
     {
       "request": {
         "op": "factory_development_read",
-        "state_path": "/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/material/header-continuity.state.json",
+        "state_path": "desktop/cradle/walk/material/header-continuity.state.json",
         "read": "central-project-link-read",
         "subject": "project:o-i"
       },
@@ -89,7 +97,7 @@
     {
       "request": {
         "op": "factory_development_read",
-        "state_path": "/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/material/header-continuity.state.json",
+        "state_path": "desktop/cradle/walk/material/header-continuity.state.json",
         "read": "project",
         "subject": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC"
       },
@@ -115,7 +123,7 @@
     {
       "request": {
         "op": "factory_development_read",
-        "state_path": "/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/material/header-continuity.state.json",
+        "state_path": "desktop/cradle/walk/material/header-continuity.state.json",
         "read": "run",
         "subject": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD"
       },
@@ -194,7 +202,7 @@
     {
       "request": {
         "op": "factory_attempt_task_list_read",
-        "state_path": "/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/material/header-continuity.state.json",
+        "state_path": "desktop/cradle/walk/material/header-continuity.state.json",
         "run_ref": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD"
       },
       "result": {
@@ -218,7 +226,7 @@
     {
       "request": {
         "op": "factory_development_read",
-        "state_path": "/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/material/header-continuity.state.json",
+        "state_path": "desktop/cradle/walk/material/header-continuity.state.json",
         "read": "build",
         "subject": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD"
       },
@@ -279,7 +287,7 @@
     {
       "request": {
         "op": "factory_development_read",
-        "state_path": "/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/material/header-continuity.state.json",
+        "state_path": "desktop/cradle/walk/material/header-continuity.state.json",
         "read": "central-project-link-read",
         "subject": "project:o-i"
       },
@@ -314,7 +322,7 @@
     {
       "request": {
         "op": "factory_development_read",
-        "state_path": "/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/material/header-continuity.state.json",
+        "state_path": "desktop/cradle/walk/material/header-continuity.state.json",
         "read": "project",
         "subject": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC"
       },
@@ -340,7 +348,7 @@
     {
       "request": {
         "op": "factory_development_read",
-        "state_path": "/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/material/header-continuity.state.json",
+        "state_path": "desktop/cradle/walk/material/header-continuity.state.json",
         "read": "run",
         "subject": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD"
       },
@@ -418,32 +426,8 @@
     },
     {
       "request": {
-        "op": "factory_attempt_task_list_read",
-        "state_path": "/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/material/header-continuity.state.json",
-        "run_ref": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD"
-      },
-      "result": {
-        "ok": true,
-        "outcome": {
-          "data": {
-            "contract": "factory.attempt-task-list-reading/v1",
-            "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC",
-            "revision": 1,
-            "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD",
-            "runRevision": 2,
-            "sourceCurrent": true,
-            "taskRefs": [],
-            "topologyRevision": 2,
-            "totalTasks": 0
-          },
-          "result": "factory_attempt_task_list_reading"
-        }
-      }
-    },
-    {
-      "request": {
         "op": "factory_development_read",
-        "state_path": "/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/material/header-continuity.state.json",
+        "state_path": "desktop/cradle/walk/material/header-continuity.state.json",
         "read": "build",
         "subject": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD"
       },
@@ -498,6 +482,30 @@
             }
           },
           "result": "factory_development_reading"
+        }
+      }
+    },
+    {
+      "request": {
+        "op": "factory_attempt_task_list_read",
+        "state_path": "desktop/cradle/walk/material/header-continuity.state.json",
+        "run_ref": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD"
+      },
+      "result": {
+        "ok": true,
+        "outcome": {
+          "data": {
+            "contract": "factory.attempt-task-list-reading/v1",
+            "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC",
+            "revision": 1,
+            "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD",
+            "runRevision": 2,
+            "sourceCurrent": true,
+            "taskRefs": [],
+            "topologyRevision": 2,
+            "totalTasks": 0
+          },
+          "result": "factory_attempt_task_list_reading"
         }
       }
     }

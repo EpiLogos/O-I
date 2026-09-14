@@ -60,7 +60,7 @@ export interface SurfaceBinding {
     };
   };
   flow?: {flowRef:string;path:string};
-  view?: {developmentField?:{cwd:string;baseRevision?:string};factory?: {statePath:string;centralProjectRef?:string;projectRef?:string;runRef?:string;telemetryRef?:string};graphOrigin?:string;knowledgePlane?: "graph"|"page";encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect"};
+  view?: {developmentField?:{cwd:string;baseRevision?:string};factory?: {statePath:string;centralProjectRef?:string;projectRef?:string;runRef?:string;telemetryRef?:string;expectedRevision?:number};graphOrigin?:string;knowledgePlane?: "graph"|"page";encounterReturnSurfaceId?:string;encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect"};
   location?: import("../kernel/types").CentralLocation;
 }
 

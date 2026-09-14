@@ -439,3 +439,7 @@
   .desktop-shell:has(.shell-return-host:not([hidden])) .desktop-side.right {top:-24px;}
   .shell-return-host .tab-strip {padding-right:38px;}
 }
+
+.shell-companion-host{height:100%;min-height:0;display:flex;flex-direction:column}
+.shell-companion-host[hidden]{display:none}
+.shell-companion-host>.agent-layer{flex:1;min-height:0}

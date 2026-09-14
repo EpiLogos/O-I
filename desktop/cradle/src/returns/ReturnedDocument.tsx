@@ -24,14 +24,18 @@ export function ReturnedDocument({reading,callbacks,body}:{reading:ReturnedDocum
       {reading.outcome.standing&&<p className="returned-document-standing">{reading.outcome.standing}</p>}
       {reading.subject.ref&&<ReferenceDisclosure summary="Document identity" reference={reading.subject.ref}/>}
     </header>
-    <DocumentSection title="What changed">
+    {reading.variant==="verification"?<DocumentSection title="Checks and results" required>
       {body}
-      {material.length>0&&<MaterialList material={material} callbacks={callbacks}/>}
-      {!body&&material.length===0&&<Missing text="The owner did not disclose changed material for this document."/>}
-    </DocumentSection>
-    <DocumentSection title="Verification" required>
+      {evidence.length>0?<EvidenceList evidence={evidence}/>:<Missing text="No check results were disclosed for this verification."/>}
+    </DocumentSection>:<DocumentSection title={reading.variant==="report"?"Findings":reading.variant==="preview-media"?"Preview":"What changed"}>
+      {body}
+      {(!body||reading.variant==="preview-media")&&material.length>0&&<MaterialList material={material} callbacks={callbacks}/>}
+      {!body&&material.length===0&&<Missing text="The owner did not disclose the material body for this document."/>}
+    </DocumentSection>}
+    {reading.variant!=="verification"&&(evidence.length>0||reading.variant==="code"||reading.variant==="handoff")&&<DocumentSection title={reading.variant==="report"?"Evidence":"Verification"} required={reading.variant==="code"||reading.variant==="handoff"||evidence.some(item=>item.required)}>
       {evidence.length>0?<EvidenceList evidence={evidence}/>:<Missing text="The owner did not disclose verification for this document."/>}
-    </DocumentSection>
+    </DocumentSection>}
+    {material.length>0&&(reading.variant==="verification"||!!body&&reading.variant!=="preview-media")&&<DocumentSection title="Artifacts and attachments"><MaterialList material={material} callbacks={callbacks}/></DocumentSection>}
     {reading.runtime&&reading.runtime.length>0&&<DocumentSection title="Runtime observations"><dl className="returned-document-runtime">{reading.runtime.map(row=><div key={row.label+"-"+row.value}><dt>{row.label}</dt><dd>{row.value}{row.standing==="derived"&&row.basis&&<small>Derived from {row.basis}</small>}{row.standing==="observed"&&row.basis&&<small>Source {row.basis}</small>}</dd></div>)}</dl></DocumentSection>}
     {outstanding.length>0&&<DocumentSection title="Remaining work"><OutstandingList items={outstanding}/></DocumentSection>}
     {(continuations.length>0||reading.variant==="handoff")&&<DocumentSection title="Continue" required>

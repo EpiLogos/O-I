@@ -1,0 +1,40 @@
+.factory-material-surface { height: 100%; min-height: 0; overflow: auto; color: var(--oi-ink); background: var(--oi-surface); }
+.factory-material-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); }
+.factory-material-toolbar p { margin: 0; color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); font-weight: 600; letter-spacing: .07em; text-transform: uppercase; }
+.factory-material-toolbar button, .factory-material-latest button { min-height: 29px; padding: 5px 9px; color: var(--oi-ink); background: transparent; border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: 4px; font: inherit; font-size: var(--oi-shell-type-nav); }
+.factory-material-basis { margin: 0; padding: 9px 16px; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); }
+.factory-material-basis summary { cursor: pointer; }
+.factory-material-basis dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 7px 14px; margin: 8px 0 0; }
+.factory-material-basis div { display: grid; gap: 3px; min-width: 0; }
+.factory-material-basis dt { color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); }
+.factory-material-basis dd { min-width: 0; margin: 0; font-size: var(--oi-shell-type-meta); overflow-wrap: anywhere; }
+.factory-material-refusal, .factory-material-empty { margin: 16px; font-size: var(--oi-shell-type-body); line-height: 1.5; }
+.factory-material-refusal { color: var(--oi-danger, #a33); }
+.factory-material-empty { color: var(--oi-muted-2); }
+.factory-material-latest { display: flex; align-items: start; justify-content: space-between; gap: 14px; margin: 14px 16px; padding: 12px; border: var(--oi-shell-edge) solid var(--oi-accent); background: var(--oi-wash); }
+.factory-material-latest strong { font-size: var(--oi-shell-type-nav); }
+.factory-material-latest p { max-width: 56ch; margin: 5px 0 0; color: var(--oi-muted-2); font-size: var(--oi-shell-type-body); line-height: 1.5; }
+.factory-material-latest small { display: block; margin-top: 5px; color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); }
+.factory-material-latest-refusal { color: var(--oi-danger, #a33) !important; }
+.factory-material-surface .returned-document { margin: 0; border: 0; border-radius: 0; }
+.factory-material-body { display: grid; gap: 16px; }
+.factory-material-body > section { display: grid; gap: 8px; }
+.factory-material-body h4, .factory-material-body h5, .factory-material-body p { margin: 0; }
+.factory-material-body h4 { font-size: var(--oi-shell-type-nav); font-weight: 600; }
+.factory-material-body h5 { font-size: var(--oi-shell-type-nav); font-weight: 550; }
+.factory-material-body > section > p, .factory-material-body article > p { color: var(--oi-muted-2); font-size: var(--oi-shell-type-body); line-height: 1.5; }
+.factory-material-body ul { display: grid; gap: 5px; margin: 0; padding-left: 18px; font-size: var(--oi-shell-type-body); line-height: 1.5; }
+.factory-material-claims, .factory-material-evidence { display: grid; gap: 8px; }
+.factory-material-claims article, .factory-material-evidence article, .factory-material-unavailable { display: grid; gap: 7px; padding: 10px; border: var(--oi-shell-edge) solid var(--oi-hairline); }
+.factory-material-claims header { display: flex; justify-content: flex-end; }
+.factory-material-claims header span { color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); text-transform: capitalize; }
+.factory-material-reference, .factory-material-details { color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); }
+.factory-material-reference summary, .factory-material-details summary { cursor: pointer; }
+.factory-material-reference code, .factory-material-reference li, .factory-material-details code { overflow-wrap: anywhere; }
+.factory-material-reference ul { margin-top: 7px; padding-left: 15px; }
+.factory-material-details { padding-top: 8px; border-top: var(--oi-shell-edge) solid var(--oi-hairline); }
+.factory-material-details dl { display: grid; gap: 5px; margin: 8px 0 0; }
+.factory-material-details dl div { display: grid; grid-template-columns: minmax(96px, auto) minmax(0, 1fr); gap: 8px; }
+.factory-material-details dt { color: var(--oi-muted-2); }
+.factory-material-details dd { min-width: 0; margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .factory-material-toolbar, .factory-material-latest { align-items: stretch; flex-direction: column; } .factory-material-latest button { align-self: start; } }

@@ -28,6 +28,7 @@ export type AgentProfile = {
     recognition: string;
   } | null;
   source_path: string;
+  source_scope: "personal" | "project";
 };
 export type AgentSetMember =
   | { kind: "agent"; agent_ref: string }
@@ -40,6 +41,7 @@ export type AgentSet = {
   orchestrator_agent_ref?: string | null;
   correction?: unknown;
   source_path: string;
+  source_scope: "root" | "project";
 };
 export type AgentProposal = {
   profile: Record<string, unknown>;
@@ -54,6 +56,7 @@ export type AgentProposal = {
 export type AgentRoster = {
   profiles: AgentProfile[];
   sets: AgentSet[];
+  warnings: string[];
   observed_at_unix_ms: number;
 };
 export type AgentWorld = {
@@ -86,70 +89,124 @@ export async function readAgentRoster(
   project: string,
   projectRef: string,
 ): Promise<AgentRoster> {
-  const [profiles, sets] = await Promise.all([
-    call(transport, project, "agent-profile.list", projectRef, {
-      scope: "project",
-      project,
-    }),
-    call(transport, project, "central.agent-set.list", projectRef, {
-      scope: "project",
-      project,
-    }),
+  const reads = await Promise.allSettled([
+    Promise.all([
+      call(transport, project, "agent-profile.list", projectRef, { scope: "root" }),
+      call(transport, project, "central.agent-set.list", projectRef, { scope: "root" }),
+    ]),
+    Promise.all([
+      call(transport, project, "agent-profile.list", projectRef, { scope: "project", project }),
+      call(transport, project, "central.agent-set.list", projectRef, { scope: "project", project }),
+    ]),
   ]);
-  if (profiles.state !== "invoked") throw new Error("AgentProfile listing unavailable");
-  if (sets.state !== "invoked") throw new Error("AgentSet listing unavailable");
-  const profileRows = profiles.data && typeof profiles.data === "object"
-    ? (profiles.data as { profiles?: unknown }).profiles
-    : undefined;
-  const setRows = sets.data && typeof sets.data === "object"
-    ? (sets.data as { records?: unknown }).records
-    : undefined;
-  if (!Array.isArray(profileRows)) throw new Error("Central returned an invalid AgentProfile list");
-  if (!Array.isArray(setRows)) throw new Error("Central returned an invalid AgentSet list");
-  const decodedProfiles = profileRows.map((reading) => {
-    if (!reading || typeof reading !== "object") throw new Error("Central returned an invalid AgentProfile reading");
-    const row = reading as { profile?: unknown; source_path?: unknown };
-    if (!row.profile || typeof row.profile !== "object" || typeof row.source_path !== "string") {
-      throw new Error("Central returned an incomplete AgentProfile reading");
+  const warnings: string[] = [];
+  const profiles: AgentProfile[] = [];
+  const setsByRef = new Map<string, AgentSet>();
+  for (const [scope, read] of [["personal", reads[0]], ["project", reads[1]]] as const) {
+    if (read.status === "rejected") {
+      warnings.push(scope + " Agent roster unavailable: " + String(read.reason));
+      continue;
     }
-    const profile = row.profile as Record<string, unknown>;
-    const refLists = [
-      "governance_refs", "skill_refs", "skill_set_refs", "method_refs",
-      "routine_refs", "ratified_world_refs", "knowledge_source_refs",
-      "computer_access_intent_refs", "placement_intent_refs", "provenance_refs",
-    ];
-    if (profile.schema !== "central.agent-profile/v1" ||
-        typeof profile.ref !== "string" || typeof profile.revision !== "string" ||
-        typeof profile.agent_ref !== "string" || typeof profile.world_ref !== "string" ||
-        refLists.some((key) => !Array.isArray(profile[key]) ||
-          !(profile[key] as unknown[]).every((value) => typeof value === "string"))) {
-      throw new Error("Central returned an invalid AgentProfile record");
+    const [profileResult, setResult] = read.value;
+    if (profileResult.state !== "invoked") {
+      warnings.push(scope + " AgentProfiles were not disclosed by Central");
+    } else {
+      const profileRows = profileResult.data && typeof profileResult.data === "object"
+        ? (profileResult.data as { profiles?: unknown }).profiles : undefined;
+      if (!Array.isArray(profileRows)) {
+        warnings.push(scope + " AgentProfiles returned an invalid list");
+      } else {
+        for (const reading of profileRows) {
+          try {
+            if (!reading || typeof reading !== "object") throw new Error("invalid AgentProfile reading");
+            const row = reading as { profile?: unknown; source_path?: unknown };
+            if (!row.profile || typeof row.profile !== "object" || typeof row.source_path !== "string") {
+              throw new Error("incomplete AgentProfile reading");
+            }
+            const profile = row.profile as Record<string, unknown>;
+            const ref = profile.ref;
+            if (
+              profile.schema !== "central.agent-profile/v1" ||
+              typeof ref !== "string" ||
+              typeof profile.revision !== "string" ||
+              typeof profile.agent_ref !== "string" ||
+              typeof profile.world_ref !== "string"
+            ) throw new Error("invalid AgentProfile record");
+            const refLists = [
+              "governance_refs", "skill_refs", "skill_set_refs", "method_refs", "routine_refs",
+              "ratified_world_refs", "knowledge_source_refs", "computer_access_intent_refs",
+              "placement_intent_refs", "provenance_refs",
+            ];
+            if (refLists.some((key) =>
+              !Array.isArray(profile[key]) ||
+              !(profile[key] as unknown[]).every((value) => typeof value === "string")
+            )) throw new Error("invalid AgentProfile ref collection");
+            profiles.push({
+              ...profile,
+              profile_ref: ref,
+              source_path: row.source_path,
+              source_scope: scope === "personal" ? "personal" : "project",
+            } as AgentProfile);
+          } catch (reason) {
+            warnings.push(scope + " AgentProfile entry ignored: " + String(reason));
+          }
+        }
+      }
     }
-    return { ...profile, profile_ref: profile.ref, source_path: row.source_path } as AgentProfile;
-  });
-  const decodedSets = setRows.map((reading) => {
-    if (!reading || typeof reading !== "object") throw new Error("Central returned an invalid AgentSet reading");
-    const row = reading as { ref?: unknown; revision?: unknown; source_path?: unknown; record?: unknown };
-    if (typeof row.ref !== "string" || typeof row.revision !== "string" ||
-        typeof row.source_path !== "string" || !row.record || typeof row.record !== "object") {
-      throw new Error("Central returned an incomplete AgentSet reading");
+    if (setResult.state !== "invoked") {
+      warnings.push(scope + " AgentSets were not disclosed by Central");
+    } else {
+      const setRows = setResult.data && typeof setResult.data === "object"
+        ? (setResult.data as { records?: unknown }).records : undefined;
+      if (!Array.isArray(setRows)) {
+        warnings.push(scope + " AgentSets returned an invalid list");
+      } else {
+        for (const reading of setRows) {
+          try {
+            if (!reading || typeof reading !== "object") throw new Error("invalid AgentSet reading");
+            const row = reading as { ref?: unknown; revision?: unknown; source_path?: unknown; record?: unknown };
+            if (
+              typeof row.ref !== "string" ||
+              typeof row.revision !== "string" ||
+              typeof row.source_path !== "string" ||
+              !row.record ||
+              typeof row.record !== "object"
+            ) throw new Error("incomplete AgentSet reading");
+            const record = row.record as Record<string, unknown>;
+            if (
+              record.schema !== "central.agent-set/v1" ||
+              record.ref !== row.ref ||
+              record.revision !== row.revision ||
+              !Array.isArray(record.members) ||
+              !(record.members as unknown[]).every((member) => {
+                if (!member || typeof member !== "object") return false;
+                const value = member as { kind?: unknown; agent_ref?: unknown; agent_set_ref?: unknown };
+                return value.kind === "agent"
+                  ? typeof value.agent_ref === "string" && value.agent_ref.trim() !== ""
+                  : value.kind === "agent-set" &&
+                    typeof value.agent_set_ref === "string" &&
+                    value.agent_set_ref.trim() !== "";
+              })
+            ) throw new Error("invalid AgentSet record");
+            const set = {
+              ...record,
+              ref: row.ref,
+              revision: row.revision,
+              source_path: row.source_path,
+              source_scope: scope === "personal" ? "root" : "project",
+            } as unknown as AgentSet;
+            // Central's project register overlays root AgentSets by stable ref.
+            setsByRef.set(set.ref, set);
+          } catch (reason) {
+            warnings.push(scope + " AgentSet entry ignored: " + String(reason));
+          }
+        }
+      }
     }
-    const record = row.record as Record<string, unknown>;
-    if (record.schema !== "central.agent-set/v1" || record.ref !== row.ref ||
-        record.revision !== row.revision || !Array.isArray(record.members) ||
-        !(record.members as unknown[]).every((member) => {
-          if (!member || typeof member !== "object") return false;
-          const value = member as { kind?: unknown; agent_ref?: unknown; agent_set_ref?: unknown };
-          return value.kind === "agent"
-            ? typeof value.agent_ref === "string" && value.agent_ref.trim() !== ""
-            : value.kind === "agent-set" &&
-              typeof value.agent_set_ref === "string" && value.agent_set_ref.trim() !== "";
-        })) {
-      throw new Error("Central returned an invalid AgentSet record");
-    }
-    return { ...record, ref: row.ref, revision: row.revision, source_path: row.source_path } as AgentSet;
-  });
-  return { profiles: decodedProfiles, sets: decodedSets, observed_at_unix_ms: Date.now() };
+  }
+  const sets = [...setsByRef.values()];
+  if (!profiles.length && !sets.length && warnings.length === 4) throw new Error(warnings.join("; "));
+  return { profiles, sets, warnings, observed_at_unix_ms: Date.now() };
 }
 
 export async function readAgentWorlds(
@@ -260,6 +317,24 @@ export async function expressAgentProfile(
     throw new Error("Central returned an invalid AgentProfile proposal");
   }
   return value as unknown as AgentProposal;
+}
+
+export type AgentExpressionCapability = { available: boolean; action: "agent-profile.express" };
+
+export async function readAgentExpressionCapability(
+  transport: KernelTransportStatus,
+): Promise<AgentExpressionCapability> {
+  const result = await kernelOp(transport, {op: "central_actions_read"});
+  if (result.error) throw new Error(result.error);
+  if (result.outcome?.result !== "central_actions_reading") throw new Error("Central Action catalogue is unavailable");
+  const data = result.outcome.data;
+  if (!data || typeof data !== "object" || !Array.isArray((data as {actions?:unknown}).actions)) throw new Error("Central returned an invalid Action catalogue");
+  const actions = (data as {actions:unknown[]}).actions;
+  const advertised = Array.isArray(actions) && actions.some((entry) =>
+    entry && typeof entry === "object" && (entry as { id?: unknown }).id === "agent-profile.express" &&
+    (entry as { availability?: { available?: unknown } }).availability?.available === true
+  );
+  return { available: advertised, action: "agent-profile.express" };
 }
 
 export type SessionSpaceRequest =

@@ -1,0 +1,11 @@
+PASS Reads the live Central Action catalogue
+PASS Confirms Agent expression is unavailable in the live catalogue
+PASS Opens the Project Agents workspace
+PASS Shows truthful empty profile inventory
+PASS Shows truthful empty team inventory
+PASS Shows current Project sessions separately
+PASS Hides unsupported expression affordance
+PASS Offers workspace controls as secondary settings
+PASS Workspace settings starts collapsed
+PASS Does not surface irrelevant World errors
+PASS No application page errors

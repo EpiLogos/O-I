@@ -1,9 +1,10 @@
 {
   "standing": "C: running application with native Factory readbacks; queued Run only, no execution or H claim",
   "checks": [
-    "Native retained-task read opens in an ordinary handoff Surface",
-    "Queued Run does not fabricate task or Return material",
-    "Exact handoff Run and source locator survive reload"
+    "A queued Run without a retained task offers no phantom Handoff output",
+    "Missing handoff does not fabricate a document or continuation",
+    "Factory source and Run survive reload without an invented handoff",
+    "Reload rechecks the real empty retained-task relation"
   ],
   "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD",
   "owner": {

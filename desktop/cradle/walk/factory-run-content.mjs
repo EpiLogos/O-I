@@ -9,8 +9,16 @@ if(!statePath||!runRef||!projectRef)throw new Error("Set WALK_FACTORY_STATE, WAL
 const browser=await chromium.launch({executablePath:process.env.WALK_CHROMIUM_EXECUTABLE,headless:true});
 const page=await browser.newPage({viewport:{width:1422,height:858}});
 const errors=[],responses=[],checks=[];
+let buildReadCount=0;
+async function waitFor(predicate,message,timeoutMs=5_000){
+ const deadline=Date.now()+timeoutMs;
+ while(!predicate()){
+  if(Date.now()>=deadline)throw new Error(message);
+  await new Promise(resolve=>setTimeout(resolve,50));
+ }
+}
 page.on("pageerror",error=>errors.push(String(error)));
-page.on("response",async response=>{if(response.url().endsWith("/op")){try{const request=response.request().postDataJSON();if(request.op.startsWith("factory_"))responses.push({request,result:await response.json()});}catch{}}});
+page.on("response",async response=>{if(response.url().endsWith("/op")){try{const request=response.request().postDataJSON();if(request.op.startsWith("factory_")){const result=await response.json();responses.push({request,result});if(result.outcome?.data?.contract==="factory.build-view/v1")buildReadCount+=1;}}catch{}}});
 const check=(value,name)=>{assert.ok(value,name);checks.push(name);console.log("PASS",name)};
 await page.addInitScript(()=>{window.__OI_KERNEL_BRIDGE__="http://127.0.0.1:4179";sessionStorage.setItem("oi-cradle.welcome.v1","1");});
 try{
@@ -31,9 +39,26 @@ try{
  await runs.getByRole("button",{name:"Live work",exact:true}).click();
  check(await runs.getByText("No execution has been recorded for this Run.",{exact:true}).count()===1,"Actual empty execution state is not fabricated");
  await runs.getByRole("button",{name:"Run map",exact:true}).click();
+ const nativeRun=responses.findLast(row=>row.result.outcome?.data?.contract==="factory.run-reading/v1")?.result.outcome.data;
+ check(nativeRun?.runRef===runRef,"Native Run Map retains the selected Run identity");
+ const workNode=Object.values(nativeRun.runMap.nodes).find(node=>node.kind==="work");
+ check(Boolean(workNode),"Native Run Map discloses an actual work node");
+ const runMap=runs.getByRole("region",{name:"Factory Run map"});
+ await runMap.getByRole("button",{name:new RegExp(workNode.label,"i")}).click();
+ const selectedNode=runMap.getByRole("article",{name:"Selected node: "+workNode.label});
+ check(await selectedNode.count()===1,"Selects the actual Factory work node");
+ await selectedNode.getByText("Native semantic reference",{exact:true}).click();
+ check(await selectedNode.locator("code").filter({hasText:workNode.semanticRef}).count()===1,"Shows the exact native semantic reference");
+ const incoming=nativeRun.runMap.edges.filter(edge=>edge.to===workNode.id);
+ check(incoming.length===1&&incoming[0].relation==="branches_to","Native Run Map supplies the work-node dependency edge");
+ check(await selectedNode.getByRole("heading",{name:"Incoming",exact:true}).count()===1,"Renders the selected node incoming dependency");
+ check(await selectedNode.getByText("Branches To",{exact:true}).count()===1,"Renders the native dependency relation");
+ const priorBuildReads=responses.filter(row=>row.result.outcome?.data?.contract==="factory.build-view/v1").length;
  await runs.getByRole("button",{name:"Refresh",exact:true}).click();
- await page.waitForFunction(()=>[...document.querySelectorAll(".factory-build-controls button")].some(button=>button.textContent==="Refresh"&&!button.disabled));
- check(await runs.locator(".fb-build-surface").count()===1,"Refresh retains a single current Run view");
+ await page.waitForFunction(()=>document.querySelectorAll(".fb-build-surface.factory-build").length===1);
+ await waitFor(()=>buildReadCount>priorBuildReads,"Refresh did not re-read the native Factory Build");
+ check(buildReadCount>priorBuildReads,"Refresh re-reads the native Factory Build");
+ check(await runMap.getByRole("article",{name:"Selected node: "+workNode.label}).count()===1,"Run Map selection survives the Build refresh");
  check(responses.some(row=>row.result.outcome?.data?.contract==="factory.central-project-link-reading/v1"),"Reads canonical Central-to-Factory project link");
  check(responses.some(row=>row.result.outcome?.data?.contract==="factory.build-view/v1"),"Reads native Factory Build");
  await page.screenshot({path:"walk/artifacts/factory-run-content-20260914.png"});

@@ -34,9 +34,9 @@ function validBinding(raw: unknown): SurfaceBinding | null {
   // `draft` is unplaced writing: it deliberately carries no owner ref, and it
   // must survive a relaunch — the writing lives beside it under the same
   // surface id, and dropping the binding would orphan it.
-  if (o.kind !== "source" && o.kind !== "sources" && o.kind !== "knowledge" && o.kind !== "file" && o.kind !== "encounter" && o.kind !== "system" && o.kind !== "browser" && o.kind !== "terminal" && o.kind !== "flow" && o.kind !== "draft" && o.kind !== "blank" && o.kind !== "factory" && o.kind !== "agents" && o.kind !== "observatory" && o.kind !== "instrument" && o.kind !== "project-now" && o.kind !== "factory-handoff" && o.kind !== "development-field") return null;
+  if (o.kind !== "source" && o.kind !== "sources" && o.kind !== "knowledge" && o.kind !== "file" && o.kind !== "encounter" && o.kind !== "system" && o.kind !== "browser" && o.kind !== "terminal" && o.kind !== "flow" && o.kind !== "draft" && o.kind !== "blank" && o.kind !== "factory" && o.kind !== "agents" && o.kind !== "observatory" && o.kind !== "instrument" && o.kind !== "project-now" && o.kind !== "factory-handoff" && o.kind !== "factory-material" && o.kind !== "development-field") return null;
   if (o.ref !== undefined && typeof o.ref !== "string") return null;
-  if(o.kind==="factory-handoff"&&(typeof o.ref!=="string"||typeof o.project!=="string"))return null;
+  if((o.kind==="factory-handoff"||o.kind==="factory-material")&&(typeof o.ref!=="string"||!o.ref.trim()||typeof o.project!=="string"))return null;
   if (o.kind === "project-now" && (typeof o.ref!=="string"||typeof o.project!=="string"))return null;
   if (o.kind === "instrument" && (typeof o.ref !== "string" || !o.ref.trim())) return null;
   if (o.project !== undefined && typeof o.project !== "string") return null;
@@ -68,15 +68,18 @@ function validBinding(raw: unknown): SurfaceBinding | null {
   const developmentField=o.kind==="development-field"&&view?.developmentField&&typeof view.developmentField.cwd==="string"&&view.developmentField.cwd.startsWith("/")?{cwd:view.developmentField.cwd,baseRevision:typeof view.developmentField.baseRevision==="string"?view.developmentField.baseRevision:undefined}:undefined;
   if(o.kind==="development-field"&&(!developmentField||typeof o.project!=="string"))return null;
   const encounterPlane=view?.encounterPlane;
+  const encounterReturnSurfaceId=o.kind==="encounter"&&typeof view?.encounterReturnSurfaceId==="string"?view.encounterReturnSurfaceId:undefined;
   const rawFactory=view?.factory;
-  const factory=(o.kind==="factory"||o.kind==="factory-handoff") && rawFactory && typeof rawFactory.statePath==="string"
+  const factory=(o.kind==="factory"||o.kind==="factory-handoff"||o.kind==="factory-material") && rawFactory && typeof rawFactory.statePath==="string"
     && rawFactory.statePath.trim() ? {statePath:rawFactory.statePath,
       centralProjectRef:typeof rawFactory.centralProjectRef==="string"?rawFactory.centralProjectRef:undefined,
       projectRef:typeof rawFactory.projectRef==="string"?rawFactory.projectRef:undefined,
       runRef:typeof rawFactory.runRef==="string"?rawFactory.runRef:undefined,
-      telemetryRef:typeof rawFactory.telemetryRef==="string"?rawFactory.telemetryRef:undefined}:undefined;
+      telemetryRef:typeof rawFactory.telemetryRef==="string"?rawFactory.telemetryRef:undefined,
+      expectedRevision:typeof rawFactory.expectedRevision==="number"&&Number.isSafeInteger(rawFactory.expectedRevision)&&rawFactory.expectedRevision>=0?rawFactory.expectedRevision:undefined}:undefined;
   if(o.kind==="factory-handoff"&&(!factory||factory.runRef!==o.ref))return null;
-  return { terminal:o.kind==="terminal"?{cwd:typeof terminalRaw?.cwd==="string"?terminalRaw.cwd:undefined,attachment}:undefined, flow:o.kind==="flow"?flow:undefined, browser:o.kind==="browser"?{url:typeof (o.browser as {url?:unknown})?.url==="string"?(o.browser as {url:string}).url:""}:undefined, view:developmentField?{developmentField}:factory ? {factory} : encounterPlane&&["Conversation","Activity","Context","Inspect"].includes(encounterPlane)?{encounterPlane}:undefined, encounter, location, address, project: o.project as string | undefined, id: o.id, kind: o.kind, ref: o.ref as string | undefined, title: o.title };
+  if(o.kind==="factory-material"&&(!factory||!factory.runRef?.trim()||(rawFactory?.expectedRevision!==undefined&&factory.expectedRevision===undefined)))return null;
+  return { terminal:o.kind==="terminal"?{cwd:typeof terminalRaw?.cwd==="string"?terminalRaw.cwd:undefined,attachment}:undefined, flow:o.kind==="flow"?flow:undefined, browser:o.kind==="browser"?{url:typeof (o.browser as {url?:unknown})?.url==="string"?(o.browser as {url:string}).url:""}:undefined, view:developmentField?{developmentField}:factory ? {factory} : (encounterReturnSurfaceId||encounterPlane&&["Conversation","Activity","Context","Inspect"].includes(encounterPlane))?{encounterPlane,encounterReturnSurfaceId}:undefined, encounter, location, address, project: o.project as string | undefined, id: o.id, kind: o.kind, ref: o.ref as string | undefined, title: o.title };
 }
 
 function validPane(raw: unknown, surfaces: Record<SurfaceId, SurfaceBinding>): Pane | null {

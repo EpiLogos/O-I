@@ -1272,3 +1272,14 @@ hides source/dispatch plumbing behind disclosure, but remains a candidate.
 Full-motion production app walk passed including an actually mounted Stage
 becoming invisible on release. Native Factory rejection/locator persistence walk
 passed. F2–F6 remain open. No merged increment is claimed.
+
+
+## 2026-09-14 — #289/#292 experienced-product increment
+
+Continued `cradle-factory-arrangement` from owner correction `35d2aa0`, merging actual main `f0b4739` through `7c633da`. Factory retains central Run/work and the ordinary right pane for returned material. Ordinary expanded conversation has one transcript/composer with complementary Activity/Context/Inspect; return restores previous work. Project, AgentSession and SessionSpace jointly scope presentation and detached-window focus.
+
+Shared result variants now carry Factory material and native Git readings; Run Map nodes/relations are selectable; reviewed material survives failed refreshes. Session Inspect consumes native model and exact working-Surface operations. Agent and NOW readers preserve native scope/provenance. The installed Central Action catalogue gates the intent form: an unavailable `agent-profile.express` is not presented, and the incompatible proposal API is not substituted.
+
+Evidence: 103 real application browser checks, 24 layout checks, 3 native-window identity tests, 32 kernel library tests and 1 independent real Central catalogue parity test; production web/native Linux builds passed. Native CUA proved dialogue placement/return, exact existing tmux open, Git result maximize/detach/redock, and workspace recovery after graceful app restart. Receipt: `desktop/cradle/walk/artifacts/factory-experience-pivot-20260914/receipt.md` and sibling JSON/screenshots/logs.
+
+The actual Run remains queued with zero executions/Candidates/Evidence. New Agent admission/formation, full Start resolver, Factory execution→AgentSession/Activity/Return, opaque artifact resolution, Routine catalogue and full joined/all-harness/H acceptance remain open at their native owners. No full F0–F6 or merge completion is claimed.

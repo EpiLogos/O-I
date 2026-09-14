@@ -1,0 +1,155 @@
+{
+  "schema": "oi.cradle.factory-experience-pivot-receipt/v1",
+  "standing": "Executed application, public-owner and selected native-presentation evidence. Full Factory execution/Agent admission, populated Candidate/Evidence/Return, all-harness acceptance and human acceptance remain unproved.",
+  "base": {
+    "committed_branch_head": "7c633da920ad0869ba219adf72587d583c0d9dad",
+    "merged_main": "f0b4739602fda7f57f6ca5c50688064cfe6f0879",
+    "user_correction_ancestor": "35d2aa0aa61860f87b0b28b46965065bfd244d42"
+  },
+  "owner_reads": {
+    "roster": {
+      "command": "node desktop/cradle/walk/agent-roster-read.mjs",
+      "result": "passed",
+      "personal_profiles": 0,
+      "personal_sets": 0,
+      "project_profiles": 0,
+      "project_sets": 0
+    },
+    "run": {
+      "command": "node desktop/cradle/walk/factory-run-read.mjs /home/frank/Central/Work/Factory/.worktrees/codex-developmental-build-read/target/debug/factory /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/material/header-continuity.state.json run:01ARZ3NDEKTSV4RRFFQ69G5FCD",
+      "result": "passed",
+      "contract": "factory.run-reading/v1",
+      "nodes": 2,
+      "edges": 1
+    },
+    "material": {
+      "command": "WALK_FACTORY_BIN=/home/frank/Central/Work/Factory/.worktrees/codex-developmental-build-read/target/debug/factory WALK_FACTORY_STATE=/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/material/header-continuity.state.json WALK_FACTORY_RUN=run:01ARZ3NDEKTSV4RRFFQ69G5FCD node walk/factory-material-read.mjs",
+      "result": "passed",
+      "build_revision": 1,
+      "candidates": 0,
+      "evidence": 0
+    },
+    "composition": {
+      "command": "node walk/surface-composition.mjs",
+      "result": "passed",
+      "checks": 24,
+      "log": "surface-composition-24.log"
+    },
+    "action_catalog": {
+      "result": "passed",
+      "kernel_operation": "central_actions_read",
+      "public_operation": "oi central --json action list",
+      "descriptors": 150,
+      "agent_profile_express_present": false,
+      "native_integration_test": "OI_BIN=/home/frank/.local/share/oi/cargo/bin/oi OI_CENTRAL_ROOT=/home/frank/Central CARGO_BUILD_JOBS=2 cargo test --test native_action_catalog -- --ignored",
+      "native_test_result": "1 passed; independent catalogue parity, no emitted receipts, unchanged kernel snapshot"
+    }
+  },
+  "browser_walks": [
+    {
+      "name": "conversation placement",
+      "checks": 18,
+      "receipt": "../conversation-placement.json",
+      "result": "passed"
+    },
+    {
+      "name": "native Git return",
+      "checks": 13,
+      "receipt": "../git-return-ui.json",
+      "result": "passed"
+    },
+    {
+      "name": "session controls",
+      "checks": 19,
+      "receipt": "../session-controls.json",
+      "result": "passed",
+      "model": "owner advertised gpt-5.6-luna / low; the exact session was already selected, then owner refresh confirmed it. No model prompt or terminal input."
+    },
+    {
+      "name": "Factory workbench",
+      "checks": 18,
+      "receipt": "../factory-corrected-workbench.json",
+      "log": "browser-factory-workbench-18.log",
+      "result": "passed"
+    },
+    {
+      "name": "Factory Run content",
+      "checks": 20,
+      "receipt": "../factory-run-content-20260914.json",
+      "log": "browser-factory-run-content-20.log",
+      "result": "passed"
+    },
+    {
+      "name": "Factory empty handoff",
+      "checks": 4,
+      "receipt": "../factory-handoff-owner-walk.json",
+      "log": "browser-factory-handoff-empty-4.log",
+      "result": "passed",
+      "standing": "Queued Run had no retained task; no Handoff was offered or fabricated."
+    },
+    {
+      "name": "Agents native capability gate",
+      "checks": 11,
+      "receipt": "../agent-roster-ui-20260914.json",
+      "result": "passed",
+      "url": "http://localhost:4173"
+    }
+  ],
+  "linux_rust": {
+    "command": "CARGO_BUILD_JOBS=2 /home/frank/.cargo/bin/cargo test --manifest-path desktop/cradle/src-tauri/Cargo.toml --bin oi-cradle windows::tests -- --nocapture",
+    "result": "passed",
+    "tests": 3,
+    "log": "linux-rust-3-tests.log"
+  },
+  "native_refs": {
+    "project": "project:o-i",
+    "agent_session": "agent-session/oi-factory-codex-20260914",
+    "session_space": "session-space/oi-factory-demo-20260914",
+    "working_surface": "working-surface/oi-factory-demo-20260914-shell",
+    "terminal_surface": "surface/terminal/factory/shell",
+    "native_session_id": "01a09ff3-f1fd-7f92-a156-2d85d11a9462"
+  },
+  "native_presentation": {
+    "screenshots": [
+      "git-native-right.png",
+      "git-native-promoted.png",
+      "git-native-redocked.png",
+      "agents-native-final.png",
+      "inspect-native-final.png",
+      "working-native-final.png",
+      "git-native-detached.png"
+    ],
+    "standing": "Parent CUA captures. The Git view was reread from its current native working-state owner basis when opened in a new native window; these captures do not claim a byte-exact frozen patch.",
+    "restart": "Native O-I > Quit O:I closed the previous application; rebuilt app restored the retained workspace and actual dialogue. Inspect disclosed existing Luna/low and opened the same persisted tmux Surface with its retained terminal history; no prompt or terminal command was issued."
+  },
+  "missing_native_joins": [
+    "Agent/Profile/AgentSet admission and AgentSession attachment",
+    "shared Start/formation resolver including temporary/child work",
+    "Factory execution to Agency/AgentSession/Activity/Return correlation",
+    "returned artifact material resolver/open target",
+    "canonical Routine catalogue and schedule/last/next read"
+  ],
+  "limitations": [
+    "Live Agent inventories are empty",
+    "Factory Build has zero Candidates and Evidence",
+    "No positive execution, Return, populated roster, or human acceptance is claimed"
+  ],
+  "observed_at": "2026-09-14T22:25:00Z",
+  "build": {
+    "web": "npm run build; passed",
+    "native": "CARGO_BUILD_JOBS=2 /home/frank/.cargo/bin/cargo build --manifest-path desktop/cradle/src-tauri/Cargo.toml; passed",
+    "native_binary_sha256": "3769220867ca2a2997066e14425a745d5467162aebde49a2ccdb1418dbd7266c",
+    "native_pid": 1146989,
+    "native_window": 6291459,
+    "runtime_frontend": "Vite1421 current worktree; production browser walks use built preview4173"
+  },
+  "kernel": {
+    "test_command": "CARGO_BUILD_JOBS=2 /home/frank/.cargo/bin/cargo test --all-targets",
+    "test_cwd": "desktop/cradle/kernel",
+    "tests": "32 passed; other native-owner integration gates ignored unless separately recorded",
+    "test_log": "kernel-all-tests.log",
+    "clippy_command": "CARGO_BUILD_JOBS=2 /home/frank/.cargo/bin/cargo clippy --all-targets -- -D warnings",
+    "clippy_result": "passed",
+    "clippy_log": "kernel-all-clippy.log"
+  }
+}

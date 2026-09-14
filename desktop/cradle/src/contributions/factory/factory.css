@@ -87,3 +87,31 @@
 
 .factory-runs-layout.factory-runs-single{grid-template-columns:minmax(0,1fr)}
 .factory-run-summary.is-compact{margin:0 24px 16px;padding:0;font-size:.8rem}
+
+/* F4: Factory's RunMap as a compact, inspectable native topology. */
+.factory-run-map { margin: 0 24px 18px; border: var(--oi-shell-edge) solid var(--oi-hairline); }
+.factory-run-map-head { display: flex; justify-content: space-between; gap: 12px; padding: 10px 12px; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); }
+.factory-run-map-head h3, .factory-run-map-head p, .factory-run-map-detail h4, .factory-run-map-detail p { margin: 0; }
+.factory-run-map-head h3 { font-size: 13px; font-weight: 600; }
+.factory-run-map-head p, .factory-run-map-kicker, .factory-run-map-empty { color: var(--oi-muted-2); font-size: 11px; line-height: 1.45; }
+.factory-run-map-layout { display: grid; grid-template-columns: minmax(190px, 38%) minmax(0, 1fr); min-height: 116px; }
+.factory-run-map-nodes { display: grid; align-content: start; gap: 2px; margin: 0; padding: 7px; list-style: none; border-right: var(--oi-shell-edge) solid var(--oi-hairline); }
+.factory-run-map-nodes button { display: grid; gap: 3px; width: 100%; padding: 7px 8px; border: var(--oi-shell-edge) solid transparent; border-radius: 3px; color: var(--oi-ink); background: transparent; text-align: left; font: inherit; }
+.factory-run-map-nodes button:hover { border-color: var(--oi-hairline); background: var(--oi-wash); }
+.factory-run-map-nodes button.is-selected { border-left: 2px solid var(--oi-accent); background: var(--oi-wash); }
+.factory-run-map-nodes span { overflow: hidden; text-overflow: ellipsis; white-space: normal; overflow-wrap: anywhere; font-size: 13px; }
+.factory-run-map-nodes small { color: var(--oi-muted-2); font-size: 11px; }
+.factory-run-map-detail { padding: 13px 14px; min-width: 0; }
+.factory-run-map-kicker { text-transform: uppercase; letter-spacing: .07em; }
+.factory-run-map-detail h4 { margin-top: 4px; font-size: 13px; line-height: 1.4; }
+.factory-run-map-semantic { margin-top: 10px; color: var(--oi-muted-2); font-size: 11px; }
+.factory-run-map-semantic summary { cursor: pointer; }
+.factory-run-map-semantic code { display: block; margin-top: 5px; overflow-wrap: anywhere; color: var(--oi-ink); }
+.factory-run-map-relations { display: grid; gap: 10px; margin-top: 12px; }
+.factory-run-map-relations h5 { margin: 0 0 4px; color: var(--oi-muted-2); font-size: 11px; font-weight: 550; }
+.factory-run-map-relations ul { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.factory-run-map-relations li { display: flex; justify-content: space-between; gap: 10px; font-size: 11px; }
+.factory-run-map-relations li span { min-width: 0; overflow-wrap: anywhere; }
+.factory-run-map-relations li small { flex: none; color: var(--oi-muted-2); }
+.factory-run-map-empty { margin: 12px; }
+@media (max-width: 720px) { .factory-run-map { margin-inline: 16px; } .factory-run-map-layout { grid-template-columns: 1fr; } .factory-run-map-nodes { border-right: 0; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); } }

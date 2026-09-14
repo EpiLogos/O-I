@@ -1,4 +1,5 @@
 import {GitWorkingState} from "../returns/GitWorkingState";
+import {FactoryMaterialSurface} from "../contributions/factory/FactoryMaterialSurface";
 import {FactoryHandoffSurface} from "../contributions/factory/FactoryHandoffSurface";
 import {ProjectNowSurface} from "../contributions/project-now/ProjectNowSurface";
 import {AgentRosterSurface} from "../contributions/agents";
@@ -41,7 +42,7 @@ import type { ActionArg, LayoutState, Pane, SurfaceId, SurfaceBinding } from "./
 
 export interface WorkbenchProps {
   returnedHost?: HTMLElement | null;
-  accompanyingRef?: string;
+  accompanying?: {ref:string;project:string;space:string};
   onOpenBinding:(binding:SurfaceBinding)=>Promise<void>;
   onOpenFile:(location:import("../kernel/types").CentralLocation)=>Promise<void>;
   onOpenWorkingSurface:(selection:import("../encounter/working-surface").WorkingSurfaceSelection)=>Promise<void>;
@@ -306,7 +307,7 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
         }}
 
       >
-        {activeBinding ? <SurfaceBody key={activeBinding.id} foreground={focused} binding={activeBinding} accompanyingRef={props.accompanyingRef} onOpenEncounter={props.onOpenEncounter} onOpenWorkingSurface={props.onOpenWorkingSurface} onOpenFile={props.onOpenFile} onOpenBinding={props.onOpenBinding} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} /> : <p className="source-note">{state.detached?.some(d=>d.groupId===group.id)?"This view is open in a native window. Close that window to re-dock it here.":"Move a tab here, or open a source or wiki with +."}</p>}
+        {activeBinding ? <SurfaceBody key={activeBinding.id} foreground={focused} binding={activeBinding} accompanying={props.accompanying} onOpenEncounter={props.onOpenEncounter} onOpenWorkingSurface={props.onOpenWorkingSurface} onOpenFile={props.onOpenFile} onOpenBinding={props.onOpenBinding} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} /> : <p className="source-note">{state.detached?.some(d=>d.groupId===group.id)?"This view is open in a native window. Close that window to re-dock it here.":state.composition?.returnPaneId===group.id?"Select returned material from your work to read it here.":"Move a tab here, or open a source or wiki with +."}</p>}
       </div>
       <footer className="pane-status pane-footer" aria-label={focused ? "Active pane" : "Pane status"} />
     </section>
@@ -316,12 +317,12 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
 /** The surface body by kind: real owner surfaces where they exist (U0.4:
  * 'source', 'sources'), the clearly-named test card otherwise. */
 function SurfaceBody({
-  binding,onView,foreground,accompanyingRef,onOpenEncounter,onOpenWorkingSurface,onOpenFile,onOpenBinding,
+  binding,onView,foreground,accompanying,onOpenEncounter,onOpenWorkingSurface,onOpenFile,onOpenBinding,
   openSource, openKnowledge,
 }: {
   binding: import("./types").SurfaceBinding;
   foreground: boolean;
-  accompanyingRef?:string;
+  accompanying?:{ref:string;project:string;space:string};
   onOpenFile:WorkbenchProps["onOpenFile"];
   onOpenWorkingSurface:WorkbenchProps["onOpenWorkingSurface"];
   onOpenBinding:WorkbenchProps["onOpenBinding"];
@@ -332,11 +333,12 @@ function SurfaceBody({
 }) {
   if(binding.kind==="development-field")return binding.project&&binding.view?.developmentField?<GitWorkingState project={binding.project} cwd={binding.view.developmentField.cwd} baseRevision={binding.view.developmentField.baseRevision}/>:<p role="alert">The working changes Surface has no disclosed Project location.</p>;
   if(binding.kind==="factory-handoff")return binding.view?.factory?.statePath&&binding.ref?<FactoryHandoffSurface statePath={binding.view.factory.statePath} runRef={binding.ref}/>:<p role="alert">The handoff Surface has no retained Factory source.</p>;
+  if(binding.kind==="factory-material")return binding.view?.factory?.statePath&&binding.view.factory.runRef&&binding.ref?<FactoryMaterialSurface key={binding.id} statePath={binding.view.factory.statePath} runRef={binding.view.factory.runRef} subjectRef={binding.ref} expectedRevision={binding.view.factory.expectedRevision} onRevisionAccepted={revision=>onView(binding.id,{...binding.view,factory:{...binding.view!.factory!,expectedRevision:revision}})}/>:<p role="alert">The material Surface has no retained Factory source or Run.</p>;
   if(binding.kind==="project-now")return binding.project&&binding.ref?<ProjectNowSurface project={binding.project} projectRef={binding.ref} onOpenFile={onOpenFile}/>:<p role="status">Open NOW from a Project.</p>;
   if(binding.kind==="observatory")return <SessionObservatory binding={binding} onOpenWorkingSurface={onOpenWorkingSurface}/>;
   if(binding.kind==="agents")return binding.project&&binding.ref ? <AgentRosterSurface project={binding.project} projectRef={binding.ref} onOpenEncounter={onOpenEncounter}/> : <p role="status">Open Agents from a Project.</p>;
-  if(binding.kind==="encounter"&&binding.ref===accompanyingRef)return <div className="surface-accompanying-host" data-accompanying-host={binding.id}/>;
-  if(binding.kind==="encounter")return <EncounterSurface key={binding.id} binding={binding} onView={view=>onView(binding.id,view)}/>;
+  if(binding.kind==="encounter"&&accompanying&&binding.ref===accompanying.ref&&binding.project===accompanying.project&&binding.encounter?.space===accompanying.space)return <div className="surface-accompanying-host" data-accompanying-host={binding.id}/>;
+  if(binding.kind==="encounter")return <EncounterSurface onOpenWorkingSurface={onOpenWorkingSurface} key={binding.id} binding={binding} onView={view=>onView(binding.id,view)}/>;
   if (binding.kind === "terminal") return <TerminalSurface binding={binding} />;
   if (binding.kind === "flow") return <FlowSurface binding={binding} />;
   if (binding.kind === "draft") return <DraftSurface binding={binding} />;
@@ -494,7 +496,7 @@ export function ArrangementActions({state, execute, openFrameMenu, nativeWindows
   const props = {state, execute, openFrameMenu, nativeWindows};
   const group = groupsOf(state.root).find(g => g.id === state.focusedGroupId);
   const active = group?.active ? state.surfaces[group.active] : undefined;
-  const detachable = !!active && ["source", "knowledge", "file", "encounter", "factory-handoff", "development-field"].includes(active.kind);
+  const detachable = !!active && ["source", "knowledge", "file", "encounter", "factory-handoff", "factory-material", "development-field"].includes(active.kind);
   return <>
         <button aria-label="Split active surface right" title="Split right (⌘D)" disabled={!active} onClick={() => props.execute("surface.split-right")}><Glyph name="columns"/></button>
         <button aria-label="Split active surface down" title="Split down (⌘⇧D)" disabled={!active} onClick={() => props.execute("surface.split-down")}><Glyph name="rows"/></button>

@@ -198,6 +198,8 @@ pub enum KernelOp {
     /// owner operation are explicit unsupported states. Owner-side effects
     /// happen through the owner operation and are provable through the
     /// owner store; the kernel records nothing and emits nothing.
+    /// Public installed Central Action catalogue; read-only, no authority granted.
+    CentralActionsRead,
     InvokeAction { #[serde(default)] project: Option<String>, invocation: action::ActionInvocation },
     /// Compose the W1.5 changed-since-thought read (`flow_cognition.rs`):
     /// the kernel supplies the KnowledgeChangeHorizon adapted from Central's
@@ -351,6 +353,7 @@ pub enum KernelOpResult {
     /// The typed result of one owner-Action dispatch (`action.rs`): the
     /// owner payload verbatim, or an explicit named state.
     ActionDispatched { dispatch: action::ActionDispatch },
+    CentralActionsReading { data: serde_json::Value },
     /// The typed changed-since-thought compose (`flow_cognition.rs`): both
     /// owner sides of the read, explicit.
     FlowChangedSince { reading: flow_cognition::ChangedSinceReading },
@@ -744,6 +747,10 @@ impl Kernel {
                 let cwd = std::path::PathBuf::from(root["root"].as_str().ok_or("Central root location unavailable")?);
                 let reading = encounter::assemble(&cwd, &session, &request_ref, reply.as_ref());
                 Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::EncounterJoined { reading } })
+            }
+            KernelOp::CentralActionsRead => {
+                let data = self.client.action_catalog().map_err(|error| error.to_string())?;
+                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::CentralActionsReading { data } })
             }
             KernelOp::InvokeAction { project, invocation } => {
                 // Central discloses the scope, exactly as the Knowledge/Graph

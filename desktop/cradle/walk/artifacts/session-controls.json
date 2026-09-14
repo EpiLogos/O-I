@@ -1,0 +1,253 @@
+{
+  "standing": "C: final-build browser UI + public native owner reads; no model prompt or terminal input",
+  "project": "O-I",
+  "conversationTitle": "Factory live walk — Codex",
+  "agentSession": "agent-session/oi-factory-codex-20260914",
+  "sessionSpace": "session-space/oi-factory-demo-20260914",
+  "checks": [
+    "Owner model reading retains the exact AgentSession",
+    "Owner model reading discloses a native session identity",
+    "Owner discloses an actual resident model catalogue",
+    "Luna choice comes from the current owner catalogue",
+    "Low effort comes from the current owner catalogue",
+    "Owner model reading retains the exact AgentSession",
+    "Owner model reading discloses a native session identity",
+    "Selection confirmation remains on the same native session",
+    "Owner confirms the exact advertised Luna model",
+    "Owner confirms the exact advertised Low reasoning effort",
+    "Kernel request carries the exact SessionSpace and AgentSession",
+    "Native read confirms the persisted working-surface binding",
+    "Native read confirms the canonical terminal surface and AgentSession",
+    "Provider observation preserves exact persisted surface identity",
+    "Provider observation confirms the existing tmux terminal marker",
+    "Provider binding maps the marker to the exact canonical terminal surface",
+    "Browser preview preserves the terminal as a non-attached native-only Surface",
+    "Closing the terminal returns to the same inspected encounter",
+    "No application page errors"
+  ],
+  "errors": [],
+  "model": {
+    "before": {
+      "agent_session": "agent-session/oi-factory-codex-20260914",
+      "model_observation": {
+        "available_models": [
+          {
+            "description": "Our most capable model for complex, demanding work.",
+            "modelId": "gpt-6-astra",
+            "name": "6 Astra"
+          },
+          {
+            "description": "Reliable agentic workhorse for everyday tasks.",
+            "modelId": "gpt-5.6-sol",
+            "name": "5.6 Sol"
+          },
+          {
+            "description": "Balanced agentic coding model for everyday work.",
+            "modelId": "gpt-5.6-terra",
+            "name": "5.6 Terra"
+          },
+          {
+            "description": "Fast and affordable agentic coding model.",
+            "modelId": "gpt-5.6-luna",
+            "name": "5.6 Luna"
+          },
+          {
+            "description": "Proven previous-generation model for coding and general work.",
+            "modelId": "gpt-5.5",
+            "name": "5.5"
+          },
+          {
+            "description": "Ultra-fast coding model.",
+            "modelId": "gpt-5.3-codex-spark",
+            "name": "5.3 Codex Spark"
+          }
+        ],
+        "current_model_id": "gpt-5.6-luna",
+        "reasoning_effort": {
+          "configId": "reasoning_effort",
+          "currentValue": "low",
+          "options": [
+            {
+              "description": "Fast responses with lighter reasoning",
+              "name": "Low",
+              "value": "low"
+            },
+            {
+              "description": "Balances speed and reasoning depth for everyday tasks",
+              "name": "Medium",
+              "value": "medium"
+            },
+            {
+              "description": "Greater reasoning depth for complex problems",
+              "name": "High",
+              "value": "high"
+            },
+            {
+              "description": "Extra high reasoning depth for complex problems",
+              "name": "Xhigh",
+              "value": "xhigh"
+            },
+            {
+              "description": "Maximum reasoning depth for the hardest problems",
+              "name": "Max",
+              "value": "max"
+            }
+          ]
+        },
+        "standing": "provider-reported-configuration-not-independent-selection-or-inference-proof"
+      },
+      "native_session_id": "01a09ff3-f1fd-7f92-a156-2d85d11a9462",
+      "standing": "provider-reported-configuration-not-independent-selection-or-inference-proof"
+    },
+    "advertised": {
+      "luna": {
+        "description": "Fast and affordable agentic coding model.",
+        "modelId": "gpt-5.6-luna",
+        "name": "5.6 Luna"
+      },
+      "low": {
+        "description": "Fast responses with lighter reasoning",
+        "name": "Low",
+        "value": "low"
+      }
+    },
+    "mutation": "already-selected"
+  },
+  "workingSurface": {
+    "request": {
+      "action": "resolve_working",
+      "space": "session-space/oi-factory-demo-20260914",
+      "agent_session": "agent-session/oi-factory-codex-20260914"
+    },
+    "data": {
+      "binding": {
+        "agent_session": "agent-session/oi-factory-codex-20260914",
+        "binding": "working-surface/oi-factory-demo-20260914-shell",
+        "plan": {
+          "attach": "never",
+          "backend_extensions": {},
+          "capabilities": {
+            "config": {},
+            "disable": [],
+            "enable": [],
+            "profiles": [],
+            "skill-overlays": {},
+            "use": []
+          },
+          "id": "oi-factory-demo-20260914-working",
+          "lifecycle": "persist",
+          "mux": "tmux",
+          "name": "oi-factory-demo-20260914-working",
+          "root": "/home/frank/Central/Work/O-I",
+          "task": null,
+          "views": [
+            {
+              "focus": "shell",
+              "id": "factory",
+              "name": "Factory demo working Surface",
+              "steps": [
+                {
+                  "capabilities": {
+                    "config": {},
+                    "disable": [],
+                    "enable": [],
+                    "profiles": [],
+                    "skill-overlays": {},
+                    "use": []
+                  },
+                  "command": [
+                    "sh"
+                  ],
+                  "cwd": "/home/frank/Central/Work/O-I",
+                  "focus": true,
+                  "name": "Factory demo shell",
+                  "pane": "shell",
+                  "restart": "never",
+                  "split": null,
+                  "view": "factory"
+                }
+              ]
+            }
+          ],
+          "warnings": []
+        },
+        "plan_key": "factory/shell",
+        "provenance": [
+          "O:I #289 Factory live desktop acceptance demo; bounded tmux working Surface for the existing admitted AgentSession."
+        ],
+        "provider": "provider/tmux/current",
+        "surface": "surface/terminal/factory/shell"
+      },
+      "observation": {
+        "reading": {
+          "agent_session": "agent-session/oi-factory-codex-20260914",
+          "binding": "working-surface/oi-factory-demo-20260914-shell",
+          "live_native_id": "%5",
+          "native_standing": "reobserved-unproven",
+          "plan_id": "oi-factory-demo-20260914-working",
+          "plan_key": "factory/shell",
+          "plan_name": "oi-factory-demo-20260914-working",
+          "provenance": [
+            "persisted SessionSpace binding selected before provider operation",
+            "provider-native ids are re-observed and remain provenance"
+          ],
+          "provider": "provider/tmux/current",
+          "provider_observation": {
+            "bindings": [
+              {
+                "kind": "session",
+                "native_id": "oi-factory-demo-20260914-working",
+                "provenance": [
+                  "tmux session binding"
+                ]
+              },
+              {
+                "kind": "view",
+                "native_id": "Factory demo working Surface",
+                "provenance": [
+                  "tmux view logical_key=factory"
+                ]
+              },
+              {
+                "canonical_ref": "surface/terminal/factory/shell",
+                "kind": "surface",
+                "native_id": "%5",
+                "provenance": [
+                  "explicit tmux surface binding logical_key=factory/shell"
+                ]
+              }
+            ],
+            "capabilities": {
+              "agent_session_attach_detach": false,
+              "conversation_surface": false,
+              "diff_surface": false,
+              "discover": true,
+              "editor_surface": false,
+              "focus": true,
+              "multi_project": true,
+              "open": true,
+              "preview_surface": false,
+              "reconstruct": true,
+              "select": true,
+              "surface_attach_detach": true,
+              "terminal_surface": true,
+              "test_surface": false
+            },
+            "health": "healthy",
+            "provenance": [
+              "tmux via aikit MuxAdapter; provider-native ids are provenance",
+              "observed over session plan oi-factory-demo-20260914-working"
+            ],
+            "provider": "provider/tmux/current",
+            "provider_version": "3.7c",
+            "schema": "aikit.working-environment-provider/v1"
+          },
+          "schema": "aikit.session-space-working-surface/v1",
+          "space": "session-space/oi-factory-demo-20260914",
+          "surface": "surface/terminal/factory/shell"
+        }
+      },
+      "service_cwd": "/home/frank/Central/Work/O-I"
+    }
+  }
+}

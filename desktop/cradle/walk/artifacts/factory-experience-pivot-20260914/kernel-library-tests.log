@@ -1,0 +1,39 @@
+   Compiling oi-cradle-kernel v0.1.0 (/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/kernel)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 19.59s
+     Running unittests src/lib.rs (desktop/cradle/kernel/target/debug/deps/oi_cradle_kernel-96264ff9f7d4a5f4)
+
+running 32 tests
+test events::tests::focus_changed_carries_the_whole_relation_not_a_copy_of_selection ... ok
+test events::tests::events_round_trip_over_the_wire_with_schema_and_version ... ok
+test events::tests::the_kernel_parse_boundary_refuses_foreign_and_stale_envelopes_by_reason ... ok
+test events::tests::the_kernel_parse_boundary_refuses_a_payload_the_kernel_could_not_produce ... ok
+test events::tests::unknown_events_fail_closed_instead_of_degrading_into_another_variant ... ok
+test events::tests::the_log_orders_seqs_monotonically_from_one_with_no_gaps ... ok
+test flow::tests::a_conflict_failure_is_structured_with_both_revisions ... ok
+test flow::receiving_wire_contract_tests::desktop_inbox_and_review_requests_use_the_disclosed_tagged_wire_contract ... ok
+test events::tests::every_event_variant_exists_and_is_typed ... ok
+test focus::tests::a_ref_without_an_identifier_is_not_a_subject ... ok
+test focus::tests::clearing_returns_to_b0 ... ok
+test focus::tests::exactly_one_subject_is_held_never_an_accumulation ... ok
+test flow::tests::the_write_core_targets_the_owner_actions_and_writes_no_files_itself ... ok
+test focus::tests::empty_relation_is_b0_no_focus ... ok
+test focus::tests::relation_slots_accept_only_whole_refs_and_round_trip ... ok
+test refs::tests::a_central_source_ref_travels_verbatim_and_whole ... ok
+test refs::tests::an_empty_ref_is_refused_rather_than_wrapped ... ok
+test system_composition::tests::mounted_descriptor_passes_through_unmodified ... ok
+test system_composition::tests::discovery_is_uniform_across_all_six_owners ... ok
+test system_composition::tests::non_v2_schema_is_degraded_not_fabricated ... ok
+test system_composition::tests::non_zero_exit_is_degraded_with_stderr ... ok
+test knowledge::tests::full_query_is_one_literal_operand_after_the_option_terminator ... ok
+test system_composition::tests::product_id_mismatch_is_degraded ... ok
+test system_composition::tests::oi_position_is_degraded_when_the_census_reports_warnings ... ok
+test system_composition::tests::spawn_failure_is_unavailable_with_reason ... ok
+test tests::an_edit_without_an_open_buffer_is_refused ... ok
+test tests::state_and_listing_ops_emit_nothing ... ok
+test world::tests::a_listing_row_carries_the_owner_ref_verbatim ... ok
+test world::tests::the_reading_core_lists_from_owner_disclosures_and_writes_no_files ... ok
+test system_composition::tests::reading_emits_exactly_seven_positions_oi_plus_six ... ok
+test system_composition::tests::oi_position_is_unavailable_when_the_census_cannot_be_read ... ok
+test knowledge::tests::actual_process_argv_preserves_queries_and_root_or_child_context ... ok
+
+test result: ok. 32 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.24s

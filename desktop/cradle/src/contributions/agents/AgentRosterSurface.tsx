@@ -6,6 +6,7 @@ import {
   expressAgentProfile,
   readAgentRoster,
   readAgentWorlds,
+  readAgentExpressionCapability,
   type AgentProfileExpression,
   type AgentRoster,
   type AgentWorld,
@@ -32,6 +33,7 @@ export function AgentRosterSurface({
   const kernel = useKernel();
   const [roster, setRoster] = useState<AgentRoster>();
   const [worlds, setWorlds] = useState<AgentWorld[]>([]);
+  const [expressionAvailable, setExpressionAvailable] = useState<boolean>();
   const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(true);
   const [tick, setTick] = useState(0);
@@ -42,7 +44,10 @@ export function AgentRosterSurface({
   });
   const [proposal, setProposal] = useState<AgentProposal>();
   const [busy, setBusy] = useState(false);
-  const [selected, setSelected] = useState<{ kind: "profile"; ref: string } | { kind: "set"; ref: string }>();
+  const [selected, setSelected] = useState<
+    | { kind: "profile"; ref: string; scope: "personal" | "project" }
+    | { kind: "set"; ref: string; scope: "root" | "project" }
+  >();
 
   useEffect(() => {
     let live = true;
@@ -50,16 +55,19 @@ export function AgentRosterSurface({
     setError(undefined);
     setRoster(undefined);
     setWorlds([]);
+    setExpressionAvailable(undefined);
     void Promise.allSettled([
       readAgentRoster(kernel.transport, project, projectRef),
       readAgentWorlds(kernel.transport, project, projectRef),
-    ]).then(([rosterResult, worldsResult]) => {
+      readAgentExpressionCapability(kernel.transport),
+    ]).then(([rosterResult, worldsResult, expressionResult]) => {
       if (!live) return;
       if (rosterResult.status === "fulfilled") {
         setRoster(rosterResult.value);
       } else {
         setError(message(rosterResult.reason));
       }
+      if (expressionResult.status === "fulfilled") setExpressionAvailable(expressionResult.value.available);
       if (worldsResult.status === "fulfilled") {
         setWorlds(worldsResult.value);
         setForm((current) => ({
@@ -71,7 +79,11 @@ export function AgentRosterSurface({
             worldsResult.value.some((world) => world.ref === ref),
           ),
         }));
-      } else if (rosterResult.status === "fulfilled") {
+      } else if (
+        rosterResult.status === "fulfilled" &&
+        expressionResult.status === "fulfilled" &&
+        expressionResult.value.available
+      ) {
         setError(message(worldsResult.reason));
       }
       setLoading(false);
@@ -81,8 +93,8 @@ export function AgentRosterSurface({
     };
   }, [kernel.transport, project, projectRef, tick]);
 
-  const selectedProfile = selected?.kind === "profile" ? roster?.profiles.find((profile) => profile.profile_ref === selected.ref) : undefined;
-  const selectedSet = selected?.kind === "set" ? roster?.sets.find((set) => set.ref === selected.ref) : undefined;
+  const selectedProfile = selected?.kind === "profile" ? roster?.profiles.find((profile) => profile.profile_ref === selected.ref && profile.source_scope === selected.scope) : undefined;
+  const selectedSet = selected?.kind === "set" ? roster?.sets.find((set) => set.ref === selected.ref && set.source_scope === selected.scope) : undefined;
 
   const incomplete =
     !form.world_ref.trim() ||
@@ -132,13 +144,14 @@ export function AgentRosterSurface({
       <header>
         <div>
           <h2>Agents</h2>
-          <p>Durable project profiles and teams</p>
+          <p>Durable profiles and teams</p>
         </div>
         <button onClick={() => setTick((value) => value + 1)} disabled={loading}>
           Refresh
         </button>
       </header>
       {error && <p role="alert">{error}</p>}
+      {roster?.warnings.map((warning) => <p key={warning} role="status">{warning}</p>)}
       {loading && <p role="status">Reading Central Agents and Worlds…</p>}
 
       <section>
@@ -146,15 +159,15 @@ export function AgentRosterSurface({
         {roster?.profiles.length ? (
           <ul>
             {roster.profiles.map((profile) => (
-              <li key={String(profile.profile_ref)} role="button" tabIndex={0} onClick={() => setSelected({ kind: "profile", ref: profile.profile_ref })} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelected({ kind: "profile", ref: profile.profile_ref }); } }}>
+              <li key={profile.source_scope + ":" + profile.profile_ref} role="button" tabIndex={0} onClick={() => setSelected({ kind: "profile", ref: profile.profile_ref, scope: profile.source_scope })} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelected({ kind: "profile", ref: profile.profile_ref, scope: profile.source_scope }); } }}>
                 <strong>{profile.purpose || profile.role || "Agent profile"}</strong>
-                <span>{profile.role || "Authored project profile"}</span>
+                <span>{profile.role || "Agent profile"}</span>
                 <small>Select for details</small>
               </li>
             ))}
           </ul>
         ) : (
-          roster && <p>No project AgentProfiles are authored.</p>
+          roster && <p>No AgentProfiles are authored in the disclosed scopes.</p>
         )}
       </section>
 
@@ -163,7 +176,7 @@ export function AgentRosterSurface({
         {roster?.sets.length ? (
           <ul>
             {roster.sets.map((set) => (
-              <li key={String(set.ref)} role="button" tabIndex={0} onClick={() => setSelected({ kind: "set", ref: set.ref })} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelected({ kind: "set", ref: set.ref }); } }}>
+              <li key={set.source_scope + ":" + set.ref} role="button" tabIndex={0} onClick={() => setSelected({ kind: "set", ref: set.ref, scope: set.source_scope })} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelected({ kind: "set", ref: set.ref, scope: set.source_scope }); } }}>
                 <strong>Agent team</strong>
                 <span>
                   {Array.isArray(set.members)
@@ -179,11 +192,11 @@ export function AgentRosterSurface({
             ))}
           </ul>
         ) : (
-          roster && <p>No project AgentSets are authored.</p>
+          roster && <p>No AgentSets are authored in the disclosed scopes.</p>
         )}
       </section>
 
-      <AgentDetail profile={selectedProfile} set={selectedSet} />
+      {(!!roster?.profiles.length || !!roster?.sets.length) && <AgentDetail profile={selectedProfile} set={selectedSet} />}
 
       <section>
         <h3>Current sessions</h3>
@@ -194,8 +207,12 @@ export function AgentRosterSurface({
         )}
       </section>
 
-      <SessionSpaceControls project={project} projectRef={projectRef} />
+      <details className="agents-workspace-settings">
+        <summary>Workspace settings</summary>
+        <SessionSpaceControls project={project} projectRef={projectRef} />
+      </details>
 
+      {expressionAvailable && (
       <details>
         <summary>Express an AgentProfile intent</summary>
         <p>
@@ -289,6 +306,7 @@ export function AgentRosterSurface({
           </details>
         )}
       </details>
+      )}
     </section>
   );
 }

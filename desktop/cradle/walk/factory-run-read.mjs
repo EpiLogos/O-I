@@ -14,4 +14,6 @@ const decoder=await import("data:text/javascript,"+encodeURIComponent(javascript
 const reading=JSON.parse(native.stdout)
 if (!decoder.runReading(reading)) throw new Error("Factory Run reading was rejected by the desktop decoder")
 if (reading.runMap.nodes.destination?.state !== null) throw new Error("expected actual destination node to retain nullable state")
-console.log(JSON.stringify({contract:reading.contract,runRef:reading.runRef,destination:reading.destination,nodes:Object.keys(reading.runMap.nodes).length,decoded:true}))
+if (!Array.isArray(reading.runMap.edges) || reading.runMap.edges.length!==1 || reading.runMap.edges[0].relation!=="branches_to") throw new Error("expected exact native RunMap edge reading")
+if (reading.runMap.nodes["work-verify-header-continuity"]?.semanticRef!=="workflow-unit:6WE8KR1PMA9F4NDBH44FCC63NR") throw new Error("expected exact native semantic reference")
+console.log(JSON.stringify({contract:reading.contract,runRef:reading.runRef,destination:reading.destination,nodes:Object.keys(reading.runMap.nodes).length,edges:reading.runMap.edges.length,decoded:true}))

@@ -192,3 +192,7 @@
 
 .encounter-dispatch-disclosure{margin-top:10px;font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2)}
 .encounter-dispatch-disclosure>summary{cursor:pointer;padding:5px 0}
+
+.encounter-completed{padding:10px 0;border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft);font-size:var(--oi-shell-type-ui);color:var(--oi-muted-2)}
+.encounter-completed strong{font-weight:500}
+.encounter-completed p{margin:5px 0 0}

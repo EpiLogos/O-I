@@ -17,19 +17,17 @@ try{
  await page.getByRole("button",{name:"O-I",exact:true}).click();
  await page.getByRole("navigation",{name:"O-I work",exact:true}).getByRole("button",{name:"Runs / Build",exact:true}).click();
  const runs=page.getByRole("region",{name:"Factory Runs and Build",exact:true});
- await runs.getByText("Connect Factory source",{exact:true}).click();
+ await runs.getByText("Connect Factory",{exact:true}).click();
  await runs.getByLabel("Developmental state path").fill(statePath);
  await runs.getByLabel("Run ref (optional)").fill(runRef);
  await runs.getByRole("button",{name:"Read Runs",exact:true}).click();
- await runs.getByRole("button",{name:"Open handoff",exact:true}).click();
- const handoff=page.getByRole("region",{name:"Factory handoff",exact:true});
- await handoff.getByText("Factory has retained no attempt handoff for this Run.",{exact:true}).waitFor();
- check(await handoff.getByRole("alert").count()===0,"Native retained-task read opens in an ordinary handoff Surface");
- check(await handoff.getByRole("navigation",{name:"Retained Factory tasks",exact:true}).count()===0,"Queued Run does not fabricate task or Return material");
- await page.waitForFunction(()=>JSON.parse(localStorage.getItem("oi-cradle.workspaces.v1")??"null")?.workspaces.some(w=>Object.values(w.layout.surfaces).some(s=>s.kind==="factory-handoff")));
+ await runs.getByText("No retained handoff",{exact:true}).waitFor();
+ check(await runs.getByRole("button",{name:"Open handoff",exact:true}).count()===0,"A queued Run without a retained task offers no phantom Handoff output");
+ check(await page.locator(".returned-document[data-variant=handoff]").count()===0,"Missing handoff does not fabricate a document or continuation");
  await page.reload({waitUntil:"domcontentloaded"});
- await handoff.getByText("Factory has retained no attempt handoff for this Run.",{exact:true}).waitFor();
- check(await page.locator(".workspace-recovery").count()===0,"Exact handoff Run and source locator survive reload");
+ await runs.getByText("No retained handoff",{exact:true}).waitFor();
+ check(await page.locator(".workspace-recovery").count()===0,"Factory source and Run survive reload without an invented handoff");
+ check(await runs.getByRole("button",{name:"Open handoff",exact:true}).count()===0,"Reload rechecks the real empty retained-task relation");
  await page.screenshot({path:"walk/artifacts/factory-handoff-owner-walk.png"});
  writeFileSync("walk/artifacts/factory-handoff-owner-walk.json",JSON.stringify({standing:"C: running application with native Factory readbacks; queued Run only, no execution or H claim",checks,runRef,owner:owner.outcome.data},null,2));
 }catch(error){console.error((await page.locator("body").innerText()).slice(-5500));await page.screenshot({path:"walk/artifacts/factory-handoff-failure.png"});throw error;}finally{await browser.close();}

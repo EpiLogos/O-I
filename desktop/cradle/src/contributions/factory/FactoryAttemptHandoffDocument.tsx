@@ -5,9 +5,8 @@ import type {FactoryAttemptTaskReading,FactoryAttemptTaskView,FactoryOwnerTeleme
  * verification receipts and execution correlations it actually discloses;
  * opaque owner records and unresolved material hosts stay opaque. */
 export function FactoryAttemptHandoffDocument({reading,callbacks}:{reading:FactoryAttemptTaskReading;callbacks?:ReturnedDocumentCallbacks}) {
-  return <section className="factory-attempt-handoff" aria-label="Factory attempt handoff">
-    {reading.attempts.length>0?reading.attempts.map(attempt=><ReturnedDocument key={attempt.record.attemptRef} reading={toReturnedDocument(reading,attempt)} callbacks={callbacks}/> ):<ReturnedDocument reading={noAttemptDocument(reading)} callbacks={callbacks}/>}
-  </section>;
+  if(reading.attempts.length===0) return <section className="factory-handoff-empty" aria-label="No retained Factory attempt"><p>No retained Factory attempt for this task.</p></section>;
+  return <>{reading.attempts.map(attempt=><ReturnedDocument key={attempt.record.attemptRef} reading={toReturnedDocument(reading,attempt)} callbacks={callbacks}/>)}</>;
 }
 
 export function toReturnedDocument(reading:FactoryAttemptTaskReading,attempt:FactoryAttemptTaskView):ReturnedDocumentReading {
@@ -83,19 +82,3 @@ function uiContinuations(reading:FactoryAttemptTaskReading,attempt:FactoryAttemp
 
 function referenceEvidence(label:string,refs:string[]) { return refs.map(ref=>({label,standing:"recorded" as const,refs:[ref]})); }
 function returnedArchiveProvenance(refs:string[]) { return refs.map((value,index)=>({label:`Archive ${index+1}`,value})); }
-
-function noAttemptDocument(reading:FactoryAttemptTaskReading):ReturnedDocumentReading {
-  return {
-    variant:"handoff",
-    subject:{title:"No retained attempt record",ref:reading.taskRef},
-    outcome:{summary:"Factory retained no attempt record for this task."},
-    evidence:[{label:"Factory verification",standing:"missing",required:true,detail:"No Factory attempt exists from which verification can be read."}],
-    continuations:[{label:"UI continuation",prompt:`Read the current Factory task state for ${reading.taskRef} in Run ${reading.runRef} before deciding whether new work can be admitted.`}],
-    provenance:[
-      {label:"Project",value:reading.projectRef},{label:"Run",value:reading.runRef},{label:"Task",value:reading.taskRef},
-      {label:"Factory revision",value:String(reading.revision)},{label:"Run revision",value:String(reading.runRevision)},
-      {label:"Topology revision",value:String(reading.topologyRevision)},{label:"Source current",value:String(reading.sourceCurrent)},
-      {label:"Workflow source",value:reading.workflowSourceRef},{label:"Workflow revision",value:reading.workflowSourceRevision},{label:"Workflow digest",value:reading.workflowSourceDigest},
-    ],
-  };
-}

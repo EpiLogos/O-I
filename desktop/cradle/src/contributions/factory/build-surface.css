@@ -155,3 +155,5 @@
 .fb-build-surface.factory-build .fb-frontier h2{font-size:1rem;line-height:1.55;letter-spacing:0}
 .fb-build-surface .fb-frontier p{font-size:.8rem}
 .fb-build-surface .fb-depth{padding-top:18px}
+
+.fb-build-surface .fb-evidence-open{border:0;padding:0;background:transparent;color:inherit;text-align:left;text-decoration:underline;text-underline-offset:3px;cursor:pointer;font:inherit}

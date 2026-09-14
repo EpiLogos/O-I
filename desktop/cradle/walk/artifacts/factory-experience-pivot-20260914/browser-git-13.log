@@ -1,0 +1,13 @@
+PASS Project Changes opens the real native Git reading centrally
+PASS Native patch body is rendered in the shared return document
+PASS Git return has one document heading
+PASS Actual patch is in What changed
+PASS Native patch exposes multiple actual changed sections
+PASS Selecting a native changed section displays its returned diff
+PASS Git read does not claim verification
+PASS Factory presents the selected native Git document in the existing right pane
+PASS One visible Git document after relocating its Surface
+PASS Maximizing the returned Git pane uses the full right region at 1422px
+PASS Restoring the returned Git pane preserves its persisted right width
+PASS Leaving restores the original central Git Surface
+PASS No application errors

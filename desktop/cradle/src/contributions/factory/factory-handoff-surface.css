@@ -1,0 +1,13 @@
+.factory-handoff-surface { height: 100%; min-height: 0; overflow: auto; }
+.factory-handoff-surface > .returned-document { margin: 0; border: 0; border-radius: 0; }
+.factory-handoff-standing, .factory-handoff-error, .factory-handoff-retry { margin: 16px; font-size: var(--oi-shell-type-body); line-height: 1.5; }
+.factory-handoff-standing { color: var(--oi-muted-2); }
+.factory-handoff-error { color: var(--oi-danger, #a33); }
+.factory-handoff-task-list { display: grid; gap: 5px; padding: 12px 16px; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); }
+.factory-handoff-task-list > span { color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); font-weight: 600; letter-spacing: .07em; text-transform: uppercase; }
+.factory-handoff-task-list button { min-width: 0; padding: 8px; color: var(--oi-ink); background: transparent; border: var(--oi-shell-edge) solid transparent; border-radius: 3px; text-align: left; font: inherit; overflow-wrap: anywhere; }
+.factory-handoff-task-list button:hover, .factory-handoff-task-list button[aria-pressed="true"] { border-color: var(--oi-hairline); background: var(--oi-wash); }
+.factory-handoff-retry button { min-height: 29px; padding: 5px 9px; color: var(--oi-ink); background: transparent; border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: 4px; font: inherit; }
+.factory-handoff-empty { display: grid; justify-items: start; gap: 10px; margin: 18px 16px; color: var(--oi-muted-2); font-size: var(--oi-shell-type-body); line-height: 1.5; }
+.factory-handoff-empty p { margin: 0; }
+.factory-handoff-empty button { min-height: 29px; padding: 5px 9px; color: var(--oi-ink); background: transparent; border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: 4px; font: inherit; }

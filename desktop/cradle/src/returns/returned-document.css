@@ -67,3 +67,10 @@
 .git-working-state-warning { color: var(--oi-danger) !important; }
 .git-working-state-empty { margin: 16px 0 0; color: var(--oi-muted-2); }
 @media (max-width: 640px) { .git-working-state { padding: 16px; } .git-working-state-header { display: grid; } .git-working-state-header button { justify-self: start; } .git-working-state-patch pre { font-size: 11px; } }
+
+/* One document family, with the material taking the space its variant needs. */
+.returned-document{font-size:13px;line-height:1.55}
+.returned-document h2{font-size:18px;line-height:1.35}
+.returned-document[data-variant="preview-media"],.returned-document[data-variant="code"]{max-width:none}
+.returned-document[data-variant="preview-media"] .returned-document-material-host{min-height:260px}
+.returned-document[data-variant="verification"] .returned-document-evidence>li[data-standing="failed"],.returned-document[data-variant="verification"] .returned-document-evidence>li[data-standing="outstanding"]{border-left:2px solid var(--oi-danger);padding-left:10px}

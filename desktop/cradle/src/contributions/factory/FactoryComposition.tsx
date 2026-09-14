@@ -33,6 +33,6 @@ export function FactoryComposition({binding, foreground, onView, onOpenWorkingSu
   }, [binding.id, foreground, stage.present]);
   const updateLocator = (factory: FactoryLocator) => onView({...binding.view, factory});
   return <div ref={root} className="factory-composition" data-factory-binding={binding.id}>
-    <FactoryRunsSurface onOpenHandoff={async(statePath,runRef)=>onOpenBinding({id:crypto.randomUUID(),kind:"factory-handoff",title:"Run handoff",project:binding.project,ref:runRef,view:{factory:{statePath,runRef}}})} locator={binding.view?.factory} boundProjectRef={binding.ref} project={binding.project} onOpenWorkingSurface={onOpenWorkingSurface} onLocator={updateLocator}/>
+    <FactoryRunsSurface onOpenMaterial={async(statePath,runRef,selection,expectedRevision)=>onOpenBinding({id:crypto.randomUUID(),kind:"factory-material",title:selection.label,project:binding.project,ref:selection.subjectRef,view:{factory:{statePath,runRef,expectedRevision}}})} onOpenHandoff={async(statePath,runRef)=>onOpenBinding({id:crypto.randomUUID(),kind:"factory-handoff",title:"Run handoff",project:binding.project,ref:runRef,view:{factory:{statePath,runRef}}})} locator={binding.view?.factory} boundProjectRef={binding.ref} project={binding.project} onOpenWorkingSurface={onOpenWorkingSurface} onLocator={updateLocator}/>
   </div>;
 }

@@ -55,6 +55,44 @@ pub struct Detached {
 pub struct Windows(pub Mutex<BTreeMap<String, Detached>>);
 static NEXT: AtomicU64 = AtomicU64::new(1);
 
+fn encounter_space(binding: &Binding) -> Option<&str> {
+    binding.encounter.as_ref()?.get("space")?.as_str()
+}
+
+/// A detached encounter is the owner identity (project, AgentSession,
+/// SessionSpace), not its session ref alone. Other detachable subjects retain
+/// their legacy ref identity; Factory material remains binding-id based so
+/// distinct revisions can stay open together.
+fn same_detached_subject(request: &Binding, stored: &Binding) -> bool {
+    if stored.id == request.id {
+        return true;
+    }
+    if request.kind == "factory-material" || request.reference.is_none() {
+        return false;
+    }
+    if request.kind == "encounter" {
+        return stored.kind == "encounter"
+            && stored.reference == request.reference
+            && stored.project == request.project
+            && encounter_space(stored) == encounter_space(request);
+    }
+    stored.reference == request.reference
+}
+
+/// Existing unscoped callers retain reference-only focus. An encounter caller
+/// that supplies project or SessionSpace may focus only that exact identity.
+fn focus_subject_matches(binding: &Binding, reference: &str, project: Option<&str>, space: Option<&str>) -> bool {
+    if binding.reference.as_deref() != Some(reference) {
+        return false;
+    }
+    if project.is_none() && space.is_none() {
+        return true;
+    }
+    binding.kind == "encounter"
+        && project.map_or(true, |value| binding.project.as_deref() == Some(value))
+        && space.map_or(true, |value| encounter_space(binding) == Some(value))
+}
+
 #[tauri::command]
 pub fn window_detach(
     app: AppHandle,
@@ -77,7 +115,7 @@ pub fn window_detach(
         if surface.kind != binding.kind || surface.source_ref != binding.reference {
             return Err("Detached binding differs from the kernel subject".into());
         }
-        if !matches!(binding.kind.as_str(), "source" | "knowledge" | "file" | "encounter" | "browser" | "terminal" | "flow" | "factory-handoff" | "development-field") {
+        if !matches!(binding.kind.as_str(), "source" | "knowledge" | "file" | "encounter" | "browser" | "terminal" | "flow" | "factory-handoff" | "factory-material" | "development-field") {
             return Err("This surface has no native detached body".into());
         }
         if binding.kind == "file" {
@@ -100,7 +138,7 @@ pub fn window_detach(
         .lock()
         .map_err(|_| "Window state unavailable")?
         .iter()
-        .find(|(_, r)| r.binding.id == binding.id || (binding.reference.is_some() && r.binding.reference == binding.reference))
+        .find(|(_, r)| same_detached_subject(&binding, &r.binding))
         .map(|(label, _)| label.clone());
     if let Some(label) = existing {
         if let Some(existing) = app.get_window(&label) {
@@ -259,14 +297,19 @@ pub fn window_redock(window: Window) -> Result<(), String> {
     window.close().map_err(|e| e.to_string())
 }
 #[tauri::command]
-pub fn window_focus_subject(app: AppHandle, reference: String) -> Result<bool, String> {
+pub fn window_focus_subject(
+    app: AppHandle,
+    reference: String,
+    project: Option<String>,
+    space: Option<String>,
+) -> Result<bool, String> {
     let label = app
         .state::<Windows>()
         .0
         .lock()
         .map_err(|_| "Window state unavailable")?
         .iter()
-        .find(|(_, r)| r.binding.reference.as_deref() == Some(&reference))
+        .find(|(_, r)| focus_subject_matches(&r.binding, &reference, project.as_deref(), space.as_deref()))
         .map(|(k, _)| k.clone());
     if let Some(window) = label.and_then(|l| app.get_window(&l)) {
         window.set_focus().map_err(|e| e.to_string())?;
@@ -281,4 +324,47 @@ pub fn window_focus_main(app: AppHandle, window: Window) -> Result<(), String> {
     if window.label() != "main" { return Err("Workspace navigation focus belongs to the main window".into()); }
     app.get_window("main").ok_or("Workspace window is unavailable")?
         .set_focus().map_err(|error|error.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn encounter(id: &str, project: &str, space: &str) -> Binding {
+        Binding {
+            id: id.into(), kind: "encounter".into(), title: "Conversation".into(),
+            reference: Some("agent-session/shared".into()), project: Some(project.into()),
+            address: None, encounter: Some(serde_json::json!({"space": space})), browser: None,
+            terminal: None, flow: None, view: None, location: None,
+        }
+    }
+
+    #[test]
+    fn encounter_detach_identity_requires_project_and_space() {
+        let first = encounter("first", "Factory", "session-space/factory");
+        let other_project = encounter("second", "Central", "session-space/central");
+        let other_space = encounter("third", "Factory", "session-space/other");
+        assert!(same_detached_subject(&first, &first));
+        assert!(!same_detached_subject(&first, &other_project));
+        assert!(!same_detached_subject(&first, &other_space));
+    }
+
+    #[test]
+    fn scoped_focus_rejects_same_ref_from_another_project() {
+        let first = encounter("first", "Factory", "session-space/factory");
+        let other_project = encounter("second", "Central", "session-space/central");
+        assert!(focus_subject_matches(&first, "agent-session/shared", Some("Factory"), Some("session-space/factory")));
+        assert!(!focus_subject_matches(&other_project, "agent-session/shared", Some("Factory"), Some("session-space/factory")));
+        assert!(focus_subject_matches(&other_project, "agent-session/shared", None, None));
+    }
+
+    #[test]
+    fn factory_material_dedup_stays_binding_id_based() {
+        let mut first = encounter("material-one", "Factory", "session-space/factory");
+        first.kind = "factory-material".into();
+        let mut revision_two = first.clone();
+        revision_two.id = "material-two".into();
+        assert!(same_detached_subject(&first, &first));
+        assert!(!same_detached_subject(&first, &revision_two));
+    }
 }

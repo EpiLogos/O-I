@@ -23,6 +23,8 @@ interface Props {
   right?: ReactNode;
   sessionIngress?: ReactNode;
   accompanyingTarget?: string;
+  complementary?:boolean;
+  companionHost?:(node:HTMLDivElement|null)=>void;
   returnedHost?: (node:HTMLDivElement|null)=>void;
   namingRequest: "create" | "rename" | null; onNamingHandled: () => void;
   error: string | null; navigator: (workspaceSelector: ReactNode) => ReactNode; children: ReactNode;
@@ -241,7 +243,7 @@ export function DesktopShell(p: Props) {
 
         {p.children}
       </main>
-      <aside className={`desktop-side right depth-${right}`} data-region="right" data-depth={right} data-overlay={overlayRight && right === "panel"} data-focus-ref={ref} aria-hidden={!rightOpen} aria-label={composed?"Returned material region":"Agent and inspector region"}>
+      <aside className={`desktop-side right depth-${right}`} data-region="right" data-depth={right} data-overlay={overlayRight && right === "panel"} data-focus-ref={ref} aria-hidden={!rightOpen} aria-label={composed?"Result region":"Agent and inspector region"}>
         {<>
           {right === "panel" && separator("right")}
           <div className="desktop-side-content">
@@ -257,7 +259,7 @@ export function DesktopShell(p: Props) {
             <div className="inspector-body">
               {plane === "system" ? <SystemPanel/> : plane === "history" ? p.subject.history ?? <p>No history operation is available for this subject.</p> : p.subject.context}
             </div>
-          </>}<div ref={p.returnedHost} className="shell-return-host" data-shell-return-host hidden={!composed}/></div>
+          </>}<div ref={p.companionHost} className="shell-companion-host" hidden={!p.complementary}/><div ref={p.returnedHost} className="shell-return-host" data-shell-return-host hidden={!composed}/></div>
         </>}
       </aside>
     </div>

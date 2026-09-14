@@ -1,0 +1,20 @@
+{
+  "standing": "C: frozen native Factory Build read and production material decoder; no populated Candidate/Evidence exists in this owner reading.",
+  "source": {
+    "factory": "/home/frank/Central/Work/Factory/.worktrees/codex-developmental-build-read/target/debug/factory",
+    "statePath": "/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/material/header-continuity.state.json",
+    "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD",
+    "buildRevision": 1,
+    "factoryStateRevision": 1
+  },
+  "assertions": [
+    "exact Run decoded",
+    "unknown material subject refused",
+    "duplicate canonical material identity refused"
+  ],
+  "ownerMaterial": {
+    "candidates": 0,
+    "evidence": 0,
+    "positivePopulatedMaterial": "unproved"
+  }
+}

@@ -207,6 +207,18 @@ impl CentralClient {
                 Some(_) => {}
             }
         }
+        let encoded = serde_json::to_string(&input).map_err(|error| OwnerCallError::Malformed {
+            detail: format!("encode {action} input: {error}"),
+        })?;
+        self.call_owner(&["action", "run", action, &encoded], action)
+    }
+
+    /// Read public installed Action descriptors; disclosure grants no authority.
+    pub fn action_catalog(&self) -> Result<Value, OwnerCallError> {
+        self.call_owner(&["action", "list"], "action list")
+    }
+
+    fn call_owner(&self, args: &[&str], action: &str) -> Result<Value, OwnerCallError> {
         let mut command = Command::new(&self.executable);
         if self.suite_route {
             command.arg("central");
@@ -218,13 +230,7 @@ impl CentralClient {
         if let Some(root) = &self.central_root {
             command.arg("--root").arg(root);
         }
-        command
-            .arg("action")
-            .arg("run")
-            .arg(action)
-            .arg(serde_json::to_string(&input).map_err(|error| OwnerCallError::Malformed {
-                detail: format!("encode {action} input: {error}"),
-            })?);
+        command.args(args);
         let output = command.output().map_err(|error| OwnerCallError::Unavailable {
             detail: format!("launch {} for {action}: {error}", self.executable.display()),
         })?;

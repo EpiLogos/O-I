@@ -19,6 +19,11 @@ try {
  check(before.length>0,"Native patch body is rendered in the shared return document");
  check(await surface.getByRole("heading",{level:2}).count()===1,"Git return has one document heading");
  check(await surface.locator(".returned-document-section").first().locator(".git-working-state-patch").count()===1,"Actual patch is in What changed");
+ const patchSections=surface.getByRole("navigation",{name:"Changed patch sections",exact:true}).getByRole("button");
+ check(await patchSections.count()>1,"Native patch exposes multiple actual changed sections");
+ const selectedPatch=await patchSections.nth(1).innerText();
+ await patchSections.nth(1).click();
+ check((await surface.locator(".git-working-state-patch pre").innerText()).includes(selectedPatch),"Selecting a native changed section displays its returned diff");
  check(await surface.getByText("missing",{exact:true}).count()>0,"Git read does not claim verification");
  await nav.getByRole("button",{name:"Runs / Build",exact:true}).click();
  await page.getByRole("region",{name:"Factory Runs and Build",exact:true}).waitFor();

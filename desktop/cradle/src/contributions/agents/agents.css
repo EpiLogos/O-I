@@ -80,3 +80,12 @@
 }
 .agents-detail{display:flex;flex-direction:column;gap:8px;padding:14px;border:1px solid var(--oi-hairline);border-radius:6px;background:var(--oi-composer-ground)}.agents-detail h3,.agents-detail p{margin:0}.agents-detail-purpose{font-size:1.05rem;color:var(--oi-accent-ink)!important}.agents-detail dl{display:grid;grid-template-columns:minmax(90px,auto) 1fr;gap:5px 12px;margin:0}.agents-detail dt{color:var(--oi-muted-2)}.agents-detail dd{margin:0;overflow-wrap:anywhere}.agents-detail details{margin-top:4px}.agents-detail-empty{padding:10px;border:1px dashed var(--oi-hairline)}.agents-detail li{display:list-item;border:0;padding:3px 0}
 .agents-proposal-summary{display:grid;grid-template-columns:minmax(70px,auto) 1fr;gap:5px 12px;margin:0}.agents-proposal-summary dt{color:var(--oi-muted-2)}.agents-proposal-summary dd{margin:0;overflow-wrap:anywhere}
+
+.agents-detail-header{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.agents-detail-header h3{margin:0}.agents-detail-kicker,.agents-detail-scope{font-size:.75rem;text-transform:uppercase;letter-spacing:.06em}.agents-detail-kicker{margin:0 0 4px;color:var(--oi-muted-2)!important}.agents-detail-tabs{display:flex;gap:4px;flex-wrap:wrap}.agents-detail-tabs button{padding:5px 8px;font-size:.8rem}.agents-detail-tabs button.is-active{border-color:var(--oi-accent-ink);color:var(--oi-accent-ink)}.agents-detail-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.agents-detail-list h4{margin:0 0 4px;font-size:.85rem}.agents-detail-list p{margin:0;overflow-wrap:anywhere}.agents-detail-members{margin:0;padding-left:18px}.agents-detail-provenance{margin-top:4px}
+@media (max-width:640px){.agents-detail-columns{grid-template-columns:1fr}}
+
+/* Roster content shares the reading scale; session rows remain navigation. */
+.agents-roster{font-size:var(--oi-shell-type-body);line-height:1.5}
+.agents-roster .encounter-row{display:flex;align-items:center;gap:10px;width:100%;min-height:40px;padding:10px 0;text-align:left;background:transparent;border:0;border-bottom:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:0}
+.agents-roster .encounter-row:hover,.agents-roster .encounter-row:focus-visible{background:var(--oi-wash);outline:2px solid var(--oi-accent-soft);outline-offset:2px}
+.agents-roster .encounter-row .encounter-title{color:var(--oi-ink)}

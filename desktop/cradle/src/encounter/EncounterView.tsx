@@ -1,3 +1,4 @@
+import {createPortal} from "react-dom";
 import {useLayoutEffect,useRef,useState,type ReactNode} from "react";
 import type {A2aDifference,A2aPeerFields,EncounterReading,EncounterStatus,JournalPage,PermissionDecision} from "./client";
 import {Glyph} from "../workspace/Glyph";
@@ -8,7 +9,10 @@ import "./encounter.css";
  * "side"/"full" are the accompanying-agent-layer shapes, where the layer
  * renders its own header and plane nav (FND-02) and this view supplies only
  * the transcript + composer. */
-export function EncounterView({title,plane,onPlane,reading,status,draft,pending,error,providers,onProvider,onDraft,onSend,onCancel,onEarlier,onLatest,onPermission,presentation,concealed=false,addressed,resume,onReconnect,readJournal,deliveries,nowRefs,taskBasisWithoutNow,space,a2a,onA2aSeed,onA2aSend}:{title:string;plane:string;onPlane:(plane:"Conversation"|"Activity"|"Context"|"Inspect")=>void;reading?:EncounterReading;status?:EncounterStatus;draft:string;pending:boolean;error?:string;providers:{id:string;label:string}[];onProvider:(id:string)=>void;onDraft:(text:string)=>void;onSend:()=>void;onCancel:()=>void;onEarlier:()=>void;onLatest:()=>void;onPermission:(id:string,decision:PermissionDecision)=>void;presentation:"tab"|"side"|"full";concealed?:boolean;addressed?:ReactNode;resume?:{provider:string};onReconnect:(provider:string)=>void;readJournal?:(after:number)=>Promise<JournalPage>;deliveries?:{ref:string;phase:string}[];nowRefs?:{ref:string;register:string|null}[];taskBasisWithoutNow?:boolean;space?:string;a2a?:{seed?:string;busy:boolean;difference?:A2aDifference;error?:string};onA2aSeed?:(seed:string)=>void;onA2aSend?:(seed:string,fields:A2aPeerFields)=>void}) {
+export type EncounterViewProps = {title:string;plane:string;onPlane:(plane:"Conversation"|"Activity"|"Context"|"Inspect")=>void;reading?:EncounterReading;status?:EncounterStatus;draft:string;pending:boolean;error?:string;providers:{id:string;label:string}[];onProvider:(id:string)=>void;onDraft:(text:string)=>void;onSend:()=>void;onCancel:()=>void;onEarlier:()=>void;onLatest:()=>void;onPermission:(id:string,decision:PermissionDecision)=>void;presentation:"tab"|"side"|"full";concealed?:boolean;addressed?:ReactNode;resume?:{provider:string};onReconnect:(provider:string)=>void;readJournal?:(after:number)=>Promise<JournalPage>;deliveries?:{ref:string;phase:string}[];nowRefs?:{ref:string;register:string|null}[];taskBasisWithoutNow?:boolean;space?:string;a2a?:{seed?:string;busy:boolean;difference?:A2aDifference;error?:string};onA2aSeed?:(seed:string)=>void;onA2aSend?:(seed:string,fields:A2aPeerFields)=>void;inspectControls?:ReactNode;complementary?:{host:HTMLElement;plane:"Activity"|"Context"|"Inspect"}};
+export function EncounterView(props:EncounterViewProps) {
+  const {title,plane,onPlane,reading,status,draft,pending,error,providers,onProvider,onDraft,onSend,onCancel,onEarlier,onLatest,onPermission,presentation,concealed=false,addressed,resume,onReconnect,readJournal,deliveries,nowRefs,taskBasisWithoutNow,space,a2a,onA2aSeed,onA2aSend}=props;
+  const {complementary,inspectControls}=props;
   const transcript=useRef<HTMLDivElement>(null);const following=useRef(true);
   const composerInput=useRef<HTMLTextAreaElement>(null);
   useLayoutEffect(()=>{const element=transcript.current;if(element&&following.current)element.scrollTop=element.scrollHeight;},[reading,plane]);
@@ -27,7 +31,7 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
   // conversational kinds to the Conversation plane.
   const blocks=reading?.blocks.filter(block=>plane!=="Activity"||!["user","assistant"].includes(block.kind));
   const tab=presentation==="tab";
-  return <section hidden={concealed} style={concealed?{display:"none"}:undefined} className="encounter" data-presentation={presentation} aria-label="Encounter">
+  return <><section hidden={concealed} style={concealed?{display:"none"}:undefined} className="encounter" data-presentation={presentation} aria-label="Encounter">
     {tab && <header className="encounter-heading"><span className="encounter-mark" aria-hidden="true">◌</span><div><h2>{title}</h2><small>{status?.provider?.label??(connected?"Native encounter":"Choose a provider")}</small></div><span className="encounter-state" role="status">{running?status?.state==="InterruptRequested"?"Stopping…":"Responding…":connected?"Connected":"Disconnected"}</span></header>}
     {tab && <nav className="encounter-planes" aria-label="Encounter planes">{(["Conversation","Activity","Context","Inspect"] as const).map(name=><button key={name} aria-pressed={plane===name} onClick={()=>onPlane(name)}>{name}</button>)}</nav>}
     <div ref={transcript} className="encounter-transcript" aria-label={plane==="Conversation"?"Transcript":`Encounter ${plane}`} onScroll={()=>{const element=transcript.current;if(element)following.current=element.scrollHeight-element.clientHeight-element.scrollTop<48;}}>
@@ -49,22 +53,25 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
         </dl>
       </div>
       :plane==="Inspect"?<div className="encounter-inspect">
-        <dl>
+        {inspectControls}
+        <details><summary>Session identity and authority</summary><dl>
           <dt>Encounter</dt><dd>{reading?.agent_session??"Unavailable"}</dd>
           <dt>Session space</dt><dd>{typeof space==="string"?space:"Not disclosed"}</dd>
           <dt>Native session</dt><dd>{status?.native_session_id??"Not resident — no native session identity"}</dd>
           <dt>Provider</dt><dd>{status?.provider?.label??"No provider identity supplied"}</dd>
           <dt>Connection</dt><dd>{status?.state??"Unavailable"}</dd>
           <dt>Permission authority</dt><dd>{reading?.permission_authority??"Not disclosed"}</dd>
-        </dl>
-        <h3>Addressed deliveries dispatched from this surface</h3>
+        </dl></details>
+        <details><summary>Addressed deliveries</summary>
         {deliveries?.length?<ul className="encounter-deliveries">{deliveries.map(d=><li key={d.ref}><code>{d.ref}</code><span>{d.phase}</span></li>)}</ul>
           :<p>No addressed delivery has been dispatched while this surface is open. Delivery identities are minted here, bound durably by the owner, and re-dispatched never — repeat sends return the owner&apos;s held receipt.</p>}
-        <h3>NOW records reached this surface</h3>
+        </details>
+        <details><summary>Linked NOW records</summary>
         {nowRefs?.length?<ul className="encounter-now-refs">{nowRefs.map(n=><li key={n.ref} data-now-ref={n.ref}><code>{n.ref}</code><span>{n.register?`${n.register} register`:"root register"}</span><NowRelations nowRef={n.ref} project={n.register}/></li>)}</ul>
           :taskBasisWithoutNow?<p data-now-task-uncertain="true">A task basis reached this surface, and the owner&apos;s record carries no allocated NOW yet — the session&apos;s preparation is uncertain. The allocation the owner has not published is not inferred from the ground.</p>
           :<p data-now-relations-empty="true">No NOW records reached this surface. A NOW appears here only when one of this surface&apos;s own records — an addressed dispatch receipt, a task basis — names it; nothing is inferred from transcripts or bindings.</p>}
-        {reading?.actions?.length?<ul className="encounter-actions">{reading.actions.map(a=><li key={a.ref}><span>{a.ref}</span><span>{a.enabled?"Enabled":a.reason??"Disabled"}</span></li>)}</ul>:null}
+        </details>
+        {reading?.actions?.length?<details><summary>Available session operations</summary><ul className="encounter-actions">{reading.actions.map(a=><li key={a.ref}><span>{a.ref}</span><span>{a.enabled?"Enabled":a.reason??"Disabled"}</span></li>)}</ul></details>:null}
         {onA2aSeed && <details className="encounter-alternate-operation"><summary>Exchange with another agent</summary>{reading?.blocks.filter(block=>block.kind==="assistant").slice(-1).map(block=><button key={block.id} disabled={a2a?.busy} onClick={()=>onA2aSeed(block.text)}>Prepare A2A exchange from latest reply</button>)}</details>}
         <details><summary>Raw disclosure</summary><pre>{JSON.stringify({schema:reading?.schema,connection:status,actions:reading?.actions,permission_authority:reading?.permission_authority},null,2)}</pre></details>
       </div>
@@ -78,7 +85,7 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
       {plane==="Activity"&&status?.error&&<p className="encounter-fault" role="alert">The owner reports a connection fault: {status.error}</p>}
       {blocks?.map(block=>(block.kind==="thinking"||block.kind==="provider-notice"||block.kind==="tool"||block.kind==="permission")?<details className="encounter-thinking" data-kind={block.kind} key={block.id}><summary>{block.kind==="thinking"?"Thinking":block.kind==="tool"?"Tool activity":block.kind==="permission"?"Provider consent":"Provider notice"}</summary><div>{block.text}</div></details>
         :block.kind==="error"?<div key={block.id} className="encounter-turn encounter-error" data-kind="error"><span className="encounter-avatar" aria-hidden="true"><Glyph name="chat" size={12}/></span><div><strong>Provider turn failed</strong><p>{block.text}</p></div></div>
-        :block.kind==="completed"&&plane==="Conversation"?null
+        :block.kind==="completed"?plane==="Conversation"?null:<div key={block.id} className="encounter-completed" data-kind="completed"><strong>Turn completed</strong>{block.text&&<p>{block.text}</p>}</div>
         :<div key={block.id} className={`encounter-turn encounter-${block.kind}`}><span className="encounter-avatar" aria-hidden="true">{block.kind==="user"?"Y":<Glyph name="chat" size={12}/>}</span><div><strong>{block.kind==="user"?"You":block.kind==="assistant"?(status?.provider?.label??"Assistant"):block.kind==="permission"?"Native permission requested":block.kind==="cancelled"?"Stopped":"Provider report"}</strong><p>{block.text}</p></div></div>)}
       {!reading&&<p role="status">Reading encounter…</p>}{plane==="Activity"&&blocks?.length===0&&!status?.error&&<p>No provider activity in this transcript page.</p>}
       {plane==="Activity"&&readJournal&&<ActivityJournal read={readJournal}/>}
@@ -112,7 +119,7 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
       </div>
       {addressed && <details className="encounter-dispatch-disclosure"><summary>Addressed dispatch</summary>{addressed}</details>}
     </div>}
-  </section>;
+  </section>{complementary&&createPortal(<EncounterView {...props} plane={complementary.plane} presentation="side" concealed={false} complementary={undefined}/>,complementary.host)}</>;
 }
 /** The agency panel's A2A exchange: the seeded passage is the resident's own
  * reply, verbatim. The peer fields compose the owner floor's binding per send;

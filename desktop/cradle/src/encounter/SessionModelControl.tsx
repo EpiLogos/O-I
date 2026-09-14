@@ -1,6 +1,7 @@
 import {useEffect,useRef,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {encounter} from "./client";
+import "./session-model-control.css";
 interface ModelReading {
   agent_session:string;
   native_session_id:string;

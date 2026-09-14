@@ -1,21 +1,22 @@
 import {useCallback, useEffect, useRef, useState} from "react"
 import {useKernel} from "../../kernel/KernelProvider"
 import {listFactoryAttemptTasks} from "./attempt-task"
+import {RunMapReading} from "./RunMapReading"
 import {BuildSurface} from "./BuildSurface"
 import {developmentRead} from "./development"
 import {FactoryRunList, FactorySelectedRunSummary} from "./run-list"
 import {journeyReading, projectReading, runReading, type JourneyReading, type ProjectReading, type RunReading} from "./run-reading"
-import type {FactoryBuildView} from "./types"
+import type {FactoryBuildView,FactoryMaterialSelection} from "./types"
 
 /** Persist only explicit Factory owner inputs. A Project name is never a substitute for its canonical ref. */
 export interface FactoryLocator { statePath: string; projectRef?: string; centralProjectRef?: string; runRef?: string; telemetryRef?: string }
-interface BuildSnapshot {contract: string; view: FactoryBuildView}
+interface BuildSnapshot {contract: string; revision:number; view: FactoryBuildView}
 type HandoffAvailability={kind:"idle"}|{kind:"checking"}|{kind:"empty"}|{kind:"available";taskRefs:string[]}|{kind:"unavailable";detail:string}
 interface CentralProjectLinkReading {contract: string; link: {factoryProjectRef: string; centralProjectRef: string}; project: ProjectReading}
 
 function buildReading(value: unknown): value is BuildSnapshot {
  const reading=value as Partial<BuildSnapshot>|undefined
- return reading?.contract==="factory.build-view/v1" && typeof reading.view==="object" && reading.view!==null
+ return reading?.contract==="factory.build-view/v1" && typeof reading.revision==="number" && Number.isSafeInteger(reading.revision) && reading.revision>=0 && typeof reading.view==="object" && reading.view!==null && typeof reading.view.project?.projectRef==="string" && typeof reading.view.run?.runRef==="string"
 }
 function centralProjectLinkReading(value: unknown): value is CentralProjectLinkReading {
  const reading=value as Partial<CentralProjectLinkReading>|undefined
@@ -23,7 +24,7 @@ function centralProjectLinkReading(value: unknown): value is CentralProjectLinkR
 }
 
 /** Centre-plane owner reader. It preserves the last compatible read during a failed refresh and never derives refs from labels. */
-export function FactoryRunsSurface({locator,boundProjectRef,project:projectName,onOpenWorkingSurface,onLocator,onOpenHandoff}:{onOpenHandoff:(statePath:string,runRef:string)=>Promise<void>;locator?:FactoryLocator;boundProjectRef?:string;project?:string;onOpenWorkingSurface:(selection:import("../../encounter/working-surface").WorkingSurfaceSelection)=>Promise<void>;onLocator:(value:FactoryLocator)=>void}) {
+export function FactoryRunsSurface({locator,boundProjectRef,project:projectName,onOpenWorkingSurface,onLocator,onOpenHandoff,onOpenMaterial}:{onOpenMaterial:(statePath:string,runRef:string,selection:FactoryMaterialSelection,expectedRevision?:number)=>Promise<void>;onOpenHandoff:(statePath:string,runRef:string)=>Promise<void>;locator?:FactoryLocator;boundProjectRef?:string;project?:string;onOpenWorkingSurface:(selection:import("../../encounter/working-surface").WorkingSurfaceSelection)=>Promise<void>;onLocator:(value:FactoryLocator)=>void}) {
  const kernel=useKernel()
  const [statePath,setStatePath]=useState(locator?.statePath??"")
  const [projectRef,setProjectRef]=useState(locator?.centralProjectRef??boundProjectRef??"")
@@ -135,7 +136,7 @@ export function FactoryRunsSurface({locator,boundProjectRef,project:projectName,
  },[boundProjectRef,locator?.centralProjectRef,locator?.runRef,locator?.statePath,projectRef,readCentralProject,requestedRun,statePath])
  const connect=()=>{ const path=statePath.trim(),ref=projectRef.trim(),run=requestedRun.trim(); if(path&&ref) { onLocator({statePath:path,centralProjectRef:ref,...(run?{runRef:run}: {})}); refresh(path,ref,run) } }
  const selectRun=(runRef:string)=>{ const centralRef=locator?.centralProjectRef??boundProjectRef; if(locator?.statePath&&centralRef) onLocator({statePath:locator.statePath,centralProjectRef:centralRef,runRef}) }
- const sourceControl=<details className="factory-source-picker"><summary>{locator?"Factory source":"Connect Factory source"}</summary><form onSubmit={event=>{event.preventDefault();connect()}}><label>Developmental state path<input value={statePath} onChange={event=>setStatePath(event.target.value)} required spellCheck={false} autoComplete="off"/></label><label>Central Project ref<input value={projectRef} onChange={event=>setProjectRef(event.target.value)} required placeholder="project:…" spellCheck={false} autoComplete="off"/></label><label>Run ref (optional)<input value={requestedRun} onChange={event=>setRequestedRun(event.target.value)} spellCheck={false} autoComplete="off"/></label><button type="submit" disabled={busy}>Read Runs</button></form></details>
+ const sourceControl=<details className="factory-source-picker"><summary aria-label={locator?"Factory source setup":"Connect Factory source"}>{locator?"Setup":"Connect Factory"}</summary><form onSubmit={event=>{event.preventDefault();connect()}}><label>Developmental state path<input value={statePath} onChange={event=>setStatePath(event.target.value)} required spellCheck={false} autoComplete="off"/></label><label>Central Project ref<input value={projectRef} onChange={event=>setProjectRef(event.target.value)} required placeholder="project:…" spellCheck={false} autoComplete="off"/></label><label>Run ref (optional)<input value={requestedRun} onChange={event=>setRequestedRun(event.target.value)} spellCheck={false} autoComplete="off"/></label><button type="submit" disabled={busy}>Read Runs</button></form></details>
  const retryHandoff=()=>{if(locator?.statePath&&selectedRun) void readHandoffAvailability(locator.statePath,selectedRun,request.current)}
  const handoffControl=handoff.kind==="available"&&locator?.statePath&&selectedRun?<button type="button" onClick={()=>void onOpenHandoff(locator.statePath,selectedRun).catch(reason=>setError(String(reason)))}>Open handoff</button>:handoff.kind==="checking"?<span className="factory-handoff-standing" role="status">Checking retained handoff…</span>:handoff.kind==="empty"?<span className="factory-handoff-standing">No retained handoff</span>:handoff.kind==="unavailable"?<span className="factory-handoff-standing" role="status">Retained handoff unavailable: {handoff.detail}<button type="button" onClick={retryHandoff}>Retry</button></span>:null
  const selectedJourney=selectedRun?Object.values(journeys).find(journey=>journey?.runRefs.includes(selectedRun)):undefined
@@ -146,6 +147,6 @@ export function FactoryRunsSurface({locator,boundProjectRef,project:projectName,
   {error&&<p className="factory-owner-refusal" role="alert">Factory read unavailable: {error}{locator?.statePath&&<button type="button" onClick={()=>refresh()}>Retry Factory read</button>}</p>}
   {!locator&&<p className="factory-runs-empty">Choose a Factory source and Project ref.</p>}
   {locator&&!project&&!error&&<p className="factory-runs-empty">Loading Factory Runs…</p>}
-  {project&&<div className={"factory-runs-layout"+(project.journeys.length===0&&selectedRunReading?" factory-runs-single":"")}>{(project.journeys.length>0||!selectedRunReading)&&<FactoryRunList project={project} journeys={journeys} runReadings={runReadings} selectedRun={selectedRun} pendingRun={pendingRun} onSelectRun={selectRun}/>}<div className="factory-build-centre">{selectedRunReading?<>{activeBuild?<BuildSurface projectLabel={projectName} view={activeBuild.view} runSummary={<FactorySelectedRunSummary reading={selectedRunReading} journey={selectedJourney} compact/>} headerControls={<div className="factory-build-controls">{refreshControl}{sourceControl}{handoffControl}</div>} onOpenWorkingSurface={projectName?selection=>onOpenWorkingSurface({...selection,project:projectName}):undefined}/>:<><FactorySelectedRunSummary reading={selectedRunReading} journey={selectedJourney}/><div className="factory-run-reading-state" role="status">{pendingRun===selectedRun?"Loading Factory Build…":"Factory has not returned its Build view."}{handoffControl&&<div className="factory-runs-control-row">{handoffControl}</div>}</div></>}</>:<p className="factory-runs-empty">Select a published Run.</p>}</div></div>}
+  {project&&<div className={"factory-runs-layout"+(project.journeys.length===0&&selectedRunReading?" factory-runs-single":"")}>{(project.journeys.length>0||!selectedRunReading)&&<FactoryRunList project={project} journeys={journeys} runReadings={runReadings} selectedRun={selectedRun} pendingRun={pendingRun} onSelectRun={selectRun}/>}<div className="factory-build-centre">{selectedRunReading?<>{activeBuild?<BuildSurface runMap={<RunMapReading reading={selectedRunReading}/>} onOpenMaterial={locator?.statePath?selection=>onOpenMaterial(locator.statePath,selectedRunReading.runRef,selection,activeBuild.revision):undefined} view={activeBuild.view} runSummary={<FactorySelectedRunSummary reading={selectedRunReading} journey={selectedJourney} compact/>} headerControls={<div className="factory-build-controls">{refreshControl}{sourceControl}{handoffControl}</div>} onOpenWorkingSurface={projectName?selection=>onOpenWorkingSurface({...selection,project:projectName}):undefined}/>:<><FactorySelectedRunSummary reading={selectedRunReading} journey={selectedJourney}/><div className="factory-run-reading-state" role="status">{pendingRun===selectedRun?"Loading Factory Build…":"Factory has not returned its Build view."}{handoffControl&&<div className="factory-runs-control-row">{handoffControl}</div>}</div></>}</>:<p className="factory-runs-empty">Select a published Run.</p>}</div></div>}
  </section>
 }
