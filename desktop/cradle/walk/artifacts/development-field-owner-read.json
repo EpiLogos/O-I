@@ -1,0 +1,86 @@
+{
+  "schema": "oi.cradle.development-field-owner-read/v1",
+  "observed_at": "2026-09-14T17:57:35+00:00",
+  "scope": {
+    "project": "O-I",
+    "declared_cwd": "/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement",
+    "base_revision": "b206791fd02215745ae91c61c80b86f927b4054a",
+    "resource_refs": []
+  },
+  "public_cli": {
+    "command": [
+      "oi",
+      "aikit",
+      "development-field",
+      "--json",
+      "-C",
+      "/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement",
+      "--base",
+      "b206791fd02215745ae91c61c80b86f927b4054a"
+    ],
+    "owner_operation": "aikit development-field",
+    "data_contract": "aikit.development-field-reading/v1"
+  },
+  "kernel_operation": {
+    "op": "development_field_read",
+    "request": {
+      "project": "O-I",
+      "cwd": "/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement",
+      "base_revision": "b206791fd02215745ae91c61c80b86f927b4054a",
+      "refs": []
+    },
+    "result": "development_field_reading"
+  },
+  "response_source_fields": {
+    "version": "aikit.development-field-reading/v1",
+    "git_basis": {
+      "state": "available"
+    },
+    "executable_basis": {
+      "executable": "/home/frank/.local/bin/aikit",
+      "modality": "developer",
+      "package_version": "0.1.0",
+      "source_dirty": true,
+      "source_revision": "5e55dfadd4ac86dd3eea3f85de3b4cd2409a718e"
+    },
+    "git": {
+      "base_revision": "b206791fd02215745ae91c61c80b86f927b4054a",
+      "current_diff_from_base": {
+        "base_revision": "b206791fd02215745ae91c61c80b86f927b4054a",
+        "observed_head": "4f0018dcdac746d5dad0a02beb165b661fb26832",
+        "truncated": true,
+        "untracked_paths": [
+          ".central/source-return.lock",
+          "cli/src/bimba_map_command.rs"
+        ],
+        "patch": "omitted from receipt"
+      },
+      "world": {
+        "repository": {
+          "branch": "main",
+          "head": "4f0018dcdac746d5dad0a02beb165b661fb26832",
+          "repository_root": "/home/frank/Central/Work/O-I",
+          "worktree_root": "/home/frank/Central/Work/O-I"
+        }
+      }
+    }
+  },
+  "validation_assertions": [
+    "The bridge returned ok=true and result=development_field_reading.",
+    "The response retained the caller's declared project, cwd, and exact base revision.",
+    "The response parsed the public data contract and Git basis state as available.",
+    "The response carried the native executable basis verbatim, including developer modality and source_dirty=true.",
+    "The owner-reported Git worktree is /home/frank/Central/Work/O-I, which differs from the caller's declared worktree; the consumer preserves this observation and does not replace it with a locally derived diff.",
+    "No patch content is retained in this receipt."
+  ],
+  "negative_outside_project_refusal": {
+    "request": {
+      "op": "development_field_read",
+      "project": "O-I",
+      "cwd": "/tmp",
+      "base_revision": "b206791fd02215745ae91c61c80b86f927b4054a"
+    },
+    "ok": false,
+    "error": "Disclosed worktree is outside Central's disclosed Project location"
+  }
+}

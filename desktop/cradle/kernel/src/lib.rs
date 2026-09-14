@@ -46,6 +46,7 @@ pub mod refs;
 pub mod world;
 pub mod commission;
 pub mod flow_cognition;
+pub mod development_field;
 
 pub use flow::{CentralClient, OwnerCallError};
 
@@ -245,6 +246,16 @@ pub enum KernelOp {
     DaySourceOpen { #[serde(default)] day_ref: Option<String> },
     Encounter {project:String,request:agency::EncounterRequest},
     MaterialRead {target:material::Target},
+    /// Read the AIKit-owned Development Field at an explicitly disclosed
+    /// repository/worktree. `project` resolves through Central first; `cwd`
+    /// is then checked to be inside that disclosed Project, never used to
+    /// infer an Agent/session relation. AIKit supplies every Git fact.
+    DevelopmentFieldRead {
+        project: String,
+        cwd: ::std::path::PathBuf,
+        base_revision: String,
+        #[serde(default)] refs: Vec<String>,
+    },
     /// The re-pinned build view (queue cell B): the owner CLI reads it as
     /// `factory build snapshot <state> <project-ref> <run-ref>` — the old
     /// `build discover`/`--binding` grammar is gone from the installed cut.
@@ -352,6 +363,11 @@ pub enum KernelOpResult {
     ReceivingReading {data:serde_json::Value},
     NowReading {data:serde_json::Value},
     EncounterTaskReading {data:serde_json::Value},
+    /// AIKit's public Development Field `data` envelope, with the caller's
+    /// declared Project and cwd retained as adapter provenance. The reading
+    /// may report a different observed Git worktree; that owner observation
+    /// is preserved for the UI to disclose rather than corrected locally.
+    DevelopmentFieldReading { project: String, cwd: String, reading: development_field::Reading },
     FactoryDevelopmentReading {data:serde_json::Value},
     /// Factory's structured task-level attempt and handoff reading.
     FactoryAttemptTaskReading {data:serde_json::Value},
@@ -444,6 +460,23 @@ impl Kernel {
     pub fn apply(&mut self, op: KernelOp) -> Result<KernelOpOutcome, String> {
         match op {
             KernelOp::MaterialRead{target} => native_owner_reading("workcell",material::Client::discover().read(&target)),
+            KernelOp::DevelopmentFieldRead { project, cwd, base_revision, refs } => {
+                let root = world::read_world(&self.client).map_err(|error| error.to_string())?;
+                let base = std::path::PathBuf::from(root["root"].as_str().ok_or("Central root location unavailable")?);
+                let row = root["work"]["projects"].as_array().and_then(|rows| rows.iter().find(|row| row["name"].as_str() == Some(project.as_str()))).ok_or("Project is outside Central's disclosed ground")?;
+                let project_root = base.join(row["path"].as_str().ok_or("Project location unavailable")?);
+                let canonical_project = project_root.canonicalize().map_err(|error| format!("Central's disclosed Project location cannot be read: {error}"))?;
+                let canonical_cwd = cwd.canonicalize().map_err(|error| format!("Disclosed worktree cannot be read: {error}"))?;
+                if !canonical_cwd.starts_with(&canonical_project) {
+                    return Err("Disclosed worktree is outside Central's disclosed Project location".into());
+                }
+                let reading = development_field::Client::discover().read(&canonical_cwd, &base_revision, &refs)?;
+                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::DevelopmentFieldReading {
+                    project,
+                    cwd: canonical_cwd.to_string_lossy().into_owned(),
+                    reading,
+                }})
+            }
             KernelOp::FactoryBuildSnapshot {project,state_path,project_ref,run_ref} => {
                 if let Some(project)=&project {
                     let root=world::read_world(&self.client).map_err(|e|e.to_string())?;

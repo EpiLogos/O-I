@@ -95,6 +95,19 @@ export interface NativeFileReading { schema: "central.file-reading/v1"; location
  * `encoding: "base64"`, distinct from the UTF-8 `NativeFileReading` above. */
 export interface NativeFileBytes { location: CentralLocation; revision: string; byte_len: number; mime_hint: string | null; content_base64: string }
 
+/** AIKit's public `aikit.development-field-reading/v1` data envelope. Git
+ * facts remain owner observations: the renderer never runs a Git command or
+ * fills in a missing diff. */
+export interface DevelopmentFieldAvailability { state: "available" | "unknown" | "unavailable" | (string & {}); reason?: string }
+export interface DevelopmentFieldExecutableBasis { executable:string; package_version:string; modality:"installed"|"source"|"developer"|"unknown"|(string & {}); source_revision?:string; source_dirty:boolean }
+export interface DevelopmentFieldGitRepository { branch:string; detached:boolean; head:string; repository_root:string; worktree_root:string; upstream?:string|null; ahead:number; behind:number }
+export interface DevelopmentFieldGitWorking { conflicted:string[]; staged:string[]; unstaged:string[]; untracked:string[] }
+export interface DevelopmentFieldCurrentDiff { base_revision:string; observed_head:string; patch:string; truncated:boolean; untracked_paths:string[] }
+export interface DevelopmentFieldGitWorld { version:string; project:string; provider:unknown; repository:DevelopmentFieldGitRepository; working:DevelopmentFieldGitWorking; worktrees:unknown[] }
+export interface DevelopmentFieldGitBasis { world:DevelopmentFieldGitWorld; base_revision?:string; current_diff_from_base?:DevelopmentFieldCurrentDiff }
+export interface DevelopmentFieldSubject { subject:string; availability:DevelopmentFieldAvailability; [ownerField:string]:unknown }
+export interface DevelopmentFieldReading { version:"aikit.development-field-reading/v1"|(string & {}); executable_basis:DevelopmentFieldExecutableBasis; git_basis:DevelopmentFieldAvailability; git?:DevelopmentFieldGitBasis; central_self_description:{availability:DevelopmentFieldAvailability;self_description_refs:string[]}; subjects:DevelopmentFieldSubject[]; truncated:boolean }
+
 /** W1.5 changed-since-thought compose (`flow_cognition.rs`): ONE typed
  * reading with both owner sides explicit — a side that could not be queried
  * is named, never faked empty. */
@@ -148,6 +161,7 @@ export type KernelOp =
   | {op:"factory_attempt_task_read";state_path:string;run_ref:string;task_ref:string}
   | {op:"factory_attempt_task_list_read";state_path:string;run_ref:string}
   | {op:"workcell_status_read"}
+  | {op:"development_field_read";project:string;cwd:string;base_revision:string;refs?:string[]}
   | {op:"day_read";day_ref?:string}
   | {op:"day_source_open";day_ref?:string}
   | { op: "knowledge"; project?: string; request: KnowledgeRequest }
@@ -194,6 +208,7 @@ export type KernelOpResult =
   | { result:"factory_attempt_task_reading";data:unknown }
   | { result:"factory_attempt_task_list_reading";data:unknown }
   | { result:"workcell_status_reading";data:unknown }
+  | { result:"development_field_reading";project:string;cwd:string;reading:DevelopmentFieldReading }
   | { result:"day_reading";data:unknown }
   | { result: "agency_reading"; project_ref: string; spaces: unknown[]; observed_at_unix_ms: number }
   | { result: "knowledge"; data: unknown }
