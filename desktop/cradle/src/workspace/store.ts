@@ -4,7 +4,6 @@ import { activateSurface, openBinding, redockBinding } from "../surface/engine";
 import { decodeLayout } from "../surface/persist";
 import { freshLayout, type LayoutState } from "../surface/types";
 import {focusedInstrumentBinding,focusedInstrumentSource,subscribeFocusedInstrumentOpen} from "../instrument/source";
-import {persistLatestWorkspace} from "./persistence";
 
 export type ProjectMode = "chats" | "files" | "wiki";
 export interface ProjectNavigation { expanded: boolean; scroll: number; directories?: string[]; mode?: ProjectMode; locationPath?: string }
@@ -84,7 +83,7 @@ export function useWorkspaces() {
   const persist = () => {
     // A corrupt store is retained for recovery, never overwritten by fallback.
     if (held.current.active === "recovery" || (heldRecovery.current && !heldRecovery.current.key)) return false;
-    try { persistLatestWorkspace(held, localStorage, KEY); return true; }
+    try { localStorage.setItem(KEY, JSON.stringify(held.current)); return true; }
     catch { return false; }
   };
   useEffect(() => {

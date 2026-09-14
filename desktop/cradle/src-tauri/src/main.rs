@@ -64,6 +64,16 @@ fn main() {
     }
     let builder = material_protocol::register(tauri::Builder::default());
     builder
+        // Register the owner-supported single-instance plugin before the
+        // remaining plugins. A second launch is delivered to and focuses the
+        // existing main window instead of racing its WebKit workspace store.
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.unminimize();
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+        }))
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             app.manage(windows::Windows::default());

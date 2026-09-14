@@ -58,7 +58,18 @@ pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> t
 }
 
 pub fn dispatch(app: &AppHandle, id: &str) {
-    if id == "application.quit" { app.exit(0); return; }
+    if id == "application.quit" {
+        // Close the main window through Tauri so the renderer receives its
+        // close-requested boundary and can flush the latest workspace book.
+        let detached = app.windows().into_iter().filter(|(label, _)| label != "main").map(|(_, window)| window).collect::<Vec<_>>();
+        for window in detached { let _ = window.close(); }
+        if let Some(window) = app.get_webview_window("main") {
+            let _ = window.close();
+        } else {
+            app.exit(0);
+        }
+        return;
+    }
     if id == "application.show" {
         if let Some(window) = app.get_window("main") {
             let _ = window.show(); let _ = window.unminimize(); let _ = window.set_focus();
