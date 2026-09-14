@@ -279,9 +279,10 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
   }, [kernel.transport.kind]);
 
   // Opt-in native walk receiver: observation only, no global renderer
-  // channel. The report is the forms renderer's own bounded counters —
-  // the native walk contract's exact shape (the Rust side refuses
-  // unknown fields).
+  // channel. Keep the forms renderer's bounded counters, alongside the
+  // browser-visible EngineSurface state needed to distinguish a canvas that
+  // remains mounted or visible from native-window compositor output. The
+  // native walk contract rejects fields outside this exact read-only shape.
   useEffect(() => {
     if (kernel.transport.kind !== "tauri") return;
     let live = true, enabled = false, inFlight = false, queued = false;
@@ -297,7 +298,8 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
         if (inFlight) { queued = true; return; }
         inFlight = true;
         const renderer = overlayRef.current;
-        void invoke("expression_walk_observation", { report: renderer ? renderer.inspect() : null })
+        const overlay = renderer?.inspect();
+        void invoke("expression_walk_observation", { report: overlay ? { ...overlay, engine: surfaceRef.current?.walkObservation() ?? null } : null })
           .catch(() => {})
           .finally(() => { inFlight = false; if (queued) { queued = false; send(); } });
       };

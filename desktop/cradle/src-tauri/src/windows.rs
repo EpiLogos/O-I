@@ -77,7 +77,7 @@ pub fn window_detach(
         if surface.kind != binding.kind || surface.source_ref != binding.reference {
             return Err("Detached binding differs from the kernel subject".into());
         }
-        if !matches!(binding.kind.as_str(), "source" | "knowledge" | "file" | "encounter" | "browser" | "terminal" | "flow") {
+        if !matches!(binding.kind.as_str(), "source" | "knowledge" | "file" | "encounter" | "browser" | "terminal" | "flow" | "factory-handoff" | "development-field") {
             return Err("This surface has no native detached body".into());
         }
         if binding.kind == "file" {
@@ -120,6 +120,8 @@ pub fn window_detach(
         .inner_size(800.0, 650.0)
         .min_inner_size(400.0, 300.0)
         .initialization_script("window.__OI_DETACHED__ = true;");
+    #[cfg(target_os = "linux")]
+    let builder = builder.decorations(false);
     #[cfg(target_os = "macos")]
     let builder = if let Some(id) = app
         .config()

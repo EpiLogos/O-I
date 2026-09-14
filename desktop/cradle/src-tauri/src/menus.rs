@@ -48,12 +48,9 @@ pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> t
     // Reuse the same native menu and dispatch; no second menu action model.
     // Keep the window menu as fallback if the native panel export fails.
     #[cfg(target_os = "linux")]
-    if install_panel_menu(app, menu).is_ok() {
-        // The configured main window may be created after the setup-time
-        // windows map is populated; hide it explicitly as well as any
-        // already-created detached windows.
-        if let Some(window) = app.get_webview_window("main") { window.hide_menu()?; }
-        for window in app.windows().values() { window.hide_menu()?; }
+    match install_panel_menu(app, menu) {
+        Ok(()) => sync_window_menu_visibility(app),
+        Err(error) => eprintln!("O:I: panel menu unavailable; keeping window menu visible: {error}"),
     }
     if let Some(current) = arrangements.iter().find(|w| w.id == active) {
         if let Some(window) = app.get_window("main") { window.set_title(&format!("{} — O-I", current.name))?; }
@@ -86,6 +83,21 @@ pub fn dispatch(app: &AppHandle, id: &str) {
             let _ = window.emit("oi:arrangement-action", id);
             let _ = window.set_focus();
             if let Some(shell)=app.get_webview("main") {let _=shell.set_focus();}
+        }
+    }
+}
+
+#[cfg(target_os = "linux")]
+pub(crate) fn sync_window_menu_visibility(app: &AppHandle) {
+    // The panel export is the authority for hiding the in-window fallback.
+    // Re-run this at the main document Finished boundary because GTK menu
+    // presentation is applied on the native main thread after setup.
+    if app.tray_by_id("oi-workbench-menu").is_none() {
+        return;
+    }
+    for (label, window) in app.windows() {
+        if let Err(error) = window.hide_menu() {
+            eprintln!("O:I: failed to hide menu for window {label}: {error}");
         }
     }
 }

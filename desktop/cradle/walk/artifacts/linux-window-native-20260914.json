@@ -1,0 +1,224 @@
+{
+  "schema": "oi.cradle.linux-window-native/v1",
+  "observed_at": "2026-09-14T19:50:42.679773+00:00",
+  "standing": "M: Linux native window presentation, menu dispatch and persistence; full Factory acceptance remains open",
+  "basis": {
+    "head": "b7b2042fbf0b0c69e0a54dd4e45bbcba45de6919",
+    "native_build": "cargo build --locked -j2, /tmp/oi-u-native-decorations-build.log",
+    "native_build_passed": true,
+    "app_pid": 929710,
+    "backend": "Wayland",
+    "hyprland_xwayland": false,
+    "bounds": [
+      9,
+      33,
+      1422,
+      858
+    ]
+  },
+  "checks": [
+    {
+      "name": "X11 native main and detached window have no redundant GTK menu",
+      "result": "passed",
+      "evidence": [
+        "/tmp/oi-u-native-welcome-final.png",
+        "/tmp/oi-u-detached-menu-final.png"
+      ]
+    },
+    {
+      "name": "Native Quit with detached window exits successfully and restart retains binding",
+      "result": "passed",
+      "process": 883455,
+      "exit_code": 0,
+      "restarted_process": 890849
+    },
+    {
+      "name": "Native Quit after Project SessionSpace creation exits successfully",
+      "result": "passed",
+      "process": 890849,
+      "menu_target": "s0000004f:2",
+      "exit_code": 0
+    },
+    {
+      "name": "Wayland native panel DBusMenu dispatch closes app cleanly",
+      "result": "passed",
+      "process": 921167,
+      "menu_bus": ":1.842",
+      "menu_id": 66,
+      "exit_code": 0
+    },
+    {
+      "name": "Wayland redundant client-side titlebar removed",
+      "result": "passed",
+      "process": 929710,
+      "screenshot": "linux-window-native-20260914.png"
+    },
+    {
+      "name": "Host wallpaper interference removed from opaque app content",
+      "result": "passed",
+      "receipt": "omarchy-opacity-native-20260914.json"
+    }
+  ],
+  "bounded_expression_observations": [
+    {
+      "native_window": {
+        "inner_position_physical": {
+          "x": 9,
+          "y": 33
+        },
+        "inner_size_physical": {
+          "height": 858,
+          "width": 706
+        },
+        "scale_factor": 1.0
+      },
+      "report": {
+        "emitters": 0,
+        "engine": {
+          "activePresentationId": null,
+          "animationScheduled": false,
+          "canvas": {
+            "backingHeight": 858,
+            "backingWidth": 1422,
+            "connected": true,
+            "cssHeight": 858,
+            "cssWidth": 706,
+            "display": "block",
+            "opacity": "1",
+            "position": "fixed",
+            "visibility": "hidden",
+            "zIndex": "1"
+          },
+          "canvasCount": 1,
+          "lastPresentationEvent": "release",
+          "lastPresentationId": "welcome.mark",
+          "lifecycleRevision": 2,
+          "live": false,
+          "mounted": true
+        },
+        "entries": 0,
+        "forms": [],
+        "frames": 0,
+        "ink": "color(srgb 0.553176 0.57051 0.530039)",
+        "paused": false,
+        "peakEmitters": 0,
+        "pointCount": 0,
+        "reduced": false,
+        "requests": 0,
+        "scheduled": false
+      },
+      "schema": "oi.native-expression-observation/v1",
+      "unix_ms": 1789413657243,
+      "webview": "main"
+    },
+    {
+      "native_window": {
+        "inner_position_physical": {
+          "x": 725,
+          "y": 33
+        },
+        "inner_size_physical": {
+          "height": 858,
+          "width": 706
+        },
+        "scale_factor": 1.0
+      },
+      "report": {
+        "emitters": 0,
+        "engine": {
+          "activePresentationId": null,
+          "animationScheduled": false,
+          "canvas": {
+            "backingHeight": 150,
+            "backingWidth": 300,
+            "connected": true,
+            "cssHeight": 858,
+            "cssWidth": 706,
+            "display": "block",
+            "opacity": "1",
+            "position": "fixed",
+            "visibility": "hidden",
+            "zIndex": "1"
+          },
+          "canvasCount": 1,
+          "lastPresentationEvent": "created",
+          "lastPresentationId": null,
+          "lifecycleRevision": 0,
+          "live": false,
+          "mounted": true
+        },
+        "entries": 0,
+        "forms": [],
+        "frames": 0,
+        "ink": "color(srgb 0.512706 0.530275 0.502196)",
+        "paused": false,
+        "peakEmitters": 0,
+        "pointCount": 0,
+        "reduced": false,
+        "requests": 0,
+        "scheduled": false
+      },
+      "schema": "oi.native-expression-observation/v1",
+      "unix_ms": 1789413657286,
+      "webview": "surface-1"
+    },
+    {
+      "native_window": {
+        "inner_position_physical": {
+          "x": 0,
+          "y": 0
+        },
+        "inner_size_physical": {
+          "height": 858,
+          "width": 1422
+        },
+        "scale_factor": 1.0
+      },
+      "report": {
+        "emitters": 0,
+        "engine": {
+          "activePresentationId": null,
+          "animationScheduled": false,
+          "canvas": {
+            "backingHeight": 857,
+            "backingWidth": 1421,
+            "connected": true,
+            "cssHeight": 944,
+            "cssWidth": 1564,
+            "display": "block",
+            "opacity": "1",
+            "position": "fixed",
+            "visibility": "hidden",
+            "zIndex": "1"
+          },
+          "canvasCount": 1,
+          "lastPresentationEvent": "release",
+          "lastPresentationId": "welcome.mark",
+          "lifecycleRevision": 2,
+          "live": false,
+          "mounted": true
+        },
+        "entries": 0,
+        "forms": [],
+        "frames": 0,
+        "ink": "color(srgb 0.512706 0.530275 0.502196)",
+        "paused": false,
+        "peakEmitters": 0,
+        "pointCount": 0,
+        "reduced": false,
+        "requests": 0,
+        "scheduled": false
+      },
+      "schema": "oi.native-expression-observation/v1",
+      "unix_ms": 1789415441772,
+      "webview": "main"
+    }
+  ],
+  "limitations": [
+    "The Linux OS-panel menu was read and dispatched through its real DBusMenu export; no physical pointer popup proof is claimed.",
+    "Detached drag affordance is source-checked and built; no Wayland drag gesture was exercised.",
+    "Historical WebKit crash notifications are retained in screenshots and are not evidence of current process failure.",
+    "The Omarchy opacity exception is a host configuration change, not portable O:I source or a physics change.",
+    "No Factory execution/candidate/return-action, Herdr, all-harness, K9 or human acceptance claim."
+  ]
+}

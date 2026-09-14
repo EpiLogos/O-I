@@ -9,10 +9,18 @@
  * Popovers (80) and consent (above all tokens) would still win while it
  * stands; none exists at boot. Tokens only. */
 .oi-welcome {
+  /* The hosted expression canvas is intentionally transparent. This exclusive
+   * frontstate therefore supplies the same authored paper/ink material as the
+   * oi.mark scene rather than inheriting the desktop's current pane theme. */
+  --oi-welcome-ground: #f4f2eb;
+  --oi-welcome-ink: #252720;
+  --oi-welcome-muted: #596152;
+  --oi-welcome-detail: #4b5346;
+  --oi-welcome-focus: #47563b;
   position: fixed;
   inset: 0;
   z-index: var(--oi-z-stage-frontstate);
-  background: var(--oi-canvas-ground);
+  background: var(--oi-welcome-ground);
   transition: opacity var(--oi-motion-normal) var(--oi-motion-ease);
 }
 .oi-welcome-leaving {
@@ -31,26 +39,26 @@
   justify-items: center;
   gap: var(--oi-desktop-gap-xs);
   padding-block-end: 10vh;
-  color: var(--oi-foreground);
+  color: var(--oi-welcome-ink);
   font-family: var(--oi-font-mono);
 }
 .oi-welcome-enter:focus-visible {
-  outline: 2px solid var(--oi-focus);
+  outline: 2px solid var(--oi-welcome-focus);
   outline-offset: -2px;
 }
 .oi-welcome-mark {
   font-size: var(--oi-shell-type-ui);
   letter-spacing: var(--oi-shell-tracking);
   text-transform: uppercase;
-  color: var(--oi-muted-2);
+  color: var(--oi-welcome-muted);
 }
 .oi-welcome-hint {
   font-size: var(--oi-shell-type-nav);
-  color: var(--oi-muted);
+  color: var(--oi-welcome-detail);
 }
 .oi-welcome-detail {
   font-size: var(--oi-shell-type-nav);
-  color: var(--oi-muted-2);
+  color: var(--oi-welcome-muted);
 }
 @media (prefers-reduced-motion: reduce) {
   .oi-welcome {

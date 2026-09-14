@@ -5,6 +5,7 @@
   "permissions": [
     "core:default",
     "core:window:allow-start-dragging",
+    "core:window:allow-destroy",
     "allow-choose-central-folder",
     "allow-arrangement-menu",
     "allow-kernel-op",

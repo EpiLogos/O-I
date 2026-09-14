@@ -39,6 +39,32 @@ export interface StageRetainedLease {
   renderOnce(): StageRetainedLease;
 }
 
+/** Bounded browser-visible state for the opted-in native walk. This is
+ * deliberately canvas/lifecycle evidence only: it neither reads nor changes
+ * the engine's simulation, recipes, targets, or GPU configuration. */
+export interface EngineSurfaceWalkObservation {
+  mounted: boolean;
+  canvasCount: number;
+  live: boolean;
+  activePresentationId: string | null;
+  lastPresentationEvent: "created" | "present" | "release";
+  lastPresentationId: string | null;
+  lifecycleRevision: number;
+  animationScheduled: boolean;
+  canvas: {
+    connected: boolean;
+    visibility: string;
+    display: string;
+    opacity: string;
+    position: string;
+    zIndex: string;
+    cssWidth: number;
+    cssHeight: number;
+    backingWidth: number;
+    backingHeight: number;
+  };
+}
+
 /** Overlay merge for authored patches: objects merge recursively, arrays
  * and scalars replace. This is recipe semantics — untouched keys persist —
  * NOT the engine's migrate-from-defaults semantics. */
@@ -67,6 +93,9 @@ export class EngineSurface {
   private active: { id: string; scene: StageScene; revision: number } | null = null;
   private revision = 0;
   private live = false;
+  private lastPresentationEvent: "created" | "present" | "release" = "created";
+  private lastPresentationId: string | null = null;
+  private lifecycleRevision = 0;
   private timers: ReturnType<typeof setTimeout>[] = [];
   private raf = 0;
   private last = 0;
@@ -136,6 +165,7 @@ export class EngineSurface {
     this.live = true;
     this.canvas.style.visibility = "visible";
     this.activate(id, this.sceneFrom(stageRecipe(recipe)));
+    this.recordPresentationEvent("present", id);
     this.wake();
   }
 
@@ -144,6 +174,7 @@ export class EngineSurface {
     this.live = true;
     this.canvas.style.visibility = "visible";
     this.activate(id, this.sceneFrom(config as NativeConfig));
+    this.recordPresentationEvent("present", id);
     this.wake();
   }
 
@@ -219,6 +250,7 @@ export class EngineSurface {
     this.activate("stage-idle", this.sceneFrom(IDLE_CONFIG, "stage-idle"));
     this.renderFrame(0);
     this.active = null;
+    this.recordPresentationEvent("release", id);
   }
 
   command(command: EngineCommand) {
@@ -230,6 +262,32 @@ export class EngineSurface {
   setForceMotion(force: boolean) { this.forceMotion = force; if (force) this.wake(); }
   telemetry(): unknown { try { return this.adapter.telemetry?.() ?? null; } catch { return null; } }
   capabilities() { return this.adapter.capabilities; }
+  walkObservation(): EngineSurfaceWalkObservation {
+    const computed = getComputedStyle(this.canvas);
+    const rect = this.canvas.getBoundingClientRect();
+    return {
+      mounted: document.body.contains(this.canvas),
+      canvasCount: document.querySelectorAll('canvas[data-oi-stage="engine"]').length,
+      live: this.live,
+      activePresentationId: this.active?.id ?? null,
+      lastPresentationEvent: this.lastPresentationEvent,
+      lastPresentationId: this.lastPresentationId,
+      lifecycleRevision: this.lifecycleRevision,
+      animationScheduled: this.raf !== 0,
+      canvas: {
+        connected: this.canvas.isConnected,
+        visibility: computed.visibility,
+        display: computed.display,
+        opacity: computed.opacity,
+        position: computed.position,
+        zIndex: computed.zIndex,
+        cssWidth: Math.max(0, Math.round(rect.width)),
+        cssHeight: Math.max(0, Math.round(rect.height)),
+        backingWidth: this.canvas.width,
+        backingHeight: this.canvas.height,
+      },
+    };
+  }
 
   dispose() {
     this.clearTimers();
@@ -245,6 +303,11 @@ export class EngineSurface {
   }
 
   private activate(id: string, scene: StageScene) { this.active = { id, scene, revision: ++this.revision }; }
+  private recordPresentationEvent(event: "created" | "present" | "release", id: string | null) {
+    this.lastPresentationEvent = event;
+    this.lastPresentationId = id;
+    this.lifecycleRevision += 1;
+  }
   private require(id: string): { id: string; scene: StageScene; revision: number } {
     if (!this.active || this.active.id !== id) throw new Error(`The engine surface is not presenting "${id}".`);
     return this.active;
