@@ -189,3 +189,6 @@
 .encounter-addressed-task dt{color:var(--oi-muted-2)}
 .encounter-addressed-task dd{margin:0}
 .encounter-addressed-task p{margin:6px 0 0;color:var(--oi-muted-2)}
+
+.encounter-dispatch-disclosure{margin-top:10px;font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2)}
+.encounter-dispatch-disclosure>summary{cursor:pointer;padding:5px 0}

@@ -75,7 +75,7 @@ export function EncounterSurface({binding,onView,presentation="tab",onExpression
  const recover=async()=>{try{const next=await read();canonical.current=next.draft;failed.current=false;dirty.current=input.current!==next.draft.text;setError(undefined);await save();}catch(error){setError(String(error));}};
  const permission=async(request_id:string,decision:PermissionDecision)=>{if(!allowed("permission"))return;setPending(true);setError(undefined);try{await call({action:"permission",agent_session:binding.ref!,request_id,decision});const next=await read();setReading(next);setStatus(next.connection);}catch(error){setError(String(error));}finally{setPending(false);}};
  // --- Addressed dispatch (6B): explicit machine turns, never the human draft. ---
- const alive=useRef(true);useEffect(()=>()=>{alive.current=false;},[]);
+ const alive=useRef(true);useEffect(()=>{alive.current=true;return()=>{alive.current=false;};},[]);
  const [dispatch,setDispatch]=useState<DispatchState>({kind:"idle"});
  // The session's actual task, if the owner bound one (queue cell 2). Read
  // once per session through the owner's own `encounter-task-read`; null is

@@ -143,7 +143,8 @@ fn suite_checkout(surface: &Surface, managed_root: &Path) -> Result<PathBuf, Str
 fn install_aikit_native(surface: &Surface, checkout: &Path, managed_root: &Path) -> Result<PathBuf, String> {
     let install_root = managed_root.join("native").join("ai-kit").join(&surface.docs_ref);
     let executable = install_root.join("bin/aikit");
-    if is_executable(&executable) {
+    let encounter_executable = install_root.join("bin/aikit-session-space");
+    if is_executable(&executable) && is_executable(&encounter_executable) {
         let status = Command::new(&executable).arg("--version").stdout(Stdio::null()).stderr(Stdio::null()).status();
         if status.map(|status| status.success()).unwrap_or(false) {
             return Ok(executable);
@@ -158,8 +159,8 @@ fn install_aikit_native(surface: &Surface, checkout: &Path, managed_root: &Path)
         .arg(&install_root)
         .status()
         .map_err(|error| format!("failed to start AIKit cargo install: {error}"))?;
-    if !status.success() || !is_executable(&executable) {
-        return Err("AIKit native source install failed".to_owned());
+    if !status.success() || !is_executable(&executable) || !is_executable(&encounter_executable) {
+        return Err("AIKit native source install failed: aikit and aikit-session-space are both required".to_owned());
     }
     Ok(executable)
 }

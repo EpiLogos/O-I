@@ -109,7 +109,7 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
           ? <button className="encounter-stop" disabled={pending||!allowed("cancel",status?.state!=="InterruptRequested")} title={action("cancel")?.reason??undefined} onClick={onCancel}>Stop</button>
           : <button className="encounter-send" disabled={!allowed("prompt",connected)||pending||!draft.trim()} title={action("prompt")?.reason??undefined} onClick={onSend}><Glyph name="arrow" size={13}/><span className="sr-only">Send</span></button>}
       </div>
-      {addressed}
+      {addressed && <details className="encounter-dispatch-disclosure"><summary>Addressed dispatch</summary>{addressed}</details>}
     </div>}
   </section>;
 }
