@@ -14,15 +14,14 @@ shift || true
 clear_flag=""
 for arg in "$@"; do [ "$arg" = "--clear" ] && clear_flag="--clear-database"; done
 
-read -r server database < <(python3 - "$target" <<'PY'
+cd "$repo"
+read -r server database < <(python3 - "$target" "$here/hosting.json" <<'PY'
 import json, sys
-h = json.load(open(sys.argv[0] if False else "shared-field/spacetimedb/hosting.json"))
-t = h["targets"][sys.argv[1]]
+t = json.load(open(sys.argv[2]))["targets"][sys.argv[1]]
 print(t["server"], t["database"])
 PY
 )
-pinned="$(python3 -c 'import json;print(json.load(open("shared-field/spacetimedb/hosting.json"))["pinned_spacetimedb_version"])')"
-cd "$repo"
+pinned="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["pinned_spacetimedb_version"])' "$here/hosting.json")"
 spacetime --version | grep -q "$pinned" || { echo "spacetime CLI must be $pinned (spacetime version use $pinned)"; exit 1; }
 npm install --prefix shared-field/spacetimedb --no-audit --no-fund >/dev/null
 spacetime build --module-path shared-field/spacetimedb

@@ -8,7 +8,8 @@ generated client and the acceptance scripts are the deployment.
 
 `hosting.json` names the targets. `local` and `ci` publish to a standalone
 server on `127.0.0.1:3000`; `hosted` publishes to `maincloud.spacetimedb.com`
-as `epilogos-oi-shared-field`. Change the database name there, not in scripts.
+as `epilogos-oi-shared-field` (the production field) and `hosted-acceptance` as
+`epilogos-oi-shared-field-acceptance` (where live acceptance runs). Change the database name there, not in scripts.
 
 ## Credentials stay outside the repository
 
@@ -48,11 +49,13 @@ SPACETIMEDB_URI=wss://maincloud.spacetimedb.com SPACETIMEDB_DATABASE=epilogos-oi
 gh variable set OI_SPACETIMEDB_URI --body wss://maincloud.spacetimedb.com
 gh variable set OI_SPACETIMEDB_DATABASE --body epilogos-oi-shared-field
 
-# 5. prove the two-world circuit against the hosted field, World A from the real readings
+# 5. prove the two-world circuit on the hosted *acceptance* database (never the production field:
+#    each run leaves its withdrawn run-scoped worlds behind), World A from the real readings
+npm --prefix shared-field/spacetimedb run deploy:hosted-acceptance
 mkdir -p /tmp/oi-readings && cd ~/Central \
   && ctrl --json action run central.wiki.read '{}' | jq .data > /tmp/oi-readings/root.json \
   && ctrl --json action run projectcentral.wiki.read '{"project":"O-I"}' | jq .data > /tmp/oi-readings/project.json
-OI_WORLD_A_READINGS=/tmp/oi-readings SPACETIMEDB_URI=wss://maincloud.spacetimedb.com SPACETIMEDB_DATABASE=epilogos-oi-shared-field \
+OI_WORLD_A_READINGS=/tmp/oi-readings SPACETIMEDB_URI=wss://maincloud.spacetimedb.com SPACETIMEDB_DATABASE=epilogos-oi-shared-field-acceptance \
   npm --prefix shared-field/spacetimedb run acceptance:two-world
 ```
 

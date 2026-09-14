@@ -60,8 +60,22 @@ An earlier run of the same script (before the wiki-return path was corrected) le
 
 ## 4. Hosted deployment status
 
-`hosting.json` names the hosted target `epilogos-oi-shared-field` on `maincloud.spacetimedb.com`; `deploy.sh hosted` builds, publishes and regenerates bindings; `HOSTING.md` is the runbook. Publishing from this session was refused by the service: the machine's stored SpaceTimeDB login token is invalid (`401 Unauthorized: Invalid token: InvalidSignature`). Re-establishing that login is the owner's credential action and is the only remaining material step; the runbook's steps 0–5 are the exact handoff. Everything above was executed against the local 2.8.1 server instead, with the same module, the same generated client and the same scripts.
+Published on 2026-09-14 after the owner re-established the machine's SpaceTimeDB login (the earlier attempt from the same scripts was refused with `401 Invalid token`):
+
+| Fact | Value |
+|---|---|
+| production field | `epilogos-oi-shared-field` on `wss://maincloud.spacetimedb.com` |
+| module identity | `c20052b78a87b72e63b6d18aeb7601ed2237487bbe10d245be782a910eeaef92` |
+| projection | `projection:central:project:O-I@1` from `central:source:project:O-I:ProjectCentral/agents/wiki/wiki.json` @ `central.content-fnv1a64/v1:837:919e0d2d596a7eb6` |
+| entries / relations | 4 / 4 |
+| edition digest | `a40ec33ee50fcb5b0447e217bd8cc7c57f16215d8f73ccd8cdd63f2d6fa983fa` |
+| owner transport identity | `c200cd0697d17ff4…` (token outside the repository; not a human identity) |
+| acceptance field | `epilogos-oi-shared-field-acceptance` (deploy target `hosted-acceptance`) |
+| two-world acceptance on the hosted acceptance field | run `mu1q3ba8`, World A from the owner's real readings, 14 lifecycle steps green |
+| site build | repository variables `OI_SPACETIMEDB_URI` / `OI_SPACETIMEDB_DATABASE` set; `explore.html` connects to the production field |
+
+The production field was wiped and republished once after the first acceptance run had left its withdrawn run-scoped worlds in it; live acceptance now runs only against the acceptance field. `deploy.sh` resolved `hosting.json` relative to the caller's directory and failed under `npm run`; fixed in this line.
 
 ## 5. What this does not claim
 
-The hosted maincloud database is not yet populated; the public site's Explore is not yet pointed at it (repository variables unset on purpose until it is); no second physical machine was exercised — the two worlds ran on one host with distinct source roots, Participants and transport identities, which the contracts require and which a second machine does not change. AIKit's composition body was consumed from a file, not from a CLI producer (EpiLogos/ai-kit#313). Card/Cube, Personal/Work shell and Hen uptake (PW1–PW4, PW6) are untouched.
+GitHub Pages is not enabled on the repository, so the built Explore page is not yet served publicly (every `site.yml` run on main has failed at `configure-pages` since 21 August; a repository setting for the owner); no second physical machine was exercised — the two worlds ran on one host with distinct source roots, Participants and transport identities, which the contracts require and which a second machine does not change. AIKit's composition body was consumed from a file, not from a CLI producer (EpiLogos/ai-kit#313). Card/Cube, Personal/Work shell and Hen uptake (PW1–PW4, PW6) are untouched.
