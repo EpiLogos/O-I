@@ -5,7 +5,7 @@ set -eu
 
 REPOSITORY=EpiLogos/O-I
 NATIVE_VERSION=0.1.0
-RELEASE_TAG=${OI_RELEASE_TAG:-oi-v0.1.0-prelocal.4}
+RELEASE_TAG=${OI_RELEASE_TAG:-oi-v0.1.0-prelocal.5}
 BIN_DIR=${OI_BIN_DIR:-"$HOME/.local/bin"}
 
 case "$(uname -s)/$(uname -m)" in

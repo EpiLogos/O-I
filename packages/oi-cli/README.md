@@ -10,7 +10,7 @@ The npm and GitHub Release paths are developed **distribution channels**, not ev
 
 Ordinary `main` development produces exact-commit build artifacts and attestations through the pre-local build workflow. It does not mint or select a GitHub Release. A known-good suite state remains downstream of the convergence and physical-acceptance protocol.
 
-The installer defaults to the GitHub release tag matching this package's own version (`oi-v<version>`, currently `oi-v0.1.0-prelocal.4`, the release documented in `docs/INSTALL.md`). To exercise a different release explicitly, set:
+The installer defaults to the GitHub release tag matching this package's own version (`oi-v<version>`, currently `oi-v0.1.0-prelocal.5`, the release documented in `docs/INSTALL.md`). To exercise a different release explicitly, set:
 
 ```sh
 OI_NPM_RELEASE_TAG=<tag> npm install -g <package-or-tarball>
