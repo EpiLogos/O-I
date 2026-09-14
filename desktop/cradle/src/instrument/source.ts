@@ -90,8 +90,6 @@ export interface FocusedInstrumentSnapshot {
   standing:string;
 }
 
-/** One source-owned rooted Bimba row. The desktop may sort/present rows; it
- * must not infer missing ancestry, conjugacy, relations or revisions. */
 export interface BimbaNavigationItem {
   selection:SourceQualifiedSelection;
   label:string;
@@ -135,9 +133,10 @@ export interface RetainedExpressionLease {
   retainedTargetPort():unknown;
   checkpointRetainedField(binding:unknown):unknown;
   restoreRetainedField(binding:unknown,checkpoint:unknown):RetainedExpressionLease;
-  /** Restore is explicitly source-driven after the same host reports WebGL
-   * recovery. This grants no renderer access and no permission to reseed. */
-  onRecoveryRequired(listener:()=>void):()=>void;
+  /** Loss is delivered immediately so the source can hold WebAudio/native
+   * presentation. Restore is a distinct event; only then may it restore the
+   * acknowledged GPU checkpoint and re-enter through an explicit owner read. */
+  onRecoveryRequired(listener:(phase:"lost"|"restored")=>void):()=>void;
   inspect():unknown;
   pause(value?:boolean):RetainedExpressionLease;
   resume():RetainedExpressionLease;
@@ -145,17 +144,13 @@ export interface RetainedExpressionLease {
 }
 
 export interface FocusedInstrumentSource {
-  /** Stable source identity used by the SurfaceBinding; not a graph query. */
   ref:string;
   title:string;
   read():Promise<FocusedInstrumentSnapshot>;
   readBimba():Promise<BimbaNavigation>;
   command(command:FocusedInstrumentCommand):Promise<FocusedInstrumentCommandResult>;
-  /** Optional native push seam. Polling is intentionally not invented here. */
   subscribe?(listener:()=>void):()=>void;
-  /** Attach K8's retained-field binding to the already-created O:I instance. */
   attachExpression?(lease:RetainedExpressionLease):void|(()=>void)|Promise<void|(()=>void)>;
-  /** Exact canonical Epii AgentSession ref supplied by its owner. */
   accompanying?:{ref:string;project:string;space:string};
 }
 
@@ -179,8 +174,6 @@ export function registerFocusedInstrumentSource(source:FocusedInstrumentSource):
 
 export function focusedInstrumentSource(ref:string):FocusedInstrumentSource|undefined{return sources.get(ref);}
 
-/** Subscribe to registry replacement and to the currently registered owner's
- * push seam without turning absence into polling. */
 export function subscribeFocusedInstrumentSource(ref:string,listener:()=>void):()=>void {
   let owner:FocusedInstrumentSource|undefined=sources.get(ref);
   let ownerStop=owner?.subscribe?.(listener);
@@ -212,5 +205,4 @@ export function focusedInstrumentBinding(request:FocusedInstrumentOpenRequest):S
   return {id:crypto.randomUUID(),kind:"instrument",ref:request.sourceRef,title:request.title??source?.title??"Epi / Nara"};
 }
 
-/** Test/diagnostic helper: clears presentation registrations only. */
 export function resetFocusedInstrumentSources(){sources.clear();sourceListeners.clear();openListeners.clear();}
