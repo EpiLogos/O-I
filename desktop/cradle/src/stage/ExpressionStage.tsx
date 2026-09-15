@@ -354,8 +354,16 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
       send = () => {
         if (inFlight) { queued = true; return; }
         inFlight = true;
-        const renderer = cuesRef.current;
-        void invoke("expression_walk_observation", { report: renderer ? renderer.inspect() : null })
+        const renderer = cuesRef.current, field = surfaceRef.current;
+        const cues = renderer?.inspect();
+        const telemetry = field?.telemetry() as {config?: {particleCount?: number}} | null;
+        // This native receiver observes the window field, including a full
+        // opening or foreground presentation. Cue-only scheduling would
+        // incorrectly report an active foreground as an idle renderer.
+        const report = cues && field ? { ...cues, frames: field.frameCount,
+          pointCount: telemetry?.config?.particleCount ?? 0,
+          scheduled: field.isScheduled, paused: field.isPaused } : null;
+        void invoke("expression_walk_observation", { report })
           .catch(() => {})
           .finally(() => { inFlight = false; if (queued) { queued = false; send(); } });
       };
