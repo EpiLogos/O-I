@@ -54,12 +54,21 @@ jobs:
       - name: Prove Expression projection through the accepted native engine
         working-directory: desktop/cradle
         run: node tests/expression-engine.mjs
+      - name: Prove knowledge projection identity and provenance preservation
+        working-directory: desktop/cradle
+        run: node tests/knowledge-expression.mjs
+      - name: Prove Explore travel, field search and primary projection readings (SF1)
+        working-directory: desktop/cradle
+        run: node --test tests/explore-field.test.mjs
       - name: Install browser engines for search component contracts
         working-directory: desktop/cradle
         run: npx playwright install --with-deps chromium webkit
       - name: Prove search component and literal query transport (D)
         working-directory: desktop/cradle
         run: node tests/search-overlay.mjs
+      - name: Prove Expression page placement and capture on one WebGL context
+        working-directory: desktop/cradle
+        run: node tests/expression-stage-placement.mjs
       - name: Retain search browser receipts and screenshots
         if: always()
         uses: actions/upload-artifact@v4

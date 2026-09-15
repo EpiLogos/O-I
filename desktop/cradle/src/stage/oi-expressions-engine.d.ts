@@ -167,6 +167,7 @@ declare module "@epilogos/oi-design-system/expressions-engine/oi/retained.mjs" {
     withCleanFrame<T>(copy: () => T): T;
     capture(width: number, height: number): HTMLCanvasElement;
     retainedTargetPort(): RetainedTargetPort;
+    updateRetainedPresentation(request: unknown): unknown;
     checkpointRetainedField(binding: { checkpoint(renderer: unknown): unknown }): unknown;
     restoreRetainedField(binding: { restore(renderer: unknown, checkpoint: unknown): void }, checkpoint: unknown): RetainedProductionAdapter;
     onRetainedRecoveryRequired(listener: (phase: "lost"|"restored") => void): () => void;

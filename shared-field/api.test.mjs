@@ -20,6 +20,7 @@ test('unified shared-field API exposes projection, Explore presentation/authorin
     'createWorldPresentation',
     'validateWorldPresentation',
     'resolvePresentationBindings',
+    'resolveExpressionPresentation',
     'createWorldPresentationProjection',
     'worldPresentationFromProjection',
     'refineWorldPresentationProjection',
@@ -56,6 +57,7 @@ test('unified shared-field API exposes projection, Explore presentation/authorin
   assert.equal(api.EXPLORE_RESULT_SCHEMA, 'oi.explore-result/v1');
   assert.equal(api.WORLD_PRESENTATION_SCHEMA, 'oi.world-presentation/v1');
   assert.equal(api.PRESENTATION_BINDING_SCHEMA, 'oi.presentation-binding/v1');
+  assert.equal(api.EXPRESSION_PRESENTATION_SCHEMA, 'oi.expression-presentation/v1');
   assert.equal(api.PRESENTATION_AUTHORING_SCHEMA, 'oi.presentation-authoring/v1');
   assert.equal(api.WATCH_SCHEMA, 'oi.watch/v1');
   assert.equal(api.CONTACT_SCHEMA, 'oi.contact/v1');

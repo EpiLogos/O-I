@@ -8,7 +8,7 @@ import type {AddressableParticipantsState} from "./AddressedRecipientPicker";
 import {SessionControls} from "./SessionControls";
 import type {WorkingSurfaceSelection} from "./working-surface";
 import {EncounterView,type EncounterViewProps} from "./EncounterView";
-export interface EncounterExpressionReading {state?:string;pending:boolean;completed?:number;inputRevision?:number}
+export interface EncounterExpressionReading {agentSessionRef?:string;state?:string;pending:boolean;completed?:number;inputRevision?:number;latestOwnerActivity?:{blockId:number;kind:string}}
 /** Ephemeral input buffering only. Every accepted edit and message is AIKit-owned. */
 export function EncounterSurface({binding,onView,presentation="tab",onExpression,concealed=false,complementary,onOpenWorkingSurface}:{binding:SurfaceBinding;onView:(view:NonNullable<SurfaceBinding["view"]>)=>void;presentation?:"tab"|"side"|"full";onExpression?:(reading:EncounterExpressionReading)=>void;concealed?:boolean;complementary?:EncounterViewProps["complementary"];onOpenWorkingSurface?:(selection:WorkingSurfaceSelection)=>Promise<void>}) {
  const kernel=useKernel();
@@ -18,7 +18,7 @@ export function EncounterSurface({binding,onView,presentation="tab",onExpression
  const canonical=useRef<Draft>({revision:0,text:""});const input=useRef("");const dirty=useRef(false);const saving=useRef(false);const sending=useRef(false);const failed=useRef(false);
  const [before,setBefore]=useState<number>();
  const expression=useRef(onExpression);expression.current=onExpression;
- useEffect(()=>{expression.current?.({state:status?.state,pending,inputRevision:reading?.draft.revision,completed:reading?reading.blocks.filter(block=>block.kind==="completed").slice(-1)[0]?.id??-1:undefined});},[status,reading,pending]);
+ useEffect(()=>{const activity=reading?.blocks.filter(block=>["thinking","tool","permission","completed"].includes(block.kind)).slice(-1)[0];expression.current?.({agentSessionRef:reading?.agent_session,state:status?.state,pending,inputRevision:reading?.draft.revision,completed:reading?reading.blocks.filter(block=>block.kind==="completed").slice(-1)[0]?.id??-1:undefined,latestOwnerActivity:activity?{blockId:activity.id,kind:activity.kind}:undefined});},[status,reading,pending]);
  const call=<T,>(request:Parameters<typeof encounter>[2])=>encounter<T>(kernel.transport,binding.project!,request);
  const read=()=>call<EncounterReading>({action:"view",agent_session:binding.ref!,before});
  const allowed=(name:string)=>reading?.actions?.some(action=>action.ref===`aikit.encounter.${name}`&&action.enabled===true)===true;

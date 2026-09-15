@@ -42,6 +42,7 @@ try {
     check(await right.locator('.encounter-composer textarea:visible').count()===0,`${plane} remains complementary and does not duplicate the composer`);
   }
   await right.getByText("Session identity and authority",{exact:true}).click();
+  await right.getByText(agentSession,{exact:true}).waitFor({timeout:30000});
   check(await right.getByText(agentSession,{exact:true}).count()>0,"Inspect retains the exact native AgentSession identity");
   check(await right.getByText(sessionSpace,{exact:true}).count()>0,"Inspect retains the exact native SessionSpace identity");
 

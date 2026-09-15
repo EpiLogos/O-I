@@ -1,7 +1,7 @@
 import {leaveComposition} from "../surface/composition";
 import {preservePresentation,latestRecovery} from "./recovery";
 import { useEffect, useRef, useState, type SetStateAction } from "react";
-import { activateSurface, openBinding, redockBinding } from "../surface/engine";
+import { activateSurface, groupsOf, openBinding, redockBinding } from "../surface/engine";
 import { decodeLayout } from "../surface/persist";
 import { freshLayout, type LayoutState } from "../surface/types";
 import {focusedInstrumentBinding,focusedInstrumentSource,subscribeFocusedInstrumentOpen} from "../instrument/source";
@@ -120,7 +120,11 @@ export function useWorkspaces() {
     setLayout(current=>{
       const state=leaveComposition(current);
       const existing=Object.values(state.surfaces).find(surface=>surface.kind==="instrument"&&surface.ref===request.sourceRef);
-      const opened=existing?activateSurface(state,existing.id):openBinding(state,binding);
+      const opened=existing
+        ? groupsOf(state.root).some(group=>group.tabs.includes(existing.id))
+          ? activateSurface(state,existing.id)
+          : openBinding({...state,closedStack:state.closedStack.filter(id=>id!==existing.id)},existing)
+        : openBinding(state,binding);
       // K9 composes the shell's existing navigator/centre/AgentLayer. The
       // accompanying ref is accepted only from the registered owner source.
       return {...opened,agencyDepth:"panel",rightDepth:"panel",accompanying:source.accompanying??opened.accompanying};

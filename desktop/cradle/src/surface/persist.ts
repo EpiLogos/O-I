@@ -35,8 +35,10 @@ function validBinding(raw: unknown): SurfaceBinding | null {
     return null;
   // `draft` is unplaced writing: it deliberately carries no owner ref, and it
   // must survive a relaunch — the writing lives beside it under the same
-  // surface id, and dropping the binding would orphan it.
-  if (o.kind !== "source" && o.kind !== "sources" && o.kind !== "knowledge" && o.kind !== "file" && o.kind !== "encounter" && o.kind !== "system" && o.kind !== "browser" && o.kind !== "terminal" && o.kind !== "flow" && o.kind !== "draft" && o.kind !== "blank" && o.kind !== "factory" && o.kind !== "agents" && o.kind !== "observatory" && o.kind !== "instrument" && o.kind !== "project-now" && o.kind !== "factory-handoff" && o.kind !== "factory-material" && o.kind !== "development-field") return null;
+  // surface id, and dropping the binding would orphan it. `instrument` is a
+  // presentation binding to an externally owned QL source; the source itself
+  // is never serialised into desktop state.
+  if (o.kind !== "source" && o.kind !== "sources" && o.kind !== "knowledge" && o.kind !== "file" && o.kind !== "encounter" && o.kind !== "system" && o.kind !== "browser" && o.kind !== "terminal" && o.kind !== "flow" && o.kind !== "draft" && o.kind !== "blank" && o.kind !== "factory" && o.kind !== "agents" && o.kind !== "observatory" && o.kind !== "instrument" && o.kind !== "project-now" && o.kind !== "factory-handoff" && o.kind !== "factory-material" && o.kind !== "development-field" && o.kind !== "explore" && o.kind !== "presentation") return null;
   if (o.ref !== undefined && typeof o.ref !== "string") return null;
   if((o.kind==="factory-handoff"||o.kind==="factory-material")&&(typeof o.ref!=="string"||!o.ref.trim()||typeof o.project!=="string"))return null;
   if (o.kind === "project-now" && (typeof o.ref!=="string"||typeof o.project!=="string"))return null;
@@ -66,6 +68,11 @@ function validBinding(raw: unknown): SurfaceBinding | null {
     ? { kind: "aikit-session-space-working-surface" as const, space: attachmentRaw.space, binding: attachmentRaw.binding, serviceCwd: attachmentRaw.serviceCwd }
     : undefined;
   if (o.kind === "terminal" && attachmentRaw !== undefined && !attachment) return null;
+  // SF1: a pinned projected subject must name its hosted ref and its world;
+  // the optional exact refs/revisions ride along only when well-typed.
+  const presentationRaw=o.presentation as Record<string,unknown>|undefined;
+  if(o.kind==="presentation" && (typeof o.ref!=="string" || !o.ref.trim() || !presentationRaw || typeof presentationRaw!=="object" || typeof presentationRaw.world_ref!=="string"))return null;
+  const presentation=o.kind==="presentation"&&presentationRaw?{world_ref:presentationRaw.world_ref as string,...(typeof presentationRaw.field_ref==="string"?{field_ref:presentationRaw.field_ref}:{}),...(typeof presentationRaw.projection_ref==="string"?{projection_ref:presentationRaw.projection_ref}:{}),...(Number.isInteger(presentationRaw.projection_revision)?{projection_revision:presentationRaw.projection_revision as number}:{}),...(typeof presentationRaw.presentation_ref==="string"?{presentation_ref:presentationRaw.presentation_ref}:{}),...(Number.isInteger(presentationRaw.presentation_revision)?{presentation_revision:presentationRaw.presentation_revision as number}:{}),...(typeof presentationRaw.expression_ref==="string"?{expression_ref:presentationRaw.expression_ref}:{}),...(Number.isInteger(presentationRaw.expression_revision)?{expression_revision:presentationRaw.expression_revision as number}:{})}:undefined;
   const view=o.view as SurfaceBinding["view"];
   const rawDevelopmentField = o.kind === "development-field" && view?.developmentField && typeof view.developmentField === "object"
     ? view.developmentField as Record<string, unknown>
@@ -104,7 +111,7 @@ function validBinding(raw: unknown): SurfaceBinding | null {
     factory=exactFactoryReviewView(rawFactory,{kind:o.kind,statePath:factory.statePath,runRef:factory.runRef!,subjectRef:o.kind==="factory-material"?o.ref as string:undefined},true);
     if(!factory)return null;
   }
-  return { terminal:o.kind==="terminal"?{cwd:typeof terminalRaw?.cwd==="string"?terminalRaw.cwd:undefined,attachment}:undefined, flow:o.kind==="flow"?flow:undefined, browser:o.kind==="browser"?{url:typeof (o.browser as {url?:unknown})?.url==="string"?(o.browser as {url:string}).url:""}:undefined, view:retainedDevelopmentField?{developmentField:retainedDevelopmentField}:factory ? {factory} : (encounterReturnSurfaceId||encounterPlane&&["Conversation","Activity","Context","Inspect"].includes(encounterPlane))?{encounterPlane,encounterReturnSurfaceId}:undefined, encounter, location, address, project: o.project as string | undefined, id: o.id, kind: o.kind, ref: o.ref as string | undefined, title: o.title };
+  return { presentation, terminal:o.kind==="terminal"?{cwd:typeof terminalRaw?.cwd==="string"?terminalRaw.cwd:undefined,attachment}:undefined, flow:o.kind==="flow"?flow:undefined, browser:o.kind==="browser"?{url:typeof (o.browser as {url?:unknown})?.url==="string"?(o.browser as {url:string}).url:""}:undefined, view:retainedDevelopmentField?{developmentField:retainedDevelopmentField}:factory ? {factory} : (encounterReturnSurfaceId||encounterPlane&&["Conversation","Activity","Context","Inspect"].includes(encounterPlane))?{encounterPlane,encounterReturnSurfaceId}:undefined, encounter, location, address, project: o.project as string | undefined, id: o.id, kind: o.kind, ref: o.ref as string | undefined, title: o.title };
 }
 
 function validPane(raw: unknown, surfaces: Record<SurfaceId, SurfaceBinding>): Pane | null {

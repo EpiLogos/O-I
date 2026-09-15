@@ -37,6 +37,7 @@ export interface StageRetainedLease {
   pause(value?: boolean): StageRetainedLease;
   resume(): StageRetainedLease;
   renderOnce(): StageRetainedLease;
+  updatePresentation(request: unknown): unknown;
 }
 
 /** Bounded browser-visible state for the opted-in native walk. This is
@@ -110,9 +111,16 @@ export class EngineSurface {
   private detachPointer: () => void = () => {};
   private onError: (message: string) => void;
   private retainedLeaseOwner: string | null = null;
+  private retainedLeaseIdentity: symbol | null = null;
+  private readonly home: HTMLElement;
+  private readonly homeElement: HTMLElement | null;
+  private readonly homeStyle: string;
 
   private constructor(canvas: HTMLCanvasElement, element: HTMLElement | null, onError: (message: string) => void) {
     this.canvas = canvas;
+    this.home = canvas.parentElement!;
+    this.homeElement = element;
+    this.homeStyle = canvas.style.cssText;
     this.canvas.style.visibility = "hidden";
     this.element = element;
     this.onError = onError;
@@ -120,22 +128,24 @@ export class EngineSurface {
     this.adapter = factory
       ? (factory(canvas) as ProductionAdapter)
       : new ProductionAdapter(canvas);
-    const pointerTarget = element ?? window;
+    const pointerTarget = window;
     const move = (event: PointerEvent) => {
+      const element = this.element;
       const width = element ? element.clientWidth : window.innerWidth;
       const height = element ? element.clientHeight : window.innerHeight;
       const origin = stageCentre(width, height);
       const scale = (stageScale(width, height) * CAMERA_2D.zoom) / WORLD_SCALE;
       const localX = element ? event.clientX - element.getBoundingClientRect().left : event.clientX;
       const localY = element ? event.clientY - element.getBoundingClientRect().top : event.clientY;
+      if (element && (localX < 0 || localY < 0 || localX > width || localY > height)) { leave(); return; }
       this.pointer = { active: true, world: { x: (localX - origin.x) / scale, y: -(localY - origin.y) / scale, z: 0 } };
     };
     const leave = () => { this.pointer = { active: false, world: this.pointer.world }; };
     pointerTarget.addEventListener("pointermove", move as EventListener, { passive: true });
-    (element ?? document.documentElement).addEventListener("pointerleave", leave);
+    document.documentElement.addEventListener("pointerleave", leave);
     this.detachPointer = () => {
       pointerTarget.removeEventListener("pointermove", move as EventListener);
-      (element ?? document.documentElement).removeEventListener("pointerleave", leave);
+      document.documentElement.removeEventListener("pointerleave", leave);
     };
     if (element) {
       this.observer = new ResizeObserver(() => this.wake());
@@ -185,6 +195,34 @@ export class EngineSurface {
     this.wake();
   }
 
+  /** Move the same canvas/context/clock between page and focused hosts.
+   * Placement never creates a production adapter or changes the scene. */
+  setContainer(id: string, container: HTMLElement | null) {
+    this.require(id);
+    if (container && (container.ownerDocument !== this.canvas.ownerDocument || !container.isConnected || container === this.canvas || this.canvas.contains(container))) {
+      throw new Error("Expression container must be a connected element in this window.");
+    }
+    if (this.element === (container ?? this.homeElement)) return;
+    this.observer?.disconnect();
+    this.observer = null;
+    this.element = container ?? this.homeElement;
+    this.canvas.style.cssText = this.homeStyle;
+    if (container) {
+      Object.assign(this.canvas.style, { position: "absolute", inset: "0", width: "100%", height: "100%", zIndex: "0", pointerEvents: "none" });
+      container.append(this.canvas);
+      this.observer = new ResizeObserver(() => this.wake());
+      this.observer.observe(container);
+    } else {
+      this.home.append(this.canvas);
+      if (this.homeElement) {
+        this.observer = new ResizeObserver(() => this.wake());
+        this.observer.observe(this.homeElement);
+      }
+    }
+    this.pointer.active = false;
+    this.wake();
+  }
+
   update(id: string, recipe: string) {
     const active = this.require(id);
     const merged = mergePatch(active.scene.native?.config ?? {}, stageRecipe(recipe));
@@ -225,6 +263,8 @@ export class EngineSurface {
       this.retainedLeaseOwner = id;
     }
     const surface = this;
+    const leaseIdentity = Symbol(id);
+    this.retainedLeaseIdentity=leaseIdentity;
     const lease: StageRetainedLease = {
       retainedTargetPort() { return surface.adapter.retainedTargetPort(); },
       checkpointRetainedField(binding) { return surface.adapter.checkpointRetainedField(binding as { checkpoint(renderer: unknown): unknown }); },
@@ -238,23 +278,44 @@ export class EngineSurface {
       pause(value = true) { surface.setPaused(value); return lease; },
       resume() { surface.setPaused(false); return lease; },
       renderOnce() { surface.renderFrame(0); return lease; },
+      updatePresentation(request) {
+        if(surface.retainedLeaseOwner!==id||surface.retainedLeaseIdentity!==leaseIdentity)throw new Error("This retained presentation lease is no longer current.");
+        const receipt=surface.adapter.updateRetainedPresentation(request);
+        // A deliberate presentation edit remains visible while an otherwise
+        // healthy field is paused. Ambient wake sources stay held below.
+        if(surface.paused)surface.renderFrame(0);else surface.wake();
+        return receipt;
+      },
     };
+    Object.defineProperty(lease,"identity",{value:leaseIdentity});
     return lease;
   }
 
   release(id: string) {
     if (!this.active || this.active.id !== id) return;
+    // Keep the renderer's current allocation while the retained owner is
+    // absent. Re-entry with the same field size can then rebind the existing
+    // GPU textures without a seed-changing resize; this carries no Personal
+    // presentation or owner generation across the release.
+    const retainedParticleCount = this.retainedLeaseOwner === id
+      ? this.adapter.retainedTargetPort().particleCount
+      : undefined;
+    this.setContainer(id, null);
     this.clearTimers();
     if (this.retainedLeaseOwner === id) {
       this.adapter.releaseRetainedField();
       this.retainedLeaseOwner = null;
+      this.retainedLeaseIdentity = null;
     }
     this.live = false;
     this.sleep();
     // A transition toward idle is not an empty frame. Hide the released
     // presentation immediately; keep the native medium for the next scene.
     this.canvas.style.visibility = "hidden";
-    this.activate(STAGE_IDLE, this.sceneFrom(IDLE_CONFIG, STAGE_IDLE));
+    const idleConfig = retainedParticleCount === undefined
+      ? IDLE_CONFIG
+      : { ...IDLE_CONFIG, particleCount: retainedParticleCount };
+    this.activate(STAGE_IDLE, this.sceneFrom(idleConfig, STAGE_IDLE));
     this.renderFrame(0);
     this.active = null;
     this.recordPresentationEvent("release", id);
@@ -274,15 +335,16 @@ export class EngineSurface {
     if (!this.active || !this.live) throw new Error("The engine surface has no live presentation to capture.");
     const w = Math.max(1, Math.round(width ?? this.canvas.width));
     const h = Math.max(1, Math.round(height ?? this.canvas.height));
-    try {
-      return this.adapter.withCleanFrame(() => this.adapter.capture(w, h));
-    } catch (cause) {
-      this.fail(cause);
-      throw cause;
-    }
+    // A refused capture (for example a decoding source) is an operation
+    // failure, not permission to destroy the live presentation and its draft.
+    return this.adapter.withCleanFrame(() => this.adapter.capture(w, h));
   }
 
-  setPaused(paused: boolean) { this.paused = paused; if (!paused) this.wake(); }
+  setPaused(paused: boolean) {
+    this.paused = paused;
+    if (paused) this.sleep();
+    else this.wake();
+  }
   /** Walk/dev observability: whether the surface's own clock is held. */
   get isPaused() { return this.paused; }
   setForceMotion(force: boolean) { this.forceMotion = force; if (force) this.wake(); }
@@ -324,6 +386,7 @@ export class EngineSurface {
     this.detachPointer();
     this.active = null;
     this.retainedLeaseOwner = null;
+    this.retainedLeaseIdentity = null;
     try { this.adapter.dispose(); } catch { /* already gone with its context */ }
     this.canvas.remove();
   }
@@ -345,7 +408,7 @@ export class EngineSurface {
   }
   private clearTimers() { for (const timer of this.timers) clearTimeout(timer); this.timers.length = 0; }
   private wake = () => {
-    if (this.raf || !this.active || !this.live) return;
+    if (this.paused || this.raf || !this.active || !this.live) return;
     this.last = performance.now();
     this.raf = requestAnimationFrame(this.frame);
   };

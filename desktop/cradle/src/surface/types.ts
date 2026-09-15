@@ -72,6 +72,11 @@ export interface SurfaceBinding {
   flow?: {flowRef:string;path:string};
   view?: {developmentField?:{cwd:string;baseRevision?:string;snapshot?:DevelopmentFieldViewSnapshot;snapshotUnavailable?:string};factory?: {statePath:string;centralProjectRef?:string;projectRef?:string;runRef?:string;telemetryRef?:string;expectedRevision?:number;materialSnapshot?:import("../contributions/factory/factory-review-snapshot").FactoryMaterialReviewSnapshot;handoffSnapshot?:import("../contributions/factory/factory-review-snapshot").FactoryHandoffReviewSnapshot;snapshotUnavailable?:string};graphOrigin?:string;knowledgePlane?: "graph"|"page";encounterReturnSurfaceId?:string;encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect"};
   location?: import("../kernel/types").CentralLocation;
+  /** SF1: a projected subject pinned as its own Surface (kind
+   * 'presentation') carries the exact World/Projection/Presentation/
+   * Expression refs it was opened with — presentation state naming semantic
+   * addresses, never a cloned remote payload. `ref` is the hosted entry ref. */
+  presentation?: {world_ref:string;field_ref?:string;projection_ref?:string;projection_revision?:number;presentation_ref?:string;presentation_revision?:number;expression_ref?:string;expression_revision?:number};
 }
 
 /** A tab group: one tab strip + the surface it presents. */

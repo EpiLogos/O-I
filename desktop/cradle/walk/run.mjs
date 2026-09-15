@@ -35,6 +35,7 @@ if (!Number.isInteger(BRIDGE_PORT) || BRIDGE_PORT < 1024 || BRIDGE_PORT > 65535)
 const BRIDGE_URL = `http://127.0.0.1:${BRIDGE_PORT}`;
 
 const SCENARIOS = {
+  "expression-page": {module:"scenarios/expression-page.mjs",kernel:true,aliases:["ex5"]},
   refinement:{module:"scenarios/refinement.mjs",kernel:true,aliases:[]},
   "shell-recovery": {module:"scenarios/shell-recovery.mjs",kernel:true,aliases:[]},
   ground:{module:"scenarios/ground.mjs",kernel:true,aliases:[]},
@@ -43,11 +44,13 @@ const SCENARIOS = {
   welcome: { module: "scenarios/welcome.mjs", kernel: false, aliases: [] },
   instrument: { module: "scenarios/instrument.mjs", kernel: true, aliases: ["k9"] },
   "instrument-host": { module: "scenarios/instrument-host.mjs", kernel: true, aliases: ["k9-host"] },
+  "instrument-native-host": { module: "scenarios/instrument-native-host.mjs", kernel: true, aliases: ["k9-native"] },
   visuals: { module: "scenarios/visuals.mjs", kernel: true, aliases: [] },
   surfaces: { module: "scenarios/surfaces.mjs", kernel: true, aliases: ["u0.3b"] },
   "kernel-cas": { module: "scenarios/kernel-cas.mjs", kernel: true, aliases: ["u0.4"] },
   system: {module:"scenarios/system.mjs",kernel:true,aliases:[]},
   "system-settings": {module:"scenarios/system-settings.mjs",kernel:true,aliases:[]},
+  configuration: {module:"scenarios/configuration.mjs",kernel:true,aliases:["c6"]},
   permission: {module:"scenarios/permission.mjs",kernel:true,aliases:[]},
   encounter: {module:"scenarios/encounter.mjs",kernel:true,aliases:[]},
   "context-draft": {module:"scenarios/context-draft.mjs",kernel:true,aliases:[]},
@@ -60,6 +63,7 @@ const SCENARIOS = {
   "first-vertical": {module:"scenarios/first-vertical.mjs",kernel:true,aliases:["vertical"]},
   "shared-field-return": {module:"scenarios/shared-field-return.mjs",kernel:true,aliases:["7"]},
   "shared-field-hosted": {module:"scenarios/shared-field-hosted.mjs",kernel:true,aliases:["lane-c5","u-sf1"]},
+  "explore-sf1": {module:"scenarios/explore-sf1.mjs",kernel:true,aliases:["sf1","explore"]},
   "a2a-exchange": {module:"scenarios/a2a-exchange.mjs",kernel:true,aliases:["7b"]},
   "agency-a2a": {module:"scenarios/agency-a2a.mjs",kernel:true,aliases:["7c"]},
   "flow-canvas": {module:"scenarios/flow-canvas.mjs",kernel:true,aliases:["u4.1"]},
@@ -79,6 +83,7 @@ const SCENARIOS = {
   navigator: { module: "scenarios/navigator.mjs", kernel: true, aliases: ["u1.1"] },
   editor: { module: "scenarios/editor.mjs", kernel: true, aliases: ["u1.2"] },
   knowledge: { module: "scenarios/knowledge.mjs", kernel: true, aliases: ["u3.1", "u3.4"] },
+  "knowledge-expression": { module: "scenarios/knowledge-expression.mjs", kernel: true, aliases: ["ex3"] },
   history: { module: "scenarios/history.mjs", kernel: true, aliases: ["u1.3"] },
   spatial: { module: "scenarios/spatial.mjs", kernel: true, aliases: ["shell"] },
   companions: { module: "scenarios/companions.mjs", kernel: false, aliases: ["round2"] },
@@ -351,7 +356,8 @@ async function runScenario(name, { baseUrl }) {
     bridgeUrl = BRIDGE_URL;
   }
 
-  const browser = await chromium.launch({executablePath: process.env.WALK_CHROMIUM_EXECUTABLE});
+  const chromiumExecutable = process.env.WALK_CHROMIUM_EXECUTABLE ?? process.env.OI_CHROMIUM;
+  const browser = await chromium.launch(chromiumExecutable ? { executablePath: chromiumExecutable } : {});
   // An explicit context: leave/re-enter scenarios open a second page in the
   // SAME context (shared storage = the restored frame), which the implicit
   // browser.newPage() context refuses.
@@ -414,7 +420,7 @@ function resolveNames(args) {
   const names = [];
   for (const arg of args) {
     const canonical =
-      SCENARIOS[arg] ? arg : Object.keys(SCENARIOS).find((n) => SCENARIOS[n].aliases.includes(arg));
+      SCENARIOS[arg] ? arg : Object.keys(SCENARIOS).find((n) => SCENARIOS[n].aliases?.includes(arg));
     if (!canonical) {
       console.error(`unknown scenario \`${arg}\`; known: ${Object.keys(SCENARIOS).join(", ")}, all`);
       process.exit(2);
