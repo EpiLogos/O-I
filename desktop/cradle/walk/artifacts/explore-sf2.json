@@ -1,0 +1,1836 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "explore-sf2",
+  "generated_at": "2026-09-15T13:48:14.484Z",
+  "environment": {
+    "base_url": "http://localhost:4272",
+    "bridge_url": "http://127.0.0.1:4282",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 8098,
+  "checks": [
+    {
+      "ok": true,
+      "label": "The independently hosted world exposes an addressable Wiki/Bimba subject",
+      "data": {
+        "counts": {
+          "entries": 9,
+          "fields": 2,
+          "participants": 3,
+          "projections": 2,
+          "relations": 9
+        },
+        "ref": "world:acceptance:two-world:mu200dlq:a/wiki:node:project-root/o-i"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Desktop renders the owner-returned bounded whole without adding nodes or relations",
+      "data": {
+        "focus": "world:acceptance:two-world:mu200dlq:a/wiki:node:project-root/o-i",
+        "nodes": 2,
+        "relations": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "Graph labels preserve exact relation kinds and provenance revisions",
+      "data": {
+        "relations": [
+          {
+            "relation": "wiki.contains",
+            "provenance": [
+              {
+                "kind": "wiki-relation",
+                "ref": "world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I#wiki.contains#world:acceptance:two-world:mu200dlq:a/wiki:node:project-root/o-i",
+                "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                "source_system": "central"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "LIST is another reading over the same selected relation state"
+    },
+    {
+      "ok": true,
+      "label": "TREE is another reading over the same typed neighbours"
+    },
+    {
+      "ok": true,
+      "label": "Page uses the existing WorldPresentation over the same selected subject"
+    },
+    {
+      "ok": true,
+      "label": "The hosted bounded whole is alive through the existing Expression application and shared stage",
+      "data": {
+        "status": "2 subjects · 1 typed relations · Expression r2"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Pin persists the exact projected semantic ref in the knowledge presentation"
+    },
+    {
+      "ok": true,
+      "label": "Follow can freeze the visual locus without creating a second navigation history"
+    },
+    {
+      "ok": true,
+      "label": "The real owner relation state supplies a recenterable neighbour",
+      "data": {
+        "nodes": [
+          "world:acceptance:two-world:mu200dlq:a/wiki:node:project-root/o-i",
+          "world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "Neighbour activation recentres through the existing Explore selection with the exact ref"
+    },
+    {
+      "ok": true,
+      "label": "Back and Forward restore exact knowledge refs through Explore’s existing bounded history"
+    },
+    {
+      "ok": true,
+      "label": "Source/properties depth exposes the selected subject and its exact provenance revisions"
+    },
+    {
+      "ok": true,
+      "label": "Page/popout uses an ordinary Surface binding with the same projected subject ref"
+    },
+    {
+      "ok": true,
+      "label": "Return restores the prior knowledge locus with history intact"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-15T13:48:14.636Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4282"
+        },
+        "url": "http://localhost:4272/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "invoke.shared_field",
+      "duration_ms": 382.1,
+      "data": {
+        "outcome": {
+          "data": {
+            "contributions": [
+              {
+                "contract": {
+                  "contribution_ref": "contribution:acceptance:two-world:mu200dlq:b-reply",
+                  "contributor_participant_ref": "participant:acceptance:two-world:mu200dlq:b-in-a",
+                  "created_at": "2026-09-15T01:33:51.487Z",
+                  "field_ref": "oi:field:acceptance:two-world:mu200dlq:a",
+                  "mode": "reply",
+                  "provenance": [
+                    {
+                      "kind": "authored",
+                      "ref": "world:acceptance:two-world:mu200dlq:b",
+                      "revision": "central.content-fnv1a64/v1:411:b-project-mu200dlq",
+                      "source_system": "central"
+                    }
+                  ],
+                  "relation": {
+                    "kind": "responds-to"
+                  },
+                  "representation": {
+                    "kind": "oi.sparse-representation/v1",
+                    "payload": {
+                      "description": "Atelier read world:acceptance:two-world:mu200dlq:a and answers from its own world.",
+                      "groups": [],
+                      "meta": [
+                        {
+                          "label": "from",
+                          "value": "world:acceptance:two-world:mu200dlq:b"
+                        }
+                      ],
+                      "schema": "oi.sparse-representation/v1",
+                      "title": "A reply from Atelier"
+                    }
+                  },
+                  "schema": "oi.contribution/v1",
+                  "source": {
+                    "revision": "central.content-fnv1a64/v1:411:b-project-mu200dlq",
+                    "system": "central"
+                  },
+                  "target": {
+                    "kind": "oi.projection",
+                    "ref": "projection:acceptance:two-world:mu200dlq:a"
+                  }
+                },
+                "contribution_ref": "contribution:acceptance:two-world:mu200dlq:b-reply",
+                "contributor_participant_ref": "participant:acceptance:two-world:mu200dlq:b-in-a",
+                "field_ref": "oi:field:acceptance:two-world:mu200dlq:a",
+                "ingress_ref": "ingress:3d9e4679239701d1"
+              }
+            ],
+            "counts": {
+              "entries": 9,
+              "fields": 2,
+              "participants": 3,
+              "projections": 2,
+              "relations": 9
+            },
+            "entries": [
+              {
+                "aliases": [],
+                "kind": "central-world",
+                "label": "World A — a ProjectCentral world",
+                "locators": [
+                  {
+                    "locator": "/explore.html?ref=world%3Aacceptance%3Atwo-world%3Amu200dlq%3Aa",
+                    "surface": "web"
+                  },
+                  {
+                    "locator": "http://127.0.0.1:62573/index.html",
+                    "surface": "edition"
+                  },
+                  {
+                    "locator": "http://127.0.0.1:62573/manifest.json",
+                    "surface": "edition-manifest"
+                  }
+                ],
+                "meta": {
+                  "projection_ref": "projection:acceptance:two-world:mu200dlq:a",
+                  "register": "project",
+                  "standing": "projection"
+                },
+                "provenance": [
+                  {
+                    "kind": "central-wiki-reading",
+                    "ref": "central:source:control:root:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:1639:00c425e4acbea7b5",
+                    "source_system": "central"
+                  },
+                  {
+                    "kind": "central-wiki-reading",
+                    "ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                    "source_system": "central"
+                  }
+                ],
+                "ref": "world:acceptance:two-world:mu200dlq:a",
+                "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                "schema": "oi.explore-entry/v1",
+                "summary": "World A as its owner selected it for the shared field.",
+                "world_ref": "world:acceptance:two-world:mu200dlq:a"
+              },
+              {
+                "aliases": [
+                  "central:wiki:root"
+                ],
+                "kind": "wiki-space",
+                "label": "Central",
+                "locators": [
+                  {
+                    "locator": "/explore.html?ref=world%3Aacceptance%3Atwo-world%3Amu200dlq%3Aa%2Fcentral%3Awiki%3Aroot",
+                    "surface": "web"
+                  }
+                ],
+                "meta": {
+                  "disclosure": "address",
+                  "local_ref": "central:wiki:root",
+                  "register": "root",
+                  "standing": "agent-maintained"
+                },
+                "provenance": [
+                  {
+                    "kind": "agent-wiki",
+                    "ref": "central:wiki:root",
+                    "revision": "central.content-fnv1a64/v1:1639:00c425e4acbea7b5",
+                    "source_system": "central"
+                  }
+                ],
+                "ref": "world:acceptance:two-world:mu200dlq:a/central:wiki:root",
+                "revision": "39",
+                "schema": "oi.explore-entry/v1",
+                "summary": "WikiSpace at the root register · addressable only; no nodes selected",
+                "world_ref": "world:acceptance:two-world:mu200dlq:a"
+              },
+              {
+                "aliases": [
+                  "central:wiki:project:O-I"
+                ],
+                "kind": "wiki-space",
+                "label": "O-I",
+                "locators": [
+                  {
+                    "locator": "/explore.html?ref=world%3Aacceptance%3Atwo-world%3Amu200dlq%3Aa%2Fcentral%3Awiki%3Aproject%3AO-I",
+                    "surface": "web"
+                  }
+                ],
+                "meta": {
+                  "disclosure": "nodes",
+                  "local_ref": "central:wiki:project:O-I",
+                  "register": "project",
+                  "standing": "agent-maintained"
+                },
+                "provenance": [
+                  {
+                    "kind": "agent-wiki",
+                    "ref": "central:wiki:project:O-I",
+                    "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                    "source_system": "central"
+                  }
+                ],
+                "ref": "world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I",
+                "revision": "3",
+                "schema": "oi.explore-entry/v1",
+                "summary": "WikiSpace at the project register · 1 of 1 nodes selected",
+                "world_ref": "world:acceptance:two-world:mu200dlq:a"
+              },
+              {
+                "aliases": [
+                  "wiki:node:project-root/o-i"
+                ],
+                "kind": "wiki-node",
+                "label": "O-I",
+                "locators": [
+                  {
+                    "locator": "/explore.html?ref=world%3Aacceptance%3Atwo-world%3Amu200dlq%3Aa%2Fwiki%3Anode%3Aproject-root%2Fo-i",
+                    "surface": "web"
+                  }
+                ],
+                "meta": {
+                  "local_ref": "wiki:node:project-root/o-i",
+                  "node_type": "project-root",
+                  "register": "project",
+                  "standing": "agent-maintained"
+                },
+                "provenance": [
+                  {
+                    "kind": "agent-wiki",
+                    "ref": "wiki:node:project-root/o-i",
+                    "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                    "source_system": "central"
+                  },
+                  {
+                    "kind": "agent-maintained-source",
+                    "ref": "ProjectCentral/project.json",
+                    "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                    "source_system": "central"
+                  }
+                ],
+                "ref": "world:acceptance:two-world:mu200dlq:a/wiki:node:project-root/o-i",
+                "revision": "1",
+                "schema": "oi.explore-entry/v1",
+                "summary": "project-root · agent-maintained · revision 1",
+                "world_ref": "world:acceptance:two-world:mu200dlq:a"
+              },
+              {
+                "aliases": [],
+                "kind": "contribution",
+                "label": "A reply from Atelier",
+                "locators": [],
+                "meta": {
+                  "participant_ref": "participant:acceptance:two-world:mu200dlq:b-in-a"
+                },
+                "provenance": [
+                  {
+                    "kind": "admitted-contribution",
+                    "ref": "contribution:acceptance:two-world:mu200dlq:b-reply",
+                    "source_system": "o-i"
+                  },
+                  {
+                    "kind": "authored",
+                    "ref": "world:acceptance:two-world:mu200dlq:b",
+                    "revision": "central.content-fnv1a64/v1:411:b-project-mu200dlq",
+                    "source_system": "central"
+                  }
+                ],
+                "ref": "contribution:acceptance:two-world:mu200dlq:b-reply",
+                "schema": "oi.explore-entry/v1",
+                "summary": "Admitted reply from World B",
+                "world_ref": "world:acceptance:two-world:mu200dlq:a"
+              },
+              {
+                "aliases": [],
+                "kind": "central-world",
+                "label": "Atelier — World B",
+                "locators": [
+                  {
+                    "locator": "/explore.html?ref=world%3Aacceptance%3Atwo-world%3Amu200dlq%3Ab",
+                    "surface": "web"
+                  }
+                ],
+                "meta": {
+                  "projection_ref": "projection:acceptance:two-world:mu200dlq:b",
+                  "register": "project",
+                  "standing": "projection"
+                },
+                "provenance": [
+                  {
+                    "kind": "central-wiki-reading",
+                    "ref": "central:source:control:root:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:2001:b-root-mu200dlq",
+                    "source_system": "central"
+                  },
+                  {
+                    "kind": "central-wiki-reading",
+                    "ref": "central:source:project:Atelier:ProjectCentral/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:411:b-project-mu200dlq",
+                    "source_system": "central"
+                  }
+                ],
+                "ref": "world:acceptance:two-world:mu200dlq:b",
+                "revision": "central.content-fnv1a64/v1:411:b-project-mu200dlq",
+                "schema": "oi.explore-entry/v1",
+                "world_ref": "world:acceptance:two-world:mu200dlq:b"
+              },
+              {
+                "aliases": [
+                  "central:wiki:root"
+                ],
+                "kind": "wiki-space",
+                "label": "Atelier",
+                "locators": [
+                  {
+                    "locator": "/explore.html?ref=world%3Aacceptance%3Atwo-world%3Amu200dlq%3Ab%2Fcentral%3Awiki%3Aroot",
+                    "surface": "web"
+                  }
+                ],
+                "meta": {
+                  "disclosure": "address",
+                  "local_ref": "central:wiki:root",
+                  "register": "root",
+                  "standing": "agent-maintained"
+                },
+                "provenance": [
+                  {
+                    "kind": "agent-wiki",
+                    "ref": "central:wiki:root",
+                    "revision": "central.content-fnv1a64/v1:2001:b-root-mu200dlq",
+                    "source_system": "central"
+                  }
+                ],
+                "ref": "world:acceptance:two-world:mu200dlq:b/central:wiki:root",
+                "revision": "5",
+                "schema": "oi.explore-entry/v1",
+                "summary": "WikiSpace at the root register · addressable only; no nodes selected",
+                "world_ref": "world:acceptance:two-world:mu200dlq:b"
+              },
+              {
+                "aliases": [
+                  "central:wiki:project:Atelier"
+                ],
+                "kind": "wiki-space",
+                "label": "Atelier",
+                "locators": [
+                  {
+                    "locator": "/explore.html?ref=world%3Aacceptance%3Atwo-world%3Amu200dlq%3Ab%2Fcentral%3Awiki%3Aproject%3AAtelier",
+                    "surface": "web"
+                  }
+                ],
+                "meta": {
+                  "disclosure": "nodes",
+                  "local_ref": "central:wiki:project:Atelier",
+                  "register": "project",
+                  "standing": "agent-maintained"
+                },
+                "provenance": [
+                  {
+                    "kind": "agent-wiki",
+                    "ref": "central:wiki:project:Atelier",
+                    "revision": "central.content-fnv1a64/v1:411:b-project-mu200dlq",
+                    "source_system": "central"
+                  }
+                ],
+                "ref": "world:acceptance:two-world:mu200dlq:b/central:wiki:project:Atelier",
+                "revision": "2",
+                "schema": "oi.explore-entry/v1",
+                "summary": "WikiSpace at the project register · 1 of 1 nodes selected",
+                "world_ref": "world:acceptance:two-world:mu200dlq:b"
+              },
+              {
+                "aliases": [
+                  "wiki:node:project-root/atelier"
+                ],
+                "kind": "wiki-node",
+                "label": "Atelier",
+                "locators": [
+                  {
+                    "locator": "/explore.html?ref=world%3Aacceptance%3Atwo-world%3Amu200dlq%3Ab%2Fwiki%3Anode%3Aproject-root%2Fatelier",
+                    "surface": "web"
+                  }
+                ],
+                "meta": {
+                  "local_ref": "wiki:node:project-root/atelier",
+                  "node_type": "project-root",
+                  "register": "project",
+                  "standing": "agent-maintained"
+                },
+                "provenance": [
+                  {
+                    "kind": "agent-wiki",
+                    "ref": "wiki:node:project-root/atelier",
+                    "revision": "central.content-fnv1a64/v1:411:b-project-mu200dlq",
+                    "source_system": "central"
+                  }
+                ],
+                "ref": "world:acceptance:two-world:mu200dlq:b/wiki:node:project-root/atelier",
+                "revision": "1",
+                "schema": "oi.explore-entry/v1",
+                "summary": "project-root · agent-maintained · revision 1",
+                "world_ref": "world:acceptance:two-world:mu200dlq:b"
+              }
+            ],
+            "entry_fields": {
+              "contribution:acceptance:two-world:mu200dlq:b-reply": "oi:field:acceptance:two-world:mu200dlq:a",
+              "world:acceptance:two-world:mu200dlq:a": "oi:field:acceptance:two-world:mu200dlq:a",
+              "world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I": "oi:field:acceptance:two-world:mu200dlq:a",
+              "world:acceptance:two-world:mu200dlq:a/central:wiki:root": "oi:field:acceptance:two-world:mu200dlq:a",
+              "world:acceptance:two-world:mu200dlq:a/wiki:node:project-root/o-i": "oi:field:acceptance:two-world:mu200dlq:a",
+              "world:acceptance:two-world:mu200dlq:b": "oi:field:acceptance:two-world:mu200dlq:b",
+              "world:acceptance:two-world:mu200dlq:b/central:wiki:project:Atelier": "oi:field:acceptance:two-world:mu200dlq:b",
+              "world:acceptance:two-world:mu200dlq:b/central:wiki:root": "oi:field:acceptance:two-world:mu200dlq:b",
+              "world:acceptance:two-world:mu200dlq:b/wiki:node:project-root/atelier": "oi:field:acceptance:two-world:mu200dlq:b"
+            },
+            "fields": [
+              {
+                "field_ref": "oi:field:acceptance:two-world:mu200dlq:a",
+                "kind": "explore",
+                "provenance": [
+                  {
+                    "kind": "human-publication",
+                    "ref": "participant:acceptance:two-world:mu200dlq:a-owner",
+                    "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                    "source_system": "central"
+                  }
+                ],
+                "schema": "oi.shared-field/v1",
+                "title": "World A — a ProjectCentral world",
+                "visibility": "public"
+              },
+              {
+                "field_ref": "oi:field:acceptance:two-world:mu200dlq:b",
+                "kind": "explore",
+                "provenance": [
+                  {
+                    "kind": "human-publication",
+                    "ref": "participant:acceptance:two-world:mu200dlq:b-owner",
+                    "revision": "central.content-fnv1a64/v1:411:b-project-mu200dlq",
+                    "source_system": "central"
+                  }
+                ],
+                "schema": "oi.shared-field/v1",
+                "title": "Atelier — World B",
+                "visibility": "public"
+              }
+            ],
+            "my_authority": [],
+            "my_contacts": [],
+            "my_contribution_receipts": [],
+            "my_watches": [],
+            "participants": [
+              {
+                "field_ref": "oi:field:acceptance:two-world:mu200dlq:a",
+                "identity": {
+                  "kind": "human",
+                  "ref": "human:acceptance:two-world:mu200dlq:a"
+                },
+                "participant_ref": "participant:acceptance:two-world:mu200dlq:a-owner",
+                "presentation": {
+                  "chosen_name": "World A owner",
+                  "world_ref": "world:acceptance:two-world:mu200dlq:a"
+                },
+                "provenance": {
+                  "source_ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.json",
+                  "source_revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                  "source_system": "central"
+                },
+                "schema": "oi.participant/v1"
+              },
+              {
+                "field_ref": "oi:field:acceptance:two-world:mu200dlq:a",
+                "identity": {
+                  "kind": "human",
+                  "ref": "human:acceptance:two-world:mu200dlq:b"
+                },
+                "participant_ref": "participant:acceptance:two-world:mu200dlq:b-in-a",
+                "presentation": {
+                  "chosen_name": "Atelier owner",
+                  "world_ref": "world:acceptance:two-world:mu200dlq:b"
+                },
+                "provenance": {
+                  "source_ref": "central:source:project:Atelier:ProjectCentral/agents/wiki/wiki.json",
+                  "source_revision": "central.content-fnv1a64/v1:411:b-project-mu200dlq",
+                  "source_system": "central"
+                },
+                "schema": "oi.participant/v1"
+              },
+              {
+                "field_ref": "oi:field:acceptance:two-world:mu200dlq:b",
+                "identity": {
+                  "kind": "human",
+                  "ref": "human:acceptance:two-world:mu200dlq:b"
+                },
+                "participant_ref": "participant:acceptance:two-world:mu200dlq:b-owner",
+                "presentation": {
+                  "chosen_name": "Atelier owner",
+                  "world_ref": "world:acceptance:two-world:mu200dlq:b"
+                },
+                "provenance": {
+                  "source_ref": "central:source:project:Atelier:ProjectCentral/agents/wiki/wiki.json",
+                  "source_revision": "central.content-fnv1a64/v1:411:b-project-mu200dlq",
+                  "source_system": "central"
+                },
+                "schema": "oi.participant/v1"
+              }
+            ],
+            "projections": [
+              {
+                "audience": {
+                  "visibility": "public"
+                },
+                "projection_ref": "projection:acceptance:two-world:mu200dlq:a",
+                "projection_revision": 3,
+                "provenance": [
+                  {
+                    "kind": "human-publication",
+                    "ref": "participant:acceptance:two-world:mu200dlq:a-owner",
+                    "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                    "source_system": "central"
+                  },
+                  {
+                    "kind": "human-refinement",
+                    "ref": "participant:acceptance:two-world:mu200dlq:a-owner",
+                    "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                    "source_system": "central"
+                  }
+                ],
+                "published_at": "2026-09-15T01:33:51.988Z",
+                "publisher_participant_ref": "participant:acceptance:two-world:mu200dlq:a-owner",
+                "representation": {
+                  "kind": "oi.withdrawal/v1",
+                  "payload": {
+                    "reason": "World A owner withdrew the public representation at the end of the acceptance."
+                  }
+                },
+                "schema": "oi.projection/v1",
+                "source": {
+                  "ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.json",
+                  "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                  "system": "central"
+                },
+                "state": "withdrawn",
+                "subject": {
+                  "kind": "central-world",
+                  "ref": "world:acceptance:two-world:mu200dlq:a"
+                },
+                "supersedes": {
+                  "projection_ref": "projection:acceptance:two-world:mu200dlq:a",
+                  "projection_revision": 2,
+                  "source_revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6"
+                },
+                "withdrawal": {
+                  "reason": "World A owner withdrew the public representation at the end of the acceptance.",
+                  "source_history_deleted": false
+                }
+              },
+              {
+                "audience": {
+                  "visibility": "public"
+                },
+                "projection_ref": "projection:acceptance:two-world:mu200dlq:b",
+                "projection_revision": 1,
+                "provenance": [
+                  {
+                    "kind": "human-publication",
+                    "ref": "participant:acceptance:two-world:mu200dlq:b-owner",
+                    "revision": "central.content-fnv1a64/v1:411:b-project-mu200dlq",
+                    "source_system": "central"
+                  }
+                ],
+                "published_at": "2026-09-15T01:33:50.182Z",
+                "publisher_participant_ref": "participant:acceptance:two-world:mu200dlq:b-owner",
+                "representation": {
+                  "kind": "oi.world-presentation/v1",
+                  "payload": {
+                    "presentation_ref": "presentation:acceptance:two-world:mu200dlq:b",
+                    "provenance": [
+                      {
+                        "kind": "central-wiki-reading",
+                        "ref": "central:source:control:root:Control/agents/wiki/wiki.json",
+                        "revision": "central.content-fnv1a64/v1:2001:b-root-mu200dlq",
+                        "source_system": "central"
+                      },
+                      {
+                        "kind": "central-wiki-reading",
+                        "ref": "central:source:project:Atelier:ProjectCentral/agents/wiki/wiki.json",
+                        "revision": "central.content-fnv1a64/v1:411:b-project-mu200dlq",
+                        "source_system": "central"
+                      }
+                    ],
+                    "regions": [
+                      {
+                        "bindings": [
+                          {
+                            "binding_ref": "lede",
+                            "component_ref": "oi.presentation/lede/v1",
+                            "fallback": {
+                              "title": "Atelier — World B"
+                            },
+                            "portable_renderer": "oi.presentation/lede/v1",
+                            "props": {
+                              "title": "Atelier — World B"
+                            },
+                            "provenance": [
+                              {
+                                "kind": "agent-wiki",
+                                "ref": "world:acceptance:two-world:mu200dlq:b",
+                                "revision": "central.content-fnv1a64/v1:411:b-project-mu200dlq",
+                                "source_system": "central"
+                              }
+                            ],
+                            "schema": "oi.presentation-binding/v1",
+                            "subject_ref": "world:acceptance:two-world:mu200dlq:b"
+                          }
+                        ],
+                        "region_ref": "lede",
+                        "role": "lede"
+                      },
+                      {
+                        "bindings": [
+                          {
+                            "binding_ref": "space:central-wiki-root",
+                            "component_ref": "oi.presentation/wiki-reading/v1",
+                            "fallback": {
+                              "text": "central:wiki:root",
+                              "title": "Atelier"
+                            },
+                            "portable_renderer": "oi.presentation/wiki-reading/v1",
+                            "props": {
+                              "refs": [
+                                "world:acceptance:two-world:mu200dlq:b/central:wiki:project:Atelier"
+                              ],
+                              "text": "central:wiki:root · root register",
+                              "title": "Atelier"
+                            },
+                            "provenance": [
+                              {
+                                "kind": "agent-wiki",
+                                "ref": "central:wiki:root",
+                                "revision": "central.content-fnv1a64/v1:2001:b-root-mu200dlq",
+                                "source_system": "central"
+                              }
+                            ],
+                            "schema": "oi.presentation-binding/v1",
+                            "subject_ref": "world:acceptance:two-world:mu200dlq:b/central:wiki:root"
+                          },
+                          {
+                            "binding_ref": "space:central-wiki-project-atelier",
+                            "component_ref": "oi.presentation/wiki-reading/v1",
+                            "fallback": {
+                              "text": "central:wiki:project:Atelier",
+                              "title": "Atelier"
+                            },
+                            "portable_renderer": "oi.presentation/wiki-reading/v1",
+                            "props": {
+                              "refs": [
+                                "world:acceptance:two-world:mu200dlq:b/wiki:node:project-root/atelier"
+                              ],
+                              "text": "central:wiki:project:Atelier · project register",
+                              "title": "Atelier"
+                            },
+                            "provenance": [
+                              {
+                                "kind": "agent-wiki",
+                                "ref": "central:wiki:project:Atelier",
+                                "revision": "central.content-fnv1a64/v1:411:b-project-mu200dlq",
+                                "source_system": "central"
+                              }
+                            ],
+                            "schema": "oi.presentation-binding/v1",
+                            "subject_ref": "world:acceptance:two-world:mu200dlq:b/central:wiki:project:Atelier"
+                          }
+                        ],
+                        "label": "Wiki topology",
+                        "region_ref": "wiki",
+                        "role": "relation"
+                      },
+                      {
+                        "bindings": [
+                          {
+                            "binding_ref": "node:wiki-node-project-root-atelier",
+                            "component_ref": "oi.presentation/reference-card/v1",
+                            "fallback": {
+                              "text": "project-root · agent-maintained",
+                              "title": "Atelier"
+                            },
+                            "portable_renderer": "oi.presentation/reference-card/v1",
+                            "props": {
+                              "refs": [],
+                              "text": "project-root · agent-maintained",
+                              "title": "Atelier"
+                            },
+                            "provenance": [
+                              {
+                                "kind": "agent-wiki",
+                                "ref": "wiki:node:project-root/atelier",
+                                "revision": "central.content-fnv1a64/v1:411:b-project-mu200dlq",
+                                "source_system": "central"
+                              }
+                            ],
+                            "schema": "oi.presentation-binding/v1",
+                            "subject_ref": "world:acceptance:two-world:mu200dlq:b/wiki:node:project-root/atelier"
+                          }
+                        ],
+                        "label": "Selected nodes",
+                        "region_ref": "nodes",
+                        "role": "reading"
+                      }
+                    ],
+                    "revision": 1,
+                    "schema": "oi.world-presentation/v1",
+                    "theme": {
+                      "tokens": {}
+                    },
+                    "title": "Atelier — World B",
+                    "world_ref": "world:acceptance:two-world:mu200dlq:b"
+                  }
+                },
+                "schema": "oi.projection/v1",
+                "source": {
+                  "ref": "central:source:project:Atelier:ProjectCentral/agents/wiki/wiki.json",
+                  "revision": "central.content-fnv1a64/v1:411:b-project-mu200dlq",
+                  "system": "central"
+                },
+                "state": "published",
+                "subject": {
+                  "kind": "central-world",
+                  "ref": "world:acceptance:two-world:mu200dlq:b"
+                }
+              }
+            ],
+            "relations": [
+              {
+                "direction": "forward",
+                "from": "world:acceptance:two-world:mu200dlq:a/central:wiki:root",
+                "origin": "wiki",
+                "provenance": [
+                  {
+                    "kind": "wiki-relation",
+                    "ref": "world:acceptance:two-world:mu200dlq:a/central:wiki:root#wiki.contains#world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I",
+                    "revision": "central.content-fnv1a64/v1:1639:00c425e4acbea7b5",
+                    "source_system": "central"
+                  }
+                ],
+                "relation": "wiki.contains",
+                "relation_ref": "world:acceptance:two-world:mu200dlq:a/central:wiki:root#wiki.contains#world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I",
+                "to": "world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I"
+              },
+              {
+                "direction": "forward",
+                "from": "world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I",
+                "origin": "wiki",
+                "provenance": [
+                  {
+                    "kind": "wiki-relation",
+                    "ref": "world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I#wiki.contains#world:acceptance:two-world:mu200dlq:a/wiki:node:project-root/o-i",
+                    "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                    "source_system": "central"
+                  }
+                ],
+                "relation": "wiki.contains",
+                "relation_ref": "world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I#wiki.contains#world:acceptance:two-world:mu200dlq:a/wiki:node:project-root/o-i",
+                "to": "world:acceptance:two-world:mu200dlq:a/wiki:node:project-root/o-i"
+              },
+              {
+                "from": "world:acceptance:two-world:mu200dlq:a",
+                "origin": "projection",
+                "provenance": [
+                  {
+                    "kind": "projection-relation",
+                    "ref": "world:acceptance:two-world:mu200dlq:a#oi.world/wiki-space#world:acceptance:two-world:mu200dlq:a/central:wiki:root",
+                    "revision": "projection:acceptance:two-world:mu200dlq:a@1",
+                    "source_system": "o-i"
+                  }
+                ],
+                "relation": "oi.world/wiki-space",
+                "relation_ref": "world:acceptance:two-world:mu200dlq:a#oi.world/wiki-space#world:acceptance:two-world:mu200dlq:a/central:wiki:root",
+                "to": "world:acceptance:two-world:mu200dlq:a/central:wiki:root"
+              },
+              {
+                "from": "world:acceptance:two-world:mu200dlq:a",
+                "origin": "projection",
+                "provenance": [
+                  {
+                    "kind": "projection-relation",
+                    "ref": "world:acceptance:two-world:mu200dlq:a#oi.world/wiki-space#world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I",
+                    "revision": "projection:acceptance:two-world:mu200dlq:a@1",
+                    "source_system": "o-i"
+                  }
+                ],
+                "relation": "oi.world/wiki-space",
+                "relation_ref": "world:acceptance:two-world:mu200dlq:a#oi.world/wiki-space#world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I",
+                "to": "world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I"
+              },
+              {
+                "from": "contribution:acceptance:two-world:mu200dlq:b-reply",
+                "origin": "contribution",
+                "provenance": [
+                  {
+                    "kind": "admitted-contribution",
+                    "ref": "contribution:acceptance:two-world:mu200dlq:b-reply",
+                    "source_system": "o-i"
+                  }
+                ],
+                "relation": "responds-to",
+                "relation_ref": "contribution:acceptance:two-world:mu200dlq:b-reply#responds-to#projection:acceptance:two-world:mu200dlq:a",
+                "to": "world:acceptance:two-world:mu200dlq:a"
+              },
+              {
+                "direction": "forward",
+                "from": "world:acceptance:two-world:mu200dlq:b/central:wiki:root",
+                "origin": "wiki",
+                "provenance": [
+                  {
+                    "kind": "wiki-relation",
+                    "ref": "world:acceptance:two-world:mu200dlq:b/central:wiki:root#wiki.contains#world:acceptance:two-world:mu200dlq:b/central:wiki:project:Atelier",
+                    "revision": "central.content-fnv1a64/v1:2001:b-root-mu200dlq",
+                    "source_system": "central"
+                  }
+                ],
+                "relation": "wiki.contains",
+                "relation_ref": "world:acceptance:two-world:mu200dlq:b/central:wiki:root#wiki.contains#world:acceptance:two-world:mu200dlq:b/central:wiki:project:Atelier",
+                "to": "world:acceptance:two-world:mu200dlq:b/central:wiki:project:Atelier"
+              },
+              {
+                "direction": "forward",
+                "from": "world:acceptance:two-world:mu200dlq:b/central:wiki:project:Atelier",
+                "origin": "wiki",
+                "provenance": [
+                  {
+                    "kind": "wiki-relation",
+                    "ref": "world:acceptance:two-world:mu200dlq:b/central:wiki:project:Atelier#wiki.contains#world:acceptance:two-world:mu200dlq:b/wiki:node:project-root/atelier",
+                    "revision": "central.content-fnv1a64/v1:411:b-project-mu200dlq",
+                    "source_system": "central"
+                  }
+                ],
+                "relation": "wiki.contains",
+                "relation_ref": "world:acceptance:two-world:mu200dlq:b/central:wiki:project:Atelier#wiki.contains#world:acceptance:two-world:mu200dlq:b/wiki:node:project-root/atelier",
+                "to": "world:acceptance:two-world:mu200dlq:b/wiki:node:project-root/atelier"
+              },
+              {
+                "from": "world:acceptance:two-world:mu200dlq:b",
+                "origin": "projection",
+                "provenance": [
+                  {
+                    "kind": "projection-relation",
+                    "ref": "world:acceptance:two-world:mu200dlq:b#oi.world/wiki-space#world:acceptance:two-world:mu200dlq:b/central:wiki:root",
+                    "revision": "projection:acceptance:two-world:mu200dlq:b@1",
+                    "source_system": "o-i"
+                  }
+                ],
+                "relation": "oi.world/wiki-space",
+                "relation_ref": "world:acceptance:two-world:mu200dlq:b#oi.world/wiki-space#world:acceptance:two-world:mu200dlq:b/central:wiki:root",
+                "to": "world:acceptance:two-world:mu200dlq:b/central:wiki:root"
+              },
+              {
+                "from": "world:acceptance:two-world:mu200dlq:b",
+                "origin": "projection",
+                "provenance": [
+                  {
+                    "kind": "projection-relation",
+                    "ref": "world:acceptance:two-world:mu200dlq:b#oi.world/wiki-space#world:acceptance:two-world:mu200dlq:b/central:wiki:project:Atelier",
+                    "revision": "projection:acceptance:two-world:mu200dlq:b@1",
+                    "source_system": "o-i"
+                  }
+                ],
+                "relation": "oi.world/wiki-space",
+                "relation_ref": "world:acceptance:two-world:mu200dlq:b#oi.world/wiki-space#world:acceptance:two-world:mu200dlq:b/central:wiki:project:Atelier",
+                "to": "world:acceptance:two-world:mu200dlq:b/central:wiki:project:Atelier"
+              }
+            ],
+            "schema": "oi.shared-field.snapshot/v1",
+            "status": {
+              "healthy": true,
+              "material": {
+                "age_ms": 1,
+                "observed_at": "2026-09-15T13:48:16.040Z",
+                "state": "validated"
+              },
+              "material_valid": true,
+              "revision": 1,
+              "transport": {
+                "changed_at": "2026-09-15T13:48:16.039Z",
+                "identity": "c200afa6b3eca4a8402f7c1c287199dd46b59861ab78bf430adb769115992e63",
+                "state": "available"
+              }
+            },
+            "target": {
+              "database": "oi-shared-field-acceptance",
+              "name": "frank-acceptance",
+              "uri": "ws://100.92.62.101:3000"
+            },
+            "transport_identity": "c200afa6b3eca4a8402f7c1c287199dd46b59861ab78bf430adb769115992e63"
+          },
+          "result": "shared_field_reading"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "invoke.shared_field",
+      "duration_ms": 400.8,
+      "data": {
+        "outcome": {
+          "data": {
+            "contributions": [
+              {
+                "contract": {
+                  "contribution_ref": "contribution:acceptance:two-world:mu200dlq:b-reply",
+                  "contributor_participant_ref": "participant:acceptance:two-world:mu200dlq:b-in-a",
+                  "created_at": "2026-09-15T01:33:51.487Z",
+                  "field_ref": "oi:field:acceptance:two-world:mu200dlq:a",
+                  "mode": "reply",
+                  "provenance": [
+                    {
+                      "kind": "authored",
+                      "ref": "world:acceptance:two-world:mu200dlq:b",
+                      "revision": "central.content-fnv1a64/v1:411:b-project-mu200dlq",
+                      "source_system": "central"
+                    }
+                  ],
+                  "relation": {
+                    "kind": "responds-to"
+                  },
+                  "representation": {
+                    "kind": "oi.sparse-representation/v1",
+                    "payload": {
+                      "description": "Atelier read world:acceptance:two-world:mu200dlq:a and answers from its own world.",
+                      "groups": [],
+                      "meta": [
+                        {
+                          "label": "from",
+                          "value": "world:acceptance:two-world:mu200dlq:b"
+                        }
+                      ],
+                      "schema": "oi.sparse-representation/v1",
+                      "title": "A reply from Atelier"
+                    }
+                  },
+                  "schema": "oi.contribution/v1",
+                  "source": {
+                    "revision": "central.content-fnv1a64/v1:411:b-project-mu200dlq",
+                    "system": "central"
+                  },
+                  "target": {
+                    "kind": "oi.projection",
+                    "ref": "projection:acceptance:two-world:mu200dlq:a"
+                  }
+                },
+                "contribution_ref": "contribution:acceptance:two-world:mu200dlq:b-reply",
+                "contributor_participant_ref": "participant:acceptance:two-world:mu200dlq:b-in-a",
+                "field_ref": "oi:field:acceptance:two-world:mu200dlq:a",
+                "ingress_ref": "ingress:3d9e4679239701d1"
+              }
+            ],
+            "entry": {
+              "aliases": [
+                "wiki:node:project-root/o-i"
+              ],
+              "kind": "wiki-node",
+              "label": "O-I",
+              "locators": [
+                {
+                  "locator": "/explore.html?ref=world%3Aacceptance%3Atwo-world%3Amu200dlq%3Aa%2Fwiki%3Anode%3Aproject-root%2Fo-i",
+                  "surface": "web"
+                }
+              ],
+              "meta": {
+                "local_ref": "wiki:node:project-root/o-i",
+                "node_type": "project-root",
+                "register": "project",
+                "standing": "agent-maintained"
+              },
+              "provenance": [
+                {
+                  "kind": "agent-wiki",
+                  "ref": "wiki:node:project-root/o-i",
+                  "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                  "source_system": "central"
+                },
+                {
+                  "kind": "agent-maintained-source",
+                  "ref": "ProjectCentral/project.json",
+                  "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                  "source_system": "central"
+                }
+              ],
+              "ref": "world:acceptance:two-world:mu200dlq:a/wiki:node:project-root/o-i",
+              "revision": "1",
+              "schema": "oi.explore-entry/v1",
+              "summary": "project-root · agent-maintained · revision 1",
+              "world_ref": "world:acceptance:two-world:mu200dlq:a"
+            },
+            "field_ref": "oi:field:acceptance:two-world:mu200dlq:a",
+            "my_authority": [],
+            "my_watches": [],
+            "neighbourhood": {
+              "actions": [
+                "open",
+                "inspect",
+                "traverse"
+              ],
+              "relations": {
+                "budget": 24,
+                "depth": 1,
+                "edges": [
+                  {
+                    "direction": "forward",
+                    "from": "world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I",
+                    "origin": "wiki",
+                    "provenance": [
+                      {
+                        "kind": "wiki-relation",
+                        "ref": "world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I#wiki.contains#world:acceptance:two-world:mu200dlq:a/wiki:node:project-root/o-i",
+                        "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                        "source_system": "central"
+                      }
+                    ],
+                    "relation": "wiki.contains",
+                    "to": "world:acceptance:two-world:mu200dlq:a/wiki:node:project-root/o-i"
+                  }
+                ],
+                "focus": "world:acceptance:two-world:mu200dlq:a/wiki:node:project-root/o-i",
+                "nodes": [
+                  {
+                    "aliases": [
+                      "wiki:node:project-root/o-i"
+                    ],
+                    "kind": "wiki-node",
+                    "label": "O-I",
+                    "locators": [
+                      {
+                        "locator": "/explore.html?ref=world%3Aacceptance%3Atwo-world%3Amu200dlq%3Aa%2Fwiki%3Anode%3Aproject-root%2Fo-i",
+                        "surface": "web"
+                      }
+                    ],
+                    "meta": {
+                      "local_ref": "wiki:node:project-root/o-i",
+                      "node_type": "project-root",
+                      "register": "project",
+                      "standing": "agent-maintained"
+                    },
+                    "provenance": [
+                      {
+                        "kind": "agent-wiki",
+                        "ref": "wiki:node:project-root/o-i",
+                        "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                        "source_system": "central"
+                      },
+                      {
+                        "kind": "agent-maintained-source",
+                        "ref": "ProjectCentral/project.json",
+                        "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                        "source_system": "central"
+                      }
+                    ],
+                    "ref": "world:acceptance:two-world:mu200dlq:a/wiki:node:project-root/o-i",
+                    "revision": "1",
+                    "schema": "oi.explore-entry/v1",
+                    "summary": "project-root · agent-maintained · revision 1",
+                    "world_ref": "world:acceptance:two-world:mu200dlq:a"
+                  },
+                  {
+                    "aliases": [
+                      "central:wiki:project:O-I"
+                    ],
+                    "kind": "wiki-space",
+                    "label": "O-I",
+                    "locators": [
+                      {
+                        "locator": "/explore.html?ref=world%3Aacceptance%3Atwo-world%3Amu200dlq%3Aa%2Fcentral%3Awiki%3Aproject%3AO-I",
+                        "surface": "web"
+                      }
+                    ],
+                    "meta": {
+                      "disclosure": "nodes",
+                      "local_ref": "central:wiki:project:O-I",
+                      "register": "project",
+                      "standing": "agent-maintained"
+                    },
+                    "provenance": [
+                      {
+                        "kind": "agent-wiki",
+                        "ref": "central:wiki:project:O-I",
+                        "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                        "source_system": "central"
+                      }
+                    ],
+                    "ref": "world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I",
+                    "revision": "3",
+                    "schema": "oi.explore-entry/v1",
+                    "summary": "WikiSpace at the project register · 1 of 1 nodes selected",
+                    "world_ref": "world:acceptance:two-world:mu200dlq:a"
+                  }
+                ],
+                "schema": "oi.explore-relation-view/v1",
+                "truncated": false
+              },
+              "resource": {
+                "aliases": [
+                  "wiki:node:project-root/o-i"
+                ],
+                "kind": "wiki-node",
+                "label": "O-I",
+                "locators": [
+                  {
+                    "locator": "/explore.html?ref=world%3Aacceptance%3Atwo-world%3Amu200dlq%3Aa%2Fwiki%3Anode%3Aproject-root%2Fo-i",
+                    "surface": "web"
+                  }
+                ],
+                "meta": {
+                  "local_ref": "wiki:node:project-root/o-i",
+                  "node_type": "project-root",
+                  "register": "project",
+                  "standing": "agent-maintained"
+                },
+                "provenance": [
+                  {
+                    "kind": "agent-wiki",
+                    "ref": "wiki:node:project-root/o-i",
+                    "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                    "source_system": "central"
+                  },
+                  {
+                    "kind": "agent-maintained-source",
+                    "ref": "ProjectCentral/project.json",
+                    "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                    "source_system": "central"
+                  }
+                ],
+                "ref": "world:acceptance:two-world:mu200dlq:a/wiki:node:project-root/o-i",
+                "revision": "1",
+                "schema": "oi.explore-entry/v1",
+                "summary": "project-root · agent-maintained · revision 1",
+                "world_ref": "world:acceptance:two-world:mu200dlq:a"
+              }
+            },
+            "projections": [
+              {
+                "audience": {
+                  "visibility": "public"
+                },
+                "projection_ref": "projection:acceptance:two-world:mu200dlq:a",
+                "projection_revision": 3,
+                "provenance": [
+                  {
+                    "kind": "human-publication",
+                    "ref": "participant:acceptance:two-world:mu200dlq:a-owner",
+                    "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                    "source_system": "central"
+                  },
+                  {
+                    "kind": "human-refinement",
+                    "ref": "participant:acceptance:two-world:mu200dlq:a-owner",
+                    "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                    "source_system": "central"
+                  }
+                ],
+                "published_at": "2026-09-15T01:33:51.988Z",
+                "publisher_participant_ref": "participant:acceptance:two-world:mu200dlq:a-owner",
+                "representation": {
+                  "kind": "oi.withdrawal/v1",
+                  "payload": {
+                    "reason": "World A owner withdrew the public representation at the end of the acceptance."
+                  }
+                },
+                "schema": "oi.projection/v1",
+                "source": {
+                  "ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.json",
+                  "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                  "system": "central"
+                },
+                "state": "withdrawn",
+                "subject": {
+                  "kind": "central-world",
+                  "ref": "world:acceptance:two-world:mu200dlq:a"
+                },
+                "supersedes": {
+                  "projection_ref": "projection:acceptance:two-world:mu200dlq:a",
+                  "projection_revision": 2,
+                  "source_revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6"
+                },
+                "withdrawal": {
+                  "reason": "World A owner withdrew the public representation at the end of the acceptance.",
+                  "source_history_deleted": false
+                }
+              }
+            ],
+            "ref": "world:acceptance:two-world:mu200dlq:a/wiki:node:project-root/o-i",
+            "relations": [
+              {
+                "direction": "forward",
+                "from": "world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I",
+                "origin": "wiki",
+                "provenance": [
+                  {
+                    "kind": "wiki-relation",
+                    "ref": "world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I#wiki.contains#world:acceptance:two-world:mu200dlq:a/wiki:node:project-root/o-i",
+                    "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                    "source_system": "central"
+                  }
+                ],
+                "relation": "wiki.contains",
+                "relation_ref": "world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I#wiki.contains#world:acceptance:two-world:mu200dlq:a/wiki:node:project-root/o-i",
+                "to": "world:acceptance:two-world:mu200dlq:a/wiki:node:project-root/o-i"
+              }
+            ],
+            "schema": "oi.shared-field.reading/v1",
+            "state": "hosted",
+            "status": {
+              "healthy": true,
+              "material": {
+                "age_ms": 1,
+                "observed_at": "2026-09-15T13:48:17.274Z",
+                "state": "validated"
+              },
+              "material_valid": true,
+              "revision": 1,
+              "transport": {
+                "changed_at": "2026-09-15T13:48:17.273Z",
+                "identity": "c200afa6b3eca4a8402f7c1c287199dd46b59861ab78bf430adb769115992e63",
+                "state": "available"
+              }
+            },
+            "target": {
+              "database": "oi-shared-field-acceptance",
+              "name": "frank-acceptance",
+              "uri": "ws://100.92.62.101:3000"
+            }
+          },
+          "result": "shared_field_reading"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.stage",
+      "duration_ms": 0,
+      "data": {
+        "paused": false,
+        "presentations": [
+          {
+            "id": "explore-knowledge-expression:world:acceptance:two-world:mu200dlq:a/wiki:node:project-root/o-i",
+            "plane": "overlay"
+          }
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 1243,
+      "data": {
+        "file": "explore-sf2-living-knowledge-expression.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "invoke.shared_field",
+      "duration_ms": 569,
+      "data": {
+        "outcome": {
+          "data": {
+            "contributions": [
+              {
+                "contract": {
+                  "contribution_ref": "contribution:acceptance:two-world:mu200dlq:b-reply",
+                  "contributor_participant_ref": "participant:acceptance:two-world:mu200dlq:b-in-a",
+                  "created_at": "2026-09-15T01:33:51.487Z",
+                  "field_ref": "oi:field:acceptance:two-world:mu200dlq:a",
+                  "mode": "reply",
+                  "provenance": [
+                    {
+                      "kind": "authored",
+                      "ref": "world:acceptance:two-world:mu200dlq:b",
+                      "revision": "central.content-fnv1a64/v1:411:b-project-mu200dlq",
+                      "source_system": "central"
+                    }
+                  ],
+                  "relation": {
+                    "kind": "responds-to"
+                  },
+                  "representation": {
+                    "kind": "oi.sparse-representation/v1",
+                    "payload": {
+                      "description": "Atelier read world:acceptance:two-world:mu200dlq:a and answers from its own world.",
+                      "groups": [],
+                      "meta": [
+                        {
+                          "label": "from",
+                          "value": "world:acceptance:two-world:mu200dlq:b"
+                        }
+                      ],
+                      "schema": "oi.sparse-representation/v1",
+                      "title": "A reply from Atelier"
+                    }
+                  },
+                  "schema": "oi.contribution/v1",
+                  "source": {
+                    "revision": "central.content-fnv1a64/v1:411:b-project-mu200dlq",
+                    "system": "central"
+                  },
+                  "target": {
+                    "kind": "oi.projection",
+                    "ref": "projection:acceptance:two-world:mu200dlq:a"
+                  }
+                },
+                "contribution_ref": "contribution:acceptance:two-world:mu200dlq:b-reply",
+                "contributor_participant_ref": "participant:acceptance:two-world:mu200dlq:b-in-a",
+                "field_ref": "oi:field:acceptance:two-world:mu200dlq:a",
+                "ingress_ref": "ingress:3d9e4679239701d1"
+              }
+            ],
+            "entry": {
+              "aliases": [
+                "central:wiki:project:O-I"
+              ],
+              "kind": "wiki-space",
+              "label": "O-I",
+              "locators": [
+                {
+                  "locator": "/explore.html?ref=world%3Aacceptance%3Atwo-world%3Amu200dlq%3Aa%2Fcentral%3Awiki%3Aproject%3AO-I",
+                  "surface": "web"
+                }
+              ],
+              "meta": {
+                "disclosure": "nodes",
+                "local_ref": "central:wiki:project:O-I",
+                "register": "project",
+                "standing": "agent-maintained"
+              },
+              "provenance": [
+                {
+                  "kind": "agent-wiki",
+                  "ref": "central:wiki:project:O-I",
+                  "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                  "source_system": "central"
+                }
+              ],
+              "ref": "world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I",
+              "revision": "3",
+              "schema": "oi.explore-entry/v1",
+              "summary": "WikiSpace at the project register · 1 of 1 nodes selected",
+              "world_ref": "world:acceptance:two-world:mu200dlq:a"
+            },
+            "field_ref": "oi:field:acceptance:two-world:mu200dlq:a",
+            "my_authority": [],
+            "my_watches": [],
+            "neighbourhood": {
+              "actions": [
+                "open",
+                "inspect",
+                "traverse"
+              ],
+              "relations": {
+                "budget": 24,
+                "depth": 1,
+                "edges": [
+                  {
+                    "direction": "forward",
+                    "from": "world:acceptance:two-world:mu200dlq:a/central:wiki:root",
+                    "origin": "wiki",
+                    "provenance": [
+                      {
+                        "kind": "wiki-relation",
+                        "ref": "world:acceptance:two-world:mu200dlq:a/central:wiki:root#wiki.contains#world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I",
+                        "revision": "central.content-fnv1a64/v1:1639:00c425e4acbea7b5",
+                        "source_system": "central"
+                      }
+                    ],
+                    "relation": "wiki.contains",
+                    "to": "world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I"
+                  },
+                  {
+                    "direction": "forward",
+                    "from": "world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I",
+                    "origin": "wiki",
+                    "provenance": [
+                      {
+                        "kind": "wiki-relation",
+                        "ref": "world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I#wiki.contains#world:acceptance:two-world:mu200dlq:a/wiki:node:project-root/o-i",
+                        "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                        "source_system": "central"
+                      }
+                    ],
+                    "relation": "wiki.contains",
+                    "to": "world:acceptance:two-world:mu200dlq:a/wiki:node:project-root/o-i"
+                  },
+                  {
+                    "from": "world:acceptance:two-world:mu200dlq:a",
+                    "origin": "projection",
+                    "provenance": [
+                      {
+                        "kind": "projection-relation",
+                        "ref": "world:acceptance:two-world:mu200dlq:a#oi.world/wiki-space#world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I",
+                        "revision": "projection:acceptance:two-world:mu200dlq:a@1",
+                        "source_system": "o-i"
+                      }
+                    ],
+                    "relation": "oi.world/wiki-space",
+                    "to": "world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I"
+                  }
+                ],
+                "focus": "world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I",
+                "nodes": [
+                  {
+                    "aliases": [
+                      "central:wiki:project:O-I"
+                    ],
+                    "kind": "wiki-space",
+                    "label": "O-I",
+                    "locators": [
+                      {
+                        "locator": "/explore.html?ref=world%3Aacceptance%3Atwo-world%3Amu200dlq%3Aa%2Fcentral%3Awiki%3Aproject%3AO-I",
+                        "surface": "web"
+                      }
+                    ],
+                    "meta": {
+                      "disclosure": "nodes",
+                      "local_ref": "central:wiki:project:O-I",
+                      "register": "project",
+                      "standing": "agent-maintained"
+                    },
+                    "provenance": [
+                      {
+                        "kind": "agent-wiki",
+                        "ref": "central:wiki:project:O-I",
+                        "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                        "source_system": "central"
+                      }
+                    ],
+                    "ref": "world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I",
+                    "revision": "3",
+                    "schema": "oi.explore-entry/v1",
+                    "summary": "WikiSpace at the project register · 1 of 1 nodes selected",
+                    "world_ref": "world:acceptance:two-world:mu200dlq:a"
+                  },
+                  {
+                    "aliases": [
+                      "central:wiki:root"
+                    ],
+                    "kind": "wiki-space",
+                    "label": "Central",
+                    "locators": [
+                      {
+                        "locator": "/explore.html?ref=world%3Aacceptance%3Atwo-world%3Amu200dlq%3Aa%2Fcentral%3Awiki%3Aroot",
+                        "surface": "web"
+                      }
+                    ],
+                    "meta": {
+                      "disclosure": "address",
+                      "local_ref": "central:wiki:root",
+                      "register": "root",
+                      "standing": "agent-maintained"
+                    },
+                    "provenance": [
+                      {
+                        "kind": "agent-wiki",
+                        "ref": "central:wiki:root",
+                        "revision": "central.content-fnv1a64/v1:1639:00c425e4acbea7b5",
+                        "source_system": "central"
+                      }
+                    ],
+                    "ref": "world:acceptance:two-world:mu200dlq:a/central:wiki:root",
+                    "revision": "39",
+                    "schema": "oi.explore-entry/v1",
+                    "summary": "WikiSpace at the root register · addressable only; no nodes selected",
+                    "world_ref": "world:acceptance:two-world:mu200dlq:a"
+                  },
+                  {
+                    "aliases": [
+                      "wiki:node:project-root/o-i"
+                    ],
+                    "kind": "wiki-node",
+                    "label": "O-I",
+                    "locators": [
+                      {
+                        "locator": "/explore.html?ref=world%3Aacceptance%3Atwo-world%3Amu200dlq%3Aa%2Fwiki%3Anode%3Aproject-root%2Fo-i",
+                        "surface": "web"
+                      }
+                    ],
+                    "meta": {
+                      "local_ref": "wiki:node:project-root/o-i",
+                      "node_type": "project-root",
+                      "register": "project",
+                      "standing": "agent-maintained"
+                    },
+                    "provenance": [
+                      {
+                        "kind": "agent-wiki",
+                        "ref": "wiki:node:project-root/o-i",
+                        "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                        "source_system": "central"
+                      },
+                      {
+                        "kind": "agent-maintained-source",
+                        "ref": "ProjectCentral/project.json",
+                        "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                        "source_system": "central"
+                      }
+                    ],
+                    "ref": "world:acceptance:two-world:mu200dlq:a/wiki:node:project-root/o-i",
+                    "revision": "1",
+                    "schema": "oi.explore-entry/v1",
+                    "summary": "project-root · agent-maintained · revision 1",
+                    "world_ref": "world:acceptance:two-world:mu200dlq:a"
+                  },
+                  {
+                    "aliases": [],
+                    "kind": "central-world",
+                    "label": "World A — a ProjectCentral world",
+                    "locators": [
+                      {
+                        "locator": "/explore.html?ref=world%3Aacceptance%3Atwo-world%3Amu200dlq%3Aa",
+                        "surface": "web"
+                      },
+                      {
+                        "locator": "http://127.0.0.1:62573/index.html",
+                        "surface": "edition"
+                      },
+                      {
+                        "locator": "http://127.0.0.1:62573/manifest.json",
+                        "surface": "edition-manifest"
+                      }
+                    ],
+                    "meta": {
+                      "projection_ref": "projection:acceptance:two-world:mu200dlq:a",
+                      "register": "project",
+                      "standing": "projection"
+                    },
+                    "provenance": [
+                      {
+                        "kind": "central-wiki-reading",
+                        "ref": "central:source:control:root:Control/agents/wiki/wiki.json",
+                        "revision": "central.content-fnv1a64/v1:1639:00c425e4acbea7b5",
+                        "source_system": "central"
+                      },
+                      {
+                        "kind": "central-wiki-reading",
+                        "ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.json",
+                        "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                        "source_system": "central"
+                      }
+                    ],
+                    "ref": "world:acceptance:two-world:mu200dlq:a",
+                    "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                    "schema": "oi.explore-entry/v1",
+                    "summary": "World A as its owner selected it for the shared field.",
+                    "world_ref": "world:acceptance:two-world:mu200dlq:a"
+                  }
+                ],
+                "schema": "oi.explore-relation-view/v1",
+                "truncated": false
+              },
+              "resource": {
+                "aliases": [
+                  "central:wiki:project:O-I"
+                ],
+                "kind": "wiki-space",
+                "label": "O-I",
+                "locators": [
+                  {
+                    "locator": "/explore.html?ref=world%3Aacceptance%3Atwo-world%3Amu200dlq%3Aa%2Fcentral%3Awiki%3Aproject%3AO-I",
+                    "surface": "web"
+                  }
+                ],
+                "meta": {
+                  "disclosure": "nodes",
+                  "local_ref": "central:wiki:project:O-I",
+                  "register": "project",
+                  "standing": "agent-maintained"
+                },
+                "provenance": [
+                  {
+                    "kind": "agent-wiki",
+                    "ref": "central:wiki:project:O-I",
+                    "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                    "source_system": "central"
+                  }
+                ],
+                "ref": "world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I",
+                "revision": "3",
+                "schema": "oi.explore-entry/v1",
+                "summary": "WikiSpace at the project register · 1 of 1 nodes selected",
+                "world_ref": "world:acceptance:two-world:mu200dlq:a"
+              }
+            },
+            "projections": [
+              {
+                "audience": {
+                  "visibility": "public"
+                },
+                "projection_ref": "projection:acceptance:two-world:mu200dlq:a",
+                "projection_revision": 3,
+                "provenance": [
+                  {
+                    "kind": "human-publication",
+                    "ref": "participant:acceptance:two-world:mu200dlq:a-owner",
+                    "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                    "source_system": "central"
+                  },
+                  {
+                    "kind": "human-refinement",
+                    "ref": "participant:acceptance:two-world:mu200dlq:a-owner",
+                    "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                    "source_system": "central"
+                  }
+                ],
+                "published_at": "2026-09-15T01:33:51.988Z",
+                "publisher_participant_ref": "participant:acceptance:two-world:mu200dlq:a-owner",
+                "representation": {
+                  "kind": "oi.withdrawal/v1",
+                  "payload": {
+                    "reason": "World A owner withdrew the public representation at the end of the acceptance."
+                  }
+                },
+                "schema": "oi.projection/v1",
+                "source": {
+                  "ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.json",
+                  "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                  "system": "central"
+                },
+                "state": "withdrawn",
+                "subject": {
+                  "kind": "central-world",
+                  "ref": "world:acceptance:two-world:mu200dlq:a"
+                },
+                "supersedes": {
+                  "projection_ref": "projection:acceptance:two-world:mu200dlq:a",
+                  "projection_revision": 2,
+                  "source_revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6"
+                },
+                "withdrawal": {
+                  "reason": "World A owner withdrew the public representation at the end of the acceptance.",
+                  "source_history_deleted": false
+                }
+              }
+            ],
+            "ref": "world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I",
+            "relations": [
+              {
+                "direction": "forward",
+                "from": "world:acceptance:two-world:mu200dlq:a/central:wiki:root",
+                "origin": "wiki",
+                "provenance": [
+                  {
+                    "kind": "wiki-relation",
+                    "ref": "world:acceptance:two-world:mu200dlq:a/central:wiki:root#wiki.contains#world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I",
+                    "revision": "central.content-fnv1a64/v1:1639:00c425e4acbea7b5",
+                    "source_system": "central"
+                  }
+                ],
+                "relation": "wiki.contains",
+                "relation_ref": "world:acceptance:two-world:mu200dlq:a/central:wiki:root#wiki.contains#world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I",
+                "to": "world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I"
+              },
+              {
+                "direction": "forward",
+                "from": "world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I",
+                "origin": "wiki",
+                "provenance": [
+                  {
+                    "kind": "wiki-relation",
+                    "ref": "world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I#wiki.contains#world:acceptance:two-world:mu200dlq:a/wiki:node:project-root/o-i",
+                    "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+                    "source_system": "central"
+                  }
+                ],
+                "relation": "wiki.contains",
+                "relation_ref": "world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I#wiki.contains#world:acceptance:two-world:mu200dlq:a/wiki:node:project-root/o-i",
+                "to": "world:acceptance:two-world:mu200dlq:a/wiki:node:project-root/o-i"
+              },
+              {
+                "from": "world:acceptance:two-world:mu200dlq:a",
+                "origin": "projection",
+                "provenance": [
+                  {
+                    "kind": "projection-relation",
+                    "ref": "world:acceptance:two-world:mu200dlq:a#oi.world/wiki-space#world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I",
+                    "revision": "projection:acceptance:two-world:mu200dlq:a@1",
+                    "source_system": "o-i"
+                  }
+                ],
+                "relation": "oi.world/wiki-space",
+                "relation_ref": "world:acceptance:two-world:mu200dlq:a#oi.world/wiki-space#world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I",
+                "to": "world:acceptance:two-world:mu200dlq:a/central:wiki:project:O-I"
+              }
+            ],
+            "schema": "oi.shared-field.reading/v1",
+            "state": "hosted",
+            "status": {
+              "healthy": true,
+              "material": {
+                "age_ms": 1,
+                "observed_at": "2026-09-15T13:48:22.302Z",
+                "state": "validated"
+              },
+              "material_valid": true,
+              "revision": 1,
+              "transport": {
+                "changed_at": "2026-09-15T13:48:22.301Z",
+                "identity": "c200afa6b3eca4a8402f7c1c287199dd46b59861ab78bf430adb769115992e63",
+                "state": "available"
+              }
+            },
+            "target": {
+              "database": "oi-shared-field-acceptance",
+              "name": "frank-acceptance",
+              "uri": "ws://100.92.62.101:3000"
+            }
+          },
+          "result": "shared_field_reading"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 54,
+      "data": {
+        "file": "explore-sf2-living-knowledge-source.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 48,
+      "data": {
+        "file": "explore-sf2-living-knowledge-return.png"
+      }
+    }
+  ],
+  "metrics": {
+    "knowledge_open_ms": 813
+  },
+  "screenshots": [
+    "explore-sf2-living-knowledge-expression.png",
+    "explore-sf2-living-knowledge-source.png",
+    "explore-sf2-living-knowledge-return.png"
+  ]
+}

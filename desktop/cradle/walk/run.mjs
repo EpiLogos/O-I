@@ -29,7 +29,8 @@ import { chromium } from "playwright";
 const here = dirname(fileURLToPath(import.meta.url));
 const cradleRoot = resolve(here, "..");
 const artifactsDir = join(here, "artifacts");
-const PREVIEW_PORT = 4173;
+const PREVIEW_PORT = Number(process.env.WALK_PREVIEW_PORT ?? 4173);
+if (!Number.isInteger(PREVIEW_PORT) || PREVIEW_PORT < 1024 || PREVIEW_PORT > 65535) throw new Error("WALK_PREVIEW_PORT must be a port from 1024 to 65535");
 const BRIDGE_PORT = Number(process.env.WALK_BRIDGE_PORT ?? 4179);
 if (!Number.isInteger(BRIDGE_PORT) || BRIDGE_PORT < 1024 || BRIDGE_PORT > 65535) throw new Error("WALK_BRIDGE_PORT must be a port from 1024 to 65535");
 const BRIDGE_URL = `http://127.0.0.1:${BRIDGE_PORT}`;
@@ -64,6 +65,7 @@ const SCENARIOS = {
   "shared-field-return": {module:"scenarios/shared-field-return.mjs",kernel:true,aliases:["7"]},
   "shared-field-hosted": {module:"scenarios/shared-field-hosted.mjs",kernel:true,aliases:["lane-c5","u-sf1"]},
   "explore-sf1": {module:"scenarios/explore-sf1.mjs",kernel:true,aliases:["sf1","explore"]},
+  "explore-sf2": {module:"scenarios/explore-sf2.mjs",kernel:true,aliases:["sf2","knowledge-encounter"]},
   "a2a-exchange": {module:"scenarios/a2a-exchange.mjs",kernel:true,aliases:["7b"]},
   "agency-a2a": {module:"scenarios/agency-a2a.mjs",kernel:true,aliases:["7c"]},
   "flow-canvas": {module:"scenarios/flow-canvas.mjs",kernel:true,aliases:["u4.1"]},
@@ -446,7 +448,7 @@ try {
     );
   }
   if (needsPreview) {
-    spawnService("preview", "npm", ["run", "preview"]);
+    spawnService("preview", "npm", ["run", "preview", "--", "--port", String(PREVIEW_PORT)]);
     await waitForHttp(baseUrl, "the preview server", 60_000);
   }
   console.log(`serving the cradle at ${baseUrl}${externalUrl ? " (external)" : ""}`);
