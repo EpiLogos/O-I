@@ -1,0 +1,33 @@
+[package]
+name = "oi-config-conformance"
+version = "0.1.0"
+edition = "2021"
+publish = false
+# Member of the cli workspace so one target directory serves the Gate-A
+# contract suite and the C7 conformance suite (#299).
+workspace = "../../cli"
+
+# The owner stub is an independent implementation of the frozen owner
+# surface (09 §6): it deliberately does not link `oi-cli`, so the grammar,
+# scope decision and transport behaviour it exercises are its own, and the
+# conformance suite can cross-check two independent implementations.
+[[bin]]
+name = "config-owner-stub"
+path = "src/bin/config_owner_stub.rs"
+
+# Aggregates the per-test verdicts into the required-test status table
+# (#299 §22) and runs the whole-artifact redaction sweep after the suite.
+[[bin]]
+name = "config-conformance-report"
+path = "src/bin/conformance_report.rs"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+
+[dev-dependencies]
+oi-cli = { path = "../../cli" }
