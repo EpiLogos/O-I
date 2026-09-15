@@ -194,7 +194,9 @@ export function validateArtifactSelection(value) {
   const meta = Array.isArray(value.meta_fields) ? value.meta_fields : ['title', 'created', 'template', 'revision'];
   for (const field of meta) if (!DISCLOSABLE_META.includes(field)) throw new TypeError(`selection.meta_fields may not disclose "${field}"`);
   if (value.relate_to_node !== undefined) { record(value.relate_to_node, 'selection.relate_to_node'); text(value.relate_to_node.node_ref, 'selection.relate_to_node.node_ref'); }
-  return { ...value, include, meta_fields: meta };
+  const replies = Array.isArray(value.replies) ? value.replies : [];
+  replies.forEach((reply, index) => { record(reply, `selection.replies[${index}]`); text(reply.contribution_ref, `selection.replies[${index}].contribution_ref`); text(reply.contributor_participant_ref, `selection.replies[${index}].contributor_participant_ref`); });
+  return { ...value, include, meta_fields: meta, replies };
 }
 
 // ---------------------------------------------------------------------------
@@ -268,6 +270,7 @@ export function projectCuratedArtifact(input) {
     { region_ref: 'lede', role: 'lede', bindings: [{ schema: 'oi.presentation-binding/v1', binding_ref: 'lede', component_ref: 'oi.presentation/lede/v1', portable_renderer: 'oi.presentation/lede/v1', subject_ref: hostedArtifactRef, props: { title, ...(selection.summary ? { text: selection.summary } : {}) }, fallback: { title }, provenance }] },
     { region_ref: 'entries', role: 'reading', label: `Selected entries · ${selected.length} of ${artifact.entries.length}`, bindings: entryBindings },
     ...(includedBindings.length ? [{ region_ref: 'included', role: 'reading', label: 'Explicitly included collections', bindings: includedBindings }] : []),
+    ...(selection.replies.length ? [{ region_ref: 'replies', role: 'relation', label: 'Replies from other worlds (admitted)', bindings: selection.replies.map((reply) => ({ schema: 'oi.presentation-binding/v1', binding_ref: `reply:${slug(reply.contribution_ref)}`, component_ref: 'oi.presentation/reference-card/v1', portable_renderer: 'oi.presentation/reference-card/v1', subject_ref: reply.contribution_ref, props: { title: reply.label ?? 'Admitted reply', text: reply.summary ?? `from ${reply.contributor_participant_ref}`, refs: [reply.contribution_ref] }, fallback: { title: reply.label ?? 'Admitted reply' }, provenance: [{ kind: 'admitted-contribution', ref: reply.contribution_ref, source_system: 'o-i', ...(reply.source_revision ? { revision: reply.source_revision } : {}) }] })) }] : []),
     ...(metaText ? [{ region_ref: 'meta', role: 'relation', label: 'Artifact', bindings: [{ schema: 'oi.presentation-binding/v1', binding_ref: 'meta', component_ref: 'oi.presentation/reference-card/v1', portable_renderer: 'oi.presentation/reference-card/v1', subject_ref: hostedArtifactRef, props: { title: 'Artifact identity', text: metaText, refs: selection.disclose_source_refs ? [artifact.source.ref] : [] }, fallback: { title: 'Artifact identity', text: metaText }, provenance }] }] : []),
   ].filter((region) => region.bindings.length > 0);
 
