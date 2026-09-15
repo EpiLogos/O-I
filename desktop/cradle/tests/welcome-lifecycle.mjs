@@ -16,6 +16,8 @@ await server.listen();
 const url=`http://127.0.0.1:${server.httpServer.address().port}/welcome-lifecycle`;
 const browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-webgl']});
 const results=[],errors=[];
+const selection=process.argv[2]??'all';
+assert.ok(['all','motion','restored'].includes(selection),'Select all, motion or restored Welcome checks');
 const stageSummary=({frames,live,scheduled,playback,presentations})=>({frames,live,scheduled,playback,presentations});
 const observeErrors=page=>page.on('pageerror',error=>errors.push(error.message));
 const fieldPixels=async page=>{
@@ -26,9 +28,15 @@ const fieldPixels=async page=>{
 };
 const appReady=page=>page.evaluate(()=>welcomeTest.setAppReady(true));
 const fieldReady=page=>page.waitForSelector('.oi-welcome[data-field-ready="true"]',{timeout:30000});
-const entered=page=>page.waitForFunction(()=>welcomeTest.entered===1,null,{timeout:30000});
+const entered=async page=>{
+ try {await page.waitForFunction(()=>welcomeTest.entered===1,null,{timeout:30000});}
+ catch(error) {
+  const current=await page.evaluate(()=>({stage:welcomeTest.stage.inspect(),entered:welcomeTest.entered,phase:document.querySelector('.oi-welcome')?.dataset.phase,error:document.querySelector('.oi-welcome-error')?.textContent,leakedKeys:welcomeTest.leakedKeys,capturedByUnderlay:welcomeTest.capturedByUnderlay}));
+  throw new Error(`Welcome did not enter: ${JSON.stringify({...current,stage:stageSummary(current.stage)})}`,{cause:error});
+ }
+};
 try {
- for(const theme of ['light','dark']) {
+ for(const theme of selection==='all'?['light','dark']:[]) {
   const context=await browser.newContext({viewport:{width:900,height:700}});
   await context.addInitScript(theme=>localStorage.setItem('oi-cradle.visuals.v1',JSON.stringify({enabled:true,welcomeEnabled:true,theme})),theme);
   const page=await context.newPage();observeErrors(page);
@@ -102,8 +110,58 @@ try {
   assert.equal(await page.evaluate(()=>welcomeTest.fieldReadyEvents.length),1,'skipping still allows the real app to compose');
   await context.close();
  }
+ // A real restored native presentation attempts admission while the mark
+ // owns the one field, then retries when the frontstate actually releases.
+ if(selection!=='motion') {
+ const restoredContext=await browser.newContext({viewport:{width:900,height:700}});
+ const restored=await restoredContext.newPage();observeErrors(restored);
+ await restored.goto(`${url}?restored`);await fieldReady(restored);
+ await restored.waitForFunction(()=>welcomeTest.restoredAttempts>0);
+ assert.equal(await restored.evaluate(()=>welcomeTest.restoredHandle),null,'the restored body defers behind the frontstate');
+ assert.equal(await restored.locator('canvas[data-oi-stage="engine"]').count(),1);
+ await restored.keyboard.press('x');
+ await appReady(restored);
+ await restored.getByRole('button',{name:'O:I is ready. Open the app.',exact:true}).waitFor();
+ await restored.keyboard.press('y');
+ assert.deepEqual(await restored.evaluate(()=>welcomeTest.capturedByUnderlay),[],'later app capture handlers receive no keys before or after readiness changes');
+ await restored.evaluate(()=>{window.restoredCanvas=document.querySelector('canvas[data-oi-stage="engine"]');window.restoredContext=restoredCanvas.getContext('webgl2');});
+ await restored.keyboard.press('Enter');await entered(restored);
+ await restored.waitForFunction(()=>welcomeTest.restoredHandle);
+ await restored.evaluate(()=>welcomeTest.restoredHandle.ready());
+ assert.equal(await restored.evaluate(()=>document.querySelector('canvas[data-oi-stage="engine"]')===restoredCanvas&&restoredCanvas.getContext('webgl2')===restoredContext),true,'restoration uses the same canvas and context after entry');
+ assert.equal(await restored.evaluate(()=>welcomeTest.fieldReadyEvents.length),1,'admission does not restart the Welcome generation');
+ assert.deepEqual(await restored.evaluate(()=>welcomeTest.stage.inspect().presentations.map(item=>item.id)),['restored-expression']);
+ await restored.keyboard.press('z');
+ assert.deepEqual(await restored.evaluate(()=>welcomeTest.capturedByUnderlay),['z'],'the restored app receives keys after entry');
+ await restoredContext.close();
+ results.push({restoredPresentation:'deferred behind Welcome, admitted on the same field after release',keyboardCapture:'isolated until entry, then released'});
+ }
+
+ // Changing the actual browser preference mid-flight must finish with the
+ // authored final still; zero-delta reduced frames cannot strand a promise.
+ if(selection!=='restored') for(const reduceAt of [0,2050]) {
+ const switching=await browser.newContext({viewport:{width:900,height:700}});
+ const switchingPage=await switching.newPage();observeErrors(switchingPage);
+ await switchingPage.goto(url);await fieldReady(switchingPage);await appReady(switchingPage);
+ await switchingPage.getByRole('button',{name:'O:I is ready. Open the app.',exact:true}).click();
+ await switchingPage.waitForFunction(minimum=>{const playback=welcomeTest.stage.inspect().playback;return playback?.status==='active'&&playback.elapsed>=minimum;},reduceAt,{polling:25,timeout:20000});
+ const beforeSwitch=await switchingPage.evaluate(()=>welcomeTest.stage.inspect());
+ await switchingPage.emulateMedia({reducedMotion:'reduce'});
+ try {await entered(switchingPage);} catch(error) {
+  const stalled=await switchingPage.evaluate(()=>({stage:welcomeTest.stage.inspect(),reduced:matchMedia('(prefers-reduced-motion: reduce)').matches,phase:document.querySelector('.oi-welcome')?.dataset.phase,fieldError:document.querySelector('.oi-welcome-error')?.textContent}));
+  throw new Error(`Reduced-motion entry stalled: ${JSON.stringify({before:stageSummary(beforeSwitch),after:{...stalled,stage:stageSummary(stalled.stage)}})}`,{cause:error});
+ }
+ const switched=await switchingPage.evaluate(()=>welcomeTest.completedStage);
+ assert.equal(switched.playback.status,'completed','mid-flight reduced motion reaches a completed final still');
+ assert.ok(switched.frames>beforeSwitch.frames);
+ assert.equal(switched.scheduled,false);assert.equal(switched.live,false);
+ await switching.close();
+ results.push({reducedMotionAt:beforeSwitch.playback.elapsed,reducedMotionDuringFlight:stageSummary(switched)});
+ }
+
  // Reduced motion uses the real runtime final still, then releases. There is
  // no duration assertion: a slow real first draw is allowed to take its time.
+ if(selection==='all') {
  const reduced=await browser.newContext({viewport:{width:900,height:700},reducedMotion:'reduce'});
  const page=await reduced.newPage();observeErrors(page);
  await page.goto(url);await fieldReady(page);await appReady(page);
@@ -143,6 +201,7 @@ try {
   assert.equal(await failed.locator('.oi-welcome').count(),0,'engine failure leaves a working route into the app');
   results.push({webglUnavailable:'truthful failure with usable Continue'});
  }finally{await failedBrowser.close();}
+ }
  assert.deepEqual(errors,[]);
  console.log(JSON.stringify({check:'Welcome real component lifecycle',results},null,2));
 }finally{await browser.close();await server.close();}

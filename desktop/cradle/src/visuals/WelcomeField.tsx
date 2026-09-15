@@ -138,18 +138,30 @@ export function WelcomeField({ onEntered, onFieldReady, appReady = true }: {
     }
   }, [canEnter, fieldError, finish]);
 
+  const interaction = useRef({phase, canEnter, enter});
+  interaction.current = {phase, canEnter, enter};
   useEffect(() => {
-    if (!gate || phase === "done") return;
-    const key = (event: KeyboardEvent) => {
-      if (event.key === "Escape" || event.key === "Enter" || event.key === " ") {
+    if (!gate) return;
+    // Keep the capture listener ahead of the lazily mounted workspace's
+    // window handlers. Re-registering when readiness changes would let those
+    // handlers receive a shortcut before the opening could contain it.
+    const contain = (event: KeyboardEvent) => {
+      const current = interaction.current;
+      if (current.phase === "done") return;
+      event.stopImmediatePropagation();
+      if (event.type === "keydown" && ["Escape", "Enter", " "].includes(event.key)) {
         event.preventDefault();
-        event.stopImmediatePropagation();
-        if (phase === "rest" && canEnter) void enter();
+        if (current.phase === "rest" && current.canEnter) void current.enter();
       }
+      // Tab and browser/OS defaults remain available. Only application
+      // event propagation into the covered workspace is contained.
     };
-    window.addEventListener("keydown", key, { capture: true });
-    return () => window.removeEventListener("keydown", key, { capture: true });
-  }, [gate, phase, canEnter, enter]);
+    const events = ["keydown", "keyup", "keypress"] as const;
+    for (const event of events) window.addEventListener(event, contain, { capture: true });
+    return () => {
+      for (const event of events) window.removeEventListener(event, contain, { capture: true });
+    };
+  }, [gate]);
 
   if (!gate || phase === "done") return null;
 
