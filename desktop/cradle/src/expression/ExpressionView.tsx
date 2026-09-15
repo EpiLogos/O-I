@@ -25,8 +25,7 @@ export function ExpressionView({initialExpressionRef}:{initialExpressionRef?:str
  const [lesson,setLesson]=useState("");
  const [presentationDisclosure,setPresentationDisclosure]=useState<ReturnType<typeof compilePedagogy>["agentPresentation"]>([]);
  const [presenting,setPresenting]=useState(false);const presentation=useRef<StagePresentation|null>(null);const stageHost=useRef<HTMLDivElement|null>(null);
- const current=useRef(document);current.current=document;
- const mounted=useRef(true);const readGeneration=useRef(0);const selectedRef=useRef<string>();if(document?.expression_ref)selectedRef.current=document.expression_ref;
+ const mounted=useRef(true);const readGeneration=useRef(0);const selectedRef=useRef<string>();
  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;readGeneration.current++;};},[]);
  const request=useCallback(async(request:ExpressionRequest)=>{
   const reply=await kernelOp(kernel.transport,{op:"expression",request});
@@ -34,7 +33,7 @@ export function ExpressionView({initialExpressionRef}:{initialExpressionRef?:str
   return reply.outcome.data;
  },[kernel.transport]);
  const inspect=useCallback(async(expressionRef:string)=>{
-  const generation=++readGeneration.current;selectedRef.current=expressionRef;
+  const generation=++readGeneration.current;selectedRef.current=expressionRef;setPending(false);setError("");
   const reading=await request({operation:"inspect",expression_ref:expressionRef});
   if(!mounted.current||generation!==readGeneration.current||selectedRef.current!==expressionRef)return;
   if(reading.document)setDocument(reading.document);if(reading.file)setFile(reading.file);
@@ -48,13 +47,19 @@ export function ExpressionView({initialExpressionRef}:{initialExpressionRef?:str
  const seq=kernel.receipts.filter(r=>r.event==="expression_changed").slice(-1)[0]?.seq;
  useEffect(()=>{void refresh().catch(e=>setError(String(e)));},[seq,refresh]);
  const run=async(op:ExpressionRequest)=>{
+  const target="expression_ref" in op?op.expression_ref:undefined;
+  let generation=readGeneration.current;
+  if(op.operation==="create"){selectedRef.current=op.expression_ref;generation=++readGeneration.current;}
   setPending(true);setError("");try{
-   const data=await request(op);setResult(data);
-   if(data.document)setDocument(data.document);
+   const data=await request(op);
+   const currentSelection=mounted.current&&generation===readGeneration.current&&(!target||selectedRef.current===target);
+   if(!currentSelection)return undefined;
+   setResult(data);
+   if(data.document){selectedRef.current=data.document.expression_ref;setDocument(data.document);}
    if(data.file)setFile(data.file);
    if(["revision_conflict","proposal_basis_conflict","file_revision_conflict","save_refused"].includes(data.state??""))setError(JSON.stringify(data));
    await refresh();return data;
-  }catch(e){setError(String(e));return undefined;}finally{setPending(false);}
+  }catch(e){if(mounted.current&&generation===readGeneration.current)setError(String(e));return undefined;}finally{if(mounted.current&&generation===readGeneration.current)setPending(false);}
  };
  const review=async(proposalRef:string,decision:"accepted"|"rejected")=>{
   let corrections:Change[]=[];
