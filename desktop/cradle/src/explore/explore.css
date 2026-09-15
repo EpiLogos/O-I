@@ -114,7 +114,7 @@
 .world-component--fallback { padding: var(--oi-space-3); border: 1px dashed var(--oi-world-rule, var(--oi-hairline)); border-radius: var(--oi-radius-md); }
 .world-component--fallback code { display: block; margin-top: var(--oi-space-2); font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); }
 .world-component--expression { display: grid; gap: var(--oi-space-2); margin: 0; }
-.world-expression__live { position: relative; min-height: 280px; border: var(--oi-shell-edge) solid var(--oi-world-rule, var(--oi-hairline)); border-radius: var(--oi-radius-lg); background: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--oi-ink) 8%, transparent), transparent 70%); overflow: hidden; }
+.world-expression__live { position: relative; min-height: 280px; border: var(--oi-shell-edge) solid var(--oi-world-rule, var(--oi-hairline)); border-radius: var(--oi-radius-lg); background: var(--oi-white); color: var(--oi-black); overflow: hidden; }
 .world-expression__live > p { position: absolute; left: var(--oi-space-3); bottom: var(--oi-space-2); margin: 0; font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); }
 .world-expression__meta, .world-component--expression figcaption { display: flex; justify-content: space-between; gap: var(--oi-space-3); font-size: var(--oi-shell-type-meta); color: var(--oi-world-muted, var(--oi-muted-2)); flex-wrap: wrap; }
 .world-expression__frozen { width: 100%; aspect-ratio: 16 / 10; border: var(--oi-shell-edge) solid var(--oi-world-rule, var(--oi-hairline)); border-radius: var(--oi-radius-lg); background: #0e0f12; }

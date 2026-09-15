@@ -42,6 +42,7 @@ jobs:
             ../shared-field/shared-field.test.mjs \
             ../shared-field/social.test.mjs \
             ../shared-field/presentation.test.mjs \
+            ../shared-field/expression-presentation.test.mjs \
             ../shared-field/presentation-projection.test.mjs \
             ../shared-field/presentation-authoring.test.mjs \
             ../shared-field/account-projection.test.mjs \

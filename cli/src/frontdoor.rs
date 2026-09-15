@@ -6,7 +6,11 @@ pub fn cli_main() -> ExitCode {
             Ok(()) => {
                 println!();
                 println!("  oi capabilities --json        derived child capability records with source hashes; not installed availability");
-                println!("  oi desktop --help             M′ application operations over the S command whole");
+                println!("  oi config --help              the configuration plane: list/show/get/set/reset/diff/plan/apply/doctor over the shared registry and owner-native operations");
+                println!("  oi profile --help             sparse O:I World profiles: list/show/create/use/diff/clone/export/import");
+                println!("  oi <namespace> config-contribution --json");
+                println!("                                an owner's configuration contribution through the dispatcher, like `system --json`");
+                println!("  oi desktop --help             install/remove/status lifecycle plus M′ application operations");
                 println!("  oi aikit-session-space ...    AIKit companion protocol (native arguments preserved)");
                 println!("  oi ground status|bind          inspect or explicitly change the default ground binding");
                 println!("  oi mode list|set <frame>|clear [--json]");
@@ -60,6 +64,18 @@ pub fn cli_main() -> ExitCode {
     }
     if command == Some("mode") {
         return match command_mode(args.get(1..).unwrap_or_default()) {
+            Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
+            Err(message) => { eprintln!("oi: {message}"); ExitCode::from(2) }
+        };
+    }
+    if command == Some("config") {
+        return match command_config(args.get(1..).unwrap_or_default()) {
+            Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
+            Err(message) => { eprintln!("oi: {message}"); ExitCode::from(2) }
+        };
+    }
+    if command == Some("profile") {
+        return match command_profile(args.get(1..).unwrap_or_default()) {
             Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
             Err(message) => { eprintln!("oi: {message}"); ExitCode::from(2) }
         };

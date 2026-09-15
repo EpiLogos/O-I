@@ -13,7 +13,12 @@ pub const CURRENT_WORLD_SCHEMA: &str = "oi.current-world/v2";
 pub const DEFAULT_MACHINE_ROLE: &str = "current";
 pub const DEFAULT_LOCAL_WORKCELL_REF: &str = "workcell:local";
 
-const PRODUCT_POSITIONS: [(u8, &str, &str); 6] = [
+/// The canonical, stable product positions of the six-product field (#268):
+/// position → product id and public name, in the suite manifest's product
+/// order. The Context Frame notation (`0/1`, `0/1/2/3`, …) is spoken in these
+/// positions. Public so verification scopes and lifecycle surfaces (install,
+/// removal) name positions through this one table instead of duplicating it.
+pub const PRODUCT_POSITIONS: [(u8, &str, &str); 6] = [
     (0, "central", "Central"),
     (1, "actuation", "Actuation"),
     (2, "ai-kit", "AIKit"),
@@ -125,6 +130,19 @@ impl CurrentWorldReading {
             })
             .collect::<Vec<_>>();
         let context_frame = context_frame_status(&positions);
+        let mut warnings = disclosure.warnings.clone();
+        // A component install is present material, not damage — but its
+        // command surface does not exist on this machine, and the reading
+        // may not fall short silently (lock §5): every capability journey
+        // that invokes the native command is named as unavailable.
+        for surface in &disclosure.surfaces {
+            if surface.state == NativeSurfaceState::InstalledComponent {
+                warnings.push(format!(
+                    "{} is installed as component material; this install ships no native '{}' command, so journeys that invoke {} cannot run on this machine.",
+                    surface.public_name, surface.native_entry, surface.native_entry
+                ));
+            }
+        }
         Self {
             schema: CURRENT_WORLD_SCHEMA.to_owned(),
             owner_disclosures: None,
@@ -133,7 +151,7 @@ impl CurrentWorldReading {
             requested_mode: None,
             positions,
             context_frame,
-            warnings: disclosure.warnings.clone(),
+            warnings,
         }
     }
 
@@ -253,7 +271,9 @@ fn position_from_surface(
 fn surface_present(surface: &SurfaceDisclosure) -> bool {
     matches!(
         surface.state,
-        NativeSurfaceState::Installed | NativeSurfaceState::Registered
+        NativeSurfaceState::Installed
+            | NativeSurfaceState::Registered
+            | NativeSurfaceState::InstalledComponent
     )
 }
 
@@ -716,5 +736,99 @@ mod tests {
             reading.requested_mode.as_ref().map(|r| r.mode.as_str()),
             Some("9/9")
         );
+    }
+
+    fn component_disclosure() -> SuiteCompositionDisclosure {
+        // Central registered with its command; Actuation installed as
+        // component material — payloads at their recorded root, no native
+        // command recorded by this install (suite manifest artifact kind
+        // "component").
+        let mut disclosure = disclosure_with(&["central"], NativeSurfaceState::Registered);
+        let mut actuation = surface("actuation", NativeSurfaceState::InstalledComponent);
+        actuation.native_entry = "actuation".to_owned();
+        actuation.resolved = Some("/managed/actuation/03e03ac".to_owned());
+        disclosure.surfaces.push(actuation);
+        disclosure
+    }
+
+    #[test]
+    fn component_install_is_present_and_the_exact_effective_match_sees_it() {
+        // Campaign finding 3 (2026-09-14): a component product shipped no
+        // native executable for the target, yet its position read broken and
+        // absent, hiding it from the exact effective match. Component
+        // material present at its recorded root is present material.
+        let reading = CurrentWorldReading::from_disclosure(&component_disclosure());
+        assert_eq!(
+            reading.context_frame.present_positions,
+            vec![0, 1],
+            "the effective composition must see the component product"
+        );
+        assert_eq!(mode_of(&reading).as_deref(), Some("0/1"));
+        assert_eq!(
+            reading.context_frame.install_mode_basis.as_deref(),
+            Some("effective")
+        );
+        let actuation = &reading.positions[1];
+        assert!(actuation.present);
+        assert_eq!(actuation.state, NativeSurfaceState::InstalledComponent);
+        assert_eq!(
+            actuation.native_location.as_deref(),
+            Some("/managed/actuation/03e03ac")
+        );
+        // The command surface gap is named in warnings, never hidden.
+        assert!(
+            reading
+                .warnings
+                .iter()
+                .any(|warning| warning.contains("no native 'actuation' command")),
+            "{:?}",
+            reading.warnings
+        );
+    }
+
+    #[test]
+    fn requested_mode_with_a_component_product_is_realised_and_names_the_command_gap() {
+        // Requested 0/1 with Actuation installed as a component: the mode is
+        // realised — component material is present, so there is no mode
+        // shortfall — but the unavailable command surface is still warned
+        // about with the exact gap named (lock §5: no silent shortfall).
+        let reading = CurrentWorldReading::from_disclosure(&component_disclosure())
+            .with_requested_mode(requested("0/1"));
+        assert_eq!(mode_of(&reading).as_deref(), Some("0/1"));
+        assert_eq!(
+            reading.context_frame.install_mode_basis.as_deref(),
+            Some("requested")
+        );
+        assert!(
+            !reading
+                .warnings
+                .iter()
+                .any(|warning| warning.contains("not fully realised")),
+            "a component product is present material, not a shortfall: {:?}",
+            reading.warnings
+        );
+        assert!(
+            reading
+                .warnings
+                .iter()
+                .any(|warning| warning.contains("no native 'actuation' command")),
+            "the command gap must be named: {:?}",
+            reading.warnings
+        );
+    }
+
+    #[test]
+    fn broken_component_material_is_absent_and_names_no_mode() {
+        // Damage keeps its name: with the component material gone, the
+        // position is broken and absent, and presence {0} matches no mode.
+        let mut disclosure = disclosure_with(&["central"], NativeSurfaceState::Registered);
+        disclosure
+            .surfaces
+            .push(surface("actuation", NativeSurfaceState::Broken));
+        let reading = CurrentWorldReading::from_disclosure(&disclosure);
+        assert_eq!(reading.context_frame.present_positions, vec![0]);
+        assert!(!reading.positions[1].present);
+        assert_eq!(reading.positions[1].state, NativeSurfaceState::Broken);
+        assert_eq!(mode_of(&reading), None);
     }
 }

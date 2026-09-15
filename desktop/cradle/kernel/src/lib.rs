@@ -464,7 +464,7 @@ impl Kernel {
                 let (data, changed) = self.expressions.apply(&self.client, request)?;
                 let mut receipts = Vec::new();
                 if let Some(change) = changed {
-                    receipts.push(self.log.record(KernelEvent::ExpressionChanged { expression_ref: change.expression_ref, revision: change.revision, actor: change.actor }));
+                    receipts.push(self.log.record(KernelEvent::ExpressionChanged { expression_ref: change.expression_ref, revision: change.revision, actor: change.actor, activity_ref: change.activity_ref }));
                 }
                 if data["state"] == "ready" {
                     if let Some(subject) = focus_ref.as_deref().and_then(|r| self.expressions.selected_subject(r)) {

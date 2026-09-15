@@ -7,7 +7,9 @@ export interface Entity {entity_ref:string;revision:number;title:string;subject:
 export interface Scene {scene_ref:string;revision:number;title:string;entity_refs:string[]}
 export interface Relation {binding_ref:string;relation:ReadingRef;from_entity_ref:string;to_entity_ref:string;provenance:ReadingRef[]}
 export interface Representation {kind:"live"|"image"|"video"|"html"|"embed"|"projection";representation:ReadingRef;provenance:ReadingRef[]}
-export interface ExpressionDocument {schema:"oi.expression/v1";expression_ref:string;revision:number;title:string;scenes:Scene[];entities:Record<string,Entity>;relations:Record<string,Relation>;selection:{scene_ref:string;entity_ref:string|null};provenance:ReadingRef[];representations:Representation[]}
+export interface RefinementDecision {state:"accepted"|"rejected";actor:string;reason:string;decided_at_revision:number;corrections:Change[]}
+export interface Refinement {proposal_ref:string;basis_revision:number;proposed_by:string;activity_ref:string|null;continues_proposal_ref:string|null;summary:string;changes:Change[];method_refs:ReadingRef[];evidence_refs:ReadingRef[];decision:RefinementDecision|null}
+export interface ExpressionDocument {schema:"oi.expression/v1";expression_ref:string;revision:number;title:string;scenes:Scene[];entities:Record<string,Entity>;relations:Record<string,Relation>;selection:{scene_ref:string;entity_ref:string|null};provenance:ReadingRef[];representations:Representation[];refinements:Refinement[]}
 export type Change =
  | {change:"scene_create";scene_ref:string;title:string}
  | {change:"scene_reorder";scene_refs:string[]}
@@ -30,6 +32,8 @@ export type ExpressionRequest =
  | {operation:"open_file";location:CentralLocation;actor:string}
  | {operation:"fork";expression_ref:string;expected_revision:number;new_expression_ref:string;actor:string}
  | {operation:"edit";expression_ref:string;expected_revision:number;actor:string;changes:Change[]}
+ | {operation:"propose";expression_ref:string;expected_revision:number;proposal_ref:string;actor:string;activity_ref:string|null;continues_proposal_ref:string|null;summary:string;changes:Change[];method_refs:ReadingRef[];evidence_refs:ReadingRef[]}
+ | {operation:"review";expression_ref:string;expected_revision:number;proposal_ref:string;actor:string;decision:"accepted"|"rejected";reason:string;corrections:Change[]}
  | {operation:"export";expression_ref:string;expected_revision:number}
  | {operation:"save";expression_ref:string;expected_revision:number;location:CentralLocation;expected_file_revision:string;actor:string;actor_kind:"human"|"agent"}
  | {operation:"invoke";expression_ref:string;expected_revision:number;entity_ref:string;action_ref:string;input:unknown;project:string|null};

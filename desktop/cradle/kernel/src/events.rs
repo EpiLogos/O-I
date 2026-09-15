@@ -49,7 +49,12 @@ pub const KERNEL_EVENT_TOPIC: &str = "oi:kernel-event";
 // nature; boxing one arm would change how every emitter constructs it.
 #[allow(clippy::large_enum_variant)]
 pub enum KernelEvent {
-    ExpressionChanged { expression_ref: String, revision: u64, actor: String },
+    ExpressionChanged { expression_ref: String, revision: u64, actor: String,
+        /// Caller-supplied Activity correlation. It is unverified here and
+        /// never authenticates the caller or grants Action authority.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        activity_ref: Option<String>,
+    },
     WorldChanged { summary: String },
     /// The one global focus relation moved (02 §7, 03 §B).
     FocusChanged {
@@ -133,7 +138,18 @@ impl KernelEvent {
     /// is refused here.
     pub fn validate(&self) -> Result<(), String> {
         match self {
-            Self::ExpressionChanged { expression_ref, revision, actor } => { non_empty("expression_ref", expression_ref)?; non_empty("actor", actor)?; if *revision == 0 { Err("Expression revision must be positive".into()) } else { Ok(()) } },
+            Self::ExpressionChanged { expression_ref, revision, actor, activity_ref } => {
+                non_empty("expression_ref", expression_ref)?;
+                non_empty("actor", actor)?;
+                if let Some(activity_ref) = activity_ref {
+                    non_empty("activity_ref", activity_ref)?;
+                }
+                if *revision == 0 {
+                    Err("Expression revision must be positive".into())
+                } else {
+                    Ok(())
+                }
+            },
             Self::WorldChanged { summary } => non_empty("WorldChanged.summary", summary),
             Self::FocusChanged { focus } => {
                 let relation = |name: &str| format!("FocusChanged.focus.{name}");

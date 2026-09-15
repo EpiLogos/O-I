@@ -64,6 +64,22 @@ revisions. An accepted change emits one attributed `expression_changed` receipt;
 only affected scene/entity revisions advance. Continuous simulation emits no
 editing receipts and does not impersonate Agent Activity.
 
+Agent-assisted work may use the optional `propose` → `review` path. A proposal
+contains a bounded ordinary `changes[]` batch, exact basis revision, actor
+attribution, optional supplied Activity correlation, and source-qualified Method
+and evidence refs. Submission records the proposal and advances only the
+Expression application revision; it does not apply proposed scene/entity changes.
+Human `review` retains an accepted or rejected decision, reason and bounded
+corrections. Acceptance is permitted only while the proposal's material basis is
+unchanged; an intervening edit returns `proposal_basis_conflict` without mutation.
+Rejection remains available after an intervening edit, and a later proposal may
+explicitly continue an earlier reviewed proposal. Direct `edit` remains available
+without a review gate.
+
+Actor and Activity strings are supplied correlation fields, never authentication.
+Visible Activity treatment requires a separately observed native owner reading;
+an Expression receipt alone is not evidence that an Agent acted.
+
 Parameters are a bounded, declared material vocabulary. Each state contains its
 base scalar and optional structured engine automation (waveform, bounds, rate).
 Manual takeover explicitly removes automation. Unsupported parameters fail;

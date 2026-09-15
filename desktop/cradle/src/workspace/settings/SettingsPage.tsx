@@ -21,6 +21,8 @@ import type {ActivityExtras, CompositionReading, OwnerMount, SettingsView} from 
 import {buildSections, frameFact, RAIL} from "./world";
 import {ProductSection} from "./ProductSection";
 import {NativeProductSection} from "./NativeProductSection";
+import {ConfigurationView} from "../../configuration/ConfigurationView";
+import {ProfilesView} from "../../configuration/ProfilesView";
 import "./settings.css";
 
 const BOOTSTRAP_STEPS:{title:string;detail:string;native:string}[] = [
@@ -142,6 +144,14 @@ export function SettingsPage() {
         {reading.positions.map(position=><tr key={position.product_id}><td>{position.product_id}</td><td>{position.native_state}</td><td>{typeof position.current_world.version==="string"?position.current_world.version:"—"}</td></tr>)}
       </tbody></table>}
       <p className="settings-native-note">Each product's own configuration is shown in the Health view above.</p>
+    </div>}
+    {view==="configuration"&&<div className="settings-view">
+      <h3>Configuration</h3>
+      <ConfigurationView/>
+    </div>}
+    {view==="profiles"&&<div className="settings-view">
+      <h3>Profiles</h3>
+      <ProfilesView/>
     </div>}
     {view==="bootstrap"&&<div className="settings-view">
       <h3>Bootstrap</h3>
