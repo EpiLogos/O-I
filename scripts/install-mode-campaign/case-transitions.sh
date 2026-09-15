@@ -3,7 +3,8 @@
 # 0/1 -> 0/1/2 -> 0/1/2/3, proving at every step:
 #   - no identity drift (remaining product positions byte-identical)
 #   - no world reconstruction (ground digests unchanged)
-# and recording the descending step honestly.
+# and then the full descent 0/1/2/3 -> 0/1/2 -> 0/1 through the
+# per-product removal lifecycle (oi remove, #311).
 #
 # Component products (actuation, software-factory, quaternal-logic) ship
 # contract material, not native executables; on linux their positions read
@@ -14,7 +15,9 @@
 #
 # Usage inside a container phase (via lib.sh):
 #   case-transitions.sh <step>
-# Steps: t1 (=0/1) | t2 (+ai-kit) | t3 (+factory) | t4 (down attempt)
+# Steps: t1 (=0/1) | t2 (+ai-kit) | t3 (+factory)
+#        | t4 (descend: remove factory -> 0/1/2)
+#        | t5 (descend: remove ai-kit -> 0/1)
 
 set -eu
 
@@ -109,29 +112,30 @@ t3)
     assert_prior_unchanged t2 t3 central actuation ai-kit
     ;;
 t4)
-    step "descending: attempt single-product (software-factory) removal through production paths"
-    set +e
-    oi suite remove software-factory >"$EV/descend-remove.log" 2>&1
-    echo "suite remove rc=$?" >>"$EV/descend-remove.log"
-    oi suite uninstall software-factory >>"$EV/descend-remove.log" 2>&1
-    echo "suite uninstall rc=$?" >>"$EV/descend-remove.log"
-    oi update >>"$EV/descend-remove.log" 2>&1
-    echo "update rc=$?" >>"$EV/descend-remove.log"
-    set -e
-    if grep -q "unknown suite command" "$EV/descend-remove.log"; then
-        {
-            echo "FINDING (gap, verbatim refusals in descend-remove.log):"
-            echo "no production path removes a single product. Descent"
-            echo "0/1/2/3 -> 0/1/2 cannot be expressed as a lifecycle"
-            echo "operation; 'oi suite remove/uninstall' answer 'unknown suite"
-            echo "command'. The composition lock's lifecycle-planner increment"
-            echo "(native-owner remove with receipts) is not implemented."
-        } >"$EV/descend-gap.txt"
-        cat "$EV/descend-gap.txt"
-    else
-        step "a removal path answered; recording world after descent"
-        identity_snapshot t4
-    fi
+    step "descending 0/1/2/3 -> 0/1/2: per-product removal of software-factory (lifecycle planner remove leg, #311)"
+    expect_ok "oi remove software-factory" oi remove software-factory
+    ls "$OI_DATA_HOME/receipts/removals" >"$EV/descend-removal-receipts.txt" 2>&1 || true
+    for receipt in "$OI_DATA_HOME"/receipts/removals/*.json; do
+        [ -f "$receipt" ] && cat "$receipt" >>"$EV/descend-removal-receipts.txt"
+    done
+    expect_ok "mode set 0/1/2" oi mode set 0/1/2
+    assert_requested_mode "0/1/2"
+    assert_position "software-factory" absent
+    assert_position "ai-kit" present
+    identity_snapshot t4
+    assert_prior_unchanged t3 t4 central actuation ai-kit
+    step "descent 0/1/2/3 -> 0/1/2 complete: removed product absent, prior positions and ground untouched"
+    ;;
+t5)
+    step "descending 0/1/2 -> 0/1: per-product removal of ai-kit"
+    expect_ok "oi remove ai-kit" oi remove ai-kit
+    expect_ok "mode set 0/1" oi mode set 0/1
+    assert_requested_mode "0/1"
+    assert_position "ai-kit" absent
+    assert_position "actuation" present
+    identity_snapshot t5
+    assert_prior_unchanged t4 t5 central actuation
+    step "descent 0/1/2 -> 0/1 complete"
     ;;
 *) echo "unknown step: $STEP" >&2; exit 2 ;;
 esac
