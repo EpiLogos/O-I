@@ -26,6 +26,9 @@ class ProductionAdapter {
     notes: ["GPU particle dynamics and continuous modal resonance. One simulation clock.", "10 formations / 8 pins. Configuration saves are not runtime checkpoints.", "Live video and native-resolution PNG. Offline controlled clip rendering is not available."]
   };
   engine = null;
+  // Recovery disposes GPU objects before the next render replaces them, but the
+  // adapter still owns the canvas context if it is disposed during that gap.
+  contextOwner = null;
   width = innerWidth;
   height = innerHeight;
   dpr = devicePixelRatio || 1;
@@ -107,6 +110,7 @@ class ProductionAdapter {
     const config = this.configuration(frame);
     if (!this.engine) {
       this.engine = new PointCloudField(this.canvas, config, true);
+      this.contextOwner = this.engine;
       this.seedRecoveredSources = true;
     } else if (config !== this.applied) this.engine.replaceConfig(config);
     if (config !== this.applied) this.syncSources(frame.scene);
@@ -250,8 +254,9 @@ class ProductionAdapter {
   }
   dispose() {
     this.canvas.removeEventListener("webglcontextlost", this.lost);
-    this.engine?.destroy();
+    this.contextOwner?.destroy({ releaseContext: true });
     this.engine = null;
+    this.contextOwner = null;
   }
 }
 export {
