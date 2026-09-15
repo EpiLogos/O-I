@@ -54,7 +54,9 @@ const blocks = []; // { selector, names: [], decls: Map }
 const stack = [];
 const firstOwner = new Map(); // token name -> section of first definition
 const sectionMarker = /^\s*\/\*\s*=+\s*section:\s*(.+?)\s*=+\s*\*\//;
-const decl = /^\s*(--oi-[a-z0-9-]+)\s*:\s*(.+?);\s*$/;
+// A declaration may carry a trailing comment (the shell vocabulary annotates
+// every role); the comment is not part of the value.
+const decl = /^\s*(--oi-[a-z0-9-]+)\s*:\s*(.+?);\s*(?:\/\*.*?\*\/\s*)?$/;
 
 for (const line of lines) {
   const marker = line.match(sectionMarker);
