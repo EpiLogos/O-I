@@ -54,6 +54,9 @@ jobs:
       - name: Prove Expression projection through the accepted native engine
         working-directory: desktop/cradle
         run: node tests/expression-engine.mjs
+      - name: Prove knowledge projection identity and provenance preservation
+        working-directory: desktop/cradle
+        run: node tests/knowledge-expression.mjs
       - name: Prove Explore travel, field search and primary projection readings (SF1)
         working-directory: desktop/cradle
         run: node --test tests/explore-field.test.mjs

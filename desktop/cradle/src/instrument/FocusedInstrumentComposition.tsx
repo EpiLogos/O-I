@@ -107,6 +107,8 @@ function FocusedInstrumentSurface({binding,sourcesOpen,onToggleSources}:{binding
   // The stage attach follows source presence: a binding restored from a
   // previous session re-attaches when its owner registers, however late.
   const sourcePresent=!!focusedInstrumentSource(ref);
+  const composeGeneration=useRef(0);
+  useEffect(()=>()=>{composeGeneration.current++;},[ref]);
   useEffect(()=>{
     let detached:(()=>void)|undefined;
     const detachOnce=()=>{const stop=detached;detached=undefined;stop?.();};
@@ -157,17 +159,20 @@ function FocusedInstrumentSurface({binding,sourcesOpen,onToggleSources}:{binding
   const active=snapshot?.focus.focus;
   const media=snapshot?mediumLabels(snapshot):[];
   const composeCues=async()=>{
+    const generation=++composeGeneration.current;
     setBusy(true);setStageError(null);
     try{
       const source=focusedInstrumentSource(ref);
       if(!source)throw new Error("The Nara owner is unavailable");
       // Re-read before export: the displayed reception may have become stale.
       const current=await source.read(),document=naraCueExpression(current,`expression:${crypto.randomUUID()}`);
+      if(generation!==composeGeneration.current)return;
       const reply=await kernelOp(kernel.transport,{op:"expression",request:{operation:"open",document,actor:"human:nara-composition"}});
+      if(generation!==composeGeneration.current)return;
       if(reply.error||reply.outcome?.result!=="expression"||reply.outcome.data.state!=="ready")throw new Error(reply.error??"Safe cue composition could not be opened");
       summonExpression(document.expression_ref);
-    }catch(reason){setStageError(reason instanceof Error?reason.message:String(reason));}
-    finally{setBusy(false);}
+    }catch(reason){if(generation===composeGeneration.current)setStageError(reason instanceof Error?reason.message:String(reason));}
+    finally{if(generation===composeGeneration.current)setBusy(false);}
   };
   return <div className="k9-layer" data-epi-nara-region="instrument">
     <div className="k9-identity k9-chip">
