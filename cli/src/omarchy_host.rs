@@ -200,7 +200,7 @@ fn inspect_omarchy_host(home: &Path) -> Result<OmarchyHostPlan, String> {
             repository: OMARCHY_SOURCE_REPOSITORY.to_owned(),
             stable_release: OMARCHY_STABLE_RELEASE.to_owned(),
             contract_revision: OMARCHY_CONTRACT_REVISION.to_owned(),
-            contract_basis: "current quattro shell/plugin/IPC contract inspected at implementation; stable release retained separately".to_owned(),
+            contract_basis: "shell/plugin/IPC contract inspected at the pinned release commit itself; v4.0.3 carries the scoped plugin API boundary and keepLoaded service survival in its tag".to_owned(),
         },
         shell_config: if shell_config.exists() {
             format!("present-native-owned:{}", shell_config.display())
@@ -211,8 +211,8 @@ fn inspect_omarchy_host(home: &Path) -> Result<OmarchyHostPlan, String> {
         managed_files,
         changes,
         native_owner_actions: vec![
-            format!("omarchy plugin enable {OMARCHY_PLUGIN_ID} --yes"),
-            format!("omarchy plugin enable {OMARCHY_SWITCHER_ID} --yes"),
+            format!("omarchy plugin enable {OMARCHY_PLUGIN_ID}"),
+            format!("omarchy plugin enable {OMARCHY_SWITCHER_ID}"),
             "omarchy-shell shell rescanPlugins".to_owned(),
             "omarchy-shell shell listPlugins".to_owned(),
         ],
@@ -342,6 +342,12 @@ mod omarchy_host_tests {
 
         assert!(plan.shell_config.starts_with("present-native-owned:"));
         assert!(plan.changes.iter().all(|change| !change.contains("shell.json")));
+        // v4.0.3 `omarchy plugin enable <id> [placement]` has no --yes flag;
+        // enablement is promptless and the flag belongs to `plugin add`.
+        assert!(plan.native_owner_actions.iter().all(|action| !action.contains("--yes")));
+        assert!(plan
+            .native_owner_actions
+            .contains(&format!("omarchy plugin enable {OMARCHY_PLUGIN_ID}")));
         assert_eq!(before, fs::read(&shell).unwrap());
         fs::remove_dir_all(home).unwrap();
     }
