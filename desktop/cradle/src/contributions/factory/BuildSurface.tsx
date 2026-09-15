@@ -17,10 +17,10 @@ function Ref({ children }: { children: string }) {
   return <code className="fb-ref" title={children}>{children}</code>
 }
 
-function ActionButton({ actionRef, subjectRef, label, availability, unavailableReason, onAction }: {
-  actionRef: string; subjectRef: string; label: string; availability?: string; unavailableReason?: string; onAction?: (invocation: ActionInvocation) => void
+function ActionButton({ actionRef, subjectRef, label, onAction }: {
+  actionRef: string; subjectRef: string; label: string; onAction?: (invocation: ActionInvocation) => void
 }) {
-  return <button type="button" className="fb-action" disabled={!onAction || availability !== "available"} title={unavailableReason ?? (!onAction || availability !== "available" ? "Native Action admission is unavailable" : undefined)} onClick={() => onAction?.({ actionRef, subjectRef })}>{label}</button>
+  return <button type="button" className="fb-action" onClick={() => onAction?.({ actionRef, subjectRef })}>{label}</button>
 }
 
 export function BuildSurface({ view, initialDepth = 'semantic', onAction }: BuildSurfaceProps) {
@@ -63,7 +63,7 @@ export function BuildSurface({ view, initialDepth = 'semantic', onAction }: Buil
           <Ref>{candidate.candidateRef}</Ref>
           <dl><dt>Executions</dt><dd>{candidate.producingExecutionRefs.map((ref) => <Ref key={ref}>{ref}</Ref>)}</dd><dt>Claims</dt><dd>{candidate.claimRefs.length}</dd><dt>Evidence</dt><dd>{candidate.evidenceRefs.length}</dd></dl>
           {candidate.tradeoffs?.length ? <ul>{candidate.tradeoffs.map((item) => <li key={item}>{item}</li>)}</ul> : null}
-          <div className="fb-actions">{candidateActions.map((action) => <ActionButton key={action.actionRef} actionRef={action.actionRef} subjectRef={candidate.candidateRef} label={action.label} availability={action.availability} unavailableReason={action.unavailableReason} onAction={onAction} />)}</div>
+          <div className="fb-actions">{candidateActions.map((action) => <ActionButton key={action.actionRef} actionRef={action.actionRef} subjectRef={candidate.candidateRef} label={action.label} onAction={onAction} />)}</div>
         </article>)}</div>
       </section>
 
@@ -75,7 +75,7 @@ export function BuildSurface({ view, initialDepth = 'semantic', onAction }: Buil
           {view.humanRequests.length ? view.humanRequests.map((request) => <article className="fb-human-request" key={request.humanRequestRef}><strong>{request.question}</strong><p>{request.whyHuman}</p><Ref>{request.decisionRef}</Ref></article>) : <p className="fb-muted">No durable human authorship request is open.</p>}
         </section>
       </div>
-      <div className="fb-actions fb-run-actions">{runActions.map((action) => <ActionButton key={action.actionRef} actionRef={action.actionRef} subjectRef={view.run.runRef} label={action.label} availability={action.availability} unavailableReason={action.unavailableReason} onAction={onAction} />)}</div>
+      <div className="fb-actions fb-run-actions">{runActions.map((action) => <ActionButton key={action.actionRef} actionRef={action.actionRef} subjectRef={view.run.runRef} label={action.label} onAction={onAction} />)}</div>
     </section> : null}
 
     {depth === 'live' ? <section className="fb-depth">
