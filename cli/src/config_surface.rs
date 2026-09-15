@@ -429,6 +429,27 @@ pub trait ConfigSurface {
     /// Readiness findings for `oi config doctor`, keyed off contribution
     /// effect kinds and reconciliation statuses.
     fn doctor(&self) -> SurfaceResult<Vec<DoctorFinding>>;
+
+    /// Hold one desired entry as explicit O:I intent — the desired axis of
+    /// 09 §7 — without planning, applying or touching any owner. A hold
+    /// replaces the previously held entry for the same (setting, scope).
+    /// Surfaces that keep no desired state refuse.
+    fn hold_desired(&self, _request: &ChangeRequest) -> SurfaceResult<DesiredEntry> {
+        Err(SurfaceError::new(
+            ErrorCode::Internal,
+            "this configuration surface keeps no desired state; holding is an engine capability",
+        ))
+    }
+
+    /// Withdraw one explicitly held desired entry. `Ok(false)` when nothing
+    /// was held — the absence is observable, not an error. Surfaces that
+    /// keep no desired state refuse.
+    fn discard_desired(&self, _setting_ref: &str, _scope: &Scope) -> SurfaceResult<bool> {
+        Err(SurfaceError::new(
+            ErrorCode::Internal,
+            "this configuration surface keeps no desired state; discarding is an engine capability",
+        ))
+    }
 }
 
 // ---------------------------------------------------------------------------

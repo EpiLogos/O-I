@@ -29,7 +29,7 @@ pub use orchestration::{
 pub use registry::{
     product_position_specs, OwnerEntry, OwnerRegistry, RegistryDegradation, PRODUCT_POSITIONS,
 };
-pub use store::{oi_home, ConfigurationStore, ReconciliationRecord};
+pub use store::{oi_home, ConfigurationStore, DesiredRecord, ReconciliationRecord};
 pub use surface_adapter::{
     desired_change, desired_change_from_entry, error_document, kernel_wire_error,
 };

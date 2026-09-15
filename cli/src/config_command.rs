@@ -38,6 +38,8 @@ fn command_config(args: &[OsString]) -> Result<i32, String> {
         "show" => config_show(&*config, &positional, json),
         "get" => config_get(&*config, &positional, json),
         "set" => config_set(&*config, &positional, json),
+        "hold" => config_hold(&*config, &positional, json),
+        "discard" => config_discard(&*config, &positional, json),
         "reset" => config_reset(&*config, &positional, json),
         "diff" => config_diff(&*config, json),
         "plan" => config_plan(&*config, rest, json),
@@ -640,6 +642,122 @@ fn config_set(
     )
 }
 
+/// Hold one desired entry as explicit O:I intent (09 §7): the same
+/// addressing, secret law and shape checks as `set`, but nothing is
+/// planned, applied or mutated — the owner is not touched. `oi config
+/// diff` shows the drift; plan and apply take it to the owner.
+fn config_hold(
+    config: &dyn ConfigSurface,
+    positional: &[String],
+    json: bool,
+) -> SurfaceResult<ConfigCommandOutcome> {
+    let (setting_ref, value_raw, scope_argument) = match positional {
+        [setting_ref, value] => (setting_ref.clone(), value.clone(), None),
+        [setting_ref, value, scope] => (setting_ref.clone(), value.clone(), Some(scope.clone())),
+        _ => {
+            return Err(SurfaceError::new(
+                ErrorCode::Internal,
+                "usage: oi config hold <setting-ref> <value|secret-reference> [scope] [--json]",
+            ))
+        }
+    };
+    let listed = config.list()?;
+    let kind = find_listed(&listed, &setting_ref)
+        .map(|entry| entry.setting.value_schema.kind)
+        .ok_or_else(|| {
+            SurfaceError::new(
+                ErrorCode::UnsupportedSetting,
+                format!("`{setting_ref}` is not in any contribution"),
+            )
+            .setting(&setting_ref)
+        })?;
+    let scope = match decide_scope(&listed, &setting_ref, scope_argument.as_deref()) {
+        Ok(scope) => scope,
+        Err(ConfigUsageError::Structured(error)) => return Err(error),
+    };
+    // Secret-kind settings take the owner-namespace reference as the value
+    // argument; the seam normalises it into a secret_reference (09 §14).
+    let value = if kind == ValueKind::Secret {
+        Some(Value::String(value_raw))
+    } else {
+        Some(coerce_value(kind, &value_raw)?)
+    };
+    let request = ChangeRequest {
+        setting_ref: setting_ref.clone(),
+        scope: scope.clone(),
+        value,
+        secret_reference: None,
+    };
+    let held = config.hold_desired(&request)?;
+    if json {
+        return config_outcome(
+            None,
+            Some(serde_json::to_value(&held).map_err(|error| {
+                SurfaceError::new(ErrorCode::Internal, error.to_string())
+            })?),
+        );
+    }
+    let subject = held
+        .secret_reference
+        .as_ref()
+        .map(|reference| format!("secret reference `{}`", reference.ref_))
+        .unwrap_or_else(|| format!("{}", held.value.clone().unwrap_or(Value::Null)));
+    config_outcome(
+        Some(format!(
+            "Held desired: {setting_ref} @ {} → {subject}. Nothing was applied; `oi config diff` shows the drift, plan and apply take it to the owner.",
+            held.scope.compact()
+        )),
+        None,
+    )
+}
+
+/// Withdraw one explicitly held desired entry. Discarding a subject nothing
+/// is held for reports `removed: false` — observable, not an error.
+fn config_discard(
+    config: &dyn ConfigSurface,
+    positional: &[String],
+    json: bool,
+) -> SurfaceResult<ConfigCommandOutcome> {
+    let (setting_ref, scope_argument) = match positional {
+        [setting_ref] => (setting_ref.clone(), None),
+        [setting_ref, scope] => (setting_ref.clone(), Some(scope.clone())),
+        _ => {
+            return Err(SurfaceError::new(
+                ErrorCode::Internal,
+                "usage: oi config discard <setting-ref> [scope] [--json]",
+            ))
+        }
+    };
+    let scope = match decide_scope(&config.list()?, &setting_ref, scope_argument.as_deref()) {
+        Ok(scope) => scope,
+        Err(ConfigUsageError::Structured(error)) => return Err(error),
+    };
+    let removed = config.discard_desired(&setting_ref, &scope)?;
+    if json {
+        return config_outcome(
+            None,
+            Some(serde_json::json!({
+                "schema": "oi.config-discard/v1",
+                "setting_ref": setting_ref,
+                "scope": serde_json::to_value(&scope)
+                    .map_err(|error| SurfaceError::new(ErrorCode::Internal, error.to_string()))?,
+                "removed": removed,
+            })),
+        );
+    }
+    config_outcome(
+        Some(if removed {
+            format!(
+                "Discarded the held desired entry for {setting_ref} @ {}. The owner's own state was never touched.",
+                scope.compact()
+            )
+        } else {
+            format!("Nothing is held for {setting_ref} @ {}.", scope.compact())
+        }),
+        None,
+    )
+}
+
 fn config_reset(
     config: &dyn ConfigSurface,
     positional: &[String],
@@ -905,6 +1023,8 @@ surface used by the conformance tests.\n\
   oi config show <setting-ref> [scope] [--json]   the oi.config-resolution/v1 reading\n\
   oi config get <setting-ref> [scope] [--json]    the addressed value (secrets: reference only)\n\
   oi config set <setting-ref> <value> [scope] [--json]   assemble a ChangeSet request\n\
+  oi config hold <setting-ref> <value|secret-reference> [scope] [--json]   hold desired intent; nothing is applied\n\
+  oi config discard <setting-ref> [scope] [--json]   withdraw a held desired entry\n\
   oi config reset <setting-ref> [scope] [--json]   owner-native reset with receipt\n\
   oi config diff [--json]                     desired vs native for held desired state\n\
   oi config plan --request-file <path|-> [--json]   owner-native plans, no mutation\n\
