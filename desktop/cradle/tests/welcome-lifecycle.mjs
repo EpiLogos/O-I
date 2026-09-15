@@ -112,10 +112,10 @@ try {
  }
  // A real restored native presentation attempts admission while the mark
  // owns the one field, then retries when the frontstate actually releases.
- if(selection!=='motion') {
+ if(selection!=='motion') for(const keepWelcome of [false,true]) {
  const restoredContext=await browser.newContext({viewport:{width:900,height:700}});
  const restored=await restoredContext.newPage();observeErrors(restored);
- await restored.goto(`${url}?restored`);await fieldReady(restored);
+ await restored.goto(`${url}?restored${keepWelcome?'&keep-welcome':''}`);await fieldReady(restored);
  await restored.waitForFunction(()=>welcomeTest.restoredAttempts>0);
  assert.equal(await restored.evaluate(()=>welcomeTest.restoredHandle),null,'the restored body defers behind the frontstate');
  assert.equal(await restored.locator('canvas[data-oi-stage="engine"]').count(),1);
@@ -126,6 +126,8 @@ try {
  assert.deepEqual(await restored.evaluate(()=>welcomeTest.capturedByUnderlay),[],'later app capture handlers receive no keys before or after readiness changes');
  await restored.evaluate(()=>{window.restoredCanvas=document.querySelector('canvas[data-oi-stage="engine"]');window.restoredContext=restoredCanvas.getContext('webgl2');});
  await restored.keyboard.press('Enter');await entered(restored);
+ await restored.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+ assert.equal(await restored.locator('.oi-welcome').count(),0,'completed Welcome stays absent even when its parent keeps the component mounted');
  await restored.waitForFunction(()=>welcomeTest.restoredHandle);
  await restored.evaluate(()=>welcomeTest.restoredHandle.ready());
  assert.equal(await restored.evaluate(()=>document.querySelector('canvas[data-oi-stage="engine"]')===restoredCanvas&&restoredCanvas.getContext('webgl2')===restoredContext),true,'restoration uses the same canvas and context after entry');
@@ -134,7 +136,7 @@ try {
  await restored.keyboard.press('z');
  assert.deepEqual(await restored.evaluate(()=>welcomeTest.capturedByUnderlay),['z'],'the restored app receives keys after entry');
  await restoredContext.close();
- results.push({restoredPresentation:'deferred behind Welcome, admitted on the same field after release',keyboardCapture:'isolated until entry, then released'});
+ results.push({keepWelcomeMounted:keepWelcome,restoredPresentation:'deferred behind Welcome, admitted on the same field after release',keyboardCapture:'isolated until entry, then released'});
  }
 
  // Changing the actual browser preference mid-flight must finish with the

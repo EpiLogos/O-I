@@ -61,6 +61,9 @@ export function WelcomeField({ onEntered, onFieldReady, appReady = true }: {
   }, []);
 
   useEffect(() => {
+    // Releasing the frontstate makes the shared stage available to restored
+    // surfaces. That API change must not restart a completed opening.
+    if (finished.current) return;
     if (!gate || !snapshot.enabled || !snapshot.welcomeEnabled) {
       reportFieldReady();
       finish();
