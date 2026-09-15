@@ -10,12 +10,12 @@
  * a master on/off switch that is unambiguous, and typed text targets
  * (glyph A/B and arbitrary words). The panel is a controller of the
  * instrument, never its owner: every value flows through the validated
- * visual-preference owner, and the preview is an element-bounded engine
- * surface framing the owner's own document to this box.
+ * visual-preference owner. The preview places the window's shared Expression
+ * stage in this box; it never creates a component-level renderer.
  */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useVisuals } from "../../visuals/ParticleExpression";
-import type { EngineSurface } from "../../stage/engineSurface";
+import { useExpressionStage, type StagePresentation } from "../../stage/ExpressionStage";
 import {
   visuals,
   type SavedState,
@@ -78,49 +78,64 @@ function ThemesView({ theme }: { theme: ThemeChoice }) {
 
 function ExpressionView() {
   const { snapshot } = useVisuals();
+  const stage = useExpressionStage();
+  const previewId = `oi-visuals-preview${useId()}`;
   const config = snapshot.config;
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const surfaceRef = useRef<EngineSurface | null>(null);
-  const [surfaceError, setSurfaceError] = useState<string | null>(null);
+  const presentationRef = useRef<StagePresentation | null>(null);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [previewReady, setPreviewReady] = useState(false);
+  const [retry, setRetry] = useState(0);
   const [previewPaused, setPreviewPaused] = useState(false);
   const [previewForceMotion, setPreviewForceMotion] = useState(false);
   const [captureNotice, setCaptureNotice] = useState<string | null>(null);
-  const configRef = useRef(config); configRef.current = config;
+  const latest = useRef({config, previewPaused, previewForceMotion});
+  latest.current = {config, previewPaused, previewForceMotion};
+  const surfaceError = stage.error ?? previewError;
+  const readTelemetry = useCallback(() => presentationRef.current?.telemetry() ?? null, []);
 
-  // The preview is an element-bounded engine surface: the owner's own
-  // document (never app-invented physics), re-presented per accepted
-  // revision. The engine module loads only on the enabled path. Engine
-  // failure surfaces here and disposes the surface.
+  // Acquire the one window stage, then move its existing canvas/context into
+  // the preview. Provider readiness retries acquisition; navigation releases
+  // the presentation and returns the canvas to its window home.
   useEffect(() => {
-    if (!snapshot.enabled || surfaceError) return;
+    setPreviewError(null);
+    setPreviewReady(false);
+    if (!snapshot.enabled) return;
     const container = containerRef.current;
-    if (!container || surfaceRef.current) return;
-    let cancelled = false;
-    let surface: EngineSurface | null = null;
-    void import("../../stage/engineSurface").then(({ EngineSurface }) => {
-      if (cancelled || surfaceRef.current) return;
-      surface = EngineSurface.forElement(container, (message) => setSurfaceError(message));
-      surfaceRef.current = surface;
-      surface.presentConfig("oi-visuals-preview", configRef.current);
-    }).catch((cause: unknown) => {
-      setSurfaceError(cause instanceof Error ? cause.message : String(cause));
-    });
+    if (!container) return;
+    let presentation: StagePresentation | null = null;
+    try {
+      presentation = stage.present({id: previewId, plane: "overlay", recipe: "",
+        config: latest.current.config as unknown as Record<string, unknown>,
+        sceneRef: previewId,
+        paused: latest.current.previewPaused, forceMotion: latest.current.previewForceMotion});
+      if (!presentation) return;
+      presentation.setContainer(container);
+      presentationRef.current = presentation;
+      setPreviewReady(true);
+    } catch (cause) {
+      presentation?.release();
+      setPreviewError(cause instanceof Error ? cause.message : String(cause));
+    }
     return () => {
-      cancelled = true;
-      surface?.dispose();
-      if (surface && surfaceRef.current === surface) surfaceRef.current = null;
+      presentation?.release();
+      if (presentationRef.current === presentation) presentationRef.current = null;
     };
-  }, [snapshot.enabled, surfaceError]);
+  }, [snapshot.enabled, stage, previewId, retry]);
 
   // Accepted writes re-present the owner's document — one migration per
   // revision; the store's own emission is the coalescing point.
   useEffect(() => {
-    surfaceRef.current?.presentConfig("oi-visuals-preview", config);
-  }, [config]);
+    presentationRef.current?.updateConfig(config as unknown as Record<string, unknown>, previewId, []);
+  }, [config, previewId]);
 
-  // The deliberate reduced-motion override belongs to this surface alone.
+  // These settings belong only to this presentation and are restored on
+  // re-enable. Releasing the handle clears its deliberate motion override.
   useEffect(() => {
-    surfaceRef.current?.setForceMotion(previewForceMotion);
+    presentationRef.current?.setPaused(previewPaused);
+  }, [previewPaused]);
+  useEffect(() => {
+    presentationRef.current?.setForceMotion(previewForceMotion);
   }, [previewForceMotion]);
 
   return (
@@ -135,7 +150,7 @@ function ExpressionView() {
         </button>
         <p className="settings-native-note">
           {snapshot.enabled
-            ? "The particle layer is live. Off removes the renderer entirely — nothing runs hidden."
+            ? "Expression is enabled. Off removes the renderer entirely — nothing runs hidden."
             : "Off is absolute: no renderer, no simulation, no resources held."}
         </p>
         <label className="visuals-check">
@@ -153,21 +168,20 @@ function ExpressionView() {
         <p className="settings-native-note">Turn the expression on to see and shape the field.</p>
       )}
 
-      {snapshot.enabled && surfaceError && <p role="alert">The expression layer could not start: {surfaceError}</p>}
+      {snapshot.enabled && surfaceError && <div role="alert">
+        <p>The expression preview is unavailable: {surfaceError}</p>
+        {!stage.error && <button onClick={() => setRetry((value) => value + 1)}>Retry preview</button>}
+      </div>}
 
       {snapshot.enabled && (
         <>
-          {/* The explicit preview: the only renderer this panel starts —
-              an element-bounded engine surface framing the owner's own
-              document to this box. */}
+          {/* The window's production canvas is placed here while acquired. */}
           <div className="visuals-preview">
             <div
               className={surfaceError ? "visuals-preview-stage visuals-preview-stage-empty" : "visuals-preview-stage"}
-              ref={surfaceError ? undefined : containerRef}
-              style={surfaceError ? undefined : { position: "relative" }}
-            >
-              {surfaceError && "Renderer unavailable"}
-            </div>
+              ref={containerRef}
+              style={{ position: "relative" }}
+            />
             <label className="visuals-check">
               <input
                 type="checkbox"
@@ -291,24 +305,24 @@ function ExpressionView() {
           </fieldset>
 
           <div className="visuals-actions" role="group" aria-label="Field actions">
-            <button onClick={() => surfaceRef.current?.command({ type: "disperse", strength: 3.5 })}>Disperse</button>
+            <button disabled={!previewReady} onClick={() => presentationRef.current?.command({ type: "disperse", strength: 3.5 })}>Disperse</button>
             <button
+              disabled={!previewReady}
               onClick={() => {
-                const next = !previewPaused;
-                surfaceRef.current?.setPaused(next);
-                setPreviewPaused(next);
+                setPreviewPaused(!previewPaused);
               }}
             >
               {previewPaused ? "Resume simulation" : "Pause simulation"}
             </button>
-            <button onClick={() => surfaceRef.current?.command({ type: "reset-field" })}>Reset field</button>
+            <button disabled={!previewReady} onClick={() => presentationRef.current?.command({ type: "reset-field" })}>Reset field</button>
             <button onClick={() => visuals.resetConfig()}>Restore defaults</button>
             <button
+              disabled={!previewReady}
               onClick={() => {
-                const surface = surfaceRef.current;
-                if (!surface) return;
+                const presentation = presentationRef.current;
+                if (!presentation) return;
                 try {
-                  const canvas = surface.capture();
+                  const canvas = presentation.capture();
                   const url = canvas.toDataURL("image/png");
                   const anchor = window.document.createElement("a");
                   anchor.href = url;
@@ -329,7 +343,7 @@ function ExpressionView() {
 
           <ImportExport />
 
-          <Diagnostics read={() => surfaceRef.current?.telemetry() ?? null} />
+          <Diagnostics read={readTelemetry} />
         </>
       )}
     </div>
