@@ -8,8 +8,13 @@
 //! the contract): unknown members are tolerated on read and never a reason
 //! to drop a setting.
 pub mod changeset;
+pub mod connector;
 pub mod contribution;
+pub mod kernel;
 pub mod profile;
+/// C2 profile store (#299 §17): persistence, file-safety law, diff inputs,
+/// export/import for `oi.profile/v1` (09 §12–§13).
+pub mod profile_store;
 pub mod redaction;
 pub mod refs;
 pub mod resolution;
@@ -18,6 +23,10 @@ pub use changeset::{
     derive_changeset_status, Authority, ChangeSet, ChangeSetStatus, IdempotencyKey, Operation,
     OperationError, OperationKind, OperationStatus, Receipt, ReceiptOutcome, RequestedChange,
     Verification, VerificationEntry, CHANGSET_SCHEMA, RECEIPT_SCHEMA,
+};
+pub use connector::{
+    connector_name_of, connector_owner_ref, connector_reread, parse_connector_setting_ref,
+    validate_connector_contribution, CONNECTOR_REF_PREFIX,
 };
 pub use contribution::{
     AllowedScope, Availability, AvailabilityState, Contribution, ContributionRegistry,
@@ -39,6 +48,16 @@ pub use resolution::{
     reconcile, Desired, NativeAxes, NativeAxis, NativeReading, Provenance, Reconciliation,
     ReconciliationInputs, ReconciliationStatus, Resolution, SecretReference, StageState,
     RESOLUTION_SCHEMA,
+};
+// The C1 kernel (#299): registry/discovery, transport, orchestration,
+// verification and O:I-side persistence. Additive to the frozen C0 files.
+pub use kernel::{
+    assemble_changeset, canonical_reading_digest, execute_changeset, idempotency_key_of,
+    mint_changeset_id, plan_request, reset_setting, resolve_setting, resolve_setting_address,
+    ApplyRequest, ChangeKind, ConfigurationStore, DesiredChange, DesiredInput, ErrorDocument,
+    ExecuteReport, KernelError, OwnerGateway, OwnerOpError, OwnerRegistry, OwnerSpec,
+    OwnerTransport, PlanDocument, ProcessTransport, ReconciliationRecord, ResetRequest,
+    SettingRequest, TransportError, TransportFailure, ValidationDocument,
 };
 
 /// The structured error codes every configuration-plane operation may

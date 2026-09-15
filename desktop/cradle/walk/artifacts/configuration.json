@@ -1,0 +1,240 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "configuration",
+  "generated_at": "2026-09-15T02:46:38.954Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 4625,
+  "checks": [
+    {
+      "ok": true,
+      "label": "The registry projects every mounted contribution generically (two products, the oi composition owner, a connector)",
+      "data": {
+        "ownerRefs": [
+          "ai-kit",
+          "oi",
+          "connector/factory-actuation",
+          "workcell"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "The unavailable owner renders its disclosed availability"
+    },
+    {
+      "ok": true,
+      "label": "The unavailable owner renders its honest absence — no fabricated settings, no fake controls"
+    },
+    {
+      "ok": true,
+      "label": "boolean → switch"
+    },
+    {
+      "ok": true,
+      "label": "enum → choice"
+    },
+    {
+      "ok": true,
+      "label": "path → path field"
+    },
+    {
+      "ok": true,
+      "label": "table → structured editor"
+    },
+    {
+      "ok": true,
+      "label": "reference → reference field (native resolver)"
+    },
+    {
+      "ok": true,
+      "label": "secret → presence only"
+    },
+    {
+      "ok": true,
+      "label": "secret → reference shown, never a value"
+    },
+    {
+      "ok": true,
+      "label": "satisfied, drifted, pending and blocked render from the frozen vocabulary (§7.1)",
+      "data": {
+        "statuses": {
+          "ai-kit:resolution:model.default": "drifted",
+          "ai-kit:resolution:skill-set": "pending",
+          "ai-kit:session:session.provider": "satisfied",
+          "ai-kit:session:provider-instance": "satisfied",
+          "ai-kit:sources:pins": "satisfied",
+          "ai-kit:providers:credentials.anthropic": "blocked",
+          "oi:composition:ground-binding": "satisfied",
+          "oi:composition:managed-root": "satisfied",
+          "oi:verify:verify.before-run": "satisfied",
+          "connector/factory-actuation:authority:authority.mode": "satisfied"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "model.default is drifted (profile desired vs native)"
+    },
+    {
+      "ok": true,
+      "label": "the native axis stays visible"
+    },
+    {
+      "ok": true,
+      "label": "the desired axis stays visible beside it"
+    },
+    {
+      "ok": true,
+      "label": "owner authority is visible before apply"
+    },
+    {
+      "ok": true,
+      "label": "expected effect is visible before apply"
+    },
+    {
+      "ok": true,
+      "label": "the ChangeSet records per-operation truth"
+    },
+    {
+      "ok": true,
+      "label": "re-read verification reconciles the applied setting"
+    },
+    {
+      "ok": true,
+      "label": "after apply + reread the setting reconciles satisfied"
+    },
+    {
+      "ok": true,
+      "label": "holding desired drifts the setting before any owner is touched"
+    },
+    {
+      "ok": true,
+      "label": "desired over an undisclosed subject is unknown — never guessed, never fabricated"
+    },
+    {
+      "ok": true,
+      "label": "all five registry-renderable statuses have now rendered",
+      "data": {
+        "statuses": {
+          "ai-kit:resolution:model.default": "satisfied",
+          "ai-kit:resolution:skill-set": "pending",
+          "ai-kit:session:session.provider": "satisfied",
+          "ai-kit:session:provider-instance": "unknown",
+          "ai-kit:sources:pins": "satisfied",
+          "ai-kit:providers:credentials.anthropic": "blocked",
+          "oi:composition:ground-binding": "satisfied",
+          "oi:composition:managed-root": "satisfied",
+          "oi:verify:verify.before-run": "drifted",
+          "connector/factory-actuation:authority:authority.mode": "satisfied"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "an external native edit appears on reread as drift, never silently rewritten"
+    },
+    {
+      "ok": true,
+      "label": "the succeeded owner operation is recorded verified"
+    },
+    {
+      "ok": true,
+      "label": "the failed owner operation is recorded failed"
+    },
+    {
+      "ok": true,
+      "label": "the owner error renders verbatim — no fake rollback, no faked success"
+    },
+    {
+      "ok": true,
+      "label": "an empty World renders the honest beginning, same system, no fabricated rows"
+    },
+    {
+      "ok": true,
+      "label": "the active profile is marked"
+    },
+    {
+      "ok": true,
+      "label": "an entry no owner contributes renders unsupported — held honestly, never dropped (the sixth status)"
+    },
+    {
+      "ok": true,
+      "label": "native profiles render as references, never expanded"
+    },
+    {
+      "ok": true,
+      "label": "profile use shows the inspectable plan before anything moves"
+    },
+    {
+      "ok": true,
+      "label": "the switch happened only after the plan was shown and accepted"
+    },
+    {
+      "ok": true,
+      "label": "the previous profile is no longer marked active"
+    },
+    {
+      "ok": true,
+      "label": "the switch result renders as a ChangeSet"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 44,
+      "data": {
+        "file": "configuration-configuration-registry.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 39,
+      "data": {
+        "file": "configuration-configuration-plan.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 29,
+      "data": {
+        "file": "configuration-configuration-partial.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 31,
+      "data": {
+        "file": "configuration-configuration-empty.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 32,
+      "data": {
+        "file": "configuration-profiles-use-plan.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "configuration-configuration-registry.png",
+    "configuration-configuration-plan.png",
+    "configuration-configuration-partial.png",
+    "configuration-configuration-empty.png",
+    "configuration-profiles-use-plan.png"
+  ]
+}
