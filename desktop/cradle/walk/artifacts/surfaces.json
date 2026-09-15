@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "surfaces",
-  "generated_at": "2026-09-14T18:48:05.336Z",
+  "generated_at": "2026-09-15T13:14:56.486Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -11,8 +11,8 @@
     "platform": "darwin"
   },
   "passed": false,
-  "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('.tab').filter({ hasText: '04 05-EXECUTION.md' }).first().locator('.tab-close')\n\n    at Module.run (/Users/admin/Central/Work/O-I/desktop/cradle/walk/scenarios/surfaces.mjs:27:55)\n    at async runScenario (/Users/admin/Central/Work/O-I/desktop/cradle/walk/run.mjs:378:5)\n    at async file:///Users/admin/Central/Work/O-I/desktop/cradle/walk/run.mjs:451:18",
-  "duration_ms": 31131,
+  "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('.tab').filter({ hasText: '04 05-EXECUTION.md' }).first().locator('.tab-close')\n\n    at Module.run (/Users/admin/Central/Work/O-I/.agent-worktrees/ui-grammar-workbench/desktop/cradle/walk/scenarios/surfaces.mjs:27:55)\n    at async runScenario (/Users/admin/Central/Work/O-I/.agent-worktrees/ui-grammar-workbench/desktop/cradle/walk/run.mjs:383:5)\n    at async file:///Users/admin/Central/Work/O-I/.agent-worktrees/ui-grammar-workbench/desktop/cradle/walk/run.mjs:456:18",
+  "duration_ms": 32673,
   "checks": [
     {
       "ok": true,
@@ -42,7 +42,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-14T18:48:05.541Z",
+        "mounted_at": "2026-09-15T13:14:56.783Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -53,7 +53,7 @@
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 6.4,
+      "duration_ms": 43.3,
       "data": {
         "project": {
           "kind": "project",
@@ -83,7 +83,7 @@
     }
   ],
   "metrics": {
-    "open_4_tabs_ms": 547
+    "open_4_tabs_ms": 1415
   },
   "screenshots": []
 }
