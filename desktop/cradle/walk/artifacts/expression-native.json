@@ -1,0 +1,651 @@
+{
+  "schema": "oi.cradle.expression-native-review/v1",
+  "observed_at": "2026-09-15T03:50:31.407824+00:00",
+  "status": "passed: native refinement and page focus/capture/return",
+  "native_binary": "desktop/cradle/src-tauri/target/debug/oi-cradle",
+  "kernel_head": "fa12a3f",
+  "frontend_head": "fa12a3f plus verified native page capture and material CSS corrections",
+  "isolated_central": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-expression-page-HbNXKn",
+  "webview_store": "f7ffd64860d40e265a83e73b68a45e8c",
+  "expression_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c",
+  "entity_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef",
+  "checks": [
+    "Human created Expression and Thing through native UI",
+    "Real oi desktop expression socket delivered this Agent proposal into the same app",
+    "UI accepted proposal with retained human glyph correction",
+    "CLI inspected exact glyph O and scale 1.4 after correction",
+    "UI rejected follow-up; same native entity and rejection note retained",
+    "Agent continued from reviewed rejection; UI accepted x=80 preserving glyph O",
+    "Native Central file ref and actual content revision bound through UI",
+    "Native Things page presents exact Expression r10",
+    "Native page focus and Escape return retain expression and page refs",
+    "Capture while focused followed by immediate Escape retains the PNG on the same page",
+    "Captured image and live field remain readable in the native dark shell"
+  ],
+  "evidence": {
+    "initial_proposal": {
+      "ok": true,
+      "outcome": {
+        "data": {
+          "dirty": true,
+          "document": {
+            "entities": {
+              "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef": {
+                "entity_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef",
+                "parameters": {
+                  "glyph": {
+                    "automation": null,
+                    "value": "O"
+                  }
+                },
+                "revision": 2,
+                "subject": null,
+                "title": "Thing 1"
+              }
+            },
+            "expression_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c",
+            "provenance": [],
+            "refinements": [
+              {
+                "activity_ref": null,
+                "basis_revision": 2,
+                "changes": [
+                  {
+                    "change": "parameter_set",
+                    "entity_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef",
+                    "parameter": "glyph",
+                    "value": "ROOT"
+                  },
+                  {
+                    "change": "parameter_set",
+                    "entity_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef",
+                    "parameter": "scale",
+                    "value": 1.4
+                  }
+                ],
+                "continues_proposal_ref": null,
+                "decision": null,
+                "evidence_refs": [],
+                "method_refs": [],
+                "proposal_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:proposal:codex-refine-1",
+                "proposed_by": "agent:codex-expression-fanout",
+                "summary": "Refine the existing human object without changing its identity"
+              }
+            ],
+            "relations": {},
+            "representations": [],
+            "revision": 3,
+            "scenes": [
+              {
+                "entity_refs": [
+                  "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef"
+                ],
+                "revision": 2,
+                "scene_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:scene:main",
+                "title": "Main"
+              }
+            ],
+            "schema": "oi.expression/v1",
+            "selection": {
+              "entity_ref": null,
+              "scene_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:scene:main"
+            },
+            "title": "Native human and Agent refinement"
+          },
+          "dynamic_state": "not_restored",
+          "file": null,
+          "saved_revision": null,
+          "state": "ready"
+        },
+        "receipts": [
+          {
+            "actor": "agent:codex-expression-fanout",
+            "event": "expression_changed",
+            "expression_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c",
+            "revision": 3,
+            "schema": "oi.kernel-event/v1",
+            "seq": 5,
+            "version": 1
+          }
+        ],
+        "result": "expression"
+      }
+    },
+    "corrected": {
+      "ok": true,
+      "outcome": {
+        "data": {
+          "dirty": true,
+          "document": {
+            "entities": {
+              "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef": {
+                "entity_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef",
+                "parameters": {
+                  "glyph": {
+                    "automation": null,
+                    "value": "O"
+                  },
+                  "scale": {
+                    "automation": null,
+                    "value": 1.4
+                  }
+                },
+                "revision": 4,
+                "subject": null,
+                "title": "Thing 1"
+              }
+            },
+            "expression_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c",
+            "provenance": [],
+            "refinements": [
+              {
+                "activity_ref": null,
+                "basis_revision": 2,
+                "changes": [
+                  {
+                    "change": "parameter_set",
+                    "entity_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef",
+                    "parameter": "glyph",
+                    "value": "ROOT"
+                  },
+                  {
+                    "change": "parameter_set",
+                    "entity_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef",
+                    "parameter": "scale",
+                    "value": 1.4
+                  }
+                ],
+                "continues_proposal_ref": null,
+                "decision": {
+                  "actor": "human:expression-editor",
+                  "corrections": [
+                    {
+                      "change": "parameter_set",
+                      "entity_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef",
+                      "parameter": "glyph",
+                      "value": "O"
+                    }
+                  ],
+                  "decided_at_revision": 4,
+                  "reason": "Keep the human glyph; accept only the scale refinement.",
+                  "state": "accepted"
+                },
+                "evidence_refs": [],
+                "method_refs": [],
+                "proposal_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:proposal:codex-refine-1",
+                "proposed_by": "agent:codex-expression-fanout",
+                "summary": "Refine the existing human object without changing its identity"
+              }
+            ],
+            "relations": {},
+            "representations": [],
+            "revision": 4,
+            "scenes": [
+              {
+                "entity_refs": [
+                  "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef"
+                ],
+                "revision": 2,
+                "scene_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:scene:main",
+                "title": "Main"
+              }
+            ],
+            "schema": "oi.expression/v1",
+            "selection": {
+              "entity_ref": null,
+              "scene_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:scene:main"
+            },
+            "title": "Native human and Agent refinement"
+          },
+          "dynamic_state": "not_restored",
+          "file": null,
+          "saved_revision": null,
+          "state": "ready"
+        },
+        "result": "expression"
+      }
+    },
+    "rejected": {
+      "ok": true,
+      "outcome": {
+        "data": {
+          "dirty": true,
+          "document": {
+            "entities": {
+              "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef": {
+                "entity_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef",
+                "parameters": {
+                  "glyph": {
+                    "automation": null,
+                    "value": "O"
+                  },
+                  "scale": {
+                    "automation": null,
+                    "value": 1.4
+                  }
+                },
+                "revision": 4,
+                "subject": null,
+                "title": "Thing 1"
+              }
+            },
+            "expression_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c",
+            "provenance": [],
+            "refinements": [
+              {
+                "activity_ref": null,
+                "basis_revision": 2,
+                "changes": [
+                  {
+                    "change": "parameter_set",
+                    "entity_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef",
+                    "parameter": "glyph",
+                    "value": "ROOT"
+                  },
+                  {
+                    "change": "parameter_set",
+                    "entity_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef",
+                    "parameter": "scale",
+                    "value": 1.4
+                  }
+                ],
+                "continues_proposal_ref": null,
+                "decision": {
+                  "actor": "human:expression-editor",
+                  "corrections": [
+                    {
+                      "change": "parameter_set",
+                      "entity_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef",
+                      "parameter": "glyph",
+                      "value": "O"
+                    }
+                  ],
+                  "decided_at_revision": 4,
+                  "reason": "Keep the human glyph; accept only the scale refinement.",
+                  "state": "accepted"
+                },
+                "evidence_refs": [],
+                "method_refs": [],
+                "proposal_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:proposal:codex-refine-1",
+                "proposed_by": "agent:codex-expression-fanout",
+                "summary": "Refine the existing human object without changing its identity"
+              },
+              {
+                "activity_ref": null,
+                "basis_revision": 4,
+                "changes": [
+                  {
+                    "change": "parameter_set",
+                    "entity_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef",
+                    "parameter": "glyph",
+                    "value": "ROOT"
+                  }
+                ],
+                "continues_proposal_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:proposal:codex-refine-1",
+                "decision": {
+                  "actor": "human:expression-editor",
+                  "corrections": [],
+                  "decided_at_revision": 6,
+                  "reason": "Reject the glyph change. Continue from the preserved human glyph.",
+                  "state": "rejected"
+                },
+                "evidence_refs": [],
+                "method_refs": [],
+                "proposal_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:proposal:codex-refine-2",
+                "proposed_by": "agent:codex-expression-fanout",
+                "summary": "Consider a second glyph revision after the human correction"
+              }
+            ],
+            "relations": {},
+            "representations": [],
+            "revision": 7,
+            "scenes": [
+              {
+                "entity_refs": [
+                  "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef"
+                ],
+                "revision": 2,
+                "scene_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:scene:main",
+                "title": "Main"
+              }
+            ],
+            "schema": "oi.expression/v1",
+            "selection": {
+              "entity_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef",
+              "scene_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:scene:main"
+            },
+            "title": "Native human and Agent refinement"
+          },
+          "dynamic_state": "not_restored",
+          "file": null,
+          "saved_revision": null,
+          "state": "ready"
+        },
+        "result": "expression"
+      }
+    },
+    "continued": {
+      "ok": true,
+      "outcome": {
+        "data": {
+          "dirty": true,
+          "document": {
+            "entities": {
+              "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef": {
+                "entity_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef",
+                "parameters": {
+                  "glyph": {
+                    "automation": null,
+                    "value": "O"
+                  },
+                  "scale": {
+                    "automation": null,
+                    "value": 1.4
+                  },
+                  "x": {
+                    "automation": null,
+                    "value": 80
+                  }
+                },
+                "revision": 9,
+                "subject": null,
+                "title": "Thing 1"
+              }
+            },
+            "expression_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c",
+            "provenance": [],
+            "refinements": [
+              {
+                "activity_ref": null,
+                "basis_revision": 2,
+                "changes": [
+                  {
+                    "change": "parameter_set",
+                    "entity_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef",
+                    "parameter": "glyph",
+                    "value": "ROOT"
+                  },
+                  {
+                    "change": "parameter_set",
+                    "entity_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef",
+                    "parameter": "scale",
+                    "value": 1.4
+                  }
+                ],
+                "continues_proposal_ref": null,
+                "decision": {
+                  "actor": "human:expression-editor",
+                  "corrections": [
+                    {
+                      "change": "parameter_set",
+                      "entity_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef",
+                      "parameter": "glyph",
+                      "value": "O"
+                    }
+                  ],
+                  "decided_at_revision": 4,
+                  "reason": "Keep the human glyph; accept only the scale refinement.",
+                  "state": "accepted"
+                },
+                "evidence_refs": [],
+                "method_refs": [],
+                "proposal_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:proposal:codex-refine-1",
+                "proposed_by": "agent:codex-expression-fanout",
+                "summary": "Refine the existing human object without changing its identity"
+              },
+              {
+                "activity_ref": null,
+                "basis_revision": 4,
+                "changes": [
+                  {
+                    "change": "parameter_set",
+                    "entity_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef",
+                    "parameter": "glyph",
+                    "value": "ROOT"
+                  }
+                ],
+                "continues_proposal_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:proposal:codex-refine-1",
+                "decision": {
+                  "actor": "human:expression-editor",
+                  "corrections": [],
+                  "decided_at_revision": 6,
+                  "reason": "Reject the glyph change. Continue from the preserved human glyph.",
+                  "state": "rejected"
+                },
+                "evidence_refs": [],
+                "method_refs": [],
+                "proposal_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:proposal:codex-refine-2",
+                "proposed_by": "agent:codex-expression-fanout",
+                "summary": "Consider a second glyph revision after the human correction"
+              },
+              {
+                "activity_ref": null,
+                "basis_revision": 7,
+                "changes": [
+                  {
+                    "change": "parameter_set",
+                    "entity_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef",
+                    "parameter": "x",
+                    "value": 80
+                  }
+                ],
+                "continues_proposal_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:proposal:codex-refine-2",
+                "decision": {
+                  "actor": "human:expression-editor",
+                  "corrections": [],
+                  "decided_at_revision": 9,
+                  "reason": "Accept the position change while retaining the human glyph.",
+                  "state": "accepted"
+                },
+                "evidence_refs": [],
+                "method_refs": [],
+                "proposal_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:proposal:codex-refine-3",
+                "proposed_by": "agent:codex-expression-fanout",
+                "summary": "Continue with position only, preserving the rejected glyph decision"
+              }
+            ],
+            "relations": {},
+            "representations": [],
+            "revision": 9,
+            "scenes": [
+              {
+                "entity_refs": [
+                  "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef"
+                ],
+                "revision": 2,
+                "scene_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:scene:main",
+                "title": "Main"
+              }
+            ],
+            "schema": "oi.expression/v1",
+            "selection": {
+              "entity_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef",
+              "scene_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:scene:main"
+            },
+            "title": "Native human and Agent refinement"
+          },
+          "dynamic_state": "not_restored",
+          "file": null,
+          "saved_revision": null,
+          "state": "ready"
+        },
+        "result": "expression"
+      }
+    },
+    "source": {
+      "ref": "central:path:/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-expression-page-HbNXKn:Work/ExpressionPage/subject.md",
+      "revision": "central.content-fnv1a64/v1:121:60e25de65c4c223c"
+    },
+    "page_bound": {
+      "ok": true,
+      "outcome": {
+        "data": {
+          "dirty": true,
+          "document": {
+            "entities": {
+              "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef": {
+                "entity_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef",
+                "parameters": {
+                  "glyph": {
+                    "automation": null,
+                    "value": "O"
+                  },
+                  "scale": {
+                    "automation": null,
+                    "value": 1.4
+                  },
+                  "x": {
+                    "automation": null,
+                    "value": 80
+                  }
+                },
+                "revision": 10,
+                "subject": {
+                  "actions": [],
+                  "native_owner": "central",
+                  "presentation_role": "thing",
+                  "readings": [],
+                  "sources": [
+                    {
+                      "availability": "available",
+                      "ref": "central:path:/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-expression-page-HbNXKn:Work/ExpressionPage/subject.md",
+                      "revision": "central.content-fnv1a64/v1:121:60e25de65c4c223c"
+                    }
+                  ],
+                  "subject_ref": "central:path:/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-expression-page-HbNXKn:Work/ExpressionPage/subject.md"
+                },
+                "title": "Thing 1"
+              }
+            },
+            "expression_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c",
+            "provenance": [],
+            "refinements": [
+              {
+                "activity_ref": null,
+                "basis_revision": 2,
+                "changes": [
+                  {
+                    "change": "parameter_set",
+                    "entity_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef",
+                    "parameter": "glyph",
+                    "value": "ROOT"
+                  },
+                  {
+                    "change": "parameter_set",
+                    "entity_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef",
+                    "parameter": "scale",
+                    "value": 1.4
+                  }
+                ],
+                "continues_proposal_ref": null,
+                "decision": {
+                  "actor": "human:expression-editor",
+                  "corrections": [
+                    {
+                      "change": "parameter_set",
+                      "entity_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef",
+                      "parameter": "glyph",
+                      "value": "O"
+                    }
+                  ],
+                  "decided_at_revision": 4,
+                  "reason": "Keep the human glyph; accept only the scale refinement.",
+                  "state": "accepted"
+                },
+                "evidence_refs": [],
+                "method_refs": [],
+                "proposal_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:proposal:codex-refine-1",
+                "proposed_by": "agent:codex-expression-fanout",
+                "summary": "Refine the existing human object without changing its identity"
+              },
+              {
+                "activity_ref": null,
+                "basis_revision": 4,
+                "changes": [
+                  {
+                    "change": "parameter_set",
+                    "entity_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef",
+                    "parameter": "glyph",
+                    "value": "ROOT"
+                  }
+                ],
+                "continues_proposal_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:proposal:codex-refine-1",
+                "decision": {
+                  "actor": "human:expression-editor",
+                  "corrections": [],
+                  "decided_at_revision": 6,
+                  "reason": "Reject the glyph change. Continue from the preserved human glyph.",
+                  "state": "rejected"
+                },
+                "evidence_refs": [],
+                "method_refs": [],
+                "proposal_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:proposal:codex-refine-2",
+                "proposed_by": "agent:codex-expression-fanout",
+                "summary": "Consider a second glyph revision after the human correction"
+              },
+              {
+                "activity_ref": null,
+                "basis_revision": 7,
+                "changes": [
+                  {
+                    "change": "parameter_set",
+                    "entity_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef",
+                    "parameter": "x",
+                    "value": 80
+                  }
+                ],
+                "continues_proposal_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:proposal:codex-refine-2",
+                "decision": {
+                  "actor": "human:expression-editor",
+                  "corrections": [],
+                  "decided_at_revision": 9,
+                  "reason": "Accept the position change while retaining the human glyph.",
+                  "state": "accepted"
+                },
+                "evidence_refs": [],
+                "method_refs": [],
+                "proposal_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:proposal:codex-refine-3",
+                "proposed_by": "agent:codex-expression-fanout",
+                "summary": "Continue with position only, preserving the rejected glyph decision"
+              }
+            ],
+            "relations": {},
+            "representations": [],
+            "revision": 10,
+            "scenes": [
+              {
+                "entity_refs": [
+                  "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef"
+                ],
+                "revision": 2,
+                "scene_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:scene:main",
+                "title": "Main"
+              }
+            ],
+            "schema": "oi.expression/v1",
+            "selection": {
+              "entity_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:entity:7fa2c863-58bb-4f51-a2fc-bb42e60c20ef",
+              "scene_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c:scene:main"
+            },
+            "title": "Native human and Agent refinement"
+          },
+          "dynamic_state": "not_restored",
+          "file": null,
+          "saved_revision": null,
+          "state": "ready"
+        },
+        "result": "expression"
+      }
+    }
+  },
+  "screenshots": [
+    "expression-native-human-decisions.png",
+    "expression-native-focused-page.png",
+    "expression-native-capture-return.png"
+  ],
+  "limits": [
+    "Agent proposal attribution is caller supplied; no undisclosed native Activity or personality was invented.",
+    "Native source and page were controlled files in an isolated Central ground.",
+    "Hosted portable fallback and live body coherence is under separate repair."
+  ]
+}
