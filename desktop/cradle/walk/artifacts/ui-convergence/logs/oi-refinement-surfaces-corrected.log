@@ -1,0 +1,84 @@
+serving the cradle at http://127.0.0.1:4321 (external)
+
+=== scenario: refinement ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4329 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4329 (fresh kernel, seq from 1)
+PASS  Pen and @ are the only mode selectors
+PASS  Writing mode exposes its editing toolkit in the header
+PASS  CodeMirror saves exact text through the real Central source owner
+PASS  Standard selection accepts a visual highlight
+PASS  Highlighting does not modify the authored document
+PASS  Markdown toolbar applies formatting to the actual selected range
+PASS  Undo restores real document content
+PASS  Editor search and replace panel is available
+PASS  Folding the toolbar yields its height to document content
+PASS  Collapsed header keeps a usable reveal target
+PASS  Hovering pane content does not reveal its footer
+PASS  Only the bottom edge reveals the pane footer
+PASS  Footer expansion gives up document height instead of overlaying it
+PASS  Per-tab focus folds away the tab strip
+PASS  Document right-click uses shared menu styling with writing-specific actions
+PASS  Sidebar closes fully
+PASS  System row ends at the navigator bottom without exposing projects beneath
+PASS  Project scrolling stays structurally above System
+PASS  Folder and project rows have no separate arrow controls
+PASS  Resize affordance has no visible line
+PASS  Dragging changes live sidebar geometry and retains final width
+PASS  Workspace footer can be pinned
+PASS  Fresh canvas retains focused actions without Browse the web
+PASS  Welcome phrase component is integrated
+  screenshot: artifacts/refinement-fresh-canvas-refined.png
+PASS  Fresh Flow appends both exact entries to its real Central document
+PASS  Tab split creates a second real pane
+PASS  Per-tab move returns the selected tab and removes its emptied pane
+PASS  Right sidebar opens with usable width
+PASS  Right sidebar expands across the central canvas
+PASS  Global right toggle stays clickable above the full agent view
+PASS  Full agent mode conceals the entire canvas including its tab border
+PASS  Full agent content expands into a wider reading layout
+PASS  Right sidebar restores its previous width
+PASS  Right resize affordance is cursor-only too
+  screenshot: artifacts/refinement-editor-and-chrome-refined.png
+PASS  Compact-width sidebar dragging retains the chosen width
+PASS  Narrow overlay drawer resizes without snapping back
+PASS  Narrow shell has no horizontal overflow
+  stopped walk-bridge
+  receipt: artifacts/refinement.json — 37/37 checks, PASS
+
+=== scenario: surfaces ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4329 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4329 (fresh kernel, seq from 1)
+PASS  Four owner sources open as four unique bindings
+PASS  Last opened source is the single kernel focus
+PASS  Opening an existing ref reuses its binding
+PASS  Keyboard closes the focused source view
+PASS  Keyboard reopens the same source binding
+PASS  Pointer close operates on the requested tab
+PASS  Keyboard splits the active source to the right
+PASS  Keyboard split keeps the DOM caret in the semantically active pane
+PASS  Keyboard focus moves to the neighbouring pane
+PASS  Keyboard moves the active binding into the neighbouring pane
+PASS  Keyboard creates a vertical split
+PASS  Keyboard tiles the four real sources
+PASS  Each tiled source has one editor
+  screenshot: artifacts/surfaces-native-sources-tiled.png
+PASS  Tiling and movement retain dirty source writing
+FAIL  Source frame menu discloses exactly its operative frame actions
+PASS  Pointer menu pins the requested source
+PASS  Pinned source refuses keyboard close
+PASS  Pinned close is disclosed as disabled
+PASS  Keyboard unpins the same binding
+PASS  Pointer drag moves a source and removes its empty pane
+PASS  Pointer menu splits the same real binding
+FAIL  Keyboard menu activation closes the selected view
+PASS  Closed binding reopens without a new source identity
+  SCENARIO ERROR: page.waitForFunction: Timeout 30000ms exceeded.
+    at Module.run (/Users/admin/Central/Work/O-I/.agent-worktrees/ui-runtime-continuation/desktop/cradle/walk/scenarios/surfaces.mjs:67:14)
+    at async runScenario (/Users/admin/Central/Work/O-I/.agent-worktrees/ui-runtime-continuation/desktop/cradle/walk/run.mjs:383:5)
+    at async file:///Users/admin/Central/Work/O-I/.agent-worktrees/ui-runtime-continuation/desktop/cradle/walk/run.mjs:456:18
+  stopped walk-bridge
+  receipt: artifacts/surfaces.json — 21/23 checks, FAIL
+
+=== walk summary ===
+PASS  refinement — 37/37 checks
+FAIL  surfaces — 21/23 checks · open_4_tabs_ms=1210
