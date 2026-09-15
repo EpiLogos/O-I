@@ -52,9 +52,14 @@ try {
     oldPresentation.release();
     window.nextPresentation = providerTest.stage.present({id:'next',plane:'ambient',recipe:'oi.mark'});
   });
-  await page.waitForFunction(() => providerTest.stage.inspect().frames > 2,null,{timeout:15000});
+  // Software GL compilation and loaded CI workers can delay a drawing
+  // frame beyond the quiet observation interval. Require actual progress
+  // without interpreting that interval as a frame-rate budget.
+  const beforeResume = await page.evaluate(() => providerTest.stage.inspect().frames);
+  await page.waitForFunction(before => providerTest.stage.inspect().frames >= before + 2,beforeResume,{polling:100,timeout:15000});
   state = await observe(page);
-  assert.ok(state.frames>0,'a new presentation does not inherit the released presentation pause');
+  assert.equal(state.stage.paused,false,'a new presentation does not inherit the released presentation pause');
+  assert.equal(state.stage.live,true);
   await page.evaluate(() => nextPresentation.release());
   await page.waitForFunction(() => !providerTest.stage.inspect().scheduled);
 
