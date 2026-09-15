@@ -40,13 +40,13 @@ export function naraExpressionConfig(session:NaraExpressionSession):NativeConfig
   const ordered=[...session.centres].sort((a,b)=>a.ordinal-b.ordinal);
   scene.entities=ordered.map(centre=>{
     const locus=entity(centre.label,String(centre.ordinal+1),{x:0,y:-0.66+centre.ordinal*0.22,z:0});
-    locus.id=centre.locus_ref;locus.size={x:0.17,y:0.17};locus.rotation=0;
+    locus.id=`nara-centre-${centre.ordinal}`;locus.size={x:0.17,y:0.17};locus.rotation=0;
     locus.share=1;
-    Object.assign(locus,presentationEntity(centre.locus_ref,centre.ordinal,centre.resonance,session));
+    Object.assign(locus,presentationEntity(locus.id,centre.ordinal,centre.resonance,session));
     return locus;
   });
   const earth=entity("EarthBody","⊕",{x:0,y:-0.94,z:0});
-  earth.id=session.earth_body.locus_ref;earth.size={x:0.28,y:0.28};earth.share=1;
+  earth.id="nara-earth-body";earth.size={x:0.28,y:0.28};earth.share=1;
   Object.assign(earth,presentationEntity(earth.id,7,0.5,session));
   scene.entities.push(earth);
   scene.field.background="#f4f2eb";scene.field.params.count=65536;scene.field.params.size=1.2;
@@ -54,12 +54,12 @@ export function naraExpressionConfig(session:NaraExpressionSession):NativeConfig
 }
 
 function sourceTint(session:NaraExpressionSession):{tint:string;weight:number}{
-  const colour=(session.m2_presentation as {colour?:{linear_rgba?:unknown;standing?:unknown}}|null)?.colour;
+  const colour=(session.m2_presentation as {colour?:{linear_rgba?:unknown;standing?:unknown;source_name?:unknown;palette?:unknown}}|null)?.colour;
   const rgba=colour?.linear_rgba;
-  if(!Array.isArray(rgba)||rgba.length<3||rgba.slice(0,3).some(value=>typeof value!=="number"||!Number.isFinite(value)))return {tint:"#252720",weight:0};
+  if(colour?.standing!=="source-name-with-explicit-linear-rgba-policy"||!present(String(colour.source_name??""))||!Array.isArray(rgba)||rgba.length!==4||rgba.some(value=>typeof value!=="number"||!Number.isFinite(value)||value<0||value>1))return {tint:"#252720",weight:0};
   const srgb=(value:number)=>value<=.0031308?12.92*value:1.055*Math.pow(value,1/2.4)-.055;
   const hex=rgba.slice(0,3).map(value=>Math.round(Math.max(0,Math.min(1,srgb(value as number)))*255).toString(16).padStart(2,"0")).join("");
-  return {tint:`#${hex}`,weight:colour?.standing==="available"||colour?.standing==="current"?0.72:0};
+  return {tint:`#${hex}`,weight:0.72};
 }
 
 function presentationEntity(id:string,ordinal:number,resonance:number,session:NaraExpressionSession){
@@ -71,7 +71,7 @@ function presentationEntity(id:string,ordinal:number,resonance:number,session:Na
  * readings and must never be exported as the portable cue body. */
 export function naraRetainedPresentation(session:NaraExpressionSession):NaraRetainedPresentation{
   const ordered=[...session.centres].sort((a,b)=>a.ordinal-b.ordinal);
-  return {schema:"oi.retained-presentation/v1",eventRef:session.event_ref,subjectRef:session.subject_ref,profileGeneration:session.profile_generation,personalGeneration:session.personal_reception_generation,entities:[...ordered.map(centre=>presentationEntity(centre.locus_ref,centre.ordinal,centre.resonance,session)),presentationEntity(session.earth_body.locus_ref,7,0.5,session)]};
+  return {schema:"oi.retained-presentation/v1",eventRef:session.event_ref,subjectRef:session.subject_ref,profileGeneration:session.profile_generation,personalGeneration:session.personal_reception_generation,entities:[...ordered.map(centre=>presentationEntity(`nara-centre-${centre.ordinal}`,centre.ordinal,centre.resonance,session)),presentationEntity("nara-earth-body",7,0.5,session)]};
 }
 
 export function projectNaraExpression(snapshot:FocusedInstrumentSnapshot):NaraExpressionProjection{

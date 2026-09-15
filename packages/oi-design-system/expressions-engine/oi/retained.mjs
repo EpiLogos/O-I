@@ -21,6 +21,7 @@
  * scene replacement.
  */
 import { ProductionAdapter } from "../shell/production.mjs";
+import { WORLD_SCALE } from "../shell/nativeParameters.mjs";
 
 export class RetainedProductionAdapter extends ProductionAdapter {
   constructor(canvas) {
@@ -164,7 +165,7 @@ export class RetainedProductionAdapter extends ProductionAdapter {
       }
       // The envelope uses the authoring coordinate convention; native entity
       // coordinates use the engine's established 400-unit stage scale.
-      return { ...entity, x: patch.x * 400, y: patch.y * 400, z: patch.z * 400, scale: patch.scale, tint: patch.tint, tintWeight: patch.tintWeight };
+      return { ...entity, x: patch.x * WORLD_SCALE, y: patch.y * WORLD_SCALE, z: patch.z * WORLD_SCALE, scale: patch.scale, tint: patch.tint, tintWeight: patch.tintWeight };
     });
     const fingerprint = JSON.stringify({schema:request.schema,eventRef:request.eventRef,subjectRef:request.subjectRef,profileGeneration:request.profileGeneration,personalGeneration:request.personalGeneration,entities:request.entities});
     if (previous && request.personalGeneration === previous.personalGeneration) {
