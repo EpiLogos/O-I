@@ -158,6 +158,7 @@ export function ExploreSurface({binding,onOpenPresentation,onOpenExplore}:Explor
 
   return <section className="explore-surface" aria-label={pinned?"Projected subject":"Explore"} data-explore-mode={pinned?"presentation":"explore"} data-selected-ref={selected??""} data-travel-index={travel.index} data-travel-length={travel.visits.length} aria-busy={busy||readBusy}>
     {(watchError||promoteError||storageError)&&<p role="alert">{watchError??promoteError??storageError}</p>}
+    {snapshot&&!isUnavailable(snapshot)&&!!snapshot.relation_errors?.length&&<p role="status" className="explore-muted" data-relations-degraded={snapshot.relation_errors.length}>{snapshot.relation_errors.length} shared relation{snapshot.relation_errors.length===1?" is":"s are"} unavailable because its source record or endpoint could not be validated. Valid subjects remain available; refresh after the source is repaired.</p>}
     {!selected&&<>
       {strip}
       {unavailable&&<div className="explore-unavailable-field" data-field-state="unavailable"><p role="status">The open field is unavailable — {unavailable.detail}</p><p className="explore-muted">Local work is untouched. Watched fields and local Projections stay where they are; the field returns when a hosting target is bound and reachable.</p></div>}

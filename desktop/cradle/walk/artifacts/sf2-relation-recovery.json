@@ -1,0 +1,27 @@
+{
+  "schema": "oi.relation-recovery.acceptance/v1",
+  "target": "hosted-acceptance",
+  "passed": true,
+  "field_ref": "oi:field:relation-recovery:e46db400-d180-4cef-b692-de31ecabeb34",
+  "checks": [
+    "unrelated subjects retained",
+    "valid relations retained",
+    "bad relation explicitly unavailable",
+    "private payload omitted",
+    "outsider cannot see test rows",
+    "fresh connection tolerates bad relation",
+    "source repair restores exact identity and revision"
+  ],
+  "source": {
+    "repository_head": "0df0680cedaa4455069d1150510480f43fe159f4",
+    "tracked_changes": [
+      "desktop/cradle/src/explore/ExploreSurface.tsx",
+      "desktop/cradle/src/explore/PresentationBody.tsx",
+      "desktop/cradle/src/knowledge/shared-field.ts",
+      "shared-field/spacetimedb.mjs",
+      "shared-field/spacetimedb.test.mjs",
+      "shared-field/spacetimedb/field-lib.ts"
+    ],
+    "runner": "shared-field/spacetimedb/relation-recovery-live-acceptance.ts"
+  }
+}

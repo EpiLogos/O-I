@@ -527,6 +527,15 @@ that cross-checkout resolution before building and records the repository
 head, tracked edits and engine provenance in every receipt. The separate
 engine refresh remains outside this SF2 proof.
 
+A later hosted run exposed one malformed relation taking down every fresh
+reader. The client now excludes only invalid relation rows, reports their
+unavailability, keeps valid subjects/relations readable and restores exact
+refs after owner repair. The [real-service regression](../shared-field/spacetimedb/relation-recovery-live-acceptance.ts)
+uses a run-scoped private field and verifies isolation, fresh connection,
+protected-body exclusion and repair; its [receipt](../desktop/cradle/walk/artifacts/sf2-relation-recovery.json)
+records seven passing checks. Replay from `shared-field/spacetimedb` with
+`OI_SHARED_FIELD_TARGET=hosted-acceptance npx tsx relation-recovery-live-acceptance.ts`.
+
 Replay from `desktop/cradle` with an available native `ctrl` and the configured
 acceptance target: `OI_SHARED_FIELD_TARGET=hosted-acceptance npm run walk -- explore-sf2`.
 Additional gates: `node tests/knowledge-expression.mjs`,

@@ -16,19 +16,20 @@ export type SharedFieldUnavailable={state:"unavailable";owner_operation:string;d
 export type SharedFieldStatus={schema:"oi.shared-field.status/v1";bound:true;target:SharedFieldTarget}|{schema:"oi.shared-field.status/v1";bound:false;reason:string}|SharedFieldUnavailable;
 export interface HostedProjection {projection_ref:string;projection_revision:number;state:string;subject:{kind:string;ref:string};source:{system:string;ref?:string;revision:string};publisher_participant_ref:string;published_at:string;[key:string]:unknown}
 export interface HostedEntry {ref:string;kind:string;world_ref:string;label:string;summary?:string;revision?:string;aliases:string[];projection_ref?:string;meta?:Record<string,unknown>;[key:string]:unknown}
+export interface HostedRelationError {field_ref:string|null;relation_ref:string|null;from:string|null;to:string|null;detail:string}
 export interface HostedRelation {from:string;to:string;relation:string;origin:string;[key:string]:unknown}
 export interface HostedField {field_ref:string;kind:string;visibility:string;title?:string;[key:string]:unknown}
 export interface HostedParticipant {participant_ref:string;field_ref:string;identity:{kind:string;ref:string};presentation?:{chosen_name?:string;world_ref?:string};[key:string]:unknown}
 export interface HostedAuthority {field_ref:string;participant_ref:string;role:string;revoked:boolean}
 export interface HostedWatch {watch_ref:string;field_ref:string;target_kind:string;target_ref:string;state:string;watcher_participant_ref?:string}
 /** The caller-visible field (`oi.shared-field.snapshot/v1`), as the client reads it: hosted contracts verbatim plus the caller's own private views. */
-export interface SharedFieldSnapshot {schema:"oi.shared-field.snapshot/v1";target:SharedFieldTarget;transport_identity:string;status:{healthy?:boolean;transport?:{state?:string};[key:string]:unknown};fields:HostedField[];participants:HostedParticipant[];projections:HostedProjection[];entries:HostedEntry[];relations:HostedRelation[];contributions:unknown[];my_authority:HostedAuthority[];my_contribution_receipts:unknown[];my_watches:HostedWatch[];my_contacts:unknown[];counts:{fields:number;participants:number;projections:number;entries:number;relations:number};entry_fields:Record<string,string>}
+export interface SharedFieldSnapshot {schema:"oi.shared-field.snapshot/v1";target:SharedFieldTarget;transport_identity:string;status:{healthy?:boolean;transport?:{state?:string};[key:string]:unknown};fields:HostedField[];participants:HostedParticipant[];projections:HostedProjection[];entries:HostedEntry[];relations:HostedRelation[];relation_errors?:HostedRelationError[];contributions:unknown[];my_authority:HostedAuthority[];my_contribution_receipts:unknown[];my_watches:HostedWatch[];my_contacts:unknown[];counts:{fields:number;participants:number;projections:number;entries:number;relations:number};entry_fields:Record<string,string>}
 /** `watch` result (`oi.shared-field.watch-result/v1`): the caller's own Watch row as the field echoed it. */
 export interface SharedFieldWatchResult {schema:"oi.shared-field.watch-result/v1";watch_ref:string;field_ref:string;target:{kind:string;ref:string};state:string;watcher_participant_ref:string}
 /** One hosted ref as the client reads it (`oi.shared-field.reading/v1`). */
 export type SharedFieldReading=
   |{schema:"oi.shared-field.reading/v1";ref:string;state:"absent";target:SharedFieldTarget}
-  |{schema:"oi.shared-field.reading/v1";ref:string;state:"hosted";target:SharedFieldTarget;field_ref:string|null;entry:HostedEntry;projections:HostedProjection[];relations:HostedRelation[];contributions:unknown[];neighbourhood:unknown;my_authority:HostedAuthority[];my_watches:HostedWatch[];status:unknown}
+  |{schema:"oi.shared-field.reading/v1";ref:string;state:"hosted";target:SharedFieldTarget;field_ref:string|null;entry:HostedEntry;projections:HostedProjection[];relations:HostedRelation[];relation_errors?:HostedRelationError[];contributions:unknown[];neighbourhood:unknown;my_authority:HostedAuthority[];my_watches:HostedWatch[];status:unknown}
   |SharedFieldUnavailable;
 /** The hosted publication result (`oi.shared-field.hosted-result/v1`),
  * shown verbatim: the hosted Projection row, the target, and the transport
