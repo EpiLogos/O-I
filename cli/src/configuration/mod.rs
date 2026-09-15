@@ -11,6 +11,9 @@ pub mod changeset;
 pub mod contribution;
 pub mod kernel;
 pub mod profile;
+/// C2 profile store (#299 §17): persistence, file-safety law, diff inputs,
+/// export/import for `oi.profile/v1` (09 §12–§13).
+pub mod profile_store;
 pub mod redaction;
 pub mod refs;
 pub mod resolution;
