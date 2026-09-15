@@ -1,81 +1,104 @@
-/** The welcome frontstate — the Global Expression Stage's first
- * application: the app opens behind the O:I mark presented on the
- * frontstate plane; the kernel's opening is stated truthfully on the same
- * continuous field (no second loader), and once `app.ready` lands, a
- * click plays the authored enter sequence and hands the workspace over.
- * Reduced motion skips the flight entirely.
- * Runs the real first-open path — the runner only suppresses the
- * frontstate for URLs without ?frontstate. */
+/** Real native boot and the first-open production field. The field paints
+ * before the lazy workspace composes beneath it. Entry awaits both, and its
+ * complete inversion / explosion / tail is governed by rendered engine time. */
+import {renderedBounds} from '../knowledge-projection-geometry.mjs';
+
 const READY = '.oi-welcome-enter[aria-label="O:I is ready. Open the app."]';
-export default async function run({page,baseUrl,check,shot}) {
+const stage = page => page.evaluate(async () => (await window.__cradle.walk.read.stage()).data);
+const fieldPixels = async page => {
+  const box=await page.locator('canvas[data-oi-stage="engine"]').boundingBox();
+  // Read the actual canvas region above the DOM labels, so readable text
+  // cannot stand in for readable native mark ink.
+  return renderedBounds(page,{screenshot:()=>page.screenshot({clip:{...box,height:Math.floor(box.height*.7)}})});
+};
+const chooseTheme = (page,theme) => page.evaluate(theme => {
+  const key='oi-cradle.visuals.v1',current=JSON.parse(localStorage.getItem(key)||'{}');
+  localStorage.setItem(key,JSON.stringify({...current,theme}));
+  sessionStorage.removeItem('oi-cradle.welcome.v1');
+},theme);
+
+export default async function run({page,baseUrl,check,shot,metric}) {
   await page.goto(`${baseUrl}?frontstate`);
   const welcome=page.locator('.oi-welcome');
   await welcome.waitFor({timeout:15000});
-  check(await welcome.count()===1,'The welcome frontstate stands between the app and the person on first open');
-  check((await page.locator('.oi-boot-overlay').count())===0,'Boot is one continuous frontstate — no second loader stands over it');
-  // The host loads lazily (the heavy dependency is imported on first use);
-  // give it its moment rather than demanding it synchronously.
-  await page.locator('.oi-point-cloud-overlay').waitFor({timeout:20000});
-  check(await page.locator('.oi-point-cloud-overlay').count()===1,'The frontstate field renders through the one window expression canvas');
-  // The enter control opens only once the kernel state has settled (`app.ready`).
-  await page.locator(READY).waitFor({timeout:15000});
-  const enter=page.locator('.oi-welcome-enter');
-  check(await enter.getAttribute('aria-label')==='O:I is ready. Open the app.','The enter control is a real labelled control, not a bare scrim');
-  check(await page.getByRole('region',{name:'Empty workspace'}).isVisible(),'The workspace is already composed behind the frontstate');
+  check(await welcome.count()===1,'The welcome frontstate stands on first open');
+  check(await page.locator('.oi-boot-overlay').count()===0,'Boot uses one continuous frontstate');
+  await page.locator('.oi-expression-surface').waitFor({timeout:30000});
+  check(await page.locator('canvas[data-oi-stage="engine"]').count()===1,'The opening uses one production Expression canvas');
+  await page.locator(READY).waitFor({timeout:30000});
+  check(await welcome.getAttribute('data-field-ready')==='true'&&(await stage(page)).frames>0,'Entry becomes available after actual field drawing and native boot');
+  check(await page.getByRole('region',{name:'Empty workspace',includeHidden:true}).isVisible(),'The workspace is composed beneath the opening field');
+  check(await page.locator('.oi-workspace-mount[inert][aria-hidden="true"]').count()===1,'The covered workspace is unavailable to pointer and keyboard interaction');
 
-  // Escape is a keyboard path into the app.
   await page.keyboard.press('Escape');
-  await welcome.waitFor({state:'detached',timeout:10000});
-  check((await page.locator('.oi-welcome').count())===0,'Escape dissolves the frontstate and hands the app over');
+  await welcome.waitFor({state:'detached',timeout:30000});
+  const escaped=await stage(page);
+  check(escaped.playback?.status==='completed'&&escaped.playback.elapsed>=escaped.playback.duration,'Escape waits for the full rendered enter sequence');
+  check(await page.evaluate(()=>document.activeElement?.id==='root'||document.activeElement?.classList.contains('cm-content')),'Keyboard entry restores focus in the working app');
 
-  // A second open in the same session does not re-trap the app.
   await page.reload();
-  await page.locator('.desktop-shell').waitFor({timeout:15000});
-  check((await page.locator('.oi-welcome').count())===0,'A continuing session in the same window opens straight into the app');
+  await page.locator('.desktop-shell').waitFor({timeout:30000});
+  check(await page.locator('.oi-welcome').count()===0,'The completed opening does not re-trap the same session');
 
-  // Reduced motion: the frontstate still appears, but the click enters at
-  // once — the preference is respected, never silently animated through.
   await page.emulateMedia({reducedMotion:'reduce'});
-  await page.evaluate(() => sessionStorage.clear());
+  await chooseTheme(page,'dark');
   await page.reload();
-  await page.locator('.oi-welcome').waitFor({timeout:15000});
-  await page.locator(READY).waitFor({timeout:15000});
+  await page.locator(READY).waitFor({timeout:30000});
   await shot('welcome-reduced-motion');
-  await page.mouse.click(640,400);
-  await page.waitForTimeout(300);
-  check((await page.locator('.oi-welcome').count())===0,'Reduced motion enters immediately without the dissolve flight');
+  const beforeReduced=(await stage(page)).frames;
+  await page.keyboard.press(' ');
+  await welcome.waitFor({state:'detached',timeout:30000});
+  const reduced=await stage(page);
+  check(reduced.playback?.status==='completed'&&reduced.frames>beforeReduced,'Reduced motion paints the final authored still before keyboard entry');
+  check(reduced.live===false&&reduced.scheduled===false,'Reduced motion releases the opening without continuing a simulation');
   await page.emulateMedia({reducedMotion:'no-preference'});
 
-  // The full visual path: click → authored dissolve → app. Screenshot
-  // evidence at rest and mid-flight (native visual acceptance still pending).
-  await page.evaluate(() => sessionStorage.clear());
-  await page.reload();
-  await page.locator('.oi-welcome').waitFor({timeout:15000});
-  await page.locator(READY).waitFor({timeout:15000});
-  await page.waitForTimeout(1200);
-  await shot('welcome-frontstate-rest');
-  await page.mouse.click(640,400);
-  await page.waitForTimeout(450);
-  await shot('welcome-frontstate-dissolve');
-  await page.locator('.oi-welcome').waitFor({state:'detached',timeout:10000});
-  check(await page.getByRole('region',{name:'Empty workspace'}).isVisible(),'After the dissolve the empty workspace is the app');
-  await shot('welcome-frontstate-entered');
+  for(const theme of ['light','dark']) {
+    await chooseTheme(page,theme);
+    await page.reload();
+    await page.locator(READY).waitFor({timeout:30000});
+    const pixels=await fieldPixels(page),inverseLight=theme==='dark';
+    const ground=inverseLight?[251,251,249]:[18,18,17];
+    check(JSON.stringify(pixels.background)===JSON.stringify(ground),`${theme} app starts on the opposite canonical scene ground`,pixels);
+    check(pixels[inverseLight?'darkInkPixels':'lightInkPixels']>1000,`${theme} opening has readable native O:I mark ink`,pixels);
+    metric(`welcome_${theme}_inverse_ink_pixels`,pixels[inverseLight?'darkInkPixels':'lightInkPixels']);
+    const before=await page.evaluate(()=>{
+      const canvas=document.querySelector('canvas[data-oi-stage="engine"]');
+      window.welcomeCanvas=canvas;window.welcomeContext=canvas.getContext('webgl2');
+      const field=getComputedStyle(canvas),control=getComputedStyle(document.querySelector('.oi-welcome'));
+      return {background:control.backgroundColor,fieldZ:Number(field.zIndex),controlZ:Number(control.zIndex)};
+    });
+    check(before.background==='rgba(0, 0, 0, 0)'&&before.controlZ>before.fieldZ,'The field owns its full ground and the labelled control stays above it');
+    await shot(`welcome-${theme}-rest`);
+    await page.locator(READY).click();
+    await page.waitForFunction(async()=>{
+      const state=(await window.__cradle.walk.read.stage()).data;
+      return state?.playback?.status==='active'&&state.playback.elapsed>=750;
+    },null,{timeout:20000});
+    check(await welcome.getAttribute('data-phase')==='entering'&&await page.evaluate(()=>sessionStorage.getItem('oi-cradle.welcome.v1')===null),'The frontstate and incomplete session remain through the explosion');
+    const groundDuring=await page.evaluate(()=>getComputedStyle(document.querySelector('canvas[data-oi-stage="engine"]')).backgroundColor);
+    check(groundDuring===(theme==='dark'?'rgb(18, 18, 17)':'rgb(251, 251, 249)'),`${theme} entry reaches the application palette on the same field`);
+    await shot(`welcome-${theme}-explosion`);
+    await welcome.waitFor({state:'detached',timeout:30000});
+    const after=await stage(page);
+    check(after.playback?.status==='completed'&&after.playback.elapsed>=after.playback.duration,`${theme} entry releases only after the rendered tail`,after.playback);
+    check(await page.evaluate(()=>{
+      const canvas=document.querySelector('canvas[data-oi-stage="engine"]');
+      return canvas===window.welcomeCanvas&&canvas.getContext('webgl2')===window.welcomeContext;
+    }),'Rest, explosion and final release retain one canvas/context');
+    check(await page.evaluate(theme=>JSON.parse(localStorage.getItem('oi-cradle.visuals.v1')).theme===theme,theme),'The opening preserves the saved app appearance');
+    await shot(`welcome-${theme}-entered`);
+  }
 
-  // The clock law in the real app (StrictMode, the stage provider, the
-  // welcome release): once the frontstate has gone and no presentation is
-  // live, the production field schedules nothing and its frame count
-  // stops moving — measured over a quiet second, after the bounded settle.
-  await page.waitForFunction(async()=>{const r=await window.__cradle.walk.read.stage();return r.data&&r.data.live===false&&r.data.scheduled===false;},null,{timeout:5000});
+  await page.waitForFunction(async()=>{const state=(await window.__cradle.walk.read.stage()).data;return state?.live===false&&state.scheduled===false;},null,{timeout:5000});
   const idle=await page.evaluate(async()=>{
-    const before=await window.__cradle.walk.read.stage();
-    let raf=0;const original=window.requestAnimationFrame;window.requestAnimationFrame=(cb)=>original((t)=>{raf++;cb(t);});
-    await new Promise((resolve)=>setTimeout(resolve,1000));
-    window.requestAnimationFrame=original;
-    const after=await window.__cradle.walk.read.stage();
+    const before=(await window.__cradle.walk.read.stage()).data;
+    await new Promise(resolve=>setTimeout(resolve,1000));
+    const after=(await window.__cradle.walk.read.stage()).data;
     const canvas=document.querySelector('canvas[data-oi-stage="engine"]');
-    return {presentations:after.data.presentations.length,frames:after.data.frames-before.data.frames,scheduled:after.data.scheduled,live:after.data.live,raf,dormant:canvas?canvas.dataset.oiStageLive==='false':null,canvases:document.querySelectorAll('canvas[data-oi-stage="engine"]').length};
+    return {presentations:after.presentations.length,frames:after.frames-before.frames,scheduled:after.scheduled,live:after.live,dormant:canvas?.dataset.oiStageLive==='false',canvases:document.querySelectorAll('canvas[data-oi-stage="engine"]').length};
   });
-  check(idle.presentations===0&&idle.live===false,'No presentation is live in the settled ordinary desktop');
-  check(idle.frames===0&&idle.scheduled===false,`The released production field renders no frames and schedules none (${JSON.stringify(idle)})`);
-  check(idle.dormant===true&&idle.canvases===1,'The one engine canvas stays (context and resident field kept) and is marked dormant');
+  check(idle.presentations===0&&idle.live===false,'No presentation remains live in the settled desktop');
+  check(idle.frames===0&&idle.scheduled===false,'The completed opening schedules no simulation frames',idle);
+  check(idle.dormant&&idle.canvases===1,'The single production canvas/context stays resident and dormant');
 }
