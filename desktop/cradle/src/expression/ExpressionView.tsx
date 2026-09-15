@@ -5,6 +5,7 @@ import {useExpressionStage,type StagePresentation} from "../stage/ExpressionStag
 import {expressionConfig} from "./engineProjection";
 import type {Change,ExpressionDocument,ExpressionRequest,ExpressionResult,SubjectBinding} from "./types";
 import type {CentralLocation} from "../kernel/types";
+import {ShareProjection} from "../explore/ShareProjection";
 import "./expression.css";
 const ACTOR="human:expression-editor";
 
@@ -20,6 +21,9 @@ export function ExpressionView(){
  const [filePath,setFilePath]=useState("");const [file,setFile]=useState<{location:CentralLocation;revision:string}>();
  const [result,setResult]=useState<ExpressionResult>();
  const [presenting,setPresenting]=useState(false);const presentation=useRef<StagePresentation|null>(null);
+ // SF1: Share / Project starts from this actual local subject and stays
+ // attached beside it; it is a separate act from Save, Export and Present.
+ const [sharing,setSharing]=useState(false);
  const current=useRef(document);current.current=document;
  const request=useCallback(async(request:ExpressionRequest)=>{
   const reply=await kernelOp(kernel.transport,{op:"expression",request});
@@ -94,7 +98,9 @@ export function ExpressionView(){
     <button disabled={pending} onClick={()=>void edit([{change:"scene_create",scene_ref:`${document.expression_ref}:scene:${crypto.randomUUID()}`,title:`Scene ${document.scenes.length+1}`}])}>Add scene</button>
     <button disabled={pending} onClick={()=>void edit([{change:"entity_add",scene_ref:document.selection.scene_ref,entity_ref:`${document.expression_ref}:entity:${crypto.randomUUID()}`,title:`Thing ${Object.keys(document.entities).length+1}`}])}>Add Thing</button>
     <button aria-pressed={presenting} onClick={()=>setPresenting(!presenting)}>{presenting?"Close presentation":"Present on stage"}</button>
+    <button className="expression-share" aria-pressed={sharing} onClick={()=>setSharing(!sharing)} title="Project this Expression for an audience: exact outward preview, omissions, audience, Projection, Open in Explore">{sharing?"Close share":"Share / Project"}</button>
    </div>
+   {sharing&&<ShareProjection key={`${document.expression_ref}@${document.revision}`} document={document} onClose={()=>setSharing(false)}/>}
    <nav aria-label="Expression scenes">{document.scenes.map(s=><button key={s.scene_ref} aria-pressed={s.scene_ref===document.selection.scene_ref} onClick={()=>void edit([{change:"focus",scene_ref:s.scene_ref,entity_ref:null}])}>{s.title}</button>)}</nav>
    <div className="expression-entities" role="group" aria-label="Expression entities">{document.scenes.find(s=>s.scene_ref===document.selection.scene_ref)?.entity_refs.map(ref=>{const e=document.entities[ref];return <button key={ref} aria-pressed={selected?.entity_ref===ref} onClick={()=>void edit([{change:"focus",scene_ref:document.selection.scene_ref,entity_ref:ref}])}>{e.title}{e.subject?` · ${e.subject.presentation_role}`:""}</button>;})}</div>
    {selected&&<fieldset disabled={pending}><legend>{selected.title}</legend>
