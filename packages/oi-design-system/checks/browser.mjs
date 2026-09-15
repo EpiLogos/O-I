@@ -37,5 +37,19 @@ try{
  await page.screenshot({path:'/tmp/oi-point-cloud-desktop.png',fullPage:true});
  await page.setViewportSize({width:320,height:740});
  check('large logo shrinks within narrow reference',await page.locator('.oi-loading-mark').evaluate(e=>e.getBoundingClientRect().left>=0&&e.getBoundingClientRect().right<=innerWidth));
+ await page.addStyleTag({url:`http://127.0.0.1:${server.address().port}/desktop.css`});
+ await page.evaluate(()=>{
+  const disclosure=document.createElement('details');disclosure.className='oi-disclosure';
+  disclosure.innerHTML='<summary>Source details</summary><p>Selected source provenance</p>';
+  document.body.prepend(disclosure);
+ });
+ for(const forcedColors of ['none','active']) {
+  await page.emulateMedia({forcedColors});
+  await page.locator('.oi-disclosure > summary').focus();
+  check(`disclosure has a visible keyboard outline (${forcedColors})`,await page.locator('.oi-disclosure > summary').evaluate(el=>{const s=getComputedStyle(el);return el.matches(':focus-visible')&&s.outlineStyle!=='none'&&parseFloat(s.outlineWidth)>0;}));
+  await page.keyboard.press('Enter');
+  check(`keyboard opens disclosure (${forcedColors})`,await page.locator('.oi-disclosure').evaluate(el=>el.open));
+  await page.keyboard.press('Enter');
+ }
  console.log(`${count}/${count} browser checks passed`);
 }finally{await browser?.close();await new Promise(r=>server.close(r));}
