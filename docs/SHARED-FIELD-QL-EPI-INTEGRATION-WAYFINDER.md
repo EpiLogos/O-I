@@ -557,6 +557,18 @@ This is SF2 evidence; the actual-machine SF6 joined walk and EX6 closure remain 
 
 **Acceptance:** second world enters a Thing → summons permitted Agent/Epii → receives a source-bearing Expression refinement → human accepts/revises/refuses → exact provenance survives.
 
+Implemented SF3 uses AIKit SessionSpace's addressed Encounter delivery owner at
+`cc00077d46c1fbcdcc2020fb40ee823a64f90261` and the official
+`@agentclientprotocol/codex-acp@1.11.0` adapter with Codex `gpt-5.6-sol` at low
+reasoning in read-only mode. Hosted acceptance used separate publisher and reader
+transport identities, a reader-owned native Expression, exact projected source
+revisions, and run-scoped Agent/Being relations. The desktop displayed the real
+returned proposal before a human rejection and continuation acceptance; the EX1
+records retain the native delivery ref and terminal cursor. A mismatched AgentRef
+was unavailable before dispatch, and no personal Agent encounter was opened.
+The projected Agency ref remains presentation provenance rather than native
+authority; SessionSpace alone resolves the exact AgentSession and delivery.
+
 ### SF4 — Contribution and Return
 
 **Can develop in parallel with SF1–SF3 once exact projection identities are available.**

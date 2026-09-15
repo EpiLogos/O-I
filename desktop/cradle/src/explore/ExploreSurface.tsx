@@ -24,6 +24,7 @@ import {Glyph} from "../workspace/Glyph";
 import {Loading} from "../shared/Loading";
 import {isUnavailable,sharedField,slug,type HostedEntry,type HostedParticipant,type HostedField,type SharedFieldReading,type SharedFieldSnapshot,type SharedFieldUnavailable,type SharedFieldWatchResult} from "../knowledge/shared-field";
 import {PresentationBody,type DepthState} from "./PresentationBody";
+import {BeingEncounter} from "./BeingEncounter";
 // @ts-ignore -- language-neutral view-state codec, unit-tested in tests/explore-field.test.mjs.
 import {EXPLORE_TRAVEL_KEY,amendVisit,canTravel,currentVisit,decodeExploreTravel,freshExploreTravel,pushVisit,travelBy} from "./travel.mjs";
 // @ts-ignore -- language-neutral field reading, unit-tested in tests/explore-field.test.mjs.
@@ -178,20 +179,8 @@ export function ExploreSurface({binding,onOpenPresentation,onOpenExplore}:Explor
       </div>}
     </>}
     {selected&&isEntry&&(reading?<PresentationBody reading={reading} relations={view.state==="available"?view.relations:[]} onOpenRef={select} depth={depth} onDepth={setDepth} watch={{available:standing.available,watching:standing.watching,reason:standing.reason,busy:watchBusy,error:watchError,onToggle:()=>void toggleWatch()}} strip={strip}/>:<section className="presentation-body" data-presentation-state="reading">{strip}<Loading label="Reading the projected subject…" scope="inline"/></section>)}
-    {selected&&!isEntry&&<section className="presentation-body" data-presentation-state="local">{strip}{selected.startsWith("oi:field:")?<FieldBody field_ref={selected} view={view} snapshot={snapshot} onOpenRef={select}/>:<BeingBody ref_={selected} view={view} onOpenRef={select}/>}</section>}
+    {selected&&!isEntry&&<section className="presentation-body" data-presentation-state="local">{strip}{selected.startsWith("oi:field:")?<FieldBody field_ref={selected} view={view} snapshot={snapshot} onOpenRef={select}/>:snapshot&&!isUnavailable(snapshot)?<BeingEncounter participantRef={selected} snapshot={snapshot} onOpenRef={select}/>:<p role="status" className="explore-absent">The projected Being is unavailable.</p>}</section>}
   </section>;
-}
-
-/** A participant presented as a Being: identity, field, world and relations — never an AgentSession, never a replacement of the person's own Agent. */
-function BeingBody({ref_,view,onOpenRef}:{ref_:string;view:FieldView;onOpenRef:(ref:string)=>void}) {
-  const being=view.state==="available"?view.beings.find(b=>b.ref===ref_):undefined;
-  if(!being)return <p role="status" className="explore-absent">The field holds no Being <code>{ref_}</code>.</p>;
-  return <article className="world-presentation world-presentation--being" data-being-ref={being.ref} data-identity-kind={being.identity.kind}>
-    <header className="world-presentation__masthead"><div><div className="world-component__eyebrow">Being · {being.identity.kind}</div><h1>{being.label}</h1></div><div className="world-presentation__revision">{being.ref}</div></header>
-    <section className="world-region"><div className="world-region__components">
-      <article className="world-component world-component--text"><dl className="world-component__meta"><div><dt>Identity</dt><dd><code>{being.identity.ref}</code></dd></div><div><dt>Participant</dt><dd><code>{being.ref}</code></dd></div><div><dt>Field</dt><dd><button type="button" onClick={()=>onOpenRef(being.field_ref)}>{being.field_ref}</button></dd></div>{being.world_ref&&<div><dt>World</dt><dd><button type="button" onClick={()=>onOpenRef(being.world_ref!)}>{being.world_ref}</button></dd></div>}</dl><p className="explore-muted">Presence here implies neither trust nor endorsement, and opens no session. Your own Agent stays in the right region.</p></article>
-    </div></section>
-  </article>;
 }
 
 /** A SharedField as an ordinary Surface body: identity, standing, its members, its entries, and the caller's own membership. */

@@ -151,6 +151,17 @@
 .world-expression__meta, .world-component--expression figcaption { display: flex; justify-content: space-between; gap: var(--oi-space-3); font-size: var(--oi-shell-type-meta); color: var(--oi-world-muted, var(--oi-muted-2)); flex-wrap: wrap; }
 .world-expression__frozen { width: 100%; aspect-ratio: 16 / 10; border: var(--oi-shell-edge) solid var(--oi-world-rule, var(--oi-hairline)); border-radius: var(--oi-radius-lg); background: #0e0f12; }
 .world-presentation--sparse .world-component p, .world-presentation--being .world-component p { color: var(--oi-foreground); }
+.being-encounter { overflow: auto; padding: var(--oi-space-3) var(--oi-space-6) var(--oi-space-7); }
+.being-activity { display: grid; gap: 3px; padding: var(--oi-space-3); border-left: 2px solid var(--oi-gold); background: var(--oi-wash); }
+.being-activity span, .being-activity code, .being-address small { color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); }
+.being-address { display: grid; grid-template-columns: max-content max-content 1fr; gap: var(--oi-space-2); align-items: baseline; margin-bottom: var(--oi-space-2); }
+.being-address > span { color: var(--oi-muted-2); font-size: var(--oi-shell-type-eyebrow); letter-spacing: var(--oi-shell-tracking); text-transform: uppercase; }
+.being-expression, .being-invoke { margin: var(--oi-space-2) var(--oi-space-2) 0 0; padding: 7px 14px; border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: var(--oi-radius-pill); color: var(--oi-accent-ink); }
+.being-instruction { display: grid; gap: 5px; margin-top: var(--oi-space-3); color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); }
+.being-instruction textarea { min-height: 76px; resize: vertical; padding: var(--oi-space-2); color: var(--oi-foreground); background: var(--oi-surface); border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: var(--oi-radius-sm); font: var(--oi-shell-type-ui) var(--oi-font-sans); }
+.being-invocation-result pre { max-height: 260px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--oi-shell-type-meta); }
+.being-invoke:disabled { opacity: .42; cursor: default; }
+.being-refusal { margin: var(--oi-space-2) 0 0; color: var(--oi-muted); font-size: var(--oi-shell-type-meta); }
 
 /* Share / Project — attached beside the subject */
 .share-projection { container-type: inline-size; margin-top: var(--oi-space-4); border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: var(--oi-radius-lg); background: var(--oi-sidebar-ground); color: var(--oi-foreground); font: var(--oi-shell-type-ui) var(--oi-font-sans); overflow: hidden; }

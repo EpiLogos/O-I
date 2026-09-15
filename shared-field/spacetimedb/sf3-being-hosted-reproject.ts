@@ -1,0 +1,13 @@
+import {connect,subscribe,resolveTarget,tokenFile} from './field-lib.ts';
+import {projectionStorageKey} from '../spacetimedb.mjs';
+import {readFileSync} from 'node:fs';
+const run=process.env.OI_SF3_RUN_REF;if(!run)throw Error('OI_SF3_RUN_REF is required');const bridge=process.env.OI_SF3_BRIDGE_URL??'http://127.0.0.1:4283', expr=`expression:${run}`, field=`oi:field:${run}`, ownerP=`participant:${run}:publisher`;
+async function main(){
+const native=await fetch(`${bridge}/op`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({op:'expression',request:{operation:'inspect',expression_ref:expr}})}).then(r=>r.json()) as any;
+const d=native.outcome?.data?.document;if(d?.revision!==3)throw Error(`expected rejected native revision 3, got ${d?.revision}`);
+const composition={schema:'oi.expression-composition/v1',expression_ref:d.expression_ref,revision:d.revision,title:d.title,scenes:d.scenes,entities:d.entities,relations:d.relations,selection:d.selection,provenance:d.provenance,representations:d.representations};
+const payload={schema:'oi.world-presentation/v1',presentation_ref:`presentation:${run}:expression`,world_ref:`world:${run}`,revision:2,title:d.title,summary:'Current reader-world native Expression after rejected proposal',theme:{tokens:{}},regions:[{region_ref:`region:${run}`,label:'Expression',order:0,bindings:[{binding_ref:`binding:${run}`,component_ref:'oi.presentation/expression/v1',props:{expression:{expression_ref:expr,expression_revision:3},composition}}]}],provenance:[{kind:'acceptance',ref:run,source_system:'o-i',revision:'2'}]};
+const projection={schema:'oi.projection/v1',projection_ref:`projection:${run}:expression`,projection_revision:2,state:'published',subject:{kind:'expression',ref:expr},source:{system:'o-i',ref:expr,revision:'3'},publisher_participant_ref:ownerP,published_at:new Date().toISOString(),audience:{visibility:'public'},representation:{kind:'oi.world-presentation/v1',payload},provenance:[{kind:'acceptance',ref:run,source_system:'o-i',revision:'2'}]};
+const x=resolveTarget();if(!x.bound)throw Error(x.reason);const token=readFileSync(tokenFile(x.target.database,run+'-publisher'),'utf8').trim(),o=await connect(x.target,token);await subscribe(o.conn,o.lifecycle);await o.conn.reducers.putProjection({projectionKey:projectionStorageKey(projection.projection_ref,2),fieldRef:field,projectionRef:projection.projection_ref,projectionRevision:2,sourceRevision:'3',publisherParticipantRef:ownerP,state:'published',contractJson:JSON.stringify(projection)});console.log(JSON.stringify({projection_ref:projection.projection_ref,projection_revision:2,source_revision:'3'}));o.conn.disconnect();
+}
+main().catch(e=>{console.error(e);process.exit(1)});
