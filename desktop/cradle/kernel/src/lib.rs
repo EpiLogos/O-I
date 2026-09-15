@@ -30,6 +30,7 @@ pub mod events;
 pub mod flow;
 pub mod history;
 pub mod knowledge;
+pub mod shared_field;
 pub mod action;
 pub mod graph;
 pub mod encounter;
@@ -170,11 +171,21 @@ pub enum KernelOp {
     Knowledge { #[serde(default)] project: Option<String>, request: knowledge::Request },
     /// Assemble the typed graph input for U3.1/U3.4 presentation: Central's
     /// wiki read model (cell C1) composed with AIKit's owner-side resolution
-    /// rows (cell C2). Adapter only — every node/edge carries its owner ref,
-    /// owner operation and owner provenance verbatim; a failed input degrades
-    /// honestly as an explicit unavailable input; the Shared Field
-    /// projection is a named deferred input. Emits nothing (pull read).
+    /// rows (cell C2) and the hosted Shared Field projection (Lane C step
+    /// 5, the O:I-owned client's snapshot). Adapter only — every node/edge
+    /// carries its owner ref, owner operation and owner provenance
+    /// verbatim; a failed input degrades honestly as an explicit
+    /// unavailable input. Emits nothing (pull read).
     Graph { #[serde(default)] project: Option<String>, #[serde(default)] query: String },
+    /// One request to the O:I-owned SharedField client (`shared_field.rs`,
+    /// cell S→S0 · aperture mode): `status` | `snapshot` | `read {ref}` |
+    /// `publish {args}` | `participant` | `admit` | `contact`, carried
+    /// verbatim to the owner doorway. Pull only — emits nothing. The
+    /// hosting target and transport token are the client's own
+    /// environment; an unbound target or unreachable field returns an
+    /// explicit `{state:"unavailable", detail}` reading as data, never an
+    /// error; the owner's own refusal is returned in the owner's words.
+    SharedField { request: serde_json::Value },
     /// Compose the W3-A AIKit session-lifecycle read with the W3-B
     /// Actuation request-correlation read for ONE permission request
     /// identity (`oi.cradle.encounter/v1`). Adapter only — the identities
@@ -328,6 +339,9 @@ pub enum KernelOpResult {
     WorldRead { snapshot: KernelSnapshot },
     Knowledge { data: serde_json::Value },
     GraphReading { reading: graph::GraphReading },
+    /// The SharedField client's own reading (`oi.shared-field.*/v1`), or
+    /// the explicit unavailable state — verbatim either way.
+    SharedFieldReading { data: serde_json::Value },
     /// The typed encounter join (`encounter.rs`): both owner views, the
     /// grant-record seam and the failure-taxonomy disposition.
     EncounterJoined {
@@ -663,6 +677,13 @@ impl Kernel {
                 };
                 let reading = graph::assemble(&self.client, wiki_action, &wiki_input, &cwd, &query);
                 Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::GraphReading { reading } })
+            }
+            KernelOp::SharedField { request } => {
+                // The kernel passes the request through on the desktop's own
+                // account; the client resolves its target and token from its
+                // own environment. Nothing is recorded, nothing is emitted.
+                let data = shared_field::reading(&request)?;
+                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::SharedFieldReading { data } })
             }
             KernelOp::EncounterJoin { session, request_ref, reply } => {
                 // Central discloses the context anchor, exactly as the
