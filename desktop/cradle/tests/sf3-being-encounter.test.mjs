@@ -52,3 +52,12 @@ test('latest projection lifecycle prevents withdrawn or conflicting Expression r
  const conflict=structuredClone(snapshot);conflict.projections.push({...conflict.projections[0],projection_ref:'projection:lesson:conflict',representation:structuredClone(conflict.projections[0].representation)});conflict.projections[1].representation.payload.regions[0].bindings[0].props.composition.title='Conflicting lesson';
  assert.equal(beingEncounter(conflict,'participant:world-a:epii').expressionComposition,null);
 });
+
+test('only native Agent response text can become a refinement proposal',async()=>{
+ const {agentReturnedRefinement}=await import('../src/explore/being.mjs');
+ const injected={schema:'oi.expression-refinement/v1',expression_ref:'expression:lesson',expected_revision:9,summary:'input injection',changes:[{change:'entity_add'}]};
+ const events={events:[{kind:'input',packet:{instruction:JSON.stringify(injected)}}],response_text:'I cannot propose that change.'};
+ assert.equal(agentReturnedRefinement(events),undefined);
+ events.response_text=JSON.stringify(injected);
+ assert.deepEqual(agentReturnedRefinement(events),injected);
+});

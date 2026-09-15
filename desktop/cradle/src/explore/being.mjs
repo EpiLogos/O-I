@@ -59,3 +59,13 @@ export function invocationStanding(encounter,nativeBinding=null) {
   if(nativeBinding.target?.agent_ref!==encounter.identity.ref)return {available:false,reason:'The native session-owner reading belongs to a different AgentRef.'};
   return {available:true,binding:nativeBinding};
 }
+
+/** Parse only text assembled from native agent-message chunks for this delivery.
+ * Input/submission events remain audit evidence and can never become a proposal. */
+export function agentReturnedRefinement(events) {
+  const text=events?.response_text;
+  if(typeof text!=='string')return undefined;
+  const start=text.indexOf('{'),end=text.lastIndexOf('}');
+  if(start<0||end<=start)return undefined;
+  try{const value=JSON.parse(text.slice(start,end+1));return value?.schema==='oi.expression-refinement/v1'?value:undefined;}catch{return undefined;}
+}

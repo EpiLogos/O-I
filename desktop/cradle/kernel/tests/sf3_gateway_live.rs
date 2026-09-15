@@ -71,8 +71,8 @@ fn real_provider_return_is_reviewed_by_the_native_expression_owner() {
     assert_eq!(returned["target"]["agent_ref"], "agent:sf3");
     assert_eq!(returned["target"]["agent_session"], "agent-session/sf3");
     assert_eq!(returned["delivery"]["phase"], "returned");
-    let body =
-        refinement(&returned["events"]).expect("real provider returned structured refinement");
+    let body = refinement(&returned["events"]["response_text"])
+        .expect("real provider response text returned structured refinement");
     assert_eq!(body["expression_ref"], "expression:sf3-lesson");
     assert_eq!(body["expected_revision"], 1);
     let delivery_ref = returned["delivery"]["delivery_ref"].as_str().unwrap();
