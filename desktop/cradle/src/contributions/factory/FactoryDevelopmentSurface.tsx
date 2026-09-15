@@ -2,7 +2,7 @@ import {useState} from "react";
 import {useKernel} from "../../kernel/KernelProvider";
 import {buildSnapshot,developmentRead,workcellStatus,type WorkcellStatus} from "./development";
 import {BuildSurface} from "./BuildSurface";
-import type {ActionInvocation,FactoryBuildView} from "./types";
+import type {FactoryBuildView} from "./types";
 import "./development.css";
 
 /** The owner's build view is rendered through the owner's own surface
@@ -39,10 +39,6 @@ export function FactoryDevelopmentSurface() {
  const [status,setStatus]=useState<WorkcellStatus>();
  const [statusNote,setStatusNote]=useState<string>();
  const [busy,setBusy]=useState(false);
- // The owner declares its Actions in the build view; this desktop cut has
- // no native Factory Action dispatch, so a request is recorded and refused
- // in the host's words rather than silently dropped or faked as done.
- const [undispatched,setUndispatched]=useState<ActionInvocation>();
  const runRead=async(read:"project"|"workflow-units")=>{
   setBusy(true);
   try{
@@ -90,10 +86,8 @@ export function FactoryDevelopmentSurface() {
    <h3>Build view</h3>
    <label className="oi-field">Run ref<input className="oi-input" aria-label="Run ref for build view" value={runRefInput} onChange={event=>setRunRefInput(event.target.value)} placeholder="run:…" spellCheck={false} autoComplete="off"/></label>
    <button className="oi-action" disabled={busy||!statePath.trim()||!projectRef.trim()||!runRefInput.trim()} onClick={()=>void readBuildView()}>Read build view</button>
-   {isBuildView(buildView)?<div className="factory-build-host" data-actions="undispatched">
-    <p className="oi-note">The owner's Actions are listed as declared; this desktop cut has no native Factory Action dispatch, so choosing one records the request and refuses it here.</p>
-    {undispatched&&<p role="alert" data-undispatched-action={undispatched.actionRef}>Action {undispatched.actionRef} on {undispatched.subjectRef} was requested; no native dispatch is available on this desktop cut, so nothing was run.</p>}
-    <BuildSurface view={buildView} onAction={setUndispatched}/>
+   {isBuildView(buildView)?<div className="factory-build-host">
+    <BuildSurface view={buildView}/>
     <details className="oi-disclosure"><summary>Owner payload (verbatim)</summary><DevelopmentReading heading="Build view" data={buildView}/></details>
    </div>:typeof buildView==="object"&&buildView!==null?<DevelopmentReading heading="Build view" data={buildView}/>:null}
   </section>

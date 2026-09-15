@@ -19,7 +19,5 @@
 .factory-telemetry p{margin:6px 0 0;font-size:var(--oi-shell-type-nav);overflow-wrap:anywhere}
 /* The owner's Build surface inside the host: the host gives it the pane
  * ground and a hairline frame, nothing else; the owner styles its body.
- * Declared Actions without a native dispatch on this cut are shown as
- * undispatchable (the host says so above them). */
+ * The native body disables Actions when no dispatcher is supplied. */
 .factory-build-host{display:flex;flex-direction:column;gap:10px;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:8px;padding:10px;background:var(--oi-canvas-ground)}
-.factory-build-host[data-actions="undispatched"] .fb-action{opacity:.55}
