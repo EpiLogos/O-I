@@ -43,8 +43,8 @@ use crate::config_surface::{
 use crate::configuration::kernel::{
     assemble_changeset, desired_change, execute_changeset, mint_changeset_id, plan_request,
     product_position_specs, reset_setting, resolve_setting, resolve_setting_address,
-    ConfigurationStore, DesiredChange, DesiredInput, KernelError, OwnerGateway, OwnerRegistry,
-    PlanDocument, ProcessTransport,
+    ConfigurationStore, DesiredChange, DesiredInput, DesiredRecord, KernelError, OwnerGateway,
+    OwnerRegistry, PlanDocument, ProcessTransport,
 };
 use crate::configuration::profile_store::{
     import_document, is_valid_profile_ref, ProfileStore, StoreError,
@@ -61,6 +61,7 @@ use std::path::{Path, PathBuf};
 
 /// One held desired entry beside the identity of the ChangeSet that last
 /// recorded it (the resolution reading's `source_ref`).
+#[derive(Clone)]
 struct HeldDesired {
     entry: DesiredEntry,
     changeset_id: Option<String>,
@@ -350,7 +351,9 @@ impl KernelSurface {
 
     /// The composed desired layer (09 §12 resolution order): explicit O:I
     /// sets first, then the active profile's entries where nothing explicit
-    /// is held.
+    /// is held. Held-but-unexecuted intent (the desired overlay) composes
+    /// last: it is the most recent explicit O:I act for its subject and
+    /// replaces whatever was held before it.
     fn composed_desired(&self) -> SurfaceResult<Vec<HeldDesired>> {
         let held = self.held_desired()?;
         let mut composed: Vec<HeldDesired> = held.into_values().collect();
@@ -374,7 +377,116 @@ impl KernelSurface {
                 Err(error) => return Err(Self::store_error(error)),
             }
         }
+        // The explicit holds: each replaces whatever the fold and the active
+        // profile hold for its (setting, scope).
+        for record in self.store.list_desired().map_err(internal)? {
+            let entry = DesiredEntry {
+                setting_ref: record.setting_ref.clone(),
+                scope: record.scope.clone(),
+                value: record.value.clone(),
+                secret_reference: record.secret_reference.as_ref().map(|reference| {
+                    SecretReferenceValue {
+                        ref_: reference.ref_.clone(),
+                    }
+                }),
+            };
+            composed.retain(|held| {
+                !(held.entry.setting_ref == entry.setting_ref && held.entry.scope == entry.scope)
+            });
+            composed.push(HeldDesired {
+                entry,
+                changeset_id: None,
+            });
+        }
         Ok(composed)
+    }
+
+    /// The held desired intent for one exact (setting, scope): an executed
+    /// ChangeSet's recorded change, else the explicit hold. (Active-profile
+    /// entries compose into `diff`/`doctor`; `resolve` keeps its historical
+    /// explicit-acts-only reading.)
+    fn held_for(&self, setting_ref: &str, scope: &Scope) -> SurfaceResult<Option<HeldDesired>> {
+        let fold = self.held_desired()?;
+        if let Some(held) = fold.get(&(setting_ref.to_owned(), scope.compact())) {
+            return Ok(Some(held.clone()));
+        }
+        Ok(self
+            .store
+            .load_desired(setting_ref, scope)
+            .map_err(internal)?
+            .map(|record| HeldDesired {
+                entry: DesiredEntry {
+                    setting_ref: record.setting_ref,
+                    scope: record.scope,
+                    value: record.value,
+                    secret_reference: record.secret_reference.as_ref().map(|reference| {
+                        SecretReferenceValue {
+                            ref_: reference.ref_.clone(),
+                        }
+                    }),
+                },
+                changeset_id: None,
+            }))
+    }
+
+    /// Hold one desired entry as explicit O:I intent (09 §7: the desired
+    /// axis O:I owns beside the owner's own facts). The same normalisation
+    /// as any change request applies — explicit addressing, the secret law,
+    /// the disclosed shape checks — but nothing is planned, applied or
+    /// mutated: the owner is not touched. A later hold of the same subject
+    /// replaces the earlier one.
+    fn hold(&self, request: &ChangeRequest) -> SurfaceResult<DesiredEntry> {
+        let desired = self.normalize(request)?;
+        let record = DesiredRecord {
+            setting_ref: desired.setting_ref.clone(),
+            scope: desired.scope.clone(),
+            value: desired.value.clone(),
+            secret_reference: desired.secret_reference.as_ref().map(|reference| {
+                crate::configuration::resolution::SecretReference {
+                    ref_: reference.ref_.clone(),
+                    present: None,
+                }
+            }),
+        };
+        self.store.save_desired(&record).map_err(internal)?;
+        Ok(DesiredEntry {
+            setting_ref: record.setting_ref,
+            scope: record.scope,
+            value: record.value,
+            secret_reference: record.secret_reference.as_ref().map(|reference| {
+                SecretReferenceValue {
+                    ref_: reference.ref_.clone(),
+                }
+            }),
+        })
+    }
+
+    /// Withdraw one explicitly held desired intent. Discarding a subject
+    /// nothing is held for is `Ok(false)`, not an error — discard is an
+    /// explicit operation and its absence is observable.
+    fn discard(&self, setting_ref: &str, scope: &Scope) -> SurfaceResult<bool> {
+        self.store
+            .delete_desired(setting_ref, scope)
+            .map_err(internal)
+    }
+
+    /// Retire the explicit holds an executed ChangeSet settled: an applied
+    /// operation's requested change now lives in the ChangeSet fold, and a
+    /// reset withdraws the subject entirely — in both cases the hold has
+    /// done its job and must stop speaking for the subject.
+    fn retire_holds(&self, changeset: &ChangeSet) -> SurfaceResult<()> {
+        for operation in &changeset.operations {
+            if !matches!(
+                operation.status,
+                OperationStatus::Applied | OperationStatus::Verified
+            ) {
+                continue;
+            }
+            self.store
+                .delete_desired(&operation.setting_ref, &operation.scope)
+                .map_err(internal)?;
+        }
+        Ok(())
     }
 
     /// The resolution reading for one setting at one scope with an optional
@@ -501,9 +613,8 @@ impl ConfigSurface for KernelSurface {
     }
 
     fn resolve(&self, setting_ref: &str, scope: &Scope) -> SurfaceResult<Resolution> {
-        let held = self.held_desired()?;
-        let key = (setting_ref.to_owned(), scope.compact());
-        self.build_resolution(setting_ref, scope, held.get(&key))
+        let held = self.held_for(setting_ref, scope)?;
+        self.build_resolution(setting_ref, scope, held.as_ref())
     }
 
     fn resolve_entry(&self, entry: &DesiredEntry) -> SurfaceResult<Resolution> {
@@ -616,6 +727,7 @@ impl ConfigSurface for KernelSurface {
             now_unix_ms(),
         )
         .map_err(|error| Self::kernel_error(error, None, None))?;
+        self.retire_holds(&changeset)?;
         Ok(AppliedChange {
             changeset,
             receipts: report.receipts,
@@ -635,6 +747,7 @@ impl ConfigSurface for KernelSurface {
             now_unix_ms(),
         )
         .map_err(|error| Self::kernel_error(error, Some(setting_ref), Some(scope)))?;
+        self.retire_holds(&changeset)?;
         Ok(AppliedChange {
             changeset,
             receipts: report.receipts,
@@ -749,6 +862,14 @@ impl ConfigSurface for KernelSurface {
             }
         }
         Ok(findings)
+    }
+
+    fn hold_desired(&self, request: &ChangeRequest) -> SurfaceResult<DesiredEntry> {
+        self.hold(request)
+    }
+
+    fn discard_desired(&self, setting_ref: &str, scope: &Scope) -> SurfaceResult<bool> {
+        self.discard(setting_ref, scope)
     }
 }
 

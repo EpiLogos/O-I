@@ -18,6 +18,9 @@
 //!                                           the record of record (09 §9)
 //!   reconciliation/<setting_ref>.json       latest reconciliation state
 //!                                           per setting
+//!   desired/<setting_ref>__<scope>.json     explicitly held desired intent
+//!                                           (not yet executed through any
+//!                                           ChangeSet)
 //! ```
 //!
 //! **File safety.** Regular files only (symlinks refused), 0600 (receipt
@@ -50,6 +53,22 @@ pub struct ReconciliationRecord {
     pub reading_digest: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub changeset_id: Option<String>,
+}
+
+/// One explicitly held desired intent (09 §7/§12): a sparse, single-setting
+/// record that O:I holds BEFORE any ChangeSet executes. Executed state is
+/// the ChangeSet fold's territory — a hold retires the moment an executed
+/// ChangeSet settles the same (setting, scope), so exactly one O:I record
+/// ever speaks for a subject.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct DesiredRecord {
+    pub setting_ref: String,
+    pub scope: Scope,
+    /// Absent for secret-kind holds, which carry the reference only (09 §14).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub value: Option<serde_json::Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub secret_reference: Option<crate::configuration::resolution::SecretReference>,
 }
 
 const MAX_FILE_BYTES: u64 = 1024 * 1024;
@@ -123,6 +142,14 @@ impl ConfigurationStore {
         self.root
             .join("reconciliation")
             .join(format!("{}.json", encode_name(setting_ref)))
+    }
+
+    fn desired_path(&self, setting_ref: &str, scope: &Scope) -> PathBuf {
+        self.root.join("desired").join(format!(
+            "{}__{}.json",
+            encode_name(setting_ref),
+            encode_name(&scope.compact())
+        ))
     }
 
     /// Persist the full ChangeSet document (published atomically).
@@ -207,6 +234,61 @@ impl ConfigurationStore {
             format!("invalid reconciliation record {}: {error}", path.display())
         })?;
         Ok(Some(record))
+    }
+
+    /// Hold (or replace) one explicitly held desired intent.
+    pub fn save_desired(&self, record: &DesiredRecord) -> Result<PathBuf, String> {
+        let path = self.desired_path(&record.setting_ref, &record.scope);
+        let bytes = serde_json::to_vec_pretty(record)
+            .map_err(|error| format!("cannot encode desired record: {error}"))?;
+        publish(&path, &bytes)?;
+        Ok(path)
+    }
+
+    /// The held desired intent for one (setting, scope), if any.
+    pub fn load_desired(
+        &self,
+        setting_ref: &str,
+        scope: &Scope,
+    ) -> Result<Option<DesiredRecord>, String> {
+        let path = self.desired_path(setting_ref, scope);
+        let Some(bytes) = read_regular(&path)? else {
+            return Ok(None);
+        };
+        let record: DesiredRecord = serde_json::from_slice(&bytes)
+            .map_err(|error| format!("invalid desired record {}: {error}", path.display()))?;
+        Ok(Some(record))
+    }
+
+    /// Every held desired record, in stable name order.
+    pub fn list_desired(&self) -> Result<Vec<DesiredRecord>, String> {
+        let mut records = Vec::new();
+        for entry in list_regular(&self.root.join("desired"))? {
+            let Some(bytes) = read_regular(&entry)? else {
+                continue;
+            };
+            let record: DesiredRecord = serde_json::from_slice(&bytes)
+                .map_err(|error| format!("invalid desired record {}: {error}", entry.display()))?;
+            records.push(record);
+        }
+        Ok(records)
+    }
+
+    /// Withdraw one held desired intent. `Ok(false)` when nothing was held —
+    /// discard is an explicit operation, not an error when already absent.
+    pub fn delete_desired(&self, setting_ref: &str, scope: &Scope) -> Result<bool, String> {
+        let path = self.desired_path(setting_ref, scope);
+        match std::fs::symlink_metadata(&path) {
+            Ok(metadata) if metadata.file_type().is_symlink() => Err(format!(
+                "{} must be a regular file, not a symlink",
+                path.display()
+            )),
+            Ok(_) => std::fs::remove_file(&path)
+                .map(|_| true)
+                .map_err(|error| format!("cannot remove {}: {error}", path.display())),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(false),
+            Err(error) => Err(format!("cannot inspect {}: {error}", path.display())),
+        }
     }
 }
 

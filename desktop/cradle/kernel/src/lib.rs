@@ -34,6 +34,7 @@ pub mod history;
 pub mod knowledge;
 pub mod shared_field;
 pub mod action;
+pub mod configuration;
 pub mod graph;
 pub mod encounter;
 pub mod agency;
@@ -273,6 +274,48 @@ pub enum KernelOp {
     /// Workcell's own placement/status reading (`workcell status --json`),
     /// beside the Factory reads — placement is Workcell's, never the desktop's.
     WorkcellStatusRead,
+    /// The configuration-plane binding (#299 C6 live leg,
+    /// `configuration.rs`): every operation routes through the INSTALLED
+    /// `oi` executable — the same engine `oi config` / `oi profile` drive —
+    /// so the Desktop holds no parallel product semantics. Pull/mutate
+    /// details are documented on the module.
+    /// The configuration registry: `<ns> config-contribution --json` per
+    /// mount position (09 §4), the same owner positions
+    /// `SystemCompositionRead` discovers. A failed or non-conforming read
+    /// is a named degradation on the mount, never an invented contribution.
+    ConfigRegistryRead,
+    /// `oi.config-resolution/v1` per (setting, scope): desired folded by
+    /// the engine's own desired store, native axes passed through
+    /// unmodified from the owner's v2 reading (09 §7). A refused pairing
+    /// comes back WITH a reconciliation status, never omitted.
+    ConfigResolutionsRead { pairs: Vec<configuration::ConfigPair> },
+    /// Hold (or replace) one desired entry in the engine's desired store —
+    /// no owner is touched. Secret-kind holds carry the reference only.
+    ConfigDesiredHold { request: configuration::ConfigRequest },
+    /// Withdraw one held desired entry — an explicit operation, never
+    /// implicit; the discard document carries the observed `removed` fact.
+    ConfigDesiredDiscard { setting_ref: String, scope: configuration::ConfigScope },
+    /// Owner-native plans through `oi config plan` (09 §6): owner-minted
+    /// plans verbatim, refused requests as their own `oi.config-error/v1`.
+    ConfigPlan { requests: Vec<configuration::ConfigRequest> },
+    /// Apply the requests under ONE client-minted ChangeSet (09 §8) through
+    /// `oi config apply`: the engine validates, orchestrates the owner
+    /// verbs, takes the re-read verification (09 §9) and persists; the
+    /// executed ChangeSet and owner-minted receipts cross back verbatim.
+    ConfigApply { requests: Vec<configuration::ConfigRequest> },
+    /// The stored `oi.profile/v1` documents beside the explicit active
+    /// mark (09 §12).
+    ProfileList,
+    ProfileRead { profile_ref: String },
+    /// The inspectable use plan: what the profile would hold beside what is
+    /// currently held — BEFORE anything moves (09 §12; `use` writes only
+    /// the active mark and moves no native state).
+    ProfileUsePlan { profile_ref: String },
+    /// Make the profile active — only ever AFTER its use plan was rendered
+    /// and accepted (the mark is the engine's only write here).
+    ProfileUseApply { profile_ref: String },
+    /// Create an empty sparse profile.
+    ProfileCreate { profile_ref: String, #[serde(default)] title: Option<String> },
     Ground {request:ground::Request},
     CompositionRead {#[serde(default)] owners:bool},
     /// Wave 5 (docs/cradle/07): mount each of the six owners' own native
@@ -371,6 +414,37 @@ pub enum KernelOpResult {
     EncounterTaskReading {data:serde_json::Value},
     FactoryDevelopmentReading {data:serde_json::Value},
     WorkcellStatusReading {data:serde_json::Value},
+    /// The configuration registry reading (`configuration.rs`): the seven
+    /// canonical positions, each honestly mounted or degraded by name.
+    ConfigRegistryReading { reading: configuration::RegistryReading },
+    /// One resolution per requested pair, in order (09 §7 documents
+    /// verbatim; refused pairings as named reconciliations).
+    ConfigResolutions { resolutions: Vec<serde_json::Value> },
+    /// The held desired entry as the engine recorded it.
+    ConfigDesiredHeld { entry: serde_json::Value },
+    /// The discard document, with its observed `removed` fact.
+    ConfigDesiredDiscarded { document: serde_json::Value },
+    /// Owner-minted plans plus the structured errors for the requests that
+    /// could not be planned.
+    ConfigPlanned { plans: Vec<serde_json::Value>, errors: Vec<serde_json::Value> },
+    /// The executed ChangeSet beside the owner-minted receipts (09 §8/§9),
+    /// verbatim. `owner_receipts` — not `receipts` — so the field never
+    /// collides with the kernel event receipts beside it on the wire.
+    ConfigApplied { changeset: serde_json::Value, #[serde(rename = "owner_receipts")] owner_receipts: Vec<serde_json::Value> },
+    /// The stored profiles beside the explicit active mark; a document
+    /// that stopped reading is named in `degraded`, never silently dropped.
+    ProfileListing {
+        active_profile_ref: Option<String>,
+        profiles: Vec<serde_json::Value>,
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        degraded: Vec<serde_json::Value>,
+    },
+    ProfileReading { profile: serde_json::Value },
+    /// The inspectable profile-use plan (09 §12).
+    ProfileUsePlanning { plan: configuration::UsePlan },
+    /// The activation document the engine recorded (the mark, nothing else).
+    ProfileUsed { activation: serde_json::Value },
+    ProfileCreated { profile: serde_json::Value },
     /// The owner's own `central.day.read` reading, carried verbatim — the
     /// Day's source identity is the owner's disclosure, never a ref the
     /// desktop derives from a path.
@@ -525,6 +599,70 @@ impl Kernel {
                 let root=world::read_world(&self.client).ok();
                 let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::SystemCompositionReading{reading:system_composition::Client::discover().read(&cwd)}})
+            },
+            KernelOp::ConfigRegistryRead => {
+                let root=world::read_world(&self.client).ok();
+                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ConfigRegistryReading{reading:configuration::Client::discover().registry_read(&cwd)}})
+            },
+            KernelOp::ConfigResolutionsRead {pairs} => {
+                let root=world::read_world(&self.client).ok();
+                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ConfigResolutions{resolutions:configuration::Client::discover().resolutions_read(&cwd,&pairs)}})
+            },
+            KernelOp::ConfigDesiredHold {request} => {
+                let root=world::read_world(&self.client).ok();
+                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
+                let entry=configuration::Client::discover().desired_hold(&cwd,&request)?;
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ConfigDesiredHeld{entry}})
+            },
+            KernelOp::ConfigDesiredDiscard {setting_ref,scope} => {
+                let root=world::read_world(&self.client).ok();
+                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
+                let document=configuration::Client::discover().desired_discard(&cwd,&configuration::ConfigPair{setting_ref,scope})?;
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ConfigDesiredDiscarded{document}})
+            },
+            KernelOp::ConfigPlan {requests} => {
+                let root=world::read_world(&self.client).ok();
+                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
+                let (plans,errors)=configuration::Client::discover().plan(&cwd,&requests);
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ConfigPlanned{plans,errors}})
+            },
+            KernelOp::ConfigApply {requests} => {
+                let root=world::read_world(&self.client).ok();
+                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
+                let (changeset,owner_receipts)=configuration::Client::discover().apply(&cwd,&requests)?;
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ConfigApplied{changeset,owner_receipts}})
+            },
+            KernelOp::ProfileList => {
+                let root=world::read_world(&self.client).ok();
+                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
+                let listing=configuration::Client::discover().profile_list(&cwd)?;
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ProfileListing{active_profile_ref:listing.active_profile_ref,profiles:listing.profiles,degraded:listing.degraded}})
+            },
+            KernelOp::ProfileRead {profile_ref} => {
+                let root=world::read_world(&self.client).ok();
+                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
+                let profile=configuration::Client::discover().profile_read(&cwd,&profile_ref)?;
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ProfileReading{profile}})
+            },
+            KernelOp::ProfileUsePlan {profile_ref} => {
+                let root=world::read_world(&self.client).ok();
+                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
+                let plan=configuration::Client::discover().profile_use_plan(&cwd,&profile_ref)?;
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ProfileUsePlanning{plan}})
+            },
+            KernelOp::ProfileUseApply {profile_ref} => {
+                let root=world::read_world(&self.client).ok();
+                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
+                let activation=configuration::Client::discover().profile_use_apply(&cwd,&profile_ref)?;
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ProfileUsed{activation}})
+            },
+            KernelOp::ProfileCreate {profile_ref,title} => {
+                let root=world::read_world(&self.client).ok();
+                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
+                let profile=configuration::Client::discover().profile_create(&cwd,&profile_ref,title.as_deref())?;
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ProfileCreated{profile}})
             },
             KernelOp::FileOperation {location,request} => Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::FileOperation {data:files::operate(&self.client,&location,&request)?}}),
             KernelOp::FilesList {path} => Ok(KernelOpOutcome { receipts:Vec::new(), result:KernelOpResult::DirectoryRead {directory:files::list(&self.client,&path)?} }),
