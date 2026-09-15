@@ -26,7 +26,7 @@ export default async function run({page,baseUrl,check,shot,channel}){
   try{
     const ready=await pipe.next();check(ready.status==="ready"&&ready.snapshot?.nara_expression==null,"Real focused host opens before explicit Personal reception");
     await page.exposeFunction("__qlFocusedRequest",request=>pipe.request(request));
-    await page.goto(baseUrl);await channel("info");await page.locator(".oi-point-cloud-overlay").waitFor({timeout:20000});
+    await page.goto(baseUrl);await channel("info");await page.locator(".oi-expression-surface").waitFor({state:"attached",timeout:20000});
     const setup=await page.evaluate(async({ready,reception})=>{
       const {FocusedInstrumentSession}=await import("/k9-host/focused-instrument-session.mjs");
       const audioContext=new AudioContext({sampleRate:48000});await audioContext.suspend();

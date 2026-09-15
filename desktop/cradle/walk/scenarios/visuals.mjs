@@ -21,10 +21,10 @@ export default async function run({page,baseUrl,check,shot}) {
   const master=panel.getByRole('button',{name:/^Expression: (On|Off)$/});
   await master.waitFor();
   check((await master.getAttribute('aria-pressed'))==='true','The expression layer starts on');
-  // The preview stage is the panel's one explicit renderer; wait for the
-  // lazy host to bring the canvas up.
-  await page.locator('.oi-point-cloud-overlay').waitFor({timeout:20000});
-  check((await page.locator('.oi-point-cloud-overlay').count())===1,'Enabling the visuals hosts exactly one window expression canvas');
+  // The preview hosts the window's one shared production stage canvas; wait
+  // for the lazy host to bring it up.
+  await page.locator('canvas[data-oi-stage="engine"]').waitFor({state:'attached',timeout:20000});
+  check((await page.locator('canvas[data-oi-stage="engine"]').count())===1,'Enabling the visuals hosts exactly one window expression canvas');
 
   // Typed text reaches the engine: bake a word and see the preview target change.
   await panel.getByPlaceholder('e.g. FLUID, VOID, 42').fill('VOID');
@@ -51,11 +51,11 @@ export default async function run({page,baseUrl,check,shot}) {
   // Master off: the renderer goes away entirely. Master on: it returns.
   await master.click();
   await page.waitForTimeout(400);
-  check((await page.locator('.oi-point-cloud-overlay').count())===0,'Off removes the renderer — nothing runs hidden');
+  check((await page.locator('canvas[data-oi-stage="engine"]').count())===0,'Off removes the renderer — nothing runs hidden');
   check((await panel.getByRole('button',{name:'Expression: Off'}).getAttribute('aria-pressed'))==='false','The master switch reports the off state');
   await master.click();
-  await page.locator('.oi-point-cloud-overlay').waitFor({timeout:20000});
-  check((await page.locator('.oi-point-cloud-overlay').count())===1,'On recreates the renderer');
+  await page.locator('canvas[data-oi-stage="engine"]').waitFor({state:'attached',timeout:20000});
+  check((await page.locator('canvas[data-oi-stage="engine"]').count())===1,'On recreates the renderer');
 
   // Theme resolution lands on the shell tokens.
   await panel.getByRole('button',{name:'Themes',exact:true}).click();

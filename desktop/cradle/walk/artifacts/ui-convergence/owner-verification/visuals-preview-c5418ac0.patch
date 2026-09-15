@@ -1,0 +1,457 @@
+From c5418ac0d3829afcd28e7d4d7141a6387fb8dc06 Mon Sep 17 00:00:00 2001
+From: Epii <frank.g.taylor97@gmail.com>
+Date: Tue, 15 Sep 2026 15:26:25 +0100
+Subject: [PATCH] fix(visuals): share the window Expression stage for preview
+
+
+diff --git a/desktop/cradle/src/stage/ExpressionStage.tsx b/desktop/cradle/src/stage/ExpressionStage.tsx
+index ce83b7c0..dc599402 100644
+--- a/desktop/cradle/src/stage/ExpressionStage.tsx
++++ b/desktop/cradle/src/stage/ExpressionStage.tsx
+@@ -68,6 +68,8 @@ export interface StagePresentationRequest {
+    * canvas. Element targets are a later surface kind, not a scissor. */
+   target?: string;
+   paused?: boolean;
++  /** Deliberate, presentation-scoped reduced-motion override. */
++  forceMotion?: boolean;
+ }
+ 
+ export interface StagePresentation {
+@@ -80,6 +82,12 @@ export interface StagePresentation {
+   setContainer(container: HTMLElement | null): void;
+   /** Play an authored sequence (recipes.ts) against this presentation. */
+   play(sequence: string): void;
++  /** Native instrument controls operate on this presentation's existing field. */
++  command(command: Parameters<EngineSurface["command"]>[0]): void;
++  setPaused(paused: boolean): void;
++  setForceMotion(force: boolean): void;
++  capture(width?: number, height?: number): HTMLCanvasElement;
++  telemetry(): unknown;
+   release(): void;
+ }
+ 
+@@ -178,7 +186,9 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
+     if (!surface) return null;
+     if (request.config) surface.presentConfig(request.id, request.config, request.sceneRef);
+     else surface.present(request.id, request.recipe);
+-    // Pause belongs to this presentation, not the reused window surface.
++    // Pause and deliberate motion belong to this presentation, not the
++    // reused window surface or whichever view acquires it next.
++    surface.setForceMotion(request.forceMotion ?? false);
+     surface.setPaused(request.paused ?? false);
+     const record = { id: request.id, plane: request.plane };
+     presentations.current.set(request.id, record);
+@@ -203,10 +213,16 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
+         requireCurrent();
+         surface.play(request.id, sequence);
+       },
++      command(command) { requireCurrent(); surface.command(command); },
++      setPaused(paused) { requireCurrent(); surface.setPaused(paused); },
++      setForceMotion(force) { requireCurrent(); surface.setForceMotion(force); },
++      capture(width, height) { requireCurrent(); return surface.capture(width, height); },
++      telemetry() { requireCurrent(); return surface.telemetry(); },
+       release() {
+         if (!current()) return;
+         presentations.current.delete(request.id);
+         if (request.plane === "frontstate") setFrontstateCount((count) => Math.max(0, count - 1));
++        surface.setForceMotion(false);
+         surface.release(request.id);
+       },
+     };
+diff --git a/desktop/cradle/src/workspace/settings/VisualsView.tsx b/desktop/cradle/src/workspace/settings/VisualsView.tsx
+index e67c6c20..f6299647 100644
+--- a/desktop/cradle/src/workspace/settings/VisualsView.tsx
++++ b/desktop/cradle/src/workspace/settings/VisualsView.tsx
+@@ -10,12 +10,12 @@
+  * a master on/off switch that is unambiguous, and typed text targets
+  * (glyph A/B and arbitrary words). The panel is a controller of the
+  * instrument, never its owner: every value flows through the validated
+- * visual-preference owner, and the preview is an element-bounded engine
+- * surface framing the owner's own document to this box.
++ * visual-preference owner. The preview places the window's shared Expression
++ * stage in this box; it never creates a component-level renderer.
+  */
+-import { useEffect, useMemo, useRef, useState } from "react";
++import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+ import { useVisuals } from "../../visuals/ParticleExpression";
+-import type { EngineSurface } from "../../stage/engineSurface";
++import { useExpressionStage, type StagePresentation } from "../../stage/ExpressionStage";
+ import {
+   visuals,
+   type SavedState,
+@@ -78,49 +78,64 @@ function ThemesView({ theme }: { theme: ThemeChoice }) {
+ 
+ function ExpressionView() {
+   const { snapshot } = useVisuals();
++  const stage = useExpressionStage();
++  const previewId = `oi-visuals-preview${useId()}`;
+   const config = snapshot.config;
+   const containerRef = useRef<HTMLDivElement | null>(null);
+-  const surfaceRef = useRef<EngineSurface | null>(null);
+-  const [surfaceError, setSurfaceError] = useState<string | null>(null);
++  const presentationRef = useRef<StagePresentation | null>(null);
++  const [previewError, setPreviewError] = useState<string | null>(null);
++  const [previewReady, setPreviewReady] = useState(false);
++  const [retry, setRetry] = useState(0);
+   const [previewPaused, setPreviewPaused] = useState(false);
+   const [previewForceMotion, setPreviewForceMotion] = useState(false);
+   const [captureNotice, setCaptureNotice] = useState<string | null>(null);
+-  const configRef = useRef(config); configRef.current = config;
+-
+-  // The preview is an element-bounded engine surface: the owner's own
+-  // document (never app-invented physics), re-presented per accepted
+-  // revision. The engine module loads only on the enabled path. Engine
+-  // failure surfaces here and disposes the surface.
++  const latest = useRef({config, previewPaused, previewForceMotion});
++  latest.current = {config, previewPaused, previewForceMotion};
++  const surfaceError = stage.error ?? previewError;
++  const readTelemetry = useCallback(() => presentationRef.current?.telemetry() ?? null, []);
++
++  // Acquire the one window stage, then move its existing canvas/context into
++  // the preview. Provider readiness retries acquisition; navigation releases
++  // the presentation and returns the canvas to its window home.
+   useEffect(() => {
+-    if (!snapshot.enabled || surfaceError) return;
++    setPreviewError(null);
++    setPreviewReady(false);
++    if (!snapshot.enabled) return;
+     const container = containerRef.current;
+-    if (!container || surfaceRef.current) return;
+-    let cancelled = false;
+-    let surface: EngineSurface | null = null;
+-    void import("../../stage/engineSurface").then(({ EngineSurface }) => {
+-      if (cancelled || surfaceRef.current) return;
+-      surface = EngineSurface.forElement(container, (message) => setSurfaceError(message));
+-      surfaceRef.current = surface;
+-      surface.presentConfig("oi-visuals-preview", configRef.current);
+-    }).catch((cause: unknown) => {
+-      setSurfaceError(cause instanceof Error ? cause.message : String(cause));
+-    });
++    if (!container) return;
++    let presentation: StagePresentation | null = null;
++    try {
++      presentation = stage.present({id: previewId, plane: "overlay", recipe: "",
++        config: latest.current.config as unknown as Record<string, unknown>,
++        sceneRef: previewId,
++        paused: latest.current.previewPaused, forceMotion: latest.current.previewForceMotion});
++      if (!presentation) return;
++      presentation.setContainer(container);
++      presentationRef.current = presentation;
++      setPreviewReady(true);
++    } catch (cause) {
++      presentation?.release();
++      setPreviewError(cause instanceof Error ? cause.message : String(cause));
++    }
+     return () => {
+-      cancelled = true;
+-      surface?.dispose();
+-      if (surface && surfaceRef.current === surface) surfaceRef.current = null;
++      presentation?.release();
++      if (presentationRef.current === presentation) presentationRef.current = null;
+     };
+-  }, [snapshot.enabled, surfaceError]);
++  }, [snapshot.enabled, stage, previewId, retry]);
+ 
+   // Accepted writes re-present the owner's document — one migration per
+   // revision; the store's own emission is the coalescing point.
+   useEffect(() => {
+-    surfaceRef.current?.presentConfig("oi-visuals-preview", config);
+-  }, [config]);
++    presentationRef.current?.updateConfig(config as unknown as Record<string, unknown>, previewId, []);
++  }, [config, previewId]);
+ 
+-  // The deliberate reduced-motion override belongs to this surface alone.
++  // These settings belong only to this presentation and are restored on
++  // re-enable. Releasing the handle clears its deliberate motion override.
++  useEffect(() => {
++    presentationRef.current?.setPaused(previewPaused);
++  }, [previewPaused]);
+   useEffect(() => {
+-    surfaceRef.current?.setForceMotion(previewForceMotion);
++    presentationRef.current?.setForceMotion(previewForceMotion);
+   }, [previewForceMotion]);
+ 
+   return (
+@@ -135,7 +150,7 @@ function ExpressionView() {
+         </button>
+         <p className="settings-native-note">
+           {snapshot.enabled
+-            ? "The particle layer is live. Off removes the renderer entirely — nothing runs hidden."
++            ? "Expression is enabled. Off removes the renderer entirely — nothing runs hidden."
+             : "Off is absolute: no renderer, no simulation, no resources held."}
+         </p>
+         <label className="visuals-check">
+@@ -153,21 +168,20 @@ function ExpressionView() {
+         <p className="settings-native-note">Turn the expression on to see and shape the field.</p>
+       )}
+ 
+-      {snapshot.enabled && surfaceError && <p role="alert">The expression layer could not start: {surfaceError}</p>}
++      {snapshot.enabled && surfaceError && <div role="alert">
++        <p>The expression preview is unavailable: {surfaceError}</p>
++        {!stage.error && <button onClick={() => setRetry((value) => value + 1)}>Retry preview</button>}
++      </div>}
+ 
+       {snapshot.enabled && (
+         <>
+-          {/* The explicit preview: the only renderer this panel starts —
+-              an element-bounded engine surface framing the owner's own
+-              document to this box. */}
++          {/* The window's production canvas is placed here while acquired. */}
+           <div className="visuals-preview">
+             <div
+               className={surfaceError ? "visuals-preview-stage visuals-preview-stage-empty" : "visuals-preview-stage"}
+-              ref={surfaceError ? undefined : containerRef}
+-              style={surfaceError ? undefined : { position: "relative" }}
+-            >
+-              {surfaceError && "Renderer unavailable"}
+-            </div>
++              ref={containerRef}
++              style={{ position: "relative" }}
++            />
+             <label className="visuals-check">
+               <input
+                 type="checkbox"
+@@ -291,24 +305,24 @@ function ExpressionView() {
+           </fieldset>
+ 
+           <div className="visuals-actions" role="group" aria-label="Field actions">
+-            <button onClick={() => surfaceRef.current?.command({ type: "disperse", strength: 3.5 })}>Disperse</button>
++            <button disabled={!previewReady} onClick={() => presentationRef.current?.command({ type: "disperse", strength: 3.5 })}>Disperse</button>
+             <button
++              disabled={!previewReady}
+               onClick={() => {
+-                const next = !previewPaused;
+-                surfaceRef.current?.setPaused(next);
+-                setPreviewPaused(next);
++                setPreviewPaused(!previewPaused);
+               }}
+             >
+               {previewPaused ? "Resume simulation" : "Pause simulation"}
+             </button>
+-            <button onClick={() => surfaceRef.current?.command({ type: "reset-field" })}>Reset field</button>
++            <button disabled={!previewReady} onClick={() => presentationRef.current?.command({ type: "reset-field" })}>Reset field</button>
+             <button onClick={() => visuals.resetConfig()}>Restore defaults</button>
+             <button
++              disabled={!previewReady}
+               onClick={() => {
+-                const surface = surfaceRef.current;
+-                if (!surface) return;
++                const presentation = presentationRef.current;
++                if (!presentation) return;
+                 try {
+-                  const canvas = surface.capture();
++                  const canvas = presentation.capture();
+                   const url = canvas.toDataURL("image/png");
+                   const anchor = window.document.createElement("a");
+                   anchor.href = url;
+@@ -329,7 +343,7 @@ function ExpressionView() {
+ 
+           <ImportExport />
+ 
+-          <Diagnostics read={() => surfaceRef.current?.telemetry() ?? null} />
++          <Diagnostics read={readTelemetry} />
+         </>
+       )}
+     </div>
+diff --git a/desktop/cradle/tests/visuals-preview-lifecycle.mjs b/desktop/cradle/tests/visuals-preview-lifecycle.mjs
+new file mode 100644
+index 00000000..cf8bf6af
+--- /dev/null
++++ b/desktop/cradle/tests/visuals-preview-lifecycle.mjs
+@@ -0,0 +1,162 @@
++import assert from 'node:assert/strict';
++import {createServer} from 'vite';
++import {chromium} from 'playwright';
++import {fileURLToPath} from 'node:url';
++
++const root = fileURLToPath(new URL('../', import.meta.url));
++const server = await createServer({root, appType:'custom', server:{host:'127.0.0.1',port:0}, logLevel:'error'});
++server.middlewares.use('/visuals-preview', async (_, res) => {
++  res.setHeader('content-type','text/html');
++  res.end(await server.transformIndexHtml('/visuals-preview','<body class="oi-desktop"><div id="root"></div><script type="module" src="/tests/visuals-preview-page.tsx"></script>'));
++});
++await server.listen();
++const browser = await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-webgl']});
++const context = await browser.newContext({acceptDownloads:true,reducedMotion:'no-preference'});
++const page = await context.newPage();
++const errors = [];
++page.on('pageerror', error => {errors.push(error.message);console.error(error.message);});
++await context.addInitScript(() => {
++  localStorage.setItem('oi-cradle.visuals.v1', JSON.stringify({enabled:false,welcomeEnabled:false}));
++  window.clock = {fired:0, pending:new Set()};
++  const raf = requestAnimationFrame.bind(window), cancel = cancelAnimationFrame.bind(window);
++  window.requestAnimationFrame = callback => {
++    const id = raf(time => {window.clock.pending.delete(id);window.clock.fired++;callback(time);});
++    window.clock.pending.add(id);return id;
++  };
++  window.cancelAnimationFrame = id => {window.clock.pending.delete(id);cancel(id);};
++  window.gpuCanvases = new Set();
++  const getContext = HTMLCanvasElement.prototype.getContext;
++  HTMLCanvasElement.prototype.getContext = function(type,...args) {
++    const result = getContext.call(this,type,...args);
++    if(result && (type === 'webgl2' || type === 'webgl' || type === 'experimental-webgl')) gpuCanvases.add(this);
++    return result;
++  };
++});
++const url = `http://127.0.0.1:${server.httpServer.address().port}/visuals-preview`;
++const observe = () => page.evaluate(async () => {
++  const before = clock.fired;
++  await new Promise(resolve => setTimeout(resolve,350));
++  return {frames:clock.fired-before,pending:clock.pending.size,stage:previewTest.stage.inspect(),
++    engines:document.querySelectorAll('canvas[data-oi-stage="engine"]').length,
++    canvases:document.querySelectorAll('canvas').length,
++    gpuCanvases:[...gpuCanvases].filter(canvas => canvas.isConnected).length};
++});
++const idle = () => page.waitForFunction(() => previewTest.stage.inspect().live === false && !previewTest.stage.inspect().scheduled);
++const preview = () => page.waitForFunction(() => document.querySelector('.visuals-preview-stage canvas'));
++const advances = async () => {
++  const before = await page.evaluate(() => previewTest.stage.inspect().frames);
++  await page.waitForFunction(before => previewTest.stage.inspect().frames > before,before,{polling:100});
++};
++const assertPreview = async () => {
++  await preview();
++  const state = await observe();
++  assert.equal(state.canvases,2,'Visuals reuses the one production canvas beside the shared 2D overlay');
++  assert.equal(state.gpuCanvases,1,'Visuals allocates no component-level WebGL renderer');
++  assert.equal(state.engines,1);
++  assert.equal(state.stage.presentations.length,1,'the preview is a registered stage presentation');
++  return state;
++};
++try {
++  await page.goto(url);
++  await page.getByRole('button',{name:'Expression: Off',exact:true}).waitFor();
++  let state = await observe();
++  assert.equal(state.gpuCanvases,0,'disabled settings allocate no engine context');
++  assert.equal(state.engines,0);
++  assert.equal(state.frames,0);
++  await page.getByRole('button',{name:'Expression: Off',exact:true}).click();
++  await assertPreview();
++  await advances();
++
++  await page.getByRole('button',{name:'Pause simulation',exact:true}).click();
++  state = await observe();
++  assert.equal(state.stage.paused,true);
++  assert.equal(state.frames,0,'the actual Pause control sleeps the shared engine');
++  await page.getByLabel('Glyph A',{exact:true}).fill('Ω');
++  await page.waitForFunction(() => previewTest.visuals.get().config.glyph[0] === 'Ω');
++  assert.equal((await observe()).frames,0,'accepted config changes preserve a paused preview');
++  await page.getByRole('button',{name:'Resume simulation',exact:true}).click();
++  await page.waitForFunction(() => document.querySelector('.visuals-diagnostics pre')?.textContent.includes('Ω'),null,{polling:100});
++  await page.getByRole('button',{name:'Pause simulation',exact:true}).click();
++  const downloaded = page.waitForEvent('download');
++  await page.getByRole('button',{name:'Capture image',exact:true}).click();
++  const download = await downloaded;
++  assert.equal(download.suggestedFilename(),'expression-capture.png');
++  const chunks = [];
++  for await (const chunk of await download.createReadStream()) chunks.push(chunk);
++  const png = Buffer.concat(chunks);
++  assert.equal(png.subarray(0,8).toString('hex'),'89504e470d0a1a0a','capture returns a real engine PNG');
++  assert.ok(png.readUInt32BE(16)>0 && png.readUInt32BE(20)>0);
++  await assertPreview();
++  await page.getByRole('button',{name:'Resume simulation',exact:true}).click();
++  await page.getByRole('button',{name:'Disperse',exact:true}).click();
++  await page.getByRole('button',{name:'Reset field',exact:true}).click();
++  await advances();
++
++  await page.getByRole('button',{name:'Themes',exact:true}).click();
++  await idle();
++  state = await observe();
++  assert.equal(state.stage.presentations.length,0,'leaving Expression releases its presentation');
++  assert.equal(state.frames,0,'released settings leave no continuing simulation RAF');
++  assert.equal(state.pending,0);
++  assert.equal(state.gpuCanvases,1,'the dormant shared engine remains owned by the window');
++  assert.equal(await page.evaluate(() => document.querySelector('canvas[data-oi-stage="engine"]').parentElement === document.body),true,'release restores the canvas to its window home');
++
++  // Another real presentation keeps ownership; the settings preview refuses
++  // honestly and can acquire the same stage when the current owner releases.
++  await page.evaluate(() => {window.otherPresentation=previewTest.stage.present({id:'other',plane:'ambient',recipe:'oi.mark'});});
++  await page.getByRole('button',{name:'Expression',exact:true}).click();
++  await page.getByRole('button',{name:'Retry preview',exact:true}).waitFor();
++  state = await observe();
++  assert.equal(state.gpuCanvases,1);
++  assert.equal(state.stage.presentations[0].id,'other');
++  assert.equal(await page.getByRole('button',{name:'Capture image',exact:true}).isDisabled(),true,'unavailable preview does not claim a working capture');
++  await page.evaluate(() => otherPresentation.release());
++  await page.getByRole('button',{name:'Retry preview',exact:true}).click();
++  await assertPreview();
++  const staleRefusals = await page.evaluate(() => {
++    const calls = [() => otherPresentation.command({type:'reset-field'}),
++      () => otherPresentation.setPaused(true), () => otherPresentation.setForceMotion(true),
++      () => otherPresentation.capture(), () => otherPresentation.telemetry()];
++    return calls.map(call => {try {call();return false;}catch {return true;}});
++  });
++  assert.deepEqual(staleRefusals,[true,true,true,true,true],'released handles cannot affect a replacement presentation');
++
++  await page.getByRole('button',{name:'Expression: On',exact:true}).click();
++  await page.waitForFunction(() => !previewTest.stage.inspect().engine);
++  state = await observe();
++  assert.equal(state.gpuCanvases,0,'the real Off control removes every connected engine context');
++  assert.equal(state.engines,0);
++  assert.equal(state.frames,0);
++  await page.getByRole('button',{name:'Expression: Off',exact:true}).click();
++  await assertPreview();
++
++  await page.emulateMedia({reducedMotion:'reduce'});
++  await page.waitForFunction(() => !previewTest.stage.inspect().scheduled);
++  assert.equal((await observe()).frames,0,'reduced motion holds a static preview');
++  await page.getByLabel('Animate the preview even with reduced motion on (deliberate override)',{exact:true}).check();
++  await advances();
++  await page.getByRole('button',{name:'Close settings',exact:true}).click();
++  await idle();
++  assert.equal((await observe()).frames,0,'closing the forced-motion preview clears its override and clock');
++  await page.evaluate(() => {window.nextPresentation=previewTest.stage.present({id:'next',plane:'ambient',recipe:'oi.mark'});});
++  await page.waitForFunction(() => !previewTest.stage.inspect().scheduled);
++  assert.equal((await observe()).frames,0,'the next presentation respects reduced motion without inheriting the override');
++  await page.evaluate(() => nextPresentation.release());
++
++  for (let cycle=0;cycle<2;cycle++) {
++    await page.getByRole('button',{name:'Open settings',exact:true}).click();
++    await assertPreview();
++    assert.equal((await observe()).frames,0,'remounted settings remain static under reduced motion');
++    await page.getByRole('button',{name:'Close settings',exact:true}).click();
++    await idle();
++    assert.equal((await observe()).frames,0);
++  }
++  await page.evaluate(() => previewTest.unmount());
++  state = await observe();
++  assert.equal(state.canvases,0,'StrictMode root unmount releases both window canvases');
++  assert.equal(state.pending,0);
++  await page.evaluate(() => previewTest.mount());
++  await assertPreview();
++  assert.deepEqual(errors,[]);
++  console.log('Visuals preview: real controls, PNG capture, config, pause/resume, one-context ownership, busy refusal/retry, disabled/enabled, navigation, StrictMode/remount, reduced motion and override handover passed.');
++} finally {await browser.close();await server.close();}
+diff --git a/desktop/cradle/tests/visuals-preview-page.tsx b/desktop/cradle/tests/visuals-preview-page.tsx
+new file mode 100644
+index 00000000..07ae1673
+--- /dev/null
++++ b/desktop/cradle/tests/visuals-preview-page.tsx
+@@ -0,0 +1,28 @@
++// Actual settings controls, providers and engine, with a test-only mount seam.
++import React, {useLayoutEffect, useState} from 'react';
++import {createRoot, type Root} from 'react-dom/client';
++import {KernelProvider} from '../src/kernel/KernelProvider';
++import {VisualsProvider} from '../src/visuals/ParticleExpression';
++import {visuals} from '../src/visuals/store';
++import {ExpressionStageProvider, useExpressionStage} from '../src/stage/ExpressionStage';
++import {VisualsView} from '../src/workspace/settings/VisualsView';
++import '@epilogos/oi-design-system/tokens.css';
++
++function Settings() {
++  const stage = useExpressionStage();
++  const [open, setOpen] = useState(true);
++  useLayoutEffect(() => { window.previewTest.stage = stage; });
++  return <><button onClick={() => setOpen(!open)}>{open ? 'Close settings' : 'Open settings'}</button>{open && <VisualsView />}</>;
++}
++let root: Root | null = null;
++window.previewTest = {
++  visuals,
++  mount() {
++    root = createRoot(document.getElementById('root')!);
++    root.render(<React.StrictMode><KernelProvider><VisualsProvider>
++      <ExpressionStageProvider><Settings /></ExpressionStageProvider>
++    </VisualsProvider></KernelProvider></React.StrictMode>);
++  },
++  unmount() { root?.unmount(); root = null; },
++};
++window.previewTest.mount();
