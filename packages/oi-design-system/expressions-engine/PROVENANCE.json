@@ -1,13 +1,13 @@
 {
   "source": "EpiLogos/Point-Cloud-Demo",
-  "sha": "7306b7b8882f54fec931922d46fdbaba9f656212",
+  "sha": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313",
   "oi_overlays": [
     {
       "path": "oi/retained.mjs",
       "standing": "O:I-authored retained-field extension of shell/production.mjs; not upstream, never rewritten by this script"
     }
   ],
-  "vendored_at": "2026-09-15T14:33:43Z",
+  "vendored_at": "2026-09-15T15:23:59Z",
   "entries": [
     {
       "source": "field-studies-journeys/src/production.ts",
