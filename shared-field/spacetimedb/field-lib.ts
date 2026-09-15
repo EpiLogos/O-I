@@ -28,6 +28,7 @@ export const SUBSCRIPTION = [
   'SELECT * FROM explore_relation',
   'SELECT * FROM my_field_authority',
   'SELECT * FROM my_contribution_receipt',
+  'SELECT * FROM owner_pending_contribution',
   'SELECT * FROM my_watch',
   'SELECT * FROM my_contact',
 ];
@@ -138,6 +139,7 @@ export function fieldSnapshot(client: Client) {
     contributions: rows(db.contribution).map((row: any) => ({ contribution_ref: row.contributionRef, field_ref: row.fieldRef, contributor_participant_ref: row.contributorParticipantRef, ingress_ref: row.ingressRef ?? null, contract: parse(row.contractJson) })),
     my_authority: rows(db.myFieldAuthority).map((row: any) => ({ field_ref: row.fieldRef, participant_ref: row.participantRef, role: row.role, revoked: Boolean(row.revoked) })),
     my_contribution_receipts: rows(db.myContributionReceipt).map((row: any) => ({ contribution_ref: row.contributionRef, ingress_ref: row.ingressRef, field_ref: row.fieldRef, state: row.state })),
+    owner_pending_contributions: rows(db.ownerPendingContribution).map((row: any) => ({ ingress_ref: row.ingressRef, field_ref: row.fieldRef, contribution_ref: row.claimedContributionRef, contributor_participant_ref: row.contributorParticipantRef, received_at_micros: String(row.receivedAtMicros), payload_fingerprint: row.payloadFingerprint, contract: parse(row.contractJson) })),
     my_watches: rows(db.myWatch).map((row: any) => ({ watch_ref: row.watchRef, field_ref: row.fieldRef, target_kind: row.targetKind, target_ref: row.targetRef, state: row.state })),
     my_contacts: rows(db.myContact).map((row: any) => ({ contact_ref: row.contactRef, field_ref: row.fieldRef, initiator_participant_ref: row.initiatorParticipantRef, recipient_participant_ref: row.recipientParticipantRef, state: row.state ?? row.decision ?? null })),
     counts: { fields: hosted.fields.length, participants: hosted.participants.length, projections: hosted.projections.length, entries: hosted.entries.length, relations: hosted.relations.length },
@@ -163,8 +165,9 @@ export function readRef(client: Client, ref: string) {
   const field_ref = snapshot.entry_fields[entry.ref] ?? null;
   const relation_errors = snapshot.relation_errors.filter((row: any) => row.field_ref === field_ref || row.from === entry.ref || row.to === entry.ref);
   const my_authority = snapshot.my_authority.filter((row: any) => row.field_ref === field_ref);
+  const owner_pending_contributions = snapshot.owner_pending_contributions.filter((row: any) => row.field_ref === field_ref);
   const my_watches = snapshot.my_watches.filter((row: any) => row.target_ref === entry.ref);
-  return { schema: 'oi.shared-field.reading/v1', ref, state: 'hosted', target: snapshot.target, field_ref, entry, projections, relations, relation_errors, contributions, neighbourhood, my_authority, my_watches, status: snapshot.status };
+  return { schema: 'oi.shared-field.reading/v1', ref, state: 'hosted', target: snapshot.target, field_ref, entry, projections, relations, relation_errors, contributions, owner_pending_contributions, neighbourhood, my_authority, my_watches, status: snapshot.status };
 }
 
 /** Push hosted reducer arguments (the `hostedPublicationArgs` shape) in

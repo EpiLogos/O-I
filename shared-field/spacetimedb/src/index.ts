@@ -914,6 +914,23 @@ export const my_contribution_receipt = spacetimedb.view(
   (ctx) => Array.from(ctx.db.contributionReceipt.submitterIdentity.filter(ctx.sender))
 );
 
+/** Quarantined material visible only to the owner of its receiving field.
+ * This is the inspection aperture used before admit/reject; it exposes no
+ * other field's ingress and creates no admission or index standing. */
+export const owner_pending_contribution = spacetimedb.view(
+  { name: 'owner_pending_contribution', public: true },
+  t.array(contributionIngressBacking.rowType),
+  (ctx) => {
+    const pending = [];
+    for (const owned of ctx.db.fieldOwner.ownerIdentity.filter(ctx.sender)) {
+      for (const ingress of ctx.db.contributionIngressBacking.fieldRef.filter(owned.fieldRef)) {
+        if (ingress.state === 'quarantined') pending.push(ingress);
+      }
+    }
+    return pending;
+  }
+);
+
 function requireParticipantAuthority(ctx: any, fieldRef: string, participantRef: string, roles: string[]): any {
   const key = authorityKey(fieldRef, participantRef);
   const grant = ctx.db.fieldAuthority.authorityKey.find(key);
@@ -1887,19 +1904,21 @@ export const withdraw_contribution = spacetimedb.reducer(
     requireJsonObject(args.evidenceJson, 'Withdrawal evidence', 8_192);
     const ingress = ctx.db.contributionIngressBacking.ingressRef.find(args.ingressRef);
     if (!ingress) fail(`Unknown Contribution ingress: ${args.ingressRef}`);
-    requireAdmissionAuthority(ctx, ingress.fieldRef, args.admissionParticipantRef);
+    const submitterWithdrawal = ctx.sender.isEqual(ingress.submitterIdentity);
+    if (!submitterWithdrawal) requireAdmissionAuthority(ctx, ingress.fieldRef, args.admissionParticipantRef);
     if (ingress.state !== 'admitted') fail(`Contribution ingress is ${ingress.state}, not admitted`);
     const admitted = ctx.db.admittedContributionBacking.ingressRef.find(ingress.ingressRef);
     if (!admitted) throw new Error(`Missing admitted Contribution for ${ingress.ingressRef}`);
     const now = nowMicros(ctx);
-    const decisionRef = admissionDecisionRef(ingress.ingressRef, 'withdrawn', now, args.admissionParticipantRef);
+    const withdrawalParticipantRef = submitterWithdrawal ? ingress.contributorParticipantRef : args.admissionParticipantRef;
+    const decisionRef = admissionDecisionRef(ingress.ingressRef, 'withdrawn', now, withdrawalParticipantRef);
     ctx.db.admissionDecision.insert({
       decisionRef,
       ingressRef: ingress.ingressRef,
       fieldRef: ingress.fieldRef,
       disposition: 'withdrawn',
       admissionActorIdentity: ctx.sender,
-      admissionParticipantRef: args.admissionParticipantRef,
+      admissionParticipantRef: withdrawalParticipantRef,
       decidedAtMicros: now,
       reason: args.reason,
       evidenceJson: args.evidenceJson,

@@ -910,4 +910,22 @@ mod tests {
         assert_eq!(wire["current"], "central.content-fnv1a64/v1:2404:c");
         assert!(failure.to_string().contains("both sides preserved"));
     }
+
+    #[test]
+    fn receiving_wire_keeps_every_native_variant_externally_tagged() {
+        let values = [
+            serde_json::json!({"List":{"after":0,"limit":10}}),
+            serde_json::json!({"Read":{"return_ref":"return:1"}}),
+            serde_json::json!({"Submit":{"producer_key":"p","source_ref":"source:1","document_id":"doc:1","expected_source_revision":"r1","occurred_at_unix_seconds":1,"proposal":{}}}),
+            serde_json::json!({"Document":{"source_ref":"source:1","document_id":"doc:1"}}),
+            serde_json::json!({"Review":{"return_ref":"return:1","expected_return_revision":"r1","disposition":"rejected"}}),
+            serde_json::json!({"Include":{"return_ref":"return:1","expected_return_revision":"r1","expected_source_revision":"s1"}}),
+            serde_json::json!({"Recover":{"return_ref":"return:1","expected_return_revision":"r1"}}),
+            serde_json::json!({"MutateField":{"source_ref":"source:1","document_id":"doc:1","expected_revision":"r1","request_id":"request:1","field_id":"field:1","value":"value"}}),
+        ];
+        for value in values {
+            serde_json::from_value::<ReceivingRequest>(value).expect("desktop wire must deserialize as the native owner request");
+        }
+        assert!(serde_json::from_value::<ReceivingRequest>(serde_json::json!({"kind":"document","source_ref":"source:1","document_id":"doc:1"})).is_err());
+    }
 }

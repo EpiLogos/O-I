@@ -23,6 +23,45 @@ const positive = (value, name) => {
 };
 const clone = value => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
 
+const readingRef = (value, name) => {
+  const item = record(value, name);
+  return {
+    kind: text(item.kind, `${name}.kind`),
+    ref: text(item.ref, `${name}.ref`),
+    ...(item.revision !== undefined ? { revision: typeof item.revision === 'number' ? positive(item.revision, `${name}.revision`) : text(item.revision, `${name}.revision`) } : {}),
+  };
+};
+const readingRefs = (value, name) => {
+  if (!Array.isArray(value)) throw new TypeError(`${name} must be an array`);
+  return value.map((item, index) => readingRef(item, `${name}[${index}]`));
+};
+
+function contributionContent(kind, input, basis) {
+  if (kind === 'prose') return text(input, 'prose content');
+  const value = record(input, `${kind} content`);
+  if (kind === 'relation-proposal') return {
+    relation: readingRef(value.relation, 'relation-proposal content.relation'),
+    from: readingRef(value.from, 'relation-proposal content.from'),
+    to: readingRef(value.to, 'relation-proposal content.to'),
+    ...(value.summary !== undefined ? { summary: text(value.summary, 'relation-proposal content.summary') } : {}),
+  };
+  if (kind === 'source-proposal') {
+    const operation = text(value.operation, 'source-proposal content.operation');
+    if (!['entry.add', 'entry.append', 'field.append'].includes(operation)) throw new TypeError('source-proposal content.operation must be entry.add, entry.append, or field.append');
+    if (operation === 'entry.add') return { operation, entry_id: text(value.entry_id, 'source-proposal content.entry_id'), contribution_id: text(value.contribution_id, 'source-proposal content.contribution_id'), html: text(value.html, 'source-proposal content.html') };
+    if (operation === 'entry.append') return { operation, entry_id: text(value.entry_id, 'source-proposal content.entry_id'), contribution_id: text(value.contribution_id, 'source-proposal content.contribution_id'), html: text(value.html, 'source-proposal content.html') };
+    return { operation, field_id: text(value.field_id, 'source-proposal content.field_id'), contribution_id: text(value.contribution_id, 'source-proposal content.contribution_id'), html: text(value.html, 'source-proposal content.html') };
+  }
+  if (kind === 'thing') return { thing: readingRef(value.thing, 'thing content.thing'), ...(value.representation !== undefined ? { representation: clone(record(value.representation, 'thing content.representation')) } : {}) };
+  if (kind === 'expression-revision' || kind === 'expression-scene') {
+    if (!basis.expression_ref || basis.expression_revision === undefined) throw new TypeError(`${kind} requires an Expression ref and revision in its basis`);
+    if (!Array.isArray(value.changes) || value.changes.length === 0) throw new TypeError(`${kind} content.changes must be a non-empty EX1 Change array`);
+    return { summary: text(value.summary, `${kind} content.summary`), changes: value.changes.map((change, index) => clone(record(change, `${kind} content.changes[${index}]`))), method_refs: readingRefs(value.method_refs ?? [], `${kind} content.method_refs`), evidence_refs: readingRefs(value.evidence_refs ?? [], `${kind} content.evidence_refs`) };
+  }
+  if (kind === 'file' || kind === 'reference' || kind === 'method') return readingRef(value, `${kind} content`);
+  throw new TypeError(`Unsupported contribution body kind: ${kind}`);
+}
+
 function revisionBasis(input) {
   const basis = record(input, 'contribution body.basis');
   return {
@@ -42,13 +81,13 @@ export function createContributionBody(input) {
   const kind = text(input.kind, 'contribution body.kind');
   if (!KINDS.has(kind)) throw new TypeError(`contribution body.kind must be one of ${CONTRIBUTION_BODY_KINDS.join(', ')}`);
   if (!Object.hasOwn(input, 'content')) throw new TypeError('contribution body.content is required');
-  const content = clone(input.content);
-  if (kind === 'prose' && (typeof content !== 'string' || content.trim() === '')) throw new TypeError('prose content must be a non-empty string');
+  const basis = revisionBasis(input.basis);
+  const content = contributionContent(kind, input.content, basis);
   const attachments = (input.attachments ?? []).map((item, index) => {
     const ref = record(item, `contribution body.attachments[${index}]`);
     return { kind: text(ref.kind, `contribution body.attachments[${index}].kind`), ref: text(ref.ref, `contribution body.attachments[${index}].ref`), ...(ref.revision ? { revision: text(ref.revision, `contribution body.attachments[${index}].revision`) } : {}) };
   });
-  return { schema: CONTRIBUTION_BODY_SCHEMA, kind, basis: revisionBasis(input.basis), content, attachments };
+  return { schema: CONTRIBUTION_BODY_SCHEMA, kind, basis, content, attachments };
 }
 
 export function validateContributionBody(value) {
@@ -164,7 +203,8 @@ export function nativeExpressionReturnProposal(contribution, owner, options = {}
   if (!['expression-revision', 'expression-scene'].includes(body.kind)) throw new TypeError(`${body.kind} is not an Expression Return`);
   const content = record(body.content, 'Expression contribution content');
   if (!Array.isArray(content.changes)) throw new TypeError('Expression contribution content.changes must be an EX1 Change array');
-  return { action_ref: 'oi.expression.propose', request: { operation: 'propose', expression_ref: body.basis.expression_ref, expected_revision: body.basis.expression_revision, proposal_ref: options.proposal_ref ?? `${contribution.contribution_ref}:expression-proposal`, actor: options.actor ?? contribution.contributor_participant_ref, activity_ref: options.activity_ref ?? null, continues_proposal_ref: options.continues_proposal_ref ?? null, summary: text(content.summary, 'Expression contribution content.summary'), changes: clone(content.changes), method_refs: clone(content.method_refs ?? []), evidence_refs: clone(content.evidence_refs ?? []) } };
+  const localProposalId = contribution.contribution_ref.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return { action_ref: 'oi.expression.propose', request: { operation: 'propose', expression_ref: body.basis.expression_ref, expected_revision: body.basis.expression_revision, proposal_ref: options.proposal_ref ?? `${body.basis.expression_ref}:proposal:${localProposalId}`, actor: options.actor ?? contribution.contributor_participant_ref, activity_ref: options.activity_ref ?? null, continues_proposal_ref: options.continues_proposal_ref ?? null, summary: text(content.summary, 'Expression contribution content.summary'), changes: clone(content.changes), method_refs: clone(content.method_refs ?? []), evidence_refs: clone(content.evidence_refs ?? []) } };
 }
 
 function escapeHtml(value) {

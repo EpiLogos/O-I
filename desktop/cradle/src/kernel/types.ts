@@ -147,7 +147,7 @@ export type KernelOp =
   | {op:"file_operation";location:CentralLocation;request:import("../files/client").FileRequest}
   | {op:"encounter";project:string;request:import("../encounter/client").EncounterRequest}
   | {op:"encounter_task_read";project:string;agent_session:string}
-  | {op:"receiving";project:string|null;request:import("../receiving/client").ReceivingRequest}
+  | {op:"receiving";project:string|null;request:import("../receiving/client").ReceivingWireRequest}
   | {op:"now";project:string|null;request:import("../receiving/now").NowRequest}
   | {op:"factory_development_read";project?:string;state_path:string;read:string;subject?:string}
   | {op:"factory_build_snapshot";project?:string;state_path:string;project_ref:string;run_ref:string}
