@@ -175,6 +175,8 @@ export async function publishArgs(client: Client, args: any) {
   const db: any = client.conn.db;
   await reducers.putSharedField(args.putSharedField);
   await reducers.putParticipant(args.putParticipant);
+  for (const participant of args.putParticipants ?? []) await reducers.putParticipant(participant);
+  await waitUntil(() => (args.putParticipants ?? []).every((participant: any) => rows(db.participant).some((row: any) => row.participantRef === participant.participantRef && row.fieldRef === participant.fieldRef)), 'additional Participants in the caller-visible view');
   const granted = rows(db.myFieldAuthority).find((row: any) => row.fieldRef === args.putSharedField.fieldRef && row.participantRef === args.putParticipant.participantRef && row.role === 'contributor' && !row.revoked);
   if (!granted) await reducers.grantParticipantAuthority({ fieldRef: args.putSharedField.fieldRef, participantRef: args.putParticipant.participantRef, targetIdentity: client.identity, role: 'contributor', contactable: true, ttlSeconds: 0 });
   const already = rows(db.projection).find((row: any) => row.projectionKey === args.putProjection.projectionKey);

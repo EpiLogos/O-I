@@ -59,6 +59,10 @@ const CAMERA_2D: EngineFrame["camera"] = {
   mode: "2d", yaw: 0, pitch: 0, zoom: 1, panX: 0, panY: 0,
   plane: "XY", depth: 0, grid: false, snap: false,
 };
+/** Element-bounded Expression hosts need breathing room for authored loci at
+ * the edge of the instrument's normal stage. This is a view fit only: scene
+ * coordinates, source refs and the owner-held field remain unchanged. */
+const ELEMENT_CAMERA_2D: EngineFrame["camera"] = {...CAMERA_2D,zoom:0.6};
 
 const IDLE_CONFIG: NativeConfig = { glyph: " ", particleCount: 2048 };
 const STAGE_IDLE = "stage-idle";
@@ -104,7 +108,8 @@ export class EngineSurface {
       const width = element ? element.clientWidth : window.innerWidth;
       const height = element ? element.clientHeight : window.innerHeight;
       const origin = stageCentre(width, height);
-      const scale = (stageScale(width, height) * CAMERA_2D.zoom) / WORLD_SCALE;
+      const camera=element?ELEMENT_CAMERA_2D:CAMERA_2D;
+      const scale = (stageScale(width, height) * camera.zoom) / WORLD_SCALE;
       const localX = element ? event.clientX - element.getBoundingClientRect().left : event.clientX;
       const localY = element ? event.clientY - element.getBoundingClientRect().top : event.clientY;
       if (element && (localX < 0 || localY < 0 || localX > width || localY > height)) { leave(); return; }
@@ -361,7 +366,7 @@ export class EngineSurface {
     } else { width = window.innerWidth; height = window.innerHeight; }
     try {
       this.adapter.resize(width, height, window.devicePixelRatio || 1);
-      this.adapter.render({ scene: this.active!.scene, authoringRevision: this.active!.revision, simTime: 0, delta, params: {}, camera: CAMERA_2D, pointer: this.pointer, selectedIds: this.selectedIds, scaffold: "off" });
+      this.adapter.render({ scene: this.active!.scene, authoringRevision: this.active!.revision, simTime: 0, delta, params: {}, camera: this.element?ELEMENT_CAMERA_2D:CAMERA_2D, pointer: this.pointer, selectedIds: this.selectedIds, scaffold: "off" });
       return true;
     } catch (cause) {
       this.sleep();

@@ -85,12 +85,10 @@ export function primaryProjection(reading) {
   const projections = Array.isArray(reading.projections) ? reading.projections : [];
   const entry = reading.entry;
   const named = entry?.meta?.projection_ref ?? entry?.projection_ref;
-  const published = projections.filter((projection) => projection.state === 'published');
   const latest = (rows) => rows.slice().sort((a, b) => b.projection_revision - a.projection_revision)[0] ?? null;
-  return latest(published.filter((projection) => named && projection.projection_ref === named))
-    ?? latest(published.filter((projection) => projection.subject?.ref === entry?.ref))
-    ?? latest(published.filter((projection) => projection.subject?.ref === entry?.world_ref))
-    ?? latest(published)
+  return latest(projections.filter((projection) => named && projection.projection_ref === named))
+    ?? latest(projections.filter((projection) => projection.subject?.ref === entry?.ref))
+    ?? latest(projections.filter((projection) => projection.subject?.ref === entry?.world_ref))
     ?? latest(projections);
 }
 

@@ -66,6 +66,7 @@ const SCENARIOS = {
   instrument: { module: "scenarios/instrument.mjs", kernel: true, aliases: ["k9"] },
   "instrument-host": { module: "scenarios/instrument-host.mjs", kernel: true, aliases: ["k9-host"] },
   "instrument-native-host": { module: "scenarios/instrument-native-host.mjs", kernel: true, aliases: ["k9-native"] },
+  "sf5-protected-nara": { module: "scenarios/sf5-protected-nara.mjs", kernel: true, aliases: ["sf5"] },
   visuals: { module: "scenarios/visuals.mjs", kernel: true, aliases: [] },
   surfaces: { module: "scenarios/surfaces.mjs", kernel: true, aliases: ["u0.3b"] },
   "kernel-cas": { module: "scenarios/kernel-cas.mjs", kernel: true, aliases: ["u0.4"] },
