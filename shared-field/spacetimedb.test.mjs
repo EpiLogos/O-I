@@ -212,3 +212,23 @@ test('live Explore keeps the last good index when a subscribed provider row viol
   assert.equal(live.read('agent:parasakti').label, 'Parāśakti');
   live.dispose();
 });
+
+
+test('one malformed or unavailable relation retains valid subjects and exact surviving relations', () => {
+  const rows = hostedRows();
+  const canonical = rows.exploreRelations[0];
+  rows.exploreRelations.push({...canonical, rowId:91n, relationRef:'edge:unreadable', relationJson:'{"private_body":"SENTINEL"}'});
+  const missing = {...JSON.parse(canonical.relationJson), relation_ref:'edge:missing-endpoint', to:'subject:unavailable'};
+  rows.exploreRelations.push({...canonical,rowId:92n,relationRef:missing.relation_ref,toRef:missing.to,relationJson:json(missing)});
+  rows.exploreRelations.push({...canonical,rowId:93n,relationRef:'edge:invalid-json',relationJson:'PRIVATE_SENTINEL invalid JSON'});
+  const degraded = hostedSnapshotFromRows(rows);
+  assert.equal(degraded.entries.length,2);
+  assert.deepEqual(degraded.relations,[JSON.parse(canonical.relationJson)]);
+  assert.deepEqual(degraded.relation_errors.map(row=>row.relation_ref),['edge:unreadable','edge:missing-endpoint','edge:invalid-json']);
+  assert.equal(JSON.stringify(degraded).includes('SENTINEL'),false);
+  rows.exploreRelations.splice(1);
+  const restored = hostedSnapshotFromRows(rows);
+  assert.deepEqual(restored.relation_errors,[]);
+  assert.deepEqual(restored.relations,degraded.relations);
+  assert.deepEqual(restored.implementation.relations,degraded.implementation.relations);
+});

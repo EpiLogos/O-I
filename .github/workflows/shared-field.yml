@@ -74,6 +74,12 @@ jobs:
         run: spacetime generate --lang typescript --out-dir shared-field/spacetimedb/module_bindings --module-path shared-field/spacetimedb
       - name: Prove large client envelopes survive native process exit
         run: node --test shared-field/spacetimedb/field-cli.test.mjs
+      - name: Prove unavailable relation isolation and exact owner repair
+        env:
+          SPACETIMEDB_URI: ws://127.0.0.1:3000
+          SPACETIMEDB_DATABASE: oi-shared-field-ci
+        working-directory: shared-field/spacetimedb
+        run: npx tsx relation-recovery-live-acceptance.ts
       - name: Prove Phase 1 privacy, Phase 2 Admission and Phase 3 Exchange conformance
         env:
           SPACETIMEDB_URI: ws://127.0.0.1:3000

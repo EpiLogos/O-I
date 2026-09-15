@@ -56,7 +56,8 @@ export function PresentationBody({reading,relations,onOpenRef,depth,onDepth,watc
       {depth.relations&&<aside className="presentation-depth presentation-depth--relations" aria-label="Relations of this subject">
         <header><span>Relations</span><button type="button" aria-label="Dismiss relations" onClick={()=>onDepth({relations:false})}>×</button></header>
         <ul className="presentation-relations">{touching.map((row,i)=><li key={i}><button type="button" onClick={()=>onOpenRef(row.other)}>{row.other}</button><small>{row.direction==="out"?"→":"←"} {row.relation} · {row.origin}</small></li>)}</ul>
-        {!touching.length&&<p className="explore-muted">No hosted relation touches this subject.</p>}
+        {!touching.length&&!reading.relation_errors?.length&&<p className="explore-muted">No hosted relation touches this subject.</p>}
+        {!!reading.relation_errors?.length&&<details open data-relation-errors={reading.relation_errors.length}><summary>Unavailable relations in this field</summary><ul>{reading.relation_errors.map((row,index)=><li key={index}><code>{row.relation_ref??"Unidentified source relation"}</code>: {row.detail}</li>)}</ul></details>}
         {neighbourhood?.relations?.nodes?.length?<details><summary>Bounded neighbourhood · {neighbourhood.relations.nodes.length}</summary><ul className="presentation-relations">{neighbourhood.relations.nodes.filter(node=>node.ref!==reading.entry.ref).map(node=><li key={node.ref}><button type="button" onClick={()=>onOpenRef(node.ref)}>{node.label??node.ref}</button><small>{node.kind??""}</small></li>)}</ul></details>:neighbourhood?.error?<p className="explore-muted">Neighbourhood: {neighbourhood.error}</p>:null}
       </aside>}
       <div className="presentation-main">

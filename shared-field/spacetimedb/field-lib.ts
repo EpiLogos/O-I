@@ -134,6 +134,7 @@ export function fieldSnapshot(client: Client) {
     projections: hosted.projections,
     entries: hosted.entries,
     relations: hosted.relations,
+    relation_errors: hosted.relation_errors,
     contributions: rows(db.contribution).map((row: any) => ({ contribution_ref: row.contributionRef, field_ref: row.fieldRef, contributor_participant_ref: row.contributorParticipantRef, ingress_ref: row.ingressRef ?? null, contract: parse(row.contractJson) })),
     my_authority: rows(db.myFieldAuthority).map((row: any) => ({ field_ref: row.fieldRef, participant_ref: row.participantRef, role: row.role, revoked: Boolean(row.revoked) })),
     my_contribution_receipts: rows(db.myContributionReceipt).map((row: any) => ({ contribution_ref: row.contributionRef, ingress_ref: row.ingressRef, field_ref: row.fieldRef, state: row.state })),
@@ -160,9 +161,10 @@ export function readRef(client: Client, ref: string) {
   try { neighbourhood = client.live.open(entry.ref, { depth: 1, budget: 24 }); } catch (error: any) { neighbourhood = { error: error?.message ?? String(error) }; }
   const contributions = snapshot.contributions.filter((row: any) => projections.some((projection: any) => row.contract?.target?.ref === projection.projection_ref) || row.contract?.target?.ref === entry.ref);
   const field_ref = snapshot.entry_fields[entry.ref] ?? null;
+  const relation_errors = snapshot.relation_errors.filter((row: any) => row.field_ref === field_ref || row.from === entry.ref || row.to === entry.ref);
   const my_authority = snapshot.my_authority.filter((row: any) => row.field_ref === field_ref);
   const my_watches = snapshot.my_watches.filter((row: any) => row.target_ref === entry.ref);
-  return { schema: 'oi.shared-field.reading/v1', ref, state: 'hosted', target: snapshot.target, field_ref, entry, projections, relations, contributions, neighbourhood, my_authority, my_watches, status: snapshot.status };
+  return { schema: 'oi.shared-field.reading/v1', ref, state: 'hosted', target: snapshot.target, field_ref, entry, projections, relations, relation_errors, contributions, neighbourhood, my_authority, my_watches, status: snapshot.status };
 }
 
 /** Push hosted reducer arguments (the `hostedPublicationArgs` shape) in
