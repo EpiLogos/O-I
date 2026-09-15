@@ -7,10 +7,17 @@ Status: deterministic pre-physical implementation for O:I #159 / #158 / #97.
 The implementation was received from current upstream rather than remembered Omarchy behaviour.
 
 - canonical repository: `https://github.com/omacom/omarchy`
-- current stable release at implementation: `v4.0.2`
-- inspected `quattro` contract revision: `d3d23fdddef846ebb98b52122a6ece66211c0daf`
+- current stable release at implementation: `v4.0.3`
+- inspected contract revision: `0534987009061cbe2dacdde4ad564092ab698d12` (the `v4.0.3` release commit itself; one commit now carries both the release and the shell/plugin/IPC contract)
 
-At that revision Omarchy runs one long-lived Quickshell host. Third-party plugins are user-config checkouts/directories under `~/.config/omarchy/plugins/<id>/`; `~/.config/omarchy/shell.json` remains Omarchy-owned authoritative customization state. Plugin manifests can declare several kinds. The shell loads service kinds independently, registers bar widgets independently, and gives on-demand loader precedence `panel -> overlay -> menu` when one plugin id declares more than one presentation kind. `keepLoaded` services survive plugin hot reload and receive the refreshed manifest; their code itself changes only after a shell restart.
+The v4.0.2 → v4.0.3 re-base was performed against the upstream tags, not from memory. What changed on the surfaces this contract covers:
+
+- Plugin host context became capability-scoped (upstream PR #9618): a plugin no longer receives the raw host shell or bar object. It receives a `PluginShellApi` scoped to its own id (`summon`/`hide`/`toggle`/`isPluginOpen`), a `PluginBarApi` whose `run(command)` still detaches the given command, a deep-copied public manifest (user fields such as `id` preserved), and scoped read-only registry views. The O:I payloads call exactly `shell.toggle(id, json)`, `shell.hide(id)` and `bar.run(command)`, so the payload bytes are unchanged by this re-base.
+- `keepLoaded` services survive plugin hot reload (upstream #9485) — the behaviour the previous pin inspected on the `quattro` development line at `d3d23fdd` — is contained in v4.0.3 itself. The old pin mixed the `v4.0.2` release tag with a development-line contract revision; v4.0.3 removes that split.
+- The plugin manifest schema is unchanged at v4.0.3 (`schemaVersion` 1; required `id`/`name`/`version`/`kinds`/`entryPoints`; relative entry points; `barWidget.defaultSection` in `left|center|right`). Both O:I manifests validate unchanged.
+- `omarchy plugin enable` is `<id> [placement]` with `--section|--index|--before|--after`; it has no confirmation prompt and no `--yes` flag (that flag belongs to `omarchy plugin add`). The native activation commands below were corrected accordingly during this re-base.
+
+At this revision Omarchy runs one long-lived Quickshell host. Third-party plugins are user-config checkouts/directories under `~/.config/omarchy/plugins/<id>/`; `~/.config/omarchy/shell.json` remains Omarchy-owned authoritative customization state. Plugin manifests can declare several kinds. The shell loads service kinds independently, registers bar widgets independently, and gives on-demand loader precedence `panel -> overlay -> menu` when one plugin id declares more than one presentation kind. `keepLoaded` services survive plugin hot reload and receive the refreshed manifest; their code itself changes only after a shell restart.
 
 That loader relation determines the O:I contribution shape:
 
@@ -55,8 +62,8 @@ oi host omarchy verify [--home PATH] [--json]
 Native activation remains an Omarchy operation and is returned as an explicit next relation:
 
 ```text
-omarchy plugin enable org.epilogos.oi --yes
-omarchy plugin enable org.epilogos.oi.switcher --yes
+omarchy plugin enable org.epilogos.oi
+omarchy plugin enable org.epilogos.oi.switcher
 omarchy-shell shell rescanPlugins
 omarchy-shell shell listPlugins
 ```
