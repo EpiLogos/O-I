@@ -163,17 +163,15 @@ impl OwnerRegistry {
 
     /// Turn a discovery document into a registration, or into the reason it
     /// could not be admitted. `Ok(())` under `Err(reason)`-shaped results.
-    fn admit_document(
-        &mut self,
-        spec: &OwnerSpec,
-        value: Value,
-    ) -> Option<RegistryDegradation> {
-        let failure = |state, reason: String, native_error: Option<String>| Some(RegistryDegradation {
-            owner_ref: spec.owner_ref.clone(),
-            state,
-            reason,
-            native_error,
-        });
+    fn admit_document(&mut self, spec: &OwnerSpec, value: Value) -> Option<RegistryDegradation> {
+        let failure = |state, reason: String, native_error: Option<String>| {
+            Some(RegistryDegradation {
+                owner_ref: spec.owner_ref.clone(),
+                state,
+                reason,
+                native_error,
+            })
+        };
         let contribution: Contribution = match serde_json::from_value(value) {
             Ok(contribution) => contribution,
             Err(error) => {
@@ -294,16 +292,32 @@ mod tests {
         fn system_reading(&self, _owner_ref: &str) -> Result<Value, TransportError> {
             Err(TransportFailure::owner_unavailable("stub").into())
         }
-        fn validate(&self, _: &str, _: &super::super::transport::SettingRequest) -> Result<Value, TransportError> {
+        fn validate(
+            &self,
+            _: &str,
+            _: &super::super::transport::SettingRequest,
+        ) -> Result<Value, TransportError> {
             Err(TransportFailure::owner_unavailable("stub").into())
         }
-        fn plan(&self, _: &str, _: &super::super::transport::SettingRequest) -> Result<Value, TransportError> {
+        fn plan(
+            &self,
+            _: &str,
+            _: &super::super::transport::SettingRequest,
+        ) -> Result<Value, TransportError> {
             Err(TransportFailure::owner_unavailable("stub").into())
         }
-        fn apply(&self, _: &str, _: &super::super::transport::ApplyRequest) -> Result<Value, TransportError> {
+        fn apply(
+            &self,
+            _: &str,
+            _: &super::super::transport::ApplyRequest,
+        ) -> Result<Value, TransportError> {
             Err(TransportFailure::owner_unavailable("stub").into())
         }
-        fn reset(&self, _: &str, _: &super::super::transport::ResetRequest) -> Result<Value, TransportError> {
+        fn reset(
+            &self,
+            _: &str,
+            _: &super::super::transport::ResetRequest,
+        ) -> Result<Value, TransportError> {
             Err(TransportFailure::owner_unavailable("stub").into())
         }
     }
@@ -330,16 +344,27 @@ mod tests {
         registry.discover_specs(
             &transport,
             &[
-                OwnerSpec { owner_ref: "ai-kit".into(), program: "aikit".into() },
-                OwnerSpec { owner_ref: "workcell".into(), program: "workcell".into() },
-                OwnerSpec { owner_ref: "central".into(), program: "ctrl".into() },
+                OwnerSpec {
+                    owner_ref: "ai-kit".into(),
+                    program: "aikit".into(),
+                },
+                OwnerSpec {
+                    owner_ref: "workcell".into(),
+                    program: "workcell".into(),
+                },
+                OwnerSpec {
+                    owner_ref: "central".into(),
+                    program: "ctrl".into(),
+                },
             ],
         );
 
         // The conforming document is registered whole.
         assert!(registry.lookup("ai-kit:resolution:model.default").is_some());
         // The absent owner fabricated nothing.
-        assert!(registry.lookup("workcell:placement:placement.policy").is_none());
+        assert!(registry
+            .lookup("workcell:placement:placement.policy")
+            .is_none());
         // The non-conforming answer is a named degradation, never a guess.
         let degraded = &registry.degradations()[1];
         assert_eq!(degraded.owner_ref, "central");
@@ -347,7 +372,11 @@ mod tests {
         let unavailable = &registry.degradations()[0];
         assert_eq!(unavailable.owner_ref, "workcell");
         assert_eq!(unavailable.state, DegradationState::Unavailable);
-        assert!(unavailable.native_error.as_deref().unwrap().contains("not installed"));
+        assert!(unavailable
+            .native_error
+            .as_deref()
+            .unwrap()
+            .contains("not installed"));
     }
 
     #[test]
@@ -392,6 +421,11 @@ mod tests {
             registry.scope_decision("ai-kit:resolution:model.default", &scope),
             ScopeDecision::UnsupportedScope
         );
-        assert!(registry.owner_of("ai-kit:resolution:model.default").unwrap() == "ai-kit");
+        assert!(
+            registry
+                .owner_of("ai-kit:resolution:model.default")
+                .unwrap()
+                == "ai-kit"
+        );
     }
 }

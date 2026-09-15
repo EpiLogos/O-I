@@ -36,9 +36,9 @@
 //! [`crate::fixture_surface::FixtureSurface`], which remains a test double.
 
 use crate::config_surface::{
-    AppliedChange, ChangeRequest, ConfigPlan, ConfigSurface, DoctorClassification, DoctorFinding,
-    ListedSetting, OwnerContribution, PlanChange, ProfileActivation, ProfileSurface,
-    ProfileSummary, SurfaceError, SurfaceResult, classify_reconciliation,
+    classify_reconciliation, AppliedChange, ChangeRequest, ConfigPlan, ConfigSurface,
+    DoctorClassification, DoctorFinding, ListedSetting, OwnerContribution, PlanChange,
+    ProfileActivation, ProfileSummary, ProfileSurface, SurfaceError, SurfaceResult,
 };
 use crate::configuration::kernel::{
     assemble_changeset, desired_change, execute_changeset, mint_changeset_id, plan_request,
@@ -50,10 +50,10 @@ use crate::configuration::profile_store::{
     import_document, is_valid_profile_ref, ProfileStore, StoreError,
 };
 use crate::configuration::{
-    AuthoredBy, ChangeSet, Desired, DesiredEntry, ErrorCode, OperationKind, OperationStatus,
-    Profile, ProfileProvenance, Reconciliation, ReconciliationStatus, RequestedChange, Resolution,
-    Scope, SecretReference, SecretReferenceValue, SettingSpec, ValueKind, RESOLUTION_SCHEMA,
-    validate_changeset, validate_resolution,
+    validate_changeset, validate_resolution, AuthoredBy, ChangeSet, Desired, DesiredEntry,
+    ErrorCode, OperationKind, OperationStatus, Profile, ProfileProvenance, Reconciliation,
+    ReconciliationStatus, RequestedChange, Resolution, Scope, SecretReference,
+    SecretReferenceValue, SettingSpec, ValueKind, RESOLUTION_SCHEMA,
 };
 use serde_json::Value;
 use std::collections::BTreeMap;
@@ -221,14 +221,10 @@ impl KernelSurface {
     /// argument), and the disclosed shape checks. Writability and the
     /// apply/plan capability stay the kernel assembly's own decisions.
     fn normalize(&self, request: &ChangeRequest) -> SurfaceResult<DesiredChange> {
-        let (registered, _owner) = resolve_setting_address(
-            &self.registry,
-            &request.setting_ref,
-            &request.scope,
-        )
-        .map_err(|error| {
-            Self::kernel_error(error, Some(&request.setting_ref), Some(&request.scope))
-        })?;
+        let (registered, _owner) =
+            resolve_setting_address(&self.registry, &request.setting_ref, &request.scope).map_err(
+                |error| Self::kernel_error(error, Some(&request.setting_ref), Some(&request.scope)),
+            )?;
         let spec = &registered.spec;
         let mut value = request.value.clone();
         let mut secret_reference = request.secret_reference.clone();
@@ -306,10 +302,8 @@ impl KernelSurface {
     fn held_desired(&self) -> SurfaceResult<BTreeMap<(String, String), HeldDesired>> {
         let mut changesets = self.store.list_changesets().map_err(internal)?;
         changesets.sort_by(|left, right| {
-            (left.created_at_unix_ms, left.changeset_id.as_str()).cmp(&(
-                right.created_at_unix_ms,
-                right.changeset_id.as_str(),
-            ))
+            (left.created_at_unix_ms, left.changeset_id.as_str())
+                .cmp(&(right.created_at_unix_ms, right.changeset_id.as_str()))
         });
         let mut held: BTreeMap<(String, String), HeldDesired> = BTreeMap::new();
         for changeset in &changesets {
@@ -339,12 +333,11 @@ impl KernelSurface {
                                     setting_ref: requested.setting_ref.clone(),
                                     scope: requested.scope.clone(),
                                     value: requested.value.clone(),
-                                    secret_reference: requested
-                                        .secret_reference
-                                        .as_ref()
-                                        .map(|reference| SecretReferenceValue {
+                                    secret_reference: requested.secret_reference.as_ref().map(
+                                        |reference| SecretReferenceValue {
                                             ref_: reference.ref_.clone(),
-                                        }),
+                                        },
+                                    ),
                                 },
                                 changeset_id: Some(changeset.changeset_id.clone()),
                             },
@@ -575,11 +568,14 @@ impl ConfigSurface for KernelSurface {
         let desired = self.normalize(request)?;
         // The owner-native plan crosses back whole (09 §6): O:I mints no
         // plan identity and no idempotency digest.
-        let document =
-            plan_request(&self.registry, &self.gateway(), &Self::requested_of(&desired))
-                .map_err(|error| {
-                    Self::kernel_error(error, Some(&desired.setting_ref), Some(&desired.scope))
-                })?;
+        let document = plan_request(
+            &self.registry,
+            &self.gateway(),
+            &Self::requested_of(&desired),
+        )
+        .map_err(|error| {
+            Self::kernel_error(error, Some(&desired.setting_ref), Some(&desired.scope))
+        })?;
         Ok(Self::plan_document_into(document))
     }
 
@@ -685,13 +681,12 @@ impl ConfigSurface for KernelSurface {
                     scope: scope.clone(),
                     desired: Some(Desired {
                         value: entry.value.clone(),
-                        secret_reference: entry
-                            .secret_reference
-                            .as_ref()
-                            .map(|reference| SecretReference {
+                        secret_reference: entry.secret_reference.as_ref().map(|reference| {
+                            SecretReference {
                                 ref_: reference.ref_.clone(),
                                 present: None,
-                            }),
+                            }
+                        }),
                         source_ref: None,
                         set_at_unix_ms: None,
                     }),
@@ -763,7 +758,10 @@ impl ProfileSurface for KernelSurface {
     fn list(&self) -> SurfaceResult<Vec<ProfileSummary>> {
         let mut summaries = Vec::new();
         for profile_ref in self.profiles.list_refs().map_err(Self::store_error)? {
-            let profile = self.profiles.load(&profile_ref).map_err(Self::store_error)?;
+            let profile = self
+                .profiles
+                .load(&profile_ref)
+                .map_err(Self::store_error)?;
             summaries.push(ProfileSummary {
                 profile_ref: profile.profile_ref,
                 title: profile.title,
@@ -839,7 +837,11 @@ impl ProfileSurface for KernelSurface {
         profile
             .validate()
             .map_err(|error| SurfaceError::new(ErrorCode::InvalidValue, error))?;
-        if self.profiles.exists(target_ref).map_err(Self::store_error)? {
+        if self
+            .profiles
+            .exists(target_ref)
+            .map_err(Self::store_error)?
+        {
             return Err(SurfaceError::new(
                 ErrorCode::InvalidValue,
                 format!("profile `{target_ref}` already exists"),
@@ -919,7 +921,9 @@ fn read_composition_bytes(path: &Path) -> Result<Option<Vec<u8>>, SurfaceError> 
         Err(error) => return Err(internal(format!("cannot inspect composition: {error}"))),
     };
     if !metadata.is_file() || metadata.file_type().is_symlink() {
-        return Err(internal("composition must be a regular file, not a symlink"));
+        return Err(internal(
+            "composition must be a regular file, not a symlink",
+        ));
     }
     let mut bytes = Vec::new();
     let mut options = std::fs::OpenOptions::new();
@@ -934,11 +938,7 @@ fn read_composition_bytes(path: &Path) -> Result<Option<Vec<u8>>, SurfaceError> 
         options.custom_flags(0x20000);
     }
     let file = options.open(path).map_err(|error| internal(error))?;
-    if !file
-        .metadata()
-        .map_err(|error| internal(error))?
-        .is_file()
-    {
+    if !file.metadata().map_err(|error| internal(error))?.is_file() {
         return Err(internal("composition is not a regular file"));
     }
     file.take(COMPOSITION_MAX_BYTES + 1)
@@ -1014,7 +1014,10 @@ fn set_active_mark(home: &Path, profile_ref: Option<&str>) -> SurfaceResult<()> 
             .ok_or_else(|| internal("composition must be a JSON object"))?;
         match profile_ref {
             Some(profile_ref) => {
-                object.insert("active_profile".into(), Value::String(profile_ref.to_owned()));
+                object.insert(
+                    "active_profile".into(),
+                    Value::String(profile_ref.to_owned()),
+                );
             }
             None => {
                 object.remove("active_profile");
@@ -1105,10 +1108,9 @@ mod tests {
         let home = tempfile::tempdir().expect("tempdir");
         assert_eq!(active_mark(home.path()).unwrap(), None);
         set_active_mark(home.path(), Some("sparse")).unwrap();
-        let value: Value = serde_json::from_slice(
-            &std::fs::read(home.path().join("composition.json")).unwrap(),
-        )
-        .unwrap();
+        let value: Value =
+            serde_json::from_slice(&std::fs::read(home.path().join("composition.json")).unwrap())
+                .unwrap();
         assert_eq!(value["schema"], 1);
         assert_eq!(value["active_profile"], "sparse");
     }

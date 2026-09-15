@@ -89,6 +89,7 @@ pub fn kernel_wire_error(
         scope_kind: scope.map(|scope| scope.scope_kind.as_wire().to_owned()),
         retryable: None,
         detail_ref: None,
+        extra: Default::default(),
     }
 }
 
@@ -104,6 +105,7 @@ pub fn error_document(error_code: &str, message: &str) -> ErrorDocument {
         scope_kind: None,
         retryable: None,
         detail_ref: None,
+        extra: Default::default(),
     }
 }
 
@@ -111,9 +113,9 @@ pub fn error_document(error_code: &str, message: &str) -> ErrorDocument {
 mod tests {
     use super::*;
     use crate::configuration::kernel::{ChangeKind, ERROR_SCHEMA};
-    use crate::configuration::ErrorCode;
     use crate::configuration::refs::ScopeKind;
     use crate::configuration::resolution::SecretReference;
+    use crate::configuration::ErrorCode;
     use serde_json::json;
 
     #[test]
@@ -160,7 +162,12 @@ mod tests {
             "aikit:credentials:anthropic-key"
         );
         // Presence is observed-only: it never travels into desired state.
-        assert!(change.secret_reference.as_ref().expect("reference").present.is_none());
+        assert!(change
+            .secret_reference
+            .as_ref()
+            .expect("reference")
+            .present
+            .is_none());
 
         let error = KernelError::new(ErrorCode::UnsupportedScope, "world is not allowed here");
         let document = kernel_wire_error(

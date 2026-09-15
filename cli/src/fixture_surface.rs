@@ -11,18 +11,17 @@
 //! real engine; this type stays a test double.
 
 use crate::config_surface::{
-    AppliedChange, ChangeRequest, ConfigPlan, ConfigSurface, DoctorClassification,
-    DoctorFinding, ListedSetting, OwnerContribution, PlanChange, ProfileActivation,
-    ProfileSurface, ProfileSummary, SurfaceError, SurfaceResult, CONFIG_PLAN_SCHEMA,
-    sha256_hex,
+    sha256_hex, AppliedChange, ChangeRequest, ConfigPlan, ConfigSurface, DoctorClassification,
+    DoctorFinding, ListedSetting, OwnerContribution, PlanChange, ProfileActivation, ProfileSummary,
+    ProfileSurface, SurfaceError, SurfaceResult, CONFIG_PLAN_SCHEMA,
 };
 use crate::configuration::{
-    AuthoredBy, ChangeSet, Contribution, ContributionRegistry, Desired, DesiredEntry,
-    ErrorCode, IdempotencyKey, NativeAxes, NativeAxis, Operation, OperationKind, OperationStatus,
-    Profile, ProfileProvenance, Receipt, ReceiptOutcome, ReconciliationInputs,
-    ReconciliationStatus, RequestedChange, Resolution, Scope, ScopeDecision, SecretReference,
-    SettingSpec, StageState, ValueKind, reconcile, derive_changeset_status, parse_setting_ref,
-    validate_changeset, validate_profile,
+    derive_changeset_status, parse_setting_ref, reconcile, validate_changeset, validate_profile,
+    AuthoredBy, ChangeSet, Contribution, ContributionRegistry, Desired, DesiredEntry, ErrorCode,
+    IdempotencyKey, NativeAxes, NativeAxis, Operation, OperationKind, OperationStatus, Profile,
+    ProfileProvenance, Receipt, ReceiptOutcome, ReconciliationInputs, ReconciliationStatus,
+    RequestedChange, Resolution, Scope, ScopeDecision, SecretReference, SettingSpec, StageState,
+    ValueKind,
 };
 use serde_json::Value;
 use std::cell::{Cell, RefCell};
@@ -75,8 +74,9 @@ impl FixtureSurface {
         let mut registry = ContributionRegistry::new();
         for name in FIXTURE_CONTRIBUTIONS {
             let case = read_case(dir, name)?;
-            let contribution: Contribution = serde_json::from_value(case["contribution"].clone())
-                .map_err(|error| format!("{name} does not parse: {error}"))?;
+            let contribution: Contribution =
+                serde_json::from_value(case["contribution"].clone())
+                    .map_err(|error| format!("{name} does not parse: {error}"))?;
             contribution
                 .validate()
                 .map_err(|error| format!("{name} violates the contribution contract: {error}"))?;
@@ -122,8 +122,10 @@ impl FixtureSurface {
         // Seed the simulated owner-native baseline: constant defaults are the
         // only values an owner discloses as its baseline (09 §2.2); computed
         // defaults stay uncopied — a forbidden storage class.
-        for listed in ConfigSurface::list(&surface).expect("fixture surface lists its own settings") {
-            if listed.setting.default_semantics == Some(crate::configuration::DefaultSemantics::Constant)
+        for listed in ConfigSurface::list(&surface).expect("fixture surface lists its own settings")
+        {
+            if listed.setting.default_semantics
+                == Some(crate::configuration::DefaultSemantics::Constant)
             {
                 if let Some(default) = &listed.setting.default {
                     surface.native.borrow_mut().insert(
@@ -138,7 +140,10 @@ impl FixtureSurface {
         }
         // Seed the fixture profile as inspectable desired state.
         validate_profile(&profile, &surface.registry)?;
-        surface.profiles.borrow_mut().insert(profile.profile_ref.clone(), profile);
+        surface
+            .profiles
+            .borrow_mut()
+            .insert(profile.profile_ref.clone(), profile);
         Ok(surface)
     }
 
@@ -234,10 +239,9 @@ impl FixtureSurface {
                             .allowed_scopes
                             .iter()
                             .map(|allowed| match &allowed.scope_ref {
-                                Some(reference) => format!(
-                                    "{}:{reference}",
-                                    allowed.scope_kind.as_wire()
-                                ),
+                                Some(reference) => {
+                                    format!("{}:{reference}", allowed.scope_kind.as_wire())
+                                }
                                 None => allowed.scope_kind.as_wire().to_owned(),
                             })
                             .collect::<Vec<_>>()
@@ -256,7 +260,10 @@ impl FixtureSurface {
             }
             ScopeDecision::UnknownScopeKind => Err(SurfaceError::new(
                 ErrorCode::UnknownScopeKind,
-                format!("scope kind `{}` is outside the frozen registry", scope.scope_kind.as_wire()),
+                format!(
+                    "scope kind `{}` is outside the frozen registry",
+                    scope.scope_kind.as_wire()
+                ),
             )
             .setting(setting_ref)
             .scope(scope)),
@@ -265,7 +272,10 @@ impl FixtureSurface {
 
     /// Contribution-level shape checks plus the secret law (09 §14): a
     /// secret-kind request carries a reference and never a value.
-    fn normalize_request(&self, request: &ChangeRequest) -> SurfaceResult<(SettingSpec, RequestedChange)> {
+    fn normalize_request(
+        &self,
+        request: &ChangeRequest,
+    ) -> SurfaceResult<(SettingSpec, RequestedChange)> {
         let spec = self.resolve_spec(&request.setting_ref)?;
         self.check_scope(&request.setting_ref, &request.scope)?;
         if !spec.writable {
@@ -295,7 +305,8 @@ impl FixtureSurface {
                         .setting(&request.setting_ref)
                         .scope(&request.scope));
                     };
-                    secret_reference = Some(crate::configuration::SecretReferenceValue { ref_: reference });
+                    secret_reference =
+                        Some(crate::configuration::SecretReferenceValue { ref_: reference });
                 }
                 value = None;
             }
@@ -365,8 +376,14 @@ impl FixtureSurface {
             ValueKind::Integer => match value.as_i64() {
                 None => return Err(refused("expected an integer".into())),
                 Some(integer) => {
-                    if spec.value_schema.minimum.is_some_and(|minimum| (integer as f64) < minimum)
-                        || spec.value_schema.maximum.is_some_and(|maximum| (integer as f64) > maximum)
+                    if spec
+                        .value_schema
+                        .minimum
+                        .is_some_and(|minimum| (integer as f64) < minimum)
+                        || spec
+                            .value_schema
+                            .maximum
+                            .is_some_and(|maximum| (integer as f64) > maximum)
                     {
                         return Err(refused("integer outside the disclosed range".into()));
                     }
@@ -408,9 +425,14 @@ impl FixtureSurface {
     }
 
     /// The owner-native plan for one already-normalised request.
-    fn plan_normalized(&self, spec: &SettingSpec, requested: &RequestedChange) -> SurfaceResult<ConfigPlan> {
-        let owner_ref = Self::owner_of(&requested.setting_ref)
-            .ok_or_else(|| SurfaceError::new(ErrorCode::Internal, "normalised request lost its owner"))?;
+    fn plan_normalized(
+        &self,
+        spec: &SettingSpec,
+        requested: &RequestedChange,
+    ) -> SurfaceResult<ConfigPlan> {
+        let owner_ref = Self::owner_of(&requested.setting_ref).ok_or_else(|| {
+            SurfaceError::new(ErrorCode::Internal, "normalised request lost its owner")
+        })?;
         if let Some(reason) = self.unavailable_owners.get(&owner_ref) {
             return Err(SurfaceError::new(
                 ErrorCode::OwnerUnavailable,
@@ -440,7 +462,10 @@ impl FixtureSurface {
             setting_ref: requested.setting_ref.clone(),
             scope: requested.scope.clone(),
             changes: vec![PlanChange {
-                summary: format!("owner `{owner_ref}` applies {subject} at `{}`", requested.scope.compact()),
+                summary: format!(
+                    "owner `{owner_ref}` applies {subject} at `{}`",
+                    requested.scope.compact()
+                ),
                 native_ref: spec.native_ref.clone(),
                 before_ref: None,
                 after_ref: None,
@@ -472,12 +497,11 @@ impl FixtureSurface {
             setting_ref: requested.setting_ref.clone(),
             scope: requested.scope.clone(),
             value: requested.value.clone(),
-            secret_reference: requested
-                .secret_reference
-                .as_ref()
-                .map(|reference| crate::configuration::SecretReferenceValue {
+            secret_reference: requested.secret_reference.as_ref().map(|reference| {
+                crate::configuration::SecretReferenceValue {
                     ref_: reference.ref_.clone(),
-                }),
+                }
+            }),
         });
     }
 
@@ -528,12 +552,13 @@ impl FixtureSurface {
             observed_at_unix_ms: Some(self.now_ms.get()),
         };
         let axis = |fact: Option<&NativeFact>| {
-            fact.and_then(|fact| fact.value.clone()).map(|value| NativeAxis {
-                value: Some(value),
-                provenance: Some(provenance()),
-                materialisation_ref: None,
-                stage_state: None,
-            })
+            fact.and_then(|fact| fact.value.clone())
+                .map(|value| NativeAxis {
+                    value: Some(value),
+                    provenance: Some(provenance()),
+                    materialisation_ref: None,
+                    stage_state: None,
+                })
         };
         let native_axes = if fact.is_some() {
             Some(NativeAxes {
@@ -598,7 +623,9 @@ impl FixtureSurface {
             native: native_axes,
             native_reading: Some(crate::configuration::NativeReading {
                 reading_digest: Some(sha256_hex(
-                    serde_json::to_string(&*native).unwrap_or_default().as_bytes(),
+                    serde_json::to_string(&*native)
+                        .unwrap_or_default()
+                        .as_bytes(),
                 )),
                 observed_at_unix_ms: Some(self.now_ms.get()),
             }),
@@ -663,7 +690,10 @@ impl ConfigSurface for FixtureSurface {
     fn list(&self) -> SurfaceResult<Vec<ListedSetting>> {
         let mut listed = Vec::new();
         for contribution in &self.contributions {
-            if self.unavailable_owners.contains_key(&contribution.owner.owner_ref) {
+            if self
+                .unavailable_owners
+                .contains_key(&contribution.owner.owner_ref)
+            {
                 continue;
             }
             for section in &contribution.sections {
@@ -884,7 +914,9 @@ impl ConfigSurface for FixtureSurface {
         let native = self.native.borrow();
         let verification = crate::configuration::Verification {
             reading_digest: Some(sha256_hex(
-                serde_json::to_string(&*native).unwrap_or_default().as_bytes(),
+                serde_json::to_string(&*native)
+                    .unwrap_or_default()
+                    .as_bytes(),
             )),
             observed_at_unix_ms: self.now_ms.get(),
             reconciliations,
@@ -903,7 +935,10 @@ impl ConfigSurface for FixtureSurface {
         };
         validate_changeset(&changeset, &self.registry)
             .map_err(|error| SurfaceError::new(ErrorCode::Internal, error))?;
-        Ok(AppliedChange { changeset, receipts })
+        Ok(AppliedChange {
+            changeset,
+            receipts,
+        })
     }
 
     fn reset(&self, setting_ref: &str, scope: &Scope) -> SurfaceResult<AppliedChange> {
@@ -974,7 +1009,9 @@ impl ConfigSurface for FixtureSurface {
         let native = self.native.borrow();
         let verification = crate::configuration::Verification {
             reading_digest: Some(sha256_hex(
-                serde_json::to_string(&*native).unwrap_or_default().as_bytes(),
+                serde_json::to_string(&*native)
+                    .unwrap_or_default()
+                    .as_bytes(),
             )),
             observed_at_unix_ms: self.now_ms.get(),
             reconciliations: vec![crate::configuration::VerificationEntry {
@@ -985,7 +1022,10 @@ impl ConfigSurface for FixtureSurface {
         drop(native);
         let changeset = ChangeSet {
             schema: crate::configuration::CHANGSET_SCHEMA.to_owned(),
-            changeset_id: format!("cs-reset-{}", receipt.receipt_id.trim_start_matches("fixture-")),
+            changeset_id: format!(
+                "cs-reset-{}",
+                receipt.receipt_id.trim_start_matches("fixture-")
+            ),
             created_at_unix_ms: self.now_ms.get(),
             profile_ref: None,
             status: derive_changeset_status(&operations, Some(&verification)),
@@ -996,14 +1036,20 @@ impl ConfigSurface for FixtureSurface {
         };
         validate_changeset(&changeset, &self.registry)
             .map_err(|error| SurfaceError::new(ErrorCode::Internal, error))?;
-        Ok(AppliedChange { changeset, receipts: vec![receipt] })
+        Ok(AppliedChange {
+            changeset,
+            receipts: vec![receipt],
+        })
     }
 
     fn doctor(&self) -> SurfaceResult<Vec<DoctorFinding>> {
         let mut findings = Vec::new();
         // Absent owners are findings, never silence (09 §4).
         for owner in self.discover()? {
-            if let OwnerContribution::Unavailable { owner_ref, reason, .. } = owner {
+            if let OwnerContribution::Unavailable {
+                owner_ref, reason, ..
+            } = owner
+            {
                 findings.push(DoctorFinding {
                     classification: DoctorClassification::OwnerUnavailable,
                     owner_ref: Some(owner_ref),
@@ -1033,9 +1079,11 @@ impl ConfigSurface for FixtureSurface {
                     scope: scope.clone(),
                     desired: Some(Desired {
                         value: entry.value.clone(),
-                        secret_reference: entry.secret_reference.as_ref().map(|reference| SecretReference {
-                            ref_: reference.ref_.clone(),
-                            present: None,
+                        secret_reference: entry.secret_reference.as_ref().map(|reference| {
+                            SecretReference {
+                                ref_: reference.ref_.clone(),
+                                present: None,
+                            }
                         }),
                         source_ref: None,
                         set_at_unix_ms: None,
@@ -1066,7 +1114,8 @@ impl ConfigSurface for FixtureSurface {
             let classification = match self.resolve_entry(&entry) {
                 Ok(resolution) => {
                     let status = resolution.reconciliation.status;
-                    if status == ReconciliationStatus::Blocked && !self.owner_available(&setting_ref)
+                    if status == ReconciliationStatus::Blocked
+                        && !self.owner_available(&setting_ref)
                     {
                         Some(DoctorClassification::OwnerUnavailable)
                     } else {
@@ -1264,11 +1313,16 @@ mod tests {
         assert!(!workcell.available());
         let listed = ConfigSurface::list(&*surface).expect("list");
         assert!(
-            listed.iter().any(|setting| setting.setting.setting_ref == "ai-kit:providers:credentials.anthropic"),
+            listed
+                .iter()
+                .any(|setting| setting.setting.setting_ref
+                    == "ai-kit:providers:credentials.anthropic"),
             "the secret-kind setting is listed"
         );
         assert!(
-            !listed.iter().any(|setting| setting.setting.setting_ref.starts_with("workcell:")),
+            !listed
+                .iter()
+                .any(|setting| setting.setting.setting_ref.starts_with("workcell:")),
             "an unavailable owner fabricates no settings"
         );
     }

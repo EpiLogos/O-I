@@ -19,8 +19,8 @@
 //!   bare `world` for singular kinds) — a CLI form, never a wire form.
 
 use crate::configuration::changeset::Receipt;
-use crate::configuration::resolution::SecretReference;
 use crate::configuration::refs::Scope;
+use crate::configuration::resolution::SecretReference;
 use serde_json::{json, Value};
 use std::collections::BTreeMap;
 use std::io::Write;
@@ -193,7 +193,10 @@ impl ProcessTransport {
     ) -> Result<Value, TransportError> {
         let program = self.program(owner_ref)?;
         let mut command = Command::new(&program);
-        command.args(&argv).stdin(Stdio::piped()).stdout(Stdio::piped());
+        command
+            .args(&argv)
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped());
         let mut child = command.spawn().map_err(|error| {
             TransportFailure::owner_unavailable(format!(
                 "owner `{owner_ref}` executable `{}` did not start: {error}",
@@ -255,7 +258,11 @@ impl ProcessTransport {
 
 impl OwnerTransport for ProcessTransport {
     fn discover(&self, owner_ref: &str) -> Result<Value, TransportError> {
-        self.run(owner_ref, vec!["config-contribution".into(), "--json".into()], None)
+        self.run(
+            owner_ref,
+            vec!["config-contribution".into(), "--json".into()],
+            None,
+        )
     }
 
     fn system_reading(&self, owner_ref: &str) -> Result<Value, TransportError> {
@@ -317,13 +324,11 @@ impl OwnerOpError {
     /// own code and message where it gave them, the observed code otherwise.
     pub fn into_operation_error(self) -> crate::configuration::changeset::OperationError {
         match self {
-            OwnerOpError::Owner(document) => {
-                crate::configuration::changeset::OperationError {
-                    code: document.error_code.clone(),
-                    message: document.message.clone(),
-                    retryable: document.retryable,
-                }
-            }
+            OwnerOpError::Owner(document) => crate::configuration::changeset::OperationError {
+                code: document.error_code.clone(),
+                message: document.message.clone(),
+                retryable: document.retryable,
+            },
             OwnerOpError::Failure(failure) => crate::configuration::changeset::OperationError {
                 code: failure.code.as_wire().to_owned(),
                 message: failure.message,
@@ -384,20 +389,12 @@ impl<'a> OwnerGateway<'a> {
             .map_err(OwnerOpError::Failure)
     }
 
-    pub fn apply(
-        &self,
-        owner_ref: &str,
-        request: &ApplyRequest,
-    ) -> Result<Receipt, OwnerOpError> {
+    pub fn apply(&self, owner_ref: &str, request: &ApplyRequest) -> Result<Receipt, OwnerOpError> {
         let value = self.transport.apply(owner_ref, request)?;
         Self::receipt(owner_ref, value)
     }
 
-    pub fn reset(
-        &self,
-        owner_ref: &str,
-        request: &ResetRequest,
-    ) -> Result<Receipt, OwnerOpError> {
+    pub fn reset(&self, owner_ref: &str, request: &ResetRequest) -> Result<Receipt, OwnerOpError> {
         let value = self.transport.reset(owner_ref, request)?;
         Self::receipt(owner_ref, value)
     }

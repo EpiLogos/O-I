@@ -23,8 +23,8 @@ pub mod wire;
 
 pub use orchestration::{
     assemble_changeset, canonical_reading_digest, execute_changeset, idempotency_key_of,
-    mint_changeset_id, plan_request, resolve_setting, resolve_setting_address, reset_setting,
-    DesiredChange, DesiredInput, ExecuteReport, KernelError, ChangeKind,
+    mint_changeset_id, plan_request, reset_setting, resolve_setting, resolve_setting_address,
+    ChangeKind, DesiredChange, DesiredInput, ExecuteReport, KernelError,
 };
 pub use registry::{
     product_position_specs, OwnerEntry, OwnerRegistry, RegistryDegradation, PRODUCT_POSITIONS,
@@ -38,5 +38,7 @@ pub use transport::{
     OwnerSpec, OwnerTransport, ProcessTransport, ResetRequest, SettingRequest, TransportError,
     TransportFailure,
 };
-pub use wire::{ErrorDocument, PlanAuthority, PlanChange, PlanDocument, ValidationDocument,
-    ValidationViolation, ERROR_SCHEMA, PLAN_SCHEMA, VALIDATION_SCHEMA};
+pub use wire::{
+    ErrorDocument, PlanAuthority, PlanChange, PlanDocument, ValidationDocument,
+    ValidationViolation, ERROR_SCHEMA, PLAN_SCHEMA, VALIDATION_SCHEMA,
+};

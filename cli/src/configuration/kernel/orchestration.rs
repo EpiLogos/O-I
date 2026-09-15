@@ -35,7 +35,7 @@ use crate::configuration::changeset::{
 use crate::configuration::contribution::ValueKind;
 use crate::configuration::refs::{parse_setting_ref, Scope, ScopeDecision};
 use crate::configuration::resolution::{
-    reconcile, Desired, NativeAxis, NativeAxes, NativeReading, Reconciliation,
+    reconcile, Desired, NativeAxes, NativeAxis, NativeReading, Reconciliation,
     ReconciliationInputs, ReconciliationStatus, Resolution, StageState, RESOLUTION_SCHEMA,
 };
 use crate::configuration::ErrorCode;
@@ -161,10 +161,13 @@ pub fn resolve_setting_address<'a>(
     registry: &'a OwnerRegistry,
     setting_ref: &str,
     scope: &Scope,
-) -> Result<(
-    &'a crate::configuration::contribution::RegisteredSetting,
-    String,
-), KernelError> {
+) -> Result<
+    (
+        &'a crate::configuration::contribution::RegisteredSetting,
+        String,
+    ),
+    KernelError,
+> {
     if parse_setting_ref(setting_ref).is_err() {
         return Err(KernelError::unsupported_setting(format!(
             "`{setting_ref}` is not a valid setting ref; a ref that does not parse is never coerced"
@@ -186,7 +189,10 @@ pub fn resolve_setting_address<'a>(
         ))),
         ScopeDecision::UnknownScopeKind => Err(KernelError::new(
             ErrorCode::UnknownScopeKind,
-            format!("`{}` uses a scope kind outside the registry", scope.compact()),
+            format!(
+                "`{}` uses a scope kind outside the registry",
+                scope.compact()
+            ),
         )),
     }
 }
@@ -393,7 +399,9 @@ fn execution_order(operations: &[Operation]) -> Result<Vec<usize>, KernelError> 
         })
         .collect::<Result<Vec<_>, KernelError>>()?;
     let mut remaining: Vec<usize> = dependencies.iter().map(|deps| deps.len()).collect();
-    let mut ready: Vec<usize> = (0..operations.len()).filter(|&i| remaining[i] == 0).collect();
+    let mut ready: Vec<usize> = (0..operations.len())
+        .filter(|&i| remaining[i] == 0)
+        .collect();
     let mut order = Vec::with_capacity(operations.len());
     while let Some(&next) = ready.first() {
         ready.remove(0);
@@ -489,7 +497,9 @@ pub fn execute_changeset(
             continue;
         }
 
-        let Some(requested) = requested_for_operation(&requested_changes, &changeset.operations[position]) else {
+        let Some(requested) =
+            requested_for_operation(&requested_changes, &changeset.operations[position])
+        else {
             let op = &mut changeset.operations[position];
             op.status = OperationStatus::Failed;
             op.error = Some(crate::configuration::changeset::OperationError {
@@ -516,7 +526,14 @@ pub fn execute_changeset(
         }
         match op.kind {
             OperationKind::Apply => {
-                run_apply_operation(registry, gateway, &changeset_id, op, &requested, &mut receipts);
+                run_apply_operation(
+                    registry,
+                    gateway,
+                    &changeset_id,
+                    op,
+                    &requested,
+                    &mut receipts,
+                );
             }
             OperationKind::Reset => {
                 run_reset_operation(gateway, &changeset_id, op, &mut receipts);
@@ -542,10 +559,12 @@ pub fn execute_changeset(
     // Verification is evidence, not a promise: taken whenever something was
     // applied, covering every requested change (09 §9).
     let mut reconciliations = Vec::new();
-    let any_executed = changeset
-        .operations
-        .iter()
-        .any(|op| matches!(op.status, OperationStatus::Applied | OperationStatus::Verified));
+    let any_executed = changeset.operations.iter().any(|op| {
+        matches!(
+            op.status,
+            OperationStatus::Applied | OperationStatus::Verified
+        )
+    });
     if any_executed {
         let (verification, records) = take_verification(
             registry,
@@ -561,7 +580,9 @@ pub fn execute_changeset(
         }
         if let Some(store) = store {
             for record in &reconciliations {
-                store.save_reconciliation(record).map_err(KernelError::internal)?;
+                store
+                    .save_reconciliation(record)
+                    .map_err(KernelError::internal)?;
             }
         }
     }
@@ -573,7 +594,8 @@ pub fn execute_changeset(
             store.save_receipt(receipt).map_err(KernelError::internal)?;
         }
     }
-    changeset.status = derive_changeset_status(&changeset.operations, changeset.verification.as_ref());
+    changeset.status =
+        derive_changeset_status(&changeset.operations, changeset.verification.as_ref());
     persist(store, changeset)?;
     Ok(ExecuteReport {
         receipts,
@@ -612,7 +634,10 @@ fn wire_value(requested: &RequestedChange) -> Result<Value, KernelError> {
     requested.value.clone().ok_or_else(|| {
         KernelError::new(
             ErrorCode::InvalidValue,
-            format!("`{}` carries neither a value nor a secret reference", requested.setting_ref),
+            format!(
+                "`{}` carries neither a value nor a secret reference",
+                requested.setting_ref
+            ),
         )
     })
 }
@@ -682,14 +707,12 @@ fn run_apply_operation(
             Err(error) => return fail(op, error.into_operation_error()),
         };
         op.plan_digest = Some(plan.plan_digest.clone());
-        op.plan_ref = Some(plan.explain_ref.clone().unwrap_or_else(|| plan.plan_id.clone()));
-        apply_plan(
-            gateway,
-            changeset_id,
-            op,
-            plan,
-            receipts,
+        op.plan_ref = Some(
+            plan.explain_ref
+                .clone()
+                .unwrap_or_else(|| plan.plan_id.clone()),
         );
+        apply_plan(gateway, changeset_id, op, plan, receipts);
     } else {
         fail(
             op,
@@ -754,10 +777,7 @@ fn run_reset_operation(
 /// Land an owner receipt on its operation. `no_op` is the frozen idempotent
 /// replay (09 §9): the owner did not re-execute; the operation counts as
 /// applied and names the *original* receipt.
-fn record_receipt(
-    op: &mut Operation,
-    receipt: crate::configuration::changeset::Receipt,
-) {
+fn record_receipt(op: &mut Operation, receipt: crate::configuration::changeset::Receipt) {
     match receipt.outcome {
         crate::configuration::changeset::ReceiptOutcome::Applied => {
             op.status = OperationStatus::Applied;
@@ -783,7 +803,9 @@ fn record_receipt(
     }
 }
 
-fn internal_operation_error(error: &KernelError) -> crate::configuration::changeset::OperationError {
+fn internal_operation_error(
+    error: &KernelError,
+) -> crate::configuration::changeset::OperationError {
     crate::configuration::changeset::OperationError {
         code: error.code.as_wire().to_owned(),
         message: error.message.clone(),
@@ -896,10 +918,7 @@ fn stage_state_of(axes: Option<&Value>) -> StageState {
 }
 
 fn axis_value(axes: Option<&Value>, name: &str) -> Option<Value> {
-    let value = axes?
-        .get(name)?
-        .get("value")?
-        .clone();
+    let value = axes?.get(name)?.get("value")?.clone();
     (!value.is_null()).then_some(value)
 }
 
@@ -1030,7 +1049,8 @@ fn reconciliation_status_wire(status: ReconciliationStatus) -> &'static str {
     }
 }
 
-fn reconciliation_reason(    status: ReconciliationStatus,
+fn reconciliation_reason(
+    status: ReconciliationStatus,
     supported: bool,
     owner_available: bool,
     unavailable_reason: Option<&str>,
@@ -1280,10 +1300,7 @@ mod tests {
         ];
         let order = execution_order(&ops).expect("order exists");
         assert_eq!(order, vec![0, 1, 2, 3]);
-        let cyclic = vec![
-            op("op-1", &["op-2"]),
-            op("op-2", &["op-1"]),
-        ];
+        let cyclic = vec![op("op-1", &["op-2"]), op("op-2", &["op-1"])];
         let error = execution_order(&cyclic).expect_err("a cycle has no order");
         assert!(error.message.contains("cycle"), "{}", error.message);
     }
@@ -1302,13 +1319,19 @@ mod tests {
             "owner": { "observed_at_unix_ms": 9, "reading_digest": null },
             "value": "sonnet"
         });
-        assert_eq!(canonical_reading_digest(&first), canonical_reading_digest(&second));
+        assert_eq!(
+            canonical_reading_digest(&first),
+            canonical_reading_digest(&second)
+        );
         let changed = json!({
             "observed_at_unix_ms": 1000,
             "reading_digest": "aaa",
             "owner": { "observed_at_unix_ms": 7, "reading_digest": "bbb" },
             "value": "opus"
         });
-        assert_ne!(canonical_reading_digest(&first), canonical_reading_digest(&changed));
+        assert_ne!(
+            canonical_reading_digest(&first),
+            canonical_reading_digest(&changed)
+        );
     }
 }

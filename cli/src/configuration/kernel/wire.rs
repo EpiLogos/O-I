@@ -26,6 +26,10 @@ pub struct ValidationDocument {
     pub violations: Vec<ValidationViolation>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub expected_effect: Option<Effect>,
+    /// Unknown fields, kept so relayed owner documents stay byte-faithful
+    /// through the kernel (09 §15 pass-through duty).
+    #[serde(flatten)]
+    pub extra: serde_json::Map<String, Value>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -34,6 +38,8 @@ pub struct ValidationViolation {
     pub message: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub path: Option<String>,
+    #[serde(flatten)]
+    pub extra: serde_json::Map<String, Value>,
 }
 
 impl ValidationDocument {
@@ -56,11 +62,9 @@ impl ValidationDocument {
     pub fn violation_message(&self) -> String {
         self.violations
             .iter()
-            .map(|violation| {
-                match &violation.path {
-                    Some(path) => format!("{} (at {path}): {}", violation.code, violation.message),
-                    None => format!("{}: {}", violation.code, violation.message),
-                }
+            .map(|violation| match &violation.path {
+                Some(path) => format!("{} (at {path}): {}", violation.code, violation.message),
+                None => format!("{}: {}", violation.code, violation.message),
             })
             .collect::<Vec<_>>()
             .join("; ")
@@ -86,6 +90,11 @@ pub struct PlanDocument {
     pub explain_ref: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub authority: Option<PlanAuthority>,
+    /// Unknown fields, kept so the plan the owner receives back at apply is
+    /// the plan it minted — the digest anchor survives the kernel round-trip
+    /// (09 §15 pass-through duty).
+    #[serde(flatten)]
+    pub extra: serde_json::Map<String, Value>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -97,6 +106,8 @@ pub struct PlanChange {
     pub before_ref: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub after_ref: Option<String>,
+    #[serde(flatten)]
+    pub extra: serde_json::Map<String, Value>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -105,6 +116,8 @@ pub struct PlanAuthority {
     pub requires: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub granted_by: Option<String>,
+    #[serde(flatten)]
+    pub extra: serde_json::Map<String, Value>,
 }
 
 impl PlanDocument {
@@ -139,6 +152,8 @@ pub struct ErrorDocument {
     pub retryable: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub detail_ref: Option<String>,
+    #[serde(flatten)]
+    pub extra: serde_json::Map<String, Value>,
 }
 
 impl ErrorDocument {
@@ -181,13 +196,44 @@ mod tests {
             "violations": [],
             "oi-unknown-future-field": { "kept": true }
         });
-        let document = ValidationDocument::parse(value).expect("parses");
+        let document = ValidationDocument::parse(value.clone()).expect("parses");
         assert!(document.valid);
+        // Pass-through duty: what the owner disclosed comes back out.
+        assert_eq!(
+            document.extra.get("oi-unknown-future-field"),
+            value.get("oi-unknown-future-field")
+        );
+        let round_tripped = serde_json::to_value(&document).expect("serialises");
+        assert_eq!(
+            round_tripped.get("oi-unknown-future-field"),
+            value.get("oi-unknown-future-field")
+        );
 
         let mut foreign = json!({ "schema": "oi.config-validation/v2", "valid": true });
         foreign["setting_ref"] = json!("ai-kit:resolution:model.default");
         foreign["scope"] = json!({ "scope_kind": "project", "scope_ref": null });
         assert!(ValidationDocument::parse(foreign).is_err());
+    }
+
+    #[test]
+    fn plan_document_round_trips_owner_extension_fields_intact() {
+        // AIKit-style additive evolution: a top-level `value` the plane does
+        // not type. The plan the owner gets back at apply must still carry it,
+        // or its plan_digest verification would see a modified plan.
+        let value = json!({
+            "schema": PLAN_SCHEMA,
+            "plan_id": "plan-01TEST",
+            "plan_digest": "0f4e486e39b56c0256590a0d539d809248992c6afa8965db9fefdd57b1b34c52",
+            "setting_ref": "ai-kit:resolution:resolution.profiles",
+            "scope": { "scope_kind": "machine", "scope_ref": null },
+            "changes": [{ "summary": "bind profile" }],
+            "expected_effect": { "kind": "session-restart-required", "summary": null, "ref": null },
+            "value": "profile/team/coding"
+        });
+        let document = PlanDocument::parse(value.clone()).expect("parses");
+        let round_tripped = serde_json::to_value(&document).expect("serialises");
+        assert_eq!(round_tripped.get("value"), value.get("value"));
+        assert_eq!(round_tripped.get("plan_digest"), value.get("plan_digest"));
     }
 
     #[test]
@@ -199,7 +245,10 @@ mod tests {
             "scope_kind": "world"
         });
         let document = ErrorDocument::parse(value).expect("parses");
-        assert_eq!(document.code(), crate::configuration::ErrorCode::UnsupportedScope);
+        assert_eq!(
+            document.code(),
+            crate::configuration::ErrorCode::UnsupportedScope
+        );
         assert_eq!(document.scope_kind.as_deref(), Some("world"));
 
         assert!(ErrorDocument::parse(json!({ "error": "boom" })).is_none());
@@ -216,8 +265,10 @@ mod tests {
                 code: "not_in_enum".to_owned(),
                 message: "`haiku` is not one of sonnet-current, sonnet-next, opus".to_owned(),
                 path: None,
+                extra: Default::default(),
             }],
             expected_effect: None,
+            extra: Default::default(),
         };
         assert!(document.violation_message().contains("not_in_enum"));
         assert!(document.violation_message().contains("haiku"));

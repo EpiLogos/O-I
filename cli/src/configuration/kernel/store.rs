@@ -177,9 +177,8 @@ impl ConfigurationStore {
             let Some(bytes) = read_regular(&entry)? else {
                 continue;
             };
-            let receipt: Receipt = serde_json::from_slice(&bytes).map_err(|error| {
-                format!("invalid receipt {}: {error}", entry.display())
-            })?;
+            let receipt: Receipt = serde_json::from_slice(&bytes)
+                .map_err(|error| format!("invalid receipt {}: {error}", entry.display()))?;
             if receipt.changeset_id == changeset_id {
                 receipts.push(receipt);
             }
@@ -204,8 +203,9 @@ impl ConfigurationStore {
         let Some(bytes) = read_regular(&path)? else {
             return Ok(None);
         };
-        let record: ReconciliationRecord = serde_json::from_slice(&bytes)
-            .map_err(|error| format!("invalid reconciliation record {}: {error}", path.display()))?;
+        let record: ReconciliationRecord = serde_json::from_slice(&bytes).map_err(|error| {
+            format!("invalid reconciliation record {}: {error}", path.display())
+        })?;
         Ok(Some(record))
     }
 }
@@ -218,7 +218,10 @@ fn read_regular(path: &Path) -> Result<Option<Vec<u8>>, String> {
         Err(error) => return Err(format!("cannot inspect {}: {error}", path.display())),
     };
     if metadata.file_type().is_symlink() {
-        return Err(format!("{} must be a regular file, not a symlink", path.display()));
+        return Err(format!(
+            "{} must be a regular file, not a symlink",
+            path.display()
+        ));
     }
     if !metadata.is_file() {
         return Err(format!("{} is not a regular file", path.display()));
@@ -254,7 +257,8 @@ fn list_regular(directory: &Path) -> Result<Vec<PathBuf>, String> {
     };
     let mut paths = Vec::new();
     for entry in entries {
-        let entry = entry.map_err(|error| format!("cannot list {}: {error}", directory.display()))?;
+        let entry =
+            entry.map_err(|error| format!("cannot list {}: {error}", directory.display()))?;
         let path = entry.path();
         if path.extension().and_then(|extension| extension.to_str()) == Some("json") {
             paths.push(path);
@@ -283,8 +287,7 @@ fn publish(path: &Path, bytes: &[u8]) -> Result<(), String> {
         .duration_since(UNIX_EPOCH)
         .map_err(|error| format!("cannot read the clock: {error}"))?
         .as_nanos();
-    let temporary =
-        parent.join(format!(".configuration-{}-{nonce}.tmp", std::process::id()));
+    let temporary = parent.join(format!(".configuration-{}-{nonce}.tmp", std::process::id()));
     let result = (|| {
         use std::io::Write;
         let mut options = std::fs::OpenOptions::new();
@@ -304,7 +307,12 @@ fn publish(path: &Path, bytes: &[u8]) -> Result<(), String> {
             .map_err(|error| format!("cannot publish {}: {error}", path.display()))?;
         std::fs::File::open(parent)
             .and_then(|directory| directory.sync_all())
-            .map_err(|error| format!("published {} but directory durability failed: {error}", path.display()))
+            .map_err(|error| {
+                format!(
+                    "published {} but directory durability failed: {error}",
+                    path.display()
+                )
+            })
     })();
     if result.is_err() {
         let _ = std::fs::remove_file(&temporary);
@@ -373,7 +381,10 @@ mod tests {
             .expect("loads")
             .expect("present");
         assert_eq!(loaded, changeset);
-        assert!(store.load_changeset("cs-absent").expect("no error").is_none());
+        assert!(store
+            .load_changeset("cs-absent")
+            .expect("no error")
+            .is_none());
 
         let receipt: Receipt = serde_json::from_value(json!({
             "schema": "oi.config-receipt/v1",
@@ -434,14 +445,15 @@ mod tests {
             .permissions()
             .mode();
         assert_eq!(mode & 0o777, 0o600, "stored files are 0600");
-        assert!(std::fs::symlink_metadata(&path).unwrap().file_type().is_file());
+        assert!(std::fs::symlink_metadata(&path)
+            .unwrap()
+            .file_type()
+            .is_file());
 
         // A symlink planted where a changeset lives is refused, not followed.
         let target = home.path().join("outside.json");
         std::fs::write(&target, b"{}").unwrap();
-        let link = home
-            .path()
-            .join("configuration/changesets/cs-link-1.json");
+        let link = home.path().join("configuration/changesets/cs-link-1.json");
         std::os::unix::fs::symlink(&target, &link).unwrap();
         let error = store
             .load_changeset("cs-link-1")

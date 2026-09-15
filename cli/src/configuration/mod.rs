@@ -53,7 +53,7 @@ pub use resolution::{
 // verification and O:I-side persistence. Additive to the frozen C0 files.
 pub use kernel::{
     assemble_changeset, canonical_reading_digest, execute_changeset, idempotency_key_of,
-    mint_changeset_id, plan_request, resolve_setting, resolve_setting_address, reset_setting,
+    mint_changeset_id, plan_request, reset_setting, resolve_setting, resolve_setting_address,
     ApplyRequest, ChangeKind, ConfigurationStore, DesiredChange, DesiredInput, ErrorDocument,
     ExecuteReport, KernelError, OwnerGateway, OwnerOpError, OwnerRegistry, OwnerSpec,
     OwnerTransport, PlanDocument, ProcessTransport, ReconciliationRecord, ResetRequest,

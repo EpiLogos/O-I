@@ -569,10 +569,18 @@ mod tests {
         let mut other = plan.clone();
         other.plan_id = "fixture-plan-2".into();
         other.expires_at_unix_ms = Some(999);
-        assert_eq!(digest, other.canonical_digest(), "idempotency anchor is stable");
+        assert_eq!(
+            digest,
+            other.canonical_digest(),
+            "idempotency anchor is stable"
+        );
         let mut different = plan.clone();
         different.setting_ref = "ai-kit:resolution:skill-set".into();
-        assert_ne!(digest, different.canonical_digest(), "body changes the digest");
+        assert_ne!(
+            digest,
+            different.canonical_digest(),
+            "body changes the digest"
+        );
     }
 
     #[test]
@@ -612,7 +620,10 @@ mod tests {
         let document = error.document();
         assert_eq!(document.schema, "oi.config-error/v1");
         assert_eq!(document.error_code, "unsupported_scope");
-        assert_eq!(document.setting_ref.as_deref(), Some("ai-kit:resolution:model.default"));
+        assert_eq!(
+            document.setting_ref.as_deref(),
+            Some("ai-kit:resolution:model.default")
+        );
         assert_eq!(document.scope_kind.as_deref(), Some("world"));
         let raw = document.to_json_pretty();
         assert!(raw.contains("unsupported_scope"));
