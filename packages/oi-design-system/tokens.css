@@ -21,6 +21,13 @@
   --oi-paper: #ffffff;
   --oi-ink: #0a0a0a;
   --oi-gold: #a8873f;
+  /* Canonical desktop ground / ink pairs also serve the deliberate inverse
+   * opening. One authority prevents the prepaint fallback drifting from the
+   * engine's palette or changing the person's saved appearance preference. */
+  --oi-canonical-light-canvas-ground: #fbfbf9;
+  --oi-canonical-light-foreground: #161614;
+  --oi-canonical-dark-canvas-ground: #121211;
+  --oi-canonical-dark-foreground: #e9e9e4;
 
   /* ===== section: semantic tokens — surface / text / muted / rule roles ===== */
   --oi-surface: var(--oi-paper);
@@ -159,7 +166,7 @@
 .oi-desktop {
   color-scheme: light;
   --oi-paper: #f7f7f4;
-  --oi-ink: #161614;
+  --oi-ink: var(--oi-canonical-light-foreground);
   --oi-surface: #fbfbf9;
   --oi-inspector-ground: #f1f1ee;
   --oi-composer-ground: #ffffff;
@@ -207,8 +214,6 @@
   /* ===== section: semantic tokens — surface / text / muted / rule roles ===== */
   --oi-accent-ink: var(--oi-focus);
   --oi-accent-ground: var(--oi-surface);
-  --oi-loading-ground: var(--oi-surface);
-  --oi-loading-ink: var(--oi-foreground);
   /* ===== section: spacing / rhythm ===== */
   --oi-desktop-gap-xs: 4px;
   --oi-desktop-gap-sm: 8px;
@@ -218,38 +223,18 @@
   --oi-desktop-row: 30px;
   --oi-desktop-hit-target: 28px;
   --oi-desktop-rule: 1px;
-  --oi-cloud-dot: 0.45px;
-  --oi-cloud-edge: 0.4px;
-  --oi-cloud-pitch: 2px;
-  --oi-cloud-width: 40px;
-  --oi-cloud-height: 18px;
-  --oi-cloud-field-width: 180px;
-  --oi-cloud-field-height: 60px;
-  --oi-cloud-travel: 6px;
-  --oi-loading-mark-width: 480px;
-  --oi-loading-mark-ratio: 18 / 7;
-  --oi-loading-overlay-inset: 0px;
-  --oi-loading-content-gap: 20px;
-  --oi-loading-stage-min-height: 240px;
+  --oi-reading-width: 660px;
+  --oi-dialog-width: 528px;
+  --oi-spatial-min-height: 240px;
+  --oi-graph-point-min-radius: 0.45px;
+  --oi-graph-edge-width: 0.4px;
   /* ===== section: typography ===== */
   --oi-desktop-type-caption: 11px;
   --oi-desktop-type-body: 13px;
   --oi-desktop-type-title: 16px;
-  --oi-loading-fallback-type: 42px;
   /* ===== section: motion ===== */
-  --oi-cloud-opacity-rest: 0.38;
-  --oi-cloud-opacity-active: 0.78;
-  --oi-cloud-period: 3600ms;
-  --oi-cloud-ease: ease-in-out;
-  --oi-loading-entry-duration: 160ms;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  :root {
-    --oi-cloud-period: 0.01ms;
-    --oi-loading-entry-duration: 0.01ms;
-  }
-}
 
 /* Shell vocabulary — the three regions float as distinct planes on one
  * shell ground: a slightly lighter sidebar, paper panes in a slightly
@@ -266,7 +251,9 @@
   --oi-shell-ground: #e9e9e5;          /* window ground behind every plane; pane gutter */
   --oi-sidebar-ground: #f3f3f0;        /* left plane, lighter than the gutter */
   --oi-sidebar-ground-glass: rgba(243, 243, 240, 0.92);
-  --oi-canvas-ground: #fbfbf9;         /* pane body paper */
+  --oi-canvas-ground: var(--oi-canonical-light-canvas-ground); /* pane body paper */
+  --oi-inverse-canvas-ground: var(--oi-canonical-dark-canvas-ground);
+  --oi-inverse-foreground: var(--oi-canonical-dark-foreground);
   --oi-pane-bar-ground: #f5f5f2;       /* pane tab bar */
   --oi-agent-ground: #f1f1ee;          /* right accompanying-agent plane */
   --oi-wash: #ecece8;                  /* current row / hover wash */
@@ -280,10 +267,6 @@
   --oi-composer-rule: #d8d8d3;
   --oi-message-ground: #f1f1ee;
   --oi-inspector-ground: var(--oi-agent-ground);
-  /* Loading roles must re-resolve against the desktop palette: a :root-level
-   * var() binds to :root's own surface/ink, not the host theme's. */
-  --oi-loading-ground: var(--oi-surface);
-  --oi-loading-ink: var(--oi-foreground);
   --oi-accent-ground: var(--oi-surface);
   --oi-muted-2: #8b8b86;               /* meta labels, eyebrows */
   --oi-muted-3: #adada8;               /* placeholders, tertiary */
@@ -341,7 +324,7 @@
 .oi-desktop[data-theme="dark"] {
   color-scheme: dark;
   --oi-paper: #121211;
-  --oi-ink: #e9e9e4;
+  --oi-ink: var(--oi-canonical-dark-foreground);
   --oi-surface: #161615;
   --oi-inspector-ground: #141413;
   --oi-composer-ground: #1c1c1a;
@@ -361,7 +344,9 @@
   --oi-shell-ground: #0b0b0a;
   --oi-sidebar-ground: #151514;
   --oi-sidebar-ground-glass: rgba(21, 21, 20, 0.92);
-  --oi-canvas-ground: #121211;
+  --oi-canvas-ground: var(--oi-canonical-dark-canvas-ground);
+  --oi-inverse-canvas-ground: var(--oi-canonical-light-canvas-ground);
+  --oi-inverse-foreground: var(--oi-canonical-light-foreground);
   --oi-pane-bar-ground: #181817;
   --oi-agent-ground: #141413;
   --oi-wash: #1f1f1d;
@@ -377,8 +362,6 @@
   --oi-shadow-menu: 0 10px 40px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
   --oi-shadow-overlay: 0 20px 70px rgba(0, 0, 0, 0.55);
   --oi-shadow-drawer: -10px 0 25px rgba(0, 0, 0, 0.35);
-  --oi-loading-ground: var(--oi-surface);
-  --oi-loading-ink: var(--oi-foreground);
   --oi-accent-ground: var(--oi-surface);
   --oi-mark-yellow: rgba(233, 197, 75, 0.3);
   --oi-mark-green: rgba(128, 184, 140, 0.3);
@@ -386,19 +369,14 @@
   --oi-mark-rose: rgba(215, 140, 170, 0.3);
 }
 
-/* D22 expression: presentation density, timing, and field geometry. */
+/* Semantic cue lease, gesture duration and target geometry. */
 :root {
-  --oi-grain-radius: 1px;
-  --oi-grain-alpha-max: .34;
-  --oi-grain-density: .8;
   --oi-gesture-duration: 600ms;
-  --oi-gesture-reach: 14px;
-  --oi-form-tempo: .8;
-  --oi-expression-crossfade: 400ms;
   --oi-expression-lease: 30000ms;
   --oi-expression-field-width: 44px;
   --oi-expression-field-height: 28px;
 }
 /* Walk hardening surfaces; these do not register product theme choices. */
 .oi-surface-warm-dark { --oi-surface: #292622; --oi-foreground: #e8dfd0; }
-.oi-surface-contrast { --oi-surface: #fff; --oi-foreground: #252525; --oi-grain-density: .65; }
+
+.oi-surface-contrast { --oi-surface: #fff; --oi-foreground: #252525; }

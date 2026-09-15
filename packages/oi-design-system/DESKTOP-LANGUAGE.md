@@ -20,146 +20,111 @@ This supersedes the 6 September ruling below, which explicitly opted the
 desktop into a grey-yellow-green/olive palette. That ruling is not erased: the
 returned application experience — the Expression language as it actually runs
 on the desktop — is now the canonical ground, and the olive values are retired
-from `tokens.css` rather than kept as an alternative. Everything else in the
-6 September ruling (density tokens, hit targets, point-cloud accents, the
-loading mark, the Expression overlay contract) stands unchanged; only the
-colour ground moved. Role names did not change, so no consumer moved with it.
+from `tokens.css` rather than kept as an alternative. The later 15 September opening/runtime revision below also supersedes the
+legacy loading mark and separate overlay. Density, hit targets, semantic role
+ownership and scarce gold remain in force.
 
-## Ground and density (6 September 2026)
+## Owner revision, 15 September 2026 — one field, complete opening
 
-Apply `.oi-desktop` at the host and import tokens.css + point-cloud.css. The
-6 September extension opted into drab grey-yellow-green paper, graphite
-text/nodes, slender rules and muted olive focus — superseded on 15 September by
-the neutral light/dark ground above; the density and accent law of this section
-remains in force. The original site palette remains unchanged. Shared
-contributions inherit host roles and must not bring their own cards, shadows,
-spinners or hues.
+The owner returned a further ruling after experiencing an interrupted opening:
+remove the legacy loading renderers and hardcoded SVG point clouds; let the full
+Expression field stand first while the workspace loads beneath it; invert the
+opening colours on entry and let the actual particle flight finish. The window
+field is the base presentation. A transparent activity treatment is one use of
+that field, not an independently mounted renderer underneath every surface.
 
-Use desktop type/bar/row/hit-target tokens rather than the site's fluid display
-scale. Thin bars do not mean tiny click targets: icon bodies can be small while
-the target is at least `--oi-desktop-hit-target`. Focus outlines and text remain
-solid and readable; point clouds never replace semantic text, focus indication,
-selection contrast or an accessible state label.
+The implementation uses one native engine, canvas, context and simulation clock
+per window. A focused body borrows that canvas. Local semantic cues use the same
+stage when no explicit presentation or retained-field reservation owns it.
+Components submit meaning, bounds and observed activity; they do not draw points,
+create simulation loops or retain a second renderer. The native glyph sampler
+owns point formation. Static cues paint once; actual activity may animate. No
+live presentation or active cue means no continuing simulation frames.
 
-## Accents are fine point clouds
+The opening starts on the inverse of the selected app ground. A successfully
+rendered native frame releases the lazy workspace import. Kernel state and ground
+reads start immediately; workspace composition happens underneath the full field.
+The labelled entry control becomes usable when the field has painted, the initial
+kernel state and boot decision have settled, and the workspace has composed. A
+failed field reports its real error and permits entry into the usable workspace.
+Optional products are not prerequisites for entry.
 
-Fine, separate dots collect into small bounded clouds. Not large polka dots,
-confetti, particle explosions, nebulous gradients or glowing panels. Default
-radius is 0.45 CSS px at a 2 px pitch. Size stays legible at normal display scale;
-never make a whole pane decorative particle noise. Context is conveyed by dot
-density, small extent, relation and accompanying text—not colour alone.
+Entry preserves the saved appearance and transitions the native scene into it.
+The relational motion, explosion and fade finish according to successfully
+rendered simulation progress. Hidden/suspended time cannot skip the flight. The
+same canvas supplies the interpolated background, points and final reveal. There
+is no independent scrim fade or wall timer cutting off the simulation. Only a
+completed entry records the session marker. Release stops immediately and retains
+resident identity; it does not substitute an empty scene or reseed the field.
+Reduced motion paints the final state once and releases. Disabling Expression
+removes its canvas, actual GPU context and clock.
 
-`.oi-point-cloud` is the shared accent primitive. Its default is static. Set
-`data-active="true"` only while the corresponding real operation is active;
-stop it on completion, failure, cancellation or pause. Use sparingly on activity
-rows, loading boundaries, attention markers or contextual selection accents.
-Do not animate every node or every tab. There are no background agent acts
-implied by a decorative animation.
+The host makes obscured workspace content inert and restores keyboard focus
+when the opening leaves. Failed, missing, paused and empty states are named and
+static. Semantic status text survives regardless of renderer availability,
+reduced motion or forced colours. Native Actions retain their owner contracts;
+no loader invents progress, cancellation or recovery capabilities.
 
-`--oi-meta-relation` remains the only scarce gold role. Routine loading uses
-foreground ink, not gold. A static sample in the reference demonstrates gold
-only as a relation accent. No duplicate palette in consumer CSS.
+## Current desktop grammar
 
-`createPointClusters({active})` is the general motion primitive, not logo-only
-ornament: three staggered bounded populations gather and relax through a small
-local displacement and density change. Use it for work, loading and attention
-with a separate readable state label. Size comes from the cloud-field tokens.
-State changes start/stop the shared primitive; no per-feature particle engine.
-Reduced motion keeps static clustered dots. Resting clusters never keep moving.
+Use `tokens.css`, `desktop.css` and the stage placement rules in `point-cloud.css`.
+The host selects appearance. Native and composable bodies consume `--oi-*` roles
+and bring no global chrome. Typography, proportion, hairlines and restrained
+selection do the work; gold remains the scarce meta-relation role. Pane/tab
+chrome, contextual headers, quiet actions, disclosure, provenance and inspectors
+retain their actual product relationships rather than becoming generic cards.
 
-## The {O:I} loading mark
+Use desktop type/bar/row/hit-target tokens rather than fluid marketing scales.
+Small icon bodies retain at least `--oi-desktop-hit-target` interaction bounds.
+Focus and text stay solid and readable. A particle cue never replaces a state
+label, provenance, keyboard focus or selection contrast. Do not animate whole
+panes or resting clouds to suggest that the app is alive.
 
-The loading mark uses the existing braced `assets/oi-mark.svg` as its exact mask;
-it is not a text approximation or a newly drawn logo. Fine densely packed dots fill that
-silhouette at a large 480 px default width (responsive to the containing surface). A slow 3.6-second density sweep preserves a continuously readable
-mark. No rotation, rapid flicker, dramatic zoom, forced intro or simulated
-percentage. Reduced motion removes all animation; forced colours renders a
-readable literal fallback. The DOM status label remains accessible in all modes.
+Agent cues still derive from observed encounters: TurnInFlight or an actual
+interrupt request is searching; a newly observed completion is arrival; composer
+focus/draft change is listening; a pending local operation is presence; otherwise
+idle. Old transcript completion does not replay arrival. A concealed encounter
+may preserve its native observation contract while its hidden cue does no work.
+Only resize is an admitted layout gesture; reserved open/close/split/move/save
+intents still produce no invented effect.
 
-`createLoadingIndicator({label, detail, scope, active})` from `./loading` returns
-`{element, update, remove}`. Labels are plain text, not HTML. No I/O, timer or
-minimum display duration exists in this component. The host supplies observed
-operation state and removes it as soon as that state ends.
+Local loading belongs to its affected surface. Existing content can remain with
+a freshness label. The React status body owns only semantic labels; it has no
+SVG mask, point clusters, observer, timer, minimum dwell or alternate renderer.
+Full-window loading belongs to the actual opening above, not repeated tab changes.
 
-- `inline`: a non-modal status body; usable surrounding content remains usable.
-- `surface`: positioned in a host surface (host establishes positioning).
-- `window`: only while initial shell/essential restoration is not usable.
+## Historical rulings and supersession
 
-A window overlay is presentation, not a modal/focus manager. The host must make
-obscured content inert, manage focus restoration and expose any real retry,
-cancel or recovery Actions outside the hidden work. The component must not
-invent those Actions. Do not expose Cancel if the native operation cannot cancel.
+**6 September — olive ground.** The desktop deliberately opted into
+ grey-yellow-green paper, graphite text and olive focus. The neutral light/dark
+owner revision above supersedes that choice. The original site themes remain
+available; `system` only resolves the canonical desktop appearance.
 
-Once a usable shell exists, discovery/refresh/provider work is local to its
-surface. Keep last-observed content labelled during refresh. Missing products,
-no credentials, no agents, unavailable network and failed recognition are named
-states with real exits, never indefinite loading. Error/empty/paused is static.
-Do not show a full-screen splash for every project/tab switch. Delay a transient
-indicator if needed to avoid flash; never delay usable content to show branding.
+**6 September — clusters and masked loading mark.** The package originally
+specified `.oi-point-cloud`, `createPointClusters`, and `createLoadingIndicator`
+with the braced SVG mask, a density sweep and inline/surface/window scopes. The
+later owner revision explicitly retires those renderers and their cloud/loader
+roles. The source logo remains an identity asset, not a loading mechanism.
+The old prohibition on particle explosions applied to routine accent clouds;
+the owner now explicitly commissions the real opening flight.
 
-## Bootstrap contract
+**D22 / FND-07 — separate Expression overlay.** `createExpressionOverlay` and
+`formPoints` formerly owned a Canvas2D renderer, a separate scheduler and held
+emitter leases. They are retired. Semantic expression names, gesture admission
+and handle identity remain; the O:I stage resolves them through its single native
+field. No legacy renderer is retained as a fallback. Retained Nara target and
+checkpoint ownership continues at the native boundary without an unsolicited cue
+resizing or reseeding the resident field between visits.
 
-The executable bootstrap state/owner/exit matrix is in
-`.superpowers/sdd/cradle-rebuild/BOOTSTRAP-AND-LOADING.md`. Its host lifecycle
-lands before wiki, provider and live-configuration gates; each later slice closes
-its own onboarding/recovery branch. Partial compositions remain usable.
+## Verification and standing
 
-## Verification and migration
+The bootstrap meaning and native exits remain in
+`.superpowers/sdd/cradle-rebuild/BOOTSTRAP-AND-LOADING.md`. Browser checks exercise
+real WebGL readiness, delayed module delivery, browser suspension, reduced motion,
+context creation failure, theme pixels, focus and lifecycle. Native owner tests
+verify actual context disposal and retained-field recovery. Package references
+show semantic grammar, not simulated runtime progress.
 
-`examples/loading.html` renders the real package component as a clearly labelled
-visual reference, including pause and window-overlay/focus-return. It is not an
-implemented bootstrap flow. Browser checks cover actual DOM/motion/fallback and
-safe labels. The root package audit remains strict: prototype raw-colour debt
-must be migrated into semantic tokens during the desktop build, not exempted
-or copied into production. Leave the running developer's app files alone during
-this package pass; consume these exports in the implementation slice.
-
-The 0.45px dot core has a 0.4px antialias edge so clusters survive standard-density displays; do not remove it when rendering the same tokens on canvas. Verify both 1× and Retina output.
-
-
-## Expression overlay (D22 / FND-07)
-
-`expression.mjs` owns the presentation mapping, point generation and one window
-scheduler; `expression.css` consumes the shared motion and surface tokens. Mount
-`createExpressionOverlay(document.body)` once per window and dispose
-it with the host. Components supply viewport bounds (prefer a function reading
-current bounds), never draw points or own particle state. `formPoints` is the
-renderer-neutral point source. Soft circular sprites have at least four device
-pixels of diameter; ink mixes the foreground toward its surface and alpha and
-density remain theme tokens. Warm-dark and contrast classes are walk references,
-not new product theme choices.
-
-`express(name, {rect, from, dir, lean, delay, hold, then})` returns a handle;
-`update(handle, {name, rect, dir})` refreshes or crossfades a held form, and
-`release(handle)` ends a held emitter. Delay is seconds. A caller refreshes a
-held handle before the token lease expires; the React host does this while the
-anchor exists and immediately on intersection/size/visibility changes. Handles
-are bounded at 64 and gesture chains at eight successors. Gestures drain after
-release; forms release on unmount. Pause or hidden documents clear gestures and
-pixels and stop the scheduler. Reduced motion refuses gestures and paints still
-forms without scheduling animation. Empty overlays are pixel-clear. A separate bounded deadline timer expires offscreen handles without scheduling drawing frames. Scroll and
-theme updates share the same capped drawing scheduler.
-
-Owner revision 6 keeps **resize only** as the active interaction gesture.
-`gestureFor` explicitly returns null for open, close, split, move and save;
-these reserved intents are not a claim that their gesture walk passed. The pure
-surface engine describes committed layout changes; the host posts them after
-finite geometry animations finish. Actual pointer-captured resize changes feed
-one held edge emitter and release on pointer up/cancel/lost capture or blur.
-Canonical SourceChanged receipts and successful Flow writes carry reserved save
-intents. No effect is emitted from a dirty-buffer inference.
-
-Agent forms are derived from existing encounter readings and component input:
-TurnInFlight/InterruptRequested → searching; a newly observed completed block →
-arrival; composer focus or a newly observed draft revision → listening; an actual pending local operation → presence;
-otherwise idle. Old transcript completion on first mount is not a new arrival.
-The same encounter observer remains mounted while its body is concealed by the Context plane. Completion IDs keep a monotonic cursor so Earlier/Latest cannot replay arrival. One anchor crossfades; no desktop session store or operation authority is added.
-The four elements are available in the package reference, not automatically
-assigned to an invented loading state. Initial-load identity remains separate.
-
-`inspect()` is an observation method on an overlay instance, used by the package
-browser checks. The production shell does not expose it as a global debug channel. In native builds only, the shell probes the expression_walk_observation receiver. Only an explicitly enabled receiver gets unchanged instance observations each second and at visibility/reduced/disposal transitions; disabled receivers and browser hosts start no observation timer.
-The reference page deliberately exposes its own instance for module checks; those
-checks are not native lifecycle or two-encounter acceptance. Native child-webview
-z-order, real session round trips, hidden-window transitions and owner visual
-acceptance remain the native walk's responsibility.
+Implementation/build/browser evidence does not constitute the owner’s lived UX
+acceptance of O:I #65. Native child-window behaviour, real encounters and the
+C0–C5 campaign retain their separate evidence obligations.
