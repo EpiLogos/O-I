@@ -24,6 +24,18 @@
       "uri": "wss://maincloud.spacetimedb.com",
       "database": "epilogos-oi-shared-field-acceptance",
       "note": "acceptance runs leave run-scoped worlds behind; never run them against the production field"
+    },
+    "frank": {
+      "server": "frank",
+      "uri": "ws://100.92.62.101:3000",
+      "database": "oi-shared-field",
+      "note": "self-hosted SharedField on the second machine (Workcell target-owned unit oi-shared-field.service), reachable over the tailnet only; publish/management stays private"
+    },
+    "frank-acceptance": {
+      "server": "frank",
+      "uri": "ws://100.92.62.101:3000",
+      "database": "oi-shared-field-acceptance",
+      "note": "acceptance runs on the self-hosted server; never the retained field"
     }
   },
   "site_variables": {

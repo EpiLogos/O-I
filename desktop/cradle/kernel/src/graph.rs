@@ -1,18 +1,22 @@
 //! Typed graph input assembly for U3.1/U3.4 presentation — adapter only.
 //!
-//! The graph reading composes two reviewed owner read models and nothing
+//! The graph reading composes three reviewed owner read models and nothing
 //! else: Central's wiki reading (cell C1, `central.wiki.read` /
-//! `projectcentral.wiki.read`, `central.wiki-reading/v1`) and AIKit's
+//! `projectcentral.wiki.read`, `central.wiki-reading/v1`), AIKit's
 //! owner-side resolution rows (cell C2, `aikit knowledge resolve`,
-//! `aikit.knowledge-resolution/v1`). The kernel invents no capability
-//! state: every node and edge carries the owner ref verbatim, the owner
-//! operation that produced it, and that owner's own provenance strings.
+//! `aikit.knowledge-resolution/v1`) and the hosted Shared Field projection
+//! (Lane C step 5, `shared-field.projection`: the O:I-owned client's
+//! `snapshot`, `oi.shared-field.snapshot/v1`). The kernel invents no
+//! capability state: every node and edge carries the owner ref verbatim,
+//! the owner operation that produced it, and that owner's own provenance
+//! strings. Hosted refs are already world-qualified
+//! (`world:central:project:O-I/…`), so they never collide with `central`
+//! nodes; the desktop mints no second semantic object for them.
 //!
 //! Honest degradation: a failed owner input is reported as an explicit
 //! unavailable input with the owner's message, never as an empty graph
-//! and never as fabricated rows. The Shared Field projection is a named
-//! deferred owner input in the type — absent is a truthful state, and no
-//! Shared Field implementation enters this wave.
+//! and never as fabricated rows. An unbound Shared Field target is
+//! absence — an explicit unavailable input carrying the client's reason.
 //!
 //! No persistence, no cache, no index, no ranking: the reading is a pure
 //! pull assembled per call.
@@ -22,10 +26,12 @@ use std::path::Path;
 
 use crate::flow::{CentralClient, OwnerCallError};
 use crate::knowledge;
+use crate::shared_field;
 
 pub const GRAPH_READING_SCHEMA: &str = "oi.cradle.graph-reading/v1";
-/// The named deferred Shared Field projection owner input.
-pub const SHARED_FIELD_INPUT: &str = "shared-field.projection";
+/// The hosted Shared Field projection owner input (the O:I-owned client's
+/// `snapshot`), named on every hosted node, edge and input state.
+pub const SHARED_FIELD_INPUT: &str = shared_field::OWNER_OPERATION;
 
 // ---------------------------------------------------------------------------
 // The typed graph reading
@@ -34,7 +40,7 @@ pub const SHARED_FIELD_INPUT: &str = "shared-field.projection";
 /// Availability of one named owner input, stated explicitly. `Available`
 /// names the owner operation that served it; `Unavailable` carries the
 /// owner's own failure truth (`detail` is the owner message verbatim);
-/// `Deferred` names an owner input this wave does not implement.
+/// `Deferred` names an owner input that has not been requested yet.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(tag = "state", rename_all = "snake_case")]
 pub enum GraphInput {
@@ -66,8 +72,8 @@ impl GraphInput {
     }
 }
 
-/// The named inputs of the graph reading. `shared_field` is always a
-/// named deferred input — never an empty fabrication.
+/// The named inputs of the graph reading. All three are always named on
+/// the wire; a failed one is explicit — never an empty fabrication.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct GraphInputs {
     pub central_wiki: GraphInput,
@@ -94,10 +100,14 @@ pub struct GraphNode {
     #[serde(rename = "ref")]
     pub ref_id: String,
     /// `wiki-space` | `wiki-node` | the AIKit resolution row kind
-    /// (`file` | `flow` | `skill` | `knowledge-subject`).
+    /// (`file` | `flow` | `skill` | `knowledge-subject`) | the hosted
+    /// Explore entry kind prefixed `hosted-` (`hosted-central-world` |
+    /// `hosted-wiki-space` | `hosted-wiki-node` | `hosted-curated-artifact`
+    /// | `hosted-contribution`).
     pub kind: String,
     pub label: String,
-    /// The native owner holding this ref (`central` | `ai-kit`).
+    /// The native owner holding this ref (`central` | `ai-kit` |
+    /// `shared-field`).
     pub native_owner: String,
     pub provenance: GraphProvenance,
     /// Available Action refs the owner disclosed for this ref. AIKit rows
@@ -111,7 +121,9 @@ pub struct GraphNode {
 /// spelling, the typed relation, and the owner provenance.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct GraphEdge {
-    /// `space-child-space` | `space-node` | `node-space` | `node-source`.
+    /// `space-child-space` | `space-node` | `node-space` | `node-source`,
+    /// or a hosted Explore relation spelling carried verbatim
+    /// (`wiki.contains` | `oi.world/wiki-space` | `oi.world/artifact` | …).
     pub relation: String,
     #[serde(rename = "from_ref")]
     pub from_ref: String,
@@ -127,6 +139,10 @@ pub struct GraphCounts {
     pub spaces: usize,
     pub wiki_nodes: usize,
     pub knowledge_rows: usize,
+    /// Hosted Explore entries from the Shared Field snapshot (absent on
+    /// the wire from older readers: serde default).
+    #[serde(default)]
+    pub hosted_rows: usize,
     pub nodes: usize,
     pub edges: usize,
 }
@@ -156,7 +172,10 @@ impl GraphReading {
                     owner_operation: "aikit.knowledge.resolve".into(),
                     detail: "not requested yet".into(),
                 },
-                shared_field: shared_field_deferred(),
+                shared_field: GraphInput::Deferred {
+                    owner_operation: SHARED_FIELD_INPUT.into(),
+                    detail: "not requested yet".into(),
+                },
             },
             nodes: Vec::new(),
             edges: Vec::new(),
@@ -164,6 +183,7 @@ impl GraphReading {
                 spaces: 0,
                 wiki_nodes: 0,
                 knowledge_rows: 0,
+                hosted_rows: 0,
                 nodes: 0,
                 edges: 0,
             },
@@ -171,15 +191,8 @@ impl GraphReading {
     }
 }
 
-fn shared_field_deferred() -> GraphInput {
-    GraphInput::Deferred {
-        owner_operation: SHARED_FIELD_INPUT.into(),
-        detail: "named deferred owner input: the Shared Field projection is not implemented in this wave; absent is a truthful state, never an empty fabrication".into(),
-    }
-}
-
 // ---------------------------------------------------------------------------
-// Assembly — two owner read models composed, adapter only
+// Assembly — three owner read models composed, adapter only
 // ---------------------------------------------------------------------------
 
 /// Assemble one typed graph reading over the disclosed Central ground.
@@ -187,8 +200,10 @@ fn shared_field_deferred() -> GraphInput {
 /// `wiki_action` is the owner wiki read for the requested register
 /// (`central.wiki.read` or `projectcentral.wiki.read`), `wiki_input` its
 /// owner-shaped input, `cwd` the AIKit project context, and `query` the
-/// AIKit resolution query (empty = all rows). One input failing degrades
-/// that input honestly; the other still contributes.
+/// AIKit resolution query (empty = all rows). The hosted Shared Field
+/// snapshot needs no caller input: its target is the client's own
+/// environment. One input failing degrades that input honestly; the
+/// others still contribute.
 pub fn assemble(
     client: &CentralClient,
     wiki_action: &str,
@@ -322,7 +337,93 @@ pub fn assemble(
         }
     }
 
+    // Input 3: the hosted Shared Field projection (Lane C step 5) — the
+    // O:I-owned client's caller-visible snapshot, pulled per call through
+    // the owner doorway. Unbound / unavailable / refused / malformed are
+    // one explicit unavailable input in the client's own words.
+    match shared_field::call(&serde_json::json!({ "kind": "snapshot" })) {
+        Ok(data) => assemble_shared_field(&mut reading, &data),
+        Err(error) => {
+            reading.inputs.shared_field = GraphInput::Unavailable {
+                owner_operation: SHARED_FIELD_INPUT.into(),
+                detail: error.detail(),
+            };
+        }
+    }
+
     reading.counts.nodes = reading.nodes.len();
     reading.counts.edges = reading.edges.len();
     reading
+}
+
+/// Fold one `oi.shared-field.snapshot/v1` reading into the graph: hosted
+/// Explore entries as nodes (kind = the entry kind prefixed `hosted-`),
+/// hosted Explore relations as edges (spelling and endpoints verbatim).
+/// Provenance carries the hosting target and both revisions — the
+/// projection revision of the entry's world and the entry's own revision.
+pub fn assemble_shared_field(reading: &mut GraphReading, data: &Value) {
+    if data["schema"] != "oi.shared-field.snapshot/v1" || !data["entries"].is_array() {
+        reading.inputs.shared_field = GraphInput::Unavailable {
+            owner_operation: SHARED_FIELD_INPUT.into(),
+            detail: "SharedField client returned an unsupported snapshot schema".into(),
+        };
+        return;
+    }
+    let target = format!(
+        "{}/{}",
+        data["target"]["uri"].as_str().unwrap_or_default(),
+        data["target"]["database"].as_str().unwrap_or_default()
+    );
+    reading.inputs.shared_field = GraphInput::Available {
+        owner_operation: SHARED_FIELD_INPUT.into(),
+        detail: Some(target.clone()),
+    };
+    let projections = data["projections"].as_array().cloned().unwrap_or_default();
+    let entries = data["entries"].as_array().cloned().unwrap_or_default();
+    reading.counts.hosted_rows = entries.len();
+    for entry in entries {
+        let entry_ref = entry["ref"].as_str().unwrap_or_default();
+        let world_ref = entry["world_ref"].as_str().unwrap_or_default();
+        // The projection revision of the entry's world: the projection
+        // whose subject is the world; an entry that names its own
+        // projection (`meta.projection_ref`) falls back to that one.
+        let projection = projections
+            .iter()
+            .find(|p| p["subject"]["ref"].as_str() == Some(world_ref))
+            .or_else(|| {
+                let own = entry["meta"]["projection_ref"].as_str()?;
+                projections.iter().find(|p| p["projection_ref"].as_str() == Some(own))
+            });
+        let revision = projection.and_then(|p| p["projection_revision"].as_u64()).map(|value| value.to_string());
+        let mut detail = vec![target.clone()];
+        if let Some(entry_revision) = entry["revision"].as_str().filter(|value| !value.is_empty()) {
+            detail.push(entry_revision.to_owned());
+        }
+        reading.nodes.push(GraphNode {
+            ref_id: entry_ref.to_owned(),
+            kind: format!("hosted-{}", entry["kind"].as_str().unwrap_or_default()),
+            label: entry["label"].as_str().unwrap_or_default().to_owned(),
+            native_owner: "shared-field".into(),
+            provenance: GraphProvenance {
+                source: SHARED_FIELD_INPUT.into(),
+                revision,
+                detail,
+            },
+            // The hosted field discloses no desktop Action for a
+            // projected ref; the kernel invents none.
+            actions: Vec::new(),
+        });
+    }
+    for relation in data["relations"].as_array().cloned().unwrap_or_default() {
+        reading.edges.push(GraphEdge {
+            relation: relation["relation"].as_str().unwrap_or_default().to_owned(),
+            from_ref: relation["from"].as_str().unwrap_or_default().to_owned(),
+            to_ref: relation["to"].as_str().unwrap_or_default().to_owned(),
+            provenance: GraphProvenance {
+                source: SHARED_FIELD_INPUT.into(),
+                revision: None,
+                detail: vec![target.clone()],
+            },
+        });
+    }
 }
