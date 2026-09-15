@@ -73,8 +73,11 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
  await page.waitForFunction(()=>document.querySelector('.flow-surface:not(.draft-surface) [role="status"]')?.textContent==='Saved');
  await flow.locator('.cm-content').fill('Flow writing with the real editor.');await flow.locator('.cm-content').press('Meta+s');
  await page.waitForFunction(()=>document.querySelector('.flow-surface:not(.draft-surface) [role="status"]')?.textContent==='Saved');
- const path=(await flow.locator('.editor-path').textContent()).split(' / ').slice(1).join(' / ');
- check(readFileSync(join(p.projectRoot,path),'utf8')==='Flow writing with the real editor.','Fresh Flow uses the same editor and saves to its real Central provenance');
+ const flowBinding=Object.values((await channel('read.layout')).data.layout.surfaces).find(binding=>binding.kind==='flow');
+ const location=flowBinding.location;
+ const raw=readFileSync(join(location.root,location.path),'utf8');
+ const document=JSON.parse(raw.match(/<script type="application\/json" id="ql-doc">([\s\S]*?)<\/script>/)[1].replace(/<\\\/script/gi,'</script'));
+ check(document.entries.length===2&&document.entries.every(entry=>entry.html==='<p>Flow writing with the real editor.</p>'),'Fresh Flow appends both exact entries to its real Central document');
  await page.locator('.tab').filter({hasText:source.binding.path.split('/').pop()}).click({button:'right'});await page.getByRole('menuitem',{name:'Split right',exact:true}).click();
  check(await page.locator('.pane.group').count()===2,'Tab split creates a second real pane');
  await page.locator('.tab').filter({hasText:source.binding.path.split('/').pop()}).click({button:'right'});
