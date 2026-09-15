@@ -124,14 +124,14 @@
   gap: 8px;
   align-items: baseline;
   padding: 3px 0;
-  border-bottom: 1px solid var(--oi-line, rgba(0,0,0,0.1));
+  border-bottom: 1px solid var(--oi-rule);
 }
 .encounter-journal-kind { color: var(--oi-ink); }
 .encounter-journal pre {
   max-width: 60ch;
   max-height: 12em;
   overflow: auto;
-  font-size: var(--oi-shell-type-small, var(--oi-shell-type-ui));
+  font-size: var(--oi-shell-type-ui);
 }
 .encounter-fault-held {
   margin: 6px 0;
