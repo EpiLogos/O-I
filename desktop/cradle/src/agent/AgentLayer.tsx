@@ -106,7 +106,7 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
   } : undefined;
   const encounterPlane: "Conversation" | "Activity" | "Inspect" = plane === "Context" ? "Conversation" : plane;
 
-  return <section className="agent-layer" aria-label="Accompanying agent" data-full={full} onFocusCapture={event=>{if((event.target as Element).matches(".encounter-composer textarea"))setListening(true);}} onBlurCapture={event=>{if((event.target as Element).matches(".encounter-composer textarea"))setListening(false);}}>
+  return <section className="agent-layer" aria-label="Accompanying agent" data-full={full} data-agent-session-ref={expression.agentSessionRef} data-owner-state={expression.state} data-owner-activity-block={expression.latestOwnerActivity?.blockId} onFocusCapture={event=>{if((event.target as Element).matches(".encounter-composer textarea"))setListening(true);}} onBlurCapture={event=>{if((event.target as Element).matches(".encounter-composer textarea"))setListening(false);}}>
     <header className="agent-head">
       <div className="agent-head-row">
         <ExpressionAnchor form={form}/>

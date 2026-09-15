@@ -122,6 +122,171 @@ fn edits_are_atomic_and_stale_concurrent_inputs_do_not_overwrite() {
     );
 }
 #[test]
+fn agent_refinement_waits_for_human_review_and_retains_rejection_correction_and_continuation() {
+    let mut k = Kernel::discover();
+    k.apply(KernelOp::Expression{request:request(json!({"operation":"create","expression_ref":"expression:test","title":"Lesson","actor":"human:author"}))}).unwrap();
+    let proposed=k.apply(KernelOp::Expression{request:request(json!({
+        "operation":"propose","expression_ref":"expression:test","expected_revision":1,
+        "proposal_ref":"expression:test:proposal:first","actor":"agent-session/epii",
+        "activity_ref":"activity:caller-reported:1","continues_proposal_ref":null,
+        "summary":"Introduce the source-bearing opening object",
+        "changes":[entity(),{"change":"subject_bind","entity_ref":"expression:test:entity:a","binding":{"subject_ref":"source:lesson","native_owner":"central","presentation_role":"thing","sources":[{"ref":"central:source:lesson","revision":"r8","availability":"available"}],"readings":[],"actions":[]}}],
+        "method_refs":[{"ref":"method:epii/pedagogy","revision":"m2","availability":"available"}],
+        "evidence_refs":[{"ref":"central:source:lesson","revision":"r8","availability":"available"}]
+    }))}).unwrap();
+    let proposal = &proposed.result;
+    let proposal = serde_json::to_value(proposal).unwrap();
+    assert_eq!(proposal["data"]["document"]["revision"], 2);
+    assert!(
+        proposal["data"]["document"]["entities"]
+            .as_object()
+            .unwrap()
+            .is_empty(),
+        "proposal must not apply before review"
+    );
+    assert_eq!(
+        serde_json::to_value(&proposed.receipts[0]).unwrap()["activity_ref"],
+        "activity:caller-reported:1"
+    );
+    let rejected=k.apply(KernelOp::Expression{request:request(json!({
+        "operation":"review","expression_ref":"expression:test","expected_revision":2,
+        "proposal_ref":"expression:test:proposal:first","actor":"human:author","decision":"rejected",
+        "reason":"Start from the relation, not the isolated source","corrections":[]
+    }))}).unwrap();
+    let rejected = serde_json::to_value(rejected.result).unwrap();
+    assert_eq!(
+        rejected["data"]["document"]["refinements"][0]["decision"]["state"],
+        "rejected"
+    );
+    assert!(rejected["data"]["document"]["entities"]
+        .as_object()
+        .unwrap()
+        .is_empty());
+    let continued=k.apply(KernelOp::Expression{request:request(json!({
+        "operation":"propose","expression_ref":"expression:test","expected_revision":3,
+        "proposal_ref":"expression:test:proposal:second","actor":"agent-session/epii",
+        "activity_ref":"activity:caller-reported:2","continues_proposal_ref":"expression:test:proposal:first",
+        "summary":"Continue from the human correction","changes":[entity(),{"change":"parameter_set","entity_ref":"expression:test:entity:a","parameter":"x","value":-90},{"change":"parameter_automate","entity_ref":"expression:test:entity:a","parameter":"x","automation":{"min":-90,"max":90,"rate_hz":0.12,"waveform":"sine"}}],
+        "method_refs":[{"ref":"method:epii/pedagogy","revision":"m2","availability":"available"}],
+        "evidence_refs":[{"ref":"central:source:lesson","revision":"r8","availability":"available"}]
+    }))}).unwrap();
+    assert_eq!(
+        serde_json::to_value(continued.result).unwrap()["data"]["document"]["revision"],
+        4
+    );
+    let accepted=k.apply(KernelOp::Expression{request:request(json!({
+        "operation":"review","expression_ref":"expression:test","expected_revision":4,
+        "proposal_ref":"expression:test:proposal:second","actor":"human:author","decision":"accepted",
+        "reason":"Keep the source and make the movement smaller",
+        "corrections":[{"change":"parameter_manual","entity_ref":"expression:test:entity:a","parameter":"x"},{"change":"parameter_set","entity_ref":"expression:test:entity:a","parameter":"x","value":24}]
+    }))}).unwrap();
+    let accepted = serde_json::to_value(accepted.result).unwrap();
+    assert_eq!(accepted["data"]["document"]["revision"], 5);
+    assert_eq!(
+        accepted["data"]["document"]["entities"]["expression:test:entity:a"]["parameters"]["x"]
+            ["value"],
+        24
+    );
+    assert_eq!(
+        accepted["data"]["document"]["refinements"][1]["decision"]["corrections"][0]["change"],
+        "parameter_manual"
+    );
+}
+
+#[test]
+fn invalid_stale_and_unreviewed_continuation_proposals_never_mutate() {
+    let mut app = Application::default();
+    create(&mut app);
+    let invalid = request(
+        json!({"operation":"propose","expression_ref":"expression:test","expected_revision":1,"proposal_ref":"expression:test:proposal:bad","actor":"agent:a","activity_ref":null,"continues_proposal_ref":null,"summary":"Invalid bounds","changes":[entity(),{"change":"parameter_set","entity_ref":"expression:test:entity:a","parameter":"x","value":9000}],"method_refs":[],"evidence_refs":[]}),
+    );
+    assert!(app.apply(&CentralClient::discover(), invalid).is_err());
+    assert_eq!(
+        apply(
+            &mut app,
+            json!({"operation":"inspect","expression_ref":"expression:test"})
+        )["document"]["revision"],
+        1
+    );
+    let first = apply(
+        &mut app,
+        json!({"operation":"propose","expression_ref":"expression:test","expected_revision":1,"proposal_ref":"expression:test:proposal:first","actor":"agent:a","activity_ref":null,"continues_proposal_ref":null,"summary":"Valid","changes":[entity()],"method_refs":[],"evidence_refs":[]}),
+    );
+    assert_eq!(first["document"]["revision"], 2);
+    let stale = apply(
+        &mut app,
+        json!({"operation":"propose","expression_ref":"expression:test","expected_revision":1,"proposal_ref":"expression:test:proposal:stale","actor":"agent:a","activity_ref":null,"continues_proposal_ref":null,"summary":"Stale","changes":[entity()],"method_refs":[],"evidence_refs":[]}),
+    );
+    assert_eq!(stale["state"], "revision_conflict");
+    let continuation = request(
+        json!({"operation":"propose","expression_ref":"expression:test","expected_revision":2,"proposal_ref":"expression:test:proposal:next","actor":"agent:a","activity_ref":null,"continues_proposal_ref":"expression:test:proposal:first","summary":"Too soon","changes":[entity()],"method_refs":[],"evidence_refs":[]}),
+    );
+    assert!(app.apply(&CentralClient::discover(), continuation).is_err());
+    assert_eq!(
+        apply(
+            &mut app,
+            json!({"operation":"inspect","expression_ref":"expression:test"})
+        )["document"]["revision"],
+        2
+    );
+}
+#[test]
+fn intervening_human_edit_blocks_acceptance_without_touching_human_state() {
+    let mut app = Application::default();
+    create(&mut app);
+    apply(
+        &mut app,
+        json!({"operation":"propose","expression_ref":"expression:test","expected_revision":1,"proposal_ref":"expression:test:proposal:first","actor":"agent:a","activity_ref":null,"continues_proposal_ref":null,"summary":"Agent glyph","changes":[entity(),{"change":"parameter_set","entity_ref":"expression:test:entity:a","parameter":"glyph","value":"agent"}],"method_refs":[],"evidence_refs":[]}),
+    );
+    // The person continues authoring after seeing the pending proposal.
+    let human = edit(
+        &mut app,
+        2,
+        json!([{"change":"entity_add","scene_ref":"expression:test:scene:main","entity_ref":"expression:test:entity:human","title":"Human"},{"change":"parameter_set","entity_ref":"expression:test:entity:human","parameter":"glyph","value":"human"}]),
+    );
+    assert_eq!(human["document"]["revision"], 3);
+    let before = human["document"].clone();
+    let refused = apply(
+        &mut app,
+        json!({"operation":"review","expression_ref":"expression:test","expected_revision":3,"proposal_ref":"expression:test:proposal:first","actor":"human:test","decision":"accepted","reason":"Too late","corrections":[]}),
+    );
+    assert_eq!(refused["state"], "proposal_basis_conflict");
+    let after = apply(
+        &mut app,
+        json!({"operation":"inspect","expression_ref":"expression:test"}),
+    );
+    assert_eq!(after["document"], before);
+    assert_eq!(
+        after["document"]["entities"]["expression:test:entity:human"]["parameters"]["glyph"]
+            ["value"],
+        "human"
+    );
+    assert!(after["document"]["entities"]
+        .get("expression:test:entity:a")
+        .is_none());
+}
+
+#[test]
+fn imported_refinement_cannot_continue_itself_or_an_unreviewed_proposal() {
+    let mut app = Application::default();
+    let mut document = create(&mut app)["document"].clone();
+    let proposal = json!({"proposal_ref":"expression:test:proposal:first","basis_revision":1,"proposed_by":"agent:a","activity_ref":null,"continues_proposal_ref":null,"summary":"First","changes":[entity()],"method_refs":[],"evidence_refs":[],"decision":null});
+    document["revision"] = json!(2);
+    document["refinements"] = json!([proposal]);
+    let mut fresh = Application::default();
+    assert!(fresh
+        .apply(
+            &CentralClient::discover(),
+            request(json!({"operation":"open","document":document.clone(),"actor":"human:test"}))
+        )
+        .is_ok());
+    document["refinements"][0]["continues_proposal_ref"] = json!("expression:test:proposal:first");
+    assert!(serde_json::from_value::<Document>(document)
+        .unwrap()
+        .validate()
+        .is_err());
+}
+#[test]
 fn automation_requires_explicit_manual_takeover_and_bounded_material() {
     let mut app = Application::default();
     create(&mut app);

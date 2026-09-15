@@ -5,10 +5,11 @@ import {useExpressionStage,type StagePresentation} from "../stage/ExpressionStag
 import {expressionConfig} from "./engineProjection";
 import type {Change,ExpressionDocument,ExpressionRequest,ExpressionResult,SubjectBinding} from "./types";
 import type {CentralLocation} from "../kernel/types";
+import {pedagogyChanges} from "./pedagogy";
 import "./expression.css";
 const ACTOR="human:expression-editor";
 
-export function ExpressionView(){
+export function ExpressionView({initialExpressionRef}:{initialExpressionRef?:string}={}){
  const kernel=useKernel();const stage=useExpressionStage();
  const [document,setDocument]=useState<ExpressionDocument>();
  const [list,setList]=useState<NonNullable<ExpressionResult["expressions"]>>([]);
@@ -19,6 +20,9 @@ export function ExpressionView(){
  const [source,setSource]=useState("");const [sourceRevision,setSourceRevision]=useState("");
  const [filePath,setFilePath]=useState("");const [file,setFile]=useState<{location:CentralLocation;revision:string}>();
  const [result,setResult]=useState<ExpressionResult>();
+ const [reviewReason,setReviewReason]=useState("");
+ const [reviewCorrections,setReviewCorrections]=useState("[]");
+ const [lesson,setLesson]=useState({summary:"",method:"",methodRevision:"",evidence:"",evidenceRevision:""});
  const [presenting,setPresenting]=useState(false);const presentation=useRef<StagePresentation|null>(null);
  const current=useRef(document);current.current=document;
  const request=useCallback(async(request:ExpressionRequest)=>{
@@ -30,7 +34,7 @@ export function ExpressionView(){
   const listing=await request({operation:"list"});setList(listing.expressions??[]);
   if(current.current){const reading=await request({operation:"inspect",expression_ref:current.current.expression_ref});if(reading.document)setDocument(reading.document);if(reading.file)setFile(reading.file);}
  },[request]);
- useEffect(()=>{void refresh().catch(e=>setError(String(e)));},[refresh]);
+ useEffect(()=>{void refresh().then(()=>{if(initialExpressionRef)return request({operation:"inspect",expression_ref:initialExpressionRef}).then(reading=>{if(reading.document)setDocument(reading.document);});}).catch(e=>setError(String(e)));},[refresh,initialExpressionRef,request]);
  const seq=kernel.receipts.filter(r=>r.event==="expression_changed").slice(-1)[0]?.seq;
  useEffect(()=>{void refresh().catch(e=>setError(String(e)));},[seq,refresh]);
  const run=async(op:ExpressionRequest)=>{
@@ -41,6 +45,12 @@ export function ExpressionView(){
    if(["revision_conflict","file_revision_conflict","save_refused"].includes(data.state??""))setError(JSON.stringify(data));
    await refresh();return data;
   }catch(e){setError(String(e));return undefined;}finally{setPending(false);}
+ };
+ const review=async(proposalRef:string,decision:"accepted"|"rejected")=>{
+  let corrections:Change[]=[];
+  if(decision==="accepted"){const parsed:unknown=JSON.parse(reviewCorrections);if(!Array.isArray(parsed))throw new Error("Corrections must be a JSON array of Expression changes");corrections=parsed as Change[];}
+  await run({operation:"review",expression_ref:document!.expression_ref,expected_revision:document!.revision,proposal_ref:proposalRef,actor:ACTOR,decision,reason:reviewReason,corrections});
+  setReviewReason("");setReviewCorrections("[]");
  };
  const edit=(changes:Change[])=>document&&run({operation:"edit",expression_ref:document.expression_ref,expected_revision:document.revision,actor:ACTOR,changes});
  const commitParameter=async(entity_ref:string,parameter:string,value:string|number,basis:number)=>{
@@ -80,7 +90,8 @@ export function ExpressionView(){
   const entry=reply.outcome.directory.entries.find(e=>e.name===name&&e.kind==="file");
   if(!entry)throw new Error("Choose an existing Expression file under Central");return entry.location;
  }
- return <section className="expression-editor" aria-label="Expression composition">
+ const pendingRefinements=document?.refinements.filter(proposal=>!proposal.decision)??[];
+ return <section className="expression-editor" aria-label="Expression composition" data-expression-ref={document?.expression_ref}>
   <h3>Expressions</h3>
   {error&&<p role="alert">{error}</p>}
   <div className="expression-tools">
@@ -95,6 +106,28 @@ export function ExpressionView(){
     <button disabled={pending} onClick={()=>void edit([{change:"entity_add",scene_ref:document.selection.scene_ref,entity_ref:`${document.expression_ref}:entity:${crypto.randomUUID()}`,title:`Thing ${Object.keys(document.entities).length+1}`}])}>Add Thing</button>
     <button aria-pressed={presenting} onClick={()=>setPresenting(!presenting)}>{presenting?"Close presentation":"Present on stage"}</button>
    </div>
+   <details className="expression-pedagogy"><summary>Propose a source-backed Epii lesson</summary>
+    <p>This stages a human-attributed, reviewable proposal through the same Expression service. A native Agent uses the structured socket operation and supplies its own exact AgentSession attribution. Neither path grants authority.</p>
+    <label>Lesson summary<input aria-label="Lesson summary" value={lesson.summary} onChange={event=>setLesson({...lesson,summary:event.target.value})}/></label>
+    <label>Method ref<input aria-label="Lesson method ref" value={lesson.method} onChange={event=>setLesson({...lesson,method:event.target.value})}/></label>
+    <label>Method revision<input aria-label="Lesson method revision" value={lesson.methodRevision} onChange={event=>setLesson({...lesson,methodRevision:event.target.value})}/></label>
+    <label>Evidence ref<input aria-label="Lesson evidence ref" value={lesson.evidence} onChange={event=>setLesson({...lesson,evidence:event.target.value})}/></label>
+    <label>Evidence revision<input aria-label="Lesson evidence revision" value={lesson.evidenceRevision} onChange={event=>setLesson({...lesson,evidenceRevision:event.target.value})}/></label>
+    <button disabled={pending||!owner.trim()||!source||!sourceRevision||!lesson.summary.trim()||!lesson.method.trim()||!lesson.methodRevision.trim()||!lesson.evidence.trim()||!lesson.evidenceRevision.trim()} onClick={()=>{const nonce=crypto.randomUUID();const sourceReading={ref:source,revision:sourceRevision,availability:"available" as const};const method={ref:lesson.method,revision:lesson.methodRevision,availability:"available" as const};const evidence={ref:lesson.evidence,revision:lesson.evidenceRevision,availability:"available" as const};const lessonEntity={id:`lesson-${nonce}`,title:"Source in relation",glyph:"relation",subject:{ref:source,owner:owner.trim(),role:"thing" as const,sources:[sourceReading]}};const changes=pedagogyChanges(document.expression_ref,{summary:lesson.summary,method_refs:[method],evidence_refs:[evidence],scenes:[{id:"initial",title:"Initial scene",entities:[{...lessonEntity,x:-90,y:0}]},{id:`relation-${nonce}`,title:"Relation in movement",entities:[{...lessonEntity,x:90,y:0}]}]},document.selection.scene_ref);void run({operation:"propose",expression_ref:document.expression_ref,expected_revision:document.revision,proposal_ref:`${document.expression_ref}:proposal:${nonce}`,actor:ACTOR,activity_ref:null,continues_proposal_ref:document.refinements.slice().reverse().find(proposal=>proposal.decision)?.proposal_ref??null,summary:lesson.summary,changes,method_refs:[method],evidence_refs:[evidence]});}}>Submit lesson proposal for human review</button>
+   </details>
+   {pendingRefinements.length>0&&<section className="expression-refinements" aria-label="Expression refinement proposals">
+    <h5>Proposals awaiting review</h5>
+    {pendingRefinements.map(proposal=><article key={proposal.proposal_ref} data-proposal-ref={proposal.proposal_ref}>
+     <strong>{proposal.summary}</strong><span>{proposal.proposed_by}{proposal.activity_ref?` · supplied Activity correlation ${proposal.activity_ref} (unverified here)`:" · no Activity ref disclosed"}</span>
+     <p>{proposal.changes.length} proposed changes · {proposal.method_refs.length} methods · {proposal.evidence_refs.length} evidence sources. Attribution and Activity refs do not authenticate authority.</p>
+     <label>Decision note<input aria-label={`Decision note for ${proposal.proposal_ref}`} value={reviewReason} onChange={event=>setReviewReason(event.target.value)}/></label>
+     <label>Correction changes<textarea aria-label={`Correction changes for ${proposal.proposal_ref}`} value={reviewCorrections} onChange={event=>setReviewCorrections(event.target.value)}/></label>
+     <button disabled={pending||!reviewReason.trim()} onClick={()=>void review(proposal.proposal_ref,"accepted").catch(error=>setError(String(error)))}>Accept with corrections</button>
+     <button disabled={pending||!reviewReason.trim()} onClick={()=>void review(proposal.proposal_ref,"rejected").catch(error=>setError(String(error)))}>Reject and retain note</button>
+     <details><summary>Inspect proposal, methods and evidence</summary><pre>{JSON.stringify(proposal,null,2)}</pre></details>
+    </article>)}
+   </section>}
+   {document.refinements.some(proposal=>proposal.decision)&&<details className="expression-refinements"><summary>Reviewed proposals and human decisions</summary>{document.refinements.filter(proposal=>proposal.decision).map(proposal=><article key={proposal.proposal_ref}><strong>{proposal.summary}</strong><span>{proposal.decision!.state} by {proposal.decision!.actor} · {proposal.decision!.reason}</span><p>{proposal.decision!.corrections.length} retained correction changes</p></article>)}</details>}
    <nav aria-label="Expression scenes">{document.scenes.map(s=><button key={s.scene_ref} aria-pressed={s.scene_ref===document.selection.scene_ref} onClick={()=>void edit([{change:"focus",scene_ref:s.scene_ref,entity_ref:null}])}>{s.title}</button>)}</nav>
    <div className="expression-entities" role="group" aria-label="Expression entities">{document.scenes.find(s=>s.scene_ref===document.selection.scene_ref)?.entity_refs.map(ref=>{const e=document.entities[ref];return <button key={ref} aria-pressed={selected?.entity_ref===ref} onClick={()=>void edit([{change:"focus",scene_ref:document.selection.scene_ref,entity_ref:ref}])}>{e.title}{e.subject?` · ${e.subject.presentation_role}`:""}</button>;})}</div>
    {selected&&<fieldset disabled={pending}><legend>{selected.title}</legend>
