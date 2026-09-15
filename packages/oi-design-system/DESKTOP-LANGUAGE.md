@@ -1,15 +1,39 @@
-# Desktop visual language — owner ruling, 6 September 2026
+# Desktop visual language — owner rulings
 
 This package is the implementation source for tokens and shared primitives.
-The companion desktop studies establish composition; this extension establishes
-the accent/loading language. Existing canonical design documents remain intact.
+The companion desktop studies establish composition; this document records the
+owner rulings the desktop ground stands on, newest first, so the provenance of
+each value stays legible. Existing canonical design documents remain intact.
 
-## Ground and density
+## Owner revision, 15 September 2026 — canonical light and dark
 
-Apply `.oi-desktop` at the host and import tokens.css + point-cloud.css. It opts
-into drab grey-yellow-green paper, graphite text/nodes, slender rules and muted
-olive focus. The original site palette remains unchanged. Shared contributions
-inherit host roles and must not bring their own cards, shadows, spinners or hues.
+The desktop's canonical appearance is **neutral light** and **neutral dark**.
+`.oi-desktop` is the light ground (quiet warm-white paper, ink, fine hairlines,
+restrained depth); `.oi-desktop[data-theme="dark"]` is its inverse. `system` is
+a preference that resolves — before first paint — into one of those two; it is
+not a third visual theme. The accent is ink, not a hue: selection, the send
+control and the focus ring are drawn in foreground strength; colour is reserved
+for the scarce gold meta-relation role, which keeps one value in both
+appearances.
+
+This supersedes the 6 September ruling below, which explicitly opted the
+desktop into a grey-yellow-green/olive palette. That ruling is not erased: the
+returned application experience — the Expression language as it actually runs
+on the desktop — is now the canonical ground, and the olive values are retired
+from `tokens.css` rather than kept as an alternative. Everything else in the
+6 September ruling (density tokens, hit targets, point-cloud accents, the
+loading mark, the Expression overlay contract) stands unchanged; only the
+colour ground moved. Role names did not change, so no consumer moved with it.
+
+## Ground and density (6 September 2026)
+
+Apply `.oi-desktop` at the host and import tokens.css + point-cloud.css. The
+6 September extension opted into drab grey-yellow-green paper, graphite
+text/nodes, slender rules and muted olive focus — superseded on 15 September by
+the neutral light/dark ground above; the density and accent law of this section
+remains in force. The original site palette remains unchanged. Shared
+contributions inherit host roles and must not bring their own cards, shadows,
+spinners or hues.
 
 Use desktop type/bar/row/hit-target tokens rather than the site's fluid display
 scale. Thin bars do not mean tiny click targets: icon bodies can be small while
