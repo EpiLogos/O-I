@@ -1,8 +1,8 @@
 {
   "schema": "oi.native-source-contribution/v1",
   "owner": "software-factory",
-  "candidate": "87d8785071b7de1cc73aefbb235fd59e4e43d756",
-  "parent": "fb854dede9876a0ea008afd62422ef9150fe5203",
+  "candidate": "cb0d0011a66e2bd575b5c7839d5390002bfa3aed",
+  "parent": "761b2a62c1a07a78ab2747a75c98dd62d934b1e7",
   "entry": "factory-ui/src/index.ts",
   "runtime_exports": [
     "BuildSurface",
