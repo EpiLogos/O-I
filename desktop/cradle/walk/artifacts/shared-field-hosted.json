@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "shared-field-hosted",
-  "generated_at": "2026-09-15T01:56:24.401Z",
+  "generated_at": "2026-09-15T14:55:47.550Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -10,9 +10,9 @@
     "node": "v24.16.0",
     "platform": "darwin"
   },
-  "passed": true,
+  "passed": false,
   "error": null,
-  "duration_ms": 19946,
+  "duration_ms": 25489,
   "checks": [
     {
       "ok": true,
@@ -87,10 +87,10 @@
       "label": "The kernel pulls the client's own caller-visible snapshot",
       "data": {
         "counts": {
-          "entries": 7,
-          "fields": 2,
-          "participants": 3,
-          "projections": 5,
+          "entries": 11,
+          "fields": 6,
+          "participants": 5,
+          "projections": 9,
           "relations": 9
         },
         "target": {
@@ -158,10 +158,10 @@
       "ok": true,
       "label": "Hosted node count equals the snapshot's entry count",
       "data": {
-        "hosted_nodes": 7,
-        "hosted_rows": 7,
-        "snapshot_entries_before": 7,
-        "snapshot_entries_after": 7
+        "hosted_nodes": 11,
+        "hosted_rows": 11,
+        "snapshot_entries_before": 11,
+        "snapshot_entries_after": 11
       }
     },
     {
@@ -182,17 +182,22 @@
           "hosted-wiki-space",
           "hosted-wiki-node",
           "hosted-curated-artifact",
-          "hosted-contribution"
+          "hosted-contribution",
+          "hosted-human-world",
+          "hosted-central.document",
+          "hosted-expression"
         ]
       }
     },
     {
-      "ok": true,
+      "ok": false,
       "label": "Hosted refs (world-qualified projections, contribution refs) collide with no Central or AIKit node",
       "data": {
         "ref_grammars": [
           "world",
-          "contribution"
+          "contribution",
+          "central",
+          "expression"
         ],
         "sample": [
           "world:central:project:O-I",
@@ -301,7 +306,7 @@
       "ok": true,
       "label": "The composed envelope is a real oi.projection/v1 on the Editor source",
       "data": {
-        "projection_ref": "projection:desktop:mu20tln4",
+        "projection_ref": "projection:desktop:mu2snxq1",
         "subject": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
         "source_revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd"
       }
@@ -318,11 +323,11 @@
       "label": "The hosted result shows the hosted Projection row verbatim for the composed envelope",
       "data": {
         "hosted_projection_row": {
-          "projectionKey": "projection:desktop:mu20tln4@1",
-          "projectionRef": "projection:desktop:mu20tln4",
+          "projectionKey": "projection:desktop:mu2snxq1@1",
+          "projectionRef": "projection:desktop:mu2snxq1",
           "projectionRevision": 1,
           "publisherParticipantRef": "human:desktop-walk",
-          "rowId": "4099",
+          "rowId": "8193",
           "sourceRevision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
           "state": "published"
         }
@@ -370,6 +375,16 @@
             "projection_ref": "projection:desktop:mu20tln4",
             "projection_revision": 1,
             "source_revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd"
+          },
+          {
+            "projection_ref": "projection:desktop:mu249md2",
+            "projection_revision": 1,
+            "source_revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd"
+          },
+          {
+            "projection_ref": "projection:desktop:mu2snxq1",
+            "projection_revision": 1,
+            "source_revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd"
           }
         ]
       }
@@ -378,7 +393,7 @@
       "ok": true,
       "label": "The projection ref resolves to the same hosted entry (entry alias)",
       "data": {
-        "ref": "projection:desktop:mu20tln4",
+        "ref": "projection:desktop:mu2snxq1",
         "state": "hosted"
       }
     },
@@ -387,17 +402,17 @@
       "label": "The field holds the walk's projection and lost nothing it held before (the walk's own entry upserts on re-runs; nothing else is withdrawn, overwritten or deleted)",
       "data": {
         "before": {
-          "entries": 7,
-          "fields": 2,
-          "participants": 3,
-          "projections": 5,
+          "entries": 11,
+          "fields": 6,
+          "participants": 5,
+          "projections": 9,
           "relations": 9
         },
         "after": {
-          "entries": 8,
-          "fields": 2,
-          "participants": 3,
-          "projections": 6,
+          "entries": 11,
+          "fields": 6,
+          "participants": 5,
+          "projections": 10,
           "relations": 9
         },
         "lost_entries": [],
@@ -449,10 +464,10 @@
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-15T01:56:24.725Z",
+        "mounted_at": "2026-09-15T14:55:47.782Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -482,7 +497,7 @@
     {
       "ok": true,
       "op": "invoke.shared_field",
-      "duration_ms": 766.1,
+      "duration_ms": 594.8,
       "data": {
         "outcome": {
           "data": {
@@ -501,7 +516,7 @@
     {
       "ok": true,
       "op": "invoke.shared_field",
-      "duration_ms": 509.7,
+      "duration_ms": 1023.7,
       "data": {
         "outcome": {
           "data": {
@@ -521,7 +536,7 @@
     {
       "ok": true,
       "op": "invoke.shared_field",
-      "duration_ms": 488,
+      "duration_ms": 668.2,
       "data": {
         "outcome": {
           "data": {
@@ -580,10 +595,10 @@
               }
             ],
             "counts": {
-              "entries": 7,
-              "fields": 2,
-              "participants": 3,
-              "projections": 5,
+              "entries": 11,
+              "fields": 6,
+              "participants": 5,
+              "projections": 9,
               "relations": 9
             },
             "entries": [
@@ -849,8 +864,136 @@
                 "schema": "oi.explore-entry/v1",
                 "summary": "Admitted reply from World B (frank) to the curated artifact",
                 "world_ref": "world:central:project:O-I"
+              },
+              {
+                "aliases": [],
+                "kind": "human-world",
+                "label": "Suite harmonisation 2026-09-15",
+                "locators": [],
+                "provenance": [
+                  {
+                    "kind": "human-publication",
+                    "ref": "participant:central:owner",
+                    "revision": "central.content-fnv1a64/v1:harmonisation-2026-09-15",
+                    "source_system": "central"
+                  }
+                ],
+                "ref": "central:source:github:EpiLogos/O-I@5c7582e0",
+                "revision": "central.content-fnv1a64/v1:harmonisation-2026-09-15",
+                "schema": "oi.explore-entry/v1",
+                "summary": "GitHub mains, workstation and Omarchy converged on one exact-main basis; catalog handoff PR #325",
+                "world_ref": "oi:world:central"
+              },
+              {
+                "aliases": [
+                  "projection:desktop:mu249md2"
+                ],
+                "kind": "central.document",
+                "label": "00 01-DESIGN.md",
+                "locators": [
+                  {
+                    "locator": "/explore.html?ref=central%3Asource%3Aproject%3Aeditor-walk%3AProjectCentral%2Fuser%2F00%252001-DESIGN.md",
+                    "surface": "web"
+                  }
+                ],
+                "meta": {
+                  "projection_ref": "projection:desktop:mu249md2",
+                  "standing": "projection"
+                },
+                "provenance": [
+                  {
+                    "kind": "document-source",
+                    "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+                    "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
+                    "source_system": "central"
+                  }
+                ],
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+                "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
+                "schema": "oi.explore-entry/v1",
+                "summary": "Cradle design: intent and experience",
+                "world_ref": "world:desktop:central-source-project-editor-walk-projectcentral-user-00-2001-design-md"
+              },
+              {
+                "aliases": [
+                  "projection:desktop:expression-sf1-probe:1"
+                ],
+                "kind": "expression",
+                "label": "SF1 probe",
+                "locators": [
+                  {
+                    "locator": "/explore.html?ref=expression%3Asf1-probe",
+                    "surface": "web"
+                  }
+                ],
+                "meta": {
+                  "expression_revision": 2,
+                  "live_renderer_ref": "renderer:oi:expression-stage",
+                  "presentation_ref": "presentation:expression-sf1-probe",
+                  "projection_ref": "projection:desktop:expression-sf1-probe:1",
+                  "standing": "projection"
+                },
+                "provenance": [
+                  {
+                    "kind": "expression",
+                    "ref": "expression:sf1-probe",
+                    "revision": "2",
+                    "source_system": "o-i"
+                  }
+                ],
+                "ref": "expression:sf1-probe",
+                "revision": "2",
+                "schema": "oi.explore-entry/v1",
+                "summary": "a living Expression · 1 scene · 1 entity",
+                "world_ref": "world:desktop:expression-sf1-probe"
+              },
+              {
+                "aliases": [
+                  "projection:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30:mu245q68"
+                ],
+                "kind": "expression",
+                "label": "SF1 walk field",
+                "locators": [
+                  {
+                    "locator": "/explore.html?ref=expression%3Aaa5462a3-e269-428b-b092-3cef71330b30",
+                    "surface": "web"
+                  }
+                ],
+                "meta": {
+                  "expression_revision": 5,
+                  "live_renderer_ref": "renderer:oi:expression-stage",
+                  "presentation_ref": "presentation:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30:mu245q68",
+                  "projection_ref": "projection:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30:mu245q68",
+                  "standing": "projection"
+                },
+                "provenance": [
+                  {
+                    "kind": "expression",
+                    "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                    "revision": "5",
+                    "source_system": "o-i"
+                  }
+                ],
+                "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                "revision": "5",
+                "schema": "oi.explore-entry/v1",
+                "summary": "a living Expression · 1 scene · 1 entity",
+                "world_ref": "world:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30"
               }
             ],
+            "entry_fields": {
+              "central:source:github:EpiLogos/O-I@5c7582e0": "oi:field:central:project:O-I",
+              "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md": "oi:field:desktop:central-source-project-editor-walk-projectcentral-user-00-2001-design-md",
+              "contribution:world-b:lived-2026-09-15:reply": "oi:field:central:project:O-I",
+              "expression:aa5462a3-e269-428b-b092-3cef71330b30": "oi:field:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30",
+              "expression:sf1-probe": "oi:field:desktop:expression-sf1-probe",
+              "world:central:project:O-I": "oi:field:central:project:O-I",
+              "world:central:project:O-I/artifact:central:document:doc:shared-field-artifact-2026-09-14": "oi:field:central:project:O-I",
+              "world:central:project:O-I/artifact:central:flow:09f8cdd4-ab1d-4fe4-b6aa-bde0d8a055fc": "oi:field:central:project:O-I",
+              "world:central:project:O-I/central:wiki:project:O-I": "oi:field:central:project:O-I",
+              "world:central:project:O-I/central:wiki:root": "oi:field:central:project:O-I",
+              "world:central:project:O-I/wiki:node:project-root/o-i": "oi:field:central:project:O-I"
+            },
             "fields": [
               {
                 "field_ref": "oi:field:central:project:O-I",
@@ -881,6 +1024,66 @@
                 "schema": "oi.shared-field/v1",
                 "title": "00 01-DESIGN.md",
                 "visibility": "public"
+              },
+              {
+                "field_ref": "oi:field:desktop:expression-f2fc137e-b3a0-4876-894a-87b9ee98c33f",
+                "kind": "explore",
+                "provenance": [
+                  {
+                    "kind": "human-publication",
+                    "ref": "human:desktop-walk",
+                    "revision": "5",
+                    "source_system": "o-i"
+                  }
+                ],
+                "schema": "oi.shared-field/v1",
+                "title": "SF1 walk field",
+                "visibility": "public"
+              },
+              {
+                "field_ref": "oi:field:central:project:harmonisation-2026-09-15",
+                "kind": "explore",
+                "provenance": [
+                  {
+                    "kind": "human-publication",
+                    "ref": "participant:central:owner",
+                    "revision": "central.content-fnv1a64/v1:harmonisation-2026-09-15",
+                    "source_system": "central"
+                  }
+                ],
+                "schema": "oi.shared-field/v1",
+                "title": "Suite harmonisation receipt — GitHub/workstation/Omarchy converged mains (2026-09-15)",
+                "visibility": "public"
+              },
+              {
+                "field_ref": "oi:field:desktop:expression-sf1-probe",
+                "kind": "explore",
+                "provenance": [
+                  {
+                    "kind": "human-publication",
+                    "ref": "participant:oi-field-desktop-expression-sf1-probe:human-desktop-walk",
+                    "revision": "2",
+                    "source_system": "o-i"
+                  }
+                ],
+                "schema": "oi.shared-field/v1",
+                "title": "SF1 probe",
+                "visibility": "public"
+              },
+              {
+                "field_ref": "oi:field:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30",
+                "kind": "explore",
+                "provenance": [
+                  {
+                    "kind": "human-publication",
+                    "ref": "participant:oi-field-desktop-expression-aa5462a3-e269-428b-b092-3cef71330b30:human-desktop-walk",
+                    "revision": "5",
+                    "source_system": "o-i"
+                  }
+                ],
+                "schema": "oi.shared-field/v1",
+                "title": "SF1 walk field",
+                "visibility": "public"
               }
             ],
             "my_authority": [
@@ -895,6 +1098,18 @@
                 "participant_ref": "human:desktop-walk",
                 "revoked": false,
                 "role": "contributor"
+              },
+              {
+                "field_ref": "oi:field:desktop:expression-sf1-probe",
+                "participant_ref": "participant:oi-field-desktop-expression-sf1-probe:human-desktop-walk",
+                "revoked": false,
+                "role": "contributor"
+              },
+              {
+                "field_ref": "oi:field:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30",
+                "participant_ref": "participant:oi-field-desktop-expression-aa5462a3-e269-428b-b092-3cef71330b30:human-desktop-walk",
+                "revoked": false,
+                "role": "contributor"
               }
             ],
             "my_contacts": [
@@ -907,7 +1122,15 @@
               }
             ],
             "my_contribution_receipts": [],
-            "my_watches": [],
+            "my_watches": [
+              {
+                "field_ref": "oi:field:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30",
+                "state": "active",
+                "target_kind": "object",
+                "target_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                "watch_ref": "watch:participant-oi-field-desktop-expression-aa5462a3-e269-428b-b092-3cef71330b30-human-desktop-walk:expression-aa5462a3-e269-428b-b092-3cef71330b30"
+              }
+            ],
             "participants": [
               {
                 "field_ref": "oi:field:central:project:O-I",
@@ -931,16 +1154,14 @@
                 "field_ref": "oi:field:central:project:O-I",
                 "identity": {
                   "kind": "human",
-                  "ref": "human:central:owner"
+                  "ref": "central:source:control:root:Control/user/identity"
                 },
                 "participant_ref": "participant:central:owner",
                 "presentation": {
-                  "chosen_name": "O-I owner",
-                  "world_ref": "world:central:project:O-I"
+                  "world_ref": "oi:world:central"
                 },
                 "provenance": {
-                  "source_ref": "central:path:/Users/admin/Central:Control/user/flows/flow-2026-09-14-2236.html",
-                  "source_revision": "central.content-fnv1a64/v1:45939:deae7744ca48657b",
+                  "source_revision": "central.content-fnv1a64/v1:harmonisation-2026-09-15",
                   "source_system": "central"
                 },
                 "schema": "oi.participant/v1"
@@ -959,6 +1180,40 @@
                   "source_ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
                   "source_revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
                   "source_system": "central"
+                },
+                "schema": "oi.participant/v1"
+              },
+              {
+                "field_ref": "oi:field:desktop:expression-sf1-probe",
+                "identity": {
+                  "kind": "human",
+                  "ref": "human:desktop-walk"
+                },
+                "participant_ref": "participant:oi-field-desktop-expression-sf1-probe:human-desktop-walk",
+                "presentation": {
+                  "world_ref": "world:desktop:expression-sf1-probe"
+                },
+                "provenance": {
+                  "source_ref": "expression:sf1-probe",
+                  "source_revision": "2",
+                  "source_system": "o-i"
+                },
+                "schema": "oi.participant/v1"
+              },
+              {
+                "field_ref": "oi:field:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30",
+                "identity": {
+                  "kind": "human",
+                  "ref": "human:desktop-walk"
+                },
+                "participant_ref": "participant:oi-field-desktop-expression-aa5462a3-e269-428b-b092-3cef71330b30:human-desktop-walk",
+                "presentation": {
+                  "world_ref": "world:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30"
+                },
+                "provenance": {
+                  "source_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                  "source_revision": "5",
+                  "source_system": "o-i"
                 },
                 "schema": "oi.participant/v1"
               }
@@ -1623,6 +1878,485 @@
                   "kind": "central.document",
                   "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
                 }
+              },
+              {
+                "audience": {
+                  "visibility": "public"
+                },
+                "projection_ref": "projection:desktop:mu20tln4",
+                "projection_revision": 1,
+                "provenance": [
+                  {
+                    "kind": "document-source",
+                    "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+                    "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
+                    "source_system": "central"
+                  }
+                ],
+                "published_at": "2026-09-15T01:56:33.616Z",
+                "publisher_participant_ref": "human:desktop-walk",
+                "representation": {
+                  "kind": "oi.sparse-representation/v1",
+                  "payload": {
+                    "meta": [
+                      {
+                        "label": "Native type",
+                        "value": "central.document"
+                      }
+                    ],
+                    "schema": "oi.sparse-representation/v1",
+                    "text": "Cradle design: intent and experience",
+                    "title": "00 01-DESIGN.md"
+                  }
+                },
+                "schema": "oi.projection/v1",
+                "source": {
+                  "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
+                  "system": "central"
+                },
+                "state": "published",
+                "subject": {
+                  "kind": "central.document",
+                  "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+                }
+              },
+              {
+                "audience": {
+                  "visibility": "public"
+                },
+                "projection_ref": "projection:desktop:mu249md2",
+                "projection_revision": 1,
+                "provenance": [
+                  {
+                    "kind": "document-source",
+                    "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+                    "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
+                    "source_system": "central"
+                  }
+                ],
+                "published_at": "2026-09-15T03:32:59.894Z",
+                "publisher_participant_ref": "human:desktop-walk",
+                "representation": {
+                  "kind": "oi.sparse-representation/v1",
+                  "payload": {
+                    "meta": [
+                      {
+                        "label": "Native type",
+                        "value": "central.document"
+                      }
+                    ],
+                    "schema": "oi.sparse-representation/v1",
+                    "text": "Cradle design: intent and experience",
+                    "title": "00 01-DESIGN.md"
+                  }
+                },
+                "schema": "oi.projection/v1",
+                "source": {
+                  "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
+                  "system": "central"
+                },
+                "state": "published",
+                "subject": {
+                  "kind": "central.document",
+                  "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+                }
+              },
+              {
+                "audience": {
+                  "visibility": "public"
+                },
+                "projection_ref": "projection:desktop:expression-sf1-probe:1",
+                "projection_revision": 1,
+                "provenance": [
+                  {
+                    "kind": "human-publication",
+                    "ref": "participant:oi-field-desktop-expression-sf1-probe:human-desktop-walk",
+                    "revision": "2",
+                    "source_system": "o-i"
+                  }
+                ],
+                "published_at": "2026-09-15T03:27:29.734Z",
+                "publisher_participant_ref": "participant:oi-field-desktop-expression-sf1-probe:human-desktop-walk",
+                "representation": {
+                  "kind": "oi.world-presentation/v1",
+                  "payload": {
+                    "presentation_ref": "presentation:expression-sf1-probe",
+                    "provenance": [
+                      {
+                        "kind": "expression",
+                        "ref": "expression:sf1-probe",
+                        "revision": "2",
+                        "source_system": "o-i"
+                      }
+                    ],
+                    "regions": [
+                      {
+                        "bindings": [
+                          {
+                            "binding_ref": "lede",
+                            "component_ref": "oi.presentation/lede/v1",
+                            "fallback": {
+                              "title": "SF1 probe"
+                            },
+                            "portable_renderer": "oi.presentation/lede/v1",
+                            "props": {
+                              "title": "SF1 probe"
+                            },
+                            "provenance": [
+                              {
+                                "kind": "expression",
+                                "ref": "expression:sf1-probe",
+                                "revision": "2",
+                                "source_system": "o-i"
+                              }
+                            ],
+                            "schema": "oi.presentation-binding/v1",
+                            "subject_ref": "expression:sf1-probe"
+                          }
+                        ],
+                        "region_ref": "lede",
+                        "role": "lede"
+                      },
+                      {
+                        "bindings": [
+                          {
+                            "binding_ref": "expression",
+                            "component_ref": "oi.presentation/expression/v1",
+                            "fallback": {
+                              "text": "SF1 probe: a living Expression at revision 2. Where the live renderer is not admitted, the frozen reading of the same revision renders instead.",
+                              "title": "SF1 probe"
+                            },
+                            "portable_renderer": "oi.presentation/expression/v1",
+                            "props": {
+                              "composition": {
+                                "entities": {
+                                  "expression:sf1-probe:entity:x": {
+                                    "entity_ref": "expression:sf1-probe:entity:x",
+                                    "parameters": {
+                                      "glyph": {
+                                        "automation": null,
+                                        "value": "O"
+                                      }
+                                    },
+                                    "revision": 1,
+                                    "subject": null,
+                                    "title": "X"
+                                  }
+                                },
+                                "expression_ref": "expression:sf1-probe",
+                                "provenance": [],
+                                "relations": {},
+                                "representations": [],
+                                "revision": 2,
+                                "scenes": [
+                                  {
+                                    "entity_refs": [
+                                      "expression:sf1-probe:entity:x"
+                                    ],
+                                    "revision": 1,
+                                    "scene_ref": "expression:sf1-probe:scene:a",
+                                    "title": "A"
+                                  }
+                                ],
+                                "schema": "oi.expression-composition/v1",
+                                "selection": {
+                                  "entity_ref": null,
+                                  "scene_ref": "expression:sf1-probe:scene:a"
+                                },
+                                "title": "SF1 probe"
+                              },
+                              "expression": {
+                                "expression_ref": "expression:sf1-probe",
+                                "expression_revision": 2,
+                                "live_availability": "available",
+                                "live_renderer_ref": "renderer:oi:expression-stage",
+                                "representations": [
+                                  {
+                                    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>SF1 probe</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:sf1-probe\" data-expression-revision=\"2\"><h1>SF1 probe</h1><p>Frozen reading of expression:sf1-probe at revision 2. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:sf1-probe:scene:a\" aria-label=\"A\"><h2>A</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:sf1-probe:entity:x\" style=\"left:50.00%;top:50.00%;font-size:3.00rem;opacity:1.00\" title=\"X\">O</span></div></section></main></body></html>",
+                                    "kind": "html",
+                                    "media_type": "text/html",
+                                    "provenance": [
+                                      {
+                                        "availability": "available",
+                                        "ref": "expression:sf1-probe",
+                                        "revision": "2"
+                                      }
+                                    ],
+                                    "representation": {
+                                      "availability": "available",
+                                      "ref": "expression:sf1-probe:frozen:2",
+                                      "revision": "2"
+                                    }
+                                  }
+                                ],
+                                "scene_ref": "expression:sf1-probe:scene:a",
+                                "schema": "oi.expression-presentation/v1",
+                                "subjects": []
+                              },
+                              "title": "SF1 probe"
+                            },
+                            "provenance": [
+                              {
+                                "kind": "expression",
+                                "ref": "expression:sf1-probe",
+                                "revision": "2",
+                                "source_system": "o-i"
+                              }
+                            ],
+                            "schema": "oi.presentation-binding/v1"
+                          }
+                        ],
+                        "region_ref": "body",
+                        "role": "body"
+                      }
+                    ],
+                    "revision": 1,
+                    "schema": "oi.world-presentation/v1",
+                    "theme": {
+                      "tokens": {}
+                    },
+                    "title": "SF1 probe",
+                    "world_ref": "expression:sf1-probe"
+                  }
+                },
+                "schema": "oi.projection/v1",
+                "source": {
+                  "ref": "expression:sf1-probe",
+                  "revision": "2",
+                  "system": "o-i"
+                },
+                "state": "published",
+                "subject": {
+                  "kind": "expression",
+                  "ref": "expression:sf1-probe"
+                }
+              },
+              {
+                "audience": {
+                  "visibility": "public"
+                },
+                "projection_ref": "projection:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30:mu245q68",
+                "projection_revision": 1,
+                "provenance": [
+                  {
+                    "kind": "human-publication",
+                    "ref": "participant:oi-field-desktop-expression-aa5462a3-e269-428b-b092-3cef71330b30:human-desktop-walk",
+                    "revision": "5",
+                    "source_system": "o-i"
+                  }
+                ],
+                "published_at": "2026-09-15T03:29:58.368Z",
+                "publisher_participant_ref": "participant:oi-field-desktop-expression-aa5462a3-e269-428b-b092-3cef71330b30:human-desktop-walk",
+                "representation": {
+                  "kind": "oi.world-presentation/v1",
+                  "payload": {
+                    "presentation_ref": "presentation:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30:mu245q68",
+                    "provenance": [
+                      {
+                        "kind": "expression",
+                        "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                        "revision": "5",
+                        "source_system": "o-i"
+                      }
+                    ],
+                    "regions": [
+                      {
+                        "bindings": [
+                          {
+                            "binding_ref": "lede",
+                            "component_ref": "oi.presentation/lede/v1",
+                            "fallback": {
+                              "title": "SF1 walk field"
+                            },
+                            "portable_renderer": "oi.presentation/lede/v1",
+                            "props": {
+                              "title": "SF1 walk field"
+                            },
+                            "provenance": [
+                              {
+                                "kind": "expression",
+                                "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                                "revision": "5",
+                                "source_system": "o-i"
+                              }
+                            ],
+                            "schema": "oi.presentation-binding/v1",
+                            "subject_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30"
+                          }
+                        ],
+                        "region_ref": "lede",
+                        "role": "lede"
+                      },
+                      {
+                        "bindings": [
+                          {
+                            "binding_ref": "expression",
+                            "component_ref": "oi.presentation/expression/v1",
+                            "fallback": {
+                              "text": "SF1 walk field: a living Expression at revision 5. Where the live renderer is not admitted, the frozen reading of the same revision renders instead.",
+                              "title": "SF1 walk field"
+                            },
+                            "portable_renderer": "oi.presentation/expression/v1",
+                            "props": {
+                              "composition": {
+                                "entities": {
+                                  "expression:aa5462a3-e269-428b-b092-3cef71330b30:entity:00e9ba81-5d89-48b6-a5af-ae0c8780dde8": {
+                                    "entity_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30:entity:00e9ba81-5d89-48b6-a5af-ae0c8780dde8",
+                                    "parameters": {
+                                      "glyph": {
+                                        "automation": null,
+                                        "value": "☉"
+                                      }
+                                    },
+                                    "revision": 5,
+                                    "subject": {
+                                      "native_owner": "central",
+                                      "presentation_role": "being",
+                                      "sources": [
+                                        {
+                                          "availability": "available",
+                                          "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+                                          "revision": "walk"
+                                        }
+                                      ],
+                                      "subject_ref": "central:being:walk"
+                                    },
+                                    "title": "Thing 1"
+                                  }
+                                },
+                                "expression_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                                "provenance": [],
+                                "relations": {},
+                                "representations": [],
+                                "revision": 5,
+                                "scenes": [
+                                  {
+                                    "entity_refs": [
+                                      "expression:aa5462a3-e269-428b-b092-3cef71330b30:entity:00e9ba81-5d89-48b6-a5af-ae0c8780dde8"
+                                    ],
+                                    "revision": 2,
+                                    "scene_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30:scene:main",
+                                    "title": "Main"
+                                  }
+                                ],
+                                "schema": "oi.expression-composition/v1",
+                                "selection": {
+                                  "entity_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30:entity:00e9ba81-5d89-48b6-a5af-ae0c8780dde8",
+                                  "scene_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30:scene:main"
+                                },
+                                "title": "SF1 walk field"
+                              },
+                              "expression": {
+                                "expression_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                                "expression_revision": 5,
+                                "live_availability": "available",
+                                "live_renderer_ref": "renderer:oi:expression-stage",
+                                "representations": [
+                                  {
+                                    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>SF1 walk field</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:aa5462a3-e269-428b-b092-3cef71330b30\" data-expression-revision=\"5\"><h1>SF1 walk field</h1><p>Frozen reading of expression:aa5462a3-e269-428b-b092-3cef71330b30 at revision 5. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:aa5462a3-e269-428b-b092-3cef71330b30:scene:main\" aria-label=\"Main\"><h2>Main</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:aa5462a3-e269-428b-b092-3cef71330b30:entity:00e9ba81-5d89-48b6-a5af-ae0c8780dde8\" data-subject-ref=\"central:being:walk\" data-presentation-role=\"being\" style=\"left:50.00%;top:50.00%;font-size:3.00rem;opacity:1.00\" title=\"Thing 1\">☉</span></div></section></main></body></html>",
+                                    "kind": "html",
+                                    "media_type": "text/html",
+                                    "provenance": [
+                                      {
+                                        "availability": "available",
+                                        "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                                        "revision": "5"
+                                      }
+                                    ],
+                                    "representation": {
+                                      "availability": "available",
+                                      "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30:frozen:5",
+                                      "revision": "5"
+                                    }
+                                  }
+                                ],
+                                "scene_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30:scene:main",
+                                "schema": "oi.expression-presentation/v1",
+                                "subjects": [
+                                  {
+                                    "availability": "available",
+                                    "ref": "central:being:walk",
+                                    "revision": "5",
+                                    "sources": [
+                                      {
+                                        "availability": "available",
+                                        "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+                                        "revision": "walk"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              "title": "SF1 walk field"
+                            },
+                            "provenance": [
+                              {
+                                "kind": "expression",
+                                "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                                "revision": "5",
+                                "source_system": "o-i"
+                              }
+                            ],
+                            "schema": "oi.presentation-binding/v1",
+                            "subject_ref": "central:being:walk"
+                          }
+                        ],
+                        "region_ref": "body",
+                        "role": "body"
+                      },
+                      {
+                        "bindings": [
+                          {
+                            "binding_ref": "subject:central-being-walk",
+                            "component_ref": "oi.presentation/reference-card/v1",
+                            "fallback": {
+                              "title": "central:being:walk"
+                            },
+                            "portable_renderer": "oi.presentation/reference-card/v1",
+                            "props": {
+                              "refs": [
+                                "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+                              ],
+                              "text": "being · central",
+                              "title": "central:being:walk"
+                            },
+                            "provenance": [
+                              {
+                                "kind": "expression",
+                                "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                                "revision": "5",
+                                "source_system": "o-i"
+                              }
+                            ],
+                            "schema": "oi.presentation-binding/v1",
+                            "subject_ref": "central:being:walk"
+                          }
+                        ],
+                        "label": "Bound subjects · 1",
+                        "region_ref": "subjects",
+                        "role": "relation"
+                      }
+                    ],
+                    "revision": 1,
+                    "schema": "oi.world-presentation/v1",
+                    "theme": {
+                      "tokens": {}
+                    },
+                    "title": "SF1 walk field",
+                    "world_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30"
+                  }
+                },
+                "schema": "oi.projection/v1",
+                "source": {
+                  "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                  "revision": "5",
+                  "system": "o-i"
+                },
+                "state": "published",
+                "subject": {
+                  "kind": "expression",
+                  "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30"
+                }
               }
             ],
             "relations": [
@@ -1773,13 +2507,13 @@
               "healthy": true,
               "material": {
                 "age_ms": 1,
-                "observed_at": "2026-09-15T01:56:26.749Z",
+                "observed_at": "2026-09-15T14:55:50.271Z",
                 "state": "validated"
               },
               "material_valid": true,
               "revision": 1,
               "transport": {
-                "changed_at": "2026-09-15T01:56:26.745Z",
+                "changed_at": "2026-09-15T14:55:50.268Z",
                 "identity": "c2005d75ac2e2ff00796f2f07373038812bb80b98a111efe00115a596c158020",
                 "state": "available"
               }
@@ -1798,15 +2532,15 @@
     {
       "ok": true,
       "op": "invoke.graph",
-      "duration_ms": 728.3,
+      "duration_ms": 785.5,
       "data": {
         "outcome": {
           "reading": {
             "counts": {
               "edges": 10,
-              "hosted_rows": 7,
+              "hosted_rows": 11,
               "knowledge_rows": 18,
-              "nodes": 26,
+              "nodes": 30,
               "spaces": 1,
               "wiki_nodes": 0
             },
@@ -2305,6 +3039,65 @@
                   "source": "shared-field.projection"
                 },
                 "ref": "contribution:world-b:lived-2026-09-15:reply"
+              },
+              {
+                "actions": [],
+                "kind": "hosted-human-world",
+                "label": "Suite harmonisation 2026-09-15",
+                "native_owner": "shared-field",
+                "provenance": {
+                  "detail": [
+                    "ws://100.92.62.101:3000/oi-shared-field",
+                    "central.content-fnv1a64/v1:harmonisation-2026-09-15"
+                  ],
+                  "source": "shared-field.projection"
+                },
+                "ref": "central:source:github:EpiLogos/O-I@5c7582e0"
+              },
+              {
+                "actions": [],
+                "kind": "hosted-central.document",
+                "label": "00 01-DESIGN.md",
+                "native_owner": "shared-field",
+                "provenance": {
+                  "detail": [
+                    "ws://100.92.62.101:3000/oi-shared-field",
+                    "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd"
+                  ],
+                  "revision": "1",
+                  "source": "shared-field.projection"
+                },
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+              },
+              {
+                "actions": [],
+                "kind": "hosted-expression",
+                "label": "SF1 probe",
+                "native_owner": "shared-field",
+                "provenance": {
+                  "detail": [
+                    "ws://100.92.62.101:3000/oi-shared-field",
+                    "2"
+                  ],
+                  "revision": "1",
+                  "source": "shared-field.projection"
+                },
+                "ref": "expression:sf1-probe"
+              },
+              {
+                "actions": [],
+                "kind": "hosted-expression",
+                "label": "SF1 walk field",
+                "native_owner": "shared-field",
+                "provenance": {
+                  "detail": [
+                    "ws://100.92.62.101:3000/oi-shared-field",
+                    "5"
+                  ],
+                  "revision": "1",
+                  "source": "shared-field.projection"
+                },
+                "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30"
               }
             ],
             "schema": "oi.cradle.graph-reading/v1"
@@ -2316,7 +3109,7 @@
     {
       "ok": true,
       "op": "invoke.shared_field",
-      "duration_ms": 606.3,
+      "duration_ms": 621.7,
       "data": {
         "outcome": {
           "data": {
@@ -2375,10 +3168,10 @@
               }
             ],
             "counts": {
-              "entries": 7,
-              "fields": 2,
-              "participants": 3,
-              "projections": 5,
+              "entries": 11,
+              "fields": 6,
+              "participants": 5,
+              "projections": 9,
               "relations": 9
             },
             "entries": [
@@ -2644,8 +3437,136 @@
                 "schema": "oi.explore-entry/v1",
                 "summary": "Admitted reply from World B (frank) to the curated artifact",
                 "world_ref": "world:central:project:O-I"
+              },
+              {
+                "aliases": [],
+                "kind": "human-world",
+                "label": "Suite harmonisation 2026-09-15",
+                "locators": [],
+                "provenance": [
+                  {
+                    "kind": "human-publication",
+                    "ref": "participant:central:owner",
+                    "revision": "central.content-fnv1a64/v1:harmonisation-2026-09-15",
+                    "source_system": "central"
+                  }
+                ],
+                "ref": "central:source:github:EpiLogos/O-I@5c7582e0",
+                "revision": "central.content-fnv1a64/v1:harmonisation-2026-09-15",
+                "schema": "oi.explore-entry/v1",
+                "summary": "GitHub mains, workstation and Omarchy converged on one exact-main basis; catalog handoff PR #325",
+                "world_ref": "oi:world:central"
+              },
+              {
+                "aliases": [
+                  "projection:desktop:mu249md2"
+                ],
+                "kind": "central.document",
+                "label": "00 01-DESIGN.md",
+                "locators": [
+                  {
+                    "locator": "/explore.html?ref=central%3Asource%3Aproject%3Aeditor-walk%3AProjectCentral%2Fuser%2F00%252001-DESIGN.md",
+                    "surface": "web"
+                  }
+                ],
+                "meta": {
+                  "projection_ref": "projection:desktop:mu249md2",
+                  "standing": "projection"
+                },
+                "provenance": [
+                  {
+                    "kind": "document-source",
+                    "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+                    "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
+                    "source_system": "central"
+                  }
+                ],
+                "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+                "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
+                "schema": "oi.explore-entry/v1",
+                "summary": "Cradle design: intent and experience",
+                "world_ref": "world:desktop:central-source-project-editor-walk-projectcentral-user-00-2001-design-md"
+              },
+              {
+                "aliases": [
+                  "projection:desktop:expression-sf1-probe:1"
+                ],
+                "kind": "expression",
+                "label": "SF1 probe",
+                "locators": [
+                  {
+                    "locator": "/explore.html?ref=expression%3Asf1-probe",
+                    "surface": "web"
+                  }
+                ],
+                "meta": {
+                  "expression_revision": 2,
+                  "live_renderer_ref": "renderer:oi:expression-stage",
+                  "presentation_ref": "presentation:expression-sf1-probe",
+                  "projection_ref": "projection:desktop:expression-sf1-probe:1",
+                  "standing": "projection"
+                },
+                "provenance": [
+                  {
+                    "kind": "expression",
+                    "ref": "expression:sf1-probe",
+                    "revision": "2",
+                    "source_system": "o-i"
+                  }
+                ],
+                "ref": "expression:sf1-probe",
+                "revision": "2",
+                "schema": "oi.explore-entry/v1",
+                "summary": "a living Expression · 1 scene · 1 entity",
+                "world_ref": "world:desktop:expression-sf1-probe"
+              },
+              {
+                "aliases": [
+                  "projection:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30:mu245q68"
+                ],
+                "kind": "expression",
+                "label": "SF1 walk field",
+                "locators": [
+                  {
+                    "locator": "/explore.html?ref=expression%3Aaa5462a3-e269-428b-b092-3cef71330b30",
+                    "surface": "web"
+                  }
+                ],
+                "meta": {
+                  "expression_revision": 5,
+                  "live_renderer_ref": "renderer:oi:expression-stage",
+                  "presentation_ref": "presentation:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30:mu245q68",
+                  "projection_ref": "projection:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30:mu245q68",
+                  "standing": "projection"
+                },
+                "provenance": [
+                  {
+                    "kind": "expression",
+                    "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                    "revision": "5",
+                    "source_system": "o-i"
+                  }
+                ],
+                "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                "revision": "5",
+                "schema": "oi.explore-entry/v1",
+                "summary": "a living Expression · 1 scene · 1 entity",
+                "world_ref": "world:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30"
               }
             ],
+            "entry_fields": {
+              "central:source:github:EpiLogos/O-I@5c7582e0": "oi:field:central:project:O-I",
+              "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md": "oi:field:desktop:central-source-project-editor-walk-projectcentral-user-00-2001-design-md",
+              "contribution:world-b:lived-2026-09-15:reply": "oi:field:central:project:O-I",
+              "expression:aa5462a3-e269-428b-b092-3cef71330b30": "oi:field:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30",
+              "expression:sf1-probe": "oi:field:desktop:expression-sf1-probe",
+              "world:central:project:O-I": "oi:field:central:project:O-I",
+              "world:central:project:O-I/artifact:central:document:doc:shared-field-artifact-2026-09-14": "oi:field:central:project:O-I",
+              "world:central:project:O-I/artifact:central:flow:09f8cdd4-ab1d-4fe4-b6aa-bde0d8a055fc": "oi:field:central:project:O-I",
+              "world:central:project:O-I/central:wiki:project:O-I": "oi:field:central:project:O-I",
+              "world:central:project:O-I/central:wiki:root": "oi:field:central:project:O-I",
+              "world:central:project:O-I/wiki:node:project-root/o-i": "oi:field:central:project:O-I"
+            },
             "fields": [
               {
                 "field_ref": "oi:field:central:project:O-I",
@@ -2676,6 +3597,66 @@
                 "schema": "oi.shared-field/v1",
                 "title": "00 01-DESIGN.md",
                 "visibility": "public"
+              },
+              {
+                "field_ref": "oi:field:desktop:expression-f2fc137e-b3a0-4876-894a-87b9ee98c33f",
+                "kind": "explore",
+                "provenance": [
+                  {
+                    "kind": "human-publication",
+                    "ref": "human:desktop-walk",
+                    "revision": "5",
+                    "source_system": "o-i"
+                  }
+                ],
+                "schema": "oi.shared-field/v1",
+                "title": "SF1 walk field",
+                "visibility": "public"
+              },
+              {
+                "field_ref": "oi:field:central:project:harmonisation-2026-09-15",
+                "kind": "explore",
+                "provenance": [
+                  {
+                    "kind": "human-publication",
+                    "ref": "participant:central:owner",
+                    "revision": "central.content-fnv1a64/v1:harmonisation-2026-09-15",
+                    "source_system": "central"
+                  }
+                ],
+                "schema": "oi.shared-field/v1",
+                "title": "Suite harmonisation receipt — GitHub/workstation/Omarchy converged mains (2026-09-15)",
+                "visibility": "public"
+              },
+              {
+                "field_ref": "oi:field:desktop:expression-sf1-probe",
+                "kind": "explore",
+                "provenance": [
+                  {
+                    "kind": "human-publication",
+                    "ref": "participant:oi-field-desktop-expression-sf1-probe:human-desktop-walk",
+                    "revision": "2",
+                    "source_system": "o-i"
+                  }
+                ],
+                "schema": "oi.shared-field/v1",
+                "title": "SF1 probe",
+                "visibility": "public"
+              },
+              {
+                "field_ref": "oi:field:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30",
+                "kind": "explore",
+                "provenance": [
+                  {
+                    "kind": "human-publication",
+                    "ref": "participant:oi-field-desktop-expression-aa5462a3-e269-428b-b092-3cef71330b30:human-desktop-walk",
+                    "revision": "5",
+                    "source_system": "o-i"
+                  }
+                ],
+                "schema": "oi.shared-field/v1",
+                "title": "SF1 walk field",
+                "visibility": "public"
               }
             ],
             "my_authority": [
@@ -2690,6 +3671,18 @@
                 "participant_ref": "human:desktop-walk",
                 "revoked": false,
                 "role": "contributor"
+              },
+              {
+                "field_ref": "oi:field:desktop:expression-sf1-probe",
+                "participant_ref": "participant:oi-field-desktop-expression-sf1-probe:human-desktop-walk",
+                "revoked": false,
+                "role": "contributor"
+              },
+              {
+                "field_ref": "oi:field:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30",
+                "participant_ref": "participant:oi-field-desktop-expression-aa5462a3-e269-428b-b092-3cef71330b30:human-desktop-walk",
+                "revoked": false,
+                "role": "contributor"
               }
             ],
             "my_contacts": [
@@ -2702,7 +3695,15 @@
               }
             ],
             "my_contribution_receipts": [],
-            "my_watches": [],
+            "my_watches": [
+              {
+                "field_ref": "oi:field:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30",
+                "state": "active",
+                "target_kind": "object",
+                "target_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                "watch_ref": "watch:participant-oi-field-desktop-expression-aa5462a3-e269-428b-b092-3cef71330b30-human-desktop-walk:expression-aa5462a3-e269-428b-b092-3cef71330b30"
+              }
+            ],
             "participants": [
               {
                 "field_ref": "oi:field:central:project:O-I",
@@ -2726,16 +3727,14 @@
                 "field_ref": "oi:field:central:project:O-I",
                 "identity": {
                   "kind": "human",
-                  "ref": "human:central:owner"
+                  "ref": "central:source:control:root:Control/user/identity"
                 },
                 "participant_ref": "participant:central:owner",
                 "presentation": {
-                  "chosen_name": "O-I owner",
-                  "world_ref": "world:central:project:O-I"
+                  "world_ref": "oi:world:central"
                 },
                 "provenance": {
-                  "source_ref": "central:path:/Users/admin/Central:Control/user/flows/flow-2026-09-14-2236.html",
-                  "source_revision": "central.content-fnv1a64/v1:45939:deae7744ca48657b",
+                  "source_revision": "central.content-fnv1a64/v1:harmonisation-2026-09-15",
                   "source_system": "central"
                 },
                 "schema": "oi.participant/v1"
@@ -2754,6 +3753,40 @@
                   "source_ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
                   "source_revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
                   "source_system": "central"
+                },
+                "schema": "oi.participant/v1"
+              },
+              {
+                "field_ref": "oi:field:desktop:expression-sf1-probe",
+                "identity": {
+                  "kind": "human",
+                  "ref": "human:desktop-walk"
+                },
+                "participant_ref": "participant:oi-field-desktop-expression-sf1-probe:human-desktop-walk",
+                "presentation": {
+                  "world_ref": "world:desktop:expression-sf1-probe"
+                },
+                "provenance": {
+                  "source_ref": "expression:sf1-probe",
+                  "source_revision": "2",
+                  "source_system": "o-i"
+                },
+                "schema": "oi.participant/v1"
+              },
+              {
+                "field_ref": "oi:field:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30",
+                "identity": {
+                  "kind": "human",
+                  "ref": "human:desktop-walk"
+                },
+                "participant_ref": "participant:oi-field-desktop-expression-aa5462a3-e269-428b-b092-3cef71330b30:human-desktop-walk",
+                "presentation": {
+                  "world_ref": "world:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30"
+                },
+                "provenance": {
+                  "source_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                  "source_revision": "5",
+                  "source_system": "o-i"
                 },
                 "schema": "oi.participant/v1"
               }
@@ -3418,6 +4451,485 @@
                   "kind": "central.document",
                   "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
                 }
+              },
+              {
+                "audience": {
+                  "visibility": "public"
+                },
+                "projection_ref": "projection:desktop:mu20tln4",
+                "projection_revision": 1,
+                "provenance": [
+                  {
+                    "kind": "document-source",
+                    "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+                    "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
+                    "source_system": "central"
+                  }
+                ],
+                "published_at": "2026-09-15T01:56:33.616Z",
+                "publisher_participant_ref": "human:desktop-walk",
+                "representation": {
+                  "kind": "oi.sparse-representation/v1",
+                  "payload": {
+                    "meta": [
+                      {
+                        "label": "Native type",
+                        "value": "central.document"
+                      }
+                    ],
+                    "schema": "oi.sparse-representation/v1",
+                    "text": "Cradle design: intent and experience",
+                    "title": "00 01-DESIGN.md"
+                  }
+                },
+                "schema": "oi.projection/v1",
+                "source": {
+                  "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
+                  "system": "central"
+                },
+                "state": "published",
+                "subject": {
+                  "kind": "central.document",
+                  "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+                }
+              },
+              {
+                "audience": {
+                  "visibility": "public"
+                },
+                "projection_ref": "projection:desktop:mu249md2",
+                "projection_revision": 1,
+                "provenance": [
+                  {
+                    "kind": "document-source",
+                    "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+                    "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
+                    "source_system": "central"
+                  }
+                ],
+                "published_at": "2026-09-15T03:32:59.894Z",
+                "publisher_participant_ref": "human:desktop-walk",
+                "representation": {
+                  "kind": "oi.sparse-representation/v1",
+                  "payload": {
+                    "meta": [
+                      {
+                        "label": "Native type",
+                        "value": "central.document"
+                      }
+                    ],
+                    "schema": "oi.sparse-representation/v1",
+                    "text": "Cradle design: intent and experience",
+                    "title": "00 01-DESIGN.md"
+                  }
+                },
+                "schema": "oi.projection/v1",
+                "source": {
+                  "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
+                  "system": "central"
+                },
+                "state": "published",
+                "subject": {
+                  "kind": "central.document",
+                  "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+                }
+              },
+              {
+                "audience": {
+                  "visibility": "public"
+                },
+                "projection_ref": "projection:desktop:expression-sf1-probe:1",
+                "projection_revision": 1,
+                "provenance": [
+                  {
+                    "kind": "human-publication",
+                    "ref": "participant:oi-field-desktop-expression-sf1-probe:human-desktop-walk",
+                    "revision": "2",
+                    "source_system": "o-i"
+                  }
+                ],
+                "published_at": "2026-09-15T03:27:29.734Z",
+                "publisher_participant_ref": "participant:oi-field-desktop-expression-sf1-probe:human-desktop-walk",
+                "representation": {
+                  "kind": "oi.world-presentation/v1",
+                  "payload": {
+                    "presentation_ref": "presentation:expression-sf1-probe",
+                    "provenance": [
+                      {
+                        "kind": "expression",
+                        "ref": "expression:sf1-probe",
+                        "revision": "2",
+                        "source_system": "o-i"
+                      }
+                    ],
+                    "regions": [
+                      {
+                        "bindings": [
+                          {
+                            "binding_ref": "lede",
+                            "component_ref": "oi.presentation/lede/v1",
+                            "fallback": {
+                              "title": "SF1 probe"
+                            },
+                            "portable_renderer": "oi.presentation/lede/v1",
+                            "props": {
+                              "title": "SF1 probe"
+                            },
+                            "provenance": [
+                              {
+                                "kind": "expression",
+                                "ref": "expression:sf1-probe",
+                                "revision": "2",
+                                "source_system": "o-i"
+                              }
+                            ],
+                            "schema": "oi.presentation-binding/v1",
+                            "subject_ref": "expression:sf1-probe"
+                          }
+                        ],
+                        "region_ref": "lede",
+                        "role": "lede"
+                      },
+                      {
+                        "bindings": [
+                          {
+                            "binding_ref": "expression",
+                            "component_ref": "oi.presentation/expression/v1",
+                            "fallback": {
+                              "text": "SF1 probe: a living Expression at revision 2. Where the live renderer is not admitted, the frozen reading of the same revision renders instead.",
+                              "title": "SF1 probe"
+                            },
+                            "portable_renderer": "oi.presentation/expression/v1",
+                            "props": {
+                              "composition": {
+                                "entities": {
+                                  "expression:sf1-probe:entity:x": {
+                                    "entity_ref": "expression:sf1-probe:entity:x",
+                                    "parameters": {
+                                      "glyph": {
+                                        "automation": null,
+                                        "value": "O"
+                                      }
+                                    },
+                                    "revision": 1,
+                                    "subject": null,
+                                    "title": "X"
+                                  }
+                                },
+                                "expression_ref": "expression:sf1-probe",
+                                "provenance": [],
+                                "relations": {},
+                                "representations": [],
+                                "revision": 2,
+                                "scenes": [
+                                  {
+                                    "entity_refs": [
+                                      "expression:sf1-probe:entity:x"
+                                    ],
+                                    "revision": 1,
+                                    "scene_ref": "expression:sf1-probe:scene:a",
+                                    "title": "A"
+                                  }
+                                ],
+                                "schema": "oi.expression-composition/v1",
+                                "selection": {
+                                  "entity_ref": null,
+                                  "scene_ref": "expression:sf1-probe:scene:a"
+                                },
+                                "title": "SF1 probe"
+                              },
+                              "expression": {
+                                "expression_ref": "expression:sf1-probe",
+                                "expression_revision": 2,
+                                "live_availability": "available",
+                                "live_renderer_ref": "renderer:oi:expression-stage",
+                                "representations": [
+                                  {
+                                    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>SF1 probe</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:sf1-probe\" data-expression-revision=\"2\"><h1>SF1 probe</h1><p>Frozen reading of expression:sf1-probe at revision 2. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:sf1-probe:scene:a\" aria-label=\"A\"><h2>A</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:sf1-probe:entity:x\" style=\"left:50.00%;top:50.00%;font-size:3.00rem;opacity:1.00\" title=\"X\">O</span></div></section></main></body></html>",
+                                    "kind": "html",
+                                    "media_type": "text/html",
+                                    "provenance": [
+                                      {
+                                        "availability": "available",
+                                        "ref": "expression:sf1-probe",
+                                        "revision": "2"
+                                      }
+                                    ],
+                                    "representation": {
+                                      "availability": "available",
+                                      "ref": "expression:sf1-probe:frozen:2",
+                                      "revision": "2"
+                                    }
+                                  }
+                                ],
+                                "scene_ref": "expression:sf1-probe:scene:a",
+                                "schema": "oi.expression-presentation/v1",
+                                "subjects": []
+                              },
+                              "title": "SF1 probe"
+                            },
+                            "provenance": [
+                              {
+                                "kind": "expression",
+                                "ref": "expression:sf1-probe",
+                                "revision": "2",
+                                "source_system": "o-i"
+                              }
+                            ],
+                            "schema": "oi.presentation-binding/v1"
+                          }
+                        ],
+                        "region_ref": "body",
+                        "role": "body"
+                      }
+                    ],
+                    "revision": 1,
+                    "schema": "oi.world-presentation/v1",
+                    "theme": {
+                      "tokens": {}
+                    },
+                    "title": "SF1 probe",
+                    "world_ref": "expression:sf1-probe"
+                  }
+                },
+                "schema": "oi.projection/v1",
+                "source": {
+                  "ref": "expression:sf1-probe",
+                  "revision": "2",
+                  "system": "o-i"
+                },
+                "state": "published",
+                "subject": {
+                  "kind": "expression",
+                  "ref": "expression:sf1-probe"
+                }
+              },
+              {
+                "audience": {
+                  "visibility": "public"
+                },
+                "projection_ref": "projection:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30:mu245q68",
+                "projection_revision": 1,
+                "provenance": [
+                  {
+                    "kind": "human-publication",
+                    "ref": "participant:oi-field-desktop-expression-aa5462a3-e269-428b-b092-3cef71330b30:human-desktop-walk",
+                    "revision": "5",
+                    "source_system": "o-i"
+                  }
+                ],
+                "published_at": "2026-09-15T03:29:58.368Z",
+                "publisher_participant_ref": "participant:oi-field-desktop-expression-aa5462a3-e269-428b-b092-3cef71330b30:human-desktop-walk",
+                "representation": {
+                  "kind": "oi.world-presentation/v1",
+                  "payload": {
+                    "presentation_ref": "presentation:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30:mu245q68",
+                    "provenance": [
+                      {
+                        "kind": "expression",
+                        "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                        "revision": "5",
+                        "source_system": "o-i"
+                      }
+                    ],
+                    "regions": [
+                      {
+                        "bindings": [
+                          {
+                            "binding_ref": "lede",
+                            "component_ref": "oi.presentation/lede/v1",
+                            "fallback": {
+                              "title": "SF1 walk field"
+                            },
+                            "portable_renderer": "oi.presentation/lede/v1",
+                            "props": {
+                              "title": "SF1 walk field"
+                            },
+                            "provenance": [
+                              {
+                                "kind": "expression",
+                                "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                                "revision": "5",
+                                "source_system": "o-i"
+                              }
+                            ],
+                            "schema": "oi.presentation-binding/v1",
+                            "subject_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30"
+                          }
+                        ],
+                        "region_ref": "lede",
+                        "role": "lede"
+                      },
+                      {
+                        "bindings": [
+                          {
+                            "binding_ref": "expression",
+                            "component_ref": "oi.presentation/expression/v1",
+                            "fallback": {
+                              "text": "SF1 walk field: a living Expression at revision 5. Where the live renderer is not admitted, the frozen reading of the same revision renders instead.",
+                              "title": "SF1 walk field"
+                            },
+                            "portable_renderer": "oi.presentation/expression/v1",
+                            "props": {
+                              "composition": {
+                                "entities": {
+                                  "expression:aa5462a3-e269-428b-b092-3cef71330b30:entity:00e9ba81-5d89-48b6-a5af-ae0c8780dde8": {
+                                    "entity_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30:entity:00e9ba81-5d89-48b6-a5af-ae0c8780dde8",
+                                    "parameters": {
+                                      "glyph": {
+                                        "automation": null,
+                                        "value": "☉"
+                                      }
+                                    },
+                                    "revision": 5,
+                                    "subject": {
+                                      "native_owner": "central",
+                                      "presentation_role": "being",
+                                      "sources": [
+                                        {
+                                          "availability": "available",
+                                          "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+                                          "revision": "walk"
+                                        }
+                                      ],
+                                      "subject_ref": "central:being:walk"
+                                    },
+                                    "title": "Thing 1"
+                                  }
+                                },
+                                "expression_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                                "provenance": [],
+                                "relations": {},
+                                "representations": [],
+                                "revision": 5,
+                                "scenes": [
+                                  {
+                                    "entity_refs": [
+                                      "expression:aa5462a3-e269-428b-b092-3cef71330b30:entity:00e9ba81-5d89-48b6-a5af-ae0c8780dde8"
+                                    ],
+                                    "revision": 2,
+                                    "scene_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30:scene:main",
+                                    "title": "Main"
+                                  }
+                                ],
+                                "schema": "oi.expression-composition/v1",
+                                "selection": {
+                                  "entity_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30:entity:00e9ba81-5d89-48b6-a5af-ae0c8780dde8",
+                                  "scene_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30:scene:main"
+                                },
+                                "title": "SF1 walk field"
+                              },
+                              "expression": {
+                                "expression_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                                "expression_revision": 5,
+                                "live_availability": "available",
+                                "live_renderer_ref": "renderer:oi:expression-stage",
+                                "representations": [
+                                  {
+                                    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>SF1 walk field</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:aa5462a3-e269-428b-b092-3cef71330b30\" data-expression-revision=\"5\"><h1>SF1 walk field</h1><p>Frozen reading of expression:aa5462a3-e269-428b-b092-3cef71330b30 at revision 5. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:aa5462a3-e269-428b-b092-3cef71330b30:scene:main\" aria-label=\"Main\"><h2>Main</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:aa5462a3-e269-428b-b092-3cef71330b30:entity:00e9ba81-5d89-48b6-a5af-ae0c8780dde8\" data-subject-ref=\"central:being:walk\" data-presentation-role=\"being\" style=\"left:50.00%;top:50.00%;font-size:3.00rem;opacity:1.00\" title=\"Thing 1\">☉</span></div></section></main></body></html>",
+                                    "kind": "html",
+                                    "media_type": "text/html",
+                                    "provenance": [
+                                      {
+                                        "availability": "available",
+                                        "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                                        "revision": "5"
+                                      }
+                                    ],
+                                    "representation": {
+                                      "availability": "available",
+                                      "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30:frozen:5",
+                                      "revision": "5"
+                                    }
+                                  }
+                                ],
+                                "scene_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30:scene:main",
+                                "schema": "oi.expression-presentation/v1",
+                                "subjects": [
+                                  {
+                                    "availability": "available",
+                                    "ref": "central:being:walk",
+                                    "revision": "5",
+                                    "sources": [
+                                      {
+                                        "availability": "available",
+                                        "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+                                        "revision": "walk"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              "title": "SF1 walk field"
+                            },
+                            "provenance": [
+                              {
+                                "kind": "expression",
+                                "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                                "revision": "5",
+                                "source_system": "o-i"
+                              }
+                            ],
+                            "schema": "oi.presentation-binding/v1",
+                            "subject_ref": "central:being:walk"
+                          }
+                        ],
+                        "region_ref": "body",
+                        "role": "body"
+                      },
+                      {
+                        "bindings": [
+                          {
+                            "binding_ref": "subject:central-being-walk",
+                            "component_ref": "oi.presentation/reference-card/v1",
+                            "fallback": {
+                              "title": "central:being:walk"
+                            },
+                            "portable_renderer": "oi.presentation/reference-card/v1",
+                            "props": {
+                              "refs": [
+                                "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+                              ],
+                              "text": "being · central",
+                              "title": "central:being:walk"
+                            },
+                            "provenance": [
+                              {
+                                "kind": "expression",
+                                "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                                "revision": "5",
+                                "source_system": "o-i"
+                              }
+                            ],
+                            "schema": "oi.presentation-binding/v1",
+                            "subject_ref": "central:being:walk"
+                          }
+                        ],
+                        "label": "Bound subjects · 1",
+                        "region_ref": "subjects",
+                        "role": "relation"
+                      }
+                    ],
+                    "revision": 1,
+                    "schema": "oi.world-presentation/v1",
+                    "theme": {
+                      "tokens": {}
+                    },
+                    "title": "SF1 walk field",
+                    "world_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30"
+                  }
+                },
+                "schema": "oi.projection/v1",
+                "source": {
+                  "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                  "revision": "5",
+                  "system": "o-i"
+                },
+                "state": "published",
+                "subject": {
+                  "kind": "expression",
+                  "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30"
+                }
               }
             ],
             "relations": [
@@ -3567,14 +5079,14 @@
             "status": {
               "healthy": true,
               "material": {
-                "age_ms": 1,
-                "observed_at": "2026-09-15T01:56:30.240Z",
+                "age_ms": 3,
+                "observed_at": "2026-09-15T14:55:53.999Z",
                 "state": "validated"
               },
               "material_valid": true,
               "revision": 1,
               "transport": {
-                "changed_at": "2026-09-15T01:56:30.237Z",
+                "changed_at": "2026-09-15T14:55:53.996Z",
                 "identity": "c2005d75ac2e2ff00796f2f07373038812bb80b98a111efe00115a596c158020",
                 "state": "available"
               }
@@ -3593,7 +5105,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 47,
+      "duration_ms": 69,
       "data": {
         "file": "shared-field-hosted-hosted-node-detail.png"
       }
@@ -3601,7 +5113,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 60,
+      "duration_ms": 50,
       "data": {
         "file": "shared-field-hosted-hosted-publish-result.png"
       }
@@ -3609,14 +5121,14 @@
     {
       "ok": true,
       "op": "invoke.shared_field",
-      "duration_ms": 625.2,
+      "duration_ms": 999.1,
       "data": {
         "outcome": {
           "data": {
             "contributions": [],
             "entry": {
               "aliases": [
-                "projection:desktop:mu20tln4"
+                "projection:desktop:mu2snxq1"
               ],
               "kind": "central.document",
               "label": "00 01-DESIGN.md",
@@ -3627,7 +5139,7 @@
                 }
               ],
               "meta": {
-                "projection_ref": "projection:desktop:mu20tln4",
+                "projection_ref": "projection:desktop:mu2snxq1",
                 "standing": "projection"
               },
               "provenance": [
@@ -3644,6 +5156,16 @@
               "summary": "Cradle design: intent and experience",
               "world_ref": "world:desktop:central-source-project-editor-walk-projectcentral-user-00-2001-design-md"
             },
+            "field_ref": "oi:field:desktop:central-source-project-editor-walk-projectcentral-user-00-2001-design-md",
+            "my_authority": [
+              {
+                "field_ref": "oi:field:desktop:central-source-project-editor-walk-projectcentral-user-00-2001-design-md",
+                "participant_ref": "human:desktop-walk",
+                "revoked": false,
+                "role": "contributor"
+              }
+            ],
+            "my_watches": [],
             "neighbourhood": {
               "actions": [
                 "open",
@@ -3658,7 +5180,7 @@
                 "nodes": [
                   {
                     "aliases": [
-                      "projection:desktop:mu20tln4"
+                      "projection:desktop:mu2snxq1"
                     ],
                     "kind": "central.document",
                     "label": "00 01-DESIGN.md",
@@ -3669,7 +5191,7 @@
                       }
                     ],
                     "meta": {
-                      "projection_ref": "projection:desktop:mu20tln4",
+                      "projection_ref": "projection:desktop:mu2snxq1",
                       "standing": "projection"
                     },
                     "provenance": [
@@ -3692,7 +5214,7 @@
               },
               "resource": {
                 "aliases": [
-                  "projection:desktop:mu20tln4"
+                  "projection:desktop:mu2snxq1"
                 ],
                 "kind": "central.document",
                 "label": "00 01-DESIGN.md",
@@ -3703,7 +5225,7 @@
                   }
                 ],
                 "meta": {
-                  "projection_ref": "projection:desktop:mu20tln4",
+                  "projection_ref": "projection:desktop:mu2snxq1",
                   "standing": "projection"
                 },
                 "provenance": [
@@ -3814,6 +5336,88 @@
                   }
                 ],
                 "published_at": "2026-09-15T01:56:33.616Z",
+                "publisher_participant_ref": "human:desktop-walk",
+                "representation": {
+                  "kind": "oi.sparse-representation/v1",
+                  "payload": {
+                    "meta": [
+                      {
+                        "label": "Native type",
+                        "value": "central.document"
+                      }
+                    ],
+                    "schema": "oi.sparse-representation/v1",
+                    "text": "Cradle design: intent and experience",
+                    "title": "00 01-DESIGN.md"
+                  }
+                },
+                "schema": "oi.projection/v1",
+                "source": {
+                  "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
+                  "system": "central"
+                },
+                "state": "published",
+                "subject": {
+                  "kind": "central.document",
+                  "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+                }
+              },
+              {
+                "audience": {
+                  "visibility": "public"
+                },
+                "projection_ref": "projection:desktop:mu249md2",
+                "projection_revision": 1,
+                "provenance": [
+                  {
+                    "kind": "document-source",
+                    "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+                    "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
+                    "source_system": "central"
+                  }
+                ],
+                "published_at": "2026-09-15T03:32:59.894Z",
+                "publisher_participant_ref": "human:desktop-walk",
+                "representation": {
+                  "kind": "oi.sparse-representation/v1",
+                  "payload": {
+                    "meta": [
+                      {
+                        "label": "Native type",
+                        "value": "central.document"
+                      }
+                    ],
+                    "schema": "oi.sparse-representation/v1",
+                    "text": "Cradle design: intent and experience",
+                    "title": "00 01-DESIGN.md"
+                  }
+                },
+                "schema": "oi.projection/v1",
+                "source": {
+                  "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
+                  "system": "central"
+                },
+                "state": "published",
+                "subject": {
+                  "kind": "central.document",
+                  "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+                }
+              },
+              {
+                "audience": {
+                  "visibility": "public"
+                },
+                "projection_ref": "projection:desktop:mu2snxq1",
+                "projection_revision": 1,
+                "provenance": [
+                  {
+                    "kind": "document-source",
+                    "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+                    "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
+                    "source_system": "central"
+                  }
+                ],
+                "published_at": "2026-09-15T14:55:58.585Z",
                 "publisher_participant_ref": "human:desktop-walk",
                 "representation": {
                   "kind": "oi.sparse-representation/v1",
@@ -3848,14 +5452,14 @@
             "status": {
               "healthy": true,
               "material": {
-                "age_ms": 1,
-                "observed_at": "2026-09-15T01:56:36.415Z",
+                "age_ms": 2,
+                "observed_at": "2026-09-15T14:56:03.752Z",
                 "state": "validated"
               },
               "material_valid": true,
               "revision": 1,
               "transport": {
-                "changed_at": "2026-09-15T01:56:36.413Z",
+                "changed_at": "2026-09-15T14:56:03.747Z",
                 "identity": "c2005d75ac2e2ff00796f2f07373038812bb80b98a111efe00115a596c158020",
                 "state": "available"
               }
@@ -3873,14 +5477,14 @@
     {
       "ok": true,
       "op": "invoke.shared_field",
-      "duration_ms": 572.6,
+      "duration_ms": 752.6,
       "data": {
         "outcome": {
           "data": {
             "contributions": [],
             "entry": {
               "aliases": [
-                "projection:desktop:mu20tln4"
+                "projection:desktop:mu2snxq1"
               ],
               "kind": "central.document",
               "label": "00 01-DESIGN.md",
@@ -3891,7 +5495,7 @@
                 }
               ],
               "meta": {
-                "projection_ref": "projection:desktop:mu20tln4",
+                "projection_ref": "projection:desktop:mu2snxq1",
                 "standing": "projection"
               },
               "provenance": [
@@ -3908,6 +5512,16 @@
               "summary": "Cradle design: intent and experience",
               "world_ref": "world:desktop:central-source-project-editor-walk-projectcentral-user-00-2001-design-md"
             },
+            "field_ref": "oi:field:desktop:central-source-project-editor-walk-projectcentral-user-00-2001-design-md",
+            "my_authority": [
+              {
+                "field_ref": "oi:field:desktop:central-source-project-editor-walk-projectcentral-user-00-2001-design-md",
+                "participant_ref": "human:desktop-walk",
+                "revoked": false,
+                "role": "contributor"
+              }
+            ],
+            "my_watches": [],
             "neighbourhood": {
               "actions": [
                 "open",
@@ -3922,7 +5536,7 @@
                 "nodes": [
                   {
                     "aliases": [
-                      "projection:desktop:mu20tln4"
+                      "projection:desktop:mu2snxq1"
                     ],
                     "kind": "central.document",
                     "label": "00 01-DESIGN.md",
@@ -3933,7 +5547,7 @@
                       }
                     ],
                     "meta": {
-                      "projection_ref": "projection:desktop:mu20tln4",
+                      "projection_ref": "projection:desktop:mu2snxq1",
                       "standing": "projection"
                     },
                     "provenance": [
@@ -3956,7 +5570,7 @@
               },
               "resource": {
                 "aliases": [
-                  "projection:desktop:mu20tln4"
+                  "projection:desktop:mu2snxq1"
                 ],
                 "kind": "central.document",
                 "label": "00 01-DESIGN.md",
@@ -3967,7 +5581,7 @@
                   }
                 ],
                 "meta": {
-                  "projection_ref": "projection:desktop:mu20tln4",
+                  "projection_ref": "projection:desktop:mu2snxq1",
                   "standing": "projection"
                 },
                 "provenance": [
@@ -4103,23 +5717,105 @@
                   "kind": "central.document",
                   "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
                 }
+              },
+              {
+                "audience": {
+                  "visibility": "public"
+                },
+                "projection_ref": "projection:desktop:mu249md2",
+                "projection_revision": 1,
+                "provenance": [
+                  {
+                    "kind": "document-source",
+                    "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+                    "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
+                    "source_system": "central"
+                  }
+                ],
+                "published_at": "2026-09-15T03:32:59.894Z",
+                "publisher_participant_ref": "human:desktop-walk",
+                "representation": {
+                  "kind": "oi.sparse-representation/v1",
+                  "payload": {
+                    "meta": [
+                      {
+                        "label": "Native type",
+                        "value": "central.document"
+                      }
+                    ],
+                    "schema": "oi.sparse-representation/v1",
+                    "text": "Cradle design: intent and experience",
+                    "title": "00 01-DESIGN.md"
+                  }
+                },
+                "schema": "oi.projection/v1",
+                "source": {
+                  "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
+                  "system": "central"
+                },
+                "state": "published",
+                "subject": {
+                  "kind": "central.document",
+                  "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+                }
+              },
+              {
+                "audience": {
+                  "visibility": "public"
+                },
+                "projection_ref": "projection:desktop:mu2snxq1",
+                "projection_revision": 1,
+                "provenance": [
+                  {
+                    "kind": "document-source",
+                    "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+                    "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
+                    "source_system": "central"
+                  }
+                ],
+                "published_at": "2026-09-15T14:55:58.585Z",
+                "publisher_participant_ref": "human:desktop-walk",
+                "representation": {
+                  "kind": "oi.sparse-representation/v1",
+                  "payload": {
+                    "meta": [
+                      {
+                        "label": "Native type",
+                        "value": "central.document"
+                      }
+                    ],
+                    "schema": "oi.sparse-representation/v1",
+                    "text": "Cradle design: intent and experience",
+                    "title": "00 01-DESIGN.md"
+                  }
+                },
+                "schema": "oi.projection/v1",
+                "source": {
+                  "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
+                  "system": "central"
+                },
+                "state": "published",
+                "subject": {
+                  "kind": "central.document",
+                  "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+                }
               }
             ],
-            "ref": "projection:desktop:mu20tln4",
+            "ref": "projection:desktop:mu2snxq1",
             "relations": [],
             "schema": "oi.shared-field.reading/v1",
             "state": "hosted",
             "status": {
               "healthy": true,
               "material": {
-                "age_ms": 1,
-                "observed_at": "2026-09-15T01:56:37.000Z",
+                "age_ms": 2,
+                "observed_at": "2026-09-15T14:56:04.515Z",
                 "state": "validated"
               },
               "material_valid": true,
               "revision": 1,
               "transport": {
-                "changed_at": "2026-09-15T01:56:36.997Z",
+                "changed_at": "2026-09-15T14:56:04.511Z",
                 "identity": "c2005d75ac2e2ff00796f2f07373038812bb80b98a111efe00115a596c158020",
                 "state": "available"
               }
@@ -4137,7 +5833,7 @@
     {
       "ok": true,
       "op": "invoke.shared_field",
-      "duration_ms": 500.7,
+      "duration_ms": 744.4,
       "data": {
         "outcome": {
           "data": {
@@ -4196,10 +5892,10 @@
               }
             ],
             "counts": {
-              "entries": 8,
-              "fields": 2,
-              "participants": 3,
-              "projections": 6,
+              "entries": 11,
+              "fields": 6,
+              "participants": 5,
+              "projections": 10,
               "relations": 9
             },
             "entries": [
@@ -4467,8 +6163,93 @@
                 "world_ref": "world:central:project:O-I"
               },
               {
+                "aliases": [],
+                "kind": "human-world",
+                "label": "Suite harmonisation 2026-09-15",
+                "locators": [],
+                "provenance": [
+                  {
+                    "kind": "human-publication",
+                    "ref": "participant:central:owner",
+                    "revision": "central.content-fnv1a64/v1:harmonisation-2026-09-15",
+                    "source_system": "central"
+                  }
+                ],
+                "ref": "central:source:github:EpiLogos/O-I@5c7582e0",
+                "revision": "central.content-fnv1a64/v1:harmonisation-2026-09-15",
+                "schema": "oi.explore-entry/v1",
+                "summary": "GitHub mains, workstation and Omarchy converged on one exact-main basis; catalog handoff PR #325",
+                "world_ref": "oi:world:central"
+              },
+              {
                 "aliases": [
-                  "projection:desktop:mu20tln4"
+                  "projection:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30:mu245q68"
+                ],
+                "kind": "expression",
+                "label": "SF1 walk field",
+                "locators": [
+                  {
+                    "locator": "/explore.html?ref=expression%3Aaa5462a3-e269-428b-b092-3cef71330b30",
+                    "surface": "web"
+                  }
+                ],
+                "meta": {
+                  "expression_revision": 5,
+                  "live_renderer_ref": "renderer:oi:expression-stage",
+                  "presentation_ref": "presentation:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30:mu245q68",
+                  "projection_ref": "projection:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30:mu245q68",
+                  "standing": "projection"
+                },
+                "provenance": [
+                  {
+                    "kind": "expression",
+                    "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                    "revision": "5",
+                    "source_system": "o-i"
+                  }
+                ],
+                "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                "revision": "5",
+                "schema": "oi.explore-entry/v1",
+                "summary": "a living Expression · 1 scene · 1 entity",
+                "world_ref": "world:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30"
+              },
+              {
+                "aliases": [
+                  "projection:desktop:expression-sf1-probe:1"
+                ],
+                "kind": "expression",
+                "label": "SF1 probe",
+                "locators": [
+                  {
+                    "locator": "/explore.html?ref=expression%3Asf1-probe",
+                    "surface": "web"
+                  }
+                ],
+                "meta": {
+                  "expression_revision": 2,
+                  "live_renderer_ref": "renderer:oi:expression-stage",
+                  "presentation_ref": "presentation:expression-sf1-probe",
+                  "projection_ref": "projection:desktop:expression-sf1-probe:1",
+                  "standing": "projection"
+                },
+                "provenance": [
+                  {
+                    "kind": "expression",
+                    "ref": "expression:sf1-probe",
+                    "revision": "2",
+                    "source_system": "o-i"
+                  }
+                ],
+                "ref": "expression:sf1-probe",
+                "revision": "2",
+                "schema": "oi.explore-entry/v1",
+                "summary": "a living Expression · 1 scene · 1 entity",
+                "world_ref": "world:desktop:expression-sf1-probe"
+              },
+              {
+                "aliases": [
+                  "projection:desktop:mu2snxq1"
                 ],
                 "kind": "central.document",
                 "label": "00 01-DESIGN.md",
@@ -4479,7 +6260,7 @@
                   }
                 ],
                 "meta": {
-                  "projection_ref": "projection:desktop:mu20tln4",
+                  "projection_ref": "projection:desktop:mu2snxq1",
                   "standing": "projection"
                 },
                 "provenance": [
@@ -4497,6 +6278,19 @@
                 "world_ref": "world:desktop:central-source-project-editor-walk-projectcentral-user-00-2001-design-md"
               }
             ],
+            "entry_fields": {
+              "central:source:github:EpiLogos/O-I@5c7582e0": "oi:field:central:project:O-I",
+              "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md": "oi:field:desktop:central-source-project-editor-walk-projectcentral-user-00-2001-design-md",
+              "contribution:world-b:lived-2026-09-15:reply": "oi:field:central:project:O-I",
+              "expression:aa5462a3-e269-428b-b092-3cef71330b30": "oi:field:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30",
+              "expression:sf1-probe": "oi:field:desktop:expression-sf1-probe",
+              "world:central:project:O-I": "oi:field:central:project:O-I",
+              "world:central:project:O-I/artifact:central:document:doc:shared-field-artifact-2026-09-14": "oi:field:central:project:O-I",
+              "world:central:project:O-I/artifact:central:flow:09f8cdd4-ab1d-4fe4-b6aa-bde0d8a055fc": "oi:field:central:project:O-I",
+              "world:central:project:O-I/central:wiki:project:O-I": "oi:field:central:project:O-I",
+              "world:central:project:O-I/central:wiki:root": "oi:field:central:project:O-I",
+              "world:central:project:O-I/wiki:node:project-root/o-i": "oi:field:central:project:O-I"
+            },
             "fields": [
               {
                 "field_ref": "oi:field:central:project:O-I",
@@ -4527,6 +6321,66 @@
                 "schema": "oi.shared-field/v1",
                 "title": "00 01-DESIGN.md",
                 "visibility": "public"
+              },
+              {
+                "field_ref": "oi:field:desktop:expression-f2fc137e-b3a0-4876-894a-87b9ee98c33f",
+                "kind": "explore",
+                "provenance": [
+                  {
+                    "kind": "human-publication",
+                    "ref": "human:desktop-walk",
+                    "revision": "5",
+                    "source_system": "o-i"
+                  }
+                ],
+                "schema": "oi.shared-field/v1",
+                "title": "SF1 walk field",
+                "visibility": "public"
+              },
+              {
+                "field_ref": "oi:field:central:project:harmonisation-2026-09-15",
+                "kind": "explore",
+                "provenance": [
+                  {
+                    "kind": "human-publication",
+                    "ref": "participant:central:owner",
+                    "revision": "central.content-fnv1a64/v1:harmonisation-2026-09-15",
+                    "source_system": "central"
+                  }
+                ],
+                "schema": "oi.shared-field/v1",
+                "title": "Suite harmonisation receipt — GitHub/workstation/Omarchy converged mains (2026-09-15)",
+                "visibility": "public"
+              },
+              {
+                "field_ref": "oi:field:desktop:expression-sf1-probe",
+                "kind": "explore",
+                "provenance": [
+                  {
+                    "kind": "human-publication",
+                    "ref": "participant:oi-field-desktop-expression-sf1-probe:human-desktop-walk",
+                    "revision": "2",
+                    "source_system": "o-i"
+                  }
+                ],
+                "schema": "oi.shared-field/v1",
+                "title": "SF1 probe",
+                "visibility": "public"
+              },
+              {
+                "field_ref": "oi:field:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30",
+                "kind": "explore",
+                "provenance": [
+                  {
+                    "kind": "human-publication",
+                    "ref": "participant:oi-field-desktop-expression-aa5462a3-e269-428b-b092-3cef71330b30:human-desktop-walk",
+                    "revision": "5",
+                    "source_system": "o-i"
+                  }
+                ],
+                "schema": "oi.shared-field/v1",
+                "title": "SF1 walk field",
+                "visibility": "public"
               }
             ],
             "my_authority": [
@@ -4541,6 +6395,18 @@
                 "participant_ref": "human:desktop-walk",
                 "revoked": false,
                 "role": "contributor"
+              },
+              {
+                "field_ref": "oi:field:desktop:expression-sf1-probe",
+                "participant_ref": "participant:oi-field-desktop-expression-sf1-probe:human-desktop-walk",
+                "revoked": false,
+                "role": "contributor"
+              },
+              {
+                "field_ref": "oi:field:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30",
+                "participant_ref": "participant:oi-field-desktop-expression-aa5462a3-e269-428b-b092-3cef71330b30:human-desktop-walk",
+                "revoked": false,
+                "role": "contributor"
               }
             ],
             "my_contacts": [
@@ -4553,7 +6419,15 @@
               }
             ],
             "my_contribution_receipts": [],
-            "my_watches": [],
+            "my_watches": [
+              {
+                "field_ref": "oi:field:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30",
+                "state": "active",
+                "target_kind": "object",
+                "target_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                "watch_ref": "watch:participant-oi-field-desktop-expression-aa5462a3-e269-428b-b092-3cef71330b30-human-desktop-walk:expression-aa5462a3-e269-428b-b092-3cef71330b30"
+              }
+            ],
             "participants": [
               {
                 "field_ref": "oi:field:central:project:O-I",
@@ -4577,16 +6451,14 @@
                 "field_ref": "oi:field:central:project:O-I",
                 "identity": {
                   "kind": "human",
-                  "ref": "human:central:owner"
+                  "ref": "central:source:control:root:Control/user/identity"
                 },
                 "participant_ref": "participant:central:owner",
                 "presentation": {
-                  "chosen_name": "O-I owner",
-                  "world_ref": "world:central:project:O-I"
+                  "world_ref": "oi:world:central"
                 },
                 "provenance": {
-                  "source_ref": "central:path:/Users/admin/Central:Control/user/flows/flow-2026-09-14-2236.html",
-                  "source_revision": "central.content-fnv1a64/v1:45939:deae7744ca48657b",
+                  "source_revision": "central.content-fnv1a64/v1:harmonisation-2026-09-15",
                   "source_system": "central"
                 },
                 "schema": "oi.participant/v1"
@@ -4605,6 +6477,40 @@
                   "source_ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
                   "source_revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
                   "source_system": "central"
+                },
+                "schema": "oi.participant/v1"
+              },
+              {
+                "field_ref": "oi:field:desktop:expression-sf1-probe",
+                "identity": {
+                  "kind": "human",
+                  "ref": "human:desktop-walk"
+                },
+                "participant_ref": "participant:oi-field-desktop-expression-sf1-probe:human-desktop-walk",
+                "presentation": {
+                  "world_ref": "world:desktop:expression-sf1-probe"
+                },
+                "provenance": {
+                  "source_ref": "expression:sf1-probe",
+                  "source_revision": "2",
+                  "source_system": "o-i"
+                },
+                "schema": "oi.participant/v1"
+              },
+              {
+                "field_ref": "oi:field:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30",
+                "identity": {
+                  "kind": "human",
+                  "ref": "human:desktop-walk"
+                },
+                "participant_ref": "participant:oi-field-desktop-expression-aa5462a3-e269-428b-b092-3cef71330b30:human-desktop-walk",
+                "presentation": {
+                  "world_ref": "world:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30"
+                },
+                "provenance": {
+                  "source_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                  "source_revision": "5",
+                  "source_system": "o-i"
                 },
                 "schema": "oi.participant/v1"
               }
@@ -5310,6 +7216,485 @@
                   "kind": "central.document",
                   "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
                 }
+              },
+              {
+                "audience": {
+                  "visibility": "public"
+                },
+                "projection_ref": "projection:desktop:mu249md2",
+                "projection_revision": 1,
+                "provenance": [
+                  {
+                    "kind": "document-source",
+                    "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+                    "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
+                    "source_system": "central"
+                  }
+                ],
+                "published_at": "2026-09-15T03:32:59.894Z",
+                "publisher_participant_ref": "human:desktop-walk",
+                "representation": {
+                  "kind": "oi.sparse-representation/v1",
+                  "payload": {
+                    "meta": [
+                      {
+                        "label": "Native type",
+                        "value": "central.document"
+                      }
+                    ],
+                    "schema": "oi.sparse-representation/v1",
+                    "text": "Cradle design: intent and experience",
+                    "title": "00 01-DESIGN.md"
+                  }
+                },
+                "schema": "oi.projection/v1",
+                "source": {
+                  "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
+                  "system": "central"
+                },
+                "state": "published",
+                "subject": {
+                  "kind": "central.document",
+                  "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+                }
+              },
+              {
+                "audience": {
+                  "visibility": "public"
+                },
+                "projection_ref": "projection:desktop:expression-sf1-probe:1",
+                "projection_revision": 1,
+                "provenance": [
+                  {
+                    "kind": "human-publication",
+                    "ref": "participant:oi-field-desktop-expression-sf1-probe:human-desktop-walk",
+                    "revision": "2",
+                    "source_system": "o-i"
+                  }
+                ],
+                "published_at": "2026-09-15T03:27:29.734Z",
+                "publisher_participant_ref": "participant:oi-field-desktop-expression-sf1-probe:human-desktop-walk",
+                "representation": {
+                  "kind": "oi.world-presentation/v1",
+                  "payload": {
+                    "presentation_ref": "presentation:expression-sf1-probe",
+                    "provenance": [
+                      {
+                        "kind": "expression",
+                        "ref": "expression:sf1-probe",
+                        "revision": "2",
+                        "source_system": "o-i"
+                      }
+                    ],
+                    "regions": [
+                      {
+                        "bindings": [
+                          {
+                            "binding_ref": "lede",
+                            "component_ref": "oi.presentation/lede/v1",
+                            "fallback": {
+                              "title": "SF1 probe"
+                            },
+                            "portable_renderer": "oi.presentation/lede/v1",
+                            "props": {
+                              "title": "SF1 probe"
+                            },
+                            "provenance": [
+                              {
+                                "kind": "expression",
+                                "ref": "expression:sf1-probe",
+                                "revision": "2",
+                                "source_system": "o-i"
+                              }
+                            ],
+                            "schema": "oi.presentation-binding/v1",
+                            "subject_ref": "expression:sf1-probe"
+                          }
+                        ],
+                        "region_ref": "lede",
+                        "role": "lede"
+                      },
+                      {
+                        "bindings": [
+                          {
+                            "binding_ref": "expression",
+                            "component_ref": "oi.presentation/expression/v1",
+                            "fallback": {
+                              "text": "SF1 probe: a living Expression at revision 2. Where the live renderer is not admitted, the frozen reading of the same revision renders instead.",
+                              "title": "SF1 probe"
+                            },
+                            "portable_renderer": "oi.presentation/expression/v1",
+                            "props": {
+                              "composition": {
+                                "entities": {
+                                  "expression:sf1-probe:entity:x": {
+                                    "entity_ref": "expression:sf1-probe:entity:x",
+                                    "parameters": {
+                                      "glyph": {
+                                        "automation": null,
+                                        "value": "O"
+                                      }
+                                    },
+                                    "revision": 1,
+                                    "subject": null,
+                                    "title": "X"
+                                  }
+                                },
+                                "expression_ref": "expression:sf1-probe",
+                                "provenance": [],
+                                "relations": {},
+                                "representations": [],
+                                "revision": 2,
+                                "scenes": [
+                                  {
+                                    "entity_refs": [
+                                      "expression:sf1-probe:entity:x"
+                                    ],
+                                    "revision": 1,
+                                    "scene_ref": "expression:sf1-probe:scene:a",
+                                    "title": "A"
+                                  }
+                                ],
+                                "schema": "oi.expression-composition/v1",
+                                "selection": {
+                                  "entity_ref": null,
+                                  "scene_ref": "expression:sf1-probe:scene:a"
+                                },
+                                "title": "SF1 probe"
+                              },
+                              "expression": {
+                                "expression_ref": "expression:sf1-probe",
+                                "expression_revision": 2,
+                                "live_availability": "available",
+                                "live_renderer_ref": "renderer:oi:expression-stage",
+                                "representations": [
+                                  {
+                                    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>SF1 probe</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:sf1-probe\" data-expression-revision=\"2\"><h1>SF1 probe</h1><p>Frozen reading of expression:sf1-probe at revision 2. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:sf1-probe:scene:a\" aria-label=\"A\"><h2>A</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:sf1-probe:entity:x\" style=\"left:50.00%;top:50.00%;font-size:3.00rem;opacity:1.00\" title=\"X\">O</span></div></section></main></body></html>",
+                                    "kind": "html",
+                                    "media_type": "text/html",
+                                    "provenance": [
+                                      {
+                                        "availability": "available",
+                                        "ref": "expression:sf1-probe",
+                                        "revision": "2"
+                                      }
+                                    ],
+                                    "representation": {
+                                      "availability": "available",
+                                      "ref": "expression:sf1-probe:frozen:2",
+                                      "revision": "2"
+                                    }
+                                  }
+                                ],
+                                "scene_ref": "expression:sf1-probe:scene:a",
+                                "schema": "oi.expression-presentation/v1",
+                                "subjects": []
+                              },
+                              "title": "SF1 probe"
+                            },
+                            "provenance": [
+                              {
+                                "kind": "expression",
+                                "ref": "expression:sf1-probe",
+                                "revision": "2",
+                                "source_system": "o-i"
+                              }
+                            ],
+                            "schema": "oi.presentation-binding/v1"
+                          }
+                        ],
+                        "region_ref": "body",
+                        "role": "body"
+                      }
+                    ],
+                    "revision": 1,
+                    "schema": "oi.world-presentation/v1",
+                    "theme": {
+                      "tokens": {}
+                    },
+                    "title": "SF1 probe",
+                    "world_ref": "expression:sf1-probe"
+                  }
+                },
+                "schema": "oi.projection/v1",
+                "source": {
+                  "ref": "expression:sf1-probe",
+                  "revision": "2",
+                  "system": "o-i"
+                },
+                "state": "published",
+                "subject": {
+                  "kind": "expression",
+                  "ref": "expression:sf1-probe"
+                }
+              },
+              {
+                "audience": {
+                  "visibility": "public"
+                },
+                "projection_ref": "projection:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30:mu245q68",
+                "projection_revision": 1,
+                "provenance": [
+                  {
+                    "kind": "human-publication",
+                    "ref": "participant:oi-field-desktop-expression-aa5462a3-e269-428b-b092-3cef71330b30:human-desktop-walk",
+                    "revision": "5",
+                    "source_system": "o-i"
+                  }
+                ],
+                "published_at": "2026-09-15T03:29:58.368Z",
+                "publisher_participant_ref": "participant:oi-field-desktop-expression-aa5462a3-e269-428b-b092-3cef71330b30:human-desktop-walk",
+                "representation": {
+                  "kind": "oi.world-presentation/v1",
+                  "payload": {
+                    "presentation_ref": "presentation:desktop:expression-aa5462a3-e269-428b-b092-3cef71330b30:mu245q68",
+                    "provenance": [
+                      {
+                        "kind": "expression",
+                        "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                        "revision": "5",
+                        "source_system": "o-i"
+                      }
+                    ],
+                    "regions": [
+                      {
+                        "bindings": [
+                          {
+                            "binding_ref": "lede",
+                            "component_ref": "oi.presentation/lede/v1",
+                            "fallback": {
+                              "title": "SF1 walk field"
+                            },
+                            "portable_renderer": "oi.presentation/lede/v1",
+                            "props": {
+                              "title": "SF1 walk field"
+                            },
+                            "provenance": [
+                              {
+                                "kind": "expression",
+                                "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                                "revision": "5",
+                                "source_system": "o-i"
+                              }
+                            ],
+                            "schema": "oi.presentation-binding/v1",
+                            "subject_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30"
+                          }
+                        ],
+                        "region_ref": "lede",
+                        "role": "lede"
+                      },
+                      {
+                        "bindings": [
+                          {
+                            "binding_ref": "expression",
+                            "component_ref": "oi.presentation/expression/v1",
+                            "fallback": {
+                              "text": "SF1 walk field: a living Expression at revision 5. Where the live renderer is not admitted, the frozen reading of the same revision renders instead.",
+                              "title": "SF1 walk field"
+                            },
+                            "portable_renderer": "oi.presentation/expression/v1",
+                            "props": {
+                              "composition": {
+                                "entities": {
+                                  "expression:aa5462a3-e269-428b-b092-3cef71330b30:entity:00e9ba81-5d89-48b6-a5af-ae0c8780dde8": {
+                                    "entity_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30:entity:00e9ba81-5d89-48b6-a5af-ae0c8780dde8",
+                                    "parameters": {
+                                      "glyph": {
+                                        "automation": null,
+                                        "value": "☉"
+                                      }
+                                    },
+                                    "revision": 5,
+                                    "subject": {
+                                      "native_owner": "central",
+                                      "presentation_role": "being",
+                                      "sources": [
+                                        {
+                                          "availability": "available",
+                                          "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+                                          "revision": "walk"
+                                        }
+                                      ],
+                                      "subject_ref": "central:being:walk"
+                                    },
+                                    "title": "Thing 1"
+                                  }
+                                },
+                                "expression_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                                "provenance": [],
+                                "relations": {},
+                                "representations": [],
+                                "revision": 5,
+                                "scenes": [
+                                  {
+                                    "entity_refs": [
+                                      "expression:aa5462a3-e269-428b-b092-3cef71330b30:entity:00e9ba81-5d89-48b6-a5af-ae0c8780dde8"
+                                    ],
+                                    "revision": 2,
+                                    "scene_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30:scene:main",
+                                    "title": "Main"
+                                  }
+                                ],
+                                "schema": "oi.expression-composition/v1",
+                                "selection": {
+                                  "entity_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30:entity:00e9ba81-5d89-48b6-a5af-ae0c8780dde8",
+                                  "scene_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30:scene:main"
+                                },
+                                "title": "SF1 walk field"
+                              },
+                              "expression": {
+                                "expression_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                                "expression_revision": 5,
+                                "live_availability": "available",
+                                "live_renderer_ref": "renderer:oi:expression-stage",
+                                "representations": [
+                                  {
+                                    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>SF1 walk field</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:aa5462a3-e269-428b-b092-3cef71330b30\" data-expression-revision=\"5\"><h1>SF1 walk field</h1><p>Frozen reading of expression:aa5462a3-e269-428b-b092-3cef71330b30 at revision 5. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:aa5462a3-e269-428b-b092-3cef71330b30:scene:main\" aria-label=\"Main\"><h2>Main</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:aa5462a3-e269-428b-b092-3cef71330b30:entity:00e9ba81-5d89-48b6-a5af-ae0c8780dde8\" data-subject-ref=\"central:being:walk\" data-presentation-role=\"being\" style=\"left:50.00%;top:50.00%;font-size:3.00rem;opacity:1.00\" title=\"Thing 1\">☉</span></div></section></main></body></html>",
+                                    "kind": "html",
+                                    "media_type": "text/html",
+                                    "provenance": [
+                                      {
+                                        "availability": "available",
+                                        "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                                        "revision": "5"
+                                      }
+                                    ],
+                                    "representation": {
+                                      "availability": "available",
+                                      "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30:frozen:5",
+                                      "revision": "5"
+                                    }
+                                  }
+                                ],
+                                "scene_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30:scene:main",
+                                "schema": "oi.expression-presentation/v1",
+                                "subjects": [
+                                  {
+                                    "availability": "available",
+                                    "ref": "central:being:walk",
+                                    "revision": "5",
+                                    "sources": [
+                                      {
+                                        "availability": "available",
+                                        "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+                                        "revision": "walk"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              "title": "SF1 walk field"
+                            },
+                            "provenance": [
+                              {
+                                "kind": "expression",
+                                "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                                "revision": "5",
+                                "source_system": "o-i"
+                              }
+                            ],
+                            "schema": "oi.presentation-binding/v1",
+                            "subject_ref": "central:being:walk"
+                          }
+                        ],
+                        "region_ref": "body",
+                        "role": "body"
+                      },
+                      {
+                        "bindings": [
+                          {
+                            "binding_ref": "subject:central-being-walk",
+                            "component_ref": "oi.presentation/reference-card/v1",
+                            "fallback": {
+                              "title": "central:being:walk"
+                            },
+                            "portable_renderer": "oi.presentation/reference-card/v1",
+                            "props": {
+                              "refs": [
+                                "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+                              ],
+                              "text": "being · central",
+                              "title": "central:being:walk"
+                            },
+                            "provenance": [
+                              {
+                                "kind": "expression",
+                                "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                                "revision": "5",
+                                "source_system": "o-i"
+                              }
+                            ],
+                            "schema": "oi.presentation-binding/v1",
+                            "subject_ref": "central:being:walk"
+                          }
+                        ],
+                        "label": "Bound subjects · 1",
+                        "region_ref": "subjects",
+                        "role": "relation"
+                      }
+                    ],
+                    "revision": 1,
+                    "schema": "oi.world-presentation/v1",
+                    "theme": {
+                      "tokens": {}
+                    },
+                    "title": "SF1 walk field",
+                    "world_ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30"
+                  }
+                },
+                "schema": "oi.projection/v1",
+                "source": {
+                  "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30",
+                  "revision": "5",
+                  "system": "o-i"
+                },
+                "state": "published",
+                "subject": {
+                  "kind": "expression",
+                  "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30"
+                }
+              },
+              {
+                "audience": {
+                  "visibility": "public"
+                },
+                "projection_ref": "projection:desktop:mu2snxq1",
+                "projection_revision": 1,
+                "provenance": [
+                  {
+                    "kind": "document-source",
+                    "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+                    "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
+                    "source_system": "central"
+                  }
+                ],
+                "published_at": "2026-09-15T14:55:58.585Z",
+                "publisher_participant_ref": "human:desktop-walk",
+                "representation": {
+                  "kind": "oi.sparse-representation/v1",
+                  "payload": {
+                    "meta": [
+                      {
+                        "label": "Native type",
+                        "value": "central.document"
+                      }
+                    ],
+                    "schema": "oi.sparse-representation/v1",
+                    "text": "Cradle design: intent and experience",
+                    "title": "00 01-DESIGN.md"
+                  }
+                },
+                "schema": "oi.projection/v1",
+                "source": {
+                  "revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
+                  "system": "central"
+                },
+                "state": "published",
+                "subject": {
+                  "kind": "central.document",
+                  "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md"
+                }
               }
             ],
             "relations": [
@@ -5459,14 +7844,14 @@
             "status": {
               "healthy": true,
               "material": {
-                "age_ms": 1,
-                "observed_at": "2026-09-15T01:56:37.493Z",
+                "age_ms": 2,
+                "observed_at": "2026-09-15T14:56:05.253Z",
                 "state": "validated"
               },
               "material_valid": true,
               "revision": 1,
               "transport": {
-                "changed_at": "2026-09-15T01:56:37.491Z",
+                "changed_at": "2026-09-15T14:56:05.250Z",
                 "identity": "c2005d75ac2e2ff00796f2f07373038812bb80b98a111efe00115a596c158020",
                 "state": "available"
               }
@@ -5485,7 +7870,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 36,
+      "duration_ms": 40,
       "data": {
         "file": "shared-field-hosted-explore-same-ref.png",
         "page": "explore (hosting machine)"
@@ -5494,15 +7879,15 @@
     {
       "ok": true,
       "op": "invoke.graph",
-      "duration_ms": 515.5,
+      "duration_ms": 1409.8,
       "data": {
         "outcome": {
           "reading": {
             "counts": {
               "edges": 10,
-              "hosted_rows": 8,
+              "hosted_rows": 11,
               "knowledge_rows": 18,
-              "nodes": 27,
+              "nodes": 30,
               "spaces": 1,
               "wiki_nodes": 0
             },
@@ -6004,6 +8389,50 @@
               },
               {
                 "actions": [],
+                "kind": "hosted-human-world",
+                "label": "Suite harmonisation 2026-09-15",
+                "native_owner": "shared-field",
+                "provenance": {
+                  "detail": [
+                    "ws://100.92.62.101:3000/oi-shared-field",
+                    "central.content-fnv1a64/v1:harmonisation-2026-09-15"
+                  ],
+                  "source": "shared-field.projection"
+                },
+                "ref": "central:source:github:EpiLogos/O-I@5c7582e0"
+              },
+              {
+                "actions": [],
+                "kind": "hosted-expression",
+                "label": "SF1 walk field",
+                "native_owner": "shared-field",
+                "provenance": {
+                  "detail": [
+                    "ws://100.92.62.101:3000/oi-shared-field",
+                    "5"
+                  ],
+                  "revision": "1",
+                  "source": "shared-field.projection"
+                },
+                "ref": "expression:aa5462a3-e269-428b-b092-3cef71330b30"
+              },
+              {
+                "actions": [],
+                "kind": "hosted-expression",
+                "label": "SF1 probe",
+                "native_owner": "shared-field",
+                "provenance": {
+                  "detail": [
+                    "ws://100.92.62.101:3000/oi-shared-field",
+                    "2"
+                  ],
+                  "revision": "1",
+                  "source": "shared-field.projection"
+                },
+                "ref": "expression:sf1-probe"
+              },
+              {
+                "actions": [],
                 "kind": "hosted-central.document",
                 "label": "00 01-DESIGN.md",
                 "native_owner": "shared-field",
@@ -6027,7 +8456,7 @@
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "receipts": [
           {
@@ -6042,7 +8471,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 2,
             "summary": "Surface opened: Central wiki.",
-            "surface_id": "fd99aca7-36eb-46d8-baba-dcc540e1c88b",
+            "surface_id": "c5f1cffa-efa8-46fa-bd44-95b951481211",
             "surface_ref": {
               "kind": "knowledge",
               "native_owner": "ai-kit",
@@ -6083,7 +8512,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 5,
             "summary": "Surface opened: 00 01-DESIGN.md.",
-            "surface_id": "d2180e0f-6caf-45d1-9735-2353f71b2e1b",
+            "surface_id": "172d2d9b-eee1-438a-ba15-90e46379cbcb",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -6151,9 +8580,9 @@
     }
   ],
   "metrics": {
-    "hosted_snapshot_ms": 506,
-    "graph_with_hosted_ms": 733,
-    "hosted_publish_ms": 1333,
+    "hosted_snapshot_ms": 685,
+    "graph_with_hosted_ms": 791,
+    "hosted_publish_ms": 3336,
     "kernel_events_total": 7
   },
   "screenshots": [

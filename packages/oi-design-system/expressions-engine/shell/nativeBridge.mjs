@@ -1,19 +1,13 @@
+import { stateSource } from "./sourceState.mjs";
 import { resolvedAutomation, automationLeader } from "./automationLinks.mjs";
 import { applyNativeDelta } from "./nativeDelta.mjs";
 import { DEFAULT_CONFIG, DEFAULT_COLOR_CONFIG, DEFAULT_TOROIDAL_CONFIG } from "../engine/PointCloudField.mjs";
-import { DEFAULT_SEQUENCE, DEFAULT_FORCES, DEFAULT_COMPOSITION, DEFAULT_CYMATIC_MEDIUM, makeChakraEntities, MAX_FORMATIONS, MAX_PINS } from "../engine/fieldModel.mjs";
+import { DEFAULT_SEQUENCE, DEFAULT_FORCES, DEFAULT_COMPOSITION, DEFAULT_CYMATIC_MEDIUM, MAX_FORMATIONS, MAX_PINS } from "../engine/fieldModel.mjs";
+import { makeSemanticChakraEntities } from "../engine/semantics/chakraPresets.mjs";
 import { migrateSnapshot, CONFIG_SCHEMA_VERSION } from "../engine/configMigration.mjs";
 import { writePath, readPath } from "../engine/automation.mjs";
 import { NATIVE_BINDINGS, WORLD_SCALE, baseValue, bindValue, nativeBinding, automationTarget, entityTargets, stableNativeTarget } from "./nativeParameters.mjs";
 import { clone, blankJourney, blankScene, entity, validateJourney, DEFAULT_ENGINE_SETTINGS } from "./model.mjs";
-const UNSUPPORTED_PREVIEW = {
-  damping: "Preview damping has no defined native unit. Use Viscosity Damp in Physics.",
-  flow: "The preview fluid-coupling macro has no reversible native law. Use native curl, spring and viscosity controls.",
-  resonanceDamping: "Use the native resonator Q factor. Q is not the preview damping scalar.",
-  thickness: "Preview stroke dilation is not a native target parameter; source geometry is retained unchanged.",
-  warp: "Preview form warping is not a native force law. Use the native Hopf trajectory and flow controls.",
-  jitter: "Preview lattice jitter is not the native target sampler. This value is retained, not applied."
-};
 const MATERIAL_KEYS = ["sizeBias", "opacity", "roundness", "softness", "irregularity", "elongation", "orientation", "contrast", "densityScale", "densityPhase", "edgeWeight", "halo"];
 function assertSafe(value, depth = 0) {
   if (depth > 30) throw new Error("Document nesting exceeds the safe limit");
@@ -38,7 +32,7 @@ function shapeOf(e, native) {
   if (e.shape === "text") return { ...native, kind: "glyph", text: e.text.trim() || "O" };
   return { kind: "primitive", primitive: e.shape };
 }
-function toNativeEntity(e) {
+function toNativeEntity(e, semanticAuthority = false) {
   const original = e.native;
   const { enabled, clock, steps, manual, ...nativeSequence } = e.sequence;
   const sequence = { ...DEFAULT_SEQUENCE, ...original?.sequence, ...nativeSequence, links: [] };
@@ -65,19 +59,23 @@ function toNativeEntity(e) {
       links: e.kind === "pin" ? [] : e.sequence.enabled || e.sequence.manual ? e.sequence.steps.map((k) => ({
         ...k.native,
         id: k.id,
+        name: k.name,
+        source: k.source ? clone(k.source) : void 0,
+        state: k.objectState ? { scale: k.objectState.scale ?? 1, extent: { width: k.objectState.size.x * WORLD_SCALE, height: k.objectState.size.y * WORLD_SCALE, rotation: k.objectState.rotation * Math.PI / 180, normalized: true }, tint: k.objectState.tint, tintWeight: k.objectState.tintWeight, forces: { mode: k.objectState.force.kind, strength: k.objectState.force.strength, radius: k.objectState.force.radius * WORLD_SCALE, spin: k.objectState.force.spin } } : void 0,
         shape: shapeOf(k, k.native?.shape),
         hold: k.holdOverride ? k.hold : e.sequence.hold === void 0 && k.hold !== hold ? k.hold : void 0,
         transition: k.transitionOverride ? k.transition : e.sequence.transition === void 0 && k.transition !== transition ? k.transition : void 0,
         x: k.position ? k.position.x * WORLD_SCALE : void 0,
         y: k.position ? k.position.y * WORLD_SCALE : void 0,
         z: k.position ? k.position.z * WORLD_SCALE : void 0
-      })) : [{ id: e.id + "_base", shape: shapeOf(e, original?.shape) }]
+      })) : [{ id: e.id + "_base", source: e.source ? clone(e.source) : void 0, shape: shapeOf(e, original?.shape) }]
     },
     forces: { ...DEFAULT_FORCES, ...original?.forces, mode: e.force.kind, strength: e.force.strength, radius: e.force.radius * WORLD_SCALE, spin: e.force.spin },
-    authoringSource: e.source ? clone(e.source) : void 0,
+    authoringSource: e.sequence.enabled || e.sequence.manual ? stateSource(e, 0) ? clone(stateSource(e, 0)) : void 0 : e.source ? clone(e.source) : void 0,
     tint: e.tint,
     tintWeight: e.tintWeight,
-    stationIndex: e.station ?? void 0
+    stationIndex: semanticAuthority ? original?.stationIndex : e.station ?? original?.stationIndex,
+    chakraId: semanticAuthority ? original?.chakraId : original?.chakraId
   };
 }
 const waves = { sine: "sine", triangle: "triangle", square: "square", saw: "saw", steps: "randomStep", smooth: "smoothRandom", morph: "morph" };
@@ -102,23 +100,31 @@ function projectNativeConfig(s) {
   cfg.style = s.field.material === "print" ? "halftone" : "stipple";
   cfg.dotShape = s.engine.dotShape ?? "circle";
   if (s.engine.grainProfile === false) cfg.material = void 0;
-  cfg.entities = s.entities.map(toNativeEntity);
+  const semanticAuthority = !!s.semanticField?.enabled;
+  cfg.entities = s.entities.map((e) => toNativeEntity(e, semanticAuthority));
   const first = s.entities.find((e) => e.kind === "formation" && e.enabled !== false);
   cfg.sourceType = first?.source?.kind === "image" ? "image" : first?.source?.kind === "ascii" ? "ascii" : "composition";
   cfg.customImage = first?.source?.kind === "image" ? clone(first.source.image) : void 0;
   cfg.asciiGlyph = first?.source?.kind === "ascii" ? clone(first.source.ascii) : void 0;
   cfg.toroidalMorph = { ...DEFAULT_TOROIDAL_CONFIG, ...cfg.toroidalMorph, enabled: s.engine.morphEnabled, autoOscillate: s.engine.autoOscillate, trajectory: s.engine.trajectory, driveShape: s.engine.driveShape, interference: s.morph.law === "theta" ? "toroidalOnly" : s.morph.law };
+  const semanticFocus = s.composition.frequencyDriver === "focus" && semanticAuthority;
+  const legacyFocus = s.composition.frequencyDriver === "focus" && !semanticAuthority;
   cfg.composition = { ...DEFAULT_COMPOSITION, ...cfg.composition, plane: s.engine.mediumPlane, layoutName: s.composition.layout, orchestration: {
     ...DEFAULT_COMPOSITION.orchestration,
     ...cfg.composition?.orchestration,
     mode: s.composition.focus === "travelling" ? "focus" : "parallel",
     order: s.engine.focusOrder ?? "listed",
-    followStation: s.composition.carryStation,
+    followStation: legacyFocus && s.composition.carryStation,
     focusTintWeight: s.composition.carryTint ? cfg.composition?.orchestration.focusTintWeight ?? 0 : 0
   } };
-  cfg.cymatics = { ...DEFAULT_CYMATIC_MEDIUM, ...cfg.cymatics, plateGeometry: s.engine.templateGeometry ?? cfg.cymatics.plateGeometry, dimension: s.engine.templateDimension ?? cfg.cymatics.dimension, enabled: s.engine.resonanceEnabled, engine: s.engine.resonatorMode ?? "resonator", followFocus: s.composition.frequencyDriver === "focus", autoSweep: s.engine.autoSweep && s.composition.frequencyDriver === "automation", sweep: { glideS: 8, dwellS: 2, ...cfg.cymatics?.sweep, enabled: s.engine.autoSweep && s.composition.frequencyDriver === "automation", direction: s.engine.sweepDirection } };
+  cfg.cymatics = { ...DEFAULT_CYMATIC_MEDIUM, ...cfg.cymatics, plateGeometry: s.engine.templateGeometry ?? cfg.cymatics.plateGeometry, dimension: s.engine.templateDimension ?? cfg.cymatics.dimension, enabled: s.engine.resonanceEnabled, engine: s.engine.resonatorMode ?? "resonator", followFocus: legacyFocus, autoSweep: s.engine.autoSweep && s.composition.frequencyDriver === "automation", sweep: { glideS: 8, dwellS: 2, ...cfg.cymatics?.sweep, enabled: s.engine.autoSweep && s.composition.frequencyDriver === "automation", direction: s.engine.sweepDirection } };
+  cfg.semanticField = s.semanticField ? clone(s.semanticField) : void 0;
+  if (s.composition.frequencyDriver === "focus" && semanticAuthority) cfg.resonanceDrive = { kind: "semanticFocus", profileId: s.semanticField.profile.profileId };
+  else if (s.composition.frequencyDriver === "automation" && s.engine.autoSweep) cfg.resonanceDrive = { kind: "sweep", glideS: cfg.cymatics.sweep?.glideS, dwellS: cfg.cymatics.sweep?.dwellS, direction: cfg.cymatics.sweep?.direction };
+  else if (s.composition.frequencyDriver !== "focus") cfg.resonanceDrive = { kind: "frequency" };
+  else cfg.resonanceDrive = void 0;
   cfg.relational = { ...cfg.relational, enabled: s.engine.relationalEnabled, mode: s.engine.relationalMode };
-  cfg.interaction = { ...cfg.interaction, mode: s.engine.pointerMode, placedPoints: [] };
+  cfg.interaction = { ...cfg.interaction, mode: s.engine.pointerMode, clickMode: s.engine.pointerClick ?? "pulse", placedPoints: [] };
   cfg.automations = s.automation.map((authored) => {
     const l = resolvedAutomation(s.automation, authored), leader = automationLeader(s.automation, authored);
     const b = automationTarget(s, l.target);
@@ -150,7 +156,7 @@ function projectNativeConfig(s) {
 function toNativeConfig(s) {
   const projected = projectNativeConfig(s);
   if (!s.native) return projected;
-  const baseline = s.native.projection ?? nativeSnapshotToJourney({ schemaVersion: 4, config: s.native.config }).scenes[0].native.projection;
+  const baseline = s.native.projection ?? nativeSnapshotToJourney({ schemaVersion: CONFIG_SCHEMA_VERSION, config: s.native.config }).scenes[0].native.projection;
   return applyNativeDelta(s.native.config, baseline, projected);
 }
 const shellShape = (s) => s.kind === "glyph" ? "text" : s.kind === "primitive" ? s.primitive ?? "disc" : s.kind;
@@ -173,8 +179,11 @@ function fromNativeEntity(e) {
   out.tintWeight = e.tintWeight;
   out.force = { kind: e.forces.mode, strength: e.forces.strength, radius: e.forces.radius / WORLD_SCALE, spin: e.forces.spin };
   out.station = e.stationIndex ?? null;
-  out.sequence = { ...e.sequence, manual: e.sequence.advance === "off" && e.sequence.links.length > 1, enabled: e.sequence.advance !== "off", clock: e.sequence.advance === "morphCycle" ? "morph" : "seconds", steps: (e.sequence.links.length ? e.sequence.links : [{ id: e.id + "_base", shape: e.shape }]).map((k) => ({
+  out.sequence = { ...e.sequence, manual: e.sequence.advance === "off" && e.sequence.links.length > 1, enabled: e.sequence.advance !== "off", clock: e.sequence.advance === "morphCycle" ? "morph" : "seconds", steps: (e.sequence.links.length ? e.sequence.links : [{ id: e.id + "_base", source: e.authoringSource ? clone(e.authoringSource) : void 0, shape: e.shape }]).map((k) => ({
     id: k.id,
+    name: k.name,
+    source: k.source ? clone(k.source) : void 0,
+    objectState: k.state ? { scale: k.state.scale, size: { x: (k.state.extent?.width ?? 400) / WORLD_SCALE, y: (k.state.extent?.height ?? 400) / WORLD_SCALE }, rotation: (k.state.extent?.rotation ?? 0) * 180 / Math.PI, tint: k.state.tint, tintWeight: k.state.tintWeight, force: { kind: k.state.forces.mode, strength: k.state.forces.strength, radius: k.state.forces.radius / WORLD_SCALE, spin: k.state.forces.spin } } : void 0,
     native: clone(k),
     holdOverride: k.hold !== void 0,
     transitionOverride: k.transition !== void 0,
@@ -204,10 +213,10 @@ function nativeSnapshotToJourney(raw, index = 0) {
   const snapshot = migrateSnapshot(value, index);
   if (!snapshot) throw new Error("Native migration returned no scene");
   const cfg = snapshot.config, s = blankScene(snapshot.name), j = blankJourney();
-  const completeV4 = value.schemaVersion === 4 && source.fluid && source.interaction && source.particleSize && typeof source.particleCount === "number" && Array.isArray(source.entities);
-  s.native = { config: clone(completeV4 ? source : cfg), original: clone(raw) };
+  const completeNative = Number(value.schemaVersion) >= 4 && Number(value.schemaVersion) <= CONFIG_SCHEMA_VERSION && source.fluid && source.interaction && source.particleSize && typeof source.particleCount === "number" && Array.isArray(source.entities);
+  s.native = { config: clone(completeNative ? source : cfg), original: clone(raw) };
   s.text = [];
-  s.engine = { ...DEFAULT_ENGINE_SETTINGS, inkMode: cfg.colorMode, templateGeometry: cfg.cymatics?.plateGeometry, templateDimension: cfg.cymatics?.dimension, resonanceEnabled: cfg.cymatics?.enabled ?? false, morphEnabled: cfg.toroidalMorph?.enabled ?? false, autoOscillate: cfg.toroidalMorph?.autoOscillate ?? true, trajectory: cfg.toroidalMorph?.trajectory ?? "linear", driveShape: cfg.toroidalMorph?.driveShape ?? "sine", relationalEnabled: cfg.relational?.enabled ?? false, relationalMode: cfg.relational?.mode ?? "orbital", pointerMode: cfg.interaction.mode, colorMode: cfg.color?.mode ?? "monochrome", colorEnabled: cfg.color?.enabled ?? false, mediumPlane: cfg.composition?.plane ?? "vertical", autoSweep: cfg.cymatics?.sweep?.enabled ?? cfg.cymatics?.autoSweep ?? false, sweepDirection: cfg.cymatics?.sweep?.direction ?? "ascent" };
+  s.engine = { ...DEFAULT_ENGINE_SETTINGS, inkMode: cfg.colorMode, templateGeometry: cfg.cymatics?.plateGeometry, templateDimension: cfg.cymatics?.dimension, resonanceEnabled: cfg.cymatics?.enabled ?? false, morphEnabled: cfg.toroidalMorph?.enabled ?? false, autoOscillate: cfg.toroidalMorph?.autoOscillate ?? true, trajectory: cfg.toroidalMorph?.trajectory ?? "linear", driveShape: cfg.toroidalMorph?.driveShape ?? "sine", relationalEnabled: cfg.relational?.enabled ?? false, relationalMode: cfg.relational?.mode ?? "orbital", pointerMode: cfg.interaction.mode, pointerClick: cfg.interaction.clickMode ?? "pulse", pointerClickStrength: cfg.interaction.clickStrength ?? 2.2, pointerClickRadius: (cfg.interaction.clickRadius ?? 180) / 400, colorMode: cfg.color?.mode ?? "monochrome", colorEnabled: cfg.color?.enabled ?? false, mediumPlane: cfg.composition?.plane ?? "vertical", autoSweep: cfg.cymatics?.sweep?.enabled ?? cfg.cymatics?.autoSweep ?? false, sweepDirection: cfg.cymatics?.sweep?.direction ?? "ascent" };
   s.field.background = cfg.backgroundColor ?? cfg.color?.backgroundColor ?? "#f4f2eb";
   s.field.material = cfg.style === "halftone" ? "print" : "ink";
   s.field.palette = cfg.color?.customPaletteColors?.length ? cfg.color.customPaletteColors.slice(0, 8) : [cfg.color?.primaryColor ?? "#252720", cfg.color?.accentColor ?? "#252720", cfg.color?.secondaryColor ?? "#252720"];
@@ -227,6 +236,8 @@ function nativeSnapshotToJourney(raw, index = 0) {
   s.engine.resonatorMode = cfg.cymatics?.engine ?? "resonator";
   s.engine.focusOrder = cfg.composition?.orchestration.order ?? "listed";
   s.entities = (cfg.entities ?? []).map(fromNativeEntity);
+  s.semanticField = cfg.semanticField ? clone(cfg.semanticField) : void 0;
+  s.resonanceDrive = cfg.resonanceDrive ? clone(cfg.resonanceDrive) : void 0;
   const first = s.entities.find((e) => e.kind === "formation" && e.enabled !== false);
   if (first && !first.source) {
     if (cfg.sourceType === "image" && cfg.customImage?.dataUrl) first.source = { kind: "image", image: clone(cfg.customImage) };
@@ -238,7 +249,7 @@ function nativeSnapshotToJourney(raw, index = 0) {
   s.composition.focus = cfg.composition?.orchestration.mode === "focus" ? "travelling" : "parallel";
   s.composition.carryTint = (cfg.composition?.orchestration.focusTintWeight ?? 0) > 0;
   s.composition.carryStation = cfg.composition?.orchestration.followStation ?? false;
-  s.composition.frequencyDriver = cfg.cymatics?.sweep?.enabled || cfg.cymatics?.autoSweep || cfg.automations?.some((l) => l.enabled && l.path === "cymatics.frequencyHz") ? "automation" : cfg.cymatics?.followFocus ? "focus" : "manual";
+  s.composition.frequencyDriver = cfg.resonanceDrive?.kind === "semanticFocus" ? "focus" : cfg.resonanceDrive?.kind === "sweep" || cfg.cymatics?.sweep?.enabled || cfg.cymatics?.autoSweep || cfg.automations?.some((l) => l.enabled && l.path === "cymatics.frequencyHz") ? "automation" : cfg.cymatics?.followFocus ? "focus" : "manual";
   s.morph.law = cfg.toroidalMorph?.interference === "toroidalOnly" ? "theta" : cfg.toroidalMorph?.interference ?? "theta";
   s.automation = (cfg.automations ?? []).map((l) => {
     const b = NATIVE_BINDINGS.find((b2) => b2.path === l.path), eb = entityTargets(s).find((b2) => b2.path === l.path);
@@ -248,7 +259,7 @@ function nativeSnapshotToJourney(raw, index = 0) {
   });
   if (snapshot.view?.gridMode && !s.view.nativeScaffold) s.view.nativeScaffold = snapshot.view.gridMode;
   j.name = snapshot.name;
-  j.description = "Native scene configuration imported through schema-4 migration. Original payload retained; this is not a runtime checkpoint.";
+  j.description = "Native scene configuration imported through schema-5 migration. Original payload retained; this is not a runtime checkpoint.";
   j.scenes = [s];
   checkNativeLimits(s);
   s.native.projection = clone(projectNativeConfig(s));
@@ -267,10 +278,10 @@ function importDocuments(raw) {
   return { journeys, errors };
 }
 function nativeExport(s) {
-  return { schemaVersion: 4, id: s.id, name: s.name, timestamp: Date.now(), config: toNativeConfig(s), authoringView: clone(s.view), source: s.native?.original };
+  return { schemaVersion: CONFIG_SCHEMA_VERSION, id: s.id, name: s.name, timestamp: Date.now(), config: toNativeConfig(s), authoringView: clone(s.view), source: s.native?.original };
 }
 function nativeChakras() {
-  return makeChakraEntities("yantra").slice().reverse().map((e, i) => {
+  return makeSemanticChakraEntities("yantra").slice().reverse().map((e, i) => {
     const out = fromNativeEntity(e);
     out.position = { x: 0.18, y: -0.82 + i * 0.274, z: 0 };
     out.size = { x: 0.235, y: 0.235 };
@@ -282,7 +293,6 @@ function nativeChakras() {
 }
 export {
   MATERIAL_KEYS,
-  UNSUPPORTED_PREVIEW,
   assertSafe,
   checkNativeLimits,
   fromNativeEntity,

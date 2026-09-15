@@ -1,13 +1,11 @@
+import { asciiLayout } from "./asciiLayout.mjs";
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
 import * as THREE from "three";
-import {
-  CHAKRA_CYMATIC_PROFILES,
-  renderChladniPlate,
-  sampleVolumetric3DNodalPoints
-} from "./cymatics.mjs";
+import { renderChladniPlate, sampleVolumetric3DNodalPoints, deriveCymaticTemplateModes } from "./cymatics.mjs";
+import { CHAKRA_CYMATIC_PROFILES } from "./legacy/chakraCymaticProfiles.mjs";
 import { sampleImageSource, sampleAlphaSource, SOURCE_WORK_MAX } from "./sourceSampling.mjs";
 const FALLBACK_FONT_STACK = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif';
 class GlyphSampler {
@@ -619,8 +617,29 @@ class GlyphSampler {
     }
     return { candidates };
   }
+  /** Generic authored cymatic target. No chakra lookup or semantic correspondence. */
+  sampleCymaticTemplate(spec, coherence = 1, chaos = 0) {
+    const derived = deriveCymaticTemplateModes(spec.frequencyHz, spec.baseFrequency ?? 40);
+    const m = spec.m ?? derived.m, n = spec.n ?? derived.n, l = spec.l ?? derived.l, a = spec.a ?? derived.a, b = spec.b ?? derived.b;
+    const geometry = spec.plateGeometry ?? "square", dimension = spec.dimension ?? "2D";
+    if (dimension === "3D" || geometry === "volumetric3D") {
+      return { candidates: sampleVolumetric3DNodalPoints(12e3, l, m, n, coherence, chaos, 280), is3D: true };
+    }
+    const w = this.canvas.width, h = this.canvas.height, ctx = this.ctx;
+    renderChladniPlate(ctx, w, h, geometry, m, n, a, b, coherence, chaos);
+    const pixels = ctx.getImageData(0, 0, w, h).data, candidates = [], cx = w / 2, cy = h / 2;
+    for (let y = 0; y < h; y += 3) for (let x = 0; x < w; x += 3) {
+      const idx = (y * w + x) * 4, alpha = pixels[idx + 3] / 255;
+      if (alpha > 0.05) candidates.push({ x: x - cx, y: -(y - cy), z: 0, density: alpha });
+    }
+    if (!candidates.length) for (let i = 0; i < 500; i++) {
+      const ang = i / 500 * Math.PI * 2;
+      candidates.push({ x: Math.cos(ang) * 120, y: Math.sin(ang) * 120, z: 0, density: 0.8 });
+    }
+    return { candidates, is3D: false };
+  }
   /**
-   * Generates candidate coordinates according to exact Chladni / cymatic harmonic wave equations
+   * @deprecated Legacy semantic wrapper. New authored geometry uses sampleCymaticTemplate().
    */
   sampleCymaticNode(node, plateGeometry = "square", dimension = "2D", coherence = 1, chaos = 0, frequencyOverride) {
     const freq = frequencyOverride ?? node.frequencyHz ?? 396;
@@ -907,18 +926,13 @@ class GlyphSampler {
     const h = this.canvas.height;
     const ctx = this.ctx;
     ctx.clearRect(0, 0, w, h);
-    const rawLines = asciiText.split("\n");
-    const lines = rawLines.length > 0 ? rawLines : ["[EMPTY ASCII]"];
-    const maxLineLen = Math.max(...lines.map((l) => l.length), 1);
+    const { lines, fontSize, charWidth, lineHeight } = asciiLayout(asciiText, w, h, options.fontSize);
+    const maxLineLen = Math.max(1, ...lines.map((l) => Array.from(l).length));
     const numLines = lines.length;
-    const computedSize = Math.floor(Math.min(w * 0.82 / (maxLineLen * 0.6), h * 0.82 / Math.max(1, numLines * 1.15)));
-    const fontSize = options.fontSize || Math.max(12, Math.min(72, computedSize));
     ctx.font = `bold ${fontSize}px ${options.fontFamily || '"Fira Code", "Courier New", Courier, monospace'}`;
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
     ctx.fillStyle = "#ffffff";
-    const lineHeight = fontSize * 1.15;
-    const charWidth = fontSize * 0.6;
     const totalW = maxLineLen * charWidth;
     const totalH = numLines * lineHeight;
     const startX = (w - totalW) / 2;
@@ -929,6 +943,7 @@ class GlyphSampler {
     const imgData = ctx.getImageData(0, 0, w, h);
     const sampled = sampleAlphaSource(imgData.data, w, h, {
       invert: options.invert,
+      // Preserve the actual typed contours, including sparse strokes and spaces.
       cell: { w: charWidth, h: lineHeight }
     });
     return { candidates: sampled.candidates, center: new THREE.Vector2(0, 0), analysis: sampled.analysis };

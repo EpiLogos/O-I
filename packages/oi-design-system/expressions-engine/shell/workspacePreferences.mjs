@@ -1,3 +1,4 @@
+import { stateLabel, stateSource } from "./sourceState.mjs";
 const WORKSPACE_KEY = "oi.workspace.v1";
 function defaultWorkspace() {
   return { version: 1, appearance: "scene", entries: [
@@ -28,12 +29,14 @@ function moveBeltEntry(entries, id, offset) {
 function formationSummary(e) {
   const label = (s) => s.shape === "text" ? s.text : s.shape;
   const states = e.sequence.steps;
-  if (states.length > 1) return states.map(label).join(e.sequence.enabled ? " \u2192 " : " \u2194 ") + (e.sequence.enabled ? " \xB7 playing" : e.sequence.manual ? " \xB7 manual" : " \xB7 held");
-  return label(e) + " \xB7 single state";
+  if (states.length > 1) return states.map((s, i) => stateLabel({ ...s, source: stateSource(e, i) })).join(e.sequence.enabled ? " \u2192 " : " \u2194 ") + (e.sequence.enabled ? " \xB7 playing" : e.sequence.manual ? " \xB7 manual" : " \xB7 held");
+  return (states[0] ? stateLabel({ ...states[0], source: stateSource(e, 0) }) : label(e)) + " \xB7 single state";
 }
 function syncHeldState(e, index) {
   const step = e.sequence.steps[index];
   if (!step || e.sequence.enabled || e.sequence.manual) return;
+  e.source = step.source ? structuredClone(step.source) : void 0;
+  if (step.objectState) Object.assign(e, structuredClone(step.objectState));
   e.shape = step.shape;
   e.text = step.text;
   e.yantraId = step.yantraId;

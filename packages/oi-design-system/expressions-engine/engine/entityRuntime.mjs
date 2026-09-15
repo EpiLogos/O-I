@@ -5,13 +5,11 @@
 import * as THREE from "three";
 import {
   layoutPartitions,
-  resolveSequence,
   effectiveLinks,
   MAX_FORMATIONS
 } from "./fieldModel.mjs";
-import { CANONICAL_CHAKRAS } from "./chakraSystem.mjs";
+import { resolveEntityPose } from "./entityPose.mjs";
 const BASE_SCALE = 0.56;
-const FORCE_MODE = { none: 0, attract: 1, repel: 2, vortex: 3 };
 class EntityRuntime {
   sampler;
   bakeGeneration = 0;
@@ -42,7 +40,6 @@ class EntityRuntime {
     transforms: Array.from({ length: 10 }, () => new THREE.Vector3(1, 1, 0)),
     depthScales: new Float32Array(10).fill(1),
     normalized: new Float32Array(10),
-    forces: Array.from({ length: 10 }, () => new THREE.Vector4(0, 0, 0, 0)),
     tints: Array.from({ length: 10 }, () => new THREE.Color("#ffffff")),
     tintWeights: new Float32Array(10)
   };
@@ -97,9 +94,10 @@ class EntityRuntime {
     }
   }
   /** Image / ASCII sources: override a formation's shape with an explicit candidate pool. */
-  setCustomCandidates(entityId, candidates) {
-    if (candidates) this.customCandidates.set(entityId, candidates);
-    else this.customCandidates.delete(entityId);
+  setCustomCandidates(entityId, candidates, linkId) {
+    const key = linkId ? entityId + ":" + linkId : entityId;
+    if (candidates) this.customCandidates.set(key, candidates);
+    else this.customCandidates.delete(key);
     this.bakeSig.delete(entityId);
   }
   // ------------------------------------------------------------------ shapes
@@ -137,10 +135,7 @@ class EntityRuntime {
         if (inside) out.push({ x, y, density: 1 });
       }
     } else if (shape.kind === "cymatic") {
-      const freq = shape.frequencyHz ?? 396;
-      const profile = CANONICAL_CHAKRAS.reduce((best, c) => Math.abs((c.frequencyHz ?? 0) - freq) < Math.abs((best.frequencyHz ?? 0) - freq) ? c : best, CANONICAL_CHAKRAS[0]);
-      pseudo.id = profile.id;
-      out = this.sampler.sampleCymaticNode(pseudo, shape.plateGeometry ?? this.templateGeometry, shape.dimension ?? this.templateDimension, 1, 0, freq).candidates;
+      out = this.sampler.sampleCymaticTemplate({ frequencyHz: shape.frequencyHz ?? 396, plateGeometry: shape.plateGeometry ?? this.templateGeometry, dimension: shape.dimension ?? this.templateDimension }).candidates;
     } else {
       out = this.sampler.rasterizeSpatialNode(pseudo, shape.kind === "glyph" ? "symbol" : "yantra", fontFamily, fontWeight, "yantraA").candidates;
     }
@@ -160,6 +155,14 @@ class EntityRuntime {
   }
   writeCandidates(target, start, end, cands, scale, plane, jitterPx, channel, normalized) {
     const n = cands.length;
+    if (!n) {
+      target.fill(0, start * 4, end * 4);
+      for (let i = start; i < end; i++) {
+        this.noiseData[i * 4 + channel] = 0;
+        this.noiseData[i * 4 + channel + 1] = 0;
+      }
+      return;
+    }
     for (let i = start; i < end; i++) {
       const c = normalized ? cands[Math.floor((i - start) * 0.6180339887498949 % 1 * n)] : cands[(i - start) % n];
       const jx = (Math.random() - 0.5) * jitterPx;
@@ -185,8 +188,8 @@ class EntityRuntime {
   bakePartition(p, e, linkIndex, nextIndex, plane, fontFamily, fontWeight) {
     const links = effectiveLinks(e);
     const custom = this.customCandidates.get(e.id);
-    const candA = custom && linkIndex === 0 ? custom : this.candidatesFor(links[linkIndex].shape, fontFamily, fontWeight);
-    const candB = custom && nextIndex === 0 ? custom : this.candidatesFor(links[nextIndex].shape, fontFamily, fontWeight);
+    const candA = this.customCandidates.get(e.id + ":" + links[linkIndex].id) ?? (custom && linkIndex === 0 ? custom : this.candidatesFor(links[linkIndex].shape, fontFamily, fontWeight));
+    const candB = this.customCandidates.get(e.id + ":" + links[nextIndex].id) ?? (custom && nextIndex === 0 ? custom : this.candidatesFor(links[nextIndex].shape, fontFamily, fontWeight));
     this.bakeGeneration++;
     const normalize = (cands) => {
       if (!e.extent || e.extent.normalized === false) return cands;
@@ -217,6 +220,8 @@ class EntityRuntime {
     this.currentPlane = comp.plane;
     const byId = new Map(entities.map((e) => [e.id, e]));
     const frames = [];
+    const poses = entities.map((entity) => resolveEntityPose(entity, simTime, drivePhase, manualMorph, holdRatio));
+    const poseById = new Map(poses.map((pose) => [pose.entityId, pose]));
     const impulses = [];
     let rebaked = false;
     const u = this.uniforms;
@@ -225,9 +230,10 @@ class EntityRuntime {
       if (i >= 10) return;
       const e = byId.get(p.entityId);
       if (!e) return;
-      const state = resolveSequence(e, simTime, drivePhase, manualMorph, holdRatio);
+      const pose = poseById.get(e.id);
+      const state = pose.sequence;
       const links = effectiveLinks(e);
-      const sig = `${this.shapeSignature(links[state.linkIndex].shape)}>${this.shapeSignature(links[state.nextIndex].shape)}|${!!e.extent && e.extent.normalized !== false}|${this.customCandidates.has(e.id) ? `c:${state.linkIndex === 0}:${state.nextIndex === 0}` : ""}`;
+      const sig = `${links[state.linkIndex].id}:${links[state.nextIndex].id}|${this.shapeSignature(links[state.linkIndex].shape)}>${this.shapeSignature(links[state.nextIndex].shape)}|${!!e.extent && e.extent.normalized !== false}|${this.customCandidates.has(e.id) ? `c:${state.linkIndex === 0}:${state.nextIndex === 0}` : ""}`;
       const prevStep = this.lastStep.get(e.id);
       if (this.bakeSig.get(e.id) !== sig) {
         this.bakePartition(p, e, state.linkIndex, state.nextIndex, comp.plane, fontFamily, fontWeight);
@@ -236,32 +242,24 @@ class EntityRuntime {
       }
       if (prevStep !== void 0 && prevStep !== state.step && e.sequence.impulse > 0) impulses.push(e.sequence.impulse);
       this.lastStep.set(e.id, state.step);
-      const la = links[state.linkIndex];
-      const lb = links[state.nextIndex];
-      const t = state.progress;
-      const cx = e.x + ((la.x ?? 0) * (1 - t) + (lb.x ?? 0) * t);
-      const cy = e.y + ((la.y ?? 0) * (1 - t) + (lb.y ?? 0) * t);
-      const cz = e.z + ((la.z ?? 0) * (1 - t) + (lb.z ?? 0) * t);
       u.bounds[i] = p.end;
-      u.centers[i].set(cx, cy, cz, Math.max(5, e.forces.radius));
+      u.centers[i].set(pose.x, pose.y, pose.z, Math.max(5, pose.forces.radius));
       u.morph[i] = state.progress;
-      u.depthScales[i] = Math.max(1e-3, e.scale);
+      u.depthScales[i] = Math.max(1e-3, pose.scale);
       u.normalized[i] = e.extent && e.extent.normalized !== false ? 1 : 0;
-      u.transforms[i].set(Math.max(1e-3, e.scale) * (e.extent ? e.extent.width / 400 : 1), Math.max(1e-3, e.scale) * (e.extent ? e.extent.height / 400 : 1), e.extent?.rotation ?? 0);
-      u.forces[i].set(e.forces.strength, FORCE_MODE[e.forces.mode] ?? 0, e.forces.spin, e.enabled && e.forces.mode !== "none" ? 1 : e.enabled && Math.abs(e.forces.spin) > 0 ? 1 : 0);
-      u.tints[i].set(e.tint);
-      u.tintWeights[i] = Math.max(0, Math.min(1, e.tintWeight * comp.entityTintWeight));
+      u.transforms[i].set(Math.max(1e-3, pose.scale) * (pose.extent ? pose.extent.width / 400 : 1), Math.max(1e-3, pose.scale) * (pose.extent ? pose.extent.height / 400 : 1), pose.extent?.rotation ?? 0);
+      u.tints[i].set(pose.tint);
+      u.tintWeights[i] = Math.max(0, Math.min(1, pose.tintWeight * comp.entityTintWeight));
       frames.push({ entityId: e.id, index: i, state });
     });
     for (let i = u.count; i < 10; i++) {
       u.bounds[i] = this.particleCount;
-      u.forces[i].set(0, 0, 0, 0);
       u.tintWeights[i] = 0;
       u.morph[i] = 0;
     }
-    return { frames, impulses, rebaked };
+    return { frames, poses, impulses, rebaked };
   }
-  /** Explicit reset: particle seed = current A targets translated to each entity's centre. */
+  /** Explicit reset: particle seed = current blended targets translated to each entity's centre. */
   buildSeed() {
     const seed = new Float32Array(this.dataA.length);
     seed.set(this.dataA);
@@ -278,9 +276,13 @@ class EntityRuntime {
       if (i >= 10) return;
       const c = this.uniforms.centers[i];
       for (let k = p.start; k < p.end; k++) {
-        const tr = this.uniforms.transforms[i];
+        const tr = this.uniforms.transforms[i], blend = this.uniforms.morph[i];
+        for (let channel = 0; channel < 4; channel++) {
+          const offset = k * 4 + channel;
+          seed[offset] = this.dataA[offset] + (this.dataB[offset] - this.dataA[offset]) * blend;
+        }
         const horizontal = this.currentPlane === "horizontal";
-        const jx = this.noiseData[k * 4], jy = this.noiseData[k * 4 + 1], normalized = this.uniforms.normalized[i] > 0.5;
+        const jx = this.noiseData[k * 4] + (this.noiseData[k * 4 + 2] - this.noiseData[k * 4]) * blend, jy = this.noiseData[k * 4 + 1] + (this.noiseData[k * 4 + 3] - this.noiseData[k * 4 + 1]) * blend, normalized = this.uniforms.normalized[i] > 0.5;
         const x = (seed[k * 4] + (normalized ? jx : 0)) * tr.x, y = ((horizontal ? -seed[k * 4 + 2] : seed[k * 4 + 1]) + (normalized ? jy : 0)) * tr.y;
         const nx = normalized ? 0 : jx, ny = normalized ? 0 : jy;
         const co = Math.cos(tr.z), si = Math.sin(tr.z);

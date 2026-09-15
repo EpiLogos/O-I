@@ -2,6 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
+import { CHAKRA_DEFINITIONS } from "./semantics/chakraSemantics.mjs";
 const CHAKRA_GLYPH_PRESETS = [
   {
     id: "bija_om_crown",
@@ -144,127 +145,27 @@ const CHAKRA_GLYPH_PRESETS = [
     description: "Full solar aperture of illumination and boundless oneness"
   }
 ];
-const CANONICAL_CHAKRAS = [
-  {
-    id: "sahasrara",
-    name: "Sahasrara (Crown)",
-    sanskrit: "\u0938\u0939\u0938\u094D\u0930\u093E\u0930",
-    seedSyllable: "\u0950",
-    symbol: "\u2638",
-    englishTitle: "Crown / Pure Consciousness",
-    frequencyHz: 963,
-    element: "Cosmic Spirit (Akasha)",
+const CANONICAL_CHAKRAS = [...CHAKRA_DEFINITIONS].reverse().map((definition) => {
+  const scaleById = { sahasrara: 0.16, ajna: 0.14, vishuddha: 0.14, anahata: 0.15, manipura: 0.14, svadhisthana: 0.14, muladhara: 0.15 };
+  const strengthById = { sahasrara: 2.2, ajna: 2, vishuddha: 1.8, anahata: 2.4, manipura: 1.9, svadhisthana: 1.8, muladhara: 2.2 };
+  return {
+    id: definition.id,
+    name: definition.name,
+    sanskrit: definition.sanskrit,
+    seedSyllable: definition.seedSyllable,
+    symbol: definition.symbol,
+    englishTitle: definition.englishTitle,
+    // Historical correspondence only. The real resonator does not consume this value.
+    frequencyHz: definition.historicalCorrespondences?.solfeggioHz,
+    element: definition.element,
     x: 0,
-    y: -270,
-    scale: 0.16,
-    color: "#ff77ff",
-    // Brilliant Luminous Radiant Neon Violet
-    attractorStrength: 2.2,
+    y: 270 - definition.order * 90,
+    scale: scaleById[definition.id] ?? 0.14,
+    color: definition.canonicalColor,
+    attractorStrength: strengthById[definition.id] ?? 2,
     active: true
-  },
-  {
-    id: "ajna",
-    name: "Ajna (Third Eye)",
-    sanskrit: "\u0906\u091C\u094D\u091E\u093E",
-    seedSyllable: "\u0950",
-    symbol: "\u{1F441}",
-    englishTitle: "Third Eye / Intuition",
-    frequencyHz: 852,
-    element: "Light (Prakasha)",
-    x: 0,
-    y: -180,
-    scale: 0.14,
-    color: "#66a3ff",
-    // Radiant Vivid Electric Cyan-Indigo Blue
-    attractorStrength: 2,
-    active: true
-  },
-  {
-    id: "vishuddha",
-    name: "Vishuddha (Throat)",
-    sanskrit: "\u0935\u093F\u0936\u0941\u0926\u094D\u0927",
-    seedSyllable: "\u0939\u0902",
-    symbol: "\u25EF",
-    englishTitle: "Throat / Expression",
-    frequencyHz: 741,
-    element: "Ether / Sound (Akasha)",
-    x: 0,
-    y: -90,
-    scale: 0.14,
-    color: "#00ffff",
-    // Pure Glowing Electric Neon Cyan
-    attractorStrength: 1.8,
-    active: true
-  },
-  {
-    id: "anahata",
-    name: "Anahata (Heart)",
-    sanskrit: "\u0905\u0928\u093E\u0939\u0924",
-    seedSyllable: "\u092F\u0902",
-    symbol: "\u2721",
-    englishTitle: "Heart / Compassion",
-    frequencyHz: 639,
-    element: "Air (Vayu)",
-    x: 0,
-    y: 0,
-    scale: 0.15,
-    color: "#00ff99",
-    // Luminous Vivid Emerald Spring Green
-    attractorStrength: 2.4,
-    active: true
-  },
-  {
-    id: "manipura",
-    name: "Manipura (Solar Plexus)",
-    sanskrit: "\u092E\u0923\u093F\u092A\u0942\u0930",
-    seedSyllable: "\u0930\u0902",
-    symbol: "\u25BD",
-    englishTitle: "Solar Plexus / Willpower",
-    frequencyHz: 528,
-    element: "Fire (Tejas)",
-    x: 0,
-    y: 90,
-    scale: 0.14,
-    color: "#ffff00",
-    // Pure Dazzling Solar Laser Gold Yellow
-    attractorStrength: 1.9,
-    active: true
-  },
-  {
-    id: "svadhisthana",
-    name: "Svadhisthana (Sacral)",
-    sanskrit: "\u0938\u094D\u0935\u093E\u0927\u093F\u0937\u094D\u0920\u093E\u0928",
-    seedSyllable: "\u0935\u0902",
-    symbol: "\u263D",
-    englishTitle: "Sacral / Fluid Creativity",
-    frequencyHz: 417,
-    element: "Water (Apas)",
-    x: 0,
-    y: 180,
-    scale: 0.14,
-    color: "#ff8800",
-    // Intense Radiant Sunset Flame Orange
-    attractorStrength: 1.8,
-    active: true
-  },
-  {
-    id: "muladhara",
-    name: "Muladhara (Root)",
-    sanskrit: "\u092E\u0942\u0932\u093E\u0927\u093E\u0930",
-    seedSyllable: "\u0932\u0902",
-    symbol: "\u{1FAB7}",
-    englishTitle: "Root / Grounded Foundation",
-    frequencyHz: 396,
-    element: "Earth (Prithvi)",
-    x: 0,
-    y: 270,
-    scale: 0.15,
-    color: "#ff2255",
-    // Blazing Vivid Laser Ruby Crimson
-    attractorStrength: 2.2,
-    active: true
-  }
-];
+  };
+});
 function createDefaultSpatialChakraConfig() {
   return {
     enabled: false,

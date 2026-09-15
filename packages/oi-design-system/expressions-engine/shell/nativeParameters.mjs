@@ -1,8 +1,11 @@
 import { PARAM_REGISTRY, entityParamDefs } from "../engine/paramRegistry.mjs";
 import { DEFAULT_CONFIG } from "../engine/PointCloudField.mjs";
 import { readPath } from "../engine/automation.mjs";
+import { automationGroups } from "./automationLinks.mjs";
 const WORLD_SCALE = 400;
 const aliases = {
+  "interaction.clickStrength": ["pointerClickStrength", 1, "engine.pointerClickStrength"],
+  "interaction.clickRadius": ["pointerClickRadius", 400, "engine.pointerClickRadius"],
   ...Object.fromEntries(["sizeBias", "opacity", "roundness", "softness", "irregularity", "elongation", "orientation", "contrast", "densityScale", "densityPhase", "edgeWeight", "halo"].map((k) => ["material." + k, [k]])),
   paperGrain: ["grain"],
   particleCount: ["count"],
@@ -128,6 +131,15 @@ function automationTargets(scene) {
   }
   return all;
 }
+function pruneAutomation(scene) {
+  const before = scene.automation.length;
+  scene.automation = scene.automation.filter((l) => automationTarget(scene, l.target));
+  return scene.automation.length !== before;
+}
+const pinCycleClockId = (entityId) => "pin:" + entityId;
+function entityCycleGroups(scene, entityId) {
+  return automationGroups(scene.automation).map((g) => ({ ...g, targets: g.targets.filter((l) => automationTarget(scene, l.target)?.entityId === entityId) })).filter((g) => g.targets.length);
+}
 function stableNativeTarget(scene, path) {
   const m = /^entities\.(\d+)\.(.+)$/.exec(path);
   if (!m) return "native:" + encodeURIComponent(path);
@@ -143,7 +155,10 @@ export {
   automationTargets,
   baseValue,
   bindValue,
+  entityCycleGroups,
   entityTargets,
   nativeBinding,
+  pinCycleClockId,
+  pruneAutomation,
   stableNativeTarget
 };
