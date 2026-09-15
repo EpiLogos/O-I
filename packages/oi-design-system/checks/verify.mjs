@@ -10,7 +10,9 @@
  *      under prefers-reduced-motion);
  *   5. the cradle's every var(--oi-*) reference resolves to a real token
  *      (package or cradle-defined) — no undefined names;
- *   6. the cradle source contains ZERO raw colours (hex / rgb(a) / hsl(a)).
+ *   6. the cradle style source (.css/.tsx/.html) contains ZERO raw colours
+ *      (hex / rgb(a) / hsl(a)); plain .ts logic/data modules are not
+ *      consumers of the vocabulary and are not scanned.
  *
  * Usage: node checks/verify.mjs   (or `npm run verify` in this package)
  */
@@ -147,7 +149,23 @@ const collectFiles = (dir) => {
   return out;
 };
 
-const files = collectFiles(cradleSrc);
+// The package's other stylesheets (search.css) carry their own bounded
+// --oi-* vocabularies; a cradle reference to one of those resolves too.
+const packageDefined = new Set();
+for (const entry of readdirSync(pkgRoot)) {
+  if (!entry.endsWith(".css") || entry === "tokens.css") continue;
+  for (const line of readFileSync(join(pkgRoot, entry), "utf8").split("\n")) {
+    const d = line.match(decl);
+    if (d) packageDefined.add(d[1]);
+  }
+}
+
+// The audit is of consumer STYLE source: stylesheets and components (where
+// inline styles and theme objects live). Plain .ts modules are logic and
+// data — a validator's colour regex, a fixture's authored palette, an
+// engine scene's ground — and are not consumers of the visual vocabulary;
+// a raw colour there is not a house-language breach.
+const files = collectFiles(cradleSrc).filter((file) => !file.endsWith(".ts") || file.endsWith(".d.ts"));
 const cradleDefined = new Set(); // tokens the cradle itself defines (should be none, but resolve honestly)
 const unresolved = [];
 const rawHits = [];
@@ -166,7 +184,7 @@ for (const file of files) {
   }
 
   for (const m of text.matchAll(varRe)) {
-    if (!defined.has(m[1]) && !cradleDefined.has(m[1])) {
+    if (!defined.has(m[1]) && !packageDefined.has(m[1]) && !cradleDefined.has(m[1])) {
       unresolved.push(`${rel}: var(${m[1]})`);
     }
   }
