@@ -1326,7 +1326,7 @@ fn latest_removal_receipt_for(data_root: &Path, id: &str) -> Result<Option<PathB
             .and_then(|stem| stem.split('.').next())
             .and_then(|stem| stem.parse::<u128>().ok())
             .unwrap_or(0);
-        if best.as_ref().map_or(true, |(best_stamp, _)| stamp > *best_stamp) {
+        if best.as_ref().is_none_or(|(best_stamp, _)| stamp > *best_stamp) {
             best = Some((stamp, path));
         }
     }
@@ -2096,8 +2096,10 @@ mod tests {
         let mut receipt = removal_empty_receipt(&manifest);
         receipt.products.insert("central".to_owned(), removal_fixture(data.path(), "central", "central-revision", Some("ctrl")));
         receipt.products.insert("software-factory".to_owned(), removal_fixture(data.path(), "software-factory", "factory-revision", None));
-        let mut composition = Composition::default();
-        composition.personal_ground = Some(ground.path().display().to_string());
+        let mut composition = Composition {
+            personal_ground: Some(ground.path().display().to_string()),
+            ..Composition::default()
+        };
         composition.modules.insert("central".to_owned(), managed_registration("central", Some(&data.path().join("bin/ctrl")), None));
         composition.modules.insert(
             "software-factory".to_owned(),
@@ -2250,12 +2252,14 @@ mod tests {
 
     #[test]
     fn removing_a_requested_mode_product_names_the_shortfall_and_keeps_the_request() {
-        let mut composition = Composition::default();
-        composition.requested_mode = Some(RequestedMode {
-            frame: "0/1/2/3".to_owned(),
-            set_at_unix_seconds: 1,
-            set_by: "oi mode set".to_owned(),
-        });
+        let composition = Composition {
+            requested_mode: Some(RequestedMode {
+                frame: "0/1/2/3".to_owned(),
+                set_at_unix_seconds: 1,
+                set_by: "oi mode set".to_owned(),
+            }),
+            ..Composition::default()
+        };
 
         let removal = stub_outcome("software-factory");
         let note = requested_mode_note_after_removal(&composition, &[removal]).expect("a requested-mode product was removed");

@@ -39,8 +39,7 @@ fn oi(data_home: &Path, home: &Path) -> Command {
 }
 
 fn output(command: &mut Command) -> Output {
-    let output = command.output().expect("oi binary should run");
-    output
+    command.output().expect("oi binary should run")
 }
 
 fn assert_success(output: &Output) {

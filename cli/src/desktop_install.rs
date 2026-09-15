@@ -432,9 +432,7 @@ pub fn plan_install(
     let payload_root = data_root
         .join(&staged.footprint.managed_root)
         .join(&staged.manifest.version);
-    if let Err(error) = assert_outside_ground(&payload_root) {
-        return Err(error);
-    }
+    assert_outside_ground(&payload_root)?;
     if installed_receipt_path(data_root).is_file() {
         return Err(format!(
             "an installed Desktop is already recorded in {}; remove it first (oi desktop remove)",
@@ -465,9 +463,7 @@ pub fn plan_install(
     );
     let shim_path = data_root.join("bin").join(&staged.footprint.bin_shim);
     if target_footprint.shim {
-        if let Err(error) = assert_outside_ground(&shim_path) {
-            return Err(error);
-        }
+        assert_outside_ground(&shim_path)?;
         changes.push(PlannedChange {
             kind: "bin-shim".to_owned(),
             path: shim_path.display().to_string(),
@@ -480,9 +476,7 @@ pub fn plan_install(
     let icon_available = staged.root.join("app/icon.png").is_file();
     for registration in &target_footprint.registrations {
         let destination = expand_tilde(&registration.path, home);
-        if let Err(error) = assert_outside_ground(&destination) {
-            return Err(error);
-        }
+        assert_outside_ground(&destination)?;
         match registration.kind.as_str() {
             "xdg-icon" if !icon_available => {
                 warnings.push(format!(
@@ -781,13 +775,13 @@ pub fn commit_install(
     let app_source = payload_root.join(&staged.manifest.app_entry);
     let shim_path = data_root.join("bin").join(&staged.footprint.bin_shim);
     if target_footprint.shim {
-        match write_shim(&app_source, &shim_path) {
-            Ok(disposition) => owned.push(OwnedResource {
+        {
+            let disposition = write_shim(&app_source, &shim_path)?;
+            owned.push(OwnedResource {
                 kind: "bin-shim".to_owned(),
                 path: shim_path.display().to_string(),
                 disposition,
-            }),
-            Err(error) => return Err(error),
+            })
         }
     }
 
@@ -825,9 +819,7 @@ pub fn commit_install(
                     });
                     continue;
                 }
-                if let Err(error) = write_file_atomic(&destination, &launcher_content) {
-                    return Err(error);
-                }
+                write_file_atomic(&destination, &launcher_content)?;
                 owned.push(OwnedResource {
                     kind: registration.kind.clone(),
                     path: destination.display().to_string(),
@@ -838,9 +830,7 @@ pub fn commit_install(
                 if !icon_source.is_file() {
                     continue;
                 }
-                if let Err(error) = copy_file(&icon_source, &destination) {
-                    return Err(error);
-                }
+                copy_file(&icon_source, &destination)?;
                 owned.push(OwnedResource {
                     kind: registration.kind.clone(),
                     path: destination.display().to_string(),
