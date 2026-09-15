@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { setup as sourceSetup } from "./editor.mjs";
+import { openChrome } from "../editor-doc.mjs";
 
 /** W1.4/W1.5 (the desktop half): explicit Contemplate and the what-changed
  * read, on the Flow surface. The owner operations are live on the installed
@@ -38,7 +39,16 @@ export default async function run({ page, baseUrl, check, shot, channel, provisi
   await nav.locator('[data-project-path="Work/Editor"]').click();
   await page.getByRole("button", { name: "New flow", exact: true }).waitFor({ timeout: 20000 });
   await page.getByRole("button", { name: "New flow", exact: true }).click();
-  const flowEditor = page.locator(".flow-surface .cm-content");
+  const draftEditor = page.locator(".draft-surface .cm-content");
+  await draftEditor.waitFor({ timeout: 20000 });
+  // New flow mints nothing (owner correction, 2026-09-12); the cognition
+  // section reads a real Flow, so the writing is placed at its explicit Save
+  // before the contemplate section is exercised.
+  await draftEditor.click();
+  await page.keyboard.type("A held thought for the contemplate walk.\n");
+  await openChrome(page,".draft-surface");
+  await page.getByRole("button", { name: "Save · ⌘S", exact: true }).click();
+  const flowEditor = page.locator(".flow-surface:not(.draft-surface) .cm-content");
   await flowEditor.waitFor({ timeout: 20000 });
   const cognition = page.locator(".flow-cognition");
   await cognition.waitFor();

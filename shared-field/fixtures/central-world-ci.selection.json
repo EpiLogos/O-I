@@ -1,0 +1,27 @@
+{
+  "schema": "oi.central-wiki-selection/v1",
+  "project": "Fixture",
+  "world_ref": "world:ci:central:project:Fixture",
+  "subject_world_ref": "project:Fixture",
+  "field_ref": "oi:field:ci:central:project:Fixture",
+  "projection_ref": "projection:ci:central:project:Fixture",
+  "presentation_ref": "presentation:ci:central:project:Fixture",
+  "title": "Fixture — a CI ProjectCentral world",
+  "summary": "Central-shaped CI fixture; not an owner's real world.",
+  "audience": {
+    "visibility": "public"
+  },
+  "publisher": {
+    "participant_ref": "participant:ci:owner",
+    "identity_ref": "human:ci:owner",
+    "chosen_name": "CI owner"
+  },
+  "spaces": {
+    "central:wiki:root": "address",
+    "central:wiki:project:Fixture": "nodes"
+  },
+  "node_refs": [
+    "wiki:node:project-root/fixture"
+  ],
+  "disclose_source_refs": true
+}

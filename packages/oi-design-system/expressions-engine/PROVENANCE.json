@@ -1,0 +1,79 @@
+{
+  "source": "EpiLogos/Point-Cloud-Demo",
+  "sha": "9443f58fa8599f903d6affa61bc6fbed7109f640",
+  "oi_overlays": [
+    {
+      "path": "oi/retained.mjs",
+      "standing": "O:I-authored retained-field extension of shell/production.mjs; not upstream, never rewritten by this script"
+    }
+  ],
+  "vendored_at": "2026-09-15T01:26:33Z",
+  "entries": [
+    {
+      "source": "field-studies-journeys/src/production.ts",
+      "output": "shell/production.mjs"
+    },
+    {
+      "source": "field-studies-journeys/src/model.ts",
+      "output": "shell/model.mjs"
+    },
+    {
+      "source": "field-studies-journeys/src/nativeBridge.ts",
+      "output": "shell/nativeBridge.mjs"
+    },
+    {
+      "source": "field-studies-journeys/src/nativeParameters.ts",
+      "output": "shell/nativeParameters.mjs"
+    },
+    {
+      "source": "field-studies-journeys/src/camera.ts",
+      "output": "shell/camera.mjs"
+    },
+    {
+      "source": "field-studies-journeys/src/engine.ts",
+      "output": "shell/engine.mjs"
+    },
+    {
+      "source": "field-studies-journeys/src/nativeDelta.ts",
+      "output": "shell/nativeDelta.mjs"
+    },
+    {
+      "source": "src/engine/types.ts",
+      "output": "engine/types.mjs"
+    }
+  ],
+  "files": {
+    "engine/GPGPUSimulator.mjs": "src/engine/GPGPUSimulator.ts",
+    "engine/GlyphSampler.mjs": "src/engine/GlyphSampler.ts",
+    "engine/PointCloudField.mjs": "src/engine/PointCloudField.ts",
+    "engine/automation.mjs": "src/engine/automation.ts",
+    "engine/chakraSystem.mjs": "src/engine/chakraSystem.ts",
+    "engine/colorPalettes.mjs": "src/engine/colorPalettes.ts",
+    "engine/configMigration.mjs": "src/engine/configMigration.ts",
+    "engine/cymaticResonator.mjs": "src/engine/cymaticResonator.ts",
+    "engine/cymatics.mjs": "src/engine/cymatics.ts",
+    "engine/entityRuntime.mjs": "src/engine/entityRuntime.ts",
+    "engine/factoryPresets.mjs": "src/engine/factoryPresets.ts",
+    "engine/fieldModel.mjs": "src/engine/fieldModel.ts",
+    "engine/glyphLibrary.mjs": "src/engine/glyphLibrary.ts",
+    "engine/layouts.mjs": "src/engine/layouts.ts",
+    "engine/morphSignal.mjs": "src/engine/morphSignal.ts",
+    "engine/paramRegistry.mjs": "src/engine/paramRegistry.ts",
+    "engine/pinMarkers.mjs": "src/engine/pinMarkers.ts",
+    "engine/shaders/curlNoise.mjs": "src/engine/shaders/curlNoise.ts",
+    "engine/shaders/particleShaders.mjs": "src/engine/shaders/particleShaders.ts",
+    "engine/shaders/simulationShaders.mjs": "src/engine/shaders/simulationShaders.ts",
+    "engine/sourceSampling.mjs": "src/engine/sourceSampling.ts",
+    "engine/types.mjs": "src/engine/types.ts",
+    "shell/automationLinks.mjs": "field-studies-journeys/src/automationLinks.ts",
+    "shell/camera.mjs": "field-studies-journeys/src/camera.ts",
+    "shell/engine.mjs": "field-studies-journeys/src/engine.ts",
+    "shell/model.mjs": "field-studies-journeys/src/model.ts",
+    "shell/nativeBridge.mjs": "field-studies-journeys/src/nativeBridge.ts",
+    "shell/nativeDelta.mjs": "field-studies-journeys/src/nativeDelta.ts",
+    "shell/nativeParameters.mjs": "field-studies-journeys/src/nativeParameters.ts",
+    "shell/production.mjs": "field-studies-journeys/src/production.ts",
+    "shell/propertyTracks.mjs": "field-studies-journeys/src/propertyTracks.ts",
+    "shell/workspacePreferences.mjs": "field-studies-journeys/src/workspacePreferences.ts"
+  }
+}

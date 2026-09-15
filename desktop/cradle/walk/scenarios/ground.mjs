@@ -15,6 +15,8 @@ export default async function run({page,baseUrl,check,channel,provision:p,shot})
  await writing.fill('Keep this arrangement while selecting the next Central.');
  await waitForDoc(page,'Keep this arrangement while selecting the next Central.','.draft-surface .cm-content',15000);
  await page.getByRole('button',{name:'System',exact:true}).click();
+ // The chooser lives under the System page's Config rail item.
+ await page.getByRole('button',{name:'Config',exact:true}).click();
  const chooser=page.getByRole('region',{name:'Central location'});
  await chooser.getByText('No default Central selected',{exact:true}).waitFor();
  const input=chooser.getByRole('textbox',{name:'Existing Central path'});
@@ -46,6 +48,7 @@ export default async function run({page,baseUrl,check,channel,provision:p,shot})
  // chooser inline — it is reached the same explicit way as before: the
  // sidebar's System surface.
  await page.getByRole('button',{name:'System',exact:true}).click();
+ await page.getByRole('button',{name:'Config',exact:true}).click();
  await page.getByRole('region',{name:'Central location'}).getByText(realpathSync(p.root),{exact:true}).waitFor();
  check(true,'Reload discloses the actual saved default');
  await shot('native-recognition-default-binding');

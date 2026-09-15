@@ -228,6 +228,118 @@ impl Fixture {
         self.root.join("Work/W4DProj")
     }
 
+    /// The NOW contemplation dispatch: the same kernel route, re-aimed
+    /// subject (Central #175 cell 2). The Action spelling is the kernel's
+    /// binding; the target ref is the now_ref, verbatim.
+    fn dispatch_now(&self, target_ref: &str, input: Option<Value>) -> ActionDispatch {
+        let mut kernel = Kernel::new(self.client());
+        let outcome = kernel
+            .apply(KernelOp::InvokeAction {
+                project: Some("W4DProj".into()),
+                invocation: ActionInvocation {
+                    action: "action:contemplate-now".into(),
+                    target_ref: target_ref.into(),
+                    input,
+                },
+            })
+            .unwrap();
+        assert!(
+            outcome.receipts.is_empty(),
+            "the dispatch adapter records nothing of its own: no kernel receipts"
+        );
+        let KernelOpResult::ActionDispatched { dispatch } = outcome.result else {
+            panic!("typed ActionDispatched result expected")
+        };
+        dispatch
+    }
+
+    /// Allocate one NOW clearing in the fixture ground and append one raw
+    /// fixture to its T stream through Central's own Actions. The ground's
+    /// placement policy is a controlled test fixture with the exact
+    /// recognition the native authority law requires.
+    fn allocated_now_with_fixture(&self) -> String {
+        let relations_path = self.root.join("Control/relations/source-relations.json");
+        let mut relations: Value = match fs::read_to_string(&relations_path) {
+            Ok(raw) => serde_json::from_str(&raw).unwrap(),
+            Err(_) => json!({
+                "schema": "central.control.ground-relations/v1",
+                "project_id": "control:root",
+                "relations": []
+            }),
+        };
+        let policy_path = "Control/user/placement.json";
+        write(
+            &self.root.join(policy_path),
+            r#"{
+  "schema": "central.work-placement-policy/v1",
+  "scope_ref": "control:root",
+  "authority_refs": [],
+  "writable": [{"path": "Work/W4DProj", "class": "repository"}],
+  "protected": [],
+  "enforcement": "harness-interception",
+  "required_coverage": ["filesystem"],
+  "lease_seconds": 300
+}
+"#,
+        );
+        let policy_ref = format!("central:source:control:root:{policy_path}");
+        let entry = json!({
+            "ref": policy_ref,
+            "path": policy_path,
+            "roles": ["work-placement-policy"],
+            "provenance": "human-adopted",
+            "standing": "architecture-contract",
+            "treatment": "projectcentral-user",
+            "recognition": "explicit-controlled-test-fixture-not-personal-adoption",
+            "recorded_at_unix_seconds": 1
+        });
+        let relations_entries = relations["relations"]
+            .as_array_mut()
+            .expect("relations array");
+        if !relations_entries
+            .iter()
+            .any(|row| row["path"] == policy_path)
+        {
+            relations_entries.push(entry);
+        }
+        write(
+            &relations_path,
+            &format!("{}\n", serde_json::to_string_pretty(&relations).unwrap()),
+        );
+
+        let client = self.client();
+        let policy = client
+            .run("central.work.policy", json!({"project": Value::Null}))
+            .expect("root work policy resolves");
+        let allocation = client
+            .run(
+                "central.now.allocate",
+                json!({
+                    "project": Value::Null,
+                    "task_ref": "task:now-contemplate",
+                    "purpose": "NOW contemplation dispatch binding",
+                    "expected_policy_revision": policy["revision"],
+                }),
+            )
+            .expect("the fixture ground allocates a NOW clearing");
+        let now_ref = allocation["now_ref"].as_str().unwrap().to_owned();
+        client
+            .run(
+                "central.now.thoughts.append",
+                json!({
+                    "project": Value::Null,
+                    "now_ref": now_ref,
+                    "slug": "raw-finding",
+                    "day": "2026-09-13",
+                    "actor": "agent:w4d",
+                    "actor_kind": "agent",
+                    "content": "what returned today",
+                }),
+            )
+            .expect("the raw fixture appends");
+        now_ref
+    }
+
     fn dispatch(&self, target_ref: &str, input: Option<Value>) -> ActionDispatch {
         let mut kernel = Kernel::new(self.client());
         let outcome = kernel
@@ -249,128 +361,6 @@ impl Fixture {
         };
         dispatch
     }
-}
-
-#[test]
-#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
-fn bare_row_dispatch_surfaces_the_owner_preflight_and_never_executes() {
-    let fixture = Fixture::new("preflight-bare");
-
-    let dispatch = fixture.dispatch(FLOW_REF, None);
-    let ActionDispatch::Invoked {
-        owner_operation,
-        data,
-    } = &dispatch
-    else {
-        panic!("bare Contemplate dispatch must invoke the owner preflight, got {dispatch:?}")
-    };
-    // Preflight-first: the owner operation served is the deterministic
-    // preflight, never the execution operation.
-    assert_eq!(owner_operation, "aikit flow preflight");
-    assert_eq!(data["version"], "aikit.flow-cognition/v1");
-    assert_eq!(data["flow"], FLOW_REF);
-    // Without owner seams the owner's own answer is the explicit
-    // `unavailable` preflight — carried verbatim, never faked into cognition.
-    assert_eq!(data["state"], "unavailable");
-    let reason = data["reason"].as_str().unwrap_or("");
-    assert!(
-        reason.contains("horizon") && reason.contains("runtime"),
-        "the owner unavailable reason names the absent seams: {reason}"
-    );
-
-    let _ = fs::remove_dir_all(&fixture.root);
-}
-
-#[test]
-#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
-fn owner_seams_travel_verbatim_and_the_deterministic_record_is_surfaced() {
-    let fixture = Fixture::new("preflight-seams");
-    let horizon = horizon_seam();
-    let runtime = runtime_seam();
-
-    let dispatch = fixture.dispatch(
-        FLOW_REF,
-        Some(json!({"horizon": horizon, "runtime": runtime})),
-    );
-    let ActionDispatch::Invoked {
-        owner_operation,
-        data,
-    } = &dispatch
-    else {
-        panic!("seamed Contemplate dispatch must invoke the owner preflight, got {dispatch:?}")
-    };
-    assert_eq!(owner_operation, "aikit flow preflight");
-    assert_eq!(data["version"], "aikit.flow-cognition/v1");
-    assert_eq!(data["state"], "preflight");
-    // The deterministic preflight record: the Flow ref, the standing context
-    // binding the exact source revision, and the invocation ref a later
-    // execution must present — all owner-produced, carried unchanged.
-    let preflight = &data["preflight"];
-    assert_eq!(preflight["version"], "aikit.flow-contemplate/v1");
-    assert_eq!(preflight["standing"]["binding"]["flow_ref"], FLOW_REF);
-    assert_eq!(preflight["standing"]["binding"]["flow_revision"], "rev-2");
-    assert_eq!(
-        preflight["standing"]["binding"]["source_ref"],
-        "source:file:w4d-note"
-    );
-    let invocation_ref = preflight["invocation_ref"].as_str().unwrap_or("");
-    assert!(
-        invocation_ref.starts_with("flow-contemplate/"),
-        "the owner invocation ref is deterministic and owner-shaped: {invocation_ref}"
-    );
-    // The bounded field discloses exactly the seam-carried identities.
-    assert_eq!(preflight["bounded"]["base"]["agent"], "agent:w4d");
-    assert_eq!(preflight["bounded"]["base"]["agency"], "agency:w4d");
-    assert_eq!(preflight["automatic_agent_or_model_invocation"], false);
-
-    let _ = fs::remove_dir_all(&fixture.root);
-}
-
-#[test]
-#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates"]
-fn explicit_record_executes_and_carries_the_typed_cognition_reading() {
-    let fixture = Fixture::new("contemplate-execute");
-
-    // The caller presents an explicit preflight record gating execution —
-    // the only door to the owner execution operation.
-    let dispatch = fixture.dispatch(
-        FLOW_REF,
-        Some(json!({
-            "horizon": horizon_seam(),
-            "runtime": runtime_seam(),
-            "execute": {"record": "present"},
-        })),
-    );
-    let ActionDispatch::Invoked {
-        owner_operation,
-        data,
-    } = &dispatch
-    else {
-        panic!(
-            "record-gated Contemplate dispatch must invoke the owner execution, got {dispatch:?}"
-        )
-    };
-    assert_eq!(owner_operation, "aikit flow contemplate");
-    assert_eq!(data["version"], "aikit.flow-cognition/v1");
-    // The pinned CLI surface carries no host ContemplateExecutor aperture:
-    // the honest typed reading is the owner's explicit `unavailable`, naming
-    // the absent executor — never faked into cognition.
-    let cognition = &data["cognition"];
-    assert_eq!(cognition["version"], "aikit.flow-cognition/v1");
-    assert_eq!(cognition["state"], "unavailable");
-    let reason = cognition["reason"].as_str().unwrap_or("");
-    assert!(
-        reason.contains("ContemplateExecutor") && reason.contains("never auto-invoked"),
-        "the owner unavailable reason names the absent executor and the invariant: {reason}"
-    );
-    assert_eq!(cognition["flow_ref"], FLOW_REF);
-    // The owner re-ran its deterministic preflight beside the reading.
-    assert_eq!(
-        data["preflight"]["standing"]["binding"]["flow_ref"],
-        FLOW_REF
-    );
-
-    let _ = fs::remove_dir_all(&fixture.root);
 }
 
 #[test]
@@ -490,4 +480,52 @@ mod support {
             }
         }
     }
+}
+
+#[test]
+#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates with the NOW contemplation reading"]
+fn now_subject_dispatch_reads_central_stream_and_surfaces_the_owner_preflight() {
+    let fixture = Fixture::new("contemplate-now");
+    let now_ref = fixture.allocated_now_with_fixture();
+
+    // Bare dispatch: the kernel reads the stream from Central and the AIKit
+    // owner answers its explicit preflight — carried verbatim.
+    let dispatch = fixture.dispatch_now(&now_ref, None);
+    let ActionDispatch::Invoked {
+        owner_operation,
+        data,
+    } = &dispatch
+    else {
+        panic!("NOW dispatch must invoke the owner preflight, got {dispatch:?}")
+    };
+    assert_eq!(owner_operation, "aikit flow preflight");
+    assert_eq!(data["version"], "aikit.now-contemplation/v1");
+    assert_eq!(data["now_ref"], now_ref);
+    let preflight = &data["preflight"];
+    assert_eq!(preflight["fixture_count"], 1);
+    assert_eq!(preflight["days"], json!(["2026-09-13"]));
+    assert_eq!(
+        preflight["source_fixtures"],
+        json!(["raw-finding-2026-09-13.md"])
+    );
+    assert!(preflight["invocation_ref"]
+        .as_str()
+        .unwrap_or("")
+        .starts_with("now-contemplate/"));
+    assert_eq!(preflight["automatic_agent_or_model_invocation"], false);
+    // The CLI surface carries no host executor: the honest terminal state.
+    assert_eq!(data["contemplation"]["state"], "unavailable");
+
+    // A NOW ref that owns no stream refuses through Central's own words.
+    let refused = fixture.dispatch_now("central:now:control:root:nowhere", None);
+    assert!(
+        matches!(
+            refused,
+            ActionDispatch::OwnerRefused { ref owner_operation, .. }
+                if owner_operation == "central.now.thoughts.read"
+        ),
+        "the stream read refusal names Central's Action, got {refused:?}"
+    );
+
+    let _ = fs::remove_dir_all(&fixture.root);
 }

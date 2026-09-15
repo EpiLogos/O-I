@@ -25,6 +25,7 @@ import {copyFileSync, mkdirSync, readFileSync, writeFileSync} from "node:fs";
 import {dirname, join, resolve} from "node:path";
 import {fileURLToPath} from "node:url";
 import {setup as sourceSetup} from "./editor.mjs";
+import {openChrome} from "../editor-doc.mjs";
 
 const here=dirname(fileURLToPath(import.meta.url));
 const DOCUMENTS=resolve(here,"..","..","documents");
@@ -154,19 +155,29 @@ export default async function run({page, baseUrl, check, shot, channel, bridgeUr
   await page.goto(baseUrl);await channel("info");
   const nav = page.getByRole("complementary", {name: "World navigator"});
   if (!await nav.isVisible()) await page.keyboard.press("Meta+b");
+  const ownerFlows = () => JSON.parse(execFileSync(process.env.OI_CENTRAL_CTRL_BIN ?? "ctrl", ["--root", p.root, "--json", "action", "run", "projectcentral.flow.list", JSON.stringify({project: "Editor"})], {encoding: "utf8", env: {...process.env, ...p.env}})).data.flows.length;
 
   // --- Phase 1: a Flow the human leaves open ------------------------------
+  // Start writing opens a draft that mints nothing (owner correction,
+  // 2026-09-12); the explicit Save places the writing through Central's own
+  // operation, and what the human leaves open is then a real Flow.
   await nav.locator('[data-project-path="Work/Editor"]').click();
   await page.waitForFunction(() => document.querySelector('[data-project-path="Work/Editor"]')?.getAttribute("aria-current") === "true", null, {timeout: 20000});
   await page.getByRole("button", {name: "Start writing", exact: true}).click();
-  const writing = page.locator(".flow-surface .cm-content");
+  const writing = page.locator(".draft-surface .cm-content");
   await writing.waitFor({timeout: 20000});
   await writing.click();
   const flowText = "Re-entry must find this writing exactly here.";
   await page.keyboard.type(flowText);
+  check(ownerFlows()===0, "Start writing mints nothing — the owner's Flow listing stays empty");
+  await openChrome(page, ".draft-surface");
+  await page.getByRole("button", {name: "Save · ⌘S", exact: true}).click();
+  await page.locator(".flow-surface:not(.draft-surface) .cm-content").waitFor({timeout: 20000});
   const flowRef = (await channel("read.focus")).data.subject?.ref;
-  check(typeof flowRef === "string" && flowRef.startsWith("central:source:project:"), "The open Flow is a real project-register subject beside the Day document");
-  await page.waitForFunction(t => [...document.querySelectorAll(".flow-surface .cm-content .cm-line")].map(l => l.textContent.replace(/\u00a0/g, " ")).join("\n") === t, flowText);
+  check(typeof flowRef === "string" && flowRef.startsWith("central:path:"), "The placed writing is a real ground document beside the Day document — its path-ref is the subject identity");
+  // The document surface renders the thread: the placed writing is the
+  // document's first F entry.
+  await page.waitForFunction(t => !!document.querySelector(".flow-thread")?.textContent?.includes(t), flowText);
 
   // --- Phase 2: the open Day document, its die face, and its pending Return
   // The Day opens through its OWNER route — `central.day.read` discloses the
@@ -287,11 +298,12 @@ export default async function run({page, baseUrl, check, shot, channel, bridgeUr
   check(true, "Re-entry restores the Day document and re-projects the die face from the owner's current payload");
   // The tab system unmounts inactive surfaces: activate the Flow's tab, then
   // assert the writing is exactly what was left.
-  const flowTab = page2.locator('[role="tab"], .tab').filter({hasText: /2026-09-\d+-\d+\.md/}).first();
+  // The flow instance's tab title is its date-and-time-stamped file name.
+  const flowTab = page2.locator('[role="tab"], .tab').filter({hasText: /flow-\d{4}-\d{2}-\d{2}-\d{4}\.html/}).first();
   await flowTab.waitFor({timeout: 20000});
   await flowTab.click();
   await page2.locator(".flow-surface .cm-content").waitFor({timeout: 30000});
-  check((await page2.locator(".flow-surface .cm-content").innerText()).includes(flowText), "Re-entry restores the Flow's writing byte-for-byte — Day and Flow identity survive the leave");
+  check((await page2.locator(".flow-thread").innerText()).includes(flowText), "Re-entry restores the Flow's writing byte-for-byte — Day and Flow identity survive the leave");
   // Back to the Day's tab: the tab system unmounts inactive surfaces, so
   // the returns strip only exists while the Day document is the active tab.
   await page2.locator('[role="tab"], .tab').filter({hasText: "day.md"}).first().click();

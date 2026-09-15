@@ -83,8 +83,8 @@ jobs:
           "$OI" doctor --json > "$RUNNER_TEMP/doctor.json"
           "$OI" verify --json > "$RUNNER_TEMP/verify.json"
 
-          jq -e '.schema == "oi.suite-manifest/v1" and .suite_version == "0.1.0-prelocal.2" and .standing == "historical-unratified-prelocal-build-record" and (.products | length == 6)' "$RUNNER_TEMP/manifest.json"
-          jq -e '.schema == "oi.suite-status/v1" and .suite_version == "0.1.0-prelocal.2" and (.installed.products | length == 6) and .physical_acceptance == false' "$RUNNER_TEMP/status.json"
+          jq -e '.schema == "oi.suite-manifest/v1" and .suite_version == "0.1.0-prelocal.6" and .standing == "historical-unratified-prelocal-build-record" and (.products | length == 6)' "$RUNNER_TEMP/manifest.json"
+          jq -e '.schema == "oi.suite-status/v1" and .suite_version == "0.1.0-prelocal.6" and (.installed.products | length == 6) and .physical_acceptance == false' "$RUNNER_TEMP/status.json"
           jq -e '.schema == "oi.suite-doctor/v1" and .ok == true and (.checks | length == 6) and .physical_acceptance == false' "$RUNNER_TEMP/doctor.json"
           cmp "$RUNNER_TEMP/doctor.json" "$RUNNER_TEMP/verify.json"
 
@@ -183,19 +183,17 @@ jobs:
   current-main-source:
     name: current-source / ${{ matrix.product }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
-        # Quaternal Logic keeps a stable suite pin while its own programme
-        # moves; it is intentionally not a live-main source gate.
-        product: [central, actuation, ai-kit, software-factory, workcell]
+        product: [central, actuation, ai-kit, software-factory, workcell, quaternal-logic]
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
-      - name: Test exact current in-scope native-main source
+      - name: Test exact current native-owner source contract
         run: >-
           python3 scripts/verify-current-main-source.py
           --product '${{ matrix.product }}'

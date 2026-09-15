@@ -4,11 +4,11 @@
   "source": "surfaces.json",
   "standing": "oi-projection-of-accepted-owner-command-descriptors",
   "products": [
-    {"id":"central","revision":"5b61b82835f4efbf57ab896b8efff72f9f8f3906","protocol_min":"1.0","protocol_max":"1.0"},
-    {"id":"actuation","revision":"90041d5f81331b636893d772c3288c062ad0e13b","protocol_min":"1.0","protocol_max":"1.0"},
-    {"id":"ai-kit","revision":"95e35ac6569a85239a4689aeb440929f5d07888b","protocol_min":"1.0","protocol_max":"1.0"},
-    {"id":"software-factory","revision":"885f3c29726dc6cb9397eca246abdfb1c65eff86","protocol_min":"1.0","protocol_max":"1.0"},
-    {"id":"workcell","revision":"fa47a29fa49a6636675d21309b00c269ac824abb","protocol_min":"1.0","protocol_max":"1.0"},
-    {"id":"quaternal-logic","revision":"44ed3cd0e7a8bc25508a4e18ad3bb4c730013913","protocol_min":"1.0","protocol_max":"1.0"}
+    {"id":"central","revision":"39efa03ea8607bdd8a79b0e317457c2ccc3ead4c","protocol_min":"1.0","protocol_max":"1.0"},
+    {"id":"actuation","revision":"67e6b296b85bd3eb1554802fd55a476c474aa566","protocol_min":"1.0","protocol_max":"1.0"},
+    {"id":"ai-kit","revision":"8ef8a4f02ee9e095281d2d03d3e711404ead074a","protocol_min":"1.0","protocol_max":"1.0"},
+    {"id":"software-factory","revision":"a335048b0a5b907adc5d09f0dcbda05b98f79a05","protocol_min":"1.0","protocol_max":"1.0"},
+    {"id":"workcell","revision":"0c3ad1efafdeb254366b7b6122306fe657916a10","protocol_min":"1.0","protocol_max":"1.0"},
+    {"id":"quaternal-logic","revision":"4276b94157058d0b211be20b4ebf5587fcb85a72","protocol_min":"1.0","protocol_max":"1.0"}
   ]
 }

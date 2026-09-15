@@ -4,6 +4,9 @@ Register: episteme
 
 # O:I Desktop Cradle — Rebuild Wayfinder (the grilled map)
 
+> **Adopted Factory/Agency correction — 2026-09-14:** [FACTORY-AGENCY.md](experience/FACTORY-AGENCY.md) and [#289](https://github.com/EpiLogos/O-I/issues/289) now govern that scoped experience. Ordinary work retains the four-plane companion; Factory reserves the right for actual artifacts while conversation/Run/workspace occupies the centre. Native-resolved model/harness choices are usable in the shared session interaction: earlier law 6 and “no desktop model parameter” checks mean no desktop-owned resolution, not no human chooser. The owner's authorised bounded Terra/Luna parallelism under one integrator supersedes historical “no subagents” wording for this campaign. Existing ownership, source, checks and human-evidence gates remain.
+
+
 > **Final foundation placement correction (September 8):** Read [the pane and resource contract](../.superpowers/sdd/cradle-rebuild/SELF-OTHER-FIELD-UX-2026-09-08.md#one-pane-system-an-optional-accompanying-agent). The right sidebar stays the optional accompanying agent; Shared Field details use ordinary canvas panes/full views/popouts, returning as tabs. A NOW starts from intention + one or more worlds/projections; selected outputs may survive closure. First rounds establish UI fidelity, window/focus/restore correctness and measured bounded resource use. This overrides earlier generic right-inspector wording for shared subjects.
 
 > **Latest owner field direction:** [Self/Other experience specification](../.superpowers/sdd/cradle-rebuild/SELF-OTHER-FIELD-UX-2026-09-08.md) gives the concrete making, sharing, invitation and VAK-navigation journeys. Shared NOW uses Central in the shared installation; it is not a separate activity reading. This execution addendum supersedes the earlier interpretation.

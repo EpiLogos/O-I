@@ -461,10 +461,17 @@ fn shipped_manifest_declares_only_oi_owned_skills() {
         "oi:skillset:base-guardian"
     );
     assert!(manifest.expected_native_skills.is_empty());
-    // O:I owns exactly its three guardian Skills here. Every other product's
-    // skills are composed by AIKit's sets; pinning them in this file made it
-    // a second registry in a second format.
-    assert_eq!(manifest.skills.len(), 3);
+    // The shipped manifest names the router and suite operator. The retired
+    // Central session strap belongs to Central ground and is delivered through
+    // AIKit's Central binding, not frozen into O:I's guardian registry.
+    assert_eq!(
+        manifest
+            .skills
+            .iter()
+            .map(|skill| skill.skill_ref.as_str())
+            .collect::<Vec<_>>(),
+        vec!["oi:skill:operate-suite", "oi:skill:suite-operator"]
+    );
     for skill in &manifest.skills {
         assert!(
             skill.skill_ref.starts_with("oi:skill:"),

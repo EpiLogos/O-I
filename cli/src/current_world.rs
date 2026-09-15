@@ -1,3 +1,4 @@
+use crate::context_frames;
 use crate::modality::InstallModality;
 use crate::status::{
     live_disclosure, NativeSurfaceState, SuiteCompositionDisclosure, SurfaceDisclosure,
@@ -8,12 +9,16 @@ use std::fs;
 use std::path::Path;
 use std::process::{Command, Stdio};
 
-pub const CURRENT_WORLD_SCHEMA: &str = "oi.current-world/v1";
-pub const MAXIMAL_CONTEXT_FRAME: &str = "cf5";
+pub const CURRENT_WORLD_SCHEMA: &str = "oi.current-world/v2";
 pub const DEFAULT_MACHINE_ROLE: &str = "current";
 pub const DEFAULT_LOCAL_WORKCELL_REF: &str = "workcell:local";
 
-const PRODUCT_POSITIONS: [(u8, &str, &str); 6] = [
+/// The canonical, stable product positions of the six-product field (#268):
+/// position → product id and public name, in the suite manifest's product
+/// order. The Context Frame notation (`0/1`, `0/1/2/3`, …) is spoken in these
+/// positions. Public so verification scopes and lifecycle surfaces (install,
+/// removal) name positions through this one table instead of duplicating it.
+pub const PRODUCT_POSITIONS: [(u8, &str, &str); 6] = [
     (0, "central", "Central"),
     (1, "actuation", "Actuation"),
     (2, "ai-kit", "AIKit"),
@@ -40,19 +45,44 @@ pub struct CurrentWorldPosition {
     pub native_location: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub version: Option<String>,
-    /// The installation modality recorded for this surface's registration
-    /// (#192): `None` when not registered, `Some(InstallModality::Unknown)`
-    /// for legacy state that predates the field.
+    /// The installation-path label recorded for this surface's registration
+    /// (per-registration provenance, #192 as superseded by #268): `None`
+    /// when not registered, `Some(InstallModality::Unknown)` for legacy
+    /// state that predates the field.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub modality: Option<InstallModality>,
 }
 
+/// The Context Frame reading (#268): the containing material frame plus the
+/// recognised install mode it organises.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct ContextFrameStatus {
+    /// CF5 — `4.0/1–4.4/5` — the material nesting frame. Always applicable:
+    /// the machine or material environment is already the condition of every
+    /// installation, regardless of which products are present. Never a
+    /// reward for installing all six packages.
+    pub containing_frame: String,
+    /// The recognised install mode (#268), identified by the frame notation
+    /// it sits at, resolved per `install_mode_basis`. `None` when no
+    /// characteristic composition matches and no mode was requested.
+    pub install_mode: Option<String>,
+    /// How `install_mode` was resolved: `effective` — presence exactly
+    /// matches the mode's characteristic composition; `requested` — the
+    /// person recorded this mode and presence realises it (possibly
+    /// degraded, disclosed through warnings); absent when `install_mode` is
+    /// `None`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub reading: Option<String>,
-    pub maximal: bool,
+    pub install_mode_basis: Option<String>,
     pub present_positions: Vec<u8>,
+}
+
+/// The person's recorded mode statement, joined into the reading when the
+/// disclosing process can see the composition state.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+pub struct RequestedModeDisclosure {
+    pub mode: String,
+    pub set_by: String,
+    pub set_at_unix_seconds: u64,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -73,14 +103,10 @@ pub struct CurrentWorldReading {
     pub owner_disclosures: Option<Value>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub personal_ground: Option<String>,
-    /// The installation modality of the current composition (#192): the
-    /// modality recorded on the Central registration, because Central owns
-    /// the ground the composition stands on. `InstallModality::Unknown`
-    /// when Central is not registered or its registration predates the
-    /// field — never a guess.
-    pub composition_modality: InstallModality,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub current_machine: Option<CurrentMachineRelation>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub requested_mode: Option<RequestedModeDisclosure>,
     pub positions: Vec<CurrentWorldPosition>,
     pub context_frame: ContextFrameStatus,
     #[serde(default)]
@@ -104,26 +130,48 @@ impl CurrentWorldReading {
             })
             .collect::<Vec<_>>();
         let context_frame = context_frame_status(&positions);
-        let composition_modality = disclosure
-            .surfaces
-            .iter()
-            .find(|surface| surface.id == "central")
-            .and_then(|surface| surface.modality)
-            .unwrap_or(InstallModality::Unknown);
+        let mut warnings = disclosure.warnings.clone();
+        // A component install is present material, not damage — but its
+        // command surface does not exist on this machine, and the reading
+        // may not fall short silently (lock §5): every capability journey
+        // that invokes the native command is named as unavailable.
+        for surface in &disclosure.surfaces {
+            if surface.state == NativeSurfaceState::InstalledComponent {
+                warnings.push(format!(
+                    "{} is installed as component material; this install ships no native '{}' command, so journeys that invoke {} cannot run on this machine.",
+                    surface.public_name, surface.native_entry, surface.native_entry
+                ));
+            }
+        }
         Self {
             schema: CURRENT_WORLD_SCHEMA.to_owned(),
             owner_disclosures: None,
             personal_ground: disclosure.personal_ground.clone(),
-            composition_modality,
             current_machine: None,
+            requested_mode: None,
             positions,
             context_frame,
-            warnings: disclosure.warnings.clone(),
+            warnings,
         }
     }
 
     pub fn with_current_machine(mut self, machine: CurrentMachineRelation) -> Self {
         self.current_machine = Some(machine);
+        self
+    }
+
+    /// Join the person's recorded mode statement and re-resolve the frame
+    /// reading against it. The request can be exceeded by reality — reality
+    /// then wins and the stale request is called out — but reality may not
+    /// fall short of the request silently: a request with products missing
+    /// keeps naming the world, degraded, with the shortfall in warnings.
+    pub fn with_requested_mode(mut self, requested: RequestedModeDisclosure) -> Self {
+        let present = self.context_frame.present_positions.clone();
+        let (context_frame, mut resolutions) =
+            resolve_context_frame(&present, Some(&requested.mode));
+        self.warnings.append(&mut resolutions);
+        self.context_frame = context_frame;
+        self.requested_mode = Some(requested);
         self
     }
 }
@@ -223,7 +271,9 @@ fn position_from_surface(
 fn surface_present(surface: &SurfaceDisclosure) -> bool {
     matches!(
         surface.state,
-        NativeSurfaceState::Installed | NativeSurfaceState::Registered
+        NativeSurfaceState::Installed
+            | NativeSurfaceState::Registered
+            | NativeSurfaceState::InstalledComponent
     )
 }
 
@@ -233,11 +283,92 @@ fn context_frame_status(positions: &[CurrentWorldPosition]) -> ContextFrameStatu
         .filter(|position| position.present)
         .map(|position| position.position)
         .collect::<Vec<_>>();
-    let maximal = present_positions == [0, 1, 2, 3, 4, 5];
-    ContextFrameStatus {
-        reading: maximal.then(|| MAXIMAL_CONTEXT_FRAME.to_owned()),
-        maximal,
-        present_positions,
+    resolve_context_frame(&present_positions, None).0
+}
+
+/// Resolve the Context Frame reading from present positions and an optional
+/// requested mode, returning the reading plus any divergence warnings.
+///
+/// The request and reality stand in one ordered relation:
+/// - reality fully realises the request (with or without extra products,
+///   with or without an exact match of its own): the request names the
+///   world, basis `requested`;
+/// - reality exceeds the request — everything requested is present and
+///   presence exact-matches a *different* mode: reality wins, basis
+///   `effective`, and the stale request is warned about;
+/// - reality falls short of the request: the request still names the world
+///   (degraded) and the shortfall is warned about — the world does not
+///   silently rename itself.
+fn resolve_context_frame(
+    present_positions: &[u8],
+    requested: Option<&str>,
+) -> (ContextFrameStatus, Vec<String>) {
+    let status = |install_mode: Option<&str>, basis: Option<&str>| {
+        (
+            ContextFrameStatus {
+                containing_frame: context_frames::CONTAINING_FRAME.to_owned(),
+                install_mode: install_mode.map(str::to_owned),
+                install_mode_basis: basis.map(str::to_owned),
+                present_positions: present_positions.to_vec(),
+            },
+            Vec::new(),
+        )
+    };
+    let requested_mode = requested
+        .and_then(context_frames::install_mode_by_frame)
+        .filter(|mode| mode.products.is_some());
+    let effective_mode = context_frames::install_mode_for(present_positions);
+    let request_realised = |mode: &context_frames::InstallMode| {
+        mode.products
+            .unwrap_or(&[])
+            .iter()
+            .all(|position| present_positions.contains(position))
+    };
+    let shortfall_warning = |mode: &context_frames::InstallMode| {
+        let names: Vec<&str> = PRODUCT_POSITIONS
+            .iter()
+            .filter(|(position, _, _)| {
+                mode.products.unwrap_or(&[]).contains(position)
+                    && !present_positions.contains(position)
+            })
+            .map(|(_, _, name)| *name)
+            .collect();
+        format!(
+            "Requested install mode {} is not fully realised: {} {} not usable in the effective composition.",
+            mode.frame,
+            names.join(", "),
+            if names.len() == 1 { "is" } else { "are" }
+        )
+    };
+    match (requested_mode, effective_mode) {
+        (Some(request), Some(effective)) if request.frame == effective.frame => {
+            status(Some(request.frame), Some("requested"))
+        }
+        (Some(request), Some(effective)) => {
+            if request_realised(request) {
+                // Reality grew past the request; the request is stale.
+                let (reading, _) = status(Some(effective.frame), Some("effective"));
+                let warning = format!(
+                    "Effective presence realises install mode {}, while the requested mode is {}. Re-run `oi mode set` if the statement is stale.",
+                    effective.frame, request.frame
+                );
+                (reading, vec![warning])
+            } else {
+                let (reading, _) = status(Some(request.frame), Some("requested"));
+                (reading, vec![shortfall_warning(request)])
+            }
+        }
+        (Some(request), None) => {
+            let (reading, warnings) = status(Some(request.frame), Some("requested"));
+            let warnings = if request_realised(request) {
+                warnings
+            } else {
+                vec![shortfall_warning(request)]
+            };
+            (reading, warnings)
+        }
+        (None, Some(effective)) => status(Some(effective.frame), Some("effective")),
+        (None, None) => status(None, None),
     }
 }
 
@@ -332,25 +463,64 @@ mod tests {
         }
     }
 
-    #[test]
-    fn maximal_six_product_presence_is_cf5() {
-        let disclosure = SuiteCompositionDisclosure {
+    fn disclosure_with(products: &[&str], state: NativeSurfaceState) -> SuiteCompositionDisclosure {
+        SuiteCompositionDisclosure {
             schema: "oi.desktop-composition-disclosure/v1".to_owned(),
             personal_ground: Some("/Central".to_owned()),
-            surfaces: PRODUCT_POSITIONS
-                .iter()
-                .map(|(_, id, _)| surface(id, NativeSurfaceState::Registered))
-                .collect(),
+            surfaces: products.iter().map(|id| surface(id, state)).collect(),
             warnings: Vec::new(),
-        };
-        let reading = CurrentWorldReading::from_disclosure(&disclosure);
-        assert_eq!(reading.positions.len(), 6);
+        }
+    }
+
+    fn mode_of(reading: &CurrentWorldReading) -> Option<String> {
+        reading.context_frame.install_mode.clone()
+    }
+
+    #[test]
+    fn containing_frame_is_cf5_whatever_is_installed() {
+        // The material nesting frame does not wait for six packages: it is
+        // the condition of the machine, present before and beneath any
+        // composition. The v1 rule — cf5 only at maximal six-product
+        // presence — is the regression this test retires.
+        for products in [
+            vec![],
+            vec!["central"],
+            vec!["central", "actuation"],
+            vec!["central", "workcell"],
+            vec!["central", "quaternal-logic"],
+        ] {
+            let reading = CurrentWorldReading::from_disclosure(&disclosure_with(
+                &products,
+                NativeSurfaceState::Registered,
+            ));
+            assert_eq!(
+                reading.context_frame.containing_frame, "cf5",
+                "{products:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn six_product_presence_is_no_longer_named_cf5() {
+        // All-products remains a valid deployment inside CF5; it is not one
+        // of the six install modes and no eighth frame exists.
+        let all = disclosure_with(
+            &[
+                "central",
+                "actuation",
+                "ai-kit",
+                "software-factory",
+                "workcell",
+                "quaternal-logic",
+            ],
+            NativeSurfaceState::Registered,
+        );
+        let reading = CurrentWorldReading::from_disclosure(&all);
         assert_eq!(
             reading.context_frame.present_positions,
             vec![0, 1, 2, 3, 4, 5]
         );
-        assert_eq!(reading.context_frame.reading.as_deref(), Some("cf5"));
-        assert!(reading.context_frame.maximal);
+        assert_eq!(mode_of(&reading), None);
         assert!(reading
             .positions
             .iter()
@@ -358,21 +528,74 @@ mod tests {
     }
 
     #[test]
-    fn partial_composition_retains_exact_positions() {
-        let disclosure = SuiteCompositionDisclosure {
-            schema: "oi.desktop-composition-disclosure/v1".to_owned(),
-            personal_ground: Some("/Central".to_owned()),
-            surfaces: vec![
-                surface("central", NativeSurfaceState::Registered),
-                surface("actuation", NativeSurfaceState::Registered),
-                surface("workcell", NativeSurfaceState::Installed),
-            ],
-            warnings: Vec::new(),
-        };
-        let reading = CurrentWorldReading::from_disclosure(&disclosure);
-        assert_eq!(reading.context_frame.present_positions, vec![0, 1, 4]);
-        assert_eq!(reading.context_frame.reading, None);
-        assert!(!reading.context_frame.maximal);
+    fn install_modes_recognise_their_exact_composition() {
+        let cases: [(&[&str], &str); 5] = [
+            (&["central", "actuation"], "0/1"),
+            (&["central", "actuation", "ai-kit"], "0/1/2"),
+            (
+                &["central", "actuation", "ai-kit", "software-factory"],
+                "0/1/2/3",
+            ),
+            (&["central", "workcell"], "4.5/0"),
+            (&["central", "quaternal-logic"], "5/0"),
+        ];
+        for (products, expected) in cases {
+            let reading = CurrentWorldReading::from_disclosure(&disclosure_with(
+                products,
+                NativeSurfaceState::Registered,
+            ));
+            assert_eq!(mode_of(&reading).as_deref(), Some(expected), "{products:?}");
+        }
+    }
+
+    #[test]
+    fn client_mode_composition_has_no_hidden_ql_or_agent_stack_requirement() {
+        // The client mode (4.5/0) is Central + minimal Workcell
+        // connectivity. Absence of QL, Actuation, AIKit and Factory must not
+        // withhold the name — `4.5` is not an instruction to install product
+        // 5.
+        let client = disclosure_with(&["central", "workcell"], NativeSurfaceState::Registered);
+        let reading = CurrentWorldReading::from_disclosure(&client);
+        assert_eq!(mode_of(&reading).as_deref(), Some("4.5/0"));
+        let absent: Vec<u8> = reading
+            .positions
+            .iter()
+            .filter(|position| !position.present)
+            .map(|position| position.position)
+            .collect();
+        assert_eq!(absent, vec![1, 2, 3, 5]);
+    }
+
+    #[test]
+    fn learning_mode_composition_has_no_agent_development_stack_requirement() {
+        let learning = disclosure_with(
+            &["central", "quaternal-logic"],
+            NativeSurfaceState::Registered,
+        );
+        let reading = CurrentWorldReading::from_disclosure(&learning);
+        assert_eq!(mode_of(&reading).as_deref(), Some("5/0"));
+    }
+
+    #[test]
+    fn custom_selections_are_disclosed_exactly_not_forced_into_a_mode() {
+        // The client mode plus local QL for learning: an explicit selection
+        // with its own shape. It keeps its exact positions and no mode name.
+        let mixed = disclosure_with(
+            &["central", "workcell", "quaternal-logic"],
+            NativeSurfaceState::Registered,
+        );
+        let reading = CurrentWorldReading::from_disclosure(&mixed);
+        assert_eq!(mode_of(&reading), None);
+        assert_eq!(reading.context_frame.present_positions, vec![0, 4, 5]);
+    }
+
+    #[test]
+    fn unavailable_disclosure_still_reports_the_containing_frame() {
+        let reading =
+            CurrentWorldReading::from_disclosure(&SuiteCompositionDisclosure::unavailable("none"));
+        assert_eq!(reading.context_frame.containing_frame, "cf5");
+        assert_eq!(mode_of(&reading), None);
+        assert!(reading.context_frame.present_positions.is_empty());
     }
 
     #[test]
@@ -397,28 +620,215 @@ mod tests {
     }
 
     #[test]
-    fn composition_modality_follows_the_central_registration_and_defaults_honestly() {
-        // Central owns the ground: the composition's modality is the
-        // modality recorded on Central's registration.
-        let full = SuiteCompositionDisclosure {
-            schema: "oi.desktop-composition-disclosure/v1".to_owned(),
-            personal_ground: Some("/Central".to_owned()),
-            surfaces: PRODUCT_POSITIONS
-                .iter()
-                .map(|(_, id, _)| surface(id, NativeSurfaceState::Registered))
-                .collect(),
-            warnings: Vec::new(),
-        };
+    fn position_modality_stays_registration_provenance() {
+        // The #192 labels remain valid as per-registration provenance: which
+        // installation path registered the surface. They are historical
+        // evidence about the registration, not a composition taxonomy.
+        let full = disclosure_with(&["central"], NativeSurfaceState::Registered);
         let reading = CurrentWorldReading::from_disclosure(&full);
-        assert_eq!(reading.composition_modality, InstallModality::FreshGround);
         assert_eq!(
             reading.positions[0].modality,
             Some(InstallModality::FreshGround)
         );
 
-        // Without a Central registration there is no frame to name.
-        let disclosure = SuiteCompositionDisclosure::unavailable("none");
+        let unavailable = SuiteCompositionDisclosure::unavailable("none");
+        let reading = CurrentWorldReading::from_disclosure(&unavailable);
+        assert_eq!(reading.positions[0].modality, None);
+    }
+
+    fn requested(mode: &str) -> RequestedModeDisclosure {
+        RequestedModeDisclosure {
+            mode: mode.to_owned(),
+            set_by: "oi mode set".to_owned(),
+            set_at_unix_seconds: 0,
+        }
+    }
+
+    #[test]
+    fn requested_mode_names_a_degraded_world_instead_of_renaming_it() {
+        // Requested 0/1/2 with AIKit absent: the world keeps its requested
+        // mode and warns about the missing product — it does not silently
+        // rename itself 0/1 (the regression this proves: effective presence
+        // {0,1} alone would read as the 0/1 mode).
+        let reading = CurrentWorldReading::from_disclosure(&disclosure_with(
+            &["central", "actuation"],
+            NativeSurfaceState::Registered,
+        ))
+        .with_requested_mode(requested("0/1/2"));
+        assert_eq!(mode_of(&reading).as_deref(), Some("0/1/2"));
+        assert_eq!(
+            reading.context_frame.install_mode_basis.as_deref(),
+            Some("requested")
+        );
+        assert!(
+            reading
+                .warnings
+                .iter()
+                .any(|warning| warning.contains("AIKit") && warning.contains("not usable")),
+            "{:?}",
+            reading.warnings
+        );
+        assert_eq!(
+            reading.requested_mode.as_ref().map(|r| r.mode.as_str()),
+            Some("0/1/2")
+        );
+    }
+
+    #[test]
+    fn requested_mode_stands_with_explicit_additions() {
+        // Requested 0/1 with QL added explicitly: presence {0,1,5} matches
+        // no mode exactly, so the requested mode stands with the addition
+        // visible in positions and nothing missing.
+        let reading = CurrentWorldReading::from_disclosure(&disclosure_with(
+            &["central", "actuation", "quaternal-logic"],
+            NativeSurfaceState::Registered,
+        ))
+        .with_requested_mode(requested("0/1"));
+        assert_eq!(mode_of(&reading).as_deref(), Some("0/1"));
+        assert_eq!(
+            reading.context_frame.install_mode_basis.as_deref(),
+            Some("requested")
+        );
+        assert_eq!(reading.context_frame.present_positions, vec![0, 1, 5]);
+        assert!(reading.warnings.is_empty(), "{:?}", reading.warnings);
+    }
+
+    #[test]
+    fn exact_effective_match_wins_over_a_stale_request_and_warns() {
+        // Requested 0/1, effective presence {0,1,2}: the effective exact
+        // match names 0/1/2 and the stale request is called out.
+        let reading = CurrentWorldReading::from_disclosure(&disclosure_with(
+            &["central", "actuation", "ai-kit"],
+            NativeSurfaceState::Registered,
+        ))
+        .with_requested_mode(requested("0/1"));
+        assert_eq!(mode_of(&reading).as_deref(), Some("0/1/2"));
+        assert_eq!(
+            reading.context_frame.install_mode_basis.as_deref(),
+            Some("effective")
+        );
+        assert!(
+            reading
+                .warnings
+                .iter()
+                .any(|warning| warning.contains("stale")),
+            "{:?}",
+            reading.warnings
+        );
+    }
+
+    #[test]
+    fn unknown_requested_frame_falls_back_to_presence_only_resolution() {
+        // A recorded frame the catalogue does not know (a future or foreign
+        // writer) must not fabricate a mode: presence-only resolution holds
+        // and the statement is still disclosed.
+        let reading = CurrentWorldReading::from_disclosure(&disclosure_with(
+            &["central", "workcell"],
+            NativeSurfaceState::Registered,
+        ))
+        .with_requested_mode(requested("9/9"));
+        assert_eq!(mode_of(&reading).as_deref(), Some("4.5/0"));
+        assert_eq!(
+            reading.context_frame.install_mode_basis.as_deref(),
+            Some("effective")
+        );
+        assert_eq!(
+            reading.requested_mode.as_ref().map(|r| r.mode.as_str()),
+            Some("9/9")
+        );
+    }
+
+    fn component_disclosure() -> SuiteCompositionDisclosure {
+        // Central registered with its command; Actuation installed as
+        // component material — payloads at their recorded root, no native
+        // command recorded by this install (suite manifest artifact kind
+        // "component").
+        let mut disclosure = disclosure_with(&["central"], NativeSurfaceState::Registered);
+        let mut actuation = surface("actuation", NativeSurfaceState::InstalledComponent);
+        actuation.native_entry = "actuation".to_owned();
+        actuation.resolved = Some("/managed/actuation/03e03ac".to_owned());
+        disclosure.surfaces.push(actuation);
+        disclosure
+    }
+
+    #[test]
+    fn component_install_is_present_and_the_exact_effective_match_sees_it() {
+        // Campaign finding 3 (2026-09-14): a component product shipped no
+        // native executable for the target, yet its position read broken and
+        // absent, hiding it from the exact effective match. Component
+        // material present at its recorded root is present material.
+        let reading = CurrentWorldReading::from_disclosure(&component_disclosure());
+        assert_eq!(
+            reading.context_frame.present_positions,
+            vec![0, 1],
+            "the effective composition must see the component product"
+        );
+        assert_eq!(mode_of(&reading).as_deref(), Some("0/1"));
+        assert_eq!(
+            reading.context_frame.install_mode_basis.as_deref(),
+            Some("effective")
+        );
+        let actuation = &reading.positions[1];
+        assert!(actuation.present);
+        assert_eq!(actuation.state, NativeSurfaceState::InstalledComponent);
+        assert_eq!(
+            actuation.native_location.as_deref(),
+            Some("/managed/actuation/03e03ac")
+        );
+        // The command surface gap is named in warnings, never hidden.
+        assert!(
+            reading
+                .warnings
+                .iter()
+                .any(|warning| warning.contains("no native 'actuation' command")),
+            "{:?}",
+            reading.warnings
+        );
+    }
+
+    #[test]
+    fn requested_mode_with_a_component_product_is_realised_and_names_the_command_gap() {
+        // Requested 0/1 with Actuation installed as a component: the mode is
+        // realised — component material is present, so there is no mode
+        // shortfall — but the unavailable command surface is still warned
+        // about with the exact gap named (lock §5: no silent shortfall).
+        let reading = CurrentWorldReading::from_disclosure(&component_disclosure())
+            .with_requested_mode(requested("0/1"));
+        assert_eq!(mode_of(&reading).as_deref(), Some("0/1"));
+        assert_eq!(
+            reading.context_frame.install_mode_basis.as_deref(),
+            Some("requested")
+        );
+        assert!(
+            !reading
+                .warnings
+                .iter()
+                .any(|warning| warning.contains("not fully realised")),
+            "a component product is present material, not a shortfall: {:?}",
+            reading.warnings
+        );
+        assert!(
+            reading
+                .warnings
+                .iter()
+                .any(|warning| warning.contains("no native 'actuation' command")),
+            "the command gap must be named: {:?}",
+            reading.warnings
+        );
+    }
+
+    #[test]
+    fn broken_component_material_is_absent_and_names_no_mode() {
+        // Damage keeps its name: with the component material gone, the
+        // position is broken and absent, and presence {0} matches no mode.
+        let mut disclosure = disclosure_with(&["central"], NativeSurfaceState::Registered);
+        disclosure
+            .surfaces
+            .push(surface("actuation", NativeSurfaceState::Broken));
         let reading = CurrentWorldReading::from_disclosure(&disclosure);
-        assert_eq!(reading.composition_modality, InstallModality::Unknown);
+        assert_eq!(reading.context_frame.present_positions, vec![0]);
+        assert!(!reading.positions[1].present);
+        assert_eq!(reading.positions[1].state, NativeSurfaceState::Broken);
+        assert_eq!(mode_of(&reading), None);
     }
 }

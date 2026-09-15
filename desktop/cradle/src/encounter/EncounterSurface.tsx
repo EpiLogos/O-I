@@ -5,7 +5,7 @@ import type {SurfaceBinding} from "../surface/types";
 import {createA2aBinding,createA2aPresence,performA2aExchange} from "../../../../shared-field/a2a.mjs";
 import {AddressedComposer,ACTIVE_PHASES,type AddressedFields,type DispatchState,type DeliveryHistoryEntry,type GroupState} from "./AddressedComposer";
 import {EncounterView} from "./EncounterView";
-export interface EncounterExpressionReading {state?:string;pending:boolean;completed?:number;inputRevision?:number}
+export interface EncounterExpressionReading {agentSessionRef?:string;state?:string;pending:boolean;completed?:number;inputRevision?:number;latestOwnerActivity?:{blockId:number;kind:string}}
 /** Ephemeral input buffering only. Every accepted edit and message is AIKit-owned. */
 export function EncounterSurface({binding,onView,presentation="tab",onExpression,concealed=false}:{binding:SurfaceBinding;onView:(view:NonNullable<SurfaceBinding["view"]>)=>void;presentation?:"tab"|"side"|"full";onExpression?:(reading:EncounterExpressionReading)=>void;concealed?:boolean}) {
  const kernel=useKernel();
@@ -15,7 +15,7 @@ export function EncounterSurface({binding,onView,presentation="tab",onExpression
  const canonical=useRef<Draft>({revision:0,text:""});const input=useRef("");const dirty=useRef(false);const saving=useRef(false);const sending=useRef(false);const failed=useRef(false);
  const [before,setBefore]=useState<number>();
  const expression=useRef(onExpression);expression.current=onExpression;
- useEffect(()=>{expression.current?.({state:status?.state,pending,inputRevision:reading?.draft.revision,completed:reading?reading.blocks.filter(block=>block.kind==="completed").slice(-1)[0]?.id??-1:undefined});},[status,reading,pending]);
+ useEffect(()=>{const activity=reading?.blocks.filter(block=>["thinking","tool","permission","completed"].includes(block.kind)).slice(-1)[0];expression.current?.({agentSessionRef:reading?.agent_session,state:status?.state,pending,inputRevision:reading?.draft.revision,completed:reading?reading.blocks.filter(block=>block.kind==="completed").slice(-1)[0]?.id??-1:undefined,latestOwnerActivity:activity?{blockId:activity.id,kind:activity.kind}:undefined});},[status,reading,pending]);
  const call=<T,>(request:Parameters<typeof encounter>[2])=>encounter<T>(kernel.transport,binding.project!,request);
  const read=()=>call<EncounterReading>({action:"view",agent_session:binding.ref!,before});
  const allowed=(name:string)=>reading?.actions?.some(action=>action.ref===`aikit.encounter.${name}`&&action.enabled===true)===true;
@@ -217,7 +217,8 @@ export function EncounterSurface({binding,onView,presentation="tab",onExpression
   finally{if(alive.current)setPending(false);}
  };
  return <><EncounterView concealed={concealed} presentation={presentation} plane={binding.view?.encounterPlane??"Conversation"} onPlane={encounterPlane=>onView({encounterPlane})} title={binding.title} onPermission={(id,decision)=>void permission(id,decision)} reading={reading} status={status} draft={draft} pending={pending||dirty.current||saving.current||sending.current||failed.current} error={error} providers={providers} onProvider={provider=>void connect(provider)} onDraft={change} onSend={()=>void send()} onCancel={()=>{if(!allowed("cancel"))return;void call({action:"cancel",agent_session:binding.ref!,reason:"User stopped the encounter"}).catch(error=>setError(String(error)));}} onEarlier={()=>setBefore(reading?.blocks[0]?.id)} onLatest={()=>setBefore(undefined)} readJournal={after=>call<JournalPage>({action:"read",agent_session:binding.ref!,after,limit:32})} space={binding.encounter?.space} deliveries={[...addressedHistory.map(h=>({ref:h.ref,phase:h.record.phase})),...(group?[{ref:group.ref,phase:`group — ${group.rows.map(row=>row.error?"refused":row.phase??"in flight").join(", ")}`}]:[])]}
-  nowRefs={addressedHistory.flatMap(h=>{const nowRef=(h.record as {now_ref?:unknown}).now_ref;return typeof nowRef==="string"&&nowRef?[{ref:nowRef,register:null}]:[];})}
+  nowRefs={(()=>{const refs:{ref:string;register:string|null}[]=addressedHistory.flatMap(h=>{const nowRef=(h.record as {now_ref?:unknown}).now_ref;return typeof nowRef==="string"&&nowRef?[{ref:nowRef,register:null}]:[];});const allocated=task?.allocation?.allocation?.now_ref;if(allocated&&!refs.some(r=>r.ref===allocated))refs.push({ref:allocated,register:task?.request?.central?.project??null});return refs;})()}
+  taskBasisWithoutNow={!!task&&!task.allocation?.allocation?.now_ref}
   resume={resume} onReconnect={provider=>void reconnect(provider)}
   a2a={a2a} onA2aSeed={seedA2a} onA2aSend={(seed,fields)=>void sendA2a(seed,fields)}
   addressed={<AddressedComposer disabled={status?.state==="Disconnected"} dispatch={dispatch} history={addressedHistory} service={service} agentSession={binding.ref??undefined} task={task??undefined} group={group} onGroupSend={(sender,recipients,packet)=>void sendGroup(sender,recipients,packet)} onSend={(turn,fields)=>void sendAddressed(turn,fields)}/>}

@@ -1,0 +1,198 @@
+/* The privileged Epi / Nara composition's presentation layer.
+ *
+ * Presentation only — the composition's law lives in
+ * FocusedInstrumentComposition.tsx. The visual register follows the
+ * demonstrated workspace language: quiet glass chips over the field,
+ * hairline boundaries, one status strip instead of card proliferation,
+ * short arrival transitions with reduced-motion alternatives. Every token
+ * is the shell's own; nothing here re-themes the desktop. */
+
+.k9-layer {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  z-index: 8;
+  color: var(--oi-foreground);
+  pointer-events: none;
+}
+
+/* Arrival: a short rise, never a bounce. Reduced motion renders directly. */
+@keyframes k9-arrive {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.k9-chip {
+  pointer-events: auto;
+  background: color-mix(in srgb, var(--oi-surface) 82%, transparent);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--oi-hairline);
+  border-radius: calc(var(--oi-shell-radius) - 1px);
+  padding: var(--oi-space-3) var(--oi-space-4);
+  animation: k9-arrive var(--oi-motion-ui) var(--oi-motion-ease-out) both;
+}
+
+.k9-kicker {
+  margin: 0;
+  font-size: var(--oi-type-xs);
+  letter-spacing: var(--oi-tracking-label);
+  text-transform: uppercase;
+  color: var(--oi-muted);
+}
+
+.k9-title {
+  margin: 2px 0 0;
+  font-size: var(--oi-shell-type-heading);
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.k9-quiet {
+  margin: 0;
+  font-size: var(--oi-type-xs);
+  line-height: 1.5;
+  color: var(--oi-muted);
+}
+
+.k9-mono { font-family: var(--oi-font-mono); }
+
+/* Identity chip — top left of the centre host. */
+.k9-identity {
+  position: absolute;
+  top: var(--oi-space-4);
+  left: var(--oi-space-4);
+  max-width: min(46ch, 60%);
+}
+
+/* M1–M5 — one segmented control, top right. */
+.k9-segment {
+  position: absolute;
+  top: var(--oi-space-4);
+  right: var(--oi-space-4);
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+}
+
+.k9-segment button {
+  border: 0;
+  background: transparent;
+  color: var(--oi-muted);
+  font-size: var(--oi-type-xs);
+  letter-spacing: var(--oi-tracking-label);
+  padding: 5px 9px;
+  border-radius: calc(var(--oi-shell-radius) - 3px);
+  cursor: pointer;
+}
+
+.k9-segment button:hover { color: var(--oi-foreground); background: var(--oi-wash); }
+
+.k9-segment button[aria-pressed="true"] {
+  background: var(--oi-accent-soft);
+  color: var(--oi-foreground);
+}
+
+.k9-segment button:disabled { opacity: 0.45; cursor: default; }
+
+/* The bottom strip: disclosure left, controls and status right. One row of
+ * chips that yields instead of overlapping; the field stays visible between
+ * the chips and the strip. */
+.k9-strip {
+  position: absolute;
+  left: var(--oi-space-4);
+  right: var(--oi-space-4);
+  bottom: var(--oi-space-4);
+  display: flex;
+  gap: var(--oi-space-3);
+  align-items: stretch;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.k9-disclosure { flex: 1 1 220px; max-width: 34ch; }
+
+.k9-disclosure strong { font-size: var(--oi-type-sm); font-weight: 600; }
+
+.k9-controls { flex: 1 1 320px; display: grid; gap: var(--oi-space-2); }
+
+.k9-row { display: flex; gap: var(--oi-space-2); flex-wrap: wrap; align-items: center; }
+
+.k9-btn {
+  border: 1px solid var(--oi-hairline);
+  background: transparent;
+  color: var(--oi-foreground);
+  font-size: var(--oi-type-xs);
+  padding: 5px 10px;
+  border-radius: calc(var(--oi-shell-radius) - 3px);
+  cursor: pointer;
+}
+
+.k9-btn:hover { background: var(--oi-wash); }
+
+.k9-btn[aria-pressed="true"] {
+  background: var(--oi-accent-soft);
+  border-color: var(--oi-hairline);
+}
+
+.k9-btn:disabled { opacity: 0.45; cursor: default; }
+
+.k9-status { display: grid; gap: 2px; }
+
+/* Bimba navigator — portals into the shell's own left host. While the
+ * focused mode stands, it owns that host: an opaque surface ground above
+ * the ordinary navigator content, released on exit. */
+.k9-side {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  overflow: auto;
+  background: var(--oi-surface);
+  animation: k9-arrive var(--oi-motion-ui) var(--oi-motion-ease-out) both;
+}
+
+.k9-bimba { padding: var(--oi-space-4) var(--oi-space-3); display: grid; gap: var(--oi-space-3); align-content: start; }
+
+.k9-bimba nav { display: grid; gap: 3px; }
+
+.k9-bimba-item {
+  text-align: left;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--oi-foreground);
+  border-radius: calc(var(--oi-shell-radius) - 3px);
+  padding: 7px 9px;
+  cursor: pointer;
+}
+
+.k9-bimba-item:hover { background: var(--oi-wash); }
+
+.k9-bimba-item[aria-pressed="true"] {
+  background: var(--oi-accent-soft);
+  border-color: var(--oi-hairline);
+}
+
+.k9-bimba-item:disabled { opacity: 0.5; cursor: default; }
+
+.k9-bimba-item strong { display: block; font-size: var(--oi-type-sm); font-weight: 600; }
+
+.k9-alert {
+  margin: 0;
+  font-size: var(--oi-type-xs);
+  line-height: 1.5;
+  color: var(--oi-foreground);
+  background: var(--oi-wash);
+  border: 1px solid var(--oi-hairline);
+  border-radius: calc(var(--oi-shell-radius) - 3px);
+  padding: var(--oi-space-2) var(--oi-space-3);
+}
+
+.nara-expression { margin-top: var(--oi-space-2); border-top: 1px solid var(--oi-hairline); padding-top: var(--oi-space-2); }
+.nara-expression-heading { display: flex; align-items: baseline; justify-content: space-between; gap: var(--oi-space-2); text-transform: uppercase; letter-spacing: .08em; font-size: var(--oi-type-xs); }
+.nara-expression ol { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); gap: 3px; list-style: none; margin: var(--oi-space-2) 0; padding: 0; }
+.nara-expression li { display: flex; min-width: 0; flex-direction: column; gap: 2px; border: 1px solid var(--oi-hairline); padding: 5px 3px; text-align: center; }
+.nara-expression li span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--oi-type-xs); }
+.nara-expression[data-standing="stale"] { opacity: .58; }
+
+@media (prefers-reduced-motion: reduce) {
+  .k9-chip { animation: none; }
+}

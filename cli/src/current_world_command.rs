@@ -14,6 +14,12 @@ fn current_world_main() -> Option<ExitCode> {
     };
 
     let observed = oi_cli::current_world::live_current_world().and_then(|mut reading| {
+        // The person's recorded mode statement joins the reading when the
+        // composition state is readable; absence discloses presence-only
+        // resolution rather than an error.
+        if let Some(requested) = requested_mode_statement()? {
+            reading = reading.with_requested_mode(requested);
+        }
         if owners {
             let executable=env::current_exe().map_err(|e|e.to_string())?;
             let cwd=env::current_dir().map_err(|e|e.to_string())?;
@@ -38,7 +44,27 @@ fn current_world_main() -> Option<ExitCode> {
                 "Ground: {}",
                 reading.personal_ground.as_deref().unwrap_or("not configured")
             );
-            println!("Composition modality: {}", reading.composition_modality.as_str());
+            println!(
+                "Containing frame: {} ({})",
+                reading.context_frame.containing_frame,
+                oi_cli::context_frames::CONTAINING_FRAME_NOTATION
+            );
+            let install_mode = reading
+                .context_frame
+                .install_mode
+                .as_deref()
+                .and_then(oi_cli::context_frames::install_mode_by_frame);
+            println!(
+                "Install mode: {}",
+                match (&reading.context_frame.install_mode, install_mode) {
+                    (Some(frame), Some(mode)) => match reading.context_frame.install_mode_basis.as_deref() {
+                        Some("requested") => format!("{frame} (requested) — {}", mode.name),
+                        _ => format!("{frame} — {}", mode.name),
+                    },
+                    (Some(frame), None) => frame.to_owned(),
+                    (None, _) => "explicit selection".to_owned(),
+                }
+            );
             if let Some(machine) = reading.current_machine.as_ref() {
                 println!(
                     "Machine: {}{}{}",
@@ -66,7 +92,7 @@ fn current_world_main() -> Option<ExitCode> {
                 "Context: {} ({present})",
                 reading
                     .context_frame
-                    .reading
+                    .install_mode
                     .as_deref()
                     .unwrap_or("situated composition")
             );

@@ -23,13 +23,16 @@
 //! - **Reading core only** (`world.rs`): participating sources from the
 //!   owner's horizon/ground disclosures; no tree, no UI coupling.
 //!
-//! The kernel never writes files and never mints refs: every source ref is
-//! Central's canonical grammar, carried verbatim.
+//! The kernel never writes native source files or mints native subject refs.
+//! Expression-local presentation refs do not acquire native subject identity.
 
 pub mod events;
+pub mod expression;
+pub mod expression_transport;
 pub mod flow;
 pub mod history;
 pub mod knowledge;
+pub mod shared_field;
 pub mod action;
 pub mod graph;
 pub mod encounter;
@@ -46,14 +49,14 @@ pub mod world;
 pub mod commission;
 pub mod flow_cognition;
 
-pub use flow::CentralClient;
+pub use flow::{CentralClient, OwnerCallError};
 
 use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 
 use events::{KernelEvent, KernelEventLog, KernelEventReceipt};
-use flow::{CRADLE_ACTOR, CRADLE_ACTOR_KIND, OwnerCallError, SourceReading, SourceWriteFailure};
+use flow::{CRADLE_ACTOR, CRADLE_ACTOR_KIND, SourceReading, SourceWriteFailure};
 use focus::GlobalFocus;
 use refs::{source_semantic_ref, SemanticRef};
 use world::{participating_sources, SourceListing};
@@ -138,6 +141,7 @@ pub struct KernelSnapshot {
 /// state change is recorded exactly once on the ordered log.
 #[derive(Debug)]
 pub struct Kernel {
+    expressions: expression::Application,
     agency: agency::Client,
     client: CentralClient,
     focus: GlobalFocus,
@@ -162,6 +166,7 @@ pub struct Kernel {
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(tag = "op", rename_all = "snake_case")]
 pub enum KernelOp {
+    Expression { request: expression::Request },
     /// Pull the whole kernel state (read model; emits nothing).
     State,
     WorldRead,
@@ -170,11 +175,21 @@ pub enum KernelOp {
     Knowledge { #[serde(default)] project: Option<String>, request: knowledge::Request },
     /// Assemble the typed graph input for U3.1/U3.4 presentation: Central's
     /// wiki read model (cell C1) composed with AIKit's owner-side resolution
-    /// rows (cell C2). Adapter only — every node/edge carries its owner ref,
-    /// owner operation and owner provenance verbatim; a failed input degrades
-    /// honestly as an explicit unavailable input; the Shared Field
-    /// projection is a named deferred input. Emits nothing (pull read).
+    /// rows (cell C2) and the hosted Shared Field projection (Lane C step
+    /// 5, the O:I-owned client's snapshot). Adapter only — every node/edge
+    /// carries its owner ref, owner operation and owner provenance
+    /// verbatim; a failed input degrades honestly as an explicit
+    /// unavailable input. Emits nothing (pull read).
     Graph { #[serde(default)] project: Option<String>, #[serde(default)] query: String },
+    /// One request to the O:I-owned SharedField client (`shared_field.rs`,
+    /// cell S→S0 · aperture mode): `status` | `snapshot` | `read {ref}` |
+    /// `publish {args}` | `participant` | `admit` | `contact`, carried
+    /// verbatim to the owner doorway. Pull only — emits nothing. The
+    /// hosting target and transport token are the client's own
+    /// environment; an unbound target or unreachable field returns an
+    /// explicit `{state:"unavailable", detail}` reading as data, never an
+    /// error; the owner's own refusal is returned in the owner's words.
+    SharedField { request: serde_json::Value },
     /// Compose the W3-A AIKit session-lifecycle read with the W3-B
     /// Actuation request-correlation read for ONE permission request
     /// identity (`oi.cradle.encounter/v1`). Adapter only — the identities
@@ -197,9 +212,6 @@ pub enum KernelOp {
     /// happen through the owner operation and are provable through the
     /// owner store; the kernel records nothing and emits nothing.
     InvokeAction { #[serde(default)] project: Option<String>, invocation: action::ActionInvocation },
-    /// Forward one retained Flow/source-return Action to Central. The request
-    /// and response remain owner-shaped; the kernel is only the typed seam.
-    Flow { request: flow::Request },
     /// Compose the W1.5 changed-since-thought read (`flow_cognition.rs`):
     /// the kernel supplies the KnowledgeChangeHorizon adapted from Central's
     /// own `projectcentral.change.horizon` seam and calls the AIKit owner's
@@ -207,18 +219,18 @@ pub enum KernelOp {
     /// sides explicit — a side that could not be queried is named, never
     /// faked empty. Emits nothing (pull read + owner read).
     FlowChangedSince { #[serde(default)] project: Option<String>, thought: serde_json::Value },
-    /// Commission one verbatim selection in one retained Flow (U4.1/U4.2
-    /// loop mode, `commission.rs`): the selection travels verbatim with the
-    /// Central FlowRef and the expected revision it was made against; the
+    /// Commission one selection inside a flow instance (U4.1/U4.2 loop
+    /// mode, `commission.rs`): the desktop composes the next instance
+    /// through the template's own append-entry contract and hands it
+    /// verbatim with the instance location and the expected revision; the
     /// commission lands as an owner revision through Central's
-    /// `projectcentral.flow.write` CAS — a stale expected revision refuses
-    /// with both revisions observed, never a silent overwrite. An optional
-    /// AgentSession binds without owning the Flow's identity.
-    FlowCommission {
-        #[serde(default)] project: Option<String>,
-        flow_ref: String,
+    /// `central.files.write` CAS — a stale expected revision is the owner's
+    /// own structured conflict, never a silent overwrite. An optional
+    /// AgentSession binds as the write's actor.
+    InstanceCommission {
+        location: files::Location,
         expected_revision: String,
-        selection: String,
+        content: String,
         #[serde(default, skip_serializing_if = "Option::is_none")] agent_session_ref: Option<String>,
     },
     AgencyRead { project: String },
@@ -246,10 +258,12 @@ pub enum KernelOp {
     DaySourceOpen { #[serde(default)] day_ref: Option<String> },
     Encounter {project:String,request:agency::EncounterRequest},
     MaterialRead {target:material::Target},
-    FactoryDiscover {project_ref:Option<String>},
-    FactorySnapshot {binding_ref:String},
-    FactoryIntent {binding_ref:String,request:factory::Intent},
-    FactoryInvoke {binding_ref:String,request:factory::Invocation},
+    /// The re-pinned build view (queue cell B): the owner CLI reads it as
+    /// `factory build snapshot <state> <project-ref> <run-ref>` — the old
+    /// `build discover`/`--binding` grammar is gone from the installed cut.
+    /// Refs and state path are the caller's disclosure; payload verbatim
+    /// after the contract schemas are verified.
+    FactoryBuildSnapshot { #[serde(default)] project: Option<String>, state_path: ::std::path::PathBuf, project_ref: String, run_ref: String },
     /// 6D first consumer (queue cell 3): one developmental read through the
     /// owner's own `factory development` family. The state path is the
     /// caller's disclosure — the desktop never invents a Factory state.
@@ -325,10 +339,14 @@ pub struct KernelOpOutcome {
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(tag = "result", rename_all = "snake_case")]
 pub enum KernelOpResult {
+    Expression { data: serde_json::Value },
     State { snapshot: KernelSnapshot },
     WorldRead { snapshot: KernelSnapshot },
     Knowledge { data: serde_json::Value },
     GraphReading { reading: graph::GraphReading },
+    /// The SharedField client's own reading (`oi.shared-field.*/v1`), or
+    /// the explicit unavailable state — verbatim either way.
+    SharedFieldReading { data: serde_json::Value },
     /// The typed encounter join (`encounter.rs`): both owner views, the
     /// grant-record seam and the failure-taxonomy disposition.
     EncounterJoined {
@@ -337,13 +355,12 @@ pub enum KernelOpResult {
     /// The typed result of one owner-Action dispatch (`action.rs`): the
     /// owner payload verbatim, or an explicit named state.
     ActionDispatched { dispatch: action::ActionDispatch },
-    Flow { response: flow::Response },
     /// The typed changed-since-thought compose (`flow_cognition.rs`): both
     /// owner sides of the read, explicit.
     FlowChangedSince { reading: flow_cognition::ChangedSinceReading },
     /// The typed selection commission outcome (`commission.rs`): owner
     /// revision, structured conflict, or the owner's own refusal.
-    FlowCommissioned { outcome: commission::CommissionOutcome },
+    InstanceCommissioned { outcome: commission::CommissionOutcome },
     AgencyReading { project_ref: String, spaces: serde_json::Value, observed_at_unix_ms: u64 },
     EncounterReading {data:serde_json::Value},
     ReceivingReading {data:serde_json::Value},
@@ -402,6 +419,7 @@ impl Kernel {
         Self {
             client,
             agency,
+            expressions: expression::Application::default(),
             focus: GlobalFocus::unfocused(),
             log: KernelEventLog::new(),
             surfaces: BTreeMap::new(),
@@ -437,11 +455,37 @@ impl Kernel {
     /// exactly one receipt per kernel state change.
     pub fn apply(&mut self, op: KernelOp) -> Result<KernelOpOutcome, String> {
         match op {
+            KernelOp::Expression { request } => {
+                let focus_ref = match &request {
+                    expression::Request::Edit { expression_ref, changes, .. }
+                        if changes.iter().any(|c| matches!(c, expression::Change::Focus { .. })) => Some(expression_ref.clone()),
+                    _ => None,
+                };
+                let (data, changed) = self.expressions.apply(&self.client, request)?;
+                let mut receipts = Vec::new();
+                if let Some(change) = changed {
+                    receipts.push(self.log.record(KernelEvent::ExpressionChanged { expression_ref: change.expression_ref, revision: change.revision, actor: change.actor, activity_ref: change.activity_ref }));
+                }
+                if data["state"] == "ready" {
+                    if let Some(subject) = focus_ref.as_deref().and_then(|r| self.expressions.selected_subject(r)) {
+                        let before = self.focus.clone();
+                        self.focus.focus_subject(subject).map_err(|e| e.to_string())?;
+                        if before != self.focus { receipts.push(self.log.record(KernelEvent::FocusChanged { focus: self.focus.clone() })); }
+                    }
+                }
+                Ok(KernelOpOutcome { receipts, result: KernelOpResult::Expression { data } })
+            }
             KernelOp::MaterialRead{target} => native_owner_reading("workcell",material::Client::discover().read(&target)),
-            KernelOp::FactoryDiscover{project_ref} => native_owner_reading("software-factory",factory::Client::discover().bindings(project_ref.as_deref())),
-            KernelOp::FactorySnapshot{binding_ref} => native_owner_reading("software-factory",factory::Client::discover().snapshot(&binding_ref)),
-            KernelOp::FactoryIntent{binding_ref,request} => native_owner_reading("software-factory",factory::Client::discover().intent(&binding_ref,&request)),
-            KernelOp::FactoryInvoke{binding_ref,request} => native_owner_reading("software-factory",factory::Client::discover().invoke(&binding_ref,&request)),
+            KernelOp::FactoryBuildSnapshot {project,state_path,project_ref,run_ref} => {
+                if let Some(project)=&project {
+                    let root=world::read_world(&self.client).map_err(|e|e.to_string())?;
+                    root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(project.as_str()))).ok_or("Project is outside Central's disclosed ground")?;
+                }
+                let direct=std::env::var_os("OI_FACTORY_BIN").map(std::path::PathBuf::from);
+                let executable=direct.unwrap_or_else(|| std::env::var_os("OI_BIN").map(std::path::PathBuf::from).unwrap_or_else(|| std::path::PathBuf::from("oi")));
+                let data=factory::Client::with(executable).build_snapshot(&state_path,&project_ref,&run_ref).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"factory build snapshot failed".into()))?;
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::FactoryDevelopmentReading{data}})
+            }
             KernelOp::FactoryDevelopmentRead {project,state_path,read,subject} => {
                 if let Some(project)=&project {
                     let root=world::read_world(&self.client).map_err(|e|e.to_string())?;
@@ -660,6 +704,13 @@ impl Kernel {
                 let reading = graph::assemble(&self.client, wiki_action, &wiki_input, &cwd, &query);
                 Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::GraphReading { reading } })
             }
+            KernelOp::SharedField { request } => {
+                // The kernel passes the request through on the desktop's own
+                // account; the client resolves its target and token from its
+                // own environment. Nothing is recorded, nothing is emitted.
+                let data = shared_field::reading(&request)?;
+                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::SharedFieldReading { data } })
+            }
             KernelOp::EncounterJoin { session, request_ref, reply } => {
                 // Central discloses the context anchor, exactly as the
                 // Graph/Knowledge arms; the lifecycle store itself is the
@@ -681,17 +732,6 @@ impl Kernel {
                 let dispatch = action::invoke(&self.client, &cwd, project.as_deref(), &invocation);
                 Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::ActionDispatched { dispatch } })
             }
-            KernelOp::Flow { request } => {
-                let action = request.owner_action().to_owned();
-                let response = self
-                    .client
-                    .apply_request(request)
-                    .unwrap_or_else(|error| flow::Response::Failure { action, error });
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::Flow { response },
-                })
-            }
             KernelOp::FlowChangedSince { project, thought } => {
                 // The changed-since compose resolves its owner cwd exactly as
                 // the InvokeAction arm: Central discloses the scope,
@@ -705,9 +745,9 @@ impl Kernel {
                 let reading = flow_cognition::changed_since(&self.client, project.as_deref().unwrap_or_else(|| self.client.configured_project()), &cwd, &thought).map_err(|e| e.to_string())?;
                 Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::FlowChangedSince { reading } })
             }
-            KernelOp::FlowCommission { project, flow_ref, expected_revision, selection, agent_session_ref } => {
-                let outcome = commission::commission(&self.client, project.as_deref().unwrap_or_else(|| self.client.configured_project()), &flow_ref, &expected_revision, &selection, agent_session_ref.as_deref()).map_err(|e| e.to_string())?;
-                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::FlowCommissioned { outcome } })
+            KernelOp::InstanceCommission { location, expected_revision, content, agent_session_ref } => {
+                let outcome = commission::commission(&self.client, &location, &expected_revision, &content, agent_session_ref.as_deref()).map_err(|e| e.to_string())?;
+                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::InstanceCommissioned { outcome } })
             }
             KernelOp::WorldRead => self.navigate(None, false),
             KernelOp::ProjectRead { project } => self.navigate(Some(&project), false),

@@ -14,11 +14,13 @@ current native-main source suite
 
 A release remains useful after development advances. It must not be presented as the current development world merely because its artifacts still verify.
 
-## Installation modalities
+## Installation path provenance
 
-Every path that installs, registers, establishes or reconciles an {O:I} composition belongs to exactly one named modality (context frame) — `cli/src/modality.rs` is the canonical vocabulary, and the install descriptors in `surfaces.json` carry a `modality` field. The frame is recorded in composition state at install/init time and disclosed by `oi status [--json]`, `oi doctor [--json]` and `oi current-world [--json]`. Legacy state that predates the field discloses `modality: unknown` honestly; it is never inferred retroactively.
+Every path that installs, registers, establishes or reconciles an {O:I} composition records exactly one named installation-path label — `cli/src/modality.rs` is the canonical vocabulary, and the install descriptors in `surfaces.json` carry a `modality` field. The label is recorded in composition state at install/init time and disclosed by `oi status [--json]` and `oi doctor [--json]`. Legacy state that predates the field discloses `modality: unknown` honestly; it is never inferred retroactively.
 
-| Modality | What it is | Entry points |
+These labels are **provenance, not an installation taxonomy**. Since the Context Frame composition lock ([CONTEXT-FRAME-COMPOSITION-LOCK.md](CONTEXT-FRAME-COMPOSITION-LOCK.md), #268) they no longer name "context frames" or choose which composition you have: the composition a person adopts is selected and described through the Context Frames — one containing material frame (CF5) organising six install modes, each situated at a frame notation (`00/00`, `0/1`, `0/1/2`, `0/1/2/3`, `4.5/0`, `5/0`). A label tells you which path registered a surface; the lock tells you what the person adopted and what each product contributes.
+
+| Path label | What it is | Entry points |
 |---|---|---|
 | `fresh-ground` | Establish a personal ground from nothing: compatible Central (`oi install central`), ground init (`oi init --personal-ground PATH`), the recorded first-suite bootstrap, and the released-artifact bootstrap (`oi install [PRODUCT ...]`). Includes the `machine.adopt-current` step and the guardian-SkillSet pickup. | `oi install central [--source existing\|pinned]`, `oi init --personal-ground PATH`, `oi install [--personal-ground PATH]` |
 | `existing-ground-reconcile` | Operate on a ground that already exists without reinstalling it: re-project the guardian SkillSet (`oi skills sync`, which also hands it to AIKit — the harness-strap step), place an existing work tree under `Work/` (`oi migrate`), and plain registration of detected natives (`oi register`, `oi init` without a ground). | `oi skills sync`, `oi migrate PATH`, `oi register …`, `oi install ai-kit` source path |
@@ -27,7 +29,7 @@ Every path that installs, registers, establishes or reconciles an {O:I} composit
 | `reference-world-host` | The reference-world host relation; O:I materialises only its own plugin payloads against the pinned Omarchy contract. | `oi host omarchy plan/realise/verify` |
 | `harness-strap` | Harness admission and strapping delegated to AIKit (ai-kit #114). O:I's strap step today is the guardian-SkillSet handoff to the installed AIKit and the `oi.package/v1` native lifecycle envelope; harness admission proper is not reimplemented here. | (inside `init` / `oi skills sync`; `native_lifecycle.rs`) |
 
-Each modality exists to deliver one operative-UX outcome from `docs/OI-OPERATIVE-FRONTDOOR-WAYFINDER.md`: bootstrap acceptance is UX acceptance, not just command success. The per-modality UX thread is documented on the vocabulary itself (`cli/src/modality.rs`).
+Each path exists to deliver one operative-UX outcome from `docs/OI-OPERATIVE-FRONTDOOR-WAYFINDER.md`: bootstrap acceptance is UX acceptance, not just command success. The per-path UX thread is documented on the vocabulary itself (`cli/src/modality.rs`).
 
 ### Install sources are exclusive-and-declared
 
@@ -42,15 +44,45 @@ The chosen source is recorded on the registration (`install_source`) and disclos
 
 ## Install the `oi` command
 
+### Prerequisites, honestly stated
+
+What each route presupposes on a bare machine:
+
+```text
+bootstrap script    curl (or wget), tar, and a sha256 tool — nothing else
+npm route           npm (Node.js >= 18), already on the machine
+source route        a Rust toolchain (cargo) AND an O-I checkout
+```
+
+No route has zero prerequisites; the bootstrap script is the closest — it installs the prebuilt release binary and needs no Node and no Rust, and `oi install` (the recorded release artifacts, all products) likewise needs no toolchain. But the *First encounter* sequence below needs a Rust toolchain on a bare machine: a personal ground requires current-main Central, `oi install central` builds that Central from source, and an older release-line `ctrl` is intentionally not accepted. The release-line suite also predates the current root NOW/DAY Actions. So: bootstrap + released suite run anywhere; establishing a ground needs cargo.
+
+### Bootstrap script (no Node, no Rust)
+
+From any machine with `curl` and `tar`, download and inspect the script, then run it:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/EpiLogos/O-I/main/install.sh -o oi-install.sh
+less oi-install.sh          # inspect before running; the script installs a binary onto your PATH
+sh oi-install.sh
+```
+
+It downloads the native archive and SHA-256 sidecar for your platform from the release below, verifies the checksum, and installs `oi` into `~/.local/bin` (override the location with `OI_BIN_DIR`; override the release with `OI_RELEASE_TAG`). Prebuilt targets today are Apple Silicon macOS (`aarch64-apple-darwin`) and x64 Linux (`x86_64-unknown-linux-gnu`); anything else fails explicitly.
+
 ### npm-formatted native distribution
 
 The repository defines `@epi-logos/oi` as the public distribution package for the native Rust CLI. It is a thin installer/launcher over O:I's prebuilt release artifacts, not a JavaScript reimplementation of `oi` and not the `oi.package/v1` extension envelope.
 
-The `oi-v0.1.0-prelocal.4` release line publishes the npm package tarball beside the native binary archives. Once that release exists, the package can be installed without a repository checkout or Rust toolchain:
+The `oi-v0.1.0-prelocal.6` release line publishes the npm package tarball beside the native binary archives. Once that release exists, the package can be installed without a repository checkout or Rust toolchain:
 
 ```sh
-npm install -g https://github.com/EpiLogos/O-I/releases/download/oi-v0.1.0-prelocal.4/epi-logos-oi-0.1.0-prelocal.4.tgz
+npm install -g https://github.com/EpiLogos/O-I/releases/download/oi-v0.1.0-prelocal.6/epi-logos-oi-0.1.0-prelocal.6.tgz
 oi help
+```
+
+The tarball published at `oi-v0.1.0-prelocal.4` predates the installer's default release tag and its postinstall needs the release named explicitly; from `prelocal.5` onward the package carries the default and the plain command above is sufficient:
+
+```sh
+OI_NPM_RELEASE_TAG=oi-v0.1.0-prelocal.4 npm install -g https://github.com/EpiLogos/O-I/releases/download/oi-v0.1.0-prelocal.4/epi-logos-oi-0.1.0-prelocal.4.tgz
 ```
 
 The short registry form is the intended public entry point:
@@ -234,9 +266,9 @@ The local composition is a small JSON file, normally:
 ~/.config/oi/composition.json
 ```
 
-Each module registration records the installation modality that produced it and, where a choice existed, the declared install source. Use `OI_HOME` to place the state elsewhere or `XDG_CONFIG_HOME` for the standard XDG location. Managed command artifacts installed by O:I can live beside that state, but product configuration and runtime state remain in the native product.
+Each module registration records the installation path that produced it and, where a choice existed, the declared install source. Use `OI_HOME` to place the state elsewhere or `XDG_CONFIG_HOME` for the standard XDG location. Managed command artifacts installed by O:I can live beside that state, but product configuration and runtime state remain in the native product.
 
-Run `oi status --json` to inspect registered/runtime composition, including each registration's `modality` and `install_source`. `oi current-world --json` discloses the composition's frame as `composition_modality` (the modality recorded on the Central registration, which owns the ground). Run `oi dev status --json` when the question is whether the developer source world matches the current accepted mains.
+Run `oi mode list|set <frame>|clear [--json]` to inspect or explicitly state which install mode you are adopting — the statement is recorded and disclosed by `oi current-world --json` as `requested_mode`, with the effective realisation and any shortfall named honestly. Run `oi status --json` to inspect registered/runtime composition, including each registration's `modality` (installation-path provenance) and `install_source`. `oi current-world --json` discloses the Context Frame reading: `context_frame.containing_frame` is always `cf5` — the material condition every installation stands in — and `context_frame.install_mode` names the install mode — by its frame notation — when the effective product presence matches one of the six characteristic compositions exactly. Run `oi dev status --json` when the question is whether the developer source world matches the current accepted mains.
 
 ## Failure behavior
 

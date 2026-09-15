@@ -93,14 +93,18 @@ impl Client {
     }
     pub fn read(&self, cwd: &Path) -> Reading {self.read_with_owners(cwd,false)}
     pub fn read_with_owners(&self, cwd:&Path, owners:bool)->Reading {
+        // v2 carries the Context Frame reading (containing frame + install
+        // mode, #268); a v1 document is an older installed `oi` — accepted
+        // as historical evidence with its own recorded meanings, never
+        // reinterpreted here.
         let current_world = self.invoke(
             cwd,
             "current-world",
-            "oi.current-world/v1",
+            &["oi.current-world/v2", "oi.current-world/v1"],
             "positions",
             "product_id",owners,
         );
-        let status = self.invoke(cwd, "status", "oi.suite-status/v1", "surfaces", "id",false);
+        let status = self.invoke(cwd, "status", &["oi.suite-status/v1"], "surfaces", "id",false);
         let positions = current_world
             .data
             .as_ref()
@@ -123,6 +127,10 @@ impl Client {
                             availability: match native_state {
                                 "missing" => Availability::Missing,
                                 "broken" => Availability::Unavailable,
+                                // "installed_component": component material
+                                // is present on this machine — discovered,
+                                // not unavailable; the missing native command
+                                // stays visible in native_state.
                                 _ => Availability::Discovered,
                             },
                             native_state: native_state.into(),
@@ -148,7 +156,7 @@ impl Client {
         &self,
         cwd: &Path,
         operation: &str,
-        schema: &str,
+        schemas: &[&str],
         rows: &str,
         id: &str, owners:bool,
     ) -> NativeReading {
@@ -170,7 +178,7 @@ impl Client {
             }
             let data: Value = serde_json::from_slice(&output.stdout)
                 .map_err(|e| format!("S {operation} returned unreadable JSON: {e}"))?;
-            validate(&data, schema, rows, id)?;
+            validate(&data, schemas, rows, id)?;
             Ok(data)
         })();
         match result {
@@ -188,10 +196,11 @@ impl Client {
     }
 }
 
-fn validate(data: &Value, schema: &str, rows: &str, id: &str) -> Result<(), String> {
-    if data["schema"].as_str() != Some(schema) {
+fn validate(data: &Value, schemas: &[&str], rows: &str, id: &str) -> Result<(), String> {
+    let emitted = data["schema"].as_str().unwrap_or_default();
+    if !schemas.contains(&emitted) {
         return Err(format!(
-            "Unsupported S composition schema; expected {schema}"
+            "Unsupported S composition schema {emitted:?}; expected one of {schemas:?}"
         ));
     }
     let rows = data[rows]
@@ -207,7 +216,7 @@ fn validate(data: &Value, schema: &str, rows: &str, id: &str) -> Result<(), Stri
         }
         if !matches!(
             row["state"].as_str(),
-            Some("missing" | "installed" | "registered" | "broken")
+            Some("missing" | "installed" | "registered" | "installed_component" | "broken")
         ) {
             return Err(format!("Unsupported S availability state for {product}"));
         }

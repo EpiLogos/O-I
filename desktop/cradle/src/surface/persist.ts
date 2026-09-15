@@ -25,9 +25,12 @@ function validBinding(raw: unknown): SurfaceBinding | null {
     return null;
   // `draft` is unplaced writing: it deliberately carries no owner ref, and it
   // must survive a relaunch — the writing lives beside it under the same
-  // surface id, and dropping the binding would orphan it.
-  if (o.kind !== "source" && o.kind !== "sources" && o.kind !== "knowledge" && o.kind !== "file" && o.kind !== "encounter" && o.kind !== "system" && o.kind !== "browser" && o.kind !== "terminal" && o.kind !== "flow" && o.kind !== "draft" && o.kind !== "blank") return null;
+  // surface id, and dropping the binding would orphan it. `instrument` is a
+  // presentation binding to an externally owned QL source; the source itself
+  // is never serialised into desktop state.
+  if (o.kind !== "source" && o.kind !== "sources" && o.kind !== "knowledge" && o.kind !== "file" && o.kind !== "encounter" && o.kind !== "system" && o.kind !== "browser" && o.kind !== "terminal" && o.kind !== "flow" && o.kind !== "draft" && o.kind !== "blank" && o.kind !== "instrument" && o.kind !== "explore" && o.kind !== "presentation") return null;
   if (o.ref !== undefined && typeof o.ref !== "string") return null;
+  if (o.kind === "instrument" && (typeof o.ref !== "string" || !o.ref.trim())) return null;
   if (o.project !== undefined && typeof o.project !== "string") return null;
   const address = o.address as SurfaceBinding["address"];
   if (o.kind === "knowledge" && (!address || !["wiki","source","project-map"].includes(address.kind) || typeof address.value !== "string" || address.value !== o.ref)) return null;
@@ -36,10 +39,20 @@ function validBinding(raw: unknown): SurfaceBinding | null {
   const encounter=o.encounter as SurfaceBinding["encounter"];
   if(o.kind==="encounter" && (!encounter || typeof encounter.space!=="string" || typeof o.ref!=="string" || !o.ref.startsWith("agent-session/") || typeof o.project!=="string"))return null;
   const flow=o.flow as SurfaceBinding["flow"];
-  if(o.kind==="flow" && (!flow || typeof flow.flowRef!=="string" || !flow.flowRef || typeof flow.path!=="string" || !flow.path || typeof o.ref!=="string" || !o.ref || typeof o.project!=="string" || !o.project))return null;
+  // A flow instance is a user-section document: its identity is the file's
+  // path-ref (the binding's ref) plus the in-document id — no project
+  // register is involved, and the location must round-trip for the surface
+  // to read the file back.
+  if(o.kind==="flow" && (!flow || typeof flow.flowRef!=="string" || !flow.flowRef || typeof flow.path!=="string" || !flow.path || typeof o.ref!=="string" || !o.ref || !o.ref.startsWith("central:path:")))return null;
+  if(o.kind==="flow" && (!location || location.schema!=="central.path-ref/v1" || typeof location.ref!=="string" || location.ref!==o.ref || typeof location.root!=="string" || typeof location.path!=="string"))return null;
+  // SF1: a pinned projected subject must name its hosted ref and its world;
+  // the optional exact refs/revisions ride along only when well-typed.
+  const presentationRaw=o.presentation as Record<string,unknown>|undefined;
+  if(o.kind==="presentation" && (typeof o.ref!=="string" || !o.ref.trim() || !presentationRaw || typeof presentationRaw!=="object" || typeof presentationRaw.world_ref!=="string"))return null;
+  const presentation=o.kind==="presentation"&&presentationRaw?{world_ref:presentationRaw.world_ref as string,...(typeof presentationRaw.field_ref==="string"?{field_ref:presentationRaw.field_ref}:{}),...(typeof presentationRaw.projection_ref==="string"?{projection_ref:presentationRaw.projection_ref}:{}),...(Number.isInteger(presentationRaw.projection_revision)?{projection_revision:presentationRaw.projection_revision as number}:{}),...(typeof presentationRaw.presentation_ref==="string"?{presentation_ref:presentationRaw.presentation_ref}:{}),...(Number.isInteger(presentationRaw.presentation_revision)?{presentation_revision:presentationRaw.presentation_revision as number}:{}),...(typeof presentationRaw.expression_ref==="string"?{expression_ref:presentationRaw.expression_ref}:{}),...(Number.isInteger(presentationRaw.expression_revision)?{expression_revision:presentationRaw.expression_revision as number}:{})}:undefined;
   const view=o.view as SurfaceBinding["view"];
   const encounterPlane=view?.encounterPlane;
-  return { terminal:o.kind==="terminal"?{cwd:typeof (o.terminal as {cwd?:unknown})?.cwd==="string"?(o.terminal as {cwd:string}).cwd:undefined}:undefined, flow:o.kind==="flow"?flow:undefined, browser:o.kind==="browser"?{url:typeof (o.browser as {url?:unknown})?.url==="string"?(o.browser as {url:string}).url:""}:undefined, view:encounterPlane&&["Conversation","Activity","Context","Inspect"].includes(encounterPlane)?{encounterPlane}:undefined, encounter, location, address, project: o.project as string | undefined, id: o.id, kind: o.kind, ref: o.ref as string | undefined, title: o.title };
+  return { presentation, terminal:o.kind==="terminal"?{cwd:typeof (o.terminal as {cwd?:unknown})?.cwd==="string"?(o.terminal as {cwd:string}).cwd:undefined}:undefined, flow:o.kind==="flow"?flow:undefined, browser:o.kind==="browser"?{url:typeof (o.browser as {url?:unknown})?.url==="string"?(o.browser as {url:string}).url:""}:undefined, view:encounterPlane&&["Conversation","Activity","Context","Inspect"].includes(encounterPlane)?{encounterPlane}:undefined, encounter, location, address, project: o.project as string | undefined, id: o.id, kind: o.kind, ref: o.ref as string | undefined, title: o.title };
 }
 
 function validPane(raw: unknown, surfaces: Record<SurfaceId, SurfaceBinding>): Pane | null {

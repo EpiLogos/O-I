@@ -275,8 +275,21 @@ decision. It is not invented here.
 
 ## 7. What this wave does not do
 
-- No configuration semantics, no `oi-settings` storage, no settings
-  database, no duplicate Action catalogue, no duplicate provider registry.
+- ~~No configuration semantics, no `oi-settings` storage, no settings
+  database~~ — **superseded in part** by the configuration plane
+  (`09-CONFIGURATION-PLANE.md`, #299). The blanket prohibition was correct
+  for this disclosure wave, while owner-native mutation did not exist, and
+  is too broad as the permanent O:I rule. The governing law is now the
+  superseding storage law: **O:I SHALL NOT mirror or independently
+  reinterpret product-owned configuration. O:I MAY own composition
+  configuration, sparse desired-state profiles, scope overlays, connector
+  configuration, configuration provenance and reconciliation state required
+  to operate the six as one World. Native product configuration remains
+  authoritative in its owning product.** The read-only disclosure plane this
+  wave froze is preserved unchanged; the operability plane is complementary
+  and its documents never mix with disclosure documents.
+- No duplicate Action catalogue, no duplicate provider registry — still
+  standing.
 - No renderer-owned business logic: the cradle projects, never authors.
 - No fake capability state. An empty section is proof, not failure (L3).
 - No change to Navigator/Canvas/right-layer/lower-region geometry, and no

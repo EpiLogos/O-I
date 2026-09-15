@@ -1,0 +1,45 @@
+name: Search material rendering
+
+on:
+  pull_request:
+    paths:
+      - 'desktop/cradle/src/knowledge/**'
+      - 'desktop/cradle/tests/search-*'
+      - 'packages/oi-design-system/**'
+      - '.github/workflows/search-material.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  material:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/cradle/package-lock.json
+      - run: npm ci --prefix desktop/cradle --no-audit --no-fund
+      - working-directory: desktop/cradle
+        run: npx playwright install --with-deps chromium webkit
+      - name: Inspect rendered pixels, not just a supported CSS declaration
+        working-directory: desktop/cradle
+        run: node tests/search-material.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: search-material-${{ matrix.os }}-${{ github.sha }}
+          path: desktop/cradle/tests/artifacts/material
+          if-no-files-found: error

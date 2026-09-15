@@ -24,6 +24,7 @@ export const DEFAULT_WELCOME_PHRASES = [
   {id:"notes-different-meeting",text:"I have notes from the meeting. The notes attended a different meeting.",tone:"playful",placement:"returning"},
   {id:"confidence-font",text:"Confidence is a draft that found a font.",tone:"playful",placement:"opening"},
   {id:"bad-system",text:"I have a system. It involves remembering. It is a bad system.",tone:"quiet",placement:"either"},
+  {id:"this-is-a-question",text:"“This is a question.” is a statement whose successful effect is to make “this” a question.",tone:"playful",placement:"either"},
 ] as const satisfies readonly WelcomePhrase[];
 
 export type DefaultWelcomePhraseId = (typeof DEFAULT_WELCOME_PHRASES)[number]["id"];

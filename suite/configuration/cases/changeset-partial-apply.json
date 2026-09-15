@@ -1,0 +1,107 @@
+{
+  "fixture": "changeset-partial-apply",
+  "kind": "changeset",
+  "case": "partial-apply",
+  "changeset_id": "cs-fixture-partial-apply-1",
+  "lifecycle": [
+    {
+      "stage": "final",
+      "changeset": {
+        "schema": "oi.config-changeset/v1",
+        "changeset_id": "cs-fixture-partial-apply-1",
+        "created_at_unix_ms": 0,
+        "profile_ref": "development",
+        "requested": [
+          {
+            "setting_ref": "ai-kit:resolution:model.default",
+            "scope": { "scope_kind": "project", "scope_ref": "epilogos/o-i" },
+            "value": "sonnet-next"
+          },
+          {
+            "setting_ref": "oi:verify:verify.before-run",
+            "scope": { "scope_kind": "world", "scope_ref": null },
+            "value": true
+          }
+        ],
+        "operations": [
+          {
+            "op_id": "op-1",
+            "depends_on": [],
+            "owner_ref": "ai-kit",
+            "setting_ref": "ai-kit:resolution:model.default",
+            "scope": { "scope_kind": "project", "scope_ref": "epilogos/o-i" },
+            "kind": "apply",
+            "plan_digest": "51aa02",
+            "status": "verified",
+            "receipt_ref": "aikit-receipt-2",
+            "error": null
+          },
+          {
+            "op_id": "op-2",
+            "depends_on": [],
+            "owner_ref": "oi",
+            "setting_ref": "oi:verify:verify.before-run",
+            "scope": { "scope_kind": "world", "scope_ref": null },
+            "kind": "apply",
+            "plan_digest": "77bb13",
+            "status": "failed",
+            "receipt_ref": "oi-receipt-err-1",
+            "error": {
+              "code": "owner_unavailable",
+              "message": "the composition layer could not publish the setting",
+              "retryable": true
+            }
+          }
+        ],
+        "verification": {
+          "reading_digest": "c4d0ee",
+          "observed_at_unix_ms": 0,
+          "reconciliations": [
+            { "setting_ref": "ai-kit:resolution:model.default", "status": "satisfied" },
+            { "setting_ref": "oi:verify:verify.before-run", "status": "blocked" }
+          ]
+        },
+        "status": "partially_applied"
+      }
+    }
+  ],
+  "receipts": [
+    {
+      "schema": "oi.config-receipt/v1",
+      "receipt_id": "aikit-receipt-2",
+      "owner_ref": "ai-kit",
+      "changeset_id": "cs-fixture-partial-apply-1",
+      "plan_digest": "51aa02",
+      "setting_ref": "ai-kit:resolution:model.default",
+      "scope": { "scope_kind": "project", "scope_ref": "epilogos/o-i" },
+      "operation": "apply",
+      "outcome": "applied",
+      "applied_at_unix_ms": 0,
+      "native_ref": "aikit:history:model.default:2",
+      "expected_effect": { "kind": "session-restart-required", "summary": null, "ref": null },
+      "original_receipt_id": null,
+      "error": null
+    },
+    {
+      "schema": "oi.config-receipt/v1",
+      "receipt_id": "oi-receipt-err-1",
+      "owner_ref": "oi",
+      "changeset_id": "cs-fixture-partial-apply-1",
+      "plan_digest": "77bb13",
+      "setting_ref": "oi:verify:verify.before-run",
+      "scope": { "scope_kind": "world", "scope_ref": null },
+      "operation": "apply",
+      "outcome": "failed",
+      "applied_at_unix_ms": 0,
+      "native_ref": null,
+      "expected_effect": null,
+      "original_receipt_id": null,
+      "error": { "code": "owner_unavailable", "message": "the composition layer could not publish the setting", "retryable": true }
+    }
+  ],
+  "expect": {
+    "final_status": "partially_applied",
+    "per_operation_truth_preserved": true,
+    "no_rollback_claimed": "the failed operation stays failed with its error; no compensation operation is invented"
+  }
+}

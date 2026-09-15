@@ -1,0 +1,82 @@
+{
+  "profile": "oi.html-form-roster/v1",
+  "owner": "O-I#279",
+  "meaning": "Six initial presentation families, not six exclusive C slots or a closed extension enum.",
+  "cProfile": {
+    "id": "oi.page-world-c/v1",
+    "source": "C0",
+    "subjects": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+    ],
+    "expression": "C5",
+    "audienceIndependent": true,
+    "requiresLiveQl": false
+  },
+  "forms": [
+    {
+      "kind": "document-01",
+      "label": "0/1",
+      "family": "Flow / Dialogue",
+      "hint": "Dialogue · Flow · Journal",
+      "file": "ql-dialogue-flow.html",
+      "templateRef": "ql-template:dialogue-flow",
+      "version": "0.1",
+      "standing": "retained-source"
+    },
+    {
+      "kind": "document-42",
+      "label": "4+2",
+      "family": "Day / 4+2",
+      "hint": "Day die",
+      "file": "ql-daily-die.html",
+      "templateRef": "ql-template:daily-die",
+      "version": "0.3",
+      "standing": "retained-source"
+    },
+    {
+      "kind": "document-beings",
+      "label": "Beings",
+      "family": "Beings",
+      "hint": "A presence and its world",
+      "file": "oi-beings.html",
+      "templateRef": "oi.template/beings",
+      "version": "0.1.0",
+      "standing": "reference-carrier"
+    },
+    {
+      "kind": "document-things",
+      "label": "Things",
+      "family": "Things",
+      "hint": "A subject, work or collection",
+      "file": "oi-things.html",
+      "templateRef": "oi.template/things",
+      "version": "0.1.0",
+      "standing": "reference-carrier"
+    },
+    {
+      "kind": "document-yoshimoto",
+      "label": "Yoshimoto Cube",
+      "family": "Yoshimoto Cube",
+      "hint": "Spatial and relational reading",
+      "file": null,
+      "templateRef": "oi.template/yoshimoto",
+      "version": null,
+      "standing": "intake-required",
+      "source": "owner-supplied ql-data-structure.zip; semantic rebuild 2026-07-30; preserve lawful mechanism and teaching"
+    },
+    {
+      "kind": "document-epi-card",
+      "label": "Epi-Card",
+      "family": "Epi-Card",
+      "hint": "Symbolic, visual and sonic rendition",
+      "file": null,
+      "templateRef": "oi.template/epi-card",
+      "version": null,
+      "standing": "intake-required",
+      "source": "EpiLogos/Antykathera-Essay-Work/submission-package/epi-card-system-v1"
+    }
+  ]
+}

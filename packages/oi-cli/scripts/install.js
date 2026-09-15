@@ -31,7 +31,7 @@ async function main() {
   const stagedBinary = path.join(vendor, '.oi.installing');
 
   try {
-    console.log(`@epi-logos/oi: installing native O:I ${NATIVE_VERSION} for ${target} from explicitly selected release ${tag}`);
+    console.log(`@epi-logos/oi: installing native O:I ${NATIVE_VERSION} for ${target} from release ${tag}`);
     const [checksumText] = await Promise.all([
       downloadText(checksumAssetUrl(tag, target)),
       downloadToFile(releaseAssetUrl(tag, target), archive),

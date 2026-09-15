@@ -33,6 +33,13 @@ export default async function run({ page, baseUrl, check, shot, channel, provisi
   await page.goto(baseUrl);
   const nav = page.getByRole("complementary", { name: "World navigator" });
   await nav.locator('[data-project-path="Work/Editor"]').click();
+
+  // The read half (queue cell D): while the register holds no remembered
+  // ground at all, the list renders honest absence — the owner's own
+  // "no such directory" refusal is what nothing-remembered looks like.
+  const rememberedList = nav.locator('[data-remembered-list="Editor"]');
+  await rememberedList.waitFor();
+  check(await rememberedList.locator('[data-remembered-absent]').count() === 1, "An empty remembered register renders honest absence, not an error");
   await nav.getByRole("button", { name: "Editor: files", exact: true }).click();
   const source = p.sources[0], content = p.originals.get(source.binding.path);
   await nav.locator(`[data-file-path="Work/Editor/${source.binding.path}"]`).click();
@@ -111,4 +118,19 @@ export default async function run({ page, baseUrl, check, shot, channel, provisi
   await page.locator('.component-pick-bounds').waitFor();
   await editor.locator('.cm-line').first().click(); await dialog.waitFor();
   check(await dialog.getByRole("button", { name: "Remember this", exact: true }).count() === 0, "An observed component selection offers no Remember — nothing is advertised that cannot run");
+
+  // The read half against a filled register: the navigator lists exactly the
+  // project note the owner holds, and reading it renders the owner's file
+  // verbatim against its content-addressed ref.
+  await page.getByRole("button", { name: "Close context selection" }).click();
+  await nav.getByRole("button", { name: "Editor: chats and tasks", exact: true }).click();
+  await rememberedList.locator("summary").click();
+  await rememberedList.locator("[data-remembered-row]").first().waitFor({timeout: 20000});
+  check(await rememberedList.locator("[data-remembered-row]").count() === 1, "The remembered list carries exactly the project note the owner holds");
+  await rememberedList.locator("[data-remembered-row] button").first().click();
+  const notePanel = rememberedList.locator("[data-remembered-note]");
+  await notePanel.waitFor({timeout: 20000});
+  const noteText = await notePanel.innerText();
+  check(noteText.includes(excerpt) && noteText.includes(ownerNote.ref), "Reading a note renders the owner's file verbatim — the selection and the content-addressed ref included");
+  await shot("remembered-list-read");
 }

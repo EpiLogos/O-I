@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "bootstrap",
-  "generated_at": "2026-09-08T12:06:22.140Z",
+  "generated_at": "2026-09-13T16:17:16.547Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,11 +12,11 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 1351,
+  "duration_ms": 4071,
   "checks": [
     {
       "ok": true,
-      "label": "BOOT-00/transport-unavailable: an honest state still leaves a usable local writing canvas"
+      "label": "BOOT-00/transport-unavailable: an honest state still leaves usable writing, kept on this device"
     },
     {
       "ok": true,
@@ -24,7 +24,7 @@
     },
     {
       "ok": true,
-      "label": "BOOT-02: the writing canvas stays reachable while ground is unrecognised"
+      "label": "BOOT-02: writing stays reachable while ground is unrecognised"
     },
     {
       "ok": true,
@@ -40,7 +40,19 @@
     },
     {
       "ok": true,
-      "label": "BOOT-06/12: the composition reading carries an observed-<relative time> freshness stamp"
+      "label": "BOOT-06/12: the composition reading carries its Ground fact"
+    },
+    {
+      "ok": true,
+      "label": "BOOT-06/12: the composition reading carries its Suite fact"
+    },
+    {
+      "ok": true,
+      "label": "BOOT-06/12: the composition reading carries its Census fact"
+    },
+    {
+      "ok": true,
+      "label": "BOOT-06/12: the composition reading carries its Observed fact"
     },
     {
       "ok": true,
@@ -48,11 +60,19 @@
     },
     {
       "ok": true,
-      "label": "BOOT-15: the Gateway absence section names the missing obligations honestly (no invented ecology row, no probe, no auto start)"
+      "label": "BOOT-15: the gateway obligation \"Ecology read\" is disclosed honestly — not available yet, never invented"
     },
     {
       "ok": true,
-      "label": "BOOT-15: the three real facts (AIKit executable bound, SessionSpace discovery, provider list) are all present"
+      "label": "BOOT-15: the gateway obligation \"Attach\" is disclosed honestly — not available yet, never invented"
+    },
+    {
+      "ok": true,
+      "label": "BOOT-15: the gateway obligation \"Stream cursor / replay\" is disclosed honestly — not available yet, never invented"
+    },
+    {
+      "ok": true,
+      "label": "BOOT-15: session topology is disclosed from the owner's agency reading (count or refusal verbatim), never invented"
     }
   ],
   "ops": [],

@@ -1,8 +1,15 @@
-// factory-development (queue cell 3, the first 6D consumer): Factory's own
-// developmental reads — project and workflow-units — render the owner's
-// contracts verbatim; Workcell's placement status renders beside them; a
-// nonexistent state path renders the OWNER'S refusal verbatim; nothing reads
-// before the explicit act.
+// factory-development (queue cell 3 + cell B, the 6D consumer): Factory's
+// own developmental reads as first-class rows — the project read's journey
+// registry renders as journey rows, each expanding through the owner's
+// journey read into its run rows, each run expanding into the Trajectory
+// presentation (chronological execution rows in owner order, expandable
+// verbatim detail) with the execution-telemetry read whose unavailability
+// renders in the owner's own words; the re-pinned build view
+// (`build snapshot <state> <project-ref> <run-ref>` — the old
+// `build discover`/`--binding` grammar is gone from the installed cut)
+// reaches the owner and renders its refusal verbatim on the specimen;
+// Workcell's placement status renders beside them; nothing reads before the
+// explicit act.
 //
 // The developmental state is seeded through the owner's own generator
 // (`factory conformance developmental-state`) — the owner publishes the
@@ -67,6 +74,62 @@ export default async function run({page, baseUrl, check, shot, channel, log, pro
   const unitsPayload = JSON.parse(await unitsPanel.locator("[data-owner-payload]").first().innerText());
   check(unitsPayload.contract === "factory.workflow-unit-list-reading/v1" && Array.isArray(unitsPayload.units), "The workflow-units read carries the owner's contract with its units");
   await shot("factory-development-readings");
+
+  // The journey registry renders as first-class rows carrying the owner's
+  // own journeyRef/frontier/status verbatim.
+  const journeyPayload = projectPayload.journeys[0];
+  const journeyRow = main.locator(`[data-journey-row="${journeyPayload.journeyRef}"]`);
+  await journeyRow.waitFor({timeout: 10000});
+  check((await journeyRow.innerText()).includes(journeyPayload.frontier), "The journey row renders the owner's frontier verbatim", journeyPayload);
+  check((await journeyRow.getAttribute("data-journey-row")) === journeyPayload.journeyRef, "The journey row's identity is the owner's journeyRef");
+
+  // Expanding the journey is an explicit act: the owner's journey read
+  // renders verbatim and its runRefs become run rows.
+  await journeyRow.locator("summary").first().click();
+  const journeyPanel = journeyRow.locator('[data-contract="factory.journey-reading/v1"]');
+  await journeyPanel.waitFor({timeout: 30000});
+  const journeyReading = JSON.parse(await journeyPanel.locator("[data-owner-payload]").first().innerText());
+  check(journeyReading.journeyRef === journeyPayload.journeyRef && journeyReading.frontier === journeyPayload.frontier, "The journey read carries the owner's identity and frontier verbatim");
+  const runRows = journeyRow.locator("[data-run-row]");
+  check(await runRows.count() === journeyPayload.runRefs.length, "The journey's runRefs render as run rows, one per owner ref", journeyPayload.runRefs);
+
+  // Expanding a run: the Trajectory presentation — the owner's executions as
+  // chronological rows in owner order, each expandable into verbatim detail.
+  const runRef = journeyPayload.runRefs[0];
+  const runRow = journeyRow.locator(`[data-run-row="${runRef}"]`);
+  await runRow.locator("summary").first().click();
+  await runRow.locator('.factory-run-facts').waitFor({timeout: 30000});
+  const runPanel = runRow.locator('[data-contract="factory.run-reading/v1"]');
+  check(await runPanel.count() === 1, "The run read carries the owner's run-reading contract");
+  // The full reading lives inside a closed <details>; textContent reaches it.
+  const runReading = JSON.parse(await runPanel.locator("[data-owner-payload]").first().textContent());
+  const ownerExecutions = runReading.executions ?? [];
+  check(await runRow.locator("[data-execution-row]").count() === ownerExecutions.length, "The executions band renders one row per owner execution in owner order", ownerExecutions.map(e => e.executionRef));
+  if (ownerExecutions.length) {
+    await runRow.locator("[data-execution-row]").first().locator("summary").first().click();
+    const detail = await runRow.locator('[data-owner-payload="execution"]').first().innerText();
+    const detailPayload = JSON.parse(detail);
+    check(detailPayload.executionRef === ownerExecutions[0].executionRef, "The expanded execution detail is the owner's own payload verbatim", detailPayload);
+  }
+
+  // Execution telemetry: the owner's unavailability renders verbatim —
+  // the specimen carries no telemetry and the desktop invents no observations.
+  await runRow.getByRole("button", {name: "Read execution telemetry", exact: true}).click();
+  const telemetryRefusal = runRow.locator(".factory-telemetry [data-owner-refusal]");
+  await telemetryRefusal.waitFor({timeout: 30000});
+  const telemetryText = await telemetryRefusal.getAttribute("data-owner-refusal");
+  check(telemetryText.includes("ExecutionTelemetryNotFound") || telemetryText.includes("refused") || telemetryText.includes("error"), "The owner's telemetry refusal renders verbatim", telemetryText?.slice(0, 120));
+
+  // The re-pinned build view: the new grammar reaches the owner; on this
+  // specimen the owner's build provider errors, and the refusal renders
+  // verbatim — nothing fabricated, no stale desktop payload.
+  await page.getByRole("textbox", {name: "Run ref for build view", exact: true}).fill(runRef);
+  await page.getByRole("button", {name: "Read build view", exact: true}).click();
+  const buildPanel = main.locator('.factory-development-build [data-reading-refused="true"], .factory-development-build [data-contract="factory.build-view/v1"]');
+  await buildPanel.waitFor({timeout: 30000});
+  const buildText = await buildPanel.first().innerText();
+  check(buildText.includes("refused") || buildText.includes("factory.build-view/v1"), "The re-pinned build-view route reaches the owner and discloses its answer verbatim", buildText.slice(0, 140));
+  await shot("factory-trajectory-rows");
 
   // Workcell's placement status: the owner's own fields verbatim.
   await page.getByRole("button", {name: "Read Workcell status", exact: true}).click();

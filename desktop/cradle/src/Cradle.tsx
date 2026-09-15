@@ -1,5 +1,10 @@
 import {ExpressionProvider,ExpressionLayout} from "./shared/Expression";
-import {flow,type FlowRecord} from "./flow/client";
+import {ExpressionStageProvider} from "./stage/ExpressionStage";
+import {mintInstance,parseInstance,instanceFileName} from "./flow/instance";
+import {userFlowsArea} from "./flow/instances";
+import {fileOperation,type FileMutation} from "./files/client";
+import {VisualsProvider} from "./visuals/ParticleExpression";
+import {WelcomeField} from "./visuals/WelcomeField";
 import {DRAFT_KEY} from "./flow/DraftSurface";
 import {DOCUMENT_FORMS,resolveDocumentForm} from "./flow/documentForms";
 import {ContextTray} from "./context/ContextTray";
@@ -7,6 +12,7 @@ import {FileHistory} from "./files/FileHistory";
 import {encounter} from "./encounter/client";
 import type {EncounterRow} from "./encounter/EncounterList";
 import {AgentLayer} from "./agent/AgentLayer";
+import {navigateExplore,type PresentationMeta} from "./explore/ExploreSurface";
 /**
  * The Cradle root (U0.3b + U0.4 + U0.6). One layout state, persisted to
  * localStorage and restored on load (map §5 U0.3b). Zero surfaces =
@@ -99,9 +105,13 @@ export function Cradle() {
   }, []);
   return (
     <KernelProvider>
-      <ExpressionProvider>
-      {window.__OI_DETACHED__ ? <DetachedFrame /> : <CradleFrame WalkChannel={WalkChannel} />}
-    </ExpressionProvider>
+      <VisualsProvider>
+        <ExpressionStageProvider>
+          <ExpressionProvider>
+            {window.__OI_DETACHED__ ? <DetachedFrame /> : <CradleFrame WalkChannel={WalkChannel} />}
+          </ExpressionProvider>
+        </ExpressionStageProvider>
+      </VisualsProvider>
     </KernelProvider>
   );
 }
@@ -327,18 +337,6 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
     setState(state=>groupsOf(state.root).some(group=>group.tabs.includes(binding.id))?executeFrameAction(state,"surface.activate",{surfaceId:binding.id}):openBinding({...state,closedStack:state.closedStack.filter(id=>id!==binding.id)},binding));
   };
 
-  /** Open (or focus) an existing Flow at its stable FlowRef (U4.1 §2:
-   * continue a Flow). Identity is the owner's — the binding carries the
-   * FlowRef and source ref, never a path-derived stand-in. */
-  const openFlow=async(row:FlowRecord,project:string)=>{
-    const existing=Object.values(stateRef.current.surfaces).find(binding=>binding.kind==="flow"&&binding.flow?.flowRef===row.flow_ref);
-    const title=row.title||row.path.split("/").pop()||"Flow.md";
-    const binding=existing??{id:crypto.randomUUID(),kind:"flow",title,project,ref:row.source_ref,flow:{flowRef:row.flow_ref,path:row.path}};
-    const opened=await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"flow",title,source_ref:binding.ref});
-    if(opened?.result!=="surface_opened")throw new Error("Central Flow surface could not be opened");
-    setState(state=>groupsOf(state.root).some(group=>group.tabs.includes(binding.id))?executeFrameAction(state,"surface.activate",{surfaceId:binding.id}):openBinding({...state,closedStack:state.closedStack.filter(id=>id!==binding.id)},binding));
-  };
-
   const openFile = async (location:CentralLocation) => {
     // FND-04: a binary material format (image/pdf/an unsupported disposition)
     // would refuse `central.files.read`'s default UTF-8 contract outright,
@@ -435,6 +433,42 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
     setState(s=>groupsOf(s.root).some(g=>g.tabs.includes(binding.id)) ? executeFrameAction(s,"surface.activate",{surfaceId:binding.id}) : openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
   };
 
+  /** SF1: Explore — the stable global entrance to the open/shared field
+   * (SHARED-FIELD-DESKTOP §1). One Explore Surface per arrangement,
+   * opened/focused like System; workspace-independent view state lives in
+   * its own remembered travel, never in the workspace's project. Opening
+   * it discloses nothing to anyone and starts no AgentSession. */
+  const openExplore = async (select?: {ref:string;title?:string}) => {
+    if(select)navigateExplore({ref:select.ref});
+    const current = stateRef.current;
+    const existing = Object.values(current.surfaces).find(b=>b.kind==="explore");
+    const binding = existing ?? {id:crypto.randomUUID(),kind:"explore",title:"Explore"};
+    if(!kernel.snapshot.surfaces[binding.id]){
+      const opened = await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"explore",source_ref:undefined,title:binding.title});
+      if (opened?.result !== "surface_opened") throw new Error("The Explore surface could not be opened");
+    }
+    setState(s=>groupsOf(s.root).some(g=>g.tabs.includes(binding.id)) ? executeFrameAction(s,"surface.activate",{surfaceId:binding.id}) : openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
+  };
+  /** SF1: one projected subject pinned as its own ordinary Surface, carrying
+   * the exact refs it was opened with; split/full/detach/re-dock are the
+   * frame's own grammar on this binding. */
+  const openPresentation = async (ref:string,title:string,meta:PresentationMeta) => {
+    const current = stateRef.current;
+    const existing = Object.values(current.surfaces).find(b=>b.kind==="presentation"&&b.ref===ref);
+    const binding:SurfaceBinding = existing ? {...existing,title,presentation:meta} : {id:crypto.randomUUID(),kind:"presentation",ref,title,presentation:meta};
+    if(!kernel.snapshot.surfaces[binding.id]){
+      const opened = await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"presentation",source_ref:ref,title});
+      if (opened?.result !== "surface_opened") throw new Error("The presentation surface could not be opened");
+    }
+    setState(s=>groupsOf(s.root).some(g=>g.tabs.includes(binding.id)) ? executeFrameAction({...s,surfaces:{...s.surfaces,[binding.id]:binding}},"surface.activate",{surfaceId:binding.id}) : openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
+  };
+  const openExploreRef=useRef(openExplore);openExploreRef.current=openExplore;
+  useEffect(()=>{
+    const open=(event:Event)=>{const d=(event as CustomEvent<{ref?:string;title?:string}|undefined>).detail;void openExploreRef.current(d?.ref?{ref:d.ref,title:d.title}:undefined).catch(e=>setWindowError(String(e)));};
+    window.addEventListener("oi:open-explore",open);
+    return()=>window.removeEventListener("oi:open-explore",open);
+  },[]);
+
   /// The Factory development reads surface (queue cell 3): the first 6D
   /// consumer, opened from the navigator like every global surface.
   const openFactoryDevelopment = async () => {
@@ -462,75 +496,76 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
    *  ProjectCentral/now/flows convention); never a UTC or scheduler stamp. */
   const localStamp=()=>{const d=new Date(),p=(n:number)=>String(n).padStart(2,"0");
     return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`;};
-  /** Central names the Flow from the local civil stamp
-   *  (ProjectCentral/now/flows/YYYY-MM-DD-HHMM.md). That stamp has minute
-   *  resolution, so writing twice inside one minute collides and Central
-   *  refuses the second — correctly, since a Flow may not take a path another
-   *  Flow owns. Writing is never lost to a clock: the same convention is
-   *  extended with a suffix until the owner accepts one. */
-  const createFlow=async(project:string|null)=>{
+  /** Writing opens on this device and never mints a placeholder: no Flow, no
+   *  file, no Day, no NOW allocation as a side effect of opening. The ground
+   *  is written only when the human explicitly saves real content
+   *  (placeDraft): one dated 0/1 instance in Control/user/flows/ — the
+   *  ratified carrier. */
+  const startWriting=async()=>{
+    setState(s=>openBinding(s,{id:crypto.randomUUID(),kind:"draft",title:"Draft"}));
+  };
+  /** Save unsaved writing: one dated 0/1 instance created in the user
+   *  section's flows area through Central's own file operation, replacing
+   *  the surface in place. Only real content reaches the ground — an empty
+   *  draft has nothing to place, and no blank placeholder is ever minted in
+   *  its name. The local copy is released only once the owner holds it. */
+  const placeDraft=async(bindingId:string,content:string)=>{
+    if(!content.trim())throw new Error("Nothing to place yet — write first, then save.");
+    let area:import("./flow/instances").UserFlowsArea|undefined;
+    try{area=await userFlowsArea(kernel.transport);}catch{area=undefined;}
+    if(!area)throw new Error("No Central ground is reachable; the writing is still kept on this device.");
     const stamp=localStamp();
-    const attempt=(path?:string)=>flow(kernel.transport,{action:"flow_create",project,actor:"desktop-user",actor_kind:"human",
-      ...(path?{path}:{local_stamp:stamp})});
+    let lastError:unknown;
     for(let n=0;n<8;n++){
-      try{ return await attempt(n===0?undefined:`${flowDir(project)}/${stamp}-${n+1}.md`); }
-      catch(reason){ if(!/already owns that path/i.test(String(reason))||n===7) throw reason; }
+      const name=instanceFileName(stamp,n);
+      const location={schema:"central.path-ref/v1" as const,ref:`${area.baseRef}/flows/${name}`,root:area.root,path:`${area.basePath}/flows/${name}`};
+      try{
+        const html=mintInstance(content);
+        const result=await fileOperation<FileMutation>(kernel.transport,location,{action:"write",expected_revision:"",content:html});
+        if(result.outcome!=="created")throw new Error(`Central did not create the flow instance (${result.outcome}).`);
+        const doc=parseInstance(html);
+        const documentId=doc.meta.documentId??name;
+        const title=name;
+        const binding:SurfaceBinding={id:bindingId,kind:"flow",title,ref:location.ref,location,flow:{flowRef:documentId,path:location.path}};
+        // The owner-mediated read registers the file ref for the surface-open
+        // gate and hands back the live central revision.
+        await readFile(kernel.transport,location);
+        const opened=await kernel.apply({op:"surface_open",surface_id:bindingId,kind:"flow",title,source_ref:location.ref});
+        if(opened?.result!=="surface_opened")throw new Error("Central created the flow document but the surface could not be opened; your writing is still kept on this device.");
+        await kernel.apply({op:"surface_focus",surface_id:bindingId});
+        setState(s=>({...s,surfaces:{...s.surfaces,[bindingId]:binding}}));
+        try{localStorage.removeItem(DRAFT_KEY(bindingId));}catch{/* The owner holds it now. */}
+        return;
+      }catch(reason){
+        lastError=reason;
+        if(!/already exists|conflict/i.test(String(reason)))throw reason;
+      }
     }
-    throw new Error("Central would not accept a new Flow in this minute");
-  };
-  const flowDir=(project:string|null)=>project?"ProjectCentral/now/flows":"Control/agents/now/flows";
-  const flowTitle=(created:{flow:{path:string;title?:string}})=>created.flow.title||created.flow.path.split("/").pop()||"Flow.md";
-  /** Writing opens a real Flow in its register's NOW field. Writing never
-   *  waits for a register: when the scope names a project, the Flow is
-   *  created through Central's own operation and lands in that project's
-   *  ProjectCentral NOW. When nothing can be named yet — no project chosen,
-   *  or no Central reachable at all — the writing still opens, as an
-   *  unplaced draft that keeps itself on this device and offers to place
-   *  itself the moment a register appears. Nothing is refused, and nothing
-   *  is lost. */
-  const startWriting=async(project?:string)=>{
-    const scope=project??workspaceRef.current.current.project??kernel.snapshot.navigator?.project?.project.name??null;
-    const id=crypto.randomUUID();
-    // No Central at all is the only case with nowhere to write yet: the
-    // writing opens anyway and keeps itself until a ground appears. With
-    // Central reachable and no project named, the Flow belongs to the root
-    // register — Central is the meta-project.
-    if(kernel.transport.kind==="unavailable"){
-      setState(s=>openBinding(s,{id,kind:"draft",title:"Draft"}));
-      return;
-    }
-    const created=await createFlow(scope);
-    const title=flowTitle(created);
-    const binding:SurfaceBinding={id,kind:"flow",title,project:scope??undefined,ref:created.flow.source_ref,flow:{flowRef:created.flow.flow_ref,path:created.flow.path}};
-    const opened=await kernel.apply({op:"surface_open",surface_id:id,kind:"flow",title,source_ref:binding.ref});
-    if(opened?.result!=="surface_opened")throw new Error("The new Flow surface could not be opened");
-    setState(s=>openBinding(s,binding));
-  };
-  /** Save unsaved writing into a register: one real Flow, created and written
-   *  through Central's own operations, replacing the surface in place. The
-   *  local copy is released only once the owner holds it. */
-  const placeDraft=async(bindingId:string,project:string,content:string)=>{
-    const created=await createFlow(project);
-    const title=flowTitle(created);
-    if(content.length){
-      await flow(kernel.transport,{action:"flow_write",project,flow_ref:created.flow.flow_ref,
-        expected_revision:created.flow.current_revision,content,actor:"desktop-user",actor_kind:"human"});
-    }
-    const binding:SurfaceBinding={id:bindingId,kind:"flow",title,project,ref:created.flow.source_ref,flow:{flowRef:created.flow.flow_ref,path:created.flow.path}};
-    const opened=await kernel.apply({op:"surface_open",surface_id:bindingId,kind:"flow",title,source_ref:binding.ref});
-    if(opened?.result!=="surface_opened")throw new Error("Central created the Flow but the surface could not be opened; your draft is still retained.");
-    setState(s=>({...s,surfaces:{...s.surfaces,[bindingId]:binding}}));
-    try{localStorage.removeItem(DRAFT_KEY(bindingId));}catch{/* The owner holds it now. */}
+    throw new Error(`Central would not accept a new flow instance this minute: ${String(lastError)}`);
   };
   const placeDraftRef=useRef(placeDraft);placeDraftRef.current=placeDraft;
   useEffect(()=>{
-    const place=(event:Event)=>{const d=(event as CustomEvent<{id:string;project:string;content:string}>).detail;
-      void placeDraftRef.current(d.id,d.project,d.content)
+    const place=(event:Event)=>{const d=(event as CustomEvent<{id:string;content:string}>).detail;
+      void placeDraftRef.current(d.id,d.content)
         .then(()=>window.dispatchEvent(new CustomEvent("oi:place-draft-result",{detail:{id:d.id}})))
         .catch(reason=>window.dispatchEvent(new CustomEvent("oi:place-draft-result",{detail:{id:d.id,error:String(reason instanceof Error?reason.message:reason)}})));};
     window.addEventListener("oi:place-draft",place);
     return()=>window.removeEventListener("oi:place-draft",place);
   },[]);
+  /** Open one flow instance from the navigator's user-section list: the
+   *  document surface reads the file the owner holds. */
+  const openFlowInstance=async(row:{name:string;location:import("./kernel/types").CentralLocation})=>{
+    const existing=Object.values(stateRef.current.surfaces).find(binding=>binding.kind==="flow"&&binding.location?.ref===row.location.ref);
+    const title=row.name;
+    const binding=existing??{id:crypto.randomUUID(),kind:"flow",title,ref:row.location.ref,location:row.location,flow:{flowRef:row.name,path:row.location.path}};
+    // The surface-open gate requires the ref be registered by a real
+    // owner-mediated read; reading the instance is the open.
+    await readFile(kernel.transport,row.location);
+    const opened=await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"flow",title,source_ref:binding.location!.ref});
+    if(opened?.result!=="surface_opened")throw new Error("The flow document surface could not be opened");
+    await kernel.apply({op:"surface_focus",surface_id:binding.id});
+    setState(state=>groupsOf(state.root).some(group=>group.tabs.includes(binding.id))?executeFrameAction(state,"surface.activate",{surfaceId:binding.id}):openBinding({...state,closedStack:state.closedStack.filter(id=>id!==binding.id)},binding));
+  };
   const freshChoice=async(id:string,kind:string,project?:string)=>{
     const workspaceId=workspaceRef.current.current.id;
     const current=stateRef.current.surfaces[id];if(!current)return;
@@ -544,12 +579,19 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
     if(form){await openFile(await resolveDocumentForm(kernel.transport,form,kernel.snapshot.navigator?.root?.work.projects));return;}
     let binding:SurfaceBinding={...current,project,kind,title:kind==="terminal"?"Terminal":"Browser"};
     if(kind==="flow"){
-      if(!project)throw new Error("Choose a project for this Flow first");
-      const created=await createFlow(project);
-      binding={...binding,title:flowTitle(created),ref:created.flow.source_ref,flow:{flowRef:created.flow.flow_ref,path:created.flow.path}};
+      // Writing, not minting: the fresh tab's Write opens the retained draft
+      // in place of the blank surface. No register refusal — blank writing is
+      // valid, and the picker names where a Save will place it.
+      binding={...current,project,kind:"draft",title:"Draft"};
     }else if(kind==="terminal"){
       binding.terminal={cwd:terminalCwd(project)};
     }else if(kind==="browser"){binding.browser={url:""};}else{return;}
+    if(binding.kind==="draft"){
+      // A draft is a client-side surface — the same shape the
+      // transport-unavailable path has always opened. Nothing to register.
+      workspaceRef.current.replaceSurface(workspaceId,binding);
+      return;
+    }
     const opened=await kernel.apply({op:"surface_open",surface_id:id,kind:binding.kind,title:binding.title,source_ref:binding.ref});
     if(opened?.result!=="surface_opened")throw new Error("The new surface could not be opened");
     workspaceRef.current.replaceSurface(workspaceId,binding);
@@ -742,7 +784,7 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
       const tab=Array.from(document.querySelectorAll<HTMLElement>(".tab")).find(el=>el.dataset.surfaceId===redockFocus);
       const pane=tab?.closest(".pane.group");
       const kind=state.surfaces[redockFocus]?.kind;
-      const target=pane?.querySelector<HTMLElement>(kind === "encounter" ? ".encounter textarea" : kind === "source" || kind === "file" || kind === "flow" ? ".cm-content" : "[role=tabpanel] button,[role=tabpanel] [tabindex='0']");
+      const target=pane?.querySelector<HTMLElement>(kind === "encounter" ? ".encounter textarea" : kind === "source" || kind === "file" || kind === "flow" ? ".cm-content" : kind === "explore" || kind === "presentation" ? ".explore-strip input, .explore-strip button:not(:disabled)" : "[role=tabpanel] button,[role=tabpanel] [tabindex='0']");
       if(!target || target.matches(":disabled") || !document.hasFocus())return;
       target.focus();if(document.activeElement===target)setRedockFocus(undefined);
     };
@@ -814,9 +856,15 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
     return () => window.removeEventListener("pointerdown", onDown);
   }, [menu]);
 
+  // Whether the welcome frontstate still stands between the app and the
+  // person. It dissolves on the first click (or Escape); the workspace is
+  // interactive the moment it lifts.
+  const [welcomeUp, setWelcomeUp] = useState(true);
+
   return (
     <>
       <ExpressionLayout layout={state}/>
+      {welcomeUp && <WelcomeField onEntered={()=>setWelcomeUp(false)}/>}
       {windowError && <p role="alert">{windowError}</p>}
       {workspace.recovery&&<section className="workspace-recovery" aria-label="Workspace recovery"><p>The saved arrangement could not be restored. Its original data is retained.</p><button disabled={!workspace.recovery.key} onClick={workspace.recoverAvailable}>Recover available workspaces</button><button disabled={!workspace.recovery.key} onClick={workspace.startFresh}>Start a fresh arrangement</button></section>}
       <DesktopShell onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}
@@ -824,7 +872,7 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
         subject={{ref:subjectRef,title:subjectTitle,context:<><h2>{subjectTitle}</h2>{subjectBinding?.flow&&<p data-subject-flow-ref={subjectBinding.flow.flowRef}>Working through <code>{subjectBinding.flow.flowRef}</code></p>}{subjectBuffer ? <p>{subjectBuffer.project} · {subjectBuffer.dirty ? "Unsaved changes" : "Saved"}</p> : subjectBinding?.project ? <p>{subjectBinding.project}</p> : <p>Select a surface to inspect its context.</p>}</>,history:subjectHistory}}
         right={<AgentLayer project={workspace.current.project} subject={{ref:subjectRef,kind:subjectBinding?.kind,title:subjectTitle,project:subjectBinding?.project ?? subjectBuffer?.project,location:subjectBinding?.location,dirty:subjectBuffer?.dirty,revision:subjectBuffer?.base_revision}} history={subjectHistory} historyAvailable={subjectHistoryAvailable} accompanying={state.accompanying} onAccompanying={value=>setState(s=>({...s,accompanying:value}))} full={state.rightDepth==="full"} onFull={()=>setState(s=>({...s,rightDepth:s.rightDepth==="full"?"panel":"full"}))} onClose={()=>setState(s=>({...s,rightDepth:"collapsed"}))}/>}
         layout={state} setLayout={setState} workspace={workspace.current} workspaces={workspace.workspaces} activate={workspace.activate} create={workspace.create} rename={workspace.rename} onRecover={workspace.showRecovery} error={workspace.error}
-        navigator={workspaceSelector => <WorldNavigator onAgent={summonAgent} onSystem={()=>void openSystem().catch(e=>setWindowError(String(e)))} onFactoryDevelopment={()=>void openFactoryDevelopment().catch(e=>setWindowError(String(e)))} onOpenEncounter={openEncounter} centralFiles={workspace.current.centralFiles??false} onCentralFilesChange={workspace.setCentralFiles} workspaceSelector={workspaceSelector} searchShortcut={leader.label} key={workspace.current.id} projectNavigation={workspace.current.projectNavigation ?? {}} onNavigationChange={(ref,change)=>workspace.setProjectNavigation(ref,change,workspace.current.id)} onOpenFile={openFile} onProjectChange={workspace.browse} onOpenToday={openToday} onOpenWiki={(ref,title,project)=>openKnowledge({kind:"wiki",value:ref},title,project)} onSearch={()=>setSearchOpen(true)} activeEncounterRef={activeEncounterRef} onOpenFlow={openFlow} onNewFlow={project=>startWriting(project)} />}>
+        navigator={workspaceSelector => <WorldNavigator onAgent={summonAgent} onSystem={()=>void openSystem().catch(e=>setWindowError(String(e)))} onExplore={()=>void openExplore().catch(e=>setWindowError(String(e)))} onFactoryDevelopment={()=>void openFactoryDevelopment().catch(e=>setWindowError(String(e)))} onOpenEncounter={openEncounter} centralFiles={workspace.current.centralFiles??false} onCentralFilesChange={workspace.setCentralFiles} workspaceSelector={workspaceSelector} searchShortcut={leader.label} key={workspace.current.id} projectNavigation={workspace.current.projectNavigation ?? {}} onNavigationChange={(ref,change)=>workspace.setProjectNavigation(ref,change,workspace.current.id)} onOpenFile={openFile} onProjectChange={workspace.browse} onOpenToday={openToday} onOpenWiki={(ref,title,project)=>openKnowledge({kind:"wiki",value:ref},title,project)} onSearch={()=>setSearchOpen(true)} activeEncounterRef={activeEncounterRef} onOpenFlowInstance={row=>openFlowInstance(row)} onNewFlow={()=>startWriting()} />}>
       {state.root ? (
         <Workbench
           onView={(id,view)=>workspace.surfaceView(workspace.current.id,id,view)}
@@ -836,10 +884,12 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
           openFrameMenu={openFrameMenu}
           openSource={openSource}
           openKnowledge={openKnowledge}
+          openPresentation={openPresentation}
+          openExplore={openExplore}
           nativeWindows={kernel.transport.kind==="tauri"}
         />
       ) : (
-        <Rest project={workspace.current.project} onWrite={startWriting} title={workspace.current.name} onSearch={()=>setSearchOpen(true)} onWiki={(() => {
+        <Rest project={workspace.current.project} onWrite={startWriting} title={workspace.current.name} onSearch={()=>setSearchOpen(true)} onExplore={()=>void openExplore().catch(e=>setWindowError(String(e)))} onWiki={(() => {
           const reading=kernel.snapshot.navigator;
           const project=reading?.project?.project;
           const ref=project ? project.projectcentral.agent_wiki.wiki.space_ref : reading?.root?.control.agent_wiki.wiki.space_ref;

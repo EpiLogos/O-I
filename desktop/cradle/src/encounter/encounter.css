@@ -177,6 +177,9 @@
  * surface's own dispatch records, never inferred. Empty state is honest. */
 .encounter-now-refs{list-style:none;margin:6px 0;padding:0;display:flex;flex-direction:column;gap:4px}
 .encounter-now-refs li{display:flex;gap:8px;align-items:baseline;font-size:var(--oi-shell-type-nav)}
+.encounter-now-refs li{flex-wrap:wrap}
+.encounter-now-refs .now-relations{flex-basis:100%}
+.encounter-inspect [data-now-task-uncertain]{color:var(--oi-muted-2);font-size:var(--oi-shell-type-nav);overflow-wrap:anywhere}
 
 /* The session's bound task, read through the owner (queue cell 2): owner
  * facts only, verbatim; the undisclosed agency basis is named honestly. */

@@ -1,15 +1,16 @@
 import {docText, waitForDoc} from '../editor-doc.mjs';
 /** Empty desktop remains usable without an owner transport; no sample world.
  *
- *  Writing is no longer a mode this pane owns. The study-era isolated canvas
- *  ("Start writing" → a local textarea, "Back to workspace" → back to this
- *  same page) was a parallel to the real Flow work, not a route into it:
- *  it wrote into workspace-local state instead of a Flow in a NOW register,
- *  and its "back to workspace" named a destination it did not go to. The
- *  entry now opens a real Flow through Central's own operation, so with no
- *  owner transport the honest answer is the owner's absence — never a buffer
- *  that goes nowhere. The kernel-backed half of this contract is asserted in
- *  the `flow` scenario. */
+ *  Writing is no longer a mode this pane owns, and it no longer waits for an
+ *  owner either. The study-era isolated canvas ("Start writing" → a local
+ *  textarea, "Back to workspace" → back to this same page) was a parallel to
+ *  the real Flow work, not a route into it. The entry now opens the retained
+ *  local draft (supersession, 2026-09-13: with no owner transport the writing
+ *  still opens and is kept on this device — the early reading that it should
+ *  be refused named a door the carrier law has since closed). Nothing reaches
+ *  the ground until an explicit Save places it through Central's own flow
+ *  operation; that kernel-backed half is asserted in the `flow-canvas`
+ *  scenario. */
 export default async function run({page,baseUrl,check,metric,shot,channel}) {
   await page.goto(baseUrl);
   const timing=(await channel('capture.timing')).data;
@@ -43,8 +44,18 @@ export default async function run({page,baseUrl,check,metric,shot,channel}) {
   await draft.click(); await page.keyboard.type(draftText);
   await waitForDoc(page,draftText,'.draft-surface .cm-content');
   const footer=await page.locator('.draft-surface .editor-footer').textContent()??'';
-  check(/Choose where to save/.test(footer)&&/Save/.test(footer),
-    'Unsaved writing carries a register picker beside the ordinary Save, in the ordinary saving chrome',{footer});
+  // Supersession named (2026-09-13, ratified flow carrier — O-I #271 on
+  // PROPOSAL-FLOW-DAY-LOGICS-2026-09-13-2 / Central #174): unplaced writing
+  // has ONE owner-section home. Saving places a dated 0/1 instance in
+  // Control/user/flows through Central's own file operation, and the #271
+  // brief rules "the register picker is gone (one user-section home)". The
+  // earlier check asserted the pre-carrier picker; the law under assertion
+  // now is the truthful render: the destination named beside the ordinary
+  // Save, in the ordinary saving chrome, and no register choice fabricated
+  // where the carrier law removed one.
+  const picker=await page.locator('.draft-surface .draft-register select').count();
+  check(/Control\/user\/flows/.test(footer)&&/Save/.test(footer)&&picker===0,
+    'Unsaved writing names its owner-section destination beside the ordinary Save, and fabricates no register choice',{footer,picker});
   check(/Unsaved/.test(footer),'The surface says the writing is unsaved rather than claiming owner ground');
   await page.reload(); await channel('info');
   await page.locator('.draft-surface .cm-content').waitFor();

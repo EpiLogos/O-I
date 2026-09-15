@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "contemplate",
-  "generated_at": "2026-09-12T11:07:37.079Z",
+  "generated_at": "2026-09-13T19:28:32.106Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 740,
+  "duration_ms": 2123,
   "checks": [
     {
       "ok": true,
@@ -29,7 +29,7 @@
     {
       "ok": true,
       "label": "The owner's own refusal renders verbatim (flow node not in this ground's store)",
-      "data": "no Flow node resolves central:flow:project:editor-walk:1789211257481743000"
+      "data": "no Flow node resolves bd984004-7de6-47f6-8681-496fa2f3a9dd"
     },
     {
       "ok": true,
@@ -58,10 +58,10 @@
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-12T11:07:37.202Z",
+        "mounted_at": "2026-09-13T19:28:32.283Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -93,15 +93,15 @@
             "event": "surface_changed",
             "schema": "oi.kernel-event/v1",
             "seq": 3,
-            "summary": "Surface opened: 2026-09-12-1207.md.",
-            "surface_id": "0a318a04-b621-4269-b85e-691f6c37ab14",
+            "summary": "Surface opened: flow-2026-09-13-2028.html.",
+            "surface_id": "1a161add-1386-41ca-b78f-2a58537ebc74",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
               "provenance": {
                 "source": "central.projectcentral"
               },
-              "ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-12-1207.md"
+              "ref": "central:path:/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-LAamyA:Control/user/flows/flow-2026-09-13-2028.html"
             },
             "version": 1
           },
@@ -114,7 +114,7 @@
                 "provenance": {
                   "source": "central.projectcentral"
                 },
-                "ref": "central:source:project:editor-walk:ProjectCentral/now/flows/2026-09-12-1207.md"
+                "ref": "central:path:/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-LAamyA:Control/user/flows/flow-2026-09-13-2028.html"
               }
             },
             "schema": "oi.kernel-event/v1",
@@ -130,7 +130,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 30,
+      "duration_ms": 32,
       "data": {
         "file": "contemplate-contemplate-owner-refusal-verbatim.png"
       }

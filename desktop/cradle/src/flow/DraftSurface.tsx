@@ -1,20 +1,23 @@
-import {useEffect,useMemo,useRef,useState} from "react";
+import {useEffect,useRef,useState} from "react";
 import {TextEditor,EditorCommands,type EditorHandle} from "../editor/TextEditor";
 import {EditorFrame} from "../editor/EditorChrome";
-import {useKernel} from "../kernel/KernelProvider";
-import {kernelOp} from "../kernel/bridge";
 import type {SurfaceBinding} from "../surface/types";
 import "./flow.css";
 
 /**
- * Writing that has not been saved anywhere yet.
+ * Writing that has not been placed anywhere yet.
  *
- * Writing never waits. The surface opens, the writing is kept on this device
- * as it is typed, and it survives closing the tab and relaunching. The only
- * thing missing is where it belongs, so the footer carries a register picker
- * beside the ordinary Save — the same saving chrome every other editor uses.
- * Saving creates the real Flow in that register's NOW field through Central's
- * own operation; nothing else about the surface changes.
+ * Writing never waits and never mints: the surface opens, the writing is kept
+ * on this device as it is typed, and it survives closing the tab and
+ * relaunching. Nothing reaches the ground from here until the human
+ * explicitly saves real content — saving places the writing through Central's
+ * own Flow operation into its one owner-section home, Control/user/flows,
+ * which the footer names beside the ordinary Save. The earlier register
+ * picker is gone with the ratified carrier (PROPOSAL-FLOW-DAY-LOGICS-
+ * 2026-09-13-2 / #271): one user-section home, no choice to fabricate. An
+ * empty draft cannot be placed: no blank placeholder is ever written in the
+ * writing's name (owner correction, 2026-09-12 — the blank now/flows/
+ * premise was the fault).
  */
 export const DRAFT_KEY=(id:string)=>`oi-cradle.unplaced-draft.v1:${id}`;
 
@@ -25,34 +28,13 @@ export function readDraft(id:string):string {
 }
 
 export function DraftSurface({binding}:{binding:SurfaceBinding}) {
-  const kernel=useKernel();
   const editor=useRef<EditorHandle>(null);
   const [text,setText]=useState(()=>readDraft(binding.id));
   const [retained,setRetained]=useState(true);
-  const [project,setProject]=useState(binding.project??"");
   const [saving,setSaving]=useState(false);
   const [error,setError]=useState<string>();
 
-  // Where this writing could be saved. The navigator reading is the fast path;
-  // when it holds none but a transport exists the world is read once directly,
-  // so a reachable register is never hidden from writing that is waiting.
-  const disclosed=useMemo(()=>kernel.snapshot.navigator?.root?.work.projects
-    .filter(p=>p.projectcentral.state!=="absent").map(p=>p.name)??[],[kernel.snapshot.navigator]);
-  const [read,setRead]=useState<string[]>([]);
-  const registers=disclosed.length?disclosed:read;
-  useEffect(()=>{
-    if(disclosed.length||kernel.transport.kind==="unavailable")return;
-    let live=true;
-    void kernelOp(kernel.transport,{op:"world_read"}).then(response=>{
-      if(!live||response.outcome?.result!=="world_read")return;
-      setRead(response.outcome.snapshot.navigator?.root?.work.projects
-        .filter(p=>p.projectcentral.state!=="absent").map(p=>p.name)??[]);
-    }).catch(()=>{/* Absence is an observation; the writing is kept either way. */});
-    return()=>{live=false;};
-  },[disclosed.length,kernel.transport]);
-
   useEffect(()=>{setText(readDraft(binding.id));},[binding.id]);
-  useEffect(()=>{if(!project&&registers.length===1)setProject(registers[0]);},[registers,project]);
   useEffect(()=>{
     const done=(event:Event)=>{const detail=(event as CustomEvent<{id:string;error?:string}>).detail;
       if(detail.id!==binding.id)return;setSaving(false);setError(detail.error);};
@@ -66,9 +48,11 @@ export function DraftSurface({binding}:{binding:SurfaceBinding}) {
     catch{setRetained(false);}
   };
   const save=()=>{
-    if(!project||saving)return;
+    // Empty writing has nothing to place: the ground never receives a blank
+    // placeholder from this surface, by the same law the button enforces.
+    if(saving||!text.trim())return;
     setSaving(true);setError(undefined);
-    window.dispatchEvent(new CustomEvent("oi:place-draft",{detail:{id:binding.id,project,content:text}}));
+    window.dispatchEvent(new CustomEvent("oi:place-draft",{detail:{id:binding.id,content:text}}));
   };
   const attach=()=>{
     const el=editor.current;if(!el)return;
@@ -80,14 +64,9 @@ export function DraftSurface({binding}:{binding:SurfaceBinding}) {
   return <EditorFrame className="flow-surface draft-surface" label="Unsaved writing"
     toolbar={<EditorCommands editor={editor} markdown/>}
     footer={<>
-      <label className="editor-path draft-register">
-        <select aria-label="Where to save" value={project} onChange={e=>setProject(e.target.value)}>
-          <option value="">Choose where to save</option>
-          {registers.map(name=><option key={name} value={name}>{name}</option>)}
-        </select>
-      </label>
+      <span className="editor-path">Control/user/flows</span>
       <span role="status">{saving?"Saving…":retained?"Unsaved":"Not kept on this device"}</span>
-      <button disabled={!project||saving} onClick={save}>Save · ⌘S</button>
+      <button disabled={saving||!text.trim()} onClick={save} title={text.trim()?"Place this writing through Central":"Nothing to place yet — write first"}>Save · ⌘S</button>
     </>}>
     {!retained&&<p role="alert" className="flow-error">This device would not keep the writing. Copy it somewhere you trust before closing this tab.</p>}
     {error&&<p role="alert" className="flow-error">{error}</p>}

@@ -239,7 +239,7 @@ pub fn operate(client:&CentralClient,location:&Location,request:&Request)->Resul
  let result=client.run(action,input).map_err(|error|error.to_string())?;
  let schema=match request {Request::Write{..}|Request::Restore{..}=>"central.file-mutation/v1",Request::History{..}=>"central.file-history/v1",Request::RecoveryPreview{..}=>"central.file-recovery-preview/v1"};
  if result["schema"]!=schema || result["location"]!=json!(location){return Err("Central returned a redirected or unsupported file operation".into());}
- if matches!(request,Request::Write{..}|Request::Restore{..}) && !["written","unchanged","conflict"].contains(&result["outcome"].as_str().unwrap_or("")){return Err("Central returned an unsupported mutation outcome".into());}
+ if matches!(request,Request::Write{..}|Request::Restore{..}) && !["created","written","unchanged","conflict"].contains(&result["outcome"].as_str().unwrap_or("")){return Err("Central returned an unsupported mutation outcome".into());}
  Ok(result)
 }
 

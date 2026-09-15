@@ -1,0 +1,59 @@
+{
+  "fixture": "contribution-connector-fixture",
+  "kind": "contribution",
+  "contribution": {
+    "schema": "oi.configuration-contribution/v1",
+    "contract_revision": "configuration-plane/contribution.1",
+    "owner": {
+      "owner_ref": "connector/factory-actuation",
+      "owner_kind": "connector",
+      "owner_version": "fixture-1",
+      "contribution_command": ["fixture", "config-contribution", "--json"],
+      "disclosed_at_unix_ms": 0,
+      "reading_digest": null,
+      "reading_digest_covers": "07 §4.5 convention"
+    },
+    "about": "Mechanism proof only: a connector owner contributing relation-scoped settings. This fixture assigns NO semantics to the real Factory↔Actuation discovery/intent/authority relation, which remains unresolved (#299 §9, 07 §6).",
+    "sections": [
+      {
+        "id": "authority",
+        "title": "Relation authority",
+        "settings": [
+          {
+            "setting_ref": "connector/factory-actuation:authority:authority.mode",
+            "section_ref": "authority",
+            "title": "Authority mode",
+            "description": "Fixture value contract only: how a relation between two systems might carry authority, to prove the connector-owner mechanism is representable.",
+            "value_schema": {
+              "type": "enum",
+              "options": [
+                { "value": "delegated" },
+                { "value": "audited" }
+              ]
+            },
+            "allowed_scopes": [{ "scope_kind": "connector-relation", "scope_ref": "factory-actuation" }],
+            "writable": true,
+            "profileable": true,
+            "sensitive": false,
+            "default_semantics": "none",
+            "effect": { "kind": "value-change", "summary": "Fixture only.", "ref": null },
+            "operations": { "validate": true, "plan": true, "apply": true, "reset": true },
+            "native_ref": "fixture:relation:authority"
+          }
+        ]
+      }
+    ],
+    "operations": {
+      "transport": "cli/v1",
+      "validate": { "availability": "disclosed", "reason": null },
+      "plan": { "availability": "disclosed", "reason": null },
+      "apply": { "availability": "disclosed", "reason": null },
+      "reset": { "availability": "disclosed", "reason": null }
+    },
+    "availability": { "state": "available", "reason": null },
+    "degradations": [],
+    "obligations": [
+      "The real Factory↔Actuation relation becomes a connector contribution only when its ownership and meaning are separately settled."
+    ]
+  }
+}

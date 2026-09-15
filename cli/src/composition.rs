@@ -64,6 +64,26 @@ struct Composition {
     personal_ground: Option<String>,
     #[serde(default)]
     modules: BTreeMap<String, Registration>,
+    /// The person's own statement of which install mode (#268) they are
+    /// adopting — recorded only through `oi mode set`, never inferred from
+    /// presence. `None` until stated; disclosure resolves the mode from
+    /// effective presence when no statement exists.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    requested_mode: Option<RequestedMode>,
+    /// The explicitly selected active O:I profile (09 §12 of the
+    /// configuration-plane contract). Written only by the explicit
+    /// use/clear operation (`set_active_profile`) — never inferred from
+    /// presence, never auto-switched. `None` until stated.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    active_profile: Option<String>,
+}
+
+/// One recorded mode statement (#268). The frame notation is the mode id.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) struct RequestedMode {
+    pub frame: String,
+    pub set_at_unix_seconds: u64,
+    pub set_by: String,
 }
 
 impl Default for Composition {
@@ -73,6 +93,8 @@ impl Default for Composition {
             loaded_basis: std::cell::RefCell::new(None),
             personal_ground: None,
             modules: BTreeMap::new(),
+            requested_mode: None,
+            active_profile: None,
         }
     }
 }
@@ -320,7 +342,7 @@ fn command_status(catalog: &Catalog, args: &[OsString]) -> Result<i32, String> {
         return Ok(0);
     }
 
-    println!("{:<20} {:<11} {:<16} Native", "Surface", "State", "Alias");
+    println!("{:<20} {:<19} {:<16} Native", "Surface", "State", "Alias");
     for row in &rows {
         let alias = row
             .alias
@@ -329,7 +351,7 @@ fn command_status(catalog: &Catalog, args: &[OsString]) -> Result<i32, String> {
             .unwrap_or_else(|| "—".to_owned());
         let native = row.resolved.clone().unwrap_or_else(|| row.native.clone());
         println!(
-            "{:<20} {:<11} {:<16} {}",
+            "{:<20} {:<19} {:<16} {}",
             row.name, row.state, alias, native
         );
         if let Some(detail) = &row.detail {
@@ -380,6 +402,30 @@ fn status_rows(catalog: &Catalog, composition: &Composition) -> Vec<StatusRow> {
                         Some(path) => {
                             row.state = "registered".to_owned();
                             row.resolved = Some(path.display().to_string());
+                        }
+                        // No command was recorded as part of this install
+                        // (component install): the recorded material root is
+                        // what the product installed here. Present material
+                        // is an installed component, not a broken one.
+                        None if registration.native_executable.is_none() => {
+                            match registration.root.as_deref().map(Path::new) {
+                                Some(root) if root.is_dir() => {
+                                    row.state = "installed_component".to_owned();
+                                    row.resolved = Some(root.display().to_string());
+                                    row.detail = Some(format!(
+                                        "installed as component material at {}; no native {} command is part of this install",
+                                        root.display(),
+                                        surface.native.entry
+                                    ));
+                                }
+                                _ => {
+                                    row.state = "broken".to_owned();
+                                    row.detail = Some(
+                                        "this install recorded no native command and its component material root is missing"
+                                            .to_owned(),
+                                    );
+                                }
+                            }
                         }
                         None => {
                             row.state = "broken".to_owned();
@@ -989,6 +1035,38 @@ fn save_composition(composition: &Composition) -> Result<(), String> {
     composition_save_cas(composition)
 }
 
+/// The explicitly selected active O:I profile (09 §12): `None` until an
+/// explicit `use` selects one. Reading never selects.
+// Consumed by the `oi profile` surface (C5) and the tests below until then.
+#[allow(dead_code)]
+pub(crate) fn active_profile() -> Result<Option<String>, String> {
+    Ok(load_composition()?.active_profile)
+}
+
+/// The backend of the explicit `oi profile use` / clear operation
+/// (09 §12): selecting a profile requires it to exist in the profile
+/// store and validate; clearing is equally explicit. Nothing infers or
+/// auto-switches the selection, and nothing native changes through it —
+/// this writes the composition mark only.
+// Consumed by the `oi profile use` surface (C5) and the tests below until
+// then.
+#[allow(dead_code)]
+pub(crate) fn set_active_profile(profile_ref: Option<&str>) -> Result<(), String> {
+    let mut composition = load_composition()?;
+    composition.active_profile = match profile_ref {
+        Some(reference) => {
+            use oi_cli::configuration::profile_store::ProfileStore;
+            let store = ProfileStore::open().map_err(|error| error.message())?;
+            store.load(reference).map_err(|error| {
+                format!("cannot use profile `{reference}`: {}", error.message())
+            })?;
+            Some(reference.to_owned())
+        }
+        None => None,
+    };
+    save_composition(&composition)
+}
+
 fn state_path() -> Result<PathBuf, String> {
     if let Some(home) = env::var_os("OI_HOME").filter(|value| !value.is_empty()) {
         return Ok(PathBuf::from(home).join("composition.json"));
@@ -1090,4 +1168,73 @@ fn default_cargo_aikit() -> Option<PathBuf> {
         let candidate = PathBuf::from(home).join(".cargo/bin/aikit");
         is_executable(&candidate).then_some(candidate)
     })
+}
+
+#[cfg(test)]
+mod profile_selection_tests {
+    use super::*;
+    use oi_cli::configuration::Profile;
+
+    /// The active-profile mark (09 §12) is written only by the explicit
+    /// use/clear operation, survives the CAS save with unknown fields
+    /// intact, and refuses a use of a profile the store does not hold.
+    /// Runs as a child process so OI_HOME is real for the composition and
+    /// profile-store state (the house pattern from ground_binding tests).
+    #[test]
+    fn active_profile_selection_is_explicit_and_round_trips() {
+        let home = tempfile::tempdir().unwrap();
+        if env::var_os("OI_PROFILE_USE_TEST_CHILD").is_none() {
+            let status = Command::new(env::current_exe().unwrap())
+                .args([
+                    "--exact",
+                    "composition::profile_selection_tests::active_profile_selection_is_explicit_and_round_trips",
+                    "--test-threads=1",
+                ])
+                .env("OI_PROFILE_USE_TEST_CHILD", "1")
+                .env("OI_HOME", home.path())
+                .status()
+                .unwrap();
+            assert!(status.success());
+            return;
+        }
+
+        // Nothing is selected on a fresh composition.
+        assert_eq!(active_profile().unwrap(), None);
+
+        // Using a profile the store does not hold is refused and records
+        // nothing.
+        assert!(set_active_profile(Some("development")).is_err());
+        assert_eq!(active_profile().unwrap(), None);
+
+        // Store the frozen fixture profile, then select it explicitly.
+        let fixture_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../suite/configuration/cases/profile-development.json");
+        let fixture: serde_json::Value = serde_json::from_str(
+            &fs::read_to_string(&fixture_path).unwrap(),
+        )
+        .unwrap();
+        let profile: Profile = serde_json::from_value(fixture["profile"].clone()).unwrap();
+        use oi_cli::configuration::profile_store::ProfileStore;
+        ProfileStore::open().unwrap().save(&profile).unwrap();
+
+        set_active_profile(Some("development")).unwrap();
+        assert_eq!(
+            active_profile().unwrap(),
+            Some("development".to_owned()),
+            "the explicit use records the selection"
+        );
+        let value: serde_json::Value =
+            serde_json::from_slice(&fs::read(state_path().unwrap()).unwrap()).unwrap();
+        assert_eq!(value["active_profile"], "development");
+
+        // Clearing is explicit too, and leaves no mark behind.
+        set_active_profile(None).unwrap();
+        assert_eq!(active_profile().unwrap(), None);
+        let value: serde_json::Value =
+            serde_json::from_slice(&fs::read(state_path().unwrap()).unwrap()).unwrap();
+        assert!(
+            value.get("active_profile").is_none(),
+            "a cleared selection leaves no active_profile key"
+        );
+    }
 }

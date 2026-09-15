@@ -70,6 +70,23 @@ fn main() {
             app.manage(browser::Browsers::default());
             app.manage(terminal::Terminals::default());
             app.manage(KernelHost(Mutex::new(Kernel::discover())));
+            #[cfg(unix)]
+            {
+                let path = oi_cradle_kernel::expression_transport::default_socket_path()?;
+                if let Some(directory) = path.parent() { std::fs::create_dir_all(directory)?; }
+                let handle = app.handle().clone();
+                match oi_cradle_kernel::expression_transport::serve(&path, move |request| {
+                    let host = handle.state::<KernelHost>();
+                    let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?
+                        .apply(KernelOp::Expression { request })?;
+                    for receipt in &outcome.receipts { let _ = handle.emit(KERNEL_EVENT_TOPIC, receipt); }
+                    serde_json::to_value(outcome).map_err(|e| e.to_string())
+                }) {
+                    Ok(server) => { app.manage(Mutex::new(server)); eprintln!("Expression application: {}", path.display()); }
+                    Err(error) => eprintln!("Expression Agent transport unavailable: {error}"),
+                }
+            }
+
             #[cfg(target_os="macos")]
             for config in &app.config().app.windows {
                 if !config.create {

@@ -55,3 +55,31 @@ export async function openWorkspaceStrip(page) {
   await page.locator('.workspace-footer-edge').first().hover();
   await page.locator('.canvas-arrangement').first().waitFor({ state: 'visible' });
 }
+
+/** Bind the walk's temp ground as the default Central through the real UI.
+ *  The boot law is explicit binding (BOOT-02/03): while no ground is bound
+ *  and no surface is open, the boot gate renders the chooser on the Rest
+ *  surface — recognition and binding happen right there, the same path
+ *  BOOT-03 walks. (The System page carries the same chooser under its
+ *  Config rail item; going through the boot gate keeps this helper usable
+ *  before any surface exists.) */
+export async function bindDefaultCentral(page, root) {
+  const chooser = page.getByRole('region', { name: 'Central location' });
+  const input = chooser.getByRole('textbox', { name: 'Existing Central path' });
+  await input.fill(root);
+  await chooser.getByRole('button', { name: 'Recognize', exact: true }).click();
+  await chooser.getByText('recognized', { exact: true }).waitFor();
+  await chooser.getByRole('button', { name: 'Use as default Central' }).click();
+  await chooser.getByText(/Default Central saved/).waitFor();
+}
+
+/** The site redesign's welcome field plays over a cold boot; clicking its
+ *  enter control dismisses it. No-op when the gate is absent (already
+ *  entered, or a surface opened past it). */
+export async function enterApp(page) {
+  const enter = page.locator(".oi-welcome-enter");
+  if (await enter.isVisible().catch(() => false)) {
+    await enter.click();
+    await enter.waitFor({ state: "detached", timeout: 15_000 }).catch(() => {});
+  }
+}

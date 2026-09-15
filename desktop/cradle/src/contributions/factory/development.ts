@@ -17,3 +17,14 @@ export async function workcellStatus(transport:KernelTransportStatus):Promise<Wo
   if(result.error || result.outcome?.result!=="workcell_status_reading")throw new Error(result.error??"Workcell status is unavailable");
   return result.outcome.data as WorkcellStatus;
 }
+
+/** The re-pinned build view (queue cell B): the owner CLI reads it as
+ * `factory build snapshot <state> <project-ref> <run-ref>` — the old
+ * `build discover`/`--binding` grammar is gone from the installed cut. The
+ * payload is the owner's own (`factory.build-view/v1`), carried verbatim
+ * after the kernel verifies its contract schemas. */
+export async function buildSnapshot<T=unknown>(transport:KernelTransportStatus,statePath:string,projectRef:string,runRef:string,project?:string):Promise<T> {
+  const result=await kernelOp(transport,{op:"factory_build_snapshot",project,state_path:statePath,project_ref:projectRef,run_ref:runRef});
+  if(result.error || result.outcome?.result!=="factory_development_reading")throw new Error(result.error??"The Factory build view is unavailable");
+  return result.outcome.data as T;
+}
