@@ -12,7 +12,7 @@
 import {execFileSync} from "node:child_process";
 import {createHash} from "node:crypto";
 import {existsSync, mkdirSync, readFileSync, rmSync, writeFileSync} from "node:fs";
-import {join, resolve} from "node:path";
+import {dirname, join, resolve} from "node:path";
 import {setup as sourceSetup} from "./editor.mjs";
 
 const HUMAN_TOKEN="now-walk-human-credential-not-a-real-secret";
@@ -38,8 +38,8 @@ export async function setup(args) {
   try {relations = JSON.parse(readFileSync(relationsPath, "utf8"));}
   catch {relations = {schema: "central.control.ground-relations/v1", project_id: "control:root", relations: []};}
   const grants = [
-    {principal_ref: "human:walk", actor_kind: "human", token_sha256: sha256(HUMAN_TOKEN), scope_refs: ["control:root", `project:${projectId}`], actions: ["central.document.create", "central.document.mutate", "central.receiving.submit", "central.receiving.review", "central.receiving.include", "central.receiving.recover", "central.day.ensure"], expires_at_unix_seconds: 4000000000},
-    {principal_ref: "agent:walk", actor_kind: "agent", token_sha256: sha256(AGENT_TOKEN), scope_refs: ["control:root", `project:${projectId}`], actions: ["central.document.create", "central.document.mutate", "central.receiving.submit", "central.receiving.review", "central.receiving.include", "central.receiving.recover", "central.day.ensure"], expires_at_unix_seconds: 4000000000},
+    {principal_ref: "human:walk", actor_kind: "human", token_sha256: sha256(HUMAN_TOKEN), scope_refs: ["control:root", `project:${projectId}`], actions: ["central.document.create", "central.document.mutate", "central.receiving.submit", "central.receiving.review", "central.receiving.include", "central.receiving.recover", "central.day.ensure", "central.now.allocate", "central.now.obligations"], expires_at_unix_seconds: 4000000000},
+    {principal_ref: "agent:walk", actor_kind: "agent", token_sha256: sha256(AGENT_TOKEN), scope_refs: ["control:root", `project:${projectId}`], actions: ["central.document.create", "central.document.mutate", "central.receiving.submit", "central.receiving.review", "central.receiving.include", "central.receiving.recover", "central.day.ensure", "central.now.allocate", "central.now.obligations"], expires_at_unix_seconds: 4000000000},
   ];
   const policies = [
     ["placement.json", "work-placement-policy", {schema: "central.work-placement-policy/v1", scope_ref: "control:root", writable: [{path: "Work/Editor", class: "repository"}], enforcement: "native-actions", required_coverage: ["file-content"], lease_seconds: 300}],
@@ -69,6 +69,28 @@ export async function setup(args) {
   const nowSourcePath = nowSourceCandidates.find(candidate => existsSync(candidate));
   if (!nowSourcePath) throw new Error(`allocated NOW source not found at ${nowSourceCandidates.join(" or ")}`);
 
+  // Seed one real owner-shaped obligation source in this walk's temporary
+  // project ground, bind it through the project's native relations, and ask
+  // the owner to retain it on the allocated NOW. The desktop never creates
+  // this source; it only reads the resulting owner record.
+  const projectRoot = join(source.root, "Work/Editor");
+  const obligationPath = join(dirname(now.source.path), "T", "obligation-primary.json");
+  const obligationRef = "central:source:project:" + projectId + ":" + obligationPath;
+  const obligationAbsolute = join(projectRoot, obligationPath);
+  mkdirSync(dirname(obligationAbsolute), {recursive: true});
+  writeFileSync(obligationAbsolute, JSON.stringify({schema: "central.now-obligation/v1", now_ref: now.record.now_ref, kind: "walk-fixture", detail: "retained native obligation"}, null, 2));
+  const projectRelationsPath = join(projectRoot, "ProjectCentral/relations/source-relations.json");
+  let projectRelations;
+  try {projectRelations = JSON.parse(readFileSync(projectRelationsPath, "utf8"));}
+  catch {projectRelations = {schema: "central.project.ground-relations/v1", project_id: projectId, relations: []};}
+  projectRelations.relations = projectRelations.relations ?? [];
+  if (!projectRelations.relations.some(entry => entry.ref === obligationRef)) projectRelations.relations.push({ref: obligationRef, path: obligationPath, roles: ["now-obligation"], provenance: "agent-maintained", standing: "current-development-state", treatment: "projectcentral-now", recognition: "controlled-walk-fixture-not-personal-adoption", recorded_at_unix_seconds: 1});
+  writeFileSync(projectRelationsPath, JSON.stringify(projectRelations, null, 2));
+  const retained = human("central.now.obligations", {project, now_ref: now.record.now_ref, expected_revision: now.revision.revision, obligation_refs: [obligationRef]});
+  if (!retained.record.obligations.includes(obligationRef)) throw new Error("native NOW obligation was not retained");
+  const nowWithPlacement = human("central.now.read", {project, now_ref: now.record.now_ref, with_placement: true});
+  if (nowWithPlacement.placement_included !== true || !nowWithPlacement.record.obligations.includes(obligationRef)) throw new Error("placement-aware native NOW reading did not disclose the retained obligation");
+
   // A second NOW in the ROOT register: the explicit-null kernel route reads
   // it; a project-scoped read must refuse.
   const rootPolicy = as("")("central.work.policy", {});
@@ -81,7 +103,7 @@ export async function setup(args) {
   if (first.record.status !== "pending") throw new Error(`first return arrived ${first.record.status}`);
   agent("central.receiving.submit", {project, producer_key: "producer:now-walk-2", source_ref: doc.source.ref, document_id: doc.document_id, expected_source_revision: doc.revision.revision, occurred_at_unix_seconds: 43, proposal: {operation: "field.append", field_id: "walk-field", contribution_id: "part:now-walk-2", html: "<p>Return without any NOW</p>"}});
 
-  return {...source, env: {...source.env, CENTRAL_NATIVE_TOKEN: HUMAN_TOKEN}, doc, now, rootNow, nowSourcePath, human, agent, cleanup: source.cleanup};
+  return {...source, env: {...source.env, CENTRAL_NATIVE_TOKEN: HUMAN_TOKEN}, doc, now: nowWithPlacement, rootNow, nowSourcePath, obligationRef, human, agent, cleanup: source.cleanup};
 }
 
 export default async function run({page, baseUrl, check, shot, channel, log, provision: p}) {
@@ -106,6 +128,9 @@ export default async function run({page, baseUrl, check, shot, channel, log, pro
   check(projectRead.data.outcome?.result === "now_reading" && projectRead.data.outcome?.data?.record?.task_ref === p.now.record.task_ref, "The kernel now route reads the project NOW through the owner");
   const rootRead = await channel("invoke.kernel_op", [{op: "now", project: null, request: {kind: "read", now_ref: p.rootNow.record.now_ref}}]);
   check(rootRead.data.outcome?.result === "now_reading" && rootRead.data.outcome?.data?.record?.task_ref === p.rootNow.record.task_ref, "The root register is read through the explicit-null convention");
+  const rootPlacement = await channel("invoke.kernel_op", [{op:"invoke_action", project:null, invocation:{action:"central.now.read",target_ref:p.rootNow.record.now_ref,input:{project:null,now_ref:p.rootNow.record.now_ref,with_placement:true}}}]);
+  const rootDispatch = rootPlacement.data.outcome?.dispatch;
+  check(rootDispatch?.state === "invoked" && rootDispatch.owner_operation === "central.now.read" && rootDispatch.data.record.now_ref === p.rootNow.record.now_ref && rootDispatch.data.placement_included === true, "The placement-aware native Action preserves the root register and exact NOW identity");
   const crossRead = await channel("invoke.kernel_op", [{op: "now", project: "Editor", request: {kind: "read", now_ref: p.rootNow.record.now_ref}}], {soft: true});
   check(!crossRead.ok && !!crossRead.error, "A project-scoped read of a root-register NOW is refused — registers never blur");
   const listing = await channel("invoke.kernel_op", [{op: "now", project: "Editor", request: {kind: "list"}}]);
@@ -128,6 +153,11 @@ export default async function run({page, baseUrl, check, shot, channel, log, pro
   check((await nowPanel.locator(`[data-now-sources='${JSON.stringify(p.now.record.source_refs)}']`).count()) === 1, "Source relations render exactly as the owner disclosed them");
   check(await nowPanel.locator(`code:has-text("${p.now.record.source_refs[0]}")`).count() >= 1, "The record's own source appears among the NOW's relations");
   check((await nowPanel.locator(`[data-now-continuations='${JSON.stringify(p.now.record.continuation_refs)}']`).count()) === 1, "Continuations render exactly as the owner disclosed them — an empty relation reads as none, never invented");
+  const renderedObligations = await nowPanel.locator("[data-now-obligations]").getAttribute("data-now-obligations");
+  check(renderedObligations === JSON.stringify(p.now.record.obligations) && relationsText.includes(p.obligationRef), "Native NOW obligations render from the owner's exact SourceRef list");
+  check(await nowPanel.locator('[data-now-archive-ref=""]').count() === 1 && relationsText.includes("none recorded"), "An active NOW discloses its absent archive ref honestly");
+  check(await nowPanel.locator('[data-now-placement="included"]').count() === 1 && relationsText.includes(p.now.writable_destination), "Placement-aware reading discloses the owner's destination");
+  check(relationsText.includes(p.now.policy.revision), "Placement-aware reading discloses the owner's policy revision");
   await nowPanel.evaluate(element => element.scrollIntoView({block: "center"}));
   await shot("now-relations-rendered");
 

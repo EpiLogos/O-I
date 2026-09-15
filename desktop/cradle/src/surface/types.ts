@@ -70,7 +70,7 @@ export interface SurfaceBinding {
     };
   };
   flow?: {flowRef:string;path:string};
-  view?: {developmentField?:{cwd:string;baseRevision?:string;snapshot?:DevelopmentFieldViewSnapshot;snapshotUnavailable?:string};factory?: {statePath:string;centralProjectRef?:string;projectRef?:string;runRef?:string;telemetryRef?:string;expectedRevision?:number};graphOrigin?:string;knowledgePlane?: "graph"|"page";encounterReturnSurfaceId?:string;encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect"};
+  view?: {developmentField?:{cwd:string;baseRevision?:string;snapshot?:DevelopmentFieldViewSnapshot;snapshotUnavailable?:string};factory?: {statePath:string;centralProjectRef?:string;projectRef?:string;runRef?:string;telemetryRef?:string;expectedRevision?:number;materialSnapshot?:import("../contributions/factory/factory-review-snapshot").FactoryMaterialReviewSnapshot;handoffSnapshot?:import("../contributions/factory/factory-review-snapshot").FactoryHandoffReviewSnapshot;snapshotUnavailable?:string};graphOrigin?:string;knowledgePlane?: "graph"|"page";encounterReturnSurfaceId?:string;encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect"};
   location?: import("../kernel/types").CentralLocation;
 }
 

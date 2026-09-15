@@ -141,7 +141,8 @@ function attemptView(value:unknown):value is FactoryAttemptTaskView {
   return isOneOf(value.standing,["current-attempt","historical-attempt"] as const)&&(typeof value.status==="string"||value.status===null)&&[record.attemptRef,record.taskRef,record.workflowUnitRef,record.reservedExecutionRef].every(item=>typeof item==="string")&&(record.executionRef===undefined||typeof record.executionRef==="string")&&Array.isArray(record.observations)&&Array.isArray(record.tracking)&&Array.isArray(record.reresolutions)&&Array.isArray(record.verifications)&&record.verifications.every(verification)&&strings(record.failureEvidenceRefs)&&(record.readableReturn===undefined||readableReturn(record.readableReturn))&&Array.isArray(value.unresolvedOwnerOperations)&&value.unresolvedOwnerOperations.every(item=>isRecord(item)&&typeof item.ownerRef==="string"&&typeof item.operationRef==="string"&&typeof item.receiptRef==="string")&&Array.isArray(value.ownerTelemetryCorrelations)&&value.ownerTelemetryCorrelations.every(telemetryCorrelation)&&isOneOf(value.modelUsageStatus,["owner-observed","not-observed"] as const)&&isOneOf(value.materialUsageStatus,["owner-observed","not-observed"] as const)&&strings(value.regressionObservationRefs)&&typeof value.receivingStanding==="string"&&typeof value.archiveStanding==="string";
 }
 
-function taskReading(value:unknown,runRef:string,taskRef:string):value is FactoryAttemptTaskReading {
+/** Validates a retained task response before a presentation snapshot reuses it. */
+export function isFactoryAttemptTaskReading(value:unknown,runRef:string,taskRef:string):value is FactoryAttemptTaskReading {
   return isRecord(value)&&value.contract==="factory.attempt-task-reading/v1"&&value.runRef===runRef&&value.taskRef===taskRef&&typeof value.projectRef==="string"&&isNonNegativeInteger(value.revision)&&isNonNegativeInteger(value.runRevision)&&isNonNegativeInteger(value.topologyRevision)&&typeof value.sourceCurrent==="boolean"&&typeof value.workflowSourceRef==="string"&&typeof value.workflowSourceRevision==="string"&&typeof value.workflowSourceDigest==="string"&&isNonNegativeInteger(value.totalAttempts)&&Array.isArray(value.attempts)&&value.attempts.every(attemptView)&&value.totalAttempts>=value.attempts.length;
 }
 
@@ -156,6 +157,6 @@ export async function listFactoryAttemptTasks(transport:KernelTransportStatus,st
 export async function readFactoryAttemptTask(transport:KernelTransportStatus,statePath:string,runRef:string,taskRef:string):Promise<FactoryAttemptTaskReading> {
   const result=await kernelOp(transport,{op:"factory_attempt_task_read",state_path:statePath,run_ref:runRef,task_ref:taskRef});
   if(result.error||result.outcome?.result!=="factory_attempt_task_reading") throw new Error(result.error??"Factory attempt task reading is unavailable");
-  if(!taskReading(result.outcome.data,runRef,taskRef)) throw new Error("Factory returned an incompatible task reading");
+  if(!isFactoryAttemptTaskReading(result.outcome.data,runRef,taskRef)) throw new Error("Factory returned an incompatible task reading");
   return result.outcome.data;
 }

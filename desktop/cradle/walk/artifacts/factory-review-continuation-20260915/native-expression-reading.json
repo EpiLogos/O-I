@@ -1,0 +1,51 @@
+{
+  "native_window": {
+    "inner_position_physical": {
+      "x": 9,
+      "y": 33
+    },
+    "inner_size_physical": {
+      "height": 858,
+      "width": 1422
+    },
+    "scale_factor": 1.0
+  },
+  "report": {
+    "emitters": 0,
+    "engine": {
+      "activePresentationId": null,
+      "animationScheduled": false,
+      "canvas": {
+        "backingHeight": 858,
+        "backingWidth": 1422,
+        "connected": true,
+        "cssHeight": 858,
+        "cssWidth": 1422,
+        "display": "block",
+        "opacity": "1",
+        "position": "fixed",
+        "visibility": "hidden",
+        "zIndex": "1"
+      },
+      "canvasCount": 1,
+      "lastPresentationEvent": "release",
+      "lastPresentationId": "factory-entry:7e8fc37f-1b18-4c73-a4ef-2b2d4e69b966",
+      "lifecycleRevision": 6,
+      "live": false,
+      "mounted": true
+    },
+    "entries": 0,
+    "forms": [],
+    "frames": 0,
+    "ink": "color(srgb 0.512706 0.530275 0.502196)",
+    "paused": false,
+    "peakEmitters": 0,
+    "pointCount": 0,
+    "reduced": false,
+    "requests": 0,
+    "scheduled": false
+  },
+  "schema": "oi.native-expression-observation/v1",
+  "unix_ms": 1789432582341,
+  "webview": "main"
+}

@@ -9,9 +9,7 @@ use std::{
         Mutex,
     },
 };
-use tauri::{
-    AppHandle, Emitter, Manager, WebviewUrl, Window, WebviewWindowBuilder, WindowEvent,
-};
+use tauri::{AppHandle, Emitter, Manager, WebviewUrl, WebviewWindowBuilder, Window, WindowEvent};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Bounds {
@@ -61,13 +59,17 @@ fn encounter_space(binding: &Binding) -> Option<&str> {
 
 /// A detached encounter is the owner identity (project, AgentSession,
 /// SessionSpace), not its session ref alone. Other detachable subjects retain
-/// their legacy ref identity; Factory material remains binding-id based so
+/// their legacy ref identity; Factory material and handoffs stay binding-id based so
 /// distinct revisions can stay open together.
 fn same_detached_subject(request: &Binding, stored: &Binding) -> bool {
     if stored.id == request.id {
         return true;
     }
-    if request.kind == "factory-material" || request.reference.is_none() {
+    if matches!(
+        request.kind.as_str(),
+        "factory-material" | "factory-handoff"
+    ) || request.reference.is_none()
+    {
         return false;
     }
     if request.kind == "encounter" {
@@ -81,7 +83,12 @@ fn same_detached_subject(request: &Binding, stored: &Binding) -> bool {
 
 /// Existing unscoped callers retain reference-only focus. An encounter caller
 /// that supplies project or SessionSpace may focus only that exact identity.
-fn focus_subject_matches(binding: &Binding, reference: &str, project: Option<&str>, space: Option<&str>) -> bool {
+fn focus_subject_matches(
+    binding: &Binding,
+    reference: &str,
+    project: Option<&str>,
+    space: Option<&str>,
+) -> bool {
     if binding.reference.as_deref() != Some(reference) {
         return false;
     }
@@ -115,13 +122,27 @@ pub fn window_detach(
         if surface.kind != binding.kind || surface.source_ref != binding.reference {
             return Err("Detached binding differs from the kernel subject".into());
         }
-        if !matches!(binding.kind.as_str(), "source" | "knowledge" | "file" | "encounter" | "browser" | "terminal" | "flow" | "factory-handoff" | "factory-material" | "development-field") {
+        if !matches!(
+            binding.kind.as_str(),
+            "source"
+                | "knowledge"
+                | "file"
+                | "encounter"
+                | "browser"
+                | "terminal"
+                | "flow"
+                | "factory-handoff"
+                | "factory-material"
+                | "development-field"
+        ) {
             return Err("This surface has no native detached body".into());
         }
         if binding.kind == "file" {
             let location = binding.location.clone().ok_or("File location is missing")?;
-            if binding.reference.as_deref() != Some(&location.ref_id) {return Err("File location differs from the bound subject".into());}
-            kernel.apply(oi_cradle_kernel::KernelOp::FileBytes {location})?;
+            if binding.reference.as_deref() != Some(&location.ref_id) {
+                return Err("File location differs from the bound subject".into());
+            }
+            kernel.apply(oi_cradle_kernel::KernelOp::FileBytes { location })?;
         }
         if binding.kind == "source"
             && !binding
@@ -146,7 +167,11 @@ pub fn window_detach(
         }
         // An externally destroyed webview must not permanently prevent this
         // subject from being detached again.
-        windows.0.lock().map_err(|_| "Window state unavailable")?.remove(&label);
+        windows
+            .0
+            .lock()
+            .map_err(|_| "Window state unavailable")?
+            .remove(&label);
     }
     let label = format!("surface-{}", NEXT.fetch_add(1, Ordering::Relaxed));
     let record = Detached {
@@ -203,7 +228,10 @@ pub fn window_detach(
     };
     // Publish only after fallible preparation (including monitor discovery)
     // succeeds, otherwise a failed attempt leaves a phantom detached record.
-    windows.0.lock().map_err(|_| "Window state unavailable")?
+    windows
+        .0
+        .lock()
+        .map_err(|_| "Window state unavailable")?
         .insert(label.clone(), record.clone());
     let built = builder.build();
     let detached = match built {
@@ -266,7 +294,11 @@ pub fn window_detach(
             }
         }
         if let WindowEvent::CloseRequested { api, .. } = event {
-            if record.binding.kind == "browser" && crate::browser::return_to_main(&handle, &record.binding.id).is_err() { api.prevent_close(); }
+            if record.binding.kind == "browser"
+                && crate::browser::return_to_main(&handle, &record.binding.id).is_err()
+            {
+                api.prevent_close();
+            }
         }
         if matches!(event, WindowEvent::Destroyed) {
             if let Ok(mut rows) = handle.state::<Windows>().0.lock() {
@@ -309,7 +341,9 @@ pub fn window_focus_subject(
         .lock()
         .map_err(|_| "Window state unavailable")?
         .iter()
-        .find(|(_, r)| focus_subject_matches(&r.binding, &reference, project.as_deref(), space.as_deref()))
+        .find(|(_, r)| {
+            focus_subject_matches(&r.binding, &reference, project.as_deref(), space.as_deref())
+        })
         .map(|(k, _)| k.clone());
     if let Some(window) = label.and_then(|l| app.get_window(&l)) {
         window.set_focus().map_err(|e| e.to_string())?;
@@ -321,9 +355,13 @@ pub fn window_focus_subject(
 
 #[tauri::command]
 pub fn window_focus_main(app: AppHandle, window: Window) -> Result<(), String> {
-    if window.label() != "main" { return Err("Workspace navigation focus belongs to the main window".into()); }
-    app.get_window("main").ok_or("Workspace window is unavailable")?
-        .set_focus().map_err(|error|error.to_string())
+    if window.label() != "main" {
+        return Err("Workspace navigation focus belongs to the main window".into());
+    }
+    app.get_window("main")
+        .ok_or("Workspace window is unavailable")?
+        .set_focus()
+        .map_err(|error| error.to_string())
 }
 
 #[cfg(test)]
@@ -332,10 +370,18 @@ mod tests {
 
     fn encounter(id: &str, project: &str, space: &str) -> Binding {
         Binding {
-            id: id.into(), kind: "encounter".into(), title: "Conversation".into(),
-            reference: Some("agent-session/shared".into()), project: Some(project.into()),
-            address: None, encounter: Some(serde_json::json!({"space": space})), browser: None,
-            terminal: None, flow: None, view: None, location: None,
+            id: id.into(),
+            kind: "encounter".into(),
+            title: "Conversation".into(),
+            reference: Some("agent-session/shared".into()),
+            project: Some(project.into()),
+            address: None,
+            encounter: Some(serde_json::json!({"space": space})),
+            browser: None,
+            terminal: None,
+            flow: None,
+            view: None,
+            location: None,
         }
     }
 
@@ -353,18 +399,35 @@ mod tests {
     fn scoped_focus_rejects_same_ref_from_another_project() {
         let first = encounter("first", "Factory", "session-space/factory");
         let other_project = encounter("second", "Central", "session-space/central");
-        assert!(focus_subject_matches(&first, "agent-session/shared", Some("Factory"), Some("session-space/factory")));
-        assert!(!focus_subject_matches(&other_project, "agent-session/shared", Some("Factory"), Some("session-space/factory")));
-        assert!(focus_subject_matches(&other_project, "agent-session/shared", None, None));
+        assert!(focus_subject_matches(
+            &first,
+            "agent-session/shared",
+            Some("Factory"),
+            Some("session-space/factory")
+        ));
+        assert!(!focus_subject_matches(
+            &other_project,
+            "agent-session/shared",
+            Some("Factory"),
+            Some("session-space/factory")
+        ));
+        assert!(focus_subject_matches(
+            &other_project,
+            "agent-session/shared",
+            None,
+            None
+        ));
     }
 
     #[test]
-    fn factory_material_dedup_stays_binding_id_based() {
-        let mut first = encounter("material-one", "Factory", "session-space/factory");
-        first.kind = "factory-material".into();
-        let mut revision_two = first.clone();
-        revision_two.id = "material-two".into();
-        assert!(same_detached_subject(&first, &first));
-        assert!(!same_detached_subject(&first, &revision_two));
+    fn factory_reviews_keep_independently_selected_revisions_in_distinct_windows() {
+        for kind in ["factory-material", "factory-handoff"] {
+            let mut first = encounter("review-one", "Factory", "session-space/factory");
+            first.kind = kind.into();
+            let mut revision_two = first.clone();
+            revision_two.id = "review-two".into();
+            assert!(same_detached_subject(&first, &first));
+            assert!(!same_detached_subject(&first, &revision_two));
+        }
     }
 }

@@ -1,0 +1,27 @@
+{
+  "standing": "C: actual application placement with existing AIKit session; no provider opened and no prompt sent",
+  "conversationTitle": "Factory live walk — Codex",
+  "agentSession": "agent-session/oi-factory-codex-20260914",
+  "sessionSpace": "session-space/oi-factory-demo-20260914",
+  "checks": [
+    "Local Draft retains its unsent sentinel before conversation placement",
+    "Actual conversation has one central composer",
+    "Only one visible conversation composer is mounted",
+    "Activity remains complementary and does not duplicate the composer",
+    "Context remains complementary and does not duplicate the composer",
+    "Inspect remains complementary and does not duplicate the composer",
+    "Inspect retains the exact native AgentSession identity",
+    "Inspect retains the exact native SessionSpace identity",
+    "Returning Conversation to the side restores the same local Draft text",
+    "Returned side conversation leaves the central Draft as the single central subject",
+    "Returned side conversation still has one visible composer",
+    "Returned conversation keeps its canonical native session identities",
+    "Factory promotes the same conversation centrally on the explicit Conversation command",
+    "Factory retains the existing complementary result desk in the right region",
+    "Factory conversation promotion does not duplicate the composer",
+    "Leaving Factory restores the original local Draft",
+    "The local Draft sentinel is cleared before the walk exits",
+    "No application page errors"
+  ],
+  "errors": []
+}

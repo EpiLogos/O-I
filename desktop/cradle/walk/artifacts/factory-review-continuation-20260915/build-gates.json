@@ -1,0 +1,79 @@
+[
+  {
+    "name": "now-walk",
+    "command": [
+      "node",
+      "walk/run.mjs",
+      "now-relations"
+    ],
+    "exit_code": 0,
+    "log": "/tmp/oi-factory-20260915-now-walk.log"
+  },
+  {
+    "name": "production-build",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "exit_code": 0,
+    "log": "/tmp/oi-factory-20260915-production-build.log"
+  },
+  {
+    "name": "kernel-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "desktop/cradle/kernel/Cargo.toml",
+      "--all-targets",
+      "-j2"
+    ],
+    "exit_code": 0,
+    "log": "/tmp/oi-factory-20260915-kernel-tests.log"
+  },
+  {
+    "name": "kernel-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--manifest-path",
+      "desktop/cradle/kernel/Cargo.toml",
+      "--all-targets",
+      "-j2",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "log": "/tmp/oi-factory-20260915-kernel-clippy.log"
+  },
+  {
+    "name": "native-window-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "desktop/cradle/src-tauri/Cargo.toml",
+      "--bin",
+      "oi-cradle",
+      "-j2",
+      "--",
+      "windows::tests"
+    ],
+    "exit_code": 0,
+    "log": "/tmp/oi-factory-20260915-native-window-tests.log"
+  },
+  {
+    "name": "native-build",
+    "command": [
+      "cargo",
+      "build",
+      "--manifest-path",
+      "desktop/cradle/src-tauri/Cargo.toml",
+      "-j2"
+    ],
+    "exit_code": 0,
+    "log": "/tmp/oi-factory-20260915-native-build.log"
+  }
+]

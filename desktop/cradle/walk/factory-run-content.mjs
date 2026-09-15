@@ -64,11 +64,22 @@ try{
  await page.screenshot({path:"walk/artifacts/factory-run-content-20260914.png"});
  await page.getByRole("navigation",{name:projectName+" work",exact:true}).getByRole("button",{name:"Agents",exact:true}).click();
  const agents=page.getByRole("region",{name:"Project Agents"});
+ const catalogue=await (await fetch("http://127.0.0.1:4179/op",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({op:"central_actions_read"})})).json();
+ assert.equal(catalogue.outcome?.result,"central_actions_reading");
+ assert.ok(Array.isArray(catalogue.outcome.data.actions));
+ const expression=catalogue.outcome.data.actions.find(action=>action.id==="agent-profile.express");
+ await page.waitForFunction(()=>document.querySelector(".agents-roster > header button")?.disabled===false);
+ if(expression?.availability?.available===true){
  await agents.locator("summary").filter({hasText:"Express an AgentProfile intent"}).click();
  check(await agents.getByLabel("Intent",{exact:true}).isVisible(),"Agent creation exposes the human intent");
  check(await agents.locator(".agents-expression-intent").evaluate(element=>!!(element.compareDocumentPosition(element.parentElement.querySelector("select"))&Node.DOCUMENT_POSITION_FOLLOWING)),"Intent precedes scope in reading and keyboard order");
  check(await agents.locator("summary").filter({hasText:"Optional purpose and role"}).evaluate(element=>element.parentElement.open===false),"Optional profile defaults are disclosed on request");
  check(await agents.getByRole("button",{name:"Express AgentProfile intent",exact:true}).isDisabled(),"Incomplete intent does not submit an Agent proposal");
+ }else{
+  check(await agents.locator("summary").filter({hasText:"Express an AgentProfile intent"}).count()===0,"No Agent Expression form is offered when the real owner catalogue does not advertise its operation");
+  check(await agents.getByRole("button",{name:"Express AgentProfile intent",exact:true}).count()===0,"Absent native intent operation cannot become a fabricated proposal");
+ }
+ responses.push({request:{op:"central_actions_read"},agentExpression:expression??null});
  check(errors.length===0,"No application page errors");
  writeFileSync("walk/artifacts/factory-run-content-20260914.json",JSON.stringify({standing:"C: actual application and native Factory executable; retained Run has no execution or Candidate, not positive joined-work proof",checks,errors,responses},null,2));
 }catch(error){console.log((await page.locator("body").innerText()).slice(-6500));await page.screenshot({path:"/tmp/oi-u-factory-run-content-failure.png"});throw error;}finally{await browser.close();}

@@ -1,3 +1,4 @@
+import {exactFactoryReviewView} from "../contributions/factory/factory-review-snapshot";
 /**
  * Layout persistence (U0.3b): layout state is plain serialisable app state,
  * saved to localStorage on every change and restored on load. A corrupt or
@@ -90,7 +91,7 @@ function validBinding(raw: unknown): SurfaceBinding | null {
   const encounterPlane=view?.encounterPlane;
   const encounterReturnSurfaceId=o.kind==="encounter"&&typeof view?.encounterReturnSurfaceId==="string"?view.encounterReturnSurfaceId:undefined;
   const rawFactory=view?.factory;
-  const factory=(o.kind==="factory"||o.kind==="factory-handoff"||o.kind==="factory-material") && rawFactory && typeof rawFactory.statePath==="string"
+  let factory: NonNullable<SurfaceBinding["view"]>["factory"]=(o.kind==="factory"||o.kind==="factory-handoff"||o.kind==="factory-material") && rawFactory && typeof rawFactory.statePath==="string"
     && rawFactory.statePath.trim() ? {statePath:rawFactory.statePath,
       centralProjectRef:typeof rawFactory.centralProjectRef==="string"?rawFactory.centralProjectRef:undefined,
       projectRef:typeof rawFactory.projectRef==="string"?rawFactory.projectRef:undefined,
@@ -98,7 +99,11 @@ function validBinding(raw: unknown): SurfaceBinding | null {
       telemetryRef:typeof rawFactory.telemetryRef==="string"?rawFactory.telemetryRef:undefined,
       expectedRevision:typeof rawFactory.expectedRevision==="number"&&Number.isSafeInteger(rawFactory.expectedRevision)&&rawFactory.expectedRevision>=0?rawFactory.expectedRevision:undefined}:undefined;
   if(o.kind==="factory-handoff"&&(!factory||factory.runRef!==o.ref))return null;
-  if(o.kind==="factory-material"&&(!factory||!factory.runRef?.trim()||(rawFactory?.expectedRevision!==undefined&&factory.expectedRevision===undefined)))return null;
+  if(o.kind==="factory-material"&&(!factory||!factory.runRef?.trim()))return null;
+  if(factory && (o.kind==="factory-material"||o.kind==="factory-handoff")) {
+    factory=exactFactoryReviewView(rawFactory,{kind:o.kind,statePath:factory.statePath,runRef:factory.runRef!,subjectRef:o.kind==="factory-material"?o.ref as string:undefined},true);
+    if(!factory)return null;
+  }
   return { terminal:o.kind==="terminal"?{cwd:typeof terminalRaw?.cwd==="string"?terminalRaw.cwd:undefined,attachment}:undefined, flow:o.kind==="flow"?flow:undefined, browser:o.kind==="browser"?{url:typeof (o.browser as {url?:unknown})?.url==="string"?(o.browser as {url:string}).url:""}:undefined, view:retainedDevelopmentField?{developmentField:retainedDevelopmentField}:factory ? {factory} : (encounterReturnSurfaceId||encounterPlane&&["Conversation","Activity","Context","Inspect"].includes(encounterPlane))?{encounterPlane,encounterReturnSurfaceId}:undefined, encounter, location, address, project: o.project as string | undefined, id: o.id, kind: o.kind, ref: o.ref as string | undefined, title: o.title };
 }
 

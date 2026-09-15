@@ -1,3 +1,4 @@
+import {exactFactoryReviewView} from "./contributions/factory/factory-review-snapshot";
 import {presentConversation,returnConversationToSide} from "./surface/conversation-placement";
 import {exactDevelopmentFieldView} from "./surface/development-field-snapshot";
 import {enterComposition,leaveComposition,presentBinding,selectCompositionCollection} from "./surface/composition";
@@ -784,14 +785,17 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
       });
       const v=await listen<{workspace_id:string;surface_id:string;view:NonNullable<import("./surface/types").SurfaceBinding["view"]>}>("oi:surface-view",e=>{
         const held=workspaceRef.current.workspaces.find(workspace=>workspace.id===e.payload.workspace_id)?.layout.surfaces[e.payload.surface_id];
-        const factory=e.payload.view?.factory;
-        const material=held?.kind==="factory-material"&&factory?.statePath===held.view?.factory?.statePath&&factory?.runRef===held.view?.factory?.runRef&&Number.isSafeInteger(factory?.expectedRevision)&&(factory?.expectedRevision??-1)>=0;
+        const heldFactory=held?.view?.factory;
+        const factory=heldFactory?.runRef&&(held?.kind==="factory-material"||held?.kind==="factory-handoff")
+          ? exactFactoryReviewView(e.payload.view?.factory,{kind:held.kind,statePath:heldFactory.statePath,runRef:heldFactory.runRef,subjectRef:held.kind==="factory-material"?held.ref:undefined})
+          : undefined;
         const heldDevelopment=held?.kind==="development-field"?held.view?.developmentField:undefined;
         const development=heldDevelopment&&typeof held?.project==="string"
           ? exactDevelopmentFieldView(e.payload.view?.developmentField,{project:held.project,cwd:heldDevelopment.cwd,requestedBase:heldDevelopment.baseRevision??"HEAD"})
           : undefined;
         if (development) workspaceRef.current.surfaceView(e.payload.workspace_id,e.payload.surface_id,{...held!.view,developmentField:development});
-        else if(material||["Conversation","Activity","Context","Inspect"].includes(e.payload.view?.encounterPlane??"")) workspaceRef.current.surfaceView(e.payload.workspace_id,e.payload.surface_id,{...held?.view,...e.payload.view});
+        else if(factory) workspaceRef.current.surfaceView(e.payload.workspace_id,e.payload.surface_id,{...held!.view,factory});
+        else if(held?.kind==="encounter"&&["Conversation","Activity","Context","Inspect"].includes(e.payload.view?.encounterPlane??"")) workspaceRef.current.surfaceView(e.payload.workspace_id,e.payload.surface_id,{...held.view,encounterPlane:e.payload.view.encounterPlane});
       });
       const c=await listen<{workspace_id:string;surface_id:string;bounds:import("./surface/types").NativeWindowBounds}>("oi:window-bounds",e=>workspaceRef.current.windowBounds(e.payload.workspace_id,e.payload.surface_id,e.payload.bounds));
       if(disposed){a();b();c();v();}else cleanups.push(a,b,c,v);

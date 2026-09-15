@@ -5,6 +5,7 @@ import {developmentRead} from "./development";
 import {selectFactoryMaterial,type FactoryMaterial,type FactoryMaterialBuildReading,type FactoryMaterialSelection} from "./factory-material-reading";
 import type {CandidateView,EvidenceView} from "./types";
 import "./factory-material-surface.css";
+import {createFactoryMaterialReviewSnapshot,factoryMaterialReview,type FactoryMaterialReviewSnapshot} from "./factory-review-snapshot";
 
 export interface FactoryMaterialSurfaceProps {
   statePath:string;
@@ -12,18 +13,20 @@ export interface FactoryMaterialSurfaceProps {
   subjectRef:string;
   /** Factory Build/state revision supplied by the owning Surface binding. */
   expectedRevision?:number;
-  /** The right-region owner persists this only after an explicit revision choice. */
-  onRevisionAccepted?:(revision:number)=>void|Promise<void>;
+  snapshot?:FactoryMaterialReviewSnapshot;
+  snapshotUnavailable?:string;
+  /** Atomically persists an explicit revision choice and its retained owner reading. */
+  onReviewAccepted?:(review:{revision:number;snapshot?:FactoryMaterialReviewSnapshot;snapshotUnavailable?:string})=>void|Promise<void>;
 }
 
-type ReviewedMaterial=Extract<FactoryMaterialSelection,{kind:"selected"}>;
-type LatestMaterial=ReviewedMaterial|{kind:"refusal";message:string;reading:FactoryMaterialBuildReading};
+type ReviewedMaterial=Extract<FactoryMaterialSelection,{kind:"selected"}>&{payload:unknown};
+type LatestMaterial=ReviewedMaterial|{kind:"refusal";message:string;reading:FactoryMaterialBuildReading;payload:unknown};
 type CandidateMaterial=Extract<FactoryMaterial,{kind:"candidate"}>;
 type EvidenceMaterial=Extract<FactoryMaterial,{kind:"evidence"}>;
 
 /** Right-pane reader for one canonical Factory Candidate or Evidence. It reads
  * the owner Build record only; opaque references remain disclosed references. */
-export function FactoryMaterialSurface({statePath,runRef,subjectRef,expectedRevision,onRevisionAccepted}:FactoryMaterialSurfaceProps) {
+export function FactoryMaterialSurface({statePath,runRef,subjectRef,expectedRevision,snapshot,snapshotUnavailable,onReviewAccepted}:FactoryMaterialSurfaceProps) {
   const kernel=useKernel();
   const [reviewed,setReviewed]=useState<ReviewedMaterial>();
   const [latest,setLatest]=useState<LatestMaterial>();
@@ -31,25 +34,37 @@ export function FactoryMaterialSurface({statePath,runRef,subjectRef,expectedRevi
   const [busy,setBusy]=useState(false);
   const [accepting,setAccepting]=useState(false);
   const request=useRef(0),mounted=useRef(true),sourceIdentity=useRef(""),reviewedRef=useRef<ReviewedMaterial>();
-  const identity=[statePath,runRef,subjectRef,expectedRevision===undefined?"unbound":String(expectedRevision)].join("\u0000");
+  const identity=[statePath,runRef,subjectRef].join("\u0000");
+  const expected={statePath,runRef,subjectRef};
+  const inputs=useRef({expectedRevision,snapshot,snapshotUnavailable});
+  inputs.current={expectedRevision,snapshot,snapshotUnavailable};
 
   useEffect(()=>{mounted.current=true;return ()=>{mounted.current=false;request.current+=1;};},[]);
   const current=useCallback((generation:number)=>mounted.current&&request.current===generation,[]);
+  const onReviewAcceptedRef=useRef(onReviewAccepted);
+  onReviewAcceptedRef.current=onReviewAccepted;
+  const persistReview=useCallback(async(selection:ReviewedMaterial):Promise<string|undefined>=>{
+    const captured=createFactoryMaterialReviewSnapshot(selection.payload,expected);
+    const retained=captured?{revision:selection.reading.revision,snapshot:captured}:{revision:selection.reading.revision,snapshotUnavailable:"This Factory material remains visible here, but it cannot be retained across presentation changes. Refresh explicitly to read the current Factory state."};
+    try { await onReviewAcceptedRef.current?.(retained); }
+    catch(reason) { return `This Factory material remains visible here, but its presentation snapshot could not be retained: ${message(reason)}`; }
+    return captured?undefined:retained.snapshotUnavailable;
+  },[expected.statePath,expected.runRef,expected.subjectRef]);
   const acceptLatest=useCallback(async()=>{
     if(!latest||latest.kind!=="selected") return;
     const generation=request.current;
     setAccepting(true);
     try {
-      await onRevisionAccepted?.(latest.reading.revision);
+      const notice=await persistReview(latest);
       if(!current(generation)) return;
       reviewedRef.current=latest;
-      setReviewed(latest);setLatest(undefined);setError(undefined);
+      setReviewed(latest);setLatest(undefined);setError(notice);
     } catch(reason) {
       if(current(generation)) setError(`Factory revision ${latest.reading.revision} could not be selected: ${message(reason)}`);
     } finally {
       if(current(generation)) setAccepting(false);
     }
-  },[current,latest,onRevisionAccepted]);
+  },[current,latest,persistReview]);
 
   const read=useCallback(async()=>{
     const generation=++request.current;
@@ -60,25 +75,27 @@ export function FactoryMaterialSurface({statePath,runRef,subjectRef,expectedRevi
       const result=selectFactoryMaterial(payload,runRef,subjectRef);
       const reading=result.reading;
       if(!reading) { setError(result.kind==="refusal"?result.message:"Factory did not return a material reading.");return; }
-      const retained:LatestMaterial=result.kind==="selected"?result:{kind:"refusal",message:result.message,reading};
-      if(expectedRevision!==undefined&&reading.revision!==expectedRevision&&reviewedRef.current?.reading.revision!==reading.revision) {
+      const retained:LatestMaterial=result.kind==="selected"?{...result,payload}:{kind:"refusal",message:result.message,reading,payload};
+      const boundRevision=inputs.current.expectedRevision;
+      if(boundRevision!==undefined&&reading.revision!==boundRevision&&reviewedRef.current?.reading.revision!==reading.revision) {
         setLatest(retained);
-        setError(`Factory returned Build revision ${reading.revision}; this material view is bound to revision ${expectedRevision}.`);
+        setError(`Factory returned Build revision ${reading.revision}; this material view is bound to revision ${boundRevision}.`);
         return;
       }
       if(result.kind==="refusal") {
         if(reviewedRef.current&&reviewedRef.current.reading.revision!==reading.revision) setLatest(retained);
         setError(result.message);return;
       }
-      if(!reviewedRef.current) { reviewedRef.current=result;setReviewed(result);return; }
+      const selected=retained as ReviewedMaterial;
+      if(!reviewedRef.current) { reviewedRef.current=selected;setReviewed(selected);const notice=await persistReview(selected);if(current(generation)&&notice)setError(notice);return; }
       if(reviewedRef.current.reading.revision===reading.revision) { setLatest(undefined);return; }
-      setLatest(result);
+      setLatest(retained);
     } catch(reason) {
       if(current(generation)) setError(`Factory material read unavailable: ${message(reason)}`);
     } finally {
       if(current(generation)) setBusy(false);
     }
-  },[current,expectedRevision,kernel.transport,runRef,statePath,subjectRef]);
+  },[current,kernel.transport,persistReview,runRef,statePath,subjectRef]);
 
   useEffect(()=>{
     const changed=sourceIdentity.current!==identity;
@@ -88,8 +105,16 @@ export function FactoryMaterialSurface({statePath,runRef,subjectRef,expectedRevi
       reviewedRef.current=undefined;
       setReviewed(undefined);setLatest(undefined);setError(undefined);setAccepting(false);
     }
-    void read();
-  },[identity,read]);
+    const held=inputs.current;
+    const retained=held.snapshot?factoryMaterialReview(held.snapshot,expected):undefined;
+    if(retained&&(held.expectedRevision===undefined||retained.reading.revision===held.expectedRevision)) {
+      const reviewedSnapshot={...retained,payload:held.snapshot!.payload};
+      reviewedRef.current=reviewedSnapshot;
+      setReviewed(reviewedSnapshot);setLatest(undefined);setError(undefined);setBusy(false);
+    } else if(held.snapshot||held.snapshotUnavailable) {
+      setError(held.snapshotUnavailable??"The retained Factory material cannot be restored for this revision. Refresh explicitly to read current Factory state.");setBusy(false);
+    } else void read();
+  },[identity,expected.statePath,expected.runRef,expected.subjectRef,read]);
 
   const document=reviewed?materialDocument(reviewed):undefined;
   return <section className="factory-material-surface" aria-label="Factory material">

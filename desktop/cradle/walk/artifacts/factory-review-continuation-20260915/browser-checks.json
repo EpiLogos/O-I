@@ -1,0 +1,74 @@
+[
+  {
+    "name": "surface-composition",
+    "passed_assertions": 24,
+    "last_lines": [
+      "  ]",
+      "}"
+    ]
+  },
+  {
+    "name": "factory-review-read",
+    "passed_assertions": 11,
+    "last_lines": [
+      "PASS Invalid review snapshot preserves an unrelated draft binding",
+      "PASS Invalid review persists an explicit recovery notice"
+    ]
+  },
+  {
+    "name": "factory-review-recovery",
+    "passed_assertions": 15,
+    "last_lines": [
+      "PASS factory-material: original draft survives explicit recovery",
+      "PASS No application page errors"
+    ]
+  },
+  {
+    "name": "conversation-placement",
+    "passed_assertions": 18,
+    "last_lines": [
+      "PASS The local Draft sentinel is cleared before the walk exits",
+      "PASS No application page errors"
+    ]
+  },
+  {
+    "name": "factory-workbench",
+    "passed_assertions": 18,
+    "last_lines": [
+      "PASS Reload then leave restores the persisted ordinary return point",
+      "PASS No application page errors"
+    ]
+  },
+  {
+    "name": "git-return",
+    "passed_assertions": 33,
+    "last_lines": [
+      "PASS Explicit Refresh restores the native patch after corrupt-snapshot recovery",
+      "PASS No application errors"
+    ]
+  },
+  {
+    "name": "session-controls",
+    "passed_assertions": 19,
+    "last_lines": [
+      "PASS Closing the terminal returns to the same inspected encounter",
+      "PASS No application page errors"
+    ]
+  },
+  {
+    "name": "factory-run-content",
+    "passed_assertions": 18,
+    "last_lines": [
+      "PASS Absent native intent operation cannot become a fabricated proposal",
+      "PASS No application page errors"
+    ]
+  },
+  {
+    "name": "factory-handoff",
+    "passed_assertions": 4,
+    "last_lines": [
+      "PASS Factory source and Run survive reload without an invented handoff",
+      "PASS Reload rechecks the real empty retained-task relation"
+    ]
+  }
+]

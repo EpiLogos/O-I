@@ -1,0 +1,25 @@
+{
+  "standing": "C: current native Factory Build and task-list reads plus corrupt local presentation derivatives. No populated Candidate, Evidence, Handoff, execution or acceptance is claimed.",
+  "checks": [
+    "Actual empty Build cannot become a retained Candidate review",
+    "Kernel bridge serves the public Factory task-list read",
+    "Actual queued Run has no retained handoff task",
+    "Corrupt material snapshot becomes explicit recovery",
+    "Corrupt handoff snapshot becomes explicit recovery",
+    "Oversized recovery notice becomes a bounded recovery notice",
+    "Wrong snapshot kind cannot hydrate a material Surface",
+    "Malformed expected revision blocks automatic reread",
+    "Wrong retained revision blocks automatic reread",
+    "Invalid review snapshot preserves an unrelated draft binding",
+    "Invalid review persists an explicit recovery notice"
+  ],
+  "source": {
+    "factory": "/home/frank/Central/Work/Factory/.worktrees/codex-developmental-build-read/target/debug/factory",
+    "statePath": "/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/material/header-continuity.state.json",
+    "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD",
+    "candidates": 0,
+    "evidence": 0,
+    "taskRefs": []
+  },
+  "limitation": "The current native Build and task list are empty, so positive populated-material retention remains unproved."
+}

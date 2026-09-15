@@ -1,0 +1,31 @@
+{
+  "observed_at": "2026-09-15T00:27:00.223853+00:00",
+  "executables": {
+    "aikit": {
+      "path": "/home/frank/.local/bin/aikit",
+      "sha256": "68b176875cc4798e9b253a17c4ce94aae0ecb7b1f937fe433c1ff047e77ef975"
+    },
+    "actuation": {
+      "path": "/home/frank/.local/bin/actuation",
+      "sha256": "a722c73e8344d9e5d32e54913151e7893f6493efc0e729d06c6ee35849757a02"
+    },
+    "factory": {
+      "path": "/home/frank/.local/bin/factory",
+      "sha256": "9df2f645b1acec483acf9a5dea4411c891c9bcb458a9872884b9da3b8ec2978b"
+    },
+    "oi": {
+      "path": "/home/frank/.local/bin/oi",
+      "sha256": "691f89ee7a5d5427e621b9219e5c2820541a52295379d8742201806b1938ba3d"
+    },
+    "aikit-session-space": {
+      "path": "/home/frank/.local/bin/aikit-session-space",
+      "sha256": "61b668c49f93c4265e64d89da65c882d74cbc064ab173637b1bf6351d3ce45e6"
+    },
+    "frozen_factory": {
+      "path": "/home/frank/Central/Work/Factory/.worktrees/codex-developmental-build-read/target/debug/factory",
+      "sha256": "a48c87ecb43244faef73e8c231f70594a738c7469e943cd0c1e7356cfe6dc133"
+    }
+  },
+  "factory_override": "/home/frank/Central/Work/Factory/.worktrees/codex-developmental-build-read/target/debug/factory",
+  "scope": "Hashes identify installed or frozen executables; source worktree HEAD does not establish which revision produced a binary."
+}
