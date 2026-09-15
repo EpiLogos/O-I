@@ -34,6 +34,7 @@ fn manifest(minimum_version: &str) -> PackageManifest {
                 evidence_format: Some("aikit.session-space-contribution-registry/v1".into()),
             },
         }],
+        native_tools: Vec::new(),
     }
 }
 

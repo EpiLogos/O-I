@@ -17,6 +17,34 @@ pub struct PackageManifest {
     #[serde(default)]
     pub effects: Vec<String>,
     pub contributions: Vec<PackageContribution>,
+    #[serde(default)]
+    pub native_tools: Vec<NativeToolDeclaration>,
+}
+
+/// A declarative native-tool observation entry, carried on the package envelope
+/// beside executable contributions. This is the curated-floor shape that
+/// `oi.world-recognition/v1`'s simple PATH/version/service probe reads; richer or
+/// newer tools register the same way instead of editing O:I source.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+pub struct NativeToolDeclaration {
+    pub name: String,
+    /// Open taxonomy: harness, agent, model-provider, material-executor,
+    /// working-environment, collaboration-client. Unowned kinds stay
+    /// observed-but-unrouted.
+    pub kind: String,
+    /// Args appended to the located binary for the default version probe.
+    /// Empty means the tool exposes no version flag; presence is still a fact.
+    #[serde(default)]
+    pub version_args: Vec<String>,
+    /// Full argv override. When present it wins over `version_args` and can name
+    /// a different executable (e.g. `--help`, package metadata, a relay
+    /// handshake). First token is resolved through PATH when it is a bare name.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub version_command: Option<Vec<String>>,
+    /// Observe machine-global service state from this home-relative directory
+    /// instead of probing a PATH binary (e.g. a daemon).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub service_dir: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -169,8 +197,32 @@ pub fn validate_manifest(manifest: &PackageManifest) -> Result<(), String> {
     validate_disclosures("package permissions", &manifest.permissions)?;
     validate_disclosures("package effects", &manifest.effects)?;
 
-    if manifest.contributions.is_empty() {
-        return Err("package must declare at least one native contribution".into());
+    if manifest.contributions.is_empty() && manifest.native_tools.is_empty() {
+        return Err("package must declare at least one native contribution or native tool".into());
+    }
+
+    let mut tool_names = BTreeSet::new();
+    for tool in &manifest.native_tools {
+        nonempty("native tool name", &tool.name)?;
+        nonempty("native tool kind", &tool.kind)?;
+        if tool.name != tool.name.to_lowercase() {
+            return Err(format!(
+                "native tool name `{}` must be lowercase (native-tool observation joins owners by name)",
+                tool.name
+            ));
+        }
+        if !tool_names.insert(tool.name.as_str()) {
+            return Err(format!("duplicate native tool `{}`", tool.name));
+        }
+        if let Some(command) = &tool.version_command {
+            if command.is_empty() {
+                return Err(format!(
+                    "native tool `{}` version_command must not be empty",
+                    tool.name
+                ));
+            }
+            nonempty("native tool version_command[0]", &command[0])?;
+        }
     }
 
     let mut contribution_refs = BTreeSet::new();

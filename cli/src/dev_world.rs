@@ -10,7 +10,8 @@
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
 
 pub const DEV_WORLD_SETUP_SCHEMA: &str = "oi.dev-world-setup/v1";
 pub const MACHINE_CONFIG_RELATIVE: &str = "Control/machines/current/oi-development.toml";
@@ -84,8 +85,21 @@ pub struct DevWorldSetup {
     /// The `aikit session up` delegation, tokens already resolved to absolute
     /// paths. AIKit owns materialisation; O:I only resolves and points.
     pub delegate_session_up: Vec<String>,
+    /// Per-client skill-projection pickup fact (`restart-required` |
+    /// `next-task` | `live`) read live from `aikit client status`. Empty when
+    /// AIKit is not on PATH or discloses no pickup wrinkle.
+    pub pickup: Vec<ClientPickup>,
     #[serde(default)]
     pub warnings: Vec<String>,
+}
+
+/// One client's quiet skill-pickup fact: does the user need to restart the
+/// harness, start a new task, or is the projection already live?
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct ClientPickup {
+    pub client: String,
+    /// `restart-required` | `next-task` | `live`
+    pub pickup: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -113,8 +127,10 @@ pub struct DesktopDisclosure {
 }
 
 /// Resolve the machine-local carrier + committed carrier into a setup
-/// disclosure. Purely deterministic observation: reads three files, performs
-/// token substitution, returns the delegated next step.
+/// disclosure. Deterministic core (three files + token substitution) with one
+/// live read-only observation layered on: per-client skill-pickup from
+/// `aikit client status`. It never mutates, never launches a provider, never
+/// invokes a model.
 pub fn resolve_dev_world_setup(ground: &Path) -> Result<DevWorldSetup, String> {
     let machine_path = ground.join(MACHINE_CONFIG_RELATIVE);
     let machine_text = fs::read_to_string(&machine_path).map_err(|error| {
@@ -219,7 +235,97 @@ pub fn resolve_dev_world_setup(ground: &Path) -> Result<DevWorldSetup, String> {
             resolved_path.display().to_string(),
         ],
         warnings,
+        pickup: query_client_pickup().unwrap_or_default(),
     })
+}
+
+/// Map an AIKit `client status` activation `effect` to the pickup token the
+/// disclosure surfaces. Only the three "needs attention" facts map;
+/// already-live/unsupported effects are not a pickup wrinkle.
+pub fn pickup_from_effect(effect: Option<&str>) -> Option<String> {
+    let effect = effect?;
+    if effect == "live" {
+        return Some("live".to_owned());
+    }
+    if effect.starts_with("restart ") {
+        return Some("restart-required".to_owned());
+    }
+    if effect.starts_with("next session") {
+        return Some("next-task".to_owned());
+    }
+    None
+}
+
+/// Parse `aikit client status --json`'s `data.clients` into per-client pickup
+/// facts. Pure so it can be tested without touching the live machine.
+pub fn client_pickups_from_status(data: &serde_json::Value) -> Vec<ClientPickup> {
+    let mut pickups = Vec::new();
+    let Some(clients) = data.get("clients").and_then(serde_json::Value::as_array) else {
+        return pickups;
+    };
+    for entry in clients {
+        let Some(client) = entry.get("client").and_then(serde_json::Value::as_str) else {
+            continue;
+        };
+        let effect = entry.get("effect").and_then(serde_json::Value::as_str);
+        if let Some(pickup) = pickup_from_effect(effect) {
+            pickups.push(ClientPickup {
+                client: client.to_owned(),
+                pickup,
+            });
+        }
+    }
+    pickups
+}
+
+fn resolve_executable(candidate: &str) -> Option<PathBuf> {
+    let path = Path::new(candidate);
+    if path.components().count() > 1 || path.is_absolute() {
+        return is_executable(path).then(|| path.to_path_buf());
+    }
+    std::env::var_os("PATH").and_then(|paths| {
+        std::env::split_paths(&paths)
+            .map(|directory| directory.join(candidate))
+            .find(|path| is_executable(path))
+    })
+}
+
+fn is_executable(path: &Path) -> bool {
+    let Ok(metadata) = fs::metadata(path) else {
+        return false;
+    };
+    if !metadata.is_file() {
+        return false;
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        metadata.permissions().mode() & 0o111 != 0
+    }
+    #[cfg(not(unix))]
+    {
+        true
+    }
+}
+
+/// Best-effort live read of `aikit client status` pickup facts. Returns `None`
+/// when AIKit is absent or its status envelope is unreadable; the caller treats
+/// that as "no pickup wrinkle", never a failure.
+fn query_client_pickup() -> Option<Vec<ClientPickup>> {
+    let aikit = resolve_executable("aikit")?;
+    let output = Command::new(aikit)
+        .args(["client", "status", "--json"])
+        .stdin(Stdio::null())
+        .output()
+        .ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    let envelope: serde_json::Value = serde_json::from_slice(&output.stdout).ok()?;
+    if envelope.get("ok").and_then(serde_json::Value::as_bool) != Some(true) {
+        return None;
+    }
+    Some(client_pickups_from_status(envelope.get("data")?))
 }
 
 /// Replace `@project/<key>` and `@parent` tokens with the machine-local absolute
@@ -316,9 +422,47 @@ mod tests {
             carrier_session_space: "dev-world/session-space.json".into(),
             carrier_session_spec: "dev-world/session.toml".into(),
             delegate_session_up: vec!["aikit".into(), "session".into(), "up".into()],
+            pickup: vec![],
             warnings: vec![],
         };
         assert_eq!(disclosure.schema, "oi.dev-world-setup/v1");
         assert_eq!(disclosure.session_space, "session-space/oi-development");
+    }
+
+    #[test]
+    fn pickup_effect_maps_to_quiet_tokens_only_for_real_wrinkles() {
+        assert_eq!(pickup_from_effect(Some("live")), Some("live".to_owned()));
+        assert_eq!(
+            pickup_from_effect(Some("restart Claude")),
+            Some("restart-required".to_owned())
+        );
+        assert_eq!(
+            pickup_from_effect(Some("next session only — new tasks")),
+            Some("next-task".to_owned())
+        );
+        assert_eq!(pickup_from_effect(Some("immediate")), None);
+        assert_eq!(pickup_from_effect(None), None);
+    }
+
+    #[test]
+    fn client_status_pickups_are_parsed_per_client() {
+        let data: serde_json::Value = serde_json::from_str(
+            r#"{
+              "clients": [
+                {"client":"claude","effect":"restart Claude","installed":true},
+                {"client":"codex","effect":"next session only — new tasks","installed":true},
+                {"client":"broker","effect":"live","installed":true},
+                {"client":"opencode","effect":null,"installed":false}
+              ]
+            }"#,
+        )
+        .unwrap();
+        let pickups = client_pickups_from_status(&data);
+        assert_eq!(pickups.len(), 3);
+        assert_eq!(pickups[0].client, "claude");
+        assert_eq!(pickups[0].pickup, "restart-required");
+        assert_eq!(pickups[1].pickup, "next-task");
+        assert_eq!(pickups[2].client, "broker");
+        assert_eq!(pickups[2].pickup, "live");
     }
 }

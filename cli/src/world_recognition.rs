@@ -1,4 +1,4 @@
-use crate::package::{parse_manifest, PackageContribution};
+use crate::package::{parse_manifest, NativeToolDeclaration, PackageContribution};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet};
@@ -171,6 +171,8 @@ pub struct RecognitionRegistry {
     pub schema: String,
     #[serde(default)]
     pub registrations: Vec<RecognitionRegistration>,
+    #[serde(default)]
+    pub native_tools: Vec<NativeToolDeclaration>,
 }
 
 impl Default for RecognitionRegistry {
@@ -178,6 +180,7 @@ impl Default for RecognitionRegistry {
         Self {
             schema: WORLD_RECOGNITION_REGISTRY_SCHEMA.to_owned(),
             registrations: Vec::new(),
+            native_tools: Vec::new(),
         }
     }
 }
@@ -372,7 +375,7 @@ pub fn effective_registrations(path: &Path) -> Result<Vec<RecognitionRegistratio
 pub fn register_recognition_package(
     manifest_path: &Path,
     registry_path: &Path,
-) -> Result<Vec<RecognitionRegistration>, String> {
+) -> Result<(Vec<RecognitionRegistration>, Vec<NativeToolDeclaration>), String> {
     let manifest_path = absolute_path(manifest_path)?;
     let input = fs::read_to_string(&manifest_path).map_err(|error| {
         format!(
@@ -389,9 +392,9 @@ pub fn register_recognition_package(
                 && contribution.target_contract == WORLD_RECOGNITION_CONTRACT
         })
         .collect();
-    if recognition_contributions.is_empty() {
+    if recognition_contributions.is_empty() && manifest.native_tools.is_empty() {
         return Err(format!(
-            "package {} has no O:I `{WORLD_RECOGNITION_CONTRACT}` contribution",
+            "package {} has no O:I `{WORLD_RECOGNITION_CONTRACT}` contribution or declarative native tools",
             manifest.package_ref
         ));
     }
@@ -438,8 +441,41 @@ pub fn register_recognition_package(
     registry
         .registrations
         .sort_by(|left, right| left.contribution_ref.cmp(&right.contribution_ref));
+    for tool in &manifest.native_tools {
+        if let Some(index) = registry
+            .native_tools
+            .iter()
+            .position(|existing| existing.name == tool.name)
+        {
+            registry.native_tools[index] = tool.clone();
+        } else {
+            registry.native_tools.push(tool.clone());
+        }
+    }
+    registry
+        .native_tools
+        .sort_by(|left, right| left.name.cmp(&right.name));
     save_registry(registry_path, &registry)?;
-    Ok(prepared)
+    Ok((prepared, manifest.native_tools))
+}
+
+/// Remove a registered declarative native-tool entry by name. Built-in curated
+/// tools cannot be removed through the registry — they are first-party data.
+pub fn unregister_native_tool(name: &str, registry_path: &Path) -> Result<bool, String> {
+    if builtin_native_tools()?
+        .iter()
+        .any(|tool| tool.name == name)
+    {
+        return Err(format!("{name} is a built-in first-party native tool"));
+    }
+    let mut registry = load_registry(registry_path)?;
+    let before = registry.native_tools.len();
+    registry.native_tools.retain(|tool| tool.name != name);
+    if registry.native_tools.len() == before {
+        return Ok(false);
+    }
+    save_registry(registry_path, &registry)?;
+    Ok(true)
 }
 
 pub fn unregister_recognition_contribution(
@@ -568,8 +604,11 @@ pub fn discover_world(
 /// reconciliation, owner semantic-contract disclosure and the extension frontier
 /// over a target-scoped World account. Kept separate from [`discover_world`] so
 /// registry/recogniser tests stay isolated from the live machine.
-fn enrich_world_account(account: &mut WorldRecognitionAccount) {
-    let tool_observations = recognize_installed_native_tools();
+fn enrich_world_account(
+    account: &mut WorldRecognitionAccount,
+    registry_path: &Path,
+) -> Result<(), String> {
+    let tool_observations = recognize_installed_native_tools(&effective_native_tools(registry_path)?);
     let tool_count = tool_observations.len();
     account.observations.extend(tool_observations);
     account.providers.push(RecognitionProviderExecution {
@@ -654,6 +693,7 @@ fn enrich_world_account(account: &mut WorldRecognitionAccount) {
     account
         .extension_requests
         .dedup_by(|left, right| left.request_ref == right.request_ref);
+    Ok(())
 }
 
 pub fn state_dir() -> Result<PathBuf, String> {
@@ -674,8 +714,9 @@ pub fn default_registry_path() -> Result<PathBuf, String> {
 }
 
 pub fn discover_ground(target: &Path) -> Result<WorldRecognitionAccount, String> {
-    let mut account = discover_world(target, &default_registry_path()?)?;
-    enrich_world_account(&mut account);
+    let registry_path = default_registry_path()?;
+    let mut account = discover_world(target, &registry_path)?;
+    enrich_world_account(&mut account, &registry_path)?;
     Ok(account)
 }
 
@@ -1087,34 +1128,36 @@ fn native_system_matches(left: &NativeSystemObservation, right: &NativeSystemObs
     left.name.eq_ignore_ascii_case(&right.name) || left.system_ref == right.system_ref
 }
 
-/// One entry in the built-in native-tool registry.
-///
-/// The registry itself is data, not code: `native_tools.json` ships the curated
-/// floor and this struct + [`recognize_installed_native_tools`] are the generic
-/// observation engine. Adding a tool edits JSON, not Rust. Anything richer or
-/// newer registers through the public `oi.world-recognition/v1` package path
-/// (as cmux and Herdr already do) — no source change at all. Version is always
-/// read from the live machine; nothing here asserts a fixed revision.
-#[derive(Debug, Clone, Deserialize)]
-struct NativeToolEntry {
-    name: String,
-    /// Native taxonomy: harness, agent, model-provider, material-executor,
-    /// working-environment, collaboration-client.
-    kind: String,
-    /// Version probe arguments. Empty means the tool exposes no version flag;
-    /// presence is still recorded and the probe gap is a fact, not an error.
-    #[serde(default)]
-    version_args: Vec<String>,
-    /// When set, observe machine-global service state from this home-relative
-    /// directory instead of probing a PATH binary (e.g. a daemon).
-    #[serde(default)]
-    service_dir: Option<String>,
-}
-
+/// The built-in curated floor is declared as data, not Rust source:
+/// `native_tools.json` ships the built-in entries and this module is the generic
+/// observation engine. A *new or overridden* tool arrives through the
+/// `oi.world-recognition/v1` package path (a package carrying `native_tools`),
+/// so "recognise my new tool" is *register a package*, not *edit O:I source*.
+/// Version is always read from the live machine; nothing here asserts a fixed
+/// revision.
 const NATIVE_TOOL_REGISTRY_JSON: &str = include_str!("native_tools.json");
 
-fn native_tool_registry() -> Vec<NativeToolEntry> {
-    serde_json::from_str(NATIVE_TOOL_REGISTRY_JSON).unwrap_or_default()
+/// Built-in declarative native-tool entries (the curated floor).
+fn builtin_native_tools() -> Result<Vec<NativeToolDeclaration>, String> {
+    serde_json::from_str(NATIVE_TOOL_REGISTRY_JSON)
+        .map_err(|error| format!("built-in native-tool registry is invalid: {error}"))
+}
+
+/// Merge built-in + locally registered declarative native-tool entries by name.
+/// A registered entry overrides the built-in one with the same name; new names
+/// extend the set. This is the v2 package path: no code change, no drift.
+fn effective_native_tools(
+    registry_path: &Path,
+) -> Result<Vec<NativeToolDeclaration>, String> {
+    let mut entries: BTreeMap<String, NativeToolDeclaration> = builtin_native_tools()?
+        .into_iter()
+        .map(|entry| (entry.name.clone(), entry))
+        .collect();
+    let registry = load_registry(registry_path)?;
+    for entry in registry.native_tools {
+        entries.insert(entry.name.clone(), entry);
+    }
+    Ok(entries.into_values().collect())
 }
 
 /// Observe installed harnesses, agents, model providers, material executors and
@@ -1123,11 +1166,13 @@ fn native_tool_registry() -> Vec<NativeToolEntry> {
 /// do something with them is composed separately by owner-participation
 /// reconciliation. Versions are read live — never asserted — so a tool upgrade
 /// is an observation, not a failure.
-fn recognize_installed_native_tools() -> Vec<RecognitionObservation> {
+fn recognize_installed_native_tools(
+    entries: &[NativeToolDeclaration],
+) -> Vec<RecognitionObservation> {
     let mut observations = Vec::new();
-    for entry in native_tool_registry() {
+    for entry in entries {
         if let Some(service_dir) = entry.service_dir.as_deref() {
-            if let Some(observation) = recognize_service_tool(&entry, service_dir) {
+            if let Some(observation) = recognize_service_tool(entry, service_dir) {
                 observations.push(observation);
             }
             continue;
@@ -1135,70 +1180,88 @@ fn recognize_installed_native_tools() -> Vec<RecognitionObservation> {
         let Some(locator) = resolve_executable(&entry.name) else {
             continue;
         };
-        observations.push(recognize_binary_tool(&entry, &locator));
+        observations.push(recognize_binary_tool(entry, &locator));
     }
     observations
 }
 
+/// Resolve the exact argv used to probe a binary tool's version. A
+/// `version_command` override wins outright; otherwise the located binary is
+/// probed with `version_args`; empty `version_args` and no override means the
+/// tool exposes no version flag (presence is the fact).
+fn resolve_probe_command(entry: &NativeToolDeclaration, locator: &Path) -> Option<Vec<String>> {
+    if let Some(command) = &entry.version_command {
+        return Some(command.clone());
+    }
+    if entry.version_args.is_empty() {
+        return None;
+    }
+    Some(
+        std::iter::once(locator.display().to_string())
+            .chain(entry.version_args.iter().cloned())
+            .collect(),
+    )
+}
+
 fn recognize_binary_tool(
-    entry: &NativeToolEntry,
+    entry: &NativeToolDeclaration,
     locator: &std::path::Path,
 ) -> RecognitionObservation {
     let mut facts = BTreeMap::new();
     let (version, degraded, detail, source_revision, evidence) =
-        if entry.version_args.is_empty() {
-            facts.insert("version_flag".to_owned(), json!("none"));
-            (
-                None,
-                false,
-                None,
-                None,
-                vec![RecognitionEvidence {
-                    kind: "native-presence".to_owned(),
-                    source: locator.display().to_string(),
-                    detail: format!("{} installed; exposes no version flag", entry.name),
-                }],
-            )
-        } else {
-            let output = Command::new(locator)
-                .args(&entry.version_args)
-                .stdin(Stdio::null())
-                .output();
-            match output {
-                Ok(output) => {
-                    let stdout = String::from_utf8_lossy(&output.stdout);
-                    let stderr = String::from_utf8_lossy(&output.stderr);
-                    let (version, degraded, detail) =
-                        classify_probe(output.status.success(), &stdout, &stderr);
-                    let source_revision =
-                        version.as_deref().and_then(parse_upstream_revision);
-                    (
-                        version,
-                        degraded,
-                        detail,
-                        source_revision,
-                        vec![RecognitionEvidence {
-                            kind: "native-command".to_owned(),
-                            source: locator.display().to_string(),
-                            detail: format!(
-                                "{} {}",
-                                entry.name,
-                                entry.version_args.join(" ")
-                            ),
-                        }],
-                    )
-                }
-                Err(error) => (
+        match resolve_probe_command(entry, locator) {
+            None => {
+                facts.insert("version_flag".to_owned(), json!("none"));
+                (
                     None,
-                    true,
-                    Some(format!("failed to probe: {error}")),
+                    false,
+                    None,
                     None,
                     vec![RecognitionEvidence {
-                        kind: "native-command".to_owned(),
+                        kind: "native-presence".to_owned(),
                         source: locator.display().to_string(),
-                        detail: format!("probe failed: {error}"),
+                        detail: format!("{} installed; exposes no version flag", entry.name),
                     }],
-                ),
+                )
+            }
+            Some(command) => {
+                let display = command.join(" ");
+                let output = Command::new(&command[0])
+                    .args(&command[1..])
+                    .stdin(Stdio::null())
+                    .output();
+                match output {
+                    Ok(output) => {
+                        let stdout = String::from_utf8_lossy(&output.stdout);
+                        let stderr = String::from_utf8_lossy(&output.stderr);
+                        let (version, degraded, detail) =
+                            classify_probe(output.status.success(), &stdout, &stderr);
+                        let source_revision =
+                            version.as_deref().and_then(parse_upstream_revision);
+                        (
+                            version,
+                            degraded,
+                            detail,
+                            source_revision,
+                            vec![RecognitionEvidence {
+                                kind: "native-command".to_owned(),
+                                source: display.clone(),
+                                detail: format!("{} version probe", entry.name),
+                            }],
+                        )
+                    }
+                    Err(error) => (
+                        None,
+                        true,
+                        Some(format!("failed to probe: {error}")),
+                        None,
+                        vec![RecognitionEvidence {
+                            kind: "native-command".to_owned(),
+                            source: display,
+                            detail: format!("probe failed: {error}"),
+                        }],
+                    ),
+                }
             }
         };
 
@@ -1211,8 +1274,8 @@ fn recognize_binary_tool(
         observation_ref: format!("observation:{}:local", entry.name),
         native_system: NativeSystemObservation {
             system_ref: format!("native:{}:local", entry.name),
-            kind: entry.kind.to_owned(),
-            name: entry.name.to_owned(),
+            kind: entry.kind.clone(),
+            name: entry.name.clone(),
             version,
             locator: Some(locator.display().to_string()),
             source_revision,
@@ -1229,7 +1292,7 @@ fn recognize_binary_tool(
 /// Observe a home-relative service/daemon from its own machine-global state
 /// files rather than a PATH binary. Never invents a locator or a version.
 fn recognize_service_tool(
-    entry: &NativeToolEntry,
+    entry: &NativeToolDeclaration,
     service_dir: &str,
 ) -> Option<RecognitionObservation> {
     let home = std::env::var_os("HOME")?;
@@ -2187,8 +2250,8 @@ printf '%s\n' '{"schema":"oi.world-recognition-result/v1","provider_ref":"contri
     }
 
     #[test]
-    fn native_tool_registry_uses_lowercase_names_for_owner_join() {
-        let registry = native_tool_registry();
+    fn builtin_native_tools_are_declared_as_lowercase_data() {
+        let registry = builtin_native_tools().unwrap();
         for entry in &registry {
             assert_eq!(entry.name, entry.name.to_lowercase());
             assert!(!entry.kind.is_empty());
@@ -2198,6 +2261,82 @@ printf '%s\n' '{"schema":"oi.world-recognition-result/v1","provider_ref":"contri
         assert!(registry.iter().any(|entry| entry.name == "hermes"));
         assert!(registry.iter().any(|entry| entry.name == "buzz" && entry.version_args.is_empty()));
         assert!(registry.iter().any(|entry| entry.name == "grok" && entry.service_dir.as_deref() == Some(".grokbot")));
+    }
+
+    #[test]
+    fn probe_command_resolution_prefers_version_command_then_version_args_then_none() {
+        let locator = Path::new("/usr/bin/tool");
+        let default_tool = NativeToolDeclaration {
+            name: "tool".into(),
+            kind: "harness".into(),
+            version_args: vec!["--version".into()],
+            version_command: None,
+            service_dir: None,
+        };
+        assert_eq!(
+            resolve_probe_command(&default_tool, locator),
+            Some(vec!["/usr/bin/tool".to_owned(), "--version".to_owned()])
+        );
+
+        let override_tool = NativeToolDeclaration {
+            name: "buzz".into(),
+            kind: "collaboration-client".into(),
+            version_args: vec![],
+            version_command: Some(vec!["buzz".into(), "--help".into()]),
+            service_dir: None,
+        };
+        assert_eq!(
+            resolve_probe_command(&override_tool, locator),
+            Some(vec!["buzz".to_owned(), "--help".to_owned()])
+        );
+
+        let no_flag = NativeToolDeclaration {
+            name: "buzz".into(),
+            kind: "collaboration-client".into(),
+            version_args: vec![],
+            version_command: None,
+            service_dir: None,
+        };
+        assert_eq!(resolve_probe_command(&no_flag, locator), None);
+    }
+
+    #[test]
+    fn registered_package_native_tools_extend_the_effective_floor_and_can_be_unregistered() {
+        let root = fixture("native-tools-package");
+        let registry = root.join("registry.json");
+        let manifest = root.join("package.json");
+        fs::write(
+            &manifest,
+            r#"{
+  "schema":"oi.package/v1",
+  "package_ref":"package:fixture/native-tools",
+  "version":"1.0.0",
+  "source":{"kind":"fixture","locator":"local","revision":"r1"},
+  "contributions":[],
+  "native_tools":[{"name":"fixturetool","kind":"collaboration-client","version_args":[],"version_command":["fixturetool","--help"]}]
+}"#,
+        )
+        .unwrap();
+
+        let (registrations, tools) = register_recognition_package(&manifest, &registry).unwrap();
+        assert!(registrations.is_empty());
+        assert_eq!(tools.len(), 1);
+
+        let effective = effective_native_tools(&registry).unwrap();
+        let fixturetool = effective
+            .iter()
+            .find(|entry| entry.name == "fixturetool")
+            .expect("registered native tool present");
+        assert_eq!(
+            fixturetool.version_command,
+            Some(vec!["fixturetool".to_owned(), "--help".to_owned()])
+        );
+
+        // Built-in curated tools are first-party data and cannot be unregistered.
+        assert!(unregister_native_tool("claude", &registry).is_err());
+        assert!(unregister_native_tool("fixturetool", &registry).unwrap());
+        assert!(!unregister_native_tool("fixturetool", &registry).unwrap());
+        fs::remove_dir_all(root).unwrap();
     }
 
     #[test]

@@ -1,9 +1,11 @@
 use oi_cli::world_recognition::{
     discover_ground, effective_registrations, register_recognition_package,
-    unregister_recognition_contribution, RecognizedSourceAperture, WorldRecognitionAccount,
+    unregister_native_tool, unregister_recognition_contribution, RecognizedSourceAperture,
+    WorldRecognitionAccount,
 };
 
 const EXISTING_WORLD_ADOPTION_SCHEMA: &str = "oi.existing-world-adoption/v1";
+const ADOPT_GROUND_SCHEMA: &str = "oi.adopt-ground/v1";
 
 #[derive(Debug, Clone, Serialize)]
 struct ExistingWorldOwnerHandoff {
@@ -26,6 +28,22 @@ struct ExistingWorldAdoptionAccount {
     changes: Vec<String>,
     ql_required: bool,
     notes: Vec<String>,
+}
+
+/// The authored-choice branch surfaced by `oi adopt --ground`. Detects whether a
+/// Central ground and project migration are already satisfied, and offers the
+/// branch instead of fabricating a World.
+#[derive(Debug, Clone, Serialize)]
+struct AdoptGroundAccount {
+    schema: String,
+    target: String,
+    ground: String,
+    personal_ground: Option<String>,
+    ground_initialized: bool,
+    project_under_work: bool,
+    branch: String,
+    steps: Vec<String>,
+    principle: String,
 }
 
 fn existing_world_main() -> Option<ExitCode> {
@@ -52,20 +70,43 @@ fn existing_world_main() -> Option<ExitCode> {
 fn command_existing_world_adopt(args: &[OsString]) -> Result<i32, String> {
     let mut json_mode = false;
     let mut target: Option<PathBuf> = None;
-    for arg in args {
-        match arg.to_str() {
+    let mut ground: Option<PathBuf> = None;
+    let mut index = 0;
+    while index < args.len() {
+        match args[index].to_str() {
             Some("--json") => json_mode = true,
+            Some("--ground") => {
+                index += 1;
+                ground = match args.get(index).and_then(|value| value.to_str()) {
+                    Some(value) if !value.starts_with('-') => Some(PathBuf::from(value)),
+                    _ => return Err("usage: oi adopt PATH --ground GROUND [--json]".to_owned()),
+                };
+            }
             Some(value) if value.starts_with('-') => {
                 return Err(format!("unknown adopt option '{value}'"));
             }
             Some(value) if target.is_none() => target = Some(absolute_path(Path::new(value))?),
-            Some(_) => return Err("usage: oi adopt PATH [--json]".to_owned()),
+            Some(_) => return Err("usage: oi adopt PATH [--ground GROUND] [--json]".to_owned()),
             None => return Err("adopt arguments must be UTF-8".to_owned()),
         }
+        index += 1;
     }
-    let target = target.ok_or_else(|| "usage: oi adopt PATH [--json]".to_owned())?;
+    let target = target.ok_or_else(|| "usage: oi adopt PATH [--ground GROUND] [--json]".to_owned())?;
     if !target.is_dir() {
         return Err(format!("adoption target is not a directory: {}", target.display()));
+    }
+
+    if let Some(ground) = ground {
+        let account = inspect_adopt_ground(&target, &ground)?;
+        if json_mode {
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&account).map_err(|error| error.to_string())?
+            );
+        } else {
+            print_adopt_ground_account(&account);
+        }
+        return Ok(0);
     }
 
     let account = inspect_existing_world(&target)?;
@@ -88,13 +129,15 @@ fn command_world_recognition(args: &[OsString]) -> Result<i32, String> {
                 Some([manifest]) => absolute_path(Path::new(manifest))?,
                 _ => return Err("usage: oi recognition register PACKAGE.json".to_owned()),
             };
-            let registrations = register_recognition_package(&manifest, &registry_path)?;
+            let (registrations, native_tools) =
+                register_recognition_package(&manifest, &registry_path)?;
             println!(
                 "{}",
                 serde_json::to_string_pretty(&serde_json::json!({
                     "schema": "oi.world-recognition-registration/v1",
                     "manifest": manifest.display().to_string(),
                     "registrations": registrations,
+                    "native_tools": native_tools,
                     "registry": registry_path.display().to_string()
                 }))
                 .map_err(|error| error.to_string())?
@@ -173,8 +216,23 @@ fn command_world_recognition(args: &[OsString]) -> Result<i32, String> {
             }
             Ok(0)
         }
+        Some("unregister-tool") => {
+            let name = match args.get(1..) {
+                Some([value]) => value
+                    .to_str()
+                    .ok_or_else(|| "native tool name must be UTF-8".to_owned())?,
+                _ => return Err("usage: oi recognition unregister-tool NAME".to_owned()),
+            };
+            let removed = unregister_native_tool(name, &registry_path)?;
+            if removed {
+                println!("Unregistered native tool: {name}");
+                Ok(0)
+            } else {
+                Err(format!("native tool is not registered: {name}"))
+            }
+        }
         _ => Err(
-            "usage: oi recognition <inspect PATH [--json]|list [--json]|register PACKAGE.json|unregister CONTRIBUTION_REF>"
+            "usage: oi recognition <inspect PATH [--json]|list [--json]|register PACKAGE.json|unregister CONTRIBUTION_REF|unregister-tool NAME>"
                 .to_owned(),
         ),
     }
@@ -186,6 +244,92 @@ fn world_recognition_registry_path() -> Result<PathBuf, String> {
         .parent()
         .ok_or_else(|| "composition state path has no parent".to_owned())?;
     Ok(parent.join("world-recognition-registry.json"))
+}
+
+fn inspect_adopt_ground(target: &Path, ground: &Path) -> Result<AdoptGroundAccount, String> {
+    let target = absolute_path(target)?;
+    let ground = absolute_path(ground)?;
+    let composition = load_composition()?;
+    let personal_ground = composition.personal_ground.clone();
+    let ground_initialized = personal_ground
+        .as_deref()
+        .map(|configured| {
+            absolute_path(Path::new(configured))
+                .map(|path| path == ground)
+                .unwrap_or(false)
+        })
+        .unwrap_or(false);
+    let work = ground.join("Work");
+    let project_under_work = target.starts_with(&work);
+
+    let (branch, steps) = if !ground_initialized {
+        (
+            "central-setup".to_owned(),
+            vec![
+                format!(
+                    "author personal ground (identity · vocation · place): oi init --personal-ground {}",
+                    ground.display()
+                ),
+                format!(
+                    "adopt/migrate this project into Central Work: oi migrate {}",
+                    target.display()
+                ),
+                "save a Central AgentProfile from an agency-intent expression (Control/agents/expressions/<slug>/intent.md → role/purpose/praxis refs)".to_owned(),
+                "choose World · praxis · Agent identity — the authored-choice point, never silently inferred".to_owned(),
+            ],
+        )
+    } else if !project_under_work {
+        (
+            "project-migration".to_owned(),
+            vec![
+                format!(
+                    "this project is not yet under Central Work ({})",
+                    work.display()
+                ),
+                format!(
+                    "adopt/migrate it without copying unratified files: oi migrate {}",
+                    target.display()
+                ),
+                "provenance, source relations and revision are preserved; only ratified placement changes".to_owned(),
+            ],
+        )
+    } else {
+        (
+            "complete".to_owned(),
+            vec![
+                "Central ground and project migration are satisfied".to_owned(),
+                "proceed with read-only adoption (oi adopt PATH)".to_owned(),
+            ],
+        )
+    };
+
+    Ok(AdoptGroundAccount {
+        schema: ADOPT_GROUND_SCHEMA.to_owned(),
+        target: target.display().to_string(),
+        ground: ground.display().to_string(),
+        personal_ground,
+        ground_initialized,
+        project_under_work,
+        branch,
+        steps,
+        principle: "detect-and-offer-the-authored-branch-not-fabricate-a-world".to_owned(),
+    })
+}
+
+fn print_adopt_ground_account(account: &AdoptGroundAccount) {
+    println!("{{O:I}} adopt --ground branch");
+    println!("Target:               {}", account.target);
+    println!("Ground:               {}", account.ground);
+    println!(
+        "Personal ground:      {}",
+        account.personal_ground.as_deref().unwrap_or("not set")
+    );
+    println!("Ground initialised:   {}", account.ground_initialized);
+    println!("Project under Work:   {}", account.project_under_work);
+    println!("Branch:               {}", account.branch);
+    for step in &account.steps {
+        println!("  → {step}");
+    }
 }
 
 fn inspect_existing_world(target: &Path) -> Result<ExistingWorldAdoptionAccount, String> {
@@ -408,7 +552,10 @@ mod existing_world_tests {
         root
     }
 
+    static OI_HOME_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
     fn with_isolated_oi_home<T>(root: &Path, operation: impl FnOnce() -> T) -> T {
+        let _guard = OI_HOME_LOCK.lock().unwrap();
         let previous = env::var_os("OI_HOME");
         env::set_var("OI_HOME", root.join("oi-state"));
         let result = operation();
@@ -503,6 +650,77 @@ mod existing_world_tests {
                 registration.contribution_ref == "contribution:herdr/world-recognition"
                     && registration.embedded
             }));
+        });
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn adopt_ground_detects_central_setup_when_ground_is_uninitialised() {
+        let root = fixture("adopt-ground-setup");
+        let target = root.join("project");
+        let ground = root.join("Central");
+        fs::create_dir_all(&target).unwrap();
+        fs::create_dir_all(&ground).unwrap();
+        with_isolated_oi_home(&root, || {
+            let account = inspect_adopt_ground(&target, &ground).unwrap();
+            assert_eq!(account.branch, "central-setup");
+            assert!(!account.ground_initialized);
+            assert!(!account.project_under_work);
+        });
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn adopt_ground_offers_migration_when_ground_set_but_project_not_under_work() {
+        let root = fixture("adopt-ground-migrate");
+        let target = root.join("elsewhere/project");
+        let ground = root.join("Central");
+        fs::create_dir_all(&target).unwrap();
+        fs::create_dir_all(&ground).unwrap();
+        with_isolated_oi_home(&root, || {
+            let state = state_path().unwrap();
+            fs::create_dir_all(state.parent().unwrap()).unwrap();
+            fs::write(
+                &state,
+                serde_json::json!({
+                    "schema": 1,
+                    "personal_ground": ground.display().to_string(),
+                    "modules": {}
+                })
+                .to_string(),
+            )
+            .unwrap();
+            let account = inspect_adopt_ground(&target, &ground).unwrap();
+            assert_eq!(account.branch, "project-migration");
+            assert!(account.ground_initialized);
+            assert!(!account.project_under_work);
+        });
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn adopt_ground_reports_complete_when_ground_and_migration_satisfied() {
+        let root = fixture("adopt-ground-complete");
+        let ground = root.join("Central");
+        let target = ground.join("Work/project");
+        fs::create_dir_all(&target).unwrap();
+        with_isolated_oi_home(&root, || {
+            let state = state_path().unwrap();
+            fs::create_dir_all(state.parent().unwrap()).unwrap();
+            fs::write(
+                &state,
+                serde_json::json!({
+                    "schema": 1,
+                    "personal_ground": ground.display().to_string(),
+                    "modules": {}
+                })
+                .to_string(),
+            )
+            .unwrap();
+            let account = inspect_adopt_ground(&target, &ground).unwrap();
+            assert_eq!(account.branch, "complete");
+            assert!(account.ground_initialized);
+            assert!(account.project_under_work);
         });
         fs::remove_dir_all(root).unwrap();
     }

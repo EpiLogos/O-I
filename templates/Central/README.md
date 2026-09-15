@@ -1,15 +1,21 @@
 # Central template
 
-This is the minimal personal-ground shape distributed with {O:I}.
+This is the default personal-ground shape distributed with {O:I}.
 
 ```text
 Central/
 ├── Control/
-└── Work/
+│   ├── user/                  human personal authorship — freely structured
+│   ├── agents/
+│   │   ├── governance/        human-authored: how agents should relate and work
+│   │   └── wiki/              agent-maintained: what is known about/across the sources
+│   └── machines/              authored machine intent; adopted machine declarations
+└── Work/                      the personal home for Projects
+    └── <project>/ProjectCentral/   the same relation, repeated at Project scope
 ```
 
-`Control/` is the human-authored control surface for durable personal and machine-facing context.
+The shape is a recursion: every Project carries a `ProjectCentral/` that repeats the Control relation at small scale — `user/`, `agents/governance/`, `agents/wiki/`. See `templates/Project/` for the default Project scaffold.
 
-`Work/` is the personal home for Projects.
+Files in this tree are distributed defaults. They become human source when a person adopts and edits them; until adoption they are suggestions with provenance, not implied authorship.
 
-The Central product and its native CLI own the behaviour of this structure. {O:I} carries only the default tree so a new installation has a clear place to begin.
+Central owns the behaviour of this structure — `ctrl` is its CLI: `central.init` creates the required roots; `projectcentral.init` establishes a Project's ProjectCentral; `central-machine-adopt` grounds the default machine through the local Workcell. This tree carries only the human-facing defaults so a new installation has a clear place to begin.

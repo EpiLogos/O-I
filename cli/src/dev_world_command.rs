@@ -87,6 +87,12 @@ fn dev_world_main() -> Option<ExitCode> {
                     .unwrap_or("(resume)")
             );
             println!("Desktop:     {}", setup.desktop.source_root);
+            if !setup.pickup.is_empty() {
+                println!("Skill pickup:");
+                for pickup in &setup.pickup {
+                    println!("  {:<12} {}", pickup.client, pickup.pickup);
+                }
+            }
             for warning in &setup.warnings {
                 println!("  warning: {warning}");
             }

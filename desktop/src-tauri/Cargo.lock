@@ -2290,6 +2290,7 @@ dependencies = [
  "aikit-core 0.1.0 (git+https://github.com/EpiLogos/ai-kit?rev=9ff28ca31c723b314ddf62b7f85b6e2611d53d66)",
  "serde",
  "serde_json",
+ "toml 0.9.12+spec-1.1.0",
 ]
 
 [[package]]
