@@ -25,6 +25,7 @@ import {Loading} from "../shared/Loading";
 import {isUnavailable,sharedField,slug,type HostedEntry,type HostedParticipant,type HostedField,type SharedFieldReading,type SharedFieldSnapshot,type SharedFieldUnavailable,type SharedFieldWatchResult} from "../knowledge/shared-field";
 import {PresentationBody,type DepthState} from "./PresentationBody";
 import {BeingEncounter} from "./BeingEncounter";
+import {ContributionPanel} from "./ContributionPanel";
 // @ts-ignore -- language-neutral view-state codec, unit-tested in tests/explore-field.test.mjs.
 import {EXPLORE_TRAVEL_KEY,amendVisit,canTravel,currentVisit,decodeExploreTravel,freshExploreTravel,pushVisit,travelBy} from "./travel.mjs";
 // @ts-ignore -- language-neutral field reading, unit-tested in tests/explore-field.test.mjs.
@@ -178,7 +179,7 @@ export function ExploreSurface({binding,onOpenPresentation,onOpenExplore}:Explor
         </ol>
       </div>}
     </>}
-    {selected&&isEntry&&(reading?<PresentationBody reading={reading} relations={view.state==="available"?view.relations:[]} onOpenRef={select} depth={depth} onDepth={setDepth} watch={{available:standing.available,watching:standing.watching,reason:standing.reason,busy:watchBusy,error:watchError,onToggle:()=>void toggleWatch()}} strip={strip}/>:<section className="presentation-body" data-presentation-state="reading">{strip}<Loading label="Reading the projected subject…" scope="inline"/></section>)}
+    {selected&&isEntry&&(reading?<><PresentationBody reading={reading} relations={view.state==="available"?view.relations:[]} onOpenRef={select} depth={depth} onDepth={setDepth} watch={{available:standing.available,watching:standing.watching,reason:standing.reason,busy:watchBusy,error:watchError,onToggle:()=>void toggleWatch()}} strip={strip}/>{reading.state==="hosted"&&<ContributionPanel transport={transport} reading={reading} onChanged={()=>setGeneration(n=>n+1)}/>}</>:<section className="presentation-body" data-presentation-state="reading">{strip}<Loading label="Reading the projected subject…" scope="inline"/></section>)}
     {selected&&!isEntry&&<section className="presentation-body" data-presentation-state="local">{strip}{selected.startsWith("oi:field:")?<FieldBody field_ref={selected} view={view} snapshot={snapshot} onOpenRef={select}/>:snapshot&&!isUnavailable(snapshot)?<BeingEncounter participantRef={selected} snapshot={snapshot} onOpenRef={select}/>:<p role="status" className="explore-absent">The projected Being is unavailable.</p>}</section>}
   </section>;
 }

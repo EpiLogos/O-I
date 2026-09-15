@@ -5,6 +5,7 @@ import type {KernelTransportStatus} from "../kernel/types";
 export type ReceivingRequest =
   | {kind:"list";after?:number;limit?:number}
   | {kind:"read";return_ref:string}
+  | {kind:"submit";producer_key:string;source_ref:string;document_id:string;expected_source_revision:string;occurred_at_unix_seconds:number;task_ref?:string;proposal:Record<string,unknown>}
   | {kind:"document";source_ref:string;document_id:string}
   | {kind:"review";return_ref:string;expected_return_revision:string;disposition:"accepted"|"rejected";expected_source_revision?:string}
   | {kind:"include";return_ref:string;expected_return_revision:string;expected_source_revision:string}

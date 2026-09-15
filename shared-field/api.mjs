@@ -14,6 +14,7 @@ export * from './presentation-authoring.mjs';
 export * from './projection-reading.mjs';
 export * from './watch.mjs';
 export * from './contact.mjs';
+export * from './contribution-return.mjs';
 export * from './spacetimedb.mjs';
 export * from './spacetimedb-watch.mjs';
 export * from './spacetimedb-contact.mjs';

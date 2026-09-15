@@ -68,6 +68,17 @@ impl std::error::Error for OwnerCallError {}
 pub enum ReceivingRequest {
     List { #[serde(default)] after: Option<u64>, #[serde(default)] limit: Option<u64> },
     Read { return_ref: String },
+    /// An attributable external difference enters through Central's native
+    /// proposal doorway. Central owns validation, authority and CAS arrival.
+    Submit {
+        producer_key: String,
+        source_ref: String,
+        document_id: String,
+        expected_source_revision: String,
+        occurred_at_unix_seconds: u64,
+        #[serde(default)] task_ref: Option<String>,
+        proposal: Value,
+    },
     /// The document's current native basis (the exact source revision the
     /// human would accept) — `central.document.read`.
     Document { source_ref: String, document_id: String },
@@ -278,6 +289,16 @@ impl CentralClient {
             ReceivingRequest::Read { return_ref } => {
                 input.insert("return_ref".to_owned(), json!(return_ref));
                 "central.receiving.read"
+            }
+            ReceivingRequest::Submit { producer_key, source_ref, document_id, expected_source_revision, occurred_at_unix_seconds, task_ref, proposal } => {
+                input.insert("producer_key".to_owned(), json!(producer_key));
+                input.insert("source_ref".to_owned(), json!(source_ref));
+                input.insert("document_id".to_owned(), json!(document_id));
+                input.insert("expected_source_revision".to_owned(), json!(expected_source_revision));
+                input.insert("occurred_at_unix_seconds".to_owned(), json!(occurred_at_unix_seconds));
+                if let Some(task_ref) = task_ref { input.insert("task_ref".to_owned(), json!(task_ref)); }
+                input.insert("proposal".to_owned(), proposal.clone());
+                "central.receiving.submit"
             }
             ReceivingRequest::Document { source_ref, document_id } => {
                 input.insert("source_ref".to_owned(), json!(source_ref));
