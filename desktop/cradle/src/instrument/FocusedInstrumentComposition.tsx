@@ -1,10 +1,11 @@
-import {useCallback,useEffect,useRef,useState} from "react";
+import {useCallback,useEffect,useMemo,useRef,useState} from "react";
 import {createPortal} from "react-dom";
 import {activeBindingId} from "../surface/engine";
 import type {LayoutState,SurfaceBinding} from "../surface/types";
 import {useExpressionStage,type StagePresentation} from "../stage/ExpressionStage";
 import {FOCUSED_INSTRUMENT_RECIPE} from "../stage/recipes";
 import "./instrument.css";
+import {exportNaraCues,naraRetainedPresentation,projectNaraExpression} from "./nara-expression-adapter";
 import {
   FOCUSED_INSTRUMENT_CONTRACT,
   focusedInstrumentSource,
@@ -49,9 +50,9 @@ function useSource(ref:string){
       if(run!==sequence.current)return;
       if(next.schema!==FOCUSED_INSTRUMENT_CONTRACT)throw new Error(`Unsupported focused-instrument contract ${next.schema}`);
       setSnapshot(next);setBimba(nextBimba);setError(null);
-    }catch(reason){if(run===sequence.current)setError(reason instanceof Error?reason.message:String(reason));}
+    }catch(reason){if(run===sequence.current){setSnapshot(null);setBimba(null);setError(reason instanceof Error?reason.message:String(reason));}}
   },[ref]);
-  useEffect(()=>{void refresh();return subscribeFocusedInstrumentSource(ref,()=>void refresh());},[ref,refresh]);
+  useEffect(()=>{void refresh();const stop=subscribeFocusedInstrumentSource(ref,()=>void refresh());return()=>{sequence.current++;stop();};},[ref,refresh]);
   return {snapshot,bimba,error};
 }
 
@@ -95,43 +96,59 @@ function mediumLabels(snapshot:FocusedInstrumentSnapshot){
   return [binding.literal?"literal":null,binding.glyph_ref?"glyph":null,binding.image_ref?"image":null,binding.musical_performance_ref?"musical":null,binding.enactment_ref?"enacted":null].filter((value):value is string=>!!value);
 }
 
-function FocusedInstrumentSurface({binding}:{binding:SurfaceBinding}){
+function FocusedInstrumentSurface({binding,sourcesOpen,onToggleSources}:{binding:SurfaceBinding;sourcesOpen:boolean;onToggleSources:()=>void}){
   const stage=useExpressionStage();
-  const ref=binding.ref!;const {snapshot,error}=useSource(ref);const [busy,setBusy]=useState(false);const [result,setResult]=useState<FocusedInstrumentCommandResult|null>(null);const [stageError,setStageError]=useState<string|null>(null);const leaseRef=useRef<RetainedExpressionLease|null>(null);
+  const ref=binding.ref!;const {snapshot,error}=useSource(ref);const [busy,setBusy]=useState(false);const [result,setResult]=useState<FocusedInstrumentCommandResult|null>(null);const [stageError,setStageError]=useState<string|null>(null);const leaseRef=useRef<RetainedExpressionLease|null>(null);const presentationRef=useRef<StagePresentation|null>(null);
   const presentationId=`k9:${binding.id}`;
   // The stage attach follows source presence: a binding restored from a
   // previous session re-attaches when its owner registers, however late.
   const sourcePresent=!!focusedInstrumentSource(ref);
   useEffect(()=>{
     let detached:(()=>void)|undefined;
+    const detachOnce=()=>{const stop=detached;detached=undefined;stop?.();};
     let disposed=false;
     setStageError(null);
     const source=focusedInstrumentSource(ref);
     if(!source){setStageError(`Focused instrument source ${ref} is not registered.`);return;}
     let presentation:StagePresentation|null=null;
-    try{
-      presentation=stage.present({id:presentationId,plane:"ambient",recipe:FOCUSED_INSTRUMENT_RECIPE});
-      if(!presentation){setStageError("The Global Expression Stage is unavailable or expression is disabled.");return;}
+    void source.read().then(initial=>{
+      if(disposed)return;
+      const projected=projectNaraExpression(initial);
+      presentation=projected.config&&projected.session
+        ?stage.present({id:presentationId,plane:"ambient",recipe:FOCUSED_INSTRUMENT_RECIPE,config:projected.config,sceneRef:`ql:nara:${projected.session.subject_ref}:occasion:${projected.session.personal_reception_generation}`})
+        :stage.present({id:presentationId,plane:"ambient",recipe:FOCUSED_INSTRUMENT_RECIPE});
+      if(!presentation)throw new Error("The Global Expression Stage is unavailable or expression is disabled.");
+      presentationRef.current=presentation;
       const stageLease=stage.retainedLease(presentationId);
-      if(!stageLease){presentation.release();setStageError("The focused stage could not issue its retained-field lease.");return;}
-      const lease=stageLease as RetainedExpressionLease;
-      leaseRef.current=lease;
-      if(source.attachExpression){
-        void Promise.resolve(source.attachExpression(lease)).then(stop=>{
-          if(disposed){if(typeof stop==="function")stop();return;}
-          detached=typeof stop==="function"?stop:undefined;
-        }).catch(reason=>{if(!disposed)setStageError(reason instanceof Error?reason.message:String(reason));});
-      }
-    }catch(reason){setStageError(reason instanceof Error?reason.message:String(reason));}
+      if(!stageLease)throw new Error("The focused stage could not issue its retained-field lease.");
+      const lease=stageLease as RetainedExpressionLease;leaseRef.current=lease;
+      return Promise.resolve(source.attachExpression?.(lease)).then(stop=>{
+        detached=typeof stop==="function"?stop:undefined;
+        if(disposed){detachOnce();return;}
+        return source.read().then(current=>{
+        if(disposed){detachOnce();return;}
+        const ready=projectNaraExpression(current);
+        if(ready.standing==="current"&&ready.session)lease.updatePresentation(naraRetainedPresentation(ready.session));
+      });});
+    }).catch(reason=>{
+      detachOnce();
+      presentation?.release();presentation=null;presentationRef.current=null;leaseRef.current=null;
+      if(!disposed)setStageError(reason instanceof Error?reason.message:String(reason));
+    });
     return()=>{
       disposed=true;
-      detached?.();
-      detached=undefined;
+      detachOnce();
       leaseRef.current=null;
+      presentationRef.current=null;
       presentation?.release();
     };
   },[stage,ref,presentationId,sourcePresent]);
   useEffect(()=>{if(snapshot?.available)leaseRef.current?.resume();else leaseRef.current?.pause(true);},[snapshot?.available]);
+  const nara=useMemo(()=>{
+    if(!snapshot)return {standing:"unavailable" as const,session:null,config:null,reason:"The QL owner has not supplied a Nara reception."};
+    try{return projectNaraExpression(snapshot);}catch(reason){return {standing:"unavailable" as const,session:null,config:null,reason:reason instanceof Error?reason.message:String(reason)};}
+  },[snapshot]);
+  useEffect(()=>{if(nara.standing==="current"&&nara.session)try{leaseRef.current?.updatePresentation(naraRetainedPresentation(nara.session));}catch(reason){setStageError(reason instanceof Error?reason.message:String(reason));}},[nara]);
   const command=(value:FocusedInstrumentCommand)=>void issue(ref,value,setResult,setBusy);
   const active=snapshot?.focus.focus;
   const media=snapshot?mediumLabels(snapshot):[];
@@ -140,6 +157,7 @@ function FocusedInstrumentSurface({binding}:{binding:SurfaceBinding}){
       <p className="k9-kicker">Focused instrument</p>
       <h1 className="k9-title">{binding.title}</h1>
       <p className="k9-quiet k9-mono">{snapshot?.event.subject_ref??ref}</p>
+      <button className="k9-btn" aria-pressed={sourcesOpen} onClick={onToggleSources}>{sourcesOpen?"Close sources":"Open sources"}</button>
     </div>
     <div className="k9-segment k9-chip" role="group" aria-label="Focused determinant">
       {(["m1","m2","m3","m4","m5"] as InstrumentFocus[]).map(focus=>
@@ -161,6 +179,18 @@ function FocusedInstrumentSurface({binding}:{binding:SurfaceBinding}){
         </div>
         <p className="k9-quiet k9-mono">clock {snapshot?.clock.field_ref??"#3-0"} · centre {snapshot?.clock.centre_ref??"#3-5-5/0"} · {snapshot?.clock.presentation.view??"—"}</p>
         <p className="k9-quiet">Vāk: {media.length?media.join(" · "):"no source-qualified expression bound"}{snapshot?.vak_performance?` · ${snapshot.vak_performance.mode}${snapshot.vak_performance.has_interruption?" · interrupted":""}${snapshot.vak_performance.has_late_return?" · late Return":""}`:""}</p>
+        <section className="nara-expression" aria-label="Nara Expression centres" data-standing={nara.standing}>
+          <div className="nara-expression-heading"><strong>Nara · seven centres</strong><span>{nara.standing}</span></div>
+          {nara.session&&nara.standing==="current"?<>
+            <ol>{nara.session.centres.map(centre=><li key={centre.locus_ref} data-centre-ref={centre.locus_ref}><span>{centre.label}</span><span className="k9-mono">{centre.resonance.toFixed(3)}</span></li>)}</ol>
+            <p className="k9-quiet k9-mono" data-earth-body-ref={nara.session.earth_body.locus_ref}>EarthBody · {nara.session.earth_body.frame_ref}</p>
+            <p className="k9-quiet">Cymatic stations: {nara.session.resonance_stations.availability}{nara.session.resonance_stations.station_refs.length?` · ${nara.session.resonance_stations.station_refs.join(" · ")}`:" · no owner identities disclosed"}</p>
+            <button className="k9-btn" onClick={()=>{
+              const body=JSON.stringify(exportNaraCues(nara.session!),null,2),url=URL.createObjectURL(new Blob([body],{type:"application/json"})),link=document.createElement("a");link.href=url;link.download="nara-expression-cues.json";link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+            }}>Export safe cues</button>
+            <span className="sr-only" data-nara-source-refs={nara.session.portable.source_refs.join(" ")} data-nara-action-refs={nara.session.action_refs.join(" ")}/>
+          </>:<p className="k9-quiet">{nara.reason}</p>}
+        </section>
         {snapshot?.selection?<p className="k9-quiet k9-mono">Bimba ↔ field: {snapshot.selection.coordinate_ref} · {snapshot.selection_standing}{snapshot.selected_target?` · target ${snapshot.selected_target.identity}`:""}</p>:null}
         {result?<p role="status" className="k9-quiet">{result.operation}: {result.standing}{result.error?` · ${result.error}`:""}</p>:null}
         {error?<p role="alert" className="k9-alert">{error}</p>:null}
@@ -180,9 +210,10 @@ function FocusedInstrumentSurface({binding}:{binding:SurfaceBinding}){
  */
 export function FocusedInstrumentComposition({layout}:{layout:LayoutState}){
   const active=activeBindingId(layout);const binding=active?layout.surfaces[active]:undefined;const enabled=!!binding&&binding.kind==="instrument"&&!!binding.ref;
+  const [sourcesOpen,setSourcesOpen]=useState(false);
   const centre=usePortalHost(enabled?`.surface-body[data-binding-id="${CSS.escape(binding!.id)}"]`:".k9-no-centre",enabled);
   const left=usePortalHost('[data-region="left"] .desktop-side-content',enabled);
-  useEffect(()=>{if(!enabled)return;document.body.dataset.epiNaraMode="focused";return()=>{delete document.body.dataset.epiNaraMode;};},[enabled]);
+  useEffect(()=>{if(!enabled){setSourcesOpen(false);return;}document.body.dataset.epiNaraMode="focused";return()=>{delete document.body.dataset.epiNaraMode;};},[enabled]);
   if(!enabled||!binding)return null;
-  return <>{left?createPortal(<BimbaNavigator binding={binding}/>,left):null}{centre?createPortal(<FocusedInstrumentSurface binding={binding}/>,centre):null}</>;
+  return <>{sourcesOpen&&left?createPortal(<BimbaNavigator binding={binding}/>,left):null}{centre?createPortal(<FocusedInstrumentSurface binding={binding} sourcesOpen={sourcesOpen} onToggleSources={()=>setSourcesOpen(value=>!value)}/>,centre):null}</>;
 }

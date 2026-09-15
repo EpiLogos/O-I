@@ -1,0 +1,108 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "instrument-native-host",
+  "generated_at": "2026-09-15T03:44:30.167Z",
+  "environment": {
+    "base_url": "http://127.0.0.1:4282",
+    "bridge_url": null,
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 11934,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Real focused host opens before explicit Personal reception"
+    },
+    {
+      "ok": true,
+      "label": "Explicit controlled reception is computed by the real Personal owner",
+      "data": {
+        "standing": "applied",
+        "current": true,
+        "centres": 7
+      }
+    },
+    {
+      "ok": true,
+      "label": "Real native browser adapter registers"
+    },
+    {
+      "ok": true,
+      "label": "Real native M1→M4 focus does not reseed the retained field",
+      "data": {
+        "before": 1,
+        "after": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "Native Personal owner refuses foreign reception and retains current reading",
+      "data": "personal reception is stale or cross-event"
+    },
+    {
+      "ok": true,
+      "label": "Real native Nara re-entry preserves the field seed generation",
+      "data": {
+        "after": 1,
+        "reentered": 1
+      }
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-15T03:44:34.103Z",
+        "transport": {
+          "kind": "unavailable",
+          "reason": "no kernel transport: neither the Tauri host nor a dev walk bridge is reachable"
+        },
+        "url": "http://127.0.0.1:4282/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "instrument.registerExisting",
+      "duration_ms": 0.1,
+      "data": {
+        "registered": true
+      }
+    },
+    {
+      "ok": true,
+      "op": "instrument.requestOpen",
+      "duration_ms": 0.2,
+      "data": {
+        "requested": true
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 423,
+      "data": {
+        "file": "instrument-native-host-instrument-native-nara.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "instrument.requestOpen",
+      "duration_ms": 0.2,
+      "data": {
+        "requested": true
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "instrument-native-host-instrument-native-nara.png"
+  ]
+}

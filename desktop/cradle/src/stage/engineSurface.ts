@@ -37,6 +37,7 @@ export interface StageRetainedLease {
   pause(value?: boolean): StageRetainedLease;
   resume(): StageRetainedLease;
   renderOnce(): StageRetainedLease;
+  updatePresentation(request: unknown): unknown;
 }
 
 /** Overlay merge for authored patches: objects merge recursively, arrays
@@ -81,6 +82,7 @@ export class EngineSurface {
   private detachPointer: () => void = () => {};
   private onError: (message: string) => void;
   private retainedLeaseOwner: string | null = null;
+  private retainedLeaseIdentity: symbol | null = null;
   private readonly home: HTMLElement;
   private readonly homeElement: HTMLElement | null;
   private readonly homeStyle: string;
@@ -227,6 +229,8 @@ export class EngineSurface {
       this.retainedLeaseOwner = id;
     }
     const surface = this;
+    const leaseIdentity = Symbol(id);
+    this.retainedLeaseIdentity=leaseIdentity;
     const lease: StageRetainedLease = {
       retainedTargetPort() { return surface.adapter.retainedTargetPort(); },
       checkpointRetainedField(binding) { return surface.adapter.checkpointRetainedField(binding as { checkpoint(renderer: unknown): unknown }); },
@@ -240,20 +244,36 @@ export class EngineSurface {
       pause(value = true) { surface.setPaused(value); return lease; },
       resume() { surface.setPaused(false); return lease; },
       renderOnce() { surface.renderFrame(0); return lease; },
+      updatePresentation(request) {
+        if(surface.retainedLeaseOwner!==id||surface.retainedLeaseIdentity!==leaseIdentity)throw new Error("This retained presentation lease is no longer current.");
+        const receipt=surface.adapter.updateRetainedPresentation(request);surface.wake();return receipt;
+      },
     };
+    Object.defineProperty(lease,"identity",{value:leaseIdentity});
     return lease;
   }
 
   release(id: string) {
     if (!this.active || this.active.id !== id) { this.clearTimers(); return; }
+    // Keep the renderer's current allocation while the retained owner is
+    // absent. Re-entry with the same field size can then rebind the existing
+    // GPU textures without a seed-changing resize; this carries no Personal
+    // presentation or owner generation across the release.
+    const retainedParticleCount = this.retainedLeaseOwner === id
+      ? this.adapter.retainedTargetPort().particleCount
+      : undefined;
     this.setContainer(id, null);
     this.clearTimers();
     if (this.retainedLeaseOwner === id) {
       this.adapter.releaseRetainedField();
       this.retainedLeaseOwner = null;
+      this.retainedLeaseIdentity = null;
     }
     this.live = false;
-    this.activate(STAGE_IDLE, this.sceneFrom(IDLE_CONFIG, STAGE_IDLE));
+    const idleConfig = retainedParticleCount === undefined
+      ? IDLE_CONFIG
+      : { ...IDLE_CONFIG, particleCount: retainedParticleCount };
+    this.activate(STAGE_IDLE, this.sceneFrom(idleConfig, STAGE_IDLE));
     this.renderFrame(0);
   }
 
@@ -292,6 +312,7 @@ export class EngineSurface {
     this.detachPointer();
     this.active = null;
     this.retainedLeaseOwner = null;
+    this.retainedLeaseIdentity = null;
     try { this.adapter.dispose(); } catch { /* already gone with its context */ }
     this.canvas.remove();
   }

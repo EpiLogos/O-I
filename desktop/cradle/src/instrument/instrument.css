@@ -186,6 +186,13 @@
   padding: var(--oi-space-2) var(--oi-space-3);
 }
 
+.nara-expression { margin-top: var(--oi-space-2); border-top: 1px solid var(--oi-hairline); padding-top: var(--oi-space-2); }
+.nara-expression-heading { display: flex; align-items: baseline; justify-content: space-between; gap: var(--oi-space-2); text-transform: uppercase; letter-spacing: .08em; font-size: var(--oi-type-xs); }
+.nara-expression ol { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); gap: 3px; list-style: none; margin: var(--oi-space-2) 0; padding: 0; }
+.nara-expression li { display: flex; min-width: 0; flex-direction: column; gap: 2px; border: 1px solid var(--oi-hairline); padding: 5px 3px; text-align: center; }
+.nara-expression li span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--oi-type-xs); }
+.nara-expression[data-standing="stale"] { opacity: .58; }
+
 @media (prefers-reduced-motion: reduce) {
   .k9-chip { animation: none; }
 }
