@@ -62,16 +62,16 @@
   padding: 4px 6px;
 }
 .highlight-yellow {
-  background: #e9c54b55 !important;
+  background: var(--oi-mark-yellow) !important;
 }
 .highlight-green {
-  background: #80b88c55 !important;
+  background: var(--oi-mark-green) !important;
 }
 .highlight-blue {
-  background: #75aee455 !important;
+  background: var(--oi-mark-blue) !important;
 }
 .highlight-rose {
-  background: #d78caa55 !important;
+  background: var(--oi-mark-rose) !important;
 }
 .source-editor-body:has(.text-editor) {
   height: 100%;
