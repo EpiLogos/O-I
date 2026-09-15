@@ -13,6 +13,8 @@ pub fn cli_main() -> ExitCode {
                 println!("                                state which install mode (#268) you are adopting; the Context Frames organise the six modes");
                 println!("Current world:");
                 println!("  oi current-world [--json]      disclose the situated six-product composition and current machine/Workcell relation");
+                println!("  oi bimba-map status|select|deselect [--json]");
+                println!("                                route Bimba map selection through AIKit's native MCP projection");
                 println!();
                 println!("Current-main development / #97 acceptance:");
                 println!("  oi install central [--source existing|pinned]");
@@ -117,6 +119,9 @@ pub fn cli_main() -> ExitCode {
         };
     }
     if let Some(code) = current_world_main() {
+        return code;
+    }
+    if let Some(code) = bimba_map_main() {
         return code;
     }
     if let Some(code) = existing_world_main() {

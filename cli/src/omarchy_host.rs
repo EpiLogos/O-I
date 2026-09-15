@@ -211,8 +211,8 @@ fn inspect_omarchy_host(home: &Path) -> Result<OmarchyHostPlan, String> {
         managed_files,
         changes,
         native_owner_actions: vec![
-            format!("omarchy plugin enable {OMARCHY_PLUGIN_ID} --yes"),
-            format!("omarchy plugin enable {OMARCHY_SWITCHER_ID} --yes"),
+            format!("omarchy plugin enable {OMARCHY_PLUGIN_ID}"),
+            format!("omarchy plugin enable {OMARCHY_SWITCHER_ID}"),
             "omarchy-shell shell rescanPlugins".to_owned(),
             "omarchy-shell shell listPlugins".to_owned(),
         ],
