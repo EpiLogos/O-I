@@ -52,7 +52,7 @@ try {
           else localStorage.setItem('oi-cradle.visuals.v1', saved);
           if (completed) sessionStorage.setItem('oi-cradle.welcome.v1', '1');
           // Tauri's window initialization script sets this before HTML runs.
-          if (detached) window.__OI_DETACHED__ = {pane: 'right'};
+          if (detached) window.__OI_DETACHED__ = true;
           window.__prepaintPolicyViolations = [];
           addEventListener('securitypolicyviolation', event => {
             if (event.effectiveDirective === 'script-src-elem') window.__prepaintPolicyViolations.push(event.blockedURI);
