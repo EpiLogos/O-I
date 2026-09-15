@@ -141,8 +141,10 @@ class GPGPUSimulator {
         uEntityDepthScale: { value: new Float32Array(10).fill(1) },
         uEntityNormalized: { value: new Float32Array(10) },
         uEntityTransform: { value: Array.from({ length: 10 }, () => new THREE.Vector3(1, 1, 0)) },
-        uEntityForce: { value: Array.from({ length: 10 }, () => new THREE.Vector4(0, 0, 0, 0)) },
         uTexSize: { value: new THREE.Vector2(1, 1) },
+        uForceEmitterCount: { value: 0 },
+        uForceEmitterCenter: { value: Array.from({ length: 18 }, () => new THREE.Vector4(-99999, -99999, 0, 1)) },
+        uForceEmitterParams: { value: Array.from({ length: 18 }, () => new THREE.Vector4(0, 0, 0, 0)) },
         uCompPlane: { value: 0 },
         uResDominance: { value: 1 },
         // Continuous modal cymatic resonator (live per-mode complex envelopes)
@@ -164,25 +166,22 @@ class GPGPUSimulator {
         uChiralCoupling: { value: 0.75 },
         uOscillationAmp: { value: 1.2 },
         uOscillationFreq: { value: 0.8 },
+        uBreathPhase: { value: 0 },
+        uBreathDepth: { value: 0.35 },
         uManifoldRadius: { value: 180 },
         uTorusDepthScale: { value: 1 },
         // Pointer
         uPointerPos: { value: new THREE.Vector2(-99999, -99999) },
         uBurstPosition: { value: new THREE.Vector2() },
         uBurstVelocity: { value: new THREE.Vector2() },
+        uBurstRadius: { value: 150 },
+        uBurstRadial: { value: 0 },
+        uBurstSpin: { value: 0 },
         uPointerVelocity: { value: new THREE.Vector2(0, 0) },
         uPointerZ: { value: 0 },
         uPointerRadius: { value: 150 },
         uPointerStrength: { value: 1 },
-        uInteractionMode: { value: 0 },
-        // Placed persistent interaction points in 3D
-        uPlacedPointCount: { value: 0 },
-        uPlacedPoints: {
-          value: Array.from({ length: 8 }, () => new THREE.Vector4(-99999, -99999, 0, 0))
-        },
-        uPlacedPointParams: {
-          value: Array.from({ length: 8 }, () => new THREE.Vector4(0, 0, 0, 0))
-        }
+        uInteractionMode: { value: 0 }
       },
       depthTest: false,
       depthWrite: false
@@ -271,7 +270,7 @@ class GPGPUSimulator {
       spinUniform[i] = spins[i];
     }
   }
-  /** Push the entity uniform set (partition bounds, centres, morph, forces) to the velocity material */
+  /** Push formation partition geometry/state; physical forces use the separate emitter table. */
   setEntityState(u) {
     const vU = this.velMaterial.uniforms;
     vU.uEntityCount.value = Math.min(10, u.count);
@@ -280,13 +279,29 @@ class GPGPUSimulator {
     vU.uEntityDepthScale.value.set(u.depthScales ?? new Float32Array(10).fill(1));
     vU.uEntityNormalized.value.set(u.normalized ?? new Float32Array(10));
     const cU = vU.uEntityCenter.value;
-    const fU = vU.uEntityForce.value;
     for (let i = 0; i < 10; i++) {
       cU[i].copy(u.centers[i]);
-      fU[i].copy(u.forces[i]);
       vU.uEntityTransform.value[i].copy(u.transforms[i]);
     }
     vU.uTexSize.value.set(this.texWidth, this.texHeight);
+  }
+  setForceEmitters(emitters) {
+    const u = this.velMaterial.uniforms;
+    const centers = u.uForceEmitterCenter.value;
+    const params = u.uForceEmitterParams.value;
+    const count = Math.min(18, emitters.length);
+    u.uForceEmitterCount.value = count;
+    for (let i = 0; i < 18; i++) {
+      const e = emitters[i];
+      if (!e || !e.enabled) {
+        centers[i].set(-99999, -99999, 0, 1);
+        params[i].set(0, 0, 0, 0);
+        continue;
+      }
+      centers[i].set(e.position.x, e.position.y, e.position.z, Math.max(5, e.radius));
+      const mode = e.law === "vortex" ? 3 : e.polarity === "repel" ? 2 : 1;
+      params[i].set(e.strength, mode, e.spin, e.metric === "world3d" ? 1 : 0);
+    }
   }
   setCompositionPlane(plane) {
     const v = plane === "horizontal" ? 1 : 0;
@@ -322,18 +337,22 @@ class GPGPUSimulator {
     vU.uOscillationFreq.value = oscillationFreq;
     vU.uManifoldRadius.value = manifoldRadius;
   }
-  /** Running phases of the two conjugate morph oscillators (radians) */
-  setMorphPhases(toroidal, poloidal) {
+  /** Running phases of the two conjugate morph oscillators plus the breathing oscillator (radians) */
+  setMorphPhases(toroidal, poloidal, breathPhase = poloidal) {
     this.velMaterial.uniforms.uTorPhase.value = toroidal;
     this.velMaterial.uniforms.uPolPhase.value = poloidal;
+    this.velMaterial.uniforms.uBreathPhase.value = breathPhase;
   }
   /**
    * Advances simulation by dt seconds
    */
   /** Native disperse command; independent of editor pointer ownership. */
-  setBurst(position, velocity) {
+  setBurst(position, velocity, radius, radial, spin) {
     this.velMaterial.uniforms.uBurstPosition.value.copy(position);
     this.velMaterial.uniforms.uBurstVelocity.value.copy(velocity);
+    this.velMaterial.uniforms.uBurstRadius.value = radius;
+    this.velMaterial.uniforms.uBurstRadial.value = radial;
+    this.velMaterial.uniforms.uBurstSpin.value = spin;
   }
   step(dt, time, config, morphProgress, pointerPos, pointerVel, pointerZ = 0) {
     if (!(dt > 0)) return;
@@ -376,6 +395,7 @@ class GPGPUSimulator {
       vUniforms.uChiralCoupling.value = tm.chiralCoupling ?? 0.75;
       vUniforms.uOscillationAmp.value = tm.oscillationAmplitude ?? 1.2;
       vUniforms.uOscillationFreq.value = tm.oscillationSpeed ?? 0.8;
+      vUniforms.uBreathDepth.value = tm.breathDepth ?? 0.35;
       vUniforms.uManifoldRadius.value = tm.manifoldRadius ?? 180;
       vUniforms.uTorusDepthScale.value = tm.volumetricDepthScale ?? 1;
     } else {
@@ -386,6 +406,7 @@ class GPGPUSimulator {
       vUniforms.uChiralCoupling.value = 0.75;
       vUniforms.uOscillationAmp.value = 1.2;
       vUniforms.uOscillationFreq.value = 0.8;
+      vUniforms.uBreathDepth.value = 0.35;
       vUniforms.uManifoldRadius.value = 180;
       vUniforms.uTorusDepthScale.value = 1;
     }
@@ -407,26 +428,6 @@ class GPGPUSimulator {
     if (config.interaction.mode === "attract") modeVal = 1;
     else if (config.interaction.mode === "vortex") modeVal = 2;
     vUniforms.uInteractionMode.value = modeVal;
-    const placed = config.interaction.placedPoints || [];
-    vUniforms.uPlacedPointCount.value = Math.min(8, placed.length);
-    for (let i = 0; i < 8; i++) {
-      const p = placed[i];
-      if (p && p.active !== false) {
-        vUniforms.uPlacedPoints.value[i].set(
-          p.x,
-          p.y,
-          p.z ?? 0,
-          p.radius
-        );
-        let pMode = 0;
-        if (p.mode === "attract") pMode = 1;
-        else if (p.mode === "vortex") pMode = 2;
-        vUniforms.uPlacedPointParams.value[i].set(p.strength, pMode, p.spin ?? 0, p.falloff === "gaussian" ? 1 : 0);
-      } else {
-        vUniforms.uPlacedPoints.value[i].set(-99999, -99999, 0, 0);
-        vUniforms.uPlacedPointParams.value[i].set(0, 0, 0, 0);
-      }
-    }
     this.quadMesh.material = this.velMaterial;
     this.renderer.setRenderTarget(this.nextVelTarget);
     this.renderer.render(this.quadScene, this.quadCamera);

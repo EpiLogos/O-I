@@ -44,7 +44,10 @@ function validateAutomationLinks(lanes) {
   for (const lane of lanes) {
     if (ids.has(lane.id)) throw new Error("Duplicate automation id.");
     ids.add(lane.id);
-    if (lane.clockId !== void 0 && (typeof lane.clockId !== "string" || !lane.clockId)) throw new Error("Invalid automation clock.");
+    if (lane.clockId !== void 0) {
+      if (typeof lane.clockId !== "string") throw new Error("Invalid automation clock.");
+      if (!lane.clockId) delete lane.clockId;
+    }
     if (lane.syncWith !== void 0 && typeof lane.syncWith !== "string") throw new Error("Invalid automation link.");
     automationLeader(lanes, lane);
   }
@@ -61,7 +64,7 @@ function removeGroupTarget(lanes, id) {
   if (next) {
     Object.assign(next, resolvedAutomation(lanes, next));
     delete next.syncWith;
-    next.clockId = leader.clockId ?? leader.nativeId ?? leader.id;
+    next.clockId = leader.clockId || leader.nativeId || leader.id;
     for (const target of targets.slice(1)) target.syncWith = next.id;
   }
   return lanes.filter((l) => l.id !== id);

@@ -1,3 +1,4 @@
+import { validateTransport } from "./transportState.mjs";
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -11,14 +12,17 @@ import { isLightHex } from "./colorPalettes.mjs";
 import { CymaticResonator } from "./cymaticResonator.mjs";
 import { PinMarkerLayer } from "./pinMarkers.mjs";
 import { EntityRuntime } from "./entityRuntime.mjs";
+import { compileEntityForceEmitters, relationalCarrierStates } from "./forceRuntime.mjs";
+import { SemanticFieldRuntime } from "./semantics/semanticFieldRuntime.mjs";
+import { mapChakrasToAnchors, CHAKRA_PROFILE_ID } from "./semantics/chakraProfile.mjs";
+import { semanticFocusTarget } from "./resonanceDrive.mjs";
 import {
   DEFAULT_COMPOSITION,
   DEFAULT_CYMATIC_MEDIUM,
   DEFAULT_SEQUENCE,
   makeFormation,
   makeLink,
-  resolveFocus,
-  pinsToPlacedPoints
+  resolveFocus
 } from "./fieldModel.mjs";
 function getColorModeIndex(mode) {
   switch (mode) {
@@ -69,6 +73,8 @@ const DEFAULT_TOROIDAL_CONFIG = {
   autoOscillate: true,
   oscillationSpeed: 0.8,
   oscillationAmplitude: 1.2,
+  breathRate: 0.35,
+  breathDepth: 0.35,
   fiberPhaseOffset: 0,
   toroidalWinding: 3,
   poloidalWinding: 2,
@@ -167,6 +173,13 @@ const DEFAULT_CONFIG = {
   ],
   composition: DEFAULT_COMPOSITION,
   cymatics: DEFAULT_CYMATIC_MEDIUM,
+  semanticField: {
+    enabled: false,
+    profile: { kind: "chakra", profileId: CHAKRA_PROFILE_ID },
+    affinity: { method: "modalProjection", bandwidth: 0.14 },
+    globalColorGain: 1,
+    bindings: []
+  },
   morphProgress: 0,
   autoMorph: true,
   autoMorphDuration: 4,
@@ -251,6 +264,12 @@ class PointCloudField {
   lastFocus = null;
   focusTint = new THREE.Color("#ffffff");
   activeEntityId = null;
+  lastPoses = [];
+  lastForceEmitters = [];
+  lastRelationalCarriers = [];
+  semanticRuntime = new SemanticFieldRuntime();
+  latestSemanticState = { nodes: [], colorFields: [] };
+  lastResonanceDrive = { kind: "frequency", targetHz: 396, bound: true };
   // Cymatic medium: one continuously driven resonator (see cymaticResonator.ts)
   cymaticResonator = null;
   latestResonatorTelemetry = null;
@@ -268,6 +287,7 @@ class PointCloudField {
   // Unified morph oscillator + automation runtime
   torPhaseAcc = 0;
   polPhaseAcc = 0;
+  breathPhaseAcc = 0;
   lastDrive = null;
   automationRt = createAutomationRuntime();
   telemetryAccum = 0;
@@ -311,6 +331,19 @@ class PointCloudField {
       entities: override.entities !== void 0 ? override.entities : base.entities,
       composition: comp,
       cymatics: { ...base.cymatics || DEFAULT_CYMATIC_MEDIUM, ...override.cymatics || {} },
+      resonanceDrive: override.resonanceDrive !== void 0 ? override.resonanceDrive : base.resonanceDrive,
+      semanticField: override.semanticField !== void 0 ? {
+        ...override.semanticField,
+        profile: { ...override.semanticField.profile },
+        affinity: { ...override.semanticField.affinity },
+        bindings: override.semanticField.bindings.map((b) => ({
+          ...b,
+          resonance: b.resonance ? { ...b.resonance } : void 0,
+          carriers: b.carriers.map((c) => ({ ...c })),
+          color: b.color ? { ...b.color, radius: { ...b.color.radius } } : void 0,
+          modulations: b.modulations?.map((m) => ({ ...m, source: { ...m.source }, clamp: m.clamp ? [...m.clamp] : void 0 }))
+        }))
+      } : base.semanticField,
       automations: override.automations !== void 0 ? override.automations : base.automations
     };
   }
@@ -324,9 +357,12 @@ class PointCloudField {
     this.entities.allocate(this.simulator.particleCount, this.simulator.texWidth, this.simulator.texHeight);
     this.entities.setBaseContext(cfg.style, cfg.fontFamily, cfg.fontWeight, comp.plane, cfg.cymatics);
     this.entities.layout(cfg.entities || []);
-    this.entities.update(cfg.entities || [], comp, this.simTime, this.lastDrive?.theta ?? 0, this.morphProgress, cfg.toroidalMorph?.holdRatio ?? 0, cfg.fontFamily, cfg.fontWeight);
+    const resolved = this.entities.update(cfg.entities || [], comp, this.simTime, this.lastDrive?.theta ?? 0, this.morphProgress, cfg.toroidalMorph?.holdRatio ?? 0, cfg.fontFamily, cfg.fontWeight);
+    this.lastPoses = resolved.poses;
+    this.lastForceEmitters = compileEntityForceEmitters(cfg.entities || [], resolved.poses, cfg.interaction.placedPoints || []);
     this.simulator.setTargetTextures(this.entities.textureA, this.entities.textureB, this.entities.fieldCentre(), this.entities.noiseTexture);
     this.simulator.setEntityState(this.entities.uniforms);
+    this.simulator.setForceEmitters(this.lastForceEmitters);
     this.simulator.setCompositionPlane(comp.plane);
     if (seed) {
       this.seedGeneration++;
@@ -336,6 +372,8 @@ class PointCloudField {
   /** Explicit reset: particles jump to their current targets. The only user-driven reseed. */
   resetField() {
     this.burstVelocity.set(0, 0);
+    this.burstRadial = 0;
+    this.burstSpin = 0;
     this.seedGeneration++;
     this.simulator.seedInitialState(this.entities.buildSeed());
     this.resetMorphPhases();
@@ -464,7 +502,13 @@ class PointCloudField {
         uEntityTintWeight: { value: new Float32Array(10) },
         uTexSize: { value: new THREE.Vector2(texW, texH) },
         uFocusTint: { value: new THREE.Color("#ffffff") },
-        uFocusTintWeight: { value: 0 }
+        uFocusTintWeight: { value: 0 },
+        // Semantic spatial colour is a render-only contribution field. It does not own particles or forces.
+        uCompPlane: { value: (this.config.composition || DEFAULT_COMPOSITION).plane === "horizontal" ? 1 : 0 },
+        uSemanticColorCount: { value: 0 },
+        uSemanticColorCenter: { value: Array.from({ length: 16 }, () => new THREE.Vector4(-99999, -99999, 0, 1)) },
+        uSemanticColorValue: { value: Array.from({ length: 16 }, () => new THREE.Vector4(1, 1, 1, 0)) },
+        uSemanticColorParams: { value: Array.from({ length: 16 }, () => new THREE.Vector4(0, 0, 0, 0)) }
       },
       transparent: true,
       depthTest: false,
@@ -916,27 +960,27 @@ class PointCloudField {
     const id = entityId ?? this.formations()[0]?.id;
     return id ? this.sourceAnalyses.get(id) : void 0;
   }
-  loadCustomImage(img, options = {}, entityId) {
+  loadCustomImage(img, options = {}, entityId, linkId) {
     const target = entityId ? this.formations().find((e) => e.id === entityId) : this.formations()[0];
     if (!target) return null;
     const { candidates, analysis } = this.glyphSampler.rasterizeCustomImage(img, options);
     if (entityId) this.sourceAnalyses.set(entityId, analysis);
-    this.entities.setCustomCandidates(target.id, candidates);
+    this.entities.setCustomCandidates(target.id, candidates, linkId);
     return analysis;
   }
-  loadAsciiArt(asciiText, options = {}, entityId) {
+  loadAsciiArt(asciiText, options = {}, entityId, linkId) {
     const target = entityId ? this.formations().find((e) => e.id === entityId) : this.formations()[0];
     if (!target) return null;
     const { candidates, analysis } = this.glyphSampler.rasterizeAscii(asciiText, options);
     if (entityId) this.sourceAnalyses.set(entityId, analysis);
-    this.entities.setCustomCandidates(target.id, candidates);
+    this.entities.setCustomCandidates(target.id, candidates, linkId);
     return analysis;
   }
-  clearCustomSource(entityId) {
+  clearCustomSource(entityId, linkId) {
     const id = entityId ?? this.formations()[0]?.id;
     if (id) {
       this.sourceAnalyses.delete(id);
-      this.entities.setCustomCandidates(id, null);
+      this.entities.setCustomCandidates(id, null, linkId);
     }
   }
   setMorphProgress(progress) {
@@ -947,12 +991,31 @@ class PointCloudField {
   getMorphProgress() {
     return this.morphProgress;
   }
+  /** Queued click-effect impulse, consumed by the velocity shader and decayed each step. */
   burstVelocity = new THREE.Vector2();
   burstPosition = new THREE.Vector2();
+  burstRadius = 150;
+  burstRadial = 0;
+  burstSpin = 0;
   triggerDisperse(strength = 3) {
     if (!Number.isFinite(strength)) throw new Error("Invalid disperse strength");
     this.burstVelocity.set((Math.random() - 0.5) * 600 * strength, (Math.random() - 0.5) * 600 * strength);
+    this.burstRadial = 0;
+    this.burstSpin = 0;
     this.burstPosition.copy(this.pointerPos.x > -9e4 ? this.pointerPos : this.entities.fieldCentre());
+  }
+  /** Momentary pointer click effect. Coordinates are native world pixels. */
+  triggerPointerEffect(kind, x, y, strength = 1, radius = 150) {
+    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(strength) || !Number.isFinite(radius)) {
+      throw new Error("Invalid pointer effect");
+    }
+    this.burstPosition.set(x, y);
+    this.burstRadius = Math.max(8, Math.abs(radius));
+    this.burstVelocity.set(0, 0);
+    const power = 950 * strength;
+    this.burstRadial = kind === "pulse" ? power : kind === "implode" ? -power : 0;
+    this.burstSpin = kind === "vortex" ? power : 0;
+    if (kind === "shove") this.burstVelocity.set((Math.random() - 0.5) * 2 * power, (Math.random() - 0.5) * 2 * power);
   }
   tick = () => {
     if (this.isDestroyed) return;
@@ -1148,12 +1211,14 @@ class PointCloudField {
     if (!manual) {
       this.torPhaseAcc += delta * TAU * (tm.oscillationSpeed ?? 0.8);
       this.polPhaseAcc += delta * TAU * (tm.poloidalRate ?? 0.35);
+      this.breathPhaseAcc += delta * TAU * (tm.breathRate ?? tm.poloidalRate ?? 0.35);
     }
     const theta = (manual ? 0 : this.torPhaseAcc) + (tm.toroidalPhase ?? 0);
     const phi = (manual ? 0 : this.polPhaseAcc) + (tm.poloidalPhase ?? 0);
+    const breath = manual ? 0 : this.breathPhaseAcc + (tm.poloidalPhase ?? 0);
     const drive = computeMorphDrive2(tm, theta, phi);
     this.lastDrive = drive;
-    this.simulator.setMorphPhases(theta, phi);
+    this.simulator.setMorphPhases(theta, phi, breath);
     return drive;
   }
   syncLiveMaterialUniforms() {
@@ -1202,7 +1267,7 @@ class PointCloudField {
     const forms = this.formations();
     const focus = this.lastFocus;
     const res = this.latestResonatorTelemetry;
-    const stations = this.cymaticResonator ? this.cymaticResonator.getStations() : [];
+    const stations = this.getCymaticStations();
     return {
       simTime: this.simTime,
       focus: focus && forms.length > 0 ? {
@@ -1211,6 +1276,7 @@ class PointCloudField {
         nextEntityId: forms[Math.min(focus.nextIndex, forms.length - 1)].id,
         blend: focus.blend
       } : null,
+      semantic: this.latestSemanticState,
       sequences: this.lastFrames.map((f) => ({
         entityId: f.entityId,
         linkIndex: f.state.linkIndex,
@@ -1227,7 +1293,8 @@ class PointCloudField {
         dominantN: res?.dominantN ?? 0,
         nearestStation: res?.nearestStationIndex ?? 0,
         stationProximity: res?.nearestStationProximity ?? 0,
-        stations: stations.map((s) => ({ index: s.index, name: s.name, frequencyHz: s.frequencyHz, m: s.m, n: s.n, color: s.color }))
+        stations,
+        driver: { ...this.lastResonanceDrive }
       } : null
     };
   }
@@ -1245,9 +1312,26 @@ class PointCloudField {
     if (r) r.startTime = this.simTime + delayS;
   }
   /** Zero the running toroidal / poloidal phases (restart the morph cycle). */
+  /** Reconstruct source targets after startup decoding; preserve recovered driver clocks. */
+  seedCurrentTargets() {
+    this.seedGeneration++;
+    this.simulator.seedInitialState(this.entities.buildSeed());
+  }
+  getTransportState() {
+    return { version: 1, simTime: this.simTime, theta: this.torPhaseAcc, phi: this.polPhaseAcc, lanes: [...this.automationRt.lanes].map(([id, v]) => [id, { ...v }]) };
+  }
+  restoreTransportState(value) {
+    const s = validateTransport(value);
+    this.simTime = s.simTime;
+    this.torPhaseAcc = s.theta;
+    this.polPhaseAcc = s.phi;
+    this.breathPhaseAcc = s.phi;
+    this.automationRt = { lanes: new Map(s.lanes) };
+  }
   resetMorphPhases() {
     this.torPhaseAcc = 0;
     this.polPhaseAcc = 0;
+    this.breathPhaseAcc = 0;
   }
   getMorphDrive() {
     return this.lastDrive;
@@ -1261,6 +1345,7 @@ class PointCloudField {
     const manual = tm.enabled && tm.autoOscillate !== false ? drive.progress : cfg.morphProgress ?? 0;
     const res = this.entities.update(cfg.entities || [], comp, elapsedTime, drive.theta, manual, tm.holdRatio ?? 0, cfg.fontFamily, cfg.fontWeight);
     this.lastFrames = res.frames;
+    this.lastPoses = res.poses;
     if (delta > 0) for (const imp of res.impulses) this.triggerDisperse(imp);
     this.simulator.setTargetTextures(this.entities.textureA, this.entities.textureB, this.entities.fieldCentre(), this.entities.noiseTexture);
     this.simulator.setEntityState(this.entities.uniforms);
@@ -1289,6 +1374,7 @@ class PointCloudField {
     }
     this.tickCymaticMedium(delta, comp, forms, focus);
     this.pointerVel.multiplyScalar(Math.pow(0.92, delta * 60));
+    this.lastRelationalCarriers = [];
     if (cfg.relational?.enabled) {
       const rel = cfg.relational;
       const count = Math.max(1, Math.min(10, rel.attractorCount ?? 3));
@@ -1298,6 +1384,7 @@ class PointCloudField {
       const vCenter = this.entities.fieldCentre();
       const dynamicAttractors = [];
       const dynamicSpins = [];
+      const carrierPositions = [];
       for (let i = 0; i < 10; i++) {
         if (i < count) {
           const basePt = baseCenters[i % baseCenters.length] || new THREE.Vector2(0, 0);
@@ -1327,20 +1414,42 @@ class PointCloudField {
           const spin = (i % 2 === 0 ? 1 : -1) * (1 + i * 0.2);
           dynamicAttractors.push(new THREE.Vector4(posX, posY, 0, 1));
           dynamicSpins.push(spin);
+          carrierPositions.push({ x: posX, y: posY, z: 0 });
         } else {
           dynamicAttractors.push(new THREE.Vector4(-99999, -99999, 0, 0));
           dynamicSpins.push(0);
         }
       }
       this.simulator.setAttractors(dynamicAttractors, dynamicSpins);
+      this.lastRelationalCarriers = relationalCarrierStates(carrierPositions, rel);
     }
-    const stepConfig = {
-      ...cfg,
-      interaction: { ...cfg.interaction, placedPoints: pinsToPlacedPoints(cfg.entities || []) }
-    };
-    this.simulator.setBurst(this.burstPosition, this.burstVelocity);
-    if (delta > 0) this.burstVelocity.multiplyScalar(Math.pow(0.92, delta * 60));
-    this.simulator.step(delta, elapsedTime, stepConfig, this.morphProgress, this.pointerPos, this.pointerVel, this.hostPointerZ);
+    this.lastForceEmitters = compileEntityForceEmitters(cfg.entities || [], this.lastPoses, cfg.interaction.placedPoints || []);
+    this.simulator.setForceEmitters(this.lastForceEmitters);
+    const focusSemantic = focus && forms.length > 0 ? {
+      entityId: forms[Math.min(focus.index, forms.length - 1)].id,
+      nextEntityId: forms[Math.min(focus.nextIndex, forms.length - 1)].id,
+      blend: focus.blend
+    } : null;
+    const resonanceState = this.cymaticResonator && this.resonatorActive ? this.cymaticResonator.getState() : null;
+    this.latestSemanticState = this.semanticRuntime.evaluate({
+      config: cfg.semanticField,
+      resonance: resonanceState,
+      poses: this.lastPoses,
+      entityTints: new Map((cfg.entities || []).map((e) => [e.id, e.tint])),
+      forceEmitters: this.lastForceEmitters,
+      relationalCarriers: this.lastRelationalCarriers,
+      focus: focusSemantic,
+      delta
+    });
+    this.syncSemanticColorUniforms(comp);
+    this.simulator.setBurst(this.burstPosition, this.burstVelocity, this.burstRadius, this.burstRadial, this.burstSpin);
+    if (delta > 0) {
+      const decay = Math.pow(0.92, delta * 60);
+      this.burstVelocity.multiplyScalar(decay);
+      this.burstRadial *= decay;
+      this.burstSpin *= decay;
+    }
+    this.simulator.step(delta, elapsedTime, cfg, this.morphProgress, this.pointerPos, this.pointerVel, this.hostPointerZ);
     this.particleMaterial.uniforms.uPositionTexture.value = this.simulator.currentPosTarget.texture;
     this.particleMaterial.uniforms.uVelocityTexture.value = this.simulator.currentVelTarget.texture;
     this.particleMaterial.uniforms.uTime.value = elapsedTime;
@@ -1368,6 +1477,7 @@ class PointCloudField {
     const cym = this.config.cymatics;
     if (!cym || !cym.enabled || cym.engine === "template") {
       this.stopResonator();
+      this.lastResonanceDrive = { kind: "frequency", targetHz: cym?.frequencyHz ?? this.cymaticFreqCurrent, bound: true };
       return;
     }
     const params = {
@@ -1380,21 +1490,40 @@ class PointCloudField {
     if (!this.cymaticResonator) this.cymaticResonator = new CymaticResonator(params);
     else this.cymaticResonator.configure(params);
     const resonator = this.cymaticResonator;
-    const stations = resonator.getStations();
-    let target;
-    if (cym.autoSweep || cym.sweep?.enabled) {
+    const anchors = resonator.getAnchors();
+    const focusIds = focus && forms.length > 0 ? {
+      entityId: forms[Math.min(focus.index, forms.length - 1)].id,
+      nextEntityId: forms[Math.min(focus.nextIndex, forms.length - 1)].id,
+      blend: focus.blend
+    } : null;
+    let drive = this.config.resonanceDrive;
+    if (!drive) {
+      if (cym.autoSweep || cym.sweep?.enabled) drive = { kind: "sweep" };
+      else if (cym.followFocus && comp.orchestration.followStation) drive = this.config.semanticField?.enabled ? { kind: "semanticFocus", profileId: this.config.semanticField.profile.profileId } : void 0;
+      else drive = { kind: "frequency" };
+    }
+    let target = cym.frequencyHz ?? 396;
+    if (drive?.kind === "sweep") {
       this.sweepAccum += delta;
-      target = resonator.sweepFrequency(this.sweepAccum, {
-        glideS: Math.max(0.05, cym.sweep?.glideS ?? cym.sweepSpeed ?? 3.5),
-        dwellS: Math.max(0, cym.sweep?.dwellS ?? 2),
-        direction: cym.sweep?.direction ?? "ascent"
-      });
-    } else if (cym.followFocus && comp.orchestration.followStation && focus && forms.length > 0 && stations.length > 0) {
-      const sA = stations[Math.min(stations.length - 1, forms[Math.min(focus.index, forms.length - 1)].stationIndex ?? 0)];
-      const sB = stations[Math.min(stations.length - 1, forms[Math.min(focus.nextIndex, forms.length - 1)].stationIndex ?? 0)];
-      target = sA.frequencyHz + (sB.frequencyHz - sA.frequencyHz) * focus.blend;
+      const opts = {
+        glideS: Math.max(0.05, drive.glideS ?? cym.sweep?.glideS ?? cym.sweepSpeed ?? 3.5),
+        dwellS: Math.max(0, drive.dwellS ?? cym.sweep?.dwellS ?? 2),
+        direction: drive.direction ?? cym.sweep?.direction ?? "ascent"
+      };
+      target = resonator.sweepFrequency(this.sweepAccum, opts);
+      this.lastResonanceDrive = { kind: "sweep", targetHz: target, bound: true };
+    } else if (drive?.kind === "semanticFocus") {
+      const resolved = semanticFocusTarget({ currentHz: this.cymaticFreqCurrent, focus: focusIds, semanticField: this.config.semanticField, anchors });
+      target = resolved.targetHz;
+      this.lastResonanceDrive = resolved;
+    } else if (!drive && cym.followFocus && comp.orchestration.followStation && focus && forms.length > 0 && anchors.length > 0) {
+      const aIndex = Math.min(anchors.length - 1, forms[Math.min(focus.index, forms.length - 1)].stationIndex ?? 0);
+      const bIndex = Math.min(anchors.length - 1, forms[Math.min(focus.nextIndex, forms.length - 1)].stationIndex ?? 0);
+      const a = anchors[aIndex], b = anchors[bIndex];
+      target = a.frequencyHz + (b.frequencyHz - a.frequencyHz) * focus.blend;
+      this.lastResonanceDrive = { kind: "semanticFocus", targetHz: target, bound: true, anchorId: focus.blend < 0.5 ? a.id : b.id };
     } else {
-      target = cym.frequencyHz ?? 396;
+      this.lastResonanceDrive = { kind: "frequency", targetHz: target, bound: true };
     }
     this.cymaticFreqCurrent += (target - this.cymaticFreqCurrent) * (1 - Math.exp(-delta * 8));
     this.latestResonatorTelemetry = resonator.step(delta, this.cymaticFreqCurrent);
@@ -1413,8 +1542,53 @@ class PointCloudField {
     );
     this.simulator.setResonatorDominance(cym.dominance ?? 1);
   }
+  /** Physical anchors enriched at the orchestration boundary; the resonator itself has no semantic imports. */
   getCymaticStations() {
-    return this.cymaticResonator ? this.cymaticResonator.getStations() : [];
+    const anchors = this.cymaticResonator?.getAnchors() ?? [];
+    const semantic = this.config.semanticField?.enabled && this.config.semanticField.profile.kind === "chakra" ? mapChakrasToAnchors(anchors) : [];
+    const semanticByAnchor = new Map(semantic.filter((m) => m.anchor).map((m) => [m.anchor.id, m.node]));
+    const stateByNode = new Map(this.latestSemanticState.nodes.map((n) => [n.semanticNodeId, n]));
+    const physicalState = this.cymaticResonator?.getState();
+    return anchors.map((anchor) => {
+      const node = semanticByAnchor.get(anchor.id);
+      const sem = node ? stateByNode.get(node.id) : void 0;
+      const physical = physicalState?.anchors.find((a) => a.id === anchor.id);
+      return {
+        id: anchor.id,
+        index: anchor.index,
+        name: node?.name ?? `Mode ${anchor.m}:${anchor.n}`,
+        frequencyHz: anchor.frequencyHz,
+        m: anchor.m,
+        n: anchor.n,
+        color: node?.canonicalColor ?? "#888888",
+        energy: physical?.energy ?? 0,
+        semanticNodeId: node?.id,
+        affinity: sem?.affinity
+      };
+    });
+  }
+  syncSemanticColorUniforms(comp) {
+    if (!this.particleMaterial) return;
+    const u = this.particleMaterial.uniforms;
+    const fields = this.latestSemanticState.colorFields.slice(0, 16);
+    u.uSemanticColorCount.value = fields.length;
+    u.uCompPlane.value = comp.plane === "horizontal" ? 1 : 0;
+    const centres = u.uSemanticColorCenter.value;
+    const values = u.uSemanticColorValue.value;
+    const params = u.uSemanticColorParams.value;
+    for (let i = 0; i < 16; i++) {
+      const field = fields[i];
+      if (!field) {
+        centres[i].set(-99999, -99999, 0, 1);
+        values[i].set(1, 1, 1, 0);
+        params[i].set(0, 0, 0, 0);
+        continue;
+      }
+      const color = new THREE.Color(field.color);
+      centres[i].set(field.center.x, field.center.y, field.center.z, Math.max(1e-3, field.radius));
+      values[i].set(color.r, color.g, color.b, Math.max(0, field.gain));
+      params[i].set(field.metric === "world3d" ? 1 : 0, field.falloff === "compact" ? 1 : 0, field.blend === "additive" ? 1 : 0, 0);
+    }
   }
   getCymaticTelemetry() {
     return this.latestResonatorTelemetry;

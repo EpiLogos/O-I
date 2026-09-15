@@ -40,10 +40,12 @@ declare module "@epilogos/oi-design-system/expressions-engine/shell/nativeBridge
   export interface StageJourney { scenes: StageScene[] }
   /** Migrates any recognised native configuration (including the old
    * point-cloud patch schema) into a validated journey whose scene retains
-   * the complete schema-4 config losslessly. Throws on unrecognised input. */
+   * the complete native config (schema-4 through the current schema-5)
+   * losslessly. Throws on unrecognised input. */
   export function nativeSnapshotToJourney(raw: unknown, index?: number): StageJourney;
-  /** Projects an authoring scene into a complete schema-4 configuration. */
-  export function nativeExport(scene: unknown): { schemaVersion: 4; config: NativeConfig; [key: string]: unknown };
+  /** Projects an authoring scene into a complete native configuration at the
+   * engine's current schema version (schema-5 as of the 7306b7b intake). */
+  export function nativeExport(scene: unknown): { schemaVersion: 4 | 5; config: NativeConfig; [key: string]: unknown };
 }
 
 declare module "@epilogos/oi-design-system/expressions-engine/shell/model.mjs" {
@@ -81,12 +83,14 @@ declare module "@epilogos/oi-design-system/expressions-engine/shell/engine.mjs" 
     pointer: { active: boolean; world: Vec3 };
     selectedIds: ReadonlyArray<string>;
   }
+  export type PointerEffectKind = "pulse" | "implode" | "vortex" | "shove";
   export type EngineCommand =
     | { type: "reset-field" }
     | { type: "recover-context" }
     | { type: "reset-phases" }
     | { type: "disperse"; strength: number }
-    | { type: "fire-automation"; id: string; delay?: number };
+    | { type: "fire-automation"; id: string; delay?: number }
+    | { type: "pointer-effect"; kind: PointerEffectKind; strength: number; radius: number; x: number; y: number; z: number };
   export interface FieldEngineAdapter {
     readonly canvas: HTMLCanvasElement;
     readonly capabilities: {

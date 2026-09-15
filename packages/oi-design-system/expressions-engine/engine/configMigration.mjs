@@ -6,7 +6,9 @@ import { DEFAULT_CONFIG, DEFAULT_COLOR_CONFIG, DEFAULT_TOROIDAL_CONFIG } from ".
 import { createDefaultChakraConfig } from "./chakraSystem.mjs";
 import { isLightHex } from "./colorPalettes.mjs";
 import { migrateLegacyFieldConfig } from "./fieldModel.mjs";
-const CONFIG_SCHEMA_VERSION = 4;
+import { CHAKRA_BY_ID } from "./semantics/chakraSemantics.mjs";
+import { CHAKRA_PROFILE_ID } from "./semantics/chakraProfile.mjs";
+const CONFIG_SCHEMA_VERSION = 5;
 const SNAPSHOT_STORAGE_KEY = "typographic_pointcloud_saved_states";
 const num = (v, fallback) => typeof v === "number" && Number.isFinite(v) ? v : fallback;
 function normalizeLegacyAngle(angle, fromVersion) {
@@ -71,6 +73,51 @@ function migrateToroidal(raw) {
   if (!raw) return { ...DEFAULT_TOROIDAL_CONFIG, enabled: false };
   return { ...DEFAULT_TOROIDAL_CONFIG, ...raw, enabled: raw.enabled === true };
 }
+function cloneSemanticField(raw) {
+  return {
+    ...raw,
+    profile: { ...raw.profile },
+    affinity: { ...raw.affinity },
+    bindings: (raw.bindings || []).map((b) => ({
+      ...b,
+      ...b.resonance ? { resonance: { ...b.resonance } } : {},
+      carriers: (b.carriers || []).map((c) => ({ ...c })),
+      ...b.color ? { color: { ...b.color, radius: { ...b.color.radius } } } : {},
+      ...b.modulations ? { modulations: b.modulations.map((m) => ({ ...m, source: { ...m.source }, ...m.clamp ? { clamp: [...m.clamp] } : {} })) } : {}
+    }))
+  };
+}
+function migrateSemanticField(src, entities) {
+  if (src.semanticField) return cloneSemanticField(src.semanticField);
+  const bindings = [];
+  for (const entity of entities) {
+    const chakraId = entity.chakraId;
+    if (!chakraId || !CHAKRA_BY_ID.has(chakraId)) continue;
+    bindings.push({
+      id: `semantic_${chakraId}_${entity.id}`,
+      semanticNodeId: chakraId,
+      enabled: true,
+      resonance: { gain: 1 },
+      carriers: [{ kind: "entity", id: entity.id }],
+      // v4 partition tint is retained on the entity. Spatial semantic colour starts disabled so migration is appearance-preserving.
+      color: { enabled: false, colorSource: "canonical", gain: 1, radius: { source: "force" }, falloff: "gaussian", metric: "compositionPlane", blend: "weighted", activation: "constant" }
+    });
+  }
+  return {
+    enabled: bindings.length > 0,
+    profile: { kind: "chakra", profileId: CHAKRA_PROFILE_ID },
+    affinity: { method: "modalProjection", bandwidth: 0.14 },
+    globalColorGain: 1,
+    bindings
+  };
+}
+function migrateResonanceDrive(src, field, semantic) {
+  if (src.resonanceDrive) return { ...src.resonanceDrive };
+  const cym = field.cymatics;
+  if (cym.autoSweep || cym.sweep?.enabled) return { kind: "sweep", glideS: cym.sweep?.glideS ?? cym.sweepSpeed, dwellS: cym.sweep?.dwellS, direction: cym.sweep?.direction };
+  if (cym.followFocus && field.composition.orchestration.followStation && semantic.enabled && semantic.bindings.length > 0) return { kind: "semanticFocus", profileId: semantic.profile.profileId };
+  return { kind: "frequency" };
+}
 function migrateConfig(incoming, fromVersion = CONFIG_SCHEMA_VERSION) {
   const src = incoming && typeof incoming === "object" ? incoming : {};
   const colorMode = src.colorMode === "blackOnWhite" || src.colorMode === "whiteOnBlack" ? src.colorMode : src.backgroundColor && isLightHex(src.backgroundColor) ? "blackOnWhite" : "whiteOnBlack";
@@ -80,6 +127,8 @@ function migrateConfig(incoming, fromVersion = CONFIG_SCHEMA_VERSION) {
     ...src,
     interaction: { ...DEFAULT_CONFIG.interaction, ...src.interaction || {}, placedPoints: migratePlacedPoints(src.interaction?.placedPoints) }
   });
+  const semanticField = migrateSemanticField(src, field.entities);
+  const resonanceDrive = migrateResonanceDrive(src, field, semanticField);
   return {
     ...DEFAULT_CONFIG,
     ...src,
@@ -120,6 +169,8 @@ function migrateConfig(incoming, fromVersion = CONFIG_SCHEMA_VERSION) {
     entities: field.entities,
     composition: field.composition,
     cymatics: field.cymatics,
+    semanticField,
+    resonanceDrive,
     morphProgress: num(src.morphProgress, 0),
     autoMorph: src.autoMorph !== void 0 ? !!src.autoMorph : DEFAULT_CONFIG.autoMorph,
     autoMorphDuration: num(src.autoMorphDuration, DEFAULT_CONFIG.autoMorphDuration ?? 4)

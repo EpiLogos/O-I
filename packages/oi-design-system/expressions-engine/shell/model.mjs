@@ -1,8 +1,9 @@
+import { globalPath, POINTER_PATHS } from "./sharedSettings.mjs";
 import { validateAutomationLinks } from "./automationLinks.mjs";
 import { validateWorkspace, defaultWorkspace } from "./workspacePreferences.mjs";
 import { validateTracks } from "./propertyTracks.mjs";
-const DEFAULT_ENGINE_SETTINGS = { paletteSource: "custom", grainProfile: true, backgroundMode: "solid", resonatorMode: "resonator", focusOrder: "listed", dotShape: "circle", fontFamily: "system-ui, -apple-system, sans-serif", fontWeight: 900, resonanceEnabled: true, morphEnabled: false, trajectory: "toroidalHopf", driveShape: "sine", autoOscillate: true, relationalEnabled: false, relationalMode: "orbital", pointerMode: "repel", colorMode: "linearGradient", colorEnabled: true, mediumPlane: "vertical", autoSweep: false, sweepDirection: "ascent" };
-const clone = (v) => JSON.parse(JSON.stringify(v));
+const DEFAULT_ENGINE_SETTINGS = { paletteSource: "custom", grainProfile: true, backgroundMode: "solid", resonatorMode: "resonator", focusOrder: "listed", dotShape: "circle", fontFamily: "system-ui, -apple-system, sans-serif", fontWeight: 900, resonanceEnabled: true, morphEnabled: false, trajectory: "toroidalHopf", driveShape: "sine", autoOscillate: true, relationalEnabled: false, relationalMode: "orbital", pointerMode: "repel", pointerClick: "pulse", pointerClickStrength: 2.2, pointerClickRadius: 0.45, colorMode: "linearGradient", colorEnabled: true, mediumPlane: "vertical", autoSweep: false, sweepDirection: "ascent" };
+const clone = (v) => typeof structuredClone === "function" ? structuredClone(v) : JSON.parse(JSON.stringify(v));
 const uid = (prefix = "id") => prefix + "-" + (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2, 12));
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const DEFAULT_PARAMS = {
@@ -15,21 +16,16 @@ const DEFAULT_PARAMS = {
   irregularity: 0.35,
   elongation: 0.04,
   orientation: 0,
-  jitter: 0.8,
   contrast: 0.93,
   densityScale: 1,
   densityPhase: 0.3,
   edgeWeight: 0,
   halo: 0.13,
-  thickness: 0.035,
-  warp: 0.4,
   speed: 0.7,
   circulation: 1,
   turbulence: 0.22,
   turbulenceScale: 1.2,
-  damping: 1.4,
   recovery: 1.1,
-  flow: 1,
   dispersion: 0.09,
   pointerStrength: 0.8,
   pointerRadius: 0.23,
@@ -53,7 +49,6 @@ const DEFAULT_PARAMS = {
   swirlRadius: 0.4,
   frequency: 220,
   dominance: 0,
-  resonanceDamping: 0.04,
   excitation: 0.6
 };
 function entity(name, text = "O", position = { x: 0, y: 0, z: 0 }) {
@@ -129,7 +124,7 @@ function fieldStudies() {
     s.entities = [o, ii];
     if (i === 1) {
       s.field.material = "print";
-      Object.assign(s.field.params, { count: 24e3, size: 4.1, contrast: 0.7, warp: 0.12, jitter: 0.08, roundness: 0.15, dispersion: 0.025, speed: 0.4 });
+      Object.assign(s.field.params, { count: 24e3, size: 4.1, contrast: 0.7, roundness: 0.15, dispersion: 0.025, speed: 0.4 });
     }
     if (i === 2) {
       const e = entity("Gathering ring", "O");
@@ -138,14 +133,14 @@ function fieldStudies() {
       e.size = { x: 1.6, y: 1.64 };
       s.entities = [e];
       s.field.material = "round";
-      Object.assign(s.field.params, { count: 28e3, size: 3.6, contrast: 0.75, warp: 0.4, densityPhase: 2 });
+      Object.assign(s.field.params, { count: 28e3, size: 3.6, contrast: 0.75, densityPhase: 2 });
     }
     if (i === 3) {
       o.position.x = -0.14;
       o.rotation = -17;
       ii.position.x = 0.4;
       ii.rotation = 10;
-      Object.assign(s.field.params, { warp: 0.8, dispersion: 0.16, contrast: 0.86 });
+      Object.assign(s.field.params, { dispersion: 0.16, contrast: 0.86 });
     }
     if (i === 4) {
       o.text = "&";
@@ -154,7 +149,7 @@ function fieldStudies() {
       o.position.x = 0.1;
       o.rotation = 0;
       s.entities = [o];
-      Object.assign(s.field.params, { warp: 0.12, contrast: 0.6 });
+      Object.assign(s.field.params, { contrast: 0.6 });
     }
     if (i === 5) {
       o.shape = "square";
@@ -162,14 +157,14 @@ function fieldStudies() {
       o.position.x = 0;
       o.size = { x: 3.6, y: 2.5 };
       s.entities = [o];
-      Object.assign(s.field.params, { count: 52e3, size: 1.45, contrast: 0.98, densityScale: 1.8, warp: 0.25, opacity: 0.5, dispersion: 0.4 });
+      Object.assign(s.field.params, { count: 52e3, size: 1.45, contrast: 0.98, densityScale: 1.8, opacity: 0.5, dispersion: 0.4 });
     }
     if (i === 6) {
       o.position.x = 0.2;
       o.size = { x: 1.15, y: 1.55 };
       ii.position.x = 0.84;
       s.field.palette = ["#8b8576", "#c5bba3"];
-      Object.assign(s.field.params, { count: 29e3, opacity: 0.5, size: 1.5, contrast: 0.7, warp: 0.14 });
+      Object.assign(s.field.params, { count: 29e3, opacity: 0.5, size: 1.5, contrast: 0.7 });
     }
     if (i === 7) {
       s.field.background = "#1d231f";
@@ -197,7 +192,6 @@ function sevenCentres() {
   s.entities = chakraEntities();
   s.field.params.count = 42e3;
   s.field.params.contrast = 0.5;
-  s.field.params.warp = 0.12;
   s.composition.layout = "column";
   const t = clone(s);
   t.id = uid("scene");
@@ -238,8 +232,30 @@ function validateJourney(value) {
   const safeId = (s) => typeof s === "string" && /^[a-zA-Z0-9_.:-]{1,160}$/.test(s);
   const color = (s) => typeof s === "string" && /^#[\da-f]{6}$/i.test(s);
   if (!str(j.name, 160) || !safeId(j.id) || !str(j.description) || typeof j.loop !== "boolean" || !Array.isArray(j.scenes) || !j.scenes.length || j.scenes.length > 64) throw new Error("Journey metadata or scene count is invalid (1\u201364 scenes).");
+  const validateSource = (source) => {
+    if (!source) return;
+    if (!["ascii", "image"].includes(source.kind)) throw new Error("Invalid formation source");
+    if (source.kind === "ascii") {
+      const a = source.ascii;
+      if (!a || !str(a.text, 5e4) || a.fontFamily !== void 0 && !str(a.fontFamily, 200) || a.fontSize !== void 0 && !finite(a.fontSize, 1, 1024) || a.invert !== void 0 && typeof a.invert !== "boolean") throw new Error("Invalid ASCII source");
+    } else {
+      const a = source.image;
+      if (!a || !["luminance", "edgeSobel", "silhouette"].includes(a.mode) || !finite(a.threshold, 0, 1) || !finite(a.scale, 0.01, 100) || a.invert !== void 0 && typeof a.invert !== "boolean" || a.name !== void 0 && !str(a.name, 500) || a.dataUrl !== void 0 && (!str(a.dataUrl, 12e6) || !/^data:image\/(png|jpeg|webp);base64,[a-zA-Z0-9+/=]+$/.test(a.dataUrl))) throw new Error("Invalid image source");
+    }
+  };
+  if (j.shared) {
+    j.shared.toolbelt = validateWorkspace({ version: 1, appearance: "scene", entries: j.shared.toolbelt }).entries;
+    for (const bucket of ["values", "pointer"]) {
+      const values = j.shared[bucket];
+      if (!values || typeof values !== "object" || Array.isArray(values) || Object.keys(values).length > 1024) throw new Error("Invalid expression properties");
+      for (const [path, value2] of Object.entries(values)) {
+        if (!globalPath(path) || bucket === "pointer" && !POINTER_PATHS.includes(path) || !(typeof value2 === "number" && finite(value2, -1e8, 1e8) || typeof value2 === "boolean" || str(value2, 300))) throw new Error("Invalid shared property: " + path);
+      }
+    }
+  }
   const ids = /* @__PURE__ */ new Set();
   for (const s of j.scenes) {
+    if (s.pointerScope !== void 0 && !["local", "global"].includes(s.pointerScope)) throw new Error("Invalid pointer scope.");
     if (s.propertyTakeRange && (!Number.isFinite(s.propertyTakeRange.start) || !Number.isFinite(s.propertyTakeRange.end) || s.propertyTakeRange.start < 0 || s.propertyTakeRange.end <= s.propertyTakeRange.start || s.propertyTakeRange.end > 3600)) throw new Error("Invalid property take interval");
     if (s.toolbelt !== void 0) s.toolbelt = validateWorkspace({ version: 1, appearance: "scene", entries: s.toolbelt }).entries;
     if (s.propertyTracks !== void 0) s.propertyTracks = validateTracks(s.propertyTracks);
@@ -261,18 +277,49 @@ function validateJourney(value) {
       eids.add(e.id);
       if (!e.position || !Object.values(e.position).every((n) => finite(n, -100, 100)) || !["x", "y", "z"].every((k) => finite(e.position[k], -100, 100)) || !e.size || !finite(e.size.x, 1e-3, 100) || !finite(e.size.y, 1e-3, 100) || !finite(e.rotation, -36e3, 36e3) || !finite(e.share, 0, 1e3) || !color(e.tint) || !finite(e.tintWeight, 0, 1) || typeof e.locked !== "boolean") throw new Error("Invalid entity transform or appearance.");
       if (!e.force || !["none", "attract", "repel", "vortex"].includes(e.force.kind) || !finite(e.force.strength, -1e3, 1e3) || !finite(e.force.radius, 1e-3, 125) || !finite(e.force.spin, -1e3, 1e3) || !(e.station === null || Number.isInteger(e.station) && e.station >= 0 && e.station < 7)) throw new Error("Invalid entity influence.");
-      if (e.source) {
-        if (e.kind !== "formation" || !["ascii", "image"].includes(e.source.kind)) throw new Error("Invalid formation source");
-        if (e.source.kind === "ascii" && (!e.source.ascii || !str(e.source.ascii.text, 5e4))) throw new Error("Invalid ASCII source");
-        if (e.source.kind === "image" && (!e.source.image || !["luminance", "edgeSobel", "silhouette"].includes(e.source.image.mode) || !finite(e.source.image.threshold, 0, 1) || !finite(e.source.image.scale, 0.01, 100) || e.source.image.dataUrl !== void 0 && !str(e.source.image.dataUrl, 12e6))) throw new Error("Invalid image source");
-      }
-      if (!e.sequence || typeof e.sequence.enabled !== "boolean" || !["seconds", "morph"].includes(e.sequence.clock) || !Array.isArray(e.sequence.steps) || e.sequence.steps.length > 32) throw new Error("Invalid sequence.");
+      validateSource(e.source);
+      if (!e.sequence || e.sequence.sourcesVersion !== void 0 && e.sequence.sourcesVersion !== 1 || typeof e.sequence.enabled !== "boolean" || !["seconds", "morph"].includes(e.sequence.clock) || !Array.isArray(e.sequence.steps) || e.sequence.steps.length > 32) throw new Error("Invalid sequence.");
       for (const step of e.sequence.steps) {
+        validateSource(step.source);
+        if (step.name !== void 0 && !str(step.name, 500)) throw new Error("Invalid state name");
+        if (step.objectState) {
+          const v = step.objectState;
+          if (!v.size || !finite(v.size.x, 1e-3, 100) || !finite(v.size.y, 1e-3, 100) || !finite(v.rotation, -36e3, 36e3) || v.scale !== void 0 && !finite(v.scale, 1e-3, 1e3) || !color(v.tint) || !finite(v.tintWeight, 0, 1) || !v.force || !["none", "attract", "repel", "vortex"].includes(v.force.kind) || !finite(v.force.radius, 1e-3, 125) || !finite(v.force.strength, -1e3, 1e3) || !finite(v.force.spin, -1e3, 1e3)) throw new Error("Invalid object state");
+        }
         if (!safeId(step.id) || !str(step.text, 120) || !["text", "ring", "disc", "square", "triangle", "yantra", "cymatic"].includes(step.shape) || !finite(step.hold, 0, 3600) || !finite(step.transition, 0, 3600) || step.position !== null && (!step.position || !["x", "y", "z"].every((k) => finite(step.position[k], -100, 100)))) throw new Error("Invalid sequence step.");
       }
     }
     for (const t of s.text) {
       if (!safeId(t.id) || !str(t.kicker, 300) || !str(t.title, 300) || !str(t.italic, 300) || !str(t.body) || !finite(t.x, -0.5, 1.5) || !finite(t.y, -0.5, 1.5) || !finite(t.width, 60, 1e3) || !finite(t.size, 14, 150) || !["left", "center", "right"].includes(t.align) || typeof t.visible !== "boolean") throw new Error("Invalid page text.");
+    }
+    if (s.semanticField) {
+      const sf = s.semanticField;
+      if (typeof sf.enabled !== "boolean" || sf.profile?.kind !== "chakra" || !safeId(sf.profile.profileId) || sf.affinity?.method !== "modalProjection" || !finite(sf.affinity.bandwidth, 1e-3, 10) || !finite(sf.globalColorGain, 0, 100) || !Array.isArray(sf.bindings) || sf.bindings.length > 32) throw new Error("Invalid semantic field.");
+      const semanticIds = /* @__PURE__ */ new Set();
+      for (const b of sf.bindings) {
+        if (!safeId(b.id) || semanticIds.has(b.id) || !safeId(b.semanticNodeId) || typeof b.enabled !== "boolean" || !Array.isArray(b.carriers) || !b.carriers.length || b.carriers.length > 16) throw new Error("Invalid semantic binding.");
+        semanticIds.add(b.id);
+        for (const c of b.carriers) {
+          if (!["entity", "forceEmitter"].includes(c.kind) || !safeId(c.id) || c.kind === "entity" && !eids.has(c.id)) throw new Error("Invalid semantic carrier.");
+        }
+        if (b.resonance && (!finite(b.resonance.gain, -100, 100) || b.resonance.anchorId !== void 0 && !str(b.resonance.anchorId, 160))) throw new Error("Invalid semantic resonance binding.");
+        if (b.color) {
+          const c = b.color;
+          if (typeof c.enabled !== "boolean" || !["canonical", "entityTint", "override"].includes(c.colorSource) || c.overrideColor !== void 0 && !color(c.overrideColor) || !finite(c.gain, 0, 100) || !["independent", "force"].includes(c.radius?.source) || c.radius.value !== void 0 && !finite(c.radius.value, 1e-3, 1e5) || !["gaussian", "compact"].includes(c.falloff) || !["world3d", "compositionPlane"].includes(c.metric) || !["weighted", "additive"].includes(c.blend) || !["resonanceAffinity", "focus", "constant"].includes(c.activation)) throw new Error("Invalid semantic colour coupling.");
+        }
+        if (b.modulations) {
+          if (!Array.isArray(b.modulations) || b.modulations.length > 16) throw new Error("Invalid semantic modulation list.");
+          for (const m of b.modulations) {
+            if (!["resonanceAffinity", "focus", "carrierSpeed", "forceStrength", "forceSpin"].includes(m.source?.kind) || !["color.gain", "color.radius", "color.hueShift"].includes(m.target) || !finite(m.amount, -1e4, 1e4) || m.offset !== void 0 && !finite(m.offset, -1e4, 1e4) || m.clamp !== void 0 && (!Array.isArray(m.clamp) || m.clamp.length !== 2 || !m.clamp.every((v) => finite(v, -1e9, 1e9)))) throw new Error("Invalid semantic modulation.");
+          }
+        }
+      }
+    }
+    if (s.resonanceDrive) {
+      const d = s.resonanceDrive;
+      if (!["frequency", "sweep", "semanticFocus"].includes(d.kind)) throw new Error("Invalid resonance driver.");
+      if (d.kind === "semanticFocus" && !safeId(d.profileId)) throw new Error("Invalid semantic resonance driver.");
+      if (d.kind === "sweep" && ([d.glideS, d.dwellS].some((v) => v !== void 0 && !finite(v, 0, 3600)) || d.direction !== void 0 && !["ascent", "descent", "pingpong"].includes(d.direction))) throw new Error("Invalid resonance sweep.");
     }
     if (!s.composition || !["XY", "XZ", "YZ"].includes(s.composition.plane) || !["parallel", "travelling"].includes(s.composition.focus) || !finite(s.composition.focusDuration, 0.01, 3600) || !["manual", "focus", "automation"].includes(s.composition.frequencyDriver)) throw new Error("Invalid composition.");
     if (!s.morph || !["theta", "product", "sum", "beat"].includes(s.morph.law) || !finite(s.morph.thetaRate, -100, 100) || !finite(s.morph.phiRate, -100, 100) || !finite(s.morph.thetaOffset, -1e3, 1e3) || !finite(s.morph.phiOffset, -1e3, 1e3) || !finite(s.morph.depth, -10, 10) || !finite(s.morph.dwell, 0, 0.99)) throw new Error("Invalid morph clock.");

@@ -1,3 +1,4 @@
+import { stateSource } from "./sourceState.mjs";
 import { PointCloudField } from "../engine/PointCloudField.mjs";
 import { CymaticResonator } from "../engine/cymaticResonator.mjs";
 import { readPath } from "../engine/automation.mjs";
@@ -40,6 +41,8 @@ class ProductionAdapter {
   sources = /* @__PURE__ */ new Map();
   sourceStatus = {};
   contextLost = false;
+  seedRecoveredSources = false;
+  restoredClock = false;
   lost = (event) => {
     event.preventDefault();
     this.contextLost = true;
@@ -102,8 +105,10 @@ class ProductionAdapter {
     this.dirty = false;
     if (this.contextLost) throw new Error("GPU context was lost. Your expression is retained. Restore the field explicitly; its physical state must be reseeded.");
     const config = this.configuration(frame);
-    if (!this.engine) this.engine = new PointCloudField(this.canvas, config, true);
-    else if (config !== this.applied) this.engine.replaceConfig(config);
+    if (!this.engine) {
+      this.engine = new PointCloudField(this.canvas, config, true);
+      this.seedRecoveredSources = true;
+    } else if (config !== this.applied) this.engine.replaceConfig(config);
     if (config !== this.applied) this.syncSources(frame.scene);
     this.applied = config;
     this.engine.setSelection(frame.selectedIds);
@@ -112,7 +117,22 @@ class ProductionAdapter {
     this.engine.setHostView({ width: this.width, height: this.height, pixelRatio: this.dpr, originX: o.x + frame.camera.panX, originY: o.y + frame.camera.panY, pixelsPerUnit: stageScale(this.width, this.height) * frame.camera.zoom / WORLD_SCALE, right: a, up: b });
     this.engine.setHostPointer(frame.pointer.active, { x: frame.pointer.world.x * WORLD_SCALE, y: frame.pointer.world.y * WORLD_SCALE, z: frame.pointer.world.z * WORLD_SCALE }, frame.delta);
     this.engine.advance(frame.delta);
+    if (this.seedRecoveredSources && Object.values(this.sourceStatus).every((v) => v.includes("source active"))) {
+      if (this.sources.size || this.restoredClock) this.engine.seedCurrentTargets();
+      this.seedRecoveredSources = false;
+      this.restoredClock = false;
+      this.engine.advance(0);
+    }
     this.evaluated = this.engine.getEvaluation().config;
+  }
+  transportState() {
+    return this.engine?.getTransportState();
+  }
+  restoreTransport(state) {
+    this.engine?.restoreTransportState(state);
+    this.seedRecoveredSources = true;
+    this.restoredClock = true;
+    this.dirty = true;
   }
   telemetry() {
     if (!this.engine) return null;
@@ -125,45 +145,49 @@ class ProductionAdapter {
     return { ...t, drive, params, config: cfg, sourceStatus: { ...this.sourceStatus }, live: this.engine.getEvaluation().live, background: cfg.backgroundColor ?? "#f4f2eb", palette: cfg.color?.customPaletteColors ?? [cfg.color.primaryColor, cfg.color.accentColor, cfg.color.secondaryColor], transition: this.from ? Math.min(1, (t.simTime - this.transitionStart) / Math.max(1e-3, this.duration)) : 1 };
   }
   syncSources(scene) {
-    const ids = new Set(scene.entities.map((e) => e.id));
-    for (const id of this.sources.keys()) if (!ids.has(id)) {
-      this.engine?.clearCustomSource(id);
-      this.sources.delete(id);
-      delete this.sourceStatus[id];
+    const requests = scene.entities.filter((e) => e.kind === "formation").flatMap((e) => e.sequence.enabled || e.sequence.manual ? e.sequence.steps.flatMap((k, i) => {
+      const source = stateSource(e, i);
+      return source ? [{ entityId: e.id, linkId: k.id, source }] : [];
+    }) : e.source ? [{ entityId: e.id, linkId: e.id + "_base", source: e.source }] : []);
+    const ids = new Set(requests.map((r) => JSON.stringify([r.entityId, r.linkId])));
+    for (const key of this.sources.keys()) if (!ids.has(key)) {
+      const [entityId, linkId] = JSON.parse(key);
+      this.engine?.clearCustomSource(entityId, linkId);
+      this.sources.delete(key);
+      delete this.sourceStatus[key];
     }
-    for (const e of scene.entities) {
-      const signature = JSON.stringify(e.source ?? null);
-      if (this.sources.get(e.id) === signature) continue;
-      this.sources.set(e.id, signature);
-      this.engine?.clearCustomSource(e.id);
-      delete this.sourceStatus[e.id];
-      if (e.kind === "pin" || !e.source) continue;
-      if (e.source.kind === "ascii") {
-        const analysis = this.engine?.loadAsciiArt(e.source.ascii.text, e.source.ascii, e.id);
-        this.sourceStatus[e.id] = analysis ? summarizeAnalysis(analysis, "ascii") : "ASCII source active";
+    for (const { entityId, linkId, source } of requests) {
+      const key = JSON.stringify([entityId, linkId]), signature = JSON.stringify(source);
+      if (this.sources.get(key) === signature) continue;
+      this.sources.set(key, signature);
+      this.engine?.clearCustomSource(entityId, linkId);
+      delete this.sourceStatus[key];
+      if (source.kind === "ascii") {
+        const analysis = this.engine?.loadAsciiArt(source.ascii.text, source.ascii, entityId, linkId);
+        this.sourceStatus[key] = analysis ? summarizeAnalysis(analysis, "ascii") : "ASCII source active";
         continue;
       }
-      const options = e.source.image, url = options.dataUrl ?? "";
+      const options = source.image, url = options.dataUrl ?? "";
       if (!/^data:image\/(png|jpeg|webp);base64,/i.test(url)) {
-        this.sourceStatus[e.id] = "Image source needs an embedded PNG, JPEG or WebP. The original value is retained.";
+        this.sourceStatus[key] = "Image source needs an embedded PNG, JPEG or WebP.";
         continue;
       }
       const image = new Image();
-      this.sourceStatus[e.id] = "Decoding image\u2026";
+      this.sourceStatus[key] = "Decoding image\u2026";
       image.onload = () => {
-        if (this.sources.get(e.id) !== signature || !this.engine) return;
+        if (this.sources.get(key) !== signature || !this.engine) return;
         if (image.naturalWidth * image.naturalHeight > 16777216) {
-          this.sourceStatus[e.id] = "Image exceeds the 16 megapixel source limit.";
+          this.sourceStatus[key] = "Image exceeds the 16 megapixel source limit.";
           this.dirty = true;
           return;
         }
-        const analysis = this.engine.loadCustomImage(image, options, e.id);
-        this.sourceStatus[e.id] = analysis ? summarizeAnalysis(analysis, "image") : "Image source active";
+        const analysis = this.engine.loadCustomImage(image, options, entityId, linkId);
+        this.sourceStatus[key] = analysis ? summarizeAnalysis(analysis, "image") : "Image source active";
         this.dirty = true;
       };
       image.onerror = () => {
-        if (this.sources.get(e.id) === signature) {
-          this.sourceStatus[e.id] = "The embedded image could not be decoded.";
+        if (this.sources.get(key) === signature) {
+          this.sourceStatus[key] = "The embedded image could not be decoded.";
           this.dirty = true;
         }
       };
@@ -194,7 +218,7 @@ class ProductionAdapter {
     if (current?.length) return current;
     const r = new CymaticResonator();
     r.configure({ baseFrequency: this.target?.cymatics?.baseFrequency ?? 40, plateSize: this.target?.cymatics?.plateSize ?? 700 });
-    return r.getStations();
+    return r.getAnchors().map((a) => ({ id: a.id, index: a.index, name: `Mode ${a.m}:${a.n}`, frequencyHz: a.frequencyHz, m: a.m, n: a.n, color: "#888888" }));
   }
   command(command) {
     if (command.type === "recover-context") {
@@ -216,6 +240,11 @@ class ProductionAdapter {
     else if (command.type === "disperse") {
       if (!Number.isFinite(command.strength) || Math.abs(command.strength) > 20) throw new Error("Impulse strength must be finite and within \xB120.");
       this.engine.triggerDisperse(command.strength);
+    } else if (command.type === "pointer-effect") {
+      if (!["pulse", "implode", "vortex", "shove"].includes(command.kind)) throw new Error("Unknown pointer effect.");
+      if (!Number.isFinite(command.strength) || command.strength < 0 || command.strength > 20) throw new Error("Pointer effect strength must be finite and within 0\u201320.");
+      if (!Number.isFinite(command.radius) || command.radius <= 0) throw new Error("Pointer effect radius must be positive.");
+      this.engine.triggerPointerEffect(command.kind, command.x, command.y, command.strength, command.radius);
     } else this.engine.fireAutomation(command.id, command.delay ?? 0);
     this.dirty = true;
   }

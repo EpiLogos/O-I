@@ -47,6 +47,14 @@ uniform float uEntityTintWeight[10];
 uniform vec2 uTexSize;
 uniform vec3 uFocusTint;
 uniform float uFocusTintWeight;
+
+// Semantic spatial colour fields. These are render-only contributions evaluated from semantic
+// bindings at the host boundary; they do not own particles, force centres, or resonator state.
+uniform float uCompPlane;              // 0 vertical: XY metric; 1 horizontal: XZ metric
+uniform int uSemanticColorCount;
+uniform vec4 uSemanticColorCenter[16]; // xyz centre, w radius
+uniform vec4 uSemanticColorValue[16];  // rgb linear colour, w gain
+uniform vec4 uSemanticColorParams[16]; // x metric: 0 plane / 1 world3d, y falloff: 0 gaussian / 1 compact, z blend: 0 weighted / 1 additive
 uniform vec3 uParticleColor;   // mono ink colour (also declared in the fragment stage)
 
 uniform vec4 uGrainA;
@@ -257,6 +265,50 @@ void main() {
   if (uFocusTintWeight > 0.001) {
     vec3 base = (uColorEnabled > 0.5 || tintW > 0.001) ? vColor : uParticleColor;
     vColor = mix(base, uFocusTint, clamp(uFocusTintWeight, 0.0, 1.0));
+  }
+
+  // Semantic colour is spatial, not partition-owned. Any particle receives a contribution when
+  // it enters a bound semantic centre's kernel. Weighted fields are order-independent; additive
+  // fields are accumulated separately so authoring-array order can never change the result.
+  vec3 semanticWeighted = vec3(0.0);
+  float semanticWeight = 0.0;
+  vec3 semanticAdd = vec3(0.0);
+  float semanticAddWeight = 0.0;
+  for (int i = 0; i < 16; i++) {
+    if (i >= uSemanticColorCount) break;
+    vec4 centre = uSemanticColorCenter[i];
+    vec4 value = uSemanticColorValue[i];
+    vec4 params = uSemanticColorParams[i];
+    float radius = max(0.001, centre.w);
+    vec3 delta = pos - centre.xyz;
+    float dist = params.x > 0.5
+      ? length(delta)
+      : (uCompPlane > 0.5 ? length(delta.xz) : length(delta.xy));
+    float normDist = dist / radius;
+    float kernel = params.y > 0.5
+      ? pow(max(0.0, 1.0 - normDist), 2.0)
+      : exp(-0.5 * normDist * normDist);
+    float weight = max(0.0, value.w) * kernel;
+    if (params.z > 0.5) {
+      semanticAdd += value.rgb * weight;
+      semanticAddWeight += weight;
+    } else {
+      semanticWeighted += value.rgb * weight;
+      semanticWeight += weight;
+    }
+  }
+  if (semanticWeight > 0.000001) {
+    vec3 base = (uColorEnabled > 0.5 || vTinted > 0.001) ? vColor : uParticleColor;
+    vec3 semanticColor = semanticWeighted / semanticWeight;
+    float alpha = clamp(1.0 - exp(-semanticWeight), 0.0, 1.0);
+    vColor = mix(base, semanticColor, alpha);
+    vTinted = max(vTinted, alpha);
+  }
+  if (semanticAddWeight > 0.000001) {
+    vec3 base = (uColorEnabled > 0.5 || vTinted > 0.001) ? vColor : uParticleColor;
+    // Additive is intentionally explicit and bounded; weighted mixing is the default semantic law.
+    vColor = clamp(base + semanticAdd, vec3(0.0), vec3(2.5));
+    vTinted = max(vTinted, clamp(1.0 - exp(-semanticAddWeight), 0.0, 1.0));
   }
 
   if(uGrainEnabled>0.5){

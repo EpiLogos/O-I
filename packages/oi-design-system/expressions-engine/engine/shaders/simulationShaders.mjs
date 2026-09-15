@@ -104,8 +104,12 @@ uniform float uEntityMorph[10];
 uniform float uEntityDepthScale[10];
 uniform float uEntityNormalized[10];
 uniform vec3 uEntityTransform[10];     // per-partition A\u2192B progress
-uniform vec4 uEntityForce[10];      // x strength, y mode (0 none, 1 attract, 2 repel, 3 vortex), z spin, w enabled
-uniform vec2 uTexSize;              // simulation texture size (particle index reconstruction)
+uniform vec2 uTexSize;
+
+// Unified persistent force emitters (formations + pins). w in params = metric: 0 composition plane, 1 world 3D.
+uniform int uForceEmitterCount;
+uniform vec4 uForceEmitterCenter[18]; // xyz centre, w radius
+uniform vec4 uForceEmitterParams[18]; // x strength, y mode 1 attract 2 repel 3 vortex, z spin, w metric              // simulation texture size (particle index reconstruction)
 uniform float uCompPlane;           // 0 = vertical (XY), 1 = horizontal (XZ)
 uniform float uResDominance;        // 0 = formation springs only \u2026 1 = resonator transport only
 
@@ -145,6 +149,8 @@ uniform float uPoloidalWinding;      // q winding number (e.g. 1 to 12)
 uniform float uChiralCoupling;       // coupling/interference strength (0 to 1)
 uniform float uOscillationAmp;       // vibrational breathing amplitude
 uniform float uOscillationFreq;      // vibrational rate
+uniform float uBreathPhase;          // dedicated breathing oscillator phase (radians)
+uniform float uBreathDepth;          // breathing swell depth around unity (0 = none, default 0.35)
 uniform float uManifoldRadius;       // scale of toroidal interference manifold
 uniform float uTorusDepthScale;      // volumetric 3D Z-depth expansion (default 1.0)
 
@@ -152,16 +158,14 @@ uniform float uTorusDepthScale;      // volumetric 3D Z-depth expansion (default
 uniform vec2 uPointerPos;
 uniform vec2 uBurstPosition;
 uniform vec2 uBurstVelocity;
+uniform float uBurstRadius;   // characteristic falloff radius of the queued click effect
+uniform float uBurstRadial;   // outward (+) / inward (\u2212) shock component
+uniform float uBurstSpin;     // tangential vortex-whirl component
 uniform float uPointerZ;
 uniform vec2 uPointerVelocity;
 uniform float uPointerRadius;
 uniform float uPointerStrength;
 uniform float uInteractionMode; // 0 = repel, 1 = attract, 2 = vortex
-
-// Placed persistent interaction points in 3D
-uniform int uPlacedPointCount;
-uniform vec4 uPlacedPoints[8]; // xyz = 3D position (x, y, z), w = radius
-uniform vec4 uPlacedPointParams[8]; // x = strength, y = mode (0 = repel, 1 = attract, 2 = vortex)
 
 varying vec2 vUv;
 
@@ -256,7 +260,7 @@ void main() {
       );
     }
 
-    float oscBreathing = (1.0 + 0.35 * sin(uPolPhase)) * uOscillationAmp;
+    float oscBreathing = (1.0 + uBreathDepth * sin(uBreathPhase)) * uOscillationAmp;
     vec3 morphDisplacement = hopfInterference * (rMinor * 0.75 * oscBreathing * morphEnvelope);
     morphDisplacement.z *= max(0.1, uTorusDepthScale > 0.001 ? uTorusDepthScale : 1.0);
     targetPos += morphDisplacement;
@@ -302,30 +306,40 @@ void main() {
     fVortex = vec3(vTangent * (uVortexStrength * 160.0 * vortFactor), 0.0);
   }
 
-  // --- 3B. Entity forces: every enabled formation acts on the whole medium (summed, gaussian falloff) ---
+  // --- 3B. Unified persistent force emitters: formations and pins share one physical path ---
   vec3 fEntity = vec3(0.0);
-  for (int i = 0; i < 10; i++) {
-    if (i >= uEntityCount) break;
-    vec4 ef = uEntityForce[i];
-    if (ef.w < 0.5) continue;
-    vec3 c = uEntityCenter[i].xyz;
-    float rad = max(5.0, uEntityCenter[i].w);
-    vec3 d = pos - c;
-    vec2 dp = (uCompPlane < 0.5) ? d.xy : d.xz;
-    float r = length(dp);
-    float fall = exp(- (r * r) / (2.0 * rad * rad));
-    vec2 tan2 = vec2(-dp.y, dp.x) / (r + 15.0);
-    vec2 rad2 = dp / (r + 15.0);
-    vec2 f2 = vec2(0.0);
-    if (ef.y > 0.5 && ef.y < 1.5) {
-      f2 -= rad2 * (ef.x * 400.0 * fall);                     // attract
-    } else if (ef.y > 1.5 && ef.y < 2.5) {
-      f2 += rad2 * (ef.x * 400.0 * fall);                     // repel
-    } else if (ef.y > 2.5) {
-      f2 += (tan2 * (ef.x * 220.0) - rad2 * 30.0) * fall;     // vortex swirl with slight inward pull
+  for (int i = 0; i < 18; i++) {
+    if (i >= uForceEmitterCount) break;
+    vec4 centre = uForceEmitterCenter[i];
+    vec4 params = uForceEmitterParams[i];
+    float radius = max(5.0, centre.w);
+    vec3 d = pos - centre.xyz;
+    bool world3d = params.w > 0.5;
+    float dist = world3d ? length(d) : length((uCompPlane < 0.5) ? d.xy : d.xz);
+    float fall = exp(-(dist * dist) / (2.0 * radius * radius));
+    if (fall < 0.000001) continue;
+    if (world3d) {
+      vec3 radial = d / (dist + 15.0);
+      vec3 tangent = vec3(-d.y, d.x, 0.0) / (dist + 15.0);
+      if (params.y > 0.5 && params.y < 1.5) fEntity -= radial * (params.x * 400.0 * fall);
+      else if (params.y > 1.5 && params.y < 2.5) fEntity += radial * (params.x * 400.0 * fall);
+      else if (params.y > 2.5) {
+        vec3 helix = vec3(-d.y, d.x, -d.z * 0.35) / (dist + 10.0);
+        fEntity += helix * (params.x * 480.0 * fall);
+      }
+      fEntity += tangent * (params.z * 480.0 * fall);
+    } else {
+      vec2 dp = (uCompPlane < 0.5) ? d.xy : d.xz;
+      float r = length(dp);
+      vec2 tangent = vec2(-dp.y, dp.x) / (r + 15.0);
+      vec2 radial = dp / (r + 15.0);
+      vec2 force2 = vec2(0.0);
+      if (params.y > 0.5 && params.y < 1.5) force2 -= radial * (params.x * 400.0 * fall);
+      else if (params.y > 1.5 && params.y < 2.5) force2 += radial * (params.x * 400.0 * fall);
+      else if (params.y > 2.5) force2 += (tangent * (params.x * 220.0) - radial * 30.0) * fall;
+      force2 += tangent * (params.z * 220.0 * fall);
+      if (uCompPlane < 0.5) fEntity.xy += force2; else fEntity.xz += force2;
     }
-    f2 += tan2 * (ef.z * 220.0 * fall);                       // additional signed spin
-    if (uCompPlane < 0.5) fEntity.xy += f2; else fEntity.xz += f2;
   }
 
   // --- 4. Inter-Glyph Directional Dispersion ---
@@ -403,42 +417,7 @@ void main() {
     }
   }
 
-  // --- 6B. Placed Persistent Interaction Points in 3D (Attractors, Deflectors, Vortices) ---
-  if (uPlacedPointCount > 0) {
-    for (int i = 0; i < 8; i++) {
-      if (i >= uPlacedPointCount) break;
-      vec3 pPos = uPlacedPoints[i].xyz;
-      float pRad = uPlacedPoints[i].w;
-      float pStr = uPlacedPointParams[i].x;
-      float pMode = uPlacedPointParams[i].y;
-
-      float pSpin = uPlacedPointParams[i].z;
-      bool gaussian = uPlacedPointParams[i].w > 0.5;
-      if (pRad > 0.0 && (abs(pStr) > 0.0001 || abs(pSpin) > 0.0001)) {
-        vec3 toPt = pos - pPos;
-        float dPt = length(toPt);
-        if (gaussian || dPt < pRad) {
-          float normDist = dPt / pRad;
-          float falloff = gaussian ? exp(-0.5 * normDist * normDist) : pow(max(0.0, 1.0 - normDist), uPointerFalloffPower);
-          vec3 spinTangent = vec3(-toPt.y, toPt.x, 0.0) / (dPt + 10.0);
-          fPointer += spinTangent * (pSpin * 480.0 * falloff);
-          if (pMode < 0.5) {
-            // 3D Repel
-            vec3 dir = (dPt > 0.001) ? (toPt / dPt) : vec3(0.0, 1.0, 0.0);
-            fPointer += dir * (pStr * 400.0 * falloff);
-          } else if (pMode < 1.5) {
-            // 3D Attract
-            vec3 dir = (dPt > 0.001) ? (-toPt / dPt) : vec3(0.0);
-            fPointer += dir * (pStr * 400.0 * falloff);
-          } else {
-            // 3D Vortex Swirl (tangential in XY, helical in Z)
-            vec3 pTan = vec3(-toPt.y, toPt.x, -toPt.z * 0.35) / (dPt + 10.0);
-            fPointer += pTan * (pStr * 480.0 * falloff);
-          }
-        }
-      }
-    }
-  }
+  // --- 6B. Legacy placed points are compiled into the unified force-emitter table. ---
 
   // --- 7B. Continuous Modal Cymatic Resonator: vibration-field transport ---
   // Real-time approximation: the field intensity I(u,v) = <w^2> ~= Wre^2 + Wim^2 is the
@@ -541,10 +520,17 @@ void main() {
   }
 
   // --- 8. Total Acceleration & Viscous Integration ---
-  // The same falloff-weighted velocity impulse as native pointer momentum,
+  // Queued click effects: a falloff-weighted impulse around the burst centre,
   // independently queued so a toolbar click cannot be cleared by pointer-leave.
-  float burstFalloff = pow(max(0.0, 1.0 - distance(pos.xy, uBurstPosition) / max(0.001, uPointerRadius)), uPointerFalloffPower);
+  // Directional (shove), radial (pulse / implode) and tangential (vortex)
+  // components compose; each decays through the CPU-side effect state.
+  vec2 burstDir = pos.xy - uBurstPosition;
+  float burstDist = max(0.001, length(burstDir));
+  burstDir /= burstDist;
+  float burstFalloff = pow(max(0.0, 1.0 - burstDist / max(0.001, uBurstRadius)), uPointerFalloffPower);
   fPointer.xy += uBurstVelocity * burstFalloff * 0.85;
+  fPointer.xy += burstDir * uBurstRadial * burstFalloff;
+  fPointer.xy += vec2(-burstDir.y, burstDir.x) * uBurstSpin * burstFalloff;
   vec3 accel = fSpring + fCurl + fVortex + fEntity + fDisperse + fRelational + fPointer + fHopf + fResonator;
 
   // Constant body force (gravity / wind)

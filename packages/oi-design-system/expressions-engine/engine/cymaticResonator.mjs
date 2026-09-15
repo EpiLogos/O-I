@@ -2,7 +2,6 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-import { CANONICAL_CHAKRAS } from "./chakraSystem.mjs";
 const RESONATOR_K = 8;
 const RESONATOR_MODE_TOTAL = RESONATOR_K * RESONATOR_K;
 const RESONATOR_STATION_COUNT = 7;
@@ -84,7 +83,7 @@ class CymaticResonator {
     }
   }
   /**
-   * Selects the seven chakral stations: the seven mutually-distinct, most strongly-coupled
+   * Selects seven physical stability anchors: the mutually-distinct, most strongly-coupled
    * eigenmodes of THIS instrument, ordered ascending by frequency across the band. Distinct
    * shape = distinct unordered {m,n} pair (on a free square plate, (m,n) and (n,m) are the
    * same nodal pattern up to an overall sign, so only one representative per pair is kept).
@@ -108,18 +107,14 @@ class CymaticResonator {
     candidates.sort((a, b) => b.absC - a.absC);
     const chosen = candidates.slice(0, RESONATOR_STATION_COUNT);
     chosen.sort((a, b) => a.f - b.f);
-    return chosen.map((c, idx) => {
-      const chakra = CANONICAL_CHAKRAS[CANONICAL_CHAKRAS.length - 1 - idx] ?? CANONICAL_CHAKRAS[0];
-      return {
-        index: idx,
-        name: chakra.name,
-        m: c.m,
-        n: c.n,
-        frequencyHz: c.f,
-        color: chakra.color,
-        modeIndex: c.modeIndex
-      };
-    });
+    return chosen.map((c, idx) => ({
+      id: `mode:${Math.min(c.m, c.n)}:${Math.max(c.m, c.n)}`,
+      index: idx,
+      m: c.m,
+      n: c.n,
+      frequencyHz: c.f,
+      modeIndex: c.modeIndex
+    }));
   }
   /**
    * Integrates every active mode's envelope one frame forward under a continuous drive at
@@ -188,8 +183,36 @@ class CymaticResonator {
   getTelemetry() {
     return this.lastTelemetry;
   }
+  getAnchors() {
+    return this.stations.map((anchor) => ({ ...anchor }));
+  }
+  /** @deprecated use getAnchors(); retained for compatibility with pre-semantic callers. */
   getStations() {
-    return this.stations;
+    return this.getAnchors();
+  }
+  getModalState() {
+    return Array.from({ length: RESONATOR_MODE_TOTAL }, (_, modeIndex) => ({
+      modeIndex,
+      m: this.modeM[modeIndex],
+      n: this.modeN[modeIndex],
+      frequencyHz: this.modeFreq[modeIndex],
+      coupling: this.modeCoupling[modeIndex],
+      active: this.modeActive[modeIndex] === 1,
+      re: this.re[modeIndex],
+      im: this.im[modeIndex],
+      energy: this.re[modeIndex] * this.re[modeIndex] + this.im[modeIndex] * this.im[modeIndex]
+    }));
+  }
+  getState() {
+    const modes = this.getModalState();
+    const energyByIndex = new Map(modes.map((mode) => [mode.modeIndex, mode.energy]));
+    return {
+      frequencyHz: this.lastTelemetry.frequencyHz,
+      totalEnergy: this.lastTelemetry.totalEnergy,
+      coherence: this.lastTelemetry.coherence,
+      modes,
+      anchors: this.getAnchors().map((anchor) => ({ ...anchor, energy: energyByIndex.get(anchor.modeIndex) ?? 0 }))
+    };
   }
   /**
    * Continuous, uninterrupted glide through all seven stations with per-station dwell.
