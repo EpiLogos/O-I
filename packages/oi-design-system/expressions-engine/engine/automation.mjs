@@ -96,7 +96,7 @@ function ease(kind, u) {
   }
 }
 function getRuntime(rt, lane, now) {
-  let r = rt.lanes.get(lane.id);
+  let r = rt.lanes.get(lane.clockId ?? lane.id);
   if (!r) {
     r = {
       startTime: now + (lane.delayS ?? 0),
@@ -106,7 +106,7 @@ function getRuntime(rt, lane, now) {
       lastValue: 0,
       nextValue: 0
     };
-    rt.lanes.set(lane.id, r);
+    rt.lanes.set(lane.clockId ?? lane.id, r);
   } else if ((lane.fireToken ?? 0) !== r.token) {
     r.token = lane.fireToken ?? 0;
     r.startTime = now + (lane.delayS ?? 0);
@@ -118,7 +118,12 @@ function evaluateLane(lane, now, rt) {
   const r = getRuntime(rt, lane, now);
   if (lane.type === "lfo") {
     const rate = lane.rateHz ?? 0.25;
-    const cycle = now * rate + (lane.phase ?? 0);
+    const phase = lane.phase ?? 0;
+    const cycle = r.cycle === void 0 || now < (r.lastTime ?? now) ? now * rate + phase : r.cycle + (now - (r.lastTime ?? now)) * (r.rateHz ?? rate) + phase - (r.phaseOffset ?? phase);
+    r.cycle = cycle;
+    r.lastTime = now;
+    r.phaseOffset = phase;
+    r.rateHz = rate;
     const w = waveform(lane.waveform ?? "sine", cycle, r);
     const lo = lane.min ?? 0;
     const hi = lane.max ?? 1;
@@ -149,12 +154,12 @@ function evaluateLane(lane, now, rt) {
   const e = ease(lane.easing ?? "smooth", u);
   return { id: lane.id, path: lane.path, value: from + (to - from) * e, phase: u, done };
 }
-function applyAutomations(config, lanes, now, rt) {
+function applyAutomations(config, lanes, now, rt, morphDrive) {
   if (!lanes || lanes.length === 0) return { config, live: [] };
   let out = config;
   const live = [];
   for (const lane of lanes) {
-    const v = evaluateLane(lane, now, rt);
+    const v = lane.waveform === "morph" && lane.type === "lfo" ? lane.enabled && morphDrive ? { id: lane.id, path: lane.path, value: (lane.min ?? 0) + ((lane.max ?? 1) - (lane.min ?? 0)) * morphDrive.progress, phase: morphDrive.cycleFraction, done: false } : null : evaluateLane(lane, now, rt);
     if (!v) continue;
     const base = readPath(config, lane.path);
     let value = v.value;
@@ -164,7 +169,7 @@ function applyAutomations(config, lanes, now, rt) {
     live.push({ ...v, value });
   }
   if (rt.lanes.size > lanes.length * 2 + 8) {
-    const ids = new Set(lanes.map((l) => l.id));
+    const ids = new Set(lanes.map((l) => l.clockId ?? l.id));
     for (const k of Array.from(rt.lanes.keys())) if (!ids.has(k)) rt.lanes.delete(k);
   }
   return { config: out, live };

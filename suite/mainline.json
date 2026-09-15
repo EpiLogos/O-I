@@ -22,7 +22,7 @@
     {
       "id": "ai-kit",
       "repository": "https://github.com/EpiLogos/ai-kit",
-      "revision": "856f454778e5a44e8055751bb59ed933caf210ce",
+      "revision": "8ef8a4f02ee9e095281d2d03d3e711404ead074a",
       "state": "accepted-main",
       "note": "Exact AIKit main observed 2026-09-14; current operational context/praxis owner includes AW2 operative-currentness separation and the established quick/full verification contract."
     },
@@ -36,22 +36,22 @@
     {
       "id": "workcell",
       "repository": "https://github.com/EpiLogos/Workcell",
-      "revision": "e4e40a91fe7ed1776e634cad768f1049c39fd34e",
+      "revision": "0c3ad1efafdeb254366b7b6122306fe657916a10",
       "state": "accepted-main-with-physical-provider-gates",
       "note": "Exact Workcell main observed 2026-09-14; source revision disclosure is native while owner-machine/provider acceptance remains distinct physical evidence."
     },
     {
       "id": "quaternal-logic",
       "repository": "https://github.com/EpiLogos/QL-MEF",
-      "revision": "a83148e93c500d5bebaa5811d9d25953652834cf",
+      "revision": "4276b94157058d0b211be20b4ebf5587fcb85a72",
       "state": "accepted-main",
       "note": "Exact Quaternal Logic main observed 2026-09-14 after CI convergence and accepted-main Native C parity repair: one protected native PR gate, repository quick/full verification, accepted-main local acceptance and centrally commissioned cross-product proof."
     }
   ],
   "build_record": {
     "path": "suite/manifest.json",
-    "suite_version": "0.1.0-prelocal.2",
-    "recorded_at": "2026-08-17",
+    "suite_version": "0.1.0-prelocal.6",
+    "recorded_at": "2026-09-14",
     "standing": "historical-unratified-prelocal-build-record",
     "relation": "historical-build-evidence-not-current-main-authority"
   }

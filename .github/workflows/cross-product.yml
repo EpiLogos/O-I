@@ -83,8 +83,8 @@ jobs:
           "$OI" doctor --json > "$RUNNER_TEMP/doctor.json"
           "$OI" verify --json > "$RUNNER_TEMP/verify.json"
 
-          jq -e '.schema == "oi.suite-manifest/v1" and .suite_version == "0.1.0-prelocal.2" and .standing == "historical-unratified-prelocal-build-record" and (.products | length == 6)' "$RUNNER_TEMP/manifest.json"
-          jq -e '.schema == "oi.suite-status/v1" and .suite_version == "0.1.0-prelocal.2" and (.installed.products | length == 6) and .physical_acceptance == false' "$RUNNER_TEMP/status.json"
+          jq -e '.schema == "oi.suite-manifest/v1" and .suite_version == "0.1.0-prelocal.6" and .standing == "historical-unratified-prelocal-build-record" and (.products | length == 6)' "$RUNNER_TEMP/manifest.json"
+          jq -e '.schema == "oi.suite-status/v1" and .suite_version == "0.1.0-prelocal.6" and (.installed.products | length == 6) and .physical_acceptance == false' "$RUNNER_TEMP/status.json"
           jq -e '.schema == "oi.suite-doctor/v1" and .ok == true and (.checks | length == 6) and .physical_acceptance == false' "$RUNNER_TEMP/doctor.json"
           cmp "$RUNNER_TEMP/doctor.json" "$RUNNER_TEMP/verify.json"
 

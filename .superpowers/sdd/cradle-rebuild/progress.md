@@ -1180,6 +1180,77 @@ C4 (graph presentation, ONE dedicated worker) dispatches next against a tree car
 - WALK (acceptance): rest 16/16 · system-settings 7/7 · bootstrap 15/15 · navigator 27/27; receipts + screenshots regenerated and committed (rest cold_start_fcp_ms 164).
 - Files: walk/scenarios/{rest,system-settings}.mjs, src/flow/DraftSurface.tsx (doc-comment only), walk/artifacts/{rest,system-settings,bootstrap,navigator}.json + screenshots regenerated. Branch agent/walk-recontract-rest-system-settings from origin/main 4ebd5ca9; PR #278.
 
+### 2026-09-15 — EX1: shared Expression application contract and native human/Agent operations
+
+PR #310 publishes `docs/contracts/EXPRESSION-APPLICATION-V1.md` before consumer
+implementation. Native kernel operations, permission-bounded local IPC, CLI,
+revision-checked human editing and the existing Stage projection are implemented.
+The Tauri walk proves Agent create → human edit → Agent inspect/edit, conflict
+preservation, owner file CAS, global subject focus and actual authority refusal.
+Kernel floor 39 passed/49 existing owner-gated ignores; EX1 9/9 with real Central;
+engine round-trip 10 assertions; web/native/CLI builds and clippy passed.
+Evidence and exact commands: `desktop/cradle/walk/artifacts/expression-ex1/RECEIPT.md`.
+EX0 runtime/Studio intake, EX2–EX5 adapters and human creative judgement remain
+separately owned. No whole Expression Field completion is claimed.
+
+### 2026-09-15 — EX0: latest engine intake into the one Expression body (Point-Cloud-Demo 9443f58)
+
+- ENGINE INTAKE: the vendored expressions engine refreshed from 569a9eb to the
+  accepted current Point-Cloud-Demo master `9443f58` (32 upstream modules): the
+  unified morph drive law extracted to `engine/morphSignal.mjs`; shared
+  image/ASCII source normalization (`engine/sourceSampling.mjs`) with per-entity
+  sampling analyses; linked automation lanes (`clockId`/`syncWith` with
+  frequency-integrated shared clocks) and the `morph` automation waveform;
+  stage400-normalized entity source pools; scene save workflow (`savedScenes`
+  + toolbelt/property-take scene fields validated in `validateJourney`).
+- VENDOR DISCIPLINE REPAIR: the K9 retained-field seam had been hand-patched
+  into the vendored `shell/production.mjs` after #286, so a wholesale re-vendor
+  silently deleted it (found red: instrument 6/7, instrument-host attach
+  timeout). The seam now lives in the O:I-owned
+  `expressions-engine/oi/retained.mjs` (`RetainedProductionAdapter extends
+  ProductionAdapter`) which the vendor script never rewrites; the script
+  records the overlay in PROVENANCE and verify() parse-checks it. engine/ and
+  shell/ are byte-pure upstream transforms again.
+- DEBRIS RETIRED (migration-superseded, zero remaining consumers): the legacy
+  pre-engine renderer runtime `packages/oi-design-system/point-cloud/{host,
+  GPGPUSimulator,GlyphSampler,PointCloudField,shaders}.mjs`, its package
+  export, and its ambient typings. Preserved: `point-cloud/config.mjs` +
+  `presets.mjs` (still the validated schema/patch owner and preset affordance
+  for the visuals preference store) and the authored `oi_logo_mark` saved-state
+  twin; `point-cloud.css` keeps its live consumers.
+- CAPTURE PRESERVED AND PROVEN: the engine's clean-frame capture is now a
+  bounded `EngineSurface.capture()` (honest refusals: no live field, lost
+  context, pending source) surfaced as a real "Capture image" affordance in
+  Settings → Visuals; the visuals walk receives a real PNG download (9193
+  bytes) as evidence.
+- GENERAL EXPRESSION INDEPENDENCE: no QL/Nara dependency on the ordinary
+  Expression path; the K9 lease remains the only QL-facing capability and is
+  narrower than the renderer (unchanged law).
+- WALK (acceptance): rest 16/16 · welcome 9/9 · visuals 11/11 (incl. capture)
+  · instrument 16/16 · instrument-host 12/12 (real WebGL context loss +
+  retained checkpoint restore on the new engine); receipts + screenshots
+  regenerated and committed.
+- GATES: cradle tsc+build; engine round-trip 26 assertions (now also pinning
+  PROVENANCE to the exact intake sha, linked-lane clockId round-trip, morph
+  waveform mapping, `computeMorphDrive` pure law, savedScenes validation);
+  search-overlay 172 checks chromium+webkit; expression-resize integration
+  PASS; kernel 39 passed + clippy clean.
+- PRE-EXISTING, NOT THIS LANE (identical on unmodified main `5b328af`, not
+  CI-gated): leave-reenter scenario setup needs live `ctrl` project actions
+  in this environment; rendering-quality's sandbox + 12 uncaught-rendering-
+  error checks; design-system `verify` CSS-drift checks (raw hex + unresolved
+  vars). One flake (rich-layout reflow) passed on re-run.
+- Files: scripts/vendor-expressions-engine.mjs,
+  packages/oi-design-system/expressions-engine/** (vendor refresh + oi/),
+  packages/oi-design-system/point-cloud/* (debris), packages/oi-design-system/
+  package.json, desktop/cradle/src/stage/{engineSurface.ts,
+  oi-expressions-engine.d.ts}, desktop/cradle/src/shared/oi-point-cloud-types
+  .d.ts, desktop/cradle/src/workspace/settings/VisualsView.tsx,
+  desktop/cradle/tests/expression-engine.mjs, walk/scenarios/visuals.mjs,
+  walk/expression-resize-integration.mjs (stale comment), walk/artifacts/*.
+  Lane aikit/ex0-engine-intake from origin/main 5b328af. EX1's
+  presentConfig/updateConfig seam and authored data preserved untouched.
+
 ### 2026-09-15 — Lane C step 5 (U-SF1): the desktop opens the same hosted Shared Field refs the browser Explore page opens (shared-field-hosted 38/38; kernel 40 green; build green)
 
 - REAL (cell S→S0 · aperture mode): the hosted Shared Field is a third owner input of the graph reading, pulled per call through the O:I-owned client (`shared-field/spacetimedb/field.sh`, unmodified). Kernel `shared_field.rs` spawns `OI_SHARED_FIELD_CLIENT` (default `<repo>/shared-field/spacetimedb/field.sh`, repo = `OI_REPO_ROOT` or the crate's manifest dir climbed three levels), request JSON on stdin, envelope decoded like `knowledge.rs` — the client's own failure kinds (`unbound|unavailable|refused|malformed`) carried distinctly; `unbound`/`unavailable` are absence (`{state:"unavailable", detail}` as data, an explicit `Unavailable` graph input with the client's reason), never an error. `graph.rs` input 3: one node per hosted Explore entry (kind `hosted-<entry kind>`, `native_owner:"shared-field"`, provenance source `shared-field.projection`, revision = the entry's world projection revision, detail = [target uri/database, entry revision], `actions:[]`), one edge per hosted relation (spelling/endpoints verbatim); `GraphCounts.hosted_rows` (serde default); the "not implemented in this wave" deferred text is gone — `empty()` keeps `Deferred: not requested yet`. `KernelOp::SharedField{request}` → `KernelOpResult::SharedFieldReading{data}` (pull, emits nothing; the owner's refusal returns in the owner's words). Renderer: `src/knowledge/shared-field.ts` (`sharedField(transport,request)`, `hostedPublicationArgs(envelope,candidate)` building field/participant/entry through `createSharedField`/`createParticipant`/`createExploreEntry` — the desktop re-implements no contract); `graphAddress` returns `undefined` for hosted kinds instead of throwing; a hosted node in the Knowledge surface reads through `{kind:"read",ref}` and the detail dialog presents the Projection reading (entry, projections with projection_ref/revision/source revision, hosted relations, neighbourhood) with a provenance block naming the target and both revisions; "Open in tab"/"Pop out" disabled with the reason (no local address). `SharedFieldMaterial`: after the local envelope, "Publish to the hosted field" appears only when the kernel's `status` reports a bound target; the hosted result renders verbatim (hosted_projection_row, target, transport identity labelled as the client's SpaceTimeDB connection identity, not a human); an owner refusal renders in the owner's words. No store, no token in the renderer, no default target, no target name in kernel Rust or renderer TS.

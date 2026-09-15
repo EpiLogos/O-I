@@ -1,0 +1,52 @@
+{
+  "schema": "oi.expression/v1",
+  "expression_ref": "expression:ex1-native-walk",
+  "revision": 5,
+  "title": "Native human / Agent composition",
+  "scenes": [
+    {
+      "scene_ref": "expression:ex1-native-walk:scene:main",
+      "revision": 2,
+      "title": "Main",
+      "entity_refs": [
+        "expression:ex1-native-walk:entity:26d18463-9762-4af8-953e-8b9b3037f772"
+      ]
+    }
+  ],
+  "entities": {
+    "expression:ex1-native-walk:entity:26d18463-9762-4af8-953e-8b9b3037f772": {
+      "entity_ref": "expression:ex1-native-walk:entity:26d18463-9762-4af8-953e-8b9b3037f772",
+      "revision": 5,
+      "title": "Thing 1",
+      "subject": {
+        "subject_ref": "central:wiki:project:O-I",
+        "native_owner": "central",
+        "presentation_role": "thing",
+        "sources": [],
+        "readings": [],
+        "actions": []
+      },
+      "parameters": {
+        "glyph": {
+          "value": "FINAL",
+          "automation": null
+        },
+        "scale": {
+          "value": 1.0,
+          "automation": null
+        },
+        "x": {
+          "value": 120,
+          "automation": null
+        }
+      }
+    }
+  },
+  "relations": {},
+  "selection": {
+    "scene_ref": "expression:ex1-native-walk:scene:main",
+    "entity_ref": "expression:ex1-native-walk:entity:26d18463-9762-4af8-953e-8b9b3037f772"
+  },
+  "provenance": [],
+  "representations": []
+}

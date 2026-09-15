@@ -250,6 +250,53 @@ The desktop adapter preserves presentation/binding/component/contribution/surfac
 
 This proves the authoring model is Surface-neutral while leaving the richer local Central/AIKit authority horizon to the desktop provider layer.
 
+## Expression Field renderer relation
+
+The owner-approved Expression Field ([`docs/cradle/EXPRESSION-FIELD.md`](../docs/cradle/EXPRESSION-FIELD.md), O:I #306) is a first-class **renderer/component relation inside WorldPresentation**, not a replacement for WorldPresentation.
+
+```text
+WorldPresentation
+  ├─ heading / text / Wiki / Card / Cube / other bindings
+  └─ Expression binding
+       ├─ native Expression ref + subject refs
+       ├─ live accepted renderer when admitted
+       ├─ image / video / frozen HTML fallback
+       └─ provenance + disclosed ActionRefs
+```
+
+An Expression may present a Being, Thing, Wiki/Bimba local whole, Agent state, M/Nara instrument or another native subject. The Expression does not acquire that subject's identity, authority or relation ownership. A visually connected edge is not automatically a `WikiEdge`, Contribution or KnowledgeRoute.
+
+The binding must distinguish:
+
+```text
+live Expression renderer available
+captured/frozen representation available
+renderer unavailable
+subject/source unavailable or withheld
+```
+
+A client may promote an embedded Expression into the focused Expression workspace and return to the page while preserving the same Expression/subject identity. Promotion is presentation state, not a fork.
+
+### Agent-native expression disclosure
+
+Where the O:I Expression application contract is available, WorldPresentation authoring/disclosure may expose its structured operations and current binding state to Agents alongside ordinary authoring operations. Agents must not scrape the WebGL/DOM representation to discover semantic subject, scene/entity refs, source/provenance or owner Actions.
+
+### Projection and privacy
+
+Publishing a WorldPresentation containing an Expression applies the same audience filtering and Projection rules before serialization. Local visibility inside an Expression does **not** make raw Personal/Nara state, Agent context, private sources or hidden metadata eligible for publication.
+
+A live projected Expression may be served only through an accepted capability-bounded renderer. Otherwise the WorldPresentation supplies an explicit safe fallback. Remote content never gains native filesystem/session/Action authority from the presence of the Expression renderer.
+
+This lets Explore present genuinely living worlds while retaining the governing law:
+
+```text
+native source/world stays canonical
+Projection controls outward representation
+WorldPresentation composes the page
+Expression supplies one living material body
+client/security owns renderer admission
+```
+
 ## Current portable renderers
 
 The current baseline renderers are deliberately declarative:
@@ -261,4 +308,6 @@ The current baseline renderers are deliberately declarative:
 - external link;
 - fallback for unavailable components.
 
-They are a conformance implementation of WorldPresentation, not the final component catalogue.
+Expression is the next richer renderer relation under O:I #306; it does not remove the declarative compatibility floor. A target which cannot admit the live Expression renderer must remain able to consume a safe fallback.
+
+These are a conformance implementation of WorldPresentation, not the final component catalogue.

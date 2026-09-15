@@ -1,0 +1,131 @@
+name: O:I release publish
+
+# Publishes the immutable GitHub release that the install surfaces document:
+# on an `oi-v*` tag, builds the native `oi` bootstrap binary per target and
+# packs the npm distribution package, then creates the release with the
+# archives, the npm tarball and their SHA-256 sidecars. The tag is the
+# deliberate release selection; nothing here runs on ordinary main pushes
+# (release.yml keeps building untagged pre-local artifacts there).
+
+on:
+  push:
+    tags:
+      - 'oi-v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  bootstrap:
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: macos-15
+            target: aarch64-apple-darwin
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: cli
+      - name: Build locked O:I bootstrap
+        run: cargo build --manifest-path cli/Cargo.toml --locked --release --target '${{ matrix.target }}' --bin oi
+      - name: Package release archive with the installer-facing layout
+        shell: bash
+        run: |
+          set -euo pipefail
+          native_version="$(cargo metadata --manifest-path cli/Cargo.toml --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "oi-cli") | .version')"
+          test -n "$native_version"
+          name="oi-${native_version}-${{ matrix.target }}"
+          mkdir -p "dist/$name"
+          cp "cli/target/${{ matrix.target }}/release/oi" "dist/$name/oi"
+          tar -C dist -czf "dist/$name.tar.gz" "$name"
+          shasum -a 256 "dist/$name.tar.gz" > "dist/$name.tar.gz.sha256"
+      - uses: actions/attest@v4
+        with:
+          subject-path: dist/*.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: oi-release-${{ github.ref_name }}-${{ matrix.target }}
+          retention-days: 14
+          path: |
+            dist/*.tar.gz
+            dist/*.sha256
+
+  npm-package:
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify npm distribution package
+        working-directory: packages/oi-cli
+        run: npm test
+      - name: Pack npm distribution artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          npm pack ./packages/oi-cli --pack-destination dist
+          for archive in dist/*.tgz; do
+            sha256sum "$archive" > "$archive.sha256"
+          done
+      - uses: actions/attest@v4
+        with:
+          subject-path: dist/*.tgz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: oi-npm-release-${{ github.ref_name }}
+          retention-days: 14
+          path: |
+            dist/*.tgz
+            dist/*.sha256
+
+  publish:
+    needs: [bootstrap, npm-package]
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Publish the tagged GitHub release
+        shell: bash
+        run: |
+          set -euo pipefail
+          ls -la dist
+          notes="Immutable release ${GITHUB_REF_NAME}. Install routes are documented in docs/INSTALL.md; every archive carries its SHA-256 sidecar."
+          if [[ "${GITHUB_REF_NAME}" == oi-v* ]]; then
+            gh release create "${GITHUB_REF_NAME}" dist/* --prerelease --title "${GITHUB_REF_NAME}" --notes "$notes"
+          else
+            echo "workflow_dispatch without an oi-v* tag: artifacts built, no release created" >&2
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
