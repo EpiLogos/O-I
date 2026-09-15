@@ -596,6 +596,8 @@ Projected source is never mutated in-place by the hosted service.
 
 **Acceptance:** useful living Nara/Epi presentation in the second world with no protected-state leakage and no second numerical/audio owner.
 
+**SF5 implementation evidence (2026-09-15):** the focused native run used Quaternal-Logic source `3a3d7dbcf6a898ce88a9093f858b8f254fff3cfe`, its `target/debug/ql-focused-host`, the native `ql-field-worker`, and the controlled `focused-host-config.json`, `focused-host-reception.json`, and `focused-snapshot.json` inputs recorded under `ProjectCentral/now/tmp/sf-orchestration/nara-native/personal/`. The desktop was installed from this O:I worktree's locked graph with `npm ci`; `@epilogos/oi-design-system` resolved to this worktree's `packages/oi-design-system`, excluding the user's concurrent primary-checkout changes. The real `hosted-acceptance` walk and its independently admitted reader are recorded by [`desktop/cradle/walk/artifacts/SF5-PROTECTED-NARA-RECEIPT.md`](../desktop/cradle/walk/artifacts/SF5-PROTECTED-NARA-RECEIPT.md), [`desktop/cradle/walk/artifacts/sf5-protected-nara.json`](../desktop/cradle/walk/artifacts/sf5-protected-nara.json), and the named screenshots beside them. The second desktop exposes the admitted source basis through its ordinary Source depth and returns to the same Expression after dismissal; Epii itself remains the publisher's native instrument aperture and is not invented as a second-world owner.
+
 ### SF6 — joined two-world lived acceptance
 
 Owner: O:I #65, consuming accepted SF0–SF5 and current Expression/desktop/native mains.

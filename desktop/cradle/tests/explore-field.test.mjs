@@ -71,7 +71,7 @@ test('search ranks addressable subjects and an empty query is the whole field', 
   assert.deepEqual(searchField({ state: 'unavailable' }, 'x'), []);
 });
 
-test('the primary projection is the entry\'s own latest published one, else the world\'s', () => {
+test('the primary projection is the entry\'s own latest revision, else the world\'s', () => {
   const rows = snapshot();
   const expression = primaryProjection({ state: 'hosted', entry: rows.entries[2], projections: rows.projections.filter((projection) => projection.subject.ref === 'expression:e') });
   assert.equal(expression.projection_revision, 2);
@@ -79,6 +79,12 @@ test('the primary projection is the entry\'s own latest published one, else the 
   assert.equal(node.projection_ref, 'projection:central:project:O-I');
   assert.equal(primaryProjection({ state: 'absent' }), null);
   assert.equal(primaryProjection({ state: 'hosted', entry: rows.entries[1], projections: [] }), null);
+});
+
+test('the primary projection keeps the latest lifecycle revision', () => {
+  const published={projection_ref:'projection:nara',projection_revision:1,state:'published',subject:{ref:'expression:nara'}};
+  const withdrawn={...published,projection_revision:2,state:'withdrawn'};
+  assert.equal(primaryProjection({state:'hosted',entry:{ref:'expression:nara'},projections:[published,withdrawn]}),withdrawn);
 });
 
 test('constellation places every entry and Being deterministically inside the extent', () => {

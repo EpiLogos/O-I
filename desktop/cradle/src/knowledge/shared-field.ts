@@ -10,7 +10,7 @@ import {projectionStorageKey} from "../../../../shared-field/spacetimedb.mjs";
  * token and no store: every reading is the O:I-owned client's own
  * envelope, pulled per call. Absence arrives as an explicit
  * `{state:"unavailable"}` reading, never as a throw. */
-export type SharedFieldRequest=Record<string,unknown>&{kind:"status"|"snapshot"|"read"|"publish"|"participant"|"admit"|"contact"|"watch"};
+export type SharedFieldRequest=Record<string,unknown>&{kind:"status"|"snapshot"|"read"|"publish"|"projection"|"participant"|"admit"|"contact"|"watch"};
 export type SharedFieldTarget={name:string;uri:string;database:string};
 export type SharedFieldUnavailable={state:"unavailable";owner_operation:string;detail:string};
 export type SharedFieldStatus={schema:"oi.shared-field.status/v1";bound:true;target:SharedFieldTarget}|{schema:"oi.shared-field.status/v1";bound:false;reason:string}|SharedFieldUnavailable;

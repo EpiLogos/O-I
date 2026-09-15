@@ -1,0 +1,691 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "sf5-protected-nara",
+  "generated_at": "2026-09-15T15:33:34.334Z",
+  "environment": {
+    "base_url": "http://localhost:4275",
+    "bridge_url": "http://127.0.0.1:4285",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/Work/O-I/.aikit/tasks/sf5-protected-nara",
+      "repository_head": "2c4cdf8f22927bd385fa22498a53c5300428076b",
+      "tracked_changes": [
+        "desktop/cradle/walk/artifacts/sf5-independent-reader-reentered.png",
+        "desktop/cradle/walk/artifacts/sf5-protected-nara-instrument-native-nara.png",
+        "desktop/cradle/walk/artifacts/sf5-protected-nara-nara-epii-safe-cues.png",
+        "desktop/cradle/walk/artifacts/sf5-protected-nara-sf5-live-expression.png",
+        "desktop/cradle/walk/artifacts/sf5-protected-nara-sf5-reentered.png",
+        "desktop/cradle/walk/artifacts/sf5-protected-nara-sf5-withdrawn.png",
+        "desktop/cradle/walk/artifacts/sf5-protected-nara.json",
+        "desktop/cradle/walk/scenarios/sf5-protected-nara.mjs"
+      ],
+      "engine_provenance_path": "/Users/admin/Central/Work/O-I/.aikit/tasks/sf5-protected-nara/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "7306b7b8882f54fec931922d46fdbaba9f656212"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 83281,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Real focused host opens before explicit Personal reception"
+    },
+    {
+      "ok": true,
+      "label": "Explicit controlled reception is computed by the real Personal owner",
+      "data": {
+        "standing": "applied",
+        "current": true,
+        "centres": 7
+      }
+    },
+    {
+      "ok": true,
+      "label": "Real native browser adapter registers"
+    },
+    {
+      "ok": true,
+      "label": "Real native M1→M4 focus does not reseed the retained field",
+      "data": {
+        "before": 1,
+        "after": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "Native Personal owner refuses foreign reception and retains current reading",
+      "data": "personal reception is stale or cross-event"
+    },
+    {
+      "ok": true,
+      "label": "Real native Nara re-entry preserves the field seed generation",
+      "data": {
+        "after": 1,
+        "reentered": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "Real native Nara enters retained recovery after WebGL context loss"
+    },
+    {
+      "ok": true,
+      "label": "Real native Nara restores its acknowledged checkpoint on the same canvas"
+    },
+    {
+      "ok": true,
+      "label": "Summoning Epii alone creates no Expression identity or Agent loop"
+    },
+    {
+      "ok": true,
+      "label": "Explicit Nara cue composition opens the same native Expression identity in Epii with eight safe source roles",
+      "data": {
+        "expression_ref": "expression:3d5fa465-f0d4-4d3f-8a67-ab2713d0b263",
+        "revision": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "Outward Nara payload excludes bioquaternion"
+    },
+    {
+      "ok": true,
+      "label": "Outward Nara payload excludes resonance"
+    },
+    {
+      "ok": true,
+      "label": "Outward Nara payload excludes journal"
+    },
+    {
+      "ok": true,
+      "label": "Outward Nara payload excludes activity body"
+    },
+    {
+      "ok": true,
+      "label": "Outward Nara payload excludes particle"
+    },
+    {
+      "ok": true,
+      "label": "Outward Nara payload excludes GPU"
+    },
+    {
+      "ok": true,
+      "label": "Outward Nara payload excludes Agent context"
+    },
+    {
+      "ok": true,
+      "label": "Projection binds the safe Expression to the explicitly consented target",
+      "data": {
+        "projection_ref": "projection:desktop:expression-3d5fa465-f0d4-4d3f-8a67-ab2713d0b263:mu2u0o59",
+        "revision": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "The admitted presence relation preserves its Participant endpoints and Expression ref"
+    },
+    {
+      "ok": true,
+      "label": "Changing the Nara target identity immediately invalidates consent and the created Projection"
+    },
+    {
+      "ok": true,
+      "label": "Nara publication does not invent an Explore geometry edge for participant presence",
+      "data": {
+        "relations": []
+      }
+    },
+    {
+      "ok": true,
+      "label": "An independent transport identity cannot read the restricted Nara Projection before admission",
+      "data": {
+        "state": "absent"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The owner admits the target Participant to an independent reader transport identity",
+      "data": {
+        "participant_ref": "participant:sf5:second-world:expression-3d5fa465-f0d4-4d3f-8a67-ab2713d0b263",
+        "transport_identity": "c200d97cabec9eea279200d899d95bb88ba6a8baa08ba2053a943530a7bdbdf0"
+      }
+    },
+    {
+      "ok": true,
+      "label": "A second Cradle under the admitted reader identity renders the exact live Expression or its explicit fallback",
+      "data": {
+        "state": "live",
+        "projection_revision": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "The independent reader receives source/Epii cues while protected sentinels remain absent"
+    },
+    {
+      "ok": true,
+      "label": "The ordinary second-world Source affordance exposes the admitted Projection source; Epii remains the publisher-native boundary"
+    },
+    {
+      "ok": true,
+      "label": "Dismissing Source returns to the same live Expression without widening disclosure"
+    },
+    {
+      "ok": true,
+      "label": "Withdrawal invalidates consent on the next Projection revision while retaining the semantic ref"
+    },
+    {
+      "ok": true,
+      "label": "Withdrawal removes the stale publish bundle from the ordinary desktop flow"
+    },
+    {
+      "ok": true,
+      "label": "The admitted second desktop stops rendering the Expression after withdrawal"
+    },
+    {
+      "ok": true,
+      "label": "Re-entry uses a fresh consent and revision with the same Projection and Expression refs"
+    },
+    {
+      "ok": true,
+      "label": "The independent second desktop reads the re-entered live Expression at revision 3 through the real hosted field",
+      "data": {
+        "ref": "expression:3d5fa465-f0d4-4d3f-8a67-ab2713d0b263"
+      }
+    },
+    {
+      "ok": true,
+      "label": "A second caller-owned active Nara Projection is retained for lifecycle recovery coverage",
+      "data": {
+        "projection_ref": "projection:desktop:expression-3d5fa465-f0d4-4d3f-8a67-ab2713d0b263:mu2u0o59:parallel"
+      }
+    },
+    {
+      "ok": true,
+      "label": "A real offline recovery failure keeps fresh Nara publication locked while the hosted Projection remains retained"
+    },
+    {
+      "ok": true,
+      "label": "Recovery collapses revisions per Projection ref and surfaces every active caller-owned presence"
+    },
+    {
+      "ok": true,
+      "label": "Each recovered active presence has its own withdrawal control"
+    },
+    {
+      "ok": true,
+      "label": "Restored transport recovers the retained actual hosted Projection through an authoritative field read"
+    },
+    {
+      "ok": true,
+      "label": "Reopening Share recovers the caller-owned hosted consent and freezes its published scope"
+    },
+    {
+      "ok": true,
+      "label": "Recovered consent remains withdrawable after closing and reopening Share"
+    },
+    {
+      "ok": true,
+      "label": "Recovered re-entry keeps the same semantic Projection ref at revision 5"
+    },
+    {
+      "ok": true,
+      "label": "The independent reader receives the recovered re-entry at revision 5"
+    },
+    {
+      "ok": true,
+      "label": "The second-world subject table retains eight safe locus refs beside the settled live frame"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-15T15:33:38.419Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4285"
+        },
+        "url": "http://localhost:4275/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "instrument.registerExisting",
+      "duration_ms": 0.1,
+      "data": {
+        "registered": true
+      }
+    },
+    {
+      "ok": true,
+      "op": "instrument.requestOpen",
+      "duration_ms": 0.2,
+      "data": {
+        "requested": true
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 744,
+      "data": {
+        "file": "sf5-protected-nara-instrument-native-nara.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "instrument.requestOpen",
+      "duration_ms": 0,
+      "data": {
+        "requested": true
+      }
+    },
+    {
+      "ok": true,
+      "op": "invoke.expression",
+      "duration_ms": 5.5,
+      "data": {
+        "outcome": {
+          "data": {
+            "expressions": [],
+            "schema": "oi.expression-list/v1"
+          },
+          "result": "expression"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "invoke.expression",
+      "duration_ms": 3.6,
+      "data": {
+        "outcome": {
+          "data": {
+            "dirty": true,
+            "document": {
+              "entities": {
+                "expression:3d5fa465-f0d4-4d3f-8a67-ab2713d0b263:entity:0": {
+                  "entity_ref": "expression:3d5fa465-f0d4-4d3f-8a67-ab2713d0b263:entity:0",
+                  "parameters": {
+                    "glyph": {
+                      "automation": null,
+                      "value": "1"
+                    },
+                    "scale": {
+                      "automation": null,
+                      "value": 1
+                    },
+                    "x": {
+                      "automation": null,
+                      "value": 0
+                    },
+                    "y": {
+                      "automation": null,
+                      "value": -264
+                    }
+                  },
+                  "revision": 1,
+                  "subject": {
+                    "actions": [],
+                    "native_owner": "ql",
+                    "presentation_role": "thing",
+                    "readings": [],
+                    "sources": [],
+                    "subject_ref": "ql:nara:controlled:subject/one:centre:0"
+                  },
+                  "title": "Centre 1"
+                },
+                "expression:3d5fa465-f0d4-4d3f-8a67-ab2713d0b263:entity:1": {
+                  "entity_ref": "expression:3d5fa465-f0d4-4d3f-8a67-ab2713d0b263:entity:1",
+                  "parameters": {
+                    "glyph": {
+                      "automation": null,
+                      "value": "2"
+                    },
+                    "scale": {
+                      "automation": null,
+                      "value": 1
+                    },
+                    "x": {
+                      "automation": null,
+                      "value": 0
+                    },
+                    "y": {
+                      "automation": null,
+                      "value": -176
+                    }
+                  },
+                  "revision": 1,
+                  "subject": {
+                    "actions": [],
+                    "native_owner": "ql",
+                    "presentation_role": "thing",
+                    "readings": [],
+                    "sources": [],
+                    "subject_ref": "ql:nara:controlled:subject/one:centre:1"
+                  },
+                  "title": "Centre 2"
+                },
+                "expression:3d5fa465-f0d4-4d3f-8a67-ab2713d0b263:entity:2": {
+                  "entity_ref": "expression:3d5fa465-f0d4-4d3f-8a67-ab2713d0b263:entity:2",
+                  "parameters": {
+                    "glyph": {
+                      "automation": null,
+                      "value": "3"
+                    },
+                    "scale": {
+                      "automation": null,
+                      "value": 1
+                    },
+                    "x": {
+                      "automation": null,
+                      "value": 0
+                    },
+                    "y": {
+                      "automation": null,
+                      "value": -88
+                    }
+                  },
+                  "revision": 1,
+                  "subject": {
+                    "actions": [],
+                    "native_owner": "ql",
+                    "presentation_role": "thing",
+                    "readings": [],
+                    "sources": [],
+                    "subject_ref": "ql:nara:controlled:subject/one:centre:2"
+                  },
+                  "title": "Centre 3"
+                },
+                "expression:3d5fa465-f0d4-4d3f-8a67-ab2713d0b263:entity:3": {
+                  "entity_ref": "expression:3d5fa465-f0d4-4d3f-8a67-ab2713d0b263:entity:3",
+                  "parameters": {
+                    "glyph": {
+                      "automation": null,
+                      "value": "4"
+                    },
+                    "scale": {
+                      "automation": null,
+                      "value": 1
+                    },
+                    "x": {
+                      "automation": null,
+                      "value": 0
+                    },
+                    "y": {
+                      "automation": null,
+                      "value": 0
+                    }
+                  },
+                  "revision": 1,
+                  "subject": {
+                    "actions": [],
+                    "native_owner": "ql",
+                    "presentation_role": "thing",
+                    "readings": [],
+                    "sources": [],
+                    "subject_ref": "ql:nara:controlled:subject/one:centre:3"
+                  },
+                  "title": "Centre 4"
+                },
+                "expression:3d5fa465-f0d4-4d3f-8a67-ab2713d0b263:entity:4": {
+                  "entity_ref": "expression:3d5fa465-f0d4-4d3f-8a67-ab2713d0b263:entity:4",
+                  "parameters": {
+                    "glyph": {
+                      "automation": null,
+                      "value": "5"
+                    },
+                    "scale": {
+                      "automation": null,
+                      "value": 1
+                    },
+                    "x": {
+                      "automation": null,
+                      "value": 0
+                    },
+                    "y": {
+                      "automation": null,
+                      "value": 88
+                    }
+                  },
+                  "revision": 1,
+                  "subject": {
+                    "actions": [],
+                    "native_owner": "ql",
+                    "presentation_role": "thing",
+                    "readings": [],
+                    "sources": [],
+                    "subject_ref": "ql:nara:controlled:subject/one:centre:4"
+                  },
+                  "title": "Centre 5"
+                },
+                "expression:3d5fa465-f0d4-4d3f-8a67-ab2713d0b263:entity:5": {
+                  "entity_ref": "expression:3d5fa465-f0d4-4d3f-8a67-ab2713d0b263:entity:5",
+                  "parameters": {
+                    "glyph": {
+                      "automation": null,
+                      "value": "6"
+                    },
+                    "scale": {
+                      "automation": null,
+                      "value": 1
+                    },
+                    "x": {
+                      "automation": null,
+                      "value": 0
+                    },
+                    "y": {
+                      "automation": null,
+                      "value": 176
+                    }
+                  },
+                  "revision": 1,
+                  "subject": {
+                    "actions": [],
+                    "native_owner": "ql",
+                    "presentation_role": "thing",
+                    "readings": [],
+                    "sources": [],
+                    "subject_ref": "ql:nara:controlled:subject/one:centre:5"
+                  },
+                  "title": "Centre 6"
+                },
+                "expression:3d5fa465-f0d4-4d3f-8a67-ab2713d0b263:entity:6": {
+                  "entity_ref": "expression:3d5fa465-f0d4-4d3f-8a67-ab2713d0b263:entity:6",
+                  "parameters": {
+                    "glyph": {
+                      "automation": null,
+                      "value": "7"
+                    },
+                    "scale": {
+                      "automation": null,
+                      "value": 1
+                    },
+                    "x": {
+                      "automation": null,
+                      "value": 0
+                    },
+                    "y": {
+                      "automation": null,
+                      "value": 264
+                    }
+                  },
+                  "revision": 1,
+                  "subject": {
+                    "actions": [],
+                    "native_owner": "ql",
+                    "presentation_role": "thing",
+                    "readings": [],
+                    "sources": [],
+                    "subject_ref": "ql:nara:controlled:subject/one:centre:6"
+                  },
+                  "title": "Centre 7"
+                },
+                "expression:3d5fa465-f0d4-4d3f-8a67-ab2713d0b263:entity:7": {
+                  "entity_ref": "expression:3d5fa465-f0d4-4d3f-8a67-ab2713d0b263:entity:7",
+                  "parameters": {
+                    "glyph": {
+                      "automation": null,
+                      "value": "⊕"
+                    },
+                    "scale": {
+                      "automation": null,
+                      "value": 1
+                    },
+                    "x": {
+                      "automation": null,
+                      "value": 0
+                    },
+                    "y": {
+                      "automation": null,
+                      "value": -376
+                    }
+                  },
+                  "revision": 1,
+                  "subject": {
+                    "actions": [],
+                    "native_owner": "ql",
+                    "presentation_role": "thing",
+                    "readings": [],
+                    "sources": [],
+                    "subject_ref": "ql:nara:controlled:subject/one:earth-body"
+                  },
+                  "title": "EarthBody"
+                }
+              },
+              "expression_ref": "expression:3d5fa465-f0d4-4d3f-8a67-ab2713d0b263",
+              "provenance": [
+                {
+                  "availability": "unavailable",
+                  "ref": "source:installed-k8:centre-0@controlled-installed-v1",
+                  "revision": "unavailable"
+                },
+                {
+                  "availability": "unavailable",
+                  "ref": "source:installed-k8:centre-1@controlled-installed-v1",
+                  "revision": "unavailable"
+                },
+                {
+                  "availability": "unavailable",
+                  "ref": "source:installed-k8:centre-2@controlled-installed-v1",
+                  "revision": "unavailable"
+                },
+                {
+                  "availability": "unavailable",
+                  "ref": "source:installed-k8:centre-3@controlled-installed-v1",
+                  "revision": "unavailable"
+                },
+                {
+                  "availability": "unavailable",
+                  "ref": "source:installed-k8:centre-4@controlled-installed-v1",
+                  "revision": "unavailable"
+                },
+                {
+                  "availability": "unavailable",
+                  "ref": "source:installed-k8:centre-5@controlled-installed-v1",
+                  "revision": "unavailable"
+                },
+                {
+                  "availability": "unavailable",
+                  "ref": "source:installed-k8:centre-6@controlled-installed-v1",
+                  "revision": "unavailable"
+                },
+                {
+                  "availability": "unavailable",
+                  "ref": "source:installed-k8:earth-body@controlled-installed-v1",
+                  "revision": "unavailable"
+                },
+                {
+                  "availability": "unavailable",
+                  "ref": "ql:nara:focus:m4",
+                  "revision": "unavailable"
+                }
+              ],
+              "refinements": [],
+              "relations": {},
+              "representations": [],
+              "revision": 1,
+              "scenes": [
+                {
+                  "entity_refs": [
+                    "expression:3d5fa465-f0d4-4d3f-8a67-ab2713d0b263:entity:0",
+                    "expression:3d5fa465-f0d4-4d3f-8a67-ab2713d0b263:entity:1",
+                    "expression:3d5fa465-f0d4-4d3f-8a67-ab2713d0b263:entity:2",
+                    "expression:3d5fa465-f0d4-4d3f-8a67-ab2713d0b263:entity:3",
+                    "expression:3d5fa465-f0d4-4d3f-8a67-ab2713d0b263:entity:4",
+                    "expression:3d5fa465-f0d4-4d3f-8a67-ab2713d0b263:entity:5",
+                    "expression:3d5fa465-f0d4-4d3f-8a67-ab2713d0b263:entity:6",
+                    "expression:3d5fa465-f0d4-4d3f-8a67-ab2713d0b263:entity:7"
+                  ],
+                  "revision": 1,
+                  "scene_ref": "expression:3d5fa465-f0d4-4d3f-8a67-ab2713d0b263:scene:main",
+                  "title": "Seven centres and EarthBody"
+                }
+              ],
+              "schema": "oi.expression/v1",
+              "selection": {
+                "entity_ref": null,
+                "scene_ref": "expression:3d5fa465-f0d4-4d3f-8a67-ab2713d0b263:scene:main"
+              },
+              "title": "Nara · safe cues"
+            },
+            "dynamic_state": "not_restored",
+            "file": null,
+            "saved_revision": null,
+            "state": "ready"
+          },
+          "result": "expression"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 41,
+      "data": {
+        "file": "sf5-protected-nara-nara-epii-safe-cues.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 45,
+      "data": {
+        "file": "sf5-protected-nara-sf5-live-expression.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 45,
+      "data": {
+        "file": "sf5-protected-nara-sf5-withdrawn.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 32,
+      "data": {
+        "file": "sf5-protected-nara-sf5-reentered.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "sf5-protected-nara-instrument-native-nara.png",
+    "sf5-protected-nara-nara-epii-safe-cues.png",
+    "sf5-protected-nara-sf5-live-expression.png",
+    "sf5-protected-nara-sf5-withdrawn.png",
+    "sf5-protected-nara-sf5-reentered.png"
+  ]
+}

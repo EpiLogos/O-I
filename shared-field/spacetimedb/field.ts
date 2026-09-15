@@ -20,6 +20,8 @@
  *   watch     {watch}                   put one oi.watch/v1 contract under the caller's own authority
  */
 import { close, fieldSnapshot, open, publishArgs, readRef, resolveTarget, rows, waitUntil } from './field-lib';
+import { createProjection } from '../index.mjs';
+import { projectionStorageKey } from '../spacetimedb.mjs';
 
 // stdout carries exactly one envelope; the SDK's own console chatter goes to stderr.
 for (const level of ['log', 'info', 'warn', 'debug', 'error'] as const) console[level] = (...parts: unknown[]) => { process.stderr.write(`${parts.map(String).join(' ')}\n`); };
@@ -73,6 +75,13 @@ try {
       const args = request.args;
       if (!args || typeof args !== 'object' || !args.putSharedField || !args.putParticipant || !args.putProjection) await emit({ ok: false, error: { kind: 'malformed', message: 'publish requires hosted reducer `args` (putSharedField, putParticipant, putProjection, putExploreEntries, putExploreRelations)' } });
       await emit({ ok: true, data: await publishArgs(client!, args) });
+    }
+    case 'projection': {
+      const projection = createProjection(request.projection);
+      if (typeof request.field_ref !== 'string' || !request.field_ref) await emit({ ok: false, error: { kind: 'malformed', message: 'projection requires the owning `field_ref`' } });
+      await reducers.putProjection({ projectionKey: projectionStorageKey(projection.projection_ref, projection.projection_revision), fieldRef: request.field_ref, projectionRef: projection.projection_ref, projectionRevision: projection.projection_revision, sourceRevision: projection.source.revision, publisherParticipantRef: projection.publisher_participant_ref, state: projection.state, contractJson: JSON.stringify(projection) });
+      await waitUntil(() => rows(db.projection).some((row: any) => row.projectionRef === projection.projection_ref && row.projectionRevision === projection.projection_revision), `Projection ${projection.projection_ref}@${projection.projection_revision}`);
+      await emit({ ok: true, data: { schema: 'oi.shared-field.projection-result/v1', field_ref: request.field_ref, projection_ref: projection.projection_ref, projection_revision: projection.projection_revision, state: projection.state } });
     }
     case 'participant': {
       const p = request.participant;

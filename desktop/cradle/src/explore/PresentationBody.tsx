@@ -37,7 +37,8 @@ export function PresentationBody({reading,relations,onOpenRef,depth,onDepth,watc
   if(reading.state==="unavailable")return <section className="presentation-body" data-presentation-state="unavailable">{strip}<p role="status" className="explore-unavailable">{reading.owner_operation} is unavailable — {reading.detail}</p></section>;
   if(reading.state==="absent")return <section className="presentation-body" data-presentation-state="absent">{strip}<p role="status" className="explore-absent">The field at {reading.target.uri}/{reading.target.database} holds no entry for <code>{reading.ref}</code>.</p></section>;
   const projection=primaryProjection(reading) as HostedProjection|null;
-  const representation=projection?.representation as {kind:string;payload?:unknown}|undefined;
+  const current=projection?.state==="published"?projection:null;
+  const representation=current?.representation as {kind:string;payload?:unknown}|undefined;
   const presentation=representation?.kind==="oi.world-presentation/v1"?representation.payload as WorldPresentation:undefined;
   const expression=presentation?.regions.flatMap(region=>region.bindings).find(binding=>(binding.portable_renderer??binding.component_ref)==="oi.presentation/expression/v1");
   const expressionReading=expression?.props.expression as {expression_ref:string;expression_revision:number}|undefined;
@@ -46,9 +47,10 @@ export function PresentationBody({reading,relations,onOpenRef,depth,onDepth,watc
   const knowledge=reading.entry.kind==="wiki-node"||reading.entry.kind==="wiki-space";
   const primary=<>
     {!projection&&<article className="world-presentation world-presentation--fallback" data-renderer-state="no-projection"><header className="world-presentation__masthead"><div><div className="world-component__eyebrow">Projected subject</div><h1>{reading.entry.label}</h1></div></header><section className="world-region"><div className="world-region__components"><article className="world-component world-component--text"><p>{reading.entry.summary??"No published Projection names this entry or its world yet."}</p></article></div></section></article>}
-    {projection&&presentation&&<WorldPresentationView presentation={presentation} onOpenRef={onOpenRef}/>}
-    {projection&&!presentation&&representation?.kind==="oi.sparse-representation/v1"&&<SparseBody projection={projection}/>}
-    {projection&&!presentation&&representation?.kind!=="oi.sparse-representation/v1"&&<RepresentationFallback projection={projection}/>}
+    {projection&&projection.state!=="published"&&<article className="world-presentation world-presentation--fallback" data-renderer-state="withdrawn"><header className="world-presentation__masthead"><div><div className="world-component__eyebrow">Projection withdrawn</div><h1>{reading.entry.label}</h1></div></header><section className="world-region"><div className="world-region__components"><article className="world-component world-component--text"><p>This shared presentation is no longer available.</p></article></div></section></article>}
+    {current&&presentation&&<WorldPresentationView presentation={presentation} onOpenRef={onOpenRef}/>}
+    {current&&!presentation&&representation?.kind==="oi.sparse-representation/v1"&&<SparseBody projection={current}/>}
+    {current&&!presentation&&representation?.kind!=="oi.sparse-representation/v1"&&<RepresentationFallback projection={current}/>}
   </>;
   return <section className="presentation-body" data-presentation-state="hosted" data-entry-ref={reading.entry.ref} data-entry-kind={reading.entry.kind} data-world-ref={reading.entry.world_ref} data-projection-ref={projection?.projection_ref} data-projection-revision={projection?.projection_revision} data-projection-state={projection?.state} data-source-system={projection?.source.system} data-source-ref={projection?.source.ref} data-source-revision={projection?.source.revision} data-presentation-ref={presentation?.presentation_ref} data-presentation-revision={presentation?.revision} data-expression-ref={expressionReading?.expression_ref} data-expression-revision={expressionReading?.expression_revision} data-depth-relations={Boolean(depth.relations)} data-depth-source={Boolean(depth.source)}>
     {strip}
