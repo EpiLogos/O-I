@@ -175,6 +175,13 @@
   --oi-world-foreground: var(--oi-ink);
   --oi-world-rule: var(--oi-rule);
   --oi-world-muted: var(--oi-muted);
+  /* Content marks — the editor's highlight commands ("Highlight yellow" …)
+   * colour a person's own text, never chrome. Translucent so the ink
+   * beneath stays legible; re-grounded for the dark appearance below. */
+  --oi-mark-yellow: rgba(233, 197, 75, 0.36);
+  --oi-mark-green: rgba(128, 184, 140, 0.36);
+  --oi-mark-blue: rgba(117, 174, 228, 0.36);
+  --oi-mark-rose: rgba(215, 140, 170, 0.36);
 }
 
 :root {
@@ -354,6 +361,10 @@
   --oi-loading-ground: var(--oi-surface);
   --oi-loading-ink: var(--oi-foreground);
   --oi-accent-ground: var(--oi-surface);
+  --oi-mark-yellow: rgba(233, 197, 75, 0.3);
+  --oi-mark-green: rgba(128, 184, 140, 0.3);
+  --oi-mark-blue: rgba(117, 174, 228, 0.3);
+  --oi-mark-rose: rgba(215, 140, 170, 0.3);
 }
 
 /* D22 expression: presentation density, timing, and field geometry. */
