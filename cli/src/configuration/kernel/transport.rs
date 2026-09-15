@@ -47,11 +47,23 @@ pub struct SettingRequest {
     pub value: Value,
 }
 
+/// The owner's answer to a plan request: the typed view the kernel reads and
+/// the raw document the kernel relays at apply — both, because the two duties
+/// are different (09 §15: relay owner documents unmodified).
+#[derive(Clone, Debug, PartialEq)]
+pub struct OwnerPlan {
+    pub document: PlanDocument,
+    pub raw: Value,
+}
+
 /// An apply request: the owner plan crosses whole, with the O:I changeset it
 /// belongs to (the idempotency key names it).
 #[derive(Clone, Debug, PartialEq)]
 pub struct ApplyRequest {
-    pub plan: PlanDocument,
+    /// The owner's plan exactly as the owner minted it (09 §15 pass-through
+    /// duty): relayed verbatim, never re-serialised through a typed view, so
+    /// the owner's own `plan_digest` verification sees its own document.
+    pub plan: Value,
     pub changeset_id: String,
 }
 
@@ -289,9 +301,7 @@ impl OwnerTransport for ProcessTransport {
         argv.push("-".to_owned());
         argv.push("--changeset".to_owned());
         argv.push(request.changeset_id.clone());
-        let plan_value = serde_json::to_value(&request.plan)
-            .map_err(|error| TransportFailure::internal(format!("cannot encode plan: {error}")))?;
-        self.run(owner_ref, argv, Some(&plan_value))
+        self.run(owner_ref, argv, Some(&request.plan))
     }
 
     fn reset(&self, owner_ref: &str, request: &ResetRequest) -> Result<Value, TransportError> {
@@ -382,11 +392,12 @@ impl<'a> OwnerGateway<'a> {
         &self,
         owner_ref: &str,
         request: &SettingRequest,
-    ) -> Result<PlanDocument, OwnerOpError> {
-        let value = self.transport.plan(owner_ref, request)?;
-        PlanDocument::parse(value)
+    ) -> Result<OwnerPlan, OwnerOpError> {
+        let raw = self.transport.plan(owner_ref, request)?;
+        let document = PlanDocument::parse(raw.clone())
             .map_err(TransportFailure::internal)
-            .map_err(OwnerOpError::Failure)
+            .map_err(OwnerOpError::Failure)?;
+        Ok(OwnerPlan { document, raw })
     }
 
     pub fn apply(&self, owner_ref: &str, request: &ApplyRequest) -> Result<Receipt, OwnerOpError> {

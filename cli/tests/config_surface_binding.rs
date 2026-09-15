@@ -38,7 +38,11 @@ impl Scene {
         std::fs::create_dir_all(&bin).expect("bin dir");
         let owner = write_fake_owner(&bin);
         let catalogue = write_catalogue(home.path(), &owner);
-        Self { home, work, catalogue }
+        Self {
+            home,
+            work,
+            catalogue,
+        }
     }
 
     fn oi(&self) -> Command {
@@ -60,7 +64,11 @@ impl Scene {
             serde_json::from_str(&stdout)
                 .unwrap_or_else(|error| panic!("stdout is not JSON ({error}): {stdout}"))
         };
-        (output.status.code().unwrap_or(-1), json, format!("{stdout}{stderr}"))
+        (
+            output.status.code().unwrap_or(-1),
+            json,
+            format!("{stdout}{stderr}"),
+        )
     }
 
     /// Run a command that must succeed, returning its JSON document.
@@ -343,8 +351,11 @@ fn write_catalogue(home: &Path, owner: &Path) -> PathBuf {
 
 fn write_request(scene: &Scene, name: &str, document: &Value) -> String {
     let path = scene.work.path().join(name);
-    std::fs::write(&path, serde_json::to_vec(document).expect("request encodes"))
-        .expect("request written");
+    std::fs::write(
+        &path,
+        serde_json::to_vec(document).expect("request encodes"),
+    )
+    .expect("request written");
     path.display().to_string()
 }
 
@@ -361,9 +372,11 @@ fn config_lifecycle_runs_through_the_real_kernel_with_persisted_identity() {
     // did not answer on this machine are named degradations.
     let listing = scene.run_ok(&["config", "list", "--json"]);
     assert_eq!(listing["schema"], "oi.config-listing/v1");
-    assert!(listing["owners"].as_array().expect("owners").iter().any(|owner| {
-        owner["owner_ref"] == "ai-kit" && owner["state"] == "available"
-    }));
+    assert!(listing["owners"]
+        .as_array()
+        .expect("owners")
+        .iter()
+        .any(|owner| { owner["owner_ref"] == "ai-kit" && owner["state"] == "available" }));
     assert!(
         listing["owners"]
             .as_array()
@@ -498,10 +511,7 @@ fn config_lifecycle_runs_through_the_real_kernel_with_persisted_identity() {
     ]);
     let replay_receipt = &replay["receipts"][0];
     assert_eq!(replay_receipt["outcome"], "no_op");
-    assert_eq!(
-        replay_receipt["original_receipt_id"],
-        receipt["receipt_id"]
-    );
+    assert_eq!(replay_receipt["original_receipt_id"], receipt["receipt_id"]);
     assert_eq!(replay["changeset"]["status"], "verified");
 
     // Doctor keys its findings off discovery degradations and the frozen
@@ -551,7 +561,10 @@ fn profile_store_and_active_mark_compose_the_desired_layer() {
     assert_eq!(imported["provenance"]["authored_by"], "imported");
     // The C2 store law holds on disk: the profile file is in the store.
     let stored_path = scene.home.path().join("profiles").join("dev.json");
-    assert!(stored_path.exists(), "the profile is stored beside composition.json");
+    assert!(
+        stored_path.exists(),
+        "the profile is stored beside composition.json"
+    );
 
     // `use` writes the composition active mark — the only writer (09 §12).
     let activation = scene.run_ok(&["profile", "use", "dev", "--json"]);
@@ -608,7 +621,11 @@ fn profile_store_and_active_mark_compose_the_desired_layer() {
     ]);
     let diff = scene.run_ok(&["config", "diff", "--json"]);
     let resolutions = diff["resolutions"].as_array().expect("resolutions");
-    assert_eq!(resolutions.len(), 1, "explicit sets cover the profile entry");
+    assert_eq!(
+        resolutions.len(),
+        1,
+        "explicit sets cover the profile entry"
+    );
     assert_eq!(resolutions[0]["reconciliation"]["status"], "satisfied");
 }
 
@@ -639,7 +656,9 @@ fn reset_withdraws_desired_state_and_settles_without_intent() {
     ]);
     let changesets_dir = scene.configuration_dir().join("changesets");
     assert_eq!(
-        std::fs::read_dir(&changesets_dir).expect("changesets").count(),
+        std::fs::read_dir(&changesets_dir)
+            .expect("changesets")
+            .count(),
         1
     );
 

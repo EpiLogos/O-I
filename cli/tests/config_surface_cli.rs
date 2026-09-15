@@ -97,13 +97,7 @@ fn ordinary_setting_round_trips_set_plan_apply_and_receipt_identity() {
 
     // The owner-native plan is inspectable and carries the idempotency
     // anchor; nothing mutates at plan time.
-    let (code, planned, _) = run(&[
-        "config",
-        "plan",
-        "--request-file",
-        &request_arg,
-        "--json",
-    ]);
+    let (code, planned, _) = run(&["config", "plan", "--request-file", &request_arg, "--json"]);
     assert_eq!(code, 0);
     assert_eq!(planned["changeset"]["status"], "validated");
     let plan = &planned["plans"][0];
@@ -113,13 +107,8 @@ fn ordinary_setting_round_trips_set_plan_apply_and_receipt_identity() {
     let digest = plan["plan_digest"].as_str().unwrap();
     assert_eq!(digest.len(), 64, "sha256 hex idempotency anchor");
 
-    let (code, applied, stdout) = run(&[
-        "config",
-        "apply",
-        "--request-file",
-        &request_arg,
-        "--json",
-    ]);
+    let (code, applied, stdout) =
+        run(&["config", "apply", "--request-file", &request_arg, "--json"]);
     assert_eq!(code, 0, "{stdout}");
     assert_eq!(applied["schema"], "oi.config-apply/v1");
     let changeset = &applied["changeset"];
@@ -142,7 +131,10 @@ fn ordinary_setting_round_trips_set_plan_apply_and_receipt_identity() {
     );
     // Digest stability: applying the PLANNED document re-plans to the same
     // anchor, so the operation digest equals the standalone plan's digest.
-    assert_eq!(changeset["operations"][0]["plan_digest"], plan["plan_digest"]);
+    assert_eq!(
+        changeset["operations"][0]["plan_digest"],
+        plan["plan_digest"]
+    );
 }
 
 #[test]
@@ -189,13 +181,7 @@ fn absent_owners_and_unknown_settings_are_distinct_explicit_errors() {
     assert_eq!(error["error_code"], "owner_unavailable");
 
     // An entirely unknown owner is an unsupported setting.
-    let (code, error, _) = run(&[
-        "config",
-        "get",
-        "nope:section:key",
-        "world",
-        "--json",
-    ]);
+    let (code, error, _) = run(&["config", "get", "nope:section:key", "world", "--json"]);
     assert_eq!(code, 1);
     assert_eq!(error["error_code"], "unsupported_setting");
 }
@@ -344,7 +330,10 @@ fn profile_lifecycle_exposes_frozen_documents() {
     let (code, exported, _) = run(&["profile", "export", "development", "--json"]);
     assert_eq!(code, 0);
     assert_eq!(exported["schema"], "oi.profile/v1");
-    assert_eq!(exported["native_profiles"][0]["native_profile_ref"], "coding");
+    assert_eq!(
+        exported["native_profiles"][0]["native_profile_ref"],
+        "coding"
+    );
 
     // Import stores inspectable desired state and is round-trip stable.
     let exported_path = std::env::temp_dir().join("oi-c5-exported-profile.json");
@@ -375,8 +364,8 @@ fn dispatcher_passthrough_discloses_the_owner_contribution() {
         .unwrap();
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
-    let document: Value = serde_json::from_str(stdout.trim())
-        .expect("the contribution document is emitted bare");
+    let document: Value =
+        serde_json::from_str(stdout.trim()).expect("the contribution document is emitted bare");
     assert_eq!(document["schema"], "oi.configuration-contribution/v1");
     assert_eq!(document["owner"]["owner_ref"], "ai-kit");
     let _ = aikit;
@@ -410,13 +399,16 @@ type SurfacePair = (
 use std::rc::Rc;
 
 fn fixture_surface() -> SurfacePair {
-    Rc::new(oi_cli::fixture_surface::FixtureSurface::from_cases_dir(&cases_dir()).expect("fixtures load"))
-        .into_surfaces()
+    Rc::new(
+        oi_cli::fixture_surface::FixtureSurface::from_cases_dir(&cases_dir())
+            .expect("fixtures load"),
+    )
+    .into_surfaces()
 }
 
 #[test]
 fn seam_apply_then_replay_is_idempotent_with_the_original_receipt() {
-    use oi_cli::config_surface::{ChangeRequest, parse_scope_argument};
+    use oi_cli::config_surface::{parse_scope_argument, ChangeRequest};
 
     let (config, _profiles) = fixture_surface();
     let request = ChangeRequest {
@@ -449,7 +441,10 @@ fn seam_apply_then_replay_is_idempotent_with_the_original_receipt() {
     // The desired entry is held once, and the resolution reconciles.
     assert_eq!(config.desired_entries().unwrap().len(), 1);
     let resolution = config
-        .resolve("ai-kit:session:session.provider", &parse_scope_argument("world").unwrap())
+        .resolve(
+            "ai-kit:session:session.provider",
+            &parse_scope_argument("world").unwrap(),
+        )
         .unwrap();
     assert_eq!(
         resolution.reconciliation.status,
@@ -472,10 +467,7 @@ fn seam_diff_and_doctor_report_truthful_reconciliation() {
         .iter()
         .find(|resolution| resolution.setting_ref == "ai-kit:resolution:model.default")
         .unwrap();
-    assert_eq!(
-        model.reconciliation.status,
-        ReconciliationStatus::Unknown
-    );
+    assert_eq!(model.reconciliation.status, ReconciliationStatus::Unknown);
     // session.provider holds desired `herdr` against the constant default.
     let provider = diff
         .iter()

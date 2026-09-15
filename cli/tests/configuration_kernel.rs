@@ -9,10 +9,10 @@
 //! shell fixture in this file only.
 
 use oi_cli::configuration::kernel::{
-    assemble_changeset, execute_changeset, resolve_setting, resolve_setting_address, reset_setting,
+    assemble_changeset, execute_changeset, reset_setting, resolve_setting, resolve_setting_address,
     ApplyRequest, ChangeKind, ConfigurationStore, DesiredChange, DesiredInput, OwnerGateway,
-    OwnerRegistry, OwnerSpec, OwnerTransport, ProcessTransport, ResetRequest, SettingRequest,
-    TransportError, TransportFailure,
+    OwnerRegistry, OwnerSpec, OwnerTransport, PlanDocument, ProcessTransport, ResetRequest,
+    SettingRequest, TransportError, TransportFailure,
 };
 use oi_cli::configuration::{
     parse_scope_compact, validate_resolution, ChangeSetStatus, ErrorCode, IdempotencyKey,
@@ -155,10 +155,7 @@ impl FixtureTransport {
                     .iter()
                     .map(|setting| {
                         let reference = setting["setting_ref"].as_str().expect("setting_ref");
-                        let value = state
-                            .get(reference)
-                            .cloned()
-                            .unwrap_or(Value::Null);
+                        let value = state.get(reference).cloned().unwrap_or(Value::Null);
                         let axis = |path: &str| {
                             json!({
                                 "value": value.clone(),
@@ -210,7 +207,11 @@ impl OwnerTransport for FixtureTransport {
         Ok(self.generated_reading(owner_ref))
     }
 
-    fn validate(&self, _owner_ref: &str, request: &SettingRequest) -> Result<Value, TransportError> {
+    fn validate(
+        &self,
+        _owner_ref: &str,
+        request: &SettingRequest,
+    ) -> Result<Value, TransportError> {
         Ok(json!({
             "schema": "oi.config-validation/v1",
             "setting_ref": request.setting_ref,
@@ -243,7 +244,10 @@ impl OwnerTransport for FixtureTransport {
     }
 
     fn apply(&self, owner_ref: &str, request: &ApplyRequest) -> Result<Value, TransportError> {
-        let plan = &request.plan;
+        // The raw plan arrives exactly as the owner minted it (09 §15); the
+        // fixture reads it through the typed view like any owner would.
+        let plan = &PlanDocument::parse(request.plan.clone())
+            .map_err(|error| TransportFailure::internal(error))?;
         // Fixture receipts first: they freeze exactly what these owners
         // answered in the conformance cases.
         if let Some(receipt) = self
@@ -400,9 +404,8 @@ fn simple_apply_walks_the_whole_lifecycle_and_settles_satisfied() {
     .expect("assembly resolves the fixture owner and scope");
     assert_eq!(changeset.status, ChangeSetStatus::Planned);
 
-    let report =
-        execute_changeset(&registry, &gateway, Some(&store), &mut changeset, 1_000)
-            .expect("the fixture owner executes the changeset");
+    let report = execute_changeset(&registry, &gateway, Some(&store), &mut changeset, 1_000)
+        .expect("the fixture owner executes the changeset");
 
     // The owner's receipt crossed whole.
     assert_eq!(report.receipts.len(), 1);
@@ -428,7 +431,10 @@ fn simple_apply_walks_the_whole_lifecycle_and_settles_satisfied() {
 
     // The owner's own state moved (the owner is authoritative, not O:I).
     assert_eq!(
-        transport.state.borrow().get("ai-kit:resolution:model.default"),
+        transport
+            .state
+            .borrow()
+            .get("ai-kit:resolution:model.default"),
         Some(&json!("sonnet-next"))
     );
 
@@ -443,13 +449,19 @@ fn simple_apply_walks_the_whole_lifecycle_and_settles_satisfied() {
         .load_receipts("cs-fixture-simple-apply-1")
         .expect("receipts readable");
     assert_eq!(receipts.len(), 1, "the O:I-side receipt reference is kept");
-    assert_eq!(receipts[0].native_ref.as_deref(), Some("aikit:history:model.default:1"));
+    assert_eq!(
+        receipts[0].native_ref.as_deref(),
+        Some("aikit:history:model.default:1")
+    );
     let record = store
         .load_reconciliation("ai-kit:resolution:model.default")
         .expect("readable")
         .expect("reconciliation persisted");
     assert_eq!(record.status, "satisfied");
-    assert_eq!(record.changeset_id.as_deref(), Some("cs-fixture-simple-apply-1"));
+    assert_eq!(
+        record.changeset_id.as_deref(),
+        Some("cs-fixture-simple-apply-1")
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -494,9 +506,8 @@ fn partial_apply_is_truthful_across_two_owners_and_claims_no_rollback() {
     )
     .expect("assembly resolves both fixture owners");
 
-    let report =
-        execute_changeset(&registry, &gateway, Some(&store), &mut changeset, 2_000)
-            .expect("execution records every operation truthfully");
+    let report = execute_changeset(&registry, &gateway, Some(&store), &mut changeset, 2_000)
+        .expect("execution records every operation truthfully");
 
     assert_eq!(changeset.status, ChangeSetStatus::PartiallyApplied);
     let ai_kit = &changeset.operations[0];
@@ -551,8 +562,7 @@ fn partial_apply_is_truthful_across_two_owners_and_claims_no_rollback() {
 
 #[test]
 fn idempotent_replay_returns_no_op_and_the_owner_does_not_reexecute() {
-    let transport =
-        FixtureTransport::default().with_contribution("ai-kit", "contribution-ai-kit");
+    let transport = FixtureTransport::default().with_contribution("ai-kit", "contribution-ai-kit");
     let registry = discovered_registry(&transport, &["ai-kit"]);
     let gateway = OwnerGateway::new(&transport);
     let world = Scope {
@@ -567,9 +577,14 @@ fn idempotent_replay_returns_no_op_and_the_owner_does_not_reexecute() {
         )]
     };
 
-    let mut first =
-        assemble_changeset(&registry, "cs-fixture-idempotent-1", 0, Some("development"), &request())
-            .expect("assembly");
+    let mut first = assemble_changeset(
+        &registry,
+        "cs-fixture-idempotent-1",
+        0,
+        Some("development"),
+        &request(),
+    )
+    .expect("assembly");
     let first_report =
         execute_changeset(&registry, &gateway, None, &mut first, 3_000).expect("execution");
     assert_eq!(first.status, ChangeSetStatus::Verified);
@@ -577,9 +592,14 @@ fn idempotent_replay_returns_no_op_and_the_owner_does_not_reexecute() {
     let first_key = IdempotencyKey::from_operation(&first.operations[0], "cs-fixture-idempotent-1");
 
     // The replay: the same change under the same changeset identity.
-    let mut replay =
-        assemble_changeset(&registry, "cs-fixture-idempotent-1", 0, Some("development"), &request())
-            .expect("assembly");
+    let mut replay = assemble_changeset(
+        &registry,
+        "cs-fixture-idempotent-1",
+        0,
+        Some("development"),
+        &request(),
+    )
+    .expect("assembly");
     let replay_report =
         execute_changeset(&registry, &gateway, None, &mut replay, 4_000).expect("replay");
 
@@ -672,8 +692,7 @@ fn resolution_cases_settle_through_the_kernel_reading_path() {
             }],
             "observed_at_unix_ms": 0,
         });
-        let transport =
-            FixtureTransport::default().with_reading("ai-kit", reading);
+        let transport = FixtureTransport::default().with_reading("ai-kit", reading);
         let mut registry = OwnerRegistry::new();
         registry
             .register_contribution(
@@ -768,7 +787,8 @@ fn scope_cases_are_decided_explicitly_at_the_kernel_door() {
                 assert_eq!(error.code.as_wire(), expected, "case `{name}`");
                 assert!(
                     error.message.contains(setting_ref) || error.message.contains(kind_raw),
-                    "case `{name}`: the refusal names its address: {}", error.message
+                    "case `{name}`: the refusal names its address: {}",
+                    error.message
                 );
             }
         }
@@ -799,8 +819,7 @@ fn scope_cases_are_decided_explicitly_at_the_kernel_door() {
 
 #[test]
 fn reset_runs_the_fourth_verb_and_settles_without_desired_intent() {
-    let transport =
-        FixtureTransport::default().with_contribution("ai-kit", "contribution-ai-kit");
+    let transport = FixtureTransport::default().with_contribution("ai-kit", "contribution-ai-kit");
     let registry = discovered_registry(&transport, &["ai-kit"]);
     let gateway = OwnerGateway::new(&transport);
 
@@ -819,7 +838,10 @@ fn reset_runs_the_fourth_verb_and_settles_without_desired_intent() {
     .expect("assembly");
     execute_changeset(&registry, &gateway, None, &mut applied, 6_000).expect("apply");
     assert_eq!(
-        transport.state.borrow().get("ai-kit:resolution:model.default"),
+        transport
+            .state
+            .borrow()
+            .get("ai-kit:resolution:model.default"),
         Some(&json!("opus"))
     );
 
@@ -846,7 +868,11 @@ fn reset_runs_the_fourth_verb_and_settles_without_desired_intent() {
         ReconciliationStatus::Satisfied,
         "after reset no desired intent is held: satisfied, per 09 §7.1"
     );
-    assert!(transport.state.borrow().get("ai-kit:resolution:model.default").is_none());
+    assert!(transport
+        .state
+        .borrow()
+        .get("ai-kit:resolution:model.default")
+        .is_none());
 }
 
 // ---------------------------------------------------------------------------
@@ -892,8 +918,7 @@ exit 9
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
-        std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755))
-            .expect("chmod");
+        std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755)).expect("chmod");
     }
     script
 }

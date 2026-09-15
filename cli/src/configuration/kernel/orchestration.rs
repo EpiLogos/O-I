@@ -706,11 +706,12 @@ fn run_apply_operation(
             Ok(plan) => plan,
             Err(error) => return fail(op, error.into_operation_error()),
         };
-        op.plan_digest = Some(plan.plan_digest.clone());
+        op.plan_digest = Some(plan.document.plan_digest.clone());
         op.plan_ref = Some(
-            plan.explain_ref
+            plan.document
+                .explain_ref
                 .clone()
-                .unwrap_or_else(|| plan.plan_id.clone()),
+                .unwrap_or_else(|| plan.document.plan_id.clone()),
         );
         apply_plan(gateway, changeset_id, op, plan, receipts);
     } else {
@@ -732,11 +733,11 @@ fn apply_plan(
     gateway: &OwnerGateway<'_>,
     changeset_id: &str,
     op: &mut Operation,
-    plan: PlanDocument,
+    plan: super::transport::OwnerPlan,
     receipts: &mut Vec<crate::configuration::changeset::Receipt>,
 ) {
     let request = ApplyRequest {
-        plan,
+        plan: plan.raw,
         changeset_id: changeset_id.to_owned(),
     };
     match gateway.apply(&op.owner_ref, &request) {
@@ -1228,6 +1229,7 @@ pub fn plan_request(
     }
     gateway
         .plan(&owner, &request)
+        .map(|owner_plan| owner_plan.document)
         .map_err(|error| KernelError::new(error.code(), error.message()))
 }
 
