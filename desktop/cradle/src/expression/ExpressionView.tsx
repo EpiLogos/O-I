@@ -93,7 +93,7 @@ export function ExpressionView({initialExpressionRef}:{initialExpressionRef?:str
   if(!presenting||!document)return;
   try{
    const config=expressionConfig(document);
-   if(!presentation.current)presentation.current=stage.present({id:"expression-application",plane:"overlay",recipe:"",config,sceneRef:document.selection.scene_ref});
+   if(!presentation.current)presentation.current=stage.present({id:"expression-application",plane:"overlay",recipe:"",config,appearance:"host",sceneRef:document.selection.scene_ref});
    if(!presentation.current)throw new Error(stage.error??"Expression stage is off, occupied, or unavailable");
    presentation.current.setContainer(stageHost.current);
    presentation.current.updateConfig(config,document.selection.scene_ref,document.selection.entity_ref?[document.selection.entity_ref]:[]);
