@@ -112,6 +112,7 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
   const htmlFrame = useRef<HTMLIFrameElement>(null);
   const [htmlFrameLoaded,setHtmlFrameLoaded]=useState(-1);
   const [hostedExpression,setHostedExpression]=useState<PageExpressionHostedState>();
+  const [pageExpressionInvalidated,setPageExpressionInvalidated]=useState(false);
   const location = binding.location;
 
   useEffect(() => {
@@ -160,6 +161,7 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
   const imageSrc = transport.kind === "bridge" ? imageDataUrl : baseUrl;
   const personalPage=useMemo(()=>{if(format!=="html"||!textContent||!textRevision)return undefined;try{const parsed=readPage(textContent);return parsed.page.expression?parsed:undefined;}catch{return undefined;}},[format,textContent,textRevision]);
   const receiveHostedState=useCallback((state:PageExpressionHostedState)=>setHostedExpression(state),[]);
+  useEffect(()=>setPageExpressionInvalidated(false),[generation,textRevision]);
   useEffect(()=>{
     const frame=htmlFrame.current;
     if(format!=="html"||!frame||htmlFrameLoaded!==generation||!personalPage||!textRevision||!hostedExpression)return;
@@ -168,7 +170,7 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
     const sourceExact=frame.dataset.fileRevision===textRevision&&frame.dataset.generation===frameGeneration&&(transport.kind==="tauri"?frame.getAttribute("src")===baseUrl:frame.hasAttribute("srcdoc"));
     if(!exact||!sourceExact)return;
     const token=crypto.randomUUID();let disposed=false;
-    const receive=(event:MessageEvent)=>{const value=event.data;if(disposed||event.source!==frame.contentWindow||value?.type!=="oi:page-expression-host-response"||value.token!==token||value.generation!==generation||value.page?.document_id!==hostedExpression.documentId||value.page?.revision!==hostedExpression.documentRevision||value.expression?.ref!==hostedExpression.expressionRef||value.expression?.revision!==hostedExpression.expressionRevision)return;if(value.accepted!==true&&hostedExpression.live)setHostedExpression(previous=>previous&&{...previous,live:false});};
+    const receive=(event:MessageEvent)=>{const value=event.data;if(disposed||event.source!==frame.contentWindow||value?.token!==token||value.generation!==generation||value.page?.document_id!==hostedExpression.documentId||value.page?.revision!==hostedExpression.documentRevision||value.expression?.ref!==hostedExpression.expressionRef||value.expression?.revision!==hostedExpression.expressionRevision)return;if(value.type==="oi:page-expression-host-invalidated"){setPageExpressionInvalidated(true);return;}if(value.type!=="oi:page-expression-host-response")return;if(value.accepted!==true&&hostedExpression.live)setHostedExpression(previous=>previous&&{...previous,live:false});};
     window.addEventListener("message",receive);
     frame.contentWindow?.postMessage({type:"oi:page-expression-host",token,generation,live:hostedExpression.live,page:{document_id:hostedExpression.documentId,revision:hostedExpression.documentRevision},expression:{ref:hostedExpression.expressionRef,revision:hostedExpression.expressionRevision}},"*");
     return()=>{disposed=true;window.removeEventListener("message",receive);};
@@ -190,7 +192,7 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
         ? <iframe ref={htmlFrame} onLoad={()=>setHtmlFrameLoaded(generation)} data-page-context data-file-revision={textRevision} data-generation={generation} className="material-frame" title={binding.title} sandbox="allow-scripts allow-forms allow-downloads" referrerPolicy="no-referrer" key={generation} src={suspended ? "about:blank" : baseUrl} />
         : <iframe ref={htmlFrame} onLoad={()=>setHtmlFrameLoaded(generation)} data-page-context data-file-revision={textRevision} data-generation={generation} className="material-frame" title={binding.title} sandbox="allow-scripts allow-forms allow-downloads" referrerPolicy="no-referrer" key={generation} srcDoc={suspended ? undefined : injectBase(textContent ?? "", resolveAsset(""))} />
     )}</div></div>}
-    {!error&&!pending&&personalPage&&textRevision&&<PageExpression page={personalPage} fileRevision={textRevision} pageRef={binding.ref??binding.id} onHostedState={receiveHostedState}/>}
+    {!error&&!pending&&personalPage&&textRevision&&!pageExpressionInvalidated&&<PageExpression page={personalPage} fileRevision={textRevision} pageRef={binding.ref??binding.id} onHostedState={receiveHostedState}/>}
     {!error && !pending && format === "markdown" && <div className="material-viewport" data-preview-zoom={zoom}><div className="material-scaled" style={{width:`${100/zoom}%`,height:`${100/zoom}%`,transform:`scale(${zoom})`}}>
       <iframe data-page-context key={generation} className="material-frame" title={binding.title} sandbox="allow-scripts" srcDoc={suspended ? undefined : markdownDocument(textContent ?? "", resolveAsset)} />
     </div></div>}
