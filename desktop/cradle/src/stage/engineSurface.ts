@@ -534,6 +534,10 @@ export class EngineSurface {
     // A preference change during a flight must reach its final authored
     // still. Otherwise delta becomes zero below and its promise can never
     // complete. Hidden/paused presentations still wait for a permitted draw.
+    this.resolveReducedPlayback();
+    this.wake();
+  };
+  private resolveReducedPlayback() {
     if (this.reduced.matches && !this.forceMotion && this.playback) {
       this.playback.elapsed = this.playback.sequence.duration;
       this.applySequenceSteps();
@@ -545,8 +549,7 @@ export class EngineSurface {
         scene: { ...this.active.scene, id: `${this.active.scene.id}·still`, transition: 0 },
         revision: ++this.revision };
     }
-    this.wake();
-  };
+  }
   private wake = () => {
     if (this.raf || !this.active || document.hidden) return;
     if (!this.live) return;
@@ -574,6 +577,9 @@ export class EngineSurface {
     // visibilitychange wake resumes a live field when it returns.
     if (document.hidden) { this.last = now; return; }
     const animate = this.forceMotion || !this.reduced.matches;
+    // Media queries can reflect the new preference before their change
+    // event is delivered. Normalize at the drawing boundary as well.
+    if (!animate) this.resolveReducedPlayback();
     const delta = animate ? Math.min(0.05, Math.max(0.001, (now - this.last) / 1000)) : 0;
     this.last = now;
     this.applySequenceSteps();
