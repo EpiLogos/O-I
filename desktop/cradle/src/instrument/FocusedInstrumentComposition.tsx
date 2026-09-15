@@ -50,9 +50,9 @@ function useSource(ref:string){
       if(run!==sequence.current)return;
       if(next.schema!==FOCUSED_INSTRUMENT_CONTRACT)throw new Error(`Unsupported focused-instrument contract ${next.schema}`);
       setSnapshot(next);setBimba(nextBimba);setError(null);
-    }catch(reason){if(run===sequence.current)setError(reason instanceof Error?reason.message:String(reason));}
+    }catch(reason){if(run===sequence.current){setSnapshot(null);setBimba(null);setError(reason instanceof Error?reason.message:String(reason));}}
   },[ref]);
-  useEffect(()=>{void refresh();return subscribeFocusedInstrumentSource(ref,()=>void refresh());},[ref,refresh]);
+  useEffect(()=>{void refresh();const stop=subscribeFocusedInstrumentSource(ref,()=>void refresh());return()=>{sequence.current++;stop();};},[ref,refresh]);
   return {snapshot,bimba,error};
 }
 
@@ -105,6 +105,7 @@ function FocusedInstrumentSurface({binding,sourcesOpen,onToggleSources}:{binding
   const sourcePresent=!!focusedInstrumentSource(ref);
   useEffect(()=>{
     let detached:(()=>void)|undefined;
+    const detachOnce=()=>{const stop=detached;detached=undefined;stop?.();};
     let disposed=false;
     setStageError(null);
     const source=focusedInstrumentSource(ref);
@@ -121,22 +122,22 @@ function FocusedInstrumentSurface({binding,sourcesOpen,onToggleSources}:{binding
       const stageLease=stage.retainedLease(presentationId);
       if(!stageLease)throw new Error("The focused stage could not issue its retained-field lease.");
       const lease=stageLease as RetainedExpressionLease;leaseRef.current=lease;
-      return Promise.resolve(source.attachExpression?.(lease)).then(stop=>source.read().then(current=>{
+      return Promise.resolve(source.attachExpression?.(lease)).then(stop=>{
+        detached=typeof stop==="function"?stop:undefined;
+        if(disposed){detachOnce();return;}
+        return source.read().then(current=>{
+        if(disposed){detachOnce();return;}
         const ready=projectNaraExpression(current);
         if(ready.standing==="current"&&ready.session)lease.updatePresentation(naraRetainedPresentation(ready.session));
-        return stop;
-      }));
-    }).then(stop=>{
-      if(disposed){if(typeof stop==="function")stop();return;}
-      detached=typeof stop==="function"?stop:undefined;
+      });});
     }).catch(reason=>{
+      detachOnce();
       presentation?.release();presentation=null;presentationRef.current=null;leaseRef.current=null;
       if(!disposed)setStageError(reason instanceof Error?reason.message:String(reason));
     });
     return()=>{
       disposed=true;
-      detached?.();
-      detached=undefined;
+      detachOnce();
       leaseRef.current=null;
       presentationRef.current=null;
       presentation?.release();

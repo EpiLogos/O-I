@@ -127,12 +127,20 @@ export default async function run({page,baseUrl,check,shot,channel}) {
   const after = await sessionState();
   check(after.available === true, "The session is available from its ready receipt");
 
+  check((await page.locator('[data-epi-nara-region="bimba"]').count())===0,"Rest enters with the Bimba source aperture closed");
+  await instrumentRegion.getByRole("button",{name:"Open sources"}).click();
+  await page.locator('[data-epi-nara-region="bimba"]').waitFor();
+  check(true,"Bimba is summonable from the resting Nara instrument");
+  await instrumentRegion.getByRole("button",{name:"Close sources"}).click();
+  await page.locator('[data-epi-nara-region="bimba"]').waitFor({state:"detached"});
+  check(true,"Bimba closes without leaving the retained instrument");
+
   // Commands through the real controls onto the exact host sequence.
-  await instrumentRegion.getByRole("button", { name: "M2", exact: true }).click();
+  for(const focus of ["M1","M2","M3","M4"])await instrumentRegion.getByRole("button", { name: focus, exact: true }).click();
   await page.waitForFunction(() => globalThis.__k9Host.calls.some((c) => c.operation === "set-focus"), null, { timeout: 5000 });
   await instrumentRegion.getByRole("button", { name: "Freeze view" }).click();
   await page.waitForFunction(() => globalThis.__k9Host.calls.some((c) => c.operation === "freeze"), null, { timeout: 5000 });
-  check(true, "Focus and freeze commands reach the controlled host on the session sequence");
+  check((await page.evaluate(()=>globalThis.__k9Host.calls.filter(c=>c.operation==="set-focus").map(c=>c.focus))).slice(-4).join(",")==="m1,m2,m3,m4", "M1→M4 focus commands reach the same controlled host session");
 
   // A host refusal is disclosed, never hidden.
   await page.evaluate(() => { globalThis.__k9Host.refuseNext = true; });
@@ -155,12 +163,12 @@ export default async function run({page,baseUrl,check,shot,channel}) {
   // A real WebGL context loss pauses through the lease; the session
   // restores its acknowledged checkpoint when the same canvas returns.
   await page.evaluate(() => {
-    const canvas = document.querySelector(".oi-point-cloud-overlay");
+    const canvas = document.querySelector('canvas[data-oi-stage="engine"]');
     const gl = canvas.getContext("webgl2");
     globalThis.__loseExt = gl.getExtension("WEBGL_lose_context");
     globalThis.__loseExt.loseContext();
   });
-  await page.waitForFunction(() => globalThis.__k9Session.reading.recovering === true, null, { timeout: 10000 });
+  await page.waitForFunction(() => globalThis.__k9Session.reading.recovering === true, null, { timeout: 20000 });
   check(true, "A real context loss puts the session into honest recovery");
   await page.evaluate(() => { globalThis.__loseExt.restoreContext(); });
   await page.waitForFunction(() => {

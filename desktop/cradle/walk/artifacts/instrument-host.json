@@ -1,18 +1,18 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "instrument-host",
-  "generated_at": "2026-09-15T01:30:41.368Z",
+  "generated_at": "2026-09-15T03:12:51.177Z",
   "environment": {
-    "base_url": "http://localhost:4173",
-    "bridge_url": "http://127.0.0.1:4179",
+    "base_url": "http://127.0.0.1:4282",
+    "bridge_url": "http://127.0.0.1:4182",
     "viewport": "1280x820",
     "bundle": "walk (WALK=1) served by vite preview",
     "node": "v24.16.0",
     "platform": "darwin"
   },
-  "passed": true,
-  "error": null,
-  "duration_ms": 5633,
+  "passed": false,
+  "error": "page.waitForFunction: Timeout 20000ms exceeded.\n    at Module.run (/Users/admin/Central/Work/O-I/.aikit/tasks/expression-ex2/desktop/cradle/walk/scenarios/instrument-host.mjs:174:14)\n    at async runScenario (/Users/admin/Central/Work/O-I/.aikit/tasks/expression-ex2/desktop/cradle/walk/run.mjs:378:5)\n    at async file:///Users/admin/Central/Work/O-I/.aikit/tasks/expression-ex2/desktop/cradle/walk/run.mjs:451:18",
+  "duration_ms": 30033,
   "checks": [
     {
       "ok": true,
@@ -31,7 +31,19 @@
     },
     {
       "ok": true,
-      "label": "Focus and freeze commands reach the controlled host on the session sequence"
+      "label": "Rest enters with the Bimba source aperture closed"
+    },
+    {
+      "ok": true,
+      "label": "Bimba is summonable from the resting Nara instrument"
+    },
+    {
+      "ok": true,
+      "label": "Bimba closes without leaving the retained instrument"
+    },
+    {
+      "ok": true,
+      "label": "M1→M4 focus commands reach the same controlled host session"
     },
     {
       "ok": true,
@@ -44,7 +56,7 @@
         "available": true,
         "attached": true,
         "recovering": false,
-        "host_sequence": "5",
+        "host_sequence": "8",
         "native_cursor": {
           "event_ref": "event:host-walk",
           "subject_ref": "subject:nara-walk",
@@ -61,55 +73,6 @@
     {
       "ok": true,
       "label": "A real context loss puts the session into honest recovery"
-    },
-    {
-      "ok": true,
-      "label": "The session restores its acknowledged checkpoint after the same canvas reports restoration",
-      "data": {
-        "available": false,
-        "attached": true,
-        "recovering": false,
-        "host_sequence": "5",
-        "native_cursor": {
-          "event_ref": "event:host-walk",
-          "subject_ref": "subject:nara-walk",
-          "profile_generation": 1,
-          "field_generation": "1",
-          "samples_elapsed": "513"
-        }
-      }
-    },
-    {
-      "ok": true,
-      "label": "Leaving the binding removes the composition"
-    },
-    {
-      "ok": true,
-      "label": "The adapter's expression is detached with the binding",
-      "data": {
-        "available": false,
-        "attached": false,
-        "recovering": false,
-        "host_sequence": "5",
-        "native_cursor": {
-          "event_ref": "event:host-walk",
-          "subject_ref": "subject:nara-walk",
-          "profile_generation": 1,
-          "field_generation": "1",
-          "samples_elapsed": "513"
-        }
-      }
-    },
-    {
-      "ok": true,
-      "label": "Adapter provenance: sha256 of the served QL bytes",
-      "data": {
-        "focused-instrument-session.mjs": "6ee7d0edbad2048d2ceb17033530de3e705bb090614d55e7fbcc3faf56d33b17",
-        "retained-field.mjs": "853b22f4212a0c2ed9d56b89ac654414d4175a03a531e672bdf61bd1e4d67d6a",
-        "native-audio.mjs": "2d6d97262aaf71778bd7e0e049b2aeb2a05cf8105640cfd0b6f311bde76c7cbc",
-        "_ql_ref": "origin/main",
-        "_ql_head": "4276b94157058d0b211be20b4ebf5587fcb85a72"
-      }
     }
   ],
   "ops": [
@@ -119,12 +82,12 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-15T01:30:41.562Z",
+        "mounted_at": "2026-09-15T03:12:51.933Z",
         "transport": {
           "kind": "bridge",
-          "url": "http://127.0.0.1:4179"
+          "url": "http://127.0.0.1:4182"
         },
-        "url": "http://localhost:4173/"
+        "url": "http://127.0.0.1:4282/"
       }
     },
     {
@@ -138,7 +101,7 @@
     {
       "ok": true,
       "op": "instrument.requestOpen",
-      "duration_ms": 0.2,
+      "duration_ms": 0.3,
       "data": {
         "requested": true
       }
@@ -146,7 +109,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 158,
+      "duration_ms": 390,
       "data": {
         "file": "instrument-host-instrument-host-focused.png"
       }

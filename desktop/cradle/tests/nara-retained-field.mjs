@@ -5,7 +5,8 @@ import {chromium} from 'playwright';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const packageRoot=fileURLToPath(new URL('../../../packages/oi-design-system/',import.meta.url));
-const ownerSnapshot=JSON.parse(readFileSync(process.env.QL_NARA_SNAPSHOT??'/Users/admin/Central/Work/Quaternal-Logic/.aikit/tasks/expression-owner-reference/target/k8-personal/focused-snapshot.json','utf8'));
+if(!process.env.QL_NARA_SNAPSHOT)throw new Error('QL_NARA_SNAPSHOT must name the focused-snapshot.json emitted by the actual k8_personal acceptance example');
+const ownerSnapshot=JSON.parse(readFileSync(process.env.QL_NARA_SNAPSHOT,'utf8'));
 const server=await createServer({root,appType:'custom',resolve:{alias:{'@epilogos/oi-design-system':packageRoot}},server:{host:'127.0.0.1',port:0},logLevel:'error'});
 server.middlewares.use('/nara-retained',(_req,res)=>{res.setHeader('content-type','text/html');res.end('<div id="host" style="width:900px;height:700px"></div><script type="module" src="/tests/nara-retained-page.ts"></script>');});
 await server.listen();
@@ -36,5 +37,5 @@ try{
  assert.equal(result.before.seeds,result.second.seeds);assert.notDeepEqual(result.first.centres,result.second.centres);assert.notDeepEqual(result.first.scales,result.second.scales);assert.ok(result.first.weights.every(value=>value===0),'actual owner no-palette condition remains neutral');
  assert.deepEqual(result.afterRefusal,result.second);
  assert.equal(new Set(result.first.centres.slice(0,7).map(JSON.stringify)).size,7);
- console.log('Nara retained field: 8 stable partitions, 7 distinct GPU loci, two receptions, no target replacement/reseed, atomic stale refusal.');
+ console.log('Nara retained field: actual owner snapshot plus controlled next-generation presentation; 8 stable partitions, 7 distinct GPU loci, no target replacement/reseed, atomic stale refusal.');
 }finally{await browser.close();await server.close();}
