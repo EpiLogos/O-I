@@ -1,38 +1,25 @@
-/* The Factory development surface's own rules (moved out of cradle.css 2026-09-15; the host grammar carries the chrome). */
-/* Factory development reads (queue cell 3): the owner's own developmental
- * readings, verbatim; the state path is the human's to name on this cut. */
-.factory-development{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overflow:auto}
-.factory-development-header h2{margin:0;font-size:15px}
-.factory-development-header small{color:var(--oi-muted-2)}
-.factory-development-form{display:flex;flex-direction:column;gap:8px;border:1px solid var(--oi-hairline);border-radius:8px;padding:10px}
-.factory-development-form label{display:flex;flex-direction:column;gap:3px;font-size:var(--oi-shell-type-nav);color:var(--oi-muted-2)}
-.factory-development-form input{border:1px solid var(--oi-hairline);border-radius:6px;padding:5px 8px;font:inherit;background:var(--oi-composer-ground);color:var(--oi-foreground)}
-.factory-development-actions{display:flex;gap:8px;flex-wrap:wrap}
-.factory-development-actions button{border:1px solid var(--oi-hairline);border-radius:7px;background:var(--oi-composer-ground);color:var(--oi-foreground);font:inherit;font-size:var(--oi-shell-type-nav);padding:4px 10px;cursor:pointer}
-.factory-development-actions button:disabled{color:var(--oi-muted-2);cursor:default}
-.factory-development-reading h3,.factory-development-status h3{margin:0 0 6px;font-size:var(--oi-shell-type-eyebrow);letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted-2)}
-.factory-development-reading pre{margin:0;padding:8px;border:1px solid var(--oi-hairline);border-radius:8px;background:var(--oi-composer-ground);font-size:11px;overflow:auto;max-height:340px;white-space:pre-wrap;overflow-wrap:anywhere}
-.factory-development-status dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;overflow-wrap:anywhere;font-size:var(--oi-shell-type-nav)}
-.factory-development-status dt{color:var(--oi-muted-2)}
-.factory-development-status dd{margin:0}
-.factory-development-status p{color:var(--oi-muted-2);font-size:var(--oi-shell-type-nav)}
-.factory-development-journeys h3,.factory-development-build h3{margin:0 0 6px;font-size:var(--oi-shell-type-eyebrow);letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted-2)}
-.factory-development-build label{display:flex;flex-direction:column;gap:3px;font-size:var(--oi-shell-type-nav);color:var(--oi-muted-2);margin-bottom:6px}
-.factory-development-build input{border:1px solid var(--oi-hairline);border-radius:6px;padding:5px 8px;font:inherit;background:var(--oi-composer-ground);color:var(--oi-foreground)}
-.factory-development-build button{border:1px solid var(--oi-hairline);border-radius:7px;background:var(--oi-composer-ground);color:var(--oi-foreground);font:inherit;font-size:var(--oi-shell-type-nav);padding:4px 10px;cursor:pointer}
-.factory-development-build button:disabled{color:var(--oi-muted-2);cursor:default}
-.factory-journey,.factory-run{border:1px solid var(--oi-hairline);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+/* The Factory development surface's own rules. Chrome composes the desktop
+ * grammar (oi-context-head, oi-field/oi-input, oi-action-group/oi-action,
+ * oi-ref-row/oi-ref/oi-state, oi-kv, oi-disclosure, oi-note); this file
+ * keeps the surface's layout and the host container the owner's own Build
+ * surface (captured factory-ui) inhabits. Tokens only. */
+.factory-development{padding:0 22px 18px;display:flex;flex-direction:column;gap:14px;overflow:auto}
+.factory-development-header{margin:0 -22px;padding:0 22px;border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft)}
+.factory-development-header h2{margin:0;font-size:var(--oi-shell-type-body);font-weight:550}
+.factory-development-form{display:flex;flex-direction:column;gap:8px}
+.factory-development-reading h3,.factory-development-status h3,.factory-development-journeys h3,.factory-development-build h3{margin:0 0 6px;font-size:var(--oi-shell-type-eyebrow);letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted-2)}
+.factory-development-reading pre,.factory-execution pre{margin:0;padding:8px;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:8px;background:var(--oi-composer-ground);font-size:var(--oi-shell-type-nav);overflow:auto;max-height:340px;white-space:pre-wrap;overflow-wrap:anywhere}
+.factory-development-build label{margin-bottom:6px}
+.factory-journey,.factory-run{border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
 .factory-run{margin:6px 0 0 14px}
-.factory-row-head{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;min-width:0}
-.factory-row-ref{font-size:11px;overflow-wrap:anywhere}
-.factory-row-note{color:var(--oi-muted-2);font-size:var(--oi-shell-type-nav)}
-.factory-journey summary,.factory-run summary,.factory-execution summary{cursor:pointer;font-size:var(--oi-shell-type-nav);color:var(--oi-muted-2)}
-.factory-run-facts{margin:6px 0;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;overflow-wrap:anywhere;font-size:var(--oi-shell-type-nav)}
-.factory-run-facts dt{color:var(--oi-muted-2)}
-.factory-run-facts dd{margin:0}
+.factory-journey .oi-disclosure,.factory-run .oi-disclosure,.factory-execution .oi-disclosure{border-top:0;padding:4px 0}
 .factory-executions{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
-.factory-execution pre{margin:4px 0 0;padding:8px;border:1px solid var(--oi-hairline);border-radius:8px;background:var(--oi-composer-ground);font-size:11px;overflow:auto;max-height:260px;white-space:pre-wrap;overflow-wrap:anywhere}
+.factory-execution pre{margin-top:4px;max-height:260px}
 .factory-telemetry{margin-top:6px}
-.factory-telemetry button{border:1px solid var(--oi-hairline);border-radius:7px;background:var(--oi-composer-ground);color:var(--oi-foreground);font:inherit;font-size:var(--oi-shell-type-nav);padding:4px 10px;cursor:pointer}
-.factory-telemetry button:disabled{color:var(--oi-muted-2);cursor:default}
 .factory-telemetry p{margin:6px 0 0;font-size:var(--oi-shell-type-nav);overflow-wrap:anywhere}
+/* The owner's Build surface inside the host: the host gives it the pane
+ * ground and a hairline frame, nothing else; the owner styles its body.
+ * Declared Actions without a native dispatch on this cut are shown as
+ * undispatchable (the host says so above them). */
+.factory-build-host{display:flex;flex-direction:column;gap:10px;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:8px;padding:10px;background:var(--oi-canvas-ground)}
+.factory-build-host[data-actions="undispatched"] .fb-action{opacity:.55}
