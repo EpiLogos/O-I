@@ -29,13 +29,17 @@ await page.addInitScript(()=>{
  const original=window.requestAnimationFrame.bind(window);
  window.requestAnimationFrame=(callback)=>{window.__raf.scheduled++;return original((time)=>{window.__raf.fired++;callback(time);});};
 });
-/** Frames fired over a quiet window, plus the surface's own reading. */
-const observe=async(ms=600)=>page.evaluate(async(ms)=>{
+/** Idle needs an observation window; activity needs actual multi-frame
+ * progress. Software GL speed is not a lifecycle invariant. */
+const observe=async(ms=600,framesRequired=0)=>page.evaluate(async({ms,framesRequired})=>{
  const before=window.__raf.fired,framesBefore=window.stageSurface.frameCount;
- await new Promise((resolve)=>setTimeout(resolve,ms));
+ if(framesRequired){
+  const deadline=performance.now()+ms;
+  while((window.stageSurface.frameCount-framesBefore<framesRequired||window.__raf.fired-before<framesRequired)&&performance.now()<deadline)await new Promise(resolve=>setTimeout(resolve,50));
+ }else await new Promise((resolve)=>setTimeout(resolve,ms));
  const canvas=document.querySelector('canvas[data-oi-stage="engine"]');
  return {rafFired:window.__raf.fired-before,frames:window.stageSurface.frameCount-framesBefore,live:window.stageSurface.isLive,scheduled:window.stageSurface.isScheduled,paused:window.stageSurface.isPaused,dormant:canvas?canvas.dataset.oiStageLive==="false":null,canvasPresent:!!canvas,errors:window.failures};
-},ms);
+},{ms,framesRequired});
 try{
  await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/stage-lifecycle`);
  await page.evaluate(async()=>{
@@ -50,11 +54,7 @@ try{
 
  // welcome → enter: a live presentation drives frames.
  await page.evaluate(()=>window.stageSurface.present('welcome.mark','oi.mark'));
- // Software GL compiles the field's shaders lazily over the first frames
- // (a several-hundred-millisecond stall right after the first render);
- // observe the clock once the pipeline is warm, not during its warm-up.
- await page.waitForFunction(()=>window.stageSurface.frameCount>10,null,{timeout:20000});
- state=await observe(800);
+ state=await observe(20000,2);
  check(state.rafFired>=2&&state.frames>=2&&state.live&&state.dormant===false,`A live presentation runs the clock: ${JSON.stringify(state)}`);
  check(state.errors.length===0,'No engine error while presenting');
 
@@ -81,7 +81,7 @@ try{
  state=await observe(300);
  check(!state.live,'A released presentation is not live');
  // Wait out the settle window, then demand silence.
- await page.waitForFunction(()=>!window.stageSurface.isScheduled,{timeout:5000});
+ await page.waitForFunction(()=>!window.stageSurface.isScheduled,null,{timeout:5000});
  state=await observe(800);
  check(state.rafFired===0&&state.frames===0&&!state.scheduled,`A released field sleeps — no continuing simulation frames: ${JSON.stringify(state)}`);
  check(state.dormant===true,'A released field is marked dormant');
@@ -91,18 +91,18 @@ try{
  // re-entry: presenting again on the same surface resumes the clock.
  await page.evaluate(()=>window.stageSurface.present('again','oi.mark'));
  await page.waitForFunction(()=>window.stageSurface.isScheduled);
- state=await observe(600);
+ state=await observe(20000,2);
  check(state.rafFired>=2&&state.live&&state.dormant===false,`Re-entry resumes frames on the same surface: ${JSON.stringify(state)}`);
 
  // hidden document: nothing is scheduled while hidden; visible resumes.
  const hiddenCancelled=await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});document.dispatchEvent(new Event('visibilitychange'));return !window.stageSurface.isScheduled;});
  check(hiddenCancelled,'Visibility change cancels the pending drawing frame immediately');
- await page.waitForFunction(()=>!window.stageSurface.isScheduled,{timeout:2000});
+ await page.waitForFunction(()=>!window.stageSurface.isScheduled,null,{timeout:2000});
  state=await observe(600);
  check(state.rafFired===0&&!state.scheduled&&state.live,`A hidden window burns no drawing frames while its presentation stays live: ${JSON.stringify(state)}`);
  await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>false});document.dispatchEvent(new Event('visibilitychange'));});
- await page.waitForFunction(()=>window.stageSurface.isScheduled,{timeout:2000});
- state=await observe(600);
+ await page.waitForFunction(()=>window.stageSurface.isScheduled,null,{timeout:2000});
+ state=await observe(20000,2);
  check(state.rafFired>=2,`A window made visible again resumes its live field: ${JSON.stringify(state)}`);
 
  // paused: the clock is held; resume restarts it.
@@ -110,19 +110,19 @@ try{
  state=await observe(500);
  check(state.rafFired===0&&!state.scheduled&&state.paused,`A paused field schedules nothing: ${JSON.stringify(state)}`);
  await page.evaluate(()=>window.stageSurface.setPaused(false));
- await page.waitForFunction(()=>window.stageSurface.isScheduled,{timeout:2000});
- state=await observe(500);
+ await page.waitForFunction(()=>window.stageSurface.isScheduled,null,{timeout:2000});
+ state=await observe(20000,2);
  check(state.rafFired>=2,`A resumed field runs again: ${JSON.stringify(state)}`);
 
  // reduced motion: one still frame per change, no continuous clock.
  await page.emulateMedia({reducedMotion:'reduce'});
- await page.waitForFunction(()=>!window.stageSurface.isScheduled,{timeout:2000});
+ await page.waitForFunction(()=>!window.stageSurface.isScheduled,null,{timeout:2000});
  state=await observe(600);
  check(state.rafFired===0&&state.live&&!state.scheduled,`Reduced motion is genuinely reduced — a live field paints still, no loop: ${JSON.stringify(state)}`);
  const before=await page.evaluate(()=>window.stageSurface.frameCount);
  await page.evaluate(()=>window.stageSurface.update('again','oi.mark'));
  await page.waitForFunction((before)=>window.stageSurface.frameCount>before,before,{timeout:2000});
- await page.waitForFunction(()=>!window.stageSurface.isScheduled,{timeout:2000});
+ await page.waitForFunction(()=>!window.stageSurface.isScheduled,null,{timeout:2000});
  state=await observe(500);
  check(state.rafFired===0,`Under reduced motion a change paints one frame and stops again: ${JSON.stringify(state)}`);
  // release under reduced motion: dormant at once, no settle loop.
