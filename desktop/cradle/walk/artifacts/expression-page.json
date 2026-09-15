@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "expression-page",
-  "generated_at": "2026-09-15T03:55:44.288Z",
+  "generated_at": "2026-09-15T03:59:16.529Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4185",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 5025,
+  "duration_ms": 16959,
   "checks": [
     {
       "ok": true,
@@ -25,6 +25,18 @@
     {
       "ok": true,
       "label": "The same authored HTML keeps its explicit Expression fallback when opened standalone without a host lease"
+    },
+    {
+      "ok": true,
+      "label": "Editing the iframe invalidates the exact hosted lease, restores fallback, and releases the old live presentation"
+    },
+    {
+      "ok": true,
+      "label": "Iframe editing does not mutate the owner-backed page source"
+    },
+    {
+      "ok": true,
+      "label": "Rereading the exact unchanged owner revision re-admits its live Expression body"
     },
     {
       "ok": true,
@@ -82,7 +94,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-15T03:55:44.470Z",
+        "mounted_at": "2026-09-15T03:59:16.800Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4185"
@@ -93,7 +105,7 @@
     {
       "ok": true,
       "op": "invoke.expression",
-      "duration_ms": 1,
+      "duration_ms": 2.2,
       "seq_range": {
         "from": 2,
         "to": 2
@@ -137,7 +149,7 @@
     {
       "ok": true,
       "op": "invoke.expression",
-      "duration_ms": 0.9,
+      "duration_ms": 1.9,
       "seq_range": {
         "from": 3,
         "to": 3
@@ -196,7 +208,7 @@
     {
       "ok": true,
       "op": "invoke.expression",
-      "duration_ms": 1,
+      "duration_ms": 1.4,
       "seq_range": {
         "from": 4,
         "to": 4
@@ -268,7 +280,7 @@
     {
       "ok": true,
       "op": "invoke.expression",
-      "duration_ms": 14.8,
+      "duration_ms": 1.8,
       "seq_range": {
         "from": 8,
         "to": 8
@@ -312,7 +324,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 59,
+      "duration_ms": 124,
       "data": {
         "file": "expression-page-live-return-capture.png"
       }
@@ -320,7 +332,7 @@
     {
       "ok": true,
       "op": "invoke.expression",
-      "duration_ms": 1.1,
+      "duration_ms": 7.8,
       "seq_range": {
         "from": 9,
         "to": 9
@@ -396,7 +408,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 45,
+      "duration_ms": 107,
       "data": {
         "file": "expression-page-captured-fallback-page.png"
       }
@@ -404,7 +416,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 56,
+      "duration_ms": 141,
       "data": {
         "file": "expression-page-live-reentry.png"
       }
@@ -413,7 +425,7 @@
   "metrics": {
     "capture_width": 1280,
     "capture_height": 785,
-    "capture_distinct_sampled_colours": 53
+    "capture_distinct_sampled_colours": 58
   },
   "screenshots": [
     "expression-page-live-return-capture.png",

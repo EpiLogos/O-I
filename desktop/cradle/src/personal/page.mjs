@@ -96,9 +96,10 @@ function pageRuntime() {
   const stateNode=document.getElementById("ql-doc"); let doc;
   const status=document.getElementById("page-status");
   try {doc=JSON.parse(stateNode.textContent);} catch {status.textContent="The page data could not be read. Original content is retained.";return;}
-  let dirty=false, editing=false;
+  let dirty=false, editing=false, hostedLease=null;
   const serial=value=>JSON.stringify(value).replace(/</g,"\\u003c");
-  const changed=()=>{dirty=true;doc.meta.revision+=1;stateNode.textContent=serial(doc);status.textContent="Changes are in this page only. Save an HTML copy to keep them; native source Save is separate.";};
+  const invalidateHosted=()=>{if(!hostedLease)return;const fallback=document.querySelector(".page-expression");if(fallback)fallback.hidden=false;parent.postMessage({type:"oi:page-expression-host-invalidated",...hostedLease},"*");hostedLease=null;};
+  const changed=()=>{invalidateHosted();dirty=true;doc.meta.revision+=1;stateNode.textContent=serial(doc);status.textContent="Changes are in this page only. Save an HTML copy to keep them; native source Save is separate.";};
   const fields=()=>document.querySelectorAll("[data-field]");
   const mode=()=>{document.body.dataset.editing=String(editing);fields().forEach(el=>el.setAttribute("contenteditable",editing?"plaintext-only":"false"));document.getElementById("edit-page").textContent=editing?"Read":"Edit";document.getElementById("edit-page").setAttribute("aria-pressed",String(editing));document.querySelectorAll(".author-tools").forEach(el=>el.hidden=!editing);};
   // A native host may suppress this document's explicit portable fallback
@@ -109,7 +110,7 @@ function pageRuntime() {
     const value=event.data;if(parent===window||event.source!==parent||value?.type!=="oi:page-expression-host"||typeof value.token!=="string"||value.token.length>128||!Number.isSafeInteger(value.generation))return;
     const expression=doc.page?.expression,page=value.page,requested=value.expression;
     const accepted=!!expression&&page?.document_id===(doc.meta.documentId??null)&&page?.revision===doc.meta.revision&&requested?.ref===expression.expression_ref&&requested?.revision===expression.expression_revision;
-    if(accepted){const fallback=document.querySelector(".page-expression");if(fallback)fallback.hidden=value.live===true;}
+    if(accepted){const fallback=document.querySelector(".page-expression");if(fallback)fallback.hidden=value.live===true;hostedLease=value.live===true?{token:value.token,generation:value.generation,page:{document_id:doc.meta.documentId??null,revision:doc.meta.revision},expression:{ref:expression.expression_ref,revision:expression.expression_revision}}:null;}
     parent.postMessage({type:"oi:page-expression-host-response",token:value.token,generation:value.generation,accepted,page:{document_id:doc.meta.documentId??null,revision:doc.meta.revision},expression:expression?{ref:expression.expression_ref,revision:expression.expression_revision}:null},"*");
   });
   document.getElementById("edit-page").addEventListener("click",()=>{editing=!editing;mode();});
