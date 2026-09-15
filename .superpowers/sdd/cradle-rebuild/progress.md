@@ -1268,3 +1268,17 @@ separately owned. No whole Expression Field completion is claimed.
 - NOT WALKED / DEVIATIONS: native detach/re-dock of the presentation binding is Tauri-only and not drivable from the bridge harness (recorded in the receipt, not claimed); the live Expression body renders on the WINDOW stage (the engine canvas under the panes, named as such in the body) because this main's stage has no element host — the EX5 lane's `setContainer` is detected and used when it lands; human visual/creative judgement (§14 "feels like entering another world") remains the owner's. The walk leaves real rows in `frank` under its own field/participant (`oi:field:desktop:expression-<uuid>`, `participant:…:human-desktop-walk`) plus one probe (`projection:desktop:expression-sf1-probe:1`); nothing else withdrawn or deleted. Disk on this workstation was at 99–100% during the lane (35 GB of other sessions' scratch under `/private/tmp`); two builds failed on ENOSPC and were re-run — nothing of other lanes was touched.
 - REMAINS (SF2–SF4 seams left exactly where SF1 needs them): knowledge travel/recenter/pin over a projected local whole (SF2); rich Beings/presence/addressing/Agent participation (SF3); Contribute composer and Return (SF4); Join/Request access await a client operation; element-hosted live Expression awaits EX5; `hostedPublicationArgs` (document strip) still uses the identity as participant ref and will hit the same "cannot move between SharedFields" refusal on a second field — align it with the field-scoped derivation when that strip is next touched.
 - Files: shared-field/{expression-presentation.mjs (+test, verbatim from the EX5 lane), expression-projection.mjs (+test), api.mjs, spacetimedb/field.ts (watch), spacetimedb/field-lib.ts (entry_fields, field_ref/my_authority/my_watches on read)}; desktop/cradle/src/explore/{ExploreSurface.tsx, PresentationBody.tsx, presentation.tsx, ShareProjection.tsx, field.mjs, travel.mjs, explore.css} (new); src/{Cradle.tsx, Rest.tsx, agent/AgentLayer.tsx, expression/ExpressionView.tsx, knowledge/shared-field.ts, surface/{Workbench,persist,registry,types}, surfaces/navigator/{WorldNavigator.tsx,navigator.css}, workspace/DetachedFrame.tsx}; tests/explore-field.test.mjs; walk/{run.mjs, README.md, scenarios/explore-sf1.mjs, artifacts/explore-sf1*}; .github/workflows/desktop.yml (one test step). Branch `shared-field-sf1-explore` from main e4fec7c.
+### 2026-09-15 — EX2–EX5: Nara, native knowledge, Agent composition and page bodies
+
+O-I #306 EX2–EX5 is implemented in PR #320 against EX1 and the accepted engine,
+converged with EX6 / PR #321. The QL owner prerequisite merged in QL-MEF #199 at
+`2848f7e3`. Seven-centre Nara, source-backed local knowledge wholes, structured
+human/Agent refinement and exact page/WorldPresentation admission share the
+existing kernel and engine. Native Tauri/WebKit review proves correction,
+rejection, continuation, page focus/capture/return, unsaved-edit invalidation and
+Wiki popout/re-dock with exact refs. Joined recovery exposed and repaired a
+queued animation frame rendering after WebGL context loss. Evidence, commands
+and explicit limits: `desktop/cradle/walk/artifacts/EX2-EX5-INTEGRATION.md`.
+The accepted contract is applied without new identities, stores, clocks, audio
+engines, Agent loops or inferred semantic relations. Sensory/material acceptance
+and undisclosed owner state are not claimed.

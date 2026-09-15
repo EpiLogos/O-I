@@ -1,7 +1,7 @@
 # EX2 Nara Expression receipt
 
 - O:I branch/head: `aikit/expression-ex2` / updated by this receipt commit.
-- QL producer: `aikit/expression-owner-reference` / `fd56b5e`; prerequisite PR 199.
+- QL producer: prerequisite PR 199 merged at `2848f7e39b0ab6c7a45a9bbf086aa6d3672537b5`; runtime proof used the equivalent producer on `aikit/expression-owner-reference`.
 - Standing: the Personal input is controlled and source-qualified runtime evidence. It is not owner-lived, sensory, material-validation, or clinical evidence.
 
 ## Owner producer and worker
