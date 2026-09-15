@@ -1,0 +1,96 @@
+[
+  {
+    "theme": "light",
+    "firstNativeDrawMs": 272.2999997138977,
+    "workspaceRequestMs": 277.40000009536743,
+    "workspaceComposedMs": 300.19999980926514,
+    "readyMs": 323,
+    "loadingInterval": {
+      "draws": 3,
+      "meanIntervalMs": 8.350000143051147,
+      "p95IntervalMs": 9.900000095367432,
+      "maxIntervalMs": 9.900000095367432
+    },
+    "steadyRest": {
+      "draws": 75,
+      "meanIntervalMs": 16.666216218793714,
+      "p95IntervalMs": 16.800000190734863,
+      "maxIntervalMs": 16.800000190734863,
+      "fpsFromIntervals": 60.001621656170926
+    },
+    "steadyFlight": {
+      "draws": 139,
+      "meanIntervalMs": 16.667391303656757,
+      "p95IntervalMs": 17.0,
+      "maxIntervalMs": 20.40000009536743,
+      "fpsFromIntervals": 59.99739142025208
+    },
+    "entryVisibleMs": 2618.7000002861023,
+    "drawsAfterEntry": 0,
+    "contexts": [
+      {
+        "connected": true,
+        "lost": false,
+        "width": 2560,
+        "height": 1640,
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)"
+      }
+    ],
+    "longTasks": [
+      {
+        "startTime": 156.7999997138977,
+        "duration": 118
+      }
+    ],
+    "pageErrors": [],
+    "covered": true,
+    "focus": "root"
+  },
+  {
+    "theme": "dark",
+    "firstNativeDrawMs": 137,
+    "workspaceRequestMs": 140.30000019073486,
+    "workspaceComposedMs": 174.30000019073486,
+    "readyMs": 178.59999990463257,
+    "loadingInterval": {
+      "draws": 4,
+      "meanIntervalMs": 12.766666730244955,
+      "p95IntervalMs": 29.600000381469727,
+      "maxIntervalMs": 29.600000381469727
+    },
+    "steadyRest": {
+      "draws": 78,
+      "meanIntervalMs": 16.683116888071034,
+      "p95IntervalMs": 17.600000381469727,
+      "maxIntervalMs": 17.90000009536743,
+      "fpsFromIntervals": 59.94083759702195
+    },
+    "steadyFlight": {
+      "draws": 139,
+      "meanIntervalMs": 16.666666666666668,
+      "p95IntervalMs": 17.59999990463257,
+      "maxIntervalMs": 20.300000190734863,
+      "fpsFromIntervals": 59.99999999999999
+    },
+    "entryVisibleMs": 2612.300000190735,
+    "drawsAfterEntry": 0,
+    "contexts": [
+      {
+        "connected": true,
+        "lost": false,
+        "width": 2560,
+        "height": 1640,
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)"
+      }
+    ],
+    "longTasks": [
+      {
+        "startTime": 61.90000009536743,
+        "duration": 77
+      }
+    ],
+    "pageErrors": [],
+    "covered": true,
+    "focus": "root"
+  }
+]
