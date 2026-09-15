@@ -1,9 +1,11 @@
 pub mod catalog_source;
+pub mod config_surface;
 pub mod configuration;
 pub mod context_frames;
 pub mod current_world;
 pub mod dev_world;
 pub mod development_field;
+pub mod fixture_surface;
 pub mod guardian;
 pub mod modality;
 pub mod native_lifecycle;
