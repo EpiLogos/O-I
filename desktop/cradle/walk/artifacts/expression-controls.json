@@ -1,0 +1,349 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "expression-controls",
+  "generated_at": "2026-09-15T13:58:07.396Z",
+  "environment": {
+    "base_url": "http://localhost:4322",
+    "bridge_url": "http://127.0.0.1:4331",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 1678,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Selecting the entity in the UI retains its real native identity"
+    },
+    {
+      "ok": true,
+      "label": "Enter commits a numeric edit through the real owner operation"
+    },
+    {
+      "ok": true,
+      "label": "An empty numeric edit has an accessible explanation"
+    },
+    {
+      "ok": true,
+      "label": "Invalid numeric text does not advance the native document"
+    },
+    {
+      "ok": true,
+      "label": "Escape restores the current owner value and clears the invalid state"
+    },
+    {
+      "ok": true,
+      "label": "A concurrent owner revision preserves the human draft without overwriting the new value"
+    },
+    {
+      "ok": true,
+      "label": "Recovery actions sit outside input labels and remain distinct keyboard controls"
+    },
+    {
+      "ok": true,
+      "label": "Use current accepts the owner value after a revision conflict"
+    },
+    {
+      "ok": true,
+      "label": "Explicit retry commits the preserved draft against the current native revision"
+    },
+    {
+      "ok": true,
+      "label": "Selecting an entity discloses its controls before the deeper pedagogical apparatus"
+    },
+    {
+      "ok": true,
+      "label": "Expression controls fit their actual container at 1000px",
+      "data": {
+        "width": 760,
+        "scrollWidth": 760,
+        "fields": [
+          {
+            "width": 131.59375,
+            "right": 402.59375,
+            "hostRight": 1000
+          },
+          {
+            "width": 131.59375,
+            "right": 544.1875,
+            "hostRight": 1000
+          },
+          {
+            "width": 131.609375,
+            "right": 685.796875,
+            "hostRight": 1000
+          },
+          {
+            "width": 131.59375,
+            "right": 827.390625,
+            "hostRight": 1000
+          },
+          {
+            "width": 131.609375,
+            "right": 969,
+            "hostRight": 1000
+          },
+          {
+            "width": 131.59375,
+            "right": 402.59375,
+            "hostRight": 1000
+          },
+          {
+            "width": 226,
+            "right": 497,
+            "hostRight": 1000
+          },
+          {
+            "width": 226,
+            "right": 733,
+            "hostRight": 1000
+          },
+          {
+            "width": 226,
+            "right": 497,
+            "hostRight": 1000
+          },
+          {
+            "width": 226,
+            "right": 733,
+            "hostRight": 1000
+          }
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "Expression controls fit their actual container at 760px",
+      "data": {
+        "width": 520,
+        "scrollWidth": 520,
+        "fields": [
+          {
+            "width": 146,
+            "right": 417,
+            "hostRight": 760
+          },
+          {
+            "width": 146,
+            "right": 573,
+            "hostRight": 760
+          },
+          {
+            "width": 146,
+            "right": 729,
+            "hostRight": 760
+          },
+          {
+            "width": 146,
+            "right": 417,
+            "hostRight": 760
+          },
+          {
+            "width": 146,
+            "right": 573,
+            "hostRight": 760
+          },
+          {
+            "width": 146,
+            "right": 729,
+            "hostRight": 760
+          },
+          {
+            "width": 224,
+            "right": 495,
+            "hostRight": 760
+          },
+          {
+            "width": 224,
+            "right": 729,
+            "hostRight": 760
+          },
+          {
+            "width": 224,
+            "right": 729,
+            "hostRight": 760
+          },
+          {
+            "width": 224,
+            "right": 495,
+            "hostRight": 760
+          }
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "Expression controls fit their actual container at 640px",
+      "data": {
+        "width": 440,
+        "scrollWidth": 440,
+        "fields": [
+          {
+            "width": 184,
+            "right": 415,
+            "hostRight": 640
+          },
+          {
+            "width": 184,
+            "right": 609,
+            "hostRight": 640
+          },
+          {
+            "width": 184,
+            "right": 415,
+            "hostRight": 640
+          },
+          {
+            "width": 184,
+            "right": 609,
+            "hostRight": 640
+          },
+          {
+            "width": 184,
+            "right": 415,
+            "hostRight": 640
+          },
+          {
+            "width": 184,
+            "right": 609,
+            "hostRight": 640
+          },
+          {
+            "width": 184,
+            "right": 415,
+            "hostRight": 640
+          },
+          {
+            "width": 184,
+            "right": 609,
+            "hostRight": 640
+          },
+          {
+            "width": 184,
+            "right": 609,
+            "hostRight": 640
+          },
+          {
+            "width": 184,
+            "right": 415,
+            "hostRight": 640
+          }
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "Expression controls fit their actual container at 639px",
+      "data": {
+        "width": 639,
+        "scrollWidth": 639,
+        "fields": [
+          {
+            "width": 136.75,
+            "right": 167.75,
+            "hostRight": 639
+          },
+          {
+            "width": 136.75,
+            "right": 314.5,
+            "hostRight": 639
+          },
+          {
+            "width": 136.75,
+            "right": 461.25,
+            "hostRight": 639
+          },
+          {
+            "width": 136.75,
+            "right": 608,
+            "hostRight": 639
+          },
+          {
+            "width": 136.75,
+            "right": 167.75,
+            "hostRight": 639
+          },
+          {
+            "width": 136.75,
+            "right": 314.5,
+            "hostRight": 639
+          },
+          {
+            "width": 185.65625,
+            "right": 216.65625,
+            "hostRight": 639
+          },
+          {
+            "width": 185.671875,
+            "right": 412.328125,
+            "hostRight": 639
+          },
+          {
+            "width": 185.65625,
+            "right": 216.65625,
+            "hostRight": 639
+          },
+          {
+            "width": 185.671875,
+            "right": 412.328125,
+            "hostRight": 639
+          }
+        ]
+      }
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-15T13:58:07.685Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4331"
+        },
+        "url": "http://localhost:4322/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 94,
+      "data": {
+        "file": "expression-controls-expression-light.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 38,
+      "data": {
+        "file": "expression-controls-expression-dark.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 33,
+      "data": {
+        "file": "expression-controls-expression-narrow.png"
+      }
+    }
+  ],
+  "metrics": {
+    "editor_width_at_1000": 760,
+    "editor_width_at_760": 520,
+    "editor_width_at_640": 440,
+    "editor_width_at_639": 639
+  },
+  "screenshots": [
+    "expression-controls-expression-light.png",
+    "expression-controls-expression-dark.png",
+    "expression-controls-expression-narrow.png"
+  ]
+}
