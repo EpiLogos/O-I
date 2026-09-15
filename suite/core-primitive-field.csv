@@ -1,0 +1,43 @@
+cell,row,row_name,ql_position,constitutional_family,ql_function,primitives_abstractions
+S/P0,S,O:I parent / shared field,0,Identity / Centre,implicit ground / source / referential centre / potential,World | Identity | Ref | Participant | CommonReferent | Self / Other situated positions
+S/P1,S,O:I parent / shared field,1,Form / Artifact,material/content determination / manifest what,Projection | ReferentBinding | shared representation / presentation | Presence form
+S/P2,S,O:I parent / shared field,2,Potency / Praxis,efficient cause / how / power in operation,Participation | Contribution | Addressing | Admission | Authority binding
+S/P3,S,O:I parent / shared field,3,Transformation / Trajectory,formal mediation / relation / pattern of becoming,Relation | Activity | revision path | versioned-world relation | inter-world trajectory
+S/P4,S,O:I parent / shared field,4,Embodiment / Actuality,contextual arena / Context Frame / situated application,SharedField | Encounter | Presence-in-field | Contact / mediated actuality
+S/P5,S,O:I parent / shared field,5,Evidence / Continuity,quintessence / synthesis / Return / recursive continuity,Provenance | Recognition | Return path | retained encounter history | reconciliation evidence
+S0/P0,S0,Central,0,Identity / Centre,implicit ground / source / referential centre / potential,Central | Project | ProjectCentral | Machine | AgentProfile | Control identity
+S0/P1,S0,Central,1,Form / Artifact,material/content determination / manifest what,Ground | Source | Control source | Flow source | Machine declaration
+S0/P2,S0,Central,2,Potency / Praxis,efficient cause / how / power in operation,Authorship | Governance | Action | human acceptance / mutation authority
+S0/P3,S0,Central,3,Transformation / Trajectory,formal mediation / relation / pattern of becoming,Change proposal | NOW / DAY development | Flow revision | Project adoption / migration
+S0/P4,S0,Central,4,Embodiment / Actuality,contextual arena / Context Frame / situated application,Work | CentralComputer | Machine role | Workcell binding / local world
+S0/P5,S0,Central,5,Evidence / Continuity,quintessence / synthesis / Return / recursive continuity,Observation | Inference | Derived state | source provenance | revision / history
+S1/P0,S1,Actuation,0,Identity / Centre,implicit ground / source / referential centre / potential,Agent | Agency | AgenticLocus | agency lineage identity
+S1/P1,S1,Actuation,1,Form / Artifact,material/content determination / manifest what,WorldBinding | AgenticComposition | Instantiation form | Activity form
+S1/P2,S1,Actuation,2,Potency / Praxis,efficient cause / how / power in operation,Authority | MetagencyGrant | Delegation | Agency bounds | acting power
+S1/P3,S1,Actuation,3,Transformation / Trajectory,formal mediation / relation / pattern of becoming,Determination | ActuationStream | Activity | self-differentiation / delegation / derivation / federation
+S1/P4,S1,Actuation,4,Embodiment / Actuality,contextual arena / Context Frame / situated application,Instantiation | Execution relation | RealisedActuation | bound-world actuality
+S1/P5,S1,Actuation,5,Evidence / Continuity,quintessence / synthesis / Return / recursive continuity,Return | lineage / attribution | recognition state | world-mutation state
+S2/P0,S2,AIKit,0,Identity / Centre,implicit ground / source / referential centre / potential,Profile | Scope | Resource | ProjectBinding | resource / source identity
+S2/P1,S2,AIKit,1,Form / Artifact,material/content determination / manifest what,Context | ContextSource | Surface | Projection | WikiSpace | WikiNode | WikiEdge | WikiFrame | WikiReading
+S2/P2,S2,AIKit,2,Potency / Praxis,efficient cause / how / power in operation,Capability | Skill | Method | SkillSet | ActionSet | Procedure
+S2/P3,S2,AIKit,3,Transformation / Trajectory,formal mediation / relation / pattern of becoming,ContextResolution | Generation | KnowledgeChangeHorizon | KnowledgeDependency | KnowledgeImpact | KnowledgeRoute
+S2/P4,S2,AIKit,4,Embodiment / Actuality,contextual arena / Context Frame / situated application,Component | Composition / HarnessComposition | SessionSpace | WorldInhabitation | KnowledgeApplication
+S2/P5,S2,AIKit,5,Evidence / Continuity,quintessence / synthesis / Return / recursive continuity,Trust | Familiarity | FitnessObservation | UsageSignal | WikiProvenanceRef | SemanticRevision | reading basis / history
+S3/P0,S3,Software Factory,0,Identity / Centre,implicit ground / source / referential centre / potential,Project | developmental actor identity | Run identity
+S3/P1,S3,Software Factory,1,Form / Artifact,material/content determination / manifest what,Artifact | Claim | Decision | Candidate | HumanRequest
+S3/P2,S3,Software Factory,2,Potency / Praxis,efficient cause / how / power in operation,Method | Capability | Action | Commission | developmental praxis
+S3/P3,S3,Software Factory,3,Transformation / Trajectory,formal mediation / relation / pattern of becoming,Run | RunMap | ProjectMap | ProjectDevelopment | SourceIntegration | developmental frontier
+S3/P4,S3,Software Factory,4,Embodiment / Actuality,contextual arena / Context Frame / situated application,Execution | Checkout | Gate | Application | candidate experience
+S3/P5,S3,Software Factory,5,Evidence / Continuity,quintessence / synthesis / Return / recursive continuity,Evidence | Event | Trace | Recognition | Project Canon | returned Ground
+S4/P0,S4,Workcell,0,Identity / Centre,implicit ground / source / referential centre / potential,Workcell | material-world identity | opaque client / semantic refs
+S4/P1,S4,Workcell,1,Form / Artifact,material/content determination / manifest what,ExecutionDemand | BindingGraph | MaterialisationPlan | workspace / service / fabric binding forms
+S4/P2,S4,Workcell,2,Potency / Praxis,efficient cause / how / power in operation,Material requirements | OperationalOffer | provider capability / capacity | control-plane operations
+S4/P3,S4,Workcell,3,Transformation / Trajectory,formal mediation / relation / pattern of becoming,Plan | Prepare | Lifecycle | Reconcile | Candidate materialisation trajectory
+S4/P4,S4,Workcell,4,Embodiment / Actuality,contextual arena / Context Frame / situated application,MaterialisedExecutionWorld | Workspace | Runtime | Service | Endpoint | Host
+S4/P5,S4,Workcell,5,Evidence / Continuity,quintessence / synthesis / Return / recursive continuity,Observed state | material evidence | collected artifacts | recovery / retention state
+S5/P0,S5,Quaternal Logic,0,Identity / Centre,implicit ground / source / referential centre / potential,Subject identity | Ref | QLAddress | Position | Whole / anchor
+S5/P1,S5,Quaternal Logic,1,Form / Artifact,material/content determination / manifest what,QLForm | Lens | State6 | PrimitiveTick | addressable reading / formal artifact
+S5/P2,S5,Quaternal Logic,2,Potency / Praxis,efficient cause / how / power in operation,Operator | Locate | Relate | Refract | VĀK instruction | synthesising operation
+S5/P3,S5,Quaternal Logic,3,Transformation / Trajectory,formal mediation / relation / pattern of becoming,Relation | Conjugacy | Cross relation | complement / mediation | nesting / traversal
+S5/P4,S5,Quaternal Logic,4,Embodiment / Actuality,contextual arena / Context Frame / situated application,ContextFrame | MEF address | Resonance | situated reading field
+S5/P5,S5,Quaternal Logic,5,Evidence / Continuity,quintessence / synthesis / Return / recursive continuity,Synthesis / Return | Reading provenance | conformance evidence | returned differentiation
