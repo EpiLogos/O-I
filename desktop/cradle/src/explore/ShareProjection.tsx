@@ -22,7 +22,7 @@ import {useExpressionStage} from "../stage/ExpressionStage";
 import type {ExpressionDocument} from "../expression/types";
 import {isUnavailable,sharedField,slug,type HostedParticipant,type HostedProjection,type SharedFieldHostedResult,type SharedFieldReading,type SharedFieldSnapshot,type SharedFieldStatus,type SharedFieldUnavailable} from "../knowledge/shared-field";
 import {WorldPresentationView,type WorldPresentation} from "./presentation";
-import {navigateExplore} from "./ExploreSurface";
+import {navigateExplore} from "./navigate";
 // @ts-ignore -- shared Projection lifecycle contract.
 import {withdrawProjection} from "../../../../shared-field/index.mjs";
 // @ts-ignore -- the language-neutral shared-field contracts are the executable spec.

@@ -36,6 +36,10 @@ const cases = [
   {label: 'system preference resolves light', saved: '{"theme":"system"}', system: 'light', dark: false},
   {label: 'new profile follows dark system', saved: null, system: 'dark', dark: true},
   {label: 'corrupt persistence follows dark system', saved: '{', system: 'dark', dark: true},
+  {label: 'completed opening keeps the selected ground', saved: '{"theme":"light"}', system: 'dark', dark: false, completed: true, opening: false},
+  {label: 'disabled Expression keeps the selected ground', saved: '{"theme":"dark","enabled":false}', system: 'light', dark: true, opening: false},
+  {label: 'disabled welcome keeps the selected ground', saved: '{"theme":"light","welcomeEnabled":false}', system: 'dark', dark: false, opening: false},
+  {label: 'detached window skips the opening ground', saved: '{"theme":"dark"}', system: 'light', dark: true, detached: true, opening: false},
 ];
 let passed = 0;
 try {
@@ -43,18 +47,23 @@ try {
     for (const entry of cases) {
       const context = await browser.newContext({colorScheme: entry.system});
       try {
-        await context.addInitScript(saved => {
+        await context.addInitScript(({saved, completed, detached}) => {
           if (saved === null) localStorage.removeItem('oi-cradle.visuals.v1');
           else localStorage.setItem('oi-cradle.visuals.v1', saved);
+          if (completed) sessionStorage.setItem('oi-cradle.welcome.v1', '1');
+          // Tauri's window initialization script sets this before HTML runs.
+          if (detached) window.__OI_DETACHED__ = {pane: 'right'};
           window.__prepaintPolicyViolations = [];
           addEventListener('securitypolicyviolation', event => {
             if (event.effectiveDirective === 'script-src-elem') window.__prepaintPolicyViolations.push(event.blockedURI);
           });
-        }, entry.saved);
+        }, entry);
         const page = await context.newPage();
         await page.goto(`http://127.0.0.1:${server.address().port}/?built=${Number(document.startsWith('dist/'))}`);
-        const actual = await page.evaluate(() => ({dark: document.body.dataset.theme === 'dark', violations: window.__prepaintPolicyViolations}));
+        const actual = await page.evaluate(() => ({dark: document.body.dataset.theme === 'dark', opening: document.body.dataset.oiOpening === 'true', saved: localStorage.getItem('oi-cradle.visuals.v1'), violations: window.__prepaintPolicyViolations}));
         assert.equal(actual.dark, entry.dark, `${document}: ${entry.label}`);
+        assert.equal(actual.opening, entry.opening ?? true, `${document}: opening ground must match the real welcome admission gate`);
+        assert.equal(actual.saved, entry.saved, `${document}: opening must not rewrite the saved appearance`);
         assert.deepEqual(actual.violations, [], `${document}: configured native CSP must permit the unchanged bootstrap`);
         passed++;
       } finally {await context.close();}

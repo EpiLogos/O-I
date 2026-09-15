@@ -9,7 +9,7 @@ import {FileHistory} from "./files/FileHistory";
 import {encounter} from "./encounter/client";
 import type {EncounterRow} from "./encounter/EncounterList";
 import {AgentLayer} from "./agent/AgentLayer";
-import {navigateExplore,type PresentationMeta} from "./explore/ExploreSurface";
+import {navigateExplore,type PresentationMeta} from "./explore/navigate";
 /**
  * The Cradle root (U0.3b + U0.4 + U0.6). One layout state, persisted to
  * localStorage and restored on load (map §5 U0.3b). Zero surfaces =
