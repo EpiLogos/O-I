@@ -58,6 +58,24 @@ try{
  check(state.rafFired>=2&&state.frames>=2&&state.live&&state.dormant===false,`A live presentation runs the clock: ${JSON.stringify(state)}`);
  check(state.errors.length===0,'No engine error while presenting');
 
+ // The native palette can override the engine's automatic monochrome ink.
+ // Both the actual GPU palette and ground must follow the host's roles.
+ await page.addStyleTag({url:'/node_modules/@epilogos/oi-design-system/tokens.css'});
+ await page.evaluate(()=>document.body.classList.add('oi-desktop'));
+ const palette=()=>page.evaluate(()=>({
+   ink:window.stageSurface.adapter.engine.particleMaterial.uniforms.uPrimaryColor.value.getHexString(),
+   expected:getComputedStyle(document.body).getPropertyValue('--oi-foreground').trim().slice(1),
+   background:window.stageSurface.adapter.engine.config.backgroundColor,
+   expectedBackground:getComputedStyle(document.body).getPropertyValue('--oi-canvas-ground').trim(),
+ }));
+ await page.waitForFunction(()=>window.stageSurface.adapter.engine.config.backgroundColor===getComputedStyle(document.body).getPropertyValue('--oi-canvas-ground').trim());
+ let colours=await palette();
+ check(colours.ink===colours.expected&&colours.background===colours.expectedBackground,`Light recipe uses host ink and paper: ${JSON.stringify(colours)}`);
+ await page.evaluate(()=>document.body.dataset.theme='dark');
+ await page.waitForFunction(()=>window.stageSurface.adapter.engine.config.backgroundColor===getComputedStyle(document.body).getPropertyValue('--oi-canvas-ground').trim());
+ colours=await palette();
+ check(colours.ink===colours.expected&&colours.background===colours.expectedBackground,`Dark recipe uses inverse ink and paper: ${JSON.stringify(colours)}`);
+
  // release: the field settles (bounded), then sleeps.
  await page.evaluate(()=>window.stageSurface.release('welcome.mark'));
  state=await observe(300);
@@ -77,7 +95,8 @@ try{
  check(state.rafFired>=2&&state.live&&state.dormant===false,`Re-entry resumes frames on the same surface: ${JSON.stringify(state)}`);
 
  // hidden document: nothing is scheduled while hidden; visible resumes.
- await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});document.dispatchEvent(new Event('visibilitychange'));});
+ const hiddenCancelled=await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});document.dispatchEvent(new Event('visibilitychange'));return !window.stageSurface.isScheduled;});
+ check(hiddenCancelled,'Visibility change cancels the pending drawing frame immediately');
  await page.waitForFunction(()=>!window.stageSurface.isScheduled,{timeout:2000});
  state=await observe(600);
  check(state.rafFired===0&&!state.scheduled&&state.live,`A hidden window burns no drawing frames while its presentation stays live: ${JSON.stringify(state)}`);
