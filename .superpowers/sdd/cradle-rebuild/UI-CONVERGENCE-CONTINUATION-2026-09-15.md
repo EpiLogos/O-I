@@ -34,13 +34,27 @@ SpaceTimeDB, SF branches or the exact-main Composition Receipt.
   `/Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence`, branch
   `aikit/ui-expression-convergence`, locked to Codex task
   `01a0a547-409c-7022-b2cc-e49241b6e22a`.
-- Replayed the 20 source/evidence commits cleanly onto accepted main
-  `ce82daac8bf35c2c02a3f44f69e9c3afbf59e26e`. The new main delta adds campaign
-  documents and their compiler/tests; it changes no desktop source.
-- Factory #237 is merged at accepted main
-  `fb854dede9876a0ea008afd62422ef9150fe5203`. The additional native Action
-  availability repair is Factory #238, candidate
-  `87d8785071b7de1cc73aefbb235fd59e4e43d756`; it remains an explicit PR dependency.
+- Reconciled the complete UI delta onto accepted O:I main
+  `48e298bc2f1cea71b4d1f9367a9c81ebdf209800`, preserving its new SF2 encounter,
+  native semantic/schema5 engine intake, protected Nara and walk dependency provenance. Obsolete
+  compatibility intakes were dropped. Source before this forward-port survives
+  on `agent/ui-expression-before-main-forwardport-20260915`.
+- Current O:I review: [PR #326](https://github.com/EpiLogos/O-I/pull/326).
+- Factory #237 is accepted. #238 is the exact captured Action availability
+  candidate `cb0d0011a66e2bd575b5c7839d5390002bfa3aed` on current main
+  `761b2a62c1a07a78ab2747a75c98dd62d934b1e7`.
+- Native Expression #5 is `91db8428fc9dfba06cd258ec5a58e7dd9eef5313` on current
+  main `7306b7b8882f54fec931922d46fdbaba9f656212`; O:I consumes this exact
+  candidate. Both owner PRs remain explicit unmerged dependencies.
+
+## Latest owner refinement
+
+Remove the legacy point-cloud/loading renderers. The opening is the full native
+field with its own background; app composition begins after its first actual
+frame and continues underneath. Enter moves from the inverse opening palette
+into the saved app appearance, completing the particle flight on rendered
+simulation time. Minimal semantic cues use the same field on demand. A
+transparent overlay is an optional presentation, not a second base renderer.
 
 ## Verification and return
 

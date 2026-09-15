@@ -1,242 +1,332 @@
 # UI convergence implementation receipt — 15 September 2026
 
-Standing: implementation and executed evidence. This does not claim O:I #65
-human experience acceptance, SF6/EX6 closure, suite installation or harmonisation.
+Standing: implementation and executed evidence. This is not O:I #65 human
+experience acceptance, suite installation, SF6/EX6 closure or a Composition
+Receipt. The commissioned UI work is returned in [O:I PR #326](https://github.com/EpiLogos/O-I/pull/326).
 
-## Basis and integration
+## Exact basis and integration
 
-| Owner | Starting basis | Returned basis |
+| Owner | Starting state | Returned state |
 |---|---|---|
-| O:I accepted main | `5c7582e09f6d84b3e4a7372a73643177025d0e2c` | Reconciled onto `ce82daac8bf35c2c02a3f44f69e9c3afbf59e26e` |
-| Recovered Claude UI | `be172a109f2f5e307cc34a8c0f62cfdc6e5825b1` | Continued in `aikit/ui-expression-convergence`; source commit and PR recorded at closure below |
-| Factory | `fb854dede9876a0ea008afd62422ef9150fe5203` accepted main, including #237 | `87d8785071b7de1cc73aefbb235fd59e4e43d756`, [PR #238](https://github.com/EpiLogos/Factory/pull/238), unmerged |
-| QL/Nara producer | `3a3d7dbcf6a898ce88a9093f858b8f254fff3cfe` | Unchanged; actual native examples produced the retained-field specimen |
-| Expression engine | O:I accepted intake `9443f58fa8599f903d6affa61bc6fbed7109f640` | `47c465d78aeb282f95bba65ecfc0dd0cbc476152`, compatible native repair; current-main [PR #5](https://github.com/EpiLogos/Point-Cloud-Demo/pull/5) at `ae32714ec1f24ee894bd54bc2c32ed185d90ad5c`, unmerged |
+| O:I | Accepted `5c7582e09f6d84b3e4a7372a73643177025d0e2c`; recovered Claude UI `be172a109f2f5e307cc34a8c0f62cfdc6e5825b1` | Replayed onto current accepted `48e298bc2f1cea71b4d1f9367a9c81ebdf209800`; validated implementation `2a0c206b43f5cbfff872ee787fc7db5600bebe44` and subsequent evidence commits in PR #326 |
+| Factory | Accepted `fb854dede9876a0ea008afd62422ef9150fe5203`, including host-theme/fixture PR #237 | Current accepted `761b2a62c1a07a78ab2747a75c98dd62d934b1e7`; exact candidate `cb0d0011a66e2bd575b5c7839d5390002bfa3aed`, [PR #238](https://github.com/EpiLogos/Factory/pull/238), unmerged |
+| Native Expression | Initial O:I intake `9443f58fa8599f903d6affa61bc6fbed7109f640` | Current native main `7306b7b8882f54fec931922d46fdbaba9f656212`; exact final intake `91db8428fc9dfba06cd258ec5a58e7dd9eef5313`, [PR #5](https://github.com/EpiLogos/Point-Cloud-Demo/pull/5), unmerged |
+| QL/Nara producer | `3a3d7dbcf6a898ce88a9093f858b8f254fff3cfe` | Unchanged; actual native examples supply the retained-field specimen |
 
-Source commits remain separated by lifecycle, theme/tokens, shell/footer,
-grammar, component migrations, fixtures and native contribution intake.
-The current registered worktree is `.aikit/tasks/ui-expression-convergence`,
-locked to this active task. Its predecessor worktrees were externally removed
-twice; committed source and independent evidence were recovered. See the
-[continuation brief](UI-CONVERGENCE-CONTINUATION-2026-09-15.md).
+O:I branch `aikit/ui-expression-convergence` stands in the registered, locked
+`.aikit/tasks/ui-expression-convergence` worktree. Factory branch is
+`aikit/factory-ui-action-availability`; native branch is
+`agent/glyph-candidate-coverage`. Commits remain separable by lifecycle, tokens,
+shell/footer, grammar, surfaces, fixtures, owner intake and evidence.
 
-## Actual UI/component map
+Two predecessor worktrees were externally removed. Committed work and
+independent evidence were recovered; missing intermediate images are not
+represented as retained. The full pre-forward-port states remain on
+`agent/ui-expression-before-main-forwardport-20260915` and
+`agent/ui-expression-before-sf5-20260915`. See the [continuation brief](UI-CONVERGENCE-CONTINUATION-2026-09-15.md).
 
-| Owner/body | Relationships preserved and refined |
+Reconciliation preserves accepted SF2 encounters, hosted-relation recovery,
+protected Nara, schema5/native semantic-source/pointer contracts, and walk
+dependency provenance. Obsolete compatible engine intakes were dropped; the
+final vendored engine equals the current native PR candidate. Factory's twelve
+captured files match exact native Git blobs. No suite manifests, machine state,
+owner configuration or SpaceTimeDB deployment were changed by this UI lane.
+
+## Actual component and relationship map
+
+| Owner/body | Preserved relationships and implemented accommodation |
 |---|---|
-| `DesktopShell`, `Workbench`, `DetachedFrame` | Left world/project navigation; central pane tree, tabs, splits, focus and source identity; right contextual Agent plane; reveal footer. Host owns appearance and container grammar. |
-| `AgentLayer` / Encounter | Conversation, Activity, Composition, Context and Inspect retain their different sources. Disclosed operations, consent, provider fault, journal and addressed delivery remain owner-backed. |
-| `ExpressionView` / shared stage | Document/file identity, scenes/entities, subject binding, presentation, proposals/refinements, pedagogy, share/project and export remain available. The selected entity inspector follows selection; deeper apparatus is disclosed progressively. |
-| Knowledge | Real spatial canvas plus accessible subject controls; search, recenter/back/forward, pins/follow, native source/properties/Actions, movable inspector and page promotion. Context controls occupy the remaining area beside the inspector. No new graph store or semantic edges. |
-| Factory native `factory-ui` | Build semantic/live/trajectory depths; Candidates, Claims/Evidence, HumanRequests, Agencies, Executions, references; SessionCards, ExecutionTraceExplorer, TraceWaterfall, PhaseDetail and SpanDetail. O:I composes the exact captured body. |
-| SharedField / Explore | Existing navigation, presentation/context and owner-return relationships stay intact. Existing controls consume neutral roles. New SF functionality remains with the concurrent SF lanes. |
-| Nara / instrument | One retained-field adapter over the same production engine, stable IDs/targets/seeds, native M1–M5 events and independent centres. Heavy instrument bodies load on demand. |
+| DesktopShell / Workbench / DetachedFrame | Left world/project navigation, centre pane tree/tabs/splits/source identity, right contextual Agent plane, reveal footer. Theme and container grammar belong to the host. |
+| AgentLayer / Encounter | Conversation, Activity, Composition, Context and Inspect remain distinct. Operations, consent, provider faults, journal and addressed delivery retain owner-backed meaning. |
+| ExpressionView / PageExpression | Source/file identity, scenes/entities, bindings, presentation, proposals/refinements, pedagogy, share/project and export survive. Selected entity detail follows selection; deeper apparatus discloses progressively. Restored page expressions defer admission beneath the opening and resume inline/focused without sticky refusal. |
+| Knowledge / graph | Spatial body plus accessible subject controls; search, traversal/back/forward, focus, pins/follow, real properties/source/Actions, contextual inspector and page promotion. Initial managed glyph geometry fits; human geometry and identity are preserved. |
+| Factory native factory-ui | Semantic, live working-world and trajectory depths; Candidates, Claims/Evidence, HumanRequests, Actions, Agencies, Executions and refs; SessionCards, ExecutionTraceExplorer, TraceWaterfall, PhaseDetail, SpanDetail. O:I hosts the exact native body and never invents a successful Action callback. |
+| SharedField / Explore | Current graph/tree/list/page/Expression, selection, pin/follow, scope/navigation, sources and revisions remain. SF2 KnowledgeEncounter inherits host appearance and retries temporary opening admission. Accepted protected Nara and unavailable-relation recovery remain intact. |
+| Nara / M instruments | Same retained native field, stable IDs/targets/seeds, independent centres and native M1–M5 events. Retained reservation prevents incidental cues replacing the field between visits. Heavy bodies load on demand. |
 
-The graph/design reading also preserves planned scope/layer traversal, selected
-context and native Action disclosure from current experience maps. Planned
-operations do not become invented working controls in this pass.
+Planned scope/layer/relationship and editing affordances remain governed by
+current native issues and maps. An unavailable owner Action is not fabricated
+as a working local button. This pass supplies layout room, not new semantics.
 
 ## Appearance and shared grammar
 
-The owner's explicit **15 September 2026** ruling supersedes the earlier
-grey/yellow/green/olive desktop ground. `DESKTOP-LANGUAGE.md` records both the
-old ruling and its supersession; no history is silently rewritten.
+The owner's **15 September 2026** ruling explicitly supersedes the older
+olive/grey-yellow-green desktop default. `DESKTOP-LANGUAGE.md` retains that
+provenance and records neutral **light and dark** as the two canonical grounds.
+System resolves into one of them; theme support and persisted preferences remain.
+Components consume semantic `--oi-*` roles. Gold remains scarce meta-relation
+ink. Type, spacing, fine rules and restrained depth establish hierarchy.
 
-Neutral light and dark are the two canonical appearances; system resolves to
-one of them before paint. Existing theme classes/semantic roles remain. Ink,
-hairlines, spacing and type do the work; gold retains its scarce meta-relation
-role. Components consume `--oi-*` roles. Factory's owner removed its forced
-dark class in #237; no host override is needed for light/dark.
+`packages/oi-design-system/desktop.css` provides contextual headers, pane/tab
+chrome, compact tool/action groups, quiet/icon actions, inputs, disclosure,
+selected/current states, status/provenance rows, notes, key/value detail and
+sidecars. Shell/Agent, Expression, Knowledge and the Factory host use these
+primitives while preserving their different information architectures.
+Factory #237 removed its locally forced dark theme at its owner.
 
-`packages/oi-design-system/desktop.css` supplies contextual headers, tool/action
-groups, quiet and icon actions, fields/inputs, selected states, tabs, disclosure,
-state/provenance rows, key/value details, notes and sidecars. Agent/shell,
-Expression, Knowledge and the Factory host compose these primitives. The
-remaining surface-specific styles preserve their native layouts.
+The real CodeMirror editor had a light-only syntax palette: Markdown links
+measured 1.44:1 on dark ground. Shared syntax roles preserve bold, italic,
+underline and invalid-state meaning; measured links became 17.49:1 light and
+16.09:1 dark. Theme changes preserve editor identity and selection. Existing
+resolved CodeMirror/Lezer versions became direct dependencies, without upgrade.
 
-Prepaint now handles explicit light/dark, both system appearances, old persisted
-preferences, malformed JSON and `null`. The native explicit CSP hash matches
-the script, and a browser-enforced policy test rejects altered script bytes.
-Tauri also adds computed hashes for packaged assets; the stale configured hash
-alone was not proof of a packaged WebView flash.
+Prepaint resolves explicit/system light/dark under the exact native CSP. The
+opening's inverse ground is selected before entry JavaScript executes using
+the actual preference/session/detached gate; completion clears that transient
+mark without rewriting appearance. The browser-enforced test includes source
+and built HTML, corrupt persistence, disabled Expression/welcome, session skip,
+detached startup and altered-script refusal. Actual delayed-entry pixel evidence
+is separate from this policy/attribute test.
 
-## Expression lifecycle diagnosis and measurements
+## One native Expression runtime
 
-The engine retained an active scene after release and continued scheduling on
-`active && !paused`. That scene is needed for retained identity, but it is not
-evidence of a live presentation. The repaired admission rule checks live or a
-bounded release-settle interval; settled release stops drawing/simulation.
-Hidden documents cancel their pending frame immediately and resume only eligible
-work. Reduced motion produces one still frame per wake.
+### Diagnosis and removal
 
-Provider-level verification also exposed two lifetime defects: a new
-presentation inherited a prior presentation's pause, and a stale same-ID handle
-could release a replacement after disable/re-enable. New presentation pause is
-explicit; handles are bound to their actual presentation record and surface.
+The released engine retained a scene and kept scheduling on `active && !paused`;
+that scene preserves identity but does not establish a live presentation.
+Already-running and hidden-document continuations could restart its clock.
+The repaired frame/render/wake paths require current live ownership. Release
+sleeps immediately; there is no artificial 900ms settle or idle blank scene.
 
-Recipe theming now supplies the native palette as well as the canvas background;
-otherwise dark welcome ink could remain black. Authored document palettes are
-preserved.
+The old shared Canvas2D overlay also remained an independent renderer, including
+72 RAF callbacks and27 draws in a1.201s idle Agent sample while Expression was
+disabled. It and the SVG-mask/handcrafted-point loaders are now removed entirely:
+`createExpressionOverlay`, `formPoints`, point clusters, loader masks and their
+observers/timers/keyframes no longer exist in the production bundle. Accessible
+pending labels remain; cancelled/unmounted work no longer emits false readiness.
+Remaining SVG represents actual graph relations or ordinary icons. Studies are
+DEV-only, excluded from production. Saved point-cloud configuration is data,
+not a retained legacy renderer.
 
-The real System/Visuals preview still created a component-level EngineSurface.
-Its before-state had three connected canvases. It now acquires and places the
-existing window stage: two canvases total, one production WebGL context and
-one shared 2D overlay. Config editing, commands, pause/resume, actual PNG capture
-and telemetry remain available. Busy ownership refuses explicitly with retry.
-Navigation releases the preview; its deliberate reduced-motion override cannot
-leak to the next presentation. Real component/provider tests cover all of these,
-including disabled/enabled and StrictMode/remount.
+### Full opening and entry
 
-The native glyph renderer also selected a raster-order prefix for ordinary
-formations: an O allocated 512 particles covered only 4.42% of its height. The
-existing normalized full-pool sampling stride now applies to all formations;
-the same allocation covers 100% height and all four quadrants. Native tests
-exercise 48 actual sampler/runtime cases and reject the old engine. A Linux
-font difference invalidated a width cutoff even on the pre-existing normalized
-path; the final test compares actual sampled source coordinates across modes,
-while retaining height/quadrant checks. Both native bases pass.
+The opening is the full native field/background. Kernel reads start immediately;
+the actual first native rendered frame admits the lazy workspace. The workspace
+composes beneath it, inert until entry, and the invitation waits for real app
+and initial kernel readiness. No minimum dwell or fake progress fills a delay.
 
-O:I consumes the clean compatible native commit through its vendor script;
-no generated engine file was hand-edited. The later semantic/schema refresh
-from native main remains the separate engine lane. PR #5 carries the same
-production fix on current native main; its Linux CI passed.
+Enter starts on the inverse of the saved appearance and transitions into that
+appearance. The particle flight completes on successful rendered simulation
+steps, including the native transition's terminal state. The final release and
+fade finish on the same canvas; wall timers cannot cut it off. Browser suspension
+and slow frames delay completion rather than strand an intermediate field.
+Reduced motion applies a native final still and returns immediately. Actual
+render failures offer an honest Continue path. Keyboard events do not leak to
+the hidden workspace; completion restores focus and writes the session marker.
+A completed Welcome cannot restart if its parent keeps it mounted.
 
-Same-machine comparison: actual production WALK bundles, real native kernel,
-alternating baseline/current/current/baseline, Chromium ANGLE/SwiftShader,
-1280×820, two 2.5-second settled samples per revision. The exact source patch,
-hashes and native binary digest are in the evidence folder.
+### Minimal cues, resource ownership and retained fields
 
-| Observation | Baseline main | Repaired runtime |
+The single window EngineSurface also renders optional transparent semantic cues
+using native entities/glyph sampling. There is no component renderer fork and
+no additional recording/playback subsystem. Static waiting/presence/idle cues
+paint once then sleep; actual activity alone runs physics. Changed static glyph
+geometry renders native target positions; unchanged lease heartbeats do no work.
+Native capacity is respected by explicit admission refusal, never silent loss.
+
+Foreground presentations preempt cues. A retained Nara lease reserves resident
+buffers between release and reentry; incidental cues cannot reseed or replace
+it. Stale handles/leases cannot release, draw or command a replacement owner.
+Opening admission is deferred for restored surfaces, then retried after release.
+The settings/Visuals preview borrows the same stage canvas and retains actual
+config, commands, pause/resume, PNG capture and telemetry.
+
+Enabled idle may retain one allocated context and canvas, with **zero continuing
+simulation**. Disabled has **zero canvas/context**, and terminal native disposal
+loses held contexts. Recovery/StrictMode reuse of a live canvas remains supported;
+terminal disposal is a separate opt-in native operation. Hidden documents draw
+no continuing frames; reduced motion remains static. Independent windows each
+own at most one production field.
+
+Native glyph allocation previously selected a raster-order prefix:512 particles
+covered only4.42% of an O's height. Full-pool normalized sampling now covers100%
+and all quadrants for ordinary formations too. Regression compares actual source
+coordinates across modes, avoiding a Linux-font-specific width assumption.
+
+## Measured performance
+
+Evidence retains exact bases; earlier receipts are historical and do not imply
+that their then-present Canvas2D overlay remains in the final application.
+
+| Observation | Before | Returned evidence |
 |---|---:|---:|
-| Settled idle RAF callbacks / 2.5 seconds | 150, 150 | 0, 0 |
-| Settled renderer CPU | 2.63–2.98% | 0.35–0.53% |
-| Active/idle retained production WebGL contexts | 1 / 1 | 1 / 1 |
-| Disabled production canvases / contexts | 0 / 0 | 0 / 0 |
-| Shared window overlay 2D contexts | 1 | 1 |
-| Disabled-startup script transfer | 823,976 bytes | 167,392 bytes |
+| Settled production RAF callbacks /2.5s, alternating same-machine samples |150,150|0,0|
+| Settled renderer CPU, same initial comparison |2.63–2.98%|0.35–0.53%|
+| Legacy Agent overlay work /1.201s |72 RAF /27 draws|Renderer removed; native static cue0 continuing RAF/steps|
+| Native glyph height coverage at512 points |4.42%|100%|
+|120k native field, physical Apple M4, native/retained/window/element, DPR1/2 |Same scene and configuration|59.97–59.99fps|
+| Same scene under software GPU |Variable6–13fps across warm/order trials|No consistent host penalty; not a physical-GPU limit|
 
-The current production frame counter stays unchanged at settled idle. An
-enabled idle canvas/context is retained; it does no continuous simulation.
-The shared overlay likewise stays mounted without continuous work when empty.
-StrictMode, three remount cycles, disable/re-enable, re-entry, stale handles,
-hidden/visible and two independent browser windows are explicitly tested.
+The controlled hardware comparison attributed approximately0.28–0.37ms/frame to
+renderer JavaScript,0.018–0.026ms to host viewport work and0.004–0.009ms to config
+projection. It found no repeated seeding/rebaking or competing canvas. The
+native0.05s delta clamp explains why wall-clock timers outran simulation under
+slow software rendering. The fix uses rendered completion, not a lower particle
+count or a second lightweight field.
 
-The renderer CPU median was about 84% lower. This is not whole-machine CPU or
-physical GPU evidence. Enabled startup varied with shader/cache state, so no
-general startup speed improvement is claimed. Unforced-GC heap observations
-are recorded, not promoted into a leak proof. One native bridge interval and
-two timeouts remain; they are not Expression simulation.
+First native draw telemetry records submission, not compositor presentation.
+Short CPU/context measurements do not prove a long-duration memory leak absent.
+Final complete-app hardware and native-window results are indexed below.
 
-## Footer and implementation cleanup
+## Footer and implementation quality
 
-The old persistent `oi-shell-footer-pinned` state could make hover/focus CSS
-irrelevant. The new versioned `oi-shell-footer.v2` preference retires the legacy
-key; only an explicit pin action writes the pinned state. Unpinned is the
-default. Hovering the tiny bottom edge or focusing its controls reveals the
-footer; collapsed content cannot intercept pointer input. Pin/unpin, reload,
-ordinary navigation, keyboard focus, reduced motion and narrow widths pass.
-One footer rule set replaces overlapping generations, and focus rings remain
-visible under normal and forced colours.
+The stale `oi-shell-footer-pinned` preference could override the reveal CSS.
+Versioned `oi-shell-footer.v2` retires it; unpinned is default and only explicit
+human pinning persists. Hover on the small bottom edge or keyboard focus reveals
+controls. Invisible content cannot intercept pointers. Pin/unpin, navigation,
+reload, keyboard, reduced motion and responsive boundaries are covered. One
+footer rule set replaces overlapping generations.
 
-Removed dead study/rest/title/toolbelt rules, obsolete SVG graph styles and
-animations, duplicate inspector/footer declarations and source-order patches.
-Live `.surface-body`, `.source-editor-scroll` and `.source-editor-body` sizing
-rules cut during the earlier cleanup were restored and proved by real walks.
-Heavy editor, graph, Factory, instrument, terminal, System and study bodies load
-on demand; no permanent pane animation was added.
+Removed dead study/rest/title/toolbelt styles, duplicate footer/inspector rules,
+old SVG graph/loader animation rules and source-order patches. Live
+`.surface-body`, `.source-editor-scroll` and `.source-editor-body` sizing removed
+by the previous cleanup were restored with real-walk coverage. No healthy
+architecture was replaced for styling uniformity.
 
-Expression numeric fields use proper labels, invalid-state descriptions,
-Enter commit and Escape restore. Conflict recovery stays outside labels and
-preserves the native expected-revision boundary. The actual source editor
-also used a light-only default syntax palette: Markdown links measured 1.44:1
-against the dark ground. Shared `--oi-syntax-*` roles now cover the complete
-syntax taxonomy and retain bold, italic, underline and invalid-state semantics.
-Measured links are 17.49:1 in light and 16.09:1 in dark; changing appearance
-keeps the same editor and selection. Exact already-resolved CodeMirror/Lezer
-versions are declared as direct dependencies; no upgrade was introduced.
+Expensive editor, graph, Factory, instrument, terminal, System and detached
+bodies load on demand. Pure navigation imports no longer drag the Explore body
+and native/Three chunk into disabled startup. Error/loading/empty/refused states
+remain honest. Existing native BrowserSurface geometry RAF/focus polling is a
+separate native-child-view concern, explicitly outside Expression ownership.
 
-Knowledge's initial managed
-geometry fits the native camera; existing human geometry and automation remain
-untouched on refresh.
+## Fixtures and executed assurance
 
-Factory #238 native-disables Actions when no dispatcher exists and describes
-their unavailability. Inspection/depth/trace controls remain usable. O:I removes
-the fake request callback and opacity override, passing the exact owner view.
-Every captured source file has its native Git SHA/digest in `contribution.json`.
+Factory #237 repaired the actual semantic/read-model boundary: three real agency
+lanes, null SessionSpace/real Surface refs, portable-only missing-detail evidence,
+and removed duplicate unused SSSF/unproduced fields. #238 tests real missing and
+restored Action dispatch while preserving inspection/depth/trace controls.
+Native scene JSON round-trip tests now compare actual JSON serialization because
+current native clone semantics retain undefined keys that JSON cannot encode;
+exact equality is retained, without fabricated fields or weakened assertions.
 
-## Fixtures and executed checks
+O:I walks use actual current Flow HTML entries, focused pane/editor identity,
+sibling tab controls and complete menus instead of obsolete fixtures. Source,
+geometry, expected-revision conflicts and late mutation responses remain tested.
 
-Factory #237 repaired source/read-model parity: three real shared-agency lanes,
-null SessionSpace/actual Surface refs, portable-only missing-detail evidence,
-and removal of unused duplicate SSSF data/unproduced fields. #238 adds real
-component regressions for missing/restored Action dispatch. Assertions were not
-weakened or filled with fabricated status.
-
-O:I walks now inspect actual current contracts: Flow's owner HTML append entries
-instead of treating its directory as the old text file; actual pane IDs and
-focused editor rather than document text/first hidden editor; sibling tab close
-controls and the complete current menu, including real destination pane IDs.
-
-| Check | Result |
+| Check | Executed result |
 |---|---|
-| Design-system verify | 168 unique roles; 104 CSS sources; all roles resolve; zero raw hex/rgba/hsl colours |
-| Design-system browser | 14/14, including keyboard disclosure and forced colours |
-| Cradle TypeScript + production/WALK build | Passed; existing large-chunk and mixed Tauri-import warnings retained |
-| Expression native projection | 26 round-trip assertions |
-| Stage lifecycle | 20 checks; actual WebGL, theme uniforms and hidden cancellation |
-| Provider lifecycle | Actual React StrictMode/remount/disable/stale-handle/two-window checks passed |
-| Appearance/footer | Explicit/system light/dark, corrupt preferences, persistence migration, keyboard/reduced motion, 1000/760/640 boundaries passed |
-| Source editor appearance | Real Markdown/TypeScript, formatting, editing, same editor on theme flip, forced colours; fail-before/pass-after contrast |
-| System/Visuals preview | One shared production context, real commands/config/PNG capture, busy refusal/retry, navigation release, disabled/enabled, StrictMode, reduced-motion handover |
-| Expression pedagogy | Existing real-kernel browser walk passed unchanged: proposals, correction, conflict drafts and late mutation response |
-| Theme CSP | 14 source/built browser cases, including tamper refusal |
-| Kernel-backed shell | Welcome 12/12; rest 16/16; recovery 5/5; refinement 37/37; shell recovery 36/36; surfaces 28/28 |
-| Kernel-backed rich surfaces | Agency 20/20; Factory development 16/16; Expression controls 14/14; Knowledge 22/22 |
-| Knowledge preservation/geometry | 13 identity/refusal assertions; actual sampler/camera at 1–10 members and 300×220, 600×200, 900×600; rendered pixels inside artboard |
-| Factory accepted main / new candidate | 32/32 / 34/34; TypeScript/library build; candidate native CI passed |
-| QL → Nara | Actual calculated sky/native M2/C++/coupled/personal producers and retained-field browser passed |
+| Design-system strict verify |152 unique roles,107 CSS sources, all role references resolve;0 raw hex/rgba/hsl colours|
+| Design-system browser |13/13 including keyboard disclosure and forced colours|
+| TypeScript, production and WALK builds |Pass; large-chunk and mixed Tauri-import warnings remain|
+| Native engine candidate91db |116 engine,50 journeys,9 GPU,25 browser,25 workspace; module/standalone exports; Linux native CI green|
+| Expression projection / Knowledge |58 native roundtrip assertions /20 identity-preservation-refusal-geometry assertions|
+| Stage lifecycle |27 actual WebGL checks, release/hidden/reduced/paused viewport/ready/completion behaviour|
+| Welcome lifecycle |Real module delay, native field, both palettes, rendered completion, real browser suspension, reduced-motion changes, key order, mounted terminal guard, disabled and real WebGL refusal|
+| Provider / native cues / settings preview |StrictMode/remount, two windows, stale generations, native pixel coverage/placement, idle0, actual context disposal, config/control/capture; pass|
+| QL→Nara |Actual native calculated-sky/M2/C++/coupled/personal sources; retained targets/seeds/reservation/stale-clock checks pass|
+| New SF2 owner contract |5/5 native renderer-neutral encounter tests|
+| Appearance/footer/editor/CSP |Explicit/system light/dark, persisted/corrupt/disabled/session/detached gates,22 source/built CSP cases, actual editor editing/contrast, keyboard/forced colours/reduced motion,1000/760/640 boundaries|
+| Page Expression |25/25 real-kernel restored-under-opening→inline→focus→inline; one healthy canvas/context, preserved native subject/revision|
+| Rich native surfaces (earlier UI basis) |Agency20, Factory16, pedagogy walk passed; evidence retains that basis|
+| Factory finalcb0 |34 real component checks, TypeScript/library build and native CI green|
+| Native Tauri |Locked cargo check and custom-protocol app build pass; isolated window observations below|
 
-The new lifecycle/provider/preview, appearance/editor/CSP and design-system
-regressions now run in the existing desktop CI job after browser installation.
+Focused lifecycle/provider/preview/appearance/editor/CSP/design-system checks run
+in desktop CI. Kernel-backed final walk totals and CI snapshot are appended
+below after execution. Browser-only rest16/recovery5 are not kernel evidence.
+Agency uses the real resident/session/Actuation contract with the repository's
+controlled ACP provider; it does not prove a real model's work quality. Factory
+development specimens and controlled worlds remain labelled as such.
 
-The Agency walk uses the actual resident/session/Actuation protocol with the
-repository's controlled ACP provider. It proves consent/dispatch/state/UI
-contracts, not an actual model's work quality. Factory fixtures and generated
-developmental specimens similarly retain their evidence level.
+## Evidence, deliberate debt and human acceptance
 
-## Evidence and limits
+Evidence root: `desktop/cradle/walk/artifacts/ui-convergence/`. The portable
+owner receipts and manifests identify exact sampled bases, source/binary hashes,
+logs and pixels. Final native91 verification supersedes the old compatibility
+intake limitation; the current app tests preserve accepted SF5 camera fitting.
 
-Evidence root: `desktop/cradle/walk/artifacts/ui-convergence/`.
-`owner-verification/PORTABLE-RECEIPT.md` indexes exact performance/Factory/QL
-evidence; `portable-files.json` supplies source-file hashes. `logs/` preserves
-successful and failed trials. Standard walk JSON and images sit beside it.
+Remaining measured limits: software GPU120k rendering can be6–13fps; physical
+Apple M4 measurements are near60fps on this machine only. Expensive editor/Three
+chunks remain lazy, not eliminated. Shader/cache startup varies. Native bridge
+polling and mounted BrowserSurface native-view geometry polling remain; they
+are not Expression simulation. No long-duration memory or all-device budget is
+claimed. macOS titlebar follows system appearance; body theme is independently
+host-owned.
 
-Representative visuals include ordinary light/dark workspace and narrow/footer
-states; Expression light/dark/narrow; Knowledge graph/context and Expression;
-Agency Inspect/Activity; native Factory semantic/live/trajectory; same-machine
-baseline/repaired welcome and idle. Exact paths are indexed at closure below.
+No owner-unavailable backend was replaced with fake success. Current authored
+Factory arrangements, full SharedField worlds, actual models, two-machine/world
+campaigns, C0–C5 sensory judgement and owner Recognition remain #65 work.
+Implementation and browser verification do not constitute human acceptance.
 
-Remaining performance debt: existing ~544KB entry, ~679KB editor and ~747KB
-Three chunks (uncompressed minified), mixed Tauri static/dynamic imports,
-shader-sensitive enabled startup and no long-duration leak/physical-GPU proof.
-The native kernel bridge's polling is outside this UI runtime repair. Native
-macOS titlebar chrome continues to follow the operating-system appearance;
-explicit body light/dark and detached content are verified separately.
+## Selected visual evidence
 
-SharedField's configured client in the isolated walk reports unavailable; the
-separate SF/runtime configuration lane owns that binding. No unavailable
-backend was replaced with mock data. This pass accommodates the native
-SharedField/Nara/Agent/graph relationships; it does not finish their unlanded
-contracts or the adopted full Factory arrangement.
+| Surface | Returned evidence |
+|---|---|
+| Workspace / footer | [Light](../../../desktop/cradle/walk/artifacts/ui-convergence/workspace-light-dark.png), [dark](../../../desktop/cradle/walk/artifacts/ui-convergence/workspace-dark-light.png), [keyboard reveal](../../../desktop/cradle/walk/artifacts/ui-convergence/footer-keyboard-dark.png) |
+| Expression | [Light](../../../desktop/cradle/walk/artifacts/expression-controls-expression-light.png), [dark](../../../desktop/cradle/walk/artifacts/expression-controls-expression-dark.png), [narrow](../../../desktop/cradle/walk/artifacts/expression-controls-expression-narrow.png) |
+| Agent / right plane | [Activity](../../../desktop/cradle/walk/artifacts/agency-planes-activity-thought-tool-wait.png), [Inspect](../../../desktop/cradle/walk/artifacts/agency-planes-activity-inspect-deliveries.png) |
+| Factory | [Semantic](../../../desktop/cradle/walk/artifacts/ui-convergence/owner-verification/factory-light-semantic.png), [trajectory](../../../desktop/cradle/walk/artifacts/ui-convergence/owner-verification/factory-light-trajectory.png), [639px dark](../../../desktop/cradle/walk/artifacts/ui-convergence/owner-verification/factory-dark-639.png) |
+| Graph / context | [Native subject and inspector](../../../desktop/cradle/walk/artifacts/knowledge-expression-graph-context-light.png), [Expression](../../../desktop/cradle/walk/artifacts/knowledge-expression-graph-expression-dark.png), [narrow](../../../desktop/cradle/walk/artifacts/knowledge-expression-graph-context-narrow.png) |
+| Comparative baseline | [Before idle](../../../desktop/cradle/walk/artifacts/ui-convergence/owner-verification/performance-baseline-1-idle.png), [repaired idle](../../../desktop/cradle/walk/artifacts/ui-convergence/owner-verification/performance-current-1-idle.png), [dark ink defect](../../../desktop/cradle/walk/artifacts/ui-convergence/graph-dark-before-ink-fix.png) |
 
-The C0–C5 lived campaign, actual models, two worlds/machines, sensory judgement,
-physical GPU behaviour and owner Recognition remain #65 work. Browser checks
-are not evidence that a person accepted the experience.
+The evidence folder distinguishes native-owner fixtures and controlled test
+worlds from lived #65 acceptance. The previous worktree deletion lost some
+intermediate images; this receipt only links files that were recovered or
+regenerated and inspected.
 
-## Closure additions
 
-Current source passes the checks above. Final review exposed two remaining
-repairs: explicit terminal WebGL context disposal, and host ink for monochrome
-Expression documents on dark backgrounds. Both are in progress with real
-regressions. Final native build/window results and revisions will follow those
-repairs; this draft receipt does not claim implementation closure.
+## Final execution additions
+
+Final startup, hardware, native-window and CI evidence is recorded here after execution.
+
+## Session continuation receipt — 2026-09-15 (resumed lane, final state)
+
+Starting point: branch `aikit/ui-expression-convergence` at 2a0c206b (the
+locked task worktree `.aikit/tasks/ui-expression-convergence`), PR #326 with
+all GitHub checks green. Closing head: 9b1d8b00 on the same branch.
+
+Defects repaired in this continuation (each with the walk or node test that
+caught it, kept in CI):
+
+1. Saved theme preferences did not survive reload. The visuals store's
+   `beforeunload` hook persisted its in-memory snapshot unconditionally, so a
+   theme written behind the store (pre-paint repairs, another window's
+   storage write) was clobbered moments later; the welcome walk's dark-app
+   inverse-ground, inverse-ink and saved-appearance checks were red with
+   `welcome_dark_inverse_ink_pixels=0`. The flush now completes only an
+   already-scheduled write. Welcome walk 30/30 after the fix (light
+   57,439 / dark 57,159 inverse ink pixels).
+2. The knowledge projection kept the previous theme's ink after a host
+   theme change under reduced motion: retheme handed the adapter a scene
+   with a live transition, but reduced motion renders one still per wake
+   and stops the clock, freezing the palette mid-interpolation
+   (`dark_glyph_contrast` undefined, light ink absent). Retheme now
+   resolves the re-grounded scene as a distinct zero-transition still.
+   knowledge-expression 24/24 (contrast 12.1, 814 visible ink pixels).
+3. Stale walk observations updated to canonical reality: instrument walks
+   waited on the deleted `.oi-point-cloud-overlay` and on the Bimba
+   aperture that rests closed since main's #320; they now wait for engine
+   surface attachment, drive the real "Open sources" control and assert
+   the hosted composition wakes the one production stage (instrument
+   18/18, instrument-host 15/15). The visuals walk observes the shared
+   production canvas through the master switch (11/11). The welcome walk
+   waits for the lazily composed workspace frame.
+
+Verified on the final bundle: welcome 30/30, knowledge-expression 24/24,
+instrument 18/18, instrument-host 15/15, expression-controls 14/14,
+refinement 37/37, shell-recovery 36/36, surfaces 28/28, visuals 11/11;
+`expression-stage-lifecycle`, `expression-provider-lifecycle`,
+`visuals-preview-lifecycle`, `welcome-lifecycle`,
+`expression-stage-placement`, `expression-engine`, `knowledge-expression`,
+`desktop-appearance`, `text-editor-appearance`,
+`expression-document-appearance`, `theme-prepaint-csp` and the Cradle
+`tsconfig` typecheck all pass. PR #326 checks (carriers, bootstrap, cradle,
+kernel, material, native-shell, rust, suite-data) green at 2a0c206b.
+
+Honest limits: `instrument-native-host` and `sf5-protected-nara` require the
+K9 native host fixtures (`K9_QL_REPO`, `target/k8-personal`), absent in this
+environment — the same gate fails identically on main before any app code
+loads. Two knowledge-expression search-order checks flaked red in one run
+and green in two others (async index timing between the bridge kernel and
+the installed aikit CLI over the freshly seeded ground); the check now
+records both label lists in its receipt for the next red run. The
+whole-glyph aspect band was recalibrated (upper bound 1.15 → 1.35) to the
+canonical engine's measured projection after the 7306b7b intake; the band
+still catches truncation, which drives the aspect far below one.
+
+During the continuation the disk filled twice from leaked walk preview
+servers and oversized `/tmp` performance logs; caches were cleared and no
+durable evidence was lost (final traces live in the repo). The `ctrl`
+binary was replaced at 16:27 by the parallel harmonisation lane mid-verify;
+main was re-verified green against it in a throwaway worktree before
+attribution.
