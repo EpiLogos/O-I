@@ -199,7 +199,8 @@
 .oi-disclosure > summary::-webkit-details-marker { display: none; }
 .oi-disclosure > summary::before { content: ""; flex: none; width: 5px; height: 5px; border-right: 1px solid currentColor; border-bottom: 1px solid currentColor; transform: rotate(-45deg); transition: transform var(--oi-motion-ui) var(--oi-motion-ease-out); }
 .oi-disclosure[open] > summary::before { transform: rotate(45deg); }
-.oi-disclosure > summary:hover, .oi-disclosure > summary:focus-visible { color: var(--oi-accent-ink); outline: none; }
+.oi-disclosure > summary:hover, .oi-disclosure > summary:focus-visible { color: var(--oi-accent-ink); }
+.oi-disclosure > summary:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: var(--oi-focus-ring-offset); }
 .oi-disclosure > summary > .oi-state { margin-left: auto; }
 
 /* A titled section of a sidecar or plane body. */
