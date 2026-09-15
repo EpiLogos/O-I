@@ -94,7 +94,15 @@ source; bootstrap checks source selection and historical standing even when
 revisions coincide. No owner pin, install choice or historical asset was changed.
 
 The real CLI test floor is run with the worktree catalogue explicitly selected
-(`OI_CATALOG=<worktree>/surfaces.json`, isolated `OI_HOME`), because the machine's
+(isolated `OI_HOME`, unset `OI_CATALOG`), because the machine's
 adopted catalogue names a different development cut. Both deterministic suite
 validators pass. EX1 also verifies rejection at JavaScript's integer boundary,
 including an atomic edit refused without changing the last representable draft.
+
+The carried capability snapshot's manifest digest also predated the cut. Its
+source manifest was recovered exactly at `d7d4090`; all consumed product IDs,
+public names and checkout names match the current manifest and carried snapshot.
+Only the manifest digest was reconciled; child matrices, their provenance hashes
+and native routing remain untouched and pass the existing snapshot verifier. The
+CLI's matching revision-inequality assertion now checks its real truth-basis
+disclosure, preserving acceptance of the actual current-main descriptor.
